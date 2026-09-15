@@ -250,11 +250,13 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
     let base =
         RationalBezier2::try_new(vec![p(0, 0), p(2, 3), p(4, 0)], vec![r(1), r(2), r(1)]).unwrap();
     let elevated = base.elevated_to_degree(5).unwrap();
-    let independent = RationalBezier2::try_new(
-        elevated.control_points().to_vec(),
-        elevated.weights().to_vec(),
-    )
-    .unwrap();
+    let independent = decided(
+        RationalBezier2::from_homogeneous_controls(
+            elevated.homogeneous_controls().to_vec(),
+            &CurveContext::STRICT,
+        )
+        .unwrap(),
+    );
     let first = Curve2::from(base);
     let second = Curve2::from(independent);
 

@@ -245,10 +245,10 @@ pub use polynomial_spline::{
 };
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{
-    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionTopology2, RationalBezierOverlapOrientation2,
-    RationalBezierPointIncidence2,
+    HomogeneousControl2, RationalBezier2, RationalBezierIntersectionCandidates2,
+    RationalBezierIntersectionContact2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalBezierIntersectionTopology2,
+    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2,
 };
 pub use reconstruct::PolylineReconstructionOptions;
 pub use region::RegionPointLocation;

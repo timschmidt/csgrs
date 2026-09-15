@@ -377,20 +377,20 @@ pub(crate) fn rational_bezier_circular_arc(
 ) -> CurveResult<Classification<Option<CircularArc2>>> {
     // Degree elevation and exact subdivision retain the authoritative circle
     // even when reconstructing a quadratic representative would do needless
-    // projective work. Common-sign weights make the first control edge a
-    // positive multiple of the endpoint tangent, which is sufficient to
-    // recover traversal orientation without changing parameterization.
+    // projective work. The homogeneous endpoint tangent retains traversal
+    // orientation even when an intermediate control is infinite.
     if let Some(circle) = curve.retained_circular_conic()
         && matches!(
-            curve.common_weight_sign(policy),
+            curve.unit_weight_sign(policy),
             Classification::Decided(RealSign::Positive | RealSign::Negative)
         )
     {
-        let Some(control) = curve.control_points().get(1) else {
-            return Ok(Classification::Decided(None));
-        };
+        let controls = curve.homogeneous_controls();
+        let first = &controls[0];
+        let next = &controls[1];
         let (radial_x, radial_y) = curve.start().delta_from(&circle.center);
-        let (tangent_x, tangent_y) = control.delta_from(curve.start());
+        let tangent_x = first.weight() * next.x() - next.weight() * first.x();
+        let tangent_y = first.weight() * next.y() - next.weight() * first.y();
         let tangent_cross = &radial_x * tangent_y - &radial_y * tangent_x;
         let clockwise = match crate::classify::real_sign(&tangent_cross, policy) {
             Some(RealSign::Positive) => false,

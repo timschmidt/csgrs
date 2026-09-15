@@ -34,8 +34,7 @@ use crate::bezier_topology::{
     polynomial_roots_in_unit_interval_with_endpoints,
 };
 use crate::classify::{
-    classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2_real_expr,
-    real_sign,
+    classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, real_sign,
 };
 use crate::intersect::{circle_relation_from_supports, oriented_param_range_overlap};
 use crate::policy::{PolicyClassificationCache, resolve_cached_classification};
@@ -53,9 +52,9 @@ use crate::{BezierAlgebraicParameter2, BezierParameterInterval};
 
 /// Exact planar rational Bezier curve with an arbitrary positive degree.
 ///
-/// Controls and weights are retained in affine form. Evaluation and splitting
-/// operate in homogeneous coordinates, so unequal-weight cubic and
-/// higher-degree NURBS spans do not need sampling or degree reduction.
+/// Homogeneous Bernstein controls retain finite and infinite intermediate
+/// controls directly. Affine authoring controls are a cached optional view;
+/// evaluation, splitting and degree elevation use the homogeneous geometry.
 #[derive(Clone, Debug)]
 pub struct RationalBezier2 {
     data: Arc<RationalBezierData>,
@@ -63,16 +62,18 @@ pub struct RationalBezier2 {
 
 #[derive(Debug)]
 struct RationalBezierData {
-    control_points: Vec<Point2>,
-    weights: Vec<Real>,
+    homogeneous_controls: Vec<HomogeneousControl2>,
+    affine_control_points: OnceLock<Vec<Point2>>,
+    weights: OnceLock<Vec<Real>>,
+    endpoints: [Point2; 2],
     exact_line_image: Option<LineSeg2>,
     lineage: RationalBezierLineage,
-    homogeneous_controls: OnceLock<Vec<HomogeneousPoint2>>,
     homogeneous_power_basis: OnceLock<RationalParametricCurve2>,
     x_derivative_numerator_bernstein: OnceLock<Option<Vec<Real>>>,
     y_derivative_numerator_bernstein: OnceLock<Option<Vec<Real>>>,
     x_axis_monotonicity: PolicyClassificationCache<bool>,
     y_axis_monotonicity: PolicyClassificationCache<bool>,
+    unit_weight_sign: PolicyClassificationCache<RealSign>,
     degree_elevations: OnceLock<Mutex<Vec<ExactCurveResult<RationalBezier2>>>>,
 }
 
@@ -87,11 +88,15 @@ struct RationalBezierLineageRoot {
     unit_image_is_injective: OnceLock<bool>,
     implicit_quadratic_conic: OnceLock<Arc<[Real; 6]>>,
     circular_conic: OnceLock<Arc<crate::rational_bezier::RationalQuadraticCircle2>>,
-    quadratic_conic_parameter_frame: OnceLock<Arc<[HomogeneousPoint2; 3]>>,
+    quadratic_conic_parameter_frame: OnceLock<Arc<[HomogeneousControl2; 3]>>,
 }
 
-#[derive(Clone, Debug)]
-struct HomogeneousPoint2 {
+/// One exact homogeneous Bernstein control `(X, Y, W)`.
+///
+/// A zero weight is valid: intermediate controls need not be finite affine
+/// points. The zero vector is also a valid polynomial coefficient control.
+#[derive(Clone, Debug, PartialEq)]
+pub struct HomogeneousControl2 {
     x: Real,
     y: Real,
     weight: Real,
@@ -1514,7 +1519,8 @@ fn append_complete_rational_contacts(
 
 impl PartialEq for RationalBezier2 {
     fn eq(&self, other: &Self) -> bool {
-        self.control_points() == other.control_points() && self.weights() == other.weights()
+        Arc::ptr_eq(&self.data, &other.data)
+            || self.homogeneous_controls() == other.homogeneous_controls()
     }
 }
 
@@ -1525,12 +1531,9 @@ impl From<RationalQuadraticBezier2> for RationalBezier2 {
         let implicit_quadratic_conic = curve.retained_implicit_quadratic_conic().cloned();
         let circular_conic = curve.retained_circular_conic().cloned();
         match implicit_quadratic_conic {
-            Some(implicit_quadratic_conic) => Self::try_new_with_implicit_quadratic_conic(
-                control_points,
-                weights,
-                implicit_quadratic_conic,
-                circular_conic,
-            ),
+            Some(implicit_quadratic_conic) => Self::try_new(control_points, weights).map(|curve| {
+                curve.with_implicit_quadratic_conic(implicit_quadratic_conic, circular_conic)
+            }),
             None => Self::try_new(control_points, weights),
         }
         .expect("validated rational-quadratic controls remain valid after promotion")
@@ -1660,25 +1663,22 @@ impl RationalBezier2 {
         )
     }
 
-    pub(crate) fn try_new_with_implicit_quadratic_conic(
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
+    /// Attaches a certified implicit support without rebuilding controls.
+    pub(crate) fn with_implicit_quadratic_conic(
+        self,
         implicit_quadratic_conic: Arc<[Real; 6]>,
         circular_conic: Option<Arc<crate::rational_bezier::RationalQuadraticCircle2>>,
-    ) -> CurveResult<Self> {
-        let root = Arc::new(RationalBezierLineageRoot::default());
-        let _ = root.implicit_quadratic_conic.set(implicit_quadratic_conic);
-        if let Some(circular_conic) = circular_conic {
-            let _ = root.circular_conic.set(circular_conic);
+    ) -> Self {
+        let _ = self
+            .data
+            .lineage
+            .root
+            .implicit_quadratic_conic
+            .set(implicit_quadratic_conic);
+        if let Some(circle) = circular_conic {
+            let _ = self.data.lineage.root.circular_conic.set(circle);
         }
-        Self::try_new_with_lineage(
-            control_points,
-            weights,
-            RationalBezierLineage {
-                root,
-                range: ParamRange::new(Real::zero(), Real::one()),
-            },
-        )
+        self
     }
 
     fn try_new_with_lineage(
@@ -1704,31 +1704,85 @@ impl RationalBezier2 {
         {
             return Err(CurveError::ZeroRationalBezierWeight);
         }
-        Ok(Self {
+        let endpoints = [
+            control_points[0].clone(),
+            control_points[control_points.len() - 1].clone(),
+        ];
+        let controls = control_points
+            .iter()
+            .zip(&weights)
+            .map(|(point, weight)| HomogeneousControl2::from_affine(point, weight.clone()))
+            .collect();
+        let curve =
+            Self::from_validated_homogeneous(controls, endpoints, lineage, exact_line_image);
+        let _ = curve.data.affine_control_points.set(control_points);
+        let _ = curve.data.weights.set(weights);
+        Ok(curve)
+    }
+
+    /// Constructs a rational Bezier from exact homogeneous Bernstein controls.
+    /// Only the two finite endpoints are projected; interior weights may be zero.
+    pub fn from_homogeneous_controls(
+        controls: Vec<HomogeneousControl2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        from_homogeneous(
+            controls,
+            RationalBezierLineage {
+                root: Arc::new(RationalBezierLineageRoot::default()),
+                range: ParamRange::new(Real::zero(), Real::one()),
+            },
+            &policy.strict_counterpart(),
+        )
+    }
+
+    fn from_validated_homogeneous(
+        homogeneous_controls: Vec<HomogeneousControl2>,
+        endpoints: [Point2; 2],
+        lineage: RationalBezierLineage,
+        exact_line_image: Option<LineSeg2>,
+    ) -> Self {
+        Self {
             data: Arc::new(RationalBezierData {
-                control_points,
-                weights,
+                homogeneous_controls,
+                affine_control_points: OnceLock::new(),
+                weights: OnceLock::new(),
+                endpoints,
                 exact_line_image,
                 lineage,
-                homogeneous_controls: OnceLock::new(),
                 homogeneous_power_basis: OnceLock::new(),
                 x_derivative_numerator_bernstein: OnceLock::new(),
                 y_derivative_numerator_bernstein: OnceLock::new(),
                 x_axis_monotonicity: PolicyClassificationCache::new(),
                 y_axis_monotonicity: PolicyClassificationCache::new(),
+                unit_weight_sign: PolicyClassificationCache::new(),
                 degree_elevations: OnceLock::new(),
             }),
-        })
+        }
     }
 
     /// Returns the polynomial degree of the homogeneous Bernstein curve.
     pub fn degree(&self) -> usize {
-        self.control_points().len() - 1
+        self.homogeneous_controls().len() - 1
     }
 
-    /// Returns exact affine controls in Bernstein order.
-    pub fn control_points(&self) -> &[Point2] {
-        &self.data.control_points
+    /// Returns a certified finite affine control net when available.
+    ///
+    /// This optional view is cached independently of the homogeneous geometry.
+    /// Its absence does not constrain evaluation, splitting or representation.
+    pub fn affine_control_points(&self) -> Option<&[Point2]> {
+        if let Some(points) = self.data.affine_control_points.get() {
+            return Some(points);
+        }
+        let mut points = Vec::with_capacity(self.homogeneous_controls().len());
+        for control in self.homogeneous_controls() {
+            match project_homogeneous(control, &CurveContext::STRICT) {
+                Classification::Decided(point) => points.push(point),
+                Classification::Uncertain(_) => return None,
+            }
+        }
+        let _ = self.data.affine_control_points.set(points);
+        self.data.affine_control_points.get().map(Vec::as_slice)
     }
 
     pub(crate) fn retained_exact_line_image(&self) -> Option<&LineSeg2> {
@@ -1748,7 +1802,7 @@ impl RationalBezier2 {
             2 => {
                 let half =
                     (Real::one() / Real::from(2_i8)).expect("two is a nonzero exact denominator");
-                (self.control_points()[1] == line.point_at(half)).then_some(line)
+                (self.affine_control_points()?[1] == line.point_at(half)).then_some(line)
             }
             _ => None,
         }
@@ -1756,7 +1810,12 @@ impl RationalBezier2 {
 
     /// Returns exact homogeneous weights in Bernstein order.
     pub fn weights(&self) -> &[Real] {
-        &self.data.weights
+        self.data.weights.get_or_init(|| {
+            self.homogeneous_controls()
+                .iter()
+                .map(|control| control.weight.clone())
+                .collect()
+        })
     }
 
     /// Returns the exact parameter range in the root curve's source domain.
@@ -1795,108 +1854,48 @@ impl RationalBezier2 {
             .data
             .degree_elevations
             .get_or_init(|| Mutex::new(Vec::new()));
-        while elevations
+        let mut retained = elevations
             .lock()
-            .expect("rational Bézier degree elevation cache mutex poisoned")
-            .len()
-            < elevation_count
-        {
-            let source = {
-                let retained = elevations
-                    .lock()
-                    .expect("rational Bézier degree elevation cache mutex poisoned");
-                match retained.last() {
-                    Some(Ok(curve)) => Ok(curve.clone()),
-                    Some(Err(error)) => Err(error.clone()),
-                    None => Ok(self.clone()),
-                }
+            .expect("rational Bézier degree elevation cache mutex poisoned");
+        // Selecting the preceding degree and publishing its successor form
+        // one transaction. Concurrent clones must not append the same degree
+        // twice and shift the meaning of every later cache index.
+        while retained.len() < elevation_count {
+            let source = match retained.last() {
+                Some(Ok(curve)) => Ok(curve.clone()),
+                Some(Err(error)) => Err(error.clone()),
+                None => Ok(self.clone()),
             };
-            let elevated = source.and_then(|curve| curve.elevate_once_uncached());
-            elevations
-                .lock()
-                .expect("rational Bézier degree elevation cache mutex poisoned")
-                .push(elevated);
+            retained.push(source.and_then(|curve| curve.elevate_once_uncached()));
         }
-        elevations
-            .lock()
-            .expect("rational Bézier degree elevation cache mutex poisoned")[elevation_count - 1]
-            .clone()
+        retained[elevation_count - 1].clone()
     }
 
     fn elevate_once_uncached(&self) -> ExactCurveResult<Self> {
-        let target_degree = self.degree().checked_add(1).ok_or_else(|| {
-            ExactCurveError::invalid(
-                CurveOperation2::DegreeElevation,
-                CurveFamily2::RationalBezier,
-                CurveError::InvalidDegreeElevation,
-            )
-        })?;
-        let denominator = u64::try_from(target_degree).map(Real::from).map_err(|_| {
-            ExactCurveError::invalid(
-                CurveOperation2::DegreeElevation,
-                CurveFamily2::RationalBezier,
-                CurveError::InvalidDegreeElevation,
-            )
-        })?;
-        let source = self.homogeneous_controls();
-        let mut homogeneous = Vec::with_capacity(source.len() + 1);
-        homogeneous.push(source[0].clone());
-        for index in 1..target_degree {
-            let numerator = u64::try_from(index).map(Real::from).map_err(|_| {
-                ExactCurveError::invalid(
-                    CurveOperation2::DegreeElevation,
-                    CurveFamily2::RationalBezier,
-                    CurveError::InvalidDegreeElevation,
-                )
-            })?;
-            let alpha = (numerator / &denominator).map_err(|cause| {
-                ExactCurveError::invalid(
-                    CurveOperation2::DegreeElevation,
-                    CurveFamily2::RationalBezier,
-                    cause.into(),
-                )
-            })?;
-            homogeneous.push(source[index].lerp(&source[index - 1], &alpha));
-        }
-        homogeneous.push(source[source.len() - 1].clone());
-
-        let policy = CurveContext::STRICT;
-        let mut control_points = Vec::with_capacity(homogeneous.len());
-        let mut weights = Vec::with_capacity(homogeneous.len());
-        for point in homogeneous {
-            match project_homogeneous(&point, &policy) {
-                Classification::Decided(control) => control_points.push(control),
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::DegreeElevation,
-                        CurveFamily2::RationalBezier,
-                        reason,
-                    ));
-                }
-            }
-            weights.push(point.weight);
-        }
-        Self::try_new_with_lineage(control_points, weights, self.data.lineage.clone()).map_err(
-            |cause| {
+        let homogeneous =
+            elevate_homogeneous_controls_once(self.homogeneous_controls()).map_err(|cause| {
                 ExactCurveError::invalid(
                     CurveOperation2::DegreeElevation,
                     CurveFamily2::RationalBezier,
                     cause,
                 )
-            },
-        )
+            })?;
+        Ok(Self::from_validated_homogeneous(
+            homogeneous,
+            self.data.endpoints.clone(),
+            self.data.lineage.clone(),
+            self.data.exact_line_image.clone(),
+        ))
     }
 
     /// Returns the exact start point.
     pub fn start(&self) -> &Point2 {
-        &self.control_points()[0]
+        &self.data.endpoints[0]
     }
 
     /// Returns the exact end point.
     pub fn end(&self) -> &Point2 {
-        self.control_points()
-            .last()
-            .expect("validated rational Bezier has controls")
+        &self.data.endpoints[1]
     }
 
     /// Evaluates this curve from its clone-shared homogeneous power basis.
@@ -1956,7 +1955,7 @@ impl RationalBezier2 {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
         project_homogeneous(
-            &HomogeneousPoint2 {
+            &HomogeneousControl2 {
                 x: Real::eval_poly(&power_basis.x_numerator, parameter),
                 y: Real::eval_poly(&power_basis.y_numerator, parameter),
                 weight: Real::eval_poly(&power_basis.weight, parameter),
@@ -1969,7 +1968,7 @@ impl RationalBezier2 {
         &self,
         parameter: &Real,
         policy: &CurveContext,
-    ) -> Classification<HomogeneousPoint2> {
+    ) -> Classification<HomogeneousControl2> {
         if is_zero(parameter, policy) == Some(true) {
             return Classification::Decided(self.homogeneous_controls()[0].clone());
         }
@@ -2011,7 +2010,7 @@ impl RationalBezier2 {
     fn homogeneous_de_casteljau_value(
         &self,
         parameter: &Real,
-    ) -> Classification<HomogeneousPoint2> {
+    ) -> Classification<HomogeneousControl2> {
         let mut level = self.homogeneous_controls().to_vec();
         let one_minus_parameter = Real::one() - parameter;
         for next_len in (1..level.len()).rev() {
@@ -2190,7 +2189,7 @@ impl RationalBezier2 {
         Ok(images)
     }
 
-    /// Returns a conservative exact control-hull bound when all weights share a sign.
+    /// Returns a conservative exact bound, subdividing homogeneous controls when needed.
     pub fn certified_bounds(&self, policy: &CurveContext) -> ExactCurveResult<Aabb2> {
         match self.certified_bounds_classified(policy) {
             Classification::Decided(bounds) => Ok(bounds),
@@ -2206,10 +2205,51 @@ impl RationalBezier2 {
         &self,
         policy: &CurveContext,
     ) -> Classification<Aabb2> {
-        match self.common_weight_sign(policy) {
-            Classification::Decided(_) => Aabb2::from_points(self.control_points().iter(), policy),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        if matches!(self.control_weight_sign(policy), Classification::Decided(_))
+            && let Some(points) = self.affine_control_points()
+        {
+            return Aabb2::from_points(points, policy);
         }
+        if let Classification::Uncertain(reason) = self.unit_weight_sign(policy) {
+            return Classification::Uncertain(reason);
+        }
+        // A nonvanishing denominator on a compact interval has a common-sign
+        // Bernstein net after sufficiently fine subdivision. This is a bounds
+        // calculation only: the stored curve retains its original degree.
+        let half = (Real::one() / Real::from(2_i8)).expect("two is nonzero");
+        let mut stack = vec![self.homogeneous_controls().to_vec()];
+        let mut bounds: Option<Aabb2> = None;
+        while let Some(controls) = stack.pop() {
+            match homogeneous_controls_common_weight_sign(&controls, policy) {
+                Classification::Decided(Some(_)) => {}
+                Classification::Decided(None) => {
+                    let (left, right) = split_homogeneous_controls(&controls, &half);
+                    stack.push(right);
+                    stack.push(left);
+                    continue;
+                }
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            }
+            let mut points = Vec::with_capacity(controls.len());
+            for control in controls {
+                match project_homogeneous(&control, policy) {
+                    Classification::Decided(point) => points.push(point),
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                }
+            }
+            let next = match Aabb2::from_points(&points, policy) {
+                Classification::Decided(bounds) => bounds,
+                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            };
+            bounds = Some(match bounds {
+                None => next,
+                Some(bounds) => match bounds.union(&next, policy) {
+                    Classification::Decided(bounds) => bounds,
+                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+                },
+            });
+        }
+        Classification::Decided(bounds.expect("a positive-degree finite curve has a bound"))
     }
 
     /// Certifies whether one coordinate is monotone on the full parameter domain.
@@ -2256,7 +2296,7 @@ impl RationalBezier2 {
         axis: Axis2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
+        if let Classification::Uncertain(reason) = self.unit_weight_sign(policy) {
             return Ok(Classification::Uncertain(reason));
         }
         if self.control_polygon_certifies_axis_monotone(axis, policy) {
@@ -2331,7 +2371,7 @@ impl RationalBezier2 {
         line: &LineSeg2,
         policy: &CurveContext,
     ) -> Classification<BezierLineContactRelation> {
-        let weight_sign = self.common_weight_sign(policy);
+        let weight_sign = self.unit_weight_sign(policy);
         let retained_regular_circle = if self.degree() == 2 {
             self.data
                 .lineage
@@ -2350,12 +2390,15 @@ impl RationalBezier2 {
         } else {
             None
         };
-        let control_sides = self
-            .control_points()
-            .iter()
-            .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
-            .collect::<Vec<_>>();
-        if matches!(&weight_sign, Classification::Decided(_)) {
+        let control_sides = self.affine_control_points().map(|points| {
+            points
+                .iter()
+                .map(|point| classify_oriented_line(line.start(), line.end(), point, policy))
+                .collect::<Vec<_>>()
+        });
+        if matches!(self.control_weight_sign(policy), Classification::Decided(_))
+            && let Some(control_sides) = &control_sides
+        {
             for side in [LineSide::Left, LineSide::Right] {
                 if control_sides.iter().all(
                     |candidate| matches!(candidate, Classification::Decided(value) if *value == side),
@@ -2366,10 +2409,11 @@ impl RationalBezier2 {
                 }
             }
         }
-        if control_sides
-            .iter()
-            .all(|side| matches!(side, Classification::Decided(LineSide::On)))
-        {
+        if control_sides.as_ref().is_some_and(|sides| {
+            sides
+                .iter()
+                .all(|side| matches!(side, Classification::Decided(LineSide::On)))
+        }) {
             return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
         }
         'retained_circle: {
@@ -2492,31 +2536,46 @@ impl RationalBezier2 {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let weighted_distances = self
-            .control_points()
-            .iter()
-            .enumerate()
-            .zip(self.weights())
-            .map(|((index, point), weight)| {
-                if (index == 0 || index + 1 == self.control_points().len())
-                    && (point == line.start()
-                        || point == line.end()
-                        || is_zero(&point.distance_squared(line.start()), policy) == Some(true)
-                        || is_zero(&point.distance_squared(line.end()), policy) == Some(true))
-                {
-                    Real::zero()
-                } else {
-                    let normalized_weight = if weight_sign == RealSign::Negative {
-                        -weight.clone()
-                    } else {
-                        weight.clone()
-                    };
-                    orient2_real_expr(line.start(), line.end(), point) * normalized_weight
-                }
-            })
-            .collect::<Vec<_>>();
+        let weighted_distances = self.homogeneous_line_distances(line, weight_sign, policy);
 
         exact_line_contact_relation_from_bernstein_distances(weighted_distances, policy)
+    }
+
+    fn homogeneous_line_distances(
+        &self,
+        line: &LineSeg2,
+        weight_sign: RealSign,
+        policy: &CurveContext,
+    ) -> Vec<Real> {
+        let (dx, dy) = line.delta();
+        self.homogeneous_controls()
+            .iter()
+            .enumerate()
+            .map(|(index, control)| {
+                let endpoint = if index == 0 {
+                    Some(self.start())
+                } else if index == self.degree() {
+                    Some(self.end())
+                } else {
+                    None
+                };
+                if endpoint.is_some_and(|point| {
+                    point == line.start()
+                        || point == line.end()
+                        || is_zero(&point.distance_squared(line.start()), policy) == Some(true)
+                        || is_zero(&point.distance_squared(line.end()), policy) == Some(true)
+                }) {
+                    return Real::zero();
+                }
+                let value = &dx * (&control.y - line.start().y() * &control.weight)
+                    - &dy * (&control.x - line.start().x() * &control.weight);
+                if weight_sign == RealSign::Negative {
+                    -value
+                } else {
+                    value
+                }
+            })
+            .collect()
     }
 
     /// Certifies a finite quadratic projective chart without requiring every
@@ -2551,33 +2610,11 @@ impl RationalBezier2 {
         if self.degree() != 2 || self.retained_circular_conic().is_none() {
             return self.relation_to_line_with_contacts(line, policy);
         }
-        let weight_sign = match self.common_weight_sign(policy) {
+        let weight_sign = match self.unit_weight_sign(policy) {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        let weighted_distances = self
-            .control_points()
-            .iter()
-            .enumerate()
-            .zip(self.weights())
-            .map(|((index, point), weight)| {
-                if (index == 0 || index + 1 == self.control_points().len())
-                    && (point == line.start()
-                        || point == line.end()
-                        || is_zero(&point.distance_squared(line.start()), policy) == Some(true)
-                        || is_zero(&point.distance_squared(line.end()), policy) == Some(true))
-                {
-                    Real::zero()
-                } else {
-                    let normalized_weight = if weight_sign == RealSign::Negative {
-                        -weight.clone()
-                    } else {
-                        weight.clone()
-                    };
-                    orient2_real_expr(line.start(), line.end(), point) * normalized_weight
-                }
-            })
-            .collect::<Vec<_>>();
+        let weighted_distances = self.homogeneous_line_distances(line, weight_sign, policy);
         let Ok(distances) = <Vec<Real> as TryInto<[Real; 3]>>::try_into(weighted_distances) else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
@@ -2620,7 +2657,7 @@ impl RationalBezier2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierPointIncidence2>> {
-        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
+        if let Classification::Uncertain(reason) = self.unit_weight_sign(policy) {
             return Ok(Classification::Uncertain(reason));
         }
         if self.has_certified_injective_axis(policy) {
@@ -2770,10 +2807,10 @@ impl RationalBezier2 {
             }));
         }
         if self
-            .control_points()
+            .homogeneous_controls()
             .iter()
             .rev()
-            .eq(other.control_points().iter())
+            .eq(other.homogeneous_controls().iter())
             && self.weights().iter().rev().eq(other.weights().iter())
         {
             let overlap = RationalBezierIntersectionOverlap2 {
@@ -3298,7 +3335,7 @@ impl RationalBezier2 {
                 RationalBezierIntersectionContacts2::NoIntersection,
             ));
         }
-        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
+        if let Classification::Uncertain(reason) = self.unit_weight_sign(policy) {
             return Ok(Classification::Uncertain(reason));
         }
         let basis = self.homogeneous_power_basis()?;
@@ -3347,10 +3384,10 @@ impl RationalBezier2 {
         if !Arc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root)
             || self == other
             || (self
-                .control_points()
+                .homogeneous_controls()
                 .iter()
                 .rev()
-                .eq(other.control_points().iter())
+                .eq(other.homogeneous_controls().iter())
                 && self.weights().iter().rev().eq(other.weights().iter()))
         {
             return Ok(None);
@@ -3686,7 +3723,7 @@ impl RationalBezier2 {
                 .weights()
                 .iter()
                 .any(|value| value.exact_rational_ref().is_none())
-            || self.control_points().iter().any(|point| {
+            || self.homogeneous_controls().iter().any(|point| {
                 point.x().exact_rational_ref().is_none() || point.y().exact_rational_ref().is_none()
             })
         {
@@ -3857,7 +3894,7 @@ impl RationalBezier2 {
                         )));
                     }
                     if point_is_on_full_circle && certified_orthogonal {
-                        let hull = Aabb2::from_points(self.control_points(), policy);
+                        let hull = self.certified_bounds_classified(policy);
                         if matches!(
                             hull,
                             Classification::Decided(bounds)
@@ -4421,7 +4458,7 @@ impl RationalBezier2 {
                 };
                 self.retain_root_image_injectivity(policy);
                 return Self::try_new_with_lineage(
-                    vec![point; self.control_points().len()],
+                    vec![point; self.degree() + 1],
                     vec![Real::one(); self.weights().len()],
                     self.data.lineage.subrange(start, end),
                 )
@@ -4461,11 +4498,8 @@ impl RationalBezier2 {
     /// has selected one pole-partitioned component. Reparameterization creates
     /// a fresh unit-domain lineage: an injectivity fact proved only on the
     /// authored source interval must not leak onto its projective extension.
-    /// A finite rational image can nevertheless acquire zero or mixed-sign
-    /// intermediate Bernstein weights under extrapolation. Exact homogeneous
-    /// degree elevation is repeated until every weight has the common sign
-    /// guaranteed by the pole-free denominator, avoiding a second carrier for
-    /// controls at infinity.
+    /// Zero or mixed-sign intermediate Bernstein weights are retained directly;
+    /// reparameterization does not elevate the degree to force affine controls.
     pub(crate) fn subcurve_between_affine_exact(
         &self,
         start: &Real,
@@ -4512,38 +4546,13 @@ impl RationalBezier2 {
             Some(_) => false,
             None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         };
-        let mut controls = affine_homogeneous_subcurve_controls(
+        let controls = affine_homogeneous_subcurve_controls(
             self.homogeneous_controls(),
             start,
             end,
             start_at_one,
             policy,
         )?;
-        loop {
-            match homogeneous_controls_common_weight_sign(&controls, policy) {
-                Classification::Decided(Some(_)) => break,
-                Classification::Decided(None) => {
-                    controls = elevate_homogeneous_controls_once(&controls)?;
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-
-        let mut points = Vec::with_capacity(controls.len());
-        let mut weights = Vec::with_capacity(controls.len());
-        for control in controls {
-            let point = match project_homogeneous(&control, policy) {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            points.push(point);
-            weights.push(control.weight);
-        }
-
         let root = Arc::new(RationalBezierLineageRoot::default());
         if let Some(implicit) = self.data.lineage.root.implicit_quadratic_conic.get() {
             let _ = root.implicit_quadratic_conic.set(Arc::clone(implicit));
@@ -4551,29 +4560,27 @@ impl RationalBezier2 {
         if let Some(circle) = self.data.lineage.root.circular_conic.get() {
             let _ = root.circular_conic.set(Arc::clone(circle));
         }
-        let exact_line_image = self.data.exact_line_image.as_ref().and_then(|_| {
-            LineSeg2::try_new(
-                points
-                    .first()
-                    .expect("positive-degree curve has a start")
-                    .clone(),
-                points
-                    .last()
-                    .expect("positive-degree curve has an end")
-                    .clone(),
-            )
-            .ok()
-        });
-        Self::try_new_with_lineage_and_exact_line_image(
-            points,
-            weights,
+        let curve = match from_homogeneous(
+            controls,
             RationalBezierLineage {
                 root,
                 range: ParamRange::new(Real::zero(), Real::one()),
             },
-            exact_line_image,
-        )
-        .map(Classification::Decided)
+            policy,
+        )? {
+            Classification::Decided(curve) => curve,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if self.data.exact_line_image.is_some() {
+            let line = LineSeg2::try_new(curve.start().clone(), curve.end().clone()).ok();
+            let mut data =
+                Arc::try_unwrap(curve.data).expect("newly materialized curve is unshared");
+            data.exact_line_image = line;
+            return Ok(Classification::Decided(Self {
+                data: Arc::new(data),
+            }));
+        }
+        Ok(Classification::Decided(curve))
     }
 
     pub(crate) fn endpoint_derivatives(
@@ -4667,28 +4674,74 @@ impl RationalBezier2 {
         Classification::Decided(derivatives)
     }
 
-    /// Returns this curve with traversal direction reversed.
-    pub fn reversed(&self) -> Self {
-        let mut control_points = self.control_points().to_vec();
-        let mut weights = self.weights().to_vec();
-        control_points.reverse();
-        weights.reverse();
-        Self::try_new_with_lineage(control_points, weights, self.data.lineage.reversed())
-            .expect("reversing a valid rational Bezier is valid")
+    /// Applies a finite affine map directly to homogeneous controls.
+    pub(crate) fn transformed_affine(&self, entries: [&Real; 6]) -> Self {
+        let [a, b, d, e, xoff, yoff] = entries;
+        let point = |point: &Point2| {
+            Point2::new(
+                a * point.x() + b * point.y() + xoff,
+                d * point.x() + e * point.y() + yoff,
+            )
+        };
+        let endpoints = [point(self.start()), point(self.end())];
+        let exact_line_image = self
+            .data
+            .exact_line_image
+            .as_ref()
+            .and_then(|_| LineSeg2::try_new(endpoints[0].clone(), endpoints[1].clone()).ok());
+        let curve = Self::from_validated_homogeneous(
+            self.homogeneous_controls()
+                .iter()
+                .map(|control| {
+                    HomogeneousControl2::new(
+                        a * &control.x + b * &control.y + xoff * &control.weight,
+                        d * &control.x + e * &control.y + yoff * &control.weight,
+                        control.weight.clone(),
+                    )
+                })
+                .collect(),
+            endpoints,
+            RationalBezierLineage {
+                root: Arc::new(RationalBezierLineageRoot::default()),
+                range: ParamRange::new(Real::zero(), Real::one()),
+            },
+            exact_line_image,
+        );
+        if let Some(points) = self.data.affine_control_points.get() {
+            let _ = curve
+                .data
+                .affine_control_points
+                .set(points.iter().map(point).collect());
+        }
+        curve
     }
 
-    fn homogeneous_controls(&self) -> &[HomogeneousPoint2] {
-        self.data.homogeneous_controls.get_or_init(|| {
-            self.control_points()
-                .iter()
-                .zip(self.weights())
-                .map(|(point, weight)| HomogeneousPoint2 {
-                    x: point.x() * weight,
-                    y: point.y() * weight,
-                    weight: weight.clone(),
-                })
-                .collect()
-        })
+    /// Applies a certified similarity without projecting intermediate controls.
+    pub fn transform_similarity(&self, transform: &crate::Similarity2) -> Self {
+        let (a, b, d, e, xoff, yoff) = transform.affine_components();
+        self.transformed_affine([a, b, d, e, xoff, yoff])
+    }
+
+    /// Returns this curve with traversal direction reversed.
+    pub fn reversed(&self) -> Self {
+        let curve = Self::from_validated_homogeneous(
+            self.homogeneous_controls().iter().rev().cloned().collect(),
+            [self.end().clone(), self.start().clone()],
+            self.data.lineage.reversed(),
+            self.data.exact_line_image.as_ref().map(LineSeg2::reversed),
+        );
+        if let Some(points) = self.data.affine_control_points.get() {
+            let _ = curve
+                .data
+                .affine_control_points
+                .set(points.iter().rev().cloned().collect());
+        }
+        curve
+    }
+
+    /// Returns the exact homogeneous Bernstein controls.
+    pub fn homogeneous_controls(&self) -> &[HomogeneousControl2] {
+        &self.data.homogeneous_controls
     }
 
     pub(crate) fn homogeneous_power_basis(&self) -> CurveResult<&RationalParametricCurve2> {
@@ -4696,17 +4749,15 @@ impl RationalBezier2 {
             return Ok(power_basis);
         }
         let x = bernstein_to_power_coefficients(
-            self.control_points()
+            self.homogeneous_controls()
                 .iter()
-                .zip(self.weights())
-                .map(|(point, weight)| point.x() * weight)
+                .map(|control| control.x.clone())
                 .collect(),
         )?;
         let y = bernstein_to_power_coefficients(
-            self.control_points()
+            self.homogeneous_controls()
                 .iter()
-                .zip(self.weights())
-                .map(|(point, weight)| point.y() * weight)
+                .map(|control| control.y.clone())
                 .collect(),
         )?;
         let weight = bernstein_to_power_coefficients(self.weights().to_vec())?;
@@ -5032,7 +5083,7 @@ impl RationalBezier2 {
         if first_parameters.is_empty() {
             return Ok(None);
         }
-        if !matches!(self.common_weight_sign(policy), Classification::Decided(_)) {
+        if !matches!(self.unit_weight_sign(policy), Classification::Decided(_)) {
             return Ok(None);
         }
         let graph = [Axis2::X, Axis2::Y].into_iter().find_map(|axis| {
@@ -5193,7 +5244,51 @@ impl RationalBezier2 {
         }
     }
 
-    pub(crate) fn common_weight_sign(&self, policy: &CurveContext) -> Classification<RealSign> {
+    /// Certifies the denominator sign over the complete authored domain.
+    /// Control weights provide a cheap sufficient proof; mixed or zero control
+    /// weights use the exact denominator polynomial and do not reject a curve.
+    pub(crate) fn unit_weight_sign(&self, policy: &CurveContext) -> Classification<RealSign> {
+        let strict = policy.strict_counterpart();
+        match resolve_cached_classification(
+            &self.data.unit_weight_sign,
+            &strict,
+            |attempt| -> CurveResult<Classification<RealSign>> {
+                if let Classification::Decided(sign) = self.control_weight_sign(attempt) {
+                    return Ok(Classification::Decided(sign));
+                }
+                let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+                    self.homogeneous_power_basis()?.weight.clone(),
+                    attempt,
+                )? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                match polynomial.isolate_unit_interval_roots(attempt)? {
+                    Classification::Decided(roots) if roots.is_empty() => {}
+                    Classification::Decided(_) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                Ok(match real_sign(&self.weights()[0], attempt) {
+                    Some(sign @ (RealSign::Positive | RealSign::Negative)) => {
+                        Classification::Decided(sign)
+                    }
+                    Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
+                    None => Classification::Uncertain(UncertaintyReason::RealSign),
+                })
+            },
+        ) {
+            Ok(value) => value.map(|sign| *sign),
+            Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        }
+    }
+
+    pub(crate) fn control_weight_sign(&self, policy: &CurveContext) -> Classification<RealSign> {
         let Some(first) = real_sign(&self.weights()[0], policy) else {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         };
@@ -5226,16 +5321,19 @@ impl RationalBezier2 {
         let other_base = if reversed { degree } else { 0 };
         for index in 0..=degree {
             let other_index = if reversed { degree - index } else { index };
-            if !is_zero(
-                &self.control_points()[index]
-                    .distance_squared(&other.control_points()[other_index]),
-                policy,
-            )? || !is_zero(
-                &(&self.weights()[index] * &other.weights()[other_base]
-                    - &other.weights()[other_index] * &self.weights()[0]),
-                policy,
-            )? {
-                return Some(false);
+            let first = &self.homogeneous_controls()[index];
+            let second = &other.homogeneous_controls()[other_index];
+            for (a, b) in [
+                (&first.x, &second.x),
+                (&first.y, &second.y),
+                (&first.weight, &second.weight),
+            ] {
+                if !is_zero(
+                    &(a * &other.weights()[other_base] - b * &self.weights()[0]),
+                    policy,
+                )? {
+                    return Some(false);
+                }
             }
         }
         Some(true)
@@ -5250,13 +5348,20 @@ impl RationalBezier2 {
         if self.degree() != other.degree() {
             return Classification::Decided(None);
         }
+        if self.same_projective_control_net(other, reversed, policy) == Some(true) {
+            return Classification::Decided(Some(RationalBezierEndpointParameterRelation2::Affine));
+        }
+        let (Some(first_controls), Some(second_controls)) =
+            (self.affine_control_points(), other.affine_control_points())
+        else {
+            return Classification::Decided(None);
+        };
         let degree = self.degree();
         let other_base = if reversed { degree } else { 0 };
         for index in 0..=degree {
             let other_index = if reversed { degree - index } else { index };
             match is_zero(
-                &self.control_points()[index]
-                    .distance_squared(&other.control_points()[other_index]),
+                &first_controls[index].distance_squared(&second_controls[other_index]),
                 policy,
             ) {
                 Some(true) => {}
@@ -5283,8 +5388,11 @@ impl RationalBezier2 {
         if affine && !affine_unresolved {
             return Classification::Decided(Some(RationalBezierEndpointParameterRelation2::Affine));
         }
-        if !matches!(self.common_weight_sign(policy), Classification::Decided(_))
-            || !matches!(other.common_weight_sign(policy), Classification::Decided(_))
+        if !matches!(self.control_weight_sign(policy), Classification::Decided(_))
+            || !matches!(
+                other.control_weight_sign(policy),
+                Classification::Decided(_)
+            )
         {
             return Classification::Uncertain(UncertaintyReason::RealSign);
         }
@@ -5805,8 +5913,13 @@ impl RationalBezier2 {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
         }
-        if let Classification::Uncertain(reason) = self.common_weight_sign(policy) {
-            return Ok(Classification::Uncertain(reason));
+        match is_zero(
+            &Real::eval_poly(&self.homogeneous_power_basis()?.weight, parameter),
+            policy,
+        ) {
+            Some(false) => {}
+            Some(true) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         let mut uncertainty = None;
         for axis in [Axis2::X, Axis2::Y] {
@@ -5913,11 +6026,14 @@ impl RationalBezier2 {
     }
 
     fn control_polygon_certifies_axis_monotone(&self, axis: Axis2, policy: &CurveContext) -> bool {
-        if !matches!(self.common_weight_sign(policy), Classification::Decided(_)) {
+        if !matches!(self.control_weight_sign(policy), Classification::Decided(_)) {
             return false;
         }
+        let Some(points) = self.affine_control_points() else {
+            return false;
+        };
         let mut direction = None;
-        for pair in self.control_points().windows(2) {
+        for pair in points.windows(2) {
             let first = match axis {
                 Axis2::X => pair[0].x(),
                 Axis2::Y => pair[0].y(),
@@ -6182,7 +6298,7 @@ impl RationalBezier2 {
             if real_sign(weight, policy) == Some(RealSign::Zero) {
                 return Ok(Classification::Decided(None));
             }
-            let point = HomogeneousPoint2 {
+            let point = HomogeneousControl2 {
                 x: x.clone(),
                 y: y.clone(),
                 weight: weight.clone(),
@@ -6289,9 +6405,6 @@ impl RationalBezier2 {
             });
         }
         let basis = self.homogeneous_power_basis()?;
-        if !matches!(self.common_weight_sign(policy), Classification::Decided(_)) {
-            return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
-        }
         if basis.weight.is_empty() || is_zero(&basis.weight[0], policy) != Some(false) {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }
@@ -6442,7 +6555,7 @@ impl PolynomialGraph2 {
         curve: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        if !matches!(curve.common_weight_sign(policy), Classification::Decided(_)) {
+        if !matches!(curve.unit_weight_sign(policy), Classification::Decided(_)) {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }
         let basis = curve.homogeneous_power_basis()?;
@@ -6592,7 +6705,7 @@ fn quadratic_conic_homogeneous_point_parameters(
     }
 }
 
-fn quadratic_conic_parameter_frame(curve: &RationalBezier2) -> &[HomogeneousPoint2; 3] {
+fn quadratic_conic_parameter_frame(curve: &RationalBezier2) -> &[HomogeneousControl2; 3] {
     curve
         .data
         .lineage
@@ -6609,10 +6722,10 @@ fn quadratic_conic_parameter_frame(curve: &RationalBezier2) -> &[HomogeneousPoin
 }
 
 fn quadratic_homogeneous_blossom(
-    frame: &[HomogeneousPoint2; 3],
+    frame: &[HomogeneousControl2; 3],
     first: &Real,
     second: &Real,
-) -> HomogeneousPoint2 {
+) -> HomogeneousControl2 {
     let one_minus_first = Real::one() - first;
     let one_minus_second = Real::one() - second;
     let first_scale = &one_minus_first * &one_minus_second;
@@ -6681,7 +6794,7 @@ fn overlap_from_parameter_contacts(
     }))
 }
 
-fn homogeneous_control_vector(control: &HomogeneousPoint2) -> [Real; 3] {
+fn homogeneous_control_vector(control: &HomogeneousControl2) -> [Real; 3] {
     [control.x.clone(), control.y.clone(), control.weight.clone()]
 }
 
@@ -9179,15 +9292,16 @@ fn exact_binomial_product(
 }
 
 fn exact_quadratic_homogeneous_reduction(
-    source: &[HomogeneousPoint2],
+    source: &[HomogeneousControl2],
     policy: &CurveContext,
-) -> Classification<Option<[HomogeneousPoint2; 3]>> {
+) -> Classification<Option<[HomogeneousControl2; 3]>> {
     let reduced = match exact_homogeneous_degree_reduction(source, 3, policy) {
         Classification::Decided(Some(reduced)) => reduced,
         Classification::Decided(None) => return Classification::Decided(None),
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
-    let Ok(frame) = <Vec<HomogeneousPoint2> as TryInto<[HomogeneousPoint2; 3]>>::try_into(reduced)
+    let Ok(frame) =
+        <Vec<HomogeneousControl2> as TryInto<[HomogeneousControl2; 3]>>::try_into(reduced)
     else {
         return Classification::Decided(None);
     };
@@ -9195,10 +9309,10 @@ fn exact_quadratic_homogeneous_reduction(
 }
 
 fn exact_homogeneous_degree_reduction(
-    source: &[HomogeneousPoint2],
+    source: &[HomogeneousControl2],
     target_control_count: usize,
     policy: &CurveContext,
-) -> Classification<Option<Vec<HomogeneousPoint2>>> {
+) -> Classification<Option<Vec<HomogeneousControl2>>> {
     if target_control_count < 2 || source.len() < target_control_count {
         return Classification::Decided(None);
     }
@@ -9214,9 +9328,9 @@ fn exact_homogeneous_degree_reduction(
 }
 
 fn exact_homogeneous_minimal_degree_reduction(
-    source: &[HomogeneousPoint2],
+    source: &[HomogeneousControl2],
     policy: &CurveContext,
-) -> Classification<Option<Vec<HomogeneousPoint2>>> {
+) -> Classification<Option<Vec<HomogeneousControl2>>> {
     let mut current = source.to_vec();
     let mut reduced_any = false;
     while current.len() > 2 {
@@ -9239,9 +9353,9 @@ fn exact_homogeneous_minimal_degree_reduction(
 }
 
 fn exact_homogeneous_degree_reduction_once(
-    current: &[HomogeneousPoint2],
+    current: &[HomogeneousControl2],
     policy: &CurveContext,
-) -> Classification<Option<Vec<HomogeneousPoint2>>> {
+) -> Classification<Option<Vec<HomogeneousControl2>>> {
     if current.len() <= 2 {
         return Classification::Decided(None);
     }
@@ -9262,7 +9376,7 @@ fn exact_homogeneous_degree_reduction_once(
         let index_real = Real::from(index_u64);
         let remaining = Real::from(remaining_u64);
         let previous = &reduced[index - 1];
-        let candidate = HomogeneousPoint2 {
+        let candidate = HomogeneousControl2 {
             x: match (&degree_real * &current[index].x - &index_real * &previous.x) / &remaining {
                 Ok(value) => value,
                 Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -9297,7 +9411,36 @@ fn exact_homogeneous_degree_reduction_once(
     Classification::Decided(Some(reduced))
 }
 
-impl HomogeneousPoint2 {
+impl HomogeneousControl2 {
+    /// Retains one exact homogeneous coefficient control.
+    pub const fn new(x: Real, y: Real, weight: Real) -> Self {
+        Self { x, y, weight }
+    }
+
+    /// Weights a finite affine authoring control.
+    pub fn from_affine(point: &Point2, weight: Real) -> Self {
+        Self {
+            x: point.x() * &weight,
+            y: point.y() * &weight,
+            weight,
+        }
+    }
+
+    /// Returns the homogeneous x coordinate.
+    pub const fn x(&self) -> &Real {
+        &self.x
+    }
+
+    /// Returns the homogeneous y coordinate.
+    pub const fn y(&self) -> &Real {
+        &self.y
+    }
+
+    /// Returns the homogeneous weight.
+    pub const fn weight(&self) -> &Real {
+        &self.weight
+    }
+
     fn scaled(&self, scale: &Real) -> Self {
         Self {
             x: &self.x * scale,
@@ -9343,9 +9486,9 @@ impl HomogeneousPoint2 {
 }
 
 fn split_homogeneous_controls(
-    source: &[HomogeneousPoint2],
+    source: &[HomogeneousControl2],
     parameter: &Real,
-) -> (Vec<HomogeneousPoint2>, Vec<HomogeneousPoint2>) {
+) -> (Vec<HomogeneousControl2>, Vec<HomogeneousControl2>) {
     let mut level = source.to_vec();
     let mut left = Vec::with_capacity(level.len());
     let mut right = Vec::with_capacity(level.len());
@@ -9368,12 +9511,12 @@ fn split_homogeneous_controls(
 }
 
 fn affine_homogeneous_subcurve_controls(
-    source: &[HomogeneousPoint2],
+    source: &[HomogeneousControl2],
     start: &Real,
     end: &Real,
     start_at_one: bool,
     policy: &CurveContext,
-) -> CurveResult<Vec<HomogeneousPoint2>> {
+) -> CurveResult<Vec<HomogeneousControl2>> {
     if compare_reals(start, end, policy) == Some(Ordering::Equal) {
         let (left, _) = split_homogeneous_controls(source, start);
         let point = left
@@ -9395,7 +9538,7 @@ fn affine_homogeneous_subcurve_controls(
 }
 
 fn homogeneous_controls_common_weight_sign(
-    controls: &[HomogeneousPoint2],
+    controls: &[HomogeneousControl2],
     policy: &CurveContext,
 ) -> Classification<Option<RealSign>> {
     let mut common = None;
@@ -9414,8 +9557,8 @@ fn homogeneous_controls_common_weight_sign(
 }
 
 fn elevate_homogeneous_controls_once(
-    source: &[HomogeneousPoint2],
-) -> CurveResult<Vec<HomogeneousPoint2>> {
+    source: &[HomogeneousControl2],
+) -> CurveResult<Vec<HomogeneousControl2>> {
     let target_degree = source.len();
     let denominator =
         Real::from(u64::try_from(target_degree).map_err(|_| CurveError::InvalidDegreeElevation)?);
@@ -9451,7 +9594,10 @@ fn real_nonnegative_integer_power(base: &Real, mut exponent: usize) -> Real {
     result
 }
 
-fn project_homogeneous(point: &HomogeneousPoint2, policy: &CurveContext) -> Classification<Point2> {
+fn project_homogeneous(
+    point: &HomogeneousControl2,
+    policy: &CurveContext,
+) -> Classification<Point2> {
     match is_zero(&point.weight, policy) {
         Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
         Some(false) => {}
@@ -9467,23 +9613,25 @@ fn project_homogeneous(point: &HomogeneousPoint2, policy: &CurveContext) -> Clas
 }
 
 fn from_homogeneous(
-    controls: Vec<HomogeneousPoint2>,
+    controls: Vec<HomogeneousControl2>,
     lineage: RationalBezierLineage,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RationalBezier2>> {
-    let mut points = Vec::with_capacity(controls.len());
-    let mut weights = Vec::with_capacity(controls.len());
-    for control in controls {
-        let point = match project_homogeneous(&control, policy) {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        points.push(point);
-        weights.push(control.weight);
+    if controls.len() < 2 {
+        return Err(CurveError::InvalidRationalBezier);
     }
-    RationalBezier2::try_new_with_lineage(points, weights, lineage).map(Classification::Decided)
+    let endpoints = match [
+        project_homogeneous(&controls[0], policy),
+        project_homogeneous(&controls[controls.len() - 1], policy),
+    ] {
+        [Classification::Decided(start), Classification::Decided(end)] => [start, end],
+        [Classification::Uncertain(reason), _] | [_, Classification::Uncertain(reason)] => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    Ok(Classification::Decided(
+        RationalBezier2::from_validated_homogeneous(controls, endpoints, lineage, None),
+    ))
 }
 
 #[cfg(test)]
@@ -9761,6 +9909,122 @@ mod tests {
         }
     }
 
+    fn finite_mixed_weight_quadratic() -> RationalBezier2 {
+        RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(2, 0),
+            ],
+            vec![
+                Real::one(),
+                -(Real::one() / Real::from(2_i8)).unwrap(),
+                Real::one(),
+            ],
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn concurrent_degree_elevations_preserve_the_requested_degree() {
+        let curve = finite_mixed_weight_quadratic();
+        let barrier = std::sync::Barrier::new(8);
+        std::thread::scope(|scope| {
+            let threads: Vec<_> = (0..8)
+                .map(|_| {
+                    scope.spawn(|| {
+                        barrier.wait();
+                        let elevated = curve.elevated_to_degree(10).unwrap();
+                        assert_eq!(elevated.degree(), 10);
+                        assert_eq!(elevated.start(), curve.start());
+                        assert_eq!(elevated.end(), curve.end());
+                    })
+                })
+                .collect();
+            for thread in threads {
+                thread.join().unwrap();
+            }
+        });
+        for degree in 2..=10 {
+            assert_eq!(curve.elevated_to_degree(degree).unwrap().degree(), degree);
+        }
+    }
+
+    #[test]
+    fn homogeneous_representation_preserves_exact_degree_elevation() {
+        // W=1-3t+3t^2 is strictly positive on [0,1]. Its degree-three
+        // Bernstein weights are [1,0,0,1]; the middle controls are infinite.
+        let source = finite_mixed_weight_quadratic();
+        let elevated = source.elevated_to_degree(3).unwrap();
+        assert_eq!(elevated.degree(), 3);
+        assert!(elevated.affine_control_points().is_none());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let bounds = elevated.certified_bounds(&policy).unwrap();
+            let line =
+                LineSeg2::try_new(Point2::from_values(-2, -1), Point2::from_values(4, -1)).unwrap();
+            let Classification::Decided(BezierLineContactRelation::Contacts { contacts }) =
+                elevated.relation_to_line_with_contacts(&line, &policy)
+            else {
+                panic!("homogeneous line incidence must retain the exact tangent");
+            };
+            assert_eq!(contacts.len(), 1);
+            assert_eq!(contacts[0].kind(), BezierLineContactKind::Tangent);
+            assert_eq!(
+                contacts[0]
+                    .parameter()
+                    .cmp_by_interval(
+                        &BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap()),
+                        &policy
+                    )
+                    .unwrap(),
+                Classification::Decided(Ordering::Equal)
+            );
+            for numerator in 0..=4 {
+                let parameter = (Real::from(numerator) / Real::from(4_i8)).unwrap();
+                let expected = source.point_at(&parameter, &policy).unwrap();
+                let actual = elevated.point_at(&parameter, &policy).unwrap();
+                assert_eq!(
+                    bounds.contains_point(&actual, &policy),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    real_sign(&actual.distance_squared(&expected), &policy),
+                    Some(RealSign::Zero)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn homogeneous_representation_preserves_exact_split() {
+        let source = finite_mixed_weight_quadratic();
+        let split = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided((left, right)) =
+                source.split_at_exact(&split, &policy).unwrap()
+            else {
+                panic!("a finite split must retain its infinite intermediate control");
+            };
+            assert_eq!(left.degree(), 2);
+            assert_eq!(right.degree(), 2);
+            assert_eq!(left.end(), right.start());
+            for numerator in 0..=4 {
+                let parameter = (Real::from(numerator) / Real::from(4_i8)).unwrap();
+                for (curve, original) in [
+                    (&left, &parameter * &split),
+                    (&right, &split + &parameter * (Real::one() - &split)),
+                ] {
+                    let expected = source.point_at(&original, &policy).unwrap();
+                    let actual = curve.point_at(&parameter, &policy).unwrap();
+                    assert_eq!(
+                        real_sign(&actual.distance_squared(&expected), &policy),
+                        Some(RealSign::Zero)
+                    );
+                }
+            }
+        }
+    }
+
     #[test]
     fn unit_weight_degree_one_curve_exposes_its_exact_line_parameterization() {
         let start = Point2::new(Real::from(-2_i8), Real::from(3_i8));
@@ -9778,7 +10042,7 @@ mod tests {
     }
 
     #[test]
-    fn affine_subcurve_elevates_zero_intermediate_weight_without_a_pole() {
+    fn affine_subcurve_retains_zero_intermediate_weight_without_a_pole() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
         let source = RationalBezier2::try_new(
@@ -9797,14 +10061,15 @@ mod tests {
             else {
                 panic!("the pole-free affine extension must materialize");
             };
-            assert_eq!(extended.degree(), 3);
+            assert_eq!(extended.degree(), 2);
+            assert!(extended.affine_control_points().is_none());
             assert_eq!(extended.start(), &Point2::from_values(0, 0));
             assert_eq!(
                 extended.end(),
                 &Point2::new(Real::from(2_i8), -two_thirds.clone())
             );
             assert_eq!(
-                extended.common_weight_sign(&policy),
+                extended.unit_weight_sign(&policy),
                 Classification::Decided(RealSign::Positive)
             );
         }
@@ -10374,9 +10639,17 @@ mod tests {
         assert_eq!(reduced.start(), elevated.start());
         assert_eq!(reduced.end(), elevated.end());
 
-        let symbolic_weights =
-            RationalBezier2::try_new(elevated.control_points().to_vec(), vec![Real::pi(); 4])
-                .unwrap();
+        let Classification::Decided(symbolic_weights) = RationalBezier2::from_homogeneous_controls(
+            elevated
+                .homogeneous_controls()
+                .iter()
+                .map(|control| control.scaled(&Real::pi()))
+                .collect(),
+            &policy,
+        )
+        .unwrap() else {
+            panic!("a positive projective gauge preserves finite endpoints");
+        };
         assert!(
             symbolic_weights
                 .exact_linear_homogeneous_representative(&policy)
@@ -10404,11 +10677,13 @@ mod tests {
         )
         .unwrap();
         let elevated = source.elevated_to_degree(12).unwrap();
-        let authored = RationalBezier2::try_new(
-            elevated.control_points().to_vec(),
-            elevated.weights().to_vec(),
+        let Classification::Decided(authored) = RationalBezier2::from_homogeneous_controls(
+            elevated.homogeneous_controls().to_vec(),
+            &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap() else {
+            panic!("the elevated homogeneous curve has finite endpoints");
+        };
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(Some(reduced)) = authored
                 .retained_minimal_degree_representative(&policy)
@@ -10417,7 +10692,10 @@ mod tests {
                 panic!("the exact rational elevation must reduce under {policy:?}");
             };
             assert_eq!(reduced.degree(), 3);
-            assert_eq!(reduced.control_points(), source.control_points());
+            assert_eq!(
+                reduced.homogeneous_controls(),
+                source.homogeneous_controls()
+            );
             assert_eq!(reduced.weights(), source.weights());
             for parameter in [
                 Real::zero(),

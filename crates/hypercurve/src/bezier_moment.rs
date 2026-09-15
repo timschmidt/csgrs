@@ -542,7 +542,10 @@ impl RationalBezier2 {
                 None => rational_bezier_quadratic_weight_signed_area(self),
             };
         }
-        let controls = self.control_points().iter().collect::<Vec<_>>();
+        let Some(points) = self.affine_control_points() else {
+            return Ok(None);
+        };
+        let controls = points.iter().collect::<Vec<_>>();
         signed_area_for_controls(&controls).map(Some)
     }
 
@@ -565,7 +568,10 @@ impl RationalBezier2 {
                 None => rational_bezier_quadratic_weight_area_moments(self),
             };
         }
-        let controls = self.control_points().iter().collect::<Vec<_>>();
+        let Some(points) = self.affine_control_points() else {
+            return Ok(None);
+        };
+        let controls = points.iter().collect::<Vec<_>>();
         area_moments_for_controls(&controls).map(Some)
     }
 }
@@ -665,34 +671,21 @@ fn rational_bezier_supported_weight_power_coordinates(
     curve: &RationalBezier2,
     policy: &CurveContext,
 ) -> CurveResult<Option<(Vec<Real>, Vec<Real>, Vec<Real>)>> {
-    let Some(first_sign) = compare_reals(&curve.weights()[0], &Real::zero(), policy) else {
+    if !matches!(curve.unit_weight_sign(policy), Classification::Decided(_)) {
         return Ok(None);
-    };
-    if first_sign == std::cmp::Ordering::Equal {
-        return Ok(None);
-    }
-    for weight in &curve.weights()[1..] {
-        let Some(sign) = compare_reals(weight, &Real::zero(), policy) else {
-            return Ok(None);
-        };
-        if sign != first_sign {
-            return Ok(None);
-        }
     }
     let nx = bernstein_to_power(
         curve
-            .control_points()
+            .homogeneous_controls()
             .iter()
-            .zip(curve.weights())
-            .map(|(point, weight)| point.x() * weight)
+            .map(|control| control.x().clone())
             .collect(),
     )?;
     let ny = bernstein_to_power(
         curve
-            .control_points()
+            .homogeneous_controls()
             .iter()
-            .zip(curve.weights())
-            .map(|(point, weight)| point.y() * weight)
+            .map(|control| control.y().clone())
             .collect(),
     )?;
     let mut weight_power = bernstein_to_power(curve.weights().to_vec())?;
@@ -3173,11 +3166,13 @@ mod tests {
             Some(moments.signed_area().clone())
         );
 
-        let reconstructed = RationalBezier2::try_new(
-            elevated.control_points().to_vec(),
-            elevated.weights().to_vec(),
+        let Classification::Decided(reconstructed) = RationalBezier2::from_homogeneous_controls(
+            elevated.homogeneous_controls().to_vec(),
+            &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap() else {
+            panic!("the reconstructed homogeneous conic has finite endpoints");
+        };
         let reconstructed_moments = reconstructed
             .area_moments_contribution()
             .unwrap()

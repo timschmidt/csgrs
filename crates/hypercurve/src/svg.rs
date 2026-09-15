@@ -21,8 +21,8 @@ use crate::{
     Aabb2, BezierSubcurve2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
     CurveContext, CurveGeometry2, CurveOperation2, CurveOutcome, CurvePath2, CurveRegion2,
     CurveString2, ExactCurveError, FillRule, FiniteProjectionOptions, LineSeg2, NurbsCurve2,
-    Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
-    Real, RealSign, Segment2, Similarity2,
+    Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalQuadraticBezier2, Real, RealSign,
+    Segment2, Similarity2,
 };
 use std::fmt::{self, Write};
 
@@ -938,18 +938,16 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
             .map_err(invalid)
             .map_err(svg_geometry_error)?,
         )],
-        Some(CurveGeometry2::RationalBezier(curve)) => vec![Curve2::from(
-            RationalBezier2::try_new(
-                curve
-                    .control_points()
-                    .iter()
-                    .map(|point| transform.transform_point(point))
-                    .collect(),
-                curve.weights().to_vec(),
-            )
-            .map_err(invalid)
-            .map_err(svg_geometry_error)?,
-        )],
+        Some(CurveGeometry2::RationalBezier(curve)) => {
+            vec![Curve2::from(curve.transformed_affine([
+                &transform.m00,
+                &transform.m01,
+                &transform.m10,
+                &transform.m11,
+                &transform.tx,
+                &transform.ty,
+            ]))]
+        }
         Some(CurveGeometry2::PolynomialBSpline(curve)) => {
             vec![Curve2::from(
                 PolynomialSplineCurve2::try_new_raw(
@@ -1017,18 +1015,16 @@ fn transform_bezier_subcurve(
             .map_err(invalid)
             .map_err(svg_geometry_error)?,
         )),
-        BezierSubcurve2::Rational(curve) => Ok(BezierSubcurve2::Rational(
-            RationalBezier2::try_new(
-                curve
-                    .control_points()
-                    .iter()
-                    .map(|point| transform.transform_point(point))
-                    .collect(),
-                curve.weights().to_vec(),
-            )
-            .map_err(invalid)
-            .map_err(svg_geometry_error)?,
-        )),
+        BezierSubcurve2::Rational(curve) => {
+            Ok(BezierSubcurve2::Rational(curve.transformed_affine([
+                &transform.m00,
+                &transform.m01,
+                &transform.m10,
+                &transform.m11,
+                &transform.tx,
+                &transform.ty,
+            ])))
+        }
     }
 }
 

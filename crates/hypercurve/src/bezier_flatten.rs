@@ -146,8 +146,8 @@ impl CubicBezier2 {
 impl BezierSubcurve2 {
     /// Flattens any materialized polynomial or rational Bezier span to exact-scalar chords.
     ///
-    /// Rational spans are accepted only when every weight has one certified
-    /// nonzero sign, which proves the affine image remains in its control hull.
+    /// Rational spans must have a certified nonzero denominator. Subdivision
+    /// establishes a finite control hull separately for each emitted chord.
     pub fn flatten_certified(
         &self,
         options: &BezierFlatteningOptions,
@@ -192,9 +192,9 @@ impl CurvePath2 {
 trait FlattenableBezier: Clone {
     fn start(&self) -> &Point2;
     fn end(&self) -> &Point2;
-    fn controls(&self) -> Vec<&Point2>;
+    fn controls(&self, policy: &CurveContext) -> Option<Vec<&Point2>>;
     fn split_half(&self, policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason>;
-    fn certify_convex_hull(&self, _policy: &CurveContext) -> Result<(), UncertaintyReason> {
+    fn certify_finite_domain(&self, _policy: &CurveContext) -> Result<(), UncertaintyReason> {
         Ok(())
     }
 }
@@ -208,8 +208,8 @@ impl FlattenableBezier for QuadraticBezier2 {
         self.end()
     }
 
-    fn controls(&self) -> Vec<&Point2> {
-        self.control_points().into_iter().collect()
+    fn controls(&self, _policy: &CurveContext) -> Option<Vec<&Point2>> {
+        Some(self.control_points().into_iter().collect())
     }
 
     fn split_half(&self, _policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason> {
@@ -226,8 +226,8 @@ impl FlattenableBezier for CubicBezier2 {
         self.end()
     }
 
-    fn controls(&self) -> Vec<&Point2> {
-        self.control_points().into_iter().collect()
+    fn controls(&self, _policy: &CurveContext) -> Option<Vec<&Point2>> {
+        Some(self.control_points().into_iter().collect())
     }
 
     fn split_half(&self, _policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason> {
@@ -244,13 +244,32 @@ impl FlattenableBezier for BezierSubcurve2 {
         self.end()
     }
 
-    fn controls(&self) -> Vec<&Point2> {
-        match self {
+    fn controls(&self, policy: &CurveContext) -> Option<Vec<&Point2>> {
+        Some(match self {
             Self::Quadratic(curve) => curve.control_points().into_iter().collect(),
             Self::Cubic(curve) => curve.control_points().into_iter().collect(),
-            Self::RationalQuadratic(curve) => curve.control_points().into_iter().collect(),
-            Self::Rational(curve) => curve.control_points().iter().collect(),
-        }
+            Self::RationalQuadratic(curve) => {
+                let weights = curve.weights();
+                let sign = real_sign(weights[0], policy)?;
+                if sign == RealSign::Zero
+                    || weights[1..]
+                        .iter()
+                        .any(|weight| real_sign(weight, policy) != Some(sign))
+                {
+                    return None;
+                }
+                curve.control_points().into_iter().collect()
+            }
+            Self::Rational(curve) => {
+                if !matches!(
+                    curve.control_weight_sign(policy),
+                    Classification::Decided(_)
+                ) {
+                    return None;
+                }
+                curve.affine_control_points()?.iter().collect()
+            }
+        })
     }
 
     fn split_half(&self, policy: &CurveContext) -> Result<(Self, Self), UncertaintyReason> {
@@ -268,26 +287,19 @@ impl FlattenableBezier for BezierSubcurve2 {
         Ok((left, right))
     }
 
-    fn certify_convex_hull(&self, policy: &CurveContext) -> Result<(), UncertaintyReason> {
-        let weights = match self {
+    fn certify_finite_domain(&self, policy: &CurveContext) -> Result<(), UncertaintyReason> {
+        let sign = match self {
             Self::Quadratic(_) | Self::Cubic(_) => return Ok(()),
-            Self::RationalQuadratic(curve) => curve.weights().into_iter().collect::<Vec<_>>(),
-            Self::Rational(curve) => curve.weights().iter().collect::<Vec<_>>(),
-        };
-        let mut expected = None;
-        for weight in weights {
-            let sign = real_sign(weight, policy).ok_or(UncertaintyReason::RealSign)?;
-            match sign {
-                RealSign::Zero => return Err(UncertaintyReason::Unsupported),
-                RealSign::Positive | RealSign::Negative => {
-                    if expected.is_some_and(|expected| expected != sign) {
-                        return Err(UncertaintyReason::Unsupported);
-                    }
-                    expected = Some(sign);
-                }
+            Self::RationalQuadratic(curve) => {
+                crate::RationalBezier2::from(curve.clone()).unit_weight_sign(policy)
             }
+            Self::Rational(curve) => curve.unit_weight_sign(policy),
+        };
+        match sign {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => Ok(()),
+            Classification::Decided(RealSign::Zero) => Err(UncertaintyReason::Boundary),
+            Classification::Uncertain(reason) => Err(reason),
         }
-        Ok(())
     }
 }
 
@@ -299,7 +311,7 @@ fn flatten_curve<C>(
 where
     C: FlattenableBezier,
 {
-    if let Err(reason) = curve.certify_convex_hull(policy) {
+    if let Err(reason) = curve.certify_finite_domain(policy) {
         return Classification::Uncertain(reason);
     }
     let mut points = vec![curve.start().clone()];
@@ -409,8 +421,11 @@ fn curve_is_flat<C>(
 where
     C: FlattenableBezier,
 {
+    let Some(controls) = curve.controls(policy) else {
+        return Ok(false);
+    };
     if is_zero(&curve.start().distance_squared(curve.end()), policy) == Some(true) {
-        for point in curve.controls() {
+        for point in &controls {
             if !squared_distance_within(point, curve.start(), max_error_squared, policy)? {
                 return Ok(false);
             }
@@ -420,7 +435,27 @@ where
 
     let chord_length_squared = curve.start().distance_squared(curve.end());
     let threshold = max_error_squared * &chord_length_squared;
-    for point in curve.controls().into_iter().skip(1).rev().skip(1) {
+    let dx = curve.end().x() - curve.start().x();
+    let dy = curve.end().y() - curve.start().y();
+    for point in controls.into_iter().skip(1).rev().skip(1) {
+        // Distance to the supporting line alone misses collinear overshoot.
+        // The convex capsule around the finite chord must contain each control.
+        let along = (point.x() - curve.start().x()) * &dx + (point.y() - curve.start().y()) * &dy;
+        let endpoint = match compare_reals(&along, &Real::zero(), policy) {
+            Some(Ordering::Less) => Some(curve.start()),
+            Some(_) => match compare_reals(&along, &chord_length_squared, policy) {
+                Some(Ordering::Greater) => Some(curve.end()),
+                Some(_) => None,
+                None => return Err(UncertaintyReason::Ordering),
+            },
+            None => return Err(UncertaintyReason::Ordering),
+        };
+        if let Some(endpoint) = endpoint {
+            if !squared_distance_within(point, endpoint, max_error_squared, policy)? {
+                return Ok(false);
+            }
+            continue;
+        }
         let signed_area = orient2_real_expr(curve.start(), curve.end(), point);
         let area_squared = &signed_area * &signed_area;
         match compare_reals(&area_squared, &threshold, policy) {
@@ -495,5 +530,62 @@ mod tests {
         assert_eq!(polyline.points(), &[point(0, 0), point(2, 0)]);
         assert_eq!(polyline.certificate().segment_count(), 1);
         assert_eq!(polyline.certificate().max_depth(), 0);
+    }
+
+    #[test]
+    fn homogeneous_representation_flattens_finite_mixed_controls() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let half = (Real::one() / Real::from(2)).unwrap();
+            let options = BezierFlatteningOptions::try_new(half.clone(), 12, &policy).unwrap();
+            let curve = crate::RationalBezier2::try_new(
+                vec![point(0, 0), point(1, 1), point(2, 0)],
+                vec![Real::one(), -half, Real::one()],
+            )
+            .unwrap();
+            let elevated = curve.elevated_to_degree(3).unwrap();
+            for curve in [curve, elevated] {
+                let span = BezierSubcurve2::Rational(curve);
+                let Classification::Decided(polyline) = span.flatten_certified(&options, &policy)
+                else {
+                    panic!("a finite mixed-weight curve must admit local hulls");
+                };
+                assert_eq!(polyline.points().first(), Some(&point(0, 0)));
+                assert_eq!(polyline.points().last(), Some(&point(2, 0)));
+                assert!(polyline.points().contains(&point(1, -1)));
+                assert!(polyline.certificate().max_depth() > 0);
+            }
+            let pole = BezierSubcurve2::Rational(
+                crate::RationalBezier2::try_new(
+                    vec![point(0, 0), point(1, 1), point(2, 0)],
+                    vec![Real::one(), Real::from(-2), Real::one()],
+                )
+                .unwrap(),
+            );
+            assert!(matches!(
+                pole.flatten_certified(&options, &policy),
+                Classification::Uncertain(_)
+            ));
+        }
+    }
+
+    #[test]
+    fn flatness_certificate_covers_collinear_overshoot() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let options = BezierFlatteningOptions::try_new(
+                (Real::one() / Real::from(16)).unwrap(),
+                12,
+                &policy,
+            )
+            .unwrap();
+            let curve = QuadraticBezier2::new(point(0, 0), point(4, 0), point(1, 0));
+            let Classification::Decided(polyline) = curve.flatten_certified(&options, &policy)
+            else {
+                panic!("a retracing quadratic must admit certified finite chords");
+            };
+            assert!(polyline.points().iter().any(|point| {
+                compare_reals(point.x(), &Real::from(2), &policy) == Some(Ordering::Greater)
+            }));
+            assert!(polyline.certificate().segment_count() > 1);
+        }
     }
 }

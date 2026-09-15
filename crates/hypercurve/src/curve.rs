@@ -696,12 +696,6 @@ impl Curve2 {
             )
             .map(Self::from_retained_fragment);
         }
-        let transform_points = |points: &[Point2]| {
-            points
-                .iter()
-                .map(|point| transform.transform_point(point))
-                .collect::<Vec<_>>()
-        };
         let geometry = match self.geometry() {
             Some(CurveGeometry2::Line(curve)) => CurveGeometry2::Line(
                 curve
@@ -745,13 +739,9 @@ impl Curve2 {
                     .map_err(|cause| self.transform_error(cause))?,
                 )
             }
-            Some(CurveGeometry2::RationalBezier(curve)) => CurveGeometry2::RationalBezier(
-                RationalBezier2::try_new(
-                    transform_points(curve.control_points()),
-                    curve.weights().to_vec(),
-                )
-                .map_err(|cause| self.transform_error(cause))?,
-            ),
+            Some(CurveGeometry2::RationalBezier(curve)) => {
+                CurveGeometry2::RationalBezier(curve.transform_similarity(transform))
+            }
             Some(CurveGeometry2::PolynomialBSpline(curve)) => CurveGeometry2::PolynomialBSpline(
                 curve.transform_similarity_raw(transform, policy)?,
             ),
@@ -3407,19 +3397,13 @@ impl RetainedRationalCornerArc2 {
     ) -> ExactCurveResult<RationalBezier2> {
         let evaluator = if evaluator.retained_circular_conic().is_some()
             || matches!(
-                evaluator.common_weight_sign(policy),
+                evaluator.control_weight_sign(policy),
                 Classification::Decided(RealSign::Positive | RealSign::Negative)
             ) {
             evaluator
         } else {
             let (implicit_conic, circular_conic) = circular_conic_provenance(support);
-            RationalBezier2::try_new_with_implicit_quadratic_conic(
-                evaluator.control_points().to_vec(),
-                evaluator.weights().to_vec(),
-                implicit_conic,
-                Some(circular_conic),
-            )
-            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+            evaluator.with_implicit_quadratic_conic(implicit_conic, Some(circular_conic))
         };
         // Collapse degree elevation once, before either contact enumeration
         // or publication asks for the inverse of this parameterized circle.

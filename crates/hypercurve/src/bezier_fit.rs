@@ -422,10 +422,10 @@ impl RationalBezier2 {
             return Ok(Classification::Decided(BezierLineImageFitRelation::Fit(
                 CertifiedBezierLineImage2 {
                     line: line.clone(),
-                    control_point_count: self.control_points().len(),
+                    control_point_count: self.degree() + 1,
                     fit_certificate: BezierFitCertificate::proven_exact(
                         0,
-                        self.control_points().len(),
+                        self.degree() + 1,
                         None,
                         None,
                         policy,
@@ -436,7 +436,10 @@ impl RationalBezier2 {
         let weights = self.weights().iter().collect::<Vec<_>>();
         match weights_known_same_nonzero_sign(&weights, policy) {
             Some(true) => {
-                let controls = self.control_points().iter().collect::<Vec<_>>();
+                let Some(points) = self.affine_control_points() else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                };
+                let controls = points.iter().collect::<Vec<_>>();
                 fit_control_polygon_line_image(&controls, policy)
             }
             Some(false) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),

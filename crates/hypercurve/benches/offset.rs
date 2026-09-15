@@ -602,10 +602,13 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     else {
         panic!("PH overlap benchmark source was not recognized");
     };
-    let ph_overlap_target = RationalBezier2::try_new(
-        ph_overlap.curve().control_points().to_vec(),
-        ph_overlap.curve().weights().to_vec(),
-    )?;
+    let Classification::Decided(ph_overlap_target) = RationalBezier2::from_homogeneous_controls(
+        ph_overlap.curve().homogeneous_controls().to_vec(),
+        &CurveContext::STRICT,
+    )?
+    else {
+        panic!("the PH overlap controls must retain finite endpoints");
+    };
     bench_bezier_parallel_intersections(
         "bezier_parallel_ph_overlap",
         &ph_overlap_parallel,

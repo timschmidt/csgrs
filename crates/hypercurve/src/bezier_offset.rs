@@ -164,13 +164,10 @@ impl BezierParallelSource2 {
                 .control_points()
                 .into_iter()
                 .eq(second.control_points().into_iter().rev()),
-            (Self::Rational(first), Self::Rational(second)) => {
-                first
-                    .control_points()
-                    .iter()
-                    .eq(second.control_points().iter().rev())
-                    && first.weights().iter().eq(second.weights().iter().rev())
-            }
+            (Self::Rational(first), Self::Rational(second)) => first
+                .homogeneous_controls()
+                .iter()
+                .eq(second.homogeneous_controls().iter().rev()),
             (Self::Quadratic(_) | Self::Cubic(_) | Self::Rational(_), _) => false,
         }
     }
@@ -296,14 +293,7 @@ impl BezierParallelSource2 {
                     points[3].clone(),
                 ))
             }
-            Self::Rational(source) => Self::Rational(RationalBezier2::try_new(
-                source
-                    .control_points()
-                    .iter()
-                    .map(|point| transform.transform_point(point))
-                    .collect(),
-                source.weights().to_vec(),
-            )?),
+            Self::Rational(source) => Self::Rational(source.transform_similarity(transform)),
         };
         Ok(transformed)
     }
@@ -10407,14 +10397,7 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                 parameter,
                 policy,
             } => Self::Rational {
-                curve: RationalBezier2::try_new(
-                    curve
-                        .control_points()
-                        .iter()
-                        .map(|point| transform.transform_point(point))
-                        .collect(),
-                    curve.weights().to_vec(),
-                )?,
+                curve: curve.transform_similarity(transform),
                 parameter,
                 policy,
             },
@@ -15377,15 +15360,7 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                 location,
                 tangent_cross_sign,
             } if &map.data.semicircle == source_carrier => {
-                let transformed_curve = RationalBezier2::try_new(
-                    map.data
-                        .curve
-                        .control_points()
-                        .iter()
-                        .map(|point| point.transform_similarity(transform))
-                        .collect(),
-                    map.data.curve.weights().to_vec(),
-                )?;
+                let transformed_curve = map.data.curve.transform_similarity(transform);
                 let orientation_scale = Real::from(if transform.reverses_orientation() {
                     -1_i8
                 } else {
@@ -19705,11 +19680,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let target_weight_sign = match other.common_weight_sign(policy) {
+        let target_weight_sign = match other.unit_weight_sign(policy) {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
-                    "a finite pair-radial rational candidate had zero common weight".into(),
+                    "a finite pair-radial rational candidate had a zero denominator".into(),
                 ));
             }
             Classification::Uncertain(reason) => {
@@ -20232,11 +20207,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         {
             return Ok(Classification::Uncertain(reason));
         }
-        match other.common_weight_sign(policy) {
+        match other.unit_weight_sign(policy) {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
-                    "a finite rational circle candidate had a zero common weight".into(),
+                    "a finite rational circle candidate had a zero denominator".into(),
                 ));
             }
             Classification::Uncertain(reason) => {
@@ -37877,11 +37852,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let target_weight_sign = match other.common_weight_sign(policy) {
+        let target_weight_sign = match other.unit_weight_sign(policy) {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
-                    "a finite chord-normal rational candidate had zero common weight".into(),
+                    "a finite chord-normal rational candidate had a zero denominator".into(),
                 ));
             }
             Classification::Uncertain(reason) => {
@@ -38224,11 +38199,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         let [center_x, center_y]: [DenseTensorPolynomial; 2] = center
             .try_into()
             .expect("a represented circle frame retains both center coordinates");
-        let target_weight_sign = match other.common_weight_sign(policy) {
+        let target_weight_sign = match other.unit_weight_sign(policy) {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
-                    "a finite represented-circle candidate had zero common weight".into(),
+                    "a finite represented-circle candidate had a zero denominator".into(),
                 ));
             }
             Classification::Uncertain(reason) => {
@@ -38307,11 +38282,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         let [center_x, center_y, unit_x, unit_y]: [DenseTensorPolynomial; 4] = coordinates
             .try_into()
             .expect("a represented rational-circle component retains its full frame");
-        let target_weight_sign = match other.common_weight_sign(policy) {
+        let target_weight_sign = match other.unit_weight_sign(policy) {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
-                    "a finite represented circle component had zero common weight".into(),
+                    "a finite represented circle component had a zero denominator".into(),
                 ));
             }
             Classification::Uncertain(reason) => {
@@ -39553,8 +39528,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Decided(None));
                     }
                 };
-                let source_controls = other
-                    .control_points()
+                let Some(controls) = other.affine_control_points() else {
+                    return Ok(Classification::Decided(None));
+                };
+                let source_controls = controls
                     .iter()
                     .map(inverse_point)
                     .collect::<CurveResult<Vec<_>>>()?;
@@ -40866,11 +40843,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         angular_tangent: BivariatePolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        match other.common_weight_sign(policy) {
+        match other.unit_weight_sign(policy) {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
-                    "a coincident rational circle acquired a zero common weight sign".into(),
+                    "a coincident rational circle acquired a zero denominator".into(),
                 ));
             }
             Classification::Uncertain(reason) => {
@@ -41885,12 +41862,15 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let weight_sign = match self.data.curve.common_weight_sign(policy) {
+        let weight_sign = match other_parameter.predicate_sign(
+            &bivariate_outer_product(&[Real::one()], &source.weight),
+            policy,
+        )? {
             Classification::Decided(RealSign::Positive) => RealSign::Positive,
             Classification::Decided(RealSign::Negative) => RealSign::Negative,
             Classification::Decided(RealSign::Zero) => {
                 return Err(CurveError::Topology(
-                    "a finite selected-fiber rational contact had zero common weight".into(),
+                    "a finite selected-fiber rational contact had a zero denominator".into(),
                 ));
             }
             Classification::Uncertain(reason) => {
@@ -47985,19 +47965,22 @@ impl BezierAlgebraicCuspDerivedPointSource2 {
             return None;
         }
         let value = match axis {
-            Axis2::X => first.control_points().first()?.x(),
-            Axis2::Y => first.control_points().first()?.y(),
+            Axis2::X => first.start().x(),
+            Axis2::Y => first.start().y(),
         };
         first
-            .control_points()
+            .homogeneous_controls()
             .iter()
-            .all(|point| {
+            .all(|control| {
                 let coordinate = match axis {
-                    Axis2::X => point.x(),
-                    Axis2::Y => point.y(),
+                    Axis2::X => control.x(),
+                    Axis2::Y => control.y(),
                 };
-                compare_reals(coordinate, value, &CurveContext::STRICT)
-                    == Some(std::cmp::Ordering::Equal)
+                compare_reals(
+                    coordinate,
+                    &(value * control.weight()),
+                    &CurveContext::STRICT,
+                ) == Some(std::cmp::Ordering::Equal)
             })
             .then_some(std::cmp::Ordering::Equal)
     }
@@ -78389,7 +78372,7 @@ impl BezierAlgebraicChord2 {
             );
         }
         let source_power = source.homogeneous_power_basis()?;
-        let source_weight_sign = match source.common_weight_sign(policy) {
+        let source_weight_sign = match source.unit_weight_sign(policy) {
             Classification::Decided(sign) => Some(sign),
             Classification::Uncertain(_) => None,
         };
@@ -78772,10 +78755,9 @@ impl BezierAlgebraicChord2 {
                     _ => return Ok((None, false)),
                 };
                 let mut control_hull_is_disjoint = true;
-                let interior_control_count = source.control_points().len().saturating_sub(2);
-                for (_index, control) in source
-                    .control_points()
-                    .iter()
+                let Some(controls) = source.affine_control_points() else { return Ok((None, false)); };
+                let interior_control_count = controls.len().saturating_sub(2);
+                for (_index, control) in controls.iter()
                     .enumerate()
                     .skip(1)
                     .take(interior_control_count)
@@ -80102,7 +80084,7 @@ impl BezierAlgebraicChord2 {
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
         self.validate_policy(policy)?;
         let axis = self.data.parameter_axis.axis;
-        match source.common_weight_sign(policy) {
+        match source.unit_weight_sign(policy) {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Decided(
@@ -81366,7 +81348,10 @@ impl BezierAlgebraicChord2 {
                 }
             };
             let mut common_side = None;
-            for point in curve.control_points() {
+            let Some(controls) = curve.affine_control_points() else {
+                return Ok(Classification::Decided(false));
+            };
+            for point in controls {
                 let evidence = CurvePoint2::from(point.clone());
                 let side = match support.oriented_side(&evidence, policy)? {
                     Classification::Decided(
@@ -90381,13 +90366,16 @@ impl BezierAlgebraicChordParallelPoint2 {
                 RealSign::Positive
             }
             BezierParallelSource2::Rational(source) => {
-                match source.common_weight_sign(&policy.strict_counterpart()) {
+                match parameter.polynomial_sign(
+                    &source.homogeneous_power_basis()?.weight,
+                    &policy.strict_counterpart(),
+                )? {
                     Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
                         sign
                     }
                     Classification::Decided(RealSign::Zero) => {
                         return Err(CurveError::Topology(
-                            "an analytic tangent support retained zero common weights".into(),
+                            "an analytic tangent support retained a zero source denominator".into(),
                         ));
                     }
                     Classification::Uncertain(reason) => {
@@ -93184,13 +93172,16 @@ impl BezierAnalyticParallelPoint2 {
                 RealSign::Positive
             }
             BezierParallelSource2::Rational(source) => {
-                match source.common_weight_sign(&policy.strict_counterpart()) {
+                match self.parameter_polynomial_sign(
+                    source.homogeneous_power_basis()?.weight.clone(),
+                    &policy.strict_counterpart(),
+                )? {
                     Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
                         sign
                     }
                     Classification::Decided(RealSign::Zero) => {
                         return Err(CurveError::Topology(
-                            "an analytic tangent support retained zero common weights".into(),
+                            "an analytic tangent support retained a zero source denominator".into(),
                         ));
                     }
                     Classification::Uncertain(reason) => {
@@ -93446,7 +93437,10 @@ impl BezierAnalyticParallelPoint2 {
                 Some(RealSign::Positive)
             }
             BezierParallelSource2::Rational(source) => {
-                match source.common_weight_sign(&policy.strict_counterpart()) {
+                match parameter.polynomial_sign(
+                    &source.homogeneous_power_basis()?.weight,
+                    &policy.strict_counterpart(),
+                )? {
                     Classification::Decided(sign) => Some(sign),
                     Classification::Uncertain(_) => None,
                 }
@@ -93595,8 +93589,8 @@ impl BezierAnalyticParallelPoint2 {
         };
         let point = match source_weight_sign {
             // The recursive parameter denominator is strictly positive, as
-            // is every adjoined speed. A common source-weight sign therefore
-            // certifies the complete projective denominator structurally and
+            // is every adjoined speed. The source denominator sign at the
+            // retained parameter certifies the projective denominator and
             // avoids expanding its deep recursive norm merely to normalize a
             // point that was authored on that sheet.
             Some(RealSign::Positive) => point,
@@ -93625,7 +93619,7 @@ impl BezierAnalyticParallelPoint2 {
             }
             Some(RealSign::Zero) => {
                 return Err(CurveError::Topology(
-                    "a recursive analytic point retained zero common weights".into(),
+                    "a recursive analytic point retained a zero source denominator".into(),
                 ));
             }
             None => match positive_recursive_projective_point(point)? {
@@ -108949,7 +108943,6 @@ pub struct CertifiedPythagoreanHodographOffset2 {
     curve: RationalBezier2,
     speed_polynomial: Arc<BezierParameterPolynomial>,
     source_degree: usize,
-    rational_degree: usize,
     distance: Real,
 }
 
@@ -109352,8 +109345,8 @@ impl CertifiedPythagoreanHodographOffset2 {
     }
 
     /// Returns the homogeneous degree of the exact rational parallel.
-    pub const fn rational_degree(&self) -> usize {
-        self.rational_degree
+    pub fn rational_degree(&self) -> usize {
+        self.curve.degree()
     }
 
     /// Returns the signed left-offset distance.
@@ -117919,15 +117912,16 @@ impl BezierParallel2 {
             };
         let tangent_x = polynomial_trim_structural_zeros(frame.x.clone());
         let tangent_y = polynomial_trim_structural_zeros(frame.y.clone());
-        let speed = match certify_unit_ph_speed(&tangent_x, &tangent_y, &interior, &strict)? {
-            Classification::Decided(Some(speed)) => speed,
-            Classification::Decided(None) => return Ok(global),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let offset = match self.compute_pythagorean_hodograph_offset_from_tangent_field(
-            &tangent_x, &tangent_y, speed, false, &strict,
+        let speed =
+            match certify_ph_speed_on_range(&tangent_x, &tangent_y, &interior, range, &strict)? {
+                Classification::Decided(Some(speed)) => speed,
+                Classification::Decided(None) => return Ok(global),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let curve = match self.compute_pythagorean_hodograph_offset_from_tangent_field(
+            &tangent_x, &tangent_y, &speed, range, false, &strict,
         )? {
             Classification::Decided(Some(offset)) => offset,
             Classification::Decided(None) => return Ok(global),
@@ -117935,7 +117929,6 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let curve = offset.curve;
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
@@ -118560,21 +118553,23 @@ impl BezierParallel2 {
         if radius_scale == Real::one() {
             return Ok(Classification::Decided(Some(source.clone())));
         }
-        let controls = source
-            .control_points()
-            .iter()
-            .map(|point| crate::offset::scale_from_center(point, arc.center(), &radius_scale))
-            .collect();
-        let weights = source.weights().to_vec();
+        let translation_x = arc.center().x() * (Real::one() - &radius_scale);
+        let translation_y = arc.center().y() * (Real::one() - &radius_scale);
+        let curve = source.transformed_affine([
+            &radius_scale,
+            &Real::zero(),
+            &Real::zero(),
+            &radius_scale,
+            &translation_x,
+            &translation_y,
+        ]);
         let curve = if matches!(
             real_sign(&radius_scale, &CurveContext::STRICT),
             Some(RealSign::Positive | RealSign::Negative)
         ) {
             let radius_squared = arc.radius_squared_ref() * &radius_scale * &radius_scale;
             let two = Real::from(2_i8);
-            RationalBezier2::try_new_with_implicit_quadratic_conic(
-                controls,
-                weights,
+            curve.with_implicit_quadratic_conic(
                 Arc::new([
                     Real::one(),
                     Real::zero(),
@@ -118589,9 +118584,9 @@ impl BezierParallel2 {
                     radius_squared,
                     tangent_contacts: None,
                 })),
-            )?
+            )
         } else {
-            RationalBezier2::try_new(controls, weights)?
+            curve
         };
         Ok(Classification::Decided(Some(curve)))
     }
@@ -118650,7 +118645,13 @@ impl BezierParallel2 {
         if let Some(speed) = self.data.source.unit_ph_speed.get() {
             return Ok(Classification::Decided(speed.clone()));
         }
-        match certify_unit_ph_speed(tangent_x, tangent_y, &Real::zero(), policy)? {
+        match certify_ph_speed_on_range(
+            tangent_x,
+            tangent_y,
+            &Real::zero(),
+            &CurveParameterRange2::unit(),
+            policy,
+        )? {
             Classification::Decided(speed) => {
                 let _ = self.data.source.unit_ph_speed.set(speed);
                 Ok(Classification::Decided(
@@ -118703,7 +118704,6 @@ impl BezierParallel2 {
                     curve,
                     speed_polynomial,
                     source_degree: 2,
-                    rational_degree: 2,
                     distance: self.distance().clone(),
                 },
             )));
@@ -118720,30 +118720,41 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        self.compute_pythagorean_hodograph_offset_from_tangent_field(
-            &differential.tangent_x,
-            &differential.tangent_y,
-            speed,
-            true,
-            policy,
-        )
+        Ok(self
+            .compute_pythagorean_hodograph_offset_from_tangent_field(
+                &differential.tangent_x,
+                &differential.tangent_y,
+                &speed,
+                &CurveParameterRange2::unit(),
+                true,
+                policy,
+            )?
+            .map(|curve| {
+                curve.map(|curve| CertifiedPythagoreanHodographOffset2 {
+                    curve,
+                    speed_polynomial: speed,
+                    source_degree: self.source_degree(),
+                    distance: self.distance().clone(),
+                })
+            }))
     }
 
     /// Materializes one exact rational parallel from an oriented PH tangent
     /// field. The field can be either the source's complete homogeneous
     /// hodograph or the primitive GCD quotient selected on one regular range.
     /// The retained speed certificate selects the polynomial sheet and proves
-    /// unit root exclusion. Callers prove that the field orientation agrees
+    /// root exclusion on `range`. Callers prove that the field orientation agrees
     /// with the source before entering this constructor.
     #[cold]
     fn compute_pythagorean_hodograph_offset_from_tangent_field(
         &self,
         tangent_x: &[Real],
         tangent_y: &[Real],
-        speed_polynomial: Arc<BezierParameterPolynomial>,
+        speed_polynomial: &BezierParameterPolynomial,
+        range: &CurveParameterRange2,
         allow_circular_specialization: bool,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
+    ) -> CurveResult<Classification<Option<RationalBezier2>>> {
         let speed = speed_polynomial.coefficients();
         // Preserve a constant tangent field as a direct affine translation.
         // The general homogeneous formula is algebraically equivalent, but it
@@ -118754,33 +118765,15 @@ impl BezierParallel2 {
             let translation_x = ((-self.distance() * tangent_y) / &speed[0])?;
             let translation_y = ((self.distance() * tangent_x) / &speed[0])?;
             let source = self.source().to_rational_bezier()?;
-            let controls = source
-                .control_points()
-                .iter()
-                .map(|point| point.translated(translation_x.clone(), translation_y.clone()))
-                .collect();
-            let curve = if let Some(line) = source.retained_exact_line_image() {
-                RationalBezier2::try_new_with_exact_line_image(
-                    controls,
-                    source.weights().to_vec(),
-                    LineSeg2::try_new(
-                        line.start()
-                            .translated(translation_x.clone(), translation_y.clone()),
-                        line.end().translated(translation_x, translation_y),
-                    )?,
-                )?
-            } else {
-                RationalBezier2::try_new(controls, source.weights().to_vec())?
-            };
-            return Ok(Classification::Decided(Some(
-                CertifiedPythagoreanHodographOffset2 {
-                    rational_degree: curve.degree(),
-                    curve,
-                    speed_polynomial,
-                    source_degree: self.source_degree(),
-                    distance: self.distance().clone(),
-                },
-            )));
+            let curve = source.transformed_affine([
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &translation_x,
+                &translation_y,
+            ]);
+            return Ok(Classification::Decided(Some(curve)));
         }
         let rational_source = self.rational_source();
         let rational_power_basis = match rational_source {
@@ -118806,7 +118799,9 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            match weight_polynomial.isolate_unit_interval_roots(policy)? {
+            match CurveParameterDomain2::new(range, None)
+                .finite_roots(&weight_polynomial, policy)?
+            {
                 Classification::Decided(roots) if roots.is_empty() => {}
                 Classification::Decided(_) => return Ok(Classification::Decided(None)),
                 Classification::Uncertain(reason) => {
@@ -118828,19 +118823,10 @@ impl BezierParallel2 {
             None
         };
         if let Some(curve) = circular_component {
-            let source_degree = self.source_degree();
-            return Ok(Classification::Decided(Some(
-                CertifiedPythagoreanHodographOffset2 {
-                    curve,
-                    speed_polynomial,
-                    source_degree,
-                    rational_degree: source_degree,
-                    distance: self.distance().clone(),
-                },
-            )));
+            return Ok(Classification::Decided(Some(curve)));
         }
 
-        let (normal_x_term, normal_y_term, mut denominator) = if let Some(weight) = &weight {
+        let (normal_x_term, normal_y_term, denominator) = if let Some(weight) = &weight {
             let weighted_distance = polynomial_scale(weight, self.distance());
             (
                 polynomial_multiply(&weighted_distance, tangent_y),
@@ -118854,72 +118840,24 @@ impl BezierParallel2 {
                 speed.to_vec(),
             )
         };
-        let mut numerator_x =
+        let numerator_x =
             polynomial_subtract(&polynomial_multiply(source_x, speed), &normal_x_term);
-        let mut numerator_y = polynomial_add(&polynomial_multiply(source_y, speed), &normal_y_term);
-        if weight.is_some() {
-            match real_sign(&Real::eval_poly(&denominator, &Real::zero()), policy) {
-                Some(RealSign::Positive) => {}
-                Some(RealSign::Negative) => {
-                    let negative_one = Real::from(-1_i8);
-                    numerator_x = polynomial_scale(&numerator_x, &negative_one);
-                    numerator_y = polynomial_scale(&numerator_y, &negative_one);
-                    denominator = polynomial_scale(&denominator, &negative_one);
-                }
-                Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
-        }
-        let source_degree = self.source_degree();
+        let numerator_y = polynomial_add(&polynomial_multiply(source_y, speed), &normal_y_term);
         let base_degree = numerator_x
             .len()
             .max(numerator_y.len())
             .max(denominator.len())
             .saturating_sub(1);
-        let mut rational_degree = base_degree;
-        let mut weights = power_to_bernstein_coefficients(&denominator, rational_degree)?;
-        // A polynomial certified strictly positive on the compact unit interval
-        // has all-positive Bernstein coefficients after finitely many degree
-        // elevations. Keep that exact guarantee instead of imposing a search cap.
-        loop {
-            let mut all_positive = true;
-            for weight in &weights {
-                match real_sign(weight, policy) {
-                    Some(RealSign::Positive) => {}
-                    Some(RealSign::Zero | RealSign::Negative) => {
-                        all_positive = false;
-                        break;
-                    }
-                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-                }
-            }
-            if !all_positive {
-                let Some(next_degree) = rational_degree.checked_add(1) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                weights = elevate_scalar_bernstein_once(&weights)?;
-                rational_degree = next_degree;
-                continue;
-            }
-            let x_homogeneous = power_to_bernstein_coefficients(&numerator_x, rational_degree)?;
-            let y_homogeneous = power_to_bernstein_coefficients(&numerator_y, rational_degree)?;
-            let controls = x_homogeneous
-                .into_iter()
-                .zip(y_homogeneous)
-                .zip(weights.iter())
-                .map(|((x, y), weight)| Ok(Point2::new((x / weight)?, (y / weight)?)))
-                .collect::<CurveResult<Vec<_>>>()?;
-            let curve = RationalBezier2::try_new(controls, weights)?;
-            return Ok(Classification::Decided(Some(
-                CertifiedPythagoreanHodographOffset2 {
-                    curve,
-                    speed_polynomial,
-                    source_degree,
-                    rational_degree,
-                    distance: self.distance().clone(),
-                },
-            )));
-        }
+        let weights = power_to_bernstein_coefficients(&denominator, base_degree)?;
+        let x = power_to_bernstein_coefficients(&numerator_x, base_degree)?;
+        let y = power_to_bernstein_coefficients(&numerator_y, base_degree)?;
+        let controls = x
+            .into_iter()
+            .zip(y)
+            .zip(weights)
+            .map(|((x, y), weight)| crate::HomogeneousControl2::new(x, y, weight))
+            .collect();
+        RationalBezier2::from_homogeneous_controls(controls, policy).map(|curve| curve.map(Some))
     }
 
     /// Builds a Levien-style endpoint-tangent cubic for later verification.
@@ -119955,22 +119893,6 @@ fn strict_interior_unit_parameter(parameter: &Real, policy: &CurveContext) -> Cl
     }
 }
 
-fn elevate_scalar_bernstein_once(controls: &[Real]) -> CurveResult<Vec<Real>> {
-    let degree = controls.len().saturating_sub(1);
-    let next_degree = degree + 1;
-    let denominator = Real::from(next_degree as u64);
-    let mut elevated = Vec::with_capacity(next_degree + 1);
-    elevated.push(controls[0].clone());
-    for index in 1..next_degree {
-        let left_weight = (Real::from(index as u64) / &denominator)?;
-        elevated.push(
-            &controls[index - 1] * &left_weight + &controls[index] * (Real::one() - left_weight),
-        );
-    }
-    elevated.push(controls[degree].clone());
-    Ok(elevated)
-}
-
 fn polynomial_derivative(coefficients: &[Real]) -> Vec<Real> {
     coefficients
         .iter()
@@ -120367,13 +120289,14 @@ fn polynomial_unit_frame_coordinate_relation(
     )
 }
 
-/// Certifies one oriented PH speed on the authored unit interval. Complete
-/// source fields retain this polynomial across distances; primitive regular
-/// fields carry their own certificate. Uncertainty is never cached as absence.
-fn certify_unit_ph_speed(
+/// Certifies an oriented PH speed on the requested finite domain. Complete
+/// source fields retain their unit certificate across distances; primitive
+/// regular fields carry their own range proof. Uncertainty is not absence.
+fn certify_ph_speed_on_range(
     tangent_x: &[Real],
     tangent_y: &[Real],
     orientation_parameter: &Real,
+    range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Arc<BezierParameterPolynomial>>>> {
     let speed_squared = polynomial_add(
@@ -120399,10 +120322,11 @@ fn certify_unit_ph_speed(
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let speed_roots = match speed_polynomial.isolate_unit_interval_roots(policy)? {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let speed_roots =
+        match CurveParameterDomain2::new(range, None).finite_roots(&speed_polynomial, policy)? {
+            Classification::Decided(roots) => roots,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     if !speed_roots.is_empty() {
         return Ok(Classification::Decided(None));
     }
@@ -139783,22 +139707,24 @@ mod conversion_tests {
             // the target's injective coordinate then constructs the exact
             // preimage. For t^2=1/2, the target cut satisfies s^4=1/2.
             let third = (Real::one() / Real::from(3_i8)).unwrap();
-            let nonlinear_rational_quarter =
-                RationalBezier2::try_new_with_implicit_quadratic_conic(
-                    vec![
-                        Point2::new(Real::one(), Real::zero()),
-                        Point2::new(Real::one(), Real::zero()),
-                        Point2::new(Real::one(), third),
-                        Point2::new(Real::one(), Real::one()),
-                        Point2::new(Real::zero(), Real::one()),
-                    ],
-                    vec![
-                        Real::one(),
-                        Real::one(),
-                        Real::one(),
-                        Real::one(),
-                        Real::from(2_i8),
-                    ],
+            let nonlinear_rational_quarter = RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::one(), Real::zero()),
+                    Point2::new(Real::one(), Real::zero()),
+                    Point2::new(Real::one(), third),
+                    Point2::new(Real::one(), Real::one()),
+                    Point2::new(Real::zero(), Real::one()),
+                ],
+                vec![
+                    Real::one(),
+                    Real::one(),
+                    Real::one(),
+                    Real::one(),
+                    Real::from(2_i8),
+                ],
+            )
+            .map(|curve| {
+                curve.with_implicit_quadratic_conic(
                     Arc::new([
                         Real::one(),
                         Real::zero(),
@@ -139809,7 +139735,8 @@ mod conversion_tests {
                     ]),
                     rational_quarter.retained_circular_conic().cloned(),
                 )
-                .unwrap();
+            })
+            .unwrap();
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
                     nonlinear_rational_overlaps,
@@ -140681,7 +140608,7 @@ mod conversion_tests {
             );
             assert!(!correlated_mixed_reoffset.value.boundary_loops().is_empty());
 
-            let nonlinear_analytic_source = RationalBezier2::try_new_with_implicit_quadratic_conic(
+            let nonlinear_analytic_source = RationalBezier2::try_new(
                 vec![
                     Point2::new(Real::from(2_i8), Real::zero()),
                     Point2::new(Real::from(2_i8), (Real::one() / Real::from(2_i8)).unwrap()),
@@ -140702,16 +140629,20 @@ mod conversion_tests {
                     Real::from(30_i8),
                     Real::from(48_i8),
                 ],
-                Arc::new([
-                    Real::one(),
-                    Real::zero(),
-                    Real::one(),
-                    Real::zero(),
-                    Real::zero(),
-                    Real::from(-4_i8),
-                ]),
-                source.retained_circular_conic().cloned(),
             )
+            .map(|curve| {
+                curve.with_implicit_quadratic_conic(
+                    Arc::new([
+                        Real::one(),
+                        Real::zero(),
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(-4_i8),
+                    ]),
+                    source.retained_circular_conic().cloned(),
+                )
+            })
             .unwrap();
             let nonlinear_analytic_quarter = nonlinear_analytic_source
                 .parallel_left(Real::one())
@@ -142425,27 +142356,31 @@ mod conversion_tests {
     fn nonrepresented_center_rational_quarter() -> (Real, RationalBezier2) {
         let third = (Real::one() / Real::from(3_i8)).unwrap();
         let center_x = third.clone().sqrt().unwrap();
-        let quarter = RationalBezier2::try_new_with_implicit_quadratic_conic(
+        let quarter = RationalBezier2::try_new(
             vec![
                 Point2::new(&center_x + Real::one(), Real::zero()),
                 Point2::new(&center_x + Real::one(), Real::one()),
                 Point2::new(center_x.clone(), Real::one()),
             ],
             vec![Real::one(), Real::one(), Real::from(2_i8)],
-            Arc::new([
-                Real::one(),
-                Real::zero(),
-                Real::one(),
-                Real::from(-2_i8) * &center_x,
-                Real::zero(),
-                &third - Real::one(),
-            ]),
-            Some(Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
-                center: Point2::new(center_x.clone(), Real::zero()),
-                radius_squared: Real::one(),
-                tangent_contacts: None,
-            })),
         )
+        .map(|curve| {
+            curve.with_implicit_quadratic_conic(
+                Arc::new([
+                    Real::one(),
+                    Real::zero(),
+                    Real::one(),
+                    Real::from(-2_i8) * &center_x,
+                    Real::zero(),
+                    &third - Real::one(),
+                ]),
+                Some(Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+                    center: Point2::new(center_x.clone(), Real::zero()),
+                    radius_squared: Real::one(),
+                    tangent_contacts: None,
+                })),
+            )
+        })
         .unwrap();
         (center_x, quarter)
     }
@@ -143237,7 +143172,7 @@ mod conversion_tests {
                     // positive gauge 1+t preserves its parameterized points
                     // but changes the tangent-numerator speed square. This
                     // forces the general two-radical complement proof.
-                    let left_gauged = RationalBezier2::try_new_with_implicit_quadratic_conic(
+                    let left_gauged = RationalBezier2::try_new(
                         vec![
                             Point2::new(Real::from(-2_i8), Real::zero()),
                             Point2::new(Real::from(-2_i8), Real::one()),
@@ -143253,16 +143188,20 @@ mod conversion_tests {
                             Real::from(2_i8),
                             Real::from(4_i8),
                         ],
-                        Arc::new([
-                            Real::one(),
-                            Real::zero(),
-                            Real::one(),
-                            Real::zero(),
-                            Real::zero(),
-                            Real::from(-4_i8),
-                        ]),
-                        left_source.retained_circular_conic().cloned(),
                     )
+                    .map(|curve| {
+                        curve.with_implicit_quadratic_conic(
+                            Arc::new([
+                                Real::one(),
+                                Real::zero(),
+                                Real::one(),
+                                Real::zero(),
+                                Real::zero(),
+                                Real::from(-4_i8),
+                            ]),
+                            left_source.retained_circular_conic().cloned(),
+                        )
+                    })
                     .unwrap();
                     let left = left_gauged.parallel_left(Real::from(-1_i8)).unwrap();
                     assert!(right.data.certified_ph_offset.set(None).is_ok());
@@ -146744,7 +146683,7 @@ mod conversion_tests {
         // positive homogeneous gauge. Its inward analytic parallel is the
         // left half of the selected unit circle, but its speed root differs
         // from the right carrier above.
-        let left_gauged = RationalBezier2::try_new_with_implicit_quadratic_conic(
+        let left_gauged = RationalBezier2::try_new(
             vec![
                 Point2::new(Real::from(-2_i8), Real::zero()),
                 Point2::new(Real::from(-2_i8), Real::one()),
@@ -146760,16 +146699,20 @@ mod conversion_tests {
                 Real::from(2_i8),
                 Real::from(4_i8),
             ],
-            Arc::new([
-                Real::one(),
-                Real::zero(),
-                Real::one(),
-                Real::zero(),
-                Real::zero(),
-                Real::from(-4_i8),
-            ]),
-            analytic_source.retained_circular_conic().cloned(),
         )
+        .map(|curve| {
+            curve.with_implicit_quadratic_conic(
+                Arc::new([
+                    Real::one(),
+                    Real::zero(),
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::from(-4_i8),
+                ]),
+                analytic_source.retained_circular_conic().cloned(),
+            )
+        })
         .unwrap();
         let reversed_left_parallel = left_gauged
             .parallel_left(Real::from(-1_i8))
@@ -154075,6 +154018,80 @@ mod conversion_tests {
     }
 
     #[test]
+    fn exterior_rational_analytic_points_use_the_selected_denominator_sign() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // Positive unit control weights, but W(3)=1-3/2 is negative.
+            let source = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
+                vec![Real::one(), half.clone()],
+            )
+            .unwrap();
+            let parallel = source.parallel_left(quarter.clone()).unwrap();
+            let Classification::Decided(parameter) = BezierRecursiveProjectiveParameter2::new(
+                BezierRecursiveQuadraticProjectiveScalar2 {
+                    numerator: field.constant(Real::from(3)).unwrap(),
+                    denominator: field.constant(Real::one()).unwrap(),
+                },
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the finite exterior parameter must retain");
+            };
+            let point = BezierAnalyticParallelPoint2::new_recursive_projective(
+                parallel.clone(),
+                parameter,
+                &policy,
+            );
+            let Classification::Decided(Some(projective)) =
+                point.recursive_projective_point(&policy).unwrap()
+            else {
+                panic!("the exterior analytic point must remain projective");
+            };
+            assert_eq!(
+                projective.denominator.sign(&policy).unwrap(),
+                Classification::Decided(RealSign::Positive)
+            );
+            for (coordinate, expected) in [
+                (&projective.x, Real::from(-3)),
+                (&projective.y, quarter.clone()),
+            ] {
+                let residual = coordinate
+                    .subtract(&projective.denominator.scale(&expected).unwrap())
+                    .unwrap();
+                assert_eq!(
+                    residual.sign(&policy).unwrap(),
+                    Classification::Decided(RealSign::Zero)
+                );
+            }
+            let start = BezierAnalyticParallelPoint2::new(
+                parallel.clone(),
+                BezierParameter2::Exact(Real::from(3)),
+                &policy,
+            );
+            let end = BezierAnalyticParallelPoint2::new_with_tangent_distance(
+                parallel,
+                BezierParameter2::Exact(Real::from(3)),
+                Real::one(),
+                &policy,
+            );
+            let Classification::Decided(Some(line)) =
+                start.recursive_tangent_line_to(&end, &policy).unwrap()
+            else {
+                panic!("the exterior tangent must retain its orientation");
+            };
+            // The line is directed rightward: its positive side is above y=1/4.
+            assert_eq!(
+                line.y.sign(&policy).unwrap(),
+                Classification::Decided(RealSign::Positive)
+            );
+        }
+    }
+
+    #[test]
     fn analytic_point_clones_reuse_the_certified_recursive_field() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let source = QuadraticBezier2::new(
@@ -157749,6 +157766,119 @@ mod conversion_tests {
                     carrier.data.source.unit_ph_speed.get(),
                     Some(None)
                 ));
+            }
+        }
+    }
+
+    #[test]
+    fn homogeneous_representation_avoids_ph_degree_inflation() {
+        let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // H=((t-1/2)^2-epsilon,2 sqrt(epsilon)(t-1/2)); its positive
+        // speed is (t-1/2)^2+epsilon. Positive control weights are not
+        // required to represent the exact degree-five rational offset.
+        for epsilon in [ratio(1, 64), ratio(1, 20), ratio(1, 65_536)] {
+            let x = power_to_bernstein_coefficients(
+                &[
+                    Real::zero(),
+                    ratio(1, 4) - &epsilon,
+                    ratio(-1, 2),
+                    ratio(1, 3),
+                ],
+                3,
+            )
+            .unwrap();
+            let root = epsilon.sqrt().unwrap();
+            let y = power_to_bernstein_coefficients(&[Real::zero(), -&root, root], 3).unwrap();
+            let controls: Vec<_> = x
+                .into_iter()
+                .zip(y)
+                .map(|(x, y)| Point2::new(x, y))
+                .collect();
+            let source = CubicBezier2::new(
+                controls[0].clone(),
+                controls[1].clone(),
+                controls[2].clone(),
+                controls[3].clone(),
+            );
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let parallel = source.parallel_left(ratio(1, 4)).unwrap();
+                let Classification::Decided(Some(offset)) = parallel
+                    .exact_pythagorean_hodograph_offset(&policy)
+                    .unwrap()
+                else {
+                    panic!("the exact regular PH source must materialize");
+                };
+                assert_eq!(offset.curve().degree(), 5);
+                for parameter in [Real::zero(), ratio(1, 2), Real::one()] {
+                    let Classification::Decided(expected) =
+                        parallel.point_at(&parameter, &policy).unwrap()
+                    else {
+                        panic!("the analytic parallel must evaluate");
+                    };
+                    let actual = offset.curve().point_at(&parameter, &policy).unwrap();
+                    assert_eq!(
+                        real_sign(&actual.distance_squared(&expected), &policy),
+                        Some(RealSign::Zero)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn homogeneous_representation_retains_exterior_ph_branch() {
+        let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // With w=t-1/2, (X,Y,W)=(3w^2-1,3w,w^3) has a unit-domain
+        // pole but a finite regular branch on [2,3]. Its primitive speed is
+        // 1+w^2, so the exact parallel remains rational on that branch.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let controls = [
+                (ratio(-1, 4), ratio(-3, 2), ratio(-1, 8)),
+                (ratio(-5, 4), ratio(-1, 2), ratio(1, 8)),
+                (ratio(-5, 4), ratio(1, 2), ratio(-1, 8)),
+                (ratio(-1, 4), ratio(3, 2), ratio(1, 8)),
+            ]
+            .into_iter()
+            .map(|(x, y, w)| crate::HomogeneousControl2::new(x, y, w))
+            .collect();
+            let Classification::Decided(source) =
+                RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap()
+            else {
+                panic!("the source endpoint charts must be finite");
+            };
+            let source = source.parallel_left(ratio(1, 4)).unwrap();
+            for reversed in [false, true] {
+                let parallel = if reversed {
+                    source.reversed()
+                } else {
+                    source.clone()
+                };
+                let chart = |t| {
+                    if reversed {
+                        Real::one() - Real::from(t)
+                    } else {
+                        Real::from(t)
+                    }
+                };
+                let range = CurveParameterRange2::new_validated(chart(2).into(), chart(3).into());
+                let component = match parallel
+                    .exact_rational_parallel_component_on_regular_range(&range, &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(Some(component)) => component,
+                    result => panic!("the exterior regular PH branch must materialize: {result:?}"),
+                };
+                let Classification::Decided(actual) = component
+                    .curve()
+                    .point_at_affine_classified(&chart(2), &policy)
+                else {
+                    panic!("the exterior PH image must evaluate");
+                };
+                let expected = Point2::new(ratio(679, 351), ratio(193, 156));
+                assert_eq!(
+                    real_sign(&actual.distance_squared(&expected), &policy),
+                    Some(RealSign::Zero)
+                );
             }
         }
     }
@@ -162247,11 +162377,19 @@ mod conversion_tests {
         let parameter = algebraic_parameter(polynomial_multiply(&first, &second));
         let x = -Real::from(2) * &fifth * Real::from(6).sqrt().unwrap();
         let expected = Point2::new(x.clone(), fifth.clone());
-        let negative_weights = RationalBezier2::try_new(
-            source.control_points().to_vec(),
-            source.weights().iter().map(|weight| -weight).collect(),
+        let Classification::Decided(negative_weights) = RationalBezier2::from_homogeneous_controls(
+            source
+                .homogeneous_controls()
+                .iter()
+                .map(|control| {
+                    crate::HomogeneousControl2::new(-control.x(), -control.y(), -control.weight())
+                })
+                .collect(),
+            &CurveContext::STRICT,
         )
-        .unwrap();
+        .unwrap() else {
+            panic!("the negative projective gauge preserves finite endpoints");
+        };
         for source in [source, negative_weights] {
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
                 let point = BezierAnalyticParallelPoint2::new(

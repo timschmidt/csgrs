@@ -147,6 +147,12 @@ exact signatures.
 - `RationalQuadraticBezier2` and `RationalBezier2` provide checked rational
   construction, evaluation, derivatives, splitting, reversal, transforms, and
   topology/intersection evidence.
+- `RationalBezier2::from_homogeneous_controls` retains exact Bernstein
+  `(X, Y, W)` coefficients, including zero-weight intermediate controls.
+  `try_new` accepts affine authoring points and weights; `affine_control_points`
+  returns an optional finite view. Splitting and degree elevation preserve the
+  homogeneous representation without forcing every control into affine space.
+  Domain finiteness and local convex-hull certificates are separate proofs.
 - `BezierParameter2`, `BezierParameterRange2`, and
   `BezierRootIsolationResult2` retain exact algebraic parameter information.
 - Bézier analysis includes cusp and inflection classification, monotone spans,

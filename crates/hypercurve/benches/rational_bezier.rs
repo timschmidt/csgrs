@@ -103,7 +103,8 @@ fn bench_large_rational_bezier() {
         let mut split_checksum = 0_usize;
         for _ in 0..iterations {
             let (left, right) = decided(curve.split_at_exact(&parameter, &policy).unwrap());
-            split_checksum ^= black_box(left.control_points().len() + right.control_points().len());
+            split_checksum ^=
+                black_box(left.homogeneous_controls().len() + right.homogeneous_controls().len());
         }
         let elapsed = started.elapsed();
         println!(

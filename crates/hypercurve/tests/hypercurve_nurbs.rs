@@ -1145,7 +1145,7 @@ fn periodic_nurbs_elevated_carrier_preserves_wrapped_points_and_derivatives() {
 }
 
 #[test]
-fn nurbs_degree_elevation_retains_contextual_invalid_target_and_projective_blocker() {
+fn nurbs_degree_elevation_retains_homogeneous_spans_and_actual_poles() {
     let curve = quadratic_nurbs();
     let invalid = curve
         .degree_elevation(1, &CurveContext::STRICT)
@@ -1162,17 +1162,17 @@ fn nurbs_degree_elevation_retains_contextual_invalid_target_and_projective_block
     )
     .unwrap()
     .into_value();
-    let blocked = singular
+    let elevated = singular
         .degree_elevation(2, &CurveContext::STRICT)
-        .unwrap_err();
-    assert_eq!(blocked.operation(), CurveOperation2::DegreeElevation);
-    assert_eq!(blocked.family(), CurveFamily2::Nurbs);
-    assert_eq!(
-        singular
-            .degree_elevation(2, &CurveContext::STRICT)
-            .unwrap_err(),
-        blocked
-    );
+        .unwrap()
+        .into_value();
+    assert_eq!(elevated.spans().len(), 1);
+    let span = elevated.spans()[0].curve();
+    assert_eq!(span.degree(), 2);
+    assert!(span.affine_control_points().is_none());
+    assert_eq!(span.weights(), &[r(1), r(0), r(-1)]);
+    assert!(span.point_at(&q(1, 2), &CurveContext::STRICT).is_err());
+    assert!(span.certified_bounds(&CurveContext::STRICT).is_err());
 }
 
 #[test]

@@ -652,7 +652,15 @@ impl NurbsCurve2 {
             .parameter_start
             .clone();
         knots.extend(std::iter::repeat_n(domain_start, target_degree + 1));
-        control_points.extend_from_slice(spans[0].curve().control_points());
+        control_points.extend_from_slice(spans[0].curve().affine_control_points().ok_or_else(
+            || {
+                ExactCurveError::blocked(
+                    CurveOperation2::DegreeElevation,
+                    CurveFamily2::Nurbs,
+                    UncertaintyReason::Unsupported,
+                )
+            },
+        )?);
         weights.extend_from_slice(&span_weights[0]);
         let mut removable_knots = Vec::new();
         for (span_index, (knot, source_multiplicity)) in multiplicities.iter().enumerate() {
@@ -667,7 +675,15 @@ impl NurbsCurve2 {
             ));
             let next_span = &spans[span_index + 1];
             let first_control = usize::from(!discontinuous);
-            control_points.extend_from_slice(&next_span.curve().control_points()[first_control..]);
+            control_points.extend_from_slice(
+                &next_span.curve().affine_control_points().ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        CurveOperation2::DegreeElevation,
+                        CurveFamily2::Nurbs,
+                        UncertaintyReason::Unsupported,
+                    )
+                })?[first_control..],
+            );
             weights.extend_from_slice(&span_weights[span_index + 1][first_control..]);
             removable_knots.push((
                 knot.clone(),

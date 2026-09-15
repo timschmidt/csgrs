@@ -6,8 +6,8 @@ use crate::{
 };
 use std::fmt::Write;
 
-const PREFIX: &str = "1:";
-const MAGIC: &[u8; 4] = b"HCP1";
+const PREFIX: &str = "2:";
+const MAGIC: &[u8; 4] = b"HCP2";
 
 pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<String> {
     let mut writer = ExactWriter::new(max_bytes);
@@ -204,8 +204,13 @@ impl ExactWriter {
             }
             Some(CurveGeometry2::RationalBezier(curve)) => {
                 self.write_u8(5)?;
-                self.write_points(curve.control_points())?;
-                self.write_reals(curve.weights())
+                self.write_len(curve.homogeneous_controls().len())?;
+                for control in curve.homogeneous_controls() {
+                    self.write_real(control.x())?;
+                    self.write_real(control.y())?;
+                    self.write_real(control.weight())?;
+                }
+                Ok(())
             }
             Some(CurveGeometry2::PolynomialBSpline(curve)) => {
                 self.write_u8(6)?;
@@ -370,10 +375,31 @@ impl<'a> ExactReader<'a> {
                     .map_err(geometry_error)?,
                 )
             }
-            5 => Curve2::from(
-                RationalBezier2::try_new(self.read_points()?, self.read_reals()?)
-                    .map_err(geometry_error)?,
-            ),
+            5 => {
+                let count = self.read_len()?;
+                self.check_collection_len(count, 12)?;
+                let controls = (0..count)
+                    .map(|_| {
+                        Ok(crate::HomogeneousControl2::new(
+                            self.read_real()?,
+                            self.read_real()?,
+                            self.read_real()?,
+                        ))
+                    })
+                    .collect::<SvgResult<Vec<_>>>()?;
+                let crate::Classification::Decided(curve) =
+                    RationalBezier2::from_homogeneous_controls(
+                        controls,
+                        &crate::CurveContext::STRICT,
+                    )
+                    .map_err(geometry_error)?
+                else {
+                    return Err(malformed(
+                        "rational curve endpoints are not certified finite",
+                    ));
+                };
+                Curve2::from(curve)
+            }
             6 => {
                 let degree = self.read_len()?;
                 let points = self.read_points()?;

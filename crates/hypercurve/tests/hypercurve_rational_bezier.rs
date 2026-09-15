@@ -2,10 +2,10 @@ use hypercurve::BezierAlgebraicImageStatus;
 use hypercurve::{
     Axis2, BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
     BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveFamily2, CurveOperation2, CurvePoint2, ExactCurveError, LineSeg2, ParamRange, Point2,
-    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionCandidates2,
-    RationalBezierIntersectionContacts2, RationalBezierOverlapOrientation2,
-    RationalBezierPointIncidence2, RationalQuadraticBezier2, Real,
+    CurveFamily2, CurveOperation2, CurvePoint2, LineSeg2, ParamRange, Point2, QuadraticBezier2,
+    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
+    Real,
 };
 use hyperreal::Rational;
 use num::{BigInt, BigUint};
@@ -487,7 +487,7 @@ fn general_rational_contacts_recognize_projective_scale_and_reversal() {
     let curve = curve();
     let policy = CurveContext::STRICT;
     let scaled = RationalBezier2::try_new(
-        curve.control_points().to_vec(),
+        curve.affine_control_points().unwrap().to_vec(),
         vec![r(2), r(4), r(6), r(8)],
     )
     .unwrap();
@@ -1237,16 +1237,20 @@ fn independently_constructed_partial_overlap_reconstructs_rational_endpoints() {
             .subcurve_between_exact(&q(1, 4), &Real::one(), &policy)
             .unwrap(),
     );
-    let first = RationalBezier2::try_new(
-        source_first.control_points().to_vec(),
-        source_first.weights().to_vec(),
-    )
-    .unwrap();
-    let second = RationalBezier2::try_new(
-        source_second.control_points().to_vec(),
-        source_second.weights().to_vec(),
-    )
-    .unwrap();
+    let first = decided(
+        RationalBezier2::from_homogeneous_controls(
+            source_first.homogeneous_controls().to_vec(),
+            &policy,
+        )
+        .unwrap(),
+    );
+    let second = decided(
+        RationalBezier2::from_homogeneous_controls(
+            source_second.homogeneous_controls().to_vec(),
+            &policy,
+        )
+        .unwrap(),
+    );
 
     let RationalBezierIntersectionContacts2::Overlap(overlap) =
         first.intersection_contacts(&second, &policy).unwrap()
@@ -1401,19 +1405,19 @@ fn rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_line
 }
 
 #[test]
-fn rational_bezier_degree_elevation_evidence_invalid_target_and_zero_projective_weight() {
+fn rational_bezier_degree_elevation_preserves_projective_controls_and_poles() {
     let curve = curve();
     let invalid = curve.elevated_to_degree(2).unwrap_err();
     assert_eq!(invalid.operation(), CurveOperation2::DegreeElevation);
     assert_eq!(invalid.family(), CurveFamily2::RationalBezier);
 
     let singular = RationalBezier2::try_new(vec![p(0, 0), p(2, 0)], vec![r(1), r(-1)]).unwrap();
-    let first = singular.elevated_to_degree(2);
-    assert!(matches!(
-        &first,
-        Err(ExactCurveError::Blocked(blocker))
-            if blocker.operation() == CurveOperation2::DegreeElevation
-                && blocker.family() == CurveFamily2::RationalBezier
-    ));
-    assert_eq!(singular.elevated_to_degree(2), first);
+    let first = singular.elevated_to_degree(2).unwrap();
+    assert_eq!(first.degree(), 2);
+    assert!(first.affine_control_points().is_none());
+    assert_eq!(first.weights(), &[r(1), r(0), r(-1)]);
+    assert_eq!(singular.elevated_to_degree(2).unwrap(), first);
+    // Representing a zero intermediate weight does not certify a finite curve.
+    assert!(first.point_at(&q(1, 2), &CurveContext::STRICT).is_err());
+    assert!(first.certified_bounds(&CurveContext::STRICT).is_err());
 }

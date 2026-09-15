@@ -14658,17 +14658,7 @@ fn transform_retained_region_fragment(
             let transform = retained_similarity()?;
             let source = match fragment.source() {
                 BezierSelectedFiberSource2::Rational(curve) => {
-                    BezierSelectedFiberSource2::Rational(
-                        RationalBezier2::try_new(
-                            curve
-                                .control_points()
-                                .iter()
-                                .map(|point| transform.transform_point(point))
-                                .collect(),
-                            curve.weights().to_vec(),
-                        )
-                        .map_err(affine_region_error)?,
-                    )
+                    BezierSelectedFiberSource2::Rational(curve.transform_similarity(transform))
                 }
                 BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
                     BezierSelectedFiberSource2::AnalyticParallel(
@@ -14774,11 +14764,7 @@ fn transform_region_subcurve(
             .map_err(affine_region_error)?,
         )),
         BezierSubcurve2::Rational(curve) => Ok(BezierSubcurve2::Rational(
-            RationalBezier2::try_new(
-                curve.control_points().iter().map(point).collect(),
-                curve.weights().to_vec(),
-            )
-            .map_err(affine_region_error)?,
+            curve.transformed_affine([m00, m01, m10, m11, tx, ty]),
         )),
     }
 }
@@ -16240,13 +16226,12 @@ fn algebraic_point_on_rational_curve(
     };
     if weight_sign != RealSign::Zero {
         let controls = curve
-            .control_points()
+            .homogeneous_controls()
             .iter()
-            .zip(curve.weights())
-            .map(|(control, weight)| AlgebraicRayHomogeneousControl2 {
-                x: control.x() * weight,
-                y: control.y() * weight,
-                weight: weight.clone(),
+            .map(|control| AlgebraicRayHomogeneousControl2 {
+                x: control.x().clone(),
+                y: control.y().clone(),
+                weight: control.weight().clone(),
             })
             .collect::<Vec<_>>();
         for (factor_x, factor_y) in [(Real::one(), Real::zero()), (Real::zero(), Real::one())] {
@@ -16402,13 +16387,12 @@ fn algebraic_point_rational_curve_ray_winding(
     };
     let controls = fragment
         .curve
-        .control_points()
+        .homogeneous_controls()
         .iter()
-        .zip(fragment.curve.weights())
-        .map(|(control, weight)| AlgebraicRayHomogeneousControl2 {
-            x: control.x() * weight,
-            y: control.y() * weight,
-            weight: weight.clone(),
+        .map(|control| AlgebraicRayHomogeneousControl2 {
+            x: control.x().clone(),
+            y: control.y().clone(),
+            weight: control.weight().clone(),
         })
         .collect::<Vec<_>>();
     let side_x = -direction_y.clone();
@@ -23117,7 +23101,7 @@ mod tests {
         let support = CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false)
             .expect("the unit quarter circle is valid");
         let (implicit, circular) = crate::arc_bezier::circular_conic_provenance(&support);
-        let nonlinear = RationalBezier2::try_new_with_implicit_quadratic_conic(
+        let nonlinear = RationalBezier2::try_new(
             vec![
                 p(1, 0),
                 Point2::new(Real::one(), q(1, 4)),
@@ -23132,9 +23116,8 @@ mod tests {
                 q(5, 4),
                 Real::from(2_i8),
             ],
-            implicit,
-            Some(circular),
         )
+        .map(|curve| curve.with_implicit_quadratic_conic(implicit, Some(circular)))
         .expect("the nonlinear quarter-circle chart is finite");
         let nonlinear = Curve2::from(nonlinear);
         let next_line = Curve2::from(LineSeg2::try_new(p(0, 1), p(0, 0)).unwrap());
@@ -24966,14 +24949,7 @@ mod tests {
                             _ => None,
                         })
                         .expect("the transformed fillet retains its pair-radial carrier");
-                    let transformed_line = RationalBezier2::try_new(
-                        line.control_points()
-                            .iter()
-                            .map(|point| point.transform_similarity(&transform))
-                            .collect(),
-                        line.weights().to_vec(),
-                    )
-                    .expect("the exact probe transforms without changing its parameterization");
+                    let transformed_line = line.transform_similarity(&transform);
                     let (transformed_contacts, transformed_parameter_map) =
                         match transformed_selected_radial
                             .semicircle()
@@ -25043,15 +25019,7 @@ mod tests {
                             .semicircle()
                             .transform_similarity(&nested_reflection)
                             .expect("a second exact similarity retains pair provenance");
-                        let nested_line = RationalBezier2::try_new(
-                            transformed_line
-                                .control_points()
-                                .iter()
-                                .map(|point| point.transform_similarity(&nested_reflection))
-                                .collect(),
-                            transformed_line.weights().to_vec(),
-                        )
-                        .expect("the probe follows the nested similarity");
+                        let nested_line = transformed_line.transform_similarity(&nested_reflection);
                         let nested_contacts = match nested_circle
                             .rational_intersections_with_parameter_map(&nested_line, &policy)
                             .expect("the nested pair-radial/rational system remains exact")

@@ -25,7 +25,7 @@ fuzz_target!(|bytes: &[u8]| {
         write!(&mut extension, "{byte:02x}").unwrap();
     }
     let document = format!(
-        r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="black" data-hypercurve-path="1:{extension}" d="M0 0 L1 1"/></svg>"#
+        r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="black" data-hypercurve-path="2:{extension}" d="M0 0 L1 1"/></svg>"#
     );
     let _ = import_svg_document(&document);
 });

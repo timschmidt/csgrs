@@ -696,11 +696,11 @@ fn noncircular_rational_ph_parallel_preserves_parameter_and_derivative_exactly()
 }
 
 #[test]
-fn exact_ph_materialization_has_no_fixed_bernstein_elevation_limit() {
+fn exact_ph_materialization_retains_natural_degree_with_mixed_weights() {
     // Let `a=t-1/2` and `b=1/16`. The cubic below has hodograph
     // `(a^2-b^2, 2ab)` and speed `(t-1/2)^2 + 1/256`. The speed is strictly
     // positive, but its Bernstein coefficients do not all become positive
-    // until degree 65, well beyond the former fixed +32 search window.
+    // until degree 65. Homogeneous controls retain the natural degree five.
     let source = CubicBezier2::new(
         p(0, 0),
         Point2::new(q(21, 256), q(-1, 48)),
@@ -719,7 +719,7 @@ fn exact_ph_materialization_has_no_fixed_bernstein_elevation_limit() {
                 panic!("PH degree elevation was uncertain: {reason:?}")
             }
         };
-        assert_eq!(exact.rational_degree(), 65);
+        assert_eq!(exact.rational_degree(), 5);
         for parameter in [r(0), q(1, 2), r(1)] {
             let analytic = match parallel.point_at(&parameter, &policy).unwrap() {
                 Classification::Decided(point) => point,
@@ -756,7 +756,7 @@ fn symmetric_algebraic_quarter_circle_parallel_is_exact_under_both_policies() {
 
         assert_eq!(exact.rational_degree(), 2);
         assert_eq!(
-            exact.curve().control_points(),
+            exact.curve().affine_control_points().unwrap(),
             &[
                 Point2::new(q(1, 2), r(0)),
                 Point2::new(q(1, 2), q(1, 2)),
@@ -798,7 +798,7 @@ fn circular_parallel_materializes_radius_collapse_and_reversal_exactly() {
             }
         };
         assert_eq!(exact.rational_degree(), 2);
-        assert_eq!(exact.curve().control_points(), expected);
+        assert_eq!(exact.curve().affine_control_points().unwrap(), expected);
         assert_eq!(exact.curve().weights(), &[r(1), r(1), r(2)]);
     }
 }
@@ -2870,11 +2870,15 @@ fn independently_constructed_ph_parallel_reuses_rational_overlap_authority() {
     else {
         panic!("canonical PH cubic did not materialize exactly");
     };
-    let independently_constructed = RationalBezier2::try_new(
-        materialized.curve().control_points().to_vec(),
-        materialized.curve().weights().to_vec(),
-    )
-    .unwrap();
+    let Classification::Decided(independently_constructed) =
+        RationalBezier2::from_homogeneous_controls(
+            materialized.curve().homogeneous_controls().to_vec(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+    else {
+        panic!("the reconstructed PH endpoints must remain finite");
+    };
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let intersections = decided_parallel_set(

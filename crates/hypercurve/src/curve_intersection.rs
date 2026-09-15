@@ -1392,7 +1392,7 @@ fn native_arc_span_parameter(
     point: &Point2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierParameter2> {
-    if span.control_points().len() != 3 || span.weights().len() != 3 {
+    if span.degree() != 2 {
         let mut parameters = match span
             .retained_circle_point_parameters(point, policy)
             .map_err(|cause| native_arc_parameter_error(curve, cause))?
@@ -1431,13 +1431,18 @@ fn native_arc_span_parameter(
         return Ok(BezierParameter2::Exact(Real::one()));
     }
 
-    let controls = span.control_points();
-    let weights = span.weights();
-    let p0 = controls[0].delta_from(point);
-    let p1 = controls[1].delta_from(point);
-    let p2 = controls[2].delta_from(point);
-    let beta2_scaled = ((&p0.0 * &p1.1) - (&p0.1 * &p1.0)) * &weights[0];
-    let beta0_scaled = ((&p1.0 * &p2.1) - (&p1.1 * &p2.0)) * &weights[2];
+    let controls = span.homogeneous_controls();
+    let relative = |control: &crate::HomogeneousControl2| {
+        (
+            control.x() - point.x() * control.weight(),
+            control.y() - point.y() * control.weight(),
+        )
+    };
+    let p0 = relative(&controls[0]);
+    let p1 = relative(&controls[1]);
+    let p2 = relative(&controls[2]);
+    let beta2_scaled = &p0.0 * &p1.1 - &p0.1 * &p1.0;
+    let beta0_scaled = &p1.0 * &p2.1 - &p1.1 * &p2.0;
     let ratio_squared = (beta2_scaled / beta0_scaled)
         .map_err(|cause| native_arc_parameter_error(curve, cause.into()))?;
     let ratio = ratio_squared

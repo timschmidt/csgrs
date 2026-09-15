@@ -516,12 +516,16 @@ impl RationalQuadraticBezier2 {
             self.retained_implicit_quadratic_conic(),
             self.retained_circular_conic(),
         ) {
-            let promoted = RationalBezier2::try_new_with_implicit_quadratic_conic(
+            let promoted = RationalBezier2::try_new(
                 self.control_points().into_iter().cloned().collect(),
                 self.weights().into_iter().cloned().collect(),
-                implicit_conic.clone(),
-                Some(circular_conic.clone()),
-            );
+            )
+            .map(|curve| {
+                curve.with_implicit_quadratic_conic(
+                    implicit_conic.clone(),
+                    Some(circular_conic.clone()),
+                )
+            });
             return match promoted {
                 Ok(promoted) => promoted.relation_to_line_with_contacts(line, policy),
                 Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),

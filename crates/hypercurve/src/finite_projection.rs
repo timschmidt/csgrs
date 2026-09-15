@@ -752,15 +752,21 @@ fn projected_subcurve_with_endpoints(
             )?)
         }
         BezierSubcurve2::Rational(curve) => {
-            let mut controls = curve.control_points().to_vec();
-            controls[0] = start;
-            *controls
+            let mut controls = curve.homogeneous_controls().to_vec();
+            controls[0] =
+                crate::HomogeneousControl2::from_affine(&start, controls[0].weight().clone());
+            let last = controls
                 .last_mut()
-                .expect("rational Bezier controls are nonempty") = end;
-            BezierSubcurve2::Rational(crate::RationalBezier2::try_new(
-                controls,
-                curve.weights().to_vec(),
-            )?)
+                .expect("rational Bezier controls are nonempty");
+            *last = crate::HomogeneousControl2::from_affine(&end, last.weight().clone());
+            let Classification::Decided(curve) =
+                crate::RationalBezier2::from_homogeneous_controls(controls, &CurveContext::STRICT)?
+            else {
+                return Err(CurveError::Topology(
+                    "finite projection could not retain rational endpoints".into(),
+                ));
+            };
+            BezierSubcurve2::Rational(curve)
         }
     })
 }
@@ -1456,8 +1462,10 @@ fn append_bezier_subcurve_samples(
     const MAX_DEPTH: usize = 32;
     let controls = finite_subcurve_controls(curve)?;
     let common_weight_sign = subcurve_has_common_weight_sign(curve, policy);
-    let flat = common_weight_sign && control_polygon_chord_error(&controls) <= options.chord_error;
-    if flat {
+    if common_weight_sign
+        && let Some(controls) = controls
+        && control_polygon_chord_error(&controls) <= options.chord_error
+    {
         push_if_new(points, controls[0]);
         push_if_new(
             points,
@@ -1492,8 +1500,8 @@ fn append_bezier_subcurve_samples(
     append_bezier_subcurve_samples(points, &right, options, policy, depth + 1)
 }
 
-fn finite_subcurve_controls(curve: &BezierSubcurve2) -> CurveResult<Vec<[f64; 2]>> {
-    match curve {
+fn finite_subcurve_controls(curve: &BezierSubcurve2) -> CurveResult<Option<Vec<[f64; 2]>>> {
+    let controls: CurveResult<Vec<[f64; 2]>> = match curve {
         BezierSubcurve2::Quadratic(curve) => curve
             .control_points()
             .into_iter()
@@ -1510,9 +1518,13 @@ fn finite_subcurve_controls(curve: &BezierSubcurve2) -> CurveResult<Vec<[f64; 2]
             .map(finite_point)
             .collect(),
         BezierSubcurve2::Rational(curve) => {
-            curve.control_points().iter().map(finite_point).collect()
+            let Some(controls) = curve.affine_control_points() else {
+                return Ok(None);
+            };
+            controls.iter().map(finite_point).collect()
         }
-    }
+    };
+    controls.map(Some)
 }
 
 fn subcurve_has_common_weight_sign(curve: &BezierSubcurve2, policy: &CurveContext) -> bool {
