@@ -5348,6 +5348,28 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 policy,
             );
         };
+        // Separated certified intervals already decide order. In particular,
+        // a selected spline boundary need not evaluate an unrelated contact
+        // polynomial in its high-degree field just to reject a distant root.
+        let strict = policy.strict_counterpart();
+        let separated_order = |lower: &Real, upper: &Real, other: &BezierAlgebraicParameter2| {
+            if compare_reals(upper, other.interval().start(), &strict)
+                == Some(std::cmp::Ordering::Less)
+            {
+                Some(std::cmp::Ordering::Less)
+            } else if compare_reals(other.interval().end(), lower, &strict)
+                == Some(std::cmp::Ordering::Less)
+            {
+                Some(std::cmp::Ordering::Greater)
+            } else {
+                None
+            }
+        };
+        if let Some(order) =
+            separated_order(&self.root().lower, &self.root().upper, other_algebraic)
+        {
+            return Ok(Classification::Decided(order));
+        }
         if other_algebraic == &self.data.authority.data.retained_parameter {
             // This selected scalar is a root `u` in a fiber retained at
             // `alpha`.  Comparing it with that very retained parameter needs
@@ -5393,17 +5415,12 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                     policy,
                 );
             };
+            if let Some(order) =
+                separated_order(&selected.root().lower, &selected.root().upper, &other)
+            {
+                return Ok(Classification::Decided(order));
+            }
             let strict = &CurveContext::STRICT;
-            if compare_reals(&selected.root().upper, other.interval().start(), strict)
-                == Some(std::cmp::Ordering::Less)
-            {
-                return Ok(Classification::Decided(std::cmp::Ordering::Less));
-            }
-            if compare_reals(other.interval().end(), &selected.root().lower, strict)
-                == Some(std::cmp::Ordering::Less)
-            {
-                return Ok(Classification::Decided(std::cmp::Ordering::Greater));
-            }
             if is_other_root
                 && matches!(
                     compare_reals(
@@ -85000,6 +85017,19 @@ fn retained_point_evidence_equality_by_refinement(
             return Classification::Decided(equal);
         }
     }
+    let source_and_point = match (&first.0, &second.0) {
+        (CurvePointData2::AnalyticParallel(source), CurvePointData2::Exact(point))
+        | (CurvePointData2::Exact(point), CurvePointData2::AnalyticParallel(source)) => {
+            Some((source, point))
+        }
+        _ => None,
+    };
+    if let Some((source, point)) = source_and_point
+        && let Ok(Some(equal)) =
+            source.rational_circle_source_point_equality(point, &policy.strict_counterpart())
+    {
+        return Classification::Decided(equal);
+    }
     // Equality boxes never separate. Before growing their rational endpoints
     // through hundreds of bisections, compare the exact represented
     // coordinates already owned by both carriers. Unsupported coordinate
@@ -94469,6 +94499,26 @@ impl BezierAnalyticParallelPoint2 {
         )
     }
 
+    fn parameter_polynomial_sign(
+        &self,
+        polynomial: Vec<Real>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        match &self.data.parameter {
+            BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
+                signed_coefficients_at_parameter(polynomial, parameter, policy)
+            }
+            BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => parameter
+                .predicate_sign(
+                    &bivariate_outer_product(&[Real::one()], &polynomial),
+                    policy,
+                ),
+            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                parameter.polynomial_sign(&polynomial, policy)
+            }
+        }
+    }
+
     /// Signs `|point - self|^2 - radius_squared` in the retained source
     /// parameter field without adjoining the source-speed square root.
     fn circle_residual_sign_to_exact(
@@ -94526,19 +94576,7 @@ impl BezierAnalyticParallelPoint2 {
             &polynomial_multiply(frame_tangent_x, frame_tangent_x),
             &polynomial_multiply(frame_tangent_y, frame_tangent_y),
         );
-        let sign = |polynomial: Vec<Real>| match &self.data.parameter {
-            BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
-                signed_coefficients_at_parameter(polynomial, parameter, policy)
-            }
-            BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => parameter
-                .predicate_sign(
-                    &bivariate_outer_product(&[Real::one()], &polynomial),
-                    policy,
-                ),
-            BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
-                parameter.polynomial_sign(&polynomial, policy)
-            }
-        };
+        let sign = |polynomial| self.parameter_polynomial_sign(polynomial, policy);
         let speed_sign = match sign(speed_squared.clone())? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
@@ -94588,6 +94626,81 @@ impl BezierAnalyticParallelPoint2 {
             Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         })
+    }
+
+    /// Compares through the source circle and one coordinate. On a circle,
+    /// fixing one coordinate and the sign of the other radial coordinate
+    /// uniquely selects a point. This keeps irrational source coefficients
+    /// and selected parameters in their existing field.
+    fn rational_circle_source_point_equality(
+        &self,
+        point: &Point2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<bool>> {
+        if !policy.accepts_retained_policy(self.data.policy)
+            || self.data.parallel.distance().zero_status() != ZeroKnowledge::Zero
+            || self.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+        {
+            return Ok(None);
+        }
+        let BezierParallelSource2::Rational(source) = self.data.parallel.source() else {
+            return Ok(None);
+        };
+        let Classification::Decided(Some(circle)) =
+            crate::arc_bezier::rational_bezier_circular_arc(source, policy)?
+        else {
+            return Ok(None);
+        };
+        let point = point.translated(-&self.data.translation_x, -&self.data.translation_y);
+        match crate::classify::is_zero(
+            &(point.distance_squared(circle.center()) - circle.radius_squared_ref()),
+            policy,
+        ) {
+            Some(true) => {}
+            Some(false) => return Ok(Some(false)),
+            None => return Ok(None),
+        }
+        let basis = source.homogeneous_power_basis()?;
+        let sign = |polynomial| self.parameter_polynomial_sign(polynomial, policy);
+        let Classification::Decided(weight_sign @ (RealSign::Positive | RealSign::Negative)) =
+            sign(basis.weight.clone())?
+        else {
+            return Ok(None);
+        };
+        for (coordinate, value, other, other_value, center) in [
+            (
+                &basis.x_numerator,
+                point.x(),
+                &basis.y_numerator,
+                point.y(),
+                circle.center().y(),
+            ),
+            (
+                &basis.y_numerator,
+                point.y(),
+                &basis.x_numerator,
+                point.x(),
+                circle.center().x(),
+            ),
+        ] {
+            if sign(polynomial_subtract(
+                coordinate,
+                &polynomial_scale(&basis.weight, value),
+            ))? != Classification::Decided(RealSign::Zero)
+            {
+                continue;
+            }
+            let Some(expected) = real_sign(&(other_value - center), policy) else {
+                continue;
+            };
+            if let Classification::Decided(actual) = sign(polynomial_subtract(
+                other,
+                &polynomial_scale(&basis.weight, center),
+            ))? {
+                return Ok(Some(product_sign(actual, weight_sign) == expected));
+            }
+        }
+        Ok(None)
     }
 
     pub(crate) fn same_point_evidence(
@@ -159477,6 +159590,77 @@ mod conversion_tests {
         let expected = Point2::from_values(5, 3);
         assert_eq!(bounds.min(), &expected);
         assert_eq!(bounds.max(), &expected);
+    }
+
+    #[test]
+    fn irrational_circle_source_points_reuse_coordinate_and_branch_evidence() {
+        let fifth = (Real::one() / Real::from(5)).unwrap();
+        let weight = (Real::one() / Real::from(2)).unwrap().sqrt().unwrap();
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(-1, 0),
+                Point2::from_values(-1, 1),
+                Point2::from_values(0, 1),
+            ],
+            vec![Real::one(), weight, Real::one()],
+        )
+        .unwrap();
+        let basis = source.homogeneous_power_basis().unwrap();
+        // This degree-four contact equation retains both radial branches.
+        // Exactly one root belongs to the authored northwest quadrant.
+        let first = polynomial_subtract(
+            &polynomial_scale(&basis.y_numerator, &Real::from(5)),
+            &basis.weight,
+        );
+        let second = polynomial_add(
+            &polynomial_scale(&basis.y_numerator, &Real::from(3)),
+            &basis.weight,
+        );
+        let parameter = algebraic_parameter(polynomial_multiply(&first, &second));
+        let x = -Real::from(2) * &fifth * Real::from(6).sqrt().unwrap();
+        let expected = Point2::new(x.clone(), fifth.clone());
+        let negative_weights = RationalBezier2::try_new(
+            source.control_points().to_vec(),
+            source.weights().iter().map(|weight| -weight).collect(),
+        )
+        .unwrap();
+        for source in [source, negative_weights] {
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let point = BezierAnalyticParallelPoint2::new(
+                    BezierParallel2::from_source(
+                        BezierParallelSource2::Rational(source.clone()),
+                        Real::zero(),
+                    ),
+                    parameter.clone(),
+                    &policy,
+                );
+                for (dx, dy) in [
+                    (Real::zero(), Real::zero()),
+                    (Real::from(2).sqrt().unwrap(), -Real::one()),
+                ] {
+                    let actual = CurvePoint2::from(point.translated(&dx, &dy, &policy).unwrap());
+                    let exact = CurvePoint2::from(expected.translated(dx.clone(), dy.clone()));
+                    for (first, second) in [(&actual, &exact), (&exact, &actual)] {
+                        let equality = first.coincides_with(second, &policy);
+                        assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
+                        assert_eq!(equality.value, Classification::Decided(true));
+                    }
+                    // The other circle branch shares y, and the off-circle
+                    // point shares x. Neither is the retained source point.
+                    for other in [
+                        Point2::new(-&x, fifth.clone()),
+                        Point2::new(x.clone(), Real::zero()),
+                    ] {
+                        let equality = actual.coincides_with(
+                            &other.translated(dx.clone(), dy.clone()).into(),
+                            &policy,
+                        );
+                        assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
+                        assert_eq!(equality.value, Classification::Decided(false));
+                    }
+                }
+            }
+        }
     }
 
     #[test]
