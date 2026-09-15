@@ -267,11 +267,7 @@ pub(crate) fn rational_polynomial_inverse_modulo(
 /// rational polynomial. Every member differs from the ordinary field chain by
 /// one positive rational scale.
 pub(crate) fn primitive_integer_sturm_sequence(coefficients: &[Real]) -> Option<Vec<Vec<Real>>> {
-    let rationals = coefficients
-        .iter()
-        .map(Real::exact_rational_ref)
-        .collect::<Option<Vec<_>>>()?;
-    let first = primitive_integer_content_part(Rational::primitive_bigint_ratio(&rationals));
+    let first = primitive_integer_coefficients(coefficients)?;
     let derivative = primitive_integer_content_part(
         first
             .iter()
@@ -289,16 +285,10 @@ pub(crate) fn primitive_integer_signed_remainder_sequence(
     first: &[Real],
     second: &[Real],
 ) -> Option<Vec<Vec<Real>>> {
-    let primitive = |polynomial: &[Real]| {
-        let coefficients = polynomial
-            .iter()
-            .map(Real::exact_rational_ref)
-            .collect::<Option<Vec<_>>>()?;
-        Some(primitive_integer_content_part(
-            Rational::primitive_bigint_ratio(&coefficients),
-        ))
-    };
-    primitive_integer_signed_sequence(primitive(first)?, primitive(second)?)
+    primitive_integer_signed_sequence(
+        primitive_integer_coefficients(first)?,
+        primitive_integer_coefficients(second)?,
+    )
 }
 
 fn primitive_integer_signed_sequence(
@@ -719,12 +709,16 @@ fn is_prime(candidate: u64) -> bool {
     true
 }
 
+/// Keeps the polynomial's sign while removing its positive rational scale.
+/// Hyperreal already certifies primitive integer content; only canonical
+/// degree and zero shape remain to be prepared here. Positive-leading GCD
+/// output normalization belongs to `primitive_integer_part` instead.
 fn primitive_integer_coefficients(polynomial: &[Real]) -> Option<Vec<BigInt>> {
     let rationals = polynomial
         .iter()
         .map(Real::exact_rational_ref)
         .collect::<Option<Vec<_>>>()?;
-    Some(primitive_integer_part(Rational::primitive_bigint_ratio(
+    Some(trim_integer_polynomial(Rational::primitive_bigint_ratio(
         &rationals,
     )))
 }
@@ -767,13 +761,18 @@ fn primitive_pseudo_remainder(dividend: &[BigInt], divisor: &[BigInt]) -> Option
     Some(primitive_integer_content_part(remainder))
 }
 
-fn primitive_integer_content_part(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
+fn trim_integer_polynomial(mut polynomial: Vec<BigInt>) -> Vec<BigInt> {
     while polynomial.len() > 1 && polynomial.last().is_some_and(BigInt::is_zero) {
         polynomial.pop();
     }
     if polynomial.is_empty() {
-        return vec![BigInt::zero()];
+        polynomial.push(BigInt::zero());
     }
+    polynomial
+}
+
+fn primitive_integer_content_part(polynomial: Vec<BigInt>) -> Vec<BigInt> {
+    let mut polynomial = trim_integer_polynomial(polynomial);
     let content = integer_polynomial_content(&polynomial);
     if !content.is_zero() && !content.is_one() {
         for coefficient in &mut polynomial {
