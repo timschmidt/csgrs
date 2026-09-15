@@ -75,7 +75,9 @@ pub enum OrderedFieldRootIsolationStatus {
 pub struct OrderedFieldRootIsolationReport {
     /// Terminal status.
     pub status: OrderedFieldRootIsolationStatus,
-    /// Certified singleton intervals when `status == Isolated`.
+    /// Certified singleton intervals when `status == Isolated`. Nonpoint
+    /// intervals exclude every separately reported exact root, including at
+    /// their endpoints, so the original polynomial remains their authority.
     pub intervals: Vec<IsolatedRootInterval>,
     /// Number of dyadic subdivision steps performed.
     pub subdivision_steps: usize,
@@ -487,7 +489,20 @@ where
                     .map(|value| field.sign_if_separated(value))
                     .transpose()?
                     .flatten();
-                for _ in 0..config.refinement_steps {
+                let touches_exact_root = |lower: &Real, upper: &Real| {
+                    exact_roots
+                        .iter()
+                        .any(|root| root == lower || root == upper)
+                };
+                let mut refinements = 0;
+                // Deflation proves this interval for a smaller polynomial.
+                // Move away from removed roots before publishing it for the
+                // original polynomial, even when no extra accuracy is asked
+                // for. Otherwise a later endpoint sign can select a different
+                // exact root that was already emitted separately.
+                while refinements < config.refinement_steps
+                    || touches_exact_root(&node.lower, &node.upper)
+                {
                     let Some(lower_sign) = lower_sign else {
                         break;
                     };
@@ -524,9 +539,17 @@ where
                         node.upper = midpoint;
                     }
                     node.depth += 1;
+                    refinements += 1;
                 }
                 if rational_root.is_some() {
                     break;
+                }
+                if touches_exact_root(&node.lower, &node.upper) {
+                    return Ok(report(
+                        OrderedFieldRootIsolationStatus::CompleteFallbackRequired,
+                        Vec::new(),
+                        subdivision_steps,
+                    ));
                 }
                 isolated.push(IsolatedRootInterval {
                     lower: node.lower,
@@ -1014,6 +1037,122 @@ mod tests {
                 .iter()
                 .all(|interval| interval.distinct_root_count == 1)
         );
+    }
+
+    #[test]
+    fn retained_intervals_exclude_previously_deflated_endpoint_and_interior_roots() {
+        let delta = Real::from(2_i8).powi_i64(-29).unwrap();
+        for (center, direction) in [
+            (Real::zero(), 1_i8),
+            (Real::one(), -1_i8),
+            (fraction(1, 2), 1_i8),
+            (fraction(1, 2), -1_i8),
+        ] {
+            // (t-center)^2 * ((t-center)^3-direction*delta): one exact
+            // double root and one nearby simple non-dyadic root. Deflation
+            // must not leave the removed root on the latter's boundary.
+            let mut polynomial = vec![Real::one()];
+            for _ in 0..3 {
+                let mut product = vec![Real::zero(); polynomial.len() + 1];
+                for (power, coefficient) in polynomial.iter().enumerate() {
+                    product[power] -= coefficient * &center;
+                    product[power + 1] += coefficient;
+                }
+                polynomial = product;
+            }
+            polynomial[0] -= Real::from(direction) * &delta;
+            for _ in 0..2 {
+                let mut product = vec![Real::zero(); polynomial.len() + 1];
+                for (power, coefficient) in polynomial.iter().enumerate() {
+                    product[power] -= coefficient * &center;
+                    product[power + 1] += coefficient;
+                }
+                polynomial = product;
+            }
+            for refinement_steps in [0, 8] {
+                let report = isolate_ordered_field_polynomial_roots(
+                    polynomial.clone(),
+                    &Real::zero(),
+                    &Real::one(),
+                    OrderedFieldRootIsolationConfig {
+                        max_subdivision_depth: 64,
+                        refinement_steps,
+                    },
+                    &mut RealContext,
+                )
+                .unwrap();
+                assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
+                assert_eq!(report.intervals.len(), 2);
+                assert!(
+                    report
+                        .intervals
+                        .iter()
+                        .any(|root| root.exact_root.as_ref() == Some(&center))
+                );
+                let interval = report
+                    .intervals
+                    .iter()
+                    .find(|root| root.exact_root.is_none())
+                    .unwrap();
+                if direction > 0 {
+                    assert!(
+                        interval.lower > center,
+                        "the removed root must be outside the closed isolator"
+                    );
+                } else {
+                    assert!(
+                        interval.upper < center,
+                        "the removed root must be outside the closed isolator"
+                    );
+                }
+                let lower_sign = Real::eval_poly(&polynomial, &interval.lower)
+                    .partial_cmp(&Real::zero())
+                    .unwrap();
+                let upper_sign = Real::eval_poly(&polynomial, &interval.upper)
+                    .partial_cmp(&Real::zero())
+                    .unwrap();
+                assert!(matches!(
+                    (lower_sign, upper_sign),
+                    (Ordering::Less, Ordering::Greater) | (Ordering::Greater, Ordering::Less)
+                ));
+            }
+            let limited = isolate_ordered_field_polynomial_roots(
+                polynomial,
+                &Real::zero(),
+                &Real::one(),
+                OrderedFieldRootIsolationConfig {
+                    max_subdivision_depth: 0,
+                    refinement_steps: 0,
+                },
+                &mut RealContext,
+            )
+            .unwrap();
+            assert_eq!(
+                limited.status,
+                OrderedFieldRootIsolationStatus::CompleteFallbackRequired
+            );
+            assert!(limited.intervals.is_empty());
+        }
+    }
+
+    #[test]
+    fn excluding_a_deflated_boundary_can_find_another_exact_root() {
+        let near = fraction(1, 1024);
+        let report = isolate_ordered_field_polynomial_roots(
+            vec![Real::zero(), -near.clone(), Real::one()],
+            &Real::zero(),
+            &Real::one(),
+            OrderedFieldRootIsolationConfig {
+                max_subdivision_depth: 64,
+                refinement_steps: 0,
+            },
+            &mut RealContext,
+        )
+        .unwrap();
+        assert_eq!(report.status, OrderedFieldRootIsolationStatus::Isolated);
+        assert_eq!(report.intervals.len(), 2);
+        assert_eq!(report.intervals[0].exact_root, Some(Real::zero()));
+        assert_eq!(report.intervals[1].exact_root, Some(near));
     }
 
     #[test]
