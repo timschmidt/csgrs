@@ -1,6 +1,7 @@
 //! Retained NURBS carrier with policy-isolated exact decomposition caches.
 
 use crate::HomogeneousControl2;
+use crate::bspline::{SpanParameterLocation, select_span_indices};
 use std::sync::{Arc, OnceLock};
 
 use crate::policy::{
@@ -1190,7 +1191,13 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<Point2> {
         let decomposition =
             self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
-        let (first, last) = select_span_indices(decomposition.spans(), parameter, policy)?;
+        let (first, last) = select_span_indices(
+            decomposition.spans(),
+            RationalBezierSpan2::knot_interval,
+            parameter,
+            CurveFamily2::Nurbs,
+            policy,
+        )?;
         let first_point = self.point_on_span(first.index, parameter, first.location, policy)?;
         if first.index == last.index || side == CurveParameterSide2::Left {
             return Ok(first_point);
@@ -1206,21 +1213,19 @@ impl NurbsCurve2 {
         &self,
         span_index: usize,
         parameter: &Real,
-        location: NurbsSpanParameterLocation,
+        location: SpanParameterLocation,
         policy: &CurveContext,
     ) -> ExactCurveResult<Point2> {
-        let curve = self
-            .bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?
-            .spans()[span_index]
-            .curve();
-        match location {
-            NurbsSpanParameterLocation::Start => return Ok(curve.start().clone()),
-            NurbsSpanParameterLocation::End => return Ok(curve.end().clone()),
-            NurbsSpanParameterLocation::Interior => {}
-        }
         let decomposition =
             self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
-        let local = local_span_parameter(&decomposition.spans()[span_index], parameter)?;
+        let span = &decomposition.spans()[span_index];
+        let curve = span.curve();
+        match location {
+            SpanParameterLocation::Start => return Ok(curve.start().clone()),
+            SpanParameterLocation::End => return Ok(curve.end().clone()),
+            SpanParameterLocation::Interior => {}
+        }
+        let local = local_span_parameter(span, parameter)?;
         exact_classification(
             curve.point_at_classified(&local, policy),
             CurveOperation2::Evaluation,
@@ -1389,7 +1394,13 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition =
             self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
-        let (first, last) = select_span_indices(decomposition.spans(), parameter, policy)?;
+        let (first, last) = select_span_indices(
+            decomposition.spans(),
+            RationalBezierSpan2::knot_interval,
+            parameter,
+            CurveFamily2::Nurbs,
+            policy,
+        )?;
         let first_derivatives =
             self.derivatives_on_span(first.index, parameter, max_order, first.location, policy)?;
         if first.index == last.index || side == CurveParameterSide2::Left {
@@ -1408,21 +1419,18 @@ impl NurbsCurve2 {
         span_index: usize,
         parameter: &Real,
         max_order: usize,
-        location: NurbsSpanParameterLocation,
+        location: SpanParameterLocation,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition =
             self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
         let span = &decomposition.spans()[span_index];
         let local = match location {
-            NurbsSpanParameterLocation::Start => Real::zero(),
-            NurbsSpanParameterLocation::End => Real::one(),
-            NurbsSpanParameterLocation::Interior => local_span_parameter(span, parameter)?,
+            SpanParameterLocation::Start => Real::zero(),
+            SpanParameterLocation::End => Real::one(),
+            SpanParameterLocation::Interior => local_span_parameter(span, parameter)?,
         };
-        let rational_span = self
-            .bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?
-            .spans()[span_index]
-            .curve();
+        let rational_span = span.curve();
         let local_derivatives = if max_order == 1 {
             vec![exact_classification(
                 rational_span.derivative_at_classified(&local, policy),
@@ -1773,67 +1781,6 @@ fn remap_nurbs_operation(error: ExactCurveError, operation: CurveOperation2) -> 
             ExactCurveError::blocked(operation, blocker.family(), blocker.reason())
         }
     }
-}
-
-#[derive(Clone, Copy)]
-struct SelectedNurbsSpan {
-    index: usize,
-    location: NurbsSpanParameterLocation,
-}
-
-#[derive(Clone, Copy)]
-enum NurbsSpanParameterLocation {
-    Start,
-    Interior,
-    End,
-}
-
-fn select_span_indices(
-    spans: &[RationalBezierSpan2],
-    parameter: &Real,
-    policy: &CurveContext,
-) -> ExactCurveResult<(SelectedNurbsSpan, SelectedNurbsSpan)> {
-    let mut first = None;
-    let mut last = None;
-    for (span_index, span) in spans.iter().enumerate() {
-        let (start, end) = span.knot_interval();
-        let lower = crate::classify::compare_reals(start, parameter, policy);
-        let upper = crate::classify::compare_reals(parameter, end, policy);
-        match (lower, upper) {
-            (
-                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
-                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
-            ) => {
-                let selected = SelectedNurbsSpan {
-                    index: span_index,
-                    location: if lower == Some(std::cmp::Ordering::Equal) {
-                        NurbsSpanParameterLocation::Start
-                    } else if upper == Some(std::cmp::Ordering::Equal) {
-                        NurbsSpanParameterLocation::End
-                    } else {
-                        NurbsSpanParameterLocation::Interior
-                    },
-                };
-                first.get_or_insert(selected);
-                last = Some(selected);
-            }
-            (Some(_), Some(_)) => {}
-            _ => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Evaluation,
-                    CurveFamily2::Nurbs,
-                    UncertaintyReason::Ordering,
-                ));
-            }
-        }
-    }
-    first.zip(last).ok_or_else(|| {
-        ExactCurveError::invalid(
-            CurveOperation2::Evaluation,
-            CurveFamily2::Nurbs,
-            CurveError::InvalidCurveParameter,
-        )
-    })
 }
 
 fn matching_nurbs_derivatives(

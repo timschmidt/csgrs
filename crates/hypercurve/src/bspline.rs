@@ -1047,6 +1047,89 @@ impl HomogeneousBSplineWorkingCurve {
     }
 }
 
+#[derive(Clone, Copy)]
+pub(crate) struct SelectedSpan {
+    pub(crate) index: usize,
+    pub(crate) location: SpanParameterLocation,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum SpanParameterLocation {
+    Start,
+    Interior,
+    End,
+}
+
+/// Selects both incident spans from a certified, contiguous Bezier decomposition.
+/// Extraction retains positive intervals in knot order. Their ends therefore
+/// increase strictly, and each interior knot belongs to exactly two spans.
+/// Reusing those facts avoids reclassifying every unrelated knot at evaluation.
+pub(crate) fn select_span_indices<T>(
+    spans: &[T],
+    interval: impl Fn(&T) -> (&Real, &Real),
+    parameter: &Real,
+    family: crate::CurveFamily2,
+    policy: &CurveContext,
+) -> crate::ExactCurveResult<(SelectedSpan, SelectedSpan)> {
+    let invalid = || {
+        crate::ExactCurveError::invalid(
+            crate::CurveOperation2::Evaluation,
+            family,
+            CurveError::InvalidCurveParameter,
+        )
+    };
+    let compare = |left: &Real, right: &Real| {
+        compare_reals(left, right, policy).ok_or_else(|| {
+            crate::ExactCurveError::blocked(
+                crate::CurveOperation2::Evaluation,
+                family,
+                UncertaintyReason::Ordering,
+            )
+        })
+    };
+    let (mut lower, mut upper) = (0, spans.len());
+    let mut end_order = Ordering::Greater;
+    while lower < upper {
+        let middle = lower + (upper - lower) / 2;
+        let order = compare(parameter, interval(&spans[middle]).1)?;
+        if order == Ordering::Greater {
+            lower = middle + 1;
+        } else {
+            upper = middle;
+            end_order = order;
+        }
+    }
+    if lower == spans.len() {
+        return Err(invalid());
+    }
+    let location = if end_order == Ordering::Equal {
+        SpanParameterLocation::End
+    } else if lower == 0 {
+        match compare(interval(&spans[0]).0, parameter)? {
+            Ordering::Less => SpanParameterLocation::Interior,
+            Ordering::Equal => SpanParameterLocation::Start,
+            Ordering::Greater => return Err(invalid()),
+        }
+    } else {
+        // The preceding end is below the parameter by the search invariant;
+        // it is also this span's start by certified knot contiguity.
+        SpanParameterLocation::Interior
+    };
+    let first = SelectedSpan {
+        index: lower,
+        location,
+    };
+    let last = if end_order == Ordering::Equal && lower + 1 < spans.len() {
+        SelectedSpan {
+            index: lower + 1,
+            location: SpanParameterLocation::Start,
+        }
+    } else {
+        first
+    };
+    Ok((first, last))
+}
+
 fn validate_bspline_layout(
     degree: usize,
     control_count: usize,

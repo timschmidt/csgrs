@@ -1,5 +1,6 @@
 //! Retained polynomial B-spline carrier with policy-isolated exact caches.
 
+use crate::bspline::{SpanParameterLocation, select_span_indices};
 use std::cmp::Ordering;
 use std::sync::Arc;
 
@@ -622,7 +623,13 @@ impl PolynomialSplineCurve2 {
     ) -> ExactCurveResult<Point2> {
         let decomposition =
             self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
-        let (first, last) = select_span_indices(decomposition.intervals(), parameter, policy)?;
+        let (first, last) = select_span_indices(
+            decomposition.intervals(),
+            |(start, end)| (start, end),
+            parameter,
+            CurveFamily2::PolynomialBSpline,
+            policy,
+        )?;
         let first_interval = &decomposition.intervals()[first.index];
         let first_point = evaluate_span(
             &decomposition.spans()[first.index],
@@ -808,7 +815,13 @@ impl PolynomialSplineCurve2 {
     ) -> ExactCurveResult<Vec<CurveDerivative2>> {
         let decomposition =
             self.bezier_decomposition_for_operation(policy, CurveOperation2::Evaluation)?;
-        let (first, last) = select_span_indices(decomposition.intervals(), parameter, policy)?;
+        let (first, last) = select_span_indices(
+            decomposition.intervals(),
+            |(start, end)| (start, end),
+            parameter,
+            CurveFamily2::PolynomialBSpline,
+            policy,
+        )?;
         let first_derivatives =
             self.derivatives_on_span(first.index, parameter, max_order, first.location, policy)?;
         if first.index == last.index || side == CurveParameterSide2::Left {
@@ -1178,63 +1191,6 @@ fn rationalize_subcurve(curve: &BezierSubcurve2) -> Cached<RationalBezier2> {
             CurveOperation2::NativeTopology,
             CurveFamily2::PolynomialBSpline,
             cause,
-        )
-    })
-}
-
-#[derive(Clone, Copy)]
-struct SelectedSpan {
-    index: usize,
-    location: SpanParameterLocation,
-}
-
-#[derive(Clone, Copy)]
-enum SpanParameterLocation {
-    Start,
-    Interior,
-    End,
-}
-
-fn select_span_indices(
-    intervals: &[(Real, Real)],
-    parameter: &Real,
-    policy: &CurveContext,
-) -> ExactCurveResult<(SelectedSpan, SelectedSpan)> {
-    let mut first = None;
-    let mut last = None;
-    for (span_index, (start, end)) in intervals.iter().enumerate() {
-        let lower = crate::classify::compare_reals(start, parameter, policy);
-        let upper = crate::classify::compare_reals(parameter, end, policy);
-        match (lower, upper) {
-            (Some(Ordering::Less | Ordering::Equal), Some(Ordering::Less | Ordering::Equal)) => {
-                let selected = SelectedSpan {
-                    index: span_index,
-                    location: if lower == Some(Ordering::Equal) {
-                        SpanParameterLocation::Start
-                    } else if upper == Some(Ordering::Equal) {
-                        SpanParameterLocation::End
-                    } else {
-                        SpanParameterLocation::Interior
-                    },
-                };
-                first.get_or_insert(selected);
-                last = Some(selected);
-            }
-            (Some(_), Some(_)) => {}
-            _ => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Evaluation,
-                    CurveFamily2::PolynomialBSpline,
-                    UncertaintyReason::Ordering,
-                ));
-            }
-        }
-    }
-    first.zip(last).ok_or_else(|| {
-        ExactCurveError::invalid(
-            CurveOperation2::Evaluation,
-            CurveFamily2::PolynomialBSpline,
-            CurveError::InvalidCurveParameter,
         )
     })
 }
