@@ -2282,6 +2282,32 @@ pub(crate) fn signed_polynomial_at_root(
         }
         BezierParameter2::Algebraic(parameter) => parameter,
     };
+    // The parameter already owns a singleton certificate. Sign its image
+    // through Hypersolve before isolating the roots of a new filter: nearby
+    // filter roots need not force refinement of this selected parameter.
+    let interval = algebraic.interval();
+    if let Some(sign) = hypersolve::sign_at_selected_root(
+        algebraic.polynomial().coefficients(),
+        filter.coefficients(),
+        &hypersolve::IsolatedRootInterval {
+            lower: interval.start().clone(),
+            upper: interval.end().clone(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+    ) {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-parameter-sign",
+            "retained-singleton-query",
+        );
+        return Ok(Classification::Decided(match sign {
+            Ordering::Less => RealSign::Negative,
+            Ordering::Equal => RealSign::Zero,
+            Ordering::Greater => RealSign::Positive,
+        }));
+    }
     match algebraic
         .polynomial()
         .greatest_common_divisor(filter, policy)?
@@ -5162,6 +5188,63 @@ mod conversion_tests {
     }
 
     #[test]
+    fn algebraic_sign_queries_reuse_the_singleton_for_tiny_separations() {
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for defining in [&[-1, 0, 0, 2][..], &[1, 0, 0, -4, 0, 0, 4]] {
+                let root = algebraic_parameter(&polynomial(defining));
+                let BezierParameter2::Algebraic(owner) = &root else {
+                    unreachable!()
+                };
+                for (shift, expected) in [
+                    (-tiny.clone(), RealSign::Negative),
+                    (Real::zero(), RealSign::Zero),
+                    (tiny.clone(), RealSign::Positive),
+                ] {
+                    let coefficients = vec![
+                        -Real::one() + shift,
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(2_i8),
+                    ];
+                    for reversed in [false, true] {
+                        let filter = decided(
+                            BezierParameterPolynomial::try_new_power_basis(
+                                coefficients
+                                    .iter()
+                                    .map(|value| {
+                                        if reversed {
+                                            -value.clone()
+                                        } else {
+                                            value.clone()
+                                        }
+                                    })
+                                    .collect(),
+                                &policy,
+                            )
+                            .unwrap(),
+                            "a tiny shift of the selected root's defining relation",
+                        );
+                        let expected = match (reversed, expected) {
+                            (true, RealSign::Negative) => RealSign::Positive,
+                            (true, RealSign::Positive) => RealSign::Negative,
+                            (_, sign) => sign,
+                        };
+                        assert_eq!(
+                            signed_polynomial_at_root(Some(&filter), &root, &policy).unwrap(),
+                            Classification::Decided(expected),
+                        );
+                        assert!(
+                            owner.data.shared.sturm_sequence.get().is_none(),
+                            "signing an owned singleton need not refine toward the nearby filter root"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn progressive_refinement_matches_one_pass_proof_budget() {
         let policy = CurveContext::STRICT;
         let source = algebraic_parameter(&polynomial(&[-1, 0, 2]));
@@ -5216,10 +5299,6 @@ mod conversion_tests {
                         );
                     }
                 }
-                assert!(
-                    owner.data.shared.sturm_sequence.get().is_some(),
-                    "sign queries must share the retained root's Sturm certificate"
-                );
             }
             let midpoint_root = algebraic_parameter(&polynomial(&[-3, 4]));
             for root in [
