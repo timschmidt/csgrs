@@ -312,27 +312,40 @@ fn analytic_parallel_intersects_independently_parameterized_circles_exactly() {
         let mut contact_count = 0;
         for distance in [quarter.clone(), -quarter.clone()] {
             let parallel = source.parallel_left(distance.clone()).unwrap();
+            let outward = distance == quarter;
             let radius_scale = Real::one() - distance;
             let scaled = |point: Point2| {
                 let radial = point.delta_from(&center);
                 center.translated(&radial.0 * &radius_scale, &radial.1 * &radius_scale)
             };
-            let circle: RationalBezier2 = RationalQuadraticBezier2::try_unit_end_weights(
-                scaled(point(1, 1)),
-                scaled(point(2, 1)),
-                scaled(point(2, 2)),
-                half_sqrt_two.clone(),
-            )
-            .unwrap()
-            .into();
-            let intersections = match parallel.intersections(&circle, &policy).unwrap() {
-                Classification::Decided(intersections) => intersections,
-                Classification::Uncertain(reason) => {
-                    panic!("analytic/circle intersection remained uncertain: {reason:?}")
+            for major in [false, true] {
+                if major && !outward {
+                    continue;
                 }
-            };
-            assert!(intersections.is_complete());
-            contact_count += intersections.contacts().len();
+                let circle: RationalBezier2 = RationalQuadraticBezier2::try_unit_end_weights(
+                    scaled(point(1, 1)),
+                    scaled(point(2, 1)),
+                    scaled(point(2, 2)),
+                    if major {
+                        -&half_sqrt_two
+                    } else {
+                        half_sqrt_two.clone()
+                    },
+                )
+                .unwrap()
+                .into();
+                let intersections = match parallel.intersections(&circle, &policy).unwrap() {
+                    Classification::Decided(intersections) => intersections,
+                    Classification::Uncertain(reason) => {
+                        panic!("analytic/circle intersection remained uncertain: {reason:?}")
+                    }
+                };
+                assert!(intersections.is_complete());
+                // The positive parallel stays at y<=1 while the circle has
+                // y>=5/4. Its certified empty incidence must close the query.
+                assert_eq!(intersections.contacts().len(), usize::from(!outward));
+                contact_count += intersections.contacts().len();
+            }
         }
         assert_eq!(contact_count, 1);
     }
@@ -340,31 +353,86 @@ fn analytic_parallel_intersects_independently_parameterized_circles_exactly() {
 
 #[test]
 fn analytic_parallel_circle_tangency_retains_zero_cross_evidence() {
-    let source = QuadraticBezier2::new(point(-2, 0), point(0, 0), point(2, 0));
+    let half = (Real::one() / Real::from(2_i8)).unwrap();
     let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
-    let circle: RationalBezier2 = RationalQuadraticBezier2::try_unit_end_weights(
-        point(1, 0),
-        point(1, 1),
-        point(0, 1),
-        half_sqrt_two,
-    )
-    .unwrap()
-    .into();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let parallel = source.parallel_left(Real::one()).unwrap();
-        let intersections = match parallel.intersections(&circle, &policy).unwrap() {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(reason) => {
-                panic!("analytic/circle tangency remained uncertain: {reason:?}")
+        for swap_axes in [false, true] {
+            let p = |x, y| if swap_axes { point(y, x) } else { point(x, y) };
+            for reverse_source in [false, true] {
+                let source = if reverse_source {
+                    QuadraticBezier2::new(p(2, 0), p(0, 0), p(-2, 0))
+                } else {
+                    QuadraticBezier2::new(p(-2, 0), p(0, 0), p(2, 0))
+                };
+                // Reflection or source reversal changes the selected left
+                // normal; negating the distance preserves the same offset set.
+                let distance = if swap_axes != reverse_source {
+                    -Real::one()
+                } else {
+                    Real::one()
+                };
+                let parallel = source.parallel_left(distance).unwrap();
+                for reverse_circle in [false, true] {
+                    let mut controls = [p(1, 0), p(1, 1), p(0, 1)];
+                    if reverse_circle {
+                        controls.reverse();
+                    }
+                    let circle: RationalBezier2 = RationalQuadraticBezier2::try_unit_end_weights(
+                        controls[0].clone(),
+                        controls[1].clone(),
+                        controls[2].clone(),
+                        half_sqrt_two.clone(),
+                    )
+                    .unwrap()
+                    .into();
+                    let intersections = match parallel.intersections(&circle, &policy).unwrap() {
+                        Classification::Decided(intersections) => intersections,
+                        Classification::Uncertain(reason) => {
+                            panic!("analytic/circle tangency remained uncertain: {reason:?}")
+                        }
+                    };
+                    assert!(intersections.is_complete());
+                    let [contact] = intersections.contacts() else {
+                        panic!("analytic/circle tangency must retain exactly one contact")
+                    };
+                    assert_eq!(
+                        contact
+                            .point()
+                            .coincides_with(&p(0, 1).into(), &policy)
+                            .value,
+                        Classification::Decided(true)
+                    );
+                    for (parameter, expected) in [
+                        (contact.parallel_parameter(), half.clone()),
+                        (
+                            contact.other_parameter(),
+                            if reverse_circle {
+                                Real::zero()
+                            } else {
+                                Real::one()
+                            },
+                        ),
+                    ] {
+                        assert_eq!(
+                            parameter
+                                .cmp_by_refinement(&BezierParameter2::Exact(expected), &policy)
+                                .unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Equal)
+                        );
+                    }
+                    assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Zero));
+                    assert_eq!(
+                        contact.tangent_dot_sign(),
+                        Some(if reverse_source != reverse_circle {
+                            RealSign::Positive
+                        } else {
+                            RealSign::Negative
+                        })
+                    );
+                    assert!(!contact.is_certified_transverse());
+                }
             }
-        };
-        assert!(intersections.is_complete());
-        let [contact] = intersections.contacts() else {
-            panic!("analytic/circle tangency must retain exactly one contact")
-        };
-        assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Zero));
-        assert_eq!(contact.tangent_dot_sign(), Some(RealSign::Negative));
-        assert!(!contact.is_certified_transverse());
+        }
     }
 }
 

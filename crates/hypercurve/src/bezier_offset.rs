@@ -113276,8 +113276,9 @@ impl BezierParallel2 {
     /// power-basis polynomials let `rational_parameter_image` carry an isolated
     /// parallel root directly into the conic parameter tower. Start- and
     /// end-anchored charts cover one another's projective denominator pole.
-    /// The radical-elimination divisor must remain nonzero at every queried
-    /// root, independently of any subsequent rational-map cancellation.
+    /// Radical elimination requires a nonzero divisor at every queried root.
+    /// Otherwise a certified rational parallel can supply the coordinates
+    /// directly, without cancelling an exceptional incidence fiber.
     pub(crate) fn circle_rational_quadratic_parameter_maps<'a>(
         &self,
         center: &Point2,
@@ -113336,21 +113337,50 @@ impl BezierParallel2 {
             &(Real::from(2_u8) * self.distance()),
         );
         let strict = policy.strict_counterpart();
+        let mut rational_parallel = None;
         for parameter in parameters {
             if !matches!(
                 signed_coefficients_at_parameter(&normal, parameter, &strict)?,
                 Classification::Decided(RealSign::Positive | RealSign::Negative)
             ) {
                 // At radial = normal = 0 the incidence equation cannot
-                // eliminate the speed radical. Cancelling their common
-                // factor would invent an inverse at this exceptional fiber,
-                // allowing an actual finite contact to be rejected. Both
-                // callers must use their general contact authority instead.
+                // eliminate the speed radical. A certified rational parallel
+                // supplies the original coordinates instead; otherwise keep
+                // the exceptional fiber for the general contact authority.
+                if tangent_field.is_none()
+                    && let Classification::Decided(Some(curve)) =
+                        self.exact_rational_parallel_component(&CurveContext::STRICT)?
+                {
+                    rational_parallel = Some(curve);
+                    break;
+                }
                 return Ok(None);
             }
         }
+        let rational_parallel = rational_parallel
+            .as_ref()
+            .map(RationalBezier2::homogeneous_power_basis)
+            .transpose()?;
         let lifted_line = |anchor: &Point2, point: &Point2| {
             let (line_x, line_y) = point.delta_from(anchor);
+            if let Some(source) = rational_parallel {
+                return polynomial_subtract(
+                    &polynomial_scale(
+                        &polynomial_subtract(
+                            &source.x_numerator,
+                            &polynomial_scale(&source.weight, anchor.x()),
+                        ),
+                        &line_y,
+                    ),
+                    &polynomial_scale(
+                        &polynomial_subtract(
+                            &source.y_numerator,
+                            &polynomial_scale(&source.weight, anchor.y()),
+                        ),
+                        &line_x,
+                    ),
+                );
+            }
             let source_from_start_x =
                 polynomial_subtract(source.x_numerator, &weighted(anchor.x()));
             let source_from_start_y =
@@ -117140,15 +117170,6 @@ impl BezierParallel2 {
                 return Ok(no_fast_path());
             }
         };
-        let Ok(Classification::Decided(decomposition)) =
-            support.rational_bezier_decomposition_with_policy(policy)
-        else {
-            return Ok(no_fast_path());
-        };
-        let [canonical_span] = decomposition.spans() else {
-            return Ok(no_fast_path());
-        };
-        let canonical_conic = canonical_span.curve().clone();
         let certified_tangent_parameters = other
             .retained_circular_conic()
             .and_then(|circle| circle.tangent_contacts.as_deref())
@@ -117181,6 +117202,22 @@ impl BezierParallel2 {
                 return Ok(no_fast_path());
             }
         };
+        if parameters.is_empty() {
+            // A certified empty supporting-circle intersection needs no
+            // inverse parameter chart or generic algebraic replay.
+            return Ok(Classification::Decided(Some(
+                BezierParallelIntersectionSet2::complete(Arc::from([]), Arc::from([])),
+            )));
+        }
+        let Ok(Classification::Decided(decomposition)) =
+            support.rational_bezier_decomposition_with_policy(policy)
+        else {
+            return Ok(no_fast_path());
+        };
+        let [canonical_span] = decomposition.spans() else {
+            return Ok(no_fast_path());
+        };
+        let canonical_conic = canonical_span.curve().clone();
         let Some(parameter_map_coefficients) = self
             .circle_rational_quadratic_parameter_maps_with_tangent_field(
                 support.center(),
