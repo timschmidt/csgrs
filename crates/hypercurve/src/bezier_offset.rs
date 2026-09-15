@@ -82392,6 +82392,23 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
     if first.shares_storage(second) {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
+    // A cardinal support already owns one coordinate of its intersection.
+    // Reuse that endpoint for every point family before refining or promoting
+    // the intersection's independent Cartesian coordinates.
+    for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
+        if let CurvePoint2(CurvePointData2::AlgebraicChordPair(candidate)) = candidate
+            && let Classification::Decided(support) =
+                candidate.constant_axis_support_point(axis, policy)?
+            && let Classification::Decided(order) =
+                algebraic_chord_point_coordinate_order(support, other, axis, policy)?
+        {
+            return Ok(Classification::Decided(if reverse {
+                order.reverse()
+            } else {
+                order
+            }));
+        }
+    }
     if let (
         CurvePoint2(CurvePointData2::AnalyticParallel(first)),
         CurvePoint2(CurvePointData2::AnalyticParallel(second)),
@@ -82649,40 +82666,6 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             CurvePoint2(CurvePointData2::AlgebraicChordPair(first)),
             CurvePoint2(CurvePointData2::AlgebraicChordPair(second)),
         ) if first == second => Ok(Classification::Decided(std::cmp::Ordering::Equal)),
-        (
-            CurvePoint2(CurvePointData2::AlgebraicChordPair(first)),
-            CurvePoint2(CurvePointData2::Exact(second)),
-        ) => first.axis_coordinate_order_to_real(
-            axis,
-            if use_x { second.x() } else { second.y() },
-            policy,
-        ),
-        (
-            CurvePoint2(CurvePointData2::Exact(first)),
-            CurvePoint2(CurvePointData2::AlgebraicChordPair(second)),
-        ) => Ok(second
-            .axis_coordinate_order_to_real(axis, if use_x { first.x() } else { first.y() }, policy)?
-            .map(std::cmp::Ordering::reverse)),
-        (
-            CurvePoint2(CurvePointData2::AlgebraicChordPair(first)),
-            CurvePoint2(CurvePointData2::Algebraic(_)),
-        ) => first.axis_coordinate_order_to_evidence(axis, second, policy),
-        (
-            CurvePoint2(CurvePointData2::Algebraic(_)),
-            CurvePoint2(CurvePointData2::AlgebraicChordPair(second)),
-        ) => Ok(second
-            .axis_coordinate_order_to_evidence(axis, first, policy)?
-            .map(std::cmp::Ordering::reverse)),
-        (
-            CurvePoint2(CurvePointData2::AlgebraicChordPair(first)),
-            second @ CurvePoint2(CurvePointData2::AlgebraicChordParallel(_)),
-        ) => first.axis_coordinate_order_to_evidence(axis, second, policy),
-        (
-            first @ CurvePoint2(CurvePointData2::AlgebraicChordParallel(_)),
-            CurvePoint2(CurvePointData2::AlgebraicChordPair(second)),
-        ) => Ok(second
-            .axis_coordinate_order_to_evidence(axis, first, policy)?
-            .map(std::cmp::Ordering::reverse)),
         (
             CurvePoint2(CurvePointData2::AlgebraicCuspChord(first)),
             CurvePoint2(CurvePointData2::AlgebraicCuspChord(second)),
@@ -96777,47 +96760,6 @@ impl BezierAlgebraicChordPairPoint2 {
         Ok(represented_projective_line_intersection(
             first, second, &sources,
         ))
-    }
-
-    fn axis_coordinate_order_to_real(
-        &self,
-        axis: Axis2,
-        value: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<std::cmp::Ordering>> {
-        match self.constant_axis_support_point(axis, policy)? {
-            Classification::Decided(support_point) => {
-                BezierAlgebraicChord2::point_axis_order_to_real(support_point, axis, value, policy)
-            }
-            Classification::Uncertain(_) => {
-                // Use the complete coordinate authority, including its retained
-                // algebraic proof, before a terminal interval interpretation.
-                let point = CurvePoint2::from(self.clone());
-                let query = CurvePoint2::from(Point2::new(value.clone(), value.clone()));
-                Ok(algebraic_chord_point_coordinate_order_by_refinement(
-                    &point, &query, axis, policy,
-                ))
-            }
-        }
-    }
-
-    fn axis_coordinate_order_to_evidence(
-        &self,
-        axis: Axis2,
-        other: &CurvePoint2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<std::cmp::Ordering>> {
-        match self.constant_axis_support_point(axis, policy)? {
-            Classification::Decided(support_point) => {
-                BezierAlgebraicChord2::point_axis_order(support_point, other, axis, policy)
-            }
-            Classification::Uncertain(_) => {
-                let point = CurvePoint2::from(self.clone());
-                Ok(algebraic_chord_point_coordinate_order_by_refinement(
-                    &point, other, axis, policy,
-                ))
-            }
-        }
     }
 
     pub(crate) fn same_point(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
@@ -136180,6 +136122,107 @@ mod conversion_tests {
                     contacts
                 )) if contacts.len() == 1 && contacts[0].tangent_cross_sign() == RealSign::Zero
             ));
+        }
+    }
+
+    #[test]
+    fn chord_pair_axis_order_reuses_analytic_support_coordinates() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let parameter = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::new(half, Real::zero()),
+                Point2::from_values(1, 1),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for normal in [-1_i8, 1] {
+                let analytic = BezierAnalyticParallelPoint2::new(
+                    source
+                        .parallel_left((Real::from(normal) / Real::from(20_i8)).unwrap())
+                        .unwrap(),
+                    parameter.clone(),
+                    &policy,
+                );
+                let anchor = CurvePoint2::from(analytic.clone());
+                for axis in [Axis2::X, Axis2::Y] {
+                    let (dx, dy, direction, cross) = match axis {
+                        Axis2::X => (
+                            Real::zero(),
+                            Real::one(),
+                            BezierAlgebraicChordAxisDirection2::PositiveY,
+                            RealSign::Negative,
+                        ),
+                        Axis2::Y => (
+                            Real::one(),
+                            Real::zero(),
+                            BezierAlgebraicChordAxisDirection2::PositiveX,
+                            RealSign::Positive,
+                        ),
+                    };
+                    let support = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                        anchor.clone(),
+                        CurvePoint2::from(analytic.translated(&dx, &dy, &policy).unwrap()),
+                        direction,
+                        &policy,
+                    );
+                    let transverse = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                        CurvePoint2::from(Point2::new(-&dy, -&dx)),
+                        CurvePoint2::from(Point2::new(dy, dx)),
+                        match axis {
+                            Axis2::X => BezierAlgebraicChordAxisDirection2::PositiveX,
+                            Axis2::Y => BezierAlgebraicChordAxisDirection2::PositiveY,
+                        },
+                        &policy,
+                    );
+                    // At t=sqrt(1/2), both coordinates of the offset point
+                    // are strictly between 0 and 1. Its support intersects
+                    // the other coordinate axis before the finite anchor.
+                    let pair = BezierAlgebraicChordPairPoint2::new_with_anchor_orders(
+                        support,
+                        transverse,
+                        false,
+                        std::cmp::Ordering::Less,
+                        false,
+                        std::cmp::Ordering::Greater,
+                        cross,
+                        &policy,
+                    );
+                    let point = CurvePoint2::from(pair.clone());
+                    for (shift, expected) in [
+                        (0_i8, std::cmp::Ordering::Equal),
+                        (-1, std::cmp::Ordering::Less),
+                        (1, std::cmp::Ordering::Greater),
+                    ] {
+                        let (dx, dy) = match axis {
+                            Axis2::X => (Real::from(shift), Real::zero()),
+                            Axis2::Y => (Real::zero(), Real::from(shift)),
+                        };
+                        let query =
+                            CurvePoint2::from(analytic.translated(&dx, &dy, &policy).unwrap());
+                        for (first, second, expected) in [
+                            (&query, &point, expected),
+                            (&point, &query, expected.reverse()),
+                        ] {
+                            let outcome =
+                                crate::policy::resolve_certified_value(&policy, |attempt| {
+                                    attempt.bounded_exact_predicate_pass(|| {
+                                        algebraic_chord_point_coordinate_order(
+                                            first, second, axis, attempt,
+                                        )
+                                        .unwrap()
+                                    })
+                                });
+                            assert_eq!(outcome.value, Classification::Decided(expected));
+                            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                            assert!(pair.data.recursive_point.get().is_none());
+                        }
+                    }
+                }
+            }
         }
     }
 
