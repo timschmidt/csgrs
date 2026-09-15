@@ -314,6 +314,7 @@ struct BezierParallelSourceData2 {
     source: BezierParallelSource2,
     polynomial_power_basis: OnceLock<(Vec<Real>, Vec<Real>)>,
     differential: OnceLock<BezierParallelDifferential2>,
+    unit_ph_speed: OnceLock<Option<Arc<BezierParameterPolynomial>>>,
 }
 
 #[derive(Debug)]
@@ -108946,7 +108947,7 @@ impl PartialEq for BezierParallel2 {
 #[derive(Clone, Debug, PartialEq)]
 pub struct CertifiedPythagoreanHodographOffset2 {
     curve: RationalBezier2,
-    speed_polynomial: Vec<Real>,
+    speed_polynomial: Arc<BezierParameterPolynomial>,
     source_degree: usize,
     rational_degree: usize,
     distance: Real,
@@ -109275,8 +109276,8 @@ impl CertifiedPythagoreanHodographOffset2 {
         policy: &CurveContext,
     ) -> CurveResult<Option<RealSign>> {
         let strict = policy.strict_counterpart();
-        let coefficients = self.speed_polynomial();
-        let mut polynomial = None;
+        let polynomial = self.speed_polynomial.as_ref();
+        let coefficients = polynomial.coefficients();
         let sign = if domain.finite == &CurveParameterRange2::unit() {
             // Every PH constructor proves that this polynomial has no unit
             // root. Read its sheet sign without repeating that isolation.
@@ -109286,11 +109287,7 @@ impl CertifiedPythagoreanHodographOffset2 {
         {
             Some(sign)
         } else {
-            let prepared = match polynomial_from_coefficients(coefficients.to_vec(), &strict)? {
-                Classification::Decided(Some(polynomial)) => polynomial,
-                Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
-            };
-            match domain.finite_roots(&prepared, &strict)? {
+            match domain.finite_roots(polynomial, &strict)? {
                 Classification::Decided(roots) if roots.is_empty() => {}
                 Classification::Decided(_) | Classification::Uncertain(_) => return Ok(None),
             }
@@ -109298,8 +109295,7 @@ impl CertifiedPythagoreanHodographOffset2 {
                 Classification::Decided(interior) => interior,
                 Classification::Uncertain(_) => return Ok(None),
             };
-            polynomial = Some(prepared);
-            real_sign(&Real::eval_poly(coefficients, &interior), &strict)
+            real_sign(&polynomial.evaluate(&interior), &strict)
         };
         let Some(sign @ (RealSign::Positive | RealSign::Negative)) = sign else {
             return Ok(None);
@@ -109313,13 +109309,6 @@ impl CertifiedPythagoreanHodographOffset2 {
         if coefficients.len() == 1 {
             return Ok(Some(sign));
         }
-        let polynomial = match polynomial {
-            Some(polynomial) => polynomial,
-            None => match polynomial_from_coefficients(coefficients.to_vec(), &strict)? {
-                Classification::Decided(Some(polynomial)) => polynomial,
-                Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
-            },
-        };
         let roots = match polynomial.isolate_incident_ray_roots(
             extension.anchor,
             extension.direction,
@@ -109354,7 +109343,7 @@ impl CertifiedPythagoreanHodographOffset2 {
 
     /// Returns `sigma`, where the homogeneous tangent numerator satisfies `H dot H = sigma^2`.
     pub fn speed_polynomial(&self) -> &[Real] {
-        &self.speed_polynomial
+        self.speed_polynomial.coefficients()
     }
 
     /// Returns the homogeneous source degree.
@@ -109500,6 +109489,7 @@ impl BezierParallel2 {
                 source,
                 polynomial_power_basis: OnceLock::new(),
                 differential: OnceLock::new(),
+                unit_ph_speed: OnceLock::new(),
             }),
             distance,
         )
@@ -109517,8 +109507,8 @@ impl BezierParallel2 {
 
     /// Returns the same exact source kernel at another signed normal distance.
     ///
-    /// Source power-basis and differential caches are distance-independent and
-    /// remain clone-shared.  Distance-dependent PH materialization keeps its
+    /// Source power-basis, differential and unit PH speed proofs are
+    /// distance-independent and remain clone-shared. PH materialization keeps its
     /// own cache in the new one-word carrier.
     pub(crate) fn with_distance(&self, distance: Real) -> Self {
         Self::from_shared_source(Arc::clone(&self.data.source), distance)
@@ -117929,8 +117919,15 @@ impl BezierParallel2 {
             };
         let tangent_x = polynomial_trim_structural_zeros(frame.x.clone());
         let tangent_y = polynomial_trim_structural_zeros(frame.y.clone());
+        let speed = match certify_unit_ph_speed(&tangent_x, &tangent_y, &interior, &strict)? {
+            Classification::Decided(Some(speed)) => speed,
+            Classification::Decided(None) => return Ok(global),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let offset = match self.compute_pythagorean_hodograph_offset_from_tangent_field(
-            &tangent_x, &tangent_y, &interior, false, &strict,
+            &tangent_x, &tangent_y, speed, false, &strict,
         )? {
             Classification::Decided(Some(offset)) => offset,
             Classification::Decided(None) => return Ok(global),
@@ -118606,8 +118603,10 @@ impl BezierParallel2 {
     /// `sigma` with certified nonzero sign over `[0, 1]`, the unit normal is
     /// rational and the complete parallel is converted to an arbitrary-degree
     /// [`RationalBezier2`]. Polynomial PH curves are the `W=1` specialization.
-    /// `None` means the exact polynomial-square identity was disproved;
-    /// unresolved scalar signs remain explicit [`Classification::Uncertain`].
+    /// `None` means this authored-unit PH construction is unavailable, for
+    /// example because the polynomial-square identity fails or the source has
+    /// a stationary parameter or pole. Unresolved scalar signs remain explicit
+    /// [`Classification::Uncertain`].
     pub fn exact_pythagorean_hodograph_offset(
         &self,
         policy: &CurveContext,
@@ -118639,6 +118638,34 @@ impl BezierParallel2 {
             .cloned()
     }
 
+    /// Retains the complete source hodograph's unit speed proof independently
+    /// of offset distance. Primitive fields selected on a regular range obtain
+    /// their own certificate and never populate this source-wide cache.
+    fn source_unit_ph_speed(
+        &self,
+        tangent_x: &[Real],
+        tangent_y: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Arc<BezierParameterPolynomial>>>> {
+        if let Some(speed) = self.data.source.unit_ph_speed.get() {
+            return Ok(Classification::Decided(speed.clone()));
+        }
+        match certify_unit_ph_speed(tangent_x, tangent_y, &Real::zero(), policy)? {
+            Classification::Decided(speed) => {
+                let _ = self.data.source.unit_ph_speed.set(speed);
+                Ok(Classification::Decided(
+                    self.data
+                        .source
+                        .unit_ph_speed
+                        .get()
+                        .expect("the source speed decision was retained")
+                        .clone(),
+                ))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
     #[cold]
     fn compute_pythagorean_hodograph_offset(
         &self,
@@ -118664,11 +118691,17 @@ impl BezierParallel2 {
                 offset_line,
             )?;
             let (dx, dy) = line.delta();
-            let speed = (&dx * &dx + &dy * &dy).sqrt()?;
+            let speed_polynomial = match self.source_unit_ph_speed(&[dx], &[dy], policy)? {
+                Classification::Decided(Some(speed)) => speed,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             return Ok(Classification::Decided(Some(
                 CertifiedPythagoreanHodographOffset2 {
                     curve,
-                    speed_polynomial: vec![speed],
+                    speed_polynomial,
                     source_degree: 2,
                     rational_degree: 2,
                     distance: self.distance().clone(),
@@ -118676,10 +118709,21 @@ impl BezierParallel2 {
             )));
         }
         let differential = self.differential()?;
+        let speed = match self.source_unit_ph_speed(
+            &differential.tangent_x,
+            &differential.tangent_y,
+            policy,
+        )? {
+            Classification::Decided(Some(speed)) => speed,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         self.compute_pythagorean_hodograph_offset_from_tangent_field(
             &differential.tangent_x,
             &differential.tangent_y,
-            &Real::zero(),
+            speed,
             true,
             policy,
         )
@@ -118688,42 +118732,27 @@ impl BezierParallel2 {
     /// Materializes one exact rational parallel from an oriented PH tangent
     /// field. The field can be either the source's complete homogeneous
     /// hodograph or the primitive GCD quotient selected on one regular range.
-    /// `orientation_parameter` selects the positive polynomial speed sheet;
-    /// callers prove that the field orientation agrees with the source before
-    /// entering this constructor.
+    /// The retained speed certificate selects the polynomial sheet and proves
+    /// unit root exclusion. Callers prove that the field orientation agrees
+    /// with the source before entering this constructor.
     #[cold]
     fn compute_pythagorean_hodograph_offset_from_tangent_field(
         &self,
         tangent_x: &[Real],
         tangent_y: &[Real],
-        orientation_parameter: &Real,
+        speed_polynomial: Arc<BezierParameterPolynomial>,
         allow_circular_specialization: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CertifiedPythagoreanHodographOffset2>>> {
+        let speed = speed_polynomial.coefficients();
         // Preserve a constant tangent field as a direct affine translation.
         // The general homogeneous formula is algebraically equivalent, but it
         // introduces canceling speed radicals into every control coordinate.
         // Keeping the source coefficients intact is both smaller and essential
         // when an opaque authored coefficient proves line rank by correlation.
         if let ([tangent_x], [tangent_y]) = (tangent_x, tangent_y) {
-            let speed_squared = tangent_x * tangent_x + tangent_y * tangent_y;
-            match real_sign(&speed_squared, policy) {
-                Some(RealSign::Positive) => {}
-                Some(RealSign::Zero) => {
-                    return Err(CurveError::Topology(
-                        "a regularized constant tangent field was zero".into(),
-                    ));
-                }
-                Some(RealSign::Negative) => {
-                    return Err(CurveError::Topology(
-                        "a regularized tangent squared norm was negative".into(),
-                    ));
-                }
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
-            let speed = speed_squared.sqrt()?;
-            let translation_x = ((-self.distance() * tangent_y) / &speed)?;
-            let translation_y = ((self.distance() * tangent_x) / &speed)?;
+            let translation_x = ((-self.distance() * tangent_y) / &speed[0])?;
+            let translation_y = ((self.distance() * tangent_x) / &speed[0])?;
             let source = self.source().to_rational_bezier()?;
             let controls = source
                 .control_points()
@@ -118747,7 +118776,7 @@ impl BezierParallel2 {
                 CertifiedPythagoreanHodographOffset2 {
                     rational_degree: curve.degree(),
                     curve,
-                    speed_polynomial: vec![speed],
+                    speed_polynomial,
                     source_degree: self.source_degree(),
                     distance: self.distance().clone(),
                 },
@@ -118788,37 +118817,6 @@ impl BezierParallel2 {
         } else {
             None
         };
-        let speed_squared = polynomial_add(
-            &polynomial_multiply(tangent_x, tangent_x),
-            &polynomial_multiply(tangent_y, tangent_y),
-        );
-        let mut speed = match polynomial_square_root(&speed_squared, policy)? {
-            Classification::Decided(Some(speed)) => speed,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let speed_at_orientation = Real::eval_poly(&speed, orientation_parameter);
-        match real_sign(&speed_at_orientation, policy) {
-            Some(RealSign::Positive) => {}
-            Some(RealSign::Negative) => {
-                speed = polynomial_scale(&speed, &Real::from(-1_i8));
-            }
-            Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-        let speed_polynomial = match polynomial_from_coefficients(speed.clone(), policy)? {
-            Classification::Decided(Some(polynomial)) => polynomial,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let speed_roots = match speed_polynomial.isolate_unit_interval_roots(policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        if !speed_roots.is_empty() {
-            return Ok(Classification::Decided(None));
-        }
-
         let circular_component = if allow_circular_specialization {
             match self.exact_circular_parallel_component(policy)? {
                 Classification::Decided(component) => component,
@@ -118834,7 +118832,7 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(Some(
                 CertifiedPythagoreanHodographOffset2 {
                     curve,
-                    speed_polynomial: speed,
+                    speed_polynomial,
                     source_degree,
                     rational_degree: source_degree,
                     distance: self.distance().clone(),
@@ -118847,19 +118845,18 @@ impl BezierParallel2 {
             (
                 polynomial_multiply(&weighted_distance, tangent_y),
                 polynomial_multiply(&weighted_distance, tangent_x),
-                polynomial_multiply(weight, &speed),
+                polynomial_multiply(weight, speed),
             )
         } else {
             (
                 polynomial_scale(tangent_y, self.distance()),
                 polynomial_scale(tangent_x, self.distance()),
-                speed.clone(),
+                speed.to_vec(),
             )
         };
         let mut numerator_x =
-            polynomial_subtract(&polynomial_multiply(source_x, &speed), &normal_x_term);
-        let mut numerator_y =
-            polynomial_add(&polynomial_multiply(source_y, &speed), &normal_y_term);
+            polynomial_subtract(&polynomial_multiply(source_x, speed), &normal_x_term);
+        let mut numerator_y = polynomial_add(&polynomial_multiply(source_y, speed), &normal_y_term);
         if weight.is_some() {
             match real_sign(&Real::eval_poly(&denominator, &Real::zero()), policy) {
                 Some(RealSign::Positive) => {}
@@ -118916,7 +118913,7 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(Some(
                 CertifiedPythagoreanHodographOffset2 {
                     curve,
-                    speed_polynomial: speed,
+                    speed_polynomial,
                     source_degree,
                     rational_degree,
                     distance: self.distance().clone(),
@@ -120368,6 +120365,48 @@ fn polynomial_unit_frame_coordinate_relation(
             })
             .collect(),
     )
+}
+
+/// Certifies one oriented PH speed on the authored unit interval. Complete
+/// source fields retain this polynomial across distances; primitive regular
+/// fields carry their own certificate. Uncertainty is never cached as absence.
+fn certify_unit_ph_speed(
+    tangent_x: &[Real],
+    tangent_y: &[Real],
+    orientation_parameter: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Arc<BezierParameterPolynomial>>>> {
+    let speed_squared = polynomial_add(
+        &polynomial_multiply(tangent_x, tangent_x),
+        &polynomial_multiply(tangent_y, tangent_y),
+    );
+    let mut speed = match polynomial_square_root(&speed_squared, policy)? {
+        Classification::Decided(Some(speed)) => speed,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let speed_at_orientation = Real::eval_poly(&speed, orientation_parameter);
+    match real_sign(&speed_at_orientation, policy) {
+        Some(RealSign::Positive) => {}
+        Some(RealSign::Negative) => {
+            speed = polynomial_scale(&speed, &Real::from(-1_i8));
+        }
+        Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
+        None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+    }
+    let speed_polynomial = match polynomial_from_coefficients(speed, policy)? {
+        Classification::Decided(Some(polynomial)) => polynomial,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let speed_roots = match speed_polynomial.isolate_unit_interval_roots(policy)? {
+        Classification::Decided(roots) => roots,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    if !speed_roots.is_empty() {
+        return Ok(Classification::Decided(None));
+    }
+    Ok(Classification::Decided(Some(Arc::new(speed_polynomial))))
 }
 
 fn polynomial_square_root(
@@ -157690,6 +157729,7 @@ mod conversion_tests {
         assert!(!Arc::ptr_eq(&parallel.data, &redistanced.data));
         assert!(Arc::ptr_eq(&parallel.data.source, &redistanced.data.source));
         assert!(parallel.data.source.differential.get().is_none());
+        assert!(parallel.data.source.unit_ph_speed.get().is_none());
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         assert!(matches!(
             clone.point_at(&half, &CurveContext::STRICT).unwrap(),
@@ -157698,6 +157738,101 @@ mod conversion_tests {
         assert!(parallel.data.source.differential.get().is_some());
         assert!(redistanced.data.source.differential.get().is_some());
         assert!(redistanced.data.certified_ph_offset.get().is_none());
+        assert!(parallel.data.source.unit_ph_speed.get().is_none());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for carrier in [&parallel, &redistanced] {
+                assert!(matches!(
+                    carrier.exact_pythagorean_hodograph_offset(&policy).unwrap(),
+                    Classification::Decided(None)
+                ));
+                assert!(matches!(
+                    carrier.data.source.unit_ph_speed.get(),
+                    Some(None)
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn exact_parallel_distances_reuse_the_certified_source_speed() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let line =
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 1)).unwrap();
+            let sources = [
+                BezierParallelSource2::Quadratic(QuadraticBezier2::from_line_segment(line)),
+                BezierParallelSource2::Quadratic(QuadraticBezier2::new(
+                    Point2::from_values(0, 0),
+                    Point2::from_values(1, 0),
+                    Point2::from_values(2, 0),
+                )),
+                BezierParallelSource2::Cubic(CubicBezier2::new(
+                    Point2::from_values(0, 0),
+                    Point2::from_values(1, 0),
+                    Point2::from_values(2, 1),
+                    Point2::from_values(2, 3),
+                )),
+                BezierParallelSource2::Rational(RationalBezier2::from(
+                    RationalQuadraticBezier2::try_new(
+                        Point2::from_values(1, 0),
+                        Point2::from_values(1, 1),
+                        Point2::from_values(0, 1),
+                        Real::one(),
+                        Real::one(),
+                        Real::from(2_i8),
+                    )
+                    .unwrap(),
+                )),
+            ];
+            for source in sources {
+                let parallel = BezierParallel2::from_source(source, half.clone());
+                let Classification::Decided(Some(first)) = parallel
+                    .exact_pythagorean_hodograph_offset(&policy)
+                    .unwrap()
+                else {
+                    panic!("the source has an exact regular unit PH speed");
+                };
+                for distance in [Real::zero(), -&half, Real::from(2_i8), half.clone()] {
+                    let redistanced = parallel.with_distance(distance);
+                    let Classification::Decided(Some(offset)) = redistanced
+                        .exact_pythagorean_hodograph_offset(&policy)
+                        .unwrap()
+                    else {
+                        panic!("changing distance preserves the source PH proof");
+                    };
+                    for parameter in [Real::zero(), half.clone(), Real::one()] {
+                        let Classification::Decided(expected) =
+                            redistanced.point_at(&parameter, &policy).unwrap()
+                        else {
+                            panic!("the exact parallel is finite and regular");
+                        };
+                        let Classification::Decided(actual) =
+                            offset.curve().point_at_classified(&parameter, &policy)
+                        else {
+                            panic!("the materialized parallel is finite");
+                        };
+                        assert_eq!(
+                            real_sign(&actual.distance_squared(&expected), &policy),
+                            Some(RealSign::Zero)
+                        );
+                    }
+                    assert!(
+                        std::ptr::eq(first.speed_polynomial(), offset.speed_polynomial()),
+                        "distance changes must retain the same certified source speed"
+                    );
+                    let Classification::Decided(Some(cached)) = redistanced
+                        .exact_pythagorean_hodograph_offset(&policy)
+                        .unwrap()
+                    else {
+                        panic!("the completed PH materialization is retained");
+                    };
+                    assert!(std::ptr::eq(
+                        offset.speed_polynomial(),
+                        cached.speed_polynomial()
+                    ));
+                }
+            }
+        }
     }
 
     #[test]
@@ -158663,6 +158798,19 @@ mod conversion_tests {
             // Each rational expression extends globally, but the opposite
             // side carries the other authored normal sheet. The retained
             // regular range, rather than that extension, owns topology.
+            // A primitive branch proof must not replace the rejected complete
+            // source speed. Another distance still has a stationary unit source.
+            assert!(matches!(
+                parallel.data.source.unit_ph_speed.get(),
+                Some(None)
+            ));
+            assert!(matches!(
+                parallel
+                    .with_distance(Real::from(2_i8))
+                    .exact_pythagorean_hodograph_offset(&policy)
+                    .unwrap(),
+                Classification::Decided(None)
+            ));
             let wrong_left_sheet = rational_point(&right, &quarter);
             let wrong_right_sheet = rational_point(&left, &three_quarters);
             assert_eq!(
