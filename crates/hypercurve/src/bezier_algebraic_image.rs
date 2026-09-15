@@ -256,6 +256,170 @@ mod policy_tests {
                 .is_some()
         );
     }
+
+    #[test]
+    fn retained_constant_coordinates_do_not_require_scalar_parameter_images() {
+        use super::{RationalBezierAlgebraicPointImage2, parameter_representation};
+        use crate::{BezierParameter2, BezierParameterPolynomial, Point2, RationalBezier2};
+
+        let strict = CurveContext::STRICT;
+        let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
+            vec![Real::from(-1), Real::zero(), Real::from(2)],
+            &strict,
+        )
+        .unwrap() else {
+            panic!("exact quadratic");
+        };
+        let Classification::Decided(roots) =
+            polynomial.isolate_unit_interval_roots(&strict).unwrap()
+        else {
+            panic!("certified positive quadratic root");
+        };
+        let [BezierParameter2::Algebraic(parameter)] = roots.as_slice() else {
+            panic!("the irrational parameter stays selected");
+        };
+        assert_eq!(
+            parameter.represented_exact_point(&strict).unwrap(),
+            Classification::Decided(None),
+        );
+        let retained = |x, y, weight| {
+            RationalBezierAlgebraicPointImage2::from_retained_expression(
+                parameter.clone(),
+                parameter_representation(parameter, &strict),
+                x,
+                y,
+                weight,
+                "selected parameter with a constant coordinate",
+            )
+        };
+        for policy in [strict, CurveContext::APPROXIMATE_512] {
+            for constant in [Real::zero(), Real::pi(), Real::from(2).sqrt().unwrap()] {
+                for weight in [
+                    vec![Real::one()],
+                    vec![Real::from(-3)],
+                    vec![Real::zero(), Real::one()],
+                    vec![Real::from(2), Real::one()],
+                ] {
+                    let numerator: Vec<_> = weight.iter().map(|c| c * &constant).collect();
+                    let mut varying = vec![Real::zero()];
+                    varying.extend(weight.iter().cloned());
+                    for use_x in [false, true] {
+                        let (x, y) = if use_x {
+                            (numerator.clone(), varying.clone())
+                        } else {
+                            (varying.clone(), numerator.clone())
+                        };
+                        let image = retained(x, y, weight.clone());
+                        let outcome = resolve_certified_operation(&policy, |attempt| {
+                            Ok::<_, ()>(image.exact_coordinate(use_x, attempt))
+                        })
+                        .unwrap();
+                        assert_eq!(outcome.value, Some(constant.clone()));
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        assert!(image.x().is_none() && image.y().is_none());
+                        assert!(image.exact_point(&policy).is_none());
+                    }
+                }
+            }
+
+            // Both constant coordinates can use the same conversion without
+            // constructing either a scalar parameter or Cartesian root images.
+            let point = Point2::new(Real::pi(), Real::from(2).sqrt().unwrap());
+            let image = retained(
+                vec![point.x().clone()],
+                vec![point.y().clone()],
+                vec![Real::one()],
+            );
+            assert_eq!(image.exact_point(&policy), Some(point.clone()));
+
+            // A lazy curve/parameter source must not resolve its other axis.
+            let curve = RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::zero(), point.y().clone()),
+                    Point2::new(Real::one(), point.y().clone()),
+                ],
+                vec![Real::one(); 2],
+            )
+            .unwrap();
+            let image = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                curve,
+                parameter.clone(),
+                &policy,
+            );
+            assert_eq!(
+                image.exact_coordinate(false, &policy),
+                Some(point.y().clone())
+            );
+            assert!(
+                image
+                    .data
+                    .parametric_source
+                    .as_ref()
+                    .unwrap()
+                    .resolved
+                    .get()
+                    .is_none()
+            );
+
+            // Proportional homogeneous coordinates do not remove a pole.
+            let pole = polynomial.coefficients().to_vec();
+            let image = retained(
+                vec![Real::zero(), Real::one()],
+                pole.iter().map(|c| c * point.y()).collect(),
+                pole,
+            );
+            assert!(image.exact_coordinate(false, &policy).is_none());
+            assert!(image.exact_point(&policy).is_none());
+
+            // Neither an unresolved denominator nor an almost-constant
+            // numerator can acquire a scalar value through approximation.
+            let epsilon = Real::one() - Real::from(2).powi_i64(-600).unwrap().cos();
+            assert_eq!(super::real_sign(&epsilon, &strict), None);
+            for (numerator, weight) in [
+                (vec![epsilon.clone()], vec![epsilon.clone()]),
+                (vec![point.y().clone(), epsilon], vec![Real::one()]),
+            ] {
+                let image = retained(vec![Real::zero(), Real::one()], numerator, weight);
+                let outcome = resolve_certified_operation(&policy, |attempt| {
+                    Ok::<_, ()>(image.exact_coordinate(false, attempt))
+                })
+                .unwrap();
+                assert!(outcome.value.is_none());
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            }
+        }
+    }
+}
+
+/// Recognizes a parameter-independent rational coordinate without scalar-root
+/// elimination. The caller must separately certify that the denominator does
+/// not vanish at its selected parameter; proportionality does not remove poles.
+fn strict_constant_rational_coordinate(numerator: &[Real], denominator: &[Real]) -> Option<Real> {
+    let pivot = denominator.iter().position(|coefficient| {
+        matches!(
+            real_sign(coefficient, &CurveContext::STRICT),
+            Some(RealSign::Negative | RealSign::Positive)
+        )
+    })?;
+    let zero = Real::zero();
+    let numerator_pivot = numerator.get(pivot).unwrap_or(&zero);
+    let denominator_pivot = &denominator[pivot];
+    let proportional = (0..numerator.len().max(denominator.len())).all(|index| {
+        real_sign(
+            &Real::diff_of_products(
+                numerator.get(index).unwrap_or(&zero),
+                denominator_pivot,
+                numerator_pivot,
+                denominator.get(index).unwrap_or(&zero),
+            ),
+            &CurveContext::STRICT,
+        ) == Some(RealSign::Zero)
+    });
+    if proportional {
+        (numerator_pivot / denominator_pivot).ok()
+    } else {
+        None
+    }
 }
 
 fn compare_root_representation_to_real(
@@ -795,35 +959,8 @@ impl RationalBezierAlgebraicPointImage2 {
             numerator.pop();
         }
 
-        // An opaque exact `Real` constant is not a rational-coefficient
-        // algebraic number, but it is already the canonical scalar carrier.
-        // Detect a projectively constant rational map before asking the
-        // algebraic-image package to eliminate a parameter that has vanished.
-        if let Some(pivot) = denominator.iter().position(|coefficient| {
-            matches!(
-                real_sign(coefficient, &CurveContext::STRICT),
-                Some(RealSign::Negative | RealSign::Positive)
-            )
-        }) {
-            let numerator_pivot = numerator.get(pivot).unwrap_or(&zero);
-            let denominator_pivot = &denominator[pivot];
-            let proportional = (0..numerator.len().max(denominator.len())).all(|index| {
-                let numerator = numerator.get(index).unwrap_or(&zero);
-                let denominator = denominator.get(index).unwrap_or(&zero);
-                real_sign(
-                    &Real::diff_of_products(
-                        numerator,
-                        denominator_pivot,
-                        numerator_pivot,
-                        denominator,
-                    ),
-                    &CurveContext::STRICT,
-                ) == Some(RealSign::Zero)
-            });
-            if proportional {
-                let value = (numerator_pivot / denominator_pivot).ok()?;
-                return Some(AlgebraicRootRepresentation::from_exact_value(&value));
-            }
+        if let Some(value) = strict_constant_rational_coordinate(&numerator, denominator) {
+            return Some(AlgebraicRootRepresentation::from_exact_value(&value));
         }
         let evidence = transform_algebraic_root_rational_image(
             predicate.root,
@@ -1086,10 +1223,9 @@ impl RationalBezierAlgebraicPointImage2 {
             }
         }
 
-        let point = self.resolved(policy)?;
         Some(Point2::new(
-            point.x()?.representation()?.exact_point_witness()?.clone(),
-            point.y()?.representation()?.exact_point_witness()?.clone(),
+            self.exact_coordinate(true, policy)?,
+            self.exact_coordinate(false, policy)?,
         ))
     }
 
@@ -1104,14 +1240,30 @@ impl RationalBezierAlgebraicPointImage2 {
         if let (Some(parameter), Some((x_numerator, y_numerator, denominator))) = (
             self.retained_parameter(),
             self.retained_coordinate_polynomials(),
-        ) && let Ok(Classification::Decided(Some(parameter))) =
-            parameter.represented_exact_point(policy)
-        {
-            let denominator = Real::eval_poly(denominator, &parameter);
-            let numerator =
-                Real::eval_poly(if use_x { x_numerator } else { y_numerator }, &parameter);
-            if let Ok(coordinate) = numerator / denominator {
+        ) {
+            let numerator = if use_x { x_numerator } else { y_numerator };
+            if let Some(coordinate) = strict_constant_rational_coordinate(numerator, denominator)
+                && matches!(
+                    signed_coefficients_at_parameter(
+                        denominator,
+                        &BezierParameter2::Algebraic(parameter.clone()),
+                        &policy.strict_counterpart(),
+                    ),
+                    Ok(Classification::Decided(
+                        RealSign::Positive | RealSign::Negative
+                    ))
+                )
+            {
                 return Some(coordinate);
+            }
+            if let Ok(Classification::Decided(Some(parameter))) =
+                parameter.represented_exact_point(policy)
+            {
+                let denominator = Real::eval_poly(denominator, &parameter);
+                let numerator = Real::eval_poly(numerator, &parameter);
+                if let Ok(coordinate) = numerator / denominator {
+                    return Some(coordinate);
+                }
             }
         }
 

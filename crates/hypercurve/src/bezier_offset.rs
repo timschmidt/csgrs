@@ -138516,10 +138516,31 @@ mod conversion_tests {
             )
             .unwrap();
             for carrier in [point_touch_carrier.clone(), point_touch_carrier.reversed()] {
-                assert!(matches!(
-                    carrier.representative_point(&policy).unwrap(),
-                    Classification::Decided(CurvePoint2(CurvePointData2::Algebraic(_)))
-                ));
+                let Classification::Decided(representative) =
+                    carrier.representative_point(&policy).unwrap()
+                else {
+                    panic!("the correlated chord has an exact interior representative");
+                };
+                for (axis, bound, expected) in [
+                    (Axis2::X, Real::zero(), std::cmp::Ordering::Greater),
+                    (
+                        Axis2::X,
+                        Real::from(2).sqrt().unwrap(),
+                        std::cmp::Ordering::Less,
+                    ),
+                    (Axis2::Y, Real::zero(), std::cmp::Ordering::Equal),
+                ] {
+                    assert_eq!(
+                        BezierAlgebraicChord2::point_axis_order_to_real(
+                            &representative,
+                            axis,
+                            &bound,
+                            &policy,
+                        )
+                        .unwrap(),
+                        Classification::Decided(expected),
+                    );
+                }
                 assert_eq!(
                     carrier
                         .certifiably_disjoint_from_circle_bounds(
