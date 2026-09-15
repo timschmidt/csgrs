@@ -54882,7 +54882,9 @@ fn recursive_foreign_base_root(
     let Some(radicand) = field.lift(&radicand) else {
         return Ok(Classification::Decided(None));
     };
-    match radicand.sign(policy)? {
+    // Selecting a field generator constructs exact reusable evidence. The
+    // caller's approximate terminal cannot collapse an unresolved root to zero.
+    match policy.strict_predicate_pass(|| radicand.sign(policy))? {
         Classification::Decided(RealSign::Positive) => {
             let Some(extension) = field.extension(radicand) else {
                 return Ok(Classification::Decided(None));
@@ -54990,10 +54992,13 @@ fn recursive_embed_foreign_field(
             let Some(difference) = mapped_radicand.subtract(&candidate.radicand) else {
                 continue;
             };
-            let sign = match difference.sign(policy)? {
+            // Generator identity must remain exact under either query policy.
+            let sign = match policy.strict_predicate_pass(|| difference.sign(policy))? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(_) => {
-                    match difference.sign_with_projected_zero_fallback(policy)? {
+                    match policy.strict_predicate_pass(|| {
+                        difference.sign_with_projected_zero_fallback(policy)
+                    })? {
                         Classification::Decided(sign) => sign,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
@@ -55379,10 +55384,14 @@ impl BezierRecursiveQuadraticField2 {
                         interval(&difference),
                     );
                 }
-                let sign = match difference.sign(policy)? {
+                // An approximate equality may answer a terminal predicate, but
+                // cannot identify generators in a reusable exact field.
+                let sign = match policy.strict_predicate_pass(|| difference.sign(policy))? {
                     Classification::Decided(sign) => sign,
                     Classification::Uncertain(_) => {
-                        match difference.sign_with_projected_zero_fallback(policy)? {
+                        match policy.strict_predicate_pass(|| {
+                            difference.sign_with_projected_zero_fallback(policy)
+                        })? {
                             Classification::Decided(sign) => sign,
                             Classification::Uncertain(reason) => {
                                 return Ok(Classification::Uncertain(reason));
@@ -150034,6 +150043,74 @@ mod conversion_tests {
                     assert!(point.data.recursive_projective_point.get().is_none());
                 }
             }
+        }
+    }
+
+    #[test]
+    fn recursive_field_embeddings_do_not_consume_approximate_generator_equalities() {
+        let epsilon = Real::from(2_i8).powi_i64(-600).unwrap();
+        let unresolved_positive = Real::one() - epsilon.cos();
+        assert_eq!(unresolved_positive.zero_status(), ZeroKnowledge::Unknown);
+        assert_eq!(real_sign(&unresolved_positive, &CurveContext::STRICT), None);
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let base_field =
+            BezierRecursiveQuadraticField2::base(vec![], one.clone(), one.clone()).unwrap();
+        let first = base_field
+            .extension(base_field.constant(Real::from(2_i8)).unwrap())
+            .unwrap();
+        let second = base_field
+            .extension(
+                base_field
+                    .constant(Real::from(2_i8) + &unresolved_positive)
+                    .unwrap(),
+            )
+            .unwrap();
+        let foreign_base = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let foreign = foreign_base
+            .extension(
+                foreign_base
+                    .constant(Real::from(2_i8) + &unresolved_positive)
+                    .unwrap(),
+            )
+            .unwrap();
+        let target_base = base_field.base_and_extension_path().0;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(
+                matches!(
+                    first.joined_with(&second, &policy).unwrap(),
+                    Classification::Uncertain(_)
+                ),
+                "{policy:?}: unresolved radicand equality cannot identify distinct retained generators"
+            );
+            assert!(
+                matches!(
+                    recursive_embed_foreign_field(
+                        &foreign,
+                        target_base.clone(),
+                        vec![],
+                        first.clone(),
+                        &policy,
+                    )
+                    .unwrap(),
+                    Classification::Uncertain(_)
+                ),
+                "{policy:?}: foreign fields require the same exact generator evidence"
+            );
+            assert!(
+                matches!(
+                    recursive_foreign_base_root(
+                        DenseTensorPolynomial::try_new(vec![], vec![unresolved_positive.clone()],)
+                            .unwrap(),
+                        &target_base,
+                        base_field.clone(),
+                        None,
+                        &policy,
+                    )
+                    .unwrap(),
+                    Classification::Uncertain(_)
+                ),
+                "{policy:?}: an unresolved positive radicand cannot become the exact zero root"
+            );
         }
     }
 
