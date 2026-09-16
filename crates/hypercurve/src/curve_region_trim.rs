@@ -2,9 +2,9 @@
 
 use crate::policy::resolve_certified_operation;
 use crate::{
-    BezierParameter2, BezierSplitFragment2, Classification, Curve2, CurveContext,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameter2, CurvePath2,
-    CurvePoint2, CurveRegion2, CurveSpanRange2, ExactCurveError, ExactCurveResult, Real,
+    Classification, Curve2, CurveContext, CurveIntersectionPairBlockerKind2, CurveLocation2,
+    CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2, CurvePath2, CurvePoint2,
+    CurveRegion2, CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult, Real,
     RegionPointLocation, UncertaintyReason,
 };
 
@@ -59,23 +59,24 @@ impl CurveRegionBoundaryContact2 {
 
 #[derive(Clone)]
 struct PendingBoundaryContact {
-    promoted_span_index: usize,
-    source_parameter: BezierParameter2,
+    span_index: usize,
+    source_parameter: CurveParameter2,
     contact: CurveRegionBoundaryContact2,
 }
 
 struct PendingBoundaryOverlap {
-    promoted_span_index: usize,
-    start: BezierParameter2,
-    end: BezierParameter2,
+    span_index: usize,
+    start: CurveParameter2,
+    end: CurveParameter2,
 }
 
 /// One retained region-clipped fragment with its source-curve parameter span.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionTrimFragment2 {
-    promoted_span_index: usize,
+    span_index: usize,
     span_range: CurveSpanRange2,
-    fragment: BezierSplitFragment2,
+    local_range: CurveParameterRange2,
+    curve: Curve2,
     start_boundary_contacts: Vec<CurveRegionBoundaryContact2>,
     end_boundary_contacts: Vec<CurveRegionBoundaryContact2>,
 }
@@ -123,24 +124,62 @@ impl CurvePathRegionTrim2 {
 }
 
 impl CurveRegionTrimFragment2 {
-    /// Returns the source curve's promoted Bézier span index.
-    pub const fn promoted_span_index(&self) -> usize {
-        self.promoted_span_index
+    /// Returns the source curve's connected span index.
+    pub const fn span_index(&self) -> usize {
+        self.span_index
     }
 
-    /// Returns the source curve's exact public interval for that span.
+    /// Returns the span's affine parameter chart. Its endpoints are the source
+    /// parameters corresponding to local zero and one; selected restrictions
+    /// can occupy only part of that chart.
     pub const fn span_range(&self) -> &CurveSpanRange2 {
         &self.span_range
     }
 
-    /// Returns the retained native or explicitly algebraic split fragment.
-    pub const fn fragment(&self) -> &BezierSplitFragment2 {
-        &self.fragment
+    /// Returns the exact retained curve, ready for subsequent operations.
+    pub const fn curve(&self) -> &Curve2 {
+        &self.curve
     }
 
-    /// Consumes this record and returns the retained split fragment.
-    pub fn into_fragment(self) -> BezierSplitFragment2 {
-        self.fragment
+    /// Consumes this record and returns the exact retained curve.
+    pub fn into_curve(self) -> Curve2 {
+        self.curve
+    }
+
+    /// Returns the source location of the retained curve's traversal start.
+    pub fn start_location(&self) -> CurveLocation2 {
+        CurveLocation2::new(
+            self.span_index,
+            self.span_range.clone(),
+            self.local_range.start().clone(),
+        )
+    }
+
+    /// Returns the source location of the retained curve's traversal end.
+    pub fn end_location(&self) -> CurveLocation2 {
+        CurveLocation2::new(
+            self.span_index,
+            self.span_range.clone(),
+            self.local_range.end().clone(),
+        )
+    }
+
+    /// Replays the oriented source parameter range without requiring scalar
+    /// coordinates or replacing selected-root evidence.
+    pub fn parameter_range(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveParameterRange2>> {
+        let start = match self.start_location().parameter(policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(match self.end_location().parameter(policy)? {
+            Classification::Decided(end) => {
+                Classification::Decided(CurveParameterRange2::new_validated(start, end))
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        })
     }
 
     /// Returns every authored region segment proved incident to the fragment start.
@@ -154,10 +193,9 @@ impl CurveRegionTrimFragment2 {
     }
 
     /// Returns the retained boundaries in the top-level public parameter space
-    /// when both promoted-span boundaries are represented by [`Real`].
+    /// when both local boundaries already have a [`Real`] payload.
     pub fn represented_parameter_range(&self) -> Option<(Real, Real)> {
-        let (local_start, local_end) = self.fragment.parameter_range()?;
-        let (local_start, local_end) = (local_start.scalar()?, local_end.scalar()?);
+        let (local_start, local_end) = self.local_range.scalar_endpoints()?;
         let (span_start, span_end) = self.span_range.endpoints();
         let span = span_end - span_start;
         Some((
@@ -171,8 +209,8 @@ impl Curve2 {
     /// Retains the positive-length exact fragments of this curve in the closed
     /// filled set of a region.
     ///
-    /// Every material and hole carrier is intersected with the curve's promoted
-    /// rational-Bézier spans through the same pair dispatcher used by region
+    /// Every material and hole carrier is intersected with the curve's connected
+    /// source spans through the same pair dispatcher used by region
     /// Booleans. Certified contacts split the source, then one exact
     /// representative per fragment is classified against the complete region.
     /// Certified positive-length overlaps retain boundary fragments; an
@@ -182,13 +220,13 @@ impl Curve2 {
         &self,
         region: &CurveRegion2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<BezierSplitFragment2>>> {
+    ) -> ExactCurveResult<CurveOutcome<Vec<Curve2>>> {
         resolve_certified_operation(policy, |attempt| {
             self.trim_inside_region_with_parameters_raw(region, attempt)
                 .map(|fragments| {
                     fragments
                         .into_iter()
-                        .map(CurveRegionTrimFragment2::into_fragment)
+                        .map(CurveRegionTrimFragment2::into_curve)
                         .collect()
                 })
         })
@@ -199,9 +237,9 @@ impl Curve2 {
     ///
     /// This is the authoritative form for consumers that must transfer a trim
     /// back to a corresponding curve in another parameter space. Algebraic
-    /// boundaries remain explicit in the embedded [`BezierSplitFragment2`];
+    /// boundaries retain their exact [`CurveLocation2`] and [`Curve2`] evidence;
     /// [`CurveRegionTrimFragment2::represented_parameter_range`] succeeds only
-    /// when both boundaries are materializable as [`Real`].
+    /// when both boundaries already have a [`Real`] payload.
     pub fn trim_inside_region_with_parameters(
         &self,
         region: &CurveRegion2,
@@ -242,8 +280,7 @@ impl Curve2 {
                 ),
             ));
         }
-        let native_fragments =
-            self.native_bezier_fragments_for_operation(policy, CurveOperation2::Subdivision)?;
+        let source_spans = self.source_spans(policy, CurveOperation2::Subdivision)?;
 
         let mut loop_boundaries = Vec::with_capacity(roles.len());
         let mut material_contour_index = 0_usize;
@@ -264,7 +301,13 @@ impl Curve2 {
             loop_boundaries.push((kind, contour_index));
         }
 
-        let result = region.intersect_curve_boundary_carriers_raw(self, policy)?;
+        let context =
+            crate::curve_region_boolean::CurveRegionBooleanContext::try_new_curve_boundary(
+                &source_spans,
+                region,
+                policy,
+            )?;
+        let result = context.build_intersection_evidence()?;
         if let Some(blocker) = result.blockers().first() {
             let reason = if let Some(blocker) = blocker.native_blocker() {
                 match blocker.kind() {
@@ -296,8 +339,7 @@ impl Curve2 {
             Vec::with_capacity(result.contacts().len().saturating_add(endpoint_count));
         let mut boundary_overlaps = Vec::with_capacity(result.overlaps().len());
         for contact in result.contacts() {
-            let source_parameter =
-                trim_source_bezier_parameter(contact.first_parameter(), self, policy)?;
+            let source_parameter = contact.first_parameter().clone();
             let Some(&(kind, contour_index)) = loop_boundaries.get(contact.second().loop_index())
             else {
                 return Err(ExactCurveError::invalid(
@@ -308,10 +350,10 @@ impl Curve2 {
                     ),
                 ));
             };
-            let promoted_span_index = contact.first().fragment_index();
-            split_parameters.push((promoted_span_index, source_parameter.clone()));
+            let span_index = contact.first().fragment_index();
+            split_parameters.push((span_index, source_parameter.clone()));
             boundary_contacts.push(PendingBoundaryContact {
-                promoted_span_index,
+                span_index,
                 source_parameter,
                 contact: CurveRegionBoundaryContact2 {
                     kind,
@@ -323,10 +365,8 @@ impl Curve2 {
             });
         }
         for overlap in result.overlaps() {
-            let source_start =
-                trim_source_bezier_parameter(overlap.first_range().start(), self, policy)?;
-            let source_end =
-                trim_source_bezier_parameter(overlap.first_range().end(), self, policy)?;
+            let source_start = overlap.first_range().start().clone();
+            let source_end = overlap.first_range().end().clone();
             let Some(&(kind, contour_index)) = loop_boundaries.get(overlap.second().loop_index())
             else {
                 return Err(ExactCurveError::invalid(
@@ -351,8 +391,8 @@ impl Curve2 {
                     ));
                 }
             };
-            let promoted_span_index = overlap.first().fragment_index();
-            let Some(native) = native_fragments.get(promoted_span_index) else {
+            let span_index = overlap.first().fragment_index();
+            let Some(span) = source_spans.get(span_index) else {
                 return Err(ExactCurveError::invalid(
                     CurveOperation2::Subdivision,
                     self.family(),
@@ -361,12 +401,9 @@ impl Curve2 {
                     ),
                 ));
             };
-            let source_rational = crate::RationalBezier2::try_from_subcurve(native.curve())
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Subdivision, self.family(), cause)
-                })?;
+            let source_curve = span.curve();
             boundary_overlaps.push(PendingBoundaryOverlap {
-                promoted_span_index,
+                span_index,
                 start: ordered_start,
                 end: ordered_end,
             });
@@ -374,35 +411,27 @@ impl Curve2 {
                 (&source_start, overlap.second_range().start()),
                 (&source_end, overlap.second_range().end()),
             ] {
-                split_parameters.push((promoted_span_index, source_parameter.clone()));
+                split_parameters.push((span_index, source_parameter.clone()));
                 boundary_contacts.push(PendingBoundaryContact {
-                    promoted_span_index,
+                    span_index,
                     source_parameter: source_parameter.clone(),
                     contact: CurveRegionBoundaryContact2 {
                         kind,
                         contour_index,
                         segment_index: overlap.second().fragment_index(),
                         boundary_parameter: boundary_parameter.clone(),
-                        point: crate::rational_bezier_general::exact_contact_point_evidence(
-                            &source_rational,
-                            source_parameter,
-                            policy,
-                        )
-                        .map_err(|cause| {
-                            ExactCurveError::invalid(
-                                CurveOperation2::Subdivision,
-                                self.family(),
-                                cause,
-                            )
-                        })?,
+                        point: Some(
+                            source_curve
+                                .point_at(source_parameter, policy)?
+                                .into_value(),
+                        ),
                     },
                 });
             }
         }
 
-        // Native trim classification consumes span-local representative points.
-        // Reuse its prepared spans and parameters without promoting them again.
-        let mut by_span = vec![Vec::new(); native_fragments.len()];
+        // Preserve each prepared support and its chart through subdivision.
+        let mut by_span = vec![Vec::new(); source_spans.len()];
         for (span_index, parameter) in split_parameters {
             let parameters = by_span.get_mut(span_index).ok_or_else(|| {
                 ExactCurveError::invalid(
@@ -416,106 +445,64 @@ impl Curve2 {
             parameters.push(parameter);
         }
         let mut retained = Vec::new();
-        for (promoted_span_index, (native, parameters)) in
-            native_fragments.iter().zip(by_span).enumerate()
-        {
-            let materialization = match native
-                .curve()
-                .split_at_parameters(&parameters, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Subdivision, self.family(), cause)
-                })? {
-                Classification::Decided(materialization) => materialization,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Subdivision,
-                        self.family(),
-                        reason,
-                    ));
-                }
-            };
-            for fragment in materialization.fragments() {
-                let Some((start, end)) = fragment.parameter_range() else {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Subdivision,
-                        self.family(),
-                        UncertaintyReason::Unsupported,
-                    ));
+        for (span_index, (span, parameters)) in source_spans.iter().zip(by_span).enumerate() {
+            let source = span.curve();
+            for (range, curve) in source.split_at_parameters(parameters, policy)? {
+                let covered = fragment_is_covered_by_boundary_overlap(
+                    &boundary_overlaps,
+                    span_index,
+                    range.start(),
+                    range.end(),
+                    self,
+                    policy,
+                )?;
+                let retain = if covered {
+                    // Closed-set clipping includes positive-length boundary
+                    // overlaps; complete pair replay supplies their incidence.
+                    true
+                } else {
+                    match context.trim_piece_location(span_index, &curve, &range)? {
+                        RegionPointLocation::Inside => true,
+                        RegionPointLocation::Outside => false,
+                        RegionPointLocation::Boundary => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Subdivision,
+                                self.family(),
+                                UncertaintyReason::Boundary,
+                            ));
+                        }
+                    }
                 };
-                let representative =
-                    match fragment.representative_point(policy).map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Subdivision, self.family(), cause)
-                    })? {
-                        Classification::Decided(point) => point,
-                        Classification::Uncertain(reason) => {
-                            return Err(ExactCurveError::blocked(
-                                CurveOperation2::Subdivision,
-                                self.family(),
-                                reason,
-                            ));
-                        }
-                    };
-                let retain =
-                    match region
-                        .classify_point_raw(&representative, policy)
-                        .map_err(|cause| {
-                            ExactCurveError::invalid(
-                                CurveOperation2::Subdivision,
-                                self.family(),
-                                cause,
-                            )
-                        })? {
-                        Classification::Decided(RegionPointLocation::Inside) => true,
-                        Classification::Decided(RegionPointLocation::Outside) => false,
-                        Classification::Decided(RegionPointLocation::Boundary) => {
-                            if fragment_is_covered_by_boundary_overlap(
-                                &boundary_overlaps,
-                                promoted_span_index,
-                                start,
-                                end,
-                                self,
-                                policy,
-                            )? {
-                                // Curve-region clipping uses the closed filled set:
-                                // positive-length boundary portions are retained,
-                                // while an unexplained Boundary representative is
-                                // still evidence that subdivision was incomplete.
-                                true
-                            } else {
-                                return Err(ExactCurveError::blocked(
-                                    CurveOperation2::Subdivision,
-                                    self.family(),
-                                    UncertaintyReason::Boundary,
-                                ));
-                            }
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Err(ExactCurveError::blocked(
-                                CurveOperation2::Subdivision,
-                                self.family(),
-                                reason,
-                            ));
-                        }
-                    };
                 if retain {
+                    let local_range = if source.source_traversal_is_reversed() {
+                        CurveParameterRange2::new_validated(
+                            range.end().clone(),
+                            range.start().clone(),
+                        )
+                    } else {
+                        range
+                    };
+                    let start_boundary_contacts = boundary_contacts_at(
+                        &boundary_contacts,
+                        span_index,
+                        local_range.start(),
+                        self,
+                        policy,
+                    )?;
+                    let end_boundary_contacts = boundary_contacts_at(
+                        &boundary_contacts,
+                        span_index,
+                        local_range.end(),
+                        self,
+                        policy,
+                    )?;
                     retained.push(CurveRegionTrimFragment2 {
-                        promoted_span_index,
-                        span_range: native.span_range().clone(),
-                        fragment: fragment.clone(),
-                        start_boundary_contacts: boundary_contacts_at(
-                            &boundary_contacts,
-                            promoted_span_index,
-                            start,
-                            self,
-                            policy,
-                        )?,
-                        end_boundary_contacts: boundary_contacts_at(
-                            &boundary_contacts,
-                            promoted_span_index,
-                            end,
-                            self,
-                            policy,
-                        )?,
+                        span_index,
+                        span_range: span.chart(),
+                        local_range,
+                        curve,
+                        start_boundary_contacts,
+                        end_boundary_contacts,
                     });
                 }
             }
@@ -626,20 +613,24 @@ fn merge_closed_trim_path_seam(
     let first_fragment = paths[0]
         .first()
         .expect("nonempty trim paths retain at least one fragment");
-    if !trim_fragment_reaches_curve_boundary(
-        &last_fragment.fragment,
-        source
-            .curves()
-            .last()
-            .expect("validated curve paths are nonempty"),
-        false,
-        policy,
-    )? || !trim_fragment_reaches_curve_boundary(
-        &first_fragment.fragment,
-        &source.curves()[0],
-        true,
-        policy,
-    )? {
+    if last_fragment.source_curve_index + 1 != source.curves().len()
+        || first_fragment.source_curve_index != 0
+        || !trim_fragment_reaches_curve_boundary(
+            &last_fragment.fragment,
+            source
+                .curves()
+                .last()
+                .expect("validated curve paths are nonempty"),
+            false,
+            policy,
+        )?
+        || !trim_fragment_reaches_curve_boundary(
+            &first_fragment.fragment,
+            &source.curves()[0],
+            true,
+            policy,
+        )?
+    {
         return Ok(());
     }
 
@@ -709,46 +700,30 @@ fn trim_fragments_touch_on_curve(
     source_curve: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let Some((_, previous_end)) = previous.fragment.parameter_range() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Subdivision,
-            source_curve.family(),
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let Some((current_start, _)) = current.fragment.parameter_range() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Subdivision,
-            source_curve.family(),
-            UncertaintyReason::Unsupported,
-        ));
-    };
-
-    if previous.promoted_span_index == current.promoted_span_index {
-        return compared_parameters_are_equal(previous_end, current_start, source_curve, policy);
+    if previous.span_index == current.span_index {
+        return compared_parameters_are_equal(
+            previous.local_range.end(),
+            current.local_range.start(),
+            source_curve,
+            policy,
+        );
     }
-    if current.promoted_span_index != previous.promoted_span_index + 1
-        || !compared_parameters_are_equal(
-            previous_end,
-            &BezierParameter2::Exact(Real::one()),
-            source_curve,
-            policy,
-        )?
-        || !compared_parameters_are_equal(
-            current_start,
-            &BezierParameter2::Exact(Real::zero()),
-            source_curve,
-            policy,
-        )?
-    {
+    if current.span_index != previous.span_index + 1 {
         return Ok(false);
     }
-    compared_reals_are_equal(
-        previous.span_range.endpoints().1,
-        current.span_range.endpoints().0,
+    // Equal knot parameters alone do not establish connectivity at a spline
+    // discontinuity. Retain both the source-chart and geometric requirements.
+    Ok(compared_parameters_are_equal(
+        &trim_location_parameter(&previous.end_location(), source_curve, policy)?,
+        &trim_location_parameter(&current.start_location(), source_curve, policy)?,
         source_curve,
         policy,
-    )
+    )? && trim_path_points_equal(
+        previous.curve.end(),
+        current.curve.start(),
+        source_curve.family(),
+        policy,
+    )?)
 }
 
 fn trim_fragment_reaches_curve_boundary(
@@ -757,78 +732,54 @@ fn trim_fragment_reaches_curve_boundary(
     start: bool,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let Some((fragment_start, fragment_end)) = fragment.fragment.parameter_range() else {
-        return Err(ExactCurveError::blocked(
-            CurveOperation2::Subdivision,
-            source_curve.family(),
-            UncertaintyReason::Unsupported,
-        ));
-    };
-    let (local, span, domain, unit) = if start {
-        (
-            fragment_start,
-            fragment.span_range.endpoints().0,
-            source_curve.parameter_domain().start(),
-            Real::zero(),
-        )
+    let location = if start {
+        fragment.start_location()
     } else {
-        (
-            fragment_end,
-            fragment.span_range.endpoints().1,
-            source_curve.parameter_domain().end(),
-            Real::one(),
-        )
+        fragment.end_location()
     };
-    Ok(
-        compared_parameters_are_equal(local, &BezierParameter2::Exact(unit), source_curve, policy)?
-            && compared_parameter_order(
-                &BezierParameter2::Exact(span.clone()),
-                &trim_source_bezier_parameter(domain, source_curve, policy)?,
-                source_curve,
-                policy,
-            )?
-            .is_eq(),
+    let domain = source_curve.parameter_domain();
+    let parameter = if start != source_curve.source_traversal_is_reversed() {
+        domain.start()
+    } else {
+        domain.end()
+    };
+    compared_parameters_are_equal(
+        &trim_location_parameter(&location, source_curve, policy)?,
+        parameter,
+        source_curve,
+        policy,
     )
 }
 
+fn trim_location_parameter(
+    location: &CurveLocation2,
+    source: &Curve2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveParameter2> {
+    match location.parameter(policy).map_err(|cause| {
+        ExactCurveError::invalid(CurveOperation2::Subdivision, source.family(), cause)
+    })? {
+        Classification::Decided(parameter) => Ok(parameter),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Subdivision,
+            source.family(),
+            reason,
+        )),
+    }
+}
+
 fn compared_parameters_are_equal(
-    left: &BezierParameter2,
-    right: &BezierParameter2,
+    left: &CurveParameter2,
+    right: &CurveParameter2,
     source_curve: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     Ok(compared_parameter_order(left, right, source_curve, policy)?.is_eq())
 }
 
-/// Materializes a retained source parameter only at the public curve-trim
-/// boundary, where [`BezierSplitFragment2`] must express cuts in the source
-/// curve's ordinary parameter domain. Boolean topology and carrier clipping
-/// keep the compact retained scalar until this cold consumer requests it.
-fn trim_source_bezier_parameter(
-    parameter: &CurveParameter2,
-    source_curve: &Curve2,
-    policy: &CurveContext,
-) -> ExactCurveResult<BezierParameter2> {
-    if let Some(parameter) = parameter.as_bezier_parameter() {
-        return Ok(parameter.clone());
-    }
-    match policy
-        .strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))
-        .map_err(|cause| {
-            ExactCurveError::invalid(CurveOperation2::Subdivision, source_curve.family(), cause)
-        })? {
-        Classification::Decided(parameter) => Ok(parameter),
-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-            CurveOperation2::Subdivision,
-            source_curve.family(),
-            reason,
-        )),
-    }
-}
-
 fn compared_parameter_order(
-    left: &BezierParameter2,
-    right: &BezierParameter2,
+    left: &CurveParameter2,
+    right: &CurveParameter2,
     source_curve: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<std::cmp::Ordering> {
@@ -843,8 +794,8 @@ fn compared_parameter_order(
 }
 
 fn classified_parameter_order(
-    left: &BezierParameter2,
-    right: &BezierParameter2,
+    left: &CurveParameter2,
+    right: &CurveParameter2,
     source_curve: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Classification<std::cmp::Ordering>> {
@@ -855,16 +806,16 @@ fn classified_parameter_order(
 
 fn fragment_is_covered_by_boundary_overlap(
     overlaps: &[PendingBoundaryOverlap],
-    promoted_span_index: usize,
-    start: &BezierParameter2,
-    end: &BezierParameter2,
+    span_index: usize,
+    start: &CurveParameter2,
+    end: &CurveParameter2,
     source_curve: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
     let mut uncertainty = None;
     for overlap in overlaps
         .iter()
-        .filter(|overlap| overlap.promoted_span_index == promoted_span_index)
+        .filter(|overlap| overlap.span_index == span_index)
     {
         let start_order = classified_parameter_order(&overlap.start, start, source_curve, policy)?;
         let end_order = classified_parameter_order(end, &overlap.end, source_curve, policy)?;
@@ -892,33 +843,17 @@ fn fragment_is_covered_by_boundary_overlap(
     }
 }
 
-fn compared_reals_are_equal(
-    left: &Real,
-    right: &Real,
-    source_curve: &Curve2,
-    policy: &CurveContext,
-) -> ExactCurveResult<bool> {
-    match crate::classify::compare_reals(left, right, policy) {
-        Some(ordering) => Ok(ordering.is_eq()),
-        None => Err(ExactCurveError::blocked(
-            CurveOperation2::Subdivision,
-            source_curve.family(),
-            UncertaintyReason::Ordering,
-        )),
-    }
-}
-
 fn boundary_contacts_at(
     contacts: &[PendingBoundaryContact],
-    promoted_span_index: usize,
-    parameter: &BezierParameter2,
+    span_index: usize,
+    parameter: &CurveParameter2,
     source: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurveRegionBoundaryContact2>> {
     let mut matched = Vec::new();
     for pending in contacts
         .iter()
-        .filter(|pending| pending.promoted_span_index == promoted_span_index)
+        .filter(|pending| pending.span_index == span_index)
     {
         match pending
             .source_parameter
@@ -980,6 +915,23 @@ mod tests {
                 .collect(),
         )
         .unwrap()
+    }
+
+    fn representative_point(curve: &Curve2) -> Point2 {
+        let Classification::Decided(parameter) = curve
+            .parameter_domain()
+            .strict_interior_scalar(&CurveContext::STRICT)
+            .unwrap()
+        else {
+            panic!("fixture must have a certified interior parameter");
+        };
+        curve
+            .point_at(&parameter.into(), &CurveContext::STRICT)
+            .unwrap()
+            .value
+            .coordinates()
+            .expect("fixture interior has scalar coordinates")
+            .clone()
     }
 
     fn native_region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
@@ -1119,11 +1071,25 @@ mod tests {
         let [fragment] = outcome.value[0].fragments() else {
             panic!("parabolic trim must retain one connected fragment");
         };
-        assert!(
-            fragment
-                .trim_fragment()
-                .fragment()
-                .is_algebraic_endpoint_images()
+        let curve = fragment.trim_fragment().curve();
+        assert_eq!(
+            curve
+                .start()
+                .same_point(&p(0, 1).into(), &CurveContext::STRICT),
+            Classification::Decided(true)
+        );
+        let end = Point2::new(Real::from(2).sqrt().unwrap(), Real::one());
+        assert_eq!(
+            curve.end().same_point(&end.into(), &CurveContext::STRICT),
+            Classification::Decided(true)
+        );
+        assert_eq!(
+            curve
+                .trim_inside_region(&region, &CurveContext::STRICT)
+                .unwrap()
+                .value
+                .len(),
+            1
         );
     }
 
@@ -1136,18 +1102,8 @@ mod tests {
             .unwrap()
             .into_value();
         assert_eq!(fragments.len(), 2);
-        assert_eq!(
-            fragments[0]
-                .representative_point(&CurveContext::STRICT)
-                .unwrap(),
-            Classification::Decided(p(1, 2))
-        );
-        assert_eq!(
-            fragments[1]
-                .representative_point(&CurveContext::STRICT)
-                .unwrap(),
-            Classification::Decided(p(5, 2))
-        );
+        assert_eq!(representative_point(&fragments[0]), p(1, 2));
+        assert_eq!(representative_point(&fragments[1]), p(5, 2));
     }
 
     #[test]
@@ -1162,11 +1118,8 @@ mod tests {
             let [trimmed] = trimmed.value.as_slice() else {
                 panic!("the shared bottom edge must retain one exact interval");
             };
-            let BezierSplitFragment2::Materialized { curve, .. } = trimmed.fragment() else {
-                panic!("represented overlap endpoints must materialize the retained line");
-            };
-            assert_eq!(curve.start(), &p(0, 0));
-            assert_eq!(curve.end(), &p(4, 0));
+            assert_eq!(trimmed.curve().start(), p(0, 0).into());
+            assert_eq!(trimmed.curve().end(), p(4, 0).into());
             let start = trimmed
                 .start_boundary_contacts()
                 .iter()
@@ -1243,12 +1196,7 @@ mod tests {
             .into_value();
         assert_eq!(fragments.len(), 2);
         for fragment in fragments {
-            let Classification::Decided(point) = fragment
-                .representative_point(&CurveContext::STRICT)
-                .unwrap()
-            else {
-                panic!("retained conic fragment must have an exact representative");
-            };
+            let point = representative_point(&fragment);
             assert!(matches!(
                 region
                     .classify_point(&point, &CurveContext::STRICT)
@@ -1276,7 +1224,7 @@ mod tests {
             .unwrap()
             .into_value();
         assert_eq!(fragments.len(), 1);
-        assert_eq!(fragments[0].promoted_span_index(), 0);
+        assert_eq!(fragments[0].span_index(), 0);
         let (start, end) = fragments[0]
             .represented_parameter_range()
             .expect("linear boundary roots are represented exactly");
@@ -1288,5 +1236,482 @@ mod tests {
             crate::classify::compare_reals(&end, &q(13, 4), &CurveContext::STRICT),
             Some(std::cmp::Ordering::Equal)
         );
+    }
+
+    #[test]
+    fn selected_curve_trim_reuses_unprojected_parameters_and_reenters_operations() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
+                q(1, 2),
+                32_768,
+                &policy,
+            );
+            assert!(matches!(
+                selected.promoted_bezier_parameter(&policy).unwrap(),
+                Classification::Uncertain(_)
+            ));
+            let parameter = CurveParameter2::from_selected_fiber(selected);
+            let original = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 4)));
+            let source = original
+                .subcurve(parameter.clone(), Real::one().into(), &policy)
+                .unwrap();
+            assert_eq!(source.certainty, CurveCertainty::Certified);
+            let region = native_region(vec![rectangle(-1, -1, 3, 5)], Vec::new());
+            for reversed in [false, true] {
+                let source = if reversed {
+                    source.value.reversed(&policy).unwrap().value
+                } else {
+                    source.value.clone()
+                };
+                let result = source
+                    .trim_inside_region_with_parameters(&region, &policy)
+                    .unwrap();
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let [piece] = result.value.as_slice() else {
+                    panic!("one selected interval");
+                };
+                assert!(piece.represented_parameter_range().is_none());
+                let Classification::Decided(range) = piece.parameter_range(&policy).unwrap() else {
+                    panic!("retained exact range");
+                };
+                let expected = if reversed {
+                    [CurveParameter2::from(q(3, 4)), parameter.clone()]
+                } else {
+                    [parameter.clone(), CurveParameter2::from(q(3, 4))]
+                };
+                for ((actual, expected), endpoint) in [range.start(), range.end()]
+                    .into_iter()
+                    .zip(expected)
+                    .zip([piece.curve().start(), piece.curve().end()])
+                {
+                    assert_eq!(
+                        actual.cmp_by_refinement(&expected, &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Equal)
+                    );
+                    let replayed = source.point_at(actual, &policy).unwrap();
+                    assert_eq!(replayed.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        replayed.value.same_point(&endpoint, &policy),
+                        Classification::Decided(true)
+                    );
+                }
+                let cutter = Curve2::from(
+                    LineSeg2::try_new(
+                        Point2::new(q(5, 2), -Real::one()),
+                        Point2::new(q(5, 2), Real::from(5)),
+                    )
+                    .unwrap(),
+                );
+                let contacts = piece.curve().intersect_curve(&cutter, &policy).unwrap();
+                assert_eq!(contacts.certainty, CurveCertainty::Certified);
+                assert!(contacts.value.blockers().is_empty());
+                assert_eq!(contacts.value.contacts().len(), 1);
+                let split = piece.curve().split_at(q(5, 8).into(), &policy).unwrap();
+                assert_eq!(split.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    split
+                        .value
+                        .0
+                        .end()
+                        .same_point(&split.value.1.start(), &policy),
+                    Classification::Decided(true)
+                );
+                let smaller = native_region(vec![rectangle(-1, -1, 2, 5)], Vec::new());
+                let again = piece.curve().trim_inside_region(&smaller, &policy).unwrap();
+                assert_eq!(again.certainty, CurveCertainty::Certified);
+                let [again] = again.value.as_slice() else {
+                    panic!("one repeatedly trimmed interval");
+                };
+                let endpoint = if reversed { again.start() } else { again.end() };
+                assert_eq!(
+                    endpoint.same_point(&p(2, 1).into(), &policy),
+                    Classification::Decided(true)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn path_trim_separates_discontinuous_spline_spans_at_equal_knot_parameters() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let controls = vec![p(0, 0), p(1, 0), p(3, 0), p(4, 0)];
+            let knots = [2, 2, 3, 3, 4, 4]
+                .into_iter()
+                .map(Real::from)
+                .collect::<Vec<_>>();
+            let polynomial =
+                Curve2::try_polynomial_bspline(1, controls.clone(), knots.clone(), &policy)
+                    .unwrap()
+                    .value;
+            let rational = Curve2::try_nurbs(
+                1,
+                controls,
+                vec![Real::one(), Real::from(2), Real::from(3), Real::one()],
+                knots,
+                &policy,
+            )
+            .unwrap()
+            .value;
+            let region = native_region(vec![rectangle(-1, -1, 5, 1)], Vec::new());
+            for source in [polynomial, rational] {
+                for reversed in [false, true] {
+                    let source = if reversed {
+                        source.reversed(&policy).unwrap().value
+                    } else {
+                        source.clone()
+                    };
+                    let path = CurvePath2::try_new(vec![source]).unwrap();
+                    let result = path.trim_inside_region(&region, &policy).unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(result.value.len(), 2, "a knot jump is not a connected path");
+                    let pieces = result
+                        .value
+                        .iter()
+                        .map(|path| {
+                            let [fragment] = path.fragments() else {
+                                panic!("one span per path");
+                            };
+                            fragment.trim_fragment()
+                        })
+                        .collect::<Vec<_>>();
+                    assert_eq!(
+                        pieces[0]
+                            .curve()
+                            .end()
+                            .same_point(&pieces[1].curve().start(), &policy),
+                        Classification::Decided(false)
+                    );
+                    let first = pieces[0].end_location().parameter(&policy).unwrap();
+                    let second = pieces[1].start_location().parameter(&policy).unwrap();
+                    assert_eq!(first, second, "the discontinuity shares an authored knot");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn closed_path_trim_does_not_join_interior_curves_across_an_excluded_seam() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let points = [
+                p(-3, 0),
+                p(-2, 0),
+                p(-2, 1),
+                p(2, 1),
+                p(2, 0),
+                p(3, 0),
+                p(3, -1),
+                p(-3, -1),
+            ];
+            let path = CurvePath2::try_new(
+                (0..points.len())
+                    .map(|index| {
+                        Curve2::from(
+                            LineSeg2::try_new(
+                                points[index].clone(),
+                                points[(index + 1) % points.len()].clone(),
+                            )
+                            .unwrap(),
+                        )
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            let region = native_region(
+                vec![rectangle(-2, 0, -1, 1), rectangle(1, 0, 2, 1)],
+                Vec::new(),
+            );
+            let result = path.trim_inside_region(&region, &policy).unwrap();
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert_eq!(result.value.len(), 2);
+            for retained in result.value {
+                for pair in retained.fragments().windows(2) {
+                    assert_eq!(
+                        pair[0]
+                            .trim_fragment()
+                            .curve()
+                            .end()
+                            .same_point(&pair[1].trim_fragment().curve().start(), &policy),
+                        Classification::Decided(true)
+                    );
+                }
+            }
+        }
+    }
+
+    fn decided<T: std::fmt::Debug>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                panic!("fixture requires exact evidence: {reason:?}")
+            }
+        }
+    }
+
+    fn sqrt_half_parameter(policy: &CurveContext) -> crate::BezierAlgebraicParameter2 {
+        let polynomial = decided(
+            crate::BezierParameterPolynomial::try_new_power_basis(
+                vec![Real::from(-1), Real::zero(), Real::from(2)],
+                policy,
+            )
+            .unwrap(),
+        );
+        let interval =
+            decided(crate::BezierParameterInterval::try_new(q(2, 3), q(3, 4), policy).unwrap());
+        decided(
+            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+        )
+    }
+
+    fn assert_trim_replay(
+        source: &Curve2,
+        piece: &CurveRegionTrimFragment2,
+        policy: &CurveContext,
+    ) {
+        let range = decided(piece.parameter_range(policy).unwrap());
+        for (parameter, endpoint) in [
+            (range.start(), piece.curve().start()),
+            (range.end(), piece.curve().end()),
+        ] {
+            let replayed = source.point_at(parameter, policy).unwrap();
+            assert_eq!(replayed.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                replayed.value.same_point(&endpoint, policy),
+                Classification::Decided(true)
+            );
+        }
+    }
+
+    #[test]
+    fn generated_chord_trim_preserves_holes_and_exact_endpoint_replay() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter = sqrt_half_parameter(&policy);
+            let endpoint = |x| {
+                CurvePoint2::from(
+                    crate::RationalBezier2::try_new(vec![p(0, 0), p(x, 0)], vec![Real::one(); 2])
+                        .unwrap()
+                        .point_at_algebraic_parameter(&parameter, &policy)
+                        .unwrap(),
+                )
+            };
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new(endpoint(-4), endpoint(4), &policy).unwrap(),
+            );
+            let source =
+                Curve2::from_retained_fragment(crate::BezierSplitFragment2::AlgebraicChord(chord));
+            let region =
+                native_region(vec![rectangle(-2, -2, 2, 2)], vec![rectangle(-1, -1, 1, 1)]);
+            for reversed in [false, true] {
+                let source = if reversed {
+                    source.reversed(&policy).unwrap().value
+                } else {
+                    source.clone()
+                };
+                let result = source
+                    .trim_inside_region_with_parameters(&region, &policy)
+                    .unwrap();
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(result.value.len(), 2);
+                let endpoints = if reversed {
+                    [(2, 1), (-1, -2)]
+                } else {
+                    [(-2, -1), (1, 2)]
+                };
+                for (piece, (start, end)) in result.value.iter().zip(endpoints) {
+                    assert_eq!(
+                        piece
+                            .curve()
+                            .start()
+                            .same_point(&p(start, 0).into(), &policy),
+                        Classification::Decided(true)
+                    );
+                    assert_eq!(
+                        piece.curve().end().same_point(&p(end, 0).into(), &policy),
+                        Classification::Decided(true)
+                    );
+                    assert_trim_replay(&source, piece, &policy);
+                    let again = piece.curve().trim_inside_region(&region, &policy).unwrap();
+                    assert_eq!(again.certainty, CurveCertainty::Certified);
+                    assert_eq!(again.value.len(), 1);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn generated_circle_trim_preserves_selected_frame_and_reversal() {
+        use crate::bezier_offset::{
+            BezierAlgebraicCuspSemicircle2, BezierAlgebraicCuspSemicircleFragment2,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // At t = sqrt(1/2), x = -1 + 2t^2 is exactly zero.
+            let support = QuadraticBezier2::new(p(-1, 0), p(-1, 0), p(1, 0))
+                .parallel_left(Real::zero())
+                .unwrap();
+            let circle = decided(
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    support,
+                    crate::BezierParameter2::algebraic(sqrt_half_parameter(&policy)),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            let source = Curve2::from_retained_fragment(
+                crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(circle, &policy),
+                ),
+            );
+            let region = native_region(vec![rectangle(-2, 0, 1, 2)], Vec::new());
+            for reversed in [false, true] {
+                let source = if reversed {
+                    source.reversed(&policy).unwrap().value
+                } else {
+                    source.clone()
+                };
+                let result = source
+                    .trim_inside_region_with_parameters(&region, &policy)
+                    .unwrap();
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let [piece] = result.value.as_slice() else {
+                    panic!("one upper quarter circle");
+                };
+                let [start, end] = if reversed {
+                    [p(-1, 0), p(0, 1)]
+                } else {
+                    [p(0, 1), p(-1, 0)]
+                };
+                assert_eq!(
+                    piece.curve().start().same_point(&start.into(), &policy),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    piece.curve().end().same_point(&end.into(), &policy),
+                    Classification::Decided(true)
+                );
+                assert_trim_replay(&source, piece, &policy);
+                let again = piece.curve().trim_inside_region(&region, &policy).unwrap();
+                assert_eq!(again.certainty, CurveCertainty::Certified);
+                assert_eq!(again.value.len(), 1);
+                let split = piece.curve().split_at(q(1, 4).into(), &policy).unwrap();
+                assert_eq!(split.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    split
+                        .value
+                        .0
+                        .end()
+                        .same_point(&split.value.1.start(), &policy),
+                    Classification::Decided(true)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn analytic_parallel_trim_keeps_selected_cuts_for_repeated_operations() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 2))
+                .parallel_left(q(1, 8))
+                .unwrap();
+            let fragment = decided(
+                crate::BezierParallelFragment2::try_new(
+                    parallel,
+                    crate::BezierParameterRange2::new_validated(
+                        crate::BezierParameter2::Exact(Real::zero()),
+                        crate::BezierParameter2::Exact(Real::one()),
+                    ),
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let source = Curve2::from_retained_fragment(
+                crate::BezierSplitFragment2::AnalyticParallel(fragment),
+            );
+            let region = native_region(vec![rectangle(-1, -1, 1, 3)], Vec::new());
+            for reversed in [false, true] {
+                let source = if reversed {
+                    source.reversed(&policy).unwrap().value
+                } else {
+                    source.clone()
+                };
+                let result = source
+                    .trim_inside_region_with_parameters(&region, &policy)
+                    .unwrap();
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                let [piece] = result.value.as_slice() else {
+                    panic!("one clipped analytic parallel");
+                };
+                assert_eq!(
+                    piece.curve().family(),
+                    crate::CurveFamily2::AnalyticParallel
+                );
+                assert_trim_replay(&source, piece, &policy);
+                let contacts = if reversed {
+                    piece.start_boundary_contacts()
+                } else {
+                    piece.end_boundary_contacts()
+                };
+                assert_eq!(contacts.len(), 1);
+                assert_eq!(contacts[0].segment_index(), 1);
+                let again = piece.curve().trim_inside_region(&region, &policy).unwrap();
+                assert_eq!(again.certainty, CurveCertainty::Certified);
+                assert_eq!(again.value.len(), 1);
+                let split = piece.curve().split_at(q(1, 4).into(), &policy).unwrap();
+                assert_eq!(split.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    split
+                        .value
+                        .0
+                        .end()
+                        .same_point(&split.value.1.start(), &policy),
+                    Classification::Decided(true)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn isolated_tangency_does_not_create_a_trimmed_curve() {
+        let source = Curve2::from(QuadraticBezier2::new(p(-1, 1), p(0, -1), p(1, 1)));
+        let region = native_region(vec![rectangle(-2, -2, 2, 0)], Vec::new());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let trimmed = source.trim_inside_region(&region, &policy).unwrap();
+            assert_eq!(trimmed.certainty, CurveCertainty::Certified);
+            assert!(trimmed.value.is_empty());
+        }
+    }
+
+    #[test]
+    fn curve_trim_preserves_recursively_nested_islands_and_holes() {
+        let region = native_region(
+            vec![
+                rectangle(-5, -5, 5, 5),
+                rectangle(-3, -3, 3, 3),
+                rectangle(-1, -1, 1, 1),
+            ],
+            vec![rectangle(-4, -4, 4, 4), rectangle(-2, -2, 2, 2)],
+        );
+        let source = Curve2::from(LineSeg2::try_new(p(-6, 0), p(6, 0)).unwrap());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let trimmed = source.trim_inside_region(&region, &policy).unwrap();
+            assert_eq!(trimmed.certainty, CurveCertainty::Certified);
+            assert_eq!(trimmed.value.len(), 5);
+            for (piece, (start, end)) in
+                trimmed
+                    .value
+                    .iter()
+                    .zip([(-5, -4), (-3, -2), (-1, 1), (2, 3), (4, 5)])
+            {
+                assert_eq!(
+                    piece.start().same_point(&p(start, 0).into(), &policy),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    piece.end().same_point(&p(end, 0).into(), &policy),
+                    Classification::Decided(true)
+                );
+            }
+        }
     }
 }

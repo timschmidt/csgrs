@@ -39,46 +39,18 @@ fn decided<T>(value: CurveResult<Classification<T>>, family: CurveFamily2) -> Ex
 }
 
 pub(super) fn spans(curve: &Curve2, policy: &CurveContext) -> ExactCurveResult<Vec<Span>> {
-    let retained = |fragment: &BezierSplitFragment2, chart| Span {
-        support: CurveSupport2::from_fragment(fragment),
-        range: if matches!(fragment, BezierSplitFragment2::Materialized { .. }) {
-            CurveParameterRange2::unit()
-        } else {
-            fragment.curve_region_parameter_range()
-        },
-        chart,
-        reversed: fragment.source_is_reversed(),
-        self_contacts: OnceLock::new(),
-    };
-    if let Some(fragment) = curve.retained_fragment() {
-        return Ok(vec![retained(
-            fragment,
-            CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
-        )]);
-    }
-    if let Some(spans) = curve.restricted_source_spans(policy, CurveOperation2::Intersection)? {
-        return Ok(spans
-            .iter()
-            .map(|span| {
-                retained(
-                    &span.fragment,
-                    CurveSpanRange2::from_affine_chart(&span.source_scale, &span.source_offset),
-                )
-            })
-            .collect());
-    }
-    let native =
-        curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
-    let evaluators =
-        curve.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
-    Ok(native
+    Ok(curve
+        .source_spans(policy, CurveOperation2::Intersection)?
         .iter()
-        .zip(evaluators)
-        .map(|(fragment, evaluator)| Span {
-            support: CurveSupport2::Bezier(BezierSubcurve2::Rational(evaluator.clone())),
-            range: CurveParameterRange2::unit(),
-            chart: fragment.span_range().clone(),
-            reversed: false,
+        .map(|span| Span {
+            support: CurveSupport2::from_fragment(&span.fragment),
+            range: if matches!(span.fragment, BezierSplitFragment2::Materialized { .. }) {
+                CurveParameterRange2::unit()
+            } else {
+                span.fragment.curve_region_parameter_range()
+            },
+            chart: span.chart(),
+            reversed: span.fragment.source_is_reversed(),
             self_contacts: OnceLock::new(),
         })
         .collect())

@@ -1722,19 +1722,6 @@ impl BezierSubcurve2 {
         }
     }
 
-    pub(crate) fn split_at_parameters(
-        &self,
-        parameters: &[BezierParameter2],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
-        match self {
-            Self::Quadratic(curve) => curve.split_at_parameters(parameters, policy),
-            Self::Cubic(curve) => curve.split_at_parameters(parameters, policy),
-            Self::RationalQuadratic(curve) => curve.split_at_parameters(parameters, policy),
-            Self::Rational(curve) => curve.split_at_parameters(parameters, policy),
-        }
-    }
-
     pub(crate) fn split_at_parameters_refined(
         &self,
         parameters: &[BezierParameter2],

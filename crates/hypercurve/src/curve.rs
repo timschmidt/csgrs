@@ -7,6 +7,7 @@ mod curve_evaluation;
 mod curve_subdivision;
 use crate::bezier_split::{CurveParameterDomain2, CurveParameterRange2};
 use curve_subdivision::CurveSourceRange2;
+pub(crate) use curve_subdivision::CurveSourceSpan2;
 
 #[path = "curve_corner_reconstruction.rs"]
 mod curve_corner_reconstruction;

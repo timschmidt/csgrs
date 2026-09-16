@@ -120,7 +120,7 @@ pub struct CurveRegionBooleanResults2 {
 }
 
 #[derive(Debug)]
-struct CurveRegionBooleanContext<'a> {
+pub(crate) struct CurveRegionBooleanContext<'a> {
     data: CurveRegionBooleanContextData<'a>,
 }
 
@@ -1315,16 +1315,6 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
         CurveRegionBooleanContext::try_new(self, other, policy)?.build_intersection_evidence()
     }
-
-    pub(crate) fn intersect_curve_boundary_carriers_raw(
-        &self,
-        curve: &Curve2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
-        CurveRegionBooleanContext::try_new_curve_boundary(curve, self, policy)
-            .and_then(|context| context.build_intersection_evidence())
-            .map_err(|error| error.with_operation(CurveOperation2::Subdivision))
-    }
 }
 
 /// Classifies retained multi-field point evidence against one certified simple
@@ -1462,34 +1452,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })
     }
 
-    fn try_new_curve_boundary(
-        source: &Curve2,
+    pub(crate) fn try_new_curve_boundary(
+        source_spans: &[crate::curve::CurveSourceSpan2],
         region: &'a CurveRegion2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        let source_fragments =
-            source.native_bezier_fragments_for_operation(policy, CurveOperation2::Subdivision)?;
         let mut carriers = Vec::with_capacity(
-            source_fragments
+            source_spans
                 .len()
                 .saturating_add(region_carrier_count(region)),
         );
-        for (fragment_index, fragment) in source_fragments.iter().enumerate() {
-            let geometry = CurveSupport2::Bezier(fragment.curve().clone());
-            carriers.push(RegionCarrier {
-                operand: CurveRegionBooleanOperand2::First,
-                loop_index: 0,
+        for (fragment_index, span) in source_spans.iter().enumerate() {
+            carriers.push(build_parameterized_carrier(
+                &span.fragment,
+                CurveRegionBooleanOperand2::First,
+                0,
                 fragment_index,
-                family: geometry.family(),
-                geometry,
-                start: CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
-                end: CurveParameter2::from(BezierParameter2::Exact(Real::one())),
-                reversed: false,
-                filled_side_is_left: false,
-                selected_fiber_endpoint_points: None,
-                image_is_injective: OnceLock::new(),
-                bounds: OnceLock::new(),
-            });
+                false,
+            ));
         }
         let first_carrier_count = carriers.len();
         let mut rational_quadratic_area_cache = RationalQuadraticAreaIntegralCache::default();
@@ -1675,7 +1655,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
         .build_intersection_evidence()
     }
 
-    fn build_intersection_evidence(&self) -> ExactCurveResult<CurveRegionIntersectionResult2> {
+    pub(crate) fn build_intersection_evidence(
+        &self,
+    ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
         let mut contacts = Vec::new();
         let mut overlaps = Vec::new();
         let mut blockers = Vec::new();
@@ -11021,6 +11003,55 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .map_err(|cause| self.invalid(0, cause))
     }
 
+    /// Classifies an already split open-curve piece against the other operand.
+    /// The local range belongs to its original prepared source span.
+    pub(crate) fn trim_piece_location(
+        &self,
+        carrier_index: usize,
+        curve: &Curve2,
+        range: &CurveParameterRange2,
+    ) -> ExactCurveResult<RegionPointLocation> {
+        if let Some(fragment) = curve.retained_fragment() {
+            return self.fragment_location(carrier_index, fragment);
+        }
+        if let Some(spans) =
+            curve.restricted_source_spans(&self.data.policy, CurveOperation2::Subdivision)?
+        {
+            let [span] = spans else {
+                return Err(self.invalid(
+                    carrier_index,
+                    CurveError::Topology(
+                        "a prepared curve trim piece must occupy one source span".into(),
+                    ),
+                ));
+            };
+            return self.fragment_location(carrier_index, &span.fragment);
+        }
+        let spans = curve.native_bezier_fragments_for_operation(
+            &self.data.policy,
+            CurveOperation2::Subdivision,
+        )?;
+        let [span] = spans else {
+            return Err(self.invalid(
+                carrier_index,
+                CurveError::Topology(
+                    "a prepared curve trim piece must occupy one source span".into(),
+                ),
+            ));
+        };
+        let Some((start, end)) = range.as_bezier_parameters() else {
+            return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+        };
+        self.fragment_location(
+            carrier_index,
+            &BezierSplitFragment2::Materialized {
+                start: start.clone(),
+                end: end.clone(),
+                curve: span.curve().clone(),
+            },
+        )
+    }
+
     fn fragment_location(
         &self,
         carrier_index: usize,
@@ -11523,7 +11554,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
 
             let mut crossings =
-                Vec::<(&CurveParameter2, bool, bool)>::with_capacity(evidence.contacts().len());
+                Vec::<(&CurveParameter2, bool, usize)>::with_capacity(evidence.contacts().len());
             let mut ambiguous = false;
             for contact in evidence
                 .contacts()
@@ -11557,7 +11588,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 crossings.push((
                     contact.first_parameter(),
                     cross_is_positive,
-                    boundary.filled_side_is_left,
+                    boundary.loop_index,
                 ));
             }
             if ambiguous {
@@ -11565,8 +11596,34 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             match classification_kind {
                 RetainedPointProbeClassification::FilledRegion => {
+                    // Direct point classification, boundary incidence and an
+                    // exterior probe with no crossings need no orientation
+                    // theorem. Request cached filled sides only for this
+                    // retained-point face decision.
+                    let filled_sides = if crossings.is_empty() {
+                        &[][..]
+                    } else {
+                        match boundary_region
+                            .filled_side_is_left_raw(&self.data.policy)
+                            .map_err(|cause| self.invalid(owner_carrier_index, cause))?
+                        {
+                            Classification::Decided(sides) => sides,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    };
                     let mut last_contact = None::<(&CurveParameter2, RegionPointLocation)>;
-                    for (parameter, cross_is_positive, filled_side_is_left) in crossings {
+                    for (parameter, cross_is_positive, loop_index) in crossings {
+                        let Some(&filled_side_is_left) = filled_sides.get(loop_index) else {
+                            return Err(self.invalid(
+                                owner_carrier_index,
+                                CurveError::Topology(
+                                    "an exterior classification contact lost its loop filled side"
+                                        .into(),
+                                ),
+                            ));
+                        };
                         let target_is_left_of_boundary = !cross_is_positive;
                         let location = if target_is_left_of_boundary == filled_side_is_left {
                             RegionPointLocation::Inside
@@ -12527,14 +12584,13 @@ fn build_region_carriers(
     Ok(carriers)
 }
 
-fn build_region_carrier(
+fn build_parameterized_carrier(
     fragment: &BezierSplitFragment2,
     operand: CurveRegionBooleanOperand2,
     loop_index: usize,
     fragment_index: usize,
     filled_side_is_left: bool,
-    policy: &CurveContext,
-) -> ExactCurveResult<RegionCarrier> {
+) -> RegionCarrier {
     let selected_fiber_endpoint_points = match fragment {
         BezierSplitFragment2::SelectedFiber(fragment) => {
             let points = if fragment.is_reversed() {
@@ -12546,56 +12602,67 @@ fn build_region_carrier(
         }
         _ => None,
     };
-    let mut geometry = match fragment {
-        BezierSplitFragment2::Materialized { curve, .. } => {
-            retained_axis_aligned_line_chord(curve, policy)
-                .map(CurveSupport2::Line)
-                .unwrap_or_else(|| CurveSupport2::from_fragment(fragment))
-        }
-        _ => CurveSupport2::from_fragment(fragment),
-    };
-    let (mut start, mut end) = if let BezierSplitFragment2::Materialized { .. } = fragment {
-        match &geometry {
-            CurveSupport2::Line(chord) => (
-                CurveParameter2::from_algebraic_chord(chord.start_parameter()),
-                CurveParameter2::from_algebraic_chord(chord.end_parameter()),
-            ),
-            _ => (Real::zero().into(), Real::one().into()),
-        }
+    let geometry = CurveSupport2::from_fragment(fragment);
+    let range = if matches!(fragment, BezierSplitFragment2::Materialized { .. }) {
+        CurveParameterRange2::unit()
     } else {
-        let range = fragment.curve_region_parameter_range();
-        (range.start().clone(), range.end().clone())
+        fragment.curve_region_parameter_range()
     };
-    let mut reversed = fragment.source_is_reversed();
+    RegionCarrier {
+        operand,
+        loop_index,
+        fragment_index,
+        family: geometry.family(),
+        geometry,
+        start: range.start().clone(),
+        end: range.end().clone(),
+        reversed: fragment.source_is_reversed(),
+        filled_side_is_left,
+        selected_fiber_endpoint_points,
+        image_is_injective: OnceLock::new(),
+        bounds: OnceLock::new(),
+    }
+}
 
+fn build_region_carrier(
+    fragment: &BezierSplitFragment2,
+    operand: CurveRegionBooleanOperand2,
+    loop_index: usize,
+    fragment_index: usize,
+    filled_side_is_left: bool,
+    policy: &CurveContext,
+) -> ExactCurveResult<RegionCarrier> {
+    let mut carrier = build_parameterized_carrier(
+        fragment,
+        operand,
+        loop_index,
+        fragment_index,
+        filled_side_is_left,
+    );
+    // Region boundaries may choose a simpler parameter chart. Open curve
+    // queries retain the authored chart through build_parameterized_carrier.
+    if let BezierSplitFragment2::Materialized { curve, .. } = fragment
+        && let Some(chord) = retained_axis_aligned_line_chord(curve, policy)
+    {
+        carrier.start = CurveParameter2::from_algebraic_chord(chord.start_parameter());
+        carrier.end = CurveParameter2::from_algebraic_chord(chord.end_parameter());
+        carrier.geometry = CurveSupport2::Line(chord);
+    }
     if matches!(
         fragment,
         BezierSplitFragment2::AlgebraicEndpointImages { .. }
     ) && let Ok(Classification::Decided(line)) =
         crate::bezier_region::retained_line_fragment_segment(fragment, policy)
     {
-        geometry = CurveSupport2::Bezier(BezierSubcurve2::Quadratic(
+        carrier.geometry = CurveSupport2::Bezier(BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(line),
         ));
-        start = CurveParameter2::from(BezierParameter2::Exact(crate::Real::zero()));
-        end = CurveParameter2::from(BezierParameter2::Exact(crate::Real::one()));
-        reversed = false;
+        carrier.start = Real::zero().into();
+        carrier.end = Real::one().into();
+        carrier.reversed = false;
     }
-    let family = geometry.family();
-    Ok(RegionCarrier {
-        operand,
-        loop_index,
-        fragment_index,
-        family,
-        geometry,
-        start,
-        end,
-        reversed,
-        filled_side_is_left,
-        selected_fiber_endpoint_points,
-        image_is_injective: OnceLock::new(),
-        bounds: OnceLock::new(),
-    })
+    carrier.family = carrier.geometry.family();
+    Ok(carrier)
 }
 
 fn split_carrier(
@@ -17672,8 +17739,10 @@ mod certified_successor_tests {
         expected: [Point2; 2],
         policy: &CurveContext,
     ) {
-        let curve = Curve2::from_retained_fragment(trimmed.fragment().clone());
-        let range = trimmed.fragment().curve_region_parameter_range();
+        let curve = trimmed.curve();
+        let Classification::Decided(range) = trimmed.parameter_range(policy).unwrap() else {
+            panic!("trim parameters must replay exactly");
+        };
         for ((endpoint, parameter), expected) in
             [(curve.start(), range.start()), (curve.end(), range.end())]
                 .into_iter()
@@ -17835,7 +17904,7 @@ mod certified_successor_tests {
             let source_parameter = BezierParameter2::Algebraic(parameter.clone());
             let materialization = decided(
                 source_curve
-                    .split_at_parameters(std::slice::from_ref(&source_parameter), &policy)
+                    .split_at_parameters_refined(std::slice::from_ref(&source_parameter), &policy)
                     .expect("exact algebraic source split"),
             );
             let source_fragment = materialization.fragments()[0].clone();
@@ -17985,7 +18054,7 @@ mod certified_successor_tests {
             let source_parameter = BezierParameter2::Algebraic(parameter);
             let source_fragment = decided(
                 source_curve
-                    .split_at_parameters(std::slice::from_ref(&source_parameter), &policy)
+                    .split_at_parameters_refined(std::slice::from_ref(&source_parameter), &policy)
                     .expect("exact algebraic source split"),
             )
             .fragments()[0]
@@ -18118,14 +18187,14 @@ mod certified_successor_tests {
             );
             let x_fragment = decided(
                 x_axis
-                    .split_at_parameters(std::slice::from_ref(&first_parameter), &policy)
+                    .split_at_parameters_refined(std::slice::from_ref(&first_parameter), &policy)
                     .expect("exact x-axis split"),
             )
             .fragments()[0]
                 .clone();
             let y_fragment = decided(
                 y_axis
-                    .split_at_parameters(std::slice::from_ref(&second_parameter), &policy)
+                    .split_at_parameters_refined(std::slice::from_ref(&second_parameter), &policy)
                     .expect("exact y-axis split"),
             )
             .fragments()[0]
@@ -18372,14 +18441,14 @@ mod certified_successor_tests {
             );
             let half_fragment = decided(
                 half_source
-                    .split_at_parameters(std::slice::from_ref(&half_parameter), &policy)
+                    .split_at_parameters_refined(std::slice::from_ref(&half_parameter), &policy)
                     .expect("exact half-source split"),
             )
             .fragments()[0]
                 .clone();
             let third_fragment = decided(
                 third_source
-                    .split_at_parameters(std::slice::from_ref(&third_parameter), &policy)
+                    .split_at_parameters_refined(std::slice::from_ref(&third_parameter), &policy)
                     .expect("exact third-source split"),
             )
             .fragments()[0]
@@ -20122,7 +20191,7 @@ mod certified_successor_tests {
             );
             let source_fragment = decided(
                 source_curve
-                    .split_at_parameters(std::slice::from_ref(&source_parameter), &policy)
+                    .split_at_parameters_refined(std::slice::from_ref(&source_parameter), &policy)
                     .expect("exact source split"),
             )
             .fragments()[0]

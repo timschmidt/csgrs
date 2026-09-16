@@ -206,10 +206,11 @@ exact signatures.
   derivative_at, bounds, split_at, subcurve, reversed,
   transform_similarity, native_bezier_fragments, trim_inside_region,
   trim_inside_region_with_parameters}` is the common owned carrier. Exact
-  region trimming returns retained promoted Bézier fragments and keeps
-  algebraic/shared-boundary blockers explicit; the parameter-retaining form
-  also reports each fragment's promoted span and top-level public parameter
-  range.
+  region trimming returns reusable `Curve2` pieces from authored and generated
+  supports. The parameter-retaining form reports their oriented source
+  locations as `CurveLocation2`, exact parameter ranges and boundary contacts.
+  Positive-length boundary overlaps are retained; isolated tangencies add no
+  curve. Path trimming keeps disconnected spline spans in separate chunks.
   These operations borrow `&Curve2` directly and reuse its retained calculations.
   Borrow paths as `&CurvePath2`; iterate their curves with `path.curves().iter()`.
   `Curve2` also retains generated analytic parallels, selected circles, chords,

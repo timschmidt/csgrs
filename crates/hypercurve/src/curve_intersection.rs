@@ -2182,6 +2182,18 @@ impl CurveIntersectionContext {
 }
 
 impl CurveLocation2 {
+    pub(crate) fn new(
+        span_index: usize,
+        span_range: CurveSpanRange2,
+        local_parameter: CurveParameter2,
+    ) -> Self {
+        Self {
+            span_index,
+            span_range,
+            local_parameter,
+        }
+    }
+
     /// Returns the promoted span index used by top-level dispatch.
     pub const fn span_index(&self) -> usize {
         self.span_index
@@ -2399,6 +2411,7 @@ pub(crate) fn split_curve(
     }
     curve
         .split_at_parameters(cuts, policy)
+        .map(|pieces| pieces.into_iter().map(|(_, curve)| curve).collect())
         .map_err(|error| error.with_operation(CurveOperation2::Arrangement))
 }
 
@@ -2421,24 +2434,11 @@ pub(crate) fn arrangement_from_curve_pieces<'a>(
                 ));
                 fragment_index += 1;
             };
-            if let Some(fragment) = curve.retained_fragment() {
-                append(fragment.clone());
-            } else if let Some(spans) =
-                curve.restricted_source_spans(policy, CurveOperation2::Arrangement)?
+            for span in curve
+                .source_spans(policy, CurveOperation2::Arrangement)?
+                .iter()
             {
-                for span in spans {
-                    append(span.fragment.clone());
-                }
-            } else {
-                for span in curve
-                    .native_bezier_fragments_for_operation(policy, CurveOperation2::Arrangement)?
-                {
-                    append(crate::BezierSplitFragment2::Materialized {
-                        start: BezierParameter2::Exact(Real::zero()),
-                        end: BezierParameter2::Exact(Real::one()),
-                        curve: span.curve().clone(),
-                    });
-                }
+                append(span.fragment.clone());
             }
         }
     }

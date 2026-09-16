@@ -1041,11 +1041,11 @@ fn curve_trim_intersects_analytic_parallel_region_boundaries() {
         let source = Curve2::from(LineSeg2::try_new(point(-1, 2), point(5, 2)).unwrap());
         let outcome = source.trim_inside_region(&region, &policy).unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
-        let [BezierSplitFragment2::Materialized { curve, .. }] = outcome.value.as_slice() else {
-            panic!("analytic-square trim must retain one materialized line fragment");
+        let [curve] = outcome.value.as_slice() else {
+            panic!("analytic-square trim must retain one exact line");
         };
-        assert_eq!(curve.start(), &point(0, 2));
-        assert_eq!(curve.end(), &point(4, 2));
+        assert_eq!(curve.start(), point(0, 2).into());
+        assert_eq!(curve.end(), point(4, 2).into());
     }
 }
 
@@ -1056,11 +1056,11 @@ fn curve_trim_retains_an_analytic_parallel_boundary_overlap() {
         let source = Curve2::from(LineSeg2::try_new(point(-1, 0), point(5, 0)).unwrap());
         let outcome = source.trim_inside_region(&region, &policy).unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
-        let [BezierSplitFragment2::Materialized { curve, .. }] = outcome.value.as_slice() else {
-            panic!("analytic boundary overlap must retain one materialized line fragment");
+        let [curve] = outcome.value.as_slice() else {
+            panic!("analytic boundary overlap must retain one exact line");
         };
-        assert_eq!(curve.start(), &point(0, 0));
-        assert_eq!(curve.end(), &point(4, 0));
+        assert_eq!(curve.start(), point(0, 0).into());
+        assert_eq!(curve.end(), point(4, 0).into());
     }
 }
 

@@ -1,7 +1,7 @@
 use hypercurve::{
-    BezierSplitFragment2, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext,
-    CurveError, CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2,
-    CurveStringTrimPoint2, LineSeg2, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError,
+    CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
+    LineSeg2, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 fn s(value: i32) -> Real {
@@ -51,12 +51,9 @@ fn assert_trim_path_line(path: &CurvePathRegionTrim2, start: Point2, end: Point2
     let [fragment] = path.fragments() else {
         panic!("expected one retained fragment");
     };
-    let BezierSplitFragment2::Materialized { curve, .. } = fragment.trim_fragment().fragment()
-    else {
-        panic!("expected a materialized retained line");
-    };
-    assert_eq!(curve.start(), &start);
-    assert_eq!(curve.end(), &end);
+    let curve = fragment.trim_fragment().curve();
+    assert_eq!(curve.start(), start.into());
+    assert_eq!(curve.end(), end.into());
 }
 
 fn policy() -> CurveContext {

@@ -32,6 +32,25 @@ pub(crate) struct CurveSourceSpan2 {
     pub(crate) fragment: BezierSplitFragment2,
     pub(crate) source_scale: Real,
     pub(crate) source_offset: Real,
+    native_lineage: Option<CurveParameterLineage2>,
+}
+
+impl CurveSourceSpan2 {
+    pub(crate) fn curve(&self) -> Curve2 {
+        match (&self.fragment, &self.native_lineage) {
+            (BezierSplitFragment2::Materialized { curve, .. }, Some(lineage)) => {
+                Curve2::from_geometry_with_lineage(
+                    CurveGeometry2::from_bezier(curve.clone()),
+                    lineage.clone(),
+                )
+            }
+            _ => Curve2::from_retained_fragment(self.fragment.clone()),
+        }
+    }
+
+    pub(crate) fn chart(&self) -> CurveSpanRange2 {
+        CurveSpanRange2::from_affine_chart(&self.source_scale, &self.source_offset)
+    }
 }
 
 fn subdivision_error(family: CurveFamily2, cause: CurveError) -> ExactCurveError {
@@ -64,13 +83,52 @@ fn compare(
 }
 
 impl Curve2 {
+    /// Prepares connected spans with their original public parameter charts.
+    /// Native curves, selected restrictions and generated supports use the
+    /// same shape; cached authored restrictions remain borrowed.
+    pub(crate) fn source_spans(
+        &self,
+        policy: &CurveContext,
+        operation: CurveOperation2,
+    ) -> ExactCurveResult<std::borrow::Cow<'_, [CurveSourceSpan2]>> {
+        if let Some(spans) = self.restricted_source_spans(policy, operation)? {
+            return Ok(std::borrow::Cow::Borrowed(spans));
+        }
+        if let Some(fragment) = self.retained_fragment() {
+            return Ok(std::borrow::Cow::Owned(vec![CurveSourceSpan2 {
+                fragment: fragment.clone(),
+                source_scale: Real::one(),
+                source_offset: Real::zero(),
+                native_lineage: None,
+            }]));
+        }
+        Ok(std::borrow::Cow::Owned(
+            self.native_bezier_fragments_for_operation(policy, operation)?
+                .iter()
+                .map(|span| {
+                    let (start, end) = span.parameter_range();
+                    CurveSourceSpan2 {
+                        fragment: BezierSplitFragment2::Materialized {
+                            start: BezierParameter2::Exact(Real::zero()),
+                            end: BezierParameter2::Exact(Real::one()),
+                            curve: span.curve().clone(),
+                        },
+                        source_scale: end - start,
+                        source_offset: start.clone(),
+                        native_lineage: Some(span.lineage.clone()),
+                    }
+                })
+                .collect(),
+        ))
+    }
+
     /// Splits in this curve's public chart, retaining traversal and selected
     /// parameters. Repeated and endpoint cuts do not create empty pieces.
     pub(crate) fn split_at_parameters(
         &self,
         parameters: impl IntoIterator<Item = CurveParameter2>,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Vec<Self>> {
+    ) -> ExactCurveResult<Vec<(CurveParameterRange2, Self)>> {
         let family = self.family();
         let domain = self.parameter_domain();
         let mut cuts = Vec::<CurveParameter2>::new();
@@ -95,7 +153,7 @@ impl Curve2 {
             cuts.insert(index, parameter);
         }
         if cuts.is_empty() {
-            return Ok(vec![self.clone()]);
+            return Ok(vec![(domain.clone(), self.clone())]);
         }
         let mut pieces = Vec::with_capacity(cuts.len() + 1);
         let mut start = domain.start().clone();
@@ -103,7 +161,11 @@ impl Curve2 {
             .into_iter()
             .chain(std::iter::once(domain.end().clone()))
         {
-            pieces.push(self.subcurve_at_parameters(start, end.clone(), policy)?);
+            let range = CurveParameterRange2::new_validated(start.clone(), end.clone());
+            pieces.push((
+                range,
+                self.subcurve_at_parameters(start, end.clone(), policy)?,
+            ));
             start = end;
         }
         if self.source_traversal_is_reversed() {
@@ -112,7 +174,7 @@ impl Curve2 {
         Ok(pieces)
     }
 
-    fn source_traversal_is_reversed(&self) -> bool {
+    pub(crate) fn source_traversal_is_reversed(&self) -> bool {
         self.source_range().map_or_else(
             || {
                 self.retained_fragment()
@@ -434,6 +496,7 @@ impl CurveSourceRange2 {
                     },
                     source_scale: width.clone(),
                     source_offset: chart_start.clone(),
+                    native_lineage: Some(native.lineage.clone()),
                 }
             } else {
                 let inverse = (Real::one() / &width)
@@ -468,12 +531,14 @@ impl CurveSourceRange2 {
                         .map_err(|cause| subdivision_error(family, cause))?,
                     source_scale: width.clone(),
                     source_offset: chart_start.clone(),
+                    native_lineage: None,
                 }
             };
             if self.reversed {
                 if matches!(span.fragment, BezierSplitFragment2::Materialized { .. }) {
                     span.source_scale = -span.source_scale;
                     span.source_offset = chart_end.clone();
+                    span.native_lineage = span.native_lineage.map(|lineage| lineage.reversed());
                 }
                 span.fragment = span
                     .fragment
@@ -562,8 +627,17 @@ mod tests {
                     let source_lineage = source.data.lineage.as_ref().unwrap();
                     let spans = source.native_bezier_fragments(&policy).unwrap();
                     assert_eq!(spans.certainty, CurveCertainty::Certified);
+                    let prepared = source
+                        .source_spans(&policy, CurveOperation2::Subdivision)
+                        .unwrap();
+                    assert_eq!(prepared.len(), spans.value.len());
                     let mut published = Vec::new();
-                    for span in spans.value.iter().cloned() {
+                    for (span, prepared) in spans.value.iter().cloned().zip(prepared.iter()) {
+                        let prepared_curve = prepared.curve();
+                        assert!(Arc::ptr_eq(
+                            &prepared_curve.data.lineage.as_ref().unwrap().root,
+                            &source_lineage.root,
+                        ));
                         let (start, end) = span.parameter_range();
                         let (start, end) = (start.clone(), end.clone());
                         let curve = span.into_curve();
@@ -577,6 +651,10 @@ mod tests {
                         );
                         for unit in [Real::zero(), q(1, 4), q(1, 2), q(3, 4), Real::one()] {
                             let parameter = &start + (&end - &start) * &unit;
+                            assert_eq!(
+                                prepared_curve.lineage_parameter_at(&unit).unwrap(),
+                                source.lineage_parameter_at(&parameter).unwrap()
+                            );
                             assert_eq!(
                                 curve.lineage_parameter_at(&unit).unwrap(),
                                 source.lineage_parameter_at(&parameter).unwrap()
