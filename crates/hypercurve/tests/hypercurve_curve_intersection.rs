@@ -1724,6 +1724,67 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
 }
 
 #[test]
+fn selected_circle_tangency_reuses_retained_normal_evidence() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let path = CurvePath2::try_new(vec![
+            LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
+            QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
+        ])
+        .unwrap();
+        let hypercurve::CurveCornerSolutions2::Unique(path) = path
+            .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value()
+        else {
+            panic!("unique retained fillet")
+        };
+        let circle = &path.curves()[1];
+        assert!(circle.geometry().is_none());
+        let endpoint = circle.start();
+        for line in [
+            Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(2, 0), p(-2, 0)).unwrap()),
+            Curve2::from(QuadraticBezier2::new(p(-3, 0), p(-1, 0), p(1, 0))),
+        ] {
+            for (first, second) in [(circle, &line), (&line, circle)] {
+                let outcome = first.intersect_curve(second, &policy).unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                assert!(
+                    outcome.value.is_complete(),
+                    "{:?}",
+                    outcome.value.blockers()
+                );
+                let [contact] = outcome.value.contacts() else {
+                    panic!("one tangency")
+                };
+                assert!(!contact.is_certified_transverse());
+                assert_eq!(
+                    contact.tangent_cross_sign(),
+                    Some(hypercurve::RealSign::Zero)
+                );
+                assert!(decided(
+                    contact.point().coincides_with(&endpoint, &policy).value
+                ));
+                for (curve, location) in [(first, contact.first()), (second, contact.second())] {
+                    let parameter = decided(location.parameter(&policy).unwrap());
+                    let point = curve.point_at(&parameter, &policy).unwrap();
+                    assert_eq!(point.certainty, CurveCertainty::Certified);
+                    assert_eq!(
+                        point.value.coincides_with(contact.point(), &policy).value,
+                        Classification::Decided(true),
+                        "point replay on {:?}",
+                        curve.family(),
+                    );
+                }
+                let topology = first.intersection_topology(second, &policy).unwrap();
+                assert_eq!(topology.certainty, CurveCertainty::Certified);
+                assert!(topology.value.result().is_complete());
+            }
+        }
+    }
+}
+
+#[test]
 fn native_retraced_overlaps_survive_independent_restriction() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let source = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)));

@@ -450,12 +450,14 @@ impl CurvePoint2 {
             | (other, Self(CurvePointData2::AlgebraicCuspChordDerived(point))) => {
                 point.same_point_evidence(other, policy)
             }
-            (Self(CurvePointData2::AlgebraicChordParallel(point)), other)
-            | (other, Self(CurvePointData2::AlgebraicChordParallel(point))) => {
-                point.same_point_evidence(other, policy)
-            }
+            // A retained analytic parameter can replay its shared field
+            // against a displaced chord point before the interval fallback.
             (Self(CurvePointData2::AnalyticParallel(point)), other)
             | (other, Self(CurvePointData2::AnalyticParallel(point))) => {
+                point.same_point_evidence(other, policy)
+            }
+            (Self(CurvePointData2::AlgebraicChordParallel(point)), other)
+            | (other, Self(CurvePointData2::AlgebraicChordParallel(point))) => {
                 point.same_point_evidence(other, policy)
             }
             (Self(CurvePointData2::Similarity(point)), other)

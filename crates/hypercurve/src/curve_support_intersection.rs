@@ -395,41 +395,25 @@ impl Pair<'_> {
         &self,
         circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
         circle_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
-        other_parameter: CurveParameter2,
+        mut other_parameter: CurveParameter2,
         point: Option<CurvePoint2>,
         cross: Option<hyperreal::RealSign>,
         circle_first: bool,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
         let mut circle_parameter = CurveParameter2::from_algebraic_cusp(circle_parameter);
-        let (mut first, mut second) = if circle_first {
-            (circle_parameter.clone(), other_parameter)
-        } else {
-            (other_parameter, circle_parameter.clone())
-        };
-        if !contains(
-            &self.first.range,
-            &first,
-            self.first.support.family(),
-            self.policy,
-        )? || !contains(
-            &self.second.range,
-            &second,
-            self.second.support.family(),
-            self.policy,
-        )? {
-            return Ok(());
-        }
-        // Endpoint equality is already a parameter-space theorem. Keep the
-        // endpoint's original point and parameter authority when publishing a
-        // new contact, so evaluation and later cuts replay the same witness.
+        // Identify either endpoint before ordering against the complete
+        // range. The retained endpoint can be much cheaper to order against
+        // its opposite boundary than an independently isolated equal contact.
+        // Keep this optional canonicalization bounded; domain admission below
+        // still owns every required exact comparison.
         let mut point = point;
         for at_start in [true, false] {
             let endpoint =
                 CurveParameter2::from_algebraic_cusp(circle.endpoint_parameter(at_start).clone());
             if self
                 .policy
-                .strict_predicate_pass(|| {
+                .bounded_exact_predicate_pass(|| {
                     circle_parameter.cmp_by_refinement(&endpoint, self.policy)
                 })
                 .map_err(|cause| {
@@ -453,15 +437,65 @@ impl Pair<'_> {
                     )
                 })?
             {
-                circle_parameter = endpoint;
-                if circle_first {
-                    first = circle_parameter.clone();
+                let other = if circle_first {
+                    self.second
                 } else {
-                    second = circle_parameter.clone();
+                    self.first
+                };
+                if let CurveSupport2::Bezier(source) = &other.support {
+                    let source = RationalBezier2::try_from_subcurve(source).map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Intersection,
+                            other.support.family(),
+                            cause,
+                        )
+                    })?;
+                    if let Some(line) = source.exact_linear_parameterization_line()
+                        && let Classification::Decided(parameter) = self
+                            .policy
+                            .strict_predicate_pass(|| {
+                                crate::bezier_offset::affine_line_parameter_at_incident_point(
+                                    &line,
+                                    &retained,
+                                    self.policy,
+                                )
+                            })
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(
+                                    CurveOperation2::Intersection,
+                                    other.support.family(),
+                                    cause,
+                                )
+                            })?
+                    {
+                        // Endpoint equality also proves this affine source
+                        // parameter. Retain the endpoint's field for point
+                        // replay instead of rediscovering the same fiber.
+                        other_parameter = parameter;
+                    }
                 }
+                circle_parameter = endpoint;
                 point = Some(retained);
             }
             break;
+        }
+        let (first, second) = if circle_first {
+            (circle_parameter.clone(), other_parameter)
+        } else {
+            (other_parameter, circle_parameter.clone())
+        };
+        if !contains(
+            &self.first.range,
+            &first,
+            self.first.support.family(),
+            self.policy,
+        )? || !contains(
+            &self.second.range,
+            &second,
+            self.second.support.family(),
+            self.policy,
+        )? {
+            return Ok(());
         }
         let point = match point {
             Some(point) => point,

@@ -52474,6 +52474,66 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         Ok(same_root)
     }
 
+    /// Reuses tangent incidence on the open half-circle. Parallel tangent
+    /// lines identify one point there; the antipodal ambiguity is excluded by
+    /// the strict angular-domain proofs. The source tangent stays unnormalized.
+    fn shares_tangent_point(&self, other: &Self, policy: &CurveContext) -> CurveResult<bool> {
+        let strict = policy.strict_counterpart();
+        if self.validate_policy(&strict).is_err() || other.validate_policy(&strict).is_err() {
+            return Ok(false);
+        }
+        let (Self::Mapped(first), Self::Mapped(second)) = (self, other) else {
+            return Ok(false);
+        };
+        if first.semicircle_carrier() != second.semicircle_carrier() {
+            return Ok(false);
+        }
+        for (chord_source, parametric_source) in [(first, second), (second, first)] {
+            let Some((_, chord, RealSign::Zero, chord_policy, _)) =
+                chord_source.coincident_chord_tangent_source()
+            else {
+                continue;
+            };
+            let Some((_, [x, y], source_policy)) =
+                parametric_source.coincident_tangent_power_source(&strict)?
+            else {
+                continue;
+            };
+            let [x, y] = [x, y].map(polynomial_trim_structural_zeros);
+            if !strict.accepts_retained_policy(chord_policy)
+                || !strict.accepts_retained_policy(source_policy)
+                || x.len() > 1
+                || y.len() > 1
+            {
+                continue;
+            }
+            let tangent = (
+                x.first().cloned().unwrap_or_else(Real::zero),
+                y.first().cloned().unwrap_or_else(Real::zero),
+            );
+            if real_sign(
+                &(&tangent.0 * &tangent.0 + &tangent.1 * &tangent.1),
+                &strict,
+            ) != Some(RealSign::Positive)
+                || chord.tangent_cross_vector_sign(&tangent, &strict)?
+                    != Classification::Decided(RealSign::Zero)
+            {
+                continue;
+            }
+            for parameter in [self, other] {
+                if parameter.order_to_real(&Real::zero(), &strict)?
+                    != Classification::Decided(std::cmp::Ordering::Greater)
+                    || parameter.order_to_real(&Real::one(), &strict)?
+                        != Classification::Decided(std::cmp::Ordering::Less)
+                {
+                    return Ok(false);
+                }
+            }
+            return Ok(true);
+        }
+        Ok(false)
+    }
+
     /// The cosine of this chart's angle, retained in its selected field.
     /// It decreases strictly with the public half-circle parameter regardless
     /// of the circle's center, signed radius, or traversal direction.
@@ -52559,6 +52619,9 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
         if self.shares_parametric_source_point(other, policy)? {
+            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
+        if self.shares_tangent_point(other, policy)? {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
         if let Some(Classification::Decided(order)) =
@@ -81929,88 +81992,7 @@ impl BezierAlgebraicChordParameter2 {
                 ));
             }
         }
-        if let CurvePoint2(CurvePointData2::Exact(point)) = self.point() {
-            let axis = self.chord().data.parameter_axis.axis;
-            let (coordinate, start, delta) = match axis {
-                Axis2::X => (
-                    point.x(),
-                    line.start().x(),
-                    line.end().x() - line.start().x(),
-                ),
-                Axis2::Y => (
-                    point.y(),
-                    line.start().y(),
-                    line.end().y() - line.start().y(),
-                ),
-            };
-            return Ok(Classification::Decided(CurveParameter2::from(
-                BezierParameter2::Exact(((coordinate - start) / delta)?),
-            )));
-        }
-        let points = match recursive_projective_evidence_points(&[self.point()], policy)? {
-            Classification::Decided(Some(points)) => points,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let point = match positive_recursive_projective_point(
-            points
-                .into_iter()
-                .next()
-                .expect("one chord parameter imports one projective point"),
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let axis = self.chord().data.parameter_axis;
-        let (coordinate, start, delta) = match axis.axis {
-            Axis2::X => (
-                &point.x,
-                line.start().x(),
-                line.end().x() - line.start().x(),
-            ),
-            Axis2::Y => (
-                &point.y,
-                line.start().y(),
-                line.end().y() - line.start().y(),
-            ),
-        };
-        let Some(mut numerator) =
-            coordinate.subtract(&point.denominator.scale(start).ok_or_else(|| {
-                CurveError::Topology(
-                    "an exact-line chord parameter exceeded its recursive field budget".into(),
-                )
-            })?)
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let Some(mut denominator) = point.denominator.scale(&delta) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        if !axis.coordinate_increases {
-            let negative = Real::from(-1_i8);
-            let Some(reversed_numerator) = numerator.scale(&negative) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            let Some(reversed_denominator) = denominator.scale(&negative) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            numerator = reversed_numerator;
-            denominator = reversed_denominator;
-        }
-        Ok(BezierRecursiveProjectiveParameter2::new(
-            BezierRecursiveQuadraticProjectiveScalar2 {
-                numerator,
-                denominator,
-            },
-            policy,
-        )?
-        .map(CurveParameter2::from_recursive_projective))
+        affine_line_parameter_at_incident_point(&line, self.point(), policy)
     }
 
     pub(crate) fn cmp_by_refinement(
@@ -82531,6 +82513,110 @@ impl BezierAlgebraicChordRationalOverlap2 {
             self.chord.parameter_at_certified_interior_point(point),
         )))
     }
+}
+
+/// Extracts the affine parameter of a point whose incidence on this line
+/// is already certified. Its coordinates stay in their existing shared field.
+pub(crate) fn affine_line_parameter_at_incident_point(
+    line: &LineSeg2,
+    point: &CurvePoint2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurveParameter2>> {
+    let (dx, dy) = line.delta();
+    let Some((axis, direction)) =
+        [(Axis2::X, dx), (Axis2::Y, dy)]
+            .into_iter()
+            .find_map(
+                |(axis, delta)| match real_sign(&delta, &policy.strict_counterpart()) {
+                    Some(direction @ (RealSign::Positive | RealSign::Negative)) => {
+                        Some((axis, direction))
+                    }
+                    _ => None,
+                },
+            )
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+    };
+    if let CurvePoint2(CurvePointData2::Exact(point)) = point {
+        let (coordinate, start, delta) = match axis {
+            Axis2::X => (
+                point.x(),
+                line.start().x(),
+                line.end().x() - line.start().x(),
+            ),
+            Axis2::Y => (
+                point.y(),
+                line.start().y(),
+                line.end().y() - line.start().y(),
+            ),
+        };
+        return Ok(Classification::Decided(CurveParameter2::from(
+            BezierParameter2::Exact(((coordinate - start) / delta)?),
+        )));
+    }
+    let points = match recursive_projective_evidence_points(&[point], policy)? {
+        Classification::Decided(Some(points)) => points,
+        Classification::Decided(None) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let point = match positive_recursive_projective_point(
+        points
+            .into_iter()
+            .next()
+            .expect("one affine parameter imports one projective point"),
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let (coordinate, start, delta) = match axis {
+        Axis2::X => (
+            &point.x,
+            line.start().x(),
+            line.end().x() - line.start().x(),
+        ),
+        Axis2::Y => (
+            &point.y,
+            line.start().y(),
+            line.end().y() - line.start().y(),
+        ),
+    };
+    let Some(mut numerator) =
+        coordinate.subtract(&point.denominator.scale(start).ok_or_else(|| {
+            CurveError::Topology(
+                "an affine line parameter exceeded its recursive field budget".into(),
+            )
+        })?)
+    else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let Some(mut denominator) = point.denominator.scale(&delta) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    if direction == RealSign::Negative {
+        let negative = Real::from(-1_i8);
+        let Some(reversed_numerator) = numerator.scale(&negative) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(reversed_denominator) = denominator.scale(&negative) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        numerator = reversed_numerator;
+        denominator = reversed_denominator;
+    }
+    Ok(BezierRecursiveProjectiveParameter2::new(
+        BezierRecursiveQuadraticProjectiveScalar2 {
+            numerator,
+            denominator,
+        },
+        policy,
+    )?
+    .map(CurveParameter2::from_recursive_projective))
 }
 
 fn algebraic_chord_parameter_axis(
