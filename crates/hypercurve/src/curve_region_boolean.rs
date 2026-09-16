@@ -3988,7 +3988,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         };
         match intersections {
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) => {
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps } => {
                 let mut retained = Vec::with_capacity(contacts.len());
                 for contact in contacts {
                     let cusp_parameter =
@@ -4023,53 +4023,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 Ok(RegionPairResult {
                     contacts: retained,
-                    overlaps: Vec::new(),
-                    blockers: Vec::new(),
-                })
-            }
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                contacts,
-            ) => Ok(selected_fiber_cusp_contacts_result(contacts, cusp_is_first)),
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps) => {
-                Ok(RegionPairResult {
-                    contacts: Vec::new(),
                     overlaps: overlaps
                         .into_iter()
-                        .map(|overlap| {
-                            let cusp_range = CurveParameterRange2::new_validated(
-                                CurveParameter2::from_algebraic_cusp(
-                                    overlap.cusp_start_parameter(),
-                                ),
-                                CurveParameter2::from_algebraic_cusp(overlap.cusp_end_parameter()),
-                            );
-                            let other_range = CurveParameterRange2::from_bezier_range(
-                                overlap.other_range().clone(),
-                            );
-                            let (first_range, second_range) = if cusp_is_first {
-                                (cusp_range, other_range)
-                            } else {
-                                (other_range, cusp_range)
-                            };
-                            CurveIntersectionOverlap2 {
-                                first_span_index: 0,
-                                second_span_index: 0,
-                                endpoint_inclusion: [true, true],
-                                parameter_correspondence: CurveOverlapCorrespondence2::Circle {
-                                    source: CurveCircleOverlap2::Mapped(overlap.clone()),
-                                    swapped: !cusp_is_first,
-                                },
-                                first_range,
-                                second_range,
-                                orientation: overlap.orientation(),
-                            }
+                        .map(|source| {
+                            circle_overlap_evidence(
+                                CurveCircleOverlap2::Mapped(source),
+                                cusp_is_first,
+                            )
                         })
                         .collect(),
                     blockers: Vec::new(),
                 })
             }
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
+            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                contacts,
                 overlaps,
-            ) => Ok(selected_fiber_cusp_overlaps_result(overlaps, cusp_is_first)),
+            } => Ok(selected_fiber_cusp_result(
+                contacts,
+                overlaps,
+                cusp_is_first,
+            )),
             BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
                 Ok(RegionPairResult {
                     contacts: Vec::new(),
@@ -5465,10 +5438,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         });
                     }
                 };
-                let contacts = match intersections {
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => {
-                        contacts
-                    }
+                let (contacts, overlaps) = match intersections {
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { contacts, overlaps } => (contacts, overlaps),
                     BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(
                         contacts,
                     ) => {
@@ -5477,56 +5448,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             *cusp_is_first,
                         ));
                     }
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                        contacts,
-                    ) => {
-                        return Ok(selected_fiber_cusp_contacts_result(
-                            contacts,
-                            *cusp_is_first,
-                        ));
-                    }
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
-                        overlaps,
-                    ) => {
-                        return Ok(selected_fiber_cusp_overlaps_result(
-                            overlaps,
-                            *cusp_is_first,
-                        ));
-                    }
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps) => {
-                        let overlaps = overlaps
-                            .into_iter()
-                            .map(|overlap| {
-                                let cusp_range = CurveParameterRange2::new_validated(
-                                    CurveParameter2::from_algebraic_cusp(
-                                        overlap.cusp_start_parameter(),
-                                    ),
-                                    CurveParameter2::from_algebraic_cusp(
-                                        overlap.cusp_end_parameter(),
-                                    ),
-                                );
-                                let parallel_range = CurveParameterRange2::from_bezier_range(
-                                    overlap.other_range().clone(),
-                                );
-                                let (first_range, second_range) = if *cusp_is_first {
-                                    (cusp_range, parallel_range)
-                                } else {
-                                    (parallel_range, cusp_range)
-                                };
-                                CurveIntersectionOverlap2 {
- first_span_index: 0, second_span_index: 0, endpoint_inclusion: [true, true],
-                                    parameter_correspondence: CurveOverlapCorrespondence2::Circle { source: CurveCircleOverlap2::Mapped(overlap.clone()), swapped: !*cusp_is_first },
-                                    first_range,
-                                    second_range,
-                                    orientation: overlap.orientation(),
-                                }
-                            })
-                            .collect();
-                        return Ok(RegionPairResult {
-                            contacts: Vec::new(),
-                            overlaps,
-                            blockers: Vec::new(),
-                        });
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber { contacts, overlaps } => {
+                        return Ok(selected_fiber_cusp_result(contacts, overlaps, *cusp_is_first));
                     }
                     BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent
                     | BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
@@ -5652,7 +5575,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 Ok(RegionPairResult {
                     contacts: retained,
-                    overlaps: Vec::new(),
+                    overlaps: overlaps
+                        .into_iter()
+                        .map(|source| {
+                            circle_overlap_evidence(
+                                CurveCircleOverlap2::Mapped(source),
+                                *cusp_is_first,
+                            )
+                        })
+                        .collect(),
                     blockers: Vec::new(),
                 })
             }
@@ -15276,8 +15207,9 @@ const fn orient_tangent_cross_sign(sign: RealSign, source_is_first: bool) -> Rea
     }
 }
 
-fn selected_fiber_cusp_contacts_result(
+fn selected_fiber_cusp_result(
     contacts: Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>,
+    overlaps: Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>,
     cusp_is_first: bool,
 ) -> RegionPairResult {
     let contacts = contacts
@@ -15304,7 +15236,12 @@ fn selected_fiber_cusp_contacts_result(
         .collect();
     RegionPairResult {
         contacts,
-        overlaps: Vec::new(),
+        overlaps: overlaps
+            .into_iter()
+            .map(|source| {
+                circle_overlap_evidence(CurveCircleOverlap2::Selected(source), cusp_is_first)
+            })
+            .collect(),
         blockers: Vec::new(),
     }
 }
@@ -15366,45 +15303,27 @@ fn retained_cusp_parallel_contacts_result(
     }
 }
 
-fn selected_fiber_cusp_overlaps_result(
-    overlaps: Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>,
+fn circle_overlap_evidence(
+    source: CurveCircleOverlap2,
     cusp_is_first: bool,
-) -> RegionPairResult {
-    let overlaps = overlaps
-        .into_iter()
-        .map(|overlap| {
-            let orientation = overlap.orientation();
-            let cusp_range = CurveParameterRange2::new_validated(
-                CurveParameter2::from_algebraic_cusp(overlap.cusp_start_parameter()),
-                CurveParameter2::from_algebraic_cusp(overlap.cusp_end_parameter()),
-            );
-            let other_range = CurveParameterRange2::new_validated(
-                CurveParameter2::from_selected_fiber(overlap.other_start_parameter()),
-                CurveParameter2::from_selected_fiber(overlap.other_end_parameter()),
-            );
-            let (first_range, second_range) = if cusp_is_first {
-                (cusp_range, other_range)
-            } else {
-                (other_range, cusp_range)
-            };
-            CurveIntersectionOverlap2 {
-                first_span_index: 0,
-                second_span_index: 0,
-                endpoint_inclusion: [true, true],
-                parameter_correspondence: CurveOverlapCorrespondence2::Circle {
-                    source: CurveCircleOverlap2::Selected(overlap),
-                    swapped: !cusp_is_first,
-                },
-                first_range,
-                second_range,
-                orientation,
-            }
-        })
-        .collect();
-    RegionPairResult {
-        contacts: Vec::new(),
-        overlaps,
-        blockers: Vec::new(),
+) -> CurveIntersectionOverlap2 {
+    let (cusp_range, other_range) = source.parameter_ranges();
+    let (first_range, second_range) = if cusp_is_first {
+        (cusp_range, other_range)
+    } else {
+        (other_range, cusp_range)
+    };
+    CurveIntersectionOverlap2 {
+        first_span_index: 0,
+        second_span_index: 0,
+        endpoint_inclusion: [true, true],
+        orientation: source.orientation(),
+        parameter_correspondence: CurveOverlapCorrespondence2::Circle {
+            source,
+            swapped: !cusp_is_first,
+        },
+        first_range,
+        second_range,
     }
 }
 

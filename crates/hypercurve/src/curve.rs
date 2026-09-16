@@ -6256,7 +6256,7 @@ fn retained_fillet_arc_cusp_overlap_is_positive(
             }
         };
         match intersections {
-            crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(overlaps) => {
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { overlaps, .. } => {
                 for overlap in overlaps {
                     if retained_selected_fillet_overlap_is_positive(
                         &overlap,
@@ -6271,7 +6271,7 @@ fn retained_fillet_arc_cusp_overlap_is_positive(
                     }
                 }
             }
-            crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps) => {
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { overlaps, .. } => {
                 for overlap in overlaps {
                     let cell_overlap = crate::CurveParameterRange2::from_bezier_range(
                         overlap.other_range().clone(),
@@ -6287,8 +6287,6 @@ fn retained_fillet_arc_cusp_overlap_is_positive(
                     }
                 }
             }
-            crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_)
-            | crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_) => {}
             crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Fillet,
@@ -7321,7 +7319,7 @@ fn fillet_offset_centers(
                     }
                 };
                 match intersections {
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(contacts) => {
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber { contacts, overlaps } => {
                         for contact in contacts {
                             let dot = match contact
                                 .tangent_dot_sign(policy)
@@ -7365,6 +7363,21 @@ fn fillet_offset_centers(
                                 policy,
                             )?;
                         }
+
+                        for overlap in overlaps {
+                            if retained_selected_fillet_overlap_is_positive(
+                                &overlap,
+                                &analytic_authored_range,
+                                incident_domain.as_ref(),
+                                cusp_source,
+                                analytic_family,
+                                cusp_family,
+                                policy,
+                            )? {
+                                centers.coincident = true;
+                                break;
+                            }
+                        }
                     }
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(contacts) => {
                         for contact in contacts {
@@ -7391,23 +7404,8 @@ fn fillet_offset_centers(
                             )?;
                         }
                     }
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(overlaps) => {
-                        for overlap in overlaps {
-                            if retained_selected_fillet_overlap_is_positive(
-                                &overlap,
-                                &analytic_authored_range,
-                                incident_domain.as_ref(),
-                                cusp_source,
-                                analytic_family,
-                                cusp_family,
-                                policy,
-                            )? {
-                                centers.coincident = true;
-                                break;
-                            }
-                        }
-                    }
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => {
+
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { contacts, overlaps } => {
                         let parameter_map = match cusp_circle
                             .parallel_parameter_map(analytic_support, policy)
                             .map_err(|cause| {
@@ -7564,8 +7562,7 @@ fn fillet_offset_centers(
                                 ),
                             });
                         }
-                    }
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps) => {
+
                         for overlap in overlaps {
                             let overlaps_authored = retained_fillet_cusp_mapped_overlap_is_positive(
                                 cusp_source,
@@ -7603,6 +7600,7 @@ fn fillet_offset_centers(
                             }
                         }
                     }
+
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent => {
                         centers.coincident = true;
                     }
@@ -13411,7 +13409,7 @@ mod tests {
             };
 
             let Classification::Decided((
-                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(contacts),
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { contacts, overlaps: unexpected_overlaps },
                 _,
             )) = circle
                 .rational_intersections_with_parameter_map(&rational, &policy)
@@ -13419,6 +13417,7 @@ mod tests {
             else {
                 panic!("the selected half must publish its local rational-contact fiber");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the selected half must retain exactly its left-axis contact");
             };

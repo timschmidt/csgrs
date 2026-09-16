@@ -869,12 +869,19 @@ pub(crate) struct BezierAlgebraicCuspSemicircleRationalMapContact2 {
     correlation: BezierAlgebraicCuspSemicircleRationalCorrelation2,
 }
 
+/// Isolated parameter visits and monotone overlap cells can coexist, including
+/// distinct visits to the same geometric point. Both retain their original
+/// mapping authority; a cell already owns its closed boundary visits.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum BezierAlgebraicCuspSemicircleRationalIntersections2 {
-    Contacts(Vec<BezierAlgebraicCuspSemicircleRationalContact2>),
-    SelectedFiberContacts(Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>),
-    SelectedFiberOverlaps(Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>),
-    Overlaps(Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>),
+    Mapped {
+        contacts: Vec<BezierAlgebraicCuspSemicircleRationalContact2>,
+        overlaps: Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>,
+    },
+    SelectedFiber {
+        contacts: Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>,
+        overlaps: Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>,
+    },
     DegenerateProjection,
 }
 
@@ -3505,13 +3512,28 @@ fn bezier_parameter_is_in_curve_region_range(
     ))
 }
 
-fn mapped_overlap_parameters_for_exact_cusp(
+fn mapped_parameters_for_cusp_endpoint(
+    contacts: impl Iterator<
+        Item = (
+            BezierAlgebraicCuspSemicircleContactLocation2,
+            CurveParameter2,
+        ),
+    >,
     overlaps: Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>,
     parameter: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
+    let expected_location = if parameter == &Real::zero() {
+        BezierAlgebraicCuspSemicircleContactLocation2::Start
+    } else if parameter == &Real::one() {
+        BezierAlgebraicCuspSemicircleContactLocation2::End
+    } else {
+        return Err(CurveError::InvalidCurveParameter);
+    };
     let parameter = BezierAlgebraicCuspSemicircleParameter2::Exact(parameter.clone());
-    let mut candidates: Vec<CurveParameter2> = Vec::new();
+    let mut candidates: Vec<CurveParameter2> = contacts
+        .filter_map(|(location, other)| (location == expected_location).then_some(other))
+        .collect();
     for overlap in overlaps {
         let after_start = match parameter.cmp_by_refinement(&overlap.cusp_start, policy)? {
             Classification::Decided(std::cmp::Ordering::Less) => false,
@@ -3565,24 +3587,20 @@ fn rational_parameters_for_cusp_endpoint(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
     match source.rational_intersections(target, policy)? {
-        Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
+        Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+            contacts,
             overlaps,
-        )) => mapped_overlap_parameters_for_exact_cusp(overlaps, parameter, policy),
+        }) => mapped_parameters_for_cusp_endpoint(
+            contacts
+                .into_iter()
+                .map(|contact| (contact.location, contact.other_parameter)),
+            overlaps,
+            parameter,
+            policy,
+        ),
         Classification::Decided(
-            BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
-        ) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
-        Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-            _,
-        )) => Err(CurveError::Topology(
-            "a coincident cusp endpoint replayed against a noncoincident rational carrier".into(),
-        )),
-        Classification::Decided(
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_),
-        ) => Err(CurveError::Topology(
-            "a coincident cusp endpoint replayed against a noncoincident rational carrier".into(),
-        )),
-        Classification::Decided(
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection
+            | BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { .. },
         ) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
@@ -3595,28 +3613,25 @@ fn parallel_parameters_for_cusp_endpoint(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
     match source.parallel_intersections(target, policy)? {
-        Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+        Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+            contacts,
             overlaps,
-        )) => mapped_overlap_parameters_for_exact_cusp(overlaps, parameter, policy),
+        }) => mapped_parameters_for_cusp_endpoint(
+            contacts.into_iter().map(|contact| {
+                (
+                    contact.location,
+                    CurveParameter2::from(contact.parallel_parameter),
+                )
+            }),
+            overlaps,
+            parameter,
+            policy,
+        ),
         Classification::Decided(
             BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent
-            | BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection,
-        ) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
-        Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
-            _,
-        )) => Err(CurveError::Topology(
-            "a coincident cusp endpoint replayed against a noncoincident analytic carrier".into(),
-        )),
-        Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(_),
-        )
-        | Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(_),
-        ) => Err(CurveError::Topology(
-            "a coincident cusp endpoint replayed against a noncoincident analytic carrier".into(),
-        )),
-        Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(_),
+            | BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection
+            | BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber { .. }
+            | BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(_),
         ) => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
     }
@@ -3771,13 +3786,19 @@ fn mapped_circle_tangent_parameter_candidates(
     Ok(candidates.map(curve_region_parameters_from_bezier))
 }
 
+/// Analytic replay preserves both component kinds in the same parameter space
+/// as rational replay, without projecting selected evidence to scalar roots.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum BezierAlgebraicCuspSemicircleParallelIntersections2 {
-    Contacts(Vec<BezierAlgebraicCuspSemicircleParallelContact2>),
-    SelectedFiberContacts(Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>),
+    Mapped {
+        contacts: Vec<BezierAlgebraicCuspSemicircleParallelContact2>,
+        overlaps: Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>,
+    },
+    SelectedFiber {
+        contacts: Vec<BezierAlgebraicCuspSemicircleSelectedFiberContact2>,
+        overlaps: Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>,
+    },
     RetainedContacts(Vec<BezierAlgebraicCuspSemicircleRetainedParallelContact2>),
-    SelectedFiberOverlaps(Vec<BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2>),
-    Overlaps(Vec<BezierAlgebraicCuspSemicircleMappedOverlap2>),
     /// The analytic carrier follows this circle's complete supporting
     /// component on a regular incident parameter cell. No isolated fillet
     /// center exists, and an unbounded overlap chart is intentionally not
@@ -21045,7 +21066,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "selected-normal-diagonal-rootless",
                 );
                 return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts,
+                        overlaps: Vec::new(),
+                    },
                 ));
             }
         }
@@ -21143,9 +21167,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     return Ok(Classification::Decided(
-                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                            Vec::new(),
-                        ),
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
+                            contacts: Vec::new(),
+                            overlaps: Vec::new(),
+                        },
                     ));
                 }
                 Classification::Uncertain(reason) => {
@@ -21432,14 +21457,15 @@ impl BezierAlgebraicCuspSemicircle2 {
             ),
         };
         Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                retained
+            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
+                contacts: retained
                     .into_iter()
                     .map(|(parameter, location, tangent_cross_sign)| {
                         map.contact(parameter, location, tangent_cross_sign)
                     })
                     .collect(),
-            ),
+                overlaps: Vec::new(),
+            },
         ))
     }
 
@@ -22010,7 +22036,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             "recursive-quadratic",
         );
         Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                contacts,
+                overlaps: Vec::new(),
+            },
         ))
     }
 
@@ -22254,7 +22283,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             });
         }
         Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                contacts,
+                overlaps: Vec::new(),
+            },
         ))
     }
 
@@ -22407,15 +22439,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             parameter.affine_image_unbounded(&inverse_scale, &inverse_offset, policy)
         };
         let contacts = match intersections {
-            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => contacts,
-            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                contacts,
-            ) => {
+            BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { contacts, overlaps } if overlaps.is_empty() => contacts,
+            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber { contacts, overlaps } if overlaps.is_empty() => {
                 let Some(first) = contacts.first() else {
                     return Ok(Classification::Decided(
-                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                            Vec::new(),
-                        ),
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber { contacts: Vec::new(), overlaps: Vec::new() },
                     ));
                 };
                 let map = match first.data.as_ref() {
@@ -22465,9 +22493,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "selected-normal-positive-affine-selected-fiber",
                 );
                 return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                        transported,
-                    ),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber { contacts: transported, overlaps: Vec::new() },
                 ));
             }
             BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(contacts) => {
@@ -22501,8 +22527,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             | BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection) => {
                 return Ok(Classification::Decided(result));
             }
-            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(_)
-            | BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(_) => {
+            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber { .. }
+            | BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { .. } => {
                 return Err(CurveError::Topology(
                     "the isolated selected-normal kernel unexpectedly published an overlap map"
                         .into(),
@@ -22526,7 +22552,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             "selected-normal-positive-affine-source",
         );
         Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(transported),
+            BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                contacts: transported,
+                overlaps: Vec::new(),
+            },
         ))
     }
 
@@ -22539,7 +22568,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     {
         Ok(match self.rational_intersections(curve, policy)? {
             Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps },
             ) => {
                 let mut retained = Vec::with_capacity(contacts.len());
                 for contact in contacts {
@@ -22573,13 +22602,6 @@ impl BezierAlgebraicCuspSemicircle2 {
                         correlated: true,
                     });
                 }
-                Classification::Decided(Some(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(retained),
-                ))
-            }
-            Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
-            ) => {
                 let overlaps = if let Some(range) = range {
                     let mut retained = Vec::with_capacity(overlaps.len());
                     for overlap in overlaps {
@@ -22596,26 +22618,22 @@ impl BezierAlgebraicCuspSemicircle2 {
                     overlaps
                 };
                 Classification::Decided(Some(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts: retained,
+                        overlaps,
+                    },
                 ))
             }
             Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
                     contacts,
-                ),
+                    overlaps,
+                },
             ) => Classification::Decided(Some(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
                     contacts,
-                ),
-            )),
-            Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
                     overlaps,
-                ),
-            ) => Classification::Decided(Some(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
-                    overlaps,
-                ),
+                },
             )),
             Classification::Decided(
                 BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection,
@@ -22844,9 +22862,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     policy,
                 )?
                 .map(|intersections| match intersections {
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) => {
-                        BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(
-                            contacts
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { contacts, overlaps } => {
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { contacts: contacts
                                 .into_iter()
                                 .map(|contact| BezierAlgebraicCuspSemicircleParallelContact2 {
                                     parallel_parameter: contact
@@ -22862,12 +22879,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                                     location: contact.location,
                                     correlated: contact.correlated,
                                 })
-                                .collect(),
-                        )
-                    }
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps) => {
-                        BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
-                            overlaps
+                                .collect(), overlaps: overlaps
                                 .into_iter()
                                 .map(|overlap| {
                                     let range = overlap.other_range();
@@ -22890,15 +22902,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                                         map_reversed: !overlap.map_reversed,
                                     }
                                 })
-                                .collect(),
-                        )
+                                .collect() }
                     }
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                        _,
-                    )
-                    | BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
-                        _,
-                    ) => unreachable!(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber { .. } => unreachable!(
                         "rational-frame source reversal produced selected-fiber evidence"
                     ),
                     BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(
@@ -23000,7 +23006,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "exact-center-incident-ray",
                 );
                 return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts,
+                        overlaps: Vec::new(),
+                    },
                 ));
             }
         }
@@ -23079,7 +23088,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             && first_bounds.overlaps(&second_bounds, policy) == Classification::Decided(false)
         {
             return Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(Vec::new()),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts: Vec::new(),
+                    overlaps: Vec::new(),
+                },
             ));
         }
         if self.uses_selected_radial_frame() {
@@ -23578,7 +23590,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             });
         }
         Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                contacts,
+                overlaps: Vec::new(),
+            },
         ))
     }
 
@@ -23801,7 +23816,6 @@ impl BezierAlgebraicCuspSemicircle2 {
             selected_relation: false,
         };
         let mut interior = Vec::new();
-        let mut selected_zeros = Vec::new();
         for parameter in projected {
             let selected_sign = match algebraic_cusp_correlated_radical_sum_sign(
                 &half_incidence,
@@ -23837,21 +23851,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                         parameter: parameter.clone(),
                         selected_relation: true,
                     };
-                    selected_zeros.push(start.clone());
                 }
                 (_, std::cmp::Ordering::Equal) => {
                     end = Boundary {
                         parameter: parameter.clone(),
                         selected_relation: true,
                     };
-                    selected_zeros.push(end.clone());
                 }
                 (std::cmp::Ordering::Greater, std::cmp::Ordering::Less) => {
                     let boundary = Boundary {
                         parameter,
                         selected_relation: true,
                     };
-                    selected_zeros.push(boundary.clone());
                     interior.push(boundary);
                 }
                 _ => {}
@@ -23972,7 +23983,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
 
         let mut overlaps = Vec::new();
-        for pair in boundaries.windows(2) {
+        let mut covered_boundaries = vec![false; boundaries.len()];
+        for (index, pair) in boundaries.windows(2).enumerate() {
             let cell_sample = match pair[0]
                 .parameter
                 .strict_scalar_between_ordered(&pair[1].parameter, policy)?
@@ -24037,6 +24049,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     ));
                 }
             };
+            covered_boundaries[index] = true;
+            covered_boundaries[index + 1] = true;
             overlaps.push(BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 other_range: BezierParameterRange2::new_validated(
                     pair[0].parameter.clone(),
@@ -24051,16 +24065,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 map_reversed: false,
             });
         }
-        if !overlaps.is_empty() {
-            return Ok(Classification::Decided(
-                BezierAlgebraicCuspParallelComponentReplay2::Resolved(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
-                ),
-            ));
-        }
-
         let mut contacts = Vec::new();
-        for boundary in selected_zeros {
+        for (index, boundary) in boundaries.iter().enumerate() {
+            if covered_boundaries[index] || !boundary.selected_relation {
+                continue;
+            }
             let (_, contact) = match endpoint(&boundary)? {
                 Classification::Decided(endpoint) => endpoint,
                 Classification::Uncertain(reason) => {
@@ -24083,7 +24092,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
         Ok(Classification::Decided(
             BezierAlgebraicCuspParallelComponentReplay2::Resolved(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { contacts, overlaps },
             ),
         ))
     }
@@ -32644,30 +32653,36 @@ impl BezierAlgebraicCuspSemicircle2 {
                     );
                 }
             };
-        let BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) = intersections
-        else {
-            return match intersections {
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
-                    Err(CurveError::Topology(
+        let contacts =
+            match intersections {
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps,
+                } if overlaps.is_empty() => contacts,
+                other => return match other {
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        overlaps: _,
+                        ..
+                    } => Err(CurveError::Topology(
                         "a nonzero selected circle overlapped an exact line component".into(),
-                    ))
-                }
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_) => {
-                    Err(CurveError::Topology(
+                    )),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                        overlaps,
+                        ..
+                    } if !overlaps.is_empty() => Err(CurveError::Topology(
                         "a nonzero selected circle overlapped an exact line component".into(),
-                    ))
-                }
-                BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_) => {
-                    Err(CurveError::Topology(
+                    )),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+                        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                    }
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                        contacts: _,
+                        ..
+                    } => Err(CurveError::Topology(
                         "the dedicated selected parallel-normal line kernel was bypassed".into(),
-                    ))
-                }
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => unreachable!(),
+                    )),
+                },
             };
-        };
         if contacts.is_empty() {
             return Ok(Classification::Decided(
                 BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
@@ -36272,9 +36287,10 @@ impl BezierAlgebraicCuspSemicircle2 {
         })? {
             Classification::Decided(Some(roots)) if roots.is_empty() => {
                 return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                        Vec::new(),
-                    ),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                        contacts: Vec::new(),
+                        overlaps: Vec::new(),
+                    },
                 ));
             }
             Classification::Decided(Some(roots)) => roots,
@@ -36441,14 +36457,15 @@ impl BezierAlgebraicCuspSemicircle2 {
             ),
         };
         Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                retained
+            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                contacts: retained
                     .into_iter()
                     .map(|(other_parameter, location, tangent_cross_sign)| {
                         map.contact(other_parameter, location, tangent_cross_sign)
                     })
                     .collect(),
-            ),
+                overlaps: Vec::new(),
+            },
         ))
     }
 
@@ -36462,19 +36479,41 @@ impl BezierAlgebraicCuspSemicircle2 {
         center_parameter: BezierAlgebraicParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        let angular_incidence = bivariate_subtract(
-            &bivariate_multiply(
+        // The source speed is certified positive at the retained center.
+        // A missing radical needs no conjugate equation or repeated roots.
+        let angular_incidence = if system
+            .angular_tangent
+            .radical
+            .coefficients
+            .iter()
+            .flatten()
+            .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+        {
+            system.angular_tangent.rational.clone()
+        } else if system
+            .angular_tangent
+            .rational
+            .coefficients
+            .iter()
+            .flatten()
+            .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+        {
+            system.angular_tangent.radical.clone()
+        } else {
+            bivariate_subtract(
                 &bivariate_multiply(
-                    &system.angular_tangent.rational,
-                    &system.angular_tangent.rational,
+                    &bivariate_multiply(
+                        &system.angular_tangent.rational,
+                        &system.angular_tangent.rational,
+                    ),
+                    &system.speed_squared,
                 ),
-                &system.speed_squared,
-            ),
-            &bivariate_multiply(
-                &system.angular_tangent.radical,
-                &system.angular_tangent.radical,
-            ),
-        );
+                &bivariate_multiply(
+                    &system.angular_tangent.radical,
+                    &system.angular_tangent.radical,
+                ),
+            )
+        };
         let boundary_incidence =
             bivariate_multiply(&system.selected_half_plane, &angular_incidence);
         let roots = match policy.strict_predicate_pass(|| {
@@ -36616,7 +36655,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             RealSign::Positive
         };
         let mut overlaps = Vec::new();
-        for pair in boundaries.windows(2) {
+        let mut covered_boundaries = vec![false; boundaries.len()];
+        for (index, pair) in boundaries.windows(2).enumerate() {
             let sample = match pair[0]
                 .parameter
                 .strict_scalar_between_ordered(&pair[1].parameter, policy)?
@@ -36683,22 +36723,25 @@ impl BezierAlgebraicCuspSemicircle2 {
             // signs constant on this regular cell. Its nonzero angular sign
             // therefore proves strict cusp order without comparing mapped roots.
             // Defer the shared map until every publication predicate has run.
+            covered_boundaries[index] = true;
+            covered_boundaries[index + 1] = true;
             overlaps.push((pair, first, second, orientation));
         }
 
         let mut contacts = Vec::new();
-        if overlaps.is_empty() {
-            for boundary in &boundaries {
-                let location = match cusp_location(boundary)? {
-                    Classification::Decided(location) => location,
-                    Classification::Uncertain(UncertaintyReason::Boundary) => continue,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                if location != BezierAlgebraicCuspSemicircleContactLocation2::Interior {
-                    contacts.push((boundary.parameter.clone(), location));
+        for (index, boundary) in boundaries.iter().enumerate() {
+            if covered_boundaries[index] {
+                continue;
+            }
+            let location = match cusp_location(boundary)? {
+                Classification::Decided(location) => location,
+                Classification::Uncertain(UncertaintyReason::Boundary) => continue,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
+            };
+            if location != BezierAlgebraicCuspSemicircleContactLocation2::Interior {
+                contacts.push((boundary.parameter.clone(), location));
             }
         }
         let map = BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
@@ -36716,48 +36759,36 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             ),
         };
-        if !overlaps.is_empty() {
-            return Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                    overlaps
-                        .into_iter()
-                        .map(|(pair, first, second, orientation)| {
-                            let first = map.mapped_parameter(
-                                pair[0].parameter.clone(),
-                                first,
-                                RealSign::Zero,
-                            );
-                            let second = map.mapped_parameter(
-                                pair[1].parameter.clone(),
-                                second,
-                                RealSign::Zero,
-                            );
-                            let (cusp_start, cusp_end) =
-                                if orientation == RationalBezierOverlapOrientation2::Same {
-                                    (first, second)
-                                } else {
-                                    (second, first)
-                                };
-                            BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
-                                other_start: pair[0].parameter.clone(),
-                                other_end: pair[1].parameter.clone(),
-                                cusp_start,
-                                cusp_end,
-                                orientation,
-                                map: map.clone(),
-                            }
-                        })
-                        .collect(),
-                ),
-            ));
-        }
         Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                contacts
+            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                contacts: contacts
                     .into_iter()
                     .map(|(parameter, location)| map.contact(parameter, location, RealSign::Zero))
                     .collect(),
-            ),
+                overlaps: overlaps
+                    .into_iter()
+                    .map(|(pair, first, second, orientation)| {
+                        let first =
+                            map.mapped_parameter(pair[0].parameter.clone(), first, RealSign::Zero);
+                        let second =
+                            map.mapped_parameter(pair[1].parameter.clone(), second, RealSign::Zero);
+                        let (cusp_start, cusp_end) =
+                            if orientation == RationalBezierOverlapOrientation2::Same {
+                                (first, second)
+                            } else {
+                                (second, first)
+                            };
+                        BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
+                            other_start: pair[0].parameter.clone(),
+                            other_end: pair[1].parameter.clone(),
+                            cusp_start,
+                            cusp_end,
+                            orientation,
+                            map: map.clone(),
+                        }
+                    })
+                    .collect(),
+            },
         ))
     }
 
@@ -37239,7 +37270,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             "recursive-quadratic",
         );
         Ok(Classification::Decided((
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                contacts,
+                overlaps: Vec::new(),
+            },
             parameter_map,
         )))
     }
@@ -37597,7 +37631,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             None
         };
         Ok(Classification::Decided((
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                contacts,
+                overlaps: Vec::new(),
+            },
             parameter_map,
         )))
     }
@@ -39016,7 +39053,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             None
         };
         Ok(Classification::Decided((
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                contacts,
+                overlaps: Vec::new(),
+            },
             parameter_map,
         )))
     }
@@ -39266,7 +39306,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             None
         };
         Ok(Classification::Decided((
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                contacts,
+                overlaps: Vec::new(),
+            },
             parameter_map,
         )))
     }
@@ -39376,7 +39419,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             intersections
         else {
             return Ok(Classification::Decided(Some((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new()),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts: Vec::new(),
+                    overlaps: Vec::new(),
+                },
                 None,
             ))));
         };
@@ -39630,7 +39676,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             },
         );
         Ok(Classification::Decided(Some((
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(rational_contacts),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                contacts: rational_contacts,
+                overlaps: Vec::new(),
+            },
             parameter_map,
         ))))
     }
@@ -39656,7 +39705,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                         == Classification::Decided(false)
                 {
                     return Ok(Classification::Decided((
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new()),
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                            contacts: Vec::new(),
+                            overlaps: Vec::new(),
+                        },
                         None,
                     )));
                 }
@@ -39992,7 +40044,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "direct-pair-radial",
             );
             return Ok(Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: Vec::new(),
+                },
                 parameter_map,
             )));
         }
@@ -40012,7 +40067,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             )? == Classification::Decided(true)
         {
             return Ok(Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new()),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts: Vec::new(),
+                    overlaps: Vec::new(),
+                },
                 None,
             )));
         }
@@ -40357,7 +40415,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             None
         };
         Ok(Classification::Decided((
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                contacts,
+                overlaps: Vec::new(),
+            },
             parameter_map,
         )))
     }
@@ -40480,7 +40541,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             RealSign::Positive
         };
         let mut overlaps = Vec::new();
-        for pair in boundaries.windows(2) {
+        let mut covered_boundaries = vec![false; boundaries.len()];
+        for (index, pair) in boundaries.windows(2).enumerate() {
             let sample = match pair[0]
                 .parameter
                 .strict_scalar_between_ordered(&pair[1].parameter, policy)?
@@ -40597,6 +40659,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
+            covered_boundaries[index] = true;
+            covered_boundaries[index + 1] = true;
             overlaps.push(BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 other_range: BezierParameterRange2::new_validated(
                     pair[0].parameter.clone(),
@@ -40611,14 +40675,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                 map_reversed: false,
             });
         }
-        if !overlaps.is_empty() {
-            return Ok(Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
-            ));
-        }
-
         let mut contacts = Vec::new();
-        for boundary in &boundaries {
+        // Closed overlap cells already own their boundary visits. A separate
+        // visit at the same geometric point still has its own source parameter.
+        for (index, boundary) in boundaries.iter().enumerate() {
+            if covered_boundaries[index] {
+                continue;
+            }
             let Some((_, location)) = (match endpoint(boundary)? {
                 Classification::Decided(endpoint) => endpoint,
                 Classification::Uncertain(reason) => {
@@ -40654,7 +40717,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             });
         }
         Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps },
         ))
     }
 
@@ -43907,27 +43970,29 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) = intersections
-        else {
-            return match intersections {
-                BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
-                    Err(CurveError::Topology(
+        let contacts =
+            match intersections {
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps,
+                } if overlaps.is_empty() => contacts,
+                other => return match other {
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
+                        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                    }
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        overlaps: _,
+                        ..
+                    } => Err(CurveError::Topology(
                         "a transverse cusp-pair contact replayed as a coincident rational circle"
                             .into(),
-                    ))
-                }
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_) => {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_) => {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-                }
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => unreachable!(),
+                    )),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                        contacts: _,
+                        ..
+                    } => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+                },
             };
-        };
         let mut parameters = Vec::with_capacity(contacts.len());
         for candidate in contacts {
             if candidate.location != expected_location
@@ -44018,31 +44083,36 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) = intersections
-        else {
-            return match intersections {
+        let contacts = match intersections {
+            BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { contacts, overlaps }
+                if overlaps.is_empty() =>
+            {
+                contacts
+            }
+            other => return match other {
                 BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(_) => {
-                    Err(CurveError::Topology(
-                        "a transverse cusp-pair contact replayed as a coincident analytic circle"
-                            .into(),
-                    ))
-                }
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: _, ..
+                } => Err(CurveError::Topology(
+                    "a transverse cusp-pair contact replayed as a coincident analytic circle"
+                        .into(),
+                )),
                 BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent => {
                     Err(CurveError::Topology(
                         "a transverse cusp-pair contact replayed on a coincident incident circle"
                             .into(),
                     ))
                 }
-                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(_)
-                | BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(_)
-                | BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(_) => {
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
+                    contacts: _,
+                    ..
+                }
+                | BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(_) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(_) => unreachable!(),
-            };
+            },
         };
         Ok(Classification::Decided(
             contacts
@@ -52021,11 +52091,10 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                         return Ok(Some(Classification::Uncertain(reason)));
                     }
                 };
-                let BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) =
-                    intersections
-                else {
-                    return match intersections {
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
+                let contacts = match intersections {
+BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps } if overlaps.is_empty() => contacts,
+other => return match other {
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { overlaps: _, .. } => {
                             Err(CurveError::Topology(
                                 "a linear carrier replayed as a coincident circle".into(),
                             ))
@@ -52035,21 +52104,11 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                                 UncertaintyReason::Unsupported,
                             )))
                         }
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                            _,
-                        ) => Ok(Some(Classification::Uncertain(
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { contacts: _, .. } => Ok(Some(Classification::Uncertain(
                             UncertaintyReason::Unsupported,
                         ))),
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                            _,
-                        ) => Ok(Some(Classification::Uncertain(
-                            UncertaintyReason::Unsupported,
-                        ))),
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => {
-                            unreachable!()
-                        }
-                    };
-                };
+                    },
+};
                 let mut replayed_contact = None;
                 for candidate in contacts {
                     match candidate
@@ -100827,9 +100886,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
         };
         match intersections {
-            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
-                overlaps,
-            ) => {
+            BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
+                overlaps, ..
+            } => {
                 for overlap in overlaps {
                     let candidate =
                         match overlap.other_parameter_for_cusp(source_parameter, policy)? {
@@ -100856,7 +100915,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     }
                 }
             }
-            BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps) => {
+            BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { overlaps, .. } => {
                 for overlap in overlaps {
                     let candidate =
                         match overlap.other_parameter_for_cusp(source_parameter, policy)? {
@@ -100876,9 +100935,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     }
                 }
             }
-            BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(_)
-            | BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(_)
-            | BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(_)
+            BezierAlgebraicCuspSemicircleParallelIntersections2::RetainedContacts(_)
             | BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent
             | BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {}
         }
@@ -103969,18 +104026,20 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
         };
         let contacts = match intersections {
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) => contacts,
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(_) => {
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps }
+                if overlaps.is_empty() =>
+            {
+                contacts
+            }
+            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                contacts: _,
+                ..
+            } => {
                 return Err(CurveError::Topology(
                     "a rational-frame cusp ray produced selected-fiber contacts".into(),
                 ));
             }
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_) => {
-                return Err(CurveError::Topology(
-                    "a rational-frame cusp ray produced selected-fiber overlap".into(),
-                ));
-            }
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { overlaps: _, .. } => {
                 return Err(CurveError::Topology(
                     "a nonzero ray overlapped a selected circle".into(),
                 ));
@@ -133343,14 +133402,16 @@ mod conversion_tests {
         );
         let parallel = source.parallel_left(Real::one()).unwrap();
         assert!(parallel.data.certified_ph_offset.set(None).is_ok());
-        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
+        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
             overlaps,
-        )) = semicircle
+            contacts: unexpected_contacts,
+        }) = semicircle
             .parallel_intersections(&parallel, policy)
             .unwrap()
         else {
             panic!("the analytic quarter must overlap the selected circle");
         };
+        assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         let [overlap] = overlaps.as_slice() else {
             panic!("the analytic quarter must retain one overlap cell");
         };
@@ -133509,11 +133570,15 @@ mod conversion_tests {
     ) {
         let (circle, quarter) = selected_fiber_rational_quarter(false, policy);
         let Classification::Decided(
-            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(overlaps),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                overlaps,
+                contacts: unexpected_contacts,
+            },
         ) = circle.rational_intersections(&quarter, policy).unwrap()
         else {
             panic!("the rational quarter must remain in the selected fiber");
         };
+        assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         let [overlap] = overlaps.as_slice() else {
             panic!("the selected rational quarter must retain one overlap");
         };
@@ -133554,13 +133619,15 @@ mod conversion_tests {
                         },
                     );
                     let Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
                             overlaps,
-                        ),
+                            contacts: unexpected_contacts,
+                        },
                     ) = outcome.value
                     else {
                         panic!("the selected quarter must publish its complete overlap");
                     };
+                    assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let [overlap] = overlaps.as_slice() else {
                         panic!("the regular quarter must retain one overlap cell");
                     };
@@ -133784,10 +133851,15 @@ mod conversion_tests {
                             }
                         );
                         let Classification::Decided(
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(contacts),
-                        ) = outcome.value else {
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                                contacts,
+                                overlaps: unexpected_overlaps,
+                            },
+                        ) = outcome.value
+                        else {
                             panic!("the opposite quarter must retain its lone shared endpoint");
                         };
+                        assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                         let [contact] = contacts.as_slice() else {
                             panic!("the opposite quarter must have exactly one contact");
                         };
@@ -133884,10 +133956,11 @@ mod conversion_tests {
                                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                                 if authored_sheet {
                                     let Classification::Decided(
-                                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(overlaps),
+                                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { overlaps, contacts: unexpected_contacts },
                             ) = outcome.value else {
                                 panic!("the authored circle must retain its quarter overlap");
                             };
+                                    assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     assert_eq!(overlaps.len(), 1);
                                     assert_eq!(
                                         overlaps[0]
@@ -133899,10 +133972,11 @@ mod conversion_tests {
                                     continue;
                                 }
                                 let Classification::Decided(
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(contacts),
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { contacts, overlaps: unexpected_overlaps },
                         ) = outcome.value else {
                             panic!("the conjugate component must not publish an overlap");
                         };
+                                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                                 if distance == Real::from(2_i8) {
                                     assert!(contacts.is_empty());
                                     continue;
@@ -133994,7 +134068,10 @@ mod conversion_tests {
         )
         .unwrap();
         let Classification::Decided((
-            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                contacts,
+                overlaps: unexpected_overlaps,
+            },
             Some(map),
         )) = semicircle
             .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -134002,6 +134079,7 @@ mod conversion_tests {
         else {
             panic!("the transverse rational contact must retain its map");
         };
+        assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
         assert_eq!(map.data.policy, CurveContext::STRICT);
         let [contact] = contacts.as_slice() else {
             panic!("the upper semicircle must have one transverse contact");
@@ -140241,11 +140319,15 @@ mod conversion_tests {
                 ),
             ] {
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        contacts,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = carrier.rational_intersections(&diameter, &policy).unwrap()
                 else {
                     panic!("diameter contacts must be complete");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 assert_eq!(contacts.len(), 2);
                 assert_eq!(
                     contacts
@@ -140273,7 +140355,10 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(map),
             )) = semicircle
                 .rational_intersections_internal(&vertical, true, &policy)
@@ -140281,6 +140366,7 @@ mod conversion_tests {
             else {
                 panic!("vertical-circle contacts and their shared map must complete");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the selected upper semicircle has one vertical contact");
             };
@@ -140371,13 +140457,17 @@ mod conversion_tests {
             let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
             let parallel = non_ph_parallel_touching_upper_unit_circle(true);
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = semicircle
                 .parallel_intersections(&parallel, &policy)
                 .unwrap()
             else {
                 panic!("algebraic cusp/general-parallel contacts must complete");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the tangent fixture must have one selected contact");
             };
@@ -140438,7 +140528,10 @@ mod conversion_tests {
                     .parallel_intersections(&opposite_branch, &policy)
                     .unwrap(),
                 Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(Vec::new())
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts: Vec::new(),
+                        overlaps: Vec::new()
+                    }
                 ),
             );
         }
@@ -140471,13 +140564,17 @@ mod conversion_tests {
                 "the recursive authority must retain its direct-pair fast backend"
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = semicircle
                 .parallel_intersections(&parallel, &policy)
                 .unwrap()
             else {
                 panic!("pair-radial/general-parallel contacts must complete");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the analytic tangent must have one selected pair-radial contact");
             };
@@ -140590,16 +140687,23 @@ mod conversion_tests {
             let mut has_exterior = false;
             for half_circle in [circle.clone(), circle.complementary_half()] {
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(finite),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts: finite,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = half_circle
                     .parallel_intersections_in_range(&parallel, &range, &policy)
                     .unwrap()
                 else {
                     panic!("the finite pair-radial solve must remain discrete");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 finite_count += finite.len();
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(extended),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts: extended,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = half_circle
                     .parallel_intersections_with_incident_ray(
                         &parallel,
@@ -140616,6 +140720,7 @@ mod conversion_tests {
                 else {
                     panic!("the incident pair-radial solve must remain discrete");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 extended_count += extended.len();
                 for contact in extended {
                     if contact
@@ -140700,13 +140805,17 @@ mod conversion_tests {
                 Classification::Decided(Some(_)),
             ));
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(cached_overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: cached_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .parallel_intersections(&cached_parallel, &policy)
                 .unwrap()
             else {
                 panic!("a PH circle must join the authoritative analytic overlap replay");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(cached_overlaps.len(), 1);
 
             let parallel = source.parallel_left(Real::one()).unwrap();
@@ -140725,13 +140834,17 @@ mod conversion_tests {
                 );
             }
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .parallel_intersections(&parallel, &policy)
                 .unwrap()
             else {
                 panic!("the selected positive-dimensional circle must publish overlap evidence");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the quarter circle must produce one selected overlap");
             };
@@ -140768,13 +140881,17 @@ mod conversion_tests {
                 BezierParameter2::Exact(three_quarters.clone()),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(partial_overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: partial_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .parallel_intersections_in_range(&parallel, &partial_range, &policy)
                 .unwrap()
             else {
                 panic!("an authored subrange of the circle component must remain exact");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [partial_overlap] = partial_overlaps.as_slice() else {
                 panic!("the selected partial quarter circle must remain one overlap");
             };
@@ -140801,13 +140918,17 @@ mod conversion_tests {
             let reversed_parallel = parallel.reversed();
             assert!(reversed_parallel.data.certified_ph_offset.set(None).is_ok());
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(reversed_overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: reversed_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .parallel_intersections(&reversed_parallel, &policy)
                 .unwrap()
             else {
                 panic!("reversing the analytic source must preserve its exact overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_overlap] = reversed_overlaps.as_slice() else {
                 panic!("the reversed quarter circle must remain one overlap");
             };
@@ -140988,15 +141109,17 @@ mod conversion_tests {
                 .unwrap(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    rational_source_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: rational_source_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rational quarter must expose its mapped cusp correspondence");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [rational_source_overlap] = rational_source_overlaps.as_slice() else {
                 panic!("the rational quarter must have one monotone selected cell");
             };
@@ -141136,15 +141259,17 @@ mod conversion_tests {
                 .unwrap(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    reflected_rational_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: reflected_rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&reflected_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the reflected rational quarter must remain on the selected circle");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reflected_rational_overlap] = reflected_rational_overlaps.as_slice() else {
                 panic!("the reflected rational quarter must retain one selected cell");
             };
@@ -141270,15 +141395,17 @@ mod conversion_tests {
             }
             let independent_semicircle = synthetic_independent_unit_cusp_semicircle(&policy);
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    independent_rational_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: independent_rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = independent_semicircle
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("an independent selected cusp field must retain the rational overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [independent_rational_overlap] = independent_rational_overlaps.as_slice() else {
                 panic!("the independent selected field must retain one rational cell");
             };
@@ -141296,15 +141423,17 @@ mod conversion_tests {
                 Classification::Decided(true),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    rebuilt_rational_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: rebuilt_rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rebuilt rational circle map must remain an overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [rebuilt_rational_overlap] = rebuilt_rational_overlaps.as_slice() else {
                 panic!("the rebuilt rational circle must retain one selected cell");
             };
@@ -141384,15 +141513,17 @@ mod conversion_tests {
                 .unwrap(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    projective_rational_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: projective_rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&projective_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the projectively parameterized rational circle must remain an overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [projective_rational_overlap] = projective_rational_overlaps.as_slice() else {
                 panic!("the projective rational circle must retain one selected cell");
             };
@@ -141414,15 +141545,17 @@ mod conversion_tests {
 
             let reversed_projective_rational_quarter = projective_rational_quarter.reversed();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    reversed_projective_rational_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: reversed_projective_rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&reversed_projective_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the reversed projective rational circle must remain an overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_projective_rational_overlap] =
                 reversed_projective_rational_overlaps.as_slice()
             else {
@@ -141483,15 +141616,17 @@ mod conversion_tests {
             })
             .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    nonlinear_rational_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: nonlinear_rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&nonlinear_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the nonlinearly parameterized rational circle must remain an overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [nonlinear_rational_overlap] = nonlinear_rational_overlaps.as_slice() else {
                 panic!("the nonlinear rational circle must retain one selected cell");
             };
@@ -141516,15 +141651,17 @@ mod conversion_tests {
                 Classification::Decided(true),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    independent_nonlinear_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: independent_nonlinear_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = independent_semicircle
                 .rational_intersections(&nonlinear_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("independent fields must retain the nonlinear rational overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [independent_nonlinear_overlap] = independent_nonlinear_overlaps.as_slice() else {
                 panic!("the independent nonlinear overlap must retain one selected cell");
             };
@@ -141561,15 +141698,17 @@ mod conversion_tests {
 
             let reversed_nonlinear_rational_quarter = nonlinear_rational_quarter.reversed();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    reversed_nonlinear_rational_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: reversed_nonlinear_rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&reversed_nonlinear_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the reversed nonlinear rational circle must remain an overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_nonlinear_rational_overlap] =
                 reversed_nonlinear_rational_overlaps.as_slice()
             else {
@@ -141633,15 +141772,17 @@ mod conversion_tests {
 
             let reversed_rational_quarter = rational_quarter.reversed();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    reversed_rational_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: reversed_rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&reversed_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the reversed rational circle must remain an overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_rational_overlap] = reversed_rational_overlaps.as_slice() else {
                 panic!("the reversed rational circle must retain one selected cell");
             };
@@ -141890,15 +142031,17 @@ mod conversion_tests {
                 Classification::Decided(None),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
-                    rebuilt_parallel_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: rebuilt_parallel_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .parallel_intersections(&parallel, &policy)
                 .unwrap()
             else {
                 panic!("the rebuilt analytic circle map must remain an overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [rebuilt_parallel_overlap] = rebuilt_parallel_overlaps.as_slice() else {
                 panic!("the rebuilt analytic circle must retain one selected cell");
             };
@@ -142414,15 +142557,17 @@ mod conversion_tests {
                 .parallel_intersections(&nonlinear_analytic_quarter, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
-                    nonlinear_analytic_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: nonlinear_analytic_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = nonlinear_analytic_result
             else {
                 panic!(
                     "the nonlinear analytic circle must remain an overlap: {nonlinear_analytic_result:?}"
                 );
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [nonlinear_analytic_overlap] = nonlinear_analytic_overlaps.as_slice() else {
                 panic!("the nonlinear analytic circle must retain one selected cell");
             };
@@ -142785,7 +142930,10 @@ mod conversion_tests {
                     .parallel_intersections(&opposite, &policy)
                     .unwrap(),
                 Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(Vec::new()),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts: Vec::new(),
+                        overlaps: Vec::new()
+                    },
                 ),
             );
         }
@@ -142849,7 +142997,10 @@ mod conversion_tests {
                         )
                 ));
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        overlaps,
+                        contacts: unexpected_contacts,
+                    },
                 ) = transformed_fragment
                     .semicircle()
                     .parallel_intersections(&transformed_parallel, &policy)
@@ -142857,6 +143008,7 @@ mod conversion_tests {
                 else {
                     panic!("the transformed analytic quarter must retain its circle overlap");
                 };
+                assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let [overlap] = overlaps.as_slice() else {
                     panic!("the transformed analytic quarter must retain one overlap cell");
                 };
@@ -142965,13 +143117,17 @@ mod conversion_tests {
             let target_parallel = parallel.transform_similarity(&half_turn).unwrap();
             let target_semicircle = fragment.semicircle().complementary_half();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = target_semicircle
                 .parallel_intersections(&target_parallel, &policy)
                 .unwrap()
             else {
                 panic!("the complementary analytic quarter must retain its overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the complementary analytic quarter must retain one overlap cell");
             };
@@ -143014,18 +143170,25 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let (semicircle, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(rational_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rational quarter must retain its circle overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [rational_overlap] = rational_overlaps.as_slice() else {
                 panic!("the rational quarter must retain one overlap");
             };
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(map),
             )) = semicircle
                 .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -143033,6 +143196,7 @@ mod conversion_tests {
             else {
                 panic!("the transverse cutter must retain its circle contact map");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the finite cutter must meet the selected quarter once");
             };
@@ -143136,15 +143300,17 @@ mod conversion_tests {
             let (target_circle, target_curve, target_overlap) =
                 selected_fiber_rational_quarter_overlap(&policy);
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                    reversed_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                    overlaps: reversed_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = target_circle
                 .rational_intersections(&target_curve.reversed(), &policy)
                 .unwrap()
             else {
                 panic!("the reversed rational quarter must remain in the selected fiber");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_overlap] = reversed_overlaps.as_slice() else {
                 panic!("the reversed selected quarter must retain one overlap");
             };
@@ -143299,15 +143465,17 @@ mod conversion_tests {
                     )
             ));
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                    reversed_selected_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                    overlaps: reversed_selected_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = selected_semicircle
                 .rational_intersections(&selected_curve.reversed(), &policy)
                 .unwrap()
             else {
                 panic!("the reversed selected quarter must retain its overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_selected_overlap] = reversed_selected_overlaps.as_slice() else {
                 panic!("the reversed selected quarter must retain one overlap");
             };
@@ -143377,13 +143545,17 @@ mod conversion_tests {
                 .transform_similarity(&from_selected)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(reversed_overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: reversed_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = analytic_semicircle
                 .parallel_intersections(&analytic_parallel.reversed(), &policy)
                 .unwrap()
             else {
                 panic!("the reversed analytic quarter must retain its circle overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_overlap] = reversed_overlaps.as_slice() else {
                 panic!("the reversed analytic quarter must retain one overlap");
             };
@@ -143618,18 +143790,25 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let (semicircle, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(rational_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rational quarter must retain its circle overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [rational_overlap] = rational_overlaps.as_slice() else {
                 panic!("the rational quarter must retain one overlap");
             };
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(map),
             )) = semicircle
                 .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -143637,6 +143816,7 @@ mod conversion_tests {
             else {
                 panic!("the transverse cutter must retain its circle contact map");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the finite cutter must meet the selected quarter once");
             };
@@ -143702,7 +143882,10 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let (semicircle, parallel, overlap) = general_analytic_circle_overlap(&policy);
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(map),
             )) = semicircle
                 .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -143710,6 +143893,7 @@ mod conversion_tests {
             else {
                 panic!("the transverse cutter must retain its circle contact map");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the finite cutter must meet the selected quarter once");
             };
@@ -143760,7 +143944,10 @@ mod conversion_tests {
                 let transformed_fragment = fragment.transform_similarity(&transform).unwrap();
                 let transformed_parallel = parallel.transform_similarity(&transform).unwrap();
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        overlaps,
+                        contacts: unexpected_contacts,
+                    },
                 ) = transformed_fragment
                     .semicircle()
                     .parallel_intersections(&transformed_parallel, &policy)
@@ -143768,6 +143955,7 @@ mod conversion_tests {
                 else {
                     panic!("the transformed analytic quarter must retain its overlap");
                 };
+                assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let [overlap] = overlaps.as_slice() else {
                     panic!("the transformed analytic quarter must retain one overlap");
                 };
@@ -143801,9 +143989,10 @@ mod conversion_tests {
             let (semicircle, selected_curve, selected_overlap) =
                 selected_fiber_rational_quarter_overlap(&policy);
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
                     contacts,
-                ),
+                    overlaps: unexpected_overlaps,
+                },
                 None,
             )) = semicircle
                 .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -143811,6 +144000,7 @@ mod conversion_tests {
             else {
                 panic!("the transverse selected contact must remain in one fiber");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the finite cutter must meet the selected quarter once");
             };
@@ -143910,15 +144100,17 @@ mod conversion_tests {
                 panic!("the selected transverse endpoint must retain its inward chamfer cut");
             };
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                    reversed_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                    overlaps: reversed_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .rational_intersections(&selected_curve.reversed(), &policy)
                 .unwrap()
             else {
                 panic!("the reversed selected quarter must retain its circle overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_overlap] = reversed_overlaps.as_slice() else {
                 panic!("the reversed selected quarter must retain one overlap");
             };
@@ -144033,15 +144225,17 @@ mod conversion_tests {
                 BezierParameter2::Exact(half.clone()),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
                     contacts,
-                ),
+                    overlaps: unexpected_overlaps,
+                },
             ) = semicircle
                 .parallel_intersections_in_range(&cutter, &cutter_range, &policy)
                 .unwrap()
             else {
                 panic!("the analytic transverse contact must remain in one fiber");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let contact = contacts
                 .iter()
                 .find(|contact| {
@@ -144242,13 +144436,17 @@ mod conversion_tests {
                 .parallel_intersections(&parallel, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = intersections
             else {
                 panic!(
                     "the independently encoded nonrepresented circle must publish overlap evidence: {intersections:?}"
                 );
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the independently encoded quarter must publish one overlap cell");
             };
@@ -144285,13 +144483,17 @@ mod conversion_tests {
                 BezierParameter2::Exact(Real::one() - &quarter),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(partial_overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: partial_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .parallel_intersections_in_range(&parallel, &partial_range, &policy)
                 .unwrap()
             else {
                 panic!("the independently encoded circle overlap must retain an authored clip");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [partial_overlap] = partial_overlaps.as_slice() else {
                 panic!("the clipped independently encoded quarter must remain one overlap");
             };
@@ -144300,13 +144502,17 @@ mod conversion_tests {
             let reversed = parallel.reversed();
             assert!(reversed.data.certified_ph_offset.set(None).is_ok());
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(reversed_overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: reversed_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle
                 .parallel_intersections(&reversed, &policy)
                 .unwrap()
             else {
                 panic!("reversing the independently encoded circle must preserve its overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_overlap] = reversed_overlaps.as_slice() else {
                 panic!("the reversed independently encoded quarter must remain one overlap");
             };
@@ -144365,13 +144571,17 @@ mod conversion_tests {
                 .parallel_intersections(&parallel, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = intersections
             else {
                 panic!(
                     "the independently encoded noncircular contact must complete: {intersections:?}"
                 );
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let contact = contacts
                 .iter()
                 .find(|contact| {
@@ -144405,13 +144615,17 @@ mod conversion_tests {
                     .parallel_intersections_in_range(&parallel, range, &policy)
                     .unwrap();
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(range_contacts),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts: range_contacts,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = range_intersections
                 else {
                     panic!(
                         "the independently encoded ranged contact must complete: {range_intersections:?}"
                     );
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 assert_eq!(
                     range_contacts.iter().any(|contact| {
                         contact
@@ -144434,13 +144648,17 @@ mod conversion_tests {
                 .parallel_intersections(&reversed, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(reversed_contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts: reversed_contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = reversed_intersections
             else {
                 panic!(
                     "the reversed independently encoded noncircular contact must complete: {reversed_intersections:?}"
                 );
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let reversed_contact = reversed_contacts
                 .iter()
                 .find(|contact| {
@@ -144472,13 +144690,17 @@ mod conversion_tests {
                 .parallel_intersections(&endpoint_parallel, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(endpoint_contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts: endpoint_contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = endpoint_intersections
             else {
                 panic!(
                     "the independently encoded noncircular endpoint must complete: {endpoint_intersections:?}"
                 );
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let endpoint_contact = endpoint_contacts
                 .iter()
                 .find(|contact| {
@@ -144538,18 +144760,25 @@ mod conversion_tests {
                 .rational_intersections(&quarter, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = overlap_result
             else {
                 panic!(
                     "the shifted conic must retain the nonrepresented circle overlap: {overlap_result:?}"
                 );
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the shifted conic must retain one monotone overlap");
             };
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(map),
             )) = semicircle
                 .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -144557,6 +144786,7 @@ mod conversion_tests {
             else {
                 panic!("the transverse cutter must retain its nonrepresented-center map");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let contact = contacts
                 .iter()
                 .find(|contact| {
@@ -144643,11 +144873,15 @@ mod conversion_tests {
                 .rational_intersections(&quarter, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = overlap_result
             else {
                 panic!("the explicit conic must retain the selected circle overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the translated conic must retain one monotone overlap");
             };
@@ -144693,11 +144927,15 @@ mod conversion_tests {
                 .rational_intersections(&quarter, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(rebuilt),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: rebuilt,
+                    contacts: unexpected_contacts,
+                },
             ) = rebuilt
             else {
                 panic!("the rebuilt conic must retain its selected circle overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [rebuilt] = rebuilt.as_slice() else {
                 panic!("the rebuilt conic must retain one monotone overlap");
             };
@@ -144747,13 +144985,17 @@ mod conversion_tests {
                 .parallel_intersections(&analytic_parallel, &policy)
                 .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(analytic_overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: analytic_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = analytic_overlap_result
             else {
                 panic!(
                     "the independently encoded shifted analytic circle must retain its overlap: {analytic_overlap_result:?}"
                 );
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [shifted_analytic_overlap] = analytic_overlaps.as_slice() else {
                 panic!("the shifted analytic quarter must retain one monotone overlap");
             };
@@ -145034,13 +145276,17 @@ mod conversion_tests {
                     ]);
                     let mapped_cut = |parallel: &BezierParallel2, native_cut: &BezierParameter2| {
                         let Classification::Decided(
-                            BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(overlaps),
+                            BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                                overlaps,
+                                contacts: unexpected_contacts,
+                            },
                         ) = semicircle
                             .parallel_intersections(parallel, &policy)
                             .unwrap()
                         else {
                             panic!("the analytic quarter must overlap the selected circle");
                         };
+                        assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         let [overlap] = overlaps.as_slice() else {
                             panic!("the analytic quarter must retain one selected overlap");
                         };
@@ -145252,11 +145498,15 @@ mod conversion_tests {
                 ),
             ] {
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = carrier.parallel_intersections(&parallel, &policy).unwrap()
                 else {
                     panic!("algebraic cusp/general-parallel endpoint must complete");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 let contact = contacts
                     .iter()
                     .find(|contact| {
@@ -145359,24 +145609,32 @@ mod conversion_tests {
                 .unwrap(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(rational_contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts: rational_contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = second
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rational first-circle quarter must meet the second cusp circle");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [rational_contact] = rational_contacts.as_slice() else {
                 panic!("the selected rational quarter must retain the unique upper contact");
             };
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(rational_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: rational_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = first
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rational first-circle quarter must retain its overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let rational_overlap = rational_overlaps
                 .iter()
                 .find(|overlap| {
@@ -145418,24 +145676,32 @@ mod conversion_tests {
             let analytic_quarter = analytic_source.parallel_left(Real::one()).unwrap();
             assert!(analytic_quarter.data.certified_ph_offset.set(None).is_ok());
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(analytic_contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts: analytic_contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = second
                 .parallel_intersections(&analytic_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the analytic first-circle quarter must meet the second cusp circle");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [analytic_contact] = analytic_contacts.as_slice() else {
                 panic!("the selected analytic quarter must retain the unique upper contact");
             };
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(analytic_overlaps),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: analytic_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = first
                 .parallel_intersections(&analytic_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the analytic first-circle quarter must retain its overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let analytic_overlap = analytic_overlaps
                 .iter()
                 .find(|overlap| {
@@ -145473,15 +145739,17 @@ mod conversion_tests {
             let reversed_analytic_quarter = analytic_quarter.reversed();
             let reversed_analytic_expected = analytic_contact.parallel_parameter.unit_complement();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
-                    reversed_analytic_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: reversed_analytic_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = first
                 .parallel_intersections(&reversed_analytic_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the reversed analytic quarter must retain its overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let reversed_analytic_overlap = reversed_analytic_overlaps
                 .iter()
                 .find(|overlap| {
@@ -145518,13 +145786,17 @@ mod conversion_tests {
                 .unit_complement()
                 .expect("a finite rational parameter has a unit complement");
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(reversed_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: reversed_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = first
                 .rational_intersections(&reversed_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the reversed rational quarter must retain its overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let reversed_overlap = reversed_overlaps
                 .iter()
                 .find(|overlap| {
@@ -145564,26 +145836,32 @@ mod conversion_tests {
                 .unwrap(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-                    second_rational_contacts,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts: second_rational_contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = first
                 .rational_intersections(&second_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rational second-circle quarter must meet the first cusp circle");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [second_rational_contact] = second_rational_contacts.as_slice() else {
                 panic!("the second rational quarter must retain the unique upper contact");
             };
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(second_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: second_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = second
                 .rational_intersections(&second_rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rational second-circle quarter must retain its overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let second_overlap = second_overlaps
                 .iter()
                 .find(|overlap| {
@@ -145635,13 +145913,17 @@ mod conversion_tests {
                     )
             ));
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(independent_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: independent_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = independent_reversed
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the independent reversed cusp must retain the rational overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let independent_overlap = independent_overlaps
                 .iter()
                 .find(|overlap| {
@@ -146104,13 +146386,12 @@ mod conversion_tests {
                         .unwrap(),
                     );
                     let Classification::Decided(
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                            rational_overlaps,
-                        ),
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { overlaps: rational_overlaps, contacts: unexpected_contacts },
                     ) = target.rational_intersections(&rational_quarter, &policy)?
                     else {
                         panic!("the nested target must overlap the rational quarter");
                     };
+assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let [rational_overlap] = rational_overlaps.as_slice() else {
                         panic!("the nested target must retain one rational overlap cell");
                     };
@@ -147243,13 +147524,17 @@ mod conversion_tests {
                 .unwrap(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(wide_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: wide_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = first
                 .rational_intersections(&rational_wide_arc, &policy)
                 .unwrap()
             else {
                 panic!("the wide rational arc must overlap the first cusp circle");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let expected_wide_parameter = BezierParameter2::Exact(third.clone());
             let wide_overlap = wide_overlaps
                 .iter()
@@ -147351,15 +147636,17 @@ mod conversion_tests {
                 Point2::new(Real::from(2_i8), Real::from(4_i8) + &half),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(
-                    independent_wide_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: independent_wide_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = independent_reversed
                 .rational_intersections(&rational_wide_arc, &policy)
                 .unwrap()
             else {
                 panic!("the independent reversed cusp must retain the wide rational overlap");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let independent_wide_overlap = independent_wide_overlaps
                 .iter()
                 .find(|candidate| {
@@ -147407,15 +147694,17 @@ mod conversion_tests {
             let analytic_wide_arc = analytic_wide_source.parallel_left(Real::one()).unwrap();
             assert!(analytic_wide_arc.data.certified_ph_offset.set(None).is_ok());
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
-                    analytic_wide_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    overlaps: analytic_wide_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = first
                 .parallel_intersections(&analytic_wide_arc, &policy)
                 .unwrap()
             else {
                 panic!("the wide analytic arc must overlap the first cusp circle");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let analytic_wide_overlap = analytic_wide_overlaps
                 .iter()
                 .find(|candidate| {
@@ -148398,11 +148687,15 @@ mod conversion_tests {
         ]);
         let mapped_cut = |carrier: &RationalBezier2| {
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = semicircle.rational_intersections(carrier, &policy).unwrap()
             else {
                 panic!("the benchmark rational carrier must overlap the selected circle");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the benchmark rational carrier must retain one selected cell");
             };
@@ -148471,14 +148764,16 @@ mod conversion_tests {
         );
         let analytic_parallel = analytic_source.parallel_left(Real::one()).unwrap();
         assert!(analytic_parallel.data.certified_ph_offset.set(None).is_ok());
-        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
-            parallel_overlaps,
-        )) = semicircle
+        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+            overlaps: parallel_overlaps,
+            contacts: unexpected_contacts,
+        }) = semicircle
             .parallel_intersections(&analytic_parallel, &policy)
             .unwrap()
         else {
             panic!("the benchmark analytic carrier must overlap the selected circle");
         };
+        assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         let [parallel_overlap] = parallel_overlaps.as_slice() else {
             panic!("the benchmark analytic carrier must retain one selected cell");
         };
@@ -148547,14 +148842,16 @@ mod conversion_tests {
                 .set(None)
                 .is_ok()
         );
-        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Overlaps(
-            left_overlaps,
-        )) = semicircle
+        let Classification::Decided(BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+            overlaps: left_overlaps,
+            contacts: unexpected_contacts,
+        }) = semicircle
             .parallel_intersections(&reversed_left_parallel, &policy)
             .unwrap()
         else {
             panic!("the benchmark reflected analytic carrier must overlap the selected circle");
         };
+        assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         let [left_overlap] = left_overlaps.as_slice() else {
             panic!("the reflected analytic carrier must retain one selected cell");
         };
@@ -149583,11 +149880,15 @@ mod conversion_tests {
             );
             let intersections = semicircle.rational_intersections(&source, &policy).unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = &intersections
             else {
                 panic!("the algebraic semicircle/source contacts must complete: {intersections:?}");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let cusp_contact = contacts
                 .iter()
                 .find(|contact| {
@@ -149604,6 +149905,233 @@ mod conversion_tests {
                 BezierAlgebraicCuspSemicircleContactLocation2::End,
             );
             assert_eq!(cusp_contact.tangent_cross_sign, RealSign::Zero);
+        }
+    }
+
+    fn rational_circle_with_isolated_visit() -> RationalBezier2 {
+        let ratio = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        // P(v)=((1-v^2)/(1+v^2), 2v/(1+v^2)) is on the unit circle.
+        // v(t)=(t-1/4)^2(t-3/4) touches the upper half only at t=1/4
+        // before following a positive-length upper arc on [3/4,1].
+        let v = vec![ratio(-3, 64), ratio(7, 16), ratio(-5, 4), Real::one()];
+        let squared = polynomial_multiply(&v, &v);
+        let x = power_to_bernstein_coefficients(&polynomial_subtract(&[Real::one()], &squared), 6)
+            .unwrap();
+        let y = power_to_bernstein_coefficients(&polynomial_scale(&v, &Real::from(2)), 6).unwrap();
+        let weights =
+            power_to_bernstein_coefficients(&polynomial_add(&[Real::one()], &squared), 6).unwrap();
+        RationalBezier2::try_new(
+            x.into_iter()
+                .zip(y)
+                .zip(&weights)
+                .map(|((x, y), w)| Point2::new((x / w).unwrap(), (y / w).unwrap()))
+                .collect(),
+            weights,
+        )
+        .unwrap()
+    }
+
+    fn assert_mixed_circle_intersections(
+        circle: &BezierAlgebraicCuspSemicircle2,
+        target: &RationalBezier2,
+        expected: &Real,
+        policy: &CurveContext,
+    ) {
+        let Classification::Decided(fragment) = BezierAlgebraicCuspSemicircleFragment2::try_new(
+            circle.clone(),
+            BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+            BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
+            false,
+            policy,
+        )
+        .unwrap() else {
+            panic!("the mixed-component circle must export");
+        };
+        let circle = crate::Curve2::from_retained_fragment(
+            crate::BezierSplitFragment2::AlgebraicCuspSemicircle(fragment),
+        );
+        let target = crate::Curve2::from(target.clone());
+        for swapped in [false, true] {
+            let (first, second) = if swapped {
+                (&target, &circle)
+            } else {
+                (&circle, &target)
+            };
+            let topology = first.intersection_topology(second, policy).unwrap();
+            assert_eq!(topology.certainty, CurveCertainty::Certified);
+            let result = topology.value.result();
+            assert!(result.is_complete(), "{result:?}");
+            assert_eq!((result.contacts().len(), result.overlaps().len()), (1, 1));
+            let contact = &result.contacts()[0];
+            let source = if swapped {
+                contact.first()
+            } else {
+                contact.second()
+            };
+            assert_eq!(
+                source
+                    .local_parameter()
+                    .same_value(
+                        &CurveParameter2::from(BezierParameter2::Exact(expected.clone())),
+                        policy
+                    )
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+            let source_pieces = if swapped {
+                topology.value.first()
+            } else {
+                topology.value.second()
+            };
+            assert_eq!(source_pieces.len(), 3);
+            let mut replayed = Vec::new();
+            for piece in source_pieces {
+                let replay = piece.intersect_curve(&circle, policy).unwrap();
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                assert!(replay.value.is_complete(), "{replay:?}");
+                replayed.push((replay.value.contacts().len(), replay.value.overlaps().len()));
+            }
+            replayed.sort_unstable();
+            assert_eq!(replayed, vec![(0, 1), (1, 0), (2, 0)]);
+        }
+    }
+
+    #[test]
+    fn rational_circle_overlap_preserves_an_isolated_parameter_visit() {
+        let target = rational_circle_with_isolated_visit();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = synthetic_independent_unit_cusp_semicircle(&policy);
+            for reversed in [false, true] {
+                let target = if reversed {
+                    target.reversed()
+                } else {
+                    target.clone()
+                };
+                let expected = if reversed {
+                    Real::one() - &quarter
+                } else {
+                    quarter.clone()
+                };
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        contacts,
+                        overlaps,
+                    },
+                ) = circle.rational_intersections(&target, &policy).unwrap()
+                else {
+                    panic!("the rational circle components must be decided");
+                };
+                assert_eq!((contacts.len(), overlaps.len()), (1, 1));
+                assert_eq!(
+                    contacts[0]
+                        .other_parameter
+                        .same_value(
+                            &CurveParameter2::from(BezierParameter2::Exact(expected.clone())),
+                            &policy
+                        )
+                        .unwrap(),
+                    Classification::Decided(true)
+                );
+                assert_eq!(contacts[0].tangent_cross_sign, RealSign::Zero);
+                assert_eq!(
+                    contacts[0].location,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start
+                );
+                let Classification::Decided(parameters) =
+                    rational_parameters_for_cusp_endpoint(&circle, &Real::zero(), &target, &policy)
+                        .unwrap()
+                else {
+                    panic!("both visits to the shared endpoint must replay");
+                };
+                assert_eq!(parameters.len(), 2);
+                assert_mixed_circle_intersections(&circle, &target, &expected, &policy);
+            }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_circle_overlap_preserves_an_isolated_parameter_visit() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let transform = Similarity2::try_from_real_affine(
+            Real::zero(),
+            -Real::one(),
+            Real::one(),
+            Real::zero(),
+            half,
+            Real::zero(),
+        )
+        .unwrap();
+        let target = rational_circle_with_isolated_visit().transform_similarity(&transform);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (circle, _) = selected_fiber_rational_quarter(false, &policy);
+            for reversed in [false, true] {
+                let target = if reversed {
+                    target.reversed()
+                } else {
+                    target.clone()
+                };
+                let expected = if reversed {
+                    Real::one() - &quarter
+                } else {
+                    quarter.clone()
+                };
+                let Classification::Decided(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                        contacts,
+                        overlaps,
+                    },
+                ) = circle.rational_intersections(&target, &policy).unwrap()
+                else {
+                    panic!("the selected circle must retain both component kinds");
+                };
+                assert_eq!((contacts.len(), overlaps.len()), (1, 1));
+                assert_eq!(
+                    contacts[0]
+                        .other_parameter()
+                        .order_to_real(&expected, &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                assert_eq!(contacts[0].tangent_cross_sign(), RealSign::Zero);
+                assert_mixed_circle_intersections(&circle, &target, &expected, &policy);
+            }
+        }
+    }
+
+    #[test]
+    fn rational_circle_component_adapter_preserves_mixed_evidence_when_clipped() {
+        let target = rational_circle_with_isolated_visit();
+        let ratio = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = synthetic_independent_unit_cusp_semicircle(&policy);
+            for (start, end, expected) in [
+                (Real::zero(), Real::one(), (1, 1)),
+                (ratio(1, 8), ratio(3, 8), (1, 0)),
+                (ratio(3, 4), Real::one(), (0, 1)),
+            ] {
+                let range = BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(start),
+                    BezierParameter2::Exact(end),
+                );
+                let Classification::Decided(Some(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts,
+                        overlaps,
+                    },
+                )) = circle
+                    .finite_parallel_intersections_from_rational_component(
+                        &target,
+                        Some(&range),
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the rational-component adapter must preserve both kinds of evidence");
+                };
+                assert_eq!((contacts.len(), overlaps.len()), expected);
+            }
         }
     }
 
@@ -150207,11 +150735,14 @@ mod conversion_tests {
                         "adjacent cusp/parallel range intersection at {expected_location:?} must decide: {classified:?}"
                     );
                 };
-                let BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts) =
-                    intersections
+                let BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                } = intersections
                 else {
                     panic!("adjacent cusp/parallel range intersection: {intersections:?}");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 assert!(
                     contacts.iter().any(|contact| {
                         contact.location == expected_location
@@ -150229,13 +150760,17 @@ mod conversion_tests {
             );
             for parallel in [&start_parallel, &end_parallel] {
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = semicircle
                     .parallel_intersections_in_range(parallel, &excluded_range, &policy)
                     .unwrap()
                 else {
                     panic!("an excluded same-source endpoint range must remain discrete");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 assert!(contacts.iter().all(|contact| {
                     contact
                         .parallel_parameter
@@ -150249,13 +150784,17 @@ mod conversion_tests {
                 start_fragment.range().start().unit_complement(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = semicircle
                 .parallel_intersections_in_range(&reversed_start, &reversed_range, &policy)
                 .unwrap()
             else {
                 panic!("reversed adjacent cusp/parallel range intersection must decide");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let reversed_source_parameter = source_parameter.unit_complement();
             assert!(contacts.iter().any(|contact| {
                 contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Start
@@ -150453,13 +150992,17 @@ mod conversion_tests {
                 .unwrap(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = upper
                 .rational_intersections(&rational_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the rational quarter must publish its cusp correspondence");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the rational quarter must retain one monotone overlap");
             };
@@ -153181,12 +153724,16 @@ mod conversion_tests {
                     .rational_intersections_with_parameter_map(&quarter, &policy)
                     .unwrap();
                 let Classification::Decided((
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        overlaps,
+                        contacts: unexpected_contacts,
+                    },
                     None,
                 )) = result
                 else {
                     panic!("the represented coincident quarter must publish overlap: {result:?}");
                 };
+                assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let [overlap] = overlaps.as_slice() else {
                     panic!("the represented coincident quarter must retain one overlap cell");
                 };
@@ -153225,12 +153772,16 @@ mod conversion_tests {
                         .rational_intersections_with_parameter_map(&other, &policy)
                         .unwrap();
                     let Classification::Decided((
-                        BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                        BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                            overlaps,
+                            contacts: unexpected_contacts,
+                        },
                         None,
                     )) = result
                     else {
                         panic!("the represented crossing quarter must publish overlap: {result:?}");
                     };
+                    assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let [overlap] = overlaps.as_slice() else {
                         panic!("the represented crossing quarter must retain one overlap cell");
                     };
@@ -153317,12 +153868,16 @@ mod conversion_tests {
             #[cfg(feature = "dispatch-trace")]
             let trace = hyperreal::dispatch_trace::take_trace();
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
                 None,
             )) = result.unwrap()
             else {
                 panic!("the represented folded quarter must publish its overlap cells");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(overlaps.len(), 2);
             assert_ne!(overlaps[0].orientation(), overlaps[1].orientation());
             assert_eq!(
@@ -153707,12 +154262,16 @@ mod conversion_tests {
                 .rational_intersections_with_parameter_map(&secant, &policy)
                 .unwrap();
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(parameter_map),
             )) = result
             else {
                 panic!("the rank-independent rational secant must complete: {result:?}");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the selected half-circle must retain one secant contact: {contacts:?}");
             };
@@ -153976,7 +154535,10 @@ mod conversion_tests {
                 BezierParameter2::Exact(Real::one()),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = circle
                 .parallel_intersections_with_incident_ray(
                     &parallel,
@@ -153993,6 +154555,7 @@ mod conversion_tests {
             else {
                 panic!("the represented incident analytic tangency must be decided");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let contact = contacts
                 .iter()
                 .find(|contact| {
@@ -154214,7 +154777,10 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let circle = dense_chord_normal_unit_semicircle(&policy);
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(parameter_map),
             )) = circle
                 .rational_intersections_with_parameter_map(&secant, &policy)
@@ -154222,6 +154788,7 @@ mod conversion_tests {
             else {
                 panic!("the dense rational secant must complete");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             assert_eq!(contacts.len(), 2);
             assert!(matches!(
                 &parameter_map.data.system,
@@ -154262,11 +154829,15 @@ mod conversion_tests {
                 ),
             ] {
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        overlaps,
+                        contacts: unexpected_contacts,
+                    },
                 ) = circle.rational_intersections(&target, &policy).unwrap()
                 else {
                     panic!("the dense supporting-circle component must complete");
                 };
+                assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let [overlap] = overlaps.as_slice() else {
                     panic!("the selected quarter must retain one monotone overlap cell");
                 };
@@ -156508,7 +157079,7 @@ mod conversion_tests {
                 #[cfg(feature = "dispatch-trace")]
                 let trace = hyperreal::dispatch_trace::take_trace();
                 let Classification::Decided((
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps: unexpected_overlaps },
                     parameter_map,
                 )) = intersections.unwrap_or_else(|error| {
                     #[cfg(feature = "dispatch-trace")]
@@ -156525,6 +157096,7 @@ mod conversion_tests {
                         "the recursive selected-radial/rational crossing must publish finite contacts: policy={policy:?}"
                     );
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 assert!(!contacts.is_empty());
                 #[cfg(feature = "dispatch-trace")]
                 assert_eq!(
@@ -157305,10 +157877,17 @@ mod conversion_tests {
                     0,
                 );
                 match intersections {
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(found) => {
-                        overlaps.extend(found)
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        overlaps: found,
+                        contacts,
+                    } => {
+                        assert!(contacts.iter().all(|contact| {
+                            contact.tangent_cross_sign == RealSign::Zero
+                                && contact.location
+                                    != BezierAlgebraicCuspSemicircleContactLocation2::Interior
+                        }));
+                        overlaps.extend(found);
                     }
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(_) => {}
                     other => {
                         panic!("the coincident recursive quarter was not partitioned: {other:?}")
                     }
@@ -157532,7 +158111,10 @@ mod conversion_tests {
                 let trace = hyperreal::dispatch_trace::take_trace();
                 let result = intersections.unwrap();
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        contacts,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = result
                 else {
                     #[cfg(feature = "dispatch-trace")]
@@ -157544,6 +158126,7 @@ mod conversion_tests {
                         "the singular recursive rational target must publish contacts: policy={policy:?}, scale={scale:?}, result={result:?}"
                     );
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 #[cfg(feature = "dispatch-trace")]
                 assert_eq!(
                     trace.path_count(
@@ -157599,13 +158182,17 @@ mod conversion_tests {
                     .rational_intersections(&target(reversed), &policy)
                     .unwrap();
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        contacts,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = result
                 else {
                     panic!(
                         "the nonlinear line image must use the exact chord authority: policy={policy:?}, reversed={reversed}, result={result:?}"
                     );
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 contacts
             };
             let forward = contacts(false);
@@ -157668,13 +158255,17 @@ mod conversion_tests {
                 let trace = hyperreal::dispatch_trace::take_trace();
                 let intersections = intersections.unwrap();
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(contacts),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = intersections
                 else {
                     panic!(
                         "the recursive selected circle/parallel intersection must decide: {intersections:?}"
                     );
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 #[cfg(feature = "dispatch-trace")]
                 assert_eq!(
                     trace.path_count(
@@ -157725,13 +158316,17 @@ mod conversion_tests {
                     .parallel_intersections_with_incident_ray(&parallel, &range, &incident, &policy)
                     .unwrap();
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::Contacts(extended),
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                        contacts: extended,
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = extended
                 else {
                     panic!(
                         "the recursive selected circle/parallel incident ray must decide: {extended:?}"
                     );
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 assert!(extended.len() >= contacts.len());
             }
         }
@@ -159866,7 +160461,10 @@ mod conversion_tests {
             // target parameter t=sqrt(1/2), but its circle incidence is the
             // even square (t^2-1/2)^2.
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(parameter_map),
             )) = circle
                 .rational_intersections_with_parameter_map(&tangent, &policy)
@@ -159874,6 +160472,7 @@ mod conversion_tests {
             else {
                 panic!("the pair-native algebraic tangency must complete");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the tangent must have exactly one circle contact");
             };
@@ -159936,7 +160535,10 @@ mod conversion_tests {
                             RealSign::Negative
                         };
                         let Classification::Decided((
-                            BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                                contacts,
+                                overlaps: unexpected_overlaps,
+                            },
                             Some(parameter_map),
                         )) = circle
                             .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -159944,6 +160546,7 @@ mod conversion_tests {
                         else {
                             panic!("the horizontal cutter must retain its circle contacts");
                         };
+                        assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                         assert!(!contacts.is_empty());
                         for contact in &contacts {
                             if circle.uses_selected_radial_frame() {
@@ -160026,13 +160629,17 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let circle = independent_pair_radial_unit_circle(&policy);
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = circle
                 .rational_intersections(&quarter_circle, &policy)
                 .unwrap()
             else {
                 panic!("the pair-radial supporting-circle component must replay");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the selected quarter must retain one monotone cell");
             };
@@ -160085,13 +160692,17 @@ mod conversion_tests {
             );
 
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(reversed),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: reversed,
+                    contacts: unexpected_contacts,
+                },
             ) = circle
                 .rational_intersections(&quarter_circle.reversed(), &policy)
                 .unwrap()
             else {
                 panic!("rational reversal must retain the pair-radial component");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed] = reversed.as_slice() else {
                 panic!("the reversed selected quarter must retain one monotone cell");
             };
@@ -160109,13 +160720,17 @@ mod conversion_tests {
             );
 
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(folded),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: folded,
+                    contacts: unexpected_contacts,
+                },
             ) = circle
                 .rational_intersections(&folded_quarter, &policy)
                 .unwrap()
             else {
                 panic!("a folded pair-radial component must retain regular cells");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(folded.len(), 2);
             assert_eq!(
                 folded[0].orientation(),
@@ -160889,20 +161504,27 @@ mod conversion_tests {
                     .rational_intersections(&quarter_circle, &policy)
                     .unwrap(),
                 Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(Vec::new())
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        contacts: Vec::new(),
+                        overlaps: Vec::new()
+                    }
                 )
             );
 
             let selected_component =
                 synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = selected_component
                 .rational_intersections(&quarter_circle, &policy)
                 .unwrap()
             else {
                 panic!("the selected rational circle component must publish overlap evidence");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the selected quarter circle must produce one monotone overlap");
             };
@@ -160963,13 +161585,17 @@ mod conversion_tests {
 
             let reversed = quarter_circle.reversed();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(reversed_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: reversed_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = selected_component
                 .rational_intersections(&reversed, &policy)
                 .unwrap()
             else {
                 panic!("rational source reversal must preserve the selected component");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed_overlap] = reversed_overlaps.as_slice() else {
                 panic!("the reversed quarter circle must remain one overlap");
             };
@@ -161020,13 +161646,17 @@ mod conversion_tests {
             )
             .unwrap();
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(folded_overlaps),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    overlaps: folded_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = selected_component
                 .rational_intersections(&folded_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the stationary rational circle must split into regular overlaps");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(folded_overlaps.len(), 2);
             assert_eq!(
                 folded_overlaps[0].orientation(),
@@ -161076,13 +161706,17 @@ mod conversion_tests {
                 .unwrap(),
             );
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(lower_contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts: lower_contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = selected_component
                 .rational_intersections(&lower_quarter, &policy)
                 .unwrap()
             else {
                 panic!("an opposite-half circle must retain only its selected endpoint");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [lower_contact] = lower_contacts.as_slice() else {
                 panic!("the opposite quarter circle must touch one selected endpoint");
             };
@@ -166156,11 +166790,14 @@ mod conversion_tests {
                 else {
                     panic!("an exact-center certified tangent must decide");
                 };
-                let BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) =
-                    intersections
+                let BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                } = intersections
                 else {
                     panic!("an exact selected center must publish ordinary mapped contacts");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 if contacts.iter().any(|contact| {
                     contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Interior
                 }) {
@@ -168428,7 +169065,10 @@ mod conversion_tests {
                 panic!("the non-PH selected circle must construct");
             };
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                    contacts,
+                    overlaps: unexpected_overlaps,
+                },
                 Some(parameter_map),
             )) = circle
                 .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -168436,6 +169076,7 @@ mod conversion_tests {
             else {
                 panic!("the general selected circle must retain its rational contact");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             assert_eq!(contacts.len(), 1);
             let contact = &contacts[0];
             assert_eq!(
@@ -168556,13 +169197,15 @@ mod conversion_tests {
                     },
                 );
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
                         contacts,
-                    ),
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = outcome.value
                 else {
                     panic!("the exact-center transition must preserve selected-fiber contacts");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 assert_eq!(contacts.len(), 2);
                 for (contact, (y, cross)) in contacts.iter().zip([
                     (-root_three_half.clone(), RealSign::Positive),
@@ -168667,9 +169310,10 @@ mod conversion_tests {
                 panic!("the algebraic selected circle must construct");
             };
             let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
                     contacts,
-                ),
+                    overlaps: unexpected_overlaps,
+                },
                 None,
             )) = circle
                 .rational_intersections_with_parameter_map(&cutter, &policy)
@@ -168677,6 +169321,7 @@ mod conversion_tests {
             else {
                 panic!("the general rational contact must remain in the selected fiber");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the selected half circle must retain exactly its left contact");
             };
@@ -169566,15 +170211,17 @@ mod conversion_tests {
                 panic!("the algebraic selected circle must construct");
             };
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
                     overlaps,
-                ),
+                    contacts: unexpected_contacts,
+                },
             ) = circle
                 .rational_intersections(&quarter_circle, &policy)
                 .unwrap()
             else {
                 panic!("the rational circle component must remain in the selected fiber");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the selected rational quarter must retain one monotone overlap");
             };
@@ -169652,15 +170299,17 @@ mod conversion_tests {
             );
 
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(
-                    reversed_overlaps,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                    overlaps: reversed_overlaps,
+                    contacts: unexpected_contacts,
+                },
             ) = circle
                 .rational_intersections(&quarter_circle.reversed(), &policy)
                 .unwrap()
             else {
                 panic!("rational reversal must retain the selected-fiber component");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed] = reversed_overlaps.as_slice() else {
                 panic!("the reversed quarter must retain one overlap");
             };
@@ -169685,13 +170334,17 @@ mod conversion_tests {
             );
 
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(folded),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                    overlaps: folded,
+                    contacts: unexpected_contacts,
+                },
             ) = circle
                 .rational_intersections(&folded_quarter, &policy)
                 .unwrap()
             else {
                 panic!("a stationary selected-fiber circle must split into monotone overlaps");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(folded.len(), 2);
             assert_eq!(
                 folded[0].orientation(),
@@ -169722,15 +170375,17 @@ mod conversion_tests {
             }
 
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                    opposite_contacts,
-                ),
+                BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber {
+                    contacts: opposite_contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = circle
                 .rational_intersections(&opposite_quarter, &policy)
                 .unwrap()
             else {
                 panic!("an opposite selected-fiber quarter must retain its shared endpoint");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [opposite_contact] = opposite_contacts.as_slice() else {
                 panic!("the opposite quarter must touch exactly one selected endpoint");
             };
@@ -169925,15 +170580,17 @@ mod conversion_tests {
             ));
 
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
                     overlaps,
-                ),
+                    contacts: unexpected_contacts,
+                },
             ) = circle
                 .parallel_intersections(&analytic_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the exact analytic offset must reuse the selected rational fiber");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the analytic quarter must retain one monotone overlap");
             };
@@ -169957,15 +170614,17 @@ mod conversion_tests {
             );
 
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberOverlaps(
-                    reversed,
-                ),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
+                    overlaps: reversed,
+                    contacts: unexpected_contacts,
+                },
             ) = circle
                 .parallel_intersections(&analytic_quarter.reversed(), &policy)
                 .unwrap()
             else {
                 panic!("analytic reversal must retain the selected rational fiber");
             };
+            assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed] = reversed.as_slice() else {
                 panic!("the reversed analytic quarter must retain one overlap");
             };
@@ -170338,15 +170997,17 @@ mod conversion_tests {
             assert!(booleans.xor().is_empty());
 
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
                     contacts,
-                ),
+                    overlaps: unexpected_overlaps,
+                },
             ) = circle
                 .parallel_intersections(&opposite_analytic_quarter, &policy)
                 .unwrap()
             else {
                 panic!("the opposite analytic quarter must retain its selected endpoint");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [contact] = contacts.as_slice() else {
                 panic!("the opposite analytic quarter must touch exactly one endpoint");
             };
@@ -170534,15 +171195,17 @@ mod conversion_tests {
                         .parallel_intersections_in_range(&tangent_support, &range, &policy)
                         .unwrap();
                     let Classification::Decided(
-                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                        BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
                             contacts,
-                        ),
+                            overlaps: unexpected_overlaps,
+                        },
                     ) = result
                     else {
                         panic!(
                             "an affine carrier switch must retain its selected incident contacts: {result:?}"
                         );
                     };
+                    assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                     retained.extend(contacts);
                 }
                 assert_eq!(retained.len(), 1);
@@ -171765,13 +172428,15 @@ mod conversion_tests {
             });
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             let Classification::Decided(
-                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
-                    reparameterized_contacts,
-                ),
+                BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
+                    contacts: reparameterized_contacts,
+                    overlaps: unexpected_overlaps,
+                },
             ) = outcome.value
             else {
                 panic!("an exact center must retain a nonrational analytic contact");
             };
+            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
             let [reparameterized_contact_evidence] = reparameterized_contacts.as_slice() else {
                 panic!("the restricted reparameterized carrier must have one contact");
             };
@@ -172022,15 +172687,17 @@ mod conversion_tests {
             assert!(matches!(chamfer.value, CurveCornerSolutions2::Unique(_)));
             for circle in [circle, exact_center_circle] {
                 let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiberContacts(
+                    BezierAlgebraicCuspSemicircleParallelIntersections2::SelectedFiber {
                         contacts,
-                    ),
+                        overlaps: unexpected_overlaps,
+                    },
                 ) = circle
                     .parallel_intersections_in_range(&target, &target_range, &policy)
                     .unwrap()
                 else {
                     panic!("the two-normal kernel must retain analytic contacts locally");
                 };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
                 let contact = contacts
                     .iter()
                     .find(|contact| {

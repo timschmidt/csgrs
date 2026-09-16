@@ -23650,9 +23650,7 @@ mod tests {
                 panic!("the source-circle endpoint cuts must be exact");
             };
             let contacts = match intersections {
-                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-                    contacts,
-                ) => {
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps: unexpected_overlaps } if unexpected_overlaps.is_empty() => {
                     let parameter_map = parameter_map
                         .as_ref()
                         .expect("ordinary interior contacts retain their circle map");
@@ -23666,9 +23664,7 @@ mod tests {
                         })
                         .collect::<Vec<_>>()
                 }
-                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(
-                    contacts,
-                ) => contacts
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { contacts, overlaps: unexpected_overlaps } if unexpected_overlaps.is_empty() => contacts
                     .iter()
                     .map(|contact| (contact.cusp_parameter(), contact.point_evidence()))
                     .collect::<Vec<_>>(),
@@ -24892,11 +24888,9 @@ mod tests {
                     .expect("the pair-radial/rational kernel is exact")
                 {
                     Classification::Decided((
-                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-                            contacts,
-                        ),
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps: unexpected_overlaps },
                         parameter_map,
-                    )) => (contacts, parameter_map),
+                    )) if unexpected_overlaps.is_empty() => (contacts, parameter_map),
                     Classification::Decided((intersections, _)) => {
                         panic!("the finite probe must produce contacts, got {intersections:?}")
                     }
@@ -24973,11 +24967,9 @@ mod tests {
                             .expect("the transformed pair-radial/rational kernel is exact")
                         {
                             Classification::Decided((
-                                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-                                    contacts,
-                                ),
+                                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps: unexpected_overlaps },
                                 parameter_map,
-                            )) => (contacts, parameter_map),
+                            )) if unexpected_overlaps.is_empty() => (contacts, parameter_map),
                             Classification::Decided((intersections, _)) => panic!(
                                 "the transformed finite probe must produce contacts, got {intersections:?}"
                             ),
@@ -25038,11 +25030,9 @@ mod tests {
                             .expect("the nested pair-radial/rational system remains exact")
                         {
                             Classification::Decided((
-                                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-                                    contacts,
-                                ),
+                                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps: unexpected_overlaps },
                                 Some(_),
-                            )) => contacts,
+                            )) if unexpected_overlaps.is_empty() => contacts,
                             result => panic!(
                                 "the nested transformed probe must retain contacts and a map, got {result:?}"
                             ),
@@ -29529,11 +29519,9 @@ mod tests {
                     .unwrap()
                 {
                     Classification::Decided((
-                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(
-                            contacts,
-                        ),
+                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps: unexpected_overlaps },
                         map,
-                    )) => (contacts, map),
+                    )) if unexpected_overlaps.is_empty() => (contacts, map),
                     Classification::Decided((intersections, _)) => {
                         panic!("the chord-normal probe must cross: {intersections:?}")
                     }

@@ -1196,7 +1196,14 @@ impl<'a> CurveCornerChain2<'a> {
                 Ok(())
             };
             match intersections {
-                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberContacts(contacts) => {
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { contacts, overlaps } => {
+                    if !overlaps.is_empty() {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        UncertaintyReason::Boundary,
+                    ));
+                                    }
                     for contact in contacts {
                         retain_contact(
                             CurveParameter2::from_selected_fiber(
@@ -1209,7 +1216,14 @@ impl<'a> CurveCornerChain2<'a> {
                         )?;
                     }
                 }
-                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Contacts(contacts) => {
+                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps } => {
+                    if !overlaps.is_empty() {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        UncertaintyReason::Boundary,
+                    ));
+                                    }
                     for contact in contacts {
                         use crate::bezier_offset::BezierAlgebraicCuspSemicircleContactLocation2;
 
@@ -1245,14 +1259,6 @@ impl<'a> CurveCornerChain2<'a> {
                             fillet_parameter,
                         )?;
                     }
-                }
-                crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiberOverlaps(_)
-                | crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Overlaps(_) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        CurveFamily2::CircularArc,
-                        UncertaintyReason::Boundary,
-                    ));
                 }
                 crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::DegenerateProjection => {
                     return Err(ExactCurveError::blocked(

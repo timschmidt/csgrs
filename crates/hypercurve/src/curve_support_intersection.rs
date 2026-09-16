@@ -810,7 +810,7 @@ impl Pair<'_> {
             crate::CurveFamily2::CircularArc,
         )?;
         match intersections {
-            Intersections::Contacts(contacts) => {
+            Intersections::Mapped { contacts, overlaps } => {
                 for contact in contacts {
                     let parameter = contact.location.endpoint_parameter().unwrap_or_else(|| {
                         map.as_ref()
@@ -827,11 +827,6 @@ impl Pair<'_> {
                         result,
                     )?;
                 }
-            }
-            Intersections::SelectedFiberContacts(contacts) => {
-                self.circle_selected_contacts(circle, contacts, circle_first, result)?
-            }
-            Intersections::Overlaps(overlaps) => {
                 for source in overlaps {
                     self.circle_overlap(
                         circle,
@@ -841,7 +836,8 @@ impl Pair<'_> {
                     )?;
                 }
             }
-            Intersections::SelectedFiberOverlaps(overlaps) => {
+            Intersections::SelectedFiber { contacts, overlaps } => {
+                self.circle_selected_contacts(circle, contacts, circle_first, result)?;
                 for source in overlaps {
                     self.circle_overlap(
                         circle,
@@ -928,7 +924,7 @@ impl Pair<'_> {
                 .parallel_intersections(parallel, self.policy),
         };
         match decided(intersections, crate::CurveFamily2::CircularArc)? {
-            Intersections::Contacts(contacts) => {
+            Intersections::Mapped { contacts, overlaps } => {
                 let map = if contacts
                     .iter()
                     .any(|c| c.location.endpoint_parameter().is_none())
@@ -958,24 +954,6 @@ impl Pair<'_> {
                         result,
                     )?;
                 }
-            }
-            Intersections::SelectedFiberContacts(contacts) => {
-                self.circle_selected_contacts(circle, contacts, circle_first, result)?
-            }
-            Intersections::RetainedContacts(contacts) => {
-                for contact in contacts {
-                    self.circle_contact(
-                        circle,
-                        contact.cusp_parameter(),
-                        contact.other_parameter().clone(),
-                        Some(contact.point_evidence()),
-                        Some(contact.tangent_cross_sign()),
-                        circle_first,
-                        result,
-                    )?;
-                }
-            }
-            Intersections::Overlaps(overlaps) => {
                 for source in overlaps {
                     self.circle_overlap(
                         circle,
@@ -985,11 +963,25 @@ impl Pair<'_> {
                     )?;
                 }
             }
-            Intersections::SelectedFiberOverlaps(overlaps) => {
+            Intersections::SelectedFiber { contacts, overlaps } => {
+                self.circle_selected_contacts(circle, contacts, circle_first, result)?;
                 for source in overlaps {
                     self.circle_overlap(
                         circle,
                         CurveCircleOverlap2::Selected(source),
+                        circle_first,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::RetainedContacts(contacts) => {
+                for contact in contacts {
+                    self.circle_contact(
+                        circle,
+                        contact.cusp_parameter(),
+                        contact.other_parameter().clone(),
+                        Some(contact.point_evidence()),
+                        Some(contact.tangent_cross_sign()),
                         circle_first,
                         result,
                     )?;
