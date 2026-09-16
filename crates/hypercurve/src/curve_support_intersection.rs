@@ -566,57 +566,15 @@ impl Pair<'_> {
             )?);
             return Ok(());
         }
-        // Regularized regions omit a singleton overlap. Open curves keep its
-        // endpoint contact, transported through the same original authority.
-        let (circle_range, other_range) = source.parameter_ranges();
         let (circle_span, other_span) = if circle_first {
             (self.first, self.second)
         } else {
             (self.second, self.first)
         };
-        // Both active domains are intervals in this one-to-one component.
-        // With no positive overlap, any shared point is an endpoint of the
-        // circle's clipped interval. Forward transport suffices, including
-        // component endpoints that lie inside the active source range.
-        for parameter in [
-            circle_span.range.start(),
-            circle_span.range.end(),
-            circle_range.start(),
-            circle_range.end(),
-        ] {
-            if !contains(
-                &circle_range,
-                parameter,
-                circle_span.support.family(),
-                self.policy,
-            )? || !contains(
-                &circle_span.range,
-                parameter,
-                circle_span.support.family(),
-                self.policy,
-            )? {
-                continue;
-            }
-            let Some(mapped) = decided(
-                source.map_parameter(parameter, true, self.policy),
-                circle_span.support.family(),
-            )?
-            else {
-                continue;
-            };
-            if !contains(
-                &other_range,
-                &mapped,
-                other_span.support.family(),
-                self.policy,
-            )? || !contains(
-                &other_span.range,
-                &mapped,
-                other_span.support.family(),
-                self.policy,
-            )? {
-                continue;
-            }
+        if let Some([parameter, mapped]) = decided(
+            source.singleton_contact(&circle_span.range, &other_span.range, self.policy),
+            circle_span.support.family(),
+        )? {
             self.circle_contact(
                 circle,
                 parameter
@@ -635,7 +593,6 @@ impl Pair<'_> {
                 circle_first,
                 result,
             )?;
-            return Ok(());
         }
         Ok(())
     }
@@ -927,7 +884,7 @@ impl Pair<'_> {
             Intersections::Mapped { contacts, overlaps } => {
                 let map = if contacts
                     .iter()
-                    .any(|c| c.location.endpoint_parameter().is_none())
+                    .any(|c| c.retained_cusp_parameter().is_none())
                 {
                     Some(decided(
                         circle
@@ -939,7 +896,7 @@ impl Pair<'_> {
                     None
                 };
                 for contact in contacts {
-                    let parameter = contact.location.endpoint_parameter().unwrap_or_else(|| {
+                    let parameter = contact.retained_cusp_parameter().unwrap_or_else(|| {
                         map.as_ref()
                             .expect("interior contact retains its map")
                             .contact_parameter(&contact)

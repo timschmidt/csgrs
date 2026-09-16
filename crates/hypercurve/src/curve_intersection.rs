@@ -217,6 +217,67 @@ impl CurveCircleOverlap2 {
             |parameter| self.map_parameter(parameter, false, policy),
         )
     }
+
+    /// Replays the closed-set contact when `clipped_ranges` found no positive
+    /// span. A monotone component can then meet the active domains only at an
+    /// endpoint of the first clipped interval. Forward transport preserves the
+    /// original selected parameters without constructing inverse cuts.
+    pub(crate) fn singleton_contact(
+        &self,
+        first: &CurveParameterRange2,
+        second: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<[CurveParameter2; 2]>>> {
+        use crate::bezier_split::CurveParameterDomain2;
+        let (first_overlap, second_overlap) = self.parameter_ranges();
+        for parameter in [
+            first.start(),
+            first.end(),
+            first_overlap.start(),
+            first_overlap.end(),
+        ] {
+            let contains = |range, parameter| {
+                CurveParameterDomain2::new(range, None).contains_finite_parameter(parameter, policy)
+            };
+            let mut admitted = true;
+            for range in [&first_overlap, first] {
+                match contains(range, parameter)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        admitted = false;
+                        break;
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            if !admitted {
+                continue;
+            }
+            let mapped = match self.map_parameter(parameter, true, policy)? {
+                Classification::Decided(Some(mapped)) => mapped,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            for range in [&second_overlap, second] {
+                match contains(range, &mapped)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        admitted = false;
+                        break;
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            if admitted {
+                return Ok(Classification::Decided(Some([parameter.clone(), mapped])));
+            }
+        }
+        Ok(Classification::Decided(None))
+    }
 }
 
 /// Exact transport retained by a shared-image component. Each variant owns

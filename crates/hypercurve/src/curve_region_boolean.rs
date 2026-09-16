@@ -18,7 +18,7 @@ use crate::bezier_offset::{
     BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2, BezierParallelRationalComponent2,
 };
 use crate::bezier_offset::{
-    BezierAlgebraicCuspSemicircleContactLocation2, BezierAlgebraicCuspSemicirclePairIntersections2,
+    BezierAlgebraicCuspSemicirclePairIntersections2,
     BezierAlgebraicCuspSemicircleParallelIntersections2, BezierAlgebraicCuspSemicircleParameter2,
     BezierAlgebraicCuspSemicircleRationalIntersections2, BezierParameterComponentOverlap2,
 };
@@ -5462,9 +5462,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         });
                     }
                 };
-                let parameter_map = if contacts.iter().any(|contact| {
-                    contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Interior
-                }) {
+                let parameter_map = if contacts
+                    .iter()
+                    .any(|contact| contact.retained_cusp_parameter().is_none())
+                {
                     match cusp
                         .semicircle()
                         .parallel_parameter_map(parallel, &self.data.policy)
@@ -5484,15 +5485,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 };
                 let mut retained = Vec::with_capacity(contacts.len());
                 for contact in contacts {
-                    let cusp_parameter =
-                        contact.location.endpoint_parameter().unwrap_or_else(|| {
-                            parameter_map
-                                .as_ref()
-                                .expect(
-                                    "an interior cusp/parallel contact retains its parameter map",
-                                )
-                                .contact_parameter(&contact)
-                        });
+                    let cusp_parameter = contact.retained_cusp_parameter().unwrap_or_else(|| {
+                        parameter_map
+                            .as_ref()
+                            .expect("an interior cusp/parallel contact retains its parameter map")
+                            .contact_parameter(&contact)
+                    });
                     let tangent_cross_sign = contact
                         .tangent_cross_sign
                         .map(|sign| orient_tangent_cross_sign(sign, *cusp_is_first));

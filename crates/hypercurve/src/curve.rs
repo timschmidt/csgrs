@@ -7406,7 +7406,11 @@ fn fillet_offset_centers(
                     }
 
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { contacts, overlaps } => {
-                        let parameter_map = match cusp_circle
+                        let parameter_map = if contacts
+                            .iter()
+                            .any(|contact| contact.retained_cusp_parameter().is_none())
+                        {
+                            Some(match cusp_circle
                             .parallel_parameter_map(analytic_support, policy)
                             .map_err(|cause| {
                                 ExactCurveError::invalid(
@@ -7423,6 +7427,9 @@ fn fillet_offset_centers(
                                     reason,
                                 ));
                             }
+                            })
+                        } else {
+                            None
                         };
                         for contact in contacts {
                             if (complementary
@@ -7438,7 +7445,12 @@ fn fillet_offset_centers(
                             )? {
                                 continue;
                             }
-                            let cusp_parameter = parameter_map.contact_parameter(&contact);
+                            let cusp_parameter = contact.retained_cusp_parameter().unwrap_or_else(|| {
+                                parameter_map
+                                    .as_ref()
+                                    .expect("an unresolved cusp contact retains its map")
+                                    .contact_parameter(&contact)
+                            });
                             if cusp_mode != CurveCornerMode2::TrimOrExtend {
                                 match cusp_source
                                     .contains_parameter(&cusp_parameter, false, false, policy)
