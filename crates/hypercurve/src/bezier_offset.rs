@@ -95239,18 +95239,26 @@ impl BezierAnalyticParallelPoint2 {
                 return Classification::Decided(true);
             }
         }
-        let retains_recursive_parameter = matches!(
-            &self.data.parameter,
-            BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
-        ) || matches!(
-            other,
-            CurvePoint2(CurvePointData2::AnalyticParallel(other))
-                if matches!(
-                    &other.data.parameter,
-                    BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
-                )
-        );
-        if retains_recursive_parameter {
+        // Ordinary algebraic source parameters retain the same correlations
+        // as recursive parameters: the source coordinates and positive frame
+        // speed belong to one selected field. Replay that field before
+        // reconstructing independent Cartesian roots. Exact scalar parameters
+        // already have the cheaper direct-coordinate path; selected fibers
+        // keep their local authority until a predicate needs promotion.
+        let retains_algebraic_parameter = |point: &Self| {
+            matches!(
+                &point.data.parameter,
+                BezierAnalyticParallelPointParameter2::Bezier(BezierParameter2::Algebraic(_))
+                    | BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
+            )
+        };
+        if retains_algebraic_parameter(self)
+            || matches!(
+                other,
+                CurvePoint2(CurvePointData2::AnalyticParallel(other))
+                    if retains_algebraic_parameter(other)
+            )
+        {
             let retained = CurvePoint2::from(self.clone());
             if let Ok(Classification::Decided(Some(equal))) =
                 recursive_projective_point_evidence_equality(&retained, other, policy)
@@ -150830,6 +150838,115 @@ mod conversion_tests {
                         .unwrap(),
                     Classification::Decided(RealSign::Zero)
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn analytic_point_equality_replays_algebraic_source_and_normal_sheet() {
+        let fraction = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(fraction(1, 2), Real::zero()),
+            Point2::from_values(1, 1),
+        );
+        let distance = fraction(1, 8);
+        let speed = Real::from(3_i8).sqrt().unwrap();
+        let normal_scale = (&distance / speed).unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(alpha) =
+                algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)])
+            else {
+                panic!("the source parameter is selected algebraically");
+            };
+            let Classification::Decided(interval) = BezierParameterInterval::try_new_ordered(
+                Real::from(-1_i8),
+                -fraction(1, 2),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the negative root interval is exact");
+            };
+            let Classification::Decided(negative_alpha) = BezierAlgebraicParameter2::try_isolate(
+                alpha.polynomial().clone(),
+                interval,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the other root of the same polynomial must remain distinct");
+            };
+            let point = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
+                source.parallel_left(distance.clone()).unwrap(),
+                BezierParameter2::Algebraic(alpha.clone()),
+                &policy,
+            ));
+            // P(t)=(t,t^2); at alpha^2=1/2 its positive speed is sqrt(3).
+            // Build the comparison independently in alpha, retaining signed
+            // homogeneous weights and the normal sheet explicitly.
+            for (parameter, normal, dx, dy, expected) in [
+                (
+                    alpha.clone(),
+                    normal_scale.clone(),
+                    Real::zero(),
+                    Real::zero(),
+                    true,
+                ),
+                (
+                    negative_alpha,
+                    normal_scale.clone(),
+                    Real::zero(),
+                    Real::zero(),
+                    false,
+                ),
+                (
+                    alpha.clone(),
+                    -normal_scale.clone(),
+                    Real::zero(),
+                    Real::zero(),
+                    false,
+                ),
+                (
+                    alpha.clone(),
+                    normal_scale.clone(),
+                    tiny.clone(),
+                    Real::zero(),
+                    false,
+                ),
+                (
+                    alpha.clone(),
+                    normal_scale.clone(),
+                    Real::zero(),
+                    -tiny.clone(),
+                    false,
+                ),
+            ] {
+                for weight_sign in [Real::one(), Real::from(-1_i8)] {
+                    let weight = vec![weight_sign.clone(), Real::zero(), weight_sign];
+                    let x = polynomial_multiply(
+                        &[dx.clone(), Real::one() - Real::from(2_i8) * &normal],
+                        &weight,
+                    );
+                    let y =
+                        polynomial_multiply(&[&dy + &normal, Real::zero(), Real::one()], &weight);
+                    let image = CurvePoint2::from(
+                        RationalBezierAlgebraicPointImage2::from_retained_expression(
+                            parameter.clone(),
+                            crate::bezier_algebraic_image::parameter_representation(
+                                &parameter, &policy,
+                            ),
+                            x,
+                            y,
+                            weight,
+                            "independent parabolic parallel point",
+                        ),
+                    );
+                    for (first, second) in [(&point, &image), (&image, &point)] {
+                        let result = first.coincides_with(second, &policy);
+                        assert_eq!(result.value, Classification::Decided(expected));
+                        assert_eq!(result.certainty, CurveCertainty::Certified);
+                    }
+                }
             }
         }
     }

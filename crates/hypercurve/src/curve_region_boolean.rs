@@ -18801,6 +18801,7 @@ mod certified_successor_tests {
         let evidence = context
             .build_intersection_evidence()
             .expect("the chord/analytic-parallel evidence must complete");
+        assert_chord_parallel_evidence_replays(&evidence, &policy);
         (result, evidence)
     }
 
@@ -18811,10 +18812,9 @@ mod certified_successor_tests {
         let replay = |first, second| {
             let first = evidence_carrier_point(evidence, true, first, policy);
             let second = evidence_carrier_point(evidence, false, second, policy);
-            assert_eq!(
-                first.same_point(&second, policy),
-                Classification::Decided(true)
-            );
+            let equality = first.coincides_with(&second, policy);
+            assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(equality.value, Classification::Decided(true));
         };
         for contact in evidence.contacts() {
             replay(contact.first_parameter(), contact.second_parameter());
@@ -18926,7 +18926,6 @@ mod certified_successor_tests {
                             range.clone(),
                             policy,
                         );
-                        assert_chord_parallel_evidence_replays(&evidence, &policy);
                         assert!(
                             result.blockers.is_empty(),
                             "kind={kind}, selected={selected}, reversed={reversed}: {result:?}"
