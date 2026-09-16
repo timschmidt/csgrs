@@ -408,6 +408,7 @@ impl Pair<'_> {
         // Keep this optional canonicalization bounded; domain admission below
         // still owns every required exact comparison.
         let mut point = point;
+        let mut reused_endpoint = false;
         for at_start in [true, false] {
             let endpoint =
                 CurveParameter2::from_algebraic_cusp(circle.endpoint_parameter(at_start).clone());
@@ -437,47 +438,61 @@ impl Pair<'_> {
                     )
                 })?
             {
-                let other = if circle_first {
-                    self.second
-                } else {
-                    self.first
-                };
-                if let CurveSupport2::Bezier(source) = &other.support {
-                    let source = RationalBezier2::try_from_subcurve(source).map_err(|cause| {
+                circle_parameter = endpoint;
+                point = Some(retained);
+                reused_endpoint = true;
+            }
+            break;
+        }
+        let other = if circle_first {
+            self.second
+        } else {
+            self.first
+        };
+        let chord_parameter = other_parameter.as_algebraic_chord();
+        if (reused_endpoint || chord_parameter.is_some())
+            && let CurveSupport2::Bezier(source) = &other.support
+        {
+            let source = RationalBezier2::try_from_subcurve(source).map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    other.support.family(),
+                    cause,
+                )
+            })?;
+            if let Some(line) = source.exact_linear_parameterization_line() {
+                let witness = point
+                    .as_ref()
+                    .or_else(|| chord_parameter.map(|parameter| parameter.point()))
+                    .expect("a reused endpoint or chord contact retains its point");
+                let parameter = self
+                    .policy
+                    .strict_predicate_pass(|| {
+                        crate::bezier_offset::affine_line_parameter_at_incident_point(
+                            &line,
+                            witness,
+                            self.policy,
+                        )
+                    })
+                    .map_err(|cause| {
                         ExactCurveError::invalid(
                             CurveOperation2::Intersection,
                             other.support.family(),
                             cause,
                         )
                     })?;
-                    if let Some(line) = source.exact_linear_parameterization_line()
-                        && let Classification::Decided(parameter) = self
-                            .policy
-                            .strict_predicate_pass(|| {
-                                crate::bezier_offset::affine_line_parameter_at_incident_point(
-                                    &line,
-                                    &retained,
-                                    self.policy,
-                                )
-                            })
-                            .map_err(|cause| {
-                                ExactCurveError::invalid(
-                                    CurveOperation2::Intersection,
-                                    other.support.family(),
-                                    cause,
-                                )
-                            })?
-                    {
-                        // Endpoint equality also proves this affine source
-                        // parameter. Retain the endpoint's field for point
-                        // replay instead of rediscovering the same fiber.
-                        other_parameter = parameter;
+                match parameter {
+                    Classification::Decided(parameter) => other_parameter = parameter,
+                    Classification::Uncertain(reason) if chord_parameter.is_some() => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Intersection,
+                            other.support.family(),
+                            reason,
+                        ));
                     }
+                    Classification::Uncertain(_) => {}
                 }
-                circle_parameter = endpoint;
-                point = Some(retained);
             }
-            break;
         }
         let (first, second) = if circle_first {
             (circle_parameter.clone(), other_parameter)
@@ -767,6 +782,22 @@ impl Pair<'_> {
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
         use crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2 as Intersections;
+        if let Some(line) = rational.exact_linear_parameterization_line() {
+            let span = if circle_first {
+                self.second
+            } else {
+                self.first
+            };
+            let chord = decided(
+                crate::BezierAlgebraicChord2::from_affine_line_range(
+                    &line,
+                    &span.range,
+                    self.policy,
+                ),
+                span.support.family(),
+            )?;
+            return self.circle_chord(circle, &chord, circle_first, result);
+        }
         self.require_unit_domain(if circle_first {
             self.second
         } else {
@@ -2216,6 +2247,257 @@ mod circle_dispatch_tests {
                                     == Some(hyperreal::RealSign::Zero))
                         );
                     }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_affine_domains_keep_exterior_and_algebraic_parameters() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = circle(0, 2, &policy);
+            let selected = |shift: i32| {
+                let polynomial = exact(
+                    crate::BezierParameterPolynomial::try_new_power_basis(
+                        vec![
+                            Real::from(2 * shift * shift - 1),
+                            Real::from(-4 * shift),
+                            Real::from(2),
+                        ],
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                let interval = exact(
+                    crate::BezierParameterInterval::try_new_ordered(
+                        Real::from(shift) + q(1, 2),
+                        Real::from(shift) + q(3, 4),
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                BezierParameter2::algebraic(exact(
+                    crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+                        .unwrap(),
+                ))
+            };
+            for y in [Real::zero(), q(1, 2), Real::from(2)] {
+                for (origin, delta, start, end, elevated) in [
+                    (
+                        -3,
+                        2,
+                        BezierParameter2::Exact(Real::one()),
+                        BezierParameter2::Exact(Real::from(2)),
+                        false,
+                    ),
+                    (
+                        3,
+                        -2,
+                        BezierParameter2::Exact(Real::one()),
+                        BezierParameter2::Exact(Real::from(2)),
+                        false,
+                    ),
+                    (
+                        3,
+                        2,
+                        BezierParameter2::Exact(Real::from(-2)),
+                        BezierParameter2::Exact(Real::from(-1)),
+                        false,
+                    ),
+                    (-3, 2, selected(0), selected(2), false),
+                    (
+                        -3,
+                        2,
+                        BezierParameter2::Exact(Real::one()),
+                        BezierParameter2::Exact(Real::from(2)),
+                        true,
+                    ),
+                ] {
+                    let point = |x| Point2::new(Real::from(x), y.clone());
+                    let source = if elevated {
+                        BezierSubcurve2::Rational(
+                            RationalBezier2::try_new_with_exact_line_image(
+                                vec![point(origin), point(origin + delta)],
+                                vec![Real::one(); 2],
+                                LineSeg2::try_new(point(origin), point(origin + delta)).unwrap(),
+                            )
+                            .unwrap()
+                            .elevated_to_degree(5)
+                            .unwrap(),
+                        )
+                    } else {
+                        BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                            point(origin),
+                            point(origin + delta / 2),
+                            point(origin + delta),
+                        ))
+                    };
+                    let line =
+                        Curve2::from_retained_fragment(BezierSplitFragment2::RetainedBezier {
+                            reversed: false,
+                            source_curve: source,
+                            start,
+                            end,
+                            start_image: None,
+                            end_image: None,
+                        });
+                    for reverse_circle in [false, true] {
+                        for reverse_line in [false, true] {
+                            let circle = oriented(&circle, reverse_circle, &policy);
+                            let line = oriented(&line, reverse_line, &policy);
+                            for (swapped, (first, second)) in
+                                [(&circle, &line), (&line, &circle)].into_iter().enumerate()
+                            {
+                                let outcome = first.intersect_curve(second, &policy).unwrap();
+                                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                                assert!(
+                                    outcome.value.is_complete(),
+                                    "{:?}",
+                                    outcome.value.blockers()
+                                );
+                                assert_eq!(
+                                    outcome.value.contacts().len(),
+                                    usize::from(y != Real::from(2))
+                                );
+                                assert!(outcome.value.overlaps().is_empty());
+                                for contact in outcome.value.contacts() {
+                                    let negative = reverse_circle
+                                        ^ reverse_line
+                                        ^ (delta < 0)
+                                        ^ (swapped == 1);
+                                    assert_eq!(
+                                        contact.tangent_cross_sign(),
+                                        Some(if negative {
+                                            hyperreal::RealSign::Negative
+                                        } else {
+                                            hyperreal::RealSign::Positive
+                                        })
+                                    );
+                                    assert!(contact.is_certified_transverse());
+                                }
+                                replay(first, second, &outcome.value, &policy);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_affine_clipping_replays_exact_boundary_identity() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = circle(0, 2, &policy);
+            // P(t)=(-3+2t,1/2) meets the left half of the unit circle at
+            // t=3/2-sqrt(3)/4. Isolate the same scalar independently of its
+            // represented radical so endpoint equality must replay evidence.
+            let polynomial = exact(
+                crate::BezierParameterPolynomial::try_new_power_basis(
+                    vec![Real::from(33), Real::from(-48), Real::from(16)],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval = exact(
+                crate::BezierParameterInterval::try_new_ordered(Real::one(), q(9, 8), &policy)
+                    .unwrap(),
+            );
+            let selected = BezierParameter2::algebraic(exact(
+                crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+                    .unwrap(),
+            ));
+            for boundary in [
+                BezierParameter2::Exact(q(3, 2) - q(3, 16).sqrt().unwrap()),
+                selected,
+            ] {
+                for (start, end) in [
+                    (boundary.clone(), BezierParameter2::Exact(Real::from(2))),
+                    (BezierParameter2::Exact(Real::one()), boundary.clone()),
+                ] {
+                    let point = |x| Point2::new(Real::from(x), q(1, 2));
+                    let line =
+                        Curve2::from_retained_fragment(BezierSplitFragment2::RetainedBezier {
+                            reversed: false,
+                            source_curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                                point(-3),
+                                point(-2),
+                                point(-1),
+                            )),
+                            start,
+                            end,
+                            start_image: None,
+                            end_image: None,
+                        });
+                    for reverse_line in [false, true] {
+                        let line = oriented(&line, reverse_line, &policy);
+                        for (first, second) in [(&circle, &line), (&line, &circle)] {
+                            let result = query(first, second, &policy);
+                            let [contact] = result.contacts() else {
+                                panic!("one transverse boundary contact")
+                            };
+                            assert!(contact.is_certified_transverse());
+                            let point = line
+                                .point_at(&CurveParameter2::from(boundary.clone()), &policy)
+                                .unwrap();
+                            assert_eq!(point.certainty, CurveCertainty::Certified);
+                            same(&point.value, contact.point(), &policy);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_fillet_tangency_replays_an_exterior_affine_source_chart() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let path = crate::CurvePath2::try_new(vec![
+                LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
+                QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
+            ])
+            .unwrap();
+            let crate::CurveCornerSolutions2::Unique(path) = path
+                .fillet_vertex_by_radius(1, q(1, 4), crate::CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .value
+            else {
+                panic!("unique fillet")
+            };
+            let circle = &path.curves()[1];
+            let line = Curve2::from_retained_fragment(BezierSplitFragment2::RetainedBezier {
+                reversed: false,
+                source_curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    p(-3, 0),
+                    p(-2, 0),
+                    p(-1, 0),
+                )),
+                start: BezierParameter2::Exact(Real::one()),
+                end: BezierParameter2::Exact(Real::from(2)),
+                start_image: None,
+                end_image: None,
+            });
+            for reverse_line in [false, true] {
+                let line = oriented(&line, reverse_line, &policy);
+                for (first, second) in [(circle, &line), (&line, circle)] {
+                    let outcome = first.intersect_curve(second, &policy).unwrap();
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    assert!(
+                        outcome.value.is_complete(),
+                        "{:?}",
+                        outcome.value.blockers()
+                    );
+                    let [contact] = outcome.value.contacts() else {
+                        panic!("one tangency")
+                    };
+                    assert_eq!(
+                        contact.tangent_cross_sign(),
+                        Some(hyperreal::RealSign::Zero)
+                    );
+                    same(contact.point(), &circle.start(), &policy);
+                    replay(first, second, &outcome.value, &policy);
+                    let topology = first.intersection_topology(second, &policy).unwrap();
+                    assert_eq!(topology.certainty, CurveCertainty::Certified);
+                    assert!(topology.value.result().is_complete());
                 }
             }
         }

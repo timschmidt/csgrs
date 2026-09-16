@@ -52488,37 +52488,47 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         if first.semicircle_carrier() != second.semicircle_carrier() {
             return Ok(false);
         }
-        for (chord_source, parametric_source) in [(first, second), (second, first)] {
+        for (chord_source, other_source) in [(first, second), (second, first)] {
             let Some((_, chord, RealSign::Zero, chord_policy, _)) =
                 chord_source.coincident_chord_tangent_source()
             else {
                 continue;
             };
-            let Some((_, [x, y], source_policy)) =
-                parametric_source.coincident_tangent_power_source(&strict)?
-            else {
-                continue;
-            };
-            let [x, y] = [x, y].map(polynomial_trim_structural_zeros);
-            if !strict.accepts_retained_policy(chord_policy)
-                || !strict.accepts_retained_policy(source_policy)
-                || x.len() > 1
-                || y.len() > 1
-            {
+            if !strict.accepts_retained_policy(chord_policy) {
                 continue;
             }
-            let tangent = (
-                x.first().cloned().unwrap_or_else(Real::zero),
-                y.first().cloned().unwrap_or_else(Real::zero),
-            );
-            if real_sign(
-                &(&tangent.0 * &tangent.0 + &tangent.1 * &tangent.1),
-                &strict,
-            ) != Some(RealSign::Positive)
-                || chord.tangent_cross_vector_sign(&tangent, &strict)?
-                    != Classification::Decided(RealSign::Zero)
+            if let Some((_, other_chord, RealSign::Zero, source_policy, _)) =
+                other_source.coincident_chord_tangent_source()
             {
-                continue;
+                if !strict.accepts_retained_policy(source_policy)
+                    || chord.tangent_cross_sign(other_chord, &strict)?
+                        != Classification::Decided(RealSign::Zero)
+                {
+                    continue;
+                }
+            } else {
+                let Some((_, [x, y], source_policy)) =
+                    other_source.coincident_tangent_power_source(&strict)?
+                else {
+                    continue;
+                };
+                let [x, y] = [x, y].map(polynomial_trim_structural_zeros);
+                if !strict.accepts_retained_policy(source_policy) || x.len() > 1 || y.len() > 1 {
+                    continue;
+                }
+                let tangent = (
+                    x.first().cloned().unwrap_or_else(Real::zero),
+                    y.first().cloned().unwrap_or_else(Real::zero),
+                );
+                if real_sign(
+                    &(&tangent.0 * &tangent.0 + &tangent.1 * &tangent.1),
+                    &strict,
+                ) != Some(RealSign::Positive)
+                    || chord.tangent_cross_vector_sign(&tangent, &strict)?
+                        != Classification::Decided(RealSign::Zero)
+                {
+                    continue;
+                }
             }
             for parameter in [self, other] {
                 if parameter.order_to_real(&Real::zero(), &strict)?
@@ -72392,6 +72402,56 @@ impl BezierAlgebraicChord2 {
         let delta_y = line.start().y() - other_line.start().y();
         Some(Real::diff_of_products(
             &tangent_x, &delta_y, &tangent_y, &delta_x,
+        ))
+    }
+
+    /// Restricts an exact affine line to an arbitrary finite scalar domain.
+    /// Its original support supplies the direction and incidence proofs;
+    /// selected bounds remain point witnesses on that same support.
+    pub(crate) fn from_affine_line_range(
+        line: &LineSeg2,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let source = match Self::try_new_from_certified_distinct_endpoints(
+            line.start().clone().into(),
+            line.end().clone().into(),
+            policy,
+        )? {
+            Classification::Decided(source) => source,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let [start, end] = match range.ordered_endpoints(policy)? {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if start == &CurveParameter2::from(Real::zero())
+            && end == &CurveParameter2::from(Real::one())
+        {
+            return Ok(Classification::Decided(source));
+        }
+        let curve = RationalBezier2::try_new_with_exact_line_image(
+            vec![line.start().clone(), line.end().clone()],
+            vec![Real::one(); 2],
+            line.clone(),
+        )?;
+        let point =
+            |parameter| rational_point_evidence_at_region_parameter(&curve, parameter, policy);
+        let (start, end) = match (point(start)?, point(end)?) {
+            (Classification::Decided(start), Classification::Decided(end)) => (start, end),
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        // Increasing affine parameters preserve the original line direction,
+        // including exterior bounds. No coordinate order needs to be replayed.
+        Ok(Classification::Decided(
+            Self::from_certified_ordered_parameter_range(
+                &source,
+                &source.parameter_on_retained_support(start),
+                &source.parameter_on_retained_support(end),
+                policy,
+            )?,
         ))
     }
 
