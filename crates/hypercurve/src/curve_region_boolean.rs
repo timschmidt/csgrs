@@ -6262,29 +6262,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RegionPairOverlapSource::AlgebraicCuspSelectedFiberMapped(_) => None,
         });
         if let Some(correspondence) = correspondence {
-            if let Some(reversed) = correspondence.projective_reversal() {
-                return match clip_aligned_parameter_overlap(
-                    &first_range,
-                    &second_range,
-                    reversed,
-                    first_carrier,
-                    second_carrier,
-                    &self.data.policy,
-                )? {
-                    CarrierOverlapClip::Matched(ranges) => Ok(ranges),
-                    CarrierOverlapClip::Unmatched => {
-                        Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Predicate))
-                    }
-                };
-            }
-            return clip_corresponding_parameter_overlap(
-                &first_range,
-                &second_range,
-                correspondence,
-                first_carrier,
-                second_carrier,
-                &self.data.policy,
+            let first_fragment = CurveParameterRange2::new_validated(
+                first_carrier.start.clone(),
+                first_carrier.end.clone(),
             );
+            let second_fragment = CurveParameterRange2::new_validated(
+                second_carrier.start.clone(),
+                second_carrier.end.clone(),
+            );
+            return match correspondence
+                .clipped_ranges(&first_fragment, &second_fragment, &self.data.policy)
+                .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+            {
+                Classification::Decided(ranges) => Ok(ranges),
+                Classification::Uncertain(reason) => {
+                    Err(self.blocked(pair.first_carrier_index, reason))
+                }
+            };
         }
         match clip_projectively_aligned_parameter_overlap(
             &first_range,
@@ -16727,7 +16721,11 @@ mod certified_successor_tests {
                     reversed: false,
                 },
             ] {
-                assert!(correspondence.projective_reversal().is_none());
+                assert!(matches!(
+                    correspondence,
+                    RationalBezierOverlapParameterCorrespondence2::EndpointProjective { .. }
+                        | RationalBezierOverlapParameterCorrespondence2::RangeProjective { .. }
+                ));
                 let first_carrier = carrier(
                     CurveRegionBooleanOperand2::First,
                     first.clone(),

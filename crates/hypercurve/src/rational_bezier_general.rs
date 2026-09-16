@@ -421,16 +421,6 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         }
     }
 
-    pub(crate) const fn projective_reversal(&self) -> Option<bool> {
-        match self {
-            Self::Identity => Some(false),
-            Self::UnitComplement => Some(true),
-            Self::EndpointProjective { .. }
-            | Self::RangeProjective { .. }
-            | Self::General { .. } => None,
-        }
-    }
-
     pub(crate) fn map_first_to_second(
         &self,
         parameter: &BezierParameter2,
@@ -576,17 +566,10 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         first_to_second: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CurveParameter2>>> {
-        if let Some(parameter) = parameter.as_bezier_parameter() {
-            let mapped = if first_to_second {
-                self.map_first_to_second(parameter, first_range, second_range, policy)
-            } else {
-                self.map_second_to_first(parameter, first_range, second_range, policy)
-            }?;
-            return Ok(mapped.map(|parameter| parameter.map(CurveParameter2::from)));
-        }
-        if !parameter.is_retained_scalar() {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
+        // The overlap already certifies its paired boundaries. Reuse that
+        // incidence before applying a chart map, including for ordinary
+        // Bezier roots: rebuilding a zero image over independent exact
+        // coefficient fields can lose the very equality retained here.
         let (source_range, target_range) = if first_to_second {
             (first_range, second_range)
         } else {
@@ -604,11 +587,23 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                         target_endpoint.clone(),
                     ))));
                 }
-                Classification::Decided(_) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+                // Endpoint reuse is an optimization. If this equality cannot
+                // be decided, the retained chart map may still certify the
+                // image without deciding it.
+                Classification::Decided(_) | Classification::Uncertain(_) => {}
             }
+        }
+
+        if let Some(parameter) = parameter.as_bezier_parameter() {
+            let mapped = if first_to_second {
+                self.map_first_to_second(parameter, first_range, second_range, policy)
+            } else {
+                self.map_second_to_first(parameter, first_range, second_range, policy)
+            }?;
+            return Ok(mapped.map(|parameter| parameter.map(CurveParameter2::from)));
+        }
+        if !parameter.is_retained_scalar() {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
 
         let mapped = match self {

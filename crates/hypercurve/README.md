@@ -229,6 +229,14 @@ exact signatures.
   demand, preserving selected roots for evaluation and subdivision.
   `CurveParameter2::compare` compares parameters in a shared support chart
   without requiring scalar payloads and reports predicate certainty.
+  Curve and open-path intersections consume retained rational-source cuts
+  directly, clipping contacts and overlaps to both active domains. Overlap
+  boundaries retain their certified correspondence, including a shared
+  endpoint when clipping leaves no positive-length span. Self-crossings of
+  projectively corresponding supports retain their off-diagonal contacts.
+  Retraced components, exterior source domains, and generated line, circle,
+  and parallel pair kernels still report explicit blockers where their
+  common dispatch is unfinished.
   Generated curves keep their source chart when traversal is reversed.
   Subdivision accepts the same common parameters. Selected ranges retain their
   source chart and endpoint evidence, share one authored source through repeated

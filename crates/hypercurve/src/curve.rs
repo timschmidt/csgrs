@@ -295,7 +295,10 @@ struct CurvePathData2 {
     bounds: OnceLock<ExactCurveResult<Aabb2>>,
 }
 
-/// Exact public parameter interval for one promoted native span.
+/// Exact affine chart from a support parameter to its public curve parameter.
+///
+/// The endpoints are the images of local zero and one. Native span charts
+/// ascend; a reversed retained span can have a descending chart.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveSpanRange2 {
     start: Real,
@@ -2530,7 +2533,14 @@ impl From<NurbsCurve2> for Curve2 {
 }
 
 impl CurveSpanRange2 {
-    /// Returns the exact interval in the top-level curve parameterization.
+    pub(crate) fn from_affine_chart(scale: &Real, offset: &Real) -> Self {
+        Self {
+            start: offset.clone(),
+            end: offset + scale,
+        }
+    }
+
+    /// Returns the public parameter images of local zero and one, in that order.
     pub fn endpoints(&self) -> (&Real, &Real) {
         (&self.start, &self.end)
     }

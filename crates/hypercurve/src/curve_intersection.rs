@@ -1,5 +1,8 @@
 //! Top-level exact curve-pair intersection with retained parameter intervals.
 
+#[path = "curve_support_intersection.rs"]
+mod curve_support_intersection;
+
 use std::sync::Arc;
 use std::sync::OnceLock;
 
@@ -44,7 +47,7 @@ pub struct CurveIntersectionContact2 {
     tangent_cross_sign: Option<hyperreal::RealSign>,
 }
 
-/// Certified positive-length overlap between two promoted top-level spans.
+/// Certified positive-length overlap between two retained curve spans.
 ///
 /// The oriented ranges bound the overlap closure. Endpoint inclusion remains
 /// explicit because a strict exact branch predicate can select an open end.
@@ -56,7 +59,39 @@ pub struct CurveIntersectionOverlap2 {
     second_range: CurveParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
     endpoint_inclusion: [bool; 2],
-    parameter_correspondence: Option<RationalBezierOverlapParameterCorrespondence2>,
+    parameter_correspondence: Option<CurveOverlapCorrespondence2>,
+}
+
+/// The complete support correspondence retains its original chart intervals.
+/// Clipping an overlap changes its active domain, never the map's basis.
+#[derive(Clone, Debug)]
+pub(crate) struct CurveOverlapCorrespondence2 {
+    source: RationalBezierOverlapParameterCorrespondence2,
+    first_range: BezierParameterRange2,
+    second_range: BezierParameterRange2,
+}
+
+impl CurveOverlapCorrespondence2 {
+    fn new(
+        source: RationalBezierOverlapParameterCorrespondence2,
+        overlap: &crate::RationalBezierIntersectionOverlap2,
+    ) -> Self {
+        Self {
+            source,
+            first_range: overlap.first_range().clone(),
+            second_range: overlap.second_range().clone(),
+        }
+    }
+
+    pub(crate) fn clipped_ranges(
+        &self,
+        first: &CurveParameterRange2,
+        second: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
+        self.source
+            .clipped_ranges(&self.first_range, &self.second_range, first, second, policy)
+    }
 }
 
 impl PartialEq for CurveIntersectionOverlap2 {
@@ -292,6 +327,7 @@ struct CurveIntersectionContextData {
 
 #[derive(Debug)]
 enum CurveIntersectionDispatch {
+    RetainedSupports(CurveIntersectionResult2),
     SpanPairs(Vec<CurveSpanPair>),
     CertifiedEndpointContact(CurveIntersectionContact2),
     NativeLine(LineLineIntersection),
@@ -1533,6 +1569,19 @@ impl CurveIntersectionContext {
         policy: &CurveContext,
         mut batch_cache: Option<&mut CurveIntersectionBatchCache>,
     ) -> ExactCurveResult<Self> {
+        if first.geometry().is_none() || second.geometry().is_none() {
+            let result = curve_support_intersection::intersect(first, second, policy)?;
+            return Ok(Self {
+                data: CurveIntersectionContextData {
+                    first: first.clone(),
+                    second: second.clone(),
+                    policy: *policy,
+                    span_pair_count: result.span_pair_count(),
+                    dispatch: CurveIntersectionDispatch::RetainedSupports(result),
+                    result: OnceLock::new(),
+                },
+            });
+        }
         let (span_pair_count, dispatch) = match native_line_intersection(first, second, policy)? {
             Some(relation) => (1, CurveIntersectionDispatch::NativeLine(relation)),
             None => {
@@ -1669,6 +1718,9 @@ impl CurveIntersectionContext {
     }
 
     fn build_evidence(&self) -> ExactCurveResult<CurveIntersectionResult2> {
+        if let CurveIntersectionDispatch::RetainedSupports(result) = &self.data.dispatch {
+            return Ok(result.clone());
+        }
         if let CurveIntersectionDispatch::CertifiedEndpointContact(contact) = &self.data.dispatch {
             return Ok(CurveIntersectionResult2 {
                 data: Arc::new(CurveIntersectionResultData {
@@ -1841,7 +1893,10 @@ impl CurveIntersectionContext {
                         endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
                             CurveSpanPairState::Rational(intersection) => {
-                                Some(intersection.overlap_parameter_correspondence(&overlap))
+                                Some(CurveOverlapCorrespondence2::new(
+                                    intersection.overlap_parameter_correspondence(&overlap),
+                                    &overlap,
+                                ))
                             }
                             _ => None,
                         },
@@ -1880,7 +1935,10 @@ impl CurveIntersectionContext {
                         endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
                             CurveSpanPairState::Rational(intersection) => {
-                                Some(intersection.overlap_parameter_correspondence(&overlap))
+                                Some(CurveOverlapCorrespondence2::new(
+                                    intersection.overlap_parameter_correspondence(&overlap),
+                                    &overlap,
+                                ))
                             }
                             _ => None,
                         },
@@ -2054,7 +2112,7 @@ impl CurveIntersectionContact2 {
         self.certified_transverse
     }
 
-    /// Returns the certified sign of the first local tangent crossed with the second.
+    /// Returns the certified sign of the first traversal tangent crossed with the second.
     pub const fn tangent_cross_sign(&self) -> Option<hyperreal::RealSign> {
         self.tangent_cross_sign
     }
@@ -2088,14 +2146,14 @@ impl CurveIntersectionOverlap2 {
         self.second_span_index
     }
 
-    /// Returns the exact local closure bounds on the first promoted span.
+    /// Returns the exact local closure bounds, following the first curve's traversal.
     pub const fn first_range(&self) -> &CurveParameterRange2 {
         &self.first_range
     }
 
-    /// Returns the exact local closure bounds on the second promoted span.
+    /// Returns the paired exact local closure bounds on the second span.
     ///
-    /// A descending range records reversed image orientation.
+    /// The two ranges traverse corresponding points in the same order.
     pub const fn second_range(&self) -> &CurveParameterRange2 {
         &self.second_range
     }
@@ -2115,9 +2173,7 @@ impl CurveIntersectionOverlap2 {
         self.endpoint_inclusion[1]
     }
 
-    pub(crate) const fn parameter_correspondence(
-        &self,
-    ) -> Option<&RationalBezierOverlapParameterCorrespondence2> {
+    pub(crate) const fn parameter_correspondence(&self) -> Option<&CurveOverlapCorrespondence2> {
         self.parameter_correspondence.as_ref()
     }
 }
@@ -2338,13 +2394,16 @@ fn same_curve_parameter(
     }
     let (first_start, first_end) = first.span_range.endpoints();
     let (second_start, second_end) = second.span_range.endpoints();
-    if matches!(
-        compare_reals(first_end, second_start, policy),
-        Some(std::cmp::Ordering::Less)
-    ) || matches!(
-        compare_reals(second_end, first_start, policy),
-        Some(std::cmp::Ordering::Less)
-    ) {
+    if compare_reals(first_start, first_end, policy) == Some(std::cmp::Ordering::Less)
+        && compare_reals(second_start, second_end, policy) == Some(std::cmp::Ordering::Less)
+        && (matches!(
+            compare_reals(first_end, second_start, policy),
+            Some(std::cmp::Ordering::Less)
+        ) || matches!(
+            compare_reals(second_end, first_start, policy),
+            Some(std::cmp::Ordering::Less)
+        ))
+    {
         return Classification::Decided(false);
     }
     let (Ok(Classification::Decided(first)), Ok(Classification::Decided(second))) =
