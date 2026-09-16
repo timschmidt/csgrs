@@ -128378,12 +128378,10 @@ fn parallel_fixed_distance_system(
 ) -> CurveResult<Classification<BezierParallelFixedDistanceSystem2>> {
     let center_source = center.source_power_basis()?;
     let candidate_source = candidate.source_power_basis()?;
-    for source in [&center_source, &candidate_source] {
-        if let Classification::Uncertain(reason) =
-            BezierParallel2::certify_finite_source(source, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
+    if let Classification::Uncertain(reason) =
+        BezierParallel2::certify_finite_source(&candidate_source, policy)?
+    {
+        return Ok(Classification::Uncertain(reason));
     }
     let center_differential = center.differential()?;
     let candidate_differential = candidate.differential()?;
@@ -128402,10 +128400,20 @@ fn parallel_fixed_distance_system(
                 return Ok(Classification::Uncertain(reason));
             }
         }
-    } else if let Classification::Uncertain(reason) =
-        BezierParallel2::certify_regular_differential(center_differential, policy)?
-    {
-        return Ok(Classification::Uncertain(reason));
+    } else {
+        // An unrestricted center ranges over its whole source. A selected
+        // center only needs the local finite frame certified above; a remote
+        // source pole is not part of that circle or fixed-distance query.
+        if let Classification::Uncertain(reason) =
+            BezierParallel2::certify_finite_source(&center_source, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+        if let Classification::Uncertain(reason) =
+            BezierParallel2::certify_regular_differential(center_differential, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
     }
     if let Classification::Uncertain(reason) =
         BezierParallel2::certify_regular_differential(candidate_differential, policy)?

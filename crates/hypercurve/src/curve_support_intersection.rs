@@ -1408,6 +1408,7 @@ mod circle_dispatch_tests {
             }
         }
     }
+    #[track_caller]
     fn query(first: &Curve2, second: &Curve2, policy: &CurveContext) -> CurveIntersectionResult2 {
         let result = first.intersect_curve(second, policy).unwrap();
         assert_eq!(result.certainty, CurveCertainty::Certified);
@@ -1772,6 +1773,116 @@ mod circle_dispatch_tests {
                         .iter()
                         .all(|contact| contact.is_certified_transverse())
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_retains_only_its_finite_source_frame() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // P(t) = ((2t^2 - 1)/(2t - 1), 0) has a pole at 1/2.
+            // At alpha = sqrt(1/2), its point is the origin and its
+            // tangent points right: the derivative numerator is
+            // 4(t - 1/2)^2 + 1. The retained circle is therefore the
+            // ordinary radius-one left semicircle, despite the remote pole.
+            let source = exact(
+                RationalBezier2::from_homogeneous_controls(
+                    [(-1, -1), (-1, 0), (1, 1)]
+                        .into_iter()
+                        .map(|(x, w)| {
+                            crate::HomogeneousControl2::new(
+                                Real::from(x),
+                                Real::zero(),
+                                Real::from(w),
+                            )
+                        })
+                        .collect(),
+                    &policy,
+                )
+                .unwrap(),
+            )
+            .parallel_left(Real::zero())
+            .unwrap();
+            assert!(matches!(
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    source.clone(),
+                    BezierParameter2::Exact(q(1, 2)),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            ));
+            let polynomial = exact(
+                crate::BezierParameterPolynomial::try_new_power_basis(
+                    vec![Real::from(-1), Real::zero(), Real::from(2)],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval =
+                exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), &policy).unwrap());
+            let parameter = exact(
+                crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+                    .unwrap(),
+            );
+            let circle = exact(
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    source,
+                    BezierParameter2::algebraic(parameter),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            let circle =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(circle, &policy),
+                ));
+            let overlap = query(&circle, &rational_semicircle(&policy), &policy);
+            assert_eq!(overlap.overlaps().len(), 1);
+            assert!(overlap.contacts().is_empty());
+            let line = Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap());
+            let contact = query(&circle, &line, &policy);
+            assert_eq!(contact.contacts().len(), 1);
+            same(contact.contacts()[0].point(), &p(-1, 0).into(), &policy);
+
+            let parallel = QuadraticBezier2::new(p(-2, 0), p(-1, 0), p(0, 1))
+                .parallel_left(q(1, 8))
+                .unwrap();
+            let parallel =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(exact(
+                    crate::BezierParallelFragment2::try_new(
+                        parallel,
+                        BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                        &policy,
+                    )
+                    .unwrap(),
+                )));
+            for first_reversed in [false, true] {
+                for second_reversed in [false, true] {
+                    let first = oriented(&circle, first_reversed, &policy);
+                    let second = oriented(&parallel, second_reversed, &policy);
+                    for swapped in [false, true] {
+                        let (first, second) = if swapped {
+                            (&second, &first)
+                        } else {
+                            (&first, &second)
+                        };
+                        let result = query(first, second, &policy);
+                        assert_eq!(result.contacts().len(), 2);
+                        assert!(result.overlaps().is_empty());
+                        assert!(
+                            result
+                                .contacts()
+                                .iter()
+                                .all(|contact| contact.is_certified_transverse())
+                        );
+                    }
+                }
             }
         }
     }
