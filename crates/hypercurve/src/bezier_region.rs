@@ -25830,7 +25830,7 @@ mod tests {
             assert!(
                 trace.path_count(
                     "hypercurve",
-                    "recursive-polynomial-unit-roots",
+                    "recursive-polynomial-roots",
                     "local-bernstein",
                 ) > 0,
                 "the deep selected-radial crossing must isolate its target roots in the retained coefficient field: {trace:?}",
@@ -25839,7 +25839,7 @@ mod tests {
             assert_eq!(
                 trace.path_count(
                     "hypercurve",
-                    "recursive-polynomial-unit-roots",
+                    "recursive-polynomial-roots",
                     "projected-replay",
                 ),
                 0,

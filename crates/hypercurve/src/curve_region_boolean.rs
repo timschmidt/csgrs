@@ -2890,7 +2890,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
             Classification::Decided(intersections)
         } else {
             chord
-                .rational_intersections(rational, shared_source_parameter, &self.data.policy)
+                .rational_intersections(
+                    rational,
+                    &CurveParameterRange2::new_validated(
+                        self.data.carriers[other_index].start.clone(),
+                        self.data.carriers[other_index].end.clone(),
+                    ),
+                    shared_source_parameter,
+                    &self.data.policy,
+                )
                 .map_err(|cause| self.invalid(other_index, cause))?
         };
         let complete = match intersections {
@@ -18634,6 +18642,32 @@ mod certified_successor_tests {
                             "kind={kind}, selected={selected}, reversed={reversed}: {result:?}"
                         );
                         assert!(evidence.is_complete(), "{evidence:?}");
+                        let (first, second) = if let Some(contact) = evidence.contacts().first() {
+                            (contact.first().curve(), contact.second().curve())
+                        } else {
+                            let overlap = &evidence.overlaps()[0];
+                            (overlap.first().curve(), overlap.second().curve())
+                        };
+                        for (a, b) in [(first, second), (second, first)] {
+                            let common = a.intersect_curve(b, &policy).unwrap();
+                            assert_eq!(common.certainty, crate::CurveCertainty::Certified);
+                            assert!(common.value.is_complete(), "{common:?}");
+                            assert_eq!(common.value.contacts().len(), evidence.contacts().len());
+                            assert_eq!(common.value.overlaps().len(), evidence.overlaps().len());
+                            for contact in common.value.contacts() {
+                                for (curve, location) in
+                                    [(a, contact.first()), (b, contact.second())]
+                                {
+                                    let parameter = decided(location.parameter(&policy).unwrap());
+                                    let point = curve.point_at(&parameter, &policy).unwrap();
+                                    assert_eq!(point.certainty, crate::CurveCertainty::Certified);
+                                    assert_eq!(
+                                        point.value.same_point(contact.point(), &policy),
+                                        Classification::Decided(true)
+                                    );
+                                }
+                            }
+                        }
                         if kind == 2 {
                             assert!(result.contacts.is_empty());
                             let [overlap] = evidence.overlaps() else {

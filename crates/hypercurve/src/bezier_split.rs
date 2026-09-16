@@ -783,6 +783,25 @@ impl<'a> CurveParameterDomain2<'a> {
         })
     }
 
+    /// Proves that both ends, and hence the whole finite interval, are covered.
+    /// Neither interval needs to replace its retained endpoint authorities.
+    pub(crate) fn contains_finite_range(
+        self,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if self.finite == range {
+            return Ok(Classification::Decided(true));
+        }
+        for endpoint in [range.start(), range.end()] {
+            match self.contains_finite_parameter(endpoint, policy)? {
+                Classification::Decided(true) => {}
+                other => return Ok(other),
+            }
+        }
+        Ok(Classification::Decided(true))
+    }
+
     /// Isolates in an outward envelope, then clips against the original
     /// endpoint authorities. The polynomial and every retained root stay in
     /// the original chart, including finite intervals outside the unit span.

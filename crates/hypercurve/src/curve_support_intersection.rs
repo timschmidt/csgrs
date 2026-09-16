@@ -200,9 +200,8 @@ impl Pair<'_> {
     ) -> ExactCurveResult<()> {
         let span = if chord_first { self.second } else { self.first };
         let family = span.support.family();
-        self.require_unit_domain(span)?;
         let (contacts, overlaps) = match decided(
-            chord.rational_intersections(source, None, self.policy),
+            chord.rational_intersections(source, &span.range, None, self.policy),
             family,
         )? {
             BezierAlgebraicChordRationalIntersections2::Contacts(contacts) => {
@@ -1773,7 +1772,6 @@ impl Pair<'_> {
     ) -> ExactCurveResult<()> {
         use crate::bezier_offset::BezierAlgebraicChordParallelIntersections2 as Intersections;
         let span = if chord_first { self.second } else { self.first };
-        self.require_unit_domain(span)?;
         let strict = self.policy.strict_counterpart();
         // A branch-local rational image uses exactly the original parameter
         // chart and gives finite overlaps the existing chord correspondence.
@@ -2869,6 +2867,280 @@ mod analytic_dispatch_tests {
         CurveParameter2::from_selected_fiber(
             crate::bezier_offset::exact_selected_fiber_parameter_for_test(root, value, policy),
         )
+    }
+
+    fn finite_rational(
+        source: RationalBezier2,
+        bounds: [Real; 2],
+        selected_bounds: bool,
+        policy: &CurveContext,
+    ) -> Curve2 {
+        let images = selected_bounds.then(|| {
+            bounds.each_ref().map(|parameter| {
+                CurvePoint2::from(exact(source.point_at_affine_classified(parameter, policy)))
+            })
+        });
+        let [start, end] = bounds.map(|value| {
+            if selected_bounds {
+                selected(value, policy)
+            } else {
+                value.into()
+            }
+        });
+        Curve2::from_retained_fragment(
+            CurveSupport2::Bezier(BezierSubcurve2::Rational(source))
+                .restrict_certified(
+                    CurveParameterRange2::new_validated(start, end),
+                    images,
+                    false,
+                    policy,
+                )
+                .unwrap(),
+        )
+    }
+
+    fn retained_chord(start: Point2, end: Point2, policy: &CurveContext) -> Curve2 {
+        Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(exact(
+            crate::BezierAlgebraicChord2::try_new(start.into(), end.into(), policy).unwrap(),
+        )))
+    }
+
+    #[test]
+    fn finite_chord_rational_contacts_replay_all_roots_and_stationary_points() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parabola = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 1)),
+            ))
+            .unwrap();
+            // y=(t-2)(t-3)(t-4): three exterior roots in the original chart.
+            let cubic = RationalBezier2::try_new(
+                vec![
+                    p(0, -24),
+                    Point2::new(q(1, 3), -q(46, 3)),
+                    Point2::new(q(2, 3), -q(29, 3)),
+                    p(1, -6),
+                ],
+                vec![Real::one(); 4],
+            )
+            .unwrap();
+            // (x,y)=((t-2)^2,(t-2)^3): the contact at t=2 has zero speed.
+            let cusp = RationalBezier2::try_new(
+                vec![
+                    p(4, -8),
+                    Point2::new(q(8, 3), (-4).into()),
+                    Point2::new(q(5, 3), (-2).into()),
+                    p(1, -1),
+                ],
+                vec![Real::one(); 4],
+            )
+            .unwrap();
+            for (source, bounds, chord, count, stationary) in [
+                (
+                    parabola.clone(),
+                    [1.into(), 2.into()],
+                    retained_chord(p(0, 2), p(2, 2), &policy),
+                    1,
+                    false,
+                ),
+                (
+                    parabola,
+                    [1.into(), 2.into()],
+                    retained_chord(p(1, 1), p(2, 4), &policy),
+                    2,
+                    false,
+                ),
+                (
+                    cubic,
+                    [1.into(), 5.into()],
+                    retained_chord(p(0, 0), p(6, 0), &policy),
+                    3,
+                    false,
+                ),
+                (
+                    cusp,
+                    [1.into(), 3.into()],
+                    retained_chord(p(0, -1), p(0, 1), &policy),
+                    1,
+                    true,
+                ),
+            ] {
+                for selected_bounds in [false, true] {
+                    let source =
+                        finite_rational(source.clone(), bounds.clone(), selected_bounds, &policy);
+                    for reversed in [false, true] {
+                        let source = oriented(&source, reversed, &policy);
+                        for (a, b) in [(&source, &chord), (&chord, &source)] {
+                            let result = query(a, b, &policy);
+                            assert_eq!(result.contacts().len(), count);
+                            assert!(result.overlaps().is_empty());
+                            assert!(result.parameter_components().is_empty());
+                            if stationary {
+                                assert_eq!(
+                                    result.contacts()[0].tangent_cross_sign(),
+                                    Some(hyperreal::RealSign::Zero)
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_chord_rational_retracing_keeps_all_overlap_branches() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0)),
+            ))
+            .unwrap();
+            for selected_bounds in [false, true] {
+                let source = finite_rational(
+                    source.clone(),
+                    [(-2).into(), 2.into()],
+                    selected_bounds,
+                    &policy,
+                );
+                for (start, end, contacts, overlaps) in [(1, 4, 0, 2), (0, 1, 0, 2), (-1, 0, 1, 0)]
+                {
+                    let chord = retained_chord(p(start, 0), p(end, 0), &policy);
+                    for reversed in [false, true] {
+                        let source = oriented(&source, reversed, &policy);
+                        for (a, b) in [(&source, &chord), (&chord, &source)] {
+                            let result = query(a, b, &policy);
+                            assert_eq!(result.contacts().len(), contacts);
+                            assert_eq!(result.overlaps().len(), overlaps);
+                            for overlap in result.overlaps() {
+                                let CurveOverlapCorrespondence2::ChordRational { source, .. } =
+                                    &overlap.parameter_correspondence
+                                else {
+                                    panic!("the overlap must retain its chord/source transport");
+                                };
+                                let sample = CurveParameter2::from(exact(
+                                    source
+                                        .source_range()
+                                        .strict_interior_scalar(&policy)
+                                        .unwrap(),
+                                ));
+                                let mapped = exact(
+                                    source
+                                        .chord_parameter_at_source_parameter(&sample, &policy)
+                                        .unwrap(),
+                                )
+                                .unwrap();
+                                let chord_range = CurveParameterRange2::new_validated(
+                                    CurveParameter2::from_algebraic_chord(mapped),
+                                    CurveParameter2::from_algebraic_chord(
+                                        source.chord_range()[1].clone(),
+                                    ),
+                                );
+                                let (_, clipped) = exact(
+                                    source
+                                        .clipped_ranges(
+                                            &chord_range,
+                                            source.source_range(),
+                                            &policy,
+                                        )
+                                        .unwrap(),
+                                )
+                                .unwrap();
+                                assert!([clipped.start(), clipped.end()].into_iter().any(
+                                    |parameter| {
+                                        parameter.same_value(&sample, &policy).unwrap()
+                                            == Classification::Decided(true)
+                                    }
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_chord_rational_point_fibers_and_poles_use_the_active_domain() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let constant =
+                RationalBezier2::try_new(vec![p(2, 0); 3], vec![Real::one(); 3]).unwrap();
+            let point = finite_rational(constant, [1.into(), 3.into()], true, &policy);
+            for (y, expected) in [(0, 1), (1, 0)] {
+                let chord = retained_chord(p(0, y), p(4, y), &policy);
+                for (a, b) in [(&point, &chord), (&chord, &point)] {
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.parameter_components().len(), expected);
+                    assert!(result.contacts().is_empty());
+                    assert!(result.overlaps().is_empty());
+                }
+            }
+            // A pole elsewhere in the unit chart must not constrain a retained
+            // finite fragment. The point fiber still owns its entire active range.
+            let rootful_point = exact(
+                RationalBezier2::from_homogeneous_controls(
+                    vec![
+                        crate::HomogeneousControl2::new(1.into(), 0.into(), 1.into()),
+                        crate::HomogeneousControl2::new((-1).into(), 0.into(), (-1).into()),
+                    ],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let chord = retained_chord(p(0, 0), p(2, 0), &policy);
+            for bounds in [[Real::zero(), q(1, 4)], [q(3, 4), Real::one()]] {
+                let point = finite_rational(rootful_point.clone(), bounds, true, &policy);
+                for (a, b) in [(&point, &chord), (&chord, &point)] {
+                    assert_eq!(query(a, b, &policy).parameter_components().len(), 1);
+                }
+            }
+            let undefined = Curve2::from(rootful_point);
+            assert!(!certified(chord.intersect_curve(&undefined, &policy).unwrap()).is_complete());
+            // x=t/(2-t) is finite on [3,4], while [1,3] contains its pole.
+            let source = exact(
+                RationalBezier2::from_homogeneous_controls(
+                    vec![
+                        crate::HomogeneousControl2::new(0.into(), 0.into(), 2.into()),
+                        crate::HomogeneousControl2::new(1.into(), 0.into(), 1.into()),
+                    ],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let chord = retained_chord(p(-4, 0), p(-1, 0), &policy);
+            let finite = finite_rational(source.clone(), [3.into(), 4.into()], false, &policy);
+            assert_eq!(query(&chord, &finite, &policy).overlaps().len(), 1);
+            let pole = finite_rational(source, [1.into(), 3.into()], false, &policy);
+            let result = certified(chord.intersect_curve(&pole, &policy).unwrap());
+            assert!(!result.is_complete());
+            assert!(result.contacts().is_empty());
+            assert!(result.overlaps().is_empty());
+        }
+    }
+
+    #[test]
+    fn finite_chord_analytic_parallel_replays_exterior_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parallel =
+                QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 1))
+                    .parallel_left(Real::one())
+                    .unwrap();
+            let source = Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(
+                BezierParallelFragment2::from_certified_range(
+                    parallel,
+                    BezierParameterRange2::from_exact(1.into(), 2.into()),
+                    false,
+                ),
+            ));
+            let chord = retained_chord(p(1, 0), p(1, 7), &policy);
+            for reversed in [false, true] {
+                let source = oriented(&source, reversed, &policy);
+                for (a, b) in [(&source, &chord), (&chord, &source)] {
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.contacts().len(), 1);
+                    assert!(result.contacts()[0].is_certified_transverse());
+                    assert!(result.overlaps().is_empty());
+                }
+            }
+        }
     }
 
     #[test]
