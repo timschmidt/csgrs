@@ -819,13 +819,13 @@ fn curve_string_trim_inside_region_retains_boundary_overlap() {
             .trim_fragment()
             .start_boundary_contacts()
             .iter()
-            .any(|contact| contact.segment_index() == 0)
+            .any(|contact| contact.carrier().fragment_index() == 0)
     );
     assert!(
         fragment
             .trim_fragment()
             .end_boundary_contacts()
             .iter()
-            .any(|contact| contact.segment_index() == 0)
+            .any(|contact| contact.carrier().fragment_index() == 0)
     );
 }

@@ -320,7 +320,7 @@ impl BezierArrangementGraph2 {
     /// Traverses retained fragments using native and algebraic endpoint evidence.
     ///
     /// This is the first traversal consumer for
-    /// [`BezierSplitFragment2::AlgebraicEndpointImages`]. It connects endpoints
+    /// [`BezierSplitFragment2::RetainedBezier`]. It connects endpoints
     /// only when the retained point evidence is exact and structurally equal
     /// (or when a represented coordinate has an exact point witness matching
     /// a native point). At a branch vertex it compares outgoing tangents with
@@ -505,7 +505,7 @@ fn validate_arrangement_fragment_source_range(
 ) -> CurveResult<()> {
     match fragment.fragment() {
         BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } => match start
+        | BezierSplitFragment2::RetainedBezier { start, end, .. } => match start
             .cmp_by_interval(end, policy)?
         {
             Classification::Decided(std::cmp::Ordering::Less) => {}
@@ -576,7 +576,7 @@ fn validate_arrangement_fragment_source_range(
         }
     }
 
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    let BezierSplitFragment2::RetainedBezier {
         start,
         end,
         source_curve,
@@ -811,7 +811,7 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             analytic_parallel_exact_endpoints(fragment, &CurveContext::STRICT)
         }
-        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        BezierSplitFragment2::RetainedBezier { .. }
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
         BezierSplitFragment2::SelectedFiber(fragment) => {
@@ -1071,7 +1071,7 @@ fn materialized_endpoint_data(
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             Some(analytic_parallel_endpoint_data(fragment, policy))
         }
-        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        BezierSplitFragment2::RetainedBezier { .. }
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
         BezierSplitFragment2::SelectedFiber(_) => None,
@@ -1140,7 +1140,7 @@ fn retained_endpoint_data(
             })),
             Classification::Uncertain(reason) => Some(Classification::Uncertain(reason)),
         },
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed,
             start,
             end,

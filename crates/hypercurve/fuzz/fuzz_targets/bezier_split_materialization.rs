@@ -80,7 +80,7 @@ fuzz_target!(|data: &[u8]| {
                     assert!(start.scalar().is_some());
                     assert!(end.scalar().is_some());
                 }
-                BezierSplitFragment2::AlgebraicEndpointImages {
+                BezierSplitFragment2::RetainedBezier {
                     start,
                     end,
                     start_image,

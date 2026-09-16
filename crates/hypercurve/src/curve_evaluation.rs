@@ -70,7 +70,7 @@ impl Curve2 {
         }
 
         let reversed = match fragment {
-            BezierSplitFragment2::AlgebraicEndpointImages { reversed, .. } => *reversed,
+            BezierSplitFragment2::RetainedBezier { reversed, .. } => *reversed,
             BezierSplitFragment2::AnalyticParallel(fragment) => fragment.is_reversed(),
             BezierSplitFragment2::SelectedFiber(fragment) => fragment.is_reversed(),
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
@@ -115,7 +115,7 @@ impl Curve2 {
             return Ok(self.endpoint((start_order == Ordering::Equal) != reversed));
         }
         let point = match fragment {
-            BezierSplitFragment2::AlgebraicEndpointImages { source_curve, .. } => {
+            BezierSplitFragment2::RetainedBezier { source_curve, .. } => {
                 let source = RationalBezier2::try_from_subcurve(source_curve)
                     .map_err(|cause| evaluation_error(family, cause))?;
                 return rational_point(&source, parameter, family, policy);

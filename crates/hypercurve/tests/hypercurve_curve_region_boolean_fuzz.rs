@@ -343,9 +343,9 @@ fn exact_boolean_results(
             .map(|contact| {
                 (
                     contact.first().carrier_index(),
-                    contact.first().family(),
+                    contact.first().curve().family(),
                     contact.second().carrier_index(),
-                    contact.second().family(),
+                    contact.second().curve().family(),
                     contact.first_parameter().scalar().cloned(),
                     contact.second_parameter().scalar().cloned(),
                     contact.is_certified_transverse(),
@@ -1226,9 +1226,9 @@ fn assert_selected_family_pair_contact(
         .map(|contact| {
             (
                 contact.first().carrier_index(),
-                contact.first().family(),
+                contact.first().curve().family(),
                 contact.second().carrier_index(),
-                contact.second().family(),
+                contact.second().curve().family(),
             )
         })
         .collect::<Vec<_>>();
@@ -1489,8 +1489,8 @@ fn deterministic_coincident_curve_family_images_complete() {
                 if first_family == 0 {
                     overlap.first().carrier_index() == 0 && overlap.second().carrier_index() == 4
                 } else {
-                    overlap.first().family() != hypercurve::CurveFamily2::Line
-                        && overlap.second().family() != hypercurve::CurveFamily2::Line
+                    overlap.first().curve().family() != hypercurve::CurveFamily2::Line
+                        && overlap.second().curve().family() != hypercurve::CurveFamily2::Line
                 }
             }),
             "{label}: the selected coincident image must retain overlap evidence"

@@ -1222,21 +1222,22 @@ pub enum BezierSplitFragment2 {
         /// Native subcurve over this range.
         curve: BezierSubcurve2,
     },
-    /// At least one boundary is algebraic, and its exact endpoint images were
-    /// constructed without making a native subcurve.
-    AlgebraicEndpointImages {
+    /// A source Bezier and an exact range in its unchanged parameter chart.
+    /// Algebraic boundaries retain lazy point/tangent evidence without
+    /// requiring a native subcurve or scalar reconstruction.
+    RetainedBezier {
         /// Whether traversal runs from the source end boundary to its start boundary.
         reversed: bool,
         /// Start split boundary in the original parameter space.
         start: BezierParameter2,
         /// End split boundary in the original parameter space.
         end: BezierParameter2,
-        /// Source curve that generated this algebraic-boundary fragment.
+        /// Source curve that generated this fragment.
         ///
-        /// This is not a native subcurve over the algebraic parameter range.
+        /// This is not a native subcurve over the restricted parameter range.
         /// It is retained construction evidence for conservative exact
         /// measurements, such as source-curve envelopes, that can safely
-        /// overbound the algebraic subrange without evaluating an algebraic
+        /// overbound the subrange without evaluating an algebraic
         /// split point as a floating coordinate.
         source_curve: BezierSubcurve2,
         /// Exact point/tangent image when the start boundary is algebraic.
@@ -1293,15 +1294,12 @@ impl BezierSplitMaterialization2 {
             .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }))
     }
 
-    /// Returns true when at least one algebraic-boundary fragment carries
-    /// exact endpoint point/tangent images.
-    pub fn has_algebraic_endpoint_images(&self) -> bool {
-        self.fragments.iter().any(|fragment| {
-            matches!(
-                fragment,
-                BezierSplitFragment2::AlgebraicEndpointImages { .. }
-            )
-        })
+    /// Returns true when a fragment retains a Bezier source and its range
+    /// instead of a native subcurve.
+    pub fn has_retained_beziers(&self) -> bool {
+        self.fragments
+            .iter()
+            .any(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
     }
 }
 
@@ -1311,7 +1309,7 @@ impl BezierSplitFragment2 {
     pub(crate) fn source_is_reversed(&self) -> bool {
         match self {
             Self::Materialized { .. } | Self::AlgebraicChord(_) => false,
-            Self::AlgebraicEndpointImages { reversed, .. } => *reversed,
+            Self::RetainedBezier { reversed, .. } => *reversed,
             Self::AnalyticParallel(fragment) => fragment.is_reversed(),
             Self::AlgebraicCuspSemicircle(fragment) => fragment.is_reversed(),
             Self::SelectedFiber(fragment) => fragment.is_reversed(),
@@ -1321,8 +1319,9 @@ impl BezierSplitFragment2 {
     /// Returns this fragment's boundaries in its promoted native span.
     pub const fn parameter_range(&self) -> Option<(&BezierParameter2, &BezierParameter2)> {
         match self {
-            Self::Materialized { start, end, .. }
-            | Self::AlgebraicEndpointImages { start, end, .. } => Some((start, end)),
+            Self::Materialized { start, end, .. } | Self::RetainedBezier { start, end, .. } => {
+                Some((start, end))
+            }
             Self::AnalyticParallel(fragment) => {
                 Some((fragment.range.start(), fragment.range.end()))
             }
@@ -1333,8 +1332,7 @@ impl BezierSplitFragment2 {
 
     pub(crate) fn curve_region_parameter_range(&self) -> CurveParameterRange2 {
         match self {
-            Self::Materialized { start, end, .. }
-            | Self::AlgebraicEndpointImages { start, end, .. } => {
+            Self::Materialized { start, end, .. } | Self::RetainedBezier { start, end, .. } => {
                 CurveParameterRange2::new_validated(
                     CurveParameter2::from(start.clone()),
                     CurveParameter2::from(end.clone()),
@@ -2012,9 +2010,9 @@ fn point_coordinate(point: &Point2, axis: Axis2) -> &Real {
 }
 
 impl BezierSplitFragment2 {
-    /// Returns true when this fragment retains exact algebraic endpoint images.
-    pub const fn is_algebraic_endpoint_images(&self) -> bool {
-        matches!(self, Self::AlgebraicEndpointImages { .. })
+    /// Returns true when this fragment retains a Bezier source and its range.
+    pub const fn is_retained_bezier(&self) -> bool {
+        matches!(self, Self::RetainedBezier { .. })
     }
 
     /// Constructs an exact represented point certified inside this fragment.
@@ -2036,7 +2034,7 @@ impl BezierSplitFragment2 {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }
             Self::SelectedFiber(fragment) => fragment.representative_point(policy),
-            Self::AlgebraicEndpointImages {
+            Self::RetainedBezier {
                 start,
                 end,
                 source_curve,
@@ -2066,14 +2064,14 @@ impl BezierSplitFragment2 {
                 end: end.clone(),
                 curve: curve.reversed(),
             }),
-            Self::AlgebraicEndpointImages {
+            Self::RetainedBezier {
                 reversed,
                 start,
                 end,
                 source_curve,
                 start_image,
                 end_image,
-            } => Ok(Self::AlgebraicEndpointImages {
+            } => Ok(Self::RetainedBezier {
                 reversed: !reversed,
                 start: start.clone(),
                 end: end.clone(),
@@ -2161,7 +2159,7 @@ fn validate_bezier_split_fragment(
                 ));
             }
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             start,
             end,
             source_curve,
@@ -2253,7 +2251,7 @@ fn bezier_split_fragment_range(
 ) -> CurveResult<(&BezierParameter2, &BezierParameter2)> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } => Ok((start, end)),
+        | BezierSplitFragment2::RetainedBezier { start, end, .. } => Ok((start, end)),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             Ok((fragment.range().start(), fragment.range().end()))
         }
@@ -2752,7 +2750,7 @@ where
                         .as_ref()
                         .is_none_or(BezierAlgebraicEndpointImage2::is_exact_or_lazy_first_order)
                 {
-                    fragments.push(BezierSplitFragment2::AlgebraicEndpointImages {
+                    fragments.push(BezierSplitFragment2::RetainedBezier {
                         reversed: false,
                         start,
                         end,

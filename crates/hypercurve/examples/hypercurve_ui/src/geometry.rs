@@ -1150,10 +1150,10 @@ impl Shape {
                         };
                         format!(
                             "{error}; {kind} between {:?} loop {} fragment {} and {:?} loop {} fragment {}",
-                            blocker.first().family(),
+                            blocker.first().curve().family(),
                             blocker.first().loop_index(),
                             blocker.first().fragment_index(),
-                            blocker.second().family(),
+                            blocker.second().curve().family(),
                             blocker.second().loop_index(),
                             blocker.second().fragment_index(),
                         )

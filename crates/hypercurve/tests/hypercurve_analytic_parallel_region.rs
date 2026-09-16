@@ -1102,7 +1102,7 @@ fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
                             BezierSubcurve2::RationalQuadratic(_) => 2,
                             BezierSubcurve2::Rational(_) => 3,
                         },
-                        BezierSplitFragment2::AlgebraicEndpointImages { .. } => 4,
+                        BezierSplitFragment2::RetainedBezier { .. } => 4,
                         BezierSplitFragment2::AnalyticParallel(_) => 5,
                         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => 6,
                         BezierSplitFragment2::AlgebraicChord(_) => 8,

@@ -674,7 +674,7 @@ impl<'a> CurveCornerChain2<'a> {
                 (None, None)
                     if matches!(
                         self.fragments()[previous_index],
-                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                        BezierSplitFragment2::RetainedBezier { .. }
                             | BezierSplitFragment2::AnalyticParallel(_)
                             | BezierSplitFragment2::SelectedFiber(_)
                     ) => {}
@@ -2982,7 +2982,7 @@ impl<'a> CurveCornerChain2<'a> {
             }
             if !matches!(
                 other_fragment,
-                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                BezierSplitFragment2::RetainedBezier { .. }
                     | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
                     | BezierSplitFragment2::AlgebraicChord(_)
                     | BezierSplitFragment2::AnalyticParallel(_)
@@ -3306,10 +3306,8 @@ impl<'a> CurveCornerChain2<'a> {
                     policy,
                 );
             }
-            if matches!(
-                other_fragment,
-                BezierSplitFragment2::AlgebraicEndpointImages { .. }
-            ) && let Some(parameter) = other_cut.parameter.as_algebraic_chord()
+            if matches!(other_fragment, BezierSplitFragment2::RetainedBezier { .. })
+                && let Some(parameter) = other_cut.parameter.as_algebraic_chord()
             {
                 let chord = parameter.chord().clone();
                 return Self::retained_chord_fillet_fragments(
@@ -3404,7 +3402,7 @@ impl<'a> CurveCornerChain2<'a> {
             }
             let other_parallel_fragment = match other_fragment {
                 BezierSplitFragment2::AnalyticParallel(fragment) => Some(fragment),
-                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                BezierSplitFragment2::RetainedBezier { .. }
                 | BezierSplitFragment2::SelectedFiber(_) => {
                     Some(other_promoted_parallel.ok_or_else(|| {
                         ExactCurveError::blocked(
@@ -3520,10 +3518,8 @@ impl<'a> CurveCornerChain2<'a> {
                 ),
             ));
         }
-        if matches!(
-            fragment,
-            BezierSplitFragment2::AlgebraicEndpointImages { .. }
-        ) && previous_cut.parameter.as_algebraic_chord().is_some()
+        if matches!(fragment, BezierSplitFragment2::RetainedBezier { .. })
+            && previous_cut.parameter.as_algebraic_chord().is_some()
             && next_cut.parameter.as_algebraic_chord().is_some()
         {
             return Ok(());
@@ -3553,7 +3549,7 @@ impl<'a> CurveCornerChain2<'a> {
             BezierSplitFragment2::Materialized { curve, .. } => {
                 RetainedCornerExtensionCarrier2::Curve(curve)
             }
-            BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
+            BezierSplitFragment2::RetainedBezier { .. } => {
                 promoted = promoted_endpoint_image_corner_fragment(fragment, operation)?;
                 RetainedCornerExtensionCarrier2::AnalyticParallel(&promoted)
             }
@@ -3635,10 +3631,8 @@ impl<'a> CurveCornerChain2<'a> {
             };
             return Ok(());
         }
-        if matches!(
-            fragment,
-            BezierSplitFragment2::AlgebraicEndpointImages { .. }
-        ) && cut.parameter.as_algebraic_chord().is_some()
+        if matches!(fragment, BezierSplitFragment2::RetainedBezier { .. })
+            && cut.parameter.as_algebraic_chord().is_some()
         {
             return Ok(());
         }
@@ -3685,7 +3679,7 @@ impl<'a> CurveCornerChain2<'a> {
             BezierSplitFragment2::Materialized { curve, .. } => {
                 RetainedCornerExtensionCarrier2::Curve(curve)
             }
-            BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
+            BezierSplitFragment2::RetainedBezier { .. } => {
                 promoted = promoted_endpoint_image_corner_fragment(fragment, operation)?;
                 RetainedCornerExtensionCarrier2::AnalyticParallel(&promoted)
             }

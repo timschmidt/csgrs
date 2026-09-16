@@ -21,6 +21,112 @@ pub(crate) enum CurveSupport2 {
     Circle(crate::BezierAlgebraicCuspSemicircleFragment2),
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+        BezierParameterPolynomial, Curve2, CurveCertainty, Point2, QuadraticBezier2, Real,
+    };
+
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("expected exact evidence: {reason:?}"),
+        }
+    }
+
+    #[test]
+    fn certified_bezier_ranges_preserve_source_chart_and_traversal() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = QuadraticBezier2::new(
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 0),
+                Point2::from_values(2, 2),
+            );
+            let support = CurveSupport2::Bezier(BezierSubcurve2::Quadratic(source.clone()));
+            let source = Curve2::from(source);
+            let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+            let polynomial = decided(
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![(-1).into(), 0.into(), 2.into()],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval =
+                decided(BezierParameterInterval::try_new(q(1, 2), Real::one(), &policy).unwrap());
+            let root = decided(
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+            );
+            for range in [
+                CurveParameterRange2::unit(),
+                CurveParameterRange2::new_validated(q(1, 4).into(), q(3, 4).into()),
+                CurveParameterRange2::new_validated(
+                    BezierParameter2::Algebraic(root.clone()).into(),
+                    Real::one().into(),
+                ),
+            ] {
+                for reversed in [false, true] {
+                    let fragment = support
+                        .restrict_certified(range.clone(), None, reversed, &policy)
+                        .unwrap();
+                    if let BezierSplitFragment2::RetainedBezier {
+                        start_image,
+                        end_image,
+                        ..
+                    } = &fragment
+                    {
+                        assert!(
+                            start_image
+                                .iter()
+                                .chain(end_image)
+                                .all(|image| image.is_lazy_first_order())
+                        );
+                    }
+                    let curve = Curve2::from_retained_fragment(fragment);
+                    assert_eq!(curve.parameter_domain(), &range);
+                    let midpoint = if range
+                        .start()
+                        .as_bezier_parameter()
+                        .unwrap()
+                        .scalar()
+                        .is_some()
+                    {
+                        q(1, 2)
+                    } else {
+                        q(7, 8)
+                    };
+                    for parameter in [range.start().clone(), midpoint.into(), range.end().clone()] {
+                        let actual = curve.point_at(&parameter, &policy).unwrap();
+                        let expected = source.point_at(&parameter, &policy).unwrap();
+                        assert_eq!(actual.certainty, CurveCertainty::Certified);
+                        assert_eq!(expected.certainty, CurveCertainty::Certified);
+                        assert_eq!(
+                            actual.value.same_point(&expected.value, &policy),
+                            Classification::Decided(true)
+                        );
+                    }
+                    let (start, end) = if reversed {
+                        (range.end(), range.start())
+                    } else {
+                        (range.start(), range.end())
+                    };
+                    for (point, parameter) in [(curve.start(), start), (curve.end(), end)] {
+                        assert_eq!(
+                            point.same_point(
+                                &source.point_at(parameter, &policy).unwrap().value,
+                                &policy
+                            ),
+                            Classification::Decided(true)
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
 fn subcurve_certified_outer_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {
     let bounds = match curve {
         BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(),
@@ -83,7 +189,7 @@ impl CurveSupport2 {
     pub(crate) fn from_fragment(fragment: &BezierSplitFragment2) -> Self {
         match fragment {
             BezierSplitFragment2::Materialized { curve, .. }
-            | BezierSplitFragment2::AlgebraicEndpointImages {
+            | BezierSplitFragment2::RetainedBezier {
                 source_curve: curve,
                 ..
             } => Self::Bezier(curve.clone()),
@@ -109,9 +215,10 @@ impl CurveSupport2 {
     /// have already been certified by the calling operation.
     ///
     /// Endpoint images, when supplied, correspond to ascending source order
-    /// and preserve the selected parameter-to-point relation. Rational spans
-    /// require those images; ordinary analytic, line and circle ranges already
-    /// retain their endpoint evaluators. Traversal is applied after restriction.
+    /// and preserve the selected parameter-to-point relation. Ordinary Bezier,
+    /// analytic, line and circle ranges retain lazy endpoint evaluators;
+    /// selected-fiber ranges require their certified point images. Traversal
+    /// is applied after restriction without changing the source chart.
     pub(crate) fn restrict_certified(
         &self,
         range: CurveParameterRange2,
@@ -120,9 +227,9 @@ impl CurveSupport2 {
         policy: &CurveContext,
     ) -> CurveResult<BezierSplitFragment2> {
         let selected_source = match self {
-            Self::Bezier(curve) => Some(BezierSelectedFiberSource2::Rational(
-                RationalBezier2::try_from_subcurve(curve)?,
-            )),
+            Self::Bezier(curve) if endpoint_images.is_some() => Some(
+                BezierSelectedFiberSource2::Rational(RationalBezier2::try_from_subcurve(curve)?),
+            ),
             Self::Parallel(parallel) if endpoint_images.is_some() => Some(
                 BezierSelectedFiberSource2::AnalyticParallel(parallel.clone()),
             ),
@@ -142,7 +249,40 @@ impl CurveSupport2 {
             ))
         } else {
             match self {
-                Self::Bezier(_) => unreachable!("rational range handled above"),
+                Self::Bezier(curve) => {
+                    let (Some(start), Some(end)) = (
+                        range.start().as_bezier_parameter(),
+                        range.end().as_bezier_parameter(),
+                    ) else {
+                        return Err(CurveError::Topology(
+                            "a selected rational restriction requires its certified endpoint images".into(),
+                        ));
+                    };
+                    if !reversed && range == CurveParameterRange2::unit() {
+                        return Ok(BezierSplitFragment2::Materialized {
+                            start: start.clone(),
+                            end: end.clone(),
+                            curve: curve.clone(),
+                        });
+                    }
+                    let endpoint = |parameter: &crate::BezierParameter2| match parameter {
+                        crate::BezierParameter2::Exact(_) => Ok(None),
+                        crate::BezierParameter2::Algebraic(parameter) => {
+                            crate::BezierAlgebraicEndpointImage2::from_source_curve_first_order(
+                                curve, parameter, policy,
+                            )
+                            .map(Some)
+                        }
+                    };
+                    BezierSplitFragment2::RetainedBezier {
+                        reversed: false,
+                        start: start.clone(),
+                        end: end.clone(),
+                        source_curve: curve.clone(),
+                        start_image: endpoint(start)?,
+                        end_image: endpoint(end)?,
+                    }
+                }
                 Self::Parallel(parallel) => {
                     let (Some(start), Some(end)) = (
                         range.start().as_bezier_parameter(),
@@ -167,6 +307,15 @@ impl CurveSupport2 {
                     ) else {
                         return Err(CurveError::InvalidCurveParameter);
                     };
+                    if start.is_endpoint_of(chord, true) && end.is_endpoint_of(chord, false) {
+                        chord.validate_policy(policy)?;
+                        let fragment = BezierSplitFragment2::AlgebraicChord(chord.clone());
+                        return if reversed {
+                            fragment.reversed()
+                        } else {
+                            Ok(fragment)
+                        };
+                    }
                     BezierSplitFragment2::AlgebraicChord(
                         crate::BezierAlgebraicChord2::from_certified_ordered_parameter_range(
                             chord, start, end, policy,
@@ -180,6 +329,17 @@ impl CurveSupport2 {
                     ) else {
                         return Err(CurveError::InvalidCurveParameter);
                     };
+                    if start.shares_exact_evidence(source.start_parameter())
+                        && end.shares_exact_evidence(source.end_parameter())
+                    {
+                        let fragment =
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(source.clone());
+                        return if reversed == source.is_reversed() {
+                            Ok(fragment)
+                        } else {
+                            fragment.reversed()
+                        };
+                    }
                     BezierSplitFragment2::AlgebraicCuspSemicircle(
                         crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
                             source.semicircle().clone(),

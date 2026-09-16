@@ -645,7 +645,7 @@ fn project_curve_region_loop_to_curve_path(
     for fragment in fragments {
         let curve = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => curve.clone(),
-            BezierSplitFragment2::AlgebraicEndpointImages {
+            BezierSplitFragment2::RetainedBezier {
                 reversed,
                 start,
                 end,
@@ -835,7 +835,7 @@ fn append_curve_fragment_samples(
         BezierSplitFragment2::Materialized { curve, .. } => {
             append_bezier_subcurve_samples(points, curve, options, policy, 0)?;
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed,
             start,
             end,

@@ -77,7 +77,7 @@ fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveRegionBoundaryLoo
 }
 
 fn reversed_algebraic_fragment(fragment: &BezierSplitFragment2) -> BezierSplitFragment2 {
-    assert!(fragment.is_algebraic_endpoint_images());
+    assert!(fragment.is_retained_bezier());
     fragment.reversed().unwrap()
 }
 
@@ -134,7 +134,7 @@ fn retained_algebraic_endpoint_line_fragment(start: Point2, end: Point2) -> Bezi
     let curve = QuadraticBezier2::new(start, end, far);
     let end_image = BezierAlgebraicEndpointImage2::quadratic(&curve, &parameter, &policy())
         .expect("linear midpoint image is exact algebraic evidence");
-    BezierSplitFragment2::AlgebraicEndpointImages {
+    BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: exact(Real::zero()),
         end: BezierParameter2::algebraic(parameter),
@@ -705,7 +705,7 @@ fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
     let forged_image = algebraic_image(&QuadraticBezier2::new(p(0, 1), p(1, 1), p(2, 1)));
 
     assert_topology_error(CurveRegionBoundaryLoop2::new(
-        vec![BezierSplitFragment2::AlgebraicEndpointImages {
+        vec![BezierSplitFragment2::RetainedBezier {
             reversed: false,
             start: BezierParameter2::Exact(Real::zero()),
             end: parameter,
@@ -872,7 +872,7 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
         split
             .fragments()
             .iter()
-            .all(BezierSplitFragment2::is_algebraic_endpoint_images)
+            .all(BezierSplitFragment2::is_retained_bezier)
     );
     let lower = BezierSplitFragment2::Materialized {
         start: exact(Real::zero()),
@@ -1137,7 +1137,7 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
             )
             .unwrap(),
     );
-    assert!(split.has_algebraic_endpoint_images());
+    assert!(split.has_retained_beziers());
     let mut fragments = split.fragments().to_vec();
     fragments.push(BezierSplitFragment2::Materialized {
         start: exact(r(0)),
@@ -1237,7 +1237,7 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
 fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence() {
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     let source = line_midpoint_curve(-1, 0, 1);
-    let partial = BezierSplitFragment2::AlgebraicEndpointImages {
+    let partial = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: BezierParameter2::Exact(Real::zero()),
         end: parameter,
@@ -1254,7 +1254,7 @@ fn retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evi
     let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
     let source_curve =
         hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)));
-    let source_only = BezierSplitFragment2::AlgebraicEndpointImages {
+    let source_only = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: BezierParameter2::Exact(Real::zero()),
         end: parameter,

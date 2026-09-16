@@ -3186,13 +3186,31 @@ fn rotated_algebraic_round_regions_boolean_through_oblique_three_field_contacts(
             evidence.contacts().iter().any(|contact| {
                 contact.point().is_some()
                     && matches!(
-                        (contact.first().family(), contact.second().family()),
-                        (CurveFamily2::RationalBezier, CurveFamily2::Line)
-                            | (CurveFamily2::Line, CurveFamily2::RationalBezier)
+                        (
+                            contact.first().curve().family(),
+                            contact.second().curve().family()
+                        ),
+                        (CurveFamily2::CircularArc, CurveFamily2::Line)
+                            | (CurveFamily2::Line, CurveFamily2::CircularArc)
                     )
             }),
             "the rotated round regions must retain an exact oblique cusp/chord contact: {evidence:?}",
         );
+        for contact in evidence.contacts() {
+            let Some(point) = contact.point() else {
+                continue;
+            };
+            for (carrier, parameter) in [
+                (contact.first(), contact.first_parameter()),
+                (contact.second(), contact.second_parameter()),
+            ] {
+                let replay = carrier.curve().point_at(parameter, &policy).unwrap();
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                let same = replay.value.coincides_with(point, &policy);
+                assert_eq!(same.certainty, CurveCertainty::Certified);
+                assert_eq!(same.value, Classification::Decided(true));
+            }
+        }
         #[cfg(feature = "dispatch-trace")]
         {
             assert!(
@@ -3403,9 +3421,9 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
             .map(|blocker| {
                 (
                     blocker.first().fragment_index(),
-                    blocker.first().family(),
+                    blocker.first().curve().family(),
                     blocker.second().fragment_index(),
-                    blocker.second().family(),
+                    blocker.second().curve().family(),
                     blocker.uncertainty_reason(),
                 )
             })
@@ -3468,9 +3486,9 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
             .map(|blocker| {
                 (
                     blocker.first().fragment_index(),
-                    blocker.first().family(),
+                    blocker.first().curve().family(),
                     blocker.second().fragment_index(),
-                    blocker.second().family(),
+                    blocker.second().curve().family(),
                     blocker.uncertainty_reason(),
                 )
             })
@@ -3525,9 +3543,9 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
             .map(|blocker| {
                 (
                     blocker.first().fragment_index(),
-                    blocker.first().family(),
+                    blocker.first().curve().family(),
                     blocker.second().fragment_index(),
-                    blocker.second().family(),
+                    blocker.second().curve().family(),
                     blocker.uncertainty_reason(),
                 )
             })
@@ -4727,7 +4745,7 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
             .iter()
             .map(|fragment| match fragment {
                 BezierSplitFragment2::Materialized { .. } => "materialized",
-                BezierSplitFragment2::AlgebraicEndpointImages { .. } => "endpoint-images",
+                BezierSplitFragment2::RetainedBezier { .. } => "endpoint-images",
                 BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
@@ -4869,7 +4887,7 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
         .iter()
         .map(|fragment| match fragment {
             BezierSplitFragment2::Materialized { .. } => "materialized",
-            BezierSplitFragment2::AlgebraicEndpointImages { .. } => "endpoint-images",
+            BezierSplitFragment2::RetainedBezier { .. } => "endpoint-images",
             BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
             BezierSplitFragment2::AlgebraicChord(_) => "chord",
             BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
@@ -4973,7 +4991,7 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
             .iter()
             .map(|fragment| match fragment {
                 BezierSplitFragment2::Materialized { .. } => "materialized",
-                BezierSplitFragment2::AlgebraicEndpointImages { .. } => "endpoint-images",
+                BezierSplitFragment2::RetainedBezier { .. } => "endpoint-images",
                 BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                 BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
@@ -5298,10 +5316,7 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                 fragments
                     .iter()
                     .filter(|fragment| {
-                        matches!(
-                            fragment,
-                            BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                        )
+                        matches!(fragment, BezierSplitFragment2::RetainedBezier { .. })
                     })
                     .count()
                     >= 2
@@ -5643,9 +5658,9 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
             .map(|blocker| {
                 (
                     blocker.first().fragment_index(),
-                    blocker.first().family(),
+                    blocker.first().curve().family(),
                     blocker.second().fragment_index(),
-                    blocker.second().family(),
+                    blocker.second().curve().family(),
                     blocker.uncertainty_reason(),
                 )
             })
@@ -5722,10 +5737,10 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
                 (
                     blocker.first().loop_index(),
                     blocker.first().fragment_index(),
-                    blocker.first().family(),
+                    blocker.first().curve().family(),
                     blocker.second().loop_index(),
                     blocker.second().fragment_index(),
-                    blocker.second().family(),
+                    blocker.second().curve().family(),
                     blocker.uncertainty_reason(),
                 )
             })

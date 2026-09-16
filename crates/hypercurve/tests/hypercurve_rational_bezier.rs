@@ -1056,10 +1056,7 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
             .fragments()
             .iter()
             .chain(topology.second().fragments())
-            .all(|fragment| matches!(
-                fragment,
-                BezierSplitFragment2::AlgebraicEndpointImages { .. }
-            ))
+            .all(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
     );
     assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
     assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
@@ -1073,7 +1070,7 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
     assert_eq!(split.fragments().len(), 2);
     assert!(split.fragments().iter().all(|fragment| matches!(
         fragment,
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             start_image,
             end_image,
             ..
@@ -1084,7 +1081,7 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
         .fragments()
         .iter()
         .flat_map(|fragment| match fragment {
-            BezierSplitFragment2::AlgebraicEndpointImages {
+            BezierSplitFragment2::RetainedBezier {
                 start_image,
                 end_image,
                 ..

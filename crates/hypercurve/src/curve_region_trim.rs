@@ -4,8 +4,8 @@ use crate::policy::resolve_certified_operation;
 use crate::{
     Classification, Curve2, CurveContext, CurveIntersectionPairBlockerKind2, CurveLocation2,
     CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2, CurvePath2, CurvePoint2,
-    CurveRegion2, CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult, Real,
-    RegionPointLocation, UncertaintyReason,
+    CurveRegion2, CurveRegionCarrier2, CurveResult, CurveSpanRange2, ExactCurveError,
+    ExactCurveResult, Real, RegionPointLocation, UncertaintyReason,
 };
 
 /// Which authored region boundary owns one exact trim contact.
@@ -17,12 +17,13 @@ pub enum CurveRegionBoundaryKind2 {
     Hole,
 }
 
-/// Exact evidence that one retained trim endpoint lies on an authored region segment.
+/// Exact evidence that a trim endpoint lies on a retained region carrier,
+/// together with its input boundary provenance.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionBoundaryContact2 {
     kind: CurveRegionBoundaryKind2,
     contour_index: usize,
-    segment_index: usize,
+    carrier: CurveRegionCarrier2,
     boundary_parameter: CurveParameter2,
     point: Option<CurvePoint2>,
 }
@@ -38,12 +39,12 @@ impl CurveRegionBoundaryContact2 {
         self.contour_index
     }
 
-    /// Returns the segment index in the authored contour.
-    pub const fn segment_index(&self) -> usize {
-        self.segment_index
+    /// Returns the evaluable carrier and its input boundary provenance.
+    pub const fn carrier(&self) -> &CurveRegionCarrier2 {
+        &self.carrier
     }
 
-    /// Returns the exact parameter evidence on the contacted boundary segment.
+    /// Returns the exact parameter in [`Self::carrier`]'s curve chart.
     pub const fn boundary_parameter(&self) -> &CurveParameter2 {
         &self.boundary_parameter
     }
@@ -414,7 +415,7 @@ impl<'a> PreparedTrimSource<'a> {
                 contact: CurveRegionBoundaryContact2 {
                     kind,
                     contour_index,
-                    segment_index: contact.second().fragment_index(),
+                    carrier: contact.second().clone(),
                     boundary_parameter: contact.second_parameter().clone(),
                     point: contact.point().cloned(),
                 },
@@ -475,7 +476,7 @@ impl<'a> PreparedTrimSource<'a> {
                     contact: CurveRegionBoundaryContact2 {
                         kind,
                         contour_index,
-                        segment_index: overlap.second().fragment_index(),
+                        carrier: overlap.second().clone(),
                         boundary_parameter: boundary_parameter.clone(),
                         point: Some(
                             source_curve
@@ -1051,11 +1052,15 @@ mod tests {
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         assert_eq!(outcome.value.len(), 1);
         assert_eq!(
-            outcome.value[0].start_boundary_contacts()[0].segment_index(),
+            outcome.value[0].start_boundary_contacts()[0]
+                .carrier()
+                .fragment_index(),
             0
         );
         assert_eq!(
-            outcome.value[0].end_boundary_contacts()[0].segment_index(),
+            outcome.value[0].end_boundary_contacts()[0]
+                .carrier()
+                .fragment_index(),
             2
         );
     }
@@ -1208,12 +1213,12 @@ mod tests {
             let start = trimmed
                 .start_boundary_contacts()
                 .iter()
-                .find(|contact| contact.segment_index() == 0)
+                .find(|contact| contact.carrier().fragment_index() == 0)
                 .expect("the overlap start must retain bottom-edge provenance");
             let end = trimmed
                 .end_boundary_contacts()
                 .iter()
-                .find(|contact| contact.segment_index() == 0)
+                .find(|contact| contact.carrier().fragment_index() == 0)
                 .expect("the overlap end must retain bottom-edge provenance");
             assert_eq!(start.point(), Some(&CurvePoint2::from(p(0, 0))));
             assert_eq!(end.point(), Some(&CurvePoint2::from(p(4, 0))));
@@ -1264,9 +1269,21 @@ mod tests {
         for (contact, (kind, segment_index, point)) in contacts.into_iter().zip(expected) {
             assert_eq!(contact.kind(), kind);
             assert_eq!(contact.contour_index(), 0);
-            assert_eq!(contact.segment_index(), segment_index);
+            assert_eq!(contact.carrier().fragment_index(), segment_index);
             assert_eq!(contact.point(), Some(&CurvePoint2::from(point)));
             assert!(contact.boundary_parameter().as_algebraic_chord().is_some());
+            let replay = contact
+                .carrier()
+                .curve()
+                .point_at(contact.boundary_parameter(), &CurveContext::STRICT)
+                .unwrap();
+            assert_eq!(replay.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(
+                replay
+                    .value
+                    .same_point(contact.point().unwrap(), &CurveContext::STRICT),
+                Classification::Decided(true),
+            );
         }
     }
 
@@ -1738,7 +1755,7 @@ mod tests {
                     piece.end_boundary_contacts()
                 };
                 assert_eq!(contacts.len(), 1);
-                assert_eq!(contacts[0].segment_index(), 1);
+                assert_eq!(contacts[0].carrier().fragment_index(), 1);
                 let again = piece.curve().trim_inside_region(&region, &policy).unwrap();
                 assert_eq!(again.certainty, CurveCertainty::Certified);
                 assert_eq!(again.value.len(), 1);

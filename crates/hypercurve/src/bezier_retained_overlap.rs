@@ -2804,7 +2804,7 @@ fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Po
                 (start, end)
             })
         }
-        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        BezierSplitFragment2::RetainedBezier { .. }
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
         BezierSplitFragment2::SelectedFiber(_) => None,

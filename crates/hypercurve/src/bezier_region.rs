@@ -1094,7 +1094,7 @@ impl CurveRegionBoundaryLoop2 {
             self.fragments
                 .iter()
                 .map(|fragment| match fragment {
-                    BezierSplitFragment2::AlgebraicEndpointImages { source_curve, .. } => {
+                    BezierSplitFragment2::RetainedBezier { source_curve, .. } => {
                         rationalize_retained_subcurve(source_curve).map(Some)
                     }
                     _ => Ok(None),
@@ -1285,7 +1285,7 @@ impl CurveRegionBoundaryLoop2 {
         self.fragments.iter().any(|fragment| {
             matches!(
                 fragment,
-                BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                BezierSplitFragment2::RetainedBezier { .. }
                     | BezierSplitFragment2::AnalyticParallel(_)
                     | BezierSplitFragment2::AlgebraicChord(_)
                     | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
@@ -1377,7 +1377,7 @@ fn validate_retained_fragment_provenance(
             }
             validate_retained_fragment_parameter_order(start, end, policy)
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             start,
             end,
             source_curve,
@@ -1664,7 +1664,7 @@ pub(crate) fn curve_fragment_endpoint_point(
             }
             .clone(),
         ),
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed,
             start,
             end,
@@ -1763,7 +1763,7 @@ fn retained_fragment_endpoint_evidence(
                 algebraic_cusp_source: None,
             })
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed,
             start,
             end,
@@ -1924,7 +1924,7 @@ fn fragment_certifies_nonnegative_turn(fragment: &BezierSplitFragment2) -> Curve
             retained_subcurve_parallel(curve, Real::zero())?
                 .certifies_nonnegative_turn_on_unit_domain(false)
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             source_curve,
             reversed,
             ..
@@ -2836,10 +2836,8 @@ fn retained_corner_fragment_extension(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
-    if matches!(
-        fragment,
-        BezierSplitFragment2::AlgebraicEndpointImages { .. }
-    ) && let Some(chord_parameter) = parameter.as_algebraic_chord()
+    if matches!(fragment, BezierSplitFragment2::RetainedBezier { .. })
+        && let Some(chord_parameter) = parameter.as_algebraic_chord()
     {
         let promoted = BezierSplitFragment2::AlgebraicChord(chord_parameter.chord().clone());
         return retained_corner_fragment_extension(
@@ -3194,10 +3192,7 @@ fn retained_corner_fragment_trim(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
-    if matches!(
-        fragment,
-        BezierSplitFragment2::AlgebraicEndpointImages { .. }
-    ) {
+    if matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }) {
         if let Some(chord_parameter) = parameter.as_algebraic_chord() {
             let promoted = BezierSplitFragment2::AlgebraicChord(chord_parameter.chord().clone());
             return retained_corner_fragment_trim(
@@ -3519,10 +3514,7 @@ fn retained_corner_fragment_between_cuts(
         }
         _ => {}
     }
-    if matches!(
-        fragment,
-        BezierSplitFragment2::AlgebraicEndpointImages { .. }
-    ) {
+    if matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }) {
         if let Some(chord_parameter) = previous_cut
             .parameter
             .as_algebraic_chord()
@@ -4325,7 +4317,7 @@ impl CurveTangent2 {
                     derivative.dy().clone(),
                 ))));
             }
-            BezierSplitFragment2::AlgebraicEndpointImages {
+            BezierSplitFragment2::RetainedBezier {
                 source_curve,
                 start,
                 end,
@@ -4784,7 +4776,7 @@ fn exact_offset_span_from_algebraic_endpoint_images(
         }
     };
     Ok(Classification::Decided(ExactOffsetSpan2 {
-        fragments: vec![BezierSplitFragment2::AlgebraicEndpointImages {
+        fragments: vec![BezierSplitFragment2::RetainedBezier {
             reversed,
             start: start.clone(),
             end: end.clone(),
@@ -5547,7 +5539,7 @@ impl<'a> RetainedParallelOffsetFragmentRef2<'a> {
             BezierSplitFragment2::AnalyticParallel(fragment) => Some(Self::Analytic(fragment)),
             BezierSplitFragment2::SelectedFiber(fragment) => Some(Self::Selected(fragment)),
             BezierSplitFragment2::Materialized { .. }
-            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::RetainedBezier { .. }
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
         }
@@ -5747,7 +5739,7 @@ fn promoted_endpoint_image_corner_fragment(
     fragment: &BezierSplitFragment2,
     operation: CurveOperation2,
 ) -> ExactCurveResult<crate::BezierParallelFragment2> {
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    let BezierSplitFragment2::RetainedBezier {
         reversed,
         start,
         end,
@@ -5786,7 +5778,7 @@ fn promoted_endpoint_image_corner_chord(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<crate::BezierAlgebraicChord2>> {
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    let BezierSplitFragment2::RetainedBezier {
         source_curve: source,
         ..
     } = fragment
@@ -5860,7 +5852,7 @@ impl<'a> CornerCarrierPreparation2<'a> {
             BezierSplitFragment2::Materialized { curve, .. } => {
                 Some(std::borrow::Cow::Owned(Curve2::from(curve.clone())))
             }
-            BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            BezierSplitFragment2::RetainedBezier { .. }
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
@@ -5933,7 +5925,7 @@ impl<'a> CornerCarrierPreparation2<'a> {
             return Ok(());
         }
         match fragment {
-            BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
+            BezierSplitFragment2::RetainedBezier { .. } => {
                 self.evidence = if let Some(chord) =
                     promoted_endpoint_image_corner_chord(fragment, operation, policy)?
                 {
@@ -6013,7 +6005,7 @@ impl<'a> CornerCarrierPreparation2<'a> {
             BezierSplitFragment2::SelectedFiber(fragment) => {
                 Ok(crate::curve::ExactCornerCarrier2::SelectedFiber(fragment))
             }
-            BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            BezierSplitFragment2::RetainedBezier { .. }
             | BezierSplitFragment2::Materialized { .. } => Err(ExactCurveError::blocked(
                 operation,
                 self.family(),
@@ -6673,7 +6665,7 @@ fn exact_offset_span_from_source_run(
                 }
             }
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed,
             start,
             end,
@@ -6772,7 +6764,7 @@ fn exact_offset_span_runs_from_boundary_loop(
                             BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
                                 "algebraic-cusp-semicircle"
                             }
-                            BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
+                            BezierSplitFragment2::RetainedBezier { .. } => {
                                 "algebraic-endpoint-images"
                             }
                         },
@@ -7446,7 +7438,7 @@ fn exact_offset_parallel_endpoint(
             Some((parallel, parameter, fragment.is_reversed()))
         }
         BezierSplitFragment2::Materialized { .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::RetainedBezier { .. }
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
     }
@@ -11518,7 +11510,7 @@ impl CurveRegion2 {
                 };
                 match fragment.fragment() {
                     BezierSplitFragment2::Materialized { .. }
-                    | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                    | BezierSplitFragment2::RetainedBezier { .. }
                     | BezierSplitFragment2::AnalyticParallel(_)
                     | BezierSplitFragment2::AlgebraicChord(_) => {
                         fragments.push(fragment.fragment().clone());
@@ -14478,7 +14470,7 @@ fn transform_retained_region_fragment(
                 )?,
             })
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed,
             start,
             end,
@@ -14487,7 +14479,7 @@ fn transform_retained_region_fragment(
         } => {
             let source =
                 transform_region_subcurve(source, m00, m01, m10, m11, tx, ty, similarity.as_ref())?;
-            Ok(BezierSplitFragment2::AlgebraicEndpointImages {
+            Ok(BezierSplitFragment2::RetainedBezier {
                 reversed: *reversed,
                 start: start.clone(),
                 end: end.clone(),
@@ -14914,7 +14906,7 @@ fn retained_line_fragment_endpoints(
                 fit.line().end().clone(),
             )))
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed,
             start,
             end,
@@ -15225,7 +15217,7 @@ fn retained_loop_sample_point_evidence(
             BezierSplitFragment2::Materialized { curve, .. } => {
                 subcurve_point_at(curve, half.clone(), policy).map(CurvePoint2::from)
             }
-            BezierSplitFragment2::AlgebraicEndpointImages {
+            BezierSplitFragment2::RetainedBezier {
                 start,
                 end,
                 source_curve,
@@ -15952,7 +15944,7 @@ fn retained_fragment_algebraic_ray_curve(
         BezierSplitFragment2::Materialized { curve, .. } => {
             (RationalBezier2::try_from_subcurve(curve)?, None, false)
         }
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             start,
             end,
             reversed,
@@ -16972,7 +16964,7 @@ fn retained_fragment_contains_point(
         BezierSplitFragment2::Materialized { curve, .. } => {
             Ok(subcurve_contains_point(curve, point, policy))
         }
-        BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } => {
+        BezierSplitFragment2::RetainedBezier { start, end, .. } => {
             let Some(evaluator) = evaluator else {
                 return Err(CurveError::Topology(
                     "retained algebraic source evaluator cache is incomplete".into(),
@@ -17129,11 +17121,11 @@ fn retained_circle_tangent_contacts(
             curve: BezierSubcurve2::Rational(curve),
             ..
         }
-        | BezierSplitFragment2::AlgebraicEndpointImages {
+        | BezierSplitFragment2::RetainedBezier {
             source_curve: BezierSubcurve2::Rational(curve),
             ..
         } => curve.retained_circular_conic(),
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             source_curve: BezierSubcurve2::RationalQuadratic(curve),
             ..
         } => curve.retained_circular_conic(),
@@ -17141,7 +17133,7 @@ fn retained_circle_tangent_contacts(
             .rational_curve()
             .and_then(RationalBezier2::retained_circular_conic),
         BezierSplitFragment2::Materialized { .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+        | BezierSplitFragment2::RetainedBezier { .. }
         | BezierSplitFragment2::AnalyticParallel(_)
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
@@ -17204,7 +17196,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                 Ok(Classification::Decided(None) | Classification::Uncertain(_)) | Err(_) => None,
             },
             BezierSplitFragment2::Materialized { .. }
-            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::RetainedBezier { .. }
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
             BezierSplitFragment2::SelectedFiber(_) => None,
@@ -17356,7 +17348,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                 })
             }
             BezierSplitFragment2::Materialized { .. }
-            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::RetainedBezier { .. }
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
@@ -17549,7 +17541,7 @@ fn classify_point_with_retained_ray_skipping_origin(
         };
         let (curve, range, reversed) = match fragment {
             BezierSplitFragment2::Materialized { curve, .. } => (curve, None, false),
-            BezierSplitFragment2::AlgebraicEndpointImages {
+            BezierSplitFragment2::RetainedBezier {
                 reversed,
                 start,
                 end,
@@ -18044,7 +18036,7 @@ pub(crate) fn retained_fragment_query_bounds(
 ) -> Classification<Aabb2> {
     match fragment {
         BezierSplitFragment2::Materialized { curve, .. } => subcurve_query_bounds(curve, policy),
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             source_curve: curve,
             ..
         } => subcurve_query_bounds(curve, policy),
@@ -26386,9 +26378,7 @@ mod tests {
                             .iter()
                             .map(|fragment| match fragment {
                                 BezierSplitFragment2::Materialized { .. } => "materialized",
-                                BezierSplitFragment2::AlgebraicEndpointImages { .. } => {
-                                    "endpoint-images"
-                                }
+                                BezierSplitFragment2::RetainedBezier { .. } => "endpoint-images",
                                 BezierSplitFragment2::AnalyticParallel(_) => "parallel",
                                 BezierSplitFragment2::AlgebraicChord(_) => "chord",
                                 BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)
@@ -27885,7 +27875,7 @@ mod tests {
             };
             BezierAlgebraicEndpointImage2::from_source_curve(source, parameter, policy).unwrap()
         };
-        let x_fragment = BezierSplitFragment2::AlgebraicEndpointImages {
+        let x_fragment = BezierSplitFragment2::RetainedBezier {
             reversed: false,
             start: BezierParameter2::Exact(Real::zero()),
             end: x_parameter.clone(),
@@ -27893,7 +27883,7 @@ mod tests {
             start_image: None,
             end_image: Some(endpoint_image(&x_source, &x_parameter)),
         };
-        let y_fragment = BezierSplitFragment2::AlgebraicEndpointImages {
+        let y_fragment = BezierSplitFragment2::RetainedBezier {
             reversed: true,
             start: BezierParameter2::Exact(Real::zero()),
             end: y_parameter.clone(),
@@ -28062,7 +28052,7 @@ mod tests {
             Classification::Decided(chord) => chord,
             Classification::Uncertain(reason) => panic!("endpoint chord: {reason:?}"),
         };
-        let nonlinear = BezierSplitFragment2::AlgebraicEndpointImages {
+        let nonlinear = BezierSplitFragment2::RetainedBezier {
             reversed: false,
             start: alpha.clone(),
             end: BezierParameter2::Exact(Real::one()),
@@ -28172,7 +28162,7 @@ mod tests {
                             .any(|fragment| {
                                 matches!(
                                     fragment,
-                                    BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                                    BezierSplitFragment2::RetainedBezier { .. }
                                         | BezierSplitFragment2::AnalyticParallel(_)
                                         | BezierSplitFragment2::SelectedFiber(_)
                                 )
@@ -28219,7 +28209,7 @@ mod tests {
                     let fragments = edited.boundary_loops()[0].fragments();
                     assert!(fragments.iter().any(|fragment| matches!(
                         fragment,
-                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                        BezierSplitFragment2::RetainedBezier { .. }
                             | BezierSplitFragment2::AnalyticParallel(_)
                     )));
                     assert!(fragments.iter().any(|fragment| matches!(

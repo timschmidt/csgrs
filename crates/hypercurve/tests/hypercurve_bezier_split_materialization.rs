@@ -390,7 +390,7 @@ fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence(
     };
     BezierSplitMaterialization2::new(materialization.fragments().to_vec()).unwrap();
 
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    let BezierSplitFragment2::RetainedBezier {
         start,
         end,
         source_curve,
@@ -403,7 +403,7 @@ fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence(
     };
 
     assert_topology_error(BezierSplitMaterialization2::new(vec![
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed: false,
             start: start.clone(),
             end: end.clone(),
@@ -420,7 +420,7 @@ fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence(
     let wrong_parameter_image =
         BezierAlgebraicEndpointImage2::quadratic(&curve, &wrong_parameter, &policy()).unwrap();
     assert_topology_error(BezierSplitMaterialization2::new(vec![
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed: false,
             start: start.clone(),
             end: end.clone(),
@@ -432,7 +432,7 @@ fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence(
 
     let wrong_source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(0, 4), p(4, 0)));
     assert_topology_error(BezierSplitMaterialization2::new(vec![
-        BezierSplitFragment2::AlgebraicEndpointImages {
+        BezierSplitFragment2::RetainedBezier {
             reversed: false,
             start,
             end,
@@ -484,7 +484,7 @@ fn linear_algebraic_boundary_materializes_native_subcurves() {
     };
 
     assert!(materialization.is_fully_materialized());
-    assert!(!materialization.has_algebraic_endpoint_images());
+    assert!(!materialization.has_retained_beziers());
     assert_eq!(materialization.fragments().len(), 2);
     let BezierSplitFragment2::Materialized {
         start,
@@ -517,13 +517,13 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(materialization.has_algebraic_endpoint_images());
+    assert!(materialization.has_retained_beziers());
     assert_eq!(materialization.fragments().len(), 4);
     assert!(matches!(
         materialization.fragments()[0],
         BezierSplitFragment2::Materialized { .. }
     ));
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    let BezierSplitFragment2::RetainedBezier {
         source_curve,
         start_image,
         end_image,
@@ -536,7 +536,7 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
     assert!(start_image.is_none());
     assert_polynomial_endpoint_image(end_image);
 
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    let BezierSplitFragment2::RetainedBezier {
         source_curve,
         start_image,
         end_image,
@@ -563,7 +563,7 @@ fn algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal() {
     let forward = materialization.fragments()[0].clone();
     let reversed = forward.reversed().unwrap();
 
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    let BezierSplitFragment2::RetainedBezier {
         reversed: forward_orientation,
         start: forward_start,
         end: forward_end,
@@ -574,7 +574,7 @@ fn algebraic_fragment_reversal_retains_source_evidence_and_toggles_traversal() {
     else {
         panic!("expected algebraic endpoint-image fragment");
     };
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    let BezierSplitFragment2::RetainedBezier {
         reversed: reverse_orientation,
         start: reverse_start,
         end: reverse_end,
@@ -623,8 +623,8 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(materialization.has_algebraic_endpoint_images());
-    let BezierSplitFragment2::AlgebraicEndpointImages {
+    assert!(materialization.has_retained_beziers());
+    let BezierSplitFragment2::RetainedBezier {
         source_curve,
         start_image,
         end_image,
@@ -682,9 +682,9 @@ fn broad_singleton_isolator_materializes_exact_endpoint_images() {
             panic!("validated nonroot domain endpoints must order the singleton isolator");
         };
         assert_eq!(split.fragments().len(), 2);
-        assert!(split.has_algebraic_endpoint_images());
+        assert!(split.has_retained_beziers());
 
-        let BezierSplitFragment2::AlgebraicEndpointImages {
+        let BezierSplitFragment2::RetainedBezier {
             start,
             end,
             source_curve,
@@ -701,7 +701,7 @@ fn broad_singleton_isolator_materializes_exact_endpoint_images() {
         assert!(start_image.is_none());
         assert_polynomial_endpoint_image(end_image);
 
-        let BezierSplitFragment2::AlgebraicEndpointImages {
+        let BezierSplitFragment2::RetainedBezier {
             start,
             end,
             source_curve,

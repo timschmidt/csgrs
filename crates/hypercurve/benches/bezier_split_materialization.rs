@@ -128,7 +128,7 @@ fn main() -> CurveResult<()> {
     let mut retained = 0_usize;
     for _ in 0..iterations {
         let materialization = decided(curve.split_at_parameters(&algebraic_parameters, &policy)?);
-        retained += black_box(usize::from(materialization.has_algebraic_endpoint_images()));
+        retained += black_box(usize::from(materialization.has_retained_beziers()));
     }
     let elapsed = started.elapsed();
     println!(

@@ -59,21 +59,43 @@ pub enum CurveRegionBooleanOperand2 {
     Second,
 }
 
-/// Stable identity for one retained region-boundary carrier.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionCarrierRef2 {
+/// An evaluable retained carrier and its provenance in the input region.
+///
+/// Intersection parameters belong to [`Self::curve`]. Preparation may choose
+/// a simpler chart than the input fragment, whose indices remain provenance.
+/// All references to a carrier within one report share this exact curve.
+#[derive(Clone, PartialEq)]
+pub struct CurveRegionCarrier2 {
+    data: Arc<CurveRegionCarrierData2>,
+}
+
+#[derive(PartialEq)]
+struct CurveRegionCarrierData2 {
+    curve: Curve2,
     carrier_index: usize,
     operand: CurveRegionBooleanOperand2,
     loop_index: usize,
     fragment_index: usize,
-    family: CurveFamily2,
+}
+
+impl std::fmt::Debug for CurveRegionCarrier2 {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("CurveRegionCarrier2")
+            .field("carrier_index", &self.carrier_index())
+            .field("operand", &self.operand())
+            .field("loop_index", &self.loop_index())
+            .field("fragment_index", &self.fragment_index())
+            .field("family", &self.curve().family())
+            .finish_non_exhaustive()
+    }
 }
 
 /// One exact contact between retained carriers from two curved regions.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionIntersectionContact2 {
-    first: CurveRegionCarrierRef2,
-    second: CurveRegionCarrierRef2,
+    first: CurveRegionCarrier2,
+    second: CurveRegionCarrier2,
     evidence: RegionPairContactEvidence,
 }
 
@@ -83,8 +105,8 @@ pub struct CurveRegionIntersectionContact2 {
 /// point, as do both ends. Either range may descend in its source chart.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionIntersectionOverlap2 {
-    first: CurveRegionCarrierRef2,
-    second: CurveRegionCarrierRef2,
+    first: CurveRegionCarrier2,
+    second: CurveRegionCarrier2,
     source: Option<CurveIntersectionOverlap2>,
     first_range: CurveParameterRange2,
     second_range: CurveParameterRange2,
@@ -94,8 +116,8 @@ pub struct CurveRegionIntersectionOverlap2 {
 /// One incomplete retained carrier pair in a curved-region intersection result.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveRegionIntersectionBlocker2 {
-    first: CurveRegionCarrierRef2,
-    second: CurveRegionCarrierRef2,
+    first: CurveRegionCarrier2,
+    second: CurveRegionCarrier2,
     blocker: RegionPairBlocker,
 }
 
@@ -835,41 +857,42 @@ fn retained_probe_exterior_candidate(bounds: &Aabb2, index: usize) -> Option<cra
     })
 }
 
-impl CurveRegionCarrierRef2 {
-    /// Returns the flattened carrier index in the retained pair.
-    pub const fn carrier_index(&self) -> usize {
-        self.carrier_index
+impl CurveRegionCarrier2 {
+    /// Returns the exact curve in the chart used by this report's parameters.
+    pub fn curve(&self) -> &Curve2 {
+        &self.data.curve
+    }
+
+    /// Returns the flattened carrier index within this intersection report.
+    pub fn carrier_index(&self) -> usize {
+        self.data.carrier_index
     }
 
     /// Returns the region operand that owns this carrier.
-    pub const fn operand(&self) -> CurveRegionBooleanOperand2 {
-        self.operand
+    pub fn operand(&self) -> CurveRegionBooleanOperand2 {
+        self.data.operand
     }
 
-    /// Returns the retained boundary-loop index in its operand.
-    pub const fn loop_index(&self) -> usize {
-        self.loop_index
+    /// Returns the input boundary-loop index in its operand.
+    pub fn loop_index(&self) -> usize {
+        self.data.loop_index
     }
 
-    /// Returns the retained fragment index in its boundary loop.
-    pub const fn fragment_index(&self) -> usize {
-        self.fragment_index
-    }
-
-    /// Returns the exact carrier family used by intersection dispatch.
-    pub const fn family(&self) -> CurveFamily2 {
-        self.family
+    /// Returns the input fragment index in its boundary loop. Its authored
+    /// chart may differ from the retained [`Self::curve`] chart.
+    pub fn fragment_index(&self) -> usize {
+        self.data.fragment_index
     }
 }
 
 impl CurveRegionIntersectionContact2 {
     /// Returns the first-region carrier identity.
-    pub const fn first(&self) -> &CurveRegionCarrierRef2 {
+    pub const fn first(&self) -> &CurveRegionCarrier2 {
         &self.first
     }
 
     /// Returns the second-region carrier identity.
-    pub const fn second(&self) -> &CurveRegionCarrierRef2 {
+    pub const fn second(&self) -> &CurveRegionCarrier2 {
         &self.second
     }
 
@@ -900,12 +923,12 @@ impl CurveRegionIntersectionContact2 {
 
 impl CurveRegionIntersectionOverlap2 {
     /// Returns the first-region carrier identity.
-    pub const fn first(&self) -> &CurveRegionCarrierRef2 {
+    pub const fn first(&self) -> &CurveRegionCarrier2 {
         &self.first
     }
 
     /// Returns the second-region carrier identity.
-    pub const fn second(&self) -> &CurveRegionCarrierRef2 {
+    pub const fn second(&self) -> &CurveRegionCarrier2 {
         &self.second
     }
 
@@ -937,12 +960,12 @@ impl CurveRegionIntersectionOverlap2 {
 
 impl CurveRegionIntersectionBlocker2 {
     /// Returns the first-region carrier identity.
-    pub const fn first(&self) -> &CurveRegionCarrierRef2 {
+    pub const fn first(&self) -> &CurveRegionCarrier2 {
         &self.first
     }
 
     /// Returns the second-region carrier identity.
-    pub const fn second(&self) -> &CurveRegionCarrierRef2 {
+    pub const fn second(&self) -> &CurveRegionCarrier2 {
         &self.second
     }
 
@@ -1646,17 +1669,42 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut contacts = Vec::new();
         let mut overlaps = Vec::new();
         let mut blockers = Vec::new();
+        let mut carriers: Vec<Option<CurveRegionCarrier2>> = vec![None; self.data.carriers.len()];
+        let mut publish = |index: usize| -> ExactCurveResult<CurveRegionCarrier2> {
+            if let Some(carrier) = &carriers[index] {
+                return Ok(carrier.clone());
+            }
+            let carrier = &self.data.carriers[index];
+            let fragment = carrier
+                .geometry
+                .restrict_certified(
+                    CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone()),
+                    carrier.selected_fiber_endpoint_points.as_deref().cloned(),
+                    carrier.reversed,
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(index, cause))?;
+            let published = CurveRegionCarrier2 {
+                data: Arc::new(CurveRegionCarrierData2 {
+                    curve: Curve2::from_retained_fragment(fragment),
+                    carrier_index: index,
+                    operand: carrier.operand,
+                    loop_index: carrier.loop_index,
+                    fragment_index: carrier.fragment_index,
+                }),
+            };
+            carriers[index] = Some(published.clone());
+            Ok(published)
+        };
         for pair in &self.data.pairs {
             let result = self.pair_result(pair)?;
-            let first = self.carrier_ref(pair.first_carrier_index);
-            let second = self.carrier_ref(pair.second_carrier_index);
-            blockers.extend(result.blockers.into_iter().map(|blocker| {
-                CurveRegionIntersectionBlocker2 {
-                    first: first.clone(),
-                    second: second.clone(),
+            for blocker in result.blockers {
+                blockers.push(CurveRegionIntersectionBlocker2 {
+                    first: publish(pair.first_carrier_index)?,
+                    second: publish(pair.second_carrier_index)?,
                     blocker,
-                }
-            }));
+                });
+            }
             for contact in result.contacts {
                 if parameter_in_carrier(
                     contact.first_parameter(),
@@ -1668,8 +1716,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     &self.data.policy,
                 )? {
                     contacts.push(CurveRegionIntersectionContact2 {
-                        first: first.clone(),
-                        second: second.clone(),
+                        first: publish(pair.first_carrier_index)?,
+                        second: publish(pair.second_carrier_index)?,
                         evidence: contact,
                     });
                 }
@@ -1681,8 +1729,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let (first_range, second_range) =
                     self.paired_overlap_ranges(pair, overlap.orientation, ranges)?;
                 overlaps.push(CurveRegionIntersectionOverlap2 {
-                    first: first.clone(),
-                    second: second.clone(),
+                    first: publish(pair.first_carrier_index)?,
+                    second: publish(pair.second_carrier_index)?,
                     source: overlap.source.and_then(|source| match source {
                         RegionPairOverlapSource::Bezier(source) => Some(source),
                         RegionPairOverlapSource::ParameterComponent { .. } => None,
@@ -1704,17 +1752,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 blockers: blockers.into(),
             }),
         })
-    }
-
-    fn carrier_ref(&self, carrier_index: usize) -> CurveRegionCarrierRef2 {
-        let carrier = &self.data.carriers[carrier_index];
-        CurveRegionCarrierRef2 {
-            carrier_index,
-            operand: carrier.operand,
-            loop_index: carrier.loop_index,
-            fragment_index: carrier.fragment_index,
-            family: carrier.family,
-        }
     }
 
     fn parallel_self_intersections(
@@ -8060,7 +8097,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         BezierSplitFragment2::Materialized { .. } => {
                             split_fragment_is_affine_line(&split.fragment)
                         }
-                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                        BezierSplitFragment2::RetainedBezier { .. }
                         | BezierSplitFragment2::AnalyticParallel(_)
                         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
                         | BezierSplitFragment2::SelectedFiber(_) => false,
@@ -8230,7 +8267,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             chord.exact_line().map(|line| line.point_at(half.clone()))
                         }
                         BezierSplitFragment2::Materialized { .. }
-                        | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                        | BezierSplitFragment2::RetainedBezier { .. }
                         | BezierSplitFragment2::AnalyticParallel(_)
                         | BezierSplitFragment2::SelectedFiber(_)
                         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
@@ -8606,7 +8643,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         BezierSplitFragment2::AlgebraicChord(_) => 1,
                         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => 2,
                         BezierSplitFragment2::Materialized { .. }
-                        | BezierSplitFragment2::AlgebraicEndpointImages { .. } => 3,
+                        | BezierSplitFragment2::RetainedBezier { .. } => 3,
                         BezierSplitFragment2::AnalyticParallel(_)
                         | BezierSplitFragment2::SelectedFiber(_) => 4,
                     };
@@ -8883,7 +8920,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Some(curve)
             }
             BezierSplitFragment2::Materialized { .. }
-            | BezierSplitFragment2::AlgebraicEndpointImages { .. }
+            | BezierSplitFragment2::RetainedBezier { .. }
             | BezierSplitFragment2::AnalyticParallel(_)
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
@@ -12481,11 +12518,9 @@ fn build_region_carrier(
         carrier.end = CurveParameter2::from_algebraic_chord(chord.end_parameter());
         carrier.geometry = CurveSupport2::Line(chord);
     }
-    if matches!(
-        fragment,
-        BezierSplitFragment2::AlgebraicEndpointImages { .. }
-    ) && let Ok(Classification::Decided(line)) =
-        crate::bezier_region::retained_line_fragment_segment(fragment, policy)
+    if matches!(fragment, BezierSplitFragment2::RetainedBezier { .. })
+        && let Ok(Classification::Decided(line)) =
+            crate::bezier_region::retained_line_fragment_segment(fragment, policy)
     {
         carrier.geometry = CurveSupport2::Bezier(BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(line),
@@ -13308,7 +13343,7 @@ fn compact_retained_circular_fragment(
             curve: BezierSubcurve2::RationalQuadratic(curve),
         };
     }
-    let BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } = fragment else {
+    let BezierSplitFragment2::RetainedBezier { start, end, .. } = fragment else {
         return fragment.clone();
     };
     let CurveSupport2::Bezier(carrier_curve) = &carrier.geometry else {
@@ -14385,7 +14420,7 @@ fn algebraic_endpoint_tangent_at_vertex(
     vertex: usize,
 ) -> Option<&BezierEndpointTangentImage2> {
     fragments.iter().find_map(|split| {
-        let BezierSplitFragment2::AlgebraicEndpointImages {
+        let BezierSplitFragment2::RetainedBezier {
             reversed,
             start_image,
             end_image,
@@ -16103,7 +16138,7 @@ fn fragment_range(
 ) -> Option<(&BezierParameter2, &BezierParameter2)> {
     match fragment {
         BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::AlgebraicEndpointImages { start, end, .. } => Some((start, end)),
+        | BezierSplitFragment2::RetainedBezier { start, end, .. } => Some((start, end)),
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             Some((fragment.range().start(), fragment.range().end()))
         }
@@ -17616,8 +17651,18 @@ mod certified_successor_tests {
             );
             assert_eq!(trimmed.start_boundary_contacts().len(), 1);
             assert_eq!(trimmed.end_boundary_contacts().len(), 1);
-            assert_eq!(trimmed.start_boundary_contacts()[0].segment_index(), 3);
-            assert_eq!(trimmed.end_boundary_contacts()[0].segment_index(), 1);
+            assert_eq!(
+                trimmed.start_boundary_contacts()[0]
+                    .carrier()
+                    .fragment_index(),
+                3
+            );
+            assert_eq!(
+                trimmed.end_boundary_contacts()[0]
+                    .carrier()
+                    .fragment_index(),
+                1
+            );
             assert!(
                 trimmed.start_boundary_contacts()[0]
                     .boundary_parameter()
@@ -17669,12 +17714,12 @@ mod certified_successor_tests {
                 let start_contact = trimmed
                     .start_boundary_contacts()
                     .iter()
-                    .find(|contact| contact.segment_index() == 0)
+                    .find(|contact| contact.carrier().fragment_index() == 0)
                     .expect("the overlap start must retain bottom-edge provenance");
                 let end_contact = trimmed
                     .end_boundary_contacts()
                     .iter()
-                    .find(|contact| contact.segment_index() == 0)
+                    .find(|contact| contact.carrier().fragment_index() == 0)
                     .expect("the overlap end must retain bottom-edge provenance");
                 let start_parameter = start_contact
                     .boundary_parameter()
@@ -18667,7 +18712,48 @@ mod certified_successor_tests {
             == Classification::Decided(Ordering::Greater);
         let [parallel_start, parallel_end] = decided(range.ordered_endpoints(&policy).unwrap());
         let chord_geometry = CurveSupport2::Line(chord.clone());
-        let parallel_geometry = CurveSupport2::Parallel(parallel);
+        let ordered_range =
+            CurveParameterRange2::new_validated(parallel_start.clone(), parallel_end.clone());
+        // Construct the same retained fragment accepted by production. A
+        // selected range owns its one-sided endpoint evidence; dropping it
+        // would manufacture an incomplete private carrier state.
+        let fragment = match (
+            parallel_start.as_bezier_parameter(),
+            parallel_end.as_bezier_parameter(),
+        ) {
+            (Some(start), Some(end)) => BezierSplitFragment2::AnalyticParallel(
+                crate::BezierParallelFragment2::from_certified_range(
+                    parallel.clone(),
+                    BezierParameterRange2::new_validated(start.clone(), end.clone()),
+                    parallel_reversed,
+                ),
+            ),
+            _ => {
+                let start = decided(
+                    parallel
+                        .point_evidence_on_region_range(&parallel_start, &ordered_range, &policy)
+                        .unwrap(),
+                );
+                let end = decided(
+                    parallel
+                        .point_evidence_on_region_range(&parallel_end, &ordered_range, &policy)
+                        .unwrap(),
+                );
+                let fragment = BezierSplitFragment2::SelectedFiber(
+                    crate::bezier_split::BezierSelectedFiberFragment2::new(
+                        BezierSelectedFiberSource2::AnalyticParallel(parallel),
+                        ordered_range,
+                        start,
+                        end,
+                    ),
+                );
+                if parallel_reversed {
+                    fragment.reversed().unwrap()
+                } else {
+                    fragment
+                }
+            }
+        };
         let context = CurveRegionBooleanContext {
             data: CurveRegionBooleanContextData {
                 first: &empty_first,
@@ -18688,20 +18774,13 @@ mod certified_successor_tests {
                         image_is_injective: OnceLock::new(),
                         bounds: OnceLock::new(),
                     },
-                    RegionCarrier {
-                        operand: CurveRegionBooleanOperand2::Second,
-                        loop_index: 0,
-                        fragment_index: 0,
-                        family: parallel_geometry.family(),
-                        geometry: parallel_geometry,
-                        start: parallel_start.clone(),
-                        end: parallel_end.clone(),
-                        reversed: parallel_reversed,
-                        filled_side_is_left: true,
-                        selected_fiber_endpoint_points: None,
-                        image_is_injective: OnceLock::new(),
-                        bounds: OnceLock::new(),
-                    },
+                    build_parameterized_carrier(
+                        &fragment,
+                        CurveRegionBooleanOperand2::Second,
+                        0,
+                        0,
+                        true,
+                    ),
                 ],
                 first_carrier_count: 1,
                 authored_carrier_pair_count: 1,
@@ -18723,6 +18802,48 @@ mod certified_successor_tests {
             .build_intersection_evidence()
             .expect("the chord/analytic-parallel evidence must complete");
         (result, evidence)
+    }
+
+    fn assert_chord_parallel_evidence_replays(
+        evidence: &CurveRegionIntersectionResult2,
+        policy: &CurveContext,
+    ) {
+        let replay = |first, second| {
+            let first = evidence_carrier_point(evidence, true, first, policy);
+            let second = evidence_carrier_point(evidence, false, second, policy);
+            assert_eq!(
+                first.same_point(&second, policy),
+                Classification::Decided(true)
+            );
+        };
+        for contact in evidence.contacts() {
+            replay(contact.first_parameter(), contact.second_parameter());
+        }
+        for overlap in evidence.overlaps() {
+            replay(
+                overlap.first_range().start(),
+                overlap.second_range().start(),
+            );
+            replay(overlap.first_range().end(), overlap.second_range().end());
+        }
+    }
+
+    fn evidence_carrier_point(
+        evidence: &CurveRegionIntersectionResult2,
+        first: bool,
+        parameter: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> CurvePoint2 {
+        let (a, b) = if let Some(contact) = evidence.contacts().first() {
+            (contact.first(), contact.second())
+        } else {
+            let overlap = &evidence.overlaps()[0];
+            (overlap.first(), overlap.second())
+        };
+        let curve = if first { a.curve() } else { b.curve() };
+        let point = curve.point_at(parameter, policy).unwrap();
+        assert_eq!(point.certainty, crate::CurveCertainty::Certified);
+        point.value
     }
 
     #[test]
@@ -18805,6 +18926,7 @@ mod certified_successor_tests {
                             range.clone(),
                             policy,
                         );
+                        assert_chord_parallel_evidence_replays(&evidence, &policy);
                         assert!(
                             result.blockers.is_empty(),
                             "kind={kind}, selected={selected}, reversed={reversed}: {result:?}"

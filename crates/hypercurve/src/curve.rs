@@ -447,7 +447,7 @@ impl Curve2 {
         }
         match self.retained_fragment().expect("every curve has a carrier") {
             crate::BezierSplitFragment2::Materialized { curve, .. }
-            | crate::BezierSplitFragment2::AlgebraicEndpointImages {
+            | crate::BezierSplitFragment2::RetainedBezier {
                 source_curve: curve,
                 ..
             } => match curve {
@@ -4212,7 +4212,7 @@ pub(crate) fn exact_corner_carrier<'a>(
                 crate::BezierSplitFragment2::SelectedFiber(fragment) => {
                     Some(ExactCornerCarrier2::SelectedFiber(fragment))
                 }
-                crate::BezierSplitFragment2::AlgebraicEndpointImages { .. }
+                crate::BezierSplitFragment2::RetainedBezier { .. }
                 | crate::BezierSplitFragment2::Materialized { .. } => None,
             }
         }

@@ -142112,43 +142112,16 @@ mod conversion_tests {
             // The full regions share their circular arc and part of the
             // straight closing edge. The clipped caps share only the arc.
             assert_eq!(reversed_evidence.overlaps().len(), 2);
-            let carrier_point = |curve: &crate::Curve2, parameter: &CurveParameter2| {
-                // Region preparation gives a linear image a chord chart,
-                // whose parameter retains the point directly. Other carriers
-                // keep the boundary fragment's chart.
-                if let Some(parameter) = parameter.as_algebraic_chord() {
-                    return parameter.point().clone();
-                }
-                let point = curve.point_at(parameter, &policy).unwrap();
-                assert_eq!(point.certainty, crate::CurveCertainty::Certified);
-                point.value
-            };
-            for (first_region, second_region, evidence) in [
-                (&cusp_region, &reversed_parallel_region, &reversed_evidence),
-                (&partial_cusp_region, &parallel_region, &clipped_evidence),
-                (&parallel_region, &partial_cusp_region, &swapped_evidence),
-                (
-                    &partial_cusp_region,
-                    &reversed_parallel_region,
-                    &reversed_clipped_evidence,
-                ),
-                (
-                    &cross_field_cusp_region,
-                    &reversed_parallel_region,
-                    &cross_field_reversed_evidence,
-                ),
+            for evidence in [
+                &reversed_evidence,
+                &clipped_evidence,
+                &swapped_evidence,
+                &reversed_clipped_evidence,
+                &cross_field_reversed_evidence,
             ] {
                 for overlap in evidence.overlaps() {
-                    let first = crate::Curve2::from_retained_fragment(
-                        first_region.boundary_loops()[overlap.first().loop_index()].fragments()
-                            [overlap.first().fragment_index()]
-                        .clone(),
-                    );
-                    let second = crate::Curve2::from_retained_fragment(
-                        second_region.boundary_loops()[overlap.second().loop_index()].fragments()
-                            [overlap.second().fragment_index()]
-                        .clone(),
-                    );
+                    let first = overlap.first().curve();
+                    let second = overlap.second().curve();
                     for (first_parameter, second_parameter) in [
                         (
                             overlap.first_range().start(),
@@ -142156,8 +142129,12 @@ mod conversion_tests {
                         ),
                         (overlap.first_range().end(), overlap.second_range().end()),
                     ] {
-                        let first_point = carrier_point(&first, first_parameter);
-                        let second_point = carrier_point(&second, second_parameter);
+                        let first_point = first.point_at(first_parameter, &policy).unwrap();
+                        let second_point = second.point_at(second_parameter, &policy).unwrap();
+                        assert_eq!(first_point.certainty, crate::CurveCertainty::Certified);
+                        assert_eq!(second_point.certainty, crate::CurveCertainty::Certified);
+                        let first_point = first_point.value;
+                        let second_point = second_point.value;
                         assert_eq!(
                             first_point.same_point(&second_point, &policy),
                             Classification::Decided(true),
@@ -149354,10 +149331,11 @@ mod conversion_tests {
                 &trimmed.end_boundary_contacts()[0],
             ];
             assert!(contacts.iter().any(|contact| {
-                contact.segment_index() == 0 && contact.boundary_parameter().is_algebraic_cusp()
+                contact.carrier().fragment_index() == 0
+                    && contact.boundary_parameter().is_algebraic_cusp()
             }));
             assert!(contacts.iter().any(|contact| {
-                contact.segment_index() == 1
+                contact.carrier().fragment_index() == 1
                     && contact.boundary_parameter().as_algebraic_chord().is_some()
             }));
 
@@ -149407,7 +149385,7 @@ mod conversion_tests {
                         .iter()
                         .chain(fragment.end_boundary_contacts())
                         .any(|contact| {
-                            contact.segment_index() == 0
+                            contact.carrier().fragment_index() == 0
                                 && contact.boundary_parameter().is_algebraic_cusp()
                         })
                 }));

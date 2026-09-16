@@ -267,7 +267,7 @@ impl CurveEnvelopeAccumulator {
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
             }
-            BezierSplitFragment2::AlgebraicEndpointImages {
+            BezierSplitFragment2::RetainedBezier {
                 start,
                 end,
                 source_curve,
@@ -687,7 +687,7 @@ impl EndpointEnvelopeAccumulator {
                 }
                 self.include_endpoint(native_endpoint_interval(&end))
             }
-            BezierSplitFragment2::AlgebraicEndpointImages {
+            BezierSplitFragment2::RetainedBezier {
                 start_image,
                 end_image,
                 ..

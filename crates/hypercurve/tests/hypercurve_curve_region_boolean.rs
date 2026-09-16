@@ -84,6 +84,131 @@ fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
     .into_value()
 }
 
+fn replay_carrier(
+    carrier: &hypercurve::CurveRegionCarrier2,
+    parameter: &hypercurve::CurveParameter2,
+    policy: &CurveContext,
+) -> hypercurve::CurvePoint2 {
+    let point = carrier.curve().point_at(parameter, policy).unwrap();
+    assert_eq!(point.certainty, CurveCertainty::Certified);
+    point.value
+}
+
+fn assert_same_point(
+    first: &hypercurve::CurvePoint2,
+    second: &hypercurve::CurvePoint2,
+    policy: &CurveContext,
+) {
+    let same = first.coincides_with(second, policy);
+    assert_eq!(same.certainty, CurveCertainty::Certified);
+    assert_eq!(same.value, Classification::Decided(true));
+}
+
+fn assert_report_replays(
+    report: &hypercurve::CurveRegionIntersectionResult2,
+    policy: &CurveContext,
+) {
+    let mut carriers = std::collections::HashMap::new();
+    let mut remember = |carrier: &hypercurve::CurveRegionCarrier2| {
+        let pointer = carrier.curve() as *const Curve2;
+        if let Some(previous) = carriers.insert(carrier.carrier_index(), pointer) {
+            assert_eq!(previous, pointer, "one shared curve per reported carrier");
+        }
+    };
+    for contact in report.contacts() {
+        remember(contact.first());
+        remember(contact.second());
+        let first = replay_carrier(contact.first(), contact.first_parameter(), policy);
+        let second = replay_carrier(contact.second(), contact.second_parameter(), policy);
+        assert_same_point(&first, &second, policy);
+        if let Some(point) = contact.point() {
+            assert_same_point(&first, point, policy);
+        }
+    }
+    for overlap in report.overlaps() {
+        remember(overlap.first());
+        remember(overlap.second());
+        for (first, second) in [
+            (
+                overlap.first_range().start(),
+                overlap.second_range().start(),
+            ),
+            (overlap.first_range().end(), overlap.second_range().end()),
+        ] {
+            assert_same_point(
+                &replay_carrier(overlap.first(), first, policy),
+                &replay_carrier(overlap.second(), second, policy),
+                policy,
+            );
+        }
+    }
+    for blocker in report.blockers() {
+        remember(blocker.first());
+        remember(blocker.second());
+    }
+}
+
+#[test]
+fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            for shared_edge in [false, true] {
+                let first_path = square_path(0, 0, 4, 4);
+                let second_path = square_path(2, if shared_edge { 0 } else { -1 }, 6, 3);
+                let second_path = if reversed {
+                    let reversed = second_path.reversed(&policy).unwrap();
+                    assert_eq!(reversed.certainty, CurveCertainty::Certified);
+                    reversed.value
+                } else {
+                    second_path
+                };
+                let first = CurveRegion2::try_from_boundary_paths(&[first_path], &policy)
+                    .unwrap()
+                    .into_value();
+                let second = CurveRegion2::try_from_boundary_paths(&[second_path], &policy)
+                    .unwrap()
+                    .into_value();
+                for (first, second) in [(&first, &second), (&second, &first)] {
+                    let report = first.intersect_region(second, &policy).unwrap();
+                    assert_eq!(report.certainty, CurveCertainty::Certified);
+                    assert!(report.value.is_complete());
+                    assert!(!report.value.contacts().is_empty());
+                    assert_eq!(!report.value.overlaps().is_empty(), shared_edge);
+                    assert_report_replays(&report.value, &policy);
+                }
+                let contact = first
+                    .intersect_region(&second, &policy)
+                    .unwrap()
+                    .value
+                    .contacts()[0]
+                    .clone();
+                assert_eq!(
+                    contact.first().curve().family(),
+                    hypercurve::CurveFamily2::Line
+                );
+                assert!(contact.first_parameter().is_algebraic_chord());
+                drop(first);
+                drop(second);
+                assert_same_point(
+                    &replay_carrier(contact.first(), contact.first_parameter(), &policy),
+                    &replay_carrier(contact.second(), contact.second_parameter(), &policy),
+                    &policy,
+                );
+                let repeated = contact
+                    .first()
+                    .curve()
+                    .intersect_curve(contact.second().curve(), &policy)
+                    .unwrap();
+                assert_eq!(repeated.certainty, CurveCertainty::Certified);
+                assert!(repeated.value.is_complete());
+                assert!(
+                    !repeated.value.contacts().is_empty() || !repeated.value.overlaps().is_empty()
+                );
+            }
+        }
+    }
+}
+
 fn circle(center_x: Real) -> CurveRegion2 {
     circle_with_policy(center_x, &CurveContext::STRICT)
 }
@@ -316,6 +441,7 @@ fn affine_line_batch_reuses_the_authoritative_arrangement_topology() {
     assert!(!contacts.contacts().is_empty());
     assert!(!contacts.overlaps().is_empty());
     assert!(contacts.blockers().is_empty());
+    assert_report_replays(&contacts, &policy);
     assert!(contacts.contacts().iter().all(|contact| {
         contact.first().operand() == hypercurve::CurveRegionBooleanOperand2::First
             && contact.second().operand() == hypercurve::CurveRegionBooleanOperand2::Second
@@ -703,7 +829,7 @@ fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
                 boundary
                     .fragments()
                     .iter()
-                    .all(|fragment| !fragment.is_algebraic_endpoint_images())
+                    .all(|fragment| !fragment.is_retained_bezier())
             }));
         }
 
@@ -764,7 +890,7 @@ fn elevated_circular_boolean_outputs_publish_native_boundaries() {
                 boundary
                     .fragments()
                     .iter()
-                    .all(|fragment| !fragment.is_algebraic_endpoint_images())
+                    .all(|fragment| !fragment.is_retained_bezier())
             }));
         }
     }
@@ -1670,6 +1796,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         assert!(evidence.value.is_complete());
         assert_eq!(evidence.value.contacts().len(), 2);
         assert_eq!(evidence.value.overlaps().len(), 1);
+        assert_report_replays(&evidence.value, &policy);
 
         let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();
         assert!(results.difference().is_empty());
