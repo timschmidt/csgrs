@@ -446,6 +446,95 @@ fn rounded_algebraic_rectangle_oracle(distance: &Real, policy: &CurveContext) ->
     )
 }
 
+// Find a boundary piece fully covered by the independent parabola y=x^2,
+// 0 <= x <= 2, and return its furthest endpoint beyond the original corner.
+// This remains valid when regularization subdivides the authored parabola.
+fn parabola_extension_contact(region: &CurveRegion2, policy: &CurveContext) -> Option<CurvePoint2> {
+    let parabola = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 4)));
+    let corner = p(1, 1).into();
+    for path in decided(region.boundary_paths(policy).unwrap()) {
+        for curve in path.curves() {
+            let start = curve.start();
+            let end = curve.end();
+            let contact = if decided(
+                start
+                    .compare_coordinate(&end, hypercurve::Axis2::X, policy)
+                    .unwrap(),
+            )
+            .is_gt()
+            {
+                start
+            } else {
+                end
+            };
+            if decided(
+                contact
+                    .compare_coordinate(&corner, hypercurve::Axis2::X, policy)
+                    .unwrap(),
+            ) != std::cmp::Ordering::Greater
+            {
+                continue;
+            }
+            let Ok(outcome) = curve.intersection_topology(&parabola, policy) else {
+                // An unrelated support need not supply the positive witness.
+                continue;
+            };
+            let topology = certified(outcome);
+            if topology.result().is_complete()
+                && topology.result().contacts().is_empty()
+                && topology.result().overlaps().len() == 1
+                && topology.first().len() == 1
+            {
+                return Some(contact);
+            }
+        }
+    }
+    None
+}
+
+fn has_certified_boundary_overlap(
+    region: &CurveRegion2,
+    reference: &Curve2,
+    policy: &CurveContext,
+) -> bool {
+    decided(region.boundary_paths(policy).unwrap())
+        .iter()
+        .flat_map(CurvePath2::curves)
+        .any(|curve| {
+            // Other boundary supports can have unfinished common dispatch.
+            // Accept only a complete certified positive-overlap witness.
+            curve
+                .intersect_curve(reference, policy)
+                .is_ok_and(|outcome| {
+                    outcome.certainty == CurveCertainty::Certified
+                        && outcome.value.is_complete()
+                        && !outcome.value.overlaps().is_empty()
+                })
+        })
+}
+
+fn assert_boundary_bounds_contain_endpoints(region: &CurveRegion2, policy: &CurveContext) {
+    for path in decided(region.boundary_paths(policy).unwrap()) {
+        for curve in path.curves() {
+            let bounds = curve.bounds().expect("generated curve bounds remain exact");
+            let minimum = CurvePoint2::from(bounds.min().clone());
+            let maximum = CurvePoint2::from(bounds.max().clone());
+            for endpoint in [curve.start(), curve.end()] {
+                for axis in [hypercurve::Axis2::X, hypercurve::Axis2::Y] {
+                    assert_ne!(
+                        decided(endpoint.compare_coordinate(&minimum, axis, policy).unwrap()),
+                        std::cmp::Ordering::Less,
+                    );
+                    assert_ne!(
+                        decided(endpoint.compare_coordinate(&maximum, axis, policy).unwrap()),
+                        std::cmp::Ordering::Greater,
+                    );
+                }
+            }
+        }
+    }
+}
+
 fn shifted_algebraic_rectangle_boundary(
     min_x: i64,
     min_y: i64,
@@ -4218,17 +4307,9 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
             let exact = edit(source_path(exact_line_end.clone()), q(299, 125))
                 .into_iter()
                 .find(|candidate| {
-                    candidate.boundary_loops()[0]
-                        .fragments()
-                        .iter()
-                        .any(|fragment| {
-                            matches!(
-                                fragment,
-                                BezierSplitFragment2::Materialized {
-                                    curve: BezierSubcurve2::Quadratic(curve), ..
-                                } if curve.start() == &exact_cut || curve.end() == &exact_cut
-                            )
-                        })
+                    parabola_extension_contact(candidate, &policy).is_some_and(|contact| {
+                        decided(contact.coincides_with(&exact_cut.clone().into(), &policy))
+                    })
                 })
                 .expect("the represented exterior parabola cut must be retained");
             assert_eq!(
@@ -4241,32 +4322,7 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
 
             let algebraic = edit(source_path(algebraic_line_end.clone()), q(1, 2))
                 .into_iter()
-                .find(|candidate| {
-                    let mut extended_parabola = false;
-                    let mut selected_circle = false;
-                    for fragment in candidate.boundary_loops()[0].fragments() {
-                        match fragment {
-                            BezierSplitFragment2::AlgebraicEndpointImages {
-                                start,
-                                end,
-                                source_curve: BezierSubcurve2::Quadratic(curve),
-                                ..
-                            } if (matches!(start, hypercurve::BezierParameter2::Algebraic(_))
-                                || matches!(end, hypercurve::BezierParameter2::Algebraic(_)))
-                                && (curve.start() == &p(0, 0) || curve.end() == &p(0, 0))
-                                && curve.start() != &p(1, 1)
-                                && curve.end() != &p(1, 1) =>
-                            {
-                                extended_parabola = true;
-                            }
-                            BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
-                                selected_circle = true;
-                            }
-                            _ => {}
-                        }
-                    }
-                    extended_parabola && selected_circle
-                })
+                .find(|candidate| parabola_extension_contact(candidate, &policy).is_some())
                 .expect("the irrational exterior parabola cut must remain exact");
             assert_eq!(
                 algebraic
@@ -4279,13 +4335,35 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                 CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)], &policy)
                     .unwrap()
                     .into_value();
-            for filleted in [&exact, &algebraic] {
+            for (name, filleted) in [("represented", &exact), ("selected", &algebraic)] {
+                assert_boundary_bounds_contain_endpoints(filleted, &policy);
+                let normalized = certified(filleted.regularized_region(&policy).unwrap());
                 let replay = filleted
                     .boolean_regions(&disjoint, &policy)
                     .expect("the exterior fillet must re-enter the Boolean kernel");
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
-                assert_eq!(replay.value.union().boundary_loops().len(), 2);
+                // Extension can make the authored walk self-cross. Its
+                // regularized components must all survive the disjoint union.
+                assert_eq!(
+                    replay.value.union().boundary_loops().len(),
+                    normalized.boundary_loops().len() + 1,
+                );
                 assert!(replay.value.intersection().is_empty());
+                let recovered = certified(
+                    replay
+                        .value
+                        .union()
+                        .boolean_region(&disjoint, hypercurve::BooleanOp::Difference, &policy)
+                        .expect("the multi-component union re-enters difference"),
+                );
+                assert!(
+                    certified(
+                        recovered
+                            .boolean_region(&normalized, hypercurve::BooleanOp::Xor, &policy)
+                            .unwrap_or_else(|error| panic!("{name} fillet set identity: policy={policy:?}, reversed={reversed}, error={error:?}"))
+                    )
+                    .is_empty()
+                );
             }
         }
     }
@@ -4358,6 +4436,7 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
     }
 
     let exact_cut = Point2::new(q(6, 5), q(36, 25));
+    let authored_arc = source_path().curves()[1].clone();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let path = if reversed {
@@ -4391,56 +4470,12 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
             let exact = edited
                 .iter()
                 .find(|candidate| {
-                    candidate.boundary_loops()[0]
-                        .fragments()
-                        .iter()
-                        .any(|fragment| {
-                            matches!(
-                                fragment,
-                                BezierSplitFragment2::Materialized {
-                                    curve: BezierSubcurve2::Quadratic(curve), ..
-                                } if curve.start() == &exact_cut || curve.end() == &exact_cut
-                            )
-                        })
+                    parabola_extension_contact(candidate, &policy).is_some_and(|contact| {
+                        decided(contact.coincides_with(&exact_cut.clone().into(), &policy))
+                    })
                 })
                 .expect("the represented exterior parabola contact must be retained");
             let inside = Point2::new(q(1, 4), q(3, 2));
-            let algebraic_shape = |candidate: &CurveRegion2| {
-                let mut extended_parabola = false;
-                let mut selected_arc = false;
-                let mut selected_fillet = false;
-                let mut retained_arc_spans = 0_usize;
-                for fragment in candidate.boundary_loops()[0].fragments() {
-                    match fragment {
-                        BezierSplitFragment2::AlgebraicEndpointImages {
-                            start,
-                            end,
-                            source_curve: BezierSubcurve2::Quadratic(curve),
-                            ..
-                        } if (matches!(start, hypercurve::BezierParameter2::Algebraic(_))
-                            || matches!(end, hypercurve::BezierParameter2::Algebraic(_)))
-                            && (curve.start() == &p(0, 0) || curve.end() == &p(0, 0))
-                            && curve.start() != &p(1, 1)
-                            && curve.end() != &p(1, 1) =>
-                        {
-                            extended_parabola = true;
-                        }
-                        BezierSplitFragment2::SelectedFiber(_) => selected_arc = true,
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
-                            selected_fillet = true;
-                        }
-                        BezierSplitFragment2::Materialized {
-                            curve: BezierSubcurve2::RationalQuadratic(_),
-                            ..
-                        } => retained_arc_spans += 1,
-                        _ => {}
-                    }
-                }
-                (
-                    extended_parabola && selected_arc && selected_fillet,
-                    retained_arc_spans,
-                )
-            };
             let location = |candidate: &CurveRegion2| {
                 candidate
                     .classify_point(&inside, &policy)
@@ -4450,13 +4485,15 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
             let complement = edited
                 .iter()
                 .find(|candidate| {
-                    let (algebraic, retained_arc_spans) = algebraic_shape(candidate);
-                    algebraic
-                        && retained_arc_spans > 0
+                    parabola_extension_contact(candidate, &policy).is_some()
+                        && has_certified_boundary_overlap(candidate, &authored_arc, &policy)
                         && location(candidate)
                             == Classification::Decided(RegionPointLocation::Outside)
                 })
                 .expect("the irrational complement-arc contact must remain exact");
+
+            assert_boundary_bounds_contain_endpoints(exact, &policy);
+            assert_boundary_bounds_contain_endpoints(complement, &policy);
 
             let disjoint =
                 CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)], &policy)

@@ -17095,6 +17095,22 @@ struct RetainedRayOriginContact<'a> {
     tangent_contacts: Option<&'a [crate::rational_bezier::RationalQuadraticCircleTangentContact2]>,
 }
 
+impl RetainedRayOriginContact<'_> {
+    // The caller certifies the crossing in boundary traversal order. The
+    // supporting-line solvers consume increasing source-parameter order.
+    fn parameter_crossing_direction(&self, reversed: bool) -> BezierLineCrossingDirection {
+        match (self.crossing_direction, reversed) {
+            (BezierLineCrossingDirection::NegativeToPositive, true) => {
+                BezierLineCrossingDirection::PositiveToNegative
+            }
+            (BezierLineCrossingDirection::PositiveToNegative, true) => {
+                BezierLineCrossingDirection::NegativeToPositive
+            }
+            (direction, false) => direction,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum RetainedRayWinding {
     Winding(i32),
@@ -17382,7 +17398,8 @@ fn classify_point_with_retained_ray_skipping_origin(
                     })
                 });
             let certified_crossing = skipped_origin.and_then(|origin| {
-                certified_origin_parameter.map(|parameter| (parameter, origin.crossing_direction))
+                certified_origin_parameter
+                    .map(|parameter| (parameter, origin.parameter_crossing_direction(reversed)))
             });
             let relation = match parallel.relation_to_supporting_line_on_regular_range(
                 &ray.line,
@@ -17579,7 +17596,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                         .parameter
                         .and_then(CurveParameter2::as_bezier_parameter)
                         .and_then(BezierParameter2::scalar)
-                        .map(|parameter| (parameter, origin.crossing_direction))
+                        .map(|parameter| (parameter, origin.parameter_crossing_direction(reversed)))
                 })
                 .flatten()
         });
@@ -18739,6 +18756,118 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    #[test]
+    fn boundary_side_rays_preserve_winding_through_reversed_source_charts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let arc = Curve2::from(
+                CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap(),
+            );
+            let spans = arc.native_bezier_fragments(&policy).unwrap().value;
+            let source = RationalBezier2::try_from_subcurve(spans[0].curve()).unwrap();
+            let parameter = q(1, 4);
+            let Classification::Decided(point) = source.point_at_classified(&parameter, &policy)
+            else {
+                panic!("exact circle representative");
+            };
+            let Classification::Decided(other) = source.point_at_classified(&q(3, 4), &policy)
+            else {
+                panic!("exact second circle point");
+            };
+            let materialized = |curve| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve,
+            };
+            let line = |start, end| {
+                materialized(BezierSubcurve2::Quadratic(
+                    QuadraticBezier2::from_line_segment(LineSeg2::try_new(start, end).unwrap()),
+                ))
+            };
+            for retained in [false, true] {
+                for reversed in [false, true] {
+                    let mut circle = if retained {
+                        BezierSplitFragment2::SelectedFiber(
+                            crate::bezier_split::BezierSelectedFiberFragment2::new(
+                                BezierSelectedFiberSource2::Rational(source.clone()),
+                                CurveParameterRange2::unit(),
+                                p(1, 0).into(),
+                                p(0, 1).into(),
+                            ),
+                        )
+                    } else {
+                        materialized(BezierSubcurve2::Rational(source.clone()))
+                    };
+                    if reversed {
+                        circle = circle.reversed().unwrap();
+                    }
+                    let (start, end) = if reversed {
+                        (p(0, 1), p(1, 0))
+                    } else {
+                        (p(1, 0), p(0, 1))
+                    };
+                    let boundary = CurveRegionBoundaryLoop2::new(
+                        vec![circle, line(end, p(0, 0)), line(p(0, 0), start)],
+                        &policy,
+                    )
+                    .unwrap();
+                    let region = CurveRegion2::try_new_with_loop_topology(
+                        vec![boundary],
+                        vec![CurveRegionLoopRole::Material],
+                        vec![FillRule::NonZero],
+                        vec![if reversed {
+                            CurveBoundaryInteriorSide2::Right
+                        } else {
+                            CurveBoundaryInteriorSide2::Left
+                        }],
+                    )
+                    .unwrap();
+                    let source_parameter = CurveParameter2::from(if reversed && !retained {
+                        Real::one() - &parameter
+                    } else {
+                        parameter.clone()
+                    });
+                    for inside in [false, true] {
+                        let sign = if inside { Real::one() } else { -Real::one() };
+                        let crossing = if inside != reversed {
+                            BezierLineCrossingDirection::PositiveToNegative
+                        } else {
+                            BezierLineCrossingDirection::NegativeToPositive
+                        };
+                        let result = region
+                            .classify_point_from_boundary_side_ray_with_windings(
+                                &point,
+                                (other.x() - point.x()) * &sign,
+                                (other.y() - point.y()) * sign,
+                                true,
+                                crossing,
+                                0,
+                                0,
+                                Some(&source_parameter),
+                                &policy,
+                            )
+                            .unwrap();
+                        assert_eq!(
+                            result,
+                            Classification::Decided((
+                                vec![if inside {
+                                    if reversed { -1 } else { 1 }
+                                } else {
+                                    0
+                                }],
+                                if inside {
+                                    RegionPointLocation::Inside
+                                } else {
+                                    RegionPointLocation::Outside
+                                },
+                            )),
+                            "retained={retained}, reversed={reversed}, inside={inside}, policy={policy:?}"
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]

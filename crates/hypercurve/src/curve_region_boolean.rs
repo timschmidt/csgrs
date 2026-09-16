@@ -8741,10 +8741,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         (Some(first), Some(second)) if first != second => {
                             return Err(self.invalid(
                                 incoming.0,
-                                CurveError::Topology(
-                                    "a degree-two authored continuation changed regularized faces"
-                                        .into(),
-                                ),
+                                CurveError::Topology(format!(
+                                    "a degree-two authored continuation changed regularized faces at vertex {vertex}: incoming {incoming:?} is {first:?}, outgoing {outgoing:?} is {second:?}",
+                                )),
                             ));
                         }
                         (Some(action), None) if blockers[outgoing.0][outgoing.1].is_some() => {

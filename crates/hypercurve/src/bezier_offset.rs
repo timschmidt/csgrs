@@ -18322,45 +18322,29 @@ impl BezierAlgebraicCuspSemicircle2 {
 
     /// Returns a conservative exact box for the complete selected half circle.
     ///
-    /// The cusp center lies on the retained source parallel. Expanding the
-    /// source's certified box by `|parallel distance| + |radius|` therefore
-    /// contains the circle without materializing either algebraic center
-    /// coordinate. This intentionally favors a cheap safe broad phase over a
-    /// tight algebraic-coordinate box.
+    /// A center certified in the source's unit domain can reuse its box,
+    /// expanded by `|parallel distance| + |radius|`. Extended fillets may
+    /// retain a center outside that domain; those use the selected center's
+    /// own enclosure instead.
     pub(crate) fn conservative_bounds(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Aabb2>> {
-        let (source, expansion) = if let Some(parallel) = self.source_parallel() {
-            let source = match parallel.source().certified_bounds() {
-                Classification::Decided(source) => source,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            (
-                source,
-                parallel.distance().abs() + self.data.radial_distance.abs(),
-            )
-        } else {
-            let center = match self.center_point_evidence(policy)? {
-                Classification::Decided(center) => center,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let source = match algebraic_chord_endpoint_bounds_refined(&center, 0, policy) {
-                Classification::Decided(source) => source,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            (source, self.data.radial_distance.abs())
-        };
-        Ok(Classification::Decided(Aabb2::new_unchecked(
-            Point2::new(source.min_x() - &expansion, source.min_y() - &expansion),
-            Point2::new(source.max_x() + &expansion, source.max_y() + expansion),
-        )))
+        if let Some(parallel) = self.source_parallel()
+            && let Some(parameter) = self.selected_frame_parameter()
+            && let Ok(Classification::Decided(interval)) =
+                parameter.known_interval(&CurveContext::STRICT)
+            && in_closed_unit_interval(interval.start(), &CurveContext::STRICT) == Some(true)
+            && in_closed_unit_interval(interval.end(), &CurveContext::STRICT) == Some(true)
+            && let Classification::Decided(source) = parallel.source().certified_bounds()
+        {
+            let expansion = parallel.distance().abs() + self.data.radial_distance.abs();
+            return Ok(Classification::Decided(Aabb2::new_unchecked(
+                Point2::new(source.min_x() - &expansion, source.min_y() - &expansion),
+                Point2::new(source.max_x() + &expansion, source.max_y() + expansion),
+            )));
+        }
+        self.conservative_bounds_refined(0, policy)
     }
 
     /// Returns a progressively tighter exact box around this selected half circle.
@@ -148660,6 +148644,80 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary),
             );
+        }
+    }
+
+    #[test]
+    fn selected_circle_bounds_cover_exterior_parallel_centers() {
+        let half = (Real::one() / Real::from(2_u8)).unwrap();
+        let radius = (Real::one() / Real::from(4_u8)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 1),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for sign in [-1_i8, 1] {
+                let Classification::Decided(polynomial) =
+                    BezierParameterPolynomial::try_new_power_basis(
+                        vec![Real::from(-2), Real::zero(), Real::one()],
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("exact quadratic");
+                };
+                let (lower, upper) = if sign < 0 { (-2, -1) } else { (1, 2) };
+                let Classification::Decided(interval) = BezierParameterInterval::try_new_ordered(
+                    Real::from(lower),
+                    Real::from(upper),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("exact isolator");
+                };
+                let Classification::Decided(parameter) =
+                    BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+                else {
+                    panic!("selected exterior parameter");
+                };
+                let Classification::Decided(Some(circle)) =
+                    BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                        source.parallel_left(half.clone()).unwrap(),
+                        BezierParameter2::Algebraic(parameter),
+                        radius.clone(),
+                        false,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("regular exterior circle center");
+                };
+                let Classification::Decided(bounds) = circle.conservative_bounds(&policy).unwrap()
+                else {
+                    panic!("exact exterior circle bounds");
+                };
+                // Independently evaluate Q(t) + (1/2) left_normal(Q'(t)) at
+                // t = +/-sqrt(2), where |Q'(t)| is exactly 3.
+                let t = Real::from(sign) * Real::from(2).sqrt().unwrap();
+                let center = Point2::new(
+                    &t - (&t / Real::from(3)).unwrap(),
+                    Real::from(2) + (Real::one() / Real::from(6)).unwrap(),
+                );
+                for (coordinate, minimum, maximum) in [
+                    (center.x(), bounds.min_x(), bounds.max_x()),
+                    (center.y(), bounds.min_y(), bounds.max_y()),
+                ] {
+                    assert!(matches!(
+                        compare_reals(minimum, &(coordinate - &radius), &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                    ));
+                    assert!(matches!(
+                        compare_reals(maximum, &(coordinate + &radius), &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal)
+                    ));
+                }
+            }
         }
     }
 
