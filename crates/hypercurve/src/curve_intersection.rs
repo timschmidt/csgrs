@@ -643,9 +643,8 @@ struct CurveIntersectionContextData {
 
 #[derive(Debug)]
 enum CurveIntersectionDispatch {
-    RetainedSupports(CurveIntersectionResult2),
+    SupportEvidence(CurveIntersectionResult2),
     SpanPairs(Vec<CurveSpanPair>),
-    CertifiedEndpointContact(CurveIntersectionContact2),
     NativeLine(LineLineIntersection),
     NativeLineArc {
         order: LineArcOrder,
@@ -809,11 +808,24 @@ fn build_span_pairs(
     Ok(pairs)
 }
 
-fn certified_singleton_aabb_endpoint_contact(
+fn has_native_point_image_span(curve: &Curve2, policy: &CurveContext) -> ExactCurveResult<bool> {
+    let strict = policy.strict_counterpart();
+    Ok(curve
+        .native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?
+        .iter()
+        .any(|fragment| {
+            matches!(
+                fragment.curve().point_image(&strict),
+                Classification::Decided(Some(_))
+            )
+        }))
+}
+
+fn certified_singleton_aabb_intersection(
     first: &Curve2,
     second: &Curve2,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<CurveIntersectionContact2>> {
+) -> ExactCurveResult<Option<CurveIntersectionResult2>> {
     let (Ok(first_bounds), Ok(second_bounds)) = (first.bounds(), second.bounds()) else {
         return Ok(None);
     };
@@ -821,47 +833,74 @@ fn certified_singleton_aabb_endpoint_contact(
         Classification::Decided(Some(point)) => point,
         Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
     };
-    let Some(first_parameter) = endpoint_parameter(first, &point, policy)? else {
+    // A singleton image intersection can have many parameter preimages.
+    // Use the existing exact incidence authority for every authored span;
+    // its injectivity certificate still admits the cheap endpoint case.
+    let locations = |curve: &Curve2| -> ExactCurveResult<Option<Vec<CurveLocation2>>> {
+        let fragments =
+            curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
+        let evaluators =
+            curve.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
+        let mut locations = Vec::new();
+        for (span_index, (fragment, evaluator)) in fragments.iter().zip(evaluators).enumerate() {
+            let parameters = match evaluator
+                .point_incidence_classified(&point, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Intersection, curve.family(), cause)
+                })? {
+                Classification::Decided(crate::RationalBezierPointIncidence2::Parameters(
+                    parameters,
+                )) => parameters,
+                // Point images use the common component publisher. An
+                // unresolved incidence never certifies a missing visit.
+                Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve)
+                | Classification::Uncertain(_) => return Ok(None),
+            };
+            locations.extend(parameters.into_iter().map(|parameter| CurveLocation2 {
+                span_index,
+                span_range: fragment.span_range().clone(),
+                local_parameter: parameter.into(),
+            }));
+        }
+        Ok(Some(locations))
+    };
+    let Some(first_locations) = locations(first)? else {
         return Ok(None);
     };
-    let Some(second_parameter) = endpoint_parameter(second, &point, policy)? else {
+    let Some(second_locations) = locations(second)? else {
         return Ok(None);
     };
-    Ok(Some(CurveIntersectionContact2 {
-        first: first_parameter,
-        second: second_parameter,
-        point: CurvePoint2::from(point),
-        certified_transverse: false,
-        tangent_cross_sign: None,
-    }))
-}
-
-fn endpoint_parameter(
-    curve: &Curve2,
-    point: &Point2,
-    policy: &CurveContext,
-) -> ExactCurveResult<Option<CurveLocation2>> {
-    let fragments =
-        curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
-    let (span_index, local_parameter) = if curve
-        .start()
-        .same_point(&CurvePoint2::from(point.clone()), policy)
-        == Classification::Decided(true)
-    {
-        (0, Real::zero())
-    } else if curve
-        .end()
-        .same_point(&CurvePoint2::from(point.clone()), policy)
-        == Classification::Decided(true)
-    {
-        (fragments.len() - 1, Real::one())
-    } else {
-        return Ok(None);
-    };
-    Ok(Some(CurveLocation2 {
-        span_index,
-        span_range: fragments[span_index].span_range().clone(),
-        local_parameter: local_parameter.into(),
+    let mut contacts = Vec::new();
+    let point = CurvePoint2::from(point);
+    for first in first_locations {
+        for second in &second_locations {
+            let contact = CurveIntersectionContact2 {
+                first: first.clone(),
+                second: second.clone(),
+                point: point.clone(),
+                certified_transverse: false,
+                tangent_cross_sign: None,
+            };
+            match matching_contact_index(&contacts, &contact, policy) {
+                Classification::Decided(None) => contacts.push(contact),
+                Classification::Decided(Some(_)) => {}
+                Classification::Uncertain(_) => return Ok(None),
+            }
+        }
+    }
+    Ok(Some(CurveIntersectionResult2 {
+        data: Arc::new(CurveIntersectionResultData {
+            span_pair_count: first
+                .native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?
+                .len()
+                * second
+                    .native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?
+                    .len(),
+            contacts: contacts.into(),
+            overlaps: Arc::from([]),
+            blockers: Arc::from([]),
+            parameter_components: None,
+        }),
     }))
 }
 
@@ -1897,7 +1936,7 @@ impl CurveIntersectionContext {
                     second: second.clone(),
                     policy: *policy,
                     span_pair_count: result.span_pair_count(),
-                    dispatch: CurveIntersectionDispatch::RetainedSupports(result),
+                    dispatch: CurveIntersectionDispatch::SupportEvidence(result),
                     result: OnceLock::new(),
                 },
             });
@@ -1969,12 +2008,21 @@ impl CurveIntersectionContext {
                             (span_pair_count, dispatch)
                         }
                         None => {
-                            if let Some(contact) =
-                                certified_singleton_aabb_endpoint_contact(first, second, policy)?
+                            if has_native_point_image_span(first, policy)?
+                                || has_native_point_image_span(second, policy)?
+                            {
+                                let result =
+                                    curve_support_intersection::intersect(first, second, policy)?;
+                                (
+                                    result.span_pair_count(),
+                                    CurveIntersectionDispatch::SupportEvidence(result),
+                                )
+                            } else if let Some(result) =
+                                certified_singleton_aabb_intersection(first, second, policy)?
                             {
                                 (
-                                    1,
-                                    CurveIntersectionDispatch::CertifiedEndpointContact(contact),
+                                    result.span_pair_count(),
+                                    CurveIntersectionDispatch::SupportEvidence(result),
                                 )
                             } else {
                                 let first_evaluators = first.rational_evaluators_for_operation(
@@ -2038,19 +2086,8 @@ impl CurveIntersectionContext {
     }
 
     fn build_evidence(&self) -> ExactCurveResult<CurveIntersectionResult2> {
-        if let CurveIntersectionDispatch::RetainedSupports(result) = &self.data.dispatch {
+        if let CurveIntersectionDispatch::SupportEvidence(result) = &self.data.dispatch {
             return Ok(result.clone());
-        }
-        if let CurveIntersectionDispatch::CertifiedEndpointContact(contact) = &self.data.dispatch {
-            return Ok(CurveIntersectionResult2 {
-                data: Arc::new(CurveIntersectionResultData {
-                    span_pair_count: self.data.span_pair_count,
-                    contacts: Arc::from([contact.clone()]),
-                    overlaps: Arc::from([]),
-                    blockers: Arc::from([]),
-                    parameter_components: None,
-                }),
-            });
         }
         if let CurveIntersectionDispatch::NativeLine(relation) = &self.data.dispatch {
             return build_native_line_evidence(
@@ -2865,5 +2902,295 @@ mod native_dispatch_tests {
             }
         }
         assert_eq!(cache.circular_support_relations.len(), 1);
+    }
+}
+
+#[cfg(test)]
+mod point_component_dispatch_tests {
+    use super::*;
+    use crate::{
+        CubicBezier2, CurveCertainty, CurvePath2, LineSeg2, QuadraticBezier2,
+        RationalQuadraticBezier2,
+    };
+
+    fn p(x: i32, y: i32) -> Point2 {
+        Point2::from_values(x, y)
+    }
+    fn exact<T: std::fmt::Debug>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("{reason:?}"),
+        }
+    }
+    fn certified<T>(value: CurveOutcome<T>) -> T {
+        assert_eq!(value.certainty, CurveCertainty::Certified);
+        value.value
+    }
+    fn query(first: &Curve2, second: &Curve2, policy: &CurveContext) -> CurveIntersectionResult2 {
+        let result = certified(first.intersect_curve(second, policy).unwrap());
+        assert!(result.is_complete(), "{:?}", result.blockers());
+        result
+    }
+    fn constants(policy: &CurveContext) -> Vec<Curve2> {
+        vec![
+            QuadraticBezier2::new(p(0, 0), p(0, 0), p(0, 0)).into(),
+            CubicBezier2::new(p(0, 0), p(0, 0), p(0, 0), p(0, 0)).into(),
+            RationalQuadraticBezier2::try_new(
+                p(0, 0),
+                p(0, 0),
+                p(0, 0),
+                1.into(),
+                2.into(),
+                3.into(),
+            )
+            .unwrap()
+            .into(),
+            RationalBezier2::try_new(vec![p(0, 0); 5], vec![Real::one(); 5])
+                .unwrap()
+                .into(),
+            certified(
+                Curve2::try_polynomial_bspline(
+                    1,
+                    vec![p(0, 0); 3],
+                    [2, 2, 3, 4, 4].into_iter().map(Real::from).collect(),
+                    policy,
+                )
+                .unwrap(),
+            ),
+            certified(
+                Curve2::try_nurbs(
+                    1,
+                    vec![p(0, 0); 3],
+                    vec![1.into(), 2.into(), 3.into()],
+                    [2, 2, 3, 4, 4].into_iter().map(Real::from).collect(),
+                    policy,
+                )
+                .unwrap(),
+            ),
+        ]
+    }
+
+    #[test]
+    fn native_constant_images_retain_complete_parameter_fibers() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let crossing = Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap());
+            let ending = Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 0)).unwrap());
+            let excluded = Curve2::from(LineSeg2::try_new(p(-1, 1), p(1, 1)).unwrap());
+            for constant in constants(&policy) {
+                let count = certified(constant.native_bezier_fragments(&policy).unwrap()).len();
+                for constant in [
+                    constant.clone(),
+                    certified(constant.reversed(&policy).unwrap()),
+                ] {
+                    for (other, parameter) in [
+                        (&crossing, (Real::one() / Real::from(2)).unwrap()),
+                        (&ending, Real::zero()),
+                    ] {
+                        for swapped in [false, true] {
+                            let (a, b) = if swapped {
+                                (other, &constant)
+                            } else {
+                                (&constant, other)
+                            };
+                            let result = query(a, b, &policy);
+                            assert_eq!(result.parameter_components().len(), count);
+                            assert!(result.contacts().is_empty() && result.overlaps().is_empty());
+                            for (index, component) in
+                                result.parameter_components().iter().enumerate()
+                            {
+                                let (free, fixed, span) = if swapped {
+                                    (
+                                        component.second_parameters(),
+                                        component.first_parameters(),
+                                        component.second_span_index(),
+                                    )
+                                } else {
+                                    (
+                                        component.first_parameters(),
+                                        component.second_parameters(),
+                                        component.first_span_index(),
+                                    )
+                                };
+                                assert_eq!(span, index);
+                                assert!(matches!(free, CurveParameterSet2::Range(_)));
+                                let CurveParameterSet2::Single(fixed) = fixed else {
+                                    panic!("one point on the nonconstant line")
+                                };
+                                assert_eq!(fixed.scalar(), Some(&parameter));
+                                assert_eq!(
+                                    certified(
+                                        component.point().coincides_with(&p(0, 0).into(), &policy)
+                                    ),
+                                    Classification::Decided(true)
+                                );
+                            }
+                        }
+                    }
+                    assert!(query(&constant, &excluded, &policy).is_disjoint());
+                    let result = query(&constant, &constant, &policy);
+                    assert_eq!(result.parameter_components().len(), count * count);
+                    assert!(result.contacts().is_empty() && result.overlaps().is_empty());
+                    assert!(
+                        result
+                            .parameter_components()
+                            .iter()
+                            .all(|component| matches!(
+                                (component.first_parameters(), component.second_parameters()),
+                                (CurveParameterSet2::Range(_), CurveParameterSet2::Range(_))
+                            ))
+                    );
+                    let path = CurvePath2::try_new(vec![crossing.clone()]).unwrap();
+                    let cutter = CurvePath2::try_new(vec![constant.clone()]).unwrap();
+                    let topology = certified(path.intersection_topology(&cutter, &policy).unwrap());
+                    assert_eq!(topology.result().parameter_components().len(), count);
+                    assert_eq!(topology.first()[0].curves().len(), 2);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn native_endpoint_shortcut_does_not_erase_retraced_or_spline_visits() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let line = Curve2::from(LineSeg2::try_new(p(-1, 0), p(0, 0)).unwrap());
+            let sources = [
+                (
+                    Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(0, 0))),
+                    Real::one(),
+                ),
+                (
+                    certified(
+                        Curve2::try_polynomial_bspline(
+                            1,
+                            vec![p(0, 0), p(1, 0), p(0, 0)],
+                            [0, 0, 1, 2, 2].into_iter().map(Real::from).collect(),
+                            &policy,
+                        )
+                        .unwrap(),
+                    ),
+                    Real::from(2),
+                ),
+            ];
+            for (source, end) in sources {
+                for swapped in [false, true] {
+                    let (a, b) = if swapped {
+                        (&line, &source)
+                    } else {
+                        (&source, &line)
+                    };
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.contacts().len(), 2);
+                    assert!(
+                        result.overlaps().is_empty() && result.parameter_components().is_empty()
+                    );
+                    let parameters = result
+                        .contacts()
+                        .iter()
+                        .map(|contact| {
+                            let (source, line) = if swapped {
+                                (contact.second(), contact.first())
+                            } else {
+                                (contact.first(), contact.second())
+                            };
+                            assert_eq!(line.local_parameter().scalar(), Some(&Real::one()));
+                            exact(source.parameter(&policy).unwrap())
+                                .scalar()
+                                .unwrap()
+                                .clone()
+                        })
+                        .collect::<Vec<_>>();
+                    assert!(parameters.iter().any(|p| p == &Real::zero()));
+                    assert!(parameters.iter().any(|p| p == &end));
+                    assert_eq!(
+                        certified(source.start().coincides_with(&source.end(), &policy)),
+                        Classification::Decided(true)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn native_point_components_preserve_homogeneous_pole_domains() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = exact(
+                RationalBezier2::from_homogeneous_controls(
+                    [-1, 0, 1]
+                        .into_iter()
+                        .map(|weight| {
+                            crate::HomogeneousControl2::new(
+                                Real::zero(),
+                                Real::zero(),
+                                Real::from(weight),
+                            )
+                        })
+                        .collect(),
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let source = Curve2::from(source);
+            let line = Curve2::from(LineSeg2::try_new(p(-1, 0), p(1, 0)).unwrap());
+            let result = certified(source.intersect_curve(&line, &policy).unwrap());
+            assert!(!result.is_complete());
+            assert!(result.parameter_components().is_empty());
+            let finite = certified(
+                source
+                    .subcurve(
+                        Real::zero().into(),
+                        (Real::one() / Real::from(4)).unwrap().into(),
+                        &policy,
+                    )
+                    .unwrap(),
+            );
+            let result = query(&finite, &line, &policy);
+            assert_eq!(result.parameter_components().len(), 1);
+        }
+    }
+    #[test]
+    fn singleton_incidence_merges_spline_seams_but_keeps_distinct_visits() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let line = Curve2::from(LineSeg2::try_new(p(-1, 0), p(0, 0)).unwrap());
+            for count in [3, 5] {
+                let controls = (0..count)
+                    .map(|index| p(if index % 2 == 0 { 1 } else { 0 }, 0))
+                    .collect::<Vec<_>>();
+                let knots = std::iter::once(0)
+                    .chain(0..count)
+                    .chain(std::iter::once(count - 1))
+                    .map(Real::from)
+                    .collect();
+                let source =
+                    certified(Curve2::try_polynomial_bspline(1, controls, knots, &policy).unwrap());
+                for swapped in [false, true] {
+                    let (a, b) = if swapped {
+                        (&line, &source)
+                    } else {
+                        (&source, &line)
+                    };
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.contacts().len(), (count / 2) as usize);
+                    assert_eq!(result.span_pair_count(), (count - 1) as usize);
+                    for visit in (1..count).step_by(2) {
+                        assert_eq!(
+                            result
+                                .contacts()
+                                .iter()
+                                .filter(|contact| {
+                                    let location = if swapped {
+                                        contact.second()
+                                    } else {
+                                        contact.first()
+                                    };
+                                    exact(location.parameter(&policy).unwrap()).scalar()
+                                        == Some(&Real::from(visit))
+                                })
+                                .count(),
+                            1
+                        );
+                    }
+                }
+            }
+        }
     }
 }

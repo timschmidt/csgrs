@@ -961,6 +961,25 @@ impl Pair<'_> {
         for span in [self.first, self.second] {
             self.require_unit_domain(span)?;
         }
+        // A collapsed rational map has an entire parameter fiber, rather
+        // than one isolated root. Reuse the zero-distance kernel's complete
+        // point-component replay and the common finite-domain publication.
+        let strict = self.policy.strict_counterpart();
+        if [first, second].into_iter().any(|curve| {
+            matches!(
+                BezierSubcurve2::Rational(curve.clone()).point_image(&strict),
+                Classification::Decided(Some(_))
+            )
+        }) {
+            let parallel = first.parallel_left(Real::zero()).map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    self.first.support.family(),
+                    cause,
+                )
+            })?;
+            return self.parallel_rational(&parallel, second, true, result);
+        }
         let context = RationalBezierIntersectionContext::try_new(first, second, self.policy)?;
         let evidence = context.try_contacts()?;
         let family = self.first.support.family();
