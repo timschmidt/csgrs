@@ -212,6 +212,135 @@ fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
     }
 }
 
+#[test]
+fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let paths = [square_path(0, 0, 4, 4), square_path(2, 0, 6, 4)];
+        let region = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+            &paths,
+            &[CurveRegionLoopRole::Material; 2],
+            &[FillRule::NonZero; 2],
+            &policy,
+        )
+        .unwrap()
+        .value;
+        let probe = square(1, 1, 5, 3);
+        // The probe crosses both authored interior seams, but lies wholly
+        // inside the represented union. Neither seam belongs to its boundary.
+        for (first, second) in [(&region, &probe), (&probe, &region)] {
+            let report = first.intersect_region(second, &policy).unwrap();
+            assert_eq!(report.certainty, CurveCertainty::Certified);
+            assert!(report.value.is_complete());
+            assert!(report.value.contacts().is_empty());
+            assert!(report.value.overlaps().is_empty());
+        }
+        let canceled = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+            &[paths[0].clone(), paths[0].clone()],
+            &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+            &[FillRule::NonZero; 2],
+            &policy,
+        )
+        .unwrap()
+        .value;
+        for (first, second) in [(&canceled, &probe), (&probe, &canceled)] {
+            let report = first.intersect_region(second, &policy).unwrap();
+            assert_eq!(report.certainty, CurveCertainty::Certified);
+            assert!(report.value.is_complete());
+            assert!(report.value.contacts().is_empty());
+            assert!(report.value.overlaps().is_empty());
+        }
+    }
+}
+
+#[test]
+fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
+    use hypercurve::{
+        BezierAlgebraicChord2, BezierParameter2, BezierSplitFragment2, BezierSubcurve2,
+        CurveCornerMode2, CurveCornerSolutions2, CurveRegionBoundaryLoop2,
+    };
+    let ratio = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let path = CurvePath2::try_new(vec![
+            LineSeg2::try_new(point(-4, 0), point(0, 0)).unwrap().into(),
+            QuadraticBezier2::new(point(0, 0), point(0, 1), point(1, 2)).into(),
+            LineSeg2::try_new(point(1, 2), point(-4, 0)).unwrap().into(),
+        ])
+        .unwrap();
+        let fillet = path
+            .fillet_vertex_by_radius(1, ratio(1, 4), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap();
+        assert_eq!(fillet.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(path) = fillet.value else {
+            panic!("one exact trimmed fillet");
+        };
+        for shift in [0, 1, -2] {
+            // Q(t) = (-(t-shift)^2, t-shift), retained on [shift, shift+1].
+            // Its native unit image differs on both exterior charts.
+            let shift = Real::from(shift);
+            let source = QuadraticBezier2::new(
+                Point2::new(-(&shift * &shift), -&shift),
+                Point2::new(-(&shift * &shift) + &shift, ratio(1, 2) - &shift),
+                Point2::new(
+                    -((Real::one() - &shift) * (Real::one() - &shift)),
+                    Real::one() - &shift,
+                ),
+            );
+            let curve = BezierSplitFragment2::RetainedBezier {
+                reversed: false,
+                source_curve: BezierSubcurve2::Quadratic(source),
+                start: BezierParameter2::Exact(shift.clone()),
+                end: BezierParameter2::Exact(&shift + Real::one()),
+                start_image: None,
+                end_image: None,
+            };
+            let Classification::Decided(chord) =
+                BezierAlgebraicChord2::try_new(point(-1, 1).into(), point(0, 0).into(), &policy)
+                    .unwrap()
+            else {
+                panic!("exact chord");
+            };
+            let cap = CurveRegion2::try_new_with_loop_topology(
+                vec![
+                    CurveRegionBoundaryLoop2::new(
+                        vec![curve, BezierSplitFragment2::AlgebraicChord(chord)],
+                        &policy,
+                    )
+                    .unwrap(),
+                ],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![CurveBoundaryInteriorSide2::Left],
+            )
+            .unwrap();
+            let region =
+                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+                    .unwrap()
+                    .value;
+            // These operands have not been explicitly regularized by the caller.
+            for (first, second) in [(&region, &cap), (&cap, &region)] {
+                let report = first.intersect_region(second, &policy).unwrap();
+                assert_eq!(report.certainty, CurveCertainty::Certified);
+                assert!(report.value.is_complete(), "{:?}", report.value.blockers());
+                assert!(!report.value.contacts().is_empty());
+                assert_report_replays(&report.value, &policy);
+                let result = first
+                    .boolean_region(second, BooleanOp::Intersection, &policy)
+                    .unwrap();
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert!(!result.value.is_empty());
+                let reentry = result.value.intersect_region(first, &policy).unwrap();
+                assert_eq!(reentry.certainty, CurveCertainty::Certified);
+                assert!(
+                    reentry.value.is_complete(),
+                    "{:?}",
+                    reentry.value.blockers()
+                );
+                assert_report_replays(&reentry.value, &policy);
+            }
+        }
+    }
+}
+
 fn circle(center_x: Real) -> CurveRegion2 {
     circle_with_policy(center_x, &CurveContext::STRICT)
 }

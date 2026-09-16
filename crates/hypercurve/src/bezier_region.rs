@@ -3351,7 +3351,11 @@ fn retained_corner_fragment_trim(
         )
     })?;
     let split = match curve
-        .split_at_parameters_refined(&[parameter], policy)
+        .split_at_parameters_refined(
+            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+            &[parameter],
+            policy,
+        )
         .map_err(|cause| curve_region_edit_error(operation, cause))?
     {
         Classification::Decided(split) => split,
@@ -3759,7 +3763,11 @@ fn retained_corner_fragment_between_cuts(
             parameters.push(previous_parameter);
         }
         let split = match curve
-            .split_at_parameters_refined(&parameters, policy)
+            .split_at_parameters_refined(
+                &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                &parameters,
+                policy,
+            )
             .map_err(|cause| curve_region_edit_error(operation, cause))?
         {
             Classification::Decided(split) => split,

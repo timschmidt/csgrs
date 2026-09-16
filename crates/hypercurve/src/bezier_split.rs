@@ -1801,90 +1801,46 @@ impl BezierSubcurve2 {
         }
     }
 
+    /// Splits one certified ordered finite source range, preserving algebraic
+    /// endpoint images and materializing represented intervals when possible.
     pub(crate) fn split_at_parameters_refined(
         &self,
+        range: &BezierParameterRange2,
         parameters: &[BezierParameter2],
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
-        match self {
-            Self::Quadratic(curve) => split_curve_at_parameters(
-                parameters,
-                policy,
-                true,
-                false,
-                |_| true,
-                |start, end| {
-                    Ok(Self::Quadratic(
-                        curve.subcurve_between_exact(start, end, policy)?,
-                    ))
-                },
-                |parameter| {
-                    BezierAlgebraicEndpointImage2::quadratic_first_order(curve, parameter, policy)
-                },
-                self.clone(),
-            ),
-            Self::Cubic(curve) => split_curve_at_parameters(
-                parameters,
-                policy,
-                true,
-                false,
-                |_| true,
-                |start, end| {
-                    Ok(Self::Cubic(
-                        curve.subcurve_between_exact(start, end, policy)?,
-                    ))
-                },
-                |parameter| {
-                    BezierAlgebraicEndpointImage2::cubic_first_order(curve, parameter, policy)
-                },
-                self.clone(),
-            ),
-            Self::RationalQuadratic(curve) => split_curve_at_parameters(
-                parameters,
-                policy,
-                true,
-                false,
-                |parameter| {
-                    matches!(
-                        curve.point_at(parameter.clone(), policy),
-                        Classification::Decided(_)
-                    )
-                },
-                |start, end| {
-                    Ok(Self::RationalQuadratic(
-                        curve.subcurve_between_exact(start, end, policy)?,
-                    ))
-                },
-                |parameter| {
-                    BezierAlgebraicEndpointImage2::rational_quadratic_first_order(
-                        curve, parameter, policy,
-                    )
-                },
-                self.clone(),
-            ),
-            Self::Rational(curve) => split_curve_at_parameters(
-                parameters,
-                policy,
-                true,
-                false,
-                |parameter| {
-                    matches!(
-                        curve.point_at_classified(parameter, policy),
-                        Classification::Decided(_)
-                    )
-                },
-                |start, end| match curve.subcurve_between_exact(start, end, policy)? {
-                    Classification::Decided(curve) => Ok(Self::Rational(curve)),
+        split_curve_at_parameters(
+            range,
+            parameters,
+            policy,
+            true,
+            false,
+            |parameter| matches!(self.point_at(parameter, policy), Classification::Decided(_)),
+            |start, end| {
+                // Keep compact native kernels on their certified domain. An
+                // exterior interval gets a fresh affine chart; unit-domain
+                // injectivity facts must not escape with that extension.
+                let result = if in_closed_unit_interval(start, policy) == Some(true)
+                    && in_closed_unit_interval(end, policy) == Some(true)
+                {
+                    self.subcurve_between_exact(start, end, policy)?
+                } else {
+                    self.subcurve_between_affine_exact(start, end, policy)?
+                };
+                match result {
+                    Classification::Decided(curve) => Ok(curve),
                     Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
-                        "general rational Bezier exact split is uncertified: {reason:?}"
+                        "Bezier exact split is uncertified: {reason:?}"
                     ))),
-                },
-                |parameter| {
-                    BezierAlgebraicEndpointImage2::rational_first_order(curve, parameter, policy)
-                },
-                self.clone(),
-            ),
-        }
+                }
+            },
+            |parameter| {
+                BezierAlgebraicEndpointImage2::from_source_curve_first_order(
+                    self, parameter, policy,
+                )
+            },
+            self.clone(),
+        )
     }
 
     pub(crate) fn subcurve_between_exact(
@@ -2346,6 +2302,7 @@ impl QuadraticBezier2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         split_curve_at_parameters(
+            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
             parameters,
             policy,
             false,
@@ -2469,6 +2426,7 @@ impl CubicBezier2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         split_curve_at_parameters(
+            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
             parameters,
             policy,
             false,
@@ -2567,6 +2525,7 @@ impl RationalQuadraticBezier2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         split_curve_at_parameters(
+            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
             parameters,
             policy,
             false,
@@ -2682,6 +2641,7 @@ impl RationalBezier2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
         split_curve_at_parameters(
+            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
             parameters,
             policy,
             false,
@@ -2705,6 +2665,7 @@ impl RationalBezier2 {
 }
 
 fn split_curve_at_parameters<F, G, H>(
+    range: &BezierParameterRange2,
     parameters: &[BezierParameter2],
     policy: &CurveContext,
     refine_ordering: bool,
@@ -2719,10 +2680,7 @@ where
     G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
     H: FnMut(&Real) -> bool,
 {
-    let mut boundaries = vec![
-        BezierParameter2::Exact(Real::zero()),
-        BezierParameter2::Exact(Real::one()),
-    ];
+    let mut boundaries = vec![range.start().clone(), range.end().clone()];
     for parameter in parameters {
         validate_parameter(parameter, policy)?;
         let promoted = if promote_exact_points {
@@ -2744,6 +2702,17 @@ where
     match sort_boundaries(&mut boundaries, policy, refine_ordering)? {
         Classification::Decided(()) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+
+    for (actual, expected) in [
+        (boundaries.first().unwrap(), range.start()),
+        (boundaries.last().unwrap(), range.end()),
+    ] {
+        match compare_boundary_parameters(actual, expected, policy, refine_ordering)? {
+            Classification::Decided(Ordering::Equal) => {}
+            Classification::Decided(_) => return Err(CurveError::InvalidBezierParameter),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
     }
 
     let endpoint_images = boundaries

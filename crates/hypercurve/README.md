@@ -289,8 +289,9 @@ exact signatures.
   is a separate lossy output adapter and never participates in offset
   topology.
 - `CurveRegion2::{intersect_region, boolean_region, boolean_regions}` returns
-  intersection topology or regularized union, intersection, difference, and
-  xor results. `BooleanOp` selects an operation; batched
+  intersection topology between regularized boundaries, or regularized union,
+  intersection, difference, and xor results. Authored winding and canceled
+  seams are resolved first. `BooleanOp` selects an operation; batched
   `CurveRegionBooleanResults2` exposes all four from one evaluation.
 - `CurveRegion2::straight_skeleton` and the
   `straight_skeleton_*_events` methods expose staged skeleton construction and
