@@ -872,7 +872,6 @@ impl Pair<'_> {
         } else {
             self.first
         };
-        self.require_unit_domain(span)?;
         let strict = self.policy.strict_counterpart();
         // The rational component is optional. Keep its attempt separate so a
         // failed projection cannot erase the native selected-circle replay.
@@ -886,36 +885,38 @@ impl Pair<'_> {
                 )
             })?
         {
-            if component
-                .curve()
-                .exact_linear_parameterization_line()
-                .is_none()
+            // This image has the same parameters on the certified regular
+            // range. Publish against that support without changing the chart,
+            // so affine chord contacts use the common source-parameter map.
+            let image = Span {
+                support: CurveSupport2::Bezier(BezierSubcurve2::Rational(
+                    component.curve().clone(),
+                )),
+                range: span.range.clone(),
+                chart: span.chart.clone(),
+                reversed: span.reversed,
+            };
+            let mut candidate = Evidence::default();
+            match (Pair {
+                first: if circle_first { self.first } else { &image },
+                second: if circle_first { &image } else { self.second },
+                indices: self.indices,
+                policy: &strict,
+            })
+            .circle_rational(circle, component.curve(), circle_first, &mut candidate)
             {
-                let mut candidate = Evidence::default();
-                match (Pair {
-                    first: self.first,
-                    second: self.second,
-                    indices: self.indices,
-                    policy: &strict,
-                })
-                .circle_rational(
-                    circle,
-                    component.curve(),
-                    circle_first,
-                    &mut candidate,
-                ) {
-                    Ok(()) if candidate.blockers.is_empty() => {
-                        for contact in candidate.contacts {
-                            self.append_contact(result, contact)?;
-                        }
-                        result.overlaps.extend(candidate.overlaps);
-                        return Ok(());
+                Ok(()) if candidate.blockers.is_empty() => {
+                    for contact in candidate.contacts {
+                        self.append_contact(result, contact)?;
                     }
-                    Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
-                    _ => {}
+                    result.overlaps.extend(candidate.overlaps);
+                    return Ok(());
                 }
+                Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
+                _ => {}
             }
         }
+        self.require_unit_domain(span)?;
         let intersections = match span.range.as_bezier_parameters() {
             Some((start, end)) => circle.semicircle().parallel_intersections_in_range(
                 parallel,
@@ -2449,55 +2450,147 @@ mod circle_dispatch_tests {
     }
 
     #[test]
+    fn selected_circle_affine_parallel_domains_preserve_source_parameters() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = circle(0, 2, &policy);
+            for y in [Real::zero(), q(1, 2), Real::from(2)] {
+                for (origin, delta, start, end) in
+                    [(-1, 2, 0, 1), (-3, 2, 1, 2), (3, -2, 1, 2), (3, 2, -2, -1)]
+                {
+                    let point = |x| Point2::new(Real::from(x), y.clone());
+                    let image = LineSeg2::try_new(point(origin), point(origin + delta)).unwrap();
+                    for distance in [Real::one(), Real::from(-1)] {
+                        let source = image.offset_left(-distance.clone()).unwrap();
+                        let parallel = QuadraticBezier2::from_line_segment(source)
+                            .parallel_left(distance)
+                            .unwrap();
+                        // A constant nonzero tangent certifies this entire
+                        // affine source domain, including its exterior part.
+                        let line = Curve2::from_retained_fragment(
+                            CurveSupport2::Parallel(parallel)
+                                .restrict_certified(
+                                    CurveParameterRange2::new_validated(
+                                        Real::from(start).into(),
+                                        Real::from(end).into(),
+                                    ),
+                                    None,
+                                    false,
+                                    &policy,
+                                )
+                                .unwrap(),
+                        );
+                        for reverse_line in [false, true] {
+                            let line = oriented(&line, reverse_line, &policy);
+                            for (swapped, (first, second)) in
+                                [(&circle, &line), (&line, &circle)].into_iter().enumerate()
+                            {
+                                let result = query(first, second, &policy);
+                                assert_eq!(
+                                    result.contacts().len(),
+                                    usize::from(y != Real::from(2))
+                                );
+                                assert!(result.overlaps().is_empty());
+                                for contact in result.contacts() {
+                                    assert!(contact.is_certified_transverse());
+                                    assert_eq!(
+                                        contact.tangent_cross_sign(),
+                                        Some(if reverse_line ^ (delta < 0) ^ (swapped == 1) {
+                                            hyperreal::RealSign::Negative
+                                        } else {
+                                            hyperreal::RealSign::Positive
+                                        })
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn selected_fillet_tangency_replays_an_exterior_affine_source_chart() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let path = crate::CurvePath2::try_new(vec![
-                LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
-                QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
-            ])
-            .unwrap();
-            let crate::CurveCornerSolutions2::Unique(path) = path
-                .fillet_vertex_by_radius(1, q(1, 4), crate::CurveCornerMode2::TrimOnly, &policy)
-                .unwrap()
-                .value
-            else {
-                panic!("unique fillet")
-            };
-            let circle = &path.curves()[1];
-            let line = Curve2::from_retained_fragment(BezierSplitFragment2::RetainedBezier {
-                reversed: false,
-                source_curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                    p(-3, 0),
-                    p(-2, 0),
-                    p(-1, 0),
-                )),
-                start: BezierParameter2::Exact(Real::one()),
-                end: BezierParameter2::Exact(Real::from(2)),
-                start_image: None,
-                end_image: None,
-            });
-            for reverse_line in [false, true] {
-                let line = oriented(&line, reverse_line, &policy);
-                for (first, second) in [(circle, &line), (&line, circle)] {
-                    let outcome = first.intersect_curve(second, &policy).unwrap();
-                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                    assert!(
-                        outcome.value.is_complete(),
-                        "{:?}",
-                        outcome.value.blockers()
-                    );
-                    let [contact] = outcome.value.contacts() else {
-                        panic!("one tangency")
-                    };
-                    assert_eq!(
-                        contact.tangent_cross_sign(),
-                        Some(hyperreal::RealSign::Zero)
-                    );
-                    same(contact.point(), &circle.start(), &policy);
-                    replay(first, second, &outcome.value, &policy);
-                    let topology = first.intersection_topology(second, &policy).unwrap();
-                    assert_eq!(topology.certainty, CurveCertainty::Certified);
-                    assert!(topology.value.result().is_complete());
+            for [a, b, c, d] in [[1, 0, 0, 1], [1, 1, -1, 1]] {
+                let p = |x: i32, y: i32| Point2::from_values(a * x + b * y + 2, c * x + d * y - 3);
+                let scale = Real::from(a * a + c * c).sqrt().unwrap();
+                let path = crate::CurvePath2::try_new(vec![
+                    LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
+                    QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
+                ])
+                .unwrap();
+                let crate::CurveCornerSolutions2::Unique(path) = path
+                    .fillet_vertex_by_radius(
+                        1,
+                        scale * q(1, 4),
+                        crate::CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap()
+                    .value
+                else {
+                    panic!("unique fillet")
+                };
+                let circle = &path.curves()[1];
+                let line = Curve2::from_retained_fragment(BezierSplitFragment2::RetainedBezier {
+                    reversed: false,
+                    source_curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                        p(-3, 0),
+                        p(-2, 0),
+                        p(-1, 0),
+                    )),
+                    start: BezierParameter2::Exact(Real::one()),
+                    end: BezierParameter2::Exact(Real::from(2)),
+                    start_image: None,
+                    end_image: None,
+                });
+                let parallel = QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(p(-3, 0), p(-1, 0))
+                        .unwrap()
+                        .offset_left(-q(1, 3))
+                        .unwrap(),
+                )
+                .parallel_left(q(1, 3))
+                .unwrap();
+                let analytic = Curve2::from_retained_fragment(
+                    CurveSupport2::Parallel(parallel)
+                        .restrict_certified(
+                            CurveParameterRange2::new_validated(
+                                Real::one().into(),
+                                Real::from(2).into(),
+                            ),
+                            None,
+                            false,
+                            &policy,
+                        )
+                        .unwrap(),
+                );
+                for line in [line, analytic] {
+                    for reverse_line in [false, true] {
+                        let line = oriented(&line, reverse_line, &policy);
+                        for (first, second) in [(circle, &line), (&line, circle)] {
+                            let outcome = first.intersect_curve(second, &policy).unwrap();
+                            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                            assert!(
+                                outcome.value.is_complete(),
+                                "{:?}",
+                                outcome.value.blockers()
+                            );
+                            let [contact] = outcome.value.contacts() else {
+                                panic!("one tangency")
+                            };
+                            assert_eq!(
+                                contact.tangent_cross_sign(),
+                                Some(hyperreal::RealSign::Zero)
+                            );
+                            same(contact.point(), &circle.start(), &policy);
+                            replay(first, second, &outcome.value, &policy);
+                            let topology = first.intersection_topology(second, &policy).unwrap();
+                            assert_eq!(topology.certainty, CurveCertainty::Certified);
+                            assert!(topology.value.result().is_complete());
+                        }
+                    }
                 }
             }
         }

@@ -93692,6 +93692,43 @@ impl BezierAnalyticParallelPoint2 {
         Ok((&differential.tangent_x, &differential.tangent_y))
     }
 
+    /// A constant regular frame is a represented translation, even when its
+    /// speed is irrational. Reuse those coefficients in the parameter's field
+    /// instead of adjoining another copy of the same positive speed root.
+    fn constant_frame_translation(&self, policy: &CurveContext) -> CurveResult<Option<[Real; 2]>> {
+        let mut translation = [
+            self.data.translation_x.clone(),
+            self.data.translation_y.clone(),
+        ];
+        if self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
+            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero
+        {
+            return Ok(Some(translation));
+        }
+        let (x, y) = self.frame_tangent_power_basis()?;
+        if [x, y].into_iter().any(|component| {
+            component
+                .iter()
+                .skip(1)
+                .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
+        }) {
+            return Ok(None);
+        }
+        let x = x.first().cloned().unwrap_or_else(Real::zero);
+        let y = y.first().cloned().unwrap_or_else(Real::zero);
+        let speed_squared = &x * &x + &y * &y;
+        if real_sign(&speed_squared, &policy.strict_counterpart()) != Some(RealSign::Positive) {
+            return Ok(None);
+        }
+        let speed = speed_squared.sqrt()?;
+        let normal = self.data.parallel.distance();
+        let tangent = &self.data.tangent_distance;
+        translation[0] =
+            &translation[0] + (Real::diff_of_products(tangent, &x, normal, &y) / &speed)?;
+        translation[1] = &translation[1] + ((tangent * &y + normal * &x) / speed)?;
+        Ok(Some(translation))
+    }
+
     /// Publishes the authored tangent support shared with `end` directly in
     /// the selected parameter field.
     ///
@@ -94012,14 +94049,15 @@ impl BezierAnalyticParallelPoint2 {
         let source = self.data.parallel.source_power_basis()?;
         let unit_weight = [Real::one()];
         let weight = source.weight.unwrap_or(&unit_weight);
-        let translated_x = polynomial_add(
-            source.x_numerator,
-            &polynomial_scale(weight, &self.data.translation_x),
+        let translation = self.constant_frame_translation(policy)?;
+        let (translation_x, translation_y) = translation.as_ref().map_or(
+            (&self.data.translation_x, &self.data.translation_y),
+            |[x, y]| (x, y),
         );
-        let translated_y = polynomial_add(
-            source.y_numerator,
-            &polynomial_scale(weight, &self.data.translation_y),
-        );
+        let translated_x =
+            polynomial_add(source.x_numerator, &polynomial_scale(weight, translation_x));
+        let translated_y =
+            polynomial_add(source.y_numerator, &polynomial_scale(weight, translation_y));
         let source_degree = [translated_x.len(), translated_y.len(), weight.len()]
             .into_iter()
             .max()
@@ -94039,9 +94077,7 @@ impl BezierAnalyticParallelPoint2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let zero_frame = self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
-            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero;
-        let point = if zero_frame {
+        let point = if translation.is_some() {
             BezierRecursiveQuadraticProjectivePoint2 {
                 x: translated_x,
                 y: translated_y,
@@ -94286,23 +94322,22 @@ impl BezierAnalyticParallelPoint2 {
         let source = self.data.parallel.source_power_basis()?;
         let unit_weight = [Real::one()];
         let weight = source.weight.unwrap_or(&unit_weight);
-        let translated_x = polynomial_add(
-            source.x_numerator,
-            &polynomial_scale(weight, &self.data.translation_x),
+        let translation = self.constant_frame_translation(policy)?;
+        let (translation_x, translation_y) = translation.as_ref().map_or(
+            (&self.data.translation_x, &self.data.translation_y),
+            |[x, y]| (x, y),
         );
-        let translated_y = polynomial_add(
-            source.y_numerator,
-            &polynomial_scale(weight, &self.data.translation_y),
-        );
+        let translated_x =
+            polynomial_add(source.x_numerator, &polynomial_scale(weight, translation_x));
+        let translated_y =
+            polynomial_add(source.y_numerator, &polynomial_scale(weight, translation_y));
         let parameter_source = bezier_parameter_root_representation(&parameter);
         let tensor =
             |coefficients: &[Real]| DenseTensorPolynomial::from_axis_polynomial(1, 0, coefficients);
         let Some(one) = tensor(std::slice::from_ref(&Real::one())) else {
             return Ok(Classification::Decided(None));
         };
-        let zero_frame = self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
-            && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero;
-        let point = if zero_frame {
+        let point = if translation.is_some() {
             let Some(field) =
                 BezierRecursiveQuadraticField2::base(vec![parameter_source], one.clone(), one)
             else {
@@ -118930,7 +118965,17 @@ impl BezierParallel2 {
         }
         let power_basis = match self.source() {
             BezierParallelSource2::Quadratic(source) => {
-                polynomial_control_power_basis(&source.control_points())?
+                // Preserve the certified affine degree. Re-expanding shifted
+                // Bernstein controls can hide zero coefficients and inflate
+                // the field used to replay a selected source parameter.
+                if let Some(line) = source.retained_exact_line_image() {
+                    (
+                        vec![line.start().x().clone(), line.end().x() - line.start().x()],
+                        vec![line.start().y().clone(), line.end().y() - line.start().y()],
+                    )
+                } else {
+                    polynomial_control_power_basis(&source.control_points())?
+                }
             }
             BezierParallelSource2::Cubic(source) => {
                 polynomial_control_power_basis(&source.control_points())?
@@ -119087,15 +119132,6 @@ impl BezierParallel2 {
             return Ok(differential);
         }
         let (tangent_x, tangent_y) = match self.source() {
-            BezierParallelSource2::Quadratic(source)
-                if source.retained_exact_line_image().is_some() =>
-            {
-                let (dx, dy) = source
-                    .retained_exact_line_image()
-                    .expect("the retained line was matched")
-                    .delta();
-                (vec![dx], vec![dy])
-            }
             BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
                 let (source_x, source_y) = self.polynomial_power_basis()?;
                 (
