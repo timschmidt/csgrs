@@ -6,10 +6,10 @@ use std::sync::OnceLock;
 use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
 use crate::policy::resolve_certified_operation;
 use crate::{
-    BezierArrangementGraph2, BezierParameter2, BezierSplitMaterialization2, Classification, Curve2,
-    CurveContext, CurveIntersectionContact2, CurveIntersectionOverlap2,
-    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2,
-    CurveOutcome, CurvePath2, CurveResult, ExactCurveError, ExactCurveResult, UncertaintyReason,
+    BezierArrangementGraph2, BezierSplitMaterialization2, Classification, Curve2, CurveContext,
+    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameter2, CurvePath2,
+    CurveResult, ExactCurveError, ExactCurveResult, UncertaintyReason,
 };
 
 /// One path-pair contact with authored curve and span indices.
@@ -245,7 +245,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
                 .map(|contact| {
                     (
                         contact.first_curve_index(),
-                        contact.contact().first().promoted_span_index(),
+                        contact.contact().first().span_index(),
                         contact.contact().first().local_parameter().clone(),
                     )
                 })
@@ -273,7 +273,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
                 .map(|contact| {
                     (
                         contact.second_curve_index(),
-                        contact.contact().second().promoted_span_index(),
+                        contact.contact().second().span_index(),
                         contact.contact().second().local_parameter().clone(),
                     )
                 })
@@ -446,7 +446,7 @@ impl CurvePathIntersectionTopology2 {
 
 fn split_path(
     path: &CurvePath2,
-    parameters: impl Iterator<Item = (usize, usize, BezierParameter2)>,
+    parameters: impl Iterator<Item = (usize, usize, CurveParameter2)>,
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurvePathSplit2>> {
     let mut by_curve = vec![Vec::new(); path.curves().len()];

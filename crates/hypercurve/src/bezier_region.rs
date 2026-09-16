@@ -14361,23 +14361,23 @@ fn curve_path_contact_is_ordinary_adjacent_endpoint(
     if consecutive.is_none() && closing.is_none() {
         return Classification::Decided(false);
     }
-    let (Some(first), Some(second)) = (
-        contact.contact().first().exact_curve_parameter(),
-        contact.contact().second().exact_curve_parameter(),
+    let (Ok(Classification::Decided(first)), Ok(Classification::Decided(second))) = (
+        contact.contact().first().parameter(policy),
+        contact.contact().second().parameter(policy),
     ) else {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     };
     let mut uncertain = false;
     for (expected_first, expected_second) in consecutive.into_iter().chain(closing) {
         match (
-            CurveParameter2::from(first.clone())
+            first
                 .cmp_by_refinement(expected_first, policy)
                 .ok()
                 .and_then(|r| match r {
                     Classification::Decided(r) => Some(r),
                     _ => None,
                 }),
-            CurveParameter2::from(second.clone())
+            second
                 .cmp_by_refinement(expected_second, policy)
                 .ok()
                 .and_then(|r| match r {

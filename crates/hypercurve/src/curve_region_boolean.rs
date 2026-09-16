@@ -998,8 +998,8 @@ impl CurveRegionIntersectionBlocker2 {
 impl RegionPairContactEvidence {
     fn from_bezier(contact: &CurveIntersectionContact2) -> Self {
         Self {
-            first_parameter: CurveParameter2::from(contact.first().local_parameter().clone()),
-            second_parameter: CurveParameter2::from(contact.second().local_parameter().clone()),
+            first_parameter: contact.first().local_parameter().clone(),
+            second_parameter: contact.second().local_parameter().clone(),
             point: Some(contact.point().clone()),
             certified_transverse: contact.is_certified_transverse(),
             tangent_cross_sign: contact.tangent_cross_sign(),
@@ -4381,12 +4381,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .iter()
                         .cloned()
                         .map(|source| RegionPairOverlap {
-                            first_range: CurveParameterRange2::from_bezier_range(
-                                source.first_range().clone(),
-                            ),
-                            second_range: CurveParameterRange2::from_bezier_range(
-                                source.second_range().clone(),
-                            ),
+                            first_range: source.first_range().clone(),
+                            second_range: source.second_range().clone(),
                             orientation: source.orientation(),
                             source: Some(RegionPairOverlapSource::Bezier(source)),
                         })

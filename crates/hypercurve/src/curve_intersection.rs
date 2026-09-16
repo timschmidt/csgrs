@@ -15,26 +15,30 @@ use crate::rational_bezier_general::{
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
     BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
-    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveOutcome, CurvePoint2,
-    CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
-    LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, Point2,
-    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
+    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveOutcome, CurveParameter2,
+    CurveParameterRange2, CurvePoint2, CurveResult, CurveSpanRange2, ExactCurveError,
+    ExactCurveResult, LineArcIntersection, LineArcIntersectionPoint, LineArcOrder,
+    LineLineIntersection, ParamRange, Point2, RationalBezier2,
+    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
     RationalBezierIntersectionContacts2, RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
-/// Exact source parameter retained for one top-level curve contact.
+/// Exact location in a curve's retained span chart.
+///
+/// The local parameter keeps its selected-root or geometric authority. The
+/// span chart maps it into the authored curve parameter only when requested.
 #[derive(Clone, Debug, PartialEq)]
-pub struct CurveIntersectionParameter2 {
-    promoted_span_index: usize,
+pub struct CurveLocation2 {
+    span_index: usize,
     span_range: CurveSpanRange2,
-    local_parameter: BezierParameter2,
+    local_parameter: CurveParameter2,
 }
 
 /// One exact top-level curve contact with parameters on both operands.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveIntersectionContact2 {
-    first: CurveIntersectionParameter2,
-    second: CurveIntersectionParameter2,
+    first: CurveLocation2,
+    second: CurveLocation2,
     point: CurvePoint2,
     certified_transverse: bool,
     tangent_cross_sign: Option<hyperreal::RealSign>,
@@ -48,8 +52,8 @@ pub struct CurveIntersectionContact2 {
 pub struct CurveIntersectionOverlap2 {
     first_span_index: usize,
     second_span_index: usize,
-    first_range: BezierParameterRange2,
-    second_range: BezierParameterRange2,
+    first_range: CurveParameterRange2,
+    second_range: CurveParameterRange2,
     orientation: RationalBezierOverlapOrientation2,
     endpoint_inclusion: [bool; 2],
     parameter_correspondence: Option<RationalBezierOverlapParameterCorrespondence2>,
@@ -484,10 +488,10 @@ fn endpoint_parameter(
     curve: &Curve2,
     point: &Point2,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<CurveIntersectionParameter2>> {
+) -> ExactCurveResult<Option<CurveLocation2>> {
     let fragments =
         curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
-    let (promoted_span_index, local_parameter) = if curve
+    let (span_index, local_parameter) = if curve
         .start()
         .same_point(&CurvePoint2::from(point.clone()), policy)
         == Classification::Decided(true)
@@ -502,10 +506,10 @@ fn endpoint_parameter(
     } else {
         return Ok(None);
     };
-    Ok(Some(CurveIntersectionParameter2 {
-        promoted_span_index,
-        span_range: fragments[promoted_span_index].span_range().clone(),
-        local_parameter: BezierParameter2::Exact(local_parameter),
+    Ok(Some(CurveLocation2 {
+        span_index,
+        span_range: fragments[span_index].span_range().clone(),
+        local_parameter: local_parameter.into(),
     }))
 }
 
@@ -633,15 +637,15 @@ fn build_native_line_evidence(
         &second.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?[0];
     let contact =
         |first_parameter: Real, second_parameter: Real, point: Point2| CurveIntersectionContact2 {
-            first: CurveIntersectionParameter2 {
-                promoted_span_index: 0,
+            first: CurveLocation2 {
+                span_index: 0,
                 span_range: first_fragment.span_range().clone(),
-                local_parameter: BezierParameter2::Exact(first_parameter),
+                local_parameter: first_parameter.into(),
             },
-            second: CurveIntersectionParameter2 {
-                promoted_span_index: 0,
+            second: CurveLocation2 {
+                span_index: 0,
                 span_range: second_fragment.span_range().clone(),
-                local_parameter: BezierParameter2::Exact(second_parameter),
+                local_parameter: second_parameter.into(),
             },
             point: CurvePoint2::from(point),
             certified_transverse: false,
@@ -704,13 +708,13 @@ fn build_native_line_evidence(
                 vec![CurveIntersectionOverlap2 {
                     first_span_index: 0,
                     second_span_index: 0,
-                    first_range: BezierParameterRange2::from_exact(
-                        a_range.start().clone(),
-                        a_range.end().clone(),
+                    first_range: CurveParameterRange2::new_validated(
+                        a_range.start().clone().into(),
+                        a_range.end().clone().into(),
                     ),
-                    second_range: BezierParameterRange2::from_exact(
-                        b_range.start().clone(),
-                        b_range.end().clone(),
+                    second_range: CurveParameterRange2::new_validated(
+                        b_range.start().clone().into(),
+                        b_range.end().clone().into(),
                     ),
                     orientation,
                     endpoint_inclusion: [true, true],
@@ -814,20 +818,21 @@ fn append_native_line_arc_contact(
     let arc_span_indices = arc_span_indices_for_point(arc_curve, arc, &hit.point, policy)?;
     let contact_count = contacts.len();
     for arc_span_index in arc_span_indices {
-        let line_parameter = CurveIntersectionParameter2 {
-            promoted_span_index: 0,
+        let line_parameter = CurveLocation2 {
+            span_index: 0,
             span_range: line_fragment.span_range().clone(),
-            local_parameter: BezierParameter2::Exact(hit.line_param.clone()),
+            local_parameter: hit.line_param.clone().into(),
         };
-        let arc_parameter = CurveIntersectionParameter2 {
-            promoted_span_index: arc_span_index,
+        let arc_parameter = CurveLocation2 {
+            span_index: arc_span_index,
             span_range: arc_fragments[arc_span_index].span_range().clone(),
             local_parameter: native_arc_span_parameter(
                 arc_curve,
                 &arc_evaluators[arc_span_index],
                 &hit.point,
                 policy,
-            )?,
+            )?
+            .into(),
         };
         let (first_parameter, second_parameter) = match order {
             LineArcOrder::LineThenArc => (line_parameter, arc_parameter),
@@ -1005,25 +1010,27 @@ fn build_native_arc_evidence(
         for &first_span_index in &first_span_indices {
             for &second_span_index in &second_span_indices {
                 let candidate = CurveIntersectionContact2 {
-                    first: CurveIntersectionParameter2 {
-                        promoted_span_index: first_span_index,
+                    first: CurveLocation2 {
+                        span_index: first_span_index,
                         span_range: first_fragments[first_span_index].span_range().clone(),
                         local_parameter: native_arc_span_parameter(
                             first,
                             &first_evaluators[first_span_index],
                             point,
                             policy,
-                        )?,
+                        )?
+                        .into(),
                     },
-                    second: CurveIntersectionParameter2 {
-                        promoted_span_index: second_span_index,
+                    second: CurveLocation2 {
+                        span_index: second_span_index,
                         span_range: second_fragments[second_span_index].span_range().clone(),
                         local_parameter: native_arc_span_parameter(
                             second,
                             &second_evaluators[second_span_index],
                             point,
                             policy,
-                        )?,
+                        )?
+                        .into(),
                     },
                     point: CurvePoint2::from(point.clone()),
                     certified_transverse: false,
@@ -1207,8 +1214,8 @@ fn build_native_coincident_arc_evidence(
                     overlaps.push(CurveIntersectionOverlap2 {
                         first_span_index,
                         second_span_index,
-                        first_range,
-                        second_range,
+                        first_range: CurveParameterRange2::from_bezier_range(first_range),
+                        second_range: CurveParameterRange2::from_bezier_range(second_range),
                         orientation,
                         endpoint_inclusion: [true, true],
                         parameter_correspondence: None,
@@ -1254,25 +1261,27 @@ fn append_native_arc_span_contact(
     let second_evaluators =
         second.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
     let candidate = CurveIntersectionContact2 {
-        first: CurveIntersectionParameter2 {
-            promoted_span_index: first_span_index,
+        first: CurveLocation2 {
+            span_index: first_span_index,
             span_range: first_fragments[first_span_index].span_range().clone(),
             local_parameter: native_arc_span_parameter(
                 first,
                 &first_evaluators[first_span_index],
                 point,
                 policy,
-            )?,
+            )?
+            .into(),
         },
-        second: CurveIntersectionParameter2 {
-            promoted_span_index: second_span_index,
+        second: CurveLocation2 {
+            span_index: second_span_index,
             span_range: second_fragments[second_span_index].span_range().clone(),
             local_parameter: native_arc_span_parameter(
                 second,
                 &second_evaluators[second_span_index],
                 point,
                 policy,
-            )?,
+            )?
+            .into(),
         },
         point: CurvePoint2::from(point.clone()),
         certified_transverse: false,
@@ -1753,13 +1762,13 @@ impl CurveIntersectionContext {
                 overlaps.push(CurveIntersectionOverlap2 {
                     first_span_index: pair.first_span_index,
                     second_span_index: pair.second_span_index,
-                    first_range: BezierParameterRange2::from_exact(
-                        first_range.start().clone(),
-                        first_range.end().clone(),
+                    first_range: CurveParameterRange2::new_validated(
+                        first_range.start().clone().into(),
+                        first_range.end().clone().into(),
                     ),
-                    second_range: BezierParameterRange2::from_exact(
-                        second_range.start().clone(),
-                        second_range.end().clone(),
+                    second_range: CurveParameterRange2::new_validated(
+                        second_range.start().clone().into(),
+                        second_range.end().clone().into(),
                     ),
                     orientation: *orientation,
                     endpoint_inclusion: [true, true],
@@ -1822,8 +1831,12 @@ impl CurveIntersectionContext {
                     overlaps.push(CurveIntersectionOverlap2 {
                         first_span_index: pair.first_span_index,
                         second_span_index: pair.second_span_index,
-                        first_range: overlap.first_range().clone(),
-                        second_range: overlap.second_range().clone(),
+                        first_range: CurveParameterRange2::from_bezier_range(
+                            overlap.first_range().clone(),
+                        ),
+                        second_range: CurveParameterRange2::from_bezier_range(
+                            overlap.second_range().clone(),
+                        ),
                         orientation: overlap.orientation(),
                         endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
@@ -1857,8 +1870,12 @@ impl CurveIntersectionContext {
                     overlaps.push(CurveIntersectionOverlap2 {
                         first_span_index: pair.first_span_index,
                         second_span_index: pair.second_span_index,
-                        first_range: overlap.first_range().clone(),
-                        second_range: overlap.second_range().clone(),
+                        first_range: CurveParameterRange2::from_bezier_range(
+                            overlap.first_range().clone(),
+                        ),
+                        second_range: CurveParameterRange2::from_bezier_range(
+                            overlap.second_range().clone(),
+                        ),
                         orientation: overlap.orientation(),
                         endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
@@ -1935,7 +1952,7 @@ impl CurveIntersectionContext {
             .iter()
             .map(|contact| {
                 (
-                    contact.first().promoted_span_index(),
+                    contact.first().span_index(),
                     contact.first().local_parameter().clone(),
                 )
             })
@@ -1957,7 +1974,7 @@ impl CurveIntersectionContext {
             .iter()
             .map(|contact| {
                 (
-                    contact.second().promoted_span_index(),
+                    contact.second().span_index(),
                     contact.second().local_parameter().clone(),
                 )
             })
@@ -1985,10 +2002,10 @@ impl CurveIntersectionContext {
     }
 }
 
-impl CurveIntersectionParameter2 {
+impl CurveLocation2 {
     /// Returns the promoted span index used by top-level dispatch.
-    pub const fn promoted_span_index(&self) -> usize {
-        self.promoted_span_index
+    pub const fn span_index(&self) -> usize {
+        self.span_index
     }
 
     /// Returns the promoted span's public parameter interval.
@@ -1996,27 +2013,34 @@ impl CurveIntersectionParameter2 {
         &self.span_range
     }
 
-    /// Returns the exact parameter in the promoted span's local `[0, 1]` domain.
-    pub const fn local_parameter(&self) -> &BezierParameter2 {
+    /// Returns the exact parameter in the retained support's local chart.
+    pub const fn local_parameter(&self) -> &CurveParameter2 {
         &self.local_parameter
     }
 
-    /// Returns the exact authored curve parameter when directly represented.
-    pub fn exact_curve_parameter(&self) -> Option<Real> {
-        let local = self.local_parameter.scalar()?;
+    /// Returns the exact authored curve parameter without requiring a scalar
+    /// payload or discarding selected-root evidence.
+    ///
+    /// Identity charts reuse the existing authority. Other affine charts are
+    /// replayed only on demand, under certified parameter-transform predicates.
+    pub fn parameter(&self, policy: &CurveContext) -> CurveResult<Classification<CurveParameter2>> {
         let (start, end) = self.span_range.endpoints();
-        Some(start + (end - start) * local)
+        if start == &Real::zero() && end == &Real::one() {
+            return Ok(Classification::Decided(self.local_parameter.clone()));
+        }
+        self.local_parameter
+            .affine_image_unbounded(&(end - start), start, policy)
     }
 }
 
 impl CurveIntersectionContact2 {
     /// Returns parameter evidence on the first top-level curve.
-    pub const fn first(&self) -> &CurveIntersectionParameter2 {
+    pub const fn first(&self) -> &CurveLocation2 {
         &self.first
     }
 
     /// Returns parameter evidence on the second top-level curve.
-    pub const fn second(&self) -> &CurveIntersectionParameter2 {
+    pub const fn second(&self) -> &CurveLocation2 {
         &self.second
     }
 
@@ -2065,14 +2089,14 @@ impl CurveIntersectionOverlap2 {
     }
 
     /// Returns the exact local closure bounds on the first promoted span.
-    pub const fn first_range(&self) -> &BezierParameterRange2 {
+    pub const fn first_range(&self) -> &CurveParameterRange2 {
         &self.first_range
     }
 
     /// Returns the exact local closure bounds on the second promoted span.
     ///
     /// A descending range records reversed image orientation.
-    pub const fn second_range(&self) -> &BezierParameterRange2 {
+    pub const fn second_range(&self) -> &CurveParameterRange2 {
         &self.second_range
     }
 
@@ -2171,13 +2195,27 @@ impl CurveIntersectionTopology2 {
 
 pub(crate) fn split_curve_spans(
     curve: &Curve2,
-    parameters: impl Iterator<Item = (usize, BezierParameter2)>,
+    parameters: impl Iterator<Item = (usize, CurveParameter2)>,
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<BezierSplitMaterialization2>> {
     let native_fragments =
         curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Arrangement)?;
     let mut by_span = vec![Vec::new(); native_fragments.len()];
     for (span_index, parameter) in parameters {
+        let parameter = match parameter
+            .promoted_bezier_parameter_complete(policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Arrangement, curve.family(), cause)
+            })? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Arrangement,
+                    curve.family(),
+                    reason,
+                ));
+            }
+        };
         by_span[span_index].push(parameter);
     }
     native_fragments
@@ -2213,15 +2251,15 @@ fn append_unique_contacts(
     let original_len = output.len();
     for contact in contacts {
         let candidate = CurveIntersectionContact2 {
-            first: CurveIntersectionParameter2 {
-                promoted_span_index: first_span_index,
+            first: CurveLocation2 {
+                span_index: first_span_index,
                 span_range: first_span_range.clone(),
-                local_parameter: contact.first_parameter().clone(),
+                local_parameter: contact.first_parameter().clone().into(),
             },
-            second: CurveIntersectionParameter2 {
-                promoted_span_index: second_span_index,
+            second: CurveLocation2 {
+                span_index: second_span_index,
                 span_range: second_span_range.clone(),
-                local_parameter: contact.second_parameter().clone(),
+                local_parameter: contact.second_parameter().clone().into(),
             },
             point: contact.point().clone(),
             certified_transverse: contact.is_certified_transverse(),
@@ -2285,16 +2323,14 @@ fn same_contact(
 }
 
 fn same_curve_parameter(
-    first: &CurveIntersectionParameter2,
-    second: &CurveIntersectionParameter2,
+    first: &CurveLocation2,
+    second: &CurveLocation2,
     policy: &CurveContext,
 ) -> Classification<bool> {
     if first == second {
         return Classification::Decided(true);
     }
-    if first.promoted_span_index == second.promoted_span_index
-        && first.span_range == second.span_range
-    {
+    if first.span_index == second.span_index && first.span_range == second.span_range {
         return first
             .local_parameter
             .same_value(&second.local_parameter, policy)
@@ -2311,16 +2347,14 @@ fn same_curve_parameter(
     ) {
         return Classification::Decided(false);
     }
-    let (Some(first), Some(second)) = (
-        first.exact_curve_parameter(),
-        second.exact_curve_parameter(),
-    ) else {
+    let (Ok(Classification::Decided(first)), Ok(Classification::Decided(second))) =
+        (first.parameter(policy), second.parameter(policy))
+    else {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     };
-    match compare_reals(&first, &second, policy) {
-        Some(ordering) => Classification::Decided(ordering == std::cmp::Ordering::Equal),
-        None => Classification::Uncertain(UncertaintyReason::Ordering),
-    }
+    first
+        .same_value(&second, policy)
+        .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering))
 }
 
 #[cfg(test)]
@@ -2353,12 +2387,18 @@ mod native_dispatch_tests {
         assert_eq!(result.contacts().len(), 1);
         assert!(result.overlaps().is_empty());
         assert_eq!(
-            result.contacts()[0].first().exact_curve_parameter(),
-            Some((Real::one() / Real::from(2_i8)).unwrap())
+            result.contacts()[0]
+                .first()
+                .parameter(&CurveContext::STRICT)
+                .unwrap(),
+            Classification::Decided((Real::one() / Real::from(2_i8)).unwrap().into())
         );
         assert_eq!(
-            result.contacts()[0].second().exact_curve_parameter(),
-            Some((Real::one() / Real::from(2_i8)).unwrap())
+            result.contacts()[0]
+                .second()
+                .parameter(&CurveContext::STRICT)
+                .unwrap(),
+            Classification::Decided((Real::one() / Real::from(2_i8)).unwrap().into())
         );
     }
 

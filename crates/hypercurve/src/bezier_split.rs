@@ -424,6 +424,21 @@ impl CurveParameter2 {
         }
     }
 
+    /// Compares parameters in the same support chart while retaining their
+    /// selected-root or geometric authority and reporting predicate certainty.
+    ///
+    /// Parameters from distinct geometric charts require their supporting
+    /// curves and return an error when no local comparison authority applies.
+    pub fn compare(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<crate::CurveOutcome<Classification<Ordering>>> {
+        crate::policy::resolve_certified_operation(policy, |attempt| {
+            self.cmp_by_refinement(other, attempt)
+        })
+    }
+
     pub(crate) fn same_value(
         &self,
         other: &Self,

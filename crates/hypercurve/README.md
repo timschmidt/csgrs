@@ -223,6 +223,12 @@ exact signatures.
   A `Real` or `BezierParameter2` converts directly into the common parameter.
   `parameter.scalar()` and `range.scalar_endpoints()` expose stored `Real`
   views. Selected parameters remain exact when these views are absent.
+  Intersections return `CurveLocation2` contacts and `CurveParameterRange2`
+  overlap ranges. A location retains its support parameter and span chart;
+  `location.parameter(&policy)` maps it into the authored curve domain on
+  demand, preserving selected roots for evaluation and subdivision.
+  `CurveParameter2::compare` compares parameters in a shared support chart
+  without requiring scalar payloads and reports predicate certainty.
   Generated curves keep their source chart when traversal is reversed.
   Subdivision accepts the same common parameters. Selected ranges retain their
   source chart and endpoint evidence, share one authored source through repeated

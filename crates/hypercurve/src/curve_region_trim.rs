@@ -310,7 +310,7 @@ impl Curve2 {
                 ));
             };
             let promoted_span_index = contact.first().fragment_index();
-            split_parameters.push((promoted_span_index, source_parameter.clone()));
+            split_parameters.push((promoted_span_index, source_parameter.clone().into()));
             boundary_contacts.push(PendingBoundaryContact {
                 promoted_span_index,
                 source_parameter,
@@ -375,7 +375,7 @@ impl Curve2 {
                 (&source_start, overlap.second_range().start()),
                 (&source_end, overlap.second_range().end()),
             ] {
-                split_parameters.push((promoted_span_index, source_parameter.clone()));
+                split_parameters.push((promoted_span_index, source_parameter.clone().into()));
                 boundary_contacts.push(PendingBoundaryContact {
                     promoted_span_index,
                     source_parameter: source_parameter.clone(),

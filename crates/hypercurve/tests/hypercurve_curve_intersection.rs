@@ -53,6 +53,34 @@ fn decided<T>(classification: Classification<T>) -> T {
     }
 }
 
+#[test]
+fn curve_parameter_comparison_reports_terminal_certainty() {
+    let zero = hypercurve::CurveParameter2::from(Real::zero());
+    let unresolved = hypercurve::CurveParameter2::from(support::terminally_unresolved_zero());
+    let approximate = zero
+        .compare(&unresolved, &CurveContext::APPROXIMATE_512)
+        .unwrap();
+    assert_eq!(
+        approximate.certainty,
+        CurveCertainty::Approximate512Consumed
+    );
+    assert_eq!(
+        approximate.value,
+        Classification::Decided(std::cmp::Ordering::Equal)
+    );
+    let strict = zero.compare(&unresolved, &CurveContext::STRICT).unwrap();
+    assert_eq!(strict.certainty, CurveCertainty::Certified);
+    assert!(matches!(strict.value, Classification::Uncertain(_)));
+    let identity = unresolved
+        .compare(&unresolved, &CurveContext::STRICT)
+        .unwrap();
+    assert_eq!(identity.certainty, CurveCertainty::Certified);
+    assert_eq!(
+        identity.value,
+        Classification::Decided(std::cmp::Ordering::Equal)
+    );
+}
+
 fn path_region(
     path: &CurvePath2,
     interior_side: CurveBoundaryInteriorSide2,
@@ -124,8 +152,18 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     assert_eq!(evidence.contacts().len(), 1);
     assert!(evidence.blockers().is_empty());
     let contact = &evidence.contacts()[0];
-    assert_eq!(contact.first().exact_curve_parameter(), Some(q(1, 2)));
-    assert_eq!(contact.second().exact_curve_parameter(), Some(q(1, 2)));
+    assert_eq!(
+        decided(contact.first().parameter(&CurveContext::STRICT).unwrap())
+            .scalar()
+            .cloned(),
+        Some(q(1, 2))
+    );
+    assert_eq!(
+        decided(contact.second().parameter(&CurveContext::STRICT).unwrap())
+            .scalar()
+            .cloned(),
+        Some(q(1, 2))
+    );
     assert!(
         matches!((contact.point()).coordinates(), Some(point) if point == &Point2::new(q(1, 2), q(1, 4)))
     );
@@ -211,11 +249,127 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.contacts().len(), 1, "{evidence:?}");
     let contact = &evidence.contacts()[0];
-    assert_eq!(contact.first().exact_curve_parameter(), Some(r(1)));
-    assert_eq!(contact.second().exact_curve_parameter(), Some(q(1, 2)));
+    assert_eq!(
+        decided(contact.first().parameter(&CurveContext::STRICT).unwrap())
+            .scalar()
+            .cloned(),
+        Some(r(1))
+    );
+    assert_eq!(
+        decided(contact.second().parameter(&CurveContext::STRICT).unwrap())
+            .scalar()
+            .cloned(),
+        Some(q(1, 2))
+    );
     assert_eq!(topology.first().len(), 2);
     assert_eq!(topology.second().len(), 1);
     assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
+}
+
+#[test]
+fn selected_intersection_locations_reenter_evaluation_and_subdivision() {
+    // x(t) = t^2 meets x = 1/2 at the positive root sqrt(1/2).
+    // Spline charts map that same root into the authored interval [2, 5].
+    let controls = vec![p(0, 0), p(0, 0), p(1, 0)];
+    let root = q(1, 2).sqrt().unwrap();
+    let point = Point2::new(q(1, 2), Real::zero());
+    let crossing = Curve2::from(
+        LineSeg2::try_new(Point2::new(q(1, 2), r(-1)), Point2::new(q(1, 2), r(1))).unwrap(),
+    );
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let rational = RationalBezier2::try_new(controls.clone(), vec![Real::one(); 3]).unwrap();
+        let knots = vec![r(2), r(2), r(2), r(5), r(5), r(5)];
+        let curves = [
+            Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0))),
+            Curve2::from(rational.elevated_to_degree(5).unwrap()),
+            Curve2::try_polynomial_bspline(2, controls.clone(), knots.clone(), &policy)
+                .unwrap()
+                .into_value(),
+            Curve2::try_nurbs(2, controls.clone(), vec![Real::one(); 3], knots, &policy)
+                .unwrap()
+                .into_value(),
+        ];
+        for (index, original) in curves.into_iter().enumerate() {
+            for reversed in [false, true] {
+                let curve = if reversed {
+                    original.reversed(&policy).unwrap().into_value()
+                } else {
+                    original.clone()
+                };
+                let local = if reversed {
+                    Real::one() - &root
+                } else {
+                    root.clone()
+                };
+                let expected_parameter = if index < 2 {
+                    local
+                } else {
+                    r(2) + r(3) * local
+                };
+                for swapped in [false, true] {
+                    let (first, second) = if swapped {
+                        (&crossing, &curve)
+                    } else {
+                        (&curve, &crossing)
+                    };
+                    let outcome = first.intersect_curve(second, &policy).unwrap();
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    let result = outcome.value;
+                    assert!(result.is_complete(), "{:?}", result.blockers());
+                    assert!(result.overlaps().is_empty());
+                    assert_eq!(result.contacts().len(), 1);
+                    let first_path = CurvePath2::try_new(vec![first.clone()]).unwrap();
+                    let second_path = CurvePath2::try_new(vec![second.clone()]).unwrap();
+                    let path_outcome = first_path.intersect_path(&second_path, &policy).unwrap();
+                    assert_eq!(path_outcome.certainty, CurveCertainty::Certified);
+                    let path_result = path_outcome.value;
+                    assert!(path_result.is_complete(), "{:?}", path_result.blockers());
+                    assert!(path_result.overlaps().is_empty());
+                    assert_eq!(path_result.contacts().len(), 1);
+                    assert_eq!(path_result.contacts()[0].first_curve_index(), 0);
+                    assert_eq!(path_result.contacts()[0].second_curve_index(), 0);
+                    for contact in [&result.contacts()[0], path_result.contacts()[0].contact()] {
+                        let location = if swapped {
+                            contact.second()
+                        } else {
+                            contact.first()
+                        };
+                        let parameter = decided(location.parameter(&policy).unwrap());
+                        let comparison = parameter
+                            .compare(&expected_parameter.clone().into(), &CurveContext::STRICT)
+                            .unwrap();
+                        assert_eq!(comparison.certainty, CurveCertainty::Certified);
+                        assert_eq!(
+                            comparison.value,
+                            Classification::Decided(std::cmp::Ordering::Equal)
+                        );
+                        if index < 2 {
+                            assert_eq!(&parameter, location.local_parameter());
+                        }
+                        let evaluated = curve.point_at(&parameter, &policy).unwrap();
+                        assert_eq!(evaluated.certainty, CurveCertainty::Certified);
+                        assert_eq!(
+                            evaluated
+                                .value
+                                .coincides_with(&point.clone().into(), &CurveContext::STRICT)
+                                .value,
+                            Classification::Decided(true),
+                        );
+                        let split = curve.split_at(parameter, &policy).unwrap();
+                        assert_eq!(split.certainty, CurveCertainty::Certified);
+                        for endpoint in [split.value.0.end(), split.value.1.start()] {
+                            assert_eq!(
+                                endpoint
+                                    .coincides_with(&point.clone().into(), &CurveContext::STRICT)
+                                    .value,
+                                Classification::Decided(true),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[test]
@@ -267,10 +421,34 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
 
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
-    assert_eq!(evidence.overlaps()[0].first_range().start(), &Real::zero());
-    assert_eq!(evidence.overlaps()[0].first_range().end(), &Real::one());
-    assert_eq!(evidence.overlaps()[0].second_range().start(), &Real::zero());
-    assert_eq!(evidence.overlaps()[0].second_range().end(), &Real::one());
+    assert_eq!(
+        evidence.overlaps()[0]
+            .first_range()
+            .start()
+            .scalar()
+            .unwrap(),
+        &Real::zero()
+    );
+    assert_eq!(
+        evidence.overlaps()[0].first_range().end().scalar().unwrap(),
+        &Real::one()
+    );
+    assert_eq!(
+        evidence.overlaps()[0]
+            .second_range()
+            .start()
+            .scalar()
+            .unwrap(),
+        &Real::zero()
+    );
+    assert_eq!(
+        evidence.overlaps()[0]
+            .second_range()
+            .end()
+            .scalar()
+            .unwrap(),
+        &Real::one()
+    );
     assert_eq!(
         evidence.overlaps()[0].orientation(),
         RationalBezierOverlapOrientation2::Same
@@ -309,10 +487,13 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
     let overlap = &evidence.overlaps()[0];
     assert_eq!(overlap.first_span_index(), 0);
     assert_eq!(overlap.second_span_index(), 0);
-    assert_eq!(overlap.first_range().start(), &q(1, 3));
-    assert_eq!(overlap.first_range().end(), &Real::one());
-    assert_eq!(overlap.second_range().start(), &Real::zero());
-    assert_eq!(overlap.second_range().end(), &q(2, 3));
+    assert_eq!(overlap.first_range().start().scalar().unwrap(), &q(1, 3));
+    assert_eq!(overlap.first_range().end().scalar().unwrap(), &Real::one());
+    assert_eq!(
+        overlap.second_range().start().scalar().unwrap(),
+        &Real::zero()
+    );
+    assert_eq!(overlap.second_range().end().scalar().unwrap(), &q(2, 3));
 
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
@@ -344,8 +525,11 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert!(matches!(
-        evidence.overlaps()[0].first_range().start(),
-        BezierParameter2::Algebraic(_)
+        evidence.overlaps()[0]
+            .first_range()
+            .start()
+            .as_bezier_parameter(),
+        Some(BezierParameter2::Algebraic(_))
     ));
 
     assert_eq!(topology.first()[0].fragments().len(), 2);
@@ -409,8 +593,12 @@ fn promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary() {
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert!(matches!(
-        evidence.overlaps()[0].overlap().first_range().start(),
-        BezierParameter2::Algebraic(_)
+        evidence.overlaps()[0]
+            .overlap()
+            .first_range()
+            .start()
+            .as_bezier_parameter(),
+        Some(BezierParameter2::Algebraic(_))
     ));
 
     let region = boolean_paths(
@@ -470,8 +658,12 @@ fn promoted_region_boolean_consumes_irrational_polynomial_graph_overlap() {
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert!(matches!(
-        evidence.overlaps()[0].overlap().second_range().start(),
-        BezierParameter2::Algebraic(_)
+        evidence.overlaps()[0]
+            .overlap()
+            .second_range()
+            .start()
+            .as_bezier_parameter(),
+        Some(BezierParameter2::Algebraic(_))
     ));
 
     let region = boolean_paths(
@@ -554,10 +746,34 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     let evidence = topology.result();
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
-    assert_eq!(evidence.overlaps()[0].first_range().start(), &q(1, 3));
-    assert_eq!(evidence.overlaps()[0].first_range().end(), &Real::one());
-    assert_eq!(evidence.overlaps()[0].second_range().start(), &Real::zero());
-    assert_eq!(evidence.overlaps()[0].second_range().end(), &q(2, 3));
+    assert_eq!(
+        evidence.overlaps()[0]
+            .first_range()
+            .start()
+            .scalar()
+            .unwrap(),
+        &q(1, 3)
+    );
+    assert_eq!(
+        evidence.overlaps()[0].first_range().end().scalar().unwrap(),
+        &Real::one()
+    );
+    assert_eq!(
+        evidence.overlaps()[0]
+            .second_range()
+            .start()
+            .scalar()
+            .unwrap(),
+        &Real::zero()
+    );
+    assert_eq!(
+        evidence.overlaps()[0]
+            .second_range()
+            .end()
+            .scalar()
+            .unwrap(),
+        &q(2, 3)
+    );
     assert_eq!(topology.first()[0].fragments().len(), 2);
     assert_eq!(topology.second()[0].fragments().len(), 2);
 
@@ -569,8 +785,10 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     assert!(reversed_evidence.is_complete());
     assert_eq!(reversed_evidence.overlaps().len(), 1);
     assert_eq!(
-        reversed_evidence.overlaps()[0].second_range(),
-        &hypercurve::ParamRange::new(Real::one(), q(1, 3))
+        reversed_evidence.overlaps()[0]
+            .second_range()
+            .scalar_endpoints(),
+        Some((&Real::one(), &q(1, 3)))
     );
     assert_eq!(
         reversed_evidence.overlaps()[0].orientation(),
@@ -699,7 +917,14 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
     assert!(evidence.is_complete());
     assert_eq!(evidence.contacts().len(), 1);
     assert_eq!(
-        evidence.contacts()[0].first().exact_curve_parameter(),
+        decided(
+            evidence.contacts()[0]
+                .first()
+                .parameter(&CurveContext::STRICT)
+                .unwrap()
+        )
+        .scalar()
+        .cloned(),
         Some(q(7, 8))
     );
     assert!(
@@ -726,9 +951,14 @@ fn native_line_arc_dispatch_preserves_operand_order_and_exact_parameters() {
             .is_some()
     );
     assert_eq!(
-        reversed_evidence.contacts()[0]
-            .second()
-            .exact_curve_parameter(),
+        decided(
+            reversed_evidence.contacts()[0]
+                .second()
+                .parameter(&CurveContext::STRICT)
+                .unwrap()
+        )
+        .scalar()
+        .cloned(),
         Some(q(7, 8))
     );
 }
@@ -750,10 +980,16 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
     assert_eq!(evidence.contacts().len(), 2);
     assert_eq!(evidence.overlaps().len(), 1);
     let overlap = &evidence.overlaps()[0];
-    assert_ne!(overlap.first_range().start(), &Real::zero());
-    assert_eq!(overlap.first_range().end(), &Real::one());
-    assert_eq!(overlap.second_range().start(), &Real::zero());
-    assert_eq!(overlap.second_range().end(), &Real::one());
+    assert_ne!(
+        overlap.first_range().start().scalar().unwrap(),
+        &Real::zero()
+    );
+    assert_eq!(overlap.first_range().end().scalar().unwrap(), &Real::one());
+    assert_eq!(
+        overlap.second_range().start().scalar().unwrap(),
+        &Real::zero()
+    );
+    assert_eq!(overlap.second_range().end().scalar().unwrap(), &Real::one());
     assert_eq!(
         overlap.orientation(),
         RationalBezierOverlapOrientation2::Same
@@ -771,8 +1007,14 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
         .into_value();
     assert_eq!(reversed_evidence.overlaps().len(), 1);
     let reversed_overlap = &reversed_evidence.overlaps()[0];
-    assert_eq!(reversed_overlap.second_range().start(), &Real::one());
-    assert_eq!(reversed_overlap.second_range().end(), &Real::zero());
+    assert_eq!(
+        reversed_overlap.second_range().start().scalar().unwrap(),
+        &Real::one()
+    );
+    assert_eq!(
+        reversed_overlap.second_range().end().scalar().unwrap(),
+        &Real::zero()
+    );
     assert_eq!(
         reversed_overlap.orientation(),
         RationalBezierOverlapOrientation2::Reversed
@@ -915,11 +1157,21 @@ fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     assert_eq!(
-        evidence.overlaps()[0].overlap().first_range().start(),
+        evidence.overlaps()[0]
+            .overlap()
+            .first_range()
+            .start()
+            .scalar()
+            .unwrap(),
         &q(1, 3)
     );
     assert_eq!(
-        evidence.overlaps()[0].overlap().second_range().end(),
+        evidence.overlaps()[0]
+            .overlap()
+            .second_range()
+            .end()
+            .scalar()
+            .unwrap(),
         &q(2, 3)
     );
 
@@ -1057,10 +1309,10 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     assert_eq!(evidence.contacts().len(), 2);
     assert_eq!(evidence.overlaps().len(), 1);
     let overlap = &evidence.overlaps()[0];
-    assert_eq!(overlap.first_range().start(), &q(1, 2));
-    assert_eq!(overlap.first_range().end(), &r(1));
-    assert_eq!(overlap.second_range().start(), &r(0));
-    assert_eq!(overlap.second_range().end(), &q(1, 2));
+    assert_eq!(overlap.first_range().start().scalar().unwrap(), &q(1, 2));
+    assert_eq!(overlap.first_range().end().scalar().unwrap(), &r(1));
+    assert_eq!(overlap.second_range().start().scalar().unwrap(), &r(0));
+    assert_eq!(overlap.second_range().end().scalar().unwrap(), &q(1, 2));
     assert_eq!(
         overlap.orientation(),
         RationalBezierOverlapOrientation2::Same
@@ -1075,8 +1327,14 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
         .unwrap()
         .into_value();
     let reversed_overlap = &reversed_evidence.overlaps()[0];
-    assert_eq!(reversed_overlap.second_range().start(), &r(1));
-    assert_eq!(reversed_overlap.second_range().end(), &q(1, 2));
+    assert_eq!(
+        reversed_overlap.second_range().start().scalar().unwrap(),
+        &r(1)
+    );
+    assert_eq!(
+        reversed_overlap.second_range().end().scalar().unwrap(),
+        &q(1, 2)
+    );
     assert_eq!(
         reversed_overlap.orientation(),
         RationalBezierOverlapOrientation2::Reversed
@@ -1094,10 +1352,10 @@ fn promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries() {
     assert!(evidence.is_complete(), "{:?}", evidence.blockers());
     assert_eq!(evidence.overlaps().len(), 1);
     let overlap = evidence.overlaps()[0].overlap();
-    assert_eq!(overlap.first_range().start(), &q(1, 4));
-    assert_eq!(overlap.first_range().end(), &q(3, 4));
-    assert_eq!(overlap.second_range().start(), &r(1));
-    assert_eq!(overlap.second_range().end(), &r(0));
+    assert_eq!(overlap.first_range().start().scalar().unwrap(), &q(1, 4));
+    assert_eq!(overlap.first_range().end().scalar().unwrap(), &q(3, 4));
+    assert_eq!(overlap.second_range().start().scalar().unwrap(), &r(1));
+    assert_eq!(overlap.second_range().end().scalar().unwrap(), &r(0));
     assert_eq!(
         overlap.orientation(),
         RationalBezierOverlapOrientation2::Reversed
