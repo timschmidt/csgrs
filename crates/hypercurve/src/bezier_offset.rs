@@ -118999,6 +118999,35 @@ impl BezierParallel2 {
         ))
     }
 
+    /// A constant parallel must satisfy the squared cusp equation identically.
+    /// One nonzero coefficient therefore certifies a nonconstant image on
+    /// every nonempty regular interval, even when its midpoint is a cusp or
+    /// its two endpoints coincide. No root isolation or scalar sampling is needed.
+    pub(crate) fn nonconstant_image_certificate(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<()>> {
+        let differential = self.differential()?;
+        let speed_squared = parallel_speed_squared_polynomial(differential);
+        let source = self.source_power_basis()?;
+        let curvature =
+            parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
+        let cusp = polynomial_subtract(
+            &polynomial_multiply(&curvature, &curvature),
+            &polynomial_power(&speed_squared, 3),
+        );
+        Ok(
+            match polynomial_coefficients_are_identically_zero(&cusp, policy) {
+                Classification::Decided(false) => Classification::Decided(()),
+                // The squared identity alone cannot select the normal's sheet.
+                Classification::Decided(true) => {
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
     /// Materializes an exactly recognized rational-circle parallel without
     /// reconstructing its homogeneous speed polynomial.
     ///

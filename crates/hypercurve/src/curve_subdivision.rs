@@ -48,6 +48,75 @@ impl CurveSourceSpan2 {
         }
     }
 
+    /// Certifies a collapsed support once for the caller's prepared traversal.
+    pub(crate) fn point_image(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CurvePoint2>> {
+        let strict = policy.strict_counterpart();
+        let policy = &strict;
+        let support = CurveSupport2::from_fragment(&self.fragment);
+        let family = support.family();
+        let result = match &support {
+            CurveSupport2::Bezier(curve) => curve
+                .point_image(policy)
+                .map(|point| point.map(CurvePoint2::from)),
+            CurveSupport2::Line(_) => Classification::Decided(None),
+            CurveSupport2::Circle(circle) => {
+                match crate::classify::is_zero(circle.semicircle().radial_distance(), policy) {
+                    Some(false) => Classification::Decided(None),
+                    Some(true) => circle
+                        .semicircle()
+                        .center_point_evidence(policy)
+                        .map_err(|cause| subdivision_error(family, cause))?
+                        .map(Some),
+                    None => Classification::Uncertain(UncertaintyReason::RealSign),
+                }
+            }
+            CurveSupport2::Parallel(parallel) => {
+                let curve = self.curve();
+                // Endpoint separation is only a nonconstancy certificate;
+                // coincidence never establishes a point image.
+                if policy.strict_predicate_pass(|| curve.start().same_point(&curve.end(), policy))
+                    == Classification::Decided(false)
+                {
+                    return Ok(None);
+                }
+                // Circle collapse has a direct homogeneous certificate and
+                // does not need a reconstructed PH speed polynomial.
+                if let Classification::Decided(Some(component)) = parallel
+                    .exact_circular_parallel_component(policy)
+                    .map_err(|cause| subdivision_error(family, cause))?
+                {
+                    return decided(
+                        BezierSubcurve2::Rational(component)
+                            .point_image(policy)
+                            .map(|point| point.map(CurvePoint2::from)),
+                        family,
+                    );
+                }
+                match parallel
+                    .exact_rational_parallel_component_on_regular_range(
+                        curve.parameter_domain(),
+                        policy,
+                    )
+                    .map_err(|cause| subdivision_error(family, cause))?
+                {
+                    Classification::Decided(Some(component)) => {
+                        BezierSubcurve2::Rational(component.curve().clone())
+                            .point_image(policy)
+                            .map(|point| point.map(CurvePoint2::from))
+                    }
+                    _ => parallel
+                        .nonconstant_image_certificate(policy)
+                        .map_err(|cause| subdivision_error(family, cause))?
+                        .map(|()| None),
+                }
+            }
+        };
+        decided(result, family)
+    }
+
     pub(crate) fn chart(&self) -> CurveSpanRange2 {
         CurveSpanRange2::from_affine_chart(&self.source_scale, &self.source_offset)
     }

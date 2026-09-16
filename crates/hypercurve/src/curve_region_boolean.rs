@@ -1453,7 +1453,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     pub(crate) fn try_new_curve_boundary(
-        source_spans: &[crate::curve::CurveSourceSpan2],
+        source_spans: &[(usize, &crate::curve::CurveSourceSpan2)],
         region: &'a CurveRegion2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
@@ -1462,7 +1462,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .len()
                 .saturating_add(region_carrier_count(region)),
         );
-        for (fragment_index, span) in source_spans.iter().enumerate() {
+        for &(fragment_index, span) in source_spans {
             carriers.push(build_parameterized_carrier(
                 &span.fragment,
                 CurveRegionBooleanOperand2::First,

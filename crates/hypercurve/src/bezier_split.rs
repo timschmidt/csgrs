@@ -1624,6 +1624,56 @@ fn parameter_in_range(
 }
 
 impl BezierSubcurve2 {
+    /// Classifies the complete support image, not just its two endpoints.
+    pub(crate) fn point_image(&self, policy: &CurveContext) -> Classification<Option<Point2>> {
+        use crate::rational_bezier::point_image_from_residuals;
+        let start = self.start();
+        match self {
+            Self::Quadratic(curve) => point_image_from_residuals(
+                start,
+                curve
+                    .control_points()
+                    .into_iter()
+                    .skip(1)
+                    .map(|point| [point.x() - start.x(), point.y() - start.y()]),
+                policy,
+            ),
+            Self::Cubic(curve) => point_image_from_residuals(
+                start,
+                curve
+                    .control_points()
+                    .into_iter()
+                    .skip(1)
+                    .map(|point| [point.x() - start.x(), point.y() - start.y()]),
+                policy,
+            ),
+            Self::RationalQuadratic(curve) => {
+                point_image_from_residuals(
+                    start,
+                    curve.control_points().into_iter().zip(curve.weights()).map(
+                        |(point, weight)| {
+                            [
+                                (point.x() - start.x()) * weight,
+                                (point.y() - start.y()) * weight,
+                            ]
+                        },
+                    ),
+                    policy,
+                )
+            }
+            Self::Rational(curve) => point_image_from_residuals(
+                start,
+                curve.homogeneous_controls().iter().map(|control| {
+                    [
+                        control.x() - start.x() * control.weight(),
+                        control.y() - start.y() * control.weight(),
+                    ]
+                }),
+                policy,
+            ),
+        }
+    }
+
     /// Classifies whether one coordinate is a certified injective parameter for
     /// this complete subcurve image.
     pub(crate) fn certified_injective_axis(

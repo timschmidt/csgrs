@@ -2375,14 +2375,38 @@ fn point_image_from_controls(
     let Some(point) = controls.first().copied() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
-    for control in controls.iter().skip(1) {
-        match point_equal(point, control, policy) {
+    point_image_from_residuals(
+        point,
+        controls
+            .iter()
+            .skip(1)
+            .map(|control| [control.x() - point.x(), control.y() - point.y()]),
+        policy,
+    )
+}
+
+/// Bernstein independence proves a finite rational image is constant exactly
+/// when every coefficient of X-p.x*W and Y-p.y*W vanishes. Zero homogeneous
+/// weights require no affine reconstruction. One nonzero residual disproves
+/// constancy even when a different coefficient remains unresolved.
+pub(crate) fn point_image_from_residuals(
+    point: &Point2,
+    residuals: impl IntoIterator<Item = [Real; 2]>,
+    policy: &CurveContext,
+) -> Classification<Option<Point2>> {
+    let mut uncertain = false;
+    for residual in residuals.into_iter().flatten() {
+        match is_zero(&residual, policy) {
             Some(true) => {}
             Some(false) => return Classification::Decided(None),
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            None => uncertain = true,
         }
     }
-    Classification::Decided(Some(point.clone()))
+    if uncertain {
+        Classification::Uncertain(UncertaintyReason::RealSign)
+    } else {
+        Classification::Decided(Some(point.clone()))
+    }
 }
 
 fn line_segment_image_from_controls(
