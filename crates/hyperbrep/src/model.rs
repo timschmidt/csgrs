@@ -20,7 +20,7 @@ use crate::geometry::{
     SurfaceIntersectionCurve, SurfaceIntersectionOperand, SurfaceIntersectionPcurve,
     SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePcurveCorrespondence,
     affine_transform_orientation, materialize_nurbs_parameter_graph,
-    rational_bilinear_parameter_curve,
+    rational_bilinear_parameter_curve, resolve_planar_classification,
 };
 
 macro_rules! model_id {
@@ -1479,7 +1479,7 @@ impl CertifiedRevolutionBoundary {
                 .into_value()
                 .area_moments(&CurveContext::STRICT)
                 .map_err(GeometryError::from)
-                .and_then(|outcome| resolve_optional_planar_measurement(outcome.into_value()))
+                .and_then(|outcome| resolve_planar_classification(outcome.into_value()))
                 .map(|moments| moments.map(|moments| moments.x_moment().clone())),
         }
     }
@@ -2697,7 +2697,7 @@ impl Model {
             .signed_area(&CurveContext::STRICT)
             .map_err(GeometryError::from)?
             .into_value();
-        let loop_area = resolve_optional_planar_measurement(loop_area)?
+        let loop_area = resolve_planar_classification(loop_area)?
             .ok_or(GeometryError::UnsupportedPcurveContour)?;
         let area_order = decided_model_order(compare_reals(
             &loop_area,
@@ -3048,14 +3048,26 @@ impl Model {
                     });
                 }
                 for contact in relation.contacts() {
-                    let Some(first_parameter) = contact.first().exact_curve_parameter() else {
-                        return Err(GeometryError::UnsupportedIntersection.into());
-                    };
-                    let Some(second_parameter) = contact.second().exact_curve_parameter() else {
-                        return Err(GeometryError::UnsupportedIntersection.into());
-                    };
+                    let first_parameter = resolve_planar_classification(
+                        contact
+                            .first()
+                            .parameter(&CurveContext::STRICT)
+                            .map_err(GeometryError::from)?,
+                    )?;
+                    let second_parameter = resolve_planar_classification(
+                        contact
+                            .second()
+                            .parameter(&CurveContext::STRICT)
+                            .map_err(GeometryError::from)?,
+                    )?;
+                    let first_parameter = first_parameter
+                        .scalar()
+                        .ok_or(GeometryError::UnrepresentableParameter)?;
+                    let second_parameter = second_parameter
+                        .scalar()
+                        .ok_or(GeometryError::UnrepresentableParameter)?;
                     let first_spatial =
-                        materialized[first_index].spatial_parameter_at(&first_parameter)?;
+                        materialized[first_index].spatial_parameter_at(first_parameter)?;
                     if !ordered[first_index]
                         .intersection
                         .curve()
@@ -3066,7 +3078,7 @@ impl Model {
                     }
                     insert_exact_split_parameter(
                         &mut split_parameters[second_index],
-                        materialized[second_index].spatial_parameter_at(&second_parameter)?,
+                        materialized[second_index].spatial_parameter_at(second_parameter)?,
                     )?;
                 }
             }
@@ -5676,7 +5688,7 @@ impl Model {
                     .signed_area(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value();
-                let area = resolve_optional_planar_measurement(area)?
+                let area = resolve_planar_classification(area)?
                     .ok_or(GeometryError::UnsupportedMeasurement)?;
                 Ok(Real::from(2) * area)
             }
@@ -10507,7 +10519,7 @@ impl ModelBuilder {
                     .signed_area(&CurveContext::STRICT)
                     .map_err(GeometryError::from)?
                     .into_value();
-                let area = resolve_optional_planar_measurement(area)?;
+                let area = resolve_planar_classification(area)?;
                 match area {
                     Some(area) => decided_model_order(compare_reals(
                         &area,
@@ -11438,27 +11450,35 @@ impl ModelBuilder {
             ];
             let mut matched = [false; 2];
             for contact in relation.contacts() {
-                let Some(first_parameter) = contact.first().exact_curve_parameter() else {
-                    return Err(GeometryError::UnsupportedIntersection.into());
-                };
-                let Some(second_parameter) = contact.second().exact_curve_parameter() else {
-                    return Err(GeometryError::UnsupportedIntersection.into());
-                };
+                let first_parameter = resolve_planar_classification(
+                    contact
+                        .first()
+                        .parameter(&CurveContext::STRICT)
+                        .map_err(GeometryError::from)?,
+                )?;
+                let second_parameter = resolve_planar_classification(
+                    contact
+                        .second()
+                        .parameter(&CurveContext::STRICT)
+                        .map_err(GeometryError::from)?,
+                )?;
                 let mut found = None;
                 for (index, (expected_first, expected_second)) in expected.iter().enumerate() {
                     if !matched[index]
-                        && real_values_equal(
-                            &first_parameter,
-                            (expected_first)
-                                .scalar()
-                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                        && resolve_planar_classification(
+                            first_parameter
+                                .compare(expected_first, &policy)
+                                .map_err(GeometryError::from)?
+                                .into_value(),
                         )?
-                        && real_values_equal(
-                            &second_parameter,
-                            (expected_second)
-                                .scalar()
-                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                        .is_eq()
+                        && resolve_planar_classification(
+                            second_parameter
+                                .compare(expected_second, &policy)
+                                .map_err(GeometryError::from)?
+                                .into_value(),
                         )?
+                        .is_eq()
                     {
                         found = Some(index);
                         break;
@@ -11510,23 +11530,33 @@ impl ModelBuilder {
                     return Err(BuildError::SelfIntersectingWire(wire));
                 }
                 let contact = &relation.contacts()[0];
-                let Some(first_parameter) = contact.first().exact_curve_parameter() else {
-                    return Err(GeometryError::UnsupportedIntersection.into());
-                };
-                let Some(second_parameter) = contact.second().exact_curve_parameter() else {
-                    return Err(GeometryError::UnsupportedIntersection.into());
-                };
-                if !real_values_equal(
-                    &first_parameter,
-                    (expected_first)
-                        .scalar()
-                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                )? || !real_values_equal(
-                    &second_parameter,
-                    (expected_second)
-                        .scalar()
-                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                )? {
+                let first_parameter = resolve_planar_classification(
+                    contact
+                        .first()
+                        .parameter(&CurveContext::STRICT)
+                        .map_err(GeometryError::from)?,
+                )?;
+                let second_parameter = resolve_planar_classification(
+                    contact
+                        .second()
+                        .parameter(&CurveContext::STRICT)
+                        .map_err(GeometryError::from)?,
+                )?;
+                if !resolve_planar_classification(
+                    first_parameter
+                        .compare(expected_first, &policy)
+                        .map_err(GeometryError::from)?
+                        .into_value(),
+                )?
+                .is_eq()
+                    || !resolve_planar_classification(
+                        second_parameter
+                            .compare(expected_second, &policy)
+                            .map_err(GeometryError::from)?
+                            .into_value(),
+                    )?
+                    .is_eq()
+                {
                     return Err(BuildError::SelfIntersectingWire(wire));
                 }
             }
@@ -17248,7 +17278,7 @@ impl ModelBuilder {
                 .signed_area(&CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value();
-            let area = resolve_optional_planar_measurement(area)?
+            let area = resolve_planar_classification(area)?
                 .ok_or(BuildError::DegenerateShellVolume(shell))?;
             if decided_model_order(compare_reals(
                 &area,
@@ -20587,18 +20617,7 @@ fn curve_path_signed_area(path: &CurvePath2) -> Result<Real, GeometryError> {
         .into_value()
         .signed_area(&CurveContext::STRICT)?
         .into_value();
-    resolve_optional_planar_measurement(area)?.ok_or(GeometryError::UnsupportedMeasurement)
-}
-
-fn resolve_optional_planar_measurement<T>(
-    classification: Classification<Option<T>>,
-) -> Result<Option<T>, GeometryError> {
-    match classification {
-        Classification::Decided(value) => Ok(value),
-        Classification::Uncertain(reason) => {
-            Err(GeometryError::PlanarClassificationUnresolved(reason))
-        }
-    }
+    resolve_planar_classification(area)?.ok_or(GeometryError::UnsupportedMeasurement)
 }
 
 fn decided_model_order(

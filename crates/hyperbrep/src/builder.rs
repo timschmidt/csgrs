@@ -12,7 +12,7 @@ use hypercurve::{
 use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
-use crate::geometry::Curve3ExactData;
+use crate::geometry::{Curve3ExactData, resolve_planar_classification};
 use crate::model::CertifiedSpherePairKind;
 use crate::{
     BuildError, Curve3, Direction, EdgeId, FaceId, GeometryError, Model, ModelBuilder, Orientation,
@@ -3553,11 +3553,22 @@ fn normalize_revolution_contour(contour: &Contour2) -> Result<Contour2, Construc
     }
 }
 
-fn exact_parameter_is(parameter: Option<Real>, expected: &Real) -> Result<bool, ConstructionError> {
-    parameter
-        .map(|parameter| exact_real_equal(&parameter, expected))
-        .transpose()
-        .map(Option::unwrap_or_default)
+fn curve_location_is(
+    location: &hypercurve::CurveLocation2,
+    expected: &hypercurve::CurveParameter2,
+) -> Result<bool, ConstructionError> {
+    let parameter = resolve_planar_classification(
+        location
+            .parameter(&CurveContext::STRICT)
+            .map_err(GeometryError::from)?,
+    )?;
+    Ok(resolve_planar_classification(
+        parameter
+            .compare(expected, &CurveContext::STRICT)
+            .map_err(GeometryError::from)?
+            .into_value(),
+    )?
+    .is_eq())
 }
 
 fn required_curve_path_signed_area(
@@ -4015,31 +4026,23 @@ fn validate_simple_curve_path(
             }
             for contact in result.contacts() {
                 let forward_seam = second_index == first_index + 1
-                    && exact_parameter_is(
-                        contact.first().exact_curve_parameter(),
-                        (curves[first_index].parameter_domain().end())
-                            .scalar()
-                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                    && curve_location_is(
+                        contact.first(),
+                        curves[first_index].parameter_domain().end(),
                     )?
-                    && exact_parameter_is(
-                        contact.second().exact_curve_parameter(),
-                        (curves[second_index].parameter_domain().start())
-                            .scalar()
-                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                    && curve_location_is(
+                        contact.second(),
+                        curves[second_index].parameter_domain().start(),
                     )?;
                 let closing_seam = first_index == 0
                     && second_index + 1 == curves.len()
-                    && exact_parameter_is(
-                        contact.first().exact_curve_parameter(),
-                        (curves[first_index].parameter_domain().start())
-                            .scalar()
-                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                    && curve_location_is(
+                        contact.first(),
+                        curves[first_index].parameter_domain().start(),
                     )?
-                    && exact_parameter_is(
-                        contact.second().exact_curve_parameter(),
-                        (curves[second_index].parameter_domain().end())
-                            .scalar()
-                            .ok_or(GeometryError::UnsupportedPcurveContour)?,
+                    && curve_location_is(
+                        contact.second(),
+                        curves[second_index].parameter_domain().end(),
                     )?;
                 if !forward_seam && !closing_seam {
                     return Err(ConstructionError::SelfIntersectingProfile);

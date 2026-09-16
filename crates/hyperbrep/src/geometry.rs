@@ -13,6 +13,17 @@ use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
 use crate::error::{GeometryError, GeometryResult};
 
+pub(crate) fn resolve_planar_classification<T>(
+    classification: Classification<T>,
+) -> GeometryResult<T> {
+    match classification {
+        Classification::Decided(value) => Ok(value),
+        Classification::Uncertain(reason) => {
+            Err(GeometryError::PlanarClassificationUnresolved(reason))
+        }
+    }
+}
+
 /// Exact closed parameter interval.
 #[derive(Clone, Debug)]
 pub struct ParameterDomain {
@@ -6564,13 +6575,18 @@ fn intersect_coaxial_revolutions(
     let mut retained = Vec::with_capacity(intersections.contacts().len());
     let mut locations = Vec::<(Real, Real)>::with_capacity(intersections.contacts().len());
     for contact in intersections.contacts() {
-        let first_parameter = contact
-            .first()
-            .exact_curve_parameter()
+        let first_parameter =
+            resolve_planar_classification(contact.first().parameter(&CurveContext::STRICT)?)?;
+        let second_parameter =
+            resolve_planar_classification(contact.second().parameter(&CurveContext::STRICT)?)?;
+        // Spatial isoparametric pcurves currently require scalar parameters.
+        let first_parameter = first_parameter
+            .scalar()
+            .cloned()
             .ok_or(GeometryError::UnrepresentableParameter)?;
-        let second_parameter = contact
-            .second()
-            .exact_curve_parameter()
+        let second_parameter = second_parameter
+            .scalar()
+            .cloned()
             .ok_or(GeometryError::UnrepresentableParameter)?;
         let first_point = first_meridian
             .curve
