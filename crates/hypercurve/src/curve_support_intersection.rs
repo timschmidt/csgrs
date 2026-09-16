@@ -23,7 +23,6 @@ pub(super) struct Span {
     range: CurveParameterRange2,
     pub(super) chart: CurveSpanRange2,
     reversed: bool,
-    self_contacts: OnceLock<ExactCurveResult<RationalBezierIntersectionContacts2>>,
 }
 
 fn decided<T>(value: CurveResult<Classification<T>>, family: CurveFamily2) -> ExactCurveResult<T> {
@@ -52,7 +51,6 @@ pub(super) fn spans(curve: &Curve2, policy: &CurveContext) -> ExactCurveResult<V
             },
             chart: span.chart(),
             reversed: span.fragment.source_is_reversed(),
-            self_contacts: OnceLock::new(),
         })
         .collect())
 }
@@ -987,6 +985,20 @@ impl Pair<'_> {
         }
         let context = RationalBezierIntersectionContext::try_new(first, second, self.policy)?;
         let evidence = context.try_contacts()?;
+        // The scalar context is a cheap complete authority for isolated
+        // contacts and injective correspondences. Shared non-injective images
+        // need every component and off-diagonal pair on the active domains.
+        if matches!(
+            evidence,
+            RationalBezierIntersectionContacts2::Incomplete { .. }
+                | RationalBezierIntersectionContacts2::DegenerateResultant
+        ) || (evidence.overlap().is_some()
+            && !(first.has_certified_injective_axis(self.policy)
+                && second.has_certified_injective_axis(self.policy)))
+        {
+            return self.finite_rational(first, second, result);
+        }
+
         let family = self.first.support.family();
         for contact in evidence.isolated_contacts() {
             let first_parameter = CurveParameter2::from(contact.first_parameter().clone());
@@ -1016,7 +1028,6 @@ impl Pair<'_> {
                 context.overlap_parameter_correspondence(overlap),
                 overlap,
             );
-            self.overlap_self_contacts(first, second, overlap, &correspondence, result)?;
             if let Some((first_range, second_range)) = decided(
                 correspondence.clipped_ranges(&self.first.range, &self.second.range, self.policy),
                 family,
@@ -1042,127 +1053,6 @@ impl Pair<'_> {
                 // An open curve must retain the shared endpoint contact.
                 self.overlap_endpoint_contacts(first, overlap, &correspondence, result)?;
             }
-        }
-        self.retain_blockers(&evidence, result);
-        Ok(())
-    }
-
-    fn retain_blockers(
-        &self,
-        evidence: &RationalBezierIntersectionContacts2,
-        result: &mut Evidence,
-    ) {
-        let kind = match evidence {
-            RationalBezierIntersectionContacts2::Incomplete { candidates, .. } => {
-                Some(CurveIntersectionPairBlockerKind2::IncompleteReplay {
-                    candidates: candidates.clone(),
-                })
-            }
-            RationalBezierIntersectionContacts2::DegenerateResultant => {
-                Some(CurveIntersectionPairBlockerKind2::SharedComponent)
-            }
-            _ => None,
-        };
-        if let Some(kind) = kind {
-            self.blocker(result, kind);
-        }
-    }
-
-    fn overlap_self_contacts(
-        &self,
-        first: &RationalBezier2,
-        second: &RationalBezier2,
-        overlap: &crate::RationalBezierIntersectionOverlap2,
-        correspondence: &RationalCurveOverlap2,
-        result: &mut Evidence,
-    ) -> ExactCurveResult<()> {
-        if first.has_certified_injective_axis(self.policy)
-            && second.has_certified_injective_axis(self.policy)
-        {
-            return Ok(());
-        }
-        // A geometric overlap need not describe every pair of parameters at
-        // a self-crossing. A full-domain projective correspondence lets the
-        // existing diagonal-deflated self-contact authority recover all of
-        // those fibers. A partial or non-bijective correspondence needs its
-        // own complete component replay before domain clipping is complete.
-        if !matches!(
-            correspondence.source,
-            RationalBezierOverlapParameterCorrespondence2::Identity
-                | RationalBezierOverlapParameterCorrespondence2::UnitComplement
-                | RationalBezierOverlapParameterCorrespondence2::EndpointProjective { .. }
-        ) {
-            self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent);
-            return Ok(());
-        }
-        let evidence = self
-            .first
-            .self_contacts
-            .get_or_init(|| first.self_intersection_contacts(self.policy))
-            .as_ref()
-            .map_err(Clone::clone)?;
-        let family = self.first.support.family();
-        for contact in evidence.isolated_contacts() {
-            // Self contacts are unordered. Both ordered fibers can survive
-            // different active domains on the two operands.
-            for swapped in [false, true] {
-                let (first_parameter, source_parameter) = if swapped {
-                    (contact.second_parameter(), contact.first_parameter())
-                } else {
-                    (contact.first_parameter(), contact.second_parameter())
-                };
-                let first_parameter = CurveParameter2::from(first_parameter.clone());
-                if !contains(&self.first.range, &first_parameter, family, self.policy)? {
-                    continue;
-                }
-                let second_parameter = decided(
-                    correspondence.source.map_first_to_second_region_parameter(
-                        &CurveParameter2::from(source_parameter.clone()),
-                        &correspondence.first_range,
-                        &correspondence.second_range,
-                        self.policy,
-                    ),
-                    family,
-                )?
-                .ok_or_else(|| {
-                    ExactCurveError::blocked(
-                        CurveOperation2::Intersection,
-                        family,
-                        UncertaintyReason::Boundary,
-                    )
-                })?;
-                if !contains(
-                    &self.second.range,
-                    &second_parameter,
-                    self.second.support.family(),
-                    self.policy,
-                )? {
-                    continue;
-                }
-                let cross = contact.tangent_cross_sign().map(|sign| {
-                    if swapped
-                        != (overlap.orientation() == RationalBezierOverlapOrientation2::Reversed)
-                    {
-                        reverse_sign(sign)
-                    } else {
-                        sign
-                    }
-                });
-                self.append_contact(
-                    result,
-                    self.contact(
-                        first_parameter,
-                        second_parameter,
-                        contact.point().clone(),
-                        contact.is_certified_transverse(),
-                        cross,
-                    ),
-                )?;
-            }
-        }
-        self.retain_blockers(evidence, result);
-        if evidence.overlap().is_some() {
-            self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent);
         }
         Ok(())
     }

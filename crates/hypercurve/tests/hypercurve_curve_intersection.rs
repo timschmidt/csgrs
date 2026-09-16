@@ -1724,7 +1724,7 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
 }
 
 #[test]
-fn retained_retraced_domains_cannot_certify_a_missing_positive_overlap() {
+fn retained_retraced_domains_retain_every_parameter_component() {
     let selecting = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0)));
     let crossing = Curve2::from(
         LineSeg2::try_new(Point2::new(q(1, 2), r(-1)), Point2::new(q(1, 2), r(1))).unwrap(),
@@ -1741,9 +1741,40 @@ fn retained_retraced_domains_cannot_certify_a_missing_positive_overlap() {
             .intersect_curve(&second, &policy)
             .unwrap()
             .into_value();
-        // Both domains contain the segment from zero to 4s(1-s). A replay
-        // that retained only the diagonal parameter relation is incomplete.
-        assert!(!result.is_complete() || !result.overlaps().is_empty());
+        // Both domains contain the segment from zero to 4s(1-s). The
+        // anti-diagonal gives its correspondence; the diagonal also retains
+        // the selected common endpoint as a distinct parameter pair.
+        assert!(result.is_complete(), "{:?}", result.blockers());
+        assert_eq!(result.overlaps().len(), 1);
+        assert_eq!(result.contacts().len(), 1);
+        for overlap in result.overlaps() {
+            for (a, b) in [
+                (
+                    overlap.first_range().start(),
+                    overlap.second_range().start(),
+                ),
+                (overlap.first_range().end(), overlap.second_range().end()),
+            ] {
+                let a = first.point_at(a, &policy).unwrap();
+                let b = second.point_at(b, &policy).unwrap();
+                assert_eq!(a.certainty, CurveCertainty::Certified);
+                assert_eq!(b.certainty, CurveCertainty::Certified);
+                assert_eq!(
+                    a.value.coincides_with(&b.value, &policy).value,
+                    Classification::Decided(true)
+                );
+            }
+        }
+        for (a, b) in [(&first, &second), (&second, &first)] {
+            let topology = a.intersection_topology(b, &policy).unwrap();
+            assert_eq!(topology.certainty, CurveCertainty::Certified);
+            assert!(topology.value.result().is_complete());
+            for piece in topology.value.first() {
+                let replay = piece.intersect_curve(b, &policy).unwrap();
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                assert!(replay.value.is_complete(), "{:?}", replay.value.blockers());
+            }
+        }
     }
 }
 

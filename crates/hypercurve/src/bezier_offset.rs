@@ -108466,7 +108466,7 @@ pub(crate) struct BezierParallelPairDomainIntersectionSet2 {
 }
 
 impl BezierParallelPairDomainIntersectionSet2 {
-    fn isolated(intersections: BezierParallelPairIntersectionSet2) -> Self {
+    fn enumerated(intersections: BezierParallelPairIntersectionSet2) -> Self {
         Self {
             intersections,
             positive_dimensional: false,
@@ -115676,7 +115676,7 @@ impl BezierParallel2 {
                     {
                         BezierParallelPairDomainIntersectionSet2::positive_dimensional()
                     } else {
-                        BezierParallelPairDomainIntersectionSet2::isolated(intersections)
+                        BezierParallelPairDomainIntersectionSet2::enumerated(intersections)
                     }
                 }));
         }
@@ -115708,7 +115708,7 @@ impl BezierParallel2 {
             }
         }) else {
             return Ok(Classification::Decided(
-                BezierParallelPairDomainIntersectionSet2::isolated(
+                BezierParallelPairDomainIntersectionSet2::enumerated(
                     BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
                 ),
             ));
@@ -115847,7 +115847,7 @@ impl BezierParallel2 {
             }
             result => result,
         };
-        Ok(result.map(BezierParallelPairDomainIntersectionSet2::isolated))
+        Ok(result.map(BezierParallelPairDomainIntersectionSet2::enumerated))
     }
 
     /// The second operand has certified zero displacement. Its exact source
@@ -115992,7 +115992,7 @@ impl BezierParallel2 {
         let intersections = parallel_pair_set_from_parallel_rational(intersections, swapped);
         if retained_contacts.is_empty() {
             return Ok(Classification::Decided(
-                BezierParallelPairDomainIntersectionSet2::isolated(intersections),
+                BezierParallelPairDomainIntersectionSet2::enumerated(intersections),
             ));
         }
         if swapped {
@@ -116008,7 +116008,7 @@ impl BezierParallel2 {
             BezierParallelPairIntersectionSet2::complete(retained_contacts.into(), Arc::from([])),
             policy,
         )?
-        .map(BezierParallelPairDomainIntersectionSet2::isolated))
+        .map(BezierParallelPairDomainIntersectionSet2::enumerated))
     }
 
     /// Returns ordered off-diagonal self-contacts on two retained finite ranges
@@ -116060,7 +116060,7 @@ impl BezierParallel2 {
             }
         }) else {
             return Ok(Classification::Decided(
-                BezierParallelPairDomainIntersectionSet2::isolated(
+                BezierParallelPairDomainIntersectionSet2::enumerated(
                     BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
                 ),
             ));
@@ -116139,7 +116139,7 @@ impl BezierParallel2 {
         )?
         else {
             return Ok(Classification::Decided(
-                BezierParallelPairDomainIntersectionSet2::isolated(
+                BezierParallelPairDomainIntersectionSet2::enumerated(
                     BezierParallelPairIntersectionSet2::incomplete(
                         Arc::from([]),
                         Arc::from([]),
@@ -116180,7 +116180,7 @@ impl BezierParallel2 {
             }
             result => result,
         };
-        Ok(result.map(BezierParallelPairDomainIntersectionSet2::isolated))
+        Ok(result.map(BezierParallelPairDomainIntersectionSet2::enumerated))
     }
 
     /// Tries the exact-rational parallel-pair routes.
