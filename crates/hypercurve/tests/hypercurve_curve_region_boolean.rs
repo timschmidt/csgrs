@@ -130,10 +130,13 @@ fn assert_report_replays(
         remember(overlap.second());
         for (first, second) in [
             (
-                overlap.first_range().start(),
-                overlap.second_range().start(),
+                overlap.overlap().first_range().start(),
+                overlap.overlap().second_range().start(),
             ),
-            (overlap.first_range().end(), overlap.second_range().end()),
+            (
+                overlap.overlap().first_range().end(),
+                overlap.overlap().second_range().end(),
+            ),
         ] {
             assert_same_point(
                 &replay_carrier(overlap.first(), first, policy),

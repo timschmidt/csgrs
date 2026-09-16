@@ -81187,6 +81187,34 @@ impl BezierAlgebraicChord2 {
             return Ok(Classification::Decided(None));
         }
 
+        if let CurvePoint2(CurvePointData2::Exact(point)) = point {
+            let power = source.homogeneous_power_basis()?;
+            let (coordinate, numerator) = match axis {
+                Axis2::X => (point.x(), &power.x_numerator),
+                Axis2::Y => (point.y(), &power.y_numerator),
+            };
+            let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+                polynomial_subtract(numerator, &polynomial_scale(&power.weight, coordinate)),
+                &strict,
+            )? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let range = CurveParameterRange2::new_validated(bounds[0].clone(), bounds[1].clone());
+            let roots = match CurveParameterDomain2::new(&range, None)
+                .finite_roots(&polynomial, &strict)?
+            {
+                Classification::Decided(roots) => roots,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let [root] = roots.as_slice() else {
+                return Err(CurveError::Topology(
+                    "a certified monotone chord inverse did not retain its unique parameter".into(),
+                ));
+            };
+            return Ok(Classification::Decided(Some(root.clone().into())));
+        }
+
         let mut lower = bounds[0].clone();
         let mut upper = bounds[1].clone();
         let mut refinement_steps = 0_usize;
@@ -82207,45 +82235,151 @@ impl BezierAlgebraicChordPairOverlap2 {
 }
 
 impl BezierAlgebraicChordRationalOverlap2 {
-    /// Restricts a certified monotone source branch while retaining both
-    /// endpoint witnesses and the original source/chord authority.
-    pub(crate) fn clipped_to_source_range(
+    /// The caller has certified a finite monotone rational branch on this chord.
+    /// Both ranges must retain corresponding endpoints, in the same order.
+    pub(crate) fn from_certified_ranges(
+        chord: BezierAlgebraicChord2,
+        source: RationalBezier2,
+        chord_range: [BezierAlgebraicChordParameter2; 2],
+        source_range: CurveParameterRange2,
+        orientation: RationalBezierOverlapOrientation2,
+    ) -> Self {
+        Self {
+            chord,
+            source,
+            chord_range,
+            source_range,
+            orientation,
+        }
+    }
+
+    /// Clips either operand through the original monotone correspondence.
+    pub(crate) fn clipped_ranges(
         &self,
-        range: &CurveParameterRange2,
+        chord_range: &CurveParameterRange2,
+        source_range: &CurveParameterRange2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<Self>>> {
-        let [low, high] = match crate::bezier_split::intersect_parameter_ranges(
+    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
+        let original_chord = CurveParameterRange2::new_validated(
+            CurveParameter2::from_algebraic_chord(self.chord_range[0].clone()),
+            CurveParameter2::from_algebraic_chord(self.chord_range[1].clone()),
+        );
+        crate::bezier_split::clip_corresponding_parameter_ranges(
+            &original_chord,
             &self.source_range,
-            range,
+            chord_range,
+            source_range,
             policy,
-        )? {
-            Classification::Decided(Some(bounds)) => bounds,
-            Classification::Decided(None) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let [start, end] = if self.orientation == RationalBezierOverlapOrientation2::Same {
-            [low, high]
-        } else {
-            [high, low]
-        };
-        let mut mapped = [None, None];
-        for (index, parameter) in [&start, &end].into_iter().enumerate() {
-            match self.chord_parameter_at_source_parameter(parameter, policy)? {
-                Classification::Decided(Some(parameter)) => mapped[index] = Some(parameter),
-                Classification::Decided(None) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            |parameter| {
+                self.source_parameter_at_chord_parameter(
+                    parameter
+                        .as_algebraic_chord()
+                        .ok_or(CurveError::InvalidCurveParameter)?,
+                    policy,
+                )
+            },
+            |parameter| {
+                Ok(self
+                    .chord_parameter_at_source_parameter(parameter, policy)?
+                    .map(|parameter| parameter.map(CurveParameter2::from_algebraic_chord)))
+            },
+        )
+    }
+
+    fn source_parameter_at_chord_parameter(
+        &self,
+        parameter: &BezierAlgebraicChordParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
+        let mut orders = [std::cmp::Ordering::Equal; 2];
+        for (index, (chord, source)) in [
+            (&self.chord_range[0], self.source_range.start()),
+            (&self.chord_range[1], self.source_range.end()),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            match parameter.cmp_by_refinement(chord, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => {
+                    return Ok(Classification::Decided(Some(source.clone())));
                 }
+                Classification::Decided(order) => orders[index] = order,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        let [chord_start, chord_end] = mapped.map(|p| p.expect("two mapped boundaries"));
-        Ok(Classification::Decided(Some(Self {
-            chord: self.chord.clone(),
-            source: self.source.clone(),
-            chord_range: [chord_start, chord_end],
-            source_range: CurveParameterRange2::new_validated(start, end),
-            orientation: self.orientation,
-        })))
+        if orders[0] == orders[1] {
+            return Ok(Classification::Decided(None));
+        }
+        let domain = CurveParameterDomain2::new(&self.source_range, None);
+        if let CurvePoint2(CurvePointData2::AnalyticParallel(point)) = parameter.point()
+            && let BezierParallelSource2::Rational(source) = point.data.parallel.source()
+            && source == &self.source
+            && [
+                point.data.parallel.distance(),
+                &point.data.tangent_distance,
+                &point.data.translation_x,
+                &point.data.translation_y,
+            ]
+            .into_iter()
+            .all(|value| value == &Real::zero())
+        {
+            let retained = match &point.data.parameter {
+                BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
+                    CurveParameter2::from(parameter.clone())
+                }
+                BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
+                    CurveParameter2::from_selected_fiber(parameter.clone())
+                }
+                BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                    CurveParameter2::from_recursive_projective(parameter.clone())
+                }
+            };
+            match domain.contains_finite_parameter(&retained, policy)? {
+                Classification::Decided(true) => {
+                    return Ok(Classification::Decided(Some(retained)));
+                }
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        if let Classification::Decided(parameters) =
+            self.chord.collinear_source_parameters_at_chord_endpoint(
+                &self.source,
+                parameter.point(),
+                policy,
+            )?
+        {
+            for candidate in parameters {
+                match domain.contains_finite_parameter(&candidate, policy)? {
+                    Classification::Decided(true) => {
+                        return Ok(Classification::Decided(Some(candidate)));
+                    }
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+        let [low, high] = match self.source_range.ordered_endpoints(policy)? {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let source_order = if self.chord.data.parameter_axis.coordinate_increases
+            == (self.orientation == RationalBezierOverlapOrientation2::Same)
+        {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Greater
+        };
+        self.chord
+            .collinear_monotone_source_parameter_at_chord_endpoint(
+                &self.source,
+                parameter.point(),
+                &[low.clone(), high.clone()],
+                source_order,
+                policy,
+            )
     }
 
     pub(crate) fn chord_range(&self) -> [&BezierAlgebraicChordParameter2; 2] {
@@ -131253,6 +131387,25 @@ mod conversion_tests {
         CurveParameter2::from(parameter)
     }
 
+    fn clip_aligned_overlap_for_test(
+        first: &BezierParameterRange2,
+        second: &BezierParameterRange2,
+        reversed: bool,
+        first_limit: &CurveParameterRange2,
+        second_limit: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
+        let source = if reversed {
+            crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2::UnitComplement
+        } else {
+            crate::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2::Identity
+        };
+        match source.clipped_ranges(first, second, first_limit, second_limit, policy)? {
+            Classification::Decided(ranges) => Ok(ranges),
+            Classification::Uncertain(reason) => panic!("test overlap restriction: {reason:?}"),
+        }
+    }
+
     #[test]
     fn fiber_specialization_retains_native_quadratic_root_certificates() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -141039,14 +141192,21 @@ mod conversion_tests {
             let rational_cusp_overlaps = rational_evidence
                 .overlaps()
                 .iter()
-                .filter(|overlap| overlap.first_range().start().is_algebraic_cusp())
+                .filter(|overlap| overlap.overlap().first_range().start().is_algebraic_cusp())
                 .collect::<Vec<_>>();
             let [rational_overlap] = rational_cusp_overlaps.as_slice() else {
                 panic!("the rational quarter sector must retain one cusp overlap");
             };
-            assert!(rational_overlap.first_range().start().is_algebraic_cusp());
+            assert!(
+                rational_overlap
+                    .overlap()
+                    .first_range()
+                    .start()
+                    .is_algebraic_cusp()
+            );
             assert_eq!(
                 rational_overlap
+                    .overlap()
                     .second_range()
                     .start()
                     .as_bezier_parameter()
@@ -141057,6 +141217,7 @@ mod conversion_tests {
             );
             assert_eq!(
                 rational_overlap
+                    .overlap()
                     .second_range()
                     .end()
                     .as_bezier_parameter()
@@ -141086,6 +141247,7 @@ mod conversion_tests {
                 BezierParameter2::Exact((Real::one() / Real::from(3_i8)).unwrap());
             assert_eq!(
                 partial_rational_overlap
+                    .overlap()
                     .second_range()
                     .end()
                     .as_bezier_parameter()
@@ -141110,6 +141272,7 @@ mod conversion_tests {
             };
             assert!(
                 swapped_rational_overlap
+                    .overlap()
                     .second_range()
                     .start()
                     .is_algebraic_cusp()
@@ -141164,6 +141327,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 cross_field_rational_overlap
+                    .overlap()
                     .second_range()
                     .end()
                     .as_bezier_parameter()
@@ -141870,6 +142034,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 cross_field_parallel_overlap
+                    .overlap()
                     .second_range()
                     .end()
                     .same_value(&forward_cut, &policy)
@@ -141896,7 +142061,7 @@ mod conversion_tests {
                 evidence
                     .overlaps()
                     .iter()
-                    .filter(|overlap| overlap.first_range().start().is_algebraic_cusp())
+                    .filter(|overlap| overlap.overlap().first_range().start().is_algebraic_cusp())
                     .count(),
                 1,
             );
@@ -141918,6 +142083,7 @@ mod conversion_tests {
                 panic!("the partial cusp carrier must publish one clipped overlap");
             };
             let clipped_cusp_end = clipped_overlap
+                .overlap()
                 .first_range()
                 .end()
                 .as_algebraic_cusp()
@@ -141928,6 +142094,7 @@ mod conversion_tests {
             );
             assert_eq!(
                 clipped_overlap
+                    .overlap()
                     .second_range()
                     .start()
                     .as_bezier_parameter()
@@ -141938,6 +142105,7 @@ mod conversion_tests {
             );
             assert_eq!(
                 clipped_overlap
+                    .overlap()
                     .second_range()
                     .end()
                     .same_value(&forward_cut, &policy)
@@ -141959,7 +142127,13 @@ mod conversion_tests {
             let [swapped_overlap] = swapped_evidence.overlaps() else {
                 panic!("swapping the partial carriers must preserve one overlap");
             };
-            assert!(swapped_overlap.second_range().start().is_algebraic_cusp());
+            assert!(
+                swapped_overlap
+                    .overlap()
+                    .second_range()
+                    .start()
+                    .is_algebraic_cusp()
+            );
 
             let reversed_source_range = BezierParameterRange2::new_validated(
                 BezierParameter2::Exact(Real::zero()),
@@ -142017,6 +142191,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_clipped_overlap
+                    .overlap()
                     .second_range()
                     .end()
                     .same_value(&reversed_cut, &policy)
@@ -142025,6 +142200,7 @@ mod conversion_tests {
             );
             assert_eq!(
                 reversed_clipped_overlap
+                    .overlap()
                     .second_range()
                     .start()
                     .as_bezier_parameter()
@@ -142043,6 +142219,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 cross_field_reversed_overlap
+                    .overlap()
                     .second_range()
                     .end()
                     .same_value(&reversed_cut, &policy)
@@ -142070,10 +142247,13 @@ mod conversion_tests {
                     let second = overlap.second().curve();
                     for (first_parameter, second_parameter) in [
                         (
-                            overlap.first_range().start(),
-                            overlap.second_range().start(),
+                            overlap.overlap().first_range().start(),
+                            overlap.overlap().second_range().start(),
                         ),
-                        (overlap.first_range().end(), overlap.second_range().end()),
+                        (
+                            overlap.overlap().first_range().end(),
+                            overlap.overlap().second_range().end(),
+                        ),
                     ] {
                         let first_point = first.point_at(first_parameter, &policy).unwrap();
                         let second_point = second.point_at(second_parameter, &policy).unwrap();
@@ -149429,17 +149609,17 @@ mod conversion_tests {
             let cusp_overlap = intersections
                 .overlaps()
                 .iter()
-                .find(|overlap| overlap.first_range().start().is_algebraic_cusp())
+                .find(|overlap| overlap.overlap().first_range().start().is_algebraic_cusp())
                 .unwrap_or_else(|| {
                     panic!(
                         "the correlated shared subarc must survive carrier clipping: {intersections:?}"
                     )
                 });
             for (actual, expected) in [
-                (cusp_overlap.first_range().start(), &expected[0]),
-                (cusp_overlap.first_range().end(), &expected[1]),
-                (cusp_overlap.second_range().start(), &expected[2]),
-                (cusp_overlap.second_range().end(), &expected[3]),
+                (cusp_overlap.overlap().first_range().start(), &expected[0]),
+                (cusp_overlap.overlap().first_range().end(), &expected[1]),
+                (cusp_overlap.overlap().second_range().start(), &expected[2]),
+                (cusp_overlap.overlap().second_range().end(), &expected[3]),
             ] {
                 assert_eq!(
                     actual
@@ -169058,17 +169238,16 @@ mod conversion_tests {
             );
             let ordinary_carrier_range =
                 crate::CurveParameterRange2::from_bezier_range(unit.clone());
-            let (same_first, same_second) =
-                crate::curve_region_boolean::clip_aligned_parameter_overlap_for_test(
-                    &unit,
-                    &unit,
-                    false,
-                    &selected_carrier_range,
-                    &ordinary_carrier_range,
-                    &policy,
-                )
-                .expect("same-oriented selected analytic overlap clipping must complete")
-                .expect("the selected analytic carrier lies inside the complete overlap");
+            let (same_first, same_second) = clip_aligned_overlap_for_test(
+                &unit,
+                &unit,
+                false,
+                &selected_carrier_range,
+                &ordinary_carrier_range,
+                &policy,
+            )
+            .expect("same-oriented selected analytic overlap clipping must complete")
+            .expect("the selected analytic carrier lies inside the complete overlap");
             assert_eq!(same_first, selected_carrier_range);
             assert_eq!(same_second, selected_carrier_range);
 
@@ -169076,17 +169255,16 @@ mod conversion_tests {
                 BezierParameter2::Exact(Real::one()),
                 BezierParameter2::Exact(Real::zero()),
             );
-            let (reversed_first, reversed_second) =
-                crate::curve_region_boolean::clip_aligned_parameter_overlap_for_test(
-                    &unit,
-                    &reversed_unit,
-                    true,
-                    &selected_carrier_range,
-                    &ordinary_carrier_range,
-                    &policy,
-                )
-                .expect("reversed selected analytic overlap clipping must complete")
-                .expect("the selected analytic carrier lies inside the reversed overlap");
+            let (reversed_first, reversed_second) = clip_aligned_overlap_for_test(
+                &unit,
+                &reversed_unit,
+                true,
+                &selected_carrier_range,
+                &ordinary_carrier_range,
+                &policy,
+            )
+            .expect("reversed selected analytic overlap clipping must complete")
+            .expect("the selected analytic carrier lies inside the reversed overlap");
             assert_eq!(reversed_first, selected_carrier_range);
             assert_eq!(
                 reversed_second,
@@ -169337,8 +169515,12 @@ mod conversion_tests {
                 .into_value();
             assert!(evidence.blockers().is_empty());
             assert!(evidence.overlaps().iter().any(|overlap| {
-                overlap.first_range().start().is_retained_scalar()
-                    || overlap.second_range().start().is_retained_scalar()
+                overlap.overlap().first_range().start().is_retained_scalar()
+                    || overlap
+                        .overlap()
+                        .second_range()
+                        .start()
+                        .is_retained_scalar()
             }));
             let booleans = selected_region
                 .boolean_regions(&analytic_region, &policy)
@@ -171464,9 +171646,13 @@ mod conversion_tests {
             assert!(evidence.blockers().is_empty());
             assert_eq!(evidence.overlaps().len(), 6);
             assert!(evidence.overlaps().iter().all(|overlap| {
-                overlap.first_range().start().is_algebraic_cusp()
-                    && overlap.second_range().start().is_retained_scalar()
-                    && overlap.second_range().end().is_retained_scalar()
+                overlap.overlap().first_range().start().is_algebraic_cusp()
+                    && overlap
+                        .overlap()
+                        .second_range()
+                        .start()
+                        .is_retained_scalar()
+                    && overlap.overlap().second_range().end().is_retained_scalar()
             }));
 
             let result = selected_region
@@ -171634,9 +171820,13 @@ mod conversion_tests {
             assert!(evidence.blockers().is_empty());
             assert_eq!(evidence.overlaps().len(), 6);
             assert!(evidence.overlaps().iter().all(|overlap| {
-                overlap.first_range().start().is_algebraic_cusp()
-                    && overlap.second_range().start().is_retained_scalar()
-                    && overlap.second_range().end().is_retained_scalar()
+                overlap.overlap().first_range().start().is_algebraic_cusp()
+                    && overlap
+                        .overlap()
+                        .second_range()
+                        .start()
+                        .is_retained_scalar()
+                    && overlap.overlap().second_range().end().is_retained_scalar()
             }));
 
             let result = selected_region
@@ -177342,6 +177532,205 @@ mod conversion_tests {
                 .unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary)
             );
+        }
+    }
+}
+
+#[cfg(test)]
+mod chord_overlap_transport_tests {
+    use super::*;
+
+    fn exact<T: std::fmt::Debug>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("{reason:?}"),
+        }
+    }
+    fn q(n: i32, d: i32) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+    fn point(x: Real) -> CurvePoint2 {
+        Point2::new(x, Real::zero()).into()
+    }
+    fn source() -> RationalBezier2 {
+        RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 0),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap()
+    }
+    fn overlap(reversed: bool, policy: &CurveContext) -> BezierAlgebraicChordRationalOverlap2 {
+        let chord = exact(
+            BezierAlgebraicChord2::try_new(point(Real::zero()), point(Real::one()), policy)
+                .unwrap(),
+        );
+        let source = if reversed {
+            source().reversed()
+        } else {
+            source()
+        };
+        let BezierAlgebraicChordRationalIntersections2::Overlaps(mut overlaps) =
+            exact(chord.rational_intersections(&source, None, policy).unwrap())
+        else {
+            panic!("one monotone nonlinear line image")
+        };
+        assert_eq!(overlaps.len(), 1);
+        overlaps.pop().unwrap()
+    }
+    fn chord_cut(
+        overlap: &BezierAlgebraicChordRationalOverlap2,
+        a: Real,
+        b: Real,
+        policy: &CurveContext,
+    ) -> CurveParameterRange2 {
+        let parameter = |value| {
+            CurveParameter2::from_algebraic_chord(
+                overlap
+                    .chord
+                    .parameter_at_certified_support_point(point(value), policy)
+                    .unwrap(),
+            )
+        };
+        CurveParameterRange2::new_validated(parameter(a), parameter(b))
+    }
+    fn replay(
+        overlap: &BezierAlgebraicChordRationalOverlap2,
+        ranges: &(CurveParameterRange2, CurveParameterRange2),
+        policy: &CurveContext,
+    ) {
+        for (chord, source) in [
+            (ranges.0.start(), ranges.1.start()),
+            (ranges.0.end(), ranges.1.end()),
+        ] {
+            let expected = chord.as_algebraic_chord().unwrap().point();
+            let actual = exact(
+                rational_point_evidence_at_region_parameter(&overlap.source, source, policy)
+                    .unwrap(),
+            );
+            assert_eq!(
+                actual.same_point(expected, policy),
+                Classification::Decided(true)
+            );
+        }
+    }
+
+    #[test]
+    fn nonlinear_chord_overlap_clips_either_operand_and_keeps_paired_orientation() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let overlap = overlap(reversed, &policy);
+                let chord = chord_cut(&overlap, q(1, 3), q(2, 3), &policy);
+                let clipped = exact(
+                    overlap
+                        .clipped_ranges(&chord, &CurveParameterRange2::unit(), &policy)
+                        .unwrap(),
+                )
+                .unwrap();
+                replay(&overlap, &clipped, &policy);
+                assert_eq!(
+                    exact(
+                        clipped
+                            .1
+                            .start()
+                            .cmp_by_refinement(clipped.1.end(), &policy)
+                            .unwrap()
+                    )
+                    .is_gt(),
+                    reversed
+                );
+                let excluded = if reversed {
+                    CurveParameterRange2::new_validated(q(3, 4).into(), Real::one().into())
+                } else {
+                    CurveParameterRange2::new_validated(Real::zero().into(), q(1, 4).into())
+                };
+                assert!(
+                    exact(overlap.clipped_ranges(&chord, &excluded, &policy).unwrap()).is_none()
+                );
+                let source_cut = if reversed {
+                    CurveParameterRange2::new_validated(q(1, 4).into(), q(1, 3).into())
+                } else {
+                    CurveParameterRange2::new_validated(q(2, 3).into(), q(3, 4).into())
+                };
+                let clipped = exact(
+                    overlap
+                        .clipped_ranges(&chord, &source_cut, &policy)
+                        .unwrap(),
+                )
+                .unwrap();
+                replay(&overlap, &clipped, &policy);
+            }
+        }
+    }
+
+    #[test]
+    fn chord_overlap_inverse_uses_its_finite_exterior_source_domain() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // x=t^2 is strictly increasing on [1,2]. These exact endpoints
+            // certify the complete monotone correspondence with chord [1,4].
+            let chord = exact(
+                BezierAlgebraicChord2::try_new(point(Real::one()), point(Real::from(4)), &policy)
+                    .unwrap(),
+            );
+            let overlap = BezierAlgebraicChordRationalOverlap2 {
+                chord_range: [chord.start_parameter(), chord.end_parameter()],
+                chord,
+                source: source(),
+                source_range: CurveParameterRange2::new_validated(
+                    Real::one().into(),
+                    Real::from(2).into(),
+                ),
+                orientation: RationalBezierOverlapOrientation2::Same,
+            };
+            let cut = chord_cut(&overlap, Real::from(2), Real::from(3), &policy);
+            let clipped = exact(
+                overlap
+                    .clipped_ranges(&cut, &overlap.source_range, &policy)
+                    .unwrap(),
+            )
+            .unwrap();
+            replay(&overlap, &clipped, &policy);
+            for parameter in [clipped.1.start(), clipped.1.end()] {
+                assert_eq!(
+                    exact(
+                        parameter
+                            .cmp_by_refinement(&CurveParameter2::from(Real::one()), &policy)
+                            .unwrap()
+                    ),
+                    std::cmp::Ordering::Greater
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn chord_overlap_inverse_reuses_unprojected_selected_parameter_identity() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let overlap = overlap(false, &policy);
+            let retained = CurveParameter2::from_selected_fiber(
+                degree_nine_selected_fiber_parameter_for_test(q(1, 2), 2, &policy),
+            );
+            let mapped = exact(
+                overlap
+                    .chord_parameter_at_source_parameter(&retained, &policy)
+                    .unwrap(),
+            )
+            .unwrap();
+            let chord = CurveParameterRange2::new_validated(
+                CurveParameter2::from_algebraic_chord(mapped),
+                CurveParameter2::from_algebraic_chord(overlap.chord.end_parameter()),
+            );
+            let mut source = CurveParameterRange2::unit();
+            for _ in 0..8 {
+                let ranges =
+                    exact(overlap.clipped_ranges(&chord, &source, &policy).unwrap()).unwrap();
+                assert_eq!(ranges.1.start(), &retained);
+                assert!(ranges.1.start().as_selected_fiber().is_some());
+                source = ranges.1;
+            }
         }
     }
 }

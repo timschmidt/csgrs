@@ -128,7 +128,7 @@ impl Pair<'_> {
             second_range,
             orientation,
             endpoint_inclusion: inclusion,
-            parameter_correspondence: Some(correspondence),
+            parameter_correspondence: correspondence,
         })
     }
 
@@ -282,17 +282,12 @@ impl Pair<'_> {
                 )?;
             }
         }
+        let chord_span = if chord_first { self.first } else { self.second };
         for overlap in overlaps {
-            if let Some(clipped) = decided(
-                overlap.clipped_to_source_range(&span.range, self.policy),
+            if let Some((chord_range, source_range)) = decided(
+                overlap.clipped_ranges(&chord_span.range, &span.range, self.policy),
                 family,
             )? {
-                let [start, end] = clipped.chord_range();
-                let chord_range = CurveParameterRange2::new_validated(
-                    CurveParameter2::from_algebraic_chord(start.clone()),
-                    CurveParameter2::from_algebraic_chord(end.clone()),
-                );
-                let source_range = clipped.source_range().clone();
                 let ranges = if chord_first {
                     [chord_range, source_range]
                 } else {
@@ -2676,8 +2671,7 @@ mod analytic_dispatch_tests {
                         CurveParameterRange2::new_validated(q(3, 8).into(), q(5, 8).into());
                     let ranges = exact(
                         overlap
-                            .parameter_correspondence()
-                            .unwrap()
+                            .parameter_correspondence
                             .clipped_ranges(&smaller, &smaller, &policy)
                             .unwrap(),
                     )
@@ -2962,14 +2956,37 @@ mod analytic_dispatch_tests {
                     } else {
                         (&first_clip, &second_clip)
                     };
-                    let clipped = exact(
+                    let restricted = certified(
                         overlap
-                            .parameter_correspondence()
-                            .unwrap()
-                            .clipped_ranges(a_clip, b_clip, &policy)
+                            .restrict(
+                                [a_clip.start().clone(), a_clip.end().clone()],
+                                [b_clip.start().clone(), b_clip.end().clone()],
+                                &policy,
+                            )
                             .unwrap(),
-                    )
+                    );
+                    let restricted = exact(restricted).unwrap();
+                    let repeated = exact(certified(
+                        restricted
+                            .restrict(
+                                [
+                                    overlap.first_range().start().clone(),
+                                    overlap.first_range().end().clone(),
+                                ],
+                                [
+                                    overlap.second_range().start().clone(),
+                                    overlap.second_range().end().clone(),
+                                ],
+                                &policy,
+                            )
+                            .unwrap(),
+                    ))
                     .unwrap();
+                    assert_eq!(
+                        repeated, restricted,
+                        "restriction must never widen to the original map domain"
+                    );
+                    let clipped = (restricted.first_range(), restricted.second_range());
                     for (x, y) in [
                         (clipped.0.start(), clipped.1.start()),
                         (clipped.0.end(), clipped.1.end()),

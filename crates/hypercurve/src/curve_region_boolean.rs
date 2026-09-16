@@ -107,10 +107,7 @@ pub struct CurveRegionIntersectionContact2 {
 pub struct CurveRegionIntersectionOverlap2 {
     first: CurveRegionCarrier2,
     second: CurveRegionCarrier2,
-    source: Option<CurveIntersectionOverlap2>,
-    first_range: CurveParameterRange2,
-    second_range: CurveParameterRange2,
-    orientation: RationalBezierOverlapOrientation2,
+    overlap: CurveIntersectionOverlap2,
 }
 
 /// One incomplete retained carrier pair in a curved-region intersection result.
@@ -240,42 +237,6 @@ struct RegionPairContactEvidence {
     second_side_of_first: Option<LineSide>,
 }
 
-#[derive(Clone, Debug)]
-struct RegionPairOverlap {
-    source: Option<RegionPairOverlapSource>,
-    first_range: CurveParameterRange2,
-    second_range: CurveParameterRange2,
-    orientation: RationalBezierOverlapOrientation2,
-}
-
-#[derive(Clone, Debug)]
-enum RegionPairOverlapSource {
-    Bezier(CurveIntersectionOverlap2),
-    AlgebraicChordRational(BezierAlgebraicChordRationalOverlap2),
-    Correspondence(CurveOverlapCorrespondence2),
-}
-
-fn parameter_component_region_overlap_sources(
-    sources: &[BezierParameterComponentOverlap2],
-    overlap: &RationalBezierIntersectionOverlap2,
-    swapped: bool,
-) -> Vec<Option<RegionPairOverlapSource>> {
-    let mut retained = sources
-        .iter()
-        .filter(|source| source.overlap() == overlap)
-        .cloned()
-        .map(|source| {
-            Some(RegionPairOverlapSource::Correspondence(
-                CurveOverlapCorrespondence2::ParameterComponent { source, swapped },
-            ))
-        })
-        .collect::<Vec<_>>();
-    if retained.is_empty() {
-        retained.push(None);
-    }
-    retained
-}
-
 #[derive(Clone, Debug, PartialEq)]
 enum RegionPairBlocker {
     Bezier(CurveIntersectionPairBlocker2),
@@ -287,7 +248,7 @@ enum RegionPairBlocker {
 #[derive(Clone, Debug)]
 struct RegionPairResult {
     contacts: Vec<RegionPairContactEvidence>,
-    overlaps: Vec<RegionPairOverlap>,
+    overlaps: Vec<CurveIntersectionOverlap2>,
     blockers: Vec<RegionPairBlocker>,
 }
 
@@ -389,12 +350,6 @@ fn carrier_overlap_split_interval(
     let first = boundary_position(first_vertex)?;
     let second = boundary_position(second_vertex)?;
     (first != second).then(|| first.min(second)..first.max(second))
-}
-
-#[derive(Debug)]
-enum CarrierOverlapClip {
-    Unmatched,
-    Matched(Option<(CurveParameterRange2, CurveParameterRange2)>),
 }
 
 #[derive(Clone, Debug)]
@@ -932,29 +887,10 @@ impl CurveRegionIntersectionOverlap2 {
         &self.second
     }
 
-    /// Returns native top-level overlap evidence when that pair kernel supplied it.
-    ///
-    /// Analytic pair kernels retain the exact clipped ranges and orientation
-    /// directly, so they do not allocate a second native overlap wrapper.
-    pub const fn source(&self) -> Option<&CurveIntersectionOverlap2> {
-        self.source.as_ref()
-    }
-
-    /// Returns the exact overlap range clipped to the first retained carrier.
-    /// Its endpoints correspond in order to those of [`Self::second_range`].
-    pub const fn first_range(&self) -> &CurveParameterRange2 {
-        &self.first_range
-    }
-
-    /// Returns the exact overlap range clipped to the second retained carrier.
-    /// Its endpoints correspond in order to those of [`Self::first_range`].
-    pub const fn second_range(&self) -> &CurveParameterRange2 {
-        &self.second_range
-    }
-
-    /// Returns relative source-curve traversal orientation.
-    pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
-        self.orientation
+    /// Returns the paired ranges, endpoint ownership and reusable correspondence.
+    /// The local parameters belong to the two published carrier curves.
+    pub const fn overlap(&self) -> &CurveIntersectionOverlap2 {
+        &self.overlap
     }
 }
 
@@ -1731,14 +1667,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 overlaps.push(CurveRegionIntersectionOverlap2 {
                     first: publish(pair.first_carrier_index)?,
                     second: publish(pair.second_carrier_index)?,
-                    source: overlap.source.and_then(|source| match source {
-                        RegionPairOverlapSource::Bezier(source) => Some(source),
-                        RegionPairOverlapSource::AlgebraicChordRational(_) => None,
-                        RegionPairOverlapSource::Correspondence(_) => None,
-                    }),
-                    first_range,
-                    second_range,
-                    orientation: overlap.orientation,
+                    overlap: match overlap
+                        .with_paired_ranges(first_range, second_range, &self.data.policy)
+                        .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                    {
+                        Classification::Decided(overlap) => overlap,
+                        Classification::Uncertain(reason) => {
+                            return Err(self.blocked(pair.first_carrier_index, reason));
+                        }
+                    },
                 });
             }
         }
@@ -2616,6 +2553,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     CurveParameter2::from(BezierParameter2::Exact(curve_start)),
                     CurveParameter2::from(BezierParameter2::Exact(curve_end)),
                 );
+                let correspondence = CurveOverlapCorrespondence2::ChordRational {
+                    source: Arc::new(BezierAlgebraicChordRationalOverlap2::from_certified_ranges(
+                        chord.clone(),
+                        rational.clone(),
+                        [chord_range.start(), chord_range.end()].map(|p| {
+                            p.as_algebraic_chord()
+                                .expect("certified chord range")
+                                .clone()
+                        }),
+                        CurveParameterRange2::new_validated(
+                            b_range.start().clone().into(),
+                            b_range.end().clone().into(),
+                        ),
+                        orientation,
+                    )),
+                    chord_first: chord_is_first,
+                };
                 let (first_range, second_range) = if chord_is_first {
                     (chord_range, curve_range)
                 } else {
@@ -2623,11 +2577,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 };
                 RegionPairResult {
                     contacts: Vec::new(),
-                    overlaps: vec![RegionPairOverlap {
+                    overlaps: vec![CurveIntersectionOverlap2 {
+                        first_span_index: 0,
+                        second_span_index: 0,
+                        endpoint_inclusion: [true, true],
                         first_range,
                         second_range,
                         orientation,
-                        source: None,
+                        parameter_correspondence: correspondence,
                     }],
                     blockers: Vec::new(),
                 }
@@ -3031,8 +2988,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 } else {
                     (source_range, chord_range)
                 };
-                RegionPairOverlap {
-                    source: Some(RegionPairOverlapSource::AlgebraicChordRational(overlap)),
+                CurveIntersectionOverlap2 {
+                    first_span_index: 0,
+                    second_span_index: 0,
+                    endpoint_inclusion: [true, true],
+                    parameter_correspondence: CurveOverlapCorrespondence2::ChordRational {
+                        source: Arc::new(overlap),
+                        chord_first: chord_is_first,
+                    },
                     first_range,
                     second_range,
                     orientation,
@@ -3606,16 +3569,36 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let chord_range = CurveParameterRange2::new_validated(chord_start, chord_end);
             let parallel_range =
                 CurveParameterRange2::from_bezier_range(overlap.first_range().clone());
+            let image = self
+                .overlap_rational_image(parallel_index)?
+                .ok_or_else(|| self.blocked(parallel_index, UncertaintyReason::Unsupported))?;
+            let correspondence = CurveOverlapCorrespondence2::ChordRational {
+                source: Arc::new(BezierAlgebraicChordRationalOverlap2::from_certified_ranges(
+                    chord.clone(),
+                    image,
+                    [chord_range.start(), chord_range.end()].map(|p| {
+                        p.as_algebraic_chord()
+                            .expect("certified chord range")
+                            .clone()
+                    }),
+                    parallel_range.clone(),
+                    overlap.orientation(),
+                )),
+                chord_first: chord_is_first,
+            };
             let (first_range, second_range) = if chord_is_first {
                 (chord_range, parallel_range)
             } else {
                 (parallel_range, chord_range)
             };
-            overlaps.push(RegionPairOverlap {
+            overlaps.push(CurveIntersectionOverlap2 {
+                first_span_index: 0,
+                second_span_index: 0,
+                endpoint_inclusion: [true, true],
                 first_range,
                 second_range,
                 orientation: overlap.orientation(),
-                source: None,
+                parameter_correspondence: correspondence,
             });
         }
         let mut blockers = Vec::with_capacity(2);
@@ -4055,13 +4038,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             } else {
                                 (other_range, cusp_range)
                             };
-                            RegionPairOverlap {
-                                source: Some(RegionPairOverlapSource::Correspondence(
-                                    CurveOverlapCorrespondence2::Circle {
-                                        source: CurveCircleOverlap2::Mapped(overlap.clone()),
-                                        swapped: !cusp_is_first,
-                                    },
-                                )),
+                            CurveIntersectionOverlap2 {
+                                first_span_index: 0,
+                                second_span_index: 0,
+                                endpoint_inclusion: [true, true],
+                                parameter_correspondence: CurveOverlapCorrespondence2::Circle {
+                                    source: CurveCircleOverlap2::Mapped(overlap.clone()),
+                                    swapped: !cusp_is_first,
+                                },
                                 first_range,
                                 second_range,
                                 orientation: overlap.orientation(),
@@ -4155,6 +4139,97 @@ impl<'a> CurveRegionBooleanContext<'a> {
         })
     }
 
+    fn overlap_rational_image(&self, index: usize) -> ExactCurveResult<Option<RationalBezier2>> {
+        let carrier = &self.data.carriers[index];
+        let image = match &carrier.geometry {
+            CurveSupport2::Parallel(parallel) => parallel
+                .exact_rational_parallel_component_on_regular_range(
+                    &CurveParameterRange2::new_validated(
+                        carrier.start.clone(),
+                        carrier.end.clone(),
+                    ),
+                    &self.data.policy.strict_counterpart(),
+                )
+                .map(|result| result.map(|image| image.map(|image| image.curve().clone()))),
+            _ => carrier.geometry.exact_rational_component(&self.data.policy),
+        }
+        .map_err(|cause| self.invalid(index, cause))?;
+        match image {
+            Classification::Decided(image) => Ok(image),
+            Classification::Uncertain(reason) => Err(self.blocked(index, reason)),
+        }
+    }
+
+    fn analytic_component_overlaps(
+        &self,
+        pair: &RegionCarrierPair,
+        components: &[BezierParameterComponentOverlap2],
+        overlap: &RationalBezierIntersectionOverlap2,
+        swapped: bool,
+    ) -> ExactCurveResult<Vec<CurveIntersectionOverlap2>> {
+        let (first_range, second_range) = if swapped {
+            (overlap.second_range(), overlap.first_range())
+        } else {
+            (overlap.first_range(), overlap.second_range())
+        };
+        let mut sources = components
+            .iter()
+            .filter(|source| source.overlap() == overlap)
+            .cloned()
+            .map(|source| CurveOverlapCorrespondence2::ParameterComponent { source, swapped })
+            .collect::<Vec<_>>();
+        if sources.is_empty() {
+            let first = self.overlap_rational_image(pair.first_carrier_index)?;
+            let second = self.overlap_rational_image(pair.second_carrier_index)?;
+            let (first, second) = match (first, second) {
+                (Some(first), Some(second)) => (first, second),
+                _ => {
+                    // The analytic pair kernel emits raw overlaps only for
+                    // source-image correspondences in unchanged source charts.
+                    // Selected nonlinear image components carry their own map.
+                    let (CurveSupport2::Parallel(first), CurveSupport2::Parallel(second)) = (
+                        &self.data.carriers[pair.first_carrier_index].geometry,
+                        &self.data.carriers[pair.second_carrier_index].geometry,
+                    ) else {
+                        return Err(
+                            self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported)
+                        );
+                    };
+                    (
+                        first
+                            .source()
+                            .to_rational_bezier()
+                            .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?,
+                        second
+                            .source()
+                            .to_rational_bezier()
+                            .map_err(|cause| self.invalid(pair.second_carrier_index, cause))?,
+                    )
+                }
+            };
+            sources.push(CurveOverlapCorrespondence2::for_rational_ranges(
+                &first,
+                &second,
+                first_range,
+                second_range,
+                overlap.orientation(),
+                &self.data.policy,
+            ));
+        }
+        Ok(sources
+            .into_iter()
+            .map(|source| CurveIntersectionOverlap2 {
+                first_span_index: 0,
+                second_span_index: 0,
+                first_range: CurveParameterRange2::from_bezier_range(first_range.clone()),
+                second_range: CurveParameterRange2::from_bezier_range(second_range.clone()),
+                orientation: overlap.orientation(),
+                endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
+                parameter_correspondence: source,
+            })
+            .collect())
+    }
+
     fn pair_result(&self, pair: &RegionCarrierPair) -> ExactCurveResult<RegionPairResult> {
         let first = &self.data.carriers[pair.first_carrier_index];
         let second = &self.data.carriers[pair.second_carrier_index];
@@ -4167,17 +4242,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .iter()
                         .map(RegionPairContactEvidence::from_bezier)
                         .collect(),
-                    overlaps: result
-                        .overlaps()
-                        .iter()
-                        .cloned()
-                        .map(|source| RegionPairOverlap {
-                            first_range: source.first_range().clone(),
-                            second_range: source.second_range().clone(),
-                            orientation: source.orientation(),
-                            source: Some(RegionPairOverlapSource::Bezier(source)),
-                        })
-                        .collect(),
+                    overlaps: result.overlaps().to_vec(),
                     blockers: result
                         .blockers()
                         .iter()
@@ -4337,39 +4402,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         )
                     })
                     .collect();
-                let overlaps = result
-                    .overlaps()
-                    .iter()
-                    .flat_map(|overlap| {
-                        let (first_range, second_range) = if *parallel_is_first {
-                            (
-                                overlap.first_range().clone(),
-                                overlap.second_range().clone(),
-                            )
-                        } else {
-                            (
-                                overlap.second_range().clone(),
-                                overlap.first_range().clone(),
-                            )
-                        };
-                        parameter_component_region_overlap_sources(
-                            result.component_overlaps(),
-                            overlap,
-                            !*parallel_is_first,
-                        )
-                        .into_iter()
-                        .map(move |source| RegionPairOverlap {
-                            source,
-                            first_range: CurveParameterRange2::from_bezier_range(
-                                first_range.clone(),
-                            ),
-                            second_range: CurveParameterRange2::from_bezier_range(
-                                second_range.clone(),
-                            ),
-                            orientation: overlap.orientation(),
-                        })
-                    })
-                    .collect();
+                let mut overlaps = Vec::new();
+                for overlap in result.overlaps() {
+                    overlaps.extend(self.analytic_component_overlaps(
+                        pair,
+                        result.component_overlaps(),
+                        overlap,
+                        !*parallel_is_first,
+                    )?);
+                }
                 let mut blockers = Vec::with_capacity(2);
                 if !result.parameter_components().is_empty() {
                     blockers.push(RegionPairBlocker::PointImageParameterComponent);
@@ -4458,28 +4499,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         )
                     })
                     .collect();
-                let overlaps = result
-                    .overlaps()
-                    .iter()
-                    .flat_map(|overlap| {
-                        parameter_component_region_overlap_sources(
-                            result.component_overlaps(),
-                            overlap,
-                            false,
-                        )
-                        .into_iter()
-                        .map(move |source| RegionPairOverlap {
-                            source,
-                            first_range: CurveParameterRange2::from_bezier_range(
-                                overlap.first_range().clone(),
-                            ),
-                            second_range: CurveParameterRange2::from_bezier_range(
-                                overlap.second_range().clone(),
-                            ),
-                            orientation: overlap.orientation(),
-                        })
-                    })
-                    .collect();
+                let mut overlaps = Vec::new();
+                for overlap in result.overlaps() {
+                    overlaps.extend(self.analytic_component_overlaps(
+                        pair,
+                        result.component_overlaps(),
+                        overlap,
+                        false,
+                    )?);
+                }
                 let mut blockers = Vec::with_capacity(2);
                 if !result.parameter_components().is_empty() {
                     blockers.push(RegionPairBlocker::PointImageParameterComponent);
@@ -4987,8 +5015,33 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     .map(|overlap| {
                                         let [first_start, first_end] = overlap.first_range();
                                         let [second_start, second_end] = overlap.second_range();
-                                        RegionPairOverlap {
-                                            source: None,
+                                        CurveIntersectionOverlap2 {
+                                            first_span_index: 0,
+                                            second_span_index: 0,
+                                            endpoint_inclusion: [true, true],
+                                            parameter_correspondence:
+                                                CurveOverlapCorrespondence2::Chords {
+                                                    first: chord.clone(),
+                                                    second: other_chord.clone(),
+                                                    first_range:
+                                                        CurveParameterRange2::new_validated(
+                                                            CurveParameter2::from_algebraic_chord(
+                                                                first_start.clone(),
+                                                            ),
+                                                            CurveParameter2::from_algebraic_chord(
+                                                                first_end.clone(),
+                                                            ),
+                                                        ),
+                                                    second_range:
+                                                        CurveParameterRange2::new_validated(
+                                                            CurveParameter2::from_algebraic_chord(
+                                                                second_start.clone(),
+                                                            ),
+                                                            CurveParameter2::from_algebraic_chord(
+                                                                second_end.clone(),
+                                                            ),
+                                                        ),
+                                                },
                                             first_range: CurveParameterRange2::new_validated(
                                                 CurveParameter2::from_algebraic_chord(
                                                     first_start.clone(),
@@ -5448,8 +5501,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 } else {
                                     (parallel_range, cusp_range)
                                 };
-                                RegionPairOverlap {
-                                    source: Some(RegionPairOverlapSource::Correspondence(CurveOverlapCorrespondence2::Circle { source: CurveCircleOverlap2::Mapped(overlap.clone()), swapped: !*cusp_is_first })),
+                                CurveIntersectionOverlap2 {
+ first_span_index: 0, second_span_index: 0, endpoint_inclusion: [true, true],
+                                    parameter_correspondence: CurveOverlapCorrespondence2::Circle { source: CurveCircleOverlap2::Mapped(overlap.clone()), swapped: !*cusp_is_first },
                                     first_range,
                                     second_range,
                                     orientation: overlap.orientation(),
@@ -5707,13 +5761,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                     }
                     BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap) => {
-                        overlaps.push(RegionPairOverlap {
-                            source: Some(RegionPairOverlapSource::Correspondence(
-                                CurveOverlapCorrespondence2::Circle {
-                                    source: CurveCircleOverlap2::Pair(overlap.clone()),
-                                    swapped: false,
-                                },
-                            )),
+                        overlaps.push(CurveIntersectionOverlap2 {
+                            first_span_index: 0,
+                            second_span_index: 0,
+                            endpoint_inclusion: [true, true],
+                            parameter_correspondence: CurveOverlapCorrespondence2::Circle {
+                                source: CurveCircleOverlap2::Pair(overlap.clone()),
+                                swapped: false,
+                            },
                             first_range: CurveParameterRange2::new_validated(
                                 CurveParameter2::from_algebraic_cusp(
                                     overlap.first_start_parameter(),
@@ -5940,7 +5995,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn clipped_overlap_ranges(
         &self,
         pair: &RegionCarrierPair,
-        overlap: &RegionPairOverlap,
+        overlap: &CurveIntersectionOverlap2,
     ) -> ExactCurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
         let first_carrier = &self.data.carriers[pair.first_carrier_index];
         let second_carrier = &self.data.carriers[pair.second_carrier_index];
@@ -5973,176 +6028,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 overlap.second_range.clone(),
             )));
         }
-        if let Some(RegionPairOverlapSource::Correspondence(source)) = overlap.source.as_ref() {
-            let range = |carrier: &RegionCarrier| {
-                CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone())
-            };
-            return match source
-                .clipped_ranges(
-                    &range(first_carrier),
-                    &range(second_carrier),
-                    &self.data.policy,
-                )
-                .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
-            {
-                Classification::Decided(ranges) => Ok(ranges),
-                Classification::Uncertain(reason) => {
-                    Err(self.blocked(pair.first_carrier_index, reason))
-                }
-            };
-        }
-        if let Some(RegionPairOverlapSource::AlgebraicChordRational(source)) =
-            overlap.source.as_ref()
+        let range = |carrier: &RegionCarrier| {
+            CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone())
+        };
+        match overlap
+            .restrict_raw(
+                &range(first_carrier),
+                &range(second_carrier),
+                &self.data.policy,
+            )
+            .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
         {
-            debug_assert_eq!(source.orientation(), overlap.orientation);
-            return self.clip_algebraic_chord_rational_overlap(pair, overlap, source);
-        }
-        let Some((first_start, first_end)) = overlap.first_range.as_bezier_parameters() else {
-            return Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported));
-        };
-        let Some((second_start, second_end)) = overlap.second_range.as_bezier_parameters() else {
-            return Err(self.blocked(pair.second_carrier_index, UncertaintyReason::Unsupported));
-        };
-        let first_range =
-            BezierParameterRange2::new_validated(first_start.clone(), first_end.clone());
-        let second_range =
-            BezierParameterRange2::new_validated(second_start.clone(), second_end.clone());
-        let correspondence = overlap.source.as_ref().and_then(|source| match source {
-            RegionPairOverlapSource::Bezier(source) => source.parameter_correspondence(),
-            RegionPairOverlapSource::AlgebraicChordRational(_) => None,
-            RegionPairOverlapSource::Correspondence(_) => None,
-        });
-        if let Some(correspondence) = correspondence {
-            let first_fragment = CurveParameterRange2::new_validated(
-                first_carrier.start.clone(),
-                first_carrier.end.clone(),
-            );
-            let second_fragment = CurveParameterRange2::new_validated(
-                second_carrier.start.clone(),
-                second_carrier.end.clone(),
-            );
-            return match correspondence
-                .clipped_ranges(&first_fragment, &second_fragment, &self.data.policy)
-                .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
-            {
-                Classification::Decided(ranges) => Ok(ranges),
-                Classification::Uncertain(reason) => {
-                    Err(self.blocked(pair.first_carrier_index, reason))
-                }
-            };
-        }
-        match clip_projectively_aligned_parameter_overlap(
-            &first_range,
-            &second_range,
-            overlap.orientation,
-            first_carrier,
-            second_carrier,
-            &self.data.policy,
-        )? {
-            CarrierOverlapClip::Matched(ranges) => Ok(ranges),
-            CarrierOverlapClip::Unmatched if overlap.source.is_none() => {
-                let first = match first_carrier
-                    .geometry
-                    .exact_rational_component(&self.data.policy)
-                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
-                {
-                    Classification::Decided(Some(curve)) => curve,
-                    Classification::Decided(None) => {
-                        return Err(
-                            self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported)
-                        );
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Err(self.blocked(pair.first_carrier_index, reason));
-                    }
-                };
-                let second = match second_carrier
-                    .geometry
-                    .exact_rational_component(&self.data.policy)
-                    .map_err(|cause| self.invalid(pair.second_carrier_index, cause))?
-                {
-                    Classification::Decided(Some(curve)) => curve,
-                    Classification::Decided(None) => {
-                        return Err(
-                            self.blocked(pair.second_carrier_index, UncertaintyReason::Unsupported)
-                        );
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Err(self.blocked(pair.second_carrier_index, reason));
-                    }
-                };
-                let raw_overlap = RationalBezierIntersectionOverlap2::from_certified_parameters(
-                    first_range.start().clone(),
-                    first_range.end().clone(),
-                    second_range.start().clone(),
-                    second_range.end().clone(),
-                    overlap.orientation,
-                    [true, true],
-                );
-                let correspondence = RationalBezierOverlapParameterCorrespondence2::for_overlap(
-                    &first,
-                    &second,
-                    &raw_overlap,
-                    &self.data.policy,
-                );
-                clip_corresponding_parameter_overlap(
-                    &first_range,
-                    &second_range,
-                    &correspondence,
-                    first_carrier,
-                    second_carrier,
-                    &self.data.policy,
-                )
+            Classification::Decided(overlap) => {
+                Ok(overlap.map(|overlap| (overlap.first_range, overlap.second_range)))
             }
-            CarrierOverlapClip::Unmatched => {
-                Err(self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported))
-            }
-        }
-    }
-
-    fn clip_algebraic_chord_rational_overlap(
-        &self,
-        pair: &RegionCarrierPair,
-        overlap: &RegionPairOverlap,
-        source: &BezierAlgebraicChordRationalOverlap2,
-    ) -> ExactCurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
-        let chord_is_first = overlap.first_range.start().is_algebraic_chord();
-        if chord_is_first == overlap.second_range.start().is_algebraic_chord() {
-            return Err(self.invalid(
-                pair.first_carrier_index,
-                CurveError::Topology(
-                    "algebraic-chord overlap did not retain exactly one chord range".into(),
-                ),
-            ));
-        }
-        let source_carrier_index = if chord_is_first {
-            pair.second_carrier_index
-        } else {
-            pair.first_carrier_index
-        };
-        let carrier = &self.data.carriers[source_carrier_index];
-        let range = CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone());
-        let clipped = match source
-            .clipped_to_source_range(&range, &self.data.policy)
-            .map_err(|cause| self.invalid(source_carrier_index, cause))?
-        {
-            Classification::Decided(Some(overlap)) => overlap,
-            Classification::Decided(None) => return Ok(None),
             Classification::Uncertain(reason) => {
-                return Err(self.blocked(source_carrier_index, reason));
+                Err(self.blocked(pair.first_carrier_index, reason))
             }
-        };
-        let [start, end] = clipped.chord_range();
-        let chord_range = CurveParameterRange2::new_validated(
-            CurveParameter2::from_algebraic_chord(start.clone()),
-            CurveParameter2::from_algebraic_chord(end.clone()),
-        );
-        let source_range = clipped.source_range().clone();
-        Ok(Some(if chord_is_first {
-            (chord_range, source_range)
-        } else {
-            (source_range, chord_range)
-        }))
+        }
     }
 
     fn build_split_topology(&self) -> ExactCurveResult<CurveRegionSplitTopology> {
@@ -6650,12 +6553,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         &self.data.carriers[pair.second_carrier_index],
                         &self.data.policy,
                     )?;
-                    if let Some(RegionPairOverlapSource::Correspondence(
-                        CurveOverlapCorrespondence2::Circle {
-                            source: CurveCircleOverlap2::Selected(source),
-                            ..
-                        },
-                    )) = overlap.source.as_ref()
+                    if let CurveOverlapCorrespondence2::Circle {
+                        source: CurveCircleOverlap2::Selected(source),
+                        ..
+                    } = &overlap.parameter_correspondence
                     {
                         let selected_parameter = first_parameters[index]
                             .as_selected_fiber()
@@ -15474,13 +15375,14 @@ fn selected_fiber_cusp_overlaps_result(
             } else {
                 (other_range, cusp_range)
             };
-            RegionPairOverlap {
-                source: Some(RegionPairOverlapSource::Correspondence(
-                    CurveOverlapCorrespondence2::Circle {
-                        source: CurveCircleOverlap2::Selected(overlap),
-                        swapped: !cusp_is_first,
-                    },
-                )),
+            CurveIntersectionOverlap2 {
+                first_span_index: 0,
+                second_span_index: 0,
+                endpoint_inclusion: [true, true],
+                parameter_correspondence: CurveOverlapCorrespondence2::Circle {
+                    source: CurveCircleOverlap2::Selected(overlap),
+                    swapped: !cusp_is_first,
+                },
                 first_range,
                 second_range,
                 orientation,
@@ -15735,36 +15637,7 @@ fn range_inside_carrier(
     )
 }
 
-fn extreme_region_parameter<const N: usize>(
-    parameters: [&CurveParameter2; N],
-    replace_when: Ordering,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<CurveParameter2> {
-    let mut selected = parameters[0];
-    for parameter in &parameters[1..] {
-        selected = match selected.cmp_by_refinement(parameter, policy) {
-            Ok(Classification::Decided(order)) if order == replace_when => parameter,
-            Ok(Classification::Decided(_)) => selected,
-            Ok(Classification::Uncertain(reason)) => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Boolean,
-                    family,
-                    reason,
-                ));
-            }
-            Err(cause) => {
-                return Err(ExactCurveError::invalid(
-                    CurveOperation2::Boolean,
-                    family,
-                    cause,
-                ));
-            }
-        };
-    }
-    Ok(selected.clone())
-}
-
+#[cfg(test)]
 fn clip_corresponding_parameter_overlap(
     first_range: &BezierParameterRange2,
     second_range: &BezierParameterRange2,
@@ -15800,193 +15673,6 @@ fn clip_corresponding_parameter_overlap(
     }
 }
 
-fn clip_projectively_aligned_parameter_overlap(
-    first_range: &BezierParameterRange2,
-    second_range: &BezierParameterRange2,
-    orientation: RationalBezierOverlapOrientation2,
-    first_carrier: &RegionCarrier,
-    second_carrier: &RegionCarrier,
-    policy: &CurveContext,
-) -> ExactCurveResult<CarrierOverlapClip> {
-    let invalid = |family, cause| ExactCurveError::invalid(CurveOperation2::Boolean, family, cause);
-    let reversed = orientation == RationalBezierOverlapOrientation2::Reversed;
-    let (CurveSupport2::Bezier(first_curve), CurveSupport2::Bezier(second_curve)) =
-        (&first_carrier.geometry, &second_carrier.geometry)
-    else {
-        return clip_aligned_parameter_overlap(
-            first_range,
-            second_range,
-            reversed,
-            first_carrier,
-            second_carrier,
-            policy,
-        );
-    };
-    if reversed || first_curve != second_curve {
-        let first = RationalBezier2::try_from_subcurve(first_curve)
-            .map_err(|cause| invalid(first_carrier.family, cause))?;
-        let second = RationalBezier2::try_from_subcurve(second_curve)
-            .map_err(|cause| invalid(second_carrier.family, cause))?;
-        match first.same_projective_control_net_degree_aligned(&second, reversed, policy) {
-            Classification::Decided(true) => {}
-            Classification::Decided(false) => return Ok(CarrierOverlapClip::Unmatched),
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Boolean,
-                    first_carrier.family,
-                    reason,
-                ));
-            }
-        }
-    }
-
-    clip_aligned_parameter_overlap(
-        first_range,
-        second_range,
-        reversed,
-        first_carrier,
-        second_carrier,
-        policy,
-    )
-}
-
-fn clip_aligned_parameter_overlap(
-    first_range: &BezierParameterRange2,
-    second_range: &BezierParameterRange2,
-    reversed: bool,
-    first_carrier: &RegionCarrier,
-    second_carrier: &RegionCarrier,
-    policy: &CurveContext,
-) -> ExactCurveResult<CarrierOverlapClip> {
-    let map_to_second = |parameter: &BezierParameter2| {
-        if reversed {
-            parameter.unit_complement()
-        } else {
-            parameter.clone()
-        }
-    };
-    let mapped_overlap_start = map_to_second(first_range.start());
-    let mapped_overlap_end = map_to_second(first_range.end());
-    if decided_parameter_cmp(&mapped_overlap_start, second_range.start(), policy)?
-        != Ordering::Equal
-        || decided_parameter_cmp(&mapped_overlap_end, second_range.end(), policy)?
-            != Ordering::Equal
-    {
-        return Ok(CarrierOverlapClip::Unmatched);
-    }
-
-    let (overlap_start, overlap_end) = ascending_bezier_range(first_range, policy)?;
-    let overlap_start = CurveParameter2::from(overlap_start.clone());
-    let overlap_end = CurveParameter2::from(overlap_end.clone());
-    let (second_start_in_first, second_end_in_first) = if reversed {
-        (
-            second_carrier.end.unit_complement().ok_or_else(|| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Boolean,
-                    second_carrier.family,
-                    UncertaintyReason::Unsupported,
-                )
-            })?,
-            second_carrier.start.unit_complement().ok_or_else(|| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Boolean,
-                    second_carrier.family,
-                    UncertaintyReason::Unsupported,
-                )
-            })?,
-        )
-    } else {
-        (second_carrier.start.clone(), second_carrier.end.clone())
-    };
-    let start = extreme_region_parameter(
-        [&overlap_start, &first_carrier.start, &second_start_in_first],
-        Ordering::Less,
-        first_carrier.family,
-        policy,
-    )?;
-    let end = extreme_region_parameter(
-        [&overlap_end, &first_carrier.end, &second_end_in_first],
-        Ordering::Greater,
-        first_carrier.family,
-        policy,
-    )?;
-    match decided_parameter_cmp(&start, &end, policy)? {
-        Ordering::Less => {}
-        Ordering::Equal | Ordering::Greater => {
-            return Ok(CarrierOverlapClip::Matched(None));
-        }
-    }
-    let map_region_to_second = |parameter: &CurveParameter2| {
-        if reversed {
-            parameter.unit_complement().ok_or_else(|| {
-                ExactCurveError::blocked(
-                    CurveOperation2::Boolean,
-                    first_carrier.family,
-                    UncertaintyReason::Unsupported,
-                )
-            })
-        } else {
-            Ok(parameter.clone())
-        }
-    };
-    let second_start = map_region_to_second(&start)?;
-    let second_end = map_region_to_second(&end)?;
-    Ok(CarrierOverlapClip::Matched(Some((
-        CurveParameterRange2::new_validated(start, end),
-        CurveParameterRange2::new_validated(second_start, second_end),
-    ))))
-}
-
-#[cfg(test)]
-pub(crate) fn clip_aligned_parameter_overlap_for_test(
-    first_range: &BezierParameterRange2,
-    second_range: &BezierParameterRange2,
-    reversed: bool,
-    first_carrier_range: &CurveParameterRange2,
-    second_carrier_range: &CurveParameterRange2,
-    policy: &CurveContext,
-) -> ExactCurveResult<Option<(CurveParameterRange2, CurveParameterRange2)>> {
-    let carrier = |operand, range: &CurveParameterRange2| RegionCarrier {
-        operand,
-        loop_index: 0,
-        fragment_index: 0,
-        family: CurveFamily2::RationalBezier,
-        geometry: CurveSupport2::Bezier(BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(
-                    crate::Point2::from_values(0, 0),
-                    crate::Point2::from_values(1, 0),
-                )
-                .expect("the test carrier line is nondegenerate"),
-            ),
-        )),
-        start: range.start().clone(),
-        end: range.end().clone(),
-        reversed: false,
-        filled_side_is_left: true,
-        selected_fiber_endpoint_points: None,
-        image_is_injective: OnceLock::new(),
-        bounds: OnceLock::new(),
-    };
-    let first_carrier = carrier(CurveRegionBooleanOperand2::First, first_carrier_range);
-    let second_carrier = carrier(CurveRegionBooleanOperand2::Second, second_carrier_range);
-    match clip_aligned_parameter_overlap(
-        first_range,
-        second_range,
-        reversed,
-        &first_carrier,
-        &second_carrier,
-        policy,
-    )? {
-        CarrierOverlapClip::Matched(ranges) => Ok(ranges),
-        CarrierOverlapClip::Unmatched => Err(ExactCurveError::invalid(
-            CurveOperation2::Boolean,
-            CurveFamily2::RationalBezier,
-            CurveError::Topology("the certified test ranges were not parameter-aligned".into()),
-        )),
-    }
-}
-
 fn range_contains_fragment(
     range: &CurveParameterRange2,
     fragment_start: &CurveParameter2,
@@ -16004,21 +15690,6 @@ fn ascending_range<'a>(
     range: &'a CurveParameterRange2,
     policy: &CurveContext,
 ) -> ExactCurveResult<(&'a CurveParameter2, &'a CurveParameter2)> {
-    match decided_parameter_cmp(range.start(), range.end(), policy)? {
-        Ordering::Less => Ok((range.start(), range.end())),
-        Ordering::Greater => Ok((range.end(), range.start())),
-        Ordering::Equal => Err(ExactCurveError::invalid(
-            CurveOperation2::Boolean,
-            CurveFamily2::RationalBezier,
-            CurveError::DegenerateOverlapRange,
-        )),
-    }
-}
-
-fn ascending_bezier_range<'a>(
-    range: &'a BezierParameterRange2,
-    policy: &CurveContext,
-) -> ExactCurveResult<(&'a BezierParameter2, &'a BezierParameter2)> {
     match decided_parameter_cmp(range.start(), range.end(), policy)? {
         Ordering::Less => Ok((range.start(), range.end())),
         Ordering::Greater => Ok((range.end(), range.start())),
@@ -16274,13 +15945,14 @@ mod certified_successor_tests {
                 } else {
                     (first_overlap.clone(), second_overlap.clone())
                 };
-                let overlap = RegionPairOverlap {
-                    source: Some(RegionPairOverlapSource::Correspondence(
-                        CurveOverlapCorrespondence2::ParameterComponent {
-                            source: source.clone(),
-                            swapped,
-                        },
-                    )),
+                let overlap = CurveIntersectionOverlap2 {
+                    first_span_index: 0,
+                    second_span_index: 0,
+                    endpoint_inclusion: [true, true],
+                    parameter_correspondence: CurveOverlapCorrespondence2::ParameterComponent {
+                        source: source.clone(),
+                        swapped,
+                    },
                     first_range,
                     second_range,
                     orientation: source.overlap().orientation(),
@@ -18323,11 +17995,12 @@ mod certified_successor_tests {
             assert!(intersections.is_complete(), "{intersections:?}");
             assert_eq!(intersections.overlaps().len(), 1, "{intersections:?}");
             assert_eq!(
-                intersections.overlaps()[0].orientation(),
+                intersections.overlaps()[0].overlap().orientation(),
                 RationalBezierOverlapOrientation2::Reversed
             );
             assert!(
                 intersections.overlaps()[0]
+                    .overlap()
                     .first_range()
                     .start()
                     .is_algebraic_chord()
@@ -18427,6 +18100,83 @@ mod certified_successor_tests {
             assert!(evidence.is_complete(), "{evidence:?}");
             assert!(evidence.contacts().is_empty(), "{evidence:?}");
             assert_eq!(evidence.overlaps().len(), 1, "{evidence:?}");
+            let published = evidence.overlaps()[0].clone();
+            let CurveSupport2::Line(chord) = &context.data.carriers[0].geometry else {
+                unreachable!()
+            };
+            let interior = CurveParameter2::from_algebraic_chord(
+                chord
+                    .parameter_at_certified_support_point(
+                        Point2::new((Real::from(2) / Real::from(3)).unwrap(), Real::zero()).into(),
+                        &policy,
+                    )
+                    .unwrap(),
+            );
+            drop(context);
+            drop(evidence);
+            let limit = CurveParameterRange2::new_validated(
+                published.overlap().first_range().start().clone(),
+                interior,
+            );
+            let clipped = published
+                .overlap()
+                .restrict(
+                    [limit.start().clone(), limit.end().clone()],
+                    [
+                        published.overlap().second_range().start().clone(),
+                        published.overlap().second_range().end().clone(),
+                    ],
+                    &policy,
+                )
+                .unwrap();
+            assert_eq!(clipped.certainty, crate::CurveCertainty::Certified);
+            let clipped = decided(clipped.value).expect("a positive interior chord restriction");
+            for (a, b) in [
+                (
+                    clipped.first_range().start(),
+                    clipped.second_range().start(),
+                ),
+                (clipped.first_range().end(), clipped.second_range().end()),
+            ] {
+                let a = published
+                    .first()
+                    .curve()
+                    .point_at(a, &policy)
+                    .unwrap()
+                    .into_value();
+                let b = published
+                    .second()
+                    .curve()
+                    .point_at(b, &policy)
+                    .unwrap()
+                    .into_value();
+                assert_eq!(
+                    a.coincides_with(&b, &policy).value,
+                    Classification::Decided(true)
+                );
+            }
+            for _ in 0..8 {
+                assert_eq!(
+                    decided(
+                        clipped
+                            .restrict(
+                                [
+                                    published.overlap().first_range().start().clone(),
+                                    published.overlap().first_range().end().clone()
+                                ],
+                                [
+                                    published.overlap().second_range().start().clone(),
+                                    published.overlap().second_range().end().clone()
+                                ],
+                                &policy
+                            )
+                            .unwrap()
+                            .into_value()
+                    )
+                    .unwrap(),
+                    clipped
+                );
+            }
         }
     }
 
@@ -18771,10 +18521,13 @@ mod certified_successor_tests {
         }
         for overlap in evidence.overlaps() {
             replay(
-                overlap.first_range().start(),
-                overlap.second_range().start(),
+                overlap.overlap().first_range().start(),
+                overlap.overlap().second_range().start(),
             );
-            replay(overlap.first_range().end(), overlap.second_range().end());
+            replay(
+                overlap.overlap().first_range().end(),
+                overlap.overlap().second_range().end(),
+            );
         }
     }
 
@@ -18886,7 +18639,7 @@ mod certified_successor_tests {
                             let [overlap] = evidence.overlaps() else {
                                 panic!("one retained branch must overlap: {evidence:?}")
                             };
-                            assert_eq!(overlap.second_range(), &range);
+                            assert_eq!(overlap.overlap().second_range(), &range);
                         } else {
                             assert!(result.overlaps.is_empty());
                             let [contact] = evidence.contacts() else {
@@ -19141,7 +18894,7 @@ mod certified_successor_tests {
                 panic!("only the selected regular branch may survive: {evidence:?}");
             };
             assert_eq!(
-                selected_overlap.orientation(),
+                selected_overlap.overlap().orientation(),
                 RationalBezierOverlapOrientation2::Same,
             );
             #[cfg(feature = "dispatch-trace")]
@@ -19405,7 +19158,7 @@ mod certified_successor_tests {
                 panic!("the selected opaque branch must publish one overlap: {opaque_evidence:?}");
             };
             assert_eq!(
-                opaque_overlap.orientation(),
+                opaque_overlap.overlap().orientation(),
                 RationalBezierOverlapOrientation2::Same,
             );
             #[cfg(feature = "dispatch-trace")]
@@ -19480,11 +19233,12 @@ mod certified_successor_tests {
                 );
             };
             assert_eq!(
-                algebraic_overlap.orientation(),
+                algebraic_overlap.overlap().orientation(),
                 RationalBezierOverlapOrientation2::Same,
             );
             assert_eq!(
                 algebraic_overlap
+                    .overlap()
                     .second_range()
                     .start()
                     .as_bezier_parameter(),

@@ -111,13 +111,13 @@ impl CurveIntersectionParameterComponent2 {
 /// explicit because a strict exact branch predicate can select an open end.
 #[derive(Clone, Debug)]
 pub struct CurveIntersectionOverlap2 {
-    first_span_index: usize,
-    second_span_index: usize,
-    first_range: CurveParameterRange2,
-    second_range: CurveParameterRange2,
-    orientation: RationalBezierOverlapOrientation2,
-    endpoint_inclusion: [bool; 2],
-    parameter_correspondence: Option<CurveOverlapCorrespondence2>,
+    pub(crate) first_span_index: usize,
+    pub(crate) second_span_index: usize,
+    pub(crate) first_range: CurveParameterRange2,
+    pub(crate) second_range: CurveParameterRange2,
+    pub(crate) orientation: RationalBezierOverlapOrientation2,
+    pub(crate) endpoint_inclusion: [bool; 2],
+    pub(crate) parameter_correspondence: CurveOverlapCorrespondence2,
 }
 
 /// The complete support correspondence retains its original chart intervals.
@@ -248,7 +248,53 @@ pub(crate) enum CurveOverlapCorrespondence2 {
 }
 
 impl CurveOverlapCorrespondence2 {
-    fn rational(
+    /// The native line or shared-lineage kernel has certified an affine map.
+    fn affine(first: &ParamRange, second: &ParamRange) -> Self {
+        Self::Rational {
+            source: RationalCurveOverlap2 {
+                source: RationalBezierOverlapParameterCorrespondence2::RangeProjective {
+                    second_to_first_scale: Real::one(),
+                    reversed: false,
+                },
+                first_range: BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(first.start().clone()),
+                    BezierParameter2::Exact(first.end().clone()),
+                ),
+                second_range: BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact(second.start().clone()),
+                    BezierParameter2::Exact(second.end().clone()),
+                ),
+            },
+            swapped: false,
+        }
+    }
+
+    /// Retains transport for a component already certified by a native kernel.
+    pub(crate) fn for_rational_ranges(
+        first: &RationalBezier2,
+        second: &RationalBezier2,
+        first_range: &BezierParameterRange2,
+        second_range: &BezierParameterRange2,
+        orientation: RationalBezierOverlapOrientation2,
+        policy: &CurveContext,
+    ) -> Self {
+        let overlap = crate::RationalBezierIntersectionOverlap2::from_certified_parameters(
+            first_range.start().clone(),
+            first_range.end().clone(),
+            second_range.start().clone(),
+            second_range.end().clone(),
+            orientation,
+            [true, true],
+        );
+        Self::rational(
+            RationalBezierOverlapParameterCorrespondence2::for_overlap(
+                first, second, &overlap, policy,
+            ),
+            &overlap,
+        )
+    }
+
+    pub(crate) fn rational(
         source: RationalBezierOverlapParameterCorrespondence2,
         overlap: &crate::RationalBezierIntersectionOverlap2,
     ) -> Self {
@@ -292,50 +338,17 @@ impl CurveOverlapCorrespondence2 {
                 } else {
                     (second_range, first_range)
                 };
-                let clipped = match source.clipped_to_source_range(source_range, policy)? {
-                    Classification::Decided(Some(clipped)) => clipped,
-                    Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let [low, high] = match chord_range.ordered_endpoints(policy)? {
-                    Classification::Decided(bounds) => bounds,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let [start, end] = clipped
-                    .chord_range()
-                    .map(|p| CurveParameter2::from_algebraic_chord(p.clone()));
-                // A chord span normally owns its finite domain. If a later
-                // consumer supplies a narrower chord chart, it also needs
-                // inverse source-branch replay; do not omit that restriction.
-                for parameter in [&start, &end] {
-                    for (boundary, excluded) in [
-                        (low, std::cmp::Ordering::Less),
-                        (high, std::cmp::Ordering::Greater),
-                    ] {
-                        match parameter.cmp_by_refinement(boundary, policy)? {
-                            Classification::Decided(order) if order == excluded => {
-                                return Ok(Classification::Uncertain(
-                                    UncertaintyReason::Unsupported,
-                                ));
+                Ok(source
+                    .clipped_ranges(chord_range, source_range, policy)?
+                    .map(|ranges| {
+                        ranges.map(|(chord, source)| {
+                            if *chord_first {
+                                (chord, source)
+                            } else {
+                                (source, chord)
                             }
-                            Classification::Decided(_) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
-                    }
-                }
-                let chord = CurveParameterRange2::new_validated(start, end);
-                let source = clipped.source_range().clone();
-                Ok(Classification::Decided(Some(if *chord_first {
-                    (chord, source)
-                } else {
-                    (source, chord)
-                })))
+                        })
+                    }))
             }
             Self::Chords {
                 first,
@@ -1109,7 +1122,7 @@ fn build_native_line_evidence(
                     ),
                     orientation,
                     endpoint_inclusion: [true, true],
-                    parameter_correspondence: None,
+                    parameter_correspondence: CurveOverlapCorrespondence2::affine(a_range, b_range),
                 }],
             )
         }
@@ -1605,6 +1618,14 @@ fn build_native_coincident_arc_evidence(
                             policy,
                         )?;
                     }
+                    let correspondence = CurveOverlapCorrespondence2::for_rational_ranges(
+                        &first_evaluators[first_span_index],
+                        &second_evaluators[second_span_index],
+                        &first_range,
+                        &second_range,
+                        orientation,
+                        policy,
+                    );
                     overlaps.push(CurveIntersectionOverlap2 {
                         first_span_index,
                         second_span_index,
@@ -1612,7 +1633,7 @@ fn build_native_coincident_arc_evidence(
                         second_range: CurveParameterRange2::from_bezier_range(second_range),
                         orientation,
                         endpoint_inclusion: [true, true],
-                        parameter_correspondence: None,
+                        parameter_correspondence: correspondence,
                     });
                 }
                 ArcArcIntersection::Uncertain { reason } => {
@@ -2182,7 +2203,10 @@ impl CurveIntersectionContext {
                     ),
                     orientation: *orientation,
                     endpoint_inclusion: [true, true],
-                    parameter_correspondence: None,
+                    parameter_correspondence: CurveOverlapCorrespondence2::affine(
+                        first_range,
+                        second_range,
+                    ),
                 });
                 continue;
             }
@@ -2251,12 +2275,14 @@ impl CurveIntersectionContext {
                         endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
                             CurveSpanPairState::Rational(intersection) => {
-                                Some(CurveOverlapCorrespondence2::rational(
+                                CurveOverlapCorrespondence2::rational(
                                     intersection.overlap_parameter_correspondence(&overlap),
                                     &overlap,
-                                ))
+                                )
                             }
-                            _ => None,
+                            _ => unreachable!(
+                                "non-rational span states returned before overlap replay"
+                            ),
                         },
                     });
                 }
@@ -2293,12 +2319,14 @@ impl CurveIntersectionContext {
                         endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
                             CurveSpanPairState::Rational(intersection) => {
-                                Some(CurveOverlapCorrespondence2::rational(
+                                CurveOverlapCorrespondence2::rational(
                                     intersection.overlap_parameter_correspondence(&overlap),
                                     &overlap,
-                                ))
+                                )
                             }
-                            _ => None,
+                            _ => unreachable!(
+                                "non-rational span states returned before overlap replay"
+                            ),
                         },
                     });
                 }
@@ -2525,6 +2553,132 @@ impl CurveIntersectionPairBlocker2 {
 }
 
 impl CurveIntersectionOverlap2 {
+    /// Restricts this positive-length component to two closed local domains.
+    ///
+    /// Each endpoint pair must belong to the corresponding operand span. Either
+    /// pair may descend. The result
+    /// keeps this component's traversal, open endpoints and original transport
+    /// evidence; wider limits never enlarge it. A singleton restriction has no
+    /// positive-length component and returns `None`.
+    pub fn restrict(
+        &self,
+        first: [CurveParameter2; 2],
+        second: [CurveParameter2; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<CurveOutcome<Classification<Option<Self>>>> {
+        let [first_start, first_end] = first;
+        let [second_start, second_end] = second;
+        let first = CurveParameterRange2::new_validated(first_start, first_end);
+        let second = CurveParameterRange2::new_validated(second_start, second_end);
+        resolve_certified_operation(policy, |attempt| {
+            for range in [&first, &second] {
+                match range.start().cmp_by_refinement(range.end(), attempt)? {
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        return Ok(Classification::Decided(None));
+                    }
+                    Classification::Decided(_) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            self.restrict_raw(&first, &second, attempt)
+        })
+    }
+
+    pub(crate) fn restrict_raw(
+        &self,
+        first: &CurveParameterRange2,
+        second: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        let clip = |active, limit| {
+            crate::bezier_split::intersect_parameter_ranges(active, limit, policy).map(|result| {
+                result.map(|bounds| {
+                    bounds.map(|[start, end]| CurveParameterRange2::new_validated(start, end))
+                })
+            })
+        };
+        let first = match clip(&self.first_range, first)? {
+            Classification::Decided(Some(range)) => range,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let second = match clip(&self.second_range, second)? {
+            Classification::Decided(Some(range)) => range,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let same_bounds = |a: &CurveParameterRange2, b: &CurveParameterRange2| {
+            a == b || (a.start() == b.end() && a.end() == b.start())
+        };
+        if same_bounds(&first, &self.first_range) && same_bounds(&second, &self.second_range) {
+            return Ok(Classification::Decided(Some(self.clone())));
+        }
+        let source = &self.parameter_correspondence;
+        let (mut first, mut second) = match source.clipped_ranges(&first, &second, policy)? {
+            Classification::Decided(Some(ranges)) => ranges,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let order = match self
+            .first_range
+            .start()
+            .cmp_by_refinement(self.first_range.end(), policy)?
+        {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let clipped_order = match first.start().cmp_by_refinement(first.end(), policy)? {
+            Classification::Decided(order) => order,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if order != clipped_order {
+            first = CurveParameterRange2::new_validated(first.end().clone(), first.start().clone());
+            second =
+                CurveParameterRange2::new_validated(second.end().clone(), second.start().clone());
+        }
+        Ok(self.with_paired_ranges(first, second, policy)?.map(Some))
+    }
+
+    /// Publishes certified paired subranges without rebasing the original map.
+    pub(crate) fn with_paired_ranges(
+        &self,
+        first_range: CurveParameterRange2,
+        second_range: CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let mut endpoint_inclusion = [true, true];
+        for (index, parameter) in [first_range.start(), first_range.end()]
+            .into_iter()
+            .enumerate()
+        {
+            for (boundary, included) in [
+                (self.first_range.start(), self.includes_start()),
+                (self.first_range.end(), self.includes_end()),
+            ] {
+                if included {
+                    continue;
+                }
+                match parameter.cmp_by_refinement(boundary, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        endpoint_inclusion[index] = false
+                    }
+                    Classification::Decided(_) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+        Ok(Classification::Decided(Self {
+            first_range,
+            second_range,
+            endpoint_inclusion,
+            ..self.clone()
+        }))
+    }
+
     /// Returns the promoted span index on the first curve.
     pub const fn first_span_index(&self) -> usize {
         self.first_span_index
@@ -2560,10 +2714,6 @@ impl CurveIntersectionOverlap2 {
     /// Returns whether the paired ends of both oriented ranges belong to the overlap.
     pub const fn includes_end(&self) -> bool {
         self.endpoint_inclusion[1]
-    }
-
-    pub(crate) const fn parameter_correspondence(&self) -> Option<&CurveOverlapCorrespondence2> {
-        self.parameter_correspondence.as_ref()
     }
 }
 
@@ -3189,6 +3339,200 @@ mod point_component_dispatch_tests {
                             1
                         );
                     }
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod overlap_restriction_tests {
+    use super::*;
+    use crate::{CurveCertainty, LineSeg2};
+
+    fn exact<T: std::fmt::Debug>(value: CurveOutcome<Classification<T>>) -> T {
+        assert_eq!(value.certainty, CurveCertainty::Certified);
+        match value.value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("{reason:?}"),
+        }
+    }
+
+    fn check_native_restriction(first: &Curve2, second: &Curve2, policy: &CurveContext) {
+        let result = first.intersect_curve(second, policy).unwrap();
+        assert_eq!(result.certainty, CurveCertainty::Certified);
+        let result = result.value;
+        assert!(result.is_complete());
+        assert!(!result.overlaps().is_empty());
+        let first_spans = first.native_bezier_fragments(policy).unwrap().into_value();
+        let second_spans = second.native_bezier_fragments(policy).unwrap().into_value();
+        for overlap in result.overlaps() {
+            let mid = match overlap
+                .first_range()
+                .strict_interior_scalar(policy)
+                .unwrap()
+            {
+                Classification::Decided(mid) => mid,
+                Classification::Uncertain(reason) => panic!("{reason:?}"),
+            };
+            let limit = CurveParameterRange2::new_validated(
+                overlap.first_range().start().clone(),
+                mid.into(),
+            );
+            let mut open = overlap.clone();
+            open.endpoint_inclusion = [false, false];
+            let clipped = exact(
+                open.restrict(
+                    [limit.start().clone(), limit.end().clone()],
+                    [
+                        overlap.second_range().start().clone(),
+                        overlap.second_range().end().clone(),
+                    ],
+                    policy,
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            assert!(!clipped.includes_start());
+            assert!(clipped.includes_end());
+            let a = Curve2::from(first_spans[overlap.first_span_index()].curve().clone());
+            let b = Curve2::from(second_spans[overlap.second_span_index()].curve().clone());
+            for (a_parameter, b_parameter) in [
+                (
+                    clipped.first_range().start(),
+                    clipped.second_range().start(),
+                ),
+                (clipped.first_range().end(), clipped.second_range().end()),
+            ] {
+                let a = a.point_at(a_parameter, policy).unwrap().into_value();
+                let b = b.point_at(b_parameter, policy).unwrap().into_value();
+                assert!(exact(a.coincides_with(&b, policy)));
+            }
+            for _ in 0..8 {
+                assert_eq!(
+                    exact(
+                        clipped
+                            .restrict(
+                                [
+                                    overlap.first_range().start().clone(),
+                                    overlap.first_range().end().clone()
+                                ],
+                                [
+                                    overlap.second_range().start().clone(),
+                                    overlap.second_range().end().clone()
+                                ],
+                                policy
+                            )
+                            .unwrap()
+                    )
+                    .unwrap(),
+                    clipped
+                );
+            }
+            let singleton = std::array::from_fn(|_| clipped.first_range().end().clone());
+            assert!(
+                exact(
+                    open.restrict(
+                        singleton,
+                        [
+                            overlap.second_range().start().clone(),
+                            overlap.second_range().end().clone()
+                        ],
+                        policy
+                    )
+                    .unwrap()
+                )
+                .is_none()
+            );
+            let rest = CurveParameterRange2::new_validated(
+                clipped.first_range().end().clone(),
+                overlap.first_range().end().clone(),
+            );
+            assert!(
+                exact(
+                    clipped
+                        .restrict(
+                            [rest.start().clone(), rest.end().clone()],
+                            [
+                                overlap.second_range().start().clone(),
+                                overlap.second_range().end().clone()
+                            ],
+                            policy
+                        )
+                        .unwrap()
+                )
+                .is_none()
+            );
+            let reversed_limit =
+                CurveParameterRange2::new_validated(limit.end().clone(), limit.start().clone());
+            assert_eq!(
+                exact(
+                    open.restrict(
+                        [reversed_limit.start().clone(), reversed_limit.end().clone()],
+                        [
+                            overlap.second_range().start().clone(),
+                            overlap.second_range().end().clone()
+                        ],
+                        policy
+                    )
+                    .unwrap()
+                )
+                .unwrap(),
+                clipped
+            );
+        }
+    }
+
+    #[test]
+    fn native_line_overlap_restriction_retains_affine_transport_and_open_ends() {
+        let first = Curve2::from(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(4, 0)).unwrap(),
+        );
+        let second = Curve2::from(
+            LineSeg2::try_new(Point2::from_values(6, 0), Point2::from_values(2, 0)).unwrap(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for second in [
+                second.clone(),
+                second.reversed(&policy).unwrap().into_value(),
+            ] {
+                for (a, b) in [(&first, &second), (&second, &first)] {
+                    check_native_restriction(a, b, &policy);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn native_arc_overlap_restriction_retains_distinct_rational_charts() {
+        let first = Curve2::from(
+            CircularArc2::try_from_center(
+                Point2::from_values(1, 0),
+                Point2::from_values(0, 1),
+                Point2::from_values(0, 0),
+                false,
+            )
+            .unwrap(),
+        );
+        let second = Curve2::from(
+            CircularArc2::try_from_center(
+                Point2::new(
+                    (Real::from(3) / Real::from(5)).unwrap(),
+                    (Real::from(4) / Real::from(5)).unwrap(),
+                ),
+                Point2::from_values(-1, 0),
+                Point2::from_values(0, 0),
+                false,
+            )
+            .unwrap(),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for second in [
+                second.clone(),
+                second.reversed(&policy).unwrap().into_value(),
+            ] {
+                for (a, b) in [(&first, &second), (&second, &first)] {
+                    check_native_restriction(a, b, &policy);
                 }
             }
         }

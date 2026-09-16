@@ -422,8 +422,8 @@ impl<'a> PreparedTrimSource<'a> {
             });
         }
         for overlap in result.overlaps() {
-            let source_start = overlap.first_range().start().clone();
-            let source_end = overlap.first_range().end().clone();
+            let source_start = overlap.overlap().first_range().start().clone();
+            let source_end = overlap.overlap().first_range().end().clone();
             let Some(&(kind, contour_index)) = loop_boundaries.get(overlap.second().loop_index())
             else {
                 return Err(ExactCurveError::invalid(
@@ -466,8 +466,8 @@ impl<'a> PreparedTrimSource<'a> {
                 end: ordered_end,
             });
             for (source_parameter, boundary_parameter) in [
-                (&source_start, overlap.second_range().start()),
-                (&source_end, overlap.second_range().end()),
+                (&source_start, overlap.overlap().second_range().start()),
+                (&source_end, overlap.overlap().second_range().end()),
             ] {
                 split_parameters.push((span_index, source_parameter.clone()));
                 boundary_contacts.push(PendingBoundaryContact {
