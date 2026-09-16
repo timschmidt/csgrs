@@ -4279,17 +4279,16 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
         for reversed in [false, true] {
             let edit = |path: CurvePath2, radius: Real| {
                 let path = if reversed {
-                    path.reversed(&policy)
-                        .expect("the exact fixture reverses")
-                        .into_value()
+                    certified(path.reversed(&policy).expect("the exact fixture reverses"))
                 } else {
                     path
                 };
-                let region = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                    .expect("the exact fixture promotes")
-                    .into_value();
+                let region = certified(
+                    CurveRegion2::try_from_boundary_paths(&[path], &policy)
+                        .expect("the exact fixture promotes"),
+                );
                 let corner = corner_index(&region);
-                candidates(
+                candidates(certified(
                     region
                         .fillet_loop_vertex_by_radius(
                             0,
@@ -4302,9 +4301,8 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                             panic!(
                                 "the regular incident cell must fillet: policy={policy:?}, reversed={reversed}, error={error:?}"
                             )
-                        })
-                        .into_value(),
-                )
+                        }),
+                ))
             };
 
             let exact = edit(source_path(exact_line_end.clone()), q(299, 125))
@@ -6741,23 +6739,16 @@ fn unified_region_non_miter_erosions_split_after_neck_collapse() {
                 });
             assert_eq!(eroded.certainty, CurveCertainty::Certified);
             assert_eq!(eroded.value.boundary_loops().len(), 2);
-            let expected_location_certainty = if matches!(corner_style, OffsetCornerStyle2::Round)
-                && policy == CurveContext::APPROXIMATE_512
-            {
-                CurveCertainty::Approximate512Consumed
-            } else {
-                CurveCertainty::Certified
-            };
             for point in [p(2, 2), p(10, 2)] {
                 let location = eroded.value.classify_point(&point, &policy).unwrap();
-                assert_eq!(location.certainty, expected_location_certainty);
+                assert_eq!(location.certainty, CurveCertainty::Certified);
                 assert_eq!(
                     location.value,
                     Classification::Decided(RegionPointLocation::Inside)
                 );
             }
             let location = eroded.value.classify_point(&p(6, 2), &policy).unwrap();
-            assert_eq!(location.certainty, expected_location_certainty);
+            assert_eq!(location.certainty, CurveCertainty::Certified);
             assert_eq!(
                 location.value,
                 Classification::Decided(RegionPointLocation::Outside)
