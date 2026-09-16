@@ -166,6 +166,10 @@ impl CurveCircleOverlap2 {
 #[derive(Clone, Debug)]
 pub(crate) enum CurveOverlapCorrespondence2 {
     Rational(RationalCurveOverlap2),
+    ParameterComponent {
+        source: crate::bezier_offset::BezierParameterComponentOverlap2,
+        swapped: bool,
+    },
     Circle {
         source: CurveCircleOverlap2,
         swapped: bool,
@@ -196,24 +200,21 @@ impl CurveOverlapCorrespondence2 {
         second_range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
-        match self {
+        let swapped = match self {
+            Self::Circle { swapped, .. } | Self::ParameterComponent { swapped, .. } => *swapped,
+            _ => false,
+        };
+        let (first_range, second_range) = if swapped {
+            (second_range, first_range)
+        } else {
+            (first_range, second_range)
+        };
+        let ranges = match self {
             Self::Rational(source) => source.clipped_ranges(first_range, second_range, policy),
-            Self::Circle { source, swapped } => {
-                let ranges = if *swapped {
-                    source.clipped_ranges(second_range, first_range, policy)?
-                } else {
-                    source.clipped_ranges(first_range, second_range, policy)?
-                };
-                Ok(ranges.map(|ranges| {
-                    ranges.map(|(first, second)| {
-                        if *swapped {
-                            (second, first)
-                        } else {
-                            (first, second)
-                        }
-                    })
-                }))
+            Self::ParameterComponent { source, .. } => {
+                source.clipped_ranges(first_range, second_range, policy)
             }
+            Self::Circle { source, .. } => source.clipped_ranges(first_range, second_range, policy),
             Self::ChordRational {
                 source,
                 chord_first,
@@ -294,7 +295,16 @@ impl CurveOverlapCorrespondence2 {
                     |p| map(p, first),
                 )
             }
-        }
+        }?;
+        Ok(ranges.map(|ranges| {
+            ranges.map(|(first, second)| {
+                if swapped {
+                    (second, first)
+                } else {
+                    (first, second)
+                }
+            })
+        }))
     }
 }
 

@@ -251,10 +251,6 @@ struct RegionPairOverlap {
 #[derive(Clone, Debug)]
 enum RegionPairOverlapSource {
     Bezier(CurveIntersectionOverlap2),
-    ParameterComponent {
-        source: BezierParameterComponentOverlap2,
-        swapped: bool,
-    },
     AlgebraicChordRational(BezierAlgebraicChordRationalOverlap2),
     Correspondence(CurveOverlapCorrespondence2),
 }
@@ -268,7 +264,11 @@ fn parameter_component_region_overlap_sources(
         .iter()
         .filter(|source| source.overlap() == overlap)
         .cloned()
-        .map(|source| Some(RegionPairOverlapSource::ParameterComponent { source, swapped }))
+        .map(|source| {
+            Some(RegionPairOverlapSource::Correspondence(
+                CurveOverlapCorrespondence2::ParameterComponent { source, swapped },
+            ))
+        })
         .collect::<Vec<_>>();
     if retained.is_empty() {
         retained.push(None);
@@ -1733,7 +1733,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     second: publish(pair.second_carrier_index)?,
                     source: overlap.source.and_then(|source| match source {
                         RegionPairOverlapSource::Bezier(source) => Some(source),
-                        RegionPairOverlapSource::ParameterComponent { .. } => None,
                         RegionPairOverlapSource::AlgebraicChordRational(_) => None,
                         RegionPairOverlapSource::Correspondence(_) => None,
                     }),
@@ -5997,33 +5996,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 overlap.second_range.clone(),
             )));
         }
-        if let Some(RegionPairOverlapSource::ParameterComponent { source, swapped }) =
-            overlap.source.as_ref()
-        {
-            let first_range = CurveParameterRange2::new_validated(
-                first_carrier.start.clone(),
-                first_carrier.end.clone(),
-            );
-            let second_range = CurveParameterRange2::new_validated(
-                second_carrier.start.clone(),
-                second_carrier.end.clone(),
-            );
-            let clipped = if *swapped {
-                source
-                    .clipped_ranges(&second_range, &first_range, &self.data.policy)
-                    .map(|classification| classification.map(|ranges| ranges.map(|(a, b)| (b, a))))
-            } else {
-                source.clipped_ranges(&first_range, &second_range, &self.data.policy)
-            }
-            .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
-            return match clipped {
-                Classification::Decided(Some(ranges)) => Ok(Some(ranges)),
-                Classification::Decided(None) => Ok(None),
-                Classification::Uncertain(reason) => {
-                    Err(self.blocked(pair.first_carrier_index, reason))
-                }
-            };
-        }
         if let Some(RegionPairOverlapSource::Correspondence(source)) = overlap.source.as_ref() {
             let range = |carrier: &RegionCarrier| {
                 CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone())
@@ -6060,7 +6032,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             BezierParameterRange2::new_validated(second_start.clone(), second_end.clone());
         let correspondence = overlap.source.as_ref().and_then(|source| match source {
             RegionPairOverlapSource::Bezier(source) => source.parameter_correspondence(),
-            RegionPairOverlapSource::ParameterComponent { .. } => None,
             RegionPairOverlapSource::AlgebraicChordRational(_) => None,
             RegionPairOverlapSource::Correspondence(_) => None,
         });
@@ -16327,10 +16298,12 @@ mod certified_successor_tests {
                     (first_overlap.clone(), second_overlap.clone())
                 };
                 let overlap = RegionPairOverlap {
-                    source: Some(RegionPairOverlapSource::ParameterComponent {
-                        source: source.clone(),
-                        swapped,
-                    }),
+                    source: Some(RegionPairOverlapSource::Correspondence(
+                        CurveOverlapCorrespondence2::ParameterComponent {
+                            source: source.clone(),
+                            swapped,
+                        },
+                    )),
                     first_range,
                     second_range,
                     orientation: source.overlap().orientation(),
