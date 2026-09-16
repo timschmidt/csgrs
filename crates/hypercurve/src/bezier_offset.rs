@@ -751,6 +751,14 @@ pub(crate) enum BezierAlgebraicCuspSemicircleContactLocation2 {
 }
 
 impl BezierAlgebraicCuspSemicircleContactLocation2 {
+    pub(crate) fn endpoint_parameter(self) -> Option<BezierAlgebraicCuspSemicircleParameter2> {
+        match self {
+            Self::Start => Some(BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero())),
+            Self::End => Some(BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())),
+            Self::Interior => None,
+        }
+    }
+
     /// Exact enclosure certified by finite-chord parameter classification.
     /// Endpoints are identities; an interior contact is strictly inside the
     /// unit interval. This avoids re-isolating a deep recursive scalar merely
@@ -1174,27 +1182,6 @@ impl PartialEq for BezierAlgebraicCuspSemicircleMappedOverlap2 {
     }
 }
 
-fn ascending_second_curve_region_overlap_range(
-    ranges: Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
-    let Classification::Decided(Some((first, second))) = ranges else {
-        return Ok(ranges);
-    };
-    let order = match second.start().cmp_by_refinement(second.end(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    Ok(match order {
-        std::cmp::Ordering::Less => Classification::Decided(Some((first, second))),
-        std::cmp::Ordering::Greater => Classification::Decided(Some((
-            first,
-            CurveParameterRange2::new_validated(second.end().clone(), second.start().clone()),
-        ))),
-        std::cmp::Ordering::Equal => return Err(CurveError::DegenerateOverlapRange),
-    })
-}
-
 impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
     pub(crate) const fn other_range(&self) -> &BezierParameterRange2 {
         &self.other_range
@@ -1257,7 +1244,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         })))
     }
 
-    fn curve_region_ranges(&self) -> (CurveParameterRange2, CurveParameterRange2) {
+    pub(crate) fn parameter_ranges(&self) -> (CurveParameterRange2, CurveParameterRange2) {
         (
             CurveParameterRange2::new_validated(
                 CurveParameter2::from_algebraic_cusp(self.cusp_start_parameter()),
@@ -1267,7 +1254,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         )
     }
 
-    fn map_curve_region_parameter(
+    pub(crate) fn map_parameter(
         &self,
         parameter: &CurveParameter2,
         cusp_to_other: bool,
@@ -1290,34 +1277,15 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         other_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let (cusp_overlap, other_overlap) = self.curve_region_ranges();
+        let (cusp_overlap, other_overlap) = self.parameter_ranges();
         crate::bezier_split::corresponding_parameter_ranges_are_positive(
             &cusp_overlap,
             &other_overlap,
             cusp_fragment,
             other_fragment,
             policy,
-            |parameter| self.map_curve_region_parameter(parameter, true, policy),
+            |parameter| self.map_parameter(parameter, true, policy),
         )
-    }
-
-    pub(crate) fn clipped_ranges(
-        &self,
-        cusp_fragment: &CurveParameterRange2,
-        other_fragment: &CurveParameterRange2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
-        let (cusp_overlap, other_overlap) = self.curve_region_ranges();
-        let clipped = crate::bezier_split::clip_corresponding_parameter_ranges(
-            &cusp_overlap,
-            &other_overlap,
-            cusp_fragment,
-            other_fragment,
-            policy,
-            |parameter| self.map_curve_region_parameter(parameter, true, policy),
-            |parameter| self.map_curve_region_parameter(parameter, false, policy),
-        )?;
-        ascending_second_curve_region_overlap_range(clipped, policy)
     }
 
     fn cusp_parameter_at_other_endpoint(
@@ -16337,6 +16305,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             Some(RealSign::Positive | RealSign::Negative) => {}
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
+        if let Classification::Uncertain(reason) =
+            center_support.certify_source_frame_at(&center_parameter, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
         match center_support.parallel_derivative_scale_sign(&center_parameter, policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
@@ -20158,18 +20131,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a parallel-normal selected circle crossed predicate policies".into(),
             ));
         }
+        // Circle construction certified the finite source and its nonzero
+        // tangent at this selected parameter. Other source parameters are not
+        // part of the circle: a remote cusp or pole cannot invalidate it.
         let source = frame.center_support.source_power_basis()?;
-        if let Classification::Uncertain(reason) =
-            BezierParallel2::certify_finite_source(&source, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
         let differential = frame.center_support.differential()?;
-        if let Classification::Uncertain(reason) =
-            BezierParallel2::certify_regular_differential(differential, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
         match other.unit_weight_sign() {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
@@ -41165,7 +41131,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         self.orientation
     }
 
-    fn curve_region_ranges(&self) -> (CurveParameterRange2, CurveParameterRange2) {
+    pub(crate) fn parameter_ranges(&self) -> (CurveParameterRange2, CurveParameterRange2) {
         (
             CurveParameterRange2::new_validated(
                 CurveParameter2::from_algebraic_cusp(self.cusp_start_parameter()),
@@ -41178,7 +41144,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         )
     }
 
-    fn map_curve_region_parameter(
+    pub(crate) fn map_parameter(
         &self,
         parameter: &CurveParameter2,
         cusp_to_other: bool,
@@ -41192,11 +41158,12 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                 .other_parameter_for_cusp(parameter, policy)?
                 .map(|parameter| Some(CurveParameter2::from_selected_fiber(parameter))));
         }
-        let Some(parameter) = parameter.as_selected_fiber() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        let parameter = match self.retain_unique_other_parameter(vec![parameter.clone()], policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         Ok(self
-            .cusp_parameter_for_other(parameter, policy)?
+            .cusp_parameter_for_other(&parameter, policy)?
             .map(|parameter| Some(CurveParameter2::from_algebraic_cusp(parameter))))
     }
 
@@ -41206,34 +41173,15 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         other_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let (cusp_overlap, other_overlap) = self.curve_region_ranges();
+        let (cusp_overlap, other_overlap) = self.parameter_ranges();
         crate::bezier_split::corresponding_parameter_ranges_are_positive(
             &cusp_overlap,
             &other_overlap,
             cusp_fragment,
             other_fragment,
             policy,
-            |parameter| self.map_curve_region_parameter(parameter, true, policy),
+            |parameter| self.map_parameter(parameter, true, policy),
         )
-    }
-
-    pub(crate) fn clipped_ranges(
-        &self,
-        cusp_fragment: &CurveParameterRange2,
-        other_fragment: &CurveParameterRange2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
-        let (cusp_overlap, other_overlap) = self.curve_region_ranges();
-        let clipped = crate::bezier_split::clip_corresponding_parameter_ranges(
-            &cusp_overlap,
-            &other_overlap,
-            cusp_fragment,
-            other_fragment,
-            policy,
-            |parameter| self.map_curve_region_parameter(parameter, true, policy),
-            |parameter| self.map_curve_region_parameter(parameter, false, policy),
-        )?;
-        ascending_second_curve_region_overlap_range(clipped, policy)
     }
 
     fn endpoint_location(
@@ -50399,7 +50347,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         ))
     }
 
-    fn curve_region_ranges(&self) -> (CurveParameterRange2, CurveParameterRange2) {
+    pub(crate) fn parameter_ranges(&self) -> (CurveParameterRange2, CurveParameterRange2) {
         (
             CurveParameterRange2::new_validated(
                 CurveParameter2::from_algebraic_cusp(self.first_start_parameter()),
@@ -50420,7 +50368,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         second_fragment: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let (first_overlap, second_overlap) = self.curve_region_ranges();
+        let (first_overlap, second_overlap) = self.parameter_ranges();
         crate::bezier_split::corresponding_parameter_ranges_are_positive(
             &first_overlap,
             &second_overlap,
@@ -50435,35 +50383,6 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                     CurveParameter2::from_algebraic_cusp(self.map_parameter(parameter, true)),
                 )))
             },
-        )
-    }
-
-    /// Clips this certified coincident-circle correspondence to two retained
-    /// cusp fragments. The shared region clipper owns orientation, inverse
-    /// clipping, and exact boundary preservation for Boolean publication.
-    pub(crate) fn clipped_ranges(
-        &self,
-        first_fragment: &CurveParameterRange2,
-        second_fragment: &CurveParameterRange2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
-        let (first_overlap, second_overlap) = self.curve_region_ranges();
-        let map = |parameter: &CurveParameter2, source_first| {
-            let Some(parameter) = parameter.as_algebraic_cusp() else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            Ok(Classification::Decided(Some(
-                CurveParameter2::from_algebraic_cusp(self.map_parameter(parameter, source_first)),
-            )))
-        };
-        crate::bezier_split::clip_corresponding_parameter_ranges(
-            &first_overlap,
-            &second_overlap,
-            first_fragment,
-            second_fragment,
-            policy,
-            |parameter| map(parameter, true),
-            |parameter| map(parameter, false),
         )
     }
 
@@ -102182,6 +102101,92 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         Ok(false)
     }
 
+    /// Reuses an endpoint contact only after proving it is the sole contact
+    /// between this finite circle fragment and chord. This geometry certificate
+    /// is independent of path adjacency or region boundary ownership.
+    pub(crate) fn certified_chord_endpoint_contact(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleRetainedChordContact2>>>
+    {
+        let mut uncertainty = None;
+        for cusp_at_start in [true, false] {
+            let point = match self.endpoint_point_evidence(cusp_at_start, policy)? {
+                Classification::Decided(Some(point)) => point,
+                Classification::Decided(None) | Classification::Uncertain(_) => continue,
+            };
+            for (chord_at_start, endpoint) in [(true, chord.start()), (false, chord.end())] {
+                if !point.shares_storage(endpoint) {
+                    // Endpoint replay is only an accelerator. Suppress the
+                    // terminal here so an inconclusive retained-point
+                    // comparison falls through to the complete circle/chord
+                    // kernel instead of weakening an otherwise certified
+                    // arrangement.
+                    let first = policy.strict_predicate_pass(|| point.same_point(endpoint, policy));
+                    let second = if first == Classification::Decided(true) {
+                        Classification::Decided(true)
+                    } else {
+                        policy.strict_predicate_pass(|| endpoint.same_point(&point, policy))
+                    };
+                    match (first, second) {
+                        (Classification::Decided(true), _) | (_, Classification::Decided(true)) => {
+                        }
+                        (Classification::Uncertain(reason), _)
+                        | (_, Classification::Uncertain(reason)) => {
+                            uncertainty.get_or_insert(reason);
+                            continue;
+                        }
+                        (Classification::Decided(false), Classification::Decided(false)) => {
+                            continue;
+                        }
+                    }
+                }
+                match policy.strict_predicate_pass(|| {
+                    self.certified_adjacent_chord_is_endpoint_only(chord, cusp_at_start, policy)
+                })? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => continue,
+                    Classification::Uncertain(reason) => {
+                        uncertainty.get_or_insert(reason);
+                        continue;
+                    }
+                }
+                let cross = match policy.strict_predicate_pass(|| {
+                    self.endpoint_tangent_cross_algebraic_chord(cusp_at_start, chord, false, policy)
+                })? {
+                    Classification::Decided(cross) => cross,
+                    Classification::Uncertain(reason) => {
+                        uncertainty.get_or_insert(reason);
+                        continue;
+                    }
+                };
+                return Ok(Classification::Decided(Some(
+                    BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                        cusp_parameter: self.endpoint_parameter(cusp_at_start).clone(),
+                        chord_parameter: if chord_at_start {
+                            chord.start_parameter()
+                        } else {
+                            chord.end_parameter()
+                        },
+                        point,
+                        // Contacts use the supporting circle's parameter
+                        // orientation, independent of this fragment's traversal.
+                        tangent_cross_sign: product_sign(
+                            cross,
+                            if self.is_reversed() {
+                                RealSign::Negative
+                            } else {
+                                RealSign::Positive
+                            },
+                        ),
+                    },
+                )));
+            }
+        }
+        Ok(uncertainty.map_or(Classification::Decided(None), Classification::Uncertain))
+    }
+
     /// Certifies that a directly framed round join and an adjacent retained
     /// chord share only their authored endpoint.
     ///
@@ -118515,6 +118520,39 @@ impl BezierParallel2 {
         }
     }
 
+    /// Certifies the orthonormal source frame at one selected point. A circle
+    /// retains that local frame even when the source has singularities elsewhere.
+    fn certify_source_frame_at(
+        &self,
+        parameter: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<()>> {
+        if let Some(weight) = self.source_power_basis()?.weight {
+            match signed_coefficients_at_parameter(weight, parameter, policy)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        let speed_squared = parallel_speed_squared_polynomial(self.differential()?);
+        Ok(
+            match signed_coefficients_at_parameter(&speed_squared, parameter, policy)? {
+                Classification::Decided(RealSign::Positive) => Classification::Decided(()),
+                Classification::Decided(RealSign::Zero) => {
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                }
+                Classification::Decided(RealSign::Negative) => {
+                    return Err(CurveError::Topology(
+                        "source speed squared was certified negative".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    }
+
     fn certify_finite_source(
         source: &BezierParallelPowerBasisRef<'_>,
         policy: &CurveContext,
@@ -128350,6 +128388,11 @@ fn parallel_fixed_distance_system(
     let center_differential = center.differential()?;
     let candidate_differential = candidate.differential()?;
     if let Some(parameter) = certified_center_parameter {
+        if let Classification::Uncertain(reason) =
+            center.certify_source_frame_at(parameter, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
         match center.parallel_derivative_scale_sign(parameter, policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
@@ -128460,10 +128503,29 @@ fn parallel_fixed_distance_system(
         ),
         &Real::from(2_u8),
     );
-    let incidence = bivariate_subtract(
-        &bivariate_multiply(&f0, &f0),
-        &bivariate_multiply(&bivariate_multiply(&f1, &f1), &center_speed_squared),
-    );
+    // A zero displacement removes its speed radical. Isolate the smaller
+    // norm directly; squaring it again only adds multiplicity and carries an
+    // irrelevant source-speed factor into every later selected-fiber replay.
+    // Both source speeds have already been certified nonzero on their domains.
+    let center_is_zero =
+        real_sign(center.distance(), &CurveContext::STRICT) == Some(RealSign::Zero);
+    let candidate_is_zero =
+        real_sign(candidate.distance(), &CurveContext::STRICT) == Some(RealSign::Zero);
+    let incidence = match (center_is_zero, candidate_is_zero) {
+        (true, true) => a.clone(),
+        (true, false) => bivariate_subtract(
+            &bivariate_multiply(&bivariate_multiply(&a, &a), &candidate_speed_squared),
+            &bivariate_multiply(&b, &b),
+        ),
+        (false, true) => bivariate_subtract(
+            &bivariate_multiply(&bivariate_multiply(&a, &a), &center_speed_squared),
+            &bivariate_multiply(&c, &c),
+        ),
+        (false, false) => bivariate_subtract(
+            &bivariate_multiply(&f0, &f0),
+            &bivariate_multiply(&bivariate_multiply(&f1, &f1), &center_speed_squared),
+        ),
+    };
     Ok(Classification::Decided(
         BezierParallelFixedDistanceSystem2 {
             incidence,
@@ -142002,7 +142064,7 @@ mod conversion_tests {
             assert_eq!(
                 reversed_clipped_overlap
                     .second_range()
-                    .start()
+                    .end()
                     .same_value(&reversed_cut, &policy)
                     .unwrap(),
                 Classification::Decided(true),
@@ -142010,7 +142072,7 @@ mod conversion_tests {
             assert_eq!(
                 reversed_clipped_overlap
                     .second_range()
-                    .end()
+                    .start()
                     .as_bezier_parameter()
                     .expect("the reversed overlap must retain analytic parameters")
                     .same_value(&BezierParameter2::Exact(Real::one()), &policy)
@@ -142028,11 +142090,83 @@ mod conversion_tests {
             assert_eq!(
                 cross_field_reversed_overlap
                     .second_range()
-                    .start()
+                    .end()
                     .same_value(&reversed_cut, &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
+
+            let reversed_evidence = cusp_region
+                .intersect_region(&reversed_parallel_region, &policy)
+                .expect("the full reversed overlap must retain corresponding endpoints")
+                .into_value();
+            assert!(reversed_evidence.blockers().is_empty());
+            // The full regions share their circular arc and part of the
+            // straight closing edge. The clipped caps share only the arc.
+            assert_eq!(reversed_evidence.overlaps().len(), 2);
+            let carrier_point = |curve: &crate::Curve2, parameter: &CurveParameter2| {
+                // Region preparation gives a linear image a chord chart,
+                // whose parameter retains the point directly. Other carriers
+                // keep the boundary fragment's chart.
+                if let Some(parameter) = parameter.as_algebraic_chord() {
+                    return parameter.point().clone();
+                }
+                let point = curve.point_at(parameter, &policy).unwrap();
+                assert_eq!(point.certainty, crate::CurveCertainty::Certified);
+                point.value
+            };
+            for (first_region, second_region, evidence) in [
+                (&cusp_region, &reversed_parallel_region, &reversed_evidence),
+                (&partial_cusp_region, &parallel_region, &clipped_evidence),
+                (&parallel_region, &partial_cusp_region, &swapped_evidence),
+                (
+                    &partial_cusp_region,
+                    &reversed_parallel_region,
+                    &reversed_clipped_evidence,
+                ),
+                (
+                    &cross_field_cusp_region,
+                    &reversed_parallel_region,
+                    &cross_field_reversed_evidence,
+                ),
+            ] {
+                for overlap in evidence.overlaps() {
+                    let first = crate::Curve2::from_retained_fragment(
+                        first_region.boundary_loops()[overlap.first().loop_index()].fragments()
+                            [overlap.first().fragment_index()]
+                        .clone(),
+                    );
+                    let second = crate::Curve2::from_retained_fragment(
+                        second_region.boundary_loops()[overlap.second().loop_index()].fragments()
+                            [overlap.second().fragment_index()]
+                        .clone(),
+                    );
+                    for (first_parameter, second_parameter) in [
+                        (
+                            overlap.first_range().start(),
+                            overlap.second_range().start(),
+                        ),
+                        (overlap.first_range().end(), overlap.second_range().end()),
+                    ] {
+                        let first_point = carrier_point(&first, first_parameter);
+                        let second_point = carrier_point(&second, second_parameter);
+                        assert_eq!(
+                            first_point.same_point(&second_point, &policy),
+                            Classification::Decided(true),
+                            "region overlap endpoints must identify the same exact point",
+                        );
+                        if first_parameter.is_algebraic_chord() {
+                            assert!(
+                                [Point2::from_values(0, 0), Point2::from_values(1, 0)]
+                                    .into_iter()
+                                    .any(|expected| first_point
+                                        .same_point(&expected.into(), &policy)
+                                        == Classification::Decided(true))
+                            );
+                        }
+                    }
+                }
+            }
 
             let opposite = source.parallel_left(Real::from(-1_i8)).unwrap();
             assert!(opposite.data.certified_ph_offset.set(None).is_ok());
@@ -146753,9 +146887,10 @@ mod conversion_tests {
                     CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
                 )
             };
-            let Classification::Decided(Some((first_clipped, second_clipped))) = overlap
-                .clipped_ranges(&range(&first_fragment), &range(&second_fragment), &policy)
-                .unwrap()
+            let Classification::Decided(Some((first_clipped, second_clipped))) =
+                crate::curve_intersection::CurveCircleOverlap2::Pair(overlap.clone())
+                    .clipped_ranges(&range(&first_fragment), &range(&second_fragment), &policy)
+                    .unwrap()
             else {
                 panic!("the partial cusp carriers must retain their shared subarc");
             };

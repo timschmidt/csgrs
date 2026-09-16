@@ -199,16 +199,7 @@ impl Pair<'_> {
     ) -> ExactCurveResult<()> {
         let span = if chord_first { self.second } else { self.first };
         let family = span.support.family();
-        let unit = CurveParameterRange2::unit();
-        for parameter in [span.range.start(), span.range.end()] {
-            if !contains(&unit, parameter, family, self.policy)? {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Intersection,
-                    family,
-                    UncertaintyReason::Unsupported,
-                ));
-            }
-        }
+        self.require_unit_domain(span)?;
         let (contacts, overlaps) = match decided(
             chord.rational_intersections(source, None, self.policy),
             family,
@@ -379,6 +370,555 @@ impl Pair<'_> {
         Ok(())
     }
 
+    fn circle_contact(
+        &self,
+        circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        circle_parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+        other_parameter: CurveParameter2,
+        point: Option<CurvePoint2>,
+        cross: Option<hyperreal::RealSign>,
+        circle_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let mut circle_parameter = CurveParameter2::from_algebraic_cusp(circle_parameter);
+        let (mut first, mut second) = if circle_first {
+            (circle_parameter.clone(), other_parameter)
+        } else {
+            (other_parameter, circle_parameter.clone())
+        };
+        if !contains(
+            &self.first.range,
+            &first,
+            self.first.support.family(),
+            self.policy,
+        )? || !contains(
+            &self.second.range,
+            &second,
+            self.second.support.family(),
+            self.policy,
+        )? {
+            return Ok(());
+        }
+        // Endpoint equality is already a parameter-space theorem. Keep the
+        // endpoint's original point and parameter authority when publishing a
+        // new contact, so evaluation and later cuts replay the same witness.
+        let mut point = point;
+        for at_start in [true, false] {
+            let endpoint =
+                CurveParameter2::from_algebraic_cusp(circle.endpoint_parameter(at_start).clone());
+            if self
+                .policy
+                .strict_predicate_pass(|| {
+                    circle_parameter.cmp_by_refinement(&endpoint, self.policy)
+                })
+                .map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Intersection,
+                        crate::CurveFamily2::CircularArc,
+                        cause,
+                    )
+                })?
+                != Classification::Decided(std::cmp::Ordering::Equal)
+            {
+                continue;
+            }
+            if let Classification::Decided(Some(retained)) = circle
+                .endpoint_point_evidence(at_start, self.policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Intersection,
+                        crate::CurveFamily2::CircularArc,
+                        cause,
+                    )
+                })?
+            {
+                circle_parameter = endpoint;
+                if circle_first {
+                    first = circle_parameter.clone();
+                } else {
+                    second = circle_parameter.clone();
+                }
+                point = Some(retained);
+            }
+            break;
+        }
+        let point = match point {
+            Some(point) => point,
+            None => Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicCuspSemicircle(
+                circle.clone(),
+            ))
+            .point_at(&circle_parameter, self.policy)?
+            .into_value(),
+        };
+        let cross = cross.map(|sign| {
+            if circle_first {
+                sign
+            } else {
+                reverse_sign(sign)
+            }
+        });
+        self.append_contact(
+            result,
+            self.contact(
+                first,
+                second,
+                point,
+                matches!(
+                    cross,
+                    Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Negative)
+                ),
+                cross,
+            ),
+        )
+    }
+
+    fn circle_overlap(
+        &self,
+        circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        source: CurveCircleOverlap2,
+        circle_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let orientation = source.orientation();
+        let correspondence = CurveOverlapCorrespondence2::Circle {
+            source: source.clone(),
+            swapped: !circle_first,
+        };
+        if let Some((first, second)) = decided(
+            correspondence.clipped_ranges(&self.first.range, &self.second.range, self.policy),
+            self.first.support.family(),
+        )? {
+            result.overlaps.push(self.overlap(
+                [first, second],
+                orientation,
+                [true, true],
+                correspondence,
+            )?);
+            return Ok(());
+        }
+        // Regularized regions omit a singleton overlap. Open curves keep its
+        // endpoint contact, transported through the same original authority.
+        let (circle_range, other_range) = source.parameter_ranges();
+        let (circle_span, other_span) = if circle_first {
+            (self.first, self.second)
+        } else {
+            (self.second, self.first)
+        };
+        // Both active domains are intervals in this one-to-one component.
+        // With no positive overlap, any shared point is an endpoint of the
+        // circle's clipped interval. Forward transport suffices, including
+        // component endpoints that lie inside the active source range.
+        for parameter in [
+            circle_span.range.start(),
+            circle_span.range.end(),
+            circle_range.start(),
+            circle_range.end(),
+        ] {
+            if !contains(
+                &circle_range,
+                parameter,
+                circle_span.support.family(),
+                self.policy,
+            )? || !contains(
+                &circle_span.range,
+                parameter,
+                circle_span.support.family(),
+                self.policy,
+            )? {
+                continue;
+            }
+            let Some(mapped) = decided(
+                source.map_parameter(parameter, true, self.policy),
+                circle_span.support.family(),
+            )?
+            else {
+                continue;
+            };
+            if !contains(
+                &other_range,
+                &mapped,
+                other_span.support.family(),
+                self.policy,
+            )? || !contains(
+                &other_span.range,
+                &mapped,
+                other_span.support.family(),
+                self.policy,
+            )? {
+                continue;
+            }
+            self.circle_contact(
+                circle,
+                parameter
+                    .as_algebraic_cusp()
+                    .ok_or_else(|| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Intersection,
+                            crate::CurveFamily2::CircularArc,
+                            CurveError::InvalidCurveParameter,
+                        )
+                    })?
+                    .clone(),
+                mapped,
+                None,
+                Some(hyperreal::RealSign::Zero),
+                circle_first,
+                result,
+            )?;
+            return Ok(());
+        }
+        Ok(())
+    }
+
+    fn circles(
+        &self,
+        first: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        second: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        use crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2 as Intersections;
+        match decided(
+            first
+                .semicircle()
+                .pair_intersections(second.semicircle(), self.policy),
+            self.first.support.family(),
+        )? {
+            Intersections::NoContacts => {}
+            Intersections::Contacts {
+                contacts,
+                parameter_map,
+            } => {
+                for contact in contacts {
+                    self.circle_contact(
+                        first,
+                        parameter_map.first_contact_parameter(&contact),
+                        CurveParameter2::from_algebraic_cusp(
+                            parameter_map.second_contact_parameter(&contact),
+                        ),
+                        None,
+                        Some(contact.tangent_cross_sign),
+                        true,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::EndpointContacts(contacts) => {
+                for contact in contacts {
+                    self.circle_contact(
+                        first,
+                        contact
+                            .first_location
+                            .endpoint_parameter()
+                            .expect("endpoint contact"),
+                        CurveParameter2::from_algebraic_cusp(
+                            contact
+                                .second_location
+                                .endpoint_parameter()
+                                .expect("endpoint contact"),
+                        ),
+                        None,
+                        Some(contact.tangent_cross_sign),
+                        true,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::Overlap(source) => {
+                self.circle_overlap(first, CurveCircleOverlap2::Pair(source), true, result)?
+            }
+        }
+        Ok(())
+    }
+
+    fn circle_chord(
+        &self,
+        circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        chord: &crate::BezierAlgebraicChord2,
+        circle_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        use crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2 as Intersections;
+        let intersections = match circle
+            .certified_chord_endpoint_contact(chord, self.policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    crate::CurveFamily2::CircularArc,
+                    cause,
+                )
+            })? {
+            Classification::Decided(Some(contact)) => Intersections::Contacts(vec![contact]),
+            Classification::Decided(None) | Classification::Uncertain(_) => decided(
+                circle.semicircle().chord_intersections(chord, self.policy),
+                crate::CurveFamily2::CircularArc,
+            )?,
+        };
+        if let Intersections::Contacts(contacts) = intersections {
+            for contact in contacts {
+                self.circle_contact(
+                    circle,
+                    contact.cusp_parameter,
+                    CurveParameter2::from_algebraic_chord(contact.chord_parameter),
+                    Some(contact.point),
+                    Some(contact.tangent_cross_sign),
+                    circle_first,
+                    result,
+                )?;
+            }
+        }
+        Ok(())
+    }
+
+    fn circle_selected_contacts(
+        &self,
+        circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        contacts: Vec<crate::bezier_offset::BezierAlgebraicCuspSemicircleSelectedFiberContact2>,
+        circle_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        for contact in contacts {
+            self.circle_contact(
+                circle,
+                contact.cusp_parameter(),
+                CurveParameter2::from_selected_fiber(contact.other_parameter().clone()),
+                Some(contact.point_evidence()),
+                Some(contact.tangent_cross_sign()),
+                circle_first,
+                result,
+            )?;
+        }
+        Ok(())
+    }
+
+    fn require_unit_domain(&self, span: &Span) -> ExactCurveResult<()> {
+        let unit = CurveParameterRange2::unit();
+        for endpoint in [span.range.start(), span.range.end()] {
+            if !contains(&unit, endpoint, span.support.family(), self.policy)? {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Intersection,
+                    span.support.family(),
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    fn circle_rational(
+        &self,
+        circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        rational: &RationalBezier2,
+        circle_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        use crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2 as Intersections;
+        self.require_unit_domain(if circle_first {
+            self.second
+        } else {
+            self.first
+        })?;
+        let (intersections, map) = decided(
+            circle
+                .semicircle()
+                .rational_intersections_with_parameter_map(rational, self.policy),
+            crate::CurveFamily2::CircularArc,
+        )?;
+        match intersections {
+            Intersections::Contacts(contacts) => {
+                for contact in contacts {
+                    let parameter = contact.location.endpoint_parameter().unwrap_or_else(|| {
+                        map.as_ref()
+                            .expect("interior contact retains its map")
+                            .contact_parameter(&contact)
+                    });
+                    self.circle_contact(
+                        circle,
+                        parameter,
+                        contact.other_parameter,
+                        Some(contact.point),
+                        Some(contact.tangent_cross_sign),
+                        circle_first,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::SelectedFiberContacts(contacts) => {
+                self.circle_selected_contacts(circle, contacts, circle_first, result)?
+            }
+            Intersections::Overlaps(overlaps) => {
+                for source in overlaps {
+                    self.circle_overlap(
+                        circle,
+                        CurveCircleOverlap2::Mapped(source),
+                        circle_first,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::SelectedFiberOverlaps(overlaps) => {
+                for source in overlaps {
+                    self.circle_overlap(
+                        circle,
+                        CurveCircleOverlap2::Selected(source),
+                        circle_first,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::DegenerateProjection => self.blocker(
+                result,
+                CurveIntersectionPairBlockerKind2::Uncertain(UncertaintyReason::Unsupported),
+            ),
+        }
+        Ok(())
+    }
+
+    fn circle_parallel(
+        &self,
+        circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        parallel: &crate::BezierParallel2,
+        circle_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        use crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2 as Intersections;
+        let span = if circle_first {
+            self.second
+        } else {
+            self.first
+        };
+        self.require_unit_domain(span)?;
+        let strict = self.policy.strict_counterpart();
+        // The rational component is optional. Keep its attempt separate so a
+        // failed projection cannot erase the native selected-circle replay.
+        if let Classification::Decided(Some(component)) = parallel
+            .exact_rational_parallel_component_on_regular_range(&span.range, &strict)
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    span.support.family(),
+                    cause,
+                )
+            })?
+        {
+            if component
+                .curve()
+                .exact_linear_parameterization_line()
+                .is_none()
+            {
+                let mut candidate = Evidence::default();
+                match (Pair {
+                    first: self.first,
+                    second: self.second,
+                    indices: self.indices,
+                    policy: &strict,
+                })
+                .circle_rational(
+                    circle,
+                    component.curve(),
+                    circle_first,
+                    &mut candidate,
+                ) {
+                    Ok(()) if candidate.blockers.is_empty() => {
+                        for contact in candidate.contacts {
+                            self.append_contact(result, contact)?;
+                        }
+                        result.overlaps.extend(candidate.overlaps);
+                        return Ok(());
+                    }
+                    Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
+                    _ => {}
+                }
+            }
+        }
+        let intersections = match span.range.as_bezier_parameters() {
+            Some((start, end)) => circle.semicircle().parallel_intersections_in_range(
+                parallel,
+                &BezierParameterRange2::new_validated(start.clone(), end.clone()),
+                self.policy,
+            ),
+            None => circle
+                .semicircle()
+                .parallel_intersections(parallel, self.policy),
+        };
+        match decided(intersections, crate::CurveFamily2::CircularArc)? {
+            Intersections::Contacts(contacts) => {
+                let map = if contacts
+                    .iter()
+                    .any(|c| c.location.endpoint_parameter().is_none())
+                {
+                    Some(decided(
+                        circle
+                            .semicircle()
+                            .parallel_parameter_map(parallel, self.policy),
+                        crate::CurveFamily2::CircularArc,
+                    )?)
+                } else {
+                    None
+                };
+                for contact in contacts {
+                    let parameter = contact.location.endpoint_parameter().unwrap_or_else(|| {
+                        map.as_ref()
+                            .expect("interior contact retains its map")
+                            .contact_parameter(&contact)
+                    });
+                    self.circle_contact(
+                        circle,
+                        parameter,
+                        CurveParameter2::from(contact.parallel_parameter),
+                        None,
+                        contact.tangent_cross_sign,
+                        circle_first,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::SelectedFiberContacts(contacts) => {
+                self.circle_selected_contacts(circle, contacts, circle_first, result)?
+            }
+            Intersections::RetainedContacts(contacts) => {
+                for contact in contacts {
+                    self.circle_contact(
+                        circle,
+                        contact.cusp_parameter(),
+                        contact.other_parameter().clone(),
+                        Some(contact.point_evidence()),
+                        Some(contact.tangent_cross_sign()),
+                        circle_first,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::Overlaps(overlaps) => {
+                for source in overlaps {
+                    self.circle_overlap(
+                        circle,
+                        CurveCircleOverlap2::Mapped(source),
+                        circle_first,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::SelectedFiberOverlaps(overlaps) => {
+                for source in overlaps {
+                    self.circle_overlap(
+                        circle,
+                        CurveCircleOverlap2::Selected(source),
+                        circle_first,
+                        result,
+                    )?;
+                }
+            }
+            Intersections::CoincidentCircleComponent => {
+                self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent)
+            }
+            Intersections::DegenerateProjection => self.blocker(
+                result,
+                CurveIntersectionPairBlockerKind2::Uncertain(UncertaintyReason::Unsupported),
+            ),
+        }
+        Ok(())
+    }
+
     fn rational(
         &self,
         first: &RationalBezier2,
@@ -389,17 +929,8 @@ impl Pair<'_> {
         // An exterior restriction must use a finite-domain replay before this
         // kernel can certify completeness; never mistake an omitted chart for
         // an empty geometric intersection.
-        let unit = CurveParameterRange2::unit();
         for span in [self.first, self.second] {
-            for endpoint in [span.range.start(), span.range.end()] {
-                if !contains(&unit, endpoint, span.support.family(), self.policy)? {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Intersection,
-                        span.support.family(),
-                        UncertaintyReason::Unsupported,
-                    ));
-                }
-            }
+            self.require_unit_domain(span)?;
         }
         let context = RationalBezierIntersectionContext::try_new(first, second, self.policy)?;
         let evidence = context.try_contacts()?;
@@ -715,6 +1246,27 @@ pub(super) fn intersect(
                 (CurveSupport2::Bezier(source), CurveSupport2::Line(chord)) => {
                     pair.chord_rational(chord, &rational(source)?, false, &mut result)
                 }
+                (CurveSupport2::Circle(first), CurveSupport2::Circle(second)) => {
+                    pair.circles(first, second, &mut result)
+                }
+                (CurveSupport2::Circle(circle), CurveSupport2::Line(chord)) => {
+                    pair.circle_chord(circle, chord, true, &mut result)
+                }
+                (CurveSupport2::Line(chord), CurveSupport2::Circle(circle)) => {
+                    pair.circle_chord(circle, chord, false, &mut result)
+                }
+                (CurveSupport2::Circle(circle), CurveSupport2::Bezier(source)) => {
+                    pair.circle_rational(circle, &rational(source)?, true, &mut result)
+                }
+                (CurveSupport2::Bezier(source), CurveSupport2::Circle(circle)) => {
+                    pair.circle_rational(circle, &rational(source)?, false, &mut result)
+                }
+                (CurveSupport2::Circle(circle), CurveSupport2::Parallel(parallel)) => {
+                    pair.circle_parallel(circle, parallel, true, &mut result)
+                }
+                (CurveSupport2::Parallel(parallel), CurveSupport2::Circle(circle)) => {
+                    pair.circle_parallel(circle, parallel, false, &mut result)
+                }
                 _ => Err(ExactCurveError::blocked(
                     CurveOperation2::Intersection,
                     first.support.family(),
@@ -739,4 +1291,513 @@ pub(super) fn intersect(
             blockers: result.blockers.into(),
         }),
     })
+}
+
+#[cfg(test)]
+mod circle_dispatch_tests {
+    use super::*;
+    use crate::bezier_offset::{
+        BezierAlgebraicCuspSemicircle2, BezierAlgebraicCuspSemicircleFragment2,
+    };
+    use crate::{CurveCertainty, LineSeg2, QuadraticBezier2};
+
+    fn p(x: i32, y: i32) -> Point2 {
+        Point2::from_values(x, y)
+    }
+    fn q(n: i32, d: i32) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+    fn exact<T: std::fmt::Debug>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("exact fixture: {reason:?}"),
+        }
+    }
+    fn circle(y: i32, root_degree: i32, policy: &CurveContext) -> Curve2 {
+        let polynomial = exact(
+            crate::BezierParameterPolynomial::try_new_power_basis(
+                vec![Real::from(-1), Real::zero(), Real::from(root_degree)],
+                policy,
+            )
+            .unwrap(),
+        );
+        let interval =
+            exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), policy).unwrap());
+        let parameter = exact(
+            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+        );
+        let support = QuadraticBezier2::new(p(-1, y), p(-1, y), p(root_degree - 1, y))
+            .parallel_left(Real::zero())
+            .unwrap();
+        let circle = exact(
+            BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                support,
+                BezierParameter2::algebraic(parameter),
+                Real::one(),
+                false,
+                policy,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicCuspSemicircle(
+            BezierAlgebraicCuspSemicircleFragment2::full(circle, policy),
+        ))
+    }
+    fn oriented(curve: &Curve2, reversed: bool, policy: &CurveContext) -> Curve2 {
+        if reversed {
+            let out = curve.reversed(policy).unwrap();
+            assert_eq!(out.certainty, CurveCertainty::Certified);
+            out.value
+        } else {
+            curve.clone()
+        }
+    }
+    fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
+        let equal = first.coincides_with(second, policy);
+        assert_eq!(equal.certainty, CurveCertainty::Certified);
+        assert_eq!(equal.value, Classification::Decided(true));
+    }
+    fn replay(
+        first: &Curve2,
+        second: &Curve2,
+        result: &CurveIntersectionResult2,
+        policy: &CurveContext,
+    ) {
+        for contact in result.contacts() {
+            for (curve, location) in [(first, contact.first()), (second, contact.second())] {
+                let parameter = exact(location.parameter(policy).unwrap());
+                let point = curve.point_at(&parameter, policy).unwrap();
+                assert_eq!(point.certainty, CurveCertainty::Certified);
+                same(&point.value, contact.point(), policy);
+            }
+        }
+        let first_spans = spans(first, policy).unwrap();
+        let second_spans = spans(second, policy).unwrap();
+        for overlap in result.overlaps() {
+            for (first_parameter, second_parameter) in [
+                (
+                    overlap.first_range().start(),
+                    overlap.second_range().start(),
+                ),
+                (overlap.first_range().end(), overlap.second_range().end()),
+            ] {
+                let first_parameter = exact(
+                    CurveLocation2::new(
+                        overlap.first_span_index(),
+                        first_spans[overlap.first_span_index()].chart.clone(),
+                        first_parameter.clone(),
+                    )
+                    .parameter(policy)
+                    .unwrap(),
+                );
+                let second_parameter = exact(
+                    CurveLocation2::new(
+                        overlap.second_span_index(),
+                        second_spans[overlap.second_span_index()].chart.clone(),
+                        second_parameter.clone(),
+                    )
+                    .parameter(policy)
+                    .unwrap(),
+                );
+                let a = first.point_at(&first_parameter, policy).unwrap();
+                let b = second.point_at(&second_parameter, policy).unwrap();
+                assert_eq!(a.certainty, CurveCertainty::Certified);
+                assert_eq!(b.certainty, CurveCertainty::Certified);
+                same(&a.value, &b.value, policy);
+            }
+        }
+    }
+    fn query(first: &Curve2, second: &Curve2, policy: &CurveContext) -> CurveIntersectionResult2 {
+        let result = first.intersect_curve(second, policy).unwrap();
+        assert_eq!(result.certainty, CurveCertainty::Certified);
+        assert!(result.value.is_complete(), "{:?}", result.value.blockers());
+        replay(first, second, &result.value, policy);
+        result.value
+    }
+
+    #[test]
+    fn selected_circle_normal_requires_a_regular_selected_source_point() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = QuadraticBezier2::new(p(-1, 0), p(-1, 0), p(1, 0))
+                .parallel_left(Real::zero())
+                .unwrap();
+            let singular = BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                source.clone(),
+                BezierParameter2::Exact(Real::zero()),
+                Real::one(),
+                false,
+                &policy,
+            )
+            .unwrap();
+            assert!(matches!(
+                singular,
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+            let regular = BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                source,
+                BezierParameter2::Exact(q(1, 2)),
+                Real::one(),
+                false,
+                &policy,
+            )
+            .unwrap();
+            assert!(matches!(regular, Classification::Decided(Some(_))));
+        }
+    }
+
+    #[test]
+    fn selected_circle_pairs_replay_crossings_tangencies_and_disjointness() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let original = circle(0, 2, &policy);
+            for (y, expected) in [
+                (1, Some(Point2::new(-q(3, 4).sqrt().unwrap(), q(1, 2)))),
+                (2, Some(p(0, 1))),
+                (3, None),
+            ] {
+                let other = circle(y, 3, &policy);
+                for a in [false, true] {
+                    for b in [false, true] {
+                        for swapped in [false, true] {
+                            let first = oriented(&original, a, &policy);
+                            let second = oriented(&other, b, &policy);
+                            let (first, second) = if swapped {
+                                (&second, &first)
+                            } else {
+                                (&first, &second)
+                            };
+                            let result = query(first, second, &policy);
+                            assert!(result.overlaps().is_empty());
+                            assert_eq!(result.contacts().len(), usize::from(expected.is_some()));
+                            if let Some(point) = &expected {
+                                let contact = &result.contacts()[0];
+                                same(contact.point(), &point.clone().into(), &policy);
+                                let sign = if y == 2 {
+                                    hyperreal::RealSign::Zero
+                                } else if a ^ b ^ swapped {
+                                    hyperreal::RealSign::Negative
+                                } else {
+                                    hyperreal::RealSign::Positive
+                                };
+                                assert_eq!(contact.tangent_cross_sign(), Some(sign));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn complementary_circle_halves_keep_both_endpoint_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = circle(0, 2, &policy);
+            let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) =
+                first.retained_fragment().unwrap()
+            else {
+                unreachable!()
+            };
+            let second =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    BezierAlgebraicCuspSemicircleFragment2::full(
+                        fragment.semicircle().complementary_half(),
+                        &policy,
+                    ),
+                ));
+            for a in [false, true] {
+                for b in [false, true] {
+                    for swapped in [false, true] {
+                        let first = oriented(&first, a, &policy);
+                        let second = oriented(&second, b, &policy);
+                        let (first, second) = if swapped {
+                            (&second, &first)
+                        } else {
+                            (&first, &second)
+                        };
+                        let result = query(first, second, &policy);
+                        assert!(result.overlaps().is_empty());
+                        assert_eq!(result.contacts().len(), 2);
+                        for point in [p(0, 1), p(0, -1)] {
+                            assert!(result.contacts().iter().any(|contact| {
+                                contact
+                                    .point()
+                                    .coincides_with(&point.clone().into(), &policy)
+                                    .value
+                                    == Classification::Decided(true)
+                            }));
+                        }
+                        assert!(
+                            result
+                                .contacts()
+                                .iter()
+                                .all(|contact| contact.tangent_cross_sign()
+                                    == Some(hyperreal::RealSign::Zero))
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_intersects_rational_curves_and_retained_chords() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = circle(0, 2, &policy);
+            let chord = exact(
+                crate::BezierAlgebraicChord2::try_new(p(-2, 0).into(), p(2, 0).into(), &policy)
+                    .unwrap(),
+            );
+            let root = (Real::from(5).sqrt().unwrap() - Real::one()) * q(1, 2);
+            let nonlinear_point = Point2::new(-root.clone().sqrt().unwrap(), root);
+            for (other, point, tangent) in [
+                (
+                    Curve2::from(LineSeg2::try_new(p(-2, 0), p(2, 0)).unwrap()),
+                    p(-1, 0),
+                    false,
+                ),
+                (
+                    Curve2::try_polynomial_bspline(
+                        1,
+                        vec![p(-2, 0), p(0, 0), p(2, 0)],
+                        vec![
+                            Real::from(4),
+                            Real::from(4),
+                            Real::from(6),
+                            Real::from(10),
+                            Real::from(10),
+                        ],
+                        &policy,
+                    )
+                    .unwrap()
+                    .value,
+                    p(-1, 0),
+                    false,
+                ),
+                (
+                    Curve2::try_nurbs(
+                        1,
+                        vec![p(-2, 0), p(0, 0), p(2, 0)],
+                        vec![Real::one(), Real::from(2), Real::one()],
+                        vec![
+                            Real::from(4),
+                            Real::from(4),
+                            Real::from(6),
+                            Real::from(10),
+                            Real::from(10),
+                        ],
+                        &policy,
+                    )
+                    .unwrap()
+                    .value,
+                    p(-1, 0),
+                    false,
+                ),
+                (
+                    Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(chord)),
+                    p(-1, 0),
+                    false,
+                ),
+                (
+                    Curve2::from(QuadraticBezier2::new(p(-2, 0), p(0, 2), p(2, 0))),
+                    p(0, 1),
+                    true,
+                ),
+                (
+                    Curve2::from(QuadraticBezier2::new(p(-2, 4), p(0, -4), p(2, 4))),
+                    nonlinear_point,
+                    false,
+                ),
+            ] {
+                for a in [false, true] {
+                    for b in [false, true] {
+                        for swapped in [false, true] {
+                            let first = oriented(&source, a, &policy);
+                            let second = oriented(&other, b, &policy);
+                            let (first, second) = if swapped {
+                                (&second, &first)
+                            } else {
+                                (&first, &second)
+                            };
+                            let result = query(first, second, &policy);
+                            assert!(result.overlaps().is_empty());
+                            assert_eq!(result.contacts().len(), 1);
+                            same(result.contacts()[0].point(), &point.clone().into(), &policy);
+                            assert_eq!(result.contacts()[0].is_certified_transverse(), !tangent);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn rational_semicircle(policy: &CurveContext) -> Curve2 {
+        use crate::HomogeneousControl2;
+        exact(
+            RationalBezier2::from_homogeneous_controls(
+                vec![
+                    HomogeneousControl2::new(Real::zero(), Real::one(), Real::one()),
+                    HomogeneousControl2::new(Real::from(-1), Real::zero(), Real::zero()),
+                    HomogeneousControl2::new(Real::zero(), Real::from(-1), Real::one()),
+                ],
+                policy,
+            )
+            .unwrap(),
+        )
+        .into()
+    }
+
+    #[test]
+    fn selected_circle_overlaps_preserve_oriented_ranges_and_singleton_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = circle(0, 2, &policy);
+            for other in [circle(0, 3, &policy), rational_semicircle(&policy)] {
+                for (first_range, second_range, contacts, overlaps) in [
+                    ((q(0, 1), q(1, 1)), (q(0, 1), q(1, 1)), 0, 1),
+                    ((q(1, 4), q(3, 4)), (q(1, 2), q(1, 1)), 0, 1),
+                    ((q(0, 1), q(1, 2)), (q(1, 2), q(1, 1)), 1, 0),
+                    ((q(0, 1), q(1, 4)), (q(3, 4), q(1, 1)), 0, 0),
+                ] {
+                    let first = source
+                        .subcurve(first_range.0.into(), first_range.1.into(), &policy)
+                        .unwrap()
+                        .value;
+                    let second = other
+                        .subcurve(second_range.0.into(), second_range.1.into(), &policy)
+                        .unwrap()
+                        .value;
+                    for a in [false, true] {
+                        for b in [false, true] {
+                            for swapped in [false, true] {
+                                let first = oriented(&first, a, &policy);
+                                let second = oriented(&second, b, &policy);
+                                let (first, second) = if swapped {
+                                    (&second, &first)
+                                } else {
+                                    (&first, &second)
+                                };
+                                let result = query(first, second, &policy);
+                                assert_eq!(result.contacts().len(), contacts);
+                                assert_eq!(result.overlaps().len(), overlaps);
+                                if contacts == 1 {
+                                    same(result.contacts()[0].point(), &p(-1, 0).into(), &policy);
+                                }
+                                if let Some(overlap) = result.overlaps().first() {
+                                    assert_eq!(
+                                        overlap.orientation(),
+                                        if a ^ b {
+                                            RationalBezierOverlapOrientation2::Reversed
+                                        } else {
+                                            RationalBezierOverlapOrientation2::Same
+                                        }
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_and_analytic_parallel_keep_contact_authority() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = circle(0, 2, &policy);
+            let parallel = QuadraticBezier2::new(p(-2, 0), p(0, 0), p(2, 0))
+                .parallel_left(q(1, 2))
+                .unwrap();
+            let fragment = exact(
+                crate::BezierParallelFragment2::try_new(
+                    parallel,
+                    BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let other =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(fragment));
+            for a in [false, true] {
+                for b in [false, true] {
+                    for swapped in [false, true] {
+                        let first = oriented(&source, a, &policy);
+                        let second = oriented(&other, b, &policy);
+                        let (first, second) = if swapped {
+                            (&second, &first)
+                        } else {
+                            (&first, &second)
+                        };
+                        let result = query(first, second, &policy);
+                        assert!(result.overlaps().is_empty());
+                        assert_eq!(result.contacts().len(), 1);
+                        same(
+                            result.contacts()[0].point(),
+                            &Point2::new(-q(3, 4).sqrt().unwrap(), q(1, 2)).into(),
+                            &policy,
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_and_non_ph_parallel_keep_both_crossings() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = circle(0, 2, &policy);
+            let parallel = QuadraticBezier2::new(p(-2, 0), p(-1, 0), p(0, 1))
+                .parallel_left(q(1, 8))
+                .unwrap();
+            let fragment = exact(
+                crate::BezierParallelFragment2::try_new(
+                    parallel,
+                    BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let other =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(fragment));
+            for swapped in [false, true] {
+                let (first, second) = if swapped {
+                    (&other, &source)
+                } else {
+                    (&source, &other)
+                };
+                let result = query(first, second, &policy);
+                assert!(result.overlaps().is_empty());
+                assert_eq!(result.contacts().len(), 2);
+                assert!(
+                    result
+                        .contacts()
+                        .iter()
+                        .all(|contact| contact.is_certified_transverse())
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn selected_circle_split_results_reenter_intersections() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = circle(0, 2, &policy);
+            let line = Curve2::from(LineSeg2::try_new(p(-2, 0), p(0, 0)).unwrap());
+            let topology = source.intersection_topology(&line, &policy).unwrap();
+            assert_eq!(topology.certainty, CurveCertainty::Certified);
+            assert_eq!(topology.value.first().len(), 2);
+            assert_eq!(topology.value.second().len(), 2);
+            for piece in topology.value.first() {
+                let result = query(piece, piece, &policy);
+                assert_eq!(result.overlaps().len(), 1);
+                assert!(result.contacts().is_empty());
+            }
+            let result = query(
+                &topology.value.first()[0],
+                &topology.value.first()[1],
+                &policy,
+            );
+            assert_eq!(result.contacts().len(), 1);
+            assert!(result.overlaps().is_empty());
+            same(result.contacts()[0].point(), &p(-1, 0).into(), &policy);
+        }
+    }
 }

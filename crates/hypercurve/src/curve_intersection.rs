@@ -94,11 +94,82 @@ impl RationalCurveOverlap2 {
     }
 }
 
+/// Circle overlap transport shared by open-curve and region operations.
+/// Each case retains the kernel's original parameter and selected-field authority.
+#[derive(Clone, Debug)]
+pub(crate) enum CurveCircleOverlap2 {
+    Pair(crate::bezier_offset::BezierAlgebraicCuspSemicirclePairOverlap2),
+    Mapped(crate::bezier_offset::BezierAlgebraicCuspSemicircleMappedOverlap2),
+    Selected(crate::bezier_offset::BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2),
+}
+
+impl CurveCircleOverlap2 {
+    pub(crate) fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+        match self {
+            Self::Pair(source) => source.orientation(),
+            Self::Mapped(source) => source.orientation(),
+            Self::Selected(source) => source.orientation(),
+        }
+    }
+
+    pub(crate) fn parameter_ranges(&self) -> (CurveParameterRange2, CurveParameterRange2) {
+        match self {
+            Self::Pair(source) => source.parameter_ranges(),
+            Self::Mapped(source) => source.parameter_ranges(),
+            Self::Selected(source) => source.parameter_ranges(),
+        }
+    }
+
+    fn map_parameter(
+        &self,
+        parameter: &CurveParameter2,
+        forward: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
+        match self {
+            Self::Pair(source) => {
+                let parameter = parameter
+                    .as_algebraic_cusp()
+                    .ok_or(CurveError::InvalidCurveParameter)?;
+                Ok(Classification::Decided(Some(
+                    CurveParameter2::from_algebraic_cusp(source.map_parameter(parameter, forward)),
+                )))
+            }
+            Self::Mapped(source) => source.map_parameter(parameter, forward, policy),
+            Self::Selected(source) => source.map_parameter(parameter, forward, policy),
+        }
+    }
+
+    pub(crate) fn clipped_ranges(
+        &self,
+        first: &CurveParameterRange2,
+        second: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
+        // Both ranges pair corresponding endpoints; independently sorting the
+        // second range would erase the map's orientation.
+        let (first_overlap, second_overlap) = self.parameter_ranges();
+        crate::bezier_split::clip_corresponding_parameter_ranges(
+            &first_overlap,
+            &second_overlap,
+            first,
+            second,
+            policy,
+            |parameter| self.map_parameter(parameter, true, policy),
+            |parameter| self.map_parameter(parameter, false, policy),
+        )
+    }
+}
+
 /// Exact transport retained by a shared-image component. Each variant owns
 /// the support evidence required to restrict the correspondence again.
 #[derive(Clone, Debug)]
 pub(crate) enum CurveOverlapCorrespondence2 {
     Rational(RationalCurveOverlap2),
+    Circle {
+        source: CurveCircleOverlap2,
+        swapped: bool,
+    },
     ChordRational {
         source: Arc<crate::bezier_offset::BezierAlgebraicChordRationalOverlap2>,
         chord_first: bool,
@@ -127,6 +198,22 @@ impl CurveOverlapCorrespondence2 {
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         match self {
             Self::Rational(source) => source.clipped_ranges(first_range, second_range, policy),
+            Self::Circle { source, swapped } => {
+                let ranges = if *swapped {
+                    source.clipped_ranges(second_range, first_range, policy)?
+                } else {
+                    source.clipped_ranges(first_range, second_range, policy)?
+                };
+                Ok(ranges.map(|ranges| {
+                    ranges.map(|(first, second)| {
+                        if *swapped {
+                            (second, first)
+                        } else {
+                            (first, second)
+                        }
+                    })
+                }))
+            }
             Self::ChordRational {
                 source,
                 chord_first,

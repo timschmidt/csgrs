@@ -3122,3 +3122,164 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
         }
     }
 }
+
+#[test]
+fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
+    use hypercurve::{CurveCornerMode2, CurveCornerSolutions2};
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = CurvePath2::try_new(vec![
+            LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
+            QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
+        ])
+        .unwrap();
+        let fillet = source
+            .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap();
+        assert_eq!(fillet.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(path) = fillet.value else {
+            panic!("unique exact fillet")
+        };
+        let circle = &path.curves()[1];
+        assert_eq!(circle.family(), CurveFamily2::CircularArc);
+        assert!(
+            circle.geometry().is_none(),
+            "fixture must retain its selected construction"
+        );
+        let domain = circle.parameter_domain();
+        let interior = (1..16)
+            .map(|n| hypercurve::CurveParameter2::from(q(n, 16)))
+            .filter(|parameter| {
+                let lower = domain.start().compare(parameter, &policy).unwrap();
+                let upper = parameter.compare(domain.end(), &policy).unwrap();
+                assert_eq!(lower.certainty, CurveCertainty::Certified);
+                assert_eq!(upper.certainty, CurveCertainty::Certified);
+                decided(lower.value).is_lt() && decided(upper.value).is_lt()
+            })
+            .collect::<Vec<_>>();
+        assert!(interior.len() >= 2);
+        let restricted = circle
+            .subcurve(
+                interior[0].clone(),
+                interior.last().unwrap().clone(),
+                &policy,
+            )
+            .unwrap();
+        assert_eq!(restricted.certainty, CurveCertainty::Certified);
+        for source in [circle.clone(), restricted.value] {
+            for first_reversed in [false, true] {
+                for second_reversed in [false, true] {
+                    let first = if first_reversed {
+                        source.reversed(&policy).unwrap().value
+                    } else {
+                        source.clone()
+                    };
+                    let second = if second_reversed {
+                        source.reversed(&policy).unwrap().value
+                    } else {
+                        source.clone()
+                    };
+                    let result = first.intersect_curve(&second, &policy).unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert!(result.value.is_complete(), "{:?}", result.value.blockers());
+                    assert!(result.value.contacts().is_empty());
+                    assert_eq!(result.value.overlaps().len(), 1);
+                    let overlap = &result.value.overlaps()[0];
+                    assert_eq!(
+                        overlap.orientation(),
+                        if first_reversed ^ second_reversed {
+                            RationalBezierOverlapOrientation2::Reversed
+                        } else {
+                            RationalBezierOverlapOrientation2::Same
+                        }
+                    );
+                    for (a, b) in [
+                        (
+                            overlap.first_range().start(),
+                            overlap.second_range().start(),
+                        ),
+                        (overlap.first_range().end(), overlap.second_range().end()),
+                    ] {
+                        let a = first.point_at(a, &policy).unwrap();
+                        let b = second.point_at(b, &policy).unwrap();
+                        assert_eq!(a.certainty, CurveCertainty::Certified);
+                        assert_eq!(b.certainty, CurveCertainty::Certified);
+                        let same = a.value.coincides_with(&b.value, &policy);
+                        assert_eq!(same.certainty, CurveCertainty::Certified);
+                        assert_eq!(same.value, Classification::Decided(true));
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
+    use hypercurve::{CurveCornerMode2, CurveCornerSolutions2};
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let path = CurvePath2::try_new(vec![
+            LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
+            QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
+        ])
+        .unwrap();
+        let result = path
+            .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap();
+        assert_eq!(result.certainty, CurveCertainty::Certified);
+        let CurveCornerSolutions2::Unique(path) = result.value else {
+            panic!("unique fillet")
+        };
+        for index in [0, 2] {
+            for (reversed, other_reversed) in
+                [(false, false), (false, true), (true, false), (true, true)]
+            {
+                let circle = if reversed {
+                    path.curves()[1].reversed(&policy).unwrap().value
+                } else {
+                    path.curves()[1].clone()
+                };
+                let other = if other_reversed {
+                    path.curves()[index].reversed(&policy).unwrap().value
+                } else {
+                    path.curves()[index].clone()
+                };
+                let other = &other;
+                for swapped in [false, true] {
+                    let (first, second) = if swapped {
+                        (other, &circle)
+                    } else {
+                        (&circle, other)
+                    };
+                    let result = first.intersect_curve(second, &policy).unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert!(
+                        result.value.is_complete(),
+                        "neighbor {index}: {:?}",
+                        result.value.blockers()
+                    );
+                    assert!(result.value.overlaps().is_empty());
+                    assert_eq!(result.value.contacts().len(), 1);
+                    let contact = &result.value.contacts()[0];
+                    assert_eq!(
+                        contact.tangent_cross_sign(),
+                        Some(hyperreal::RealSign::Zero)
+                    );
+                    for (curve, location) in [(first, contact.first()), (second, contact.second())]
+                    {
+                        let parameter = decided(location.parameter(&policy).unwrap());
+                        let point = curve.point_at(&parameter, &policy).unwrap();
+                        assert_eq!(point.certainty, CurveCertainty::Certified);
+                        let same = point.value.coincides_with(contact.point(), &policy);
+                        assert_eq!(same.certainty, CurveCertainty::Certified);
+                        assert_eq!(
+                            same.value,
+                            Classification::Decided(true),
+                            "neighbor {index}, reversed {reversed}/{other_reversed}, swapped {swapped}, replay {:?}",
+                            curve.family()
+                        );
+                    }
+                }
+            }
+        }
+    }
+}

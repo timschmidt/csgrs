@@ -315,6 +315,16 @@ impl CurveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
         match (&self.data, &other.data) {
+            (
+                CurveParameterData2::AlgebraicCusp(first)
+                | CurveParameterData2::AlgebraicCuspComplement(first),
+                CurveParameterData2::Bezier(BezierParameter2::Exact(second)),
+            ) => first.order_to_real(second, policy),
+            (
+                CurveParameterData2::Bezier(BezierParameter2::Exact(first)),
+                CurveParameterData2::AlgebraicCusp(second)
+                | CurveParameterData2::AlgebraicCuspComplement(second),
+            ) => Ok(second.order_to_real(first, policy)?.map(Ordering::reverse)),
             (CurveParameterData2::Bezier(first), CurveParameterData2::Bezier(second)) => {
                 first.cmp_by_refinement(second, policy)
             }
@@ -427,8 +437,10 @@ impl CurveParameter2 {
     /// Compares parameters in the same support chart while retaining their
     /// selected-root or geometric authority and reporting predicate certainty.
     ///
-    /// Parameters from distinct geometric charts require their supporting
-    /// curves and return an error when no local comparison authority applies.
+    /// A directly represented scalar is interpreted in the retained circle's
+    /// local chart. Parameters from distinct geometric charts require their
+    /// supporting curves and return an error when no local comparison authority
+    /// applies.
     pub fn compare(
         &self,
         other: &Self,
