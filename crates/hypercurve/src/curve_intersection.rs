@@ -21,9 +21,8 @@ use crate::{
     CurveGeometry2, CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2,
     CurvePoint2, CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult,
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange,
-    Point2, RationalBezier2, RationalBezierIntersectionCandidates2,
-    RationalBezierIntersectionContact2, RationalBezierIntersectionContacts2,
-    RationalBezierOverlapOrientation2, UncertaintyReason,
+    Point2, RationalBezier2, RationalBezierIntersectionContact2,
+    RationalBezierIntersectionContacts2, RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
 /// Exact location in a curve's retained span chart.
@@ -319,6 +318,39 @@ impl PartialEq for CurveIntersectionOverlap2 {
     }
 }
 
+/// Complete unpaired parameter projections for a curve intersection query.
+///
+/// Each root retains its exact scalar or algebraic authority in the original
+/// operand chart. Projection alone does not prove incidence: replay must pair
+/// roots, reject excluded poles and select the intended geometric branches.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CurveIntersectionCandidates2 {
+    /// At least one projection has no root in the queried parameter domains.
+    NoIntersection,
+    /// Both projections contain every possible isolated contact parameter.
+    Candidates {
+        /// Ordered represented or algebraically isolated first-operand parameters.
+        first_parameters: Vec<BezierParameter2>,
+        /// Ordered represented or algebraically isolated second-operand parameters.
+        second_parameters: Vec<BezierParameter2>,
+    },
+    /// Elimination requires shared-component or other degenerate replay.
+    DegenerateResultant,
+}
+
+impl CurveIntersectionCandidates2 {
+    pub(crate) fn swapped(mut self) -> Self {
+        if let Self::Candidates {
+            first_parameters,
+            second_parameters,
+        } = &mut self
+        {
+            std::mem::swap(first_parameters, second_parameters);
+        }
+        self
+    }
+}
+
 /// Reason one promoted span pair did not produce complete contact topology.
 #[derive(Clone, Debug, PartialEq)]
 pub enum CurveIntersectionPairBlockerKind2 {
@@ -327,7 +359,7 @@ pub enum CurveIntersectionPairBlockerKind2 {
     /// Candidate replay retained some contacts but not a complete pairing.
     IncompleteReplay {
         /// Complete unpaired resultant projections available for later replay.
-        candidates: RationalBezierIntersectionCandidates2,
+        candidates: CurveIntersectionCandidates2,
     },
     /// Elimination found a shared algebraic component requiring overlap ownership.
     SharedComponent,

@@ -109,9 +109,8 @@ pub(crate) use bezier_offset::BezierAlgebraicChordPairPoint2;
 pub use bezier_offset::{
     BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2, BezierParallel2,
     BezierParallelApproximationCurve2, BezierParallelIncidence2,
-    BezierParallelIntersectionCandidates2, BezierParallelIntersectionContact2,
-    BezierParallelIntersectionParameterComponent2, BezierParallelIntersectionSet2,
-    BezierParallelPairIntersectionCandidates2, BezierParallelPairIntersectionContact2,
+    BezierParallelIntersectionContact2, BezierParallelIntersectionParameterComponent2,
+    BezierParallelIntersectionSet2, BezierParallelPairIntersectionContact2,
     BezierParallelPairIntersectionParameterComponent2, BezierParallelPairIntersectionSet2,
     BezierParallelSingularityAnalysis2, BezierParallelSource2, BezierParallelVerificationOptions,
     Blend2dCubicQuadraticReduction2, Blend2dQuadraticOffsetCandidate2,
@@ -185,9 +184,9 @@ pub use curve::{
     NativeBezierFragment2,
 };
 pub use curve_intersection::{
-    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
-    CurveIntersectionPairBlockerKind2, CurveIntersectionResult2, CurveIntersectionTopology2,
-    CurveLocation2,
+    CurveIntersectionCandidates2, CurveIntersectionContact2, CurveIntersectionOverlap2,
+    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveIntersectionResult2,
+    CurveIntersectionTopology2, CurveLocation2,
 };
 pub use curve_path_intersection::{
     CurvePathIntersectionBlocker2, CurvePathIntersectionContact2, CurvePathIntersectionOverlap2,
@@ -242,10 +241,10 @@ pub use polynomial_spline::{
 };
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{
-    HomogeneousControl2, RationalBezier2, RationalBezierIntersectionCandidates2,
-    RationalBezierIntersectionContact2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionOverlap2, RationalBezierIntersectionTopology2,
-    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2,
+    HomogeneousControl2, RationalBezier2, RationalBezierIntersectionContact2,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+    RationalBezierIntersectionTopology2, RationalBezierOverlapOrientation2,
+    RationalBezierPointIncidence2,
 };
 pub use reconstruct::PolylineReconstructionOptions;
 pub use region::RegionPointLocation;

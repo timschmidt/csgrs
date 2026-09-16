@@ -2,9 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Axis2, BezierParameter2, Classification, CurveContext, Point2, RationalBezier2,
-    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
-    RationalBezierPointIncidence2, Real,
+    Axis2, BezierParameter2, Classification, CurveContext, CurveIntersectionCandidates2, Point2,
+    RationalBezier2, RationalBezierIntersectionContacts2, RationalBezierPointIncidence2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -363,7 +362,7 @@ fn main() {
         .intersection_candidates(&horizontal, &policy)
         .expect("benchmark resultant candidates are exact")
     {
-        RationalBezierIntersectionCandidates2::Candidates {
+        CurveIntersectionCandidates2::Candidates {
             first_parameters, ..
         } => match &first_parameters[0] {
             BezierParameter2::Algebraic(parameter) => parameter.clone(),
@@ -380,12 +379,12 @@ fn main() {
             .intersection_candidates(&horizontal, &policy)
             .expect("benchmark resultant candidates are exact");
         resultant_count = resultant_count.wrapping_add(black_box(match candidates {
-            RationalBezierIntersectionCandidates2::NoIntersection => 0,
-            RationalBezierIntersectionCandidates2::Candidates {
+            CurveIntersectionCandidates2::NoIntersection => 0,
+            CurveIntersectionCandidates2::Candidates {
                 first_parameters,
                 second_parameters,
             } => first_parameters.len() + second_parameters.len(),
-            RationalBezierIntersectionCandidates2::DegenerateResultant => 1,
+            CurveIntersectionCandidates2::DegenerateResultant => 1,
         }));
     }
     let elapsed = started.elapsed();
@@ -504,11 +503,9 @@ fn main() {
         let candidates = black_box(&conic)
             .intersection_candidates(black_box(&disjoint_cubic), black_box(&policy))
             .expect("disjoint conic/cubic candidates are exact");
-        disjoint_candidate_count =
-            disjoint_candidate_count.wrapping_add(black_box(usize::from(matches!(
-                candidates,
-                RationalBezierIntersectionCandidates2::NoIntersection
-            ))));
+        disjoint_candidate_count = disjoint_candidate_count.wrapping_add(black_box(usize::from(
+            matches!(candidates, CurveIntersectionCandidates2::NoIntersection),
+        )));
     }
     let elapsed = started.elapsed();
     println!(

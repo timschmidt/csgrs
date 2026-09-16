@@ -47,10 +47,10 @@ use crate::{
     BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2, Classification,
     CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError, CurveGeometry2,
-    CurveOperation2, CurveParameter2, CurveParameterRange2, CurvePath2, CurvePoint2, CurveResult,
-    ExactCurveError, ExactCurveResult, LineCircleRelation, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
-    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    CurveIntersectionCandidates2, CurveOperation2, CurveParameter2, CurveParameterRange2,
+    CurvePath2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult, LineCircleRelation,
+    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
+    RationalBezierAlgebraicTangentImage2, RationalBezierIntersectionContacts2,
     RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
     RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
 };
@@ -108119,42 +108119,6 @@ pub enum BezierParallelIncidence2 {
     Parameters(Vec<BezierParameter2>),
 }
 
-/// Complete resultant projections for an analytic parallel and rational Bezier pair.
-#[derive(Clone, Debug, PartialEq)]
-pub enum BezierParallelIntersectionCandidates2 {
-    /// Exact elimination proves that no finite parameter pair can intersect.
-    NoIntersection,
-    /// Both projections contain every possible finite contact parameter.
-    Candidates {
-        /// Ordered represented or algebraically isolated parallel parameters.
-        parallel_parameters: Vec<BezierParameter2>,
-        /// Ordered represented or algebraically isolated rational-curve parameters.
-        other_parameters: Vec<BezierParameter2>,
-    },
-    /// A projection vanished identically and requires shared-component replay.
-    DegenerateResultant,
-}
-
-/// Complete resultant projections for two analytic Bezier parallels.
-///
-/// Projection is deliberately separate from replay. Squaring the unit-normal
-/// relations produces complete polynomial candidates, but only exact replay of
-/// the three unsquared relations may promote one parameter pair to a contact.
-#[derive(Clone, Debug, PartialEq)]
-pub enum BezierParallelPairIntersectionCandidates2 {
-    /// Exact elimination proves that no finite parameter pair can intersect.
-    NoIntersection,
-    /// Both projections contain every possible finite contact parameter.
-    Candidates {
-        /// Ordered represented or algebraically isolated first parameters.
-        first_parameters: Vec<BezierParameter2>,
-        /// Ordered represented or algebraically isolated second parameters.
-        second_parameters: Vec<BezierParameter2>,
-    },
-    /// A projection vanished identically and requires shared-component replay.
-    DegenerateResultant,
-}
-
 /// One exactly replayed contact between two analytic Bezier parallels.
 ///
 /// The parameter pair is the lossless point construction: evaluating the two
@@ -108244,7 +108208,7 @@ enum BezierParallelPairIntersectionSupplement2 {
         parameter_components: Arc<[BezierParallelPairIntersectionParameterComponent2]>,
         component_overlaps: Arc<[BezierParameterComponentOverlap2]>,
     },
-    Incomplete(BezierParallelPairIntersectionCandidates2),
+    Incomplete(CurveIntersectionCandidates2),
 }
 
 /// Complete or explicitly incomplete intersection set for two analytic parallels.
@@ -108331,7 +108295,7 @@ impl BezierParallelPairIntersectionSet2 {
     fn incomplete(
         contacts: Arc<[BezierParallelPairIntersectionContact2]>,
         overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
-        candidates: BezierParallelPairIntersectionCandidates2,
+        candidates: CurveIntersectionCandidates2,
     ) -> Self {
         Self {
             contacts,
@@ -108385,7 +108349,7 @@ impl BezierParallelPairIntersectionSet2 {
     }
 
     /// Returns complete unpaired projections retained after incomplete replay.
-    pub fn incomplete_candidates(&self) -> Option<&BezierParallelPairIntersectionCandidates2> {
+    pub fn incomplete_candidates(&self) -> Option<&CurveIntersectionCandidates2> {
         match self.supplement.as_deref() {
             Some(BezierParallelPairIntersectionSupplement2::Incomplete(candidates)) => {
                 Some(candidates)
@@ -108404,7 +108368,7 @@ impl BezierParallelPairIntersectionSet2 {
 }
 
 struct BezierParallelIntersectionCandidateSystem2 {
-    candidates: BezierParallelIntersectionCandidates2,
+    candidates: CurveIntersectionCandidates2,
     replay_equations: Option<[BivariatePolynomial; 2]>,
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
     component_overlaps: Arc<[BezierParameterComponentOverlap2]>,
@@ -108420,7 +108384,7 @@ struct BezierParallelIntersectionParameterPair2 {
 
 impl BezierParallelIntersectionCandidateSystem2 {
     fn projected(
-        candidates: BezierParallelIntersectionCandidates2,
+        candidates: CurveIntersectionCandidates2,
         replay_equations: Option<[BivariatePolynomial; 2]>,
     ) -> Self {
         Self {
@@ -108435,7 +108399,7 @@ impl BezierParallelIntersectionCandidateSystem2 {
 
     fn overlaps(overlaps: Arc<[RationalBezierIntersectionOverlap2]>) -> Self {
         Self {
-            candidates: BezierParallelIntersectionCandidates2::NoIntersection,
+            candidates: CurveIntersectionCandidates2::NoIntersection,
             replay_equations: None,
             overlaps,
             component_overlaps: Arc::from([]),
@@ -108562,7 +108526,7 @@ enum BezierParallelIntersectionSupplement2 {
         parameter_components: Arc<[BezierParallelIntersectionParameterComponent2]>,
         component_overlaps: Arc<[BezierParameterComponentOverlap2]>,
     },
-    Incomplete(BezierParallelIntersectionCandidates2),
+    Incomplete(CurveIntersectionCandidates2),
 }
 
 /// Complete or explicitly incomplete analytic-parallel/rational-Bezier intersection set.
@@ -108618,7 +108582,7 @@ impl BezierParallelIntersectionSet2 {
     fn incomplete(
         contacts: Arc<[BezierParallelIntersectionContact2]>,
         overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
-        candidates: BezierParallelIntersectionCandidates2,
+        candidates: CurveIntersectionCandidates2,
     ) -> Self {
         Self {
             contacts,
@@ -108672,7 +108636,7 @@ impl BezierParallelIntersectionSet2 {
     }
 
     /// Returns complete unpaired projections retained after incomplete replay.
-    pub fn incomplete_candidates(&self) -> Option<&BezierParallelIntersectionCandidates2> {
+    pub fn incomplete_candidates(&self) -> Option<&CurveIntersectionCandidates2> {
         match self.supplement.as_deref() {
             Some(BezierParallelIntersectionSupplement2::Incomplete(candidates)) => Some(candidates),
             Some(BezierParallelIntersectionSupplement2::Complete { .. }) | None => None,
@@ -108754,8 +108718,8 @@ fn merge_parallel_pair_intersection_sets(
         second.incomplete_candidates(),
     ) {
         (Some(candidates), None) | (None, Some(candidates)) => candidates.clone(),
-        (Some(_), Some(_)) => BezierParallelPairIntersectionCandidates2::DegenerateResultant,
-        (None, None) => BezierParallelPairIntersectionCandidates2::NoIntersection,
+        (Some(_), Some(_)) => CurveIntersectionCandidates2::DegenerateResultant,
+        (None, None) => CurveIntersectionCandidates2::NoIntersection,
     };
 
     let mut contacts = first.contacts().to_vec();
@@ -108926,54 +108890,6 @@ fn parallel_parameter_pair_is_excluded(
         }
     }
     Ok(uncertain.map_or(Classification::Decided(false), Classification::Uncertain))
-}
-
-fn parallel_candidates_from_rational(
-    candidates: RationalBezierIntersectionCandidates2,
-) -> BezierParallelIntersectionCandidates2 {
-    match candidates {
-        RationalBezierIntersectionCandidates2::NoIntersection => {
-            BezierParallelIntersectionCandidates2::NoIntersection
-        }
-        RationalBezierIntersectionCandidates2::Candidates {
-            first_parameters,
-            second_parameters,
-        } => BezierParallelIntersectionCandidates2::Candidates {
-            parallel_parameters: first_parameters,
-            other_parameters: second_parameters,
-        },
-        RationalBezierIntersectionCandidates2::DegenerateResultant => {
-            BezierParallelIntersectionCandidates2::DegenerateResultant
-        }
-    }
-}
-
-fn parallel_pair_candidates_from_parallel_rational(
-    candidates: BezierParallelIntersectionCandidates2,
-    swapped: bool,
-) -> BezierParallelPairIntersectionCandidates2 {
-    match candidates {
-        BezierParallelIntersectionCandidates2::NoIntersection => {
-            BezierParallelPairIntersectionCandidates2::NoIntersection
-        }
-        BezierParallelIntersectionCandidates2::Candidates {
-            parallel_parameters,
-            other_parameters,
-        } => {
-            let (first_parameters, second_parameters) = if swapped {
-                (other_parameters, parallel_parameters)
-            } else {
-                (parallel_parameters, other_parameters)
-            };
-            BezierParallelPairIntersectionCandidates2::Candidates {
-                first_parameters,
-                second_parameters,
-            }
-        }
-        BezierParallelIntersectionCandidates2::DegenerateResultant => {
-            BezierParallelPairIntersectionCandidates2::DegenerateResultant
-        }
-    }
 }
 
 fn swapped_parallel_overlap(
@@ -109211,7 +109127,11 @@ fn parallel_pair_set_from_parallel_rational(
             BezierParallelPairIntersectionSet2::incomplete(
                 contacts,
                 overlaps,
-                parallel_pair_candidates_from_parallel_rational(candidates.clone(), swapped),
+                if swapped {
+                    candidates.clone().swapped()
+                } else {
+                    candidates.clone()
+                },
             )
         }
         Some(BezierParallelIntersectionSupplement2::Complete {
@@ -109347,13 +109267,13 @@ fn parallel_set_from_rational_contacts(
         } => BezierParallelIntersectionSet2::incomplete(
             map_contacts(&contacts),
             Arc::from([]),
-            parallel_candidates_from_rational(candidates),
+            candidates,
         ),
         RationalBezierIntersectionContacts2::DegenerateResultant => {
             BezierParallelIntersectionSet2::incomplete(
                 Arc::from([]),
                 Arc::from([]),
-                BezierParallelIntersectionCandidates2::DegenerateResultant,
+                CurveIntersectionCandidates2::DegenerateResultant,
             )
         }
     }
@@ -115046,19 +114966,15 @@ impl BezierParallel2 {
         &self,
         other: &Self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelPairIntersectionCandidates2>> {
+    ) -> CurveResult<Classification<CurveIntersectionCandidates2>> {
         if structural_parallel_overlap(self, other, policy)?.is_some() {
             return Ok(Classification::Decided(
-                BezierParallelPairIntersectionCandidates2::DegenerateResultant,
+                CurveIntersectionCandidates2::DegenerateResultant,
             ));
         }
         match other.exact_rational_parallel_component(policy)? {
             Classification::Decided(Some(other)) => {
-                return Ok(self
-                    .intersection_candidates(&other, policy)?
-                    .map(|candidates| {
-                        parallel_pair_candidates_from_parallel_rational(candidates, false)
-                    }));
+                return self.intersection_candidates(&other, policy);
             }
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => {
@@ -115069,9 +114985,7 @@ impl BezierParallel2 {
             Classification::Decided(Some(first)) => {
                 return Ok(other
                     .intersection_candidates(&first, policy)?
-                    .map(|candidates| {
-                        parallel_pair_candidates_from_parallel_rational(candidates, true)
-                    }));
+                    .map(CurveIntersectionCandidates2::swapped));
             }
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => {
@@ -115085,7 +114999,7 @@ impl BezierParallel2 {
             }
         }) else {
             return Ok(Classification::Decided(
-                BezierParallelPairIntersectionCandidates2::NoIntersection,
+                CurveIntersectionCandidates2::NoIntersection,
             ));
         };
         if bivariate_pair_may_have_component(&system.first_equation, &system.second_equation)
@@ -115099,16 +115013,15 @@ impl BezierParallel2 {
             )
         {
             return Ok(Classification::Decided(
-                BezierParallelPairIntersectionCandidates2::DegenerateResultant,
+                CurveIntersectionCandidates2::DegenerateResultant,
             ));
         }
-        Ok(project_parallel_intersection_system(
+        project_parallel_intersection_system(
             &system.first_equation,
             &system.second_equation,
             [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
             policy,
-        )?
-        .map(|candidates| parallel_pair_candidates_from_parallel_rational(candidates, false)))
+        )
     }
 
     /// Returns every unordered off-diagonal self-contact of this analytic parallel.
@@ -115183,7 +115096,7 @@ impl BezierParallel2 {
                 BezierParallelPairIntersectionSet2::incomplete(
                     Arc::from([]),
                     Arc::from([]),
-                    BezierParallelPairIntersectionCandidates2::DegenerateResultant,
+                    CurveIntersectionCandidates2::DegenerateResultant,
                 ),
             ));
         };
@@ -115489,7 +115402,7 @@ impl BezierParallel2 {
         if axis_component
             || matches!(
                 projection.candidates,
-                BezierParallelIntersectionCandidates2::DegenerateResultant
+                CurveIntersectionCandidates2::DegenerateResultant
             )
         {
             let config = CurveIntersectionResultantConfig {
@@ -115688,7 +115601,7 @@ impl BezierParallel2 {
                 projection.residual_equations.map(|equations| *equations),
             ),
             None => BezierParallelIntersectionCandidateSystem2::projected(
-                BezierParallelIntersectionCandidates2::NoIntersection,
+                CurveIntersectionCandidates2::NoIntersection,
                 None,
             ),
         };
@@ -115854,7 +115767,7 @@ impl BezierParallel2 {
                     BezierParallelPairIntersectionSet2::incomplete(
                         Arc::from([]),
                         Arc::from([]),
-                        BezierParallelPairIntersectionCandidates2::DegenerateResultant,
+                        CurveIntersectionCandidates2::DegenerateResultant,
                     ),
                 ),
             ));
@@ -116053,16 +115966,16 @@ impl BezierParallel2 {
         } else {
             None
         };
-        let candidates = parallel_pair_candidates_from_parallel_rational(candidates, false);
+
         let empty_parameters: &[BezierParameter2] = &[];
         let (first_parameters, second_parameters, projection_incomplete) = match &candidates {
-            BezierParallelPairIntersectionCandidates2::NoIntersection => {
+            CurveIntersectionCandidates2::NoIntersection => {
                 (empty_parameters, empty_parameters, false)
             }
-            BezierParallelPairIntersectionCandidates2::DegenerateResultant => {
+            CurveIntersectionCandidates2::DegenerateResultant => {
                 (empty_parameters, empty_parameters, true)
             }
-            BezierParallelPairIntersectionCandidates2::Candidates {
+            CurveIntersectionCandidates2::Candidates {
                 first_parameters,
                 second_parameters,
             } => (
@@ -117038,19 +116951,11 @@ impl BezierParallel2 {
         &self,
         other: &RationalBezier2,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
+    ) -> CurveResult<Classification<CurveIntersectionCandidates2>> {
         if let Some(Some(offset)) = self.data.certified_ph_offset.get() {
-            return Ok(
-                match offset
-                    .curve()
-                    .intersection_candidates_classified(other, policy)?
-                {
-                    Classification::Decided(candidates) => {
-                        Classification::Decided(parallel_candidates_from_rational(candidates))
-                    }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                },
-            );
+            return offset
+                .curve()
+                .intersection_candidates_classified(other, policy);
         }
         Ok(self
             .intersection_candidate_system(other, policy)?
@@ -117058,7 +116963,7 @@ impl BezierParallel2 {
                 if system.overlaps.is_empty() {
                     system.candidates
                 } else {
-                    BezierParallelIntersectionCandidates2::DegenerateResultant
+                    CurveIntersectionCandidates2::DegenerateResultant
                 }
             }))
     }
@@ -117086,10 +116991,9 @@ impl BezierParallel2 {
             if let Classification::Decided(candidates) =
                 source.intersection_candidates_classified(other, policy)?
             {
-                let candidates = parallel_candidates_from_rational(candidates);
                 if !matches!(
                     candidates,
-                    BezierParallelIntersectionCandidates2::DegenerateResultant
+                    CurveIntersectionCandidates2::DegenerateResultant
                 ) {
                     return Ok(Classification::Decided(
                         BezierParallelIntersectionCandidateSystem2::projected(candidates, None),
@@ -117105,10 +117009,9 @@ impl BezierParallel2 {
                 .intersection_candidates_classified(other, policy)?
             {
                 Classification::Decided(candidates) => {
-                    let candidates = parallel_candidates_from_rational(candidates);
                     if !matches!(
                         candidates,
-                        BezierParallelIntersectionCandidates2::DegenerateResultant
+                        CurveIntersectionCandidates2::DegenerateResultant
                     ) {
                         return Ok(Classification::Decided(
                             BezierParallelIntersectionCandidateSystem2::projected(candidates, None),
@@ -117168,7 +117071,7 @@ impl BezierParallel2 {
         {
             return Ok(Classification::Decided(
                 BezierParallelIntersectionCandidateSystem2::projected(
-                    BezierParallelIntersectionCandidates2::NoIntersection,
+                    CurveIntersectionCandidates2::NoIntersection,
                     None,
                 ),
             ));
@@ -117193,7 +117096,7 @@ impl BezierParallel2 {
             }) {
                 return Ok(Classification::Decided(
                     BezierParallelIntersectionCandidateSystem2::projected(
-                        BezierParallelIntersectionCandidates2::DegenerateResultant,
+                        CurveIntersectionCandidates2::DegenerateResultant,
                         Some(equations),
                     ),
                 ));
@@ -117246,7 +117149,7 @@ impl BezierParallel2 {
         };
         if matches!(
             candidates,
-            BezierParallelIntersectionCandidates2::DegenerateResultant
+            CurveIntersectionCandidates2::DegenerateResultant
         ) {
             match if tangent_field.is_none() {
                 self.exact_rational_parallel_component(policy)?
@@ -117256,10 +117159,9 @@ impl BezierParallel2 {
                 Classification::Decided(Some(exact_parallel)) => {
                     match exact_parallel.intersection_candidates_classified(other, policy)? {
                         Classification::Decided(candidates) => {
-                            let candidates = parallel_candidates_from_rational(candidates);
                             if !matches!(
                                 candidates,
-                                BezierParallelIntersectionCandidates2::DegenerateResultant
+                                CurveIntersectionCandidates2::DegenerateResultant
                             ) {
                                 return Ok(Classification::Decided(
                                     BezierParallelIntersectionCandidateSystem2::projected(
@@ -117288,7 +117190,7 @@ impl BezierParallel2 {
             };
         if matches!(
             candidate_system.candidates,
-            BezierParallelIntersectionCandidates2::DegenerateResultant
+            CurveIntersectionCandidates2::DegenerateResultant
         ) && let Some(component_equations) = candidate_system.replay_equations.as_ref()
         {
             let branch = parallel_rational_component_branch(
@@ -117818,11 +117720,11 @@ impl BezierParallel2 {
             component_pairs.split_at(selected_component_pair_count);
         let residual_degenerate = matches!(
             candidates,
-            BezierParallelIntersectionCandidates2::DegenerateResultant
+            CurveIntersectionCandidates2::DegenerateResultant
         );
         let empty_parameters: &[BezierParameter2] = &[];
         let (parallel_parameters, other_parameters) = match &candidates {
-            BezierParallelIntersectionCandidates2::NoIntersection => {
+            CurveIntersectionCandidates2::NoIntersection => {
                 if component_pairs.is_empty() {
                     return Ok(Classification::Decided(
                         BezierParallelIntersectionSet2::complete_with_supplement(
@@ -117835,7 +117737,7 @@ impl BezierParallel2 {
                 }
                 (empty_parameters, empty_parameters)
             }
-            BezierParallelIntersectionCandidates2::DegenerateResultant => {
+            CurveIntersectionCandidates2::DegenerateResultant => {
                 if component_pairs.is_empty() {
                     // Replaying the original system would lose strict-zero exclusions.
                     if !overlaps.is_empty() || !excluded_component_pairs.is_empty() {
@@ -117843,7 +117745,7 @@ impl BezierParallel2 {
                             BezierParallelIntersectionSet2::incomplete(
                                 Arc::from([]),
                                 overlaps,
-                                BezierParallelIntersectionCandidates2::DegenerateResultant,
+                                CurveIntersectionCandidates2::DegenerateResultant,
                             ),
                         ));
                     }
@@ -117852,7 +117754,7 @@ impl BezierParallel2 {
                             BezierParallelIntersectionSet2::incomplete(
                                 Arc::from([]),
                                 overlaps,
-                                BezierParallelIntersectionCandidates2::DegenerateResultant,
+                                CurveIntersectionCandidates2::DegenerateResultant,
                             ),
                         ));
                     }
@@ -117860,9 +117762,9 @@ impl BezierParallel2 {
                 }
                 (empty_parameters, empty_parameters)
             }
-            BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             } => (parallel_parameters.as_slice(), other_parameters.as_slice()),
         };
 
@@ -118161,7 +118063,7 @@ impl BezierParallel2 {
                 BezierParallelIntersectionSet2::incomplete(
                     Arc::from([]),
                     Arc::from([]),
-                    BezierParallelIntersectionCandidates2::DegenerateResultant,
+                    CurveIntersectionCandidates2::DegenerateResultant,
                 ),
             ));
         };
@@ -120973,12 +120875,12 @@ const PARALLEL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
 
 fn parallel_intersection_candidate_system(
     equations: [BivariatePolynomial; 2],
-    candidates: BezierParallelIntersectionCandidates2,
+    candidates: CurveIntersectionCandidates2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelIntersectionCandidateSystem2>> {
     if matches!(
         candidates,
-        BezierParallelIntersectionCandidates2::DegenerateResultant
+        CurveIntersectionCandidates2::DegenerateResultant
     ) && let Some(reduced) = hypersolve::saturate_rootless_bivariate_axis_factors(
         &equations,
         [[&Real::zero(), &Real::one()]; 2],
@@ -121002,14 +120904,11 @@ fn parallel_intersection_candidate_system(
 }
 
 fn parallel_candidate_system(
-    candidates: BezierParallelIntersectionCandidates2,
+    candidates: CurveIntersectionCandidates2,
     equations: [BivariatePolynomial; 2],
 ) -> BezierParallelIntersectionCandidateSystem2 {
-    let replay_equations = (!matches!(
-        &candidates,
-        BezierParallelIntersectionCandidates2::NoIntersection
-    ))
-    .then_some(equations);
+    let replay_equations =
+        (!matches!(&candidates, CurveIntersectionCandidates2::NoIntersection)).then_some(equations);
     BezierParallelIntersectionCandidateSystem2::projected(candidates, replay_equations)
 }
 
@@ -121018,7 +120917,7 @@ fn project_parallel_intersection_system(
     second_equation: &BivariatePolynomial,
     domains: [CurveParameterDomain2<'_>; 2],
     policy: &CurveContext,
-) -> CurveResult<Classification<BezierParallelIntersectionCandidates2>> {
+) -> CurveResult<Classification<CurveIntersectionCandidates2>> {
     // Exact saturation can leave (c,0). Its nonzero constant equation
     // proves the whole domain empty even though its resultant is zero.
     for equation in [first_equation, second_equation] {
@@ -121030,7 +120929,7 @@ fn project_parallel_intersection_system(
             )
         {
             return Ok(Classification::Decided(
-                BezierParallelIntersectionCandidates2::NoIntersection,
+                CurveIntersectionCandidates2::NoIntersection,
             ));
         }
     }
@@ -121053,12 +120952,12 @@ fn project_parallel_intersection_system(
             // One empty projection proves the complete pair domain empty.
             // Avoid constructing or refining the other resultant.
             return Ok(Classification::Decided(
-                BezierParallelIntersectionCandidates2::NoIntersection,
+                CurveIntersectionCandidates2::NoIntersection,
             ));
         }
         ResultantParameterProjection::Degenerate => {
             return Ok(Classification::Decided(
-                BezierParallelIntersectionCandidates2::DegenerateResultant,
+                CurveIntersectionCandidates2::DegenerateResultant,
             ));
         }
         ResultantParameterProjection::Parameters(_)
@@ -121076,20 +120975,20 @@ fn project_parallel_intersection_system(
     };
     Ok(Classification::Decided(match (parallel, other) {
         (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
-            BezierParallelIntersectionCandidates2::NoIntersection
+            CurveIntersectionCandidates2::NoIntersection
         }
         (ResultantParameterProjection::Degenerate, _)
         | (_, ResultantParameterProjection::Degenerate) => {
-            BezierParallelIntersectionCandidates2::DegenerateResultant
+            CurveIntersectionCandidates2::DegenerateResultant
         }
         (
             ResultantParameterProjection::Parameters(parallel_parameters)
             | ResultantParameterProjection::SelectedParameters(parallel_parameters),
             ResultantParameterProjection::Parameters(other_parameters)
             | ResultantParameterProjection::SelectedParameters(other_parameters),
-        ) => BezierParallelIntersectionCandidates2::Candidates {
-            parallel_parameters,
-            other_parameters,
+        ) => CurveIntersectionCandidates2::Candidates {
+            first_parameters: parallel_parameters,
+            second_parameters: other_parameters,
         },
     }))
 }
@@ -121950,7 +121849,7 @@ fn parallel_candidate_system_from_parameter_components(
     for equation in &component.residual_equations {
         if bivariate_unit_square_has_strict_bernstein_sign(equation, policy)? {
             let mut candidate_system = BezierParallelIntersectionCandidateSystem2::projected(
-                BezierParallelIntersectionCandidates2::NoIntersection,
+                CurveIntersectionCandidates2::NoIntersection,
                 None,
             );
             candidate_system.overlaps = component.overlaps;
@@ -124966,14 +124865,14 @@ fn bivariate_system_has_unit_square_solution(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let (parallel_parameters, other_parameters) = match candidates {
-        BezierParallelIntersectionCandidates2::Candidates {
-            parallel_parameters,
-            other_parameters,
+        CurveIntersectionCandidates2::Candidates {
+            first_parameters: parallel_parameters,
+            second_parameters: other_parameters,
         } => (parallel_parameters, other_parameters),
-        BezierParallelIntersectionCandidates2::NoIntersection => {
+        CurveIntersectionCandidates2::NoIntersection => {
             return Ok(Classification::Decided(false));
         }
-        BezierParallelIntersectionCandidates2::DegenerateResultant => {
+        CurveIntersectionCandidates2::DegenerateResultant => {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
     };
@@ -125022,7 +124921,7 @@ fn bivariate_system_has_positive_dimensional_relation(
             [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
             policy,
         )? {
-            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant) => {
+            Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant) => {
                 Classification::Decided(true)
             }
             Classification::Decided(_) => Classification::Decided(false),
@@ -125052,14 +124951,14 @@ fn bivariate_system_unit_square_solution_pairs(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let (parallel_parameters, other_parameters) = match candidates {
-        BezierParallelIntersectionCandidates2::Candidates {
-            parallel_parameters,
-            other_parameters,
+        CurveIntersectionCandidates2::Candidates {
+            first_parameters: parallel_parameters,
+            second_parameters: other_parameters,
         } => (parallel_parameters, other_parameters),
-        BezierParallelIntersectionCandidates2::NoIntersection => {
+        CurveIntersectionCandidates2::NoIntersection => {
             return Ok(Classification::Decided(Vec::new()));
         }
-        BezierParallelIntersectionCandidates2::DegenerateResultant => {
+        CurveIntersectionCandidates2::DegenerateResultant => {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
     };
@@ -126311,7 +126210,7 @@ enum BezierParallelPairProjectionBasis2 {
 }
 
 struct BezierParallelPairProjection2 {
-    candidates: BezierParallelIntersectionCandidates2,
+    candidates: CurveIntersectionCandidates2,
     basis: BezierParallelPairProjectionBasis2,
     overlap: Option<RationalBezierIntersectionOverlap2>,
     component_overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
@@ -126816,7 +126715,7 @@ fn parameter_domain_constraint(
     };
     let candidates = if matches!(
         initial_candidates,
-        BezierParallelIntersectionCandidates2::DegenerateResultant
+        CurveIntersectionCandidates2::DegenerateResultant
     ) {
         let extracted = match extract_bivariate_system_components(residual_equations, config) {
             Classification::Decided(extracted) => extracted,
@@ -126836,11 +126735,11 @@ fn parameter_domain_constraint(
         initial_candidates
     };
     let isolated_projection = match candidates {
-        BezierParallelIntersectionCandidates2::NoIntersection => None,
-        BezierParallelIntersectionCandidates2::DegenerateResultant => {
+        CurveIntersectionCandidates2::NoIntersection => None,
+        CurveIntersectionCandidates2::DegenerateResultant => {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
-        candidates @ BezierParallelIntersectionCandidates2::Candidates { .. } => {
+        candidates @ CurveIntersectionCandidates2::Candidates { .. } => {
             Some(BezierParallelPairProjection2 {
                 candidates,
                 basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
@@ -126876,7 +126775,7 @@ fn retain_parameter_component_pairs(
         return projection;
     }
     let mut projection = projection.unwrap_or(BezierParallelPairProjection2 {
-        candidates: BezierParallelIntersectionCandidates2::NoIntersection,
+        candidates: CurveIntersectionCandidates2::NoIntersection,
         basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
         overlap: None,
         component_overlaps: Arc::from([]),
@@ -127000,7 +126899,7 @@ fn project_parallel_pair_without_components(
     };
     let (candidates, radical_component_projection, residual_was_saturated) = if matches!(
         initial_candidates,
-        BezierParallelIntersectionCandidates2::DegenerateResultant
+        CurveIntersectionCandidates2::DegenerateResultant
     ) {
         let config = CurveIntersectionResultantConfig {
             min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
@@ -127024,7 +126923,7 @@ fn project_parallel_pair_without_components(
             Classification::Decided(candidates)
                 if !matches!(
                     candidates,
-                    BezierParallelIntersectionCandidates2::DegenerateResultant
+                    CurveIntersectionCandidates2::DegenerateResultant
                 ) =>
             {
                 candidates
@@ -127048,7 +126947,7 @@ fn project_parallel_pair_without_components(
                 };
                 let component = if matches!(
                     radical_candidates,
-                    BezierParallelIntersectionCandidates2::DegenerateResultant
+                    CurveIntersectionCandidates2::DegenerateResultant
                 ) {
                     match parameter_component_system_with_selector(
                         &radical_equations,
@@ -127084,7 +126983,7 @@ fn project_parallel_pair_without_components(
                             &replay_equations[1],
                             policy,
                         )? {
-                        BezierParallelIntersectionCandidates2::NoIntersection
+                        CurveIntersectionCandidates2::NoIntersection
                     } else {
                         match project_parallel_intersection_system(
                             &replay_equations[0],
@@ -127095,7 +126994,7 @@ fn project_parallel_pair_without_components(
                             Classification::Decided(candidates)
                                 if !matches!(
                                     candidates,
-                                    BezierParallelIntersectionCandidates2::DegenerateResultant
+                                    CurveIntersectionCandidates2::DegenerateResultant
                                 ) =>
                             {
                                 candidates
@@ -128056,7 +127955,7 @@ fn project_parallel_pair_without_components_in_domain(
     };
     let candidates = if matches!(
         initial_candidates,
-        BezierParallelIntersectionCandidates2::DegenerateResultant
+        CurveIntersectionCandidates2::DegenerateResultant
     ) {
         let extracted = match extract_bivariate_system_components(residual_equations, config) {
             Classification::Decided(extracted) => extracted,
@@ -128073,7 +127972,7 @@ fn project_parallel_pair_without_components_in_domain(
             Classification::Decided(candidates)
                 if !matches!(
                     candidates,
-                    BezierParallelIntersectionCandidates2::DegenerateResultant
+                    CurveIntersectionCandidates2::DegenerateResultant
                 ) =>
             {
                 candidates
@@ -128219,7 +128118,7 @@ fn project_parallel_pair_intersection_system(
         && let Some(overlap) = source.selected_overlap()
     {
         return Ok(Classification::Decided(BezierParallelPairProjection2 {
-            candidates: BezierParallelIntersectionCandidates2::NoIntersection,
+            candidates: CurveIntersectionCandidates2::NoIntersection,
             basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
             overlap: Some(overlap.clone()),
             component_overlaps: Arc::from([]),
@@ -128240,10 +128139,7 @@ fn project_parallel_pair_intersection_system(
         Classification::Decided(projected) => projected,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    if !matches!(
-        projected,
-        BezierParallelIntersectionCandidates2::DegenerateResultant
-    ) {
+    if !matches!(projected, CurveIntersectionCandidates2::DegenerateResultant) {
         return Ok(Classification::Decided(BezierParallelPairProjection2 {
             candidates: projected,
             basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
@@ -128274,7 +128170,7 @@ fn project_parallel_pair_intersection_system(
         && let Some(overlap) = source.selected_overlap()
     {
         return Ok(Classification::Decided(BezierParallelPairProjection2 {
-            candidates: BezierParallelIntersectionCandidates2::NoIntersection,
+            candidates: CurveIntersectionCandidates2::NoIntersection,
             basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
             overlap: Some(overlap.clone()),
             component_overlaps: Arc::from([]),
@@ -128294,10 +128190,8 @@ fn project_parallel_pair_intersection_system(
         Classification::Decided(projected) => projected,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    if matches!(
-        fallback,
-        BezierParallelIntersectionCandidates2::DegenerateResultant
-    ) && let Classification::Uncertain(reason) = source_overlap
+    if matches!(fallback, CurveIntersectionCandidates2::DegenerateResultant)
+        && let Classification::Uncertain(reason) = source_overlap
     {
         return Ok(Classification::Uncertain(reason));
     }
@@ -162436,9 +162330,9 @@ mod conversion_tests {
                 );
             };
             let project = |first_ray, second_ray| {
-                let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-                    parallel_parameters,
-                    other_parameters,
+                let Classification::Decided(CurveIntersectionCandidates2::Candidates {
+                    first_parameters: parallel_parameters,
+                    second_parameters: other_parameters,
                 }) = project_parallel_intersection_system(
                     &first,
                     &second,
@@ -162502,7 +162396,7 @@ mod conversion_tests {
                     &policy
                 )
                 .unwrap(),
-                Classification::Decided(BezierParallelIntersectionCandidates2::NoIntersection),
+                Classification::Decided(CurveIntersectionCandidates2::NoIntersection),
             ));
         }
     }
@@ -162530,9 +162424,9 @@ mod conversion_tests {
         ]]);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let project = |extensions: [Option<BezierParameterRay2<'_>>; 2]| {
-                let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-                    parallel_parameters,
-                    other_parameters,
+                let Classification::Decided(CurveIntersectionCandidates2::Candidates {
+                    first_parameters: parallel_parameters,
+                    second_parameters: other_parameters,
                 }) = project_parallel_intersection_system(
                     &first,
                     &second,
@@ -172668,9 +172562,9 @@ mod conversion_tests {
                     );
                     assert_eq!(result.isolated_projection.is_some(), extend_first);
                     if let Some(projection) = result.isolated_projection {
-                        let BezierParallelIntersectionCandidates2::Candidates {
-                            parallel_parameters,
-                            other_parameters,
+                        let CurveIntersectionCandidates2::Candidates {
+                            first_parameters: parallel_parameters,
+                            second_parameters: other_parameters,
                         } = projection.candidates
                         else {
                             panic!("the isolated pair must survive saturation")
@@ -172788,9 +172682,9 @@ mod conversion_tests {
                             };
                             assert!(!selection.positive_dimensional);
                             assert!(selection.selected_pairs.is_empty());
-                            let BezierParallelIntersectionCandidates2::Candidates {
-                                parallel_parameters,
-                                other_parameters,
+                            let CurveIntersectionCandidates2::Candidates {
+                                first_parameters: parallel_parameters,
+                                second_parameters: other_parameters,
                             } = result.isolated_projection.unwrap().candidates
                             else {
                                 panic!("the exact residual pair must survive saturation")
@@ -173474,9 +173368,9 @@ mod conversion_tests {
             let Some(projection) = constraint.isolated_projection else {
                 panic!("the isolated source/component constraint was discarded");
             };
-            let BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            let CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             } = projection.candidates
             else {
                 panic!("the isolated incident constraint was not projected");
@@ -174671,9 +174565,9 @@ mod conversion_tests {
                 panic!("shared component plus residual point was not decomposed");
             };
             assert_eq!(system.overlaps.len(), 1);
-            let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            let Classification::Decided(CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],
@@ -174743,9 +174637,9 @@ mod conversion_tests {
             else {
                 panic!("the residual candidate projection was undecidable");
             };
-            let BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            let CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             } = &candidate_system.candidates
             else {
                 panic!("the residual branch-zero pair was not projected");
@@ -174952,9 +174846,9 @@ mod conversion_tests {
                 panic!("multiple component residual projection was uncertain");
             };
             assert_eq!(candidate_system.overlaps.len(), 2);
-            let BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            let CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             } = candidate_system.candidates
             else {
                 panic!("isolated residual beside two components was discarded");
@@ -176801,9 +176695,9 @@ mod conversion_tests {
                 overlap.second_range().scalar_endpoints(),
                 Some((&three_quarters, &Real::one()))
             );
-            let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            let Classification::Decided(CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],
@@ -176913,9 +176807,9 @@ mod conversion_tests {
                 panic!("implicit component plus isolated residual was not decomposed");
             };
             assert_eq!(system.overlaps.len(), 1);
-            let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            let Classification::Decided(CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             }) = project_parallel_intersection_system(
                 &system.residual_equations[0],
                 &system.residual_equations[1],

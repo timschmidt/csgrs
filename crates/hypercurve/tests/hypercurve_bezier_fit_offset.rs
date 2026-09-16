@@ -3,14 +3,13 @@ mod support;
 use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierLineImageFitRelation,
     BezierParallelApproximationCurve2, BezierParallelIncidence2,
-    BezierParallelIntersectionCandidates2, BezierParallelIntersectionContact2,
-    BezierParallelIntersectionSet2, BezierParallelPairIntersectionCandidates2,
+    BezierParallelIntersectionContact2, BezierParallelIntersectionSet2,
     BezierParallelPairIntersectionContact2, BezierParallelPairIntersectionSet2,
     BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
-    CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule,
-    LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, Rational, RationalBezier2,
-    RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
-    RationalQuadraticBezier2, Real, RealSign,
+    CurveContext, CurveError, CurveIntersectionCandidates2, CurvePath2, CurvePoint2, CurveRegion2,
+    CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
+    Rational, RationalBezier2, RationalBezierIntersectionOverlap2,
+    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, RealSign,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -1409,7 +1408,7 @@ fn parallel_pair_replays_a_general_non_ph_contact_under_both_policies() {
             .unwrap();
         assert!(matches!(
             candidates,
-            Classification::Decided(BezierParallelPairIntersectionCandidates2::Candidates { .. })
+            Classification::Decided(CurveIntersectionCandidates2::Candidates { .. })
         ));
         let intersections =
             decided_parallel_pair_set(first.parallel_intersections(&second, &policy).unwrap());
@@ -1528,9 +1527,7 @@ fn parallel_pair_certifies_partial_source_overlap_and_reparameterization() {
                 first
                     .parallel_intersection_candidates(second, &policy)
                     .unwrap(),
-                Classification::Decided(
-                    BezierParallelPairIntersectionCandidates2::DegenerateResultant
-                )
+                Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant)
             );
             let intersections =
                 decided_parallel_pair_set(first.parallel_intersections(second, &policy).unwrap());
@@ -1616,9 +1613,7 @@ fn parallel_pair_removes_a_false_same_source_component() {
                 first
                     .parallel_intersection_candidates(second, &policy)
                     .unwrap(),
-                Classification::Decided(
-                    BezierParallelPairIntersectionCandidates2::DegenerateResultant
-                )
+                Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant)
             );
             let intersections =
                 decided_parallel_pair_set(first.parallel_intersections(second, &policy).unwrap());
@@ -1639,7 +1634,7 @@ fn parallel_pair_component_saturation_retains_residual_isolated_contact() {
             first
                 .parallel_intersection_candidates(&second, &policy)
                 .unwrap(),
-            Classification::Decided(BezierParallelPairIntersectionCandidates2::DegenerateResultant)
+            Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant)
         );
         let intersections =
             decided_parallel_pair_set(first.parallel_intersections(&second, &policy).unwrap());
@@ -1771,9 +1766,9 @@ fn parallel_rational_intersection_candidates_retain_both_finite_parameters() {
             parallel
                 .intersection_candidates(&vertical, &policy)
                 .unwrap(),
-            Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters: vec![BezierParameter2::Exact(q(1, 2))],
-                other_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+            Classification::Decided(CurveIntersectionCandidates2::Candidates {
+                first_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+                second_parameters: vec![BezierParameter2::Exact(q(1, 2))],
             })
         );
     }
@@ -1787,9 +1782,9 @@ fn parallel_rational_intersection_candidates_retain_algebraic_projection() {
     let vertical = RationalBezier2::try_new(vec![p(1, 0), p(1, 2)], vec![r(1), r(1)]).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-            parallel_parameters,
-            other_parameters,
+        let Classification::Decided(CurveIntersectionCandidates2::Candidates {
+            first_parameters: parallel_parameters,
+            second_parameters: other_parameters,
         }) = parallel
             .intersection_candidates(&vertical, &policy)
             .unwrap()
@@ -1817,13 +1812,13 @@ fn parallel_rational_intersection_candidates_report_disjoint_and_shared_componen
             parallel
                 .intersection_candidates(&disjoint, &policy)
                 .unwrap(),
-            Classification::Decided(BezierParallelIntersectionCandidates2::NoIntersection)
+            Classification::Decided(CurveIntersectionCandidates2::NoIntersection)
         );
         assert_eq!(
             parallel
                 .intersection_candidates(&coincident, &policy)
                 .unwrap(),
-            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+            Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant)
         );
     }
 }
@@ -1842,7 +1837,7 @@ fn parallel_rational_intersections_retain_a_boundary_parameter_fiber() {
         assert!(
             matches!(
                 candidates,
-                Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+                Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant)
             ),
             "{candidates:?}"
         );
@@ -1940,9 +1935,9 @@ fn parallel_rational_intersections_saturate_rootless_homogeneous_axis_content() 
         (&ordinary_parallel, &factored_vertical),
     ] {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            let Classification::Decided(CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             }) = parallel.intersection_candidates(vertical, &policy).unwrap()
             else {
                 panic!("rootless homogeneous axis content was not saturated");
@@ -2001,9 +1996,9 @@ fn parallel_rational_candidates_use_approximate_512_only_as_a_terminal_decision(
     assert_eq!(
         parallel.intersection_candidates(&vertical, &CurveContext::APPROXIMATE_512),
         Ok(Classification::Decided(
-            BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters: vec![BezierParameter2::Exact(q(1, 2))],
-                other_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+            CurveIntersectionCandidates2::Candidates {
+                first_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+                second_parameters: vec![BezierParameter2::Exact(q(1, 2))],
             }
         ))
     );
@@ -2059,9 +2054,9 @@ fn zero_distance_parallel_candidates_keep_stationary_source_intersection() {
             parallel
                 .intersection_candidates(&vertical, &policy)
                 .unwrap(),
-            Classification::Decided(BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters: vec![BezierParameter2::Exact(r(0))],
-                other_parameters: vec![BezierParameter2::Exact(q(1, 2))],
+            Classification::Decided(CurveIntersectionCandidates2::Candidates {
+                first_parameters: vec![BezierParameter2::Exact(r(0))],
+                second_parameters: vec![BezierParameter2::Exact(q(1, 2))],
             })
         );
     }
@@ -2421,7 +2416,7 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
         ));
         assert_eq!(
             parallel.intersection_candidates(&target, &policy).unwrap(),
-            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+            Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant)
         );
 
         let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
@@ -2495,7 +2490,7 @@ fn parallel_rational_contacts_transport_an_implicit_parameter_component() {
         ));
         assert!(matches!(
             parallel.intersection_candidates(&target, &policy).unwrap(),
-            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+            Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant)
         ));
         let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
         let overlap = only_parallel_overlap(&intersections);
@@ -2728,7 +2723,7 @@ fn parallel_rational_contacts_partition_a_noninjective_parameter_component() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert!(matches!(
             parallel.intersection_candidates(&target, &policy).unwrap(),
-            Classification::Decided(BezierParallelIntersectionCandidates2::DegenerateResultant)
+            Classification::Decided(CurveIntersectionCandidates2::DegenerateResultant)
         ));
         let intersections = decided_parallel_set(parallel.intersections(&target, &policy).unwrap());
         assert!(intersections.is_complete(), "{intersections:?}");

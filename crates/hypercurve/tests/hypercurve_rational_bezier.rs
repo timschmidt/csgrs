@@ -2,8 +2,8 @@ use hypercurve::BezierAlgebraicImageStatus;
 use hypercurve::{
     Axis2, BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
     BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveFamily2, CurveOperation2, CurvePoint2, LineSeg2, ParamRange, Point2, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    CurveFamily2, CurveIntersectionCandidates2, CurveOperation2, CurvePoint2, LineSeg2, ParamRange,
+    Point2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
     RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
     Real,
 };
@@ -666,7 +666,7 @@ fn direct_disjoint_conic_cubic_reports_no_candidates_or_contacts() {
         conic
             .intersection_candidates(&disjoint_cubic, &policy)
             .unwrap(),
-        RationalBezierIntersectionCandidates2::NoIntersection
+        CurveIntersectionCandidates2::NoIntersection
     );
     assert_eq!(
         conic
@@ -777,7 +777,7 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
         .expect("pi-weight conic candidates should remain exact");
     assert!(!matches!(
         candidates,
-        RationalBezierIntersectionCandidates2::NoIntersection
+        CurveIntersectionCandidates2::NoIntersection
     ));
 
     let topology = conic
@@ -931,7 +931,7 @@ fn rational_resultant_certifies_disjoint_and_represented_crossing_parameters() {
     let rising = RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![r(1), r(1)]).unwrap();
     let falling = RationalBezier2::try_new(vec![p(0, 1), p(1, 0)], vec![r(1), r(1)]).unwrap();
     let crossing = rising.intersection_candidates(&falling, &policy).unwrap();
-    let RationalBezierIntersectionCandidates2::Candidates {
+    let CurveIntersectionCandidates2::Candidates {
         first_parameters,
         second_parameters,
     } = crossing
@@ -951,7 +951,7 @@ fn rational_resultant_certifies_disjoint_and_represented_crossing_parameters() {
     let above = RationalBezier2::try_new(vec![p(0, 2), p(1, 2)], vec![r(1), r(1)]).unwrap();
     assert_eq!(
         rising.intersection_candidates(&above, &policy).unwrap(),
-        RationalBezierIntersectionCandidates2::NoIntersection
+        CurveIntersectionCandidates2::NoIntersection
     );
 }
 
@@ -971,7 +971,7 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
     let candidates = parabola
         .intersection_candidates(&horizontal, &policy)
         .unwrap();
-    let RationalBezierIntersectionCandidates2::Candidates {
+    let CurveIntersectionCandidates2::Candidates {
         first_parameters,
         second_parameters,
     } = candidates
@@ -1128,7 +1128,7 @@ fn rational_resultant_replays_identical_and_reversed_full_image_overlap() {
         curve
             .intersection_candidates(&curve.clone(), &policy)
             .unwrap(),
-        RationalBezierIntersectionCandidates2::DegenerateResultant
+        CurveIntersectionCandidates2::DegenerateResultant
     );
     let RationalBezierIntersectionContacts2::Overlap(overlap) = curve
         .intersection_contacts(&curve.clone(), &policy)
@@ -1472,7 +1472,7 @@ fn polynomial_graph_overlap_retains_irrational_curved_boundary() {
         partial_parabola
             .intersection_candidates(&nonlinear_parameterization, &policy)
             .unwrap(),
-        RationalBezierIntersectionCandidates2::DegenerateResultant
+        CurveIntersectionCandidates2::DegenerateResultant
     );
     let RationalBezierIntersectionContacts2::Overlap(overlap) = partial_parabola
         .intersection_contacts(&nonlinear_parameterization, &policy)

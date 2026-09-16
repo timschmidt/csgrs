@@ -43,10 +43,11 @@ use crate::{
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
     BezierSplitMaterialization2, BezierSubcurve2, CircleCircleRelation, Classification,
-    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveOperation2, CurveParameter2,
-    CurveParameterRange2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult, LineSeg2,
-    LineSide, ParamRange, Point2, RationalBezierAlgebraicPointImage2,
-    RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2, UncertaintyReason,
+    CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionCandidates2,
+    CurveOperation2, CurveParameter2, CurveParameterRange2, CurvePoint2, CurveResult,
+    ExactCurveError, ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    RationalQuadraticBezier2, UncertaintyReason,
 };
 use crate::{BezierAlgebraicParameter2, BezierParameterInterval};
 
@@ -137,28 +138,6 @@ pub enum RationalBezierPointIncidence2 {
     EntireCurve,
     /// The complete ordered set of represented or isolated algebraic parameters.
     Parameters(Vec<BezierParameter2>),
-}
-
-/// Exact elimination candidates for two general rational Bezier curves.
-///
-/// Candidate lists are complete projections onto each parameter axis, but are
-/// deliberately not paired: a resultant root becomes a topology event only
-/// after exact replay proves that one parameter from each list maps to the
-/// same affine point.
-#[derive(Clone, Debug, PartialEq)]
-pub enum RationalBezierIntersectionCandidates2 {
-    /// At least one parameter projection has no root in the finite domains.
-    NoIntersection,
-    /// Both parameter projections contain all possible finite contacts.
-    Candidates {
-        /// Ordered represented or algebraically isolated first-curve parameters.
-        first_parameters: Vec<BezierParameter2>,
-        /// Ordered represented or algebraically isolated second-curve parameters.
-        second_parameters: Vec<BezierParameter2>,
-    },
-    /// A resultant vanished identically, indicating a shared algebraic
-    /// component or another elimination degeneracy that needs overlap replay.
-    DegenerateResultant,
 }
 
 /// One exactly replayed parameter pair shared by two rational Bezier images.
@@ -782,7 +761,7 @@ pub enum RationalBezierIntersectionContacts2 {
         /// Contacts already certified by exact replay.
         contacts: Arc<[RationalBezierIntersectionContact2]>,
         /// Complete unpaired resultant projections retained for later replay.
-        candidates: RationalBezierIntersectionCandidates2,
+        candidates: CurveIntersectionCandidates2,
     },
     /// A resultant vanished identically and overlap replay is required.
     DegenerateResultant,
@@ -882,7 +861,7 @@ struct RationalBezierIntersectionContextData {
     first: RationalBezier2,
     second: RationalBezier2,
     policy: CurveContext,
-    candidates: RationalBezierIntersectionCandidates2,
+    candidates: CurveIntersectionCandidates2,
     contacts: OnceLock<CurveResult<Classification<RationalBezierIntersectionContacts2>>>,
 }
 
@@ -1229,7 +1208,7 @@ fn rational_retained_lineage_residual_system(
 fn project_retained_lineage_residual_system(
     equations: &[BivariatePolynomial; 2],
     policy: &CurveContext,
-) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+) -> CurveResult<Classification<CurveIntersectionCandidates2>> {
     let project = |parameter| {
         resultant_parameter_projection(
             resultant_bivariate_polynomial_system_complete(
@@ -1255,18 +1234,18 @@ fn project_retained_lineage_residual_system(
     };
     Ok(Classification::Decided(match (first, second) {
         (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
-            RationalBezierIntersectionCandidates2::NoIntersection
+            CurveIntersectionCandidates2::NoIntersection
         }
         (ResultantParameterProjection::Degenerate, _)
         | (_, ResultantParameterProjection::Degenerate) => {
-            RationalBezierIntersectionCandidates2::DegenerateResultant
+            CurveIntersectionCandidates2::DegenerateResultant
         }
         (
             ResultantParameterProjection::Parameters(first_parameters)
             | ResultantParameterProjection::SelectedParameters(first_parameters),
             ResultantParameterProjection::Parameters(second_parameters)
             | ResultantParameterProjection::SelectedParameters(second_parameters),
-        ) => RationalBezierIntersectionCandidates2::Candidates {
+        ) => CurveIntersectionCandidates2::Candidates {
             first_parameters,
             second_parameters,
         },
@@ -1276,7 +1255,7 @@ fn project_retained_lineage_residual_system(
 fn project_symmetric_self_intersection_system(
     equations: &[BivariatePolynomial; 2],
     policy: &CurveContext,
-) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+) -> CurveResult<Classification<CurveIntersectionCandidates2>> {
     // A projective line's off-diagonal coordinate difference is a nonzero
     // constant. It excludes every contact, including
     // when the other coordinate equation vanishes identically. A degenerate
@@ -1287,7 +1266,7 @@ fn project_symmetric_self_intersection_system(
             && is_zero(constant, &policy.strict_counterpart()) == Some(false)
         {
             return Ok(Classification::Decided(
-                RationalBezierIntersectionCandidates2::NoIntersection,
+                CurveIntersectionCandidates2::NoIntersection,
             ));
         }
     }
@@ -1316,7 +1295,7 @@ fn project_symmetric_self_intersection_system(
         Classification::Decided(Some(polynomial)) => polynomial,
         Classification::Decided(None) => {
             return Ok(Classification::Decided(
-                RationalBezierIntersectionCandidates2::DegenerateResultant,
+                CurveIntersectionCandidates2::DegenerateResultant,
             ));
         }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -1325,9 +1304,9 @@ fn project_symmetric_self_intersection_system(
         .isolate_unit_interval_roots(policy)?
         .map(|parameters| {
             if parameters.is_empty() {
-                RationalBezierIntersectionCandidates2::NoIntersection
+                CurveIntersectionCandidates2::NoIntersection
             } else {
-                RationalBezierIntersectionCandidates2::Candidates {
+                CurveIntersectionCandidates2::Candidates {
                     first_parameters: parameters.clone(),
                     second_parameters: parameters,
                 }
@@ -2738,7 +2717,7 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         policy: &CurveContext,
-    ) -> ExactCurveResult<RationalBezierIntersectionCandidates2> {
+    ) -> ExactCurveResult<CurveIntersectionCandidates2> {
         match self.intersection_candidates_classified(other, policy) {
             Ok(Classification::Decided(candidates)) => Ok(candidates),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
@@ -2841,7 +2820,7 @@ impl RationalBezier2 {
                     first: self.clone(),
                     second: other.clone(),
                     policy: *policy,
-                    candidates: RationalBezierIntersectionCandidates2::NoIntersection,
+                    candidates: CurveIntersectionCandidates2::NoIntersection,
                     contacts,
                 },
             }));
@@ -2991,7 +2970,7 @@ impl RationalBezier2 {
         ) {
             match self.replay_intersection_candidate_set(
                 other,
-                &RationalBezierIntersectionCandidates2::DegenerateResultant,
+                &CurveIntersectionCandidates2::DegenerateResultant,
                 policy,
             )? {
                 Classification::Decided(
@@ -3265,7 +3244,7 @@ impl RationalBezier2 {
         ) {
             return self.replay_intersection_candidate_set(
                 other,
-                &RationalBezierIntersectionCandidates2::DegenerateResultant,
+                &CurveIntersectionCandidates2::DegenerateResultant,
                 policy,
             );
         }
@@ -3341,13 +3320,13 @@ impl RationalBezier2 {
             }
         };
         let replayed = match &candidates {
-            RationalBezierIntersectionCandidates2::NoIntersection => {
+            CurveIntersectionCandidates2::NoIntersection => {
                 RationalBezierIntersectionContacts2::NoIntersection
             }
-            RationalBezierIntersectionCandidates2::DegenerateResultant => {
+            CurveIntersectionCandidates2::DegenerateResultant => {
                 RationalBezierIntersectionContacts2::DegenerateResultant
             }
-            RationalBezierIntersectionCandidates2::Candidates {
+            CurveIntersectionCandidates2::Candidates {
                 first_parameters,
                 second_parameters,
             } => match self.replay_intersection_candidates_with_pair_filter(
@@ -3409,7 +3388,7 @@ impl RationalBezier2 {
         };
         let replayed = if matches!(
             candidates,
-            RationalBezierIntersectionCandidates2::DegenerateResultant
+            CurveIntersectionCandidates2::DegenerateResultant
         ) {
             RationalBezierIntersectionContacts2::DegenerateResultant
         } else {
@@ -4196,14 +4175,14 @@ impl RationalBezier2 {
     fn replay_intersection_candidate_set(
         &self,
         other: &Self,
-        candidates: &RationalBezierIntersectionCandidates2,
+        candidates: &CurveIntersectionCandidates2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         match candidates {
-            RationalBezierIntersectionCandidates2::NoIntersection => Ok(Classification::Decided(
+            CurveIntersectionCandidates2::NoIntersection => Ok(Classification::Decided(
                 RationalBezierIntersectionContacts2::NoIntersection,
             )),
-            RationalBezierIntersectionCandidates2::DegenerateResultant => {
+            CurveIntersectionCandidates2::DegenerateResultant => {
                 match self.image_overlap(other, policy) {
                     Classification::Decided(RationalBezierSharedComponentReplay::Overlap(
                         overlap,
@@ -4243,7 +4222,7 @@ impl RationalBezier2 {
                     Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                 }
             }
-            RationalBezierIntersectionCandidates2::Candidates {
+            CurveIntersectionCandidates2::Candidates {
                 first_parameters,
                 second_parameters,
             } => self.replay_intersection_candidates(
@@ -4259,14 +4238,14 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+    ) -> CurveResult<Classification<CurveIntersectionCandidates2>> {
         // Same-sign control-hull bounds are only a rejection accelerator. An
         // unavailable sign or ordering certificate must fall through to the
         // homogeneous resultant, whose affine replay independently rejects
         // projective poles and out-of-domain roots.
         if self.certified_bounds_are_disjoint(other, policy) {
             return Ok(Classification::Decided(
-                RationalBezierIntersectionCandidates2::NoIntersection,
+                CurveIntersectionCandidates2::NoIntersection,
             ));
         }
 
@@ -4290,11 +4269,11 @@ impl RationalBezier2 {
         &self,
         other: &Self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<RationalBezierIntersectionCandidates2>> {
+    ) -> CurveResult<Classification<CurveIntersectionCandidates2>> {
         match self.lineage_overlap(other, policy) {
             Classification::Decided(Some(_)) => {
                 return Ok(Classification::Decided(
-                    RationalBezierIntersectionCandidates2::DegenerateResultant,
+                    CurveIntersectionCandidates2::DegenerateResultant,
                 ));
             }
             Classification::Decided(None) => {}
@@ -4305,7 +4284,7 @@ impl RationalBezier2 {
         for reversed in [false, true] {
             if self.same_projective_control_net(other, reversed, policy) == Some(true) {
                 return Ok(Classification::Decided(
-                    RationalBezierIntersectionCandidates2::DegenerateResultant,
+                    CurveIntersectionCandidates2::DegenerateResultant,
                 ));
             }
         }
@@ -4347,18 +4326,18 @@ impl RationalBezier2 {
         };
         Ok(Classification::Decided(match (first, second) {
             (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
-                RationalBezierIntersectionCandidates2::NoIntersection
+                CurveIntersectionCandidates2::NoIntersection
             }
             (ResultantParameterProjection::Degenerate, _)
             | (_, ResultantParameterProjection::Degenerate) => {
-                RationalBezierIntersectionCandidates2::DegenerateResultant
+                CurveIntersectionCandidates2::DegenerateResultant
             }
             (
                 ResultantParameterProjection::Parameters(first_parameters)
                 | ResultantParameterProjection::SelectedParameters(first_parameters),
                 ResultantParameterProjection::Parameters(second_parameters)
                 | ResultantParameterProjection::SelectedParameters(second_parameters),
-            ) => RationalBezierIntersectionCandidates2::Candidates {
+            ) => CurveIntersectionCandidates2::Candidates {
                 first_parameters,
                 second_parameters,
             },
@@ -5048,7 +5027,7 @@ impl RationalBezier2 {
             return Ok(Classification::Decided(
                 RationalBezierIntersectionContacts2::Incomplete {
                     contacts: contacts.into(),
-                    candidates: RationalBezierIntersectionCandidates2::Candidates {
+                    candidates: CurveIntersectionCandidates2::Candidates {
                         first_parameters: first_parameters.to_vec(),
                         second_parameters: second_parameters.to_vec(),
                     },
@@ -8781,10 +8760,10 @@ fn reverse_rational_intersection_contacts(
                 .collect::<Vec<_>>()
                 .into(),
             candidates: match candidates {
-                RationalBezierIntersectionCandidates2::Candidates {
+                CurveIntersectionCandidates2::Candidates {
                     first_parameters,
                     second_parameters,
-                } => RationalBezierIntersectionCandidates2::Candidates {
+                } => CurveIntersectionCandidates2::Candidates {
                     first_parameters: second_parameters,
                     second_parameters: first_parameters,
                 },
@@ -8807,13 +8786,13 @@ const fn negated_real_sign(sign: RealSign) -> RealSign {
 
 fn intersection_candidates_from_contacts(
     contacts: &RationalBezierIntersectionContacts2,
-) -> RationalBezierIntersectionCandidates2 {
+) -> CurveIntersectionCandidates2 {
     match contacts {
         RationalBezierIntersectionContacts2::NoIntersection => {
-            RationalBezierIntersectionCandidates2::NoIntersection
+            CurveIntersectionCandidates2::NoIntersection
         }
         RationalBezierIntersectionContacts2::Contacts(contacts) => {
-            RationalBezierIntersectionCandidates2::Candidates {
+            CurveIntersectionCandidates2::Candidates {
                 first_parameters: contacts
                     .iter()
                     .map(|contact| contact.first_parameter.clone())
@@ -8828,7 +8807,7 @@ fn intersection_candidates_from_contacts(
         RationalBezierIntersectionContacts2::Overlap(_)
         | RationalBezierIntersectionContacts2::ContactsAndOverlap { .. }
         | RationalBezierIntersectionContacts2::DegenerateResultant => {
-            RationalBezierIntersectionCandidates2::DegenerateResultant
+            CurveIntersectionCandidates2::DegenerateResultant
         }
     }
 }

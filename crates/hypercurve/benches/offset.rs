@@ -2,13 +2,13 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierParallelFragment2, BezierParallelIntersectionCandidates2,
-    BezierParallelPairIntersectionCandidates2, BezierParallelVerificationOptions, BezierParameter2,
-    BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
+    BezierAlgebraicParameter2, BezierParallelFragment2, BezierParallelVerificationOptions,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
     BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
+    CurveBoundaryInteriorSide2, CurveContext, CurveIntersectionCandidates2, CurvePath2,
+    CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2,
+    OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
+    Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -222,12 +222,12 @@ fn bench_bezier_parallel_intersections(
             panic!("{name} candidate projection became uncertain");
         };
         candidate_count += black_box(match candidates {
-            BezierParallelIntersectionCandidates2::NoIntersection => 0,
-            BezierParallelIntersectionCandidates2::Candidates {
-                parallel_parameters,
-                other_parameters,
+            CurveIntersectionCandidates2::NoIntersection => 0,
+            CurveIntersectionCandidates2::Candidates {
+                first_parameters: parallel_parameters,
+                second_parameters: other_parameters,
             } => parallel_parameters.len() + other_parameters.len(),
-            BezierParallelIntersectionCandidates2::DegenerateResultant => 1,
+            CurveIntersectionCandidates2::DegenerateResultant => 1,
         });
     }
     let candidate_elapsed = started.elapsed();
@@ -274,12 +274,12 @@ fn bench_bezier_parallel_pair_intersections(
             panic!("{name} candidate projection became uncertain");
         };
         candidate_count += black_box(match candidates {
-            BezierParallelPairIntersectionCandidates2::NoIntersection => 0,
-            BezierParallelPairIntersectionCandidates2::Candidates {
+            CurveIntersectionCandidates2::NoIntersection => 0,
+            CurveIntersectionCandidates2::Candidates {
                 first_parameters,
                 second_parameters,
             } => first_parameters.len() + second_parameters.len(),
-            BezierParallelPairIntersectionCandidates2::DegenerateResultant => 1,
+            CurveIntersectionCandidates2::DegenerateResultant => 1,
         });
     }
     let candidate_elapsed = started.elapsed();
@@ -480,7 +480,7 @@ fn bench_bezier_parallel_boundary_parameter_fiber(iterations: u32) -> CurveResul
         };
         candidate_count += black_box(usize::from(matches!(
             candidates,
-            BezierParallelIntersectionCandidates2::DegenerateResultant
+            CurveIntersectionCandidates2::DegenerateResultant
         )));
     }
     let candidate_elapsed = started.elapsed();
