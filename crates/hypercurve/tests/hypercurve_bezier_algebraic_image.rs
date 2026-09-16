@@ -257,18 +257,102 @@ fn rational_point_image_transforms_exact_real_linear_root() {
         point
             .x()
             .unwrap()
-            .compare_to_real(exact_point.x(), &CurveContext::APPROXIMATE_512),
+            .compare_to_real(exact_point.x(), &CurveContext::STRICT),
         Classification::Decided(std::cmp::Ordering::Equal),
     );
     assert_eq!(
         point
             .y()
             .unwrap()
-            .compare_to_real(exact_point.y(), &CurveContext::APPROXIMATE_512),
+            .compare_to_real(exact_point.y(), &CurveContext::STRICT),
         Classification::Decided(std::cmp::Ordering::Equal),
     );
     assert!(point.retained_parameter().is_none());
     assert!(point.message().is_none());
+}
+
+#[test]
+fn conic_point_images_reuse_exact_evaluation_across_weight_charts() {
+    for translation in [Real::zero(), Real::pi()] {
+        for weights in [
+            [r(1), r(2), r(3)],
+            [r(2), r(3), r(5)],
+            [r(1), q(-1, 2), r(1)],
+            [r(2), Real::pi(), r(3)],
+            [r(1), Real::pi(), r(1)],
+            [r(1), q(1, 2).sqrt().unwrap(), r(1)],
+        ] {
+            for reverse in [false, true] {
+                for swap_axes in [false, true] {
+                    let mut controls = [
+                        Point2::new(translation.clone(), r(0)),
+                        Point2::new(r(2) + &translation, r(4)),
+                        Point2::new(r(6) + &translation, r(0)),
+                    ];
+                    if swap_axes {
+                        controls =
+                            controls.map(|point| Point2::new(point.y().clone(), point.x().clone()));
+                    }
+                    let mut weights = weights.clone();
+                    if reverse {
+                        controls.reverse();
+                        weights.reverse();
+                    }
+                    let conic = RationalQuadraticBezier2::try_new(
+                        controls[0].clone(),
+                        controls[1].clone(),
+                        controls[2].clone(),
+                        weights[0].clone(),
+                        weights[1].clone(),
+                        weights[2].clone(),
+                    )
+                    .unwrap();
+                    let promoted = RationalBezier2::from(conic.clone());
+                    for t in [
+                        q(1, 2),
+                        (r(1) / Real::pi()).unwrap(),
+                        (r(2).sqrt().unwrap() / r(2)).unwrap(),
+                    ] {
+                        let parameter =
+                            isolate(polynomial(vec![-t.clone(), r(1)]), interval(r(0), r(1)));
+                        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                            let image = conic
+                                .point_at_algebraic_parameter(&parameter, &policy)
+                                .unwrap();
+                            assert_eq!(image.status(), BezierAlgebraicImageStatus::Transformed);
+                            for point in [
+                                decided(conic.point_at(t.clone(), &policy)),
+                                promoted.point_at(&t, &policy).unwrap(),
+                            ] {
+                                for (coordinate, value) in [
+                                    (image.x().unwrap(), point.x()),
+                                    (image.y().unwrap(), point.y()),
+                                ] {
+                                    // Equality must be certified across independently evaluated
+                                    // public representations, including a transcendental weight
+                                    // and the pole-free mixed-sign chart W = 1 - 3t + 3t^2.
+                                    assert_eq!(
+                                        coordinate.compare_to_real(value, &CurveContext::STRICT),
+                                        Classification::Decided(std::cmp::Ordering::Equal),
+                                    );
+                                    for (other, expected) in [
+                                        (value - r(1), std::cmp::Ordering::Greater),
+                                        (value + r(1), std::cmp::Ordering::Less),
+                                    ] {
+                                        assert_eq!(
+                                            coordinate
+                                                .compare_to_real(&other, &CurveContext::STRICT),
+                                            Classification::Decided(expected),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[test]

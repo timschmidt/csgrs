@@ -70,6 +70,31 @@ fn rational_quadratic_rational_parameter_uses_exact_power_quotient() {
 }
 
 #[test]
+fn rational_quadratic_exact_transcendental_pole_stays_projective() {
+    // These weights give W(t) = 1 - pi*t. At t = 1/pi the numerator
+    // remains nonzero, so this is a genuine projective pole, not an affine
+    // point or a removable singularity.
+    let curve = RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        p(2, 4),
+        p(6, 0),
+        r(1),
+        r(1) - (Real::pi() / r(2)).unwrap(),
+        r(1) - Real::pi(),
+    )
+    .unwrap();
+    let pole = (r(1) / Real::pi()).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        assert_eq!(
+            curve.point_at(pole.clone(), &policy),
+            Classification::Uncertain(hypercurve::UncertaintyReason::Boundary),
+        );
+        assert_eq!(decided(curve.point_at(r(0), &policy)), p(0, 0));
+        assert_eq!(decided(curve.point_at(r(1), &policy)), p(6, 0));
+    }
+}
+
+#[test]
 fn rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative() {
     let curve = RationalQuadraticBezier2::try_new(
         p(0, 0),

@@ -29,7 +29,7 @@ use hypersolve::{
     validate_algebraic_root_representation,
 };
 
-use crate::bezier_parameter::signed_coefficients_at_parameter;
+use crate::bezier_parameter::{quadratic_bernstein_to_power, signed_coefficients_at_parameter};
 use crate::classify::{compare_reals, real_sign};
 use crate::{
     Aabb2, BezierAlgebraicParameter2, BezierParameter2, Classification, CubicBezier2, CurveContext,
@@ -2467,20 +2467,11 @@ fn linear_parameter_witness(
 }
 
 fn quadratic_point_coefficients(curve: &QuadraticBezier2) -> CoordinatePolynomials {
-    let two = Real::from(2_i8);
     CoordinatePolynomials {
-        x: quadratic_power_coefficients(
-            curve.start().x(),
-            curve.control().x(),
-            curve.end().x(),
-            &two,
-        ),
-        y: quadratic_power_coefficients(
-            curve.start().y(),
-            curve.control().y(),
-            curve.end().y(),
-            &two,
-        ),
+        x: quadratic_bernstein_to_power([curve.start().x(), curve.control().x(), curve.end().x()])
+            .into(),
+        y: quadratic_bernstein_to_power([curve.start().y(), curve.control().y(), curve.end().y()])
+            .into(),
     }
 }
 
@@ -2543,9 +2534,9 @@ fn rational_point_coefficients(curve: &RationalQuadraticBezier2) -> RationalCoor
         curve.end_weight().clone(),
     ];
     RationalCoordinatePolynomials {
-        x_numerator: rational_quadratic_power_coefficients(&weighted_x),
-        y_numerator: rational_quadratic_power_coefficients(&weighted_y),
-        denominator: rational_quadratic_power_coefficients(&weights),
+        x_numerator: quadratic_bernstein_to_power(weighted_x.each_ref()).into(),
+        y_numerator: quadratic_bernstein_to_power(weighted_y.each_ref()).into(),
+        denominator: quadratic_bernstein_to_power(weights.each_ref()).into(),
     }
 }
 
@@ -2604,17 +2595,8 @@ fn rational_second_derivative_coefficients(
     }
 }
 
-fn quadratic_power_coefficients(p0: &Real, p1: &Real, p2: &Real, two: &Real) -> Vec<Real> {
-    vec![p0.clone(), two * &(p1 - p0), p0 - &(two * p1) + p2]
-}
-
 fn quadratic_derivative_coefficients(p0: &Real, p1: &Real, p2: &Real, two: &Real) -> Vec<Real> {
     vec![two * &(p1 - p0), two * &(p0 - &(two * p1) + p2)]
-}
-
-fn rational_quadratic_power_coefficients(bernstein: &[Real; 3]) -> Vec<Real> {
-    let two = Real::from(2_i8);
-    quadratic_power_coefficients(&bernstein[0], &bernstein[1], &bernstein[2], &two)
 }
 
 fn cubic_power_coefficients(p0: &Real, p1: &Real, p2: &Real, p3: &Real, three: &Real) -> Vec<Real> {

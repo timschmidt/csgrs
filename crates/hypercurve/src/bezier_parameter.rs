@@ -4120,7 +4120,21 @@ pub(crate) fn divide_by_linear_root(coefficients: &[Real], root: &Real) -> Vec<R
     quotient
 }
 
+/// The shared degree-two basis change keeps exact coefficient expressions
+/// identical across primitive evaluation, general curves, and root images.
+pub(crate) fn quadratic_bernstein_to_power([start, control, end]: [&Real; 3]) -> [Real; 3] {
+    let two = Real::from(2_i8);
+    [
+        start.clone(),
+        &two * &(control - start),
+        start - &(&two * control) + end,
+    ]
+}
+
 pub(crate) fn bernstein_to_power_coefficients(values: Vec<Real>) -> CurveResult<Vec<Real>> {
+    if let [start, control, end] = values.as_slice() {
+        return Ok(quadratic_bernstein_to_power([start, control, end]).into());
+    }
     let degree = values
         .len()
         .checked_sub(1)

@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 
-use crate::bezier_parameter::subdivide_scalar_bernstein_half;
+use crate::bezier_parameter::{quadratic_bernstein_to_power, subdivide_scalar_bernstein_half};
 use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
 use crate::bezier_topology::polynomial_roots_in_unit_interval_with_endpoints;
 use crate::classify::{
@@ -258,54 +258,53 @@ impl RationalQuadraticBezier2 {
 
     /// Evaluates the rational segment at affine parameter `t`.
     ///
-    /// The numerator and denominator are evaluated in homogeneous Bernstein
-    /// form: `(sum B_i(t) w_i P_i) / (sum B_i(t) w_i)`. A zero denominator is
-    /// a projective boundary, so this API returns explicit uncertainty instead
+    /// The homogeneous numerator and denominator use the same power basis for
+    /// rational and arbitrary exact parameters. A zero denominator is a
+    /// projective boundary, so this API returns explicit uncertainty instead
     /// of inventing an affine point.
     pub fn point_at(&self, t: Real, policy: &CurveContext) -> Classification<Point2> {
-        let one_minus_t = Real::one() - &t;
-        let two = Real::from(2_i8);
-        // Conjugating can eliminate a non-rational middle weight. When that
-        // weight is already rational it only lengthens the exact quotient.
-        if self.start_weight == Real::one()
+        let endpoint = match t.exact_rational_ref() {
+            Some(t) if t.is_zero() => Some((&self.start, &self.start_weight)),
+            Some(t) if t.is_one() => Some((&self.end, &self.end_weight)),
+            _ => None,
+        };
+        if let Some((point, weight)) = endpoint {
+            return match is_zero(weight, policy) {
+                Some(false) => Classification::Decided(point.clone()),
+                Some(true) => Classification::Uncertain(UncertaintyReason::Boundary),
+                None => Classification::Uncertain(UncertaintyReason::RealSign),
+            };
+        }
+        // In Q(w), with w^2 rational, conjugation keeps a rational parameter's
+        // coordinates linear in w. Outside this field use the shared power
+        // basis: unrestricted conjugation expands equivalent exact expressions
+        // that their retained coordinate images cannot necessarily identify.
+        if t.exact_rational_ref().is_some()
+            && self.start_weight == Real::one()
             && self.end_weight == Real::one()
             && self.control_weight.exact_rational_ref().is_none()
-            && let Some(point) =
-                self.point_at_unit_end_weights_rationalized(&t, &one_minus_t, &two, policy)
+            && self.control_points().iter().all(|point| {
+                point.x().exact_rational_ref().is_some() && point.y().exact_rational_ref().is_some()
+            })
         {
-            return point;
-        }
-        if t.exact_rational_ref().is_some() {
-            let denominator = evaluate_quadratic_power_basis(self.weight_power_basis(), &t);
-            match is_zero(&denominator, policy) {
-                Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
-                Some(false) => {}
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            let weight_squared = &self.control_weight * &self.control_weight;
+            if weight_squared.exact_rational_ref().is_some()
+                && let Some(point) = self.point_at_quadratic_weight(&t, &weight_squared)
+            {
+                return Classification::Decided(point);
             }
-            let numerator_x =
-                evaluate_quadratic_power_basis(self.weighted_coordinate_power_basis(Axis2::X), &t);
-            let numerator_y =
-                evaluate_quadratic_power_basis(self.weighted_coordinate_power_basis(Axis2::Y), &t);
-            let Ok(x) = numerator_x / &denominator else {
-                return Classification::Uncertain(UncertaintyReason::Boundary);
-            };
-            let Ok(y) = numerator_y / denominator else {
-                return Classification::Uncertain(UncertaintyReason::Boundary);
-            };
-            return Classification::Decided(Point2::new(x, y));
         }
-        let b0 = &one_minus_t * &one_minus_t * &self.start_weight;
-        let b1 = &two * &one_minus_t * &t * &self.control_weight;
-        let b2 = &t * &t * &self.end_weight;
-        let denominator = &b0 + &b1 + &b2;
+        let denominator = self.denominator_at(&t);
         match is_zero(&denominator, policy) {
             Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
             Some(false) => {}
             None => return Classification::Uncertain(UncertaintyReason::RealSign),
         }
 
-        let numerator_x = (&b0 * self.start.x()) + (&b1 * self.control.x()) + (&b2 * self.end.x());
-        let numerator_y = (&b0 * self.start.y()) + (&b1 * self.control.y()) + (&b2 * self.end.y());
+        let numerator_x =
+            evaluate_quadratic_power_basis(self.weighted_coordinate_power_basis(Axis2::X), &t);
+        let numerator_y =
+            evaluate_quadratic_power_basis(self.weighted_coordinate_power_basis(Axis2::Y), &t);
         let Ok(x) = numerator_x / &denominator else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
@@ -315,21 +314,15 @@ impl RationalQuadraticBezier2 {
         Classification::Decided(Point2::new(x, y))
     }
 
-    fn point_at_unit_end_weights_rationalized(
-        &self,
-        t: &Real,
-        one_minus_t: &Real,
-        two: &Real,
-        policy: &CurveContext,
-    ) -> Option<Classification<Point2>> {
-        let u_squared = one_minus_t * one_minus_t;
+    fn point_at_quadratic_weight(&self, t: &Real, weight_squared: &Real) -> Option<Point2> {
+        let one_minus_t = Real::one() - t;
+        let u_squared = &one_minus_t * &one_minus_t;
         let t_squared = t * t;
         let unweighted = &u_squared + &t_squared;
-        let middle_basis = two * one_minus_t * t;
-        let weight_squared = &self.control_weight * &self.control_weight;
+        let middle_basis = Real::from(2_i8) * &one_minus_t * t;
         let conjugate_denominator =
-            (&unweighted * &unweighted) - (&middle_basis * &middle_basis * &weight_squared);
-        if is_zero(&conjugate_denominator, policy) != Some(false) {
+            (&unweighted * &unweighted) - (&middle_basis * &middle_basis * weight_squared);
+        if conjugate_denominator.zero_status() != ZeroKnowledge::NonZero {
             return None;
         }
 
@@ -337,19 +330,16 @@ impl RationalQuadraticBezier2 {
             let unweighted_numerator = (&u_squared * start) + (&t_squared * end);
             let weighted_control = &middle_basis * control;
             let rational_part = (&unweighted_numerator * &unweighted)
-                - (&weighted_control * &middle_basis * &weight_squared);
+                - (&weighted_control * &middle_basis * weight_squared);
             let radical_part = ((&weighted_control * &unweighted)
                 - (&unweighted_numerator * &middle_basis))
                 * &self.control_weight;
-            (rational_part + radical_part) / &conjugate_denominator
+            ((rational_part + radical_part) / &conjugate_denominator).ok()
         };
-        let Ok(x) = coordinate(self.start.x(), self.control.x(), self.end.x()) else {
-            return Some(Classification::Uncertain(UncertaintyReason::Boundary));
-        };
-        let Ok(y) = coordinate(self.start.y(), self.control.y(), self.end.y()) else {
-            return Some(Classification::Uncertain(UncertaintyReason::Boundary));
-        };
-        Some(Classification::Decided(Point2::new(x, y)))
+        Some(Point2::new(
+            coordinate(self.start.x(), self.control.x(), self.end.x())?,
+            coordinate(self.start.y(), self.control.y(), self.end.y())?,
+        ))
     }
 
     /// Classifies whether `point` equals this conic at parameter `t`.
@@ -458,7 +448,7 @@ impl RationalQuadraticBezier2 {
         };
         let mut retained_roots = Vec::new();
         for root in roots {
-            match is_zero(&self.denominator_at(root.clone()), policy) {
+            match is_zero(&self.denominator_at(&root), policy) {
                 Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
                 Some(false) => retained_roots.push(root),
                 None => return Classification::Uncertain(UncertaintyReason::RealSign),
@@ -580,7 +570,7 @@ impl RationalQuadraticBezier2 {
         &self,
         axis: Axis2,
         weight_products: &(Real, Real, Real),
-        denominator: &(Real, Real, Real),
+        denominator: &[Real; 3],
         policy: &CurveContext,
     ) -> Classification<Vec<Real>> {
         // After removing the irrelevant common factor two, the quotient
@@ -608,7 +598,7 @@ impl RationalQuadraticBezier2 {
         let mut retained_roots = Vec::new();
         for root in roots {
             let denominator_at_root =
-                ((&denominator.2 * &root) + &denominator.1) * &root + &denominator.0;
+                ((&denominator[2] * &root) + &denominator[1]) * &root + &denominator[0];
             match is_zero(&denominator_at_root, policy) {
                 Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
                 Some(false) => retained_roots.push(root),
@@ -978,13 +968,8 @@ impl RationalQuadraticBezier2 {
         crate::facts::rational_quadratic_bezier_facts(self)
     }
 
-    fn denominator_at(&self, t: Real) -> Real {
-        let one_minus_t = Real::one() - &t;
-        let two = Real::from(2_i8);
-        let b0 = &one_minus_t * &one_minus_t * &self.start_weight;
-        let b1 = &two * &one_minus_t * &t * &self.control_weight;
-        let b2 = &t * &t * &self.end_weight;
-        &b0 + &b1 + &b2
+    fn denominator_at(&self, t: &Real) -> Real {
+        evaluate_quadratic_power_basis(self.weight_power_basis(), t)
     }
 
     fn weighted_line_distances(&self, line: &LineSeg2) -> [Real; 3] {
@@ -997,12 +982,15 @@ impl RationalQuadraticBezier2 {
         ]
     }
 
-    fn weighted_coordinate_power_basis(&self, axis: Axis2) -> (Real, Real, Real) {
-        quadratic_bernstein_to_power(&[
-            coordinate(self.start(), axis) * &self.start_weight,
-            coordinate(self.control(), axis) * &self.control_weight,
-            coordinate(self.end(), axis) * &self.end_weight,
-        ])
+    fn weighted_coordinate_power_basis(&self, axis: Axis2) -> [Real; 3] {
+        quadratic_bernstein_to_power(
+            [
+                coordinate(self.start(), axis) * &self.start_weight,
+                coordinate(self.control(), axis) * &self.control_weight,
+                coordinate(self.end(), axis) * &self.end_weight,
+            ]
+            .each_ref(),
+        )
     }
 
     fn derivative_weight_products(&self) -> (Real, Real, Real) {
@@ -1013,12 +1001,8 @@ impl RationalQuadraticBezier2 {
         )
     }
 
-    fn weight_power_basis(&self) -> (Real, Real, Real) {
-        quadratic_bernstein_to_power(&[
-            self.start_weight.clone(),
-            self.control_weight.clone(),
-            self.end_weight.clone(),
-        ])
+    fn weight_power_basis(&self) -> [Real; 3] {
+        quadratic_bernstein_to_power(self.weights())
     }
 
     fn weights_known_same_nonzero_sign(&self, policy: &CurveContext) -> Option<bool> {
@@ -1182,16 +1166,8 @@ fn coordinate(point: &Point2, axis: Axis2) -> &Real {
     }
 }
 
-fn quadratic_bernstein_to_power(values: &[Real; 3]) -> (Real, Real, Real) {
-    let two = Real::from(2_i8);
-    let c0 = values[0].clone();
-    let c1 = &two * &(&values[1] - &values[0]);
-    let c2 = &values[0] - &(&two * &values[1]) + &values[2];
-    (c0, c1, c2)
-}
-
 fn evaluate_quadratic_power_basis(
-    (constant, linear, quadratic): (Real, Real, Real),
+    [constant, linear, quadratic]: [Real; 3],
     parameter: &Real,
 ) -> Real {
     if constant.exact_rational_ref().is_some()
@@ -1263,7 +1239,7 @@ fn rational_axis_point_root_set(
     {
         return Classification::Decided(RationalPointRootSet::All);
     }
-    let (c0, c1, c2) = quadratic_bernstein_to_power(&values);
+    let [c0, c1, c2] = quadratic_bernstein_to_power(values.each_ref());
     polynomial_roots_in_unit_interval_with_endpoints(c0, c1, c2, &values[0], &values[2], policy)
         .map(RationalPointRootSet::Roots)
 }
@@ -2906,7 +2882,7 @@ fn matching_weight_axis_difference_root_set(
     // outside the current scalar proof surface fall back to conservative
     // subdivision regions; see the Bernstein and de Casteljau curve model, and
     // exact-computation discipline.
-    let (c0, c1, c2) = quadratic_bernstein_to_power(&values);
+    let [c0, c1, c2] = quadratic_bernstein_to_power(values.each_ref());
     match polynomial_roots_in_unit_interval_with_endpoints(
         c0, c1, c2, &values[0], &values[2], policy,
     ) {
@@ -2931,7 +2907,7 @@ fn matching_weight_axis_difference_root_cover(
         return Classification::Decided(Some(RationalQuadraticRootCover::All));
     }
 
-    let (c0, c1, c2) = quadratic_bernstein_to_power(&values);
+    let [c0, c1, c2] = quadratic_bernstein_to_power(values.each_ref());
     match polynomial_roots_in_unit_interval_with_endpoints(
         c0, c1, c2, &values[0], &values[2], policy,
     ) {
@@ -3946,21 +3922,21 @@ mod tests {
     #[test]
     fn quadratic_power_evaluation_fuses_exact_terms_and_preserves_symbolic_horner_form() {
         let parameter = (Real::one() / Real::from(3_i8)).unwrap();
-        let coefficients = (Real::from(5_i8), Real::from(-7_i8), Real::from(11_i8));
-        let expected = ((&coefficients.2 * &parameter) + coefficients.1.clone()) * &parameter
-            + coefficients.0.clone();
+        let coefficients = [Real::from(5_i8), Real::from(-7_i8), Real::from(11_i8)];
+        let expected = ((&coefficients[2] * &parameter) + coefficients[1].clone()) * &parameter
+            + coefficients[0].clone();
         assert_eq!(
             evaluate_quadratic_power_basis(coefficients, &parameter),
             expected
         );
 
-        let coefficients = (
+        let coefficients = [
             Real::from(2_i8).sqrt().unwrap(),
             Real::from(3_i8).sqrt().unwrap(),
             Real::from(5_i8).sqrt().unwrap(),
-        );
-        let expected = ((&coefficients.2 * &parameter) + coefficients.1.clone()) * &parameter
-            + coefficients.0.clone();
+        ];
+        let expected = ((&coefficients[2] * &parameter) + coefficients[1].clone()) * &parameter
+            + coefficients[0].clone();
         assert_eq!(
             evaluate_quadratic_power_basis(coefficients, &parameter),
             expected
