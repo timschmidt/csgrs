@@ -694,10 +694,10 @@ impl LineSeg2 {
 
         match self.supporting_line_circle_relation(arc, policy)? {
             LineCircleRelation::Disjoint => Ok(LineArcIntersection::None),
-            LineCircleRelation::Tangent { line_param, .. } => {
+            LineCircleRelation::Tangent { point, line_param } => {
                 match line_arc_hit_candidate(
-                    self,
                     arc,
+                    point,
                     line_param,
                     IntersectionKind::Tangent,
                     policy,
@@ -710,10 +710,16 @@ impl LineSeg2 {
                 }
             }
             LineCircleRelation::Secant {
+                first_point,
                 first_param,
+                second_point,
                 second_param,
-                ..
-            } => line_arc_two_candidates(self, arc, first_param, second_param, policy),
+            } => line_arc_two_candidates(
+                arc,
+                (first_point, first_param),
+                (second_point, second_param),
+                policy,
+            ),
             LineCircleRelation::Uncertain { reason } => {
                 Ok(LineArcIntersection::Uncertain { reason })
             }
@@ -734,8 +740,77 @@ impl LineSeg2 {
         arc: &CircularArc2,
         policy: &CurveContext,
     ) -> CurveResult<LineCircleRelation> {
+        if arc.endpoints_on_stored_circle_are_certified() {
+            let incident =
+                |point: &Point2| arc.contains_endpoint(point, &CurveContext::STRICT) == Some(true);
+            if let Some(relation) = line_circle_relation_at_endpoints(
+                self,
+                arc.center(),
+                [incident(self.start()), incident(self.end())],
+                policy,
+            )? {
+                return Ok(relation);
+            }
+        }
         line_circle_relation_from_supports(self, arc.center(), arc.radius_squared_ref(), policy)
     }
+}
+
+/// Deflates a certified circle contact at a line endpoint. In the local
+/// coordinate u from that endpoint the circle equation is
+/// u * (|D|^2 u + 2 (P-C).D), so replay needs no new square root.
+fn line_circle_relation_at_endpoints(
+    line: &LineSeg2,
+    center: &Point2,
+    incident: [bool; 2],
+    policy: &CurveContext,
+) -> CurveResult<Option<LineCircleRelation>> {
+    if incident == [false, false] {
+        return Ok(None);
+    }
+    let (dx, dy) = line.delta();
+    let a = dot(&dx, &dy, &dx, &dy);
+    if crate::classify::real_sign(&a, &CurveContext::STRICT) != Some(RealSign::Positive) {
+        return Ok(None);
+    }
+    if incident == [true, true] {
+        return Ok(Some(LineCircleRelation::Secant {
+            first_point: line.start().clone(),
+            first_param: Real::zero(),
+            second_point: line.end().clone(),
+            second_param: Real::one(),
+        }));
+    }
+    let (point, parameter) = if incident[0] {
+        (line.start(), Real::zero())
+    } else {
+        (line.end(), Real::one())
+    };
+    let radial = point.delta_from(center);
+    let projection = dot(&radial.0, &radial.1, &dx, &dy);
+    let sign = match crate::classify::real_sign(&projection, &CurveContext::STRICT) {
+        Some(RealSign::Zero) => {
+            return Ok(Some(LineCircleRelation::Tangent {
+                point: point.clone(),
+                line_param: parameter,
+            }));
+        }
+        Some(sign) => sign,
+        None => return Ok(None),
+    };
+    let other_parameter = &parameter - ((Real::from(2_u8) * projection) / a)?;
+    let other_point = line_point_at_for_policy(line, &other_parameter, policy)?;
+    let (first_point, first_param, second_point, second_param) = if sign == RealSign::Positive {
+        (other_point, other_parameter, point.clone(), parameter)
+    } else {
+        (point.clone(), parameter, other_point, other_parameter)
+    };
+    Ok(Some(LineCircleRelation::Secant {
+        first_point,
+        first_param,
+        second_point,
+        second_param,
+    }))
 }
 
 pub(crate) fn line_circle_relation_from_supports(
@@ -769,17 +844,10 @@ pub(crate) fn line_circle_relation_from_supports(
         Some(RealSign::Positive) => {
             let sqrt_discriminant = discriminant.clone().sqrt()?;
             let negative_half_b = -half_b;
-            let first = ((&negative_half_b - &sqrt_discriminant) / &a)?;
-            let second = ((negative_half_b + sqrt_discriminant) / &a)?;
-            let (first_param, second_param) = match compare_reals(&first, &second, policy) {
-                Some(Ordering::Greater) => (second, first),
-                Some(Ordering::Less | Ordering::Equal) => (first, second),
-                None => {
-                    return Ok(LineCircleRelation::Uncertain {
-                        reason: UncertaintyReason::Ordering,
-                    });
-                }
-            };
+            // Positive discriminant proves a=|D|^2>0, hence these two
+            // quadratic branches already certify increasing parameter order.
+            let first_param = ((&negative_half_b - &sqrt_discriminant) / &a)?;
+            let second_param = ((negative_half_b + sqrt_discriminant) / &a)?;
             let first_point = line_point_at_for_policy(line, &first_param, policy)?;
             let second_point = line_point_at_for_policy(line, &second_param, policy)?;
             Ok(LineCircleRelation::Secant {
@@ -858,8 +926,9 @@ fn intersect_line_arc_edge_preview(
     }
     if discriminant.abs() <= discriminant_tolerance {
         let line_param = Real::try_from(-half_b / a)?;
+        let point = line_point_at_for_policy(line, &line_param, policy)?;
         return Ok(Some(
-            match line_arc_hit_candidate(line, arc, line_param, IntersectionKind::Tangent, policy)?
+            match line_arc_hit_candidate(arc, point, line_param, IntersectionKind::Tangent, policy)?
             {
                 LineArcCandidate::Hit(hit) => LineArcIntersection::Point(hit),
                 LineArcCandidate::Miss => LineArcIntersection::None,
@@ -883,14 +952,14 @@ fn intersect_line_arc_edge_preview(
     } else {
         (second, first)
     };
-    line_arc_two_candidates(
-        line,
-        arc,
-        Real::try_from(first)?,
-        Real::try_from(second)?,
-        policy,
-    )
-    .map(Some)
+    let candidate = |parameter| {
+        let parameter = Real::try_from(parameter)?;
+        Ok::<_, CurveError>((
+            line_point_at_for_policy(line, &parameter, policy)?,
+            parameter,
+        ))
+    };
+    line_arc_two_candidates(arc, candidate(first)?, candidate(second)?, policy).map(Some)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1505,24 +1574,16 @@ fn dot(ax: &Real, ay: &Real, bx: &Real, by: &Real) -> Real {
 }
 
 fn line_arc_two_candidates(
-    line: &LineSeg2,
     arc: &CircularArc2,
-    t0: Real,
-    t1: Real,
+    first: (Point2, Real),
+    second: (Point2, Real),
     policy: &CurveContext,
 ) -> CurveResult<LineArcIntersection> {
-    let ordered = match compare_reals(&t0, &t1, policy) {
-        Some(Ordering::Greater) => (t1, t0),
-        Some(Ordering::Less | Ordering::Equal) => (t0, t1),
-        None => {
-            return Ok(LineArcIntersection::Uncertain {
-                reason: UncertaintyReason::Ordering,
-            });
-        }
-    };
-
-    let first = line_arc_hit_candidate(line, arc, ordered.0, IntersectionKind::Crossing, policy)?;
-    let second = line_arc_hit_candidate(line, arc, ordered.1, IntersectionKind::Crossing, policy)?;
+    // Both the certified circle relation and the explicit preview adapter
+    // supply increasing roots. Preserve that order through finite filtering.
+    let first = line_arc_hit_candidate(arc, first.0, first.1, IntersectionKind::Crossing, policy)?;
+    let second =
+        line_arc_hit_candidate(arc, second.0, second.1, IntersectionKind::Crossing, policy)?;
 
     match (first, second) {
         (LineArcCandidate::Hit(first), LineArcCandidate::Hit(second)) => {
@@ -2074,10 +2135,10 @@ fn arc_arc_hit_candidate(
         Classification::Uncertain(reason) => return Ok(ArcArcCandidate::Uncertain(reason)),
     }
 
-    let Some(a_endpoint) = point_on_arc_endpoint(a, &point, policy) else {
+    let Some(a_endpoint) = a.contains_endpoint(&point, policy) else {
         return Ok(ArcArcCandidate::Uncertain(UncertaintyReason::RealSign));
     };
-    let Some(b_endpoint) = point_on_arc_endpoint(b, &point, policy) else {
+    let Some(b_endpoint) = b.contains_endpoint(&point, policy) else {
         return Ok(ArcArcCandidate::Uncertain(UncertaintyReason::RealSign));
     };
     let kind = if a_endpoint || b_endpoint {
@@ -2110,19 +2171,34 @@ enum LineArcCandidate {
 }
 
 fn line_arc_hit_candidate(
-    line: &LineSeg2,
     arc: &CircularArc2,
+    point: Point2,
     line_param: Real,
     base_kind: IntersectionKind,
     policy: &CurveContext,
 ) -> CurveResult<LineArcCandidate> {
-    let in_line_range = in_closed_unit_interval(&line_param, policy);
+    // Membership needs both domains. Exhaust their certified exclusions
+    // before consuming approximation for an otherwise unresolved endpoint.
+    let strict = policy.strict_counterpart();
+    let mut in_line_range = in_closed_unit_interval(&line_param, &strict);
     if in_line_range == Some(false) {
         return Ok(LineArcCandidate::Miss);
     }
 
-    let point = line_point_at_for_policy(line, &line_param, policy)?;
-    match arc.contains_sweep_point(&point, policy) {
+    let mut in_arc_sweep = arc.contains_sweep_point(&point, &strict);
+    if in_arc_sweep == Classification::Decided(false) {
+        return Ok(LineArcCandidate::Miss);
+    }
+    if policy.permits_approximate_512() {
+        in_line_range = in_line_range.or_else(|| in_closed_unit_interval(&line_param, policy));
+        if in_line_range == Some(false) {
+            return Ok(LineArcCandidate::Miss);
+        }
+        if matches!(in_arc_sweep, Classification::Uncertain(_)) {
+            in_arc_sweep = arc.contains_sweep_point(&point, policy);
+        }
+    }
+    match in_arc_sweep {
         Classification::Decided(false) => return Ok(LineArcCandidate::Miss),
         Classification::Decided(true) => {}
         Classification::Uncertain(reason) => {
@@ -2136,7 +2212,7 @@ fn line_arc_hit_candidate(
     let Some(line_endpoint) = at_unit_interval_endpoint(&line_param, policy) else {
         return Ok(LineArcCandidate::Uncertain(UncertaintyReason::Ordering));
     };
-    let Some(arc_endpoint) = point_on_arc_endpoint(arc, &point, policy) else {
+    let Some(arc_endpoint) = arc.contains_endpoint(&point, policy) else {
         return Ok(LineArcCandidate::Uncertain(UncertaintyReason::RealSign));
     };
     let kind = if line_endpoint || arc_endpoint {
@@ -2196,22 +2272,169 @@ fn line_point_at_for_policy(
     Ok(line.point_at(parameter))
 }
 
-fn point_on_arc_endpoint(
-    arc: &CircularArc2,
-    point: &Point2,
-    policy: &CurveContext,
-) -> Option<bool> {
-    let start = point.distance_squared(arc.start());
-    if is_zero(&start, policy)? {
-        return Some(true);
-    }
-    let end = point.distance_squared(arc.end());
-    is_zero(&end, policy)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn line_arc_domain_exclusion_does_not_consume_unneeded_ordering() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let endpoint_parameter = &sine * &sine + &cosine * &cosine;
+        let arc = CircularArc2::try_from_center(
+            Point2::from_values(1, 0),
+            Point2::from_values(0, 1),
+            Point2::from_values(0, 0),
+            false,
+        )
+        .unwrap();
+        let line =
+            LineSeg2::try_new(Point2::from_values(-2, 0), Point2::from_values(-1, 0)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let (line, parameter) = if reversed {
+                    (line.reversed(), Real::one() - &endpoint_parameter)
+                } else {
+                    (line.clone(), endpoint_parameter.clone())
+                };
+                assert_eq!(
+                    in_closed_unit_interval(&parameter, &CurveContext::STRICT),
+                    None
+                );
+                let result = crate::policy::resolve_certified_operation(&policy, |policy| {
+                    line_arc_hit_candidate(
+                        &arc,
+                        line.point_at(parameter.clone()),
+                        parameter,
+                        IntersectionKind::Crossing,
+                        policy,
+                    )
+                })
+                .unwrap();
+                assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+                assert!(matches!(result.value, LineArcCandidate::Miss));
+            }
+        }
+    }
+
+    #[test]
+    fn arc_endpoint_membership_survives_an_unresolved_other_endpoint() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let first = Point2::new(Real::one(), unresolved_zero);
+        let second = Point2::from_values(1, 0);
+        assert_eq!(
+            is_zero(&first.distance_squared(&second), &CurveContext::STRICT),
+            None
+        );
+        let arc =
+            CircularArc2::try_from_center(first, second, Point2::from_values(0, 0), false).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for endpoint in [arc.start(), arc.end()] {
+                assert_eq!(
+                    arc.contains_sweep_point(endpoint, &policy),
+                    Classification::Decided(true)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn line_arc_reentry_preserves_certified_algebraic_endpoints() {
+        let center = Point2::from_values(0, 0);
+        let circle = CircularArc2::try_from_center(
+            Point2::from_values(1, 0),
+            Point2::from_values(0, 1),
+            center.clone(),
+            false,
+        )
+        .unwrap();
+        let outside = Point2::from_values(-2, 0);
+        let support = LineSeg2::try_new(outside.clone(), Point2::from_values(2, 1)).unwrap();
+        // The same contacts, independently evaluated from the line/circle
+        // equations: t=(8 +/- sqrt(13))/17, P=(-2+4t,t).
+        let root = Real::from(13).sqrt().unwrap();
+        let endpoint = |sign: i8| {
+            let radical = Real::from(sign) * &root;
+            Point2::new(
+                ((Real::from(-2) + Real::from(4) * &radical) / Real::from(17)).unwrap(),
+                ((Real::from(8) + radical) / Real::from(17)).unwrap(),
+            )
+        };
+        let (endpoint_first, endpoint_second) = (endpoint(-1), endpoint(1));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let LineCircleRelation::Secant {
+                first_point: first,
+                second_point: second,
+                ..
+            } = support
+                .supporting_line_circle_relation(&circle, &policy)
+                .unwrap()
+            else {
+                panic!("the independent line crosses the unit circle twice");
+            };
+            for clockwise in [false, true] {
+                // The supporting-circle result certifies both endpoint incidences.
+                let arc = CircularArc2::new_with_certified_radius(
+                    first.clone(),
+                    second.clone(),
+                    center.clone(),
+                    Real::one(),
+                    clockwise,
+                    None,
+                );
+                for reversed in [false, true] {
+                    let line = LineSeg2::try_new(outside.clone(), endpoint_first.clone()).unwrap();
+                    let line = if reversed { line.reversed() } else { line };
+                    let LineArcIntersection::Point(hit) =
+                        line.intersect_arc(&arc, &policy).unwrap()
+                    else {
+                        panic!("the trimmed line has exactly its retained endpoint contact");
+                    };
+                    assert_eq!(hit.point, endpoint_first);
+                    assert_eq!(
+                        hit.line_param,
+                        if reversed { Real::zero() } else { Real::one() }
+                    );
+                    assert_eq!(hit.arc_param, Real::zero());
+                    assert_eq!(hit.kind, IntersectionKind::Endpoint);
+
+                    let line =
+                        LineSeg2::try_new(endpoint_first.clone(), endpoint_second.clone()).unwrap();
+                    let line = if reversed { line.reversed() } else { line };
+                    let LineArcIntersection::TwoPoints {
+                        first: start,
+                        second: end,
+                    } = line.intersect_arc(&arc, &policy).unwrap()
+                    else {
+                        panic!("both certified chord endpoints must remain distinct contacts");
+                    };
+                    assert_eq!(start.point, *line.start());
+                    assert_eq!(end.point, *line.end());
+                    assert_eq!(start.line_param, Real::zero());
+                    assert_eq!(end.line_param, Real::one());
+                    assert_eq!(start.kind, IntersectionKind::Endpoint);
+                    assert_eq!(end.kind, IntersectionKind::Endpoint);
+
+                    let tangent =
+                        endpoint_first.translated(-endpoint_first.y(), endpoint_first.x().clone());
+                    let line = LineSeg2::try_new(endpoint_first.clone(), tangent).unwrap();
+                    let line = if reversed { line.reversed() } else { line };
+                    let LineCircleRelation::Tangent { point, line_param } =
+                        line.supporting_line_circle_relation(&arc, &policy).unwrap()
+                    else {
+                        panic!("the retained endpoint tangent has one contact");
+                    };
+                    assert_eq!(point, endpoint_first);
+                    assert_eq!(
+                        line_param,
+                        if reversed { Real::one() } else { Real::zero() }
+                    );
+                }
+            }
+        }
+    }
 
     fn exact_normal_positive() -> Real {
         let root_two = Real::from(2).sqrt().unwrap();

@@ -479,7 +479,10 @@ fn parabola_extension_contact(region: &CurveRegion2, policy: &CurveContext) -> O
                 // An unrelated support need not supply the positive witness.
                 continue;
             };
-            let topology = certified(outcome);
+            if outcome.certainty != CurveCertainty::Certified {
+                continue;
+            }
+            let topology = outcome.value;
             if topology.result().is_complete()
                 && topology.result().contacts().is_empty()
                 && topology.result().overlaps().len() == 1
@@ -4337,7 +4340,13 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                     .into_value();
             for (name, filleted) in [("represented", &exact), ("selected", &algebraic)] {
                 assert_boundary_bounds_contain_endpoints(filleted, &policy);
-                let normalized = certified(filleted.regularized_region(&policy).unwrap());
+                let normalized = filleted.regularized_region(&policy).unwrap();
+                assert_eq!(
+                    normalized.certainty,
+                    CurveCertainty::Certified,
+                    "{name} normalization: policy={policy:?}, reversed={reversed}"
+                );
+                let normalized = normalized.value;
                 let replay = filleted
                     .boolean_regions(&disjoint, &policy)
                     .expect("the exterior fillet must re-enter the Boolean kernel");
@@ -4349,21 +4358,30 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                     normalized.boundary_loops().len() + 1,
                 );
                 assert!(replay.value.intersection().is_empty());
-                let recovered = certified(
-                    replay
-                        .value
-                        .union()
-                        .boolean_region(&disjoint, hypercurve::BooleanOp::Difference, &policy)
-                        .expect("the multi-component union re-enters difference"),
+                let recovered = replay
+                    .value
+                    .union()
+                    .boolean_region(&disjoint, hypercurve::BooleanOp::Difference, &policy)
+                    .expect("the multi-component union re-enters difference");
+                assert_eq!(
+                    recovered.certainty,
+                    CurveCertainty::Certified,
+                    "{name} recovery: policy={policy:?}, reversed={reversed}"
                 );
-                assert!(
-                    certified(
-                        recovered
-                            .boolean_region(&normalized, hypercurve::BooleanOp::Xor, &policy)
-                            .unwrap_or_else(|error| panic!("{name} fillet set identity: policy={policy:?}, reversed={reversed}, error={error:?}"))
-                    )
-                    .is_empty()
+                let identity = recovered
+                    .value
+                    .boolean_region(&normalized, hypercurve::BooleanOp::Xor, &policy)
+                    .unwrap_or_else(|error| {
+                        panic!(
+                            "{name} fillet set identity: policy={policy:?}, reversed={reversed}, error={error:?}"
+                        )
+                    });
+                assert_eq!(
+                    identity.certainty,
+                    CurveCertainty::Certified,
+                    "{name} set identity: policy={policy:?}, reversed={reversed}"
                 );
+                assert!(identity.value.is_empty());
             }
         }
     }

@@ -664,6 +664,23 @@ impl CircularArc2 {
         self.data().endpoints_on_stored_circle
     }
 
+    /// Decides endpoint membership without requiring a comparison with the
+    /// other endpoint once either incidence is proved.
+    pub(crate) fn contains_endpoint(&self, point: &Point2, policy: &CurveContext) -> Option<bool> {
+        if point == self.start() || point == self.end() {
+            return Some(true);
+        }
+        let at_start = points_equal(point, self.start(), policy);
+        if at_start == Some(true) {
+            return Some(true);
+        }
+        match points_equal(point, self.end(), policy) {
+            Some(true) => Some(true),
+            Some(false) if at_start == Some(false) => Some(false),
+            Some(false) | None => None,
+        }
+    }
+
     /// Returns whether this arc travels clockwise from start to end.
     pub fn is_clockwise(&self) -> bool {
         self.data().clockwise
@@ -687,7 +704,7 @@ impl CircularArc2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> Classification<bool> {
-        if point_matches_arc_endpoint(self, point, policy) == Some(true) {
+        if self.contains_endpoint(point, policy) == Some(true) {
             return Classification::Decided(true);
         }
 
@@ -726,7 +743,7 @@ impl CircularArc2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> Classification<ArcSweepPointLocation2> {
-        match point_matches_arc_endpoint(self, point, policy) {
+        match self.contains_endpoint(point, policy) {
             Some(true) => {
                 return Classification::Decided(ArcSweepPointLocation2::Endpoint);
             }
@@ -770,7 +787,7 @@ impl CircularArc2 {
 
     /// Classifies whether a point lies on this finite circular arc.
     pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
-        if point_matches_arc_endpoint(self, point, policy) == Some(true) {
+        if self.contains_endpoint(point, policy) == Some(true) {
             return Classification::Decided(true);
         }
         let radius_delta = point.distance_squared(self.center()) - self.radius_squared();
@@ -1546,19 +1563,6 @@ fn clockwise_from_bulge(bulge: &Real) -> CurveResult<bool> {
         Some(RealSign::Zero) => Err(CurveError::AmbiguousBulge),
         None => Err(CurveError::AmbiguousBulge),
     }
-}
-
-fn point_matches_arc_endpoint(
-    arc: &CircularArc2,
-    point: &Point2,
-    policy: &CurveContext,
-) -> Option<bool> {
-    let start_distance = point.distance_squared(arc.start());
-    if crate::classify::is_zero(&start_distance, policy)? {
-        return Some(true);
-    }
-    let end_distance = point.distance_squared(arc.end());
-    crate::classify::is_zero(&end_distance, policy)
 }
 
 fn ordered_line_endpoints<'a>(

@@ -5300,15 +5300,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         }
                         let rational = RationalBezier2::try_from_subcurve(curve)
                             .map_err(|cause| self.invalid(other_index, cause))?;
-                        if let Some(result) = self
-                            .algebraic_chord_shared_image_endpoint_pair_result(
+                        // This optional adjacency shortcut must not consume
+                        // approximation before the common exact pair kernel.
+                        if let Some(result) = self.data.policy.strict_predicate_pass(|| {
+                            self.algebraic_chord_shared_image_endpoint_pair_result(
                                 pair,
                                 chord,
                                 chord_index,
                                 &rational,
                                 other_index,
-                            )?
-                        {
+                            )
+                        })? {
                             return Ok(result);
                         }
                         let one_sided = chord
@@ -14937,11 +14939,13 @@ fn contacts_decided_distinct_from_carriers(
                     .geometry
                     .certified_outer_bounds(policy)
             });
+            // Bounds are only an optional distinctness certificate. An
+            // unresolved overlap must reach the exact point/parameter replay.
             if let (
                 Classification::Decided(existing_bounds),
                 Classification::Decided(current_bounds),
             ) = (existing_bounds, current_bounds)
-                && existing_bounds.overlaps(current_bounds, policy)
+                && existing_bounds.overlaps(current_bounds, &policy.strict_counterpart())
                     == Classification::Decided(false)
             {
                 return Ok(true);
