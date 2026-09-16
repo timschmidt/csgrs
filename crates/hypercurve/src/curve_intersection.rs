@@ -17,13 +17,13 @@ use crate::rational_bezier_general::{
 };
 use crate::{
     ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
-    BezierSplitMaterialization2, CircleCircleRelation, CircularArc2, Classification, Curve2,
-    CurveContext, CurveError, CurveGeometry2, CurveOperation2, CurveOutcome, CurveParameter2,
-    CurveParameterRange2, CurvePoint2, CurveResult, CurveSpanRange2, ExactCurveError,
-    ExactCurveResult, LineArcIntersection, LineArcIntersectionPoint, LineArcOrder,
-    LineLineIntersection, ParamRange, Point2, RationalBezier2,
-    RationalBezierIntersectionCandidates2, RationalBezierIntersectionContact2,
-    RationalBezierIntersectionContacts2, RationalBezierOverlapOrientation2, UncertaintyReason,
+    CircleCircleRelation, CircularArc2, Classification, Curve2, CurveContext, CurveError,
+    CurveGeometry2, CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2,
+    CurvePoint2, CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult,
+    LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange,
+    Point2, RationalBezier2, RationalBezierIntersectionCandidates2,
+    RationalBezierIntersectionContact2, RationalBezierIntersectionContacts2,
+    RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
 /// Exact location in a curve's retained span chart.
@@ -250,7 +250,7 @@ pub struct CurveIntersectionResult2 {
     data: Arc<CurveIntersectionResultData>,
 }
 
-/// Clone-shared split and arrangement topology for one complete curve-pair result.
+/// Clone-shared exact curve pieces and arrangement for one complete curve pair.
 #[derive(Clone, Debug)]
 pub struct CurveIntersectionTopology2 {
     data: Arc<CurveIntersectionTopologyData>,
@@ -259,9 +259,9 @@ pub struct CurveIntersectionTopology2 {
 #[derive(Debug)]
 struct CurveIntersectionTopologyData {
     result: CurveIntersectionResult2,
-    first: Arc<[BezierSplitMaterialization2]>,
-    second: Arc<[BezierSplitMaterialization2]>,
-    arrangement: OnceLock<CurveResult<BezierArrangementGraph2>>,
+    first: Arc<[Curve2]>,
+    second: Arc<[Curve2]>,
+    arrangement: BezierArrangementGraph2,
 }
 
 #[derive(Debug)]
@@ -2143,7 +2143,7 @@ impl CurveIntersectionContext {
                     ),
                 ]
             }));
-        let first = split_curve_spans(&self.data.first, first_parameters, &self.data.policy)?;
+        let first = split_curve(&self.data.first, first_parameters, &self.data.policy)?;
         let second_parameters = result
             .contacts()
             .iter()
@@ -2165,13 +2165,17 @@ impl CurveIntersectionContext {
                     ),
                 ]
             }));
-        let second = split_curve_spans(&self.data.second, second_parameters, &self.data.policy)?;
+        let second = split_curve(&self.data.second, second_parameters, &self.data.policy)?;
+        let arrangement = arrangement_from_curve_pieces(
+            [first.as_slice(), second.as_slice()],
+            &self.data.policy,
+        )?;
         Ok(CurveIntersectionTopology2 {
             data: Arc::new(CurveIntersectionTopologyData {
                 result,
                 first: first.into(),
                 second: second.into(),
-                arrangement: OnceLock::new(),
+                arrangement,
             }),
         })
     }
@@ -2333,83 +2337,112 @@ impl CurveIntersectionTopology2 {
         &self.data.result
     }
 
-    /// Returns first-curve materializations in promoted span order.
-    pub fn first(&self) -> &[BezierSplitMaterialization2] {
+    /// Returns the first curve's exact pieces in traversal order.
+    pub fn first(&self) -> &[Curve2] {
         &self.data.first
     }
 
-    /// Returns second-curve materializations in promoted span order.
-    pub fn second(&self) -> &[BezierSplitMaterialization2] {
+    /// Returns the second curve's exact pieces in traversal order.
+    pub fn second(&self) -> &[Curve2] {
         &self.data.second
     }
 
-    /// Borrows the lazily assembled arrangement graph.
-    pub fn arrangement_graph_view(&self) -> CurveResult<&BezierArrangementGraph2> {
-        match self.data.arrangement.get_or_init(|| {
-            let materializations = self
-                .data
-                .first
-                .iter()
-                .chain(self.data.second.iter())
-                .cloned()
-                .collect::<Vec<_>>();
-            BezierArrangementGraph2::from_split_materializations(&materializations)
-        }) {
-            Ok(graph) => Ok(graph),
-            Err(cause) => Err(cause.clone()),
-        }
-    }
-
-    /// Returns an owned arrangement graph from the retained assembly.
-    pub fn arrangement_graph(&self) -> CurveResult<BezierArrangementGraph2> {
-        self.arrangement_graph_view().cloned()
+    /// Borrows the arrangement certified with this topology's curve pieces.
+    /// Source indices are zero for the first curve and one for the second;
+    /// fragment indices follow each source's traversal.
+    pub fn arrangement_graph(&self) -> &BezierArrangementGraph2 {
+        &self.data.arrangement
     }
 }
 
-pub(crate) fn split_curve_spans(
+pub(crate) fn split_curve(
     curve: &Curve2,
     parameters: impl Iterator<Item = (usize, CurveParameter2)>,
     policy: &CurveContext,
-) -> ExactCurveResult<Vec<BezierSplitMaterialization2>> {
-    let native_fragments =
-        curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Arrangement)?;
-    let mut by_span = vec![Vec::new(); native_fragments.len()];
-    for (span_index, parameter) in parameters {
-        let parameter = match parameter
-            .promoted_bezier_parameter_complete(policy)
-            .map_err(|cause| {
+) -> ExactCurveResult<Vec<Curve2>> {
+    let parameters = parameters.collect::<Vec<_>>();
+    if parameters.is_empty() {
+        return Ok(vec![curve.clone()]);
+    }
+    let spans = curve_support_intersection::spans(curve, policy)
+        .map_err(|error| error.with_operation(CurveOperation2::Arrangement))?;
+    let mut cuts = Vec::with_capacity(parameters.len());
+    for (span_index, local_parameter) in parameters {
+        let span = spans.get(span_index).ok_or_else(|| {
+            ExactCurveError::invalid(
+                CurveOperation2::Arrangement,
+                curve.family(),
+                CurveError::Topology(
+                    "an intersection cut references an unknown source span".into(),
+                ),
+            )
+        })?;
+        let location = CurveLocation2 {
+            span_index,
+            span_range: span.chart.clone(),
+            local_parameter,
+        };
+        cuts.push(
+            match location.parameter(policy).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Arrangement, curve.family(), cause)
             })? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Arrangement,
-                    curve.family(),
-                    reason,
-                ));
-            }
-        };
-        by_span[span_index].push(parameter);
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Arrangement,
+                        curve.family(),
+                        reason,
+                    ));
+                }
+            },
+        );
     }
-    native_fragments
-        .iter()
-        .zip(by_span)
-        .map(|(fragment, parameters)| {
-            match fragment.curve().split_at_parameters(&parameters, policy) {
-                Ok(Classification::Decided(materialization)) => Ok(materialization),
-                Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
-                    CurveOperation2::Arrangement,
-                    curve.family(),
-                    reason,
-                )),
-                Err(cause) => Err(ExactCurveError::invalid(
-                    CurveOperation2::Arrangement,
-                    curve.family(),
-                    cause,
-                )),
+    curve
+        .split_at_parameters(cuts, policy)
+        .map_err(|error| error.with_operation(CurveOperation2::Arrangement))
+}
+
+/// Lowers exact pieces into the existing retained-fragment arrangement engine.
+/// Source indices name authored curves; fragment indices follow traversal.
+/// No filled region or native materialization is required for retained curves.
+pub(crate) fn arrangement_from_curve_pieces<'a>(
+    sources: impl IntoIterator<Item = &'a [Curve2]>,
+    policy: &CurveContext,
+) -> ExactCurveResult<BezierArrangementGraph2> {
+    let mut fragments = Vec::new();
+    for (source_index, pieces) in sources.into_iter().enumerate() {
+        let mut fragment_index = 0;
+        for curve in pieces {
+            let mut append = |fragment| {
+                fragments.push(crate::BezierArrangementFragment2::new(
+                    source_index,
+                    fragment_index,
+                    fragment,
+                ));
+                fragment_index += 1;
+            };
+            if let Some(fragment) = curve.retained_fragment() {
+                append(fragment.clone());
+            } else if let Some(spans) =
+                curve.restricted_source_spans(policy, CurveOperation2::Arrangement)?
+            {
+                for span in spans {
+                    append(span.fragment.clone());
+                }
+            } else {
+                for span in curve
+                    .native_bezier_fragments_for_operation(policy, CurveOperation2::Arrangement)?
+                {
+                    append(crate::BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: span.curve().clone(),
+                    });
+                }
             }
-        })
-        .collect()
+        }
+    }
+    Ok(BezierArrangementGraph2::from_certified_fragments(fragments))
 }
 
 fn append_unique_contacts(

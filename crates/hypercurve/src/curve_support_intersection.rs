@@ -17,10 +17,10 @@ struct Evidence {
     blockers: Vec<CurveIntersectionPairBlocker2>,
 }
 
-struct Span {
+pub(super) struct Span {
     support: CurveSupport2,
     range: CurveParameterRange2,
-    chart: CurveSpanRange2,
+    pub(super) chart: CurveSpanRange2,
     reversed: bool,
     self_contacts: OnceLock<ExactCurveResult<RationalBezierIntersectionContacts2>>,
 }
@@ -38,7 +38,7 @@ fn decided<T>(value: CurveResult<Classification<T>>, family: CurveFamily2) -> Ex
     }
 }
 
-fn spans(curve: &Curve2, policy: &CurveContext) -> ExactCurveResult<Vec<Span>> {
+pub(super) fn spans(curve: &Curve2, policy: &CurveContext) -> ExactCurveResult<Vec<Span>> {
     let retained = |fragment: &BezierSplitFragment2, chart| Span {
         support: CurveSupport2::from_fragment(fragment),
         range: if matches!(fragment, BezierSplitFragment2::Materialized { .. }) {

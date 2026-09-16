@@ -1,15 +1,16 @@
 //! Immediate exact intersections and Booleans between top-level curve paths.
 
 use std::sync::Arc;
-use std::sync::OnceLock;
 
-use crate::curve_intersection::{CurveIntersectionContext, split_curve_spans};
+use crate::curve_intersection::{
+    CurveIntersectionContext, arrangement_from_curve_pieces, split_curve,
+};
 use crate::policy::resolve_certified_operation;
 use crate::{
-    BezierArrangementGraph2, BezierSplitMaterialization2, Classification, Curve2, CurveContext,
-    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameter2, CurvePath2,
-    CurveResult, ExactCurveError, ExactCurveResult, UncertaintyReason,
+    BezierArrangementGraph2, Classification, Curve2, CurveContext, CurveIntersectionContact2,
+    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2,
+    CurveOperation2, CurveOutcome, CurveParameter2, CurvePath2, ExactCurveError, ExactCurveResult,
+    UncertaintyReason,
 };
 
 /// One path-pair contact with authored curve and span indices.
@@ -51,14 +52,14 @@ struct CurvePathIntersectionResultData {
     blockers: Arc<[CurvePathIntersectionBlocker2]>,
 }
 
-/// Exact split materializations retained for one authored path curve.
+/// Exact pieces of one authored path curve, in traversal order.
 #[derive(Clone, Debug)]
 pub struct CurvePathSplit2 {
     curve_index: usize,
-    materializations: Arc<[BezierSplitMaterialization2]>,
+    curves: Arc<[Curve2]>,
 }
 
-/// Clone-shared path-pair split topology and lazy arrangement.
+/// Clone-shared exact path pieces and their certified arrangement.
 #[derive(Clone, Debug)]
 pub struct CurvePathIntersectionTopology2 {
     data: Arc<CurvePathIntersectionTopologyData>,
@@ -69,7 +70,7 @@ struct CurvePathIntersectionTopologyData {
     result: CurvePathIntersectionResult2,
     first: Arc<[CurvePathSplit2]>,
     second: Arc<[CurvePathSplit2]>,
-    arrangement: OnceLock<CurveResult<BezierArrangementGraph2>>,
+    arrangement: BezierArrangementGraph2,
 }
 
 #[derive(Debug)]
@@ -293,12 +294,16 @@ impl<'a> CurvePathIntersectionContext<'a> {
                 })),
             &self.policy,
         )?;
+        let arrangement = arrangement_from_curve_pieces(
+            first.iter().chain(&second).map(CurvePathSplit2::curves),
+            &self.policy,
+        )?;
         Ok(CurvePathIntersectionTopology2 {
             data: Arc::new(CurvePathIntersectionTopologyData {
                 result,
                 first: first.into(),
                 second: second.into(),
-                arrangement: OnceLock::new(),
+                arrangement,
             }),
         })
     }
@@ -398,9 +403,9 @@ impl CurvePathSplit2 {
         self.curve_index
     }
 
-    /// Returns split materializations in promoted source-span order.
-    pub fn materializations(&self) -> &[BezierSplitMaterialization2] {
-        &self.materializations
+    /// Returns exact curve pieces in source traversal order.
+    pub fn curves(&self) -> &[Curve2] {
+        &self.curves
     }
 }
 
@@ -420,27 +425,11 @@ impl CurvePathIntersectionTopology2 {
         &self.data.second
     }
 
-    /// Borrows the lazily assembled aggregate arrangement graph.
-    pub fn arrangement_graph_view(&self) -> CurveResult<&BezierArrangementGraph2> {
-        match self.data.arrangement.get_or_init(|| {
-            let materializations = self
-                .data
-                .first
-                .iter()
-                .chain(self.data.second.iter())
-                .flat_map(CurvePathSplit2::materializations)
-                .cloned()
-                .collect::<Vec<_>>();
-            BezierArrangementGraph2::from_split_materializations(&materializations)
-        }) {
-            Ok(graph) => Ok(graph),
-            Err(error) => Err(error.clone()),
-        }
-    }
-
-    /// Returns an owned aggregate arrangement graph.
-    pub fn arrangement_graph(&self) -> CurveResult<BezierArrangementGraph2> {
-        self.arrangement_graph_view().cloned()
+    /// Borrows the arrangement certified with this topology's curve pieces.
+    /// Source indices enumerate the first path's authored curves followed by
+    /// the second path's curves; fragment indices follow each source's traversal.
+    pub fn arrangement_graph(&self) -> &BezierArrangementGraph2 {
+        &self.data.arrangement
     }
 }
 
@@ -460,7 +449,7 @@ fn split_path(
         .map(|(curve_index, (curve, parameters))| {
             Ok(CurvePathSplit2 {
                 curve_index,
-                materializations: split_curve_spans(curve, parameters.into_iter(), policy)?.into(),
+                curves: split_curve(curve, parameters.into_iter(), policy)?.into(),
             })
         })
         .collect()

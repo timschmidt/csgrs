@@ -1,6 +1,5 @@
 //! Exact top-level curve clipping against unified curve regions.
 
-use crate::curve_intersection::split_curve_spans;
 use crate::policy::resolve_certified_operation;
 use crate::{
     BezierParameter2, BezierSplitFragment2, Classification, Curve2, CurveContext,
@@ -310,7 +309,7 @@ impl Curve2 {
                 ));
             };
             let promoted_span_index = contact.first().fragment_index();
-            split_parameters.push((promoted_span_index, source_parameter.clone().into()));
+            split_parameters.push((promoted_span_index, source_parameter.clone()));
             boundary_contacts.push(PendingBoundaryContact {
                 promoted_span_index,
                 source_parameter,
@@ -375,7 +374,7 @@ impl Curve2 {
                 (&source_start, overlap.second_range().start()),
                 (&source_end, overlap.second_range().end()),
             ] {
-                split_parameters.push((promoted_span_index, source_parameter.clone().into()));
+                split_parameters.push((promoted_span_index, source_parameter.clone()));
                 boundary_contacts.push(PendingBoundaryContact {
                     promoted_span_index,
                     source_parameter: source_parameter.clone(),
@@ -401,20 +400,40 @@ impl Curve2 {
             }
         }
 
-        let materializations = split_curve_spans(self, split_parameters.into_iter(), policy)?;
-        if materializations.len() != native_fragments.len() {
-            return Err(ExactCurveError::invalid(
-                CurveOperation2::Subdivision,
-                self.family(),
-                crate::CurveError::Topology(
-                    "curve trim span materializations do not match promoted native spans".into(),
-                ),
-            ));
+        // Native trim classification consumes span-local representative points.
+        // Reuse its prepared spans and parameters without promoting them again.
+        let mut by_span = vec![Vec::new(); native_fragments.len()];
+        for (span_index, parameter) in split_parameters {
+            let parameters = by_span.get_mut(span_index).ok_or_else(|| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Subdivision,
+                    self.family(),
+                    crate::CurveError::Topology(
+                        "curve trim cut references an unknown source span".into(),
+                    ),
+                )
+            })?;
+            parameters.push(parameter);
         }
         let mut retained = Vec::new();
-        for (promoted_span_index, (native, materialization)) in
-            native_fragments.iter().zip(&materializations).enumerate()
+        for (promoted_span_index, (native, parameters)) in
+            native_fragments.iter().zip(by_span).enumerate()
         {
+            let materialization = match native
+                .curve()
+                .split_at_parameters(&parameters, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Subdivision, self.family(), cause)
+                })? {
+                Classification::Decided(materialization) => materialization,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Subdivision,
+                        self.family(),
+                        reason,
+                    ));
+                }
+            };
             for fragment in materialization.fragments() {
                 let Some((start, end)) = fragment.parameter_range() else {
                     return Err(ExactCurveError::blocked(

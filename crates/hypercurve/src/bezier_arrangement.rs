@@ -67,7 +67,7 @@ pub struct BezierArrangementTraversal2 {
 }
 
 impl BezierArrangementFragment2 {
-    /// Constructs a retained fragment from split-materialization provenance.
+    /// Constructs a retained fragment with source-curve and fragment provenance.
     pub const fn new(
         source_curve_index: usize,
         source_fragment_index: usize,
@@ -105,7 +105,7 @@ impl BezierArrangementFragment2 {
         self.source_curve_index
     }
 
-    /// Returns the fragment index within the source split materialization.
+    /// Returns the fragment index within the source curve supplied to the builder.
     pub const fn source_fragment_index(&self) -> usize {
         self.source_fragment_index
     }

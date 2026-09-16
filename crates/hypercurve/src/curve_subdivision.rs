@@ -64,6 +64,64 @@ fn compare(
 }
 
 impl Curve2 {
+    /// Splits in this curve's public chart, retaining traversal and selected
+    /// parameters. Repeated and endpoint cuts do not create empty pieces.
+    pub(crate) fn split_at_parameters(
+        &self,
+        parameters: impl IntoIterator<Item = CurveParameter2>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<Self>> {
+        let family = self.family();
+        let domain = self.parameter_domain();
+        let mut cuts = Vec::<CurveParameter2>::new();
+        'cut: for parameter in parameters {
+            let parameter = self.subdivision_parameter(parameter);
+            let start = compare(&parameter, domain.start(), family, policy)?;
+            let end = compare(&parameter, domain.end(), family, policy)?;
+            if start.is_lt() || end.is_gt() {
+                return Err(subdivision_error(family, CurveError::InvalidCurveParameter));
+            }
+            if start.is_eq() || end.is_eq() {
+                continue;
+            }
+            let mut index = cuts.len();
+            while index > 0 {
+                match compare(&parameter, &cuts[index - 1], family, policy)? {
+                    Ordering::Less => index -= 1,
+                    Ordering::Equal => continue 'cut,
+                    Ordering::Greater => break,
+                }
+            }
+            cuts.insert(index, parameter);
+        }
+        if cuts.is_empty() {
+            return Ok(vec![self.clone()]);
+        }
+        let mut pieces = Vec::with_capacity(cuts.len() + 1);
+        let mut start = domain.start().clone();
+        for end in cuts
+            .into_iter()
+            .chain(std::iter::once(domain.end().clone()))
+        {
+            pieces.push(self.subcurve_at_parameters(start, end.clone(), policy)?);
+            start = end;
+        }
+        if self.source_traversal_is_reversed() {
+            pieces.reverse();
+        }
+        Ok(pieces)
+    }
+
+    fn source_traversal_is_reversed(&self) -> bool {
+        self.source_range().map_or_else(
+            || {
+                self.retained_fragment()
+                    .is_some_and(BezierSplitFragment2::source_is_reversed)
+            },
+            |range| range.reversed,
+        )
+    }
+
     pub(super) fn split_at_parameter(
         &self,
         parameter: CurveParameter2,
@@ -85,14 +143,7 @@ impl Curve2 {
         let lower =
             self.subcurve_at_parameters(domain.start().clone(), parameter.clone(), policy)?;
         let upper = self.subcurve_at_parameters(parameter, domain.end().clone(), policy)?;
-        let reversed = self.source_range().map_or_else(
-            || {
-                self.retained_fragment()
-                    .is_some_and(BezierSplitFragment2::source_is_reversed)
-            },
-            |range| range.reversed,
-        );
-        Ok(if reversed {
+        Ok(if self.source_traversal_is_reversed() {
             (upper, lower)
         } else {
             (lower, upper)

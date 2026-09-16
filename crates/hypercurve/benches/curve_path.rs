@@ -271,9 +271,7 @@ fn main() {
             .expect("benchmark path topology is complete")
             .into_value();
         topology_checksum ^= black_box(
-            topology.first().len()
-                + topology.second().len()
-                + topology.arrangement_graph_view().unwrap().len(),
+            topology.first().len() + topology.second().len() + topology.arrangement_graph().len(),
         );
     }
     let elapsed = started.elapsed();

@@ -1766,14 +1766,14 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
             .intersection_topology(&narrow_clip, &policy)
             .unwrap()
             .into_value();
-        assert!(
-            narrow_topology
-                .first()
-                .iter()
-                .chain(narrow_topology.second())
-                .flat_map(|split| split.materializations())
-                .flat_map(|materialization| materialization.fragments())
-                .any(|fragment| fragment.is_algebraic_endpoint_images())
+        let pieces = narrow_topology.first()[0].curves();
+        assert_eq!(pieces.len(), 2);
+        assert_eq!(
+            pieces[0]
+                .end()
+                .coincides_with(&point(2, 0).into(), &CurveContext::STRICT)
+                .value,
+            Classification::Decided(true)
         );
         let narrow = boolean_paths(
             &first,
@@ -1801,14 +1801,14 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
                 .intersection_topology(&wide_clip, &policy)
                 .unwrap()
                 .into_value();
-            assert!(
-                wide_topology
-                    .first()
-                    .iter()
-                    .chain(wide_topology.second())
-                    .flat_map(|split| split.materializations())
-                    .flat_map(|materialization| materialization.fragments())
-                    .any(|fragment| fragment.is_algebraic_endpoint_images())
+            let pieces = wide_topology.first()[0].curves();
+            assert_eq!(pieces.len(), 2);
+            assert_eq!(
+                pieces[0]
+                    .end()
+                    .coincides_with(&point(3, 0).into(), &CurveContext::STRICT)
+                    .value,
+                Classification::Decided(true)
             );
             let wide = boolean_paths(
                 wide_path,

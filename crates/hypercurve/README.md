@@ -240,6 +240,13 @@ exact signatures.
   reuses finite-chord parameter certificates without reconstructing incidence.
   Self-crossings of projectively corresponding supports retain their
   off-diagonal contacts.
+  Curve and path `intersection_topology` results expose reusable `Curve2` pieces
+  in traversal order. They preserve selected source parameters and one-sided
+  spline endpoints without requiring native Bézier materialization. A path's
+  `CurvePathSplit2::curves()` groups pieces by authored curve. The borrowed
+  `arrangement_graph()` shares the topology's retained graph; its source indices
+  identify authored curves, followed by fragment indices in traversal order.
+  Graph preparation participates in the topology operation's certainty result.
   Retraced components, exterior source domains, and generated circle
   and parallel pair kernels still report explicit blockers where their
   common dispatch is unfinished.
