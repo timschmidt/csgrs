@@ -1081,6 +1081,82 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
     );
 }
 
+fn expected_line_circle_chamfer(line_contact: Point2, circle_contact: Point2) -> Contour2 {
+    Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(-2, 0), line_contact.clone()).unwrap()),
+        Segment2::Line(LineSeg2::try_new(line_contact, circle_contact.clone()).unwrap()),
+        Segment2::Arc(
+            CircularArc2::try_from_center(circle_contact, p(1, 1), p(1, 0), true).unwrap(),
+        ),
+        Segment2::Line(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn expected_line_circle_fillet() -> Contour2 {
+    // The two circle centers are 3/2 apart. Their tangency lies 2/3
+    // of the way from the original unit-circle center to the new center.
+    let sqrt_two = Real::from(2).sqrt().unwrap();
+    let center = Point2::new(Real::one() - &sqrt_two, q(1, 2));
+    let line_contact = Point2::new(center.x().clone(), Real::zero());
+    let circle_contact = Point2::new(Real::one() - q(2, 3) * sqrt_two, q(1, 3));
+    Contour2::try_new(vec![
+        Segment2::Line(LineSeg2::try_new(p(-2, 0), line_contact.clone()).unwrap()),
+        Segment2::Arc(
+            CircularArc2::try_from_center(line_contact, circle_contact.clone(), center, false)
+                .unwrap(),
+        ),
+        Segment2::Arc(
+            CircularArc2::try_from_center(circle_contact, p(1, 1), p(1, 0), true).unwrap(),
+        ),
+        Segment2::Line(LineSeg2::try_new(p(1, 1), p(-2, 1)).unwrap()),
+        Segment2::Line(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
+    ])
+    .unwrap()
+}
+
+fn assert_corner_region_survives_boundary_paths(
+    region: &CurveRegion2,
+    expected: Contour2,
+    probes: &[(Point2, RegionPointLocation)],
+    policy: &CurveContext,
+) {
+    let expected =
+        certified(CurveRegion2::try_from_native_material_contours(vec![expected], policy).unwrap());
+    let paths = decided(region.boundary_paths(policy).unwrap());
+    assert_eq!(paths.len(), 1);
+    let restored = certified(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &paths,
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            policy,
+        )
+        .unwrap(),
+    );
+    for (label, actual) in [("generated", region), ("restored", &restored)] {
+        for (point, location) in probes {
+            assert_eq!(
+                certified(actual.classify_point(point, policy).unwrap()),
+                Classification::Decided(*location),
+                "{label} corner region at {point:?}",
+            );
+        }
+        let difference = certified(
+            actual
+                .boolean_region(&expected, hypercurve::BooleanOp::Xor, policy)
+                .unwrap_or_else(|error| {
+                    panic!("{label} corner region exact comparison: {error:?}")
+                }),
+        );
+        assert!(
+            difference.is_empty(),
+            "{label} corner region differs from its independent construction"
+        );
+    }
+}
+
 #[test]
 fn unified_region_native_chamfer_uses_arc_sweep_evidence() {
     let rounded = Contour2::try_new(vec![
@@ -1093,48 +1169,52 @@ fn unified_region_native_chamfer_uses_arc_sweep_evidence() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source =
+        let source = certified(
             CurveRegion2::try_from_native_material_contours(vec![rounded.clone()], &policy)
-                .unwrap()
-                .into_value();
-        let CurveCornerSolutions2::Unique(chamfered) = source
-            .chamfer_loop_vertex_by_setbacks(
-                0,
-                1,
-                q(1, 2),
-                Real::one(),
-                CurveCornerMode2::TrimOnly,
-                &policy,
-            )
-            .unwrap()
-            .into_value()
-        else {
+                .unwrap(),
+        );
+        let CurveCornerSolutions2::Unique(chamfered) = certified(
+            source
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    1,
+                    q(1, 2),
+                    Real::one(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap(),
+        ) else {
             panic!("the native line-arc vertex must have one exact chamfer");
         };
-        let native = decided(chamfered.native_contours_fast_path(&policy).unwrap());
-        let segments = native.material_contours()[0].segments();
-        assert_eq!(segments.len(), 6);
-        let Segment2::Line(previous) = &segments[0] else {
-            panic!("the previous native line must remain a line");
-        };
-        let Segment2::Line(chamfer) = &segments[1] else {
-            panic!("the inserted native chamfer must be a line");
-        };
-        let Segment2::Arc(next) = &segments[2] else {
-            panic!("the next native arc must remain an arc");
-        };
+        // On the unit circle centered at (4,1), a unit chord from (4,0)
+        // reaches (4+sqrt(3)/2,1/2). The line setback is exactly 1/2.
         let previous_cut = Point2::new(q(7, 2), Real::zero());
-        assert_eq!(previous.end(), &previous_cut);
-        assert_eq!(chamfer.start(), &previous_cut);
-        assert_eq!(chamfer.end(), next.start());
-        assert_eq!(next.center(), &p(4, 1));
-        assert_eq!(next.end(), &p(5, 1));
-        assert_eq!(
-            next.start()
-                .distance_squared(&p(4, 0))
-                .certified_eq_until(&Real::one(), -4096)
-                .as_bool(),
-            Some(true)
+        let next_cut = Point2::new(
+            Real::from(4) + q(1, 2) * Real::from(3).sqrt().unwrap(),
+            q(1, 2),
+        );
+        let expected = Contour2::try_new(vec![
+            Segment2::Line(LineSeg2::try_new(p(0, 0), previous_cut.clone()).unwrap()),
+            Segment2::Line(LineSeg2::try_new(previous_cut, next_cut.clone()).unwrap()),
+            Segment2::Arc(
+                CircularArc2::try_from_center(next_cut, p(5, 1), p(4, 1), false).unwrap(),
+            ),
+            Segment2::Line(LineSeg2::try_new(p(5, 1), p(5, 4)).unwrap()),
+            Segment2::Line(LineSeg2::try_new(p(5, 4), p(0, 4)).unwrap()),
+            Segment2::Line(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
+        ])
+        .unwrap();
+        assert_corner_region_survives_boundary_paths(
+            &chamfered,
+            expected,
+            &[
+                (p(4, 1), RegionPointLocation::Inside),
+                (p(4, 0), RegionPointLocation::Outside),
+                (p(5, 2), RegionPointLocation::Boundary),
+                (p(6, 2), RegionPointLocation::Outside),
+            ],
+            &policy,
         );
     }
 }
@@ -1150,58 +1230,44 @@ fn unified_region_native_fillet_retains_certified_arc_contacts() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source = CurveRegion2::try_from_native_material_contours(vec![curved.clone()], &policy)
-            .unwrap()
-            .into_value();
-        let CurveCornerSolutions2::Unique(filleted) = source
-            .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
-            .unwrap()
-            .into_value()
-        else {
+        let source = certified(
+            CurveRegion2::try_from_native_material_contours(vec![curved.clone()], &policy).unwrap(),
+        );
+        let CurveCornerSolutions2::Unique(filleted) = certified(
+            source
+                .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap(),
+        ) else {
             panic!("the native line/arc vertex must have one exact fillet");
         };
-        let native = decided(filleted.native_contours_fast_path(&policy).unwrap());
-        let segments = native.material_contours()[0].segments();
-        assert_eq!(segments.len(), 5);
-        let Segment2::Line(previous) = &segments[0] else {
-            panic!("the previous native line must remain a line");
-        };
-        let Segment2::Arc(fillet) = &segments[1] else {
-            panic!("the inserted fillet must remain a circular arc");
-        };
-        let Segment2::Arc(next) = &segments[2] else {
-            panic!("the next native arc must remain a circular arc");
-        };
-        assert_eq!(previous.end(), fillet.start());
-        assert_eq!(fillet.end(), next.start());
-        assert_eq!(next.center(), &p(1, 0));
-        assert_eq!(next.end(), &p(1, 1));
-        assert_eq!(
-            fillet
-                .radius_squared()
-                .certified_eq_until(&q(1, 4), -4096)
-                .as_bool(),
-            Some(true)
-        );
-        let expected_center = Point2::new(Real::one() - Real::from(2).sqrt().unwrap(), q(1, 2));
-        assert_eq!(
-            fillet
-                .center()
-                .distance_squared(&expected_center)
-                .certified_eq_until(&Real::zero(), -4096)
-                .as_bool(),
-            Some(true)
+        let expected = expected_line_circle_fillet();
+        assert_corner_region_survives_boundary_paths(
+            &filleted,
+            expected,
+            &[
+                (
+                    Point2::new(-Real::one(), q(1, 2)),
+                    RegionPointLocation::Inside,
+                ),
+                (p(0, 0), RegionPointLocation::Outside),
+                (
+                    Point2::new(Real::from(-2), q(1, 2)),
+                    RegionPointLocation::Boundary,
+                ),
+                (p(2, 0), RegionPointLocation::Outside),
+            ],
+            &policy,
         );
     }
 }
 
 #[test]
-fn unified_region_corners_use_rational_circular_carriers() {
+fn unified_region_corners_preserve_circular_geometry_across_representations() {
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
     let conic = native_arc
         .rational_bezier_decomposition(&CurveContext::STRICT)
+        .map(certified)
         .unwrap()
-        .into_value()
         .spans()[0]
         .curve()
         .clone();
@@ -1220,8 +1286,8 @@ fn unified_region_corners_use_rational_circular_carriers() {
             ])
             .unwrap();
             let source = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                .unwrap()
-                .into_value();
+                .map(certified)
+                .unwrap();
 
             let CurveCornerSolutions2::Unique(chamfered) = source
                 .chamfer_loop_vertex_by_setbacks(
@@ -1232,33 +1298,47 @@ fn unified_region_corners_use_rational_circular_carriers() {
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
+                .map(certified)
                 .unwrap()
-                .into_value()
             else {
                 panic!("the retained circular region corner must have one chamfer");
             };
-            let chamfer_paths = decided(chamfered.boundary_paths(&policy).unwrap());
-            assert!(
-                chamfer_paths[0]
-                    .curves()
-                    .iter()
-                    .any(|curve| curve.family() == CurveFamily2::RationalQuadraticBezier)
+            // A half-unit chord from (0,0) on the unit circle centered
+            // at (1,0) reaches (1/8,sqrt(15)/8), independently of its chart.
+            let previous_cut = Point2::new(q(-1, 2), Real::zero());
+            let next_cut = Point2::new(q(1, 8), q(1, 8) * Real::from(15).sqrt().unwrap());
+            let expected_chamfer = expected_line_circle_chamfer(previous_cut, next_cut);
+            let probes = [
+                (
+                    Point2::new(-Real::one(), q(1, 2)),
+                    RegionPointLocation::Inside,
+                ),
+                (p(0, 0), RegionPointLocation::Outside),
+                (
+                    Point2::new(Real::from(-2), q(1, 2)),
+                    RegionPointLocation::Boundary,
+                ),
+                (p(2, 0), RegionPointLocation::Outside),
+            ];
+            assert_corner_region_survives_boundary_paths(
+                &chamfered,
+                expected_chamfer,
+                &probes,
+                &policy,
             );
 
             let CurveCornerSolutions2::Unique(filleted) = source
                 .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+                .map(certified)
                 .unwrap()
-                .into_value()
             else {
                 panic!("the retained circular region corner must have one fillet");
             };
-            let fillet_paths = decided(filleted.boundary_paths(&policy).unwrap());
-            assert_eq!(fillet_paths[0].curves().len(), 5);
-            assert!(
-                fillet_paths[0]
-                    .curves()
-                    .iter()
-                    .any(|curve| curve.family() == CurveFamily2::RationalQuadraticBezier)
+            assert_corner_region_survives_boundary_paths(
+                &filleted,
+                expected_line_circle_fillet(),
+                &probes,
+                &policy,
             );
         }
     }
@@ -1269,8 +1349,8 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
     let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
     let conic = native_arc
         .rational_bezier_decomposition(&CurveContext::STRICT)
+        .map(certified)
         .unwrap()
-        .into_value()
         .spans()[0]
         .curve()
         .clone();
@@ -1292,14 +1372,14 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
             .unwrap();
             for reversed in [false, true] {
                 let path = if reversed {
-                    path.reversed(&policy).unwrap().into_value()
+                    path.reversed(&policy).map(certified).unwrap()
                 } else {
                     path.clone()
                 };
                 let corner = if reversed { 3 } else { 1 };
                 let source = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                    .unwrap()
-                    .into_value();
+                    .map(certified)
+                    .unwrap();
                 let trim_count = source
                     .chamfer_loop_vertex_by_setbacks(
                         0,
@@ -1309,8 +1389,8 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
+                    .map(certified)
                     .expect("the retained circular corner has one finite chamfer")
-                    .value
                     .candidate_count();
                 let extended = source
                     .chamfer_loop_vertex_by_setbacks(
@@ -1338,37 +1418,61 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
                         ),
                         Classification::Decided(RegionPointLocation::Inside),
                     );
-                    assert!(
-                        candidate.boundary_loops()[0]
-                            .fragments()
-                            .iter()
-                            .all(|fragment| match fragment {
-                                BezierSplitFragment2::Materialized { curve, .. } => {
-                                    [curve.start(), curve.end()].iter().all(|point| {
-                                        point
-                                            .distance_squared(&p(0, 0))
-                                            .certified_eq_until(&Real::zero(), -4096)
-                                            .as_bool()
-                                            != Some(true)
-                                    })
-                                }
-                                _ => true,
-                            })
-                    );
-                    candidate.boundary_loops()[0].fragments().iter().any(
-                        |fragment| match fragment {
-                            BezierSplitFragment2::Materialized { curve, .. } => {
-                                [curve.start(), curve.end()].iter().any(|point| {
-                                    point
-                                        .distance_squared(&extension_point)
-                                        .certified_eq_until(&Real::zero(), -4096)
-                                        .as_bool()
-                                        == Some(true)
-                                })
+                    let paths = decided(candidate.boundary_paths(&policy).unwrap());
+                    let line_contacts = [
+                        Point2::new(q(-1, 2), Real::zero()),
+                        Point2::new(q(1, 2), Real::zero()),
+                    ];
+                    let circle_contacts = [
+                        Point2::new(q(1, 8), -extension_point.y()),
+                        extension_point.clone(),
+                    ];
+                    let locate = |endpoint: &CurvePoint2, points: &[Point2]| {
+                        points.iter().position(|point| {
+                            decided(endpoint.coincides_with(&point.clone().into(), &policy))
+                        })
+                    };
+                    let mut selected = None;
+                    for curve in paths.iter().flat_map(CurvePath2::curves) {
+                        let start = curve.start();
+                        let end = curve.end();
+                        for (line_end, circle_end) in [(&start, &end), (&end, &start)] {
+                            if let (Some(line), Some(circle)) = (
+                                locate(line_end, &line_contacts),
+                                locate(circle_end, &circle_contacts),
+                            ) {
+                                assert!(
+                                    selected.replace((line, circle)).is_none(),
+                                    "one chamfer joins the two chosen setbacks"
+                                );
                             }
-                            _ => false,
-                        },
-                    )
+                        }
+                    }
+                    let (line, circle) =
+                        selected.expect("the exact boundary must retain its setback contacts");
+                    // A continued line or arc may still pass through the old
+                    // corner. Its raw span endpoints do not define the cut.
+                    let expected = expected_line_circle_chamfer(
+                        line_contacts[line].clone(),
+                        circle_contacts[circle].clone(),
+                    );
+                    assert_corner_region_survives_boundary_paths(
+                        candidate,
+                        expected,
+                        &[
+                            (
+                                Point2::new(-Real::one(), q(1, 2)),
+                                RegionPointLocation::Inside,
+                            ),
+                            (p(-3, 0), RegionPointLocation::Outside),
+                            (
+                                Point2::new(Real::from(-2), q(1, 2)),
+                                RegionPointLocation::Boundary,
+                            ),
+                        ],
+                        &policy,
+                    );
+                    circle == 1
                 };
                 let mut retained_extension = false;
                 match &extended.value {
