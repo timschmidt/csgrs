@@ -1577,15 +1577,21 @@ impl RationalBezier2 {
         {
             return Ok(Classification::Decided(Vec::new()));
         }
-        Ok(match self.point_incidence_classified(point, policy)? {
-            Classification::Decided(RationalBezierPointIncidence2::Parameters(parameters)) => {
-                Classification::Decided(parameters)
-            }
-            Classification::Decided(RationalBezierPointIncidence2::EntireCurve) => {
-                Classification::Uncertain(UncertaintyReason::Unsupported)
-            }
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        })
+        Ok(
+            match self.point_incidence_on_range(
+                point,
+                &crate::CurveParameterRange2::unit(),
+                policy,
+            )? {
+                Classification::Decided(RationalBezierPointIncidence2::Parameters(parameters)) => {
+                    Classification::Decided(parameters)
+                }
+                Classification::Decided(RationalBezierPointIncidence2::EntireCurve) => {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
     pub(crate) fn try_from_subcurve(curve: &BezierSubcurve2) -> CurveResult<Self> {
@@ -2608,7 +2614,7 @@ impl RationalBezier2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> ExactCurveResult<RationalBezierPointIncidence2> {
-        match self.point_incidence_classified(point, policy) {
+        match self.point_incidence_on_range(point, &crate::CurveParameterRange2::unit(), policy) {
             Ok(Classification::Decided(incidence)) => Ok(incidence),
             Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
@@ -2623,22 +2629,48 @@ impl RationalBezier2 {
         }
     }
 
-    pub(crate) fn point_incidence_classified(
+    pub(crate) fn point_incidence_on_range(
         &self,
         point: &Point2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierPointIncidence2>> {
-        if let Classification::Uncertain(reason) = self.unit_weight_sign() {
-            return Ok(Classification::Uncertain(reason));
+        let unit = CurveParameterRange2::unit();
+        let domain = CurveParameterDomain2::new(range, None);
+        let unit_covers_range = CurveParameterDomain2::new(&unit, None)
+            .contains_finite_range(range, &policy.strict_counterpart())?
+            == Classification::Decided(true);
+        if !unit_covers_range
+            || !matches!(
+                self.unit_weight_sign(),
+                Classification::Decided(RealSign::Positive | RealSign::Negative)
+            )
+        {
+            match crate::bezier_offset::polynomial_is_nonzero_on_parameter_range(
+                &self.homogeneous_power_basis()?.weight,
+                range,
+                &policy.strict_counterpart(),
+            )? {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
         }
-        if self.has_certified_injective_axis(policy) {
+        if unit_covers_range && self.has_certified_injective_axis(policy) {
             for (parameter, endpoint) in [(Real::zero(), self.start()), (Real::one(), self.end())] {
                 if is_zero(&endpoint.distance_squared(point), policy) == Some(true) {
-                    return Ok(Classification::Decided(
-                        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(
-                            parameter,
-                        )]),
-                    ));
+                    let parameter = BezierParameter2::Exact(parameter);
+                    return Ok(domain
+                        .contains_finite_parameter(&parameter.clone().into(), policy)?
+                        .map(|inside| {
+                            RationalBezierPointIncidence2::Parameters(if inside {
+                                vec![parameter]
+                            } else {
+                                Vec::new()
+                            })
+                        }));
                 }
             }
         }
@@ -2675,7 +2707,7 @@ impl RationalBezier2 {
                 }
             },
         };
-        match polynomial.isolate_unit_interval_roots(policy)? {
+        match domain.finite_roots(&polynomial, policy)? {
             Classification::Decided(parameters) => Ok(Classification::Decided(
                 RationalBezierPointIncidence2::Parameters(parameters),
             )),
@@ -2697,7 +2729,7 @@ impl RationalBezier2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> Classification<bool> {
-        match self.point_incidence_classified(point, policy) {
+        match self.point_incidence_on_range(point, &crate::CurveParameterRange2::unit(), policy) {
             Ok(classification) => classification.map(|incidence| match incidence {
                 RationalBezierPointIncidence2::EntireCurve => true,
                 RationalBezierPointIncidence2::Parameters(parameters) => !parameters.is_empty(),
@@ -3757,7 +3789,7 @@ impl RationalBezier2 {
             let point_on_curve = |point: &Point2| {
                 matches_curve_endpoint(point)
                     || matches!(
-                        self.point_incidence_classified(point, policy),
+                        self.point_incidence_on_range(point, &crate::CurveParameterRange2::unit(), policy),
                         Ok(Classification::Decided(
                             RationalBezierPointIncidence2::Parameters(parameters)
                         )) if !parameters.is_empty()
@@ -3826,7 +3858,11 @@ impl RationalBezier2 {
                 if curve_parameters.is_empty()
                     && let Classification::Decided(RationalBezierPointIncidence2::Parameters(
                         parameters,
-                    )) = self.point_incidence_classified(point, policy)?
+                    )) = self.point_incidence_on_range(
+                        point,
+                        &crate::CurveParameterRange2::unit(),
+                        policy,
+                    )?
                 {
                     curve_parameters = parameters;
                 }
@@ -5194,7 +5230,11 @@ impl RationalBezier2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         };
-        match curve.point_incidence_classified(&point, policy)? {
+        match curve.point_incidence_on_range(
+            &point,
+            &crate::CurveParameterRange2::unit(),
+            policy,
+        )? {
             Classification::Decided(RationalBezierPointIncidence2::EntireCurve) => {
                 Ok(Classification::Decided(true))
             }
@@ -5609,7 +5649,11 @@ impl RationalBezier2 {
                     }
                 }
             }
-            match other.point_incidence_classified(&point, policy) {
+            match other.point_incidence_on_range(
+                &point,
+                &crate::CurveParameterRange2::unit(),
+                policy,
+            ) {
                 Err(CurveError::Real(_)) => {
                     return Classification::Uncertain(UncertaintyReason::RealSign);
                 }
@@ -5657,7 +5701,11 @@ impl RationalBezier2 {
                     }
                 }
             }
-            match self.point_incidence_classified(&point, policy) {
+            match self.point_incidence_on_range(
+                &point,
+                &crate::CurveParameterRange2::unit(),
+                policy,
+            ) {
                 Err(CurveError::Real(_)) => {
                     return Classification::Uncertain(UncertaintyReason::RealSign);
                 }
@@ -8889,7 +8937,7 @@ fn unique_point_incidence_parameter(
     if point == curve.end() {
         return Classification::Decided(Some(BezierParameter2::Exact(Real::one())));
     }
-    match curve.point_incidence_classified(point, policy) {
+    match curve.point_incidence_on_range(point, &crate::CurveParameterRange2::unit(), policy) {
         Err(CurveError::Real(_)) => Classification::Uncertain(UncertaintyReason::RealSign),
         Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
         Ok(Classification::Decided(RationalBezierPointIncidence2::Parameters(mut parameters))) => {

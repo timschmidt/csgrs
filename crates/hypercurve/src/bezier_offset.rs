@@ -39581,8 +39581,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     Classification::Decided([x, y]) => {
                         match (x.exact_point_witness(), y.exact_point_witness()) {
                             (Some(x), Some(y)) => {
-                                match solve_other.point_incidence_classified(
+                                match solve_other.point_incidence_on_range(
                                     &Point2::new(x.clone(), y.clone()),
+                                    &crate::CurveParameterRange2::unit(),
                                     policy,
                                 )? {
                                     Classification::Decided(
@@ -79355,7 +79356,7 @@ impl BezierAlgebraicChord2 {
                 Classification::Decided(RealSign::Positive | RealSign::Negative)
             )
         {
-            match polynomial_is_nonzero_on_curve_region_range(
+            match polynomial_is_nonzero_on_parameter_range(
                 &source.homogeneous_power_basis()?.weight,
                 range,
                 &policy.strict_counterpart(),
@@ -80783,7 +80784,7 @@ impl BezierAlgebraicChord2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        match polynomial_is_nonzero_on_curve_region_range(
+        match polynomial_is_nonzero_on_parameter_range(
             &source.homogeneous_power_basis()?.weight,
             range,
             &strict,
@@ -81447,47 +81448,19 @@ impl BezierAlgebraicChord2 {
             | CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => None,
         };
         if let Some(point) = represented_point {
-            let unit = CurveParameterRange2::unit();
-            if CurveParameterDomain2::new(&unit, None).contains_finite_range(range, policy)?
-                == Classification::Decided(true)
-                && let Classification::Decided(incidence) =
-                    source.point_incidence_classified(&point, policy)?
-            {
-                let crate::RationalBezierPointIncidence2::Parameters(parameters) = incidence else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                };
-                let domain = CurveParameterDomain2::new(range, None);
-                let mut retained = Vec::with_capacity(parameters.len());
-                for parameter in parameters {
-                    let parameter = CurveParameter2::from(parameter);
-                    match domain.contains_finite_parameter(&parameter, policy)? {
-                        Classification::Decided(true) => retained.push(parameter),
-                        Classification::Decided(false) => {}
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
+            return Ok(
+                match source.point_incidence_on_range(&point, range, policy)? {
+                    Classification::Decided(crate::RationalBezierPointIncidence2::Parameters(
+                        parameters,
+                    )) => Classification::Decided(
+                        parameters.into_iter().map(CurveParameter2::from).collect(),
+                    ),
+                    Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve) => {
+                        Classification::Uncertain(UncertaintyReason::Boundary)
                     }
-                }
-                return Ok(Classification::Decided(retained));
-            }
-            let power = source.homogeneous_power_basis()?;
-            let (coordinate, numerator) = match self.data.parameter_axis.axis {
-                Axis2::X => (point.x(), &power.x_numerator),
-                Axis2::Y => (point.y(), &power.y_numerator),
-            };
-            let polynomial = match polynomial_from_coefficients(
-                polynomial_subtract(numerator, &polynomial_scale(&power.weight, coordinate)),
-                policy,
-            )? {
-                Classification::Decided(Some(polynomial)) => polynomial,
-                Classification::Decided(None) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            return Ok(CurveParameterDomain2::new(range, None)
-                .finite_roots(&polynomial, policy)?
-                .map(|parameters| parameters.into_iter().map(CurveParameter2::from).collect()));
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                },
+            );
         }
         Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
     }
@@ -108427,7 +108400,7 @@ impl BezierParallelPairIntersectionContact2 {
 
 /// One exact positive-dimensional parameter component with zero-dimensional image.
 ///
-/// A missing parameter means that the complete authored unit domain of that
+/// A missing parameter means that the complete queried domain of that
 /// operand belongs to this component. At least one parameter is missing.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierParallelPairIntersectionParameterComponent2 {
@@ -108513,6 +108486,90 @@ impl BezierParallelPairDomainIntersectionSet2 {
     pub(crate) fn into_parts(self) -> (BezierParallelPairIntersectionSet2, bool) {
         (self.intersections, self.positive_dimensional)
     }
+}
+
+/// Complete rational incidence on retained finite source domains. Root
+/// projection and replay use the original equations. Only shared-component
+/// topology uses compact affine charts, retained by each correspondence.
+pub(crate) fn rational_pair_intersections_on_ranges(
+    first: &RationalBezier2,
+    second: &RationalBezier2,
+    ranges: [&CurveParameterRange2; 2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
+    let strict = policy.strict_counterpart();
+    for (source, range) in [first, second].into_iter().zip(ranges) {
+        match polynomial_is_nonzero_on_parameter_range(
+            &source.homogeneous_power_basis()?.weight,
+            range,
+            &strict,
+        )? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+    for (axis, source) in [first, second].into_iter().enumerate() {
+        let Classification::Decided(Some(point)) =
+            crate::BezierSubcurve2::Rational(source.clone()).point_image(&strict)
+        else {
+            continue;
+        };
+        let other_axis = 1 - axis;
+        let other = [first, second][other_axis];
+        let incidence = match other.point_incidence_on_range(&point, ranges[other_axis], &strict)? {
+            Classification::Decided(incidence) => incidence,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let point = CurvePoint2::from(point);
+        let components = match incidence {
+            crate::RationalBezierPointIncidence2::EntireCurve => {
+                vec![BezierParallelPairIntersectionParameterComponent2 {
+                    first_parameter: None,
+                    second_parameter: None,
+                    point,
+                }]
+            }
+            crate::RationalBezierPointIncidence2::Parameters(parameters) => parameters
+                .into_iter()
+                .map(|parameter| {
+                    let mut parameters = [None, None];
+                    parameters[other_axis] = Some(parameter);
+                    let [first_parameter, second_parameter] = parameters;
+                    BezierParallelPairIntersectionParameterComponent2 {
+                        first_parameter,
+                        second_parameter,
+                        point: point.clone(),
+                    }
+                })
+                .collect(),
+        };
+        return Ok(Classification::Decided(
+            BezierParallelPairIntersectionSet2::complete_with_supplement(
+                Arc::from([]),
+                Arc::from([]),
+                components.into(),
+                Arc::from([]),
+            ),
+        ));
+    }
+    let first = first.parallel_left(Real::zero())?;
+    let second = second.parallel_left(Real::zero())?;
+    Ok(first
+        .zero_distance_pair_intersections_in_domain(
+            &second,
+            ranges.map(|range| CurveParameterDomain2::new(range, None)),
+            false,
+            false,
+            ParameterComponentQuery2::RetainFinite,
+            &strict,
+        )?
+        .map(|result| {
+            debug_assert!(!result.positive_dimensional);
+            result.intersections
+        }))
 }
 
 impl BezierParallelPairIntersectionSet2 {
@@ -108718,7 +108775,7 @@ impl BezierParallelIntersectionContact2 {
 /// One exact positive-dimensional parameter component with zero-dimensional image.
 ///
 /// A missing parameter means that every parameter in that operand's authored
-/// unit domain maps to `point`; at least one parameter is always missing. This
+/// domain maps to `point`; at least one parameter is always missing. This
 /// keeps collapsed or constant curves out of positive-length overlap evidence
 /// while retaining their complete parameter solution set.
 #[derive(Clone, Debug, PartialEq)]
@@ -109166,6 +109223,13 @@ fn swapped_parameter_component_overlap(
 ) -> BezierParameterComponentOverlap2 {
     BezierParameterComponentOverlap2 {
         overlap: swapped_parallel_overlap(&overlap.overlap),
+        parameter_charts: overlap.parameter_charts.as_ref().map(|charts| {
+            Arc::new(ParameterComponentAffineCharts2 {
+                to_source: [charts.to_source[1].clone(), charts.to_source[0].clone()],
+                to_local: [charts.to_local[1].clone(), charts.to_local[0].clone()],
+                overlap: swapped_parallel_overlap(&charts.overlap),
+            })
+        }),
         support: Arc::new(bivariate_swap_parameters(&overlap.support)),
         fiber_root_ranks: [overlap.fiber_root_ranks[1], overlap.fiber_root_ranks[0]],
         witness: BezierParallelIntersectionParameterPair2 {
@@ -114406,7 +114470,7 @@ impl BezierParallel2 {
         let range = retained_range.unwrap_or(&unit);
         let domain = CurveParameterDomain2::new(range, None);
         if let Some(weight) = source.weight {
-            match polynomial_is_nonzero_on_curve_region_range(weight, range, policy)? {
+            match polynomial_is_nonzero_on_parameter_range(weight, range, policy)? {
                 Classification::Decided(true) => {}
                 Classification::Decided(false) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -114455,7 +114519,7 @@ impl BezierParallel2 {
             };
         }
         let speed_squared = parallel_speed_squared_polynomial(differential);
-        match polynomial_is_nonzero_on_curve_region_range(&speed_squared, range, policy)? {
+        match polynomial_is_nonzero_on_parameter_range(&speed_squared, range, policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -115481,6 +115545,7 @@ impl BezierParallel2 {
                         .map(|range| CurveParameterDomain2::new(range, None)),
                     false,
                     false,
+                    ParameterComponentQuery2::Existence,
                     policy,
                 )
             {
@@ -115627,7 +115692,12 @@ impl BezierParallel2 {
             };
             if real_sign(zero.distance(), &policy.strict_counterpart()) == Some(RealSign::Zero) {
                 return parallel.zero_distance_pair_intersections_in_domain(
-                    zero, domains, swapped, false, policy,
+                    zero,
+                    domains,
+                    swapped,
+                    false,
+                    ParameterComponentQuery2::Existence,
+                    policy,
                 );
             }
         }
@@ -115714,6 +115784,7 @@ impl BezierParallel2 {
                             unordered_self_pair: false,
                         },
                         domains,
+                        ParameterComponentQuery2::Existence,
                         policy,
                         config,
                     )? {
@@ -115788,36 +115859,46 @@ impl BezierParallel2 {
         domains: [CurveParameterDomain2<'_>; 2],
         swapped: bool,
         off_diagonal: bool,
+        query: ParameterComponentQuery2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         let other = zero.source().to_rational_bezier()?;
         let source = self.source_power_basis()?;
-        let differential = self.differential()?;
         let other_power = other.homogeneous_power_basis()?;
         let distance_sign = match real_sign(self.distance(), policy) {
             Some(sign) => sign,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let mut equations = if distance_sign == RealSign::Zero {
-            // Coordinate equality is lower degree and retains stationary
-            // source contacts without introducing a zero-speed component.
-            parallel_source_equality_equations(self, zero)?
+        let (mut equations, mut branch) = if distance_sign == RealSign::Zero {
+            // Coordinate equality retains stationary contacts without a
+            // zero-speed component or an unused differential construction.
+            let unit_weight = [Real::one()];
+            (
+                parallel_source_equality_equations(self, zero)?,
+                rational_pair_defined_selector(
+                    source.weight.unwrap_or(&unit_weight),
+                    &other_power.weight,
+                ),
+            )
         } else {
+            let differential = self.differential()?;
             let (orthogonality, distance) = parallel_rational_intersection_equations(
                 &source,
                 differential,
                 self.distance(),
                 other_power,
             );
-            [orthogonality, distance]
+            (
+                [orthogonality, distance],
+                parallel_rational_component_branch(
+                    &source,
+                    differential,
+                    self.distance(),
+                    other_power,
+                    distance_sign,
+                ),
+            )
         };
-        let mut branch = parallel_rational_component_branch(
-            &source,
-            differential,
-            self.distance(),
-            other_power,
-            distance_sign,
-        );
         if off_diagonal {
             debug_assert_eq!(distance_sign, RealSign::Zero);
             let diagonal =
@@ -115850,24 +115931,27 @@ impl BezierParallel2 {
         };
         let mut selected_pairs = Vec::new();
         let mut retained_contacts = Vec::new();
+        let mut component_overlaps = Vec::new();
         if let Some(support) = constraint.component_support {
             let selection = match select_parameter_component_in_domain(
                 &support,
                 &ParameterComponentSelector2::Positive(&branch),
                 domains,
+                query,
                 policy,
                 config,
             )? {
                 Classification::Decided(selection) => selection,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            if selection.positive_dimensional {
+            if selection.positive_dimensional && query == ParameterComponentQuery2::Existence {
                 return Ok(Classification::Decided(
                     BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
                 ));
             }
             selected_pairs = selection.selected_pairs;
             retained_contacts = selection.retained_contacts;
+            component_overlaps = selection.component_overlaps;
         }
         let mut candidate_system = match constraint.isolated_projection {
             Some(projection) => BezierParallelIntersectionCandidateSystem2::projected(
@@ -115881,6 +115965,11 @@ impl BezierParallel2 {
         };
         candidate_system.selected_component_pair_count = selected_pairs.len();
         candidate_system.component_pairs = selected_pairs.into();
+        candidate_system.overlaps = component_overlaps
+            .iter()
+            .map(|overlap| overlap.overlap().clone())
+            .collect();
+        candidate_system.component_overlaps = component_overlaps.into();
         let intersections = match self.replay_parallel_rational_candidate_system(
             &other,
             candidate_system,
@@ -115941,16 +116030,28 @@ impl BezierParallel2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
         if distance_sign == RealSign::Zero {
-            return self
-                .zero_distance_pair_intersections_in_domain(self, domains, false, true, policy);
+            return self.zero_distance_pair_intersections_in_domain(
+                self,
+                domains,
+                false,
+                true,
+                ParameterComponentQuery2::Existence,
+                policy,
+            );
         }
         if let Classification::Decided(Some([first, second])) =
             self.rational_parallel_components_in_domains(domains, &strict)?
         {
             let first = first.parallel_left(Real::zero())?;
             let second = second.parallel_left(Real::zero())?;
-            return first
-                .zero_distance_pair_intersections_in_domain(&second, domains, false, true, policy);
+            return first.zero_distance_pair_intersections_in_domain(
+                &second,
+                domains,
+                false,
+                true,
+                ParameterComponentQuery2::Existence,
+                policy,
+            );
         }
         let Some(system) = (match parallel_pair_equation_system(self, self, false, policy)? {
             Classification::Decided(system) => system,
@@ -116006,6 +116107,7 @@ impl BezierParallel2 {
                         unordered_self_pair: false,
                     },
                     domains,
+                    ParameterComponentQuery2::Existence,
                     policy,
                     config,
                 )? {
@@ -118377,7 +118479,11 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParallelIntersectionSet2>>> {
         let other_point = other.start().clone();
-        match other.point_incidence_classified(&other_point, policy)? {
+        match other.point_incidence_on_range(
+            &other_point,
+            &crate::CurveParameterRange2::unit(),
+            policy,
+        )? {
             Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve) => {
                 let incidence = match self.point_incidence(&other_point, policy)? {
                     Classification::Decided(incidence) => incidence,
@@ -118420,7 +118526,11 @@ impl BezierParallel2 {
                 Ok(Classification::Decided(None))
             }
             Classification::Decided(BezierParallelIncidence2::EntireCurve) => {
-                let incidence = match other.point_incidence_classified(&parallel_point, policy)? {
+                let incidence = match other.point_incidence_on_range(
+                    &parallel_point,
+                    &crate::CurveParameterRange2::unit(),
+                    policy,
+                )? {
                     Classification::Decided(incidence) => incidence,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -121437,6 +121547,14 @@ pub(crate) struct BezierParameterComponentOverlap2 {
     support: Arc<BivariatePolynomial>,
     fiber_root_ranks: [usize; 2],
     witness: BezierParallelIntersectionParameterPair2,
+    parameter_charts: Option<Arc<ParameterComponentAffineCharts2>>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct ParameterComponentAffineCharts2 {
+    to_source: [ParameterComponentAffineMap2; 2],
+    to_local: [ParameterComponentAffineMap2; 2],
+    overlap: RationalBezierIntersectionOverlap2,
 }
 
 const UNKNOWN_PARAMETER_COMPONENT_FIBER_ROOT_RANK: usize = usize::MAX;
@@ -121447,12 +121565,85 @@ impl PartialEq for BezierParameterComponentOverlap2 {
             && self.support == other.support
             && self.fiber_root_ranks == other.fiber_root_ranks
             && self.witness == other.witness
+            && self.parameter_charts == other.parameter_charts
     }
 }
 
 impl BezierParameterComponentOverlap2 {
-    pub(crate) const fn overlap(&self) -> &RationalBezierIntersectionOverlap2 {
-        &self.overlap
+    pub(crate) fn overlap(&self) -> &RationalBezierIntersectionOverlap2 {
+        self.parameter_charts
+            .as_ref()
+            .map_or(&self.overlap, |charts| &charts.overlap)
+    }
+
+    /// Publishes the original parameters of a component certified in a finite
+    /// affine chart. Its support, fiber ranks and witness remain in the chart
+    /// where they were proved. Repeated transport composes two affine maps;
+    /// it never nests correspondences or reconstructs the source curves.
+    fn in_parameter_charts(
+        mut self,
+        mut maps: [ParameterComponentAffineMap2; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        if maps
+            .iter()
+            .all(|map| map.scale == Real::one() && map.offset == Real::zero())
+        {
+            return Ok(Classification::Decided(self));
+        }
+        if let Some(charts) = &self.parameter_charts {
+            for (map, inner) in maps.iter_mut().zip(&charts.to_source) {
+                map.offset = &map.scale * &inner.offset + &map.offset;
+                map.scale = &map.scale * &inner.scale;
+            }
+        }
+        for map in &maps {
+            match real_sign(&map.scale, &policy.strict_counterpart()) {
+                Some(RealSign::Positive) => {}
+                Some(_) => return Err(CurveError::InvalidBezierRange),
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+        }
+        let inverse = |map: &ParameterComponentAffineMap2| -> CurveResult<_> {
+            let scale = (Real::one() / &map.scale)?;
+            Ok(ParameterComponentAffineMap2 {
+                offset: -(&map.offset * &scale),
+                scale,
+            })
+        };
+        let to_local = [inverse(&maps[0])?, inverse(&maps[1])?];
+        let mut endpoints: [[Option<BezierParameter2>; 2]; 2] =
+            std::array::from_fn(|_| std::array::from_fn(|_| None));
+        for ((range, map), endpoints) in [self.overlap.first_range(), self.overlap.second_range()]
+            .into_iter()
+            .zip(&maps)
+            .zip(&mut endpoints)
+        {
+            for (parameter, endpoint) in [range.start(), range.end()].into_iter().zip(endpoints) {
+                match parameter.affine_image_unbounded(&map.scale, &map.offset, policy)? {
+                    Classification::Decided(parameter) => *endpoint = Some(parameter),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
+        let [[first_start, first_end], [second_start, second_end]] = endpoints.map(|pair| {
+            pair.map(|parameter| parameter.expect("every component endpoint was transported"))
+        });
+        self.parameter_charts = Some(Arc::new(ParameterComponentAffineCharts2 {
+            to_source: maps,
+            to_local,
+            overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
+                first_start,
+                first_end,
+                second_start,
+                second_end,
+                self.overlap.orientation(),
+                [self.overlap.includes_start(), self.overlap.includes_end()],
+            ),
+        }));
+        Ok(Classification::Decided(self))
     }
 
     /// Retains closed rectangle-boundary contacts when the selected component
@@ -121502,12 +121693,12 @@ impl BezierParameterComponentOverlap2 {
                 }
                 for (boundary, owns_boundary) in [
                     (
-                        self.overlap.first_range().start(),
-                        self.overlap.includes_start(),
+                        self.overlap().first_range().start(),
+                        self.overlap().includes_start(),
                     ),
                     (
-                        self.overlap.first_range().end(),
-                        self.overlap.includes_end(),
+                        self.overlap().first_range().end(),
+                        self.overlap().includes_end(),
                     ),
                 ] {
                     if !owns_boundary {
@@ -121548,6 +121739,46 @@ impl BezierParameterComponentOverlap2 {
     }
 
     pub(crate) fn map_curve_parameter(
+        &self,
+        retained_parameter: CurveResultantParameter,
+        parameter: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
+        let Some(charts) = &self.parameter_charts else {
+            return self.map_local_curve_parameter(retained_parameter, parameter, policy);
+        };
+        let axis = match retained_parameter {
+            CurveResultantParameter::First => 0,
+            CurveResultantParameter::Second => 1,
+        };
+        let ranges = [charts.overlap.first_range(), charts.overlap.second_range()];
+        for (retained, lifted) in [
+            (ranges[axis].start(), ranges[1 - axis].start()),
+            (ranges[axis].end(), ranges[1 - axis].end()),
+        ] {
+            if parameter.same_value(&retained.clone().into(), policy)?
+                == Classification::Decided(true)
+            {
+                return Ok(Classification::Decided(Some(lifted.clone().into())));
+            }
+        }
+        let map = &charts.to_local[axis];
+        let parameter = match parameter.affine_image_unbounded(&map.scale, &map.offset, policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let parameter =
+            match self.map_local_curve_parameter(retained_parameter, &parameter, policy)? {
+                Classification::Decided(Some(parameter)) => parameter,
+                other => return Ok(other),
+            };
+        let map = &charts.to_source[1 - axis];
+        Ok(parameter
+            .affine_image_unbounded(&map.scale, &map.offset, policy)?
+            .map(Some))
+    }
+
+    fn map_local_curve_parameter(
         &self,
         retained_parameter: CurveResultantParameter,
         parameter: &CurveParameter2,
@@ -122008,9 +122239,9 @@ impl BezierParameterComponentOverlap2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         let first_overlap =
-            CurveParameterRange2::from_bezier_range(self.overlap.first_range().clone());
+            CurveParameterRange2::from_bezier_range(self.overlap().first_range().clone());
         let second_overlap =
-            CurveParameterRange2::from_bezier_range(self.overlap.second_range().clone());
+            CurveParameterRange2::from_bezier_range(self.overlap().second_range().clone());
         crate::bezier_split::clip_corresponding_parameter_ranges(
             &first_overlap,
             &second_overlap,
@@ -122032,9 +122263,9 @@ impl BezierParameterComponentOverlap2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         let first_overlap =
-            CurveParameterRange2::from_bezier_range(self.overlap.first_range().clone());
+            CurveParameterRange2::from_bezier_range(self.overlap().first_range().clone());
         let second_overlap =
-            CurveParameterRange2::from_bezier_range(self.overlap.second_range().clone());
+            CurveParameterRange2::from_bezier_range(self.overlap().second_range().clone());
         crate::bezier_split::corresponding_parameter_ranges_are_positive(
             &first_overlap,
             &second_overlap,
@@ -125772,6 +126003,7 @@ fn parameter_component_evidence_from_drafts(
             support: support.clone(),
             fiber_root_ranks: [first_rank, second_rank],
             witness: draft.witness,
+            parameter_charts: None,
         });
     }
     let mut evidence = ParameterComponentEvidence2::from_partitioned_pairs(
@@ -127354,6 +127586,7 @@ enum BezierParallelPairDomainProjection2 {
     PositiveDimensional,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 struct ParameterComponentAffineMap2 {
     scale: Real,
     offset: Real,
@@ -127725,8 +127958,17 @@ fn transform_parallel_pair_system_for_component_chart<'a>(
     }))
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ParameterComponentQuery2 {
+    /// Corner solving needs only an existence certificate, including on rays.
+    Existence,
+    /// Finite intersections retain every correspondence and residual contact.
+    RetainFinite,
+}
+
 struct ParameterComponentSelection2 {
     positive_dimensional: bool,
+    component_overlaps: Vec<BezierParameterComponentOverlap2>,
     selected_pairs: Vec<BezierParallelIntersectionParameterPair2>,
     retained_contacts: Vec<BezierParallelPairIntersectionContact2>,
 }
@@ -127923,9 +128165,15 @@ fn select_parameter_component_in_domain(
     support: &BivariatePolynomial,
     selector: &ParameterComponentSelector2<'_>,
     domains: [CurveParameterDomain2<'_>; 2],
+    query: ParameterComponentQuery2,
     policy: &CurveContext,
     config: CurveIntersectionResultantConfig,
 ) -> CurveResult<Classification<ParameterComponentSelection2>> {
+    debug_assert!(
+        query == ParameterComponentQuery2::Existence
+            || domains.iter().all(|domain| domain.extension.is_none())
+    );
+    let mut component_overlaps = Vec::new();
     let mut selected_pairs = Vec::new();
     let mut retained_contacts = Vec::new();
     // Each query has one policy and at most four chart domains. Retain only
@@ -128006,47 +128254,55 @@ fn select_parameter_component_in_domain(
             };
             let axis_report =
                 extract_bivariate_polynomial_system_axis_factors(&chart_support, &chart_support);
-            let chart_support =
-                if axis_report.status == BivariatePolynomialAxisFactorStatus::Reduced {
-                    for (factor, axis) in [
-                        (
-                            &axis_report.first_parameter_factor,
-                            CurveResultantParameter::First,
-                        ),
-                        (
-                            &axis_report.second_parameter_factor,
-                            CurveResultantParameter::Second,
-                        ),
-                    ] {
-                        match select_axis_parameter_components_on_chart(
-                            factor,
-                            axis,
-                            &selector,
-                            first_chart,
-                            second_chart,
-                            &mut selected_pairs,
-                            policy,
-                        )? {
-                            Classification::Decided(true) => {
-                                return Ok(Classification::Decided(ParameterComponentSelection2 {
-                                    positive_dimensional: true,
-                                    selected_pairs,
-                                    retained_contacts,
-                                }));
+            let chart_support = if axis_report.status
+                == BivariatePolynomialAxisFactorStatus::Reduced
+            {
+                for (factor, axis) in [
+                    (
+                        &axis_report.first_parameter_factor,
+                        CurveResultantParameter::First,
+                    ),
+                    (
+                        &axis_report.second_parameter_factor,
+                        CurveResultantParameter::Second,
+                    ),
+                ] {
+                    match select_axis_parameter_components_on_chart(
+                        factor,
+                        axis,
+                        &selector,
+                        first_chart,
+                        second_chart,
+                        &mut selected_pairs,
+                        policy,
+                    )? {
+                        Classification::Decided(true) => {
+                            // Full finite rational queries remove constant
+                            // images first and exclude poles in the selector.
+                            // An axis component here has no bijective map.
+                            if query == ParameterComponentQuery2::RetainFinite {
+                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                             }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
+                            return Ok(Classification::Decided(ParameterComponentSelection2 {
+                                positive_dimensional: true,
+                                component_overlaps,
+                                selected_pairs,
+                                retained_contacts,
+                            }));
+                        }
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
                         }
                     }
-                    let Some([reduced, _]) = axis_report.reduced_equations else {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    };
-                    Cow::Owned(reduced)
-                } else {
-                    chart_support
+                }
+                let Some([reduced, _]) = axis_report.reduced_equations else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 };
+                Cow::Owned(reduced)
+            } else {
+                chart_support
+            };
             if bivariate_unit_square_has_strict_bernstein_sign(&chart_support, policy)? {
                 continue;
             }
@@ -128088,11 +128344,31 @@ fn select_parameter_component_in_domain(
             for overlap in component.component_overlaps.iter() {
                 match overlap.has_positive_overlap(first_range, second_range, policy)? {
                     Classification::Decided(true) => {
-                        return Ok(Classification::Decided(ParameterComponentSelection2 {
-                            positive_dimensional: true,
-                            selected_pairs,
-                            retained_contacts,
-                        }));
+                        if query == ParameterComponentQuery2::Existence {
+                            return Ok(Classification::Decided(ParameterComponentSelection2 {
+                                positive_dimensional: true,
+                                component_overlaps,
+                                selected_pairs,
+                                retained_contacts,
+                            }));
+                        }
+                        let maps = [first_chart, second_chart].map(|chart| match chart.mapping {
+                            ParameterComponentMap2::Identity => ParameterComponentAffineMap2 {
+                                scale: Real::one(),
+                                offset: Real::zero(),
+                            },
+                            ParameterComponentMap2::Affine(map) => map.clone(),
+                            ParameterComponentMap2::Incident(_) => {
+                                unreachable!("finite component discovery has no incident chart")
+                            }
+                        });
+                        match overlap.clone().in_parameter_charts(maps, policy)? {
+                            Classification::Decided(overlap) => component_overlaps.push(overlap),
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                        continue;
                     }
                     Classification::Decided(false) => {}
                     Classification::Uncertain(reason) => {
@@ -128188,7 +128464,8 @@ fn select_parameter_component_in_domain(
         }
     }
     Ok(Classification::Decided(ParameterComponentSelection2 {
-        positive_dimensional: false,
+        positive_dimensional: !component_overlaps.is_empty(),
+        component_overlaps,
         selected_pairs,
         retained_contacts,
     }))
@@ -128289,6 +128566,7 @@ fn project_parallel_pair_without_components_in_domain(
                     unordered_self_pair: false,
                 },
                 domains,
+                ParameterComponentQuery2::Existence,
                 policy,
                 config,
             )? {
@@ -129294,6 +129572,16 @@ fn parallel_rational_selected_branch(
     )
 }
 
+fn rational_pair_defined_selector(
+    first_weight: &[Real],
+    second_weight: &[Real],
+) -> BivariatePolynomial {
+    bivariate_outer_product(
+        &polynomial_multiply(first_weight, first_weight),
+        &polynomial_multiply(second_weight, second_weight),
+    )
+}
+
 fn parallel_rational_component_branch(
     source: &BezierParallelPowerBasisRef<'_>,
     differential: &BezierParallelDifferential2,
@@ -129303,11 +129591,7 @@ fn parallel_rational_component_branch(
 ) -> BivariatePolynomial {
     if distance_sign == RealSign::Zero {
         let unit_weight = [Real::one()];
-        let source_weight = source.weight.unwrap_or(&unit_weight);
-        bivariate_outer_product(
-            &polynomial_multiply(source_weight, source_weight),
-            &polynomial_multiply(&other.weight, &other.weight),
-        )
+        rational_pair_defined_selector(source.weight.unwrap_or(&unit_weight), &other.weight)
     } else {
         parallel_rational_selected_branch(source, differential, distance, other)
     }
@@ -130560,11 +130844,28 @@ fn bivariate_scale(mut polynomial: BivariatePolynomial, scale: &Real) -> Bivaria
 /// Certifies finiteness or regularity on the actual closed scalar range.
 /// A strict hull is sufficient; otherwise the shared domain root authority
 /// clips against the original endpoint evidence.
-fn polynomial_is_nonzero_on_curve_region_range(
+pub(crate) fn polynomial_is_nonzero_on_parameter_range(
     coefficients: &[Real],
     range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
+    // Constant weights need no endpoint envelope or root reconstruction.
+    if coefficients
+        .iter()
+        .skip(1)
+        .all(|coefficient| coefficient.zero_status() == hyperreal::ZeroKnowledge::Zero)
+    {
+        match coefficients
+            .first()
+            .map(|value| real_sign(value, &policy.strict_counterpart()))
+        {
+            None | Some(Some(RealSign::Zero)) => return Ok(Classification::Decided(false)),
+            Some(Some(RealSign::Positive | RealSign::Negative)) => {
+                return Ok(Classification::Decided(true));
+            }
+            Some(None) => {}
+        }
+    }
     if strict_polynomial_sign_on_curve_region_range(coefficients, range, policy)?.is_some() {
         return Ok(Classification::Decided(true));
     }
@@ -172878,6 +173179,7 @@ mod conversion_tests {
                                         extensions[1],
                                     ),
                                 ],
+                                ParameterComponentQuery2::Existence,
                                 &policy,
                                 config,
                             )
@@ -173003,6 +173305,7 @@ mod conversion_tests {
                                 extensions[1],
                             ),
                         ],
+                        ParameterComponentQuery2::Existence,
                         &policy,
                         config,
                     )
@@ -173126,6 +173429,7 @@ mod conversion_tests {
                                         unordered_self_pair: false,
                                     },
                                     domains,
+                                    ParameterComponentQuery2::Existence,
                                     &policy,
                                     config,
                                 )
@@ -173171,6 +173475,7 @@ mod conversion_tests {
                                         unordered_self_pair: false,
                                     },
                                     domains,
+                                    ParameterComponentQuery2::Existence,
                                     &policy,
                                     config,
                                 )
@@ -173227,6 +173532,7 @@ mod conversion_tests {
                         unordered_self_pair: false,
                     },
                     [CurveParameterDomain2::new(&finite, None); 2],
+                    ParameterComponentQuery2::Existence,
                     &policy,
                     config,
                 )
@@ -173256,6 +173562,7 @@ mod conversion_tests {
                             unordered_self_pair: false,
                         },
                         [CurveParameterDomain2::new(&finite, None); 2],
+                        ParameterComponentQuery2::Existence,
                         &policy,
                         config,
                     )
@@ -173291,6 +173598,7 @@ mod conversion_tests {
                             ),
                             CurveParameterDomain2::new(&finite, None),
                         ],
+                        ParameterComponentQuery2::Existence,
                         &policy,
                         config,
                     )
@@ -173349,6 +173657,7 @@ mod conversion_tests {
                             unordered_self_pair: false,
                         },
                         [CurveParameterDomain2::new(&range, None); 2],
+                        ParameterComponentQuery2::Existence,
                         &policy,
                         config,
                     )
@@ -173420,6 +173729,7 @@ mod conversion_tests {
                         }),
                     ),
                 ],
+                ParameterComponentQuery2::Existence,
                 &policy,
                 config,
             )
@@ -173452,6 +173762,7 @@ mod conversion_tests {
                         }),
                     ),
                 ],
+                ParameterComponentQuery2::Existence,
                 &policy,
                 config,
             )
@@ -173497,6 +173808,7 @@ mod conversion_tests {
                             }),
                         ),
                     ],
+                    ParameterComponentQuery2::Existence,
                     &policy,
                     config,
                 )
@@ -173611,6 +173923,7 @@ mod conversion_tests {
                                             extend_second.then_some(ray),
                                         ),
                                     ],
+                                    ParameterComponentQuery2::Existence,
                                     &policy,
                                     config,
                                 )
@@ -173735,6 +174048,7 @@ mod conversion_tests {
                         }),
                     ),
                 ],
+                ParameterComponentQuery2::Existence,
                 &policy,
                 config,
             )
@@ -174440,6 +174754,118 @@ mod conversion_tests {
     }
 
     #[test]
+    fn finite_component_transport_composes_maps_without_rebasing_its_proof() {
+        let policy = CurveContext::STRICT;
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let parameter = |value: Real| BezierParameter2::Exact(value);
+        // Both v=u and v=1-u lie in the unit square. The upper branch is
+        // rank one: clipping its bounds alone does not carry that identity.
+        let original = BezierParameterComponentOverlap2 {
+            parameter_charts: None,
+            overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
+                parameter(half.clone()),
+                parameter(Real::one()),
+                parameter(half.clone()),
+                parameter(Real::one()),
+                RationalBezierOverlapOrientation2::Same,
+                [true, true],
+            ),
+            support: Arc::new(BivariatePolynomial::new(vec![
+                vec![Real::zero(), -Real::one(), Real::one()],
+                vec![Real::one()],
+                vec![-Real::one()],
+            ])),
+            fiber_root_ranks: [1, 1],
+            witness: BezierParallelIntersectionParameterPair2 {
+                parallel_parameter: parameter((Real::from(3) / Real::from(4)).unwrap()),
+                other_parameter: parameter((Real::from(3) / Real::from(4)).unwrap()),
+            },
+        };
+        let Classification::Decided(mut transported) = original
+            .clone()
+            .in_parameter_charts(
+                [
+                    ParameterComponentAffineMap2 {
+                        scale: 3.into(),
+                        offset: 2.into(),
+                    },
+                    ParameterComponentAffineMap2 {
+                        scale: 5.into(),
+                        offset: (-4).into(),
+                    },
+                ],
+                &policy,
+            )
+            .unwrap()
+        else {
+            panic!("finite affine maps must retain the branch")
+        };
+        for _ in 0..16 {
+            let Classification::Decided(next) = transported
+                .in_parameter_charts(
+                    std::array::from_fn(|_| ParameterComponentAffineMap2 {
+                        scale: Real::one(),
+                        offset: Real::one(),
+                    }),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("translations must compose")
+            };
+            transported = next;
+            assert!(Arc::ptr_eq(&original.support, &transported.support));
+            assert_eq!(original.fiber_root_ranks, transported.fiber_root_ranks);
+            assert_eq!(original.witness, transported.witness);
+            assert_eq!(original.overlap, transported.overlap);
+        }
+        let alpha = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
+        let Classification::Decided(source) = alpha
+            .affine_image_unbounded(&3.into(), &18.into(), &policy)
+            .unwrap()
+        else {
+            panic!("the source parameter transports")
+        };
+        let Classification::Decided(expected) = alpha
+            .affine_image_unbounded(&5.into(), &12.into(), &policy)
+            .unwrap()
+        else {
+            panic!("the target parameter transports")
+        };
+        let Classification::Decided(Some(mapped)) = transported
+            .map_curve_parameter(
+                CurveResultantParameter::First,
+                &source.clone().into(),
+                &policy,
+            )
+            .unwrap()
+        else {
+            panic!("the rank-one branch maps")
+        };
+        assert_eq!(
+            mapped.same_value(&expected.into(), &policy).unwrap(),
+            Classification::Decided(true)
+        );
+        let Classification::Decided(Some(restored)) = transported
+            .map_curve_parameter(CurveResultantParameter::Second, &mapped, &policy)
+            .unwrap()
+        else {
+            panic!("the branch maps back")
+        };
+        assert_eq!(
+            restored.same_value(&source.into(), &policy).unwrap(),
+            Classification::Decided(true)
+        );
+        let swapped = swapped_parameter_component_overlap(&transported);
+        assert_eq!(
+            swapped
+                .map_curve_parameter(CurveResultantParameter::First, &mapped, &policy)
+                .unwrap(),
+            Classification::Decided(Some(restored))
+        );
+    }
+
+    #[test]
     fn nonlinear_parameter_component_maps_recursive_projective_scalars_locally() {
         let fraction = |numerator: i8, denominator: i8| {
             (Real::from(numerator) / Real::from(denominator)).unwrap()
@@ -174459,6 +174885,7 @@ mod conversion_tests {
             other_parameter: parameter(Real::zero()),
         };
         let affine = BezierParameterComponentOverlap2 {
+            parameter_charts: None,
             overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
                 parameter(Real::zero()),
                 parameter(Real::one()),
@@ -174477,6 +174904,7 @@ mod conversion_tests {
             witness: witness.clone(),
         };
         let cubic = BezierParameterComponentOverlap2 {
+            parameter_charts: None,
             overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
                 parameter(Real::zero()),
                 parameter(Real::one()),
@@ -174498,6 +174926,7 @@ mod conversion_tests {
             witness: witness.clone(),
         };
         let upper_quadratic_branch = BezierParameterComponentOverlap2 {
+            parameter_charts: None,
             overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
                 parameter(half.clone()),
                 parameter(Real::one()),
@@ -174517,6 +174946,7 @@ mod conversion_tests {
             witness: witness.clone(),
         };
         let degree_drop = BezierParameterComponentOverlap2 {
+            parameter_charts: None,
             overlap: RationalBezierIntersectionOverlap2::from_certified_parameters(
                 parameter(Real::zero()),
                 parameter(Real::one()),

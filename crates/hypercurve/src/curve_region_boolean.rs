@@ -2275,7 +2275,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Err(cause) => return Err(self.invalid(0, cause)),
             };
             let other_parameters = match rational
-                .point_incidence_classified(&point, &self.data.policy)
+                .point_incidence_on_range(
+                    &point,
+                    &crate::CurveParameterRange2::unit(),
+                    &self.data.policy,
+                )
                 .map_err(|cause| self.invalid(0, cause))?
             {
                 Classification::Decided(RationalBezierPointIncidence2::Parameters(parameters)) => {

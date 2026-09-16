@@ -18487,7 +18487,9 @@ fn subcurve_point_at(
         BezierSubcurve2::Quadratic(curve) => Classification::Decided(curve.point_at(parameter)),
         BezierSubcurve2::Cubic(curve) => Classification::Decided(curve.point_at(parameter)),
         BezierSubcurve2::RationalQuadratic(curve) => curve.point_at(parameter, policy),
-        BezierSubcurve2::Rational(curve) => curve.point_at_classified(&parameter, policy),
+        // The owning fragment supplies the domain; retained endpoints and
+        // interior samples may lie outside the author's unit interval.
+        BezierSubcurve2::Rational(curve) => curve.point_at_affine_classified(&parameter, policy),
     }
 }
 

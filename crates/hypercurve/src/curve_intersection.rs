@@ -857,7 +857,7 @@ fn certified_singleton_aabb_intersection(
         let mut locations = Vec::new();
         for (span_index, (fragment, evaluator)) in fragments.iter().zip(evaluators).enumerate() {
             let parameters = match evaluator
-                .point_incidence_classified(&point, policy)
+                .point_incidence_on_range(&point, &crate::CurveParameterRange2::unit(), policy)
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Intersection, curve.family(), cause)
                 })? {

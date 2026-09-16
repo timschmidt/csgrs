@@ -948,12 +948,23 @@ impl Pair<'_> {
         second: &RationalBezier2,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
-        // The retained resultant context isolates in the unit source chart.
-        // An exterior restriction must use a finite-domain replay before this
-        // kernel can certify completeness; never mistake an omitted chart for
-        // an empty geometric intersection.
-        for span in [self.first, self.second] {
-            self.require_unit_domain(span)?;
+        let unit = CurveParameterRange2::unit();
+        let unit_domain = crate::bezier_split::CurveParameterDomain2::new(&unit, None);
+        let unit_covers_pair = [self.first, self.second].into_iter().all(|span| {
+            matches!(
+                unit_domain.contains_finite_range(&span.range, &self.policy.strict_counterpart()),
+                Ok(Classification::Decided(true))
+            )
+        }) && [first, second].into_iter().all(|source| {
+            matches!(
+                source.unit_weight_sign(),
+                Classification::Decided(
+                    hyperreal::RealSign::Positive | hyperreal::RealSign::Negative
+                )
+            )
+        });
+        if !unit_covers_pair {
+            return self.finite_rational(first, second, result);
         }
         // A collapsed rational map has an entire parameter fiber, rather
         // than one isolated root. Reuse the zero-distance kernel's complete
@@ -1273,15 +1284,8 @@ impl Pair<'_> {
                     },
                     _ => None,
                 };
-                if let Some(source) = source
-                    && !matches!(
-                        source.unit_weight_sign(),
-                        Classification::Decided(
-                            hyperreal::RealSign::Positive | hyperreal::RealSign::Negative
-                        )
-                    )
-                {
-                    let weight = source
+                if let Some(source) = source {
+                    let weight = &source
                         .homogeneous_power_basis()
                         .map_err(|cause| {
                             ExactCurveError::invalid(
@@ -1290,18 +1294,15 @@ impl Pair<'_> {
                                 cause,
                             )
                         })?
-                        .weight
-                        .clone();
-                    let polynomial = decided(
-                        crate::BezierParameterPolynomial::try_new_power_basis(weight, self.policy),
+                        .weight;
+                    if !decided(
+                        crate::bezier_offset::polynomial_is_nonzero_on_parameter_range(
+                            weight,
+                            &span.range,
+                            &self.policy.strict_counterpart(),
+                        ),
                         span.support.family(),
-                    )?;
-                    let roots = decided(
-                        crate::bezier_split::CurveParameterDomain2::new(&span.range, None)
-                            .finite_roots(&polynomial, self.policy),
-                        span.support.family(),
-                    )?;
-                    if !roots.is_empty() {
+                    )? {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Intersection,
                             span.support.family(),
@@ -1643,25 +1644,13 @@ impl Pair<'_> {
         Ok(())
     }
 
-    fn parallels(
+    fn pair_contacts(
         &self,
-        first: &crate::BezierParallel2,
-        second: &crate::BezierParallel2,
+        evidence: &crate::BezierParallelPairIntersectionSet2,
+        mut point: impl FnMut(&CurveParameter2) -> ExactCurveResult<CurvePoint2>,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
-        for span in [self.first, self.second] {
-            self.require_unit_domain(span)?;
-        }
         let family = self.first.support.family();
-        let evidence = decided(
-            first.parallel_intersections_on_regular_ranges(
-                second,
-                &self.first.range,
-                &self.second.range,
-                self.policy,
-            ),
-            family,
-        )?;
         for contact in evidence.contacts() {
             let first = contact.first_parameter();
             let second = contact.second_parameter();
@@ -1673,7 +1662,7 @@ impl Pair<'_> {
                     self.policy,
                 )?
             {
-                let point = self.analytic_contact_point(first)?;
+                let point = point(first)?;
                 self.append_contact(
                     result,
                     self.contact(
@@ -1694,6 +1683,84 @@ impl Pair<'_> {
                 result,
             )?;
         }
+        if let Some(candidates) = evidence.incomplete_candidates() {
+            self.blocker(
+                result,
+                CurveIntersectionPairBlockerKind2::IncompleteReplay {
+                    candidates: candidates.clone(),
+                },
+            );
+        }
+        Ok(())
+    }
+
+    fn finite_rational(
+        &self,
+        first: &RationalBezier2,
+        second: &RationalBezier2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let family = self.first.support.family();
+        let evidence = decided(
+            crate::bezier_offset::rational_pair_intersections_on_ranges(
+                first,
+                second,
+                [&self.first.range, &self.second.range],
+                self.policy,
+            ),
+            family,
+        )?;
+        let mut point_support = None;
+        self.pair_contacts(&evidence, |parameter| {
+            let support = match &point_support {
+                Some(support) => support,
+                None => point_support.insert(first.parallel_left(Real::zero()).map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Intersection, family, cause)
+                })?),
+            };
+            crate::bezier_offset::BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                support.clone(), parameter, Real::zero(), self.policy,
+            ).map(CurvePoint2::from).ok_or_else(|| ExactCurveError::blocked(
+                CurveOperation2::Intersection, family, UncertaintyReason::Unsupported,
+            ))
+        }, result)?;
+        for overlap in evidence.overlaps() {
+            if !self.analytic_component_overlaps(
+                overlap,
+                evidence.component_overlaps(),
+                false,
+                result,
+            )? {
+                self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent);
+            }
+        }
+        Ok(())
+    }
+
+    fn parallels(
+        &self,
+        first: &crate::BezierParallel2,
+        second: &crate::BezierParallel2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        for span in [self.first, self.second] {
+            self.require_unit_domain(span)?;
+        }
+        let family = self.first.support.family();
+        let evidence = decided(
+            first.parallel_intersections_on_regular_ranges(
+                second,
+                &self.first.range,
+                &self.second.range,
+                self.policy,
+            ),
+            family,
+        )?;
+        self.pair_contacts(
+            &evidence,
+            |parameter| self.analytic_contact_point(parameter),
+            result,
+        )?;
         let mut rational_images = None;
         for overlap in evidence.overlaps() {
             if self.analytic_component_overlaps(
@@ -1751,14 +1818,6 @@ impl Pair<'_> {
                 }
             };
             self.analytic_rational_overlap(overlap, a, b, false, result)?;
-        }
-        if let Some(candidates) = evidence.incomplete_candidates() {
-            self.blocker(
-                result,
-                CurveIntersectionPairBlockerKind2::IncompleteReplay {
-                    candidates: candidates.clone(),
-                },
-            );
         }
         Ok(())
     }
@@ -2906,8 +2965,24 @@ mod analytic_dispatch_tests {
     }
 
     #[test]
+    fn finite_rational_pairs_replay_all_roots_and_stationary_points() {
+        finite_rational_contact_cases(false);
+    }
+
+    #[test]
     fn finite_chord_rational_contacts_replay_all_roots_and_stationary_points() {
+        finite_rational_contact_cases(true);
+    }
+
+    fn finite_rational_contact_cases(retained_line: bool) {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let cutter = |a: Point2, b: Point2| {
+                if retained_line {
+                    retained_chord(a, b, &policy)
+                } else {
+                    Curve2::from(LineSeg2::try_new(a, b).unwrap())
+                }
+            };
             let parabola = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
                 QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 1)),
             ))
@@ -2938,28 +3013,28 @@ mod analytic_dispatch_tests {
                 (
                     parabola.clone(),
                     [1.into(), 2.into()],
-                    retained_chord(p(0, 2), p(2, 2), &policy),
+                    cutter(p(0, 2), p(2, 2)),
                     1,
                     false,
                 ),
                 (
                     parabola,
                     [1.into(), 2.into()],
-                    retained_chord(p(1, 1), p(2, 4), &policy),
+                    cutter(p(1, 1), p(2, 4)),
                     2,
                     false,
                 ),
                 (
                     cubic,
                     [1.into(), 5.into()],
-                    retained_chord(p(0, 0), p(6, 0), &policy),
+                    cutter(p(0, 0), p(6, 0)),
                     3,
                     false,
                 ),
                 (
                     cusp,
                     [1.into(), 3.into()],
-                    retained_chord(p(0, -1), p(0, 1), &policy),
+                    cutter(p(0, -1), p(0, 1)),
                     1,
                     true,
                 ),
@@ -3113,6 +3188,203 @@ mod analytic_dispatch_tests {
             assert!(!result.is_complete());
             assert!(result.contacts().is_empty());
             assert!(result.overlaps().is_empty());
+        }
+    }
+
+    #[test]
+    fn finite_rational_pairs_keep_nonlinear_correspondences_and_residual_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parabola = RationalBezier2::try_new(
+                vec![p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 1)],
+                vec![Real::one(); 3],
+            )
+            .unwrap();
+            // (u^2,u^4) traverses the same parabola with a nonlinear chart.
+            let squared = RationalBezier2::try_new(
+                vec![
+                    p(0, 0),
+                    p(0, 0),
+                    Point2::new(q(1, 6), Real::zero()),
+                    Point2::new(q(1, 2), Real::zero()),
+                    p(1, 1),
+                ],
+                vec![Real::one(); 5],
+            )
+            .unwrap();
+            for selected_bounds in [false, true] {
+                let first = finite_rational(
+                    parabola.clone(),
+                    [1.into(), 4.into()],
+                    selected_bounds,
+                    &policy,
+                );
+                let second = finite_rational(
+                    squared.clone(),
+                    [1.into(), 2.into()],
+                    selected_bounds,
+                    &policy,
+                );
+                for reversed in [false, true] {
+                    let first = oriented(&first, reversed, &policy);
+                    for swapped in [false, true] {
+                        let (a, b, source, image) = if swapped {
+                            (&second, &first, q(3, 2), q(9, 4))
+                        } else {
+                            (&first, &second, q(9, 4), q(3, 2))
+                        };
+                        let result = query(a, b, &policy);
+                        let [overlap] = result.overlaps() else {
+                            panic!("one nonlinear finite correspondence: {result:?}")
+                        };
+                        assert!(result.contacts().is_empty());
+                        let parameter = selected(source, &policy);
+                        let CurveOverlapCorrespondence2::ParameterComponent {
+                            source,
+                            swapped: false,
+                        } = &overlap.parameter_correspondence
+                        else {
+                            panic!("the finite overlap retains its component proof")
+                        };
+                        let mapped = exact(
+                            source
+                                .map_curve_parameter(
+                                    hypersolve::CurveResultantParameter::First,
+                                    &parameter,
+                                    &policy,
+                                )
+                                .unwrap(),
+                        )
+                        .unwrap();
+                        assert_eq!(
+                            mapped.same_value(&image.into(), &policy).unwrap(),
+                            Classification::Decided(true)
+                        );
+                        let restored = exact(
+                            source
+                                .map_curve_parameter(
+                                    hypersolve::CurveResultantParameter::Second,
+                                    &mapped,
+                                    &policy,
+                                )
+                                .unwrap(),
+                        )
+                        .unwrap();
+                        assert_eq!(
+                            restored.same_value(&parameter, &policy).unwrap(),
+                            Classification::Decided(true)
+                        );
+                        same(
+                            &certified(a.point_at(&parameter, &policy).unwrap()),
+                            &certified(b.point_at(&mapped, &policy).unwrap()),
+                            &policy,
+                        );
+                    }
+                }
+            }
+            // Identical nodal cubics share the diagonal but also meet at
+            // ordered off-diagonal pairs (-2,2) and (2,-2).
+            let nodal = RationalBezier2::try_new(
+                vec![
+                    p(0, 0),
+                    Point2::new(Real::zero(), -q(4, 3)),
+                    Point2::new(q(1, 3), -q(8, 3)),
+                    p(1, -3),
+                ],
+                vec![Real::one(); 4],
+            )
+            .unwrap();
+            let nodal = finite_rational(nodal, [(-3).into(), 3.into()], true, &policy);
+            let result = query(&nodal, &nodal, &policy);
+            assert_eq!(result.overlaps().len(), 1);
+            assert_eq!(result.contacts().len(), 2);
+            for contact in result.contacts() {
+                assert_eq!(
+                    contact
+                        .first()
+                        .local_parameter()
+                        .same_value(contact.second().local_parameter(), &policy)
+                        .unwrap(),
+                    Classification::Decided(false)
+                );
+                same(contact.point(), &p(4, 0).into(), &policy);
+                assert!(contact.is_certified_transverse());
+            }
+        }
+    }
+
+    #[test]
+    fn finite_rational_pairs_keep_retracing_and_point_fibers() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let squared =
+                RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 0)], vec![Real::one(); 3])
+                    .unwrap();
+            let squared = finite_rational(squared, [(-2).into(), 2.into()], true, &policy);
+            for (start, end, contacts, overlaps) in [(1, 4, 0, 2), (0, 1, 0, 2), (-1, 0, 1, 0)] {
+                let line = Curve2::from(LineSeg2::new_unchecked(p(start, 0), p(end, 0)));
+                for (a, b) in [(&squared, &line), (&line, &squared)] {
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.contacts().len(), contacts);
+                    assert_eq!(result.overlaps().len(), overlaps);
+                }
+            }
+            let constant =
+                RationalBezier2::try_new(vec![p(2, 0); 2], vec![Real::one(); 2]).unwrap();
+            let first = finite_rational(constant.clone(), [2.into(), 3.into()], true, &policy);
+            let second = finite_rational(constant, [(-3).into(), (-2).into()], false, &policy);
+            assert_eq!(
+                query(&first, &second, &policy).parameter_components().len(),
+                1
+            );
+            for (a, b) in [(&squared, &first), (&first, &squared)] {
+                let result = query(a, b, &policy);
+                assert_eq!(result.parameter_components().len(), 2);
+                assert!(result.contacts().is_empty() && result.overlaps().is_empty());
+                for component in result.parameter_components() {
+                    same(component.point(), &p(2, 0).into(), &policy);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_rational_pairs_certify_poles_on_the_active_domain() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = exact(
+                RationalBezier2::from_homogeneous_controls(
+                    vec![
+                        crate::HomogeneousControl2::new(0.into(), 0.into(), 2.into()),
+                        crate::HomogeneousControl2::new(1.into(), 0.into(), 1.into()),
+                    ],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let line = Curve2::from(LineSeg2::new_unchecked(p(-4, 0), p(-1, 0)));
+            let finite = finite_rational(source.clone(), [3.into(), 4.into()], true, &policy);
+            assert_eq!(query(&line, &finite, &policy).overlaps().len(), 1);
+            let pole = finite_rational(source, [1.into(), 3.into()], false, &policy);
+            assert!(!certified(line.intersect_curve(&pole, &policy).unwrap()).is_complete());
+            let rootful_point = exact(
+                RationalBezier2::from_homogeneous_controls(
+                    vec![
+                        crate::HomogeneousControl2::new(1.into(), 0.into(), 1.into()),
+                        crate::HomogeneousControl2::new((-1).into(), 0.into(), (-1).into()),
+                    ],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let line = Curve2::from(LineSeg2::new_unchecked(p(0, 0), p(2, 0)));
+            for bounds in [
+                [Real::zero(), q(1, 4)],
+                [q(3, 4), Real::one()],
+                [2.into(), 3.into()],
+            ] {
+                let point = finite_rational(rootful_point.clone(), bounds, true, &policy);
+                for (a, b) in [(&point, &line), (&line, &point)] {
+                    assert_eq!(query(a, b, &policy).parameter_components().len(), 1);
+                }
+            }
         }
     }
 
