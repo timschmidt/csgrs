@@ -3490,9 +3490,9 @@ impl RetainedRationalCornerArc2 {
                     }
                 };
                 let range = CurveParameterRange2::from_bezier_range(fragment.range().clone());
-                let point = |parameter| match fragment
+                let point = |parameter: &BezierParameter2| match fragment
                     .parallel()
-                    .point_evidence_on_regular_range(parameter, &range, policy)
+                    .point_evidence_on_regular_range(&parameter.clone().into(), &range, policy)
                     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
                 {
                     Classification::Decided(point) => Ok(point),

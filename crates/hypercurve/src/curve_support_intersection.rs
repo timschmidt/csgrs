@@ -15,6 +15,7 @@ struct Evidence {
     contacts: Vec<CurveIntersectionContact2>,
     overlaps: Vec<CurveIntersectionOverlap2>,
     blockers: Vec<CurveIntersectionPairBlocker2>,
+    parameter_components: Vec<CurveIntersectionParameterComponent2>,
 }
 
 pub(super) struct Span {
@@ -62,11 +63,11 @@ fn contains(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
-    let [lower, upper] = decided(range.ordered_endpoints(policy), family)?;
-    if decided(parameter.cmp_by_refinement(lower, policy), family)?.is_lt() {
-        return Ok(false);
-    }
-    Ok(!decided(parameter.cmp_by_refinement(upper, policy), family)?.is_gt())
+    decided(
+        crate::bezier_split::CurveParameterDomain2::new(range, None)
+            .contains_finite_parameter(parameter, policy),
+        family,
+    )
 }
 
 struct Pair<'a> {
@@ -215,6 +216,34 @@ impl Pair<'_> {
                 overlaps,
             } => (contacts, overlaps),
             BezierAlgebraicChordRationalIntersections2::DegenerateProjection => {
+                if let Classification::Decided(Some(point)) =
+                    BezierSubcurve2::Rational(source.clone())
+                        .point_image(&self.policy.strict_counterpart())
+                {
+                    let point = CurvePoint2::from(point);
+                    if decided(chord.contains_point_evidence(&point, self.policy), family)? {
+                        let parameter = chord
+                            .parameter_at_certified_support_point(point.clone(), self.policy)
+                            .map_err(|cause| {
+                                ExactCurveError::invalid(
+                                    CurveOperation2::Intersection,
+                                    family,
+                                    cause,
+                                )
+                            })?;
+                        let parameter = Some(CurveParameter2::from_algebraic_chord(parameter));
+                        self.point_image_component(
+                            if chord_first {
+                                [parameter, None]
+                            } else {
+                                [None, parameter]
+                            },
+                            &point,
+                            result,
+                        )?;
+                    }
+                    return Ok(());
+                }
                 self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent);
                 return Ok(());
             }
@@ -979,7 +1008,10 @@ impl Pair<'_> {
                     [first_range, second_range],
                     overlap.orientation(),
                     inclusion,
-                    CurveOverlapCorrespondence2::Rational(correspondence),
+                    CurveOverlapCorrespondence2::Rational {
+                        source: correspondence,
+                        swapped: false,
+                    },
                 )?);
             } else {
                 // A regularized filled region can discard a singleton overlap.
@@ -1199,6 +1231,591 @@ impl Pair<'_> {
         Ok(())
     }
 
+    fn point_image_component(
+        &self,
+        parameters: [Option<CurveParameter2>; 2],
+        point: &CurvePoint2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let domain = |span: &Span,
+                      parameter: Option<&CurveParameter2>|
+         -> ExactCurveResult<Option<CurveParameterSet2>> {
+            Ok(Some(if let Some(parameter) = parameter {
+                let parameter = parameter.clone();
+                if !contains(&span.range, &parameter, span.support.family(), self.policy)? {
+                    return Ok(None);
+                }
+                CurveParameterSet2::Single(parameter)
+            } else {
+                let source = match &span.support {
+                    CurveSupport2::Bezier(BezierSubcurve2::Rational(source)) => {
+                        Some(source.clone())
+                    }
+                    CurveSupport2::Bezier(BezierSubcurve2::RationalQuadratic(source)) => {
+                        Some(source.clone().into())
+                    }
+                    CurveSupport2::Parallel(parallel) => match parallel.source() {
+                        crate::BezierParallelSource2::Rational(source) => Some(source.clone()),
+                        _ => None,
+                    },
+                    _ => None,
+                };
+                if let Some(source) = source
+                    && !matches!(
+                        source.unit_weight_sign(),
+                        Classification::Decided(
+                            hyperreal::RealSign::Positive | hyperreal::RealSign::Negative
+                        )
+                    )
+                {
+                    let weight = source
+                        .homogeneous_power_basis()
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Intersection,
+                                span.support.family(),
+                                cause,
+                            )
+                        })?
+                        .weight
+                        .clone();
+                    let polynomial = decided(
+                        crate::BezierParameterPolynomial::try_new_power_basis(weight, self.policy),
+                        span.support.family(),
+                    )?;
+                    let roots = decided(
+                        crate::bezier_split::CurveParameterDomain2::new(&span.range, None)
+                            .finite_roots(&polynomial, self.policy),
+                        span.support.family(),
+                    )?;
+                    if !roots.is_empty() {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Intersection,
+                            span.support.family(),
+                            UncertaintyReason::Boundary,
+                        ));
+                    }
+                }
+                let range = if span.reversed {
+                    CurveParameterRange2::new_validated(
+                        span.range.end().clone(),
+                        span.range.start().clone(),
+                    )
+                } else {
+                    span.range.clone()
+                };
+                CurveParameterSet2::Range(range)
+            }))
+        };
+        let Some(first_parameters) = domain(self.first, parameters[0].as_ref())? else {
+            return Ok(());
+        };
+        let Some(second_parameters) = domain(self.second, parameters[1].as_ref())? else {
+            return Ok(());
+        };
+        result
+            .parameter_components
+            .push(CurveIntersectionParameterComponent2 {
+                first_span_index: self.indices[0],
+                second_span_index: self.indices[1],
+                first_parameters,
+                second_parameters,
+                point: point.clone(),
+            });
+        Ok(())
+    }
+
+    fn analytic_contact_point(&self, parameter: &CurveParameter2) -> ExactCurveResult<CurvePoint2> {
+        match &self.first.support {
+            CurveSupport2::Parallel(parallel) => decided(
+                parallel.point_evidence_on_regular_range(parameter, &self.first.range, self.policy),
+                self.first.support.family(),
+            ),
+            CurveSupport2::Bezier(source) => {
+                Curve2::from(RationalBezier2::try_from_subcurve(source).map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Intersection,
+                        self.first.support.family(),
+                        cause,
+                    )
+                })?)
+                .point_at(parameter, self.policy)
+                .map(CurveOutcome::into_value)
+            }
+            _ => Err(ExactCurveError::blocked(
+                CurveOperation2::Intersection,
+                self.first.support.family(),
+                UncertaintyReason::Unsupported,
+            )),
+        }
+    }
+
+    fn analytic_overlap(
+        &self,
+        overlap: &crate::RationalBezierIntersectionOverlap2,
+        correspondence: CurveOverlapCorrespondence2,
+        swapped: bool,
+        mut map: impl FnMut(
+            &CurveParameter2,
+            bool,
+        ) -> CurveResult<Classification<Option<CurveParameter2>>>,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let family = self.first.support.family();
+        if let Some((first_range, second_range)) = decided(
+            correspondence.clipped_ranges(&self.first.range, &self.second.range, self.policy),
+            family,
+        )? {
+            let lower_first = if swapped { &second_range } else { &first_range };
+            let inclusion = [
+                self.overlap_includes(overlap, lower_first.start())?,
+                self.overlap_includes(overlap, lower_first.end())?,
+            ];
+            result.overlaps.push(self.overlap(
+                [first_range, second_range],
+                overlap.orientation(),
+                inclusion,
+                correspondence,
+            )?);
+            return Ok(());
+        }
+        // Filled regions discard a singleton. Open curves retain its exact
+        // paired parameters, including when the active intervals only touch.
+        let lower_ranges = [
+            CurveParameterRange2::from_bezier_range(overlap.first_range().clone()),
+            CurveParameterRange2::from_bezier_range(overlap.second_range().clone()),
+        ];
+        for forward in [true, false] {
+            let (span, other) = if forward {
+                (self.first, self.second)
+            } else {
+                (self.second, self.first)
+            };
+            let lower_forward = forward != swapped;
+            let original = &lower_ranges[usize::from(!lower_forward)];
+            for parameter in [span.range.start(), span.range.end()] {
+                if !contains(original, parameter, span.support.family(), self.policy)? {
+                    continue;
+                }
+                let Some(mapped) = decided(map(parameter, lower_forward), family)? else {
+                    continue;
+                };
+                if !contains(&other.range, &mapped, other.support.family(), self.policy)? {
+                    continue;
+                }
+                let (first, second) = if forward {
+                    (parameter.clone(), mapped)
+                } else {
+                    (mapped, parameter.clone())
+                };
+                if !self.overlap_includes(overlap, if swapped { &second } else { &first })? {
+                    continue;
+                }
+                let point = self.analytic_contact_point(&first)?;
+                self.append_contact(
+                    result,
+                    self.contact(first, second, point, false, Some(hyperreal::RealSign::Zero)),
+                )?;
+            }
+        }
+        Ok(())
+    }
+
+    fn analytic_component_overlaps(
+        &self,
+        overlap: &crate::RationalBezierIntersectionOverlap2,
+        components: &[crate::bezier_offset::BezierParameterComponentOverlap2],
+        swapped: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<bool> {
+        let mut retained = false;
+        for source in components
+            .iter()
+            .filter(|source| source.overlap() == overlap)
+        {
+            retained = true;
+            self.analytic_overlap(
+                overlap,
+                CurveOverlapCorrespondence2::ParameterComponent {
+                    source: source.clone(),
+                    swapped,
+                },
+                swapped,
+                |parameter, forward| {
+                    source.map_curve_parameter(
+                        if forward {
+                            hypersolve::CurveResultantParameter::First
+                        } else {
+                            hypersolve::CurveResultantParameter::Second
+                        },
+                        parameter,
+                        self.policy,
+                    )
+                },
+                result,
+            )?;
+        }
+        Ok(retained)
+    }
+
+    fn analytic_rational_overlap(
+        &self,
+        overlap: &crate::RationalBezierIntersectionOverlap2,
+        first: &RationalBezier2,
+        second: &RationalBezier2,
+        swapped: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let source = RationalCurveOverlap2::new(
+            RationalBezierOverlapParameterCorrespondence2::for_overlap(
+                first,
+                second,
+                overlap,
+                self.policy,
+            ),
+            overlap,
+        );
+        self.analytic_overlap(
+            overlap,
+            CurveOverlapCorrespondence2::Rational {
+                source: source.clone(),
+                swapped,
+            },
+            swapped,
+            |parameter, forward| {
+                if forward {
+                    source.source.map_first_to_second_region_parameter(
+                        parameter,
+                        &source.first_range,
+                        &source.second_range,
+                        self.policy,
+                    )
+                } else {
+                    source.source.map_second_to_first_region_parameter(
+                        parameter,
+                        &source.first_range,
+                        &source.second_range,
+                        self.policy,
+                    )
+                }
+            },
+            result,
+        )
+    }
+
+    fn parallel_rational(
+        &self,
+        parallel: &crate::BezierParallel2,
+        rational: &RationalBezier2,
+        parallel_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        for span in [self.first, self.second] {
+            self.require_unit_domain(span)?;
+        }
+        let span = if parallel_first {
+            self.first
+        } else {
+            self.second
+        };
+        let family = span.support.family();
+        let evidence = decided(
+            parallel.intersections_on_regular_range(rational, &span.range, self.policy),
+            family,
+        )?;
+        for contact in evidence.contacts() {
+            let parameters = [
+                contact.parallel_parameter().clone().into(),
+                contact.other_parameter().clone().into(),
+            ];
+            let [first, second] = if parallel_first {
+                parameters
+            } else {
+                let [a, b] = parameters;
+                [b, a]
+            };
+            if contains(
+                &self.first.range,
+                &first,
+                self.first.support.family(),
+                self.policy,
+            )? && contains(
+                &self.second.range,
+                &second,
+                self.second.support.family(),
+                self.policy,
+            )? {
+                let cross = contact.tangent_cross_sign().map(|sign| {
+                    if parallel_first {
+                        sign
+                    } else {
+                        reverse_sign(sign)
+                    }
+                });
+                self.append_contact(
+                    result,
+                    self.contact(
+                        first,
+                        second,
+                        contact.point().clone(),
+                        contact.is_certified_transverse(),
+                        cross,
+                    ),
+                )?;
+            }
+        }
+        for component in evidence.parameter_components() {
+            let parameters = [component.parallel_parameter(), component.other_parameter()]
+                .map(|parameter| parameter.cloned().map(Into::into));
+            self.point_image_component(
+                if parallel_first {
+                    parameters
+                } else {
+                    {
+                        let [first, second] = parameters;
+                        [second, first]
+                    }
+                },
+                component.point(),
+                result,
+            )?;
+        }
+        let mut rational_image = None;
+        for overlap in evidence.overlaps() {
+            if self.analytic_component_overlaps(
+                overlap,
+                evidence.component_overlaps(),
+                !parallel_first,
+                result,
+            )? {
+                continue;
+            }
+            let image = match &rational_image {
+                Some(image) => image,
+                None => {
+                    let Some(image) = decided(
+                        parallel.exact_rational_parallel_component_on_regular_range(
+                            &span.range,
+                            &self.policy.strict_counterpart(),
+                        ),
+                        family,
+                    )?
+                    else {
+                        self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent);
+                        continue;
+                    };
+                    rational_image.insert(image)
+                }
+            };
+            self.analytic_rational_overlap(
+                overlap,
+                image.curve(),
+                rational,
+                !parallel_first,
+                result,
+            )?;
+        }
+        if let Some(candidates) = evidence.incomplete_candidates() {
+            self.blocker(
+                result,
+                CurveIntersectionPairBlockerKind2::IncompleteReplay {
+                    candidates: if parallel_first {
+                        candidates.clone()
+                    } else {
+                        candidates.clone().swapped()
+                    },
+                },
+            );
+        }
+        Ok(())
+    }
+
+    fn parallels(
+        &self,
+        first: &crate::BezierParallel2,
+        second: &crate::BezierParallel2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        for span in [self.first, self.second] {
+            self.require_unit_domain(span)?;
+        }
+        let family = self.first.support.family();
+        let evidence = decided(
+            first.parallel_intersections_on_regular_ranges(
+                second,
+                &self.first.range,
+                &self.second.range,
+                self.policy,
+            ),
+            family,
+        )?;
+        for contact in evidence.contacts() {
+            let first = contact.first_parameter();
+            let second = contact.second_parameter();
+            if contains(&self.first.range, first, family, self.policy)?
+                && contains(
+                    &self.second.range,
+                    second,
+                    self.second.support.family(),
+                    self.policy,
+                )?
+            {
+                let point = self.analytic_contact_point(first)?;
+                self.append_contact(
+                    result,
+                    self.contact(
+                        first.clone(),
+                        second.clone(),
+                        point,
+                        contact.is_certified_transverse(),
+                        contact.tangent_cross_sign(),
+                    ),
+                )?;
+            }
+        }
+        for component in evidence.parameter_components() {
+            self.point_image_component(
+                [component.first_parameter(), component.second_parameter()]
+                    .map(|parameter| parameter.cloned().map(Into::into)),
+                component.point(),
+                result,
+            )?;
+        }
+        let mut rational_images = None;
+        for overlap in evidence.overlaps() {
+            if self.analytic_component_overlaps(
+                overlap,
+                evidence.component_overlaps(),
+                false,
+                result,
+            )? {
+                continue;
+            }
+            let (a, b) = match &rational_images {
+                Some(images) => images,
+                None => {
+                    let strict = self.policy.strict_counterpart();
+                    let a = decided(
+                        first.exact_rational_parallel_component_on_regular_range(
+                            &self.first.range,
+                            &strict,
+                        ),
+                        family,
+                    )?;
+                    let b = decided(
+                        second.exact_rational_parallel_component_on_regular_range(
+                            &self.second.range,
+                            &strict,
+                        ),
+                        family,
+                    )?;
+                    match (a, b) {
+                        (Some(a), Some(b)) => {
+                            rational_images.insert((a.curve().clone(), b.curve().clone()))
+                        }
+                        _ => {
+                            // Non-rational selected components carry their own maps.
+                            // The remaining raw overlaps are certified source-image
+                            // correspondences with the unchanged source parameters.
+                            rational_images.insert((
+                                first.source().to_rational_bezier().map_err(|cause| {
+                                    ExactCurveError::invalid(
+                                        CurveOperation2::Intersection,
+                                        family,
+                                        cause,
+                                    )
+                                })?,
+                                second.source().to_rational_bezier().map_err(|cause| {
+                                    ExactCurveError::invalid(
+                                        CurveOperation2::Intersection,
+                                        family,
+                                        cause,
+                                    )
+                                })?,
+                            ))
+                        }
+                    }
+                }
+            };
+            self.analytic_rational_overlap(overlap, a, b, false, result)?;
+        }
+        if let Some(candidates) = evidence.incomplete_candidates() {
+            self.blocker(
+                result,
+                CurveIntersectionPairBlockerKind2::IncompleteReplay {
+                    candidates: candidates.clone(),
+                },
+            );
+        }
+        Ok(())
+    }
+
+    fn chord_parallel(
+        &self,
+        chord: &crate::BezierAlgebraicChord2,
+        parallel: &crate::BezierParallel2,
+        chord_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        use crate::bezier_offset::BezierAlgebraicChordParallelIntersections2 as Intersections;
+        let span = if chord_first { self.second } else { self.first };
+        self.require_unit_domain(span)?;
+        let strict = self.policy.strict_counterpart();
+        // A branch-local rational image uses exactly the original parameter
+        // chart and gives finite overlaps the existing chord correspondence.
+        if let Classification::Decided(Some(image)) = parallel
+            .exact_rational_parallel_component_on_regular_range(&span.range, &strict)
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    span.support.family(),
+                    cause,
+                )
+            })?
+        {
+            return self.chord_rational(chord, image.curve(), chord_first, result);
+        }
+        match decided(
+            chord.parallel_intersections_on_regular_range(parallel, &span.range, self.policy),
+            span.support.family(),
+        )? {
+            Intersections::Contacts(contacts) => {
+                for contact in contacts {
+                    let source = CurveParameter2::from(contact.parallel_parameter().clone());
+                    if !contains(&span.range, &source, span.support.family(), self.policy)? {
+                        continue;
+                    }
+                    let chord =
+                        CurveParameter2::from_algebraic_chord(contact.chord_parameter().clone());
+                    let cross = contact.tangent_cross_sign();
+                    let (first, second, cross) = if chord_first {
+                        (chord, source, cross)
+                    } else {
+                        (source, chord, reverse_sign(cross))
+                    };
+                    self.append_contact(
+                        result,
+                        self.contact(
+                            first,
+                            second,
+                            contact.point().clone(),
+                            cross != hyperreal::RealSign::Zero,
+                            Some(cross),
+                        ),
+                    )?;
+                }
+            }
+            Intersections::CoincidentSupportComponent => {
+                self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent)
+            }
+            Intersections::DegenerateProjection => self.blocker(
+                result,
+                CurveIntersectionPairBlockerKind2::Uncertain(UncertaintyReason::Unsupported),
+            ),
+        }
+        Ok(())
+    }
+
     fn blocker(&self, result: &mut Evidence, kind: CurveIntersectionPairBlockerKind2) {
         result.blockers.push(CurveIntersectionPairBlocker2 {
             first_span_index: self.indices[0],
@@ -1267,11 +1884,21 @@ pub(super) fn intersect(
                 (CurveSupport2::Parallel(parallel), CurveSupport2::Circle(circle)) => {
                     pair.circle_parallel(circle, parallel, false, &mut result)
                 }
-                _ => Err(ExactCurveError::blocked(
-                    CurveOperation2::Intersection,
-                    first.support.family(),
-                    UncertaintyReason::Unsupported,
-                )),
+                (CurveSupport2::Parallel(parallel), CurveSupport2::Bezier(source)) => {
+                    pair.parallel_rational(parallel, &rational(source)?, true, &mut result)
+                }
+                (CurveSupport2::Bezier(source), CurveSupport2::Parallel(parallel)) => {
+                    pair.parallel_rational(parallel, &rational(source)?, false, &mut result)
+                }
+                (CurveSupport2::Parallel(first), CurveSupport2::Parallel(second)) => {
+                    pair.parallels(first, second, &mut result)
+                }
+                (CurveSupport2::Line(chord), CurveSupport2::Parallel(parallel)) => {
+                    pair.chord_parallel(chord, parallel, true, &mut result)
+                }
+                (CurveSupport2::Parallel(parallel), CurveSupport2::Line(chord)) => {
+                    pair.chord_parallel(chord, parallel, false, &mut result)
+                }
             };
             match outcome {
                 Ok(()) => {}
@@ -1289,6 +1916,8 @@ pub(super) fn intersect(
             contacts: result.contacts.into(),
             overlaps: result.overlaps.into(),
             blockers: result.blockers.into(),
+            parameter_components: (!result.parameter_components.is_empty())
+                .then(|| result.parameter_components.into()),
         }),
     })
 }
@@ -1307,7 +1936,7 @@ mod circle_dispatch_tests {
     fn q(n: i32, d: i32) -> Real {
         (Real::from(n) / Real::from(d)).unwrap()
     }
-    fn exact<T: std::fmt::Debug>(value: Classification<T>) -> T {
+    pub(super) fn exact<T: std::fmt::Debug>(value: Classification<T>) -> T {
         match value {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => panic!("exact fixture: {reason:?}"),
@@ -1344,7 +1973,7 @@ mod circle_dispatch_tests {
             BezierAlgebraicCuspSemicircleFragment2::full(circle, policy),
         ))
     }
-    fn oriented(curve: &Curve2, reversed: bool, policy: &CurveContext) -> Curve2 {
+    pub(super) fn oriented(curve: &Curve2, reversed: bool, policy: &CurveContext) -> Curve2 {
         if reversed {
             let out = curve.reversed(policy).unwrap();
             assert_eq!(out.certainty, CurveCertainty::Certified);
@@ -1353,7 +1982,7 @@ mod circle_dispatch_tests {
             curve.clone()
         }
     }
-    fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
+    pub(super) fn same(first: &CurvePoint2, second: &CurvePoint2, policy: &CurveContext) {
         let equal = first.coincides_with(second, policy);
         assert_eq!(equal.certainty, CurveCertainty::Certified);
         assert_eq!(equal.value, Classification::Decided(true));
@@ -1409,7 +2038,11 @@ mod circle_dispatch_tests {
         }
     }
     #[track_caller]
-    fn query(first: &Curve2, second: &Curve2, policy: &CurveContext) -> CurveIntersectionResult2 {
+    pub(super) fn query(
+        first: &Curve2,
+        second: &Curve2,
+        policy: &CurveContext,
+    ) -> CurveIntersectionResult2 {
         let result = first.intersect_curve(second, policy).unwrap();
         assert_eq!(result.certainty, CurveCertainty::Certified);
         assert!(result.value.is_complete(), "{:?}", result.value.blockers());
@@ -1909,6 +2542,570 @@ mod circle_dispatch_tests {
             assert_eq!(result.contacts().len(), 1);
             assert!(result.overlaps().is_empty());
             same(result.contacts()[0].point(), &p(-1, 0).into(), &policy);
+        }
+    }
+}
+
+#[cfg(test)]
+mod analytic_dispatch_tests {
+    use super::circle_dispatch_tests::{exact, oriented, query, same};
+    use super::*;
+    use crate::{
+        BezierParallel2, BezierParallelFragment2, CurveCertainty, CurvePath2, LineSeg2,
+        QuadraticBezier2,
+    };
+
+    fn p(x: i32, y: i32) -> Point2 {
+        Point2::from_values(x, y)
+    }
+    fn q(n: i32, d: i32) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+    fn certified<T>(outcome: CurveOutcome<T>) -> T {
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        outcome.value
+    }
+    fn curve(parallel: BezierParallel2, policy: &CurveContext) -> Curve2 {
+        let fragment = exact(
+            BezierParallelFragment2::try_new(
+                parallel,
+                BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+                policy,
+            )
+            .unwrap(),
+        );
+        Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(fragment))
+    }
+    fn parabola(policy: &CurveContext) -> Curve2 {
+        curve(
+            QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1))
+                .parallel_left(Real::one())
+                .unwrap(),
+            policy,
+        )
+    }
+    fn trim(curve: &Curve2, start: Real, end: Real, policy: &CurveContext) -> Curve2 {
+        certified(curve.subcurve(start.into(), end.into(), policy).unwrap())
+    }
+
+    #[test]
+    fn common_analytic_pairs_replay_contacts_in_both_orders_and_traversals() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = parabola(&policy);
+            let second = curve(
+                QuadraticBezier2::new(p(1, 1), p(1, 2), p(2, 3))
+                    .parallel_left(Real::one())
+                    .unwrap(),
+                &policy,
+            );
+            let line = Curve2::from(
+                LineSeg2::try_new(
+                    Point2::new((-1).into(), q(3, 2)),
+                    Point2::new(3.into(), q(3, 2)),
+                )
+                .unwrap(),
+            );
+            let chord =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(exact(
+                    crate::BezierAlgebraicChord2::try_new(first.end(), first.start(), &policy)
+                        .unwrap(),
+                )));
+            for (other, count) in [(&line, 1), (&chord, 2), (&second, 1)] {
+                for reversed in [false, true] {
+                    let a = oriented(&first, reversed, &policy);
+                    for swapped in [false, true] {
+                        let (a, b) = if swapped { (other, &a) } else { (&a, other) };
+                        let result = query(a, b, &policy);
+                        assert_eq!(result.contacts().len(), count);
+                        assert!(result.overlaps().is_empty());
+                        assert!(result.parameter_components().is_empty());
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn common_analytic_overlaps_preserve_clips_and_singleton_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = parabola(&policy);
+            let middle = trim(&first, q(1, 4), q(3, 4), &policy);
+            let left = trim(&first, Real::zero(), q(1, 2), &policy);
+            let right = trim(&first, q(1, 2), Real::one(), &policy);
+            for reversed in [false, true] {
+                let middle = oriented(&middle, reversed, &policy);
+                for swapped in [false, true] {
+                    let (a, b) = if swapped {
+                        (&middle, &first)
+                    } else {
+                        (&first, &middle)
+                    };
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.overlaps().len(), 1);
+                    assert!(result.contacts().is_empty());
+                    let overlap = &result.overlaps()[0];
+                    assert!(overlap.includes_start() && overlap.includes_end());
+                    assert_eq!(
+                        overlap.orientation(),
+                        if reversed {
+                            RationalBezierOverlapOrientation2::Reversed
+                        } else {
+                            RationalBezierOverlapOrientation2::Same
+                        }
+                    );
+                    let smaller =
+                        CurveParameterRange2::new_validated(q(3, 8).into(), q(5, 8).into());
+                    let ranges = exact(
+                        overlap
+                            .parameter_correspondence()
+                            .unwrap()
+                            .clipped_ranges(&smaller, &smaller, &policy)
+                            .unwrap(),
+                    )
+                    .unwrap();
+                    assert_eq!(ranges.0.scalar_endpoints(), Some((&q(3, 8), &q(5, 8))));
+                    assert_eq!(ranges.1.scalar_endpoints(), Some((&q(3, 8), &q(5, 8))));
+                }
+            }
+            for (a, b) in [(&left, &right), (&right, &left)] {
+                let result = query(a, b, &policy);
+                assert_eq!(result.contacts().len(), 1);
+                assert!(result.overlaps().is_empty());
+                assert_eq!(
+                    result.contacts()[0].first().local_parameter().scalar(),
+                    Some(&q(1, 2))
+                );
+                assert_eq!(
+                    result.contacts()[0].second().local_parameter().scalar(),
+                    Some(&q(1, 2))
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn common_analytic_overlaps_transport_distinct_source_charts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let source = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 1));
+            let subcurve = source
+                .subcurve_between_exact(&q(1, 4), &q(3, 4), &policy)
+                .unwrap();
+            let first = curve(source.parallel_left(Real::one()).unwrap(), &policy);
+            let second = subcurve.parallel_left(Real::one()).unwrap();
+            for reverse_source in [false, true] {
+                let second = curve(
+                    if reverse_source {
+                        second.reversed()
+                    } else {
+                        second.clone()
+                    },
+                    &policy,
+                );
+                let a = trim(&first, q(3, 8), q(5, 8), &policy);
+                let b = trim(&second, q(1, 4), q(3, 4), &policy);
+                for swapped in [false, true] {
+                    let (a, b) = if swapped { (&b, &a) } else { (&a, &b) };
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.overlaps().len(), 1);
+                    assert!(result.contacts().is_empty());
+                    assert_eq!(
+                        result.overlaps()[0].orientation(),
+                        if reverse_source {
+                            RationalBezierOverlapOrientation2::Reversed
+                        } else {
+                            RationalBezierOverlapOrientation2::Same
+                        }
+                    );
+                }
+                let disjoint = trim(&first, Real::zero(), q(1, 8), &policy);
+                assert!(query(&disjoint, &second, &policy).is_disjoint());
+            }
+            let parallel = curve(
+                QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+                    .parallel_left(Real::one())
+                    .unwrap(),
+                &policy,
+            );
+            let rational = Curve2::from(LineSeg2::try_new(p(0, 1), p(2, 1)).unwrap());
+            let chord =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(exact(
+                    crate::BezierAlgebraicChord2::try_new(p(2, 1).into(), p(0, 1).into(), &policy)
+                        .unwrap(),
+                )));
+            let parallel = trim(&parallel, q(1, 4), q(3, 4), &policy);
+            for other in [&rational, &chord] {
+                for swapped in [false, true] {
+                    let (a, b) = if swapped {
+                        (other, &parallel)
+                    } else {
+                        (&parallel, other)
+                    };
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.overlaps().len(), 1);
+                    assert!(result.contacts().is_empty());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn common_parameter_components_survive_paths_cuts_and_cloning() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let line = curve(
+                QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+                    .parallel_left(Real::one())
+                    .unwrap(),
+                &policy,
+            );
+            let constant = Curve2::from(QuadraticBezier2::new(p(1, 1), p(1, 1), p(1, 1)));
+            let constant = trim(&constant, q(1, 4), q(3, 4), &policy);
+            for swapped in [false, true] {
+                let (a, b) = if swapped {
+                    (&constant, &line)
+                } else {
+                    (&line, &constant)
+                };
+                let result = query(a, b, &policy);
+                assert!(!result.is_disjoint());
+                assert!(result.contacts().is_empty() && result.overlaps().is_empty());
+                let [component] = result.parameter_components() else {
+                    panic!("one complete point-image component")
+                };
+                let (fixed, free) = if swapped {
+                    (component.second_parameters(), component.first_parameters())
+                } else {
+                    (component.first_parameters(), component.second_parameters())
+                };
+                assert!(
+                    matches!(fixed,CurveParameterSet2::Single(parameter) if parameter.scalar()==Some(&q(1,2)))
+                );
+                assert!(matches!(free, CurveParameterSet2::Range(_)));
+                same(component.point(), &p(1, 1).into(), &policy);
+                let cloned = result.clone();
+                assert!(std::ptr::eq(
+                    result.parameter_components().as_ptr(),
+                    cloned.parameter_components().as_ptr()
+                ));
+                let first_path = CurvePath2::try_new(vec![a.clone()]).unwrap();
+                let second_path = CurvePath2::try_new(vec![b.clone()]).unwrap();
+                let path_result =
+                    certified(first_path.intersect_path(&second_path, &policy).unwrap());
+                assert!(path_result.is_complete() && !path_result.is_disjoint());
+                assert_eq!(path_result.parameter_components().len(), 1);
+                assert_eq!(path_result.parameter_components()[0].component(), component);
+                let topology = certified(
+                    first_path
+                        .intersection_topology(&second_path, &policy)
+                        .unwrap(),
+                );
+                assert_eq!(topology.result().parameter_components().len(), 1);
+                let pieces = if swapped {
+                    topology.second()
+                } else {
+                    topology.first()
+                };
+                assert_eq!(pieces[0].curves().len(), 2);
+                let curve_topology = certified(a.intersection_topology(b, &policy).unwrap());
+                assert_eq!(curve_topology.result().parameter_components().len(), 1);
+            }
+            let excluded = trim(&line, Real::zero(), q(1, 4), &policy);
+            assert!(query(&excluded, &constant, &policy).is_disjoint());
+        }
+    }
+
+    #[test]
+    fn coincident_constant_parallels_retain_the_parameter_rectangle() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = curve(
+                QuadraticBezier2::new(p(3, 4), p(3, 4), p(3, 4))
+                    .parallel_left(Real::zero())
+                    .unwrap(),
+                &policy,
+            );
+            let a = trim(&first, q(1, 8), q(3, 8), &policy);
+            let b = trim(&first, q(5, 8), q(7, 8), &policy);
+            let result = query(&a, &b, &policy);
+            assert!(!result.is_disjoint());
+            let [component] = result.parameter_components() else {
+                panic!("one parameter rectangle")
+            };
+            for (domain, start, end) in [
+                (component.first_parameters(), q(1, 8), q(3, 8)),
+                (component.second_parameters(), q(5, 8), q(7, 8)),
+            ] {
+                let CurveParameterSet2::Range(range) = domain else {
+                    panic!("whole retained domain")
+                };
+                assert_eq!(range.scalar_endpoints(), Some((&start, &end)));
+            }
+        }
+    }
+    fn selected(value: Real, policy: &CurveContext) -> CurveParameter2 {
+        let polynomial = exact(
+            crate::BezierParameterPolynomial::try_new_power_basis(
+                vec![(-1).into(), Real::zero(), 2.into()],
+                policy,
+            )
+            .unwrap(),
+        );
+        let interval =
+            exact(crate::BezierParameterInterval::try_new(q(1, 2), q(3, 4), policy).unwrap());
+        let root = exact(
+            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+        );
+        CurveParameter2::from_selected_fiber(
+            crate::bezier_offset::exact_selected_fiber_parameter_for_test(root, value, policy),
+        )
+    }
+
+    #[test]
+    fn common_nonlinear_overlap_keeps_selected_parameter_charts() {
+        // Q(u) is P(t)'s unit parallel through t=(4u-u^2)/(6-3u).
+        // Neither its map nor a selected endpoint may be replaced with an
+        // affine interpolation or a reconstructed global parameter root.
+        let rational = RationalBezier2::try_new(
+            vec![
+                p(0, 1),
+                Point2::new(q(-1, 18), Real::one()),
+                Point2::new(q(-15, 134), q(133, 134)),
+                Point2::new(q(-43, 264), q(43, 44)),
+                Point2::new(q(-117, 580), q(1111, 1160)),
+                Point2::new(q(-25, 112), q(211, 224)),
+                Point2::new(q(-9, 40), q(301, 320)),
+            ],
+            vec![
+                Real::one(),
+                q(3, 4),
+                q(67, 120),
+                q(33, 80),
+                q(29, 96),
+                q(7, 32),
+                q(5, 32),
+            ],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parallel = curve(
+                QuadraticBezier2::new(
+                    p(0, 0),
+                    Point2::new(q(3, 16), Real::zero()),
+                    Point2::new(q(3, 8), q(9, 64)),
+                )
+                .parallel_left(Real::one())
+                .unwrap(),
+                &policy,
+            );
+            let start = selected(q(5, 28), &policy);
+            let end = selected(q(13, 20), &policy);
+            assert!(start.as_bezier_parameter().is_none());
+            let parallel = certified(parallel.subcurve(start, end, &policy).unwrap());
+            for other in [
+                Curve2::from(rational.clone()),
+                curve(rational.parallel_left(Real::zero()).unwrap(), &policy),
+            ] {
+                let other = certified(
+                    other
+                        .subcurve(
+                            selected(q(1, 4), &policy),
+                            selected(q(3, 4), &policy),
+                            &policy,
+                        )
+                        .unwrap(),
+                );
+                for swapped in [false, true] {
+                    let (a, b) = if swapped {
+                        (&other, &parallel)
+                    } else {
+                        (&parallel, &other)
+                    };
+                    let result = query(a, b, &policy);
+                    assert!(result.contacts().is_empty());
+                    assert_eq!(result.overlaps().len(), 1);
+                    let overlap = &result.overlaps()[0];
+                    assert!(overlap.includes_start() && overlap.includes_end());
+                    let (first, second) = if swapped {
+                        (overlap.second_range(), overlap.first_range())
+                    } else {
+                        (overlap.first_range(), overlap.second_range())
+                    };
+                    assert!(first.start().as_bezier_parameter().is_none());
+                    assert!(second.start().as_bezier_parameter().is_none());
+                    let first_clip = CurveParameterRange2::new_validated(
+                        selected(q(5, 28), &policy),
+                        selected(q(1, 2), &policy),
+                    );
+                    let second_clip = CurveParameterRange2::new_validated(
+                        selected(q(1, 4), &policy),
+                        selected(q(3, 4), &policy),
+                    );
+                    let (a_clip, b_clip) = if swapped {
+                        (&second_clip, &first_clip)
+                    } else {
+                        (&first_clip, &second_clip)
+                    };
+                    let clipped = exact(
+                        overlap
+                            .parameter_correspondence()
+                            .unwrap()
+                            .clipped_ranges(a_clip, b_clip, &policy)
+                            .unwrap(),
+                    )
+                    .unwrap();
+                    for (x, y) in [
+                        (clipped.0.start(), clipped.1.start()),
+                        (clipped.0.end(), clipped.1.end()),
+                    ] {
+                        same(
+                            &certified(a.point_at(x, &policy).unwrap()),
+                            &certified(b.point_at(y, &policy).unwrap()),
+                            &policy,
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn stationary_source_touch_replays_the_selected_normal_limits() {
+        // P'=(2t-1)^2(1,t) has equal normal limits at t=1/2.
+        // P'=(2t-1)(1,t) has opposite limits. Both sources are non-PH,
+        // so the complete component projection must retain this distinction.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (source, touches) in [
+                (
+                    RationalBezier2::try_new(
+                        vec![
+                            p(0, 0),
+                            Point2::new(q(1, 4), Real::zero()),
+                            Point2::new(q(1, 6), q(1, 12)),
+                            Point2::new(q(1, 12), q(-1, 12)),
+                            Point2::new(q(1, 3), q(1, 6)),
+                        ],
+                        vec![Real::one(); 5],
+                    )
+                    .unwrap(),
+                    true,
+                ),
+                (
+                    RationalBezier2::try_new(
+                        vec![
+                            p(0, 0),
+                            Point2::new(q(-1, 3), Real::zero()),
+                            Point2::new(q(-1, 3), q(-1, 6)),
+                            Point2::new(Real::zero(), q(1, 6)),
+                        ],
+                        vec![Real::one(); 4],
+                    )
+                    .unwrap(),
+                    false,
+                ),
+            ] {
+                let parallel = source.parallel_left((-1).into()).unwrap();
+                let retained = |start, end| {
+                    Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(
+                        BezierParallelFragment2::from_certified_range(
+                            parallel.clone(),
+                            BezierParameterRange2::from_exact(start, end),
+                            false,
+                        ),
+                    ))
+                };
+                let a = retained(Real::zero(), q(1, 2));
+                let b = retained(q(1, 2), Real::one());
+                let reversed_source =
+                    Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(
+                        BezierParallelFragment2::from_certified_range(
+                            parallel.reversed(),
+                            BezierParameterRange2::from_exact(Real::zero(), q(1, 2)),
+                            false,
+                        ),
+                    ));
+                for (first, second) in [
+                    (&a, &b),
+                    (&b, &a),
+                    (&a, &reversed_source),
+                    (&reversed_source, &a),
+                ] {
+                    let result = query(first, second, &policy);
+                    assert!(result.overlaps().is_empty());
+                    let boundary_contacts = result
+                        .contacts()
+                        .iter()
+                        .filter(|contact| {
+                            contact.first().local_parameter().scalar() == Some(&q(1, 2))
+                                && contact.second().local_parameter().scalar() == Some(&q(1, 2))
+                        })
+                        .count();
+                    assert_eq!(boundary_contacts, usize::from(touches));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn point_image_components_retain_chord_cuts_and_authored_poles() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let chord =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(exact(
+                    crate::BezierAlgebraicChord2::try_new(p(0, 1).into(), p(2, 1).into(), &policy)
+                        .unwrap(),
+                )));
+            let constant = QuadraticBezier2::new(p(1, 1), p(1, 1), p(1, 1));
+            for point in [
+                Curve2::from(constant.clone()),
+                curve(constant.parallel_left(Real::zero()).unwrap(), &policy),
+            ] {
+                for (a, b) in [(&chord, &point), (&point, &chord)] {
+                    let result = query(a, b, &policy);
+                    assert_eq!(result.parameter_components().len(), 1);
+                    let topology = certified(a.intersection_topology(b, &policy).unwrap());
+                    assert_eq!(topology.result().parameter_components().len(), 1);
+                }
+            }
+            let rootful = Curve2::from(exact(
+                RationalBezier2::from_homogeneous_controls(
+                    [-1, 0, 1]
+                        .into_iter()
+                        .map(|weight| {
+                            crate::HomogeneousControl2::new(
+                                weight.into(),
+                                weight.into(),
+                                weight.into(),
+                            )
+                        })
+                        .collect(),
+                    &policy,
+                )
+                .unwrap(),
+            ));
+            let line = curve(
+                QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+                    .parallel_left(Real::one())
+                    .unwrap(),
+                &policy,
+            );
+            let quadratic = Curve2::from(
+                crate::RationalQuadraticBezier2::try_new(
+                    p(1, 1),
+                    p(1, 1),
+                    p(1, 1),
+                    (-1).into(),
+                    (-1).into(),
+                    Real::one(),
+                )
+                .unwrap(),
+            );
+            for rootful in [rootful, quadratic] {
+                let result = certified(line.intersect_curve(&rootful, &policy).unwrap());
+                assert!(!result.is_complete());
+                assert!(result.parameter_components().is_empty());
+                let finite = trim(&rootful, Real::zero(), q(1, 4), &policy);
+                assert_eq!(
+                    query(&line, &finite, &policy).parameter_components().len(),
+                    1
+                );
+            }
         }
     }
 }

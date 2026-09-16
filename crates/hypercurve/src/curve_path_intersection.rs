@@ -9,8 +9,8 @@ use crate::policy::resolve_certified_operation;
 use crate::{
     BezierArrangementGraph2, Classification, Curve2, CurveContext, CurveIntersectionContact2,
     CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2,
-    CurveOperation2, CurveOutcome, CurveParameter2, CurvePath2, ExactCurveError, ExactCurveResult,
-    UncertaintyReason,
+    CurveIntersectionParameterComponent2, CurveOperation2, CurveOutcome, CurveParameter2,
+    CurvePath2, ExactCurveError, ExactCurveResult, UncertaintyReason,
 };
 
 /// One path-pair contact with authored curve and span indices.
@@ -27,6 +27,31 @@ pub struct CurvePathIntersectionOverlap2 {
     first_curve_index: usize,
     second_curve_index: usize,
     overlap: CurveIntersectionOverlap2,
+}
+
+/// One point-image parameter component between authored curves in two paths.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurvePathIntersectionParameterComponent2 {
+    first_curve_index: usize,
+    second_curve_index: usize,
+    component: CurveIntersectionParameterComponent2,
+}
+
+impl CurvePathIntersectionParameterComponent2 {
+    /// Returns the authored curve index in the first path.
+    pub const fn first_curve_index(&self) -> usize {
+        self.first_curve_index
+    }
+
+    /// Returns the authored curve index in the second path.
+    pub const fn second_curve_index(&self) -> usize {
+        self.second_curve_index
+    }
+
+    /// Returns the complete curve-pair parameter component and its point image.
+    pub const fn component(&self) -> &CurveIntersectionParameterComponent2 {
+        &self.component
+    }
 }
 
 /// One incomplete authored curve pair in a path-pair result.
@@ -50,6 +75,7 @@ struct CurvePathIntersectionResultData {
     contacts: Arc<[CurvePathIntersectionContact2]>,
     overlaps: Arc<[CurvePathIntersectionOverlap2]>,
     blockers: Arc<[CurvePathIntersectionBlocker2]>,
+    parameter_components: Option<Arc<[CurvePathIntersectionParameterComponent2]>>,
 }
 
 /// Exact pieces of one authored path curve, in traversal order.
@@ -104,7 +130,7 @@ fn curve_pair_bounds_decided_disjoint(
 }
 
 impl CurvePath2 {
-    /// Computes exact contacts, overlaps, and blockers against another path
+    /// Computes exact contacts, overlaps, point-image components, and blockers against another path
     /// immediately and reports any consumed terminal decision once.
     pub fn intersect_path(
         &self,
@@ -187,6 +213,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
         let mut contacts = Vec::with_capacity(pair_count);
         let mut overlaps = Vec::with_capacity(pair_count);
         let mut blockers = Vec::with_capacity(pair_count);
+        let mut parameter_components = Vec::new();
         for pair in &self.pairs {
             let result = pair.context.result_view()?;
             contacts.extend(result.contacts().iter().cloned().map(|contact| {
@@ -203,6 +230,13 @@ impl<'a> CurvePathIntersectionContext<'a> {
                     overlap,
                 }
             }));
+            parameter_components.extend(result.parameter_components().iter().cloned().map(
+                |component| CurvePathIntersectionParameterComponent2 {
+                    first_curve_index: pair.first_curve_index,
+                    second_curve_index: pair.second_curve_index,
+                    component,
+                },
+            ));
             blockers.extend(result.blockers().iter().cloned().map(|blocker| {
                 CurvePathIntersectionBlocker2 {
                     first_curve_index: pair.first_curve_index,
@@ -218,6 +252,8 @@ impl<'a> CurvePathIntersectionContext<'a> {
                 contacts: contacts.into(),
                 overlaps: overlaps.into(),
                 blockers: blockers.into(),
+                parameter_components: (!parameter_components.is_empty())
+                    .then(|| parameter_components.into()),
             }),
         })
     }
@@ -263,6 +299,19 @@ impl<'a> CurvePathIntersectionContext<'a> {
                             overlap.overlap().first_range().end().clone(),
                         ),
                     ]
+                }))
+                .chain(result.parameter_components().iter().flat_map(|component| {
+                    component
+                        .component()
+                        .first_parameters()
+                        .boundaries()
+                        .map(|parameter| {
+                            (
+                                component.first_curve_index(),
+                                component.component().first_span_index(),
+                                parameter.clone(),
+                            )
+                        })
                 })),
             &self.policy,
         )?;
@@ -291,6 +340,19 @@ impl<'a> CurvePathIntersectionContext<'a> {
                             overlap.overlap().second_range().end().clone(),
                         ),
                     ]
+                }))
+                .chain(result.parameter_components().iter().flat_map(|component| {
+                    component
+                        .component()
+                        .second_parameters()
+                        .boundaries()
+                        .map(|parameter| {
+                            (
+                                component.second_curve_index(),
+                                component.component().second_span_index(),
+                                parameter.clone(),
+                            )
+                        })
                 })),
             &self.policy,
         )?;
@@ -386,14 +448,22 @@ impl CurvePathIntersectionResult2 {
         &self.data.blockers
     }
 
+    /// Returns complete parameter components with a single point image.
+    pub fn parameter_components(&self) -> &[CurvePathIntersectionParameterComponent2] {
+        self.data.parameter_components.as_deref().unwrap_or(&[])
+    }
+
     /// Returns true when every authored curve pair has complete replay.
     pub fn is_complete(&self) -> bool {
         self.data.blockers.is_empty()
     }
 
-    /// Returns true when complete replay found no contacts or overlaps.
+    /// Returns true when complete replay found no shared point or span.
     pub fn is_disjoint(&self) -> bool {
-        self.is_complete() && self.data.contacts.is_empty() && self.data.overlaps.is_empty()
+        self.is_complete()
+            && self.data.contacts.is_empty()
+            && self.data.overlaps.is_empty()
+            && self.parameter_components().is_empty()
     }
 }
 

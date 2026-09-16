@@ -185,12 +185,14 @@ pub use curve::{
 };
 pub use curve_intersection::{
     CurveIntersectionCandidates2, CurveIntersectionContact2, CurveIntersectionOverlap2,
-    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveIntersectionResult2,
-    CurveIntersectionTopology2, CurveLocation2,
+    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2,
+    CurveIntersectionParameterComponent2, CurveIntersectionResult2, CurveIntersectionTopology2,
+    CurveLocation2, CurveParameterSet2,
 };
 pub use curve_path_intersection::{
     CurvePathIntersectionBlocker2, CurvePathIntersectionContact2, CurvePathIntersectionOverlap2,
-    CurvePathIntersectionResult2, CurvePathIntersectionTopology2, CurvePathSplit2,
+    CurvePathIntersectionParameterComponent2, CurvePathIntersectionResult2,
+    CurvePathIntersectionTopology2, CurvePathSplit2,
 };
 pub use curve_point::CurvePoint2;
 pub(crate) use curve_point::CurvePointData2;

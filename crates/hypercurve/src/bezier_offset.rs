@@ -262,7 +262,7 @@ impl BezierParallelSource2 {
         }
     }
 
-    fn to_rational_bezier(&self) -> CurveResult<RationalBezier2> {
+    pub(crate) fn to_rational_bezier(&self) -> CurveResult<RationalBezier2> {
         match self {
             Self::Quadratic(source) => RationalBezier2::try_new(
                 source.control_points().into_iter().cloned().collect(),
@@ -108963,29 +108963,81 @@ fn structural_parallel_overlap(
 
 fn structural_parallel_overlap_intersects_ranges(
     overlap: &RationalBezierIntersectionOverlap2,
-    first_range: &BezierParameterRange2,
-    second_range: &BezierParameterRange2,
+    first: &BezierParallel2,
+    second: &BezierParallel2,
+    first_range: &CurveParameterRange2,
+    second_range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
+    let reverse = |parameter: &CurveParameter2| {
+        parameter.affine_image_unbounded(&Real::from(-1_i8), &Real::one(), policy)
+    };
     let reversed_second;
     let second_in_first_parameter = match overlap.orientation() {
         RationalBezierOverlapOrientation2::Same => second_range,
         RationalBezierOverlapOrientation2::Reversed => {
-            reversed_second = BezierParameterRange2::new_validated(
-                second_range.end().unit_complement(),
-                second_range.start().unit_complement(),
-            );
+            let start = match reverse(second_range.end())? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let end = match reverse(second_range.start())? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            reversed_second = CurveParameterRange2::new_validated(start, end);
             &reversed_second
         }
     };
-    Ok(
-        match intersect_bezier_parameter_ranges(first_range, second_in_first_parameter, policy)? {
-            Classification::Decided(intersection) => {
-                Classification::Decided(intersection.is_some())
+    let [first_low, first_high] = match first_range.ordered_endpoints(policy)? {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let [second_low, second_high] = match second_in_first_parameter.ordered_endpoints(policy)? {
+        Classification::Decided(bounds) => bounds,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    // Overlapping interiors use the same regular source sheet. A shared
+    // endpoint can instead separate opposite one-sided normals at a source
+    // cusp; retain the diagonal there only after replaying both limit points.
+    for (low, high) in [(first_low, second_high), (second_low, first_high)] {
+        match low.cmp_by_refinement(high, policy)? {
+            Classification::Decided(std::cmp::Ordering::Greater) => {
+                return Ok(Classification::Decided(false));
             }
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
-    )
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                let second_parameter = match overlap.orientation() {
+                    RationalBezierOverlapOrientation2::Same => low.clone(),
+                    RationalBezierOverlapOrientation2::Reversed => match reverse(low)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    },
+                };
+                let first_point =
+                    match first.point_evidence_on_regular_range(low, first_range, policy)? {
+                        Classification::Decided(point) => point,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                let second_point = match second.point_evidence_on_regular_range(
+                    &second_parameter,
+                    second_range,
+                    policy,
+                )? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                return Ok(first_point.same_point(&second_point, &policy.strict_counterpart()));
+            }
+            Classification::Decided(std::cmp::Ordering::Less) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+    Ok(Classification::Decided(true))
 }
 
 enum CertifiedParallelSourceOverlapKind2 {
@@ -109997,7 +110049,7 @@ impl BezierParallel2 {
 
     fn source_oriented_regularized_tangent_field(
         &self,
-        range: &BezierParameterRange2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
         let strict = policy.strict_counterpart();
@@ -110153,13 +110205,19 @@ impl BezierParallel2 {
         second_range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let first = match self.source_oriented_regularized_tangent_field(first_range, policy)? {
+        let first = match self.source_oriented_regularized_tangent_field(
+            &CurveParameterRange2::from_bezier_range(first_range.clone()),
+            policy,
+        )? {
             Classification::Decided(field) => field,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let second = match self.source_oriented_regularized_tangent_field(second_range, policy)? {
+        let second = match self.source_oriented_regularized_tangent_field(
+            &CurveParameterRange2::from_bezier_range(second_range.clone()),
+            policy,
+        )? {
             Classification::Decided(field) => field,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -110300,51 +110358,10 @@ impl BezierParallel2 {
         Ok(Classification::Decided((point, tangent)))
     }
 
-    /// Retains a point on one certified regular source range using its
-    /// one-sided tangent frame.
-    ///
-    /// This is the point counterpart of the range-aware tangent predicates.
-    /// At a stationary range endpoint the authored hodograph is zero, but its
-    /// exact common-factor cancellation still defines the selected parallel
-    /// point.  Ordinary regular carriers retain their smaller unregularized
-    /// evidence.
-    pub(crate) fn point_evidence_on_regular_range(
-        &self,
-        parameter: &BezierParameter2,
-        range: &CurveParameterRange2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<CurvePoint2>> {
-        let strict = policy.strict_counterpart();
-        let interior = match range.strict_interior_scalar(&strict)? {
-            Classification::Decided(interior) => interior,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let frame =
-            match self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)? {
-                Classification::Decided(frame) => frame,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let point = match frame {
-            Some(frame) => BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
-                self.clone(),
-                parameter.clone(),
-                frame,
-                Real::zero(),
-                policy,
-            ),
-            None => BezierAnalyticParallelPoint2::new(self.clone(), parameter.clone(), policy),
-        };
-        Ok(Classification::Decided(CurvePoint2::from(point)))
-    }
-
     /// Retains a point on one certified regular carrier range without
     /// projecting selected-fiber or recursive-projective endpoints into a
     /// global parameter polynomial.
-    pub(crate) fn point_evidence_on_region_range(
+    pub(crate) fn point_evidence_on_regular_range(
         &self,
         parameter: &CurveParameter2,
         range: &CurveParameterRange2,
@@ -115166,8 +115183,8 @@ impl BezierParallel2 {
     pub(crate) fn parallel_intersections_on_regular_ranges(
         &self,
         other: &Self,
-        first_range: &BezierParameterRange2,
-        second_range: &BezierParameterRange2,
+        first_range: &CurveParameterRange2,
+        second_range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
         // A rational image keeps its exact source chart even when a retained
@@ -115191,10 +115208,7 @@ impl BezierParallel2 {
         // parameters and one-sided endpoints. Only isolated domain results
         // return here; positive-dimensional overlaps still need the full
         // overlap evidence constructed below.
-        let ranges = [
-            CurveParameterRange2::from_bezier_range(first_range.clone()),
-            CurveParameterRange2::from_bezier_range(second_range.clone()),
-        ];
+        let ranges = [first_range.clone(), second_range.clone()];
         let strict = policy.strict_counterpart();
         if let Ok(Classification::Decided(Some(first))) =
             self.exact_rational_parallel_component_on_regular_range(&ranges[0], &strict)
@@ -115244,9 +115258,13 @@ impl BezierParallel2 {
             return self.parallel_intersections_without_regular_frame(other, policy);
         }
         let branch_scale = |parallel: &BezierParallel2,
-                            range: &BezierParameterRange2|
+                            range: &CurveParameterRange2|
          -> CurveResult<Classification<RealSign>> {
-            match parallel.regular_fragment_derivative_scale_sign(range, policy)? {
+            let interior = match range.strict_interior_scalar(&strict)? {
+                Classification::Decided(interior) => interior,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            match parallel.parallel_derivative_scale_sign_at_exact(&interior, &strict)? {
                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
                     Ok(Classification::Decided(sign))
                 }
@@ -115817,7 +115835,7 @@ impl BezierParallel2 {
     fn rational_parallel_pair_intersections(
         &self,
         other: &Self,
-        ranges: Option<[&BezierParameterRange2; 2]>,
+        ranges: Option<[&CurveParameterRange2; 2]>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParallelPairIntersectionSet2>>> {
         match other.exact_rational_parallel_component(policy)? {
@@ -117220,7 +117238,7 @@ impl BezierParallel2 {
         other: &RationalBezier2,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
         derivative_scale_sign: Option<RealSign>,
-        retained_parallel_range: Option<&BezierParameterRange2>,
+        retained_parallel_range: Option<&CurveParameterRange2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParallelIntersectionSet2>>> {
         let no_fast_path = || Classification::Decided(None);
@@ -117365,7 +117383,9 @@ impl BezierParallel2 {
         let mut contacts = Vec::with_capacity(parameters.len());
         for (parallel_parameter, radial_crossing_sign) in parameters {
             if let Some(range) = retained_parallel_range {
-                match overlap_parameter_is_in_range(&parallel_parameter, range, true, policy)? {
+                match CurveParameterDomain2::new(range, None)
+                    .contains_finite_parameter(&parallel_parameter.clone().into(), policy)?
+                {
                     Classification::Decided(true) => {}
                     Classification::Decided(false) => continue,
                     Classification::Uncertain(_) => {
@@ -117589,22 +117609,28 @@ impl BezierParallel2 {
     pub(crate) fn intersections_on_regular_range(
         &self,
         other: &RationalBezier2,
-        range: &BezierParameterRange2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
             return self.intersections(other, policy);
         }
-        let frame = match self.source_oriented_regularized_tangent_field(range, policy)? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+        let strict = policy.strict_counterpart();
+        let interior = match range.strict_interior_scalar(&strict)? {
+            Classification::Decided(interior) => interior,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let frame =
+            match self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)? {
+                Classification::Decided(frame) => frame,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let Some(frame) = frame else {
             return self.intersections(other, policy);
         };
-        let scale = match self.regular_fragment_derivative_scale_sign(range, policy)? {
+        let scale = match self.parallel_derivative_scale_sign_at_exact(&interior, policy)? {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -117621,7 +117647,7 @@ impl BezierParallel2 {
         other: &RationalBezier2,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
         derivative_scale_sign: Option<RealSign>,
-        retained_parallel_range: Option<&BezierParameterRange2>,
+        retained_parallel_range: Option<&CurveParameterRange2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
@@ -117704,7 +117730,7 @@ impl BezierParallel2 {
         off_diagonal: bool,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
         derivative_scale_sign: Option<RealSign>,
-        retained_parallel_range: Option<&BezierParameterRange2>,
+        retained_parallel_range: Option<&CurveParameterRange2>,
         mut point_evidence: impl FnMut(&BezierParameter2) -> CurveResult<Option<CurvePoint2>>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
@@ -117819,7 +117845,9 @@ impl BezierParallel2 {
         };
         for parallel_parameter in parallel_parameters {
             if let Some(range) = retained_parallel_range {
-                match overlap_parameter_is_in_range(parallel_parameter, range, true, policy)? {
+                match CurveParameterDomain2::new(range, None)
+                    .contains_finite_parameter(&parallel_parameter.clone().into(), policy)?
+                {
                     Classification::Decided(true) => {}
                     Classification::Decided(false) => continue,
                     Classification::Uncertain(_) => {
@@ -117955,7 +117983,8 @@ impl BezierParallel2 {
         }
         for pair in component_pairs.iter() {
             if let Some(range) = retained_parallel_range {
-                match overlap_parameter_is_in_range(&pair.parallel_parameter, range, true, policy)?
+                match CurveParameterDomain2::new(range, None)
+                    .contains_finite_parameter(&pair.parallel_parameter.clone().into(), policy)?
                 {
                     Classification::Decided(true) => {}
                     Classification::Decided(false) => continue,
@@ -121262,7 +121291,7 @@ impl BezierParameterComponentOverlap2 {
         Ok(Classification::Decided(contacts))
     }
 
-    fn map_curve_parameter(
+    pub(crate) fn map_curve_parameter(
         &self,
         retained_parameter: CurveResultantParameter,
         parameter: &CurveParameter2,
@@ -128053,7 +128082,7 @@ fn project_parallel_pair_intersection_system(
     system: &BezierParallelPairEquationSystem2,
     first: &BezierParallel2,
     second: &BezierParallel2,
-    retained_ranges: Option<[&BezierParameterRange2; 2]>,
+    retained_ranges: Option<[&CurveParameterRange2; 2]>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelPairProjection2>> {
     let may_component =
@@ -128074,6 +128103,8 @@ fn project_parallel_pair_intersection_system(
             Some([first_range, second_range]) => {
                 match structural_parallel_overlap_intersects_ranges(
                     &overlap,
+                    first,
+                    second,
                     first_range,
                     second_range,
                     policy,
@@ -128091,8 +128122,8 @@ fn project_parallel_pair_intersection_system(
                 CertifiedParallelSourceOverlapKind2::Selected(overlap)
             } else {
                 // The source diagonal remains a squared-equation factor,
-                // but opposite branch frames prove that it is the
-                // unselected normal sheet. Saturate it without publishing
+                // but the retained ranges are disjoint or select different
+                // one-sided normal limits. Saturate it without publishing
                 // a geometric overlap.
                 CertifiedParallelSourceOverlapKind2::Excluded
             }),
@@ -132463,7 +132494,11 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let result = parallel
-                .intersections_on_regular_range(&curve, &range, &policy)
+                .intersections_on_regular_range(
+                    &curve,
+                    &CurveParameterRange2::from_bezier_range(range.clone()),
+                    &policy,
+                )
                 .unwrap();
             let Classification::Decided(result) = result else {
                 panic!("the retained cusp/quarter-circle intersection must decide: {result:?}");
@@ -132485,13 +132520,17 @@ mod conversion_tests {
             let unit = BezierParameterRange2::from_exact(Real::zero(), Real::one());
             for swapped in [false, true] {
                 let pair = if swapped {
-                    rational_parallel
-                        .parallel_intersections_on_regular_ranges(&parallel, &unit, &range, &policy)
+                    rational_parallel.parallel_intersections_on_regular_ranges(
+                        &parallel,
+                        &CurveParameterRange2::from_bezier_range(unit.clone()),
+                        &CurveParameterRange2::from_bezier_range(range.clone()),
+                        &policy,
+                    )
                 } else {
                     parallel.parallel_intersections_on_regular_ranges(
                         &rational_parallel,
-                        &range,
-                        &unit,
+                        &CurveParameterRange2::from_bezier_range(range.clone()),
+                        &CurveParameterRange2::from_bezier_range(unit.clone()),
                         &policy,
                     )
                 }
@@ -132542,7 +132581,12 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let result = match parallel
-                .parallel_intersections_on_regular_ranges(&parallel, &before, &after, &policy)
+                .parallel_intersections_on_regular_ranges(
+                    &parallel,
+                    &CurveParameterRange2::from_bezier_range(before.clone()),
+                    &CurveParameterRange2::from_bezier_range(after.clone()),
+                    &policy,
+                )
                 .unwrap()
             {
                 Classification::Decided(result) => result,
@@ -161446,7 +161490,10 @@ mod conversion_tests {
                     let right = BezierParameterRange2::from_exact(right_start, Real::one());
                     let work = || {
                         parallel.parallel_intersections_on_regular_ranges(
-                            &parallel, &left, &right, &policy,
+                            &parallel,
+                            &CurveParameterRange2::from_bezier_range(left.clone()),
+                            &CurveParameterRange2::from_bezier_range(right.clone()),
+                            &policy,
                         )
                     };
                     #[cfg(feature = "dispatch-trace")]
@@ -161671,7 +161718,10 @@ mod conversion_tests {
                 BezierParameter2::Exact(Real::one()),
             );
             let frame = parallel
-                .source_oriented_regularized_tangent_field(&range, &policy)
+                .source_oriented_regularized_tangent_field(
+                    &CurveParameterRange2::from_bezier_range(range.clone()),
+                    &policy,
+                )
                 .unwrap();
             assert!(
                 matches!(frame, Classification::Decided(Some(_))),
@@ -161783,7 +161833,12 @@ mod conversion_tests {
             let range = BezierParameterRange2::from_exact(half.clone(), Real::one());
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let work = || parallel.source_oriented_regularized_tangent_field(&range, &policy);
+            let work = || {
+                parallel.source_oriented_regularized_tangent_field(
+                    &CurveParameterRange2::from_bezier_range(range.clone()),
+                    &policy,
+                )
+            };
             #[cfg(feature = "dispatch-trace")]
             let frame = hyperreal::dispatch_trace::with_recording(work).unwrap();
             #[cfg(not(feature = "dispatch-trace"))]

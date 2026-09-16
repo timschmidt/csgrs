@@ -773,8 +773,8 @@ impl<'a> CurveParameterDomain2<'a> {
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         policy.strict_predicate_pass(|| {
-            let [lower, upper] = match self.finite_envelope(policy)? {
-                Classification::Decided((endpoints, _)) => endpoints,
+            let [lower, upper] = match self.finite.ordered_endpoints(policy)? {
+                Classification::Decided(endpoints) => endpoints,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }

@@ -3167,7 +3167,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 let endpoint_side = |parameter: &CurveParameter2| {
                     self.data.policy.strict_predicate_pass(|| {
-                        let point = match parallel.point_evidence_on_region_range(
+                        let point = match parallel.point_evidence_on_regular_range(
                             parameter,
                             &retained_range,
                             &self.data.policy,
@@ -3873,7 +3873,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             } else {
                 let point = match parallel
                     .point_evidence_on_regular_range(
-                        contact.parameter(),
+                        &contact.parameter().clone().into(),
                         &regular_range,
                         &self.data.policy,
                     )
@@ -4183,6 +4183,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .iter()
                         .cloned()
                         .map(RegionPairBlocker::Bezier)
+                        .chain(
+                            (!result.parameter_components().is_empty())
+                                .then_some(RegionPairBlocker::PointImageParameterComponent),
+                        )
                         .collect(),
                 })
             }
@@ -4252,16 +4256,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         first.geometry.bezier(),
                     )
                 };
-                let retained_range = match (
-                    parallel_carrier.start.as_bezier_parameter(),
-                    parallel_carrier.end.as_bezier_parameter(),
-                ) {
-                    (Some(start), Some(end)) => Some(BezierParameterRange2::new_validated(
-                        start.clone(),
-                        end.clone(),
-                    )),
-                    _ => None,
-                };
                 // Source-cusp branches retain one-sided endpoint point
                 // evidence and must enter the range-aware common kernel before
                 // the older circle shortcut, whose authored hodograph is
@@ -4295,12 +4289,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 let rational = RationalBezier2::try_from_subcurve(curve)
                     .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
-                let intersections = match retained_range.as_ref() {
-                    Some(range) => {
-                        parallel.intersections_on_regular_range(&rational, range, &self.data.policy)
-                    }
-                    None => parallel.intersections(&rational, &self.data.policy),
-                };
+                let intersections = parallel.intersections_on_regular_range(
+                    &rational,
+                    &regular_range,
+                    &self.data.policy,
+                );
                 let result = match intersections
                     .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
                 {
@@ -4415,34 +4408,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         // replays every residual off-diagonal contact.  Adding
                         // the unordered self result would publish each fitting
                         // crossing twice.
-                        match (
-                            first.start.as_bezier_parameter(),
-                            first.end.as_bezier_parameter(),
-                            second.start.as_bezier_parameter(),
-                            second.end.as_bezier_parameter(),
-                        ) {
-                            (
-                                Some(first_start),
-                                Some(first_end),
-                                Some(second_start),
-                                Some(second_end),
-                            ) => parallel.parallel_intersections_on_regular_ranges(
-                                second.geometry.parallel(),
-                                &BezierParameterRange2::new_validated(
-                                    first_start.clone(),
-                                    first_end.clone(),
-                                ),
-                                &BezierParameterRange2::new_validated(
-                                    second_start.clone(),
-                                    second_end.clone(),
-                                ),
-                                &self.data.policy,
+                        parallel.parallel_intersections_on_regular_ranges(
+                            second.geometry.parallel(),
+                            &CurveParameterRange2::new_validated(
+                                first.start.clone(),
+                                first.end.clone(),
                             ),
-                            _ => parallel.parallel_intersections(
-                                second.geometry.parallel(),
-                                &self.data.policy,
+                            &CurveParameterRange2::new_validated(
+                                second.start.clone(),
+                                second.end.clone(),
                             ),
-                        }
+                            &self.data.policy,
+                        )
                     }
                     RegionCarrierPairContext::ParallelSelf => {
                         self.parallel_self_intersections(parallel)
@@ -18704,12 +18681,12 @@ mod certified_successor_tests {
             _ => {
                 let start = decided(
                     parallel
-                        .point_evidence_on_region_range(&parallel_start, &ordered_range, &policy)
+                        .point_evidence_on_regular_range(&parallel_start, &ordered_range, &policy)
                         .unwrap(),
                 );
                 let end = decided(
                     parallel
-                        .point_evidence_on_region_range(&parallel_end, &ordered_range, &policy)
+                        .point_evidence_on_regular_range(&parallel_end, &ordered_range, &policy)
                         .unwrap(),
                 );
                 let fragment = BezierSplitFragment2::SelectedFiber(

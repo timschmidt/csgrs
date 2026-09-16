@@ -46,6 +46,65 @@ pub struct CurveIntersectionContact2 {
     tangent_cross_sign: Option<hyperreal::RealSign>,
 }
 
+/// One connected closed set of parameters on a retained support chart.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CurveParameterSet2 {
+    /// One exact parameter, retaining its selected-root or geometric authority.
+    Single(CurveParameter2),
+    /// Every parameter in one nondegenerate closed range.
+    Range(CurveParameterRange2),
+}
+
+impl CurveParameterSet2 {
+    pub(crate) fn boundaries(&self) -> impl Iterator<Item = &CurveParameter2> {
+        let (start, end) = match self {
+            Self::Single(parameter) => (parameter, None),
+            Self::Range(range) => (range.start(), Some(range.end())),
+        };
+        std::iter::once(start).chain(end)
+    }
+}
+
+/// A complete Cartesian parameter component whose image is one exact point.
+///
+/// At least one operand contributes a range. This evidence distinguishes a
+/// collapsed trace from an isolated contact or a positive-length image overlap.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveIntersectionParameterComponent2 {
+    first_span_index: usize,
+    second_span_index: usize,
+    first_parameters: CurveParameterSet2,
+    second_parameters: CurveParameterSet2,
+    point: CurvePoint2,
+}
+
+impl CurveIntersectionParameterComponent2 {
+    /// Returns the retained span index on the first curve.
+    pub const fn first_span_index(&self) -> usize {
+        self.first_span_index
+    }
+
+    /// Returns the retained span index on the second curve.
+    pub const fn second_span_index(&self) -> usize {
+        self.second_span_index
+    }
+
+    /// Returns the complete local parameter set on the first span.
+    pub const fn first_parameters(&self) -> &CurveParameterSet2 {
+        &self.first_parameters
+    }
+
+    /// Returns the complete local parameter set on the second span.
+    pub const fn second_parameters(&self) -> &CurveParameterSet2 {
+        &self.second_parameters
+    }
+
+    /// Returns the exact point shared by every pair in this component.
+    pub const fn point(&self) -> &CurvePoint2 {
+        &self.point
+    }
+}
+
 /// Certified positive-length overlap between two retained curve spans.
 ///
 /// The oriented ranges bound the overlap closure. Endpoint inclusion remains
@@ -164,7 +223,10 @@ impl CurveCircleOverlap2 {
 /// the support evidence required to restrict the correspondence again.
 #[derive(Clone, Debug)]
 pub(crate) enum CurveOverlapCorrespondence2 {
-    Rational(RationalCurveOverlap2),
+    Rational {
+        source: RationalCurveOverlap2,
+        swapped: bool,
+    },
     ParameterComponent {
         source: crate::bezier_offset::BezierParameterComponentOverlap2,
         swapped: bool,
@@ -190,7 +252,10 @@ impl CurveOverlapCorrespondence2 {
         source: RationalBezierOverlapParameterCorrespondence2,
         overlap: &crate::RationalBezierIntersectionOverlap2,
     ) -> Self {
-        Self::Rational(RationalCurveOverlap2::new(source, overlap))
+        Self::Rational {
+            source: RationalCurveOverlap2::new(source, overlap),
+            swapped: false,
+        }
     }
 
     pub(crate) fn clipped_ranges(
@@ -200,7 +265,9 @@ impl CurveOverlapCorrespondence2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         let swapped = match self {
-            Self::Circle { swapped, .. } | Self::ParameterComponent { swapped, .. } => *swapped,
+            Self::Rational { swapped, .. }
+            | Self::Circle { swapped, .. }
+            | Self::ParameterComponent { swapped, .. } => *swapped,
             _ => false,
         };
         let (first_range, second_range) = if swapped {
@@ -209,7 +276,9 @@ impl CurveOverlapCorrespondence2 {
             (first_range, second_range)
         };
         let ranges = match self {
-            Self::Rational(source) => source.clipped_ranges(first_range, second_range, policy),
+            Self::Rational { source, .. } => {
+                source.clipped_ranges(first_range, second_range, policy)
+            }
             Self::ParameterComponent { source, .. } => {
                 source.clipped_ranges(first_range, second_range, policy)
             }
@@ -399,6 +468,7 @@ struct CurveIntersectionResultData {
     contacts: Arc<[CurveIntersectionContact2]>,
     overlaps: Arc<[CurveIntersectionOverlap2]>,
     blockers: Arc<[CurveIntersectionPairBlocker2]>,
+    parameter_components: Option<Arc<[CurveIntersectionParameterComponent2]>>,
 }
 
 #[derive(Debug)]
@@ -1018,6 +1088,7 @@ fn build_native_line_evidence(
             contacts: contacts.into(),
             overlaps: overlaps.into(),
             blockers: Arc::from([]),
+            parameter_components: None,
         }),
     })
 }
@@ -1074,6 +1145,7 @@ fn build_native_line_arc_evidence(
             contacts: contacts.into(),
             overlaps: Arc::from([]),
             blockers: Arc::from([]),
+            parameter_components: None,
         }),
     })
 }
@@ -1345,6 +1417,7 @@ fn build_native_arc_evidence(
             contacts: contacts.into(),
             overlaps: Arc::from([]),
             blockers: Arc::from([]),
+            parameter_components: None,
         }),
     })
 }
@@ -1520,6 +1593,7 @@ fn build_native_coincident_arc_evidence(
             contacts: contacts.into(),
             overlaps: overlaps.into(),
             blockers: Arc::from([]),
+            parameter_components: None,
         }),
     })
 }
@@ -1974,6 +2048,7 @@ impl CurveIntersectionContext {
                     contacts: Arc::from([contact.clone()]),
                     overlaps: Arc::from([]),
                     blockers: Arc::from([]),
+                    parameter_components: None,
                 }),
             });
         }
@@ -2231,6 +2306,7 @@ impl CurveIntersectionContext {
                 contacts: contacts.into(),
                 overlaps: overlaps.into(),
                 blockers: blockers.into(),
+                parameter_components: None,
             }),
         })
     }
@@ -2272,6 +2348,13 @@ impl CurveIntersectionContext {
                     ),
                 ]
             }));
+        let first_parameters =
+            first_parameters.chain(result.parameter_components().iter().flat_map(|component| {
+                component
+                    .first_parameters()
+                    .boundaries()
+                    .map(|parameter| (component.first_span_index(), parameter.clone()))
+            }));
         let first = split_curve(&self.data.first, first_parameters, &self.data.policy)?;
         let second_parameters = result
             .contacts()
@@ -2293,6 +2376,13 @@ impl CurveIntersectionContext {
                         overlap.second_range().end().clone(),
                     ),
                 ]
+            }));
+        let second_parameters =
+            second_parameters.chain(result.parameter_components().iter().flat_map(|component| {
+                component
+                    .second_parameters()
+                    .boundaries()
+                    .map(|parameter| (component.second_span_index(), parameter.clone()))
             }));
         let second = split_curve(&self.data.second, second_parameters, &self.data.policy)?;
         let arrangement = arrangement_from_curve_pieces(
@@ -2461,6 +2551,11 @@ impl CurveIntersectionResult2 {
         &self.data.overlaps
     }
 
+    /// Returns complete parameter components with a single point image.
+    pub fn parameter_components(&self) -> &[CurveIntersectionParameterComponent2] {
+        self.data.parameter_components.as_deref().unwrap_or(&[])
+    }
+
     /// Returns true when every promoted span pair was completely replayed.
     pub fn is_complete(&self) -> bool {
         self.data.blockers.is_empty()
@@ -2468,7 +2563,10 @@ impl CurveIntersectionResult2 {
 
     /// Returns true when complete replay certified no intersection.
     pub fn is_disjoint(&self) -> bool {
-        self.is_complete() && self.data.contacts.is_empty() && self.data.overlaps.is_empty()
+        self.is_complete()
+            && self.data.contacts.is_empty()
+            && self.data.overlaps.is_empty()
+            && self.parameter_components().is_empty()
     }
 }
 

@@ -312,7 +312,7 @@ fn parallel_point(
     }
     decided(
         parallel
-            .point_evidence_on_region_range(parameter, range, policy)
+            .point_evidence_on_regular_range(parameter, range, policy)
             .map_err(|cause| evaluation_error(family, cause))?,
         family,
     )

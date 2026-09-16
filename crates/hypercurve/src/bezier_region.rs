@@ -1691,7 +1691,7 @@ pub(crate) fn curve_fragment_endpoint_point(
             return fragment
                 .parallel()
                 .point_evidence_on_regular_range(
-                    parameter,
+                    &parameter.clone().into(),
                     &CurveParameterRange2::from_bezier_range(fragment.range().clone()),
                     policy,
                 )
