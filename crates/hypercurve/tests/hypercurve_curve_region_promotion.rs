@@ -398,6 +398,54 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
     .unwrap()
 }
 
+// Independent boundary of [0, sqrt(1/2)] x [0, 1] dilated by a positive disk.
+// This constructs the lines and quarter circles directly, without offsetting.
+fn rounded_algebraic_rectangle_oracle(distance: &Real, policy: &CurveContext) -> CurveRegion2 {
+    let width = q(1, 2).sqrt().unwrap();
+    let centers = [
+        p(0, 0),
+        Point2::new(width.clone(), Real::zero()),
+        Point2::new(width.clone(), Real::one()),
+        p(0, 1),
+    ];
+    let points = [
+        Point2::new(Real::zero(), -distance),
+        Point2::new(width.clone(), -distance),
+        Point2::new(&width + distance, Real::zero()),
+        Point2::new(&width + distance, Real::one()),
+        Point2::new(width, Real::one() + distance),
+        Point2::new(Real::zero(), Real::one() + distance),
+        Point2::new(-distance, Real::one()),
+        Point2::new(-distance, Real::zero()),
+    ];
+    let segments = (0..points.len())
+        .map(|index| {
+            let start = points[index].clone();
+            let end = points[(index + 1) % points.len()].clone();
+            if index % 2 == 0 {
+                Segment2::Line(LineSeg2::try_new(start, end).unwrap())
+            } else {
+                Segment2::Arc(
+                    CircularArc2::try_from_center(
+                        start,
+                        end,
+                        centers[((index + 1) / 2) % centers.len()].clone(),
+                        false,
+                    )
+                    .unwrap(),
+                )
+            }
+        })
+        .collect();
+    certified(
+        CurveRegion2::try_from_native_material_contours(
+            vec![Contour2::try_new(segments).unwrap()],
+            policy,
+        )
+        .unwrap(),
+    )
+}
+
 fn shifted_algebraic_rectangle_boundary(
     min_x: i64,
     min_y: i64,
@@ -2335,25 +2383,6 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
                 trace.path_count("hypercurve", "algebraic-chord-pair", "general-rational",),
                 0
             );
-            let direct_authored_tangent = trace.path_count(
-                "hypercurve",
-                "algebraic-circle-chord-pair",
-                "adjacent-authored-tangent",
-            );
-            let selected_chord_normal_tangent = trace.path_count(
-                "hypercurve",
-                "algebraic-circle-chord-pair",
-                "authored-adjacent-endpoint-only",
-            );
-            assert_eq!(
-                direct_authored_tangent + selected_chord_normal_tangent,
-                8,
-                "every adjacent round/chord tangent must remain structurally certified: {trace:?}",
-            );
-            assert!(
-                selected_chord_normal_tangent > 0,
-                "selected chord-normal adjacency must enter the shared circle/chord authority: {trace:?}",
-            );
             assert_eq!(
                 trace.operation_count("hypercurve", "algebraic-circle-rational-pair"),
                 0
@@ -2361,6 +2390,17 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         }
         assert_eq!(rounded.certainty, CurveCertainty::Certified);
         assert_eq!(rounded.value.boundary_loops().len(), 1);
+        // A convex-boundary proof can certify the construction without pair
+        // replay. Check its exact set against an independently authored boundary.
+        let expected = rounded_algebraic_rectangle_oracle(&distance, &policy);
+        for (first, second) in [(&rounded.value, &expected), (&expected, &rounded.value)] {
+            let xor = certified(
+                first
+                    .boolean_region(second, hypercurve::BooleanOp::Xor, &policy)
+                    .unwrap(),
+            );
+            assert!(xor.is_empty());
+        }
         assert!(
             rounded.value.boundary_loops()[0]
                 .fragments()
@@ -2481,6 +2521,23 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             ),
             Classification::Decided(RegionPointLocation::Boundary),
         );
+
+        for (actual, radius) in [
+            (&rounded, q(1, 10)),
+            (&expanded.value, q(3, 20)),
+            (&expanded_again.value, q(4, 25)),
+            (&contracted.value, q(1, 20)),
+        ] {
+            let expected = rounded_algebraic_rectangle_oracle(&radius, &policy);
+            for (first, second) in [(actual, &expected), (&expected, actual)] {
+                let xor = certified(
+                    first
+                        .boolean_region(second, hypercurve::BooleanOp::Xor, &policy)
+                        .unwrap(),
+                );
+                assert!(xor.is_empty());
+            }
+        }
 
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
