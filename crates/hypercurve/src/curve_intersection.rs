@@ -65,13 +65,13 @@ pub struct CurveIntersectionOverlap2 {
 /// The complete support correspondence retains its original chart intervals.
 /// Clipping an overlap changes its active domain, never the map's basis.
 #[derive(Clone, Debug)]
-pub(crate) struct CurveOverlapCorrespondence2 {
+pub(crate) struct RationalCurveOverlap2 {
     source: RationalBezierOverlapParameterCorrespondence2,
     first_range: BezierParameterRange2,
     second_range: BezierParameterRange2,
 }
 
-impl CurveOverlapCorrespondence2 {
+impl RationalCurveOverlap2 {
     fn new(
         source: RationalBezierOverlapParameterCorrespondence2,
         overlap: &crate::RationalBezierIntersectionOverlap2,
@@ -91,6 +91,123 @@ impl CurveOverlapCorrespondence2 {
     ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
         self.source
             .clipped_ranges(&self.first_range, &self.second_range, first, second, policy)
+    }
+}
+
+/// Exact transport retained by a shared-image component. Each variant owns
+/// the support evidence required to restrict the correspondence again.
+#[derive(Clone, Debug)]
+pub(crate) enum CurveOverlapCorrespondence2 {
+    Rational(RationalCurveOverlap2),
+    ChordRational {
+        source: Arc<crate::bezier_offset::BezierAlgebraicChordRationalOverlap2>,
+        chord_first: bool,
+    },
+    Chords {
+        first: crate::BezierAlgebraicChord2,
+        second: crate::BezierAlgebraicChord2,
+        first_range: CurveParameterRange2,
+        second_range: CurveParameterRange2,
+    },
+}
+
+impl CurveOverlapCorrespondence2 {
+    fn rational(
+        source: RationalBezierOverlapParameterCorrespondence2,
+        overlap: &crate::RationalBezierIntersectionOverlap2,
+    ) -> Self {
+        Self::Rational(RationalCurveOverlap2::new(source, overlap))
+    }
+
+    pub(crate) fn clipped_ranges(
+        &self,
+        first_range: &CurveParameterRange2,
+        second_range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<(CurveParameterRange2, CurveParameterRange2)>>> {
+        match self {
+            Self::Rational(source) => source.clipped_ranges(first_range, second_range, policy),
+            Self::ChordRational {
+                source,
+                chord_first,
+            } => {
+                let (chord_range, source_range) = if *chord_first {
+                    (first_range, second_range)
+                } else {
+                    (second_range, first_range)
+                };
+                let clipped = match source.clipped_to_source_range(source_range, policy)? {
+                    Classification::Decided(Some(clipped)) => clipped,
+                    Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let [low, high] = match chord_range.ordered_endpoints(policy)? {
+                    Classification::Decided(bounds) => bounds,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                let [start, end] = clipped
+                    .chord_range()
+                    .map(|p| CurveParameter2::from_algebraic_chord(p.clone()));
+                // A chord span normally owns its finite domain. If a later
+                // consumer supplies a narrower chord chart, it also needs
+                // inverse source-branch replay; do not omit that restriction.
+                for parameter in [&start, &end] {
+                    for (boundary, excluded) in [
+                        (low, std::cmp::Ordering::Less),
+                        (high, std::cmp::Ordering::Greater),
+                    ] {
+                        match parameter.cmp_by_refinement(boundary, policy)? {
+                            Classification::Decided(order) if order == excluded => {
+                                return Ok(Classification::Uncertain(
+                                    UncertaintyReason::Unsupported,
+                                ));
+                            }
+                            Classification::Decided(_) => {}
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                }
+                let chord = CurveParameterRange2::new_validated(start, end);
+                let source = clipped.source_range().clone();
+                Ok(Classification::Decided(Some(if *chord_first {
+                    (chord, source)
+                } else {
+                    (source, chord)
+                })))
+            }
+            Self::Chords {
+                first,
+                second,
+                first_range: first_overlap,
+                second_range: second_overlap,
+            } => {
+                let map = |parameter: &CurveParameter2, chord: &crate::BezierAlgebraicChord2| {
+                    let parameter = parameter
+                        .as_algebraic_chord()
+                        .ok_or(CurveError::InvalidCurveParameter)?;
+                    chord
+                        .parameter_at_certified_support_point(parameter.point().clone(), policy)
+                        .map(|p| {
+                            Classification::Decided(Some(CurveParameter2::from_algebraic_chord(p)))
+                        })
+                };
+                crate::bezier_split::clip_corresponding_parameter_ranges(
+                    first_overlap,
+                    second_overlap,
+                    first_range,
+                    second_range,
+                    policy,
+                    |p| map(p, second),
+                    |p| map(p, first),
+                )
+            }
+        }
     }
 }
 
@@ -1893,7 +2010,7 @@ impl CurveIntersectionContext {
                         endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
                             CurveSpanPairState::Rational(intersection) => {
-                                Some(CurveOverlapCorrespondence2::new(
+                                Some(CurveOverlapCorrespondence2::rational(
                                     intersection.overlap_parameter_correspondence(&overlap),
                                     &overlap,
                                 ))
@@ -1935,7 +2052,7 @@ impl CurveIntersectionContext {
                         endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
                         parameter_correspondence: match &pair.state {
                             CurveSpanPairState::Rational(intersection) => {
-                                Some(CurveOverlapCorrespondence2::new(
+                                Some(CurveOverlapCorrespondence2::rational(
                                     intersection.overlap_parameter_correspondence(&overlap),
                                     &overlap,
                                 ))

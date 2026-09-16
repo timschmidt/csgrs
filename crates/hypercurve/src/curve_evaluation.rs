@@ -86,6 +86,15 @@ impl Curve2 {
                 let local = parameter
                     .as_algebraic_chord()
                     .ok_or_else(|| evaluation_error(family, CurveError::InvalidCurveParameter))?;
+                // A parameter certified on this identical finite chord
+                // already owns incidence and domain membership. Parameters
+                // transported from another chord still need the predicate.
+                if local.is_endpoint_of(chord, true)
+                    || local.is_endpoint_of(chord, false)
+                    || local.is_certified_strict_interior_of(chord)
+                {
+                    return Ok(local.point().clone());
+                }
                 if !decided(
                     chord
                         .contains_point_evidence(local.point(), policy)

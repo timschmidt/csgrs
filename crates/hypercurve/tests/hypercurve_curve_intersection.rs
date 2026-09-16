@@ -753,6 +753,384 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
     }
 }
 
+fn generated_parabola_chord(policy: &CurveContext) -> Curve2 {
+    let path = CurvePath2::try_new(vec![
+        Curve2::from(LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap()),
+        Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+    ])
+    .unwrap();
+    let outcome = path
+        .chamfer_vertex_by_setbacks(
+            1,
+            Real::one(),
+            Real::one(),
+            hypercurve::CurveCornerMode2::TrimOnly,
+            policy,
+        )
+        .unwrap();
+    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+    let hypercurve::CurveCornerSolutions2::Unique(path) = outcome.value else {
+        panic!("one chamfer");
+    };
+    let chord = path.curves()[1].clone();
+    assert!(chord.geometry().is_none());
+    assert_eq!(chord.family(), CurveFamily2::Line);
+    chord
+}
+
+#[test]
+fn generated_chords_keep_open_contacts_and_general_locations() {
+    let squared = r(5).sqrt().unwrap() - r(2);
+    let root = squared.clone().sqrt().unwrap();
+    let middle = Point2::new(-q(1, 2), (&root / (Real::one() + &squared)).unwrap());
+    let end = Point2::new(squared, r(2) * root);
+    let line = |x: Real| {
+        Curve2::from(
+            LineSeg2::try_new(Point2::new(x.clone(), r(-1)), Point2::new(x, r(2))).unwrap(),
+        )
+    };
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let original = generated_parabola_chord(&policy);
+        for reverse_chord in [false, true] {
+            let chord = if reverse_chord {
+                original.reversed(&policy).unwrap().into_value()
+            } else {
+                original.clone()
+            };
+            for (other, expected, interior) in [
+                (line(-q(1, 2)), Some(middle.clone()), true),
+                (line(r(-1)), Some(p(-1, 0)), false),
+                (
+                    Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
+                    Some(end.clone()),
+                    false,
+                ),
+                (line(r(1)), None, false),
+            ] {
+                for reverse_other in [false, true] {
+                    let other = if reverse_other {
+                        other.reversed(&policy).unwrap().into_value()
+                    } else {
+                        other.clone()
+                    };
+                    for swapped in [false, true] {
+                        let (first, second) = if swapped {
+                            (&other, &chord)
+                        } else {
+                            (&chord, &other)
+                        };
+                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        let result = outcome.value;
+                        assert!(
+                            result.is_complete(),
+                            "reversed={reverse_chord}/{reverse_other} swapped={swapped}: {:?}",
+                            result.blockers()
+                        );
+                        assert!(result.overlaps().is_empty());
+                        assert_eq!(result.contacts().len(), usize::from(expected.is_some()));
+                        let paths = CurvePath2::try_new(vec![first.clone()])
+                            .unwrap()
+                            .intersect_path(
+                                &CurvePath2::try_new(vec![second.clone()]).unwrap(),
+                                &policy,
+                            )
+                            .unwrap();
+                        assert_eq!(paths.certainty, CurveCertainty::Certified);
+                        assert!(paths.value.is_complete(), "{:?}", paths.value.blockers());
+                        assert_eq!(paths.value.contacts().len(), result.contacts().len());
+                        let Some(point) = &expected else {
+                            continue;
+                        };
+                        for contact in [
+                            result.contacts().first().unwrap(),
+                            paths.value.contacts()[0].contact(),
+                        ] {
+                            assert!(decided(
+                                contact
+                                    .point()
+                                    .coincides_with(&point.clone().into(), &CurveContext::STRICT)
+                                    .value
+                            ));
+                            for (curve, location) in
+                                [(first, contact.first()), (second, contact.second())]
+                            {
+                                let parameter = decided(location.parameter(&policy).unwrap());
+                                let evaluated = curve.point_at(&parameter, &policy).unwrap();
+                                assert_eq!(evaluated.certainty, CurveCertainty::Certified);
+                                assert!(decided(
+                                    evaluated
+                                        .value
+                                        .coincides_with(
+                                            &point.clone().into(),
+                                            &CurveContext::STRICT
+                                        )
+                                        .value
+                                ));
+                                if interior {
+                                    let split = curve.split_at(parameter, &policy).unwrap();
+                                    assert_eq!(split.certainty, CurveCertainty::Certified);
+                                    for endpoint in [split.value.0.end(), split.value.1.start()] {
+                                        assert!(decided(
+                                            endpoint
+                                                .coincides_with(
+                                                    &point.clone().into(),
+                                                    &CurveContext::STRICT
+                                                )
+                                                .value
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
+    let squared = r(5).sqrt().unwrap() - r(2);
+    let root = squared.clone().sqrt().unwrap();
+    let end = Point2::new(squared.clone(), r(2) * &root);
+    let selecting = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0)));
+    let selecting_line = Curve2::from(
+        LineSeg2::try_new(Point2::new(q(1, 2), r(-1)), Point2::new(q(1, 2), r(1))).unwrap(),
+    );
+    let alpha = q(1, 2).sqrt().unwrap();
+    let selected_point = Point2::new(
+        -Real::one() + &alpha * (Real::one() + squared),
+        r(2) * &alpha * root,
+    );
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let original = generated_parabola_chord(&policy);
+        let independent = Curve2::from(LineSeg2::try_new(p(-1, 0), end.clone()).unwrap());
+        let selected = selecting
+            .intersect_curve(&selecting_line, &policy)
+            .unwrap()
+            .into_value();
+        let cut = decided(selected.contacts()[0].first().parameter(&policy).unwrap());
+        let tail = independent.split_at(cut, &policy).unwrap().into_value().1;
+        for (case, (other, expected)) in [
+            (independent, [p(-1, 0), end.clone()]),
+            (generated_parabola_chord(&policy), [p(-1, 0), end.clone()]),
+            (tail, [selected_point.clone(), end.clone()]),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            for reverse_chord in [false, true] {
+                let chord = if reverse_chord {
+                    original.reversed(&policy).unwrap().into_value()
+                } else {
+                    original.clone()
+                };
+                for reverse_other in [false, true] {
+                    let other = if reverse_other {
+                        other.reversed(&policy).unwrap().into_value()
+                    } else {
+                        other.clone()
+                    };
+                    for swapped in [false, true] {
+                        let (first, second) = if swapped {
+                            (&other, &chord)
+                        } else {
+                            (&chord, &other)
+                        };
+                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        assert!(
+                            outcome.value.is_complete(),
+                            "case={case} reverse_chord={reverse_chord} reverse_other={reverse_other} swapped={swapped}: {:?}",
+                            outcome.value.blockers()
+                        );
+                        assert!(outcome.value.contacts().is_empty());
+                        assert_eq!(outcome.value.overlaps().len(), 1);
+                        let overlap = &outcome.value.overlaps()[0];
+                        assert_eq!(
+                            overlap.orientation(),
+                            if reverse_chord != reverse_other {
+                                RationalBezierOverlapOrientation2::Reversed
+                            } else {
+                                RationalBezierOverlapOrientation2::Same
+                            }
+                        );
+                        assert!(overlap.includes_start() && overlap.includes_end());
+                        for (first_parameter, second_parameter) in [
+                            (
+                                overlap.first_range().start(),
+                                overlap.second_range().start(),
+                            ),
+                            (overlap.first_range().end(), overlap.second_range().end()),
+                        ] {
+                            let first_point = first.point_at(first_parameter, &policy).unwrap();
+                            let second_point = second.point_at(second_parameter, &policy).unwrap();
+                            assert_eq!(first_point.certainty, CurveCertainty::Certified);
+                            assert_eq!(second_point.certainty, CurveCertainty::Certified);
+                            assert!(decided(
+                                first_point
+                                    .value
+                                    .coincides_with(&second_point.value, &CurveContext::STRICT)
+                                    .value
+                            ));
+                        }
+                        for (curve, range) in [
+                            (first, overlap.first_range()),
+                            (second, overlap.second_range()),
+                        ] {
+                            let points = [
+                                curve.point_at(range.start(), &policy).unwrap().into_value(),
+                                curve.point_at(range.end(), &policy).unwrap().into_value(),
+                            ];
+                            for (boundary, point) in points.iter().enumerate() {
+                                assert!(
+                                    expected.iter().any(|expected| {
+                                        decided(
+                                            point
+                                                .coincides_with(
+                                                    &expected.clone().into(),
+                                                    &CurveContext::STRICT,
+                                                )
+                                                .value,
+                                        )
+                                    }),
+                                    "case={case} reverse_chord={reverse_chord} reverse_other={reverse_other} swapped={swapped} boundary={boundary} point bounds={:?}",
+                                    point.bounds(&policy).value.map(|b| [
+                                        b.min_x().to_f64_lossy(),
+                                        b.max_x().to_f64_lossy(),
+                                        b.min_y().to_f64_lossy(),
+                                        b.max_y().to_f64_lossy()
+                                    ])
+                                );
+                            }
+                            assert!(!decided(
+                                points[0]
+                                    .coincides_with(&points[1], &CurveContext::STRICT)
+                                    .value
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
+    let squared = r(5).sqrt().unwrap() - r(2);
+    let root = squared.clone().sqrt().unwrap();
+    let end = Point2::new(squared.clone(), r(2) * &root);
+    let expected = Point2::new(-q(1, 2), (&root / (Real::one() + squared)).unwrap());
+    let selecting = Curve2::from(
+        LineSeg2::try_new(Point2::new(-q(1, 2), r(-1)), Point2::new(-q(1, 2), r(2))).unwrap(),
+    );
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let original = generated_parabola_chord(&policy);
+        let independent = Curve2::from(LineSeg2::try_new(p(-1, 0), end.clone()).unwrap());
+        let selected = original.intersect_curve(&selecting, &policy).unwrap();
+        assert_eq!(selected.certainty, CurveCertainty::Certified);
+        assert!(selected.value.is_complete());
+        assert_eq!(selected.value.contacts().len(), 1);
+        let cut = decided(
+            selected.value.contacts()[0]
+                .first()
+                .parameter(&policy)
+                .unwrap(),
+        );
+        let split = original.split_at(cut, &policy).unwrap();
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        let (left, right) = split.value;
+
+        let overlap = left.intersect_curve(&independent, &policy).unwrap();
+        assert_eq!(overlap.certainty, CurveCertainty::Certified);
+        assert!(
+            overlap.value.is_complete(),
+            "{:?}",
+            overlap.value.blockers()
+        );
+        assert!(overlap.value.contacts().is_empty());
+        assert_eq!(overlap.value.overlaps().len(), 1);
+        let cut = overlap.value.overlaps()[0].second_range().end().clone();
+        let split = independent.split_at(cut, &policy).unwrap();
+        assert_eq!(split.certainty, CurveCertainty::Certified);
+        let (prefix, tail) = split.value;
+
+        for (case, (first, second)) in [(&left, &right), (&left, &tail), (&right, &prefix)]
+            .into_iter()
+            .enumerate()
+        {
+            for reverse_first in [false, true] {
+                let first = if reverse_first {
+                    first.reversed(&policy).unwrap().into_value()
+                } else {
+                    first.clone()
+                };
+                for reverse_second in [false, true] {
+                    let second = if reverse_second {
+                        second.reversed(&policy).unwrap().into_value()
+                    } else {
+                        second.clone()
+                    };
+                    for swapped in [false, true] {
+                        let (first, second) = if swapped {
+                            (&second, &first)
+                        } else {
+                            (&first, &second)
+                        };
+                        let outcome = first.intersect_curve(second, &policy).unwrap();
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        let result = outcome.value;
+                        assert!(
+                            result.is_complete(),
+                            "case={case} reverse_first={reverse_first} reverse_second={reverse_second} swapped={swapped}: {:?}",
+                            result.blockers()
+                        );
+                        assert!(result.overlaps().is_empty());
+                        assert_eq!(result.contacts().len(), 1);
+                        let contact = &result.contacts()[0];
+                        assert!(!contact.is_certified_transverse());
+                        assert_eq!(
+                            contact.tangent_cross_sign(),
+                            Some(hyperreal::RealSign::Zero)
+                        );
+                        assert!(
+                            decided(
+                                contact
+                                    .point()
+                                    .coincides_with(&expected.clone().into(), &CurveContext::STRICT)
+                                    .value
+                            ),
+                            "case={case} reverse_first={reverse_first} reverse_second={reverse_second} swapped={swapped} point bounds={:?}",
+                            contact.point().bounds(&policy).value.map(|b| [
+                                b.min_x().to_f64_lossy(),
+                                b.max_x().to_f64_lossy(),
+                                b.min_y().to_f64_lossy(),
+                                b.max_y().to_f64_lossy()
+                            ])
+                        );
+                        for (curve, location) in
+                            [(first, contact.first()), (second, contact.second())]
+                        {
+                            let parameter = decided(location.parameter(&policy).unwrap());
+                            let point = curve.point_at(&parameter, &policy).unwrap();
+                            assert_eq!(point.certainty, CurveCertainty::Certified);
+                            assert!(decided(
+                                point
+                                    .value
+                                    .coincides_with(&expected.clone().into(), &CurveContext::STRICT)
+                                    .value
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[test]
 fn reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts() {
     let selecting = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0)));

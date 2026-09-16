@@ -4,6 +4,9 @@
 //! In particular, selected cuts do not require a new rational control net.
 
 use super::*;
+use crate::bezier_offset::{
+    BezierAlgebraicChordPairIntersections2, BezierAlgebraicChordRationalIntersections2,
+};
 use crate::curve_support::CurveSupport2;
 use crate::{BezierSplitFragment2, BezierSubcurve2, CurveFamily2};
 
@@ -110,6 +113,242 @@ fn reverse_sign(sign: hyperreal::RealSign) -> hyperreal::RealSign {
 }
 
 impl Pair<'_> {
+    fn overlap(
+        &self,
+        [mut first_range, mut second_range]: [CurveParameterRange2; 2],
+        mut orientation: RationalBezierOverlapOrientation2,
+        mut inclusion: [bool; 2],
+        correspondence: CurveOverlapCorrespondence2,
+    ) -> ExactCurveResult<CurveIntersectionOverlap2> {
+        let descending = decided(
+            first_range
+                .start()
+                .cmp_by_refinement(first_range.end(), self.policy),
+            self.first.support.family(),
+        )?
+        .is_gt();
+        if descending != self.first.reversed {
+            first_range = CurveParameterRange2::new_validated(
+                first_range.end().clone(),
+                first_range.start().clone(),
+            );
+            second_range = CurveParameterRange2::new_validated(
+                second_range.end().clone(),
+                second_range.start().clone(),
+            );
+            inclusion.reverse();
+        }
+        if self.first.reversed != self.second.reversed {
+            orientation = match orientation {
+                RationalBezierOverlapOrientation2::Same => {
+                    RationalBezierOverlapOrientation2::Reversed
+                }
+                RationalBezierOverlapOrientation2::Reversed => {
+                    RationalBezierOverlapOrientation2::Same
+                }
+            };
+        }
+        Ok(CurveIntersectionOverlap2 {
+            first_span_index: self.indices[0],
+            second_span_index: self.indices[1],
+            first_range,
+            second_range,
+            orientation,
+            endpoint_inclusion: inclusion,
+            parameter_correspondence: Some(correspondence),
+        })
+    }
+
+    fn chords(
+        &self,
+        first: &crate::BezierAlgebraicChord2,
+        second: &crate::BezierAlgebraicChord2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        // Chord restrictions own new finite chord supports, so their local
+        // domains already match the finite-domain authority below.
+        match decided(
+            first.chord_intersections(second, self.policy),
+            CurveFamily2::Line,
+        )? {
+            BezierAlgebraicChordPairIntersections2::Contacts(contacts) => {
+                for contact in contacts {
+                    self.append_contact(
+                        result,
+                        self.contact(
+                            CurveParameter2::from_algebraic_chord(
+                                contact.first_parameter().clone(),
+                            ),
+                            CurveParameter2::from_algebraic_chord(
+                                contact.second_parameter().clone(),
+                            ),
+                            contact.point().clone(),
+                            contact.tangent_cross_sign() != hyperreal::RealSign::Zero,
+                            Some(contact.tangent_cross_sign()),
+                        ),
+                    )?;
+                }
+            }
+            BezierAlgebraicChordPairIntersections2::Overlaps(overlaps) => {
+                for overlap in overlaps {
+                    let convert = |[start, end]: [&crate::bezier_offset::BezierAlgebraicChordParameter2;
+                                       2]| {
+                        CurveParameterRange2::new_validated(
+                            CurveParameter2::from_algebraic_chord(start.clone()),
+                            CurveParameter2::from_algebraic_chord(end.clone()),
+                        )
+                    };
+                    let first_range = convert(overlap.first_range());
+                    let second_range = convert(overlap.second_range());
+                    let correspondence = CurveOverlapCorrespondence2::Chords {
+                        first: first.clone(),
+                        second: second.clone(),
+                        first_range: first_range.clone(),
+                        second_range: second_range.clone(),
+                    };
+                    result.overlaps.push(self.overlap(
+                        [first_range, second_range],
+                        overlap.orientation(),
+                        [true, true],
+                        correspondence,
+                    )?);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn chord_rational(
+        &self,
+        chord: &crate::BezierAlgebraicChord2,
+        source: &RationalBezier2,
+        chord_first: bool,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let span = if chord_first { self.second } else { self.first };
+        let family = span.support.family();
+        let unit = CurveParameterRange2::unit();
+        for parameter in [span.range.start(), span.range.end()] {
+            if !contains(&unit, parameter, family, self.policy)? {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Intersection,
+                    family,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+        }
+        let (contacts, overlaps) = match decided(
+            chord.rational_intersections(source, None, self.policy),
+            family,
+        )? {
+            BezierAlgebraicChordRationalIntersections2::Contacts(contacts) => {
+                (contacts, Vec::new())
+            }
+            BezierAlgebraicChordRationalIntersections2::Overlaps(overlaps) => {
+                (Vec::new(), overlaps)
+            }
+            BezierAlgebraicChordRationalIntersections2::ContactsAndOverlaps {
+                contacts,
+                overlaps,
+            } => (contacts, overlaps),
+            BezierAlgebraicChordRationalIntersections2::DegenerateProjection => {
+                self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent);
+                return Ok(());
+            }
+            BezierAlgebraicChordRationalIntersections2::NotSourceRelated => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Intersection,
+                    family,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+        };
+        let contact = |chord: CurveParameter2, source: CurveParameter2, point, cross| {
+            let (first, second, cross) = if chord_first {
+                (chord, source, cross)
+            } else {
+                (source, chord, reverse_sign(cross))
+            };
+            self.contact(
+                first,
+                second,
+                point,
+                cross != hyperreal::RealSign::Zero,
+                Some(cross),
+            )
+        };
+        for evidence in contacts {
+            if contains(&span.range, evidence.other_parameter(), family, self.policy)? {
+                self.append_contact(
+                    result,
+                    contact(
+                        CurveParameter2::from_algebraic_chord(evidence.chord_parameter().clone()),
+                        evidence.other_parameter().clone(),
+                        evidence.point().clone(),
+                        evidence.tangent_cross_sign(),
+                    ),
+                )?;
+            }
+        }
+        for overlap in overlaps {
+            if let Some(clipped) = decided(
+                overlap.clipped_to_source_range(&span.range, self.policy),
+                family,
+            )? {
+                let [start, end] = clipped.chord_range();
+                let chord_range = CurveParameterRange2::new_validated(
+                    CurveParameter2::from_algebraic_chord(start.clone()),
+                    CurveParameter2::from_algebraic_chord(end.clone()),
+                );
+                let source_range = clipped.source_range().clone();
+                let ranges = if chord_first {
+                    [chord_range, source_range]
+                } else {
+                    [source_range, chord_range]
+                };
+                result.overlaps.push(self.overlap(
+                    ranges,
+                    overlap.orientation(),
+                    [true, true],
+                    CurveOverlapCorrespondence2::ChordRational {
+                        source: Arc::new(overlap),
+                        chord_first,
+                    },
+                )?);
+            } else {
+                // Positive-length clipping intentionally omits a singleton;
+                // open curves retain it as an exact endpoint contact.
+                for parameter in [span.range.start(), span.range.end()] {
+                    if !contains(overlap.source_range(), parameter, family, self.policy)? {
+                        continue;
+                    }
+                    let mapped = decided(
+                        overlap.chord_parameter_at_source_parameter(parameter, self.policy),
+                        family,
+                    )?
+                    .ok_or_else(|| {
+                        ExactCurveError::blocked(
+                            CurveOperation2::Intersection,
+                            family,
+                            UncertaintyReason::Boundary,
+                        )
+                    })?;
+                    let point = mapped.point().clone();
+                    self.append_contact(
+                        result,
+                        contact(
+                            CurveParameter2::from_algebraic_chord(mapped),
+                            parameter.clone(),
+                            point,
+                            hyperreal::RealSign::Zero,
+                        ),
+                    )?;
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn contact(
         &self,
         first: CurveParameter2,
@@ -217,12 +456,12 @@ impl Pair<'_> {
             }
         }
         if let Some(overlap) = evidence.overlap() {
-            let correspondence = CurveOverlapCorrespondence2::new(
+            let correspondence = RationalCurveOverlap2::new(
                 context.overlap_parameter_correspondence(overlap),
                 overlap,
             );
             self.overlap_self_contacts(first, second, overlap, &correspondence, result)?;
-            if let Some((mut first_range, mut second_range)) = decided(
+            if let Some((first_range, second_range)) = decided(
                 correspondence.clipped_ranges(&self.first.range, &self.second.range, self.policy),
                 family,
             )? {
@@ -233,38 +472,12 @@ impl Pair<'_> {
                 {
                     inclusion[index] = self.overlap_includes(overlap, parameter)?;
                 }
-                if self.first.reversed {
-                    first_range = CurveParameterRange2::new_validated(
-                        first_range.end().clone(),
-                        first_range.start().clone(),
-                    );
-                    second_range = CurveParameterRange2::new_validated(
-                        second_range.end().clone(),
-                        second_range.start().clone(),
-                    );
-                    inclusion.reverse();
-                }
-                let orientation = if self.first.reversed != self.second.reversed {
-                    match overlap.orientation() {
-                        RationalBezierOverlapOrientation2::Same => {
-                            RationalBezierOverlapOrientation2::Reversed
-                        }
-                        RationalBezierOverlapOrientation2::Reversed => {
-                            RationalBezierOverlapOrientation2::Same
-                        }
-                    }
-                } else {
-                    overlap.orientation()
-                };
-                result.overlaps.push(CurveIntersectionOverlap2 {
-                    first_span_index: self.indices[0],
-                    second_span_index: self.indices[1],
-                    first_range,
-                    second_range,
-                    orientation,
-                    endpoint_inclusion: inclusion,
-                    parameter_correspondence: Some(correspondence),
-                });
+                result.overlaps.push(self.overlap(
+                    [first_range, second_range],
+                    overlap.orientation(),
+                    inclusion,
+                    CurveOverlapCorrespondence2::Rational(correspondence),
+                )?);
             } else {
                 // A regularized filled region can discard a singleton overlap.
                 // An open curve must retain the shared endpoint contact.
@@ -301,7 +514,7 @@ impl Pair<'_> {
         first: &RationalBezier2,
         second: &RationalBezier2,
         overlap: &crate::RationalBezierIntersectionOverlap2,
-        correspondence: &CurveOverlapCorrespondence2,
+        correspondence: &RationalCurveOverlap2,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
         if first.has_certified_injective_axis(self.policy)
@@ -420,7 +633,7 @@ impl Pair<'_> {
         &self,
         first: &RationalBezier2,
         overlap: &crate::RationalBezierIntersectionOverlap2,
-        correspondence: &CurveOverlapCorrespondence2,
+        correspondence: &RationalCurveOverlap2,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
         let first_overlap = CurveParameterRange2::from_bezier_range(overlap.first_range().clone());
@@ -508,18 +721,27 @@ pub(super) fn intersect(
                 indices: [first_index, second_index],
                 policy,
             };
+            let rational = |curve: &BezierSubcurve2| {
+                RationalBezier2::try_from_subcurve(curve).map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Intersection,
+                        CurveFamily2::RationalBezier,
+                        cause,
+                    )
+                })
+            };
             let outcome = match (&first.support, &second.support) {
                 (CurveSupport2::Bezier(first), CurveSupport2::Bezier(second)) => {
-                    let convert = |curve| {
-                        RationalBezier2::try_from_subcurve(curve).map_err(|cause| {
-                            ExactCurveError::invalid(
-                                CurveOperation2::Intersection,
-                                pair.first.support.family(),
-                                cause,
-                            )
-                        })
-                    };
-                    pair.rational(&convert(first)?, &convert(second)?, &mut result)
+                    pair.rational(&rational(first)?, &rational(second)?, &mut result)
+                }
+                (CurveSupport2::Line(first), CurveSupport2::Line(second)) => {
+                    pair.chords(first, second, &mut result)
+                }
+                (CurveSupport2::Line(chord), CurveSupport2::Bezier(source)) => {
+                    pair.chord_rational(chord, &rational(source)?, true, &mut result)
+                }
+                (CurveSupport2::Bezier(source), CurveSupport2::Line(chord)) => {
+                    pair.chord_rational(chord, &rational(source)?, false, &mut result)
                 }
                 _ => Err(ExactCurveError::blocked(
                     CurveOperation2::Intersection,

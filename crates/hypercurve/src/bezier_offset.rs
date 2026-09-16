@@ -14587,6 +14587,8 @@ impl PartialEq for BezierAlgebraicChordPairPoint2 {
     }
 }
 
+/// Paired overlap boundaries in the first chord's traversal order. The
+/// second range descends when the chords have opposite orientations.
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordPairOverlap2 {
     first_range: [BezierAlgebraicChordParameter2; 2],
@@ -79403,6 +79405,36 @@ impl BezierAlgebraicChord2 {
         excluded_source_parameter: Option<&BezierParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
+        if excluded_source_parameter.is_none()
+            && let Some(intersections) = self.exact_linear_rational_intersections(source, policy)?
+        {
+            return Ok(Classification::Decided(intersections));
+        }
+        let selected = match excluded_source_parameter {
+            Some(BezierParameter2::Algebraic(parameter)) => Some(parameter.clone()),
+            Some(BezierParameter2::Exact(_)) => None,
+            None => match self.algebraic_endpoint_parameter(policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(_) => None,
+            },
+        };
+        if let Some(parameter) = selected {
+            match self.source_related_intersections(
+                source,
+                &parameter,
+                excluded_source_parameter.is_none(),
+                policy,
+            )? {
+                Classification::Decided(
+                    BezierAlgebraicChordRationalIntersections2::NotSourceRelated
+                    | BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
+                )
+                | Classification::Uncertain(UncertaintyReason::Unsupported) => {}
+                intersections => return Ok(intersections),
+            }
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record("hypercurve", "algebraic-chord-pair", "general-rational");
         if let Some(line) = self
             .exact_line()
             .or_else(|| self.strict_provenance_support_line(policy))
@@ -79504,6 +79536,110 @@ impl BezierAlgebraicChord2 {
             }
             Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
         }
+    }
+
+    /// Reuses finite chord replay when the rational source has the identical
+    /// normalized affine parameter. All endpoint contacts remain present;
+    /// adjacency belongs to the region consumer.
+    pub(crate) fn exact_linear_rational_intersections(
+        &self,
+        source: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierAlgebraicChordRationalIntersections2>> {
+        let Some(line) = source.exact_linear_parameterization_line() else {
+            return Ok(None);
+        };
+        let chord = match Self::try_new(
+            line.start().clone().into(),
+            line.end().clone().into(),
+            policy,
+        )? {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        if policy
+            .strict_predicate_pass(|| self.is_strictly_one_sided_of_exact_line(&line, policy))?
+            == Classification::Decided(true)
+        {
+            return Ok(Some(BezierAlgebraicChordRationalIntersections2::Contacts(
+                Vec::new(),
+            )));
+        }
+        let intersections = match self.chord_intersections(&chord, policy)? {
+            Classification::Decided(intersections) => intersections,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        Ok(Some(match intersections {
+            BezierAlgebraicChordPairIntersections2::Contacts(contacts) => {
+                let mut retained = Vec::with_capacity(contacts.len());
+                for contact in contacts {
+                    let parameter = match contact
+                        .second_parameter
+                        .exact_line_curve_parameter(policy)?
+                    {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => return Ok(None),
+                    };
+                    let parameter = if let Some(parameter) = parameter.as_recursive_projective() {
+                        // This contact owns the same tangent and finite-domain
+                        // evidence as general rational replay. Keep it with the
+                        // selected scalar so later corner operations can reuse
+                        // the proof. A pre-existing specialized identity needs
+                        // its complete kernel; never overwrite that evidence.
+                        if parameter.data.identity.is_some() {
+                            return Ok(None);
+                        }
+                        let location = if contact.first_parameter.is_endpoint_of(self, true) {
+                            BezierRecursiveChordContactLocation2::Start
+                        } else if contact.first_parameter.is_endpoint_of(self, false) {
+                            BezierRecursiveChordContactLocation2::End
+                        } else {
+                            BezierRecursiveChordContactLocation2::Interior
+                        };
+                        CurveParameter2::from_recursive_projective(
+                            parameter.clone().with_chord_rational_tangent_identity(
+                                self.clone(),
+                                source.clone(),
+                                contact.tangent_cross_sign,
+                                location,
+                            ),
+                        )
+                    } else {
+                        parameter
+                    };
+                    retained.push(BezierAlgebraicChordRationalContact2 {
+                        chord_parameter: contact.first_parameter,
+                        other_parameter: parameter,
+                        point: contact.point,
+                        tangent_cross_sign: contact.tangent_cross_sign,
+                    });
+                }
+                BezierAlgebraicChordRationalIntersections2::Contacts(retained)
+            }
+            BezierAlgebraicChordPairIntersections2::Overlaps(overlaps) => {
+                let mut retained = Vec::with_capacity(overlaps.len());
+                for overlap in overlaps {
+                    let mut parameters = [None, None];
+                    for (index, parameter) in overlap.second_range.iter().enumerate() {
+                        match parameter.exact_line_curve_parameter(policy)? {
+                            Classification::Decided(parameter) => {
+                                parameters[index] = Some(parameter)
+                            }
+                            Classification::Uncertain(_) => return Ok(None),
+                        }
+                    }
+                    let [start, end] = parameters.map(|p| p.expect("two overlap boundaries"));
+                    retained.push(BezierAlgebraicChordRationalOverlap2 {
+                        chord: self.clone(),
+                        source: source.clone(),
+                        chord_range: overlap.first_range,
+                        source_range: CurveParameterRange2::new_validated(start, end),
+                        orientation: overlap.orientation,
+                    });
+                }
+                BezierAlgebraicChordRationalIntersections2::Overlaps(retained)
+            }
+        }))
     }
 
     /// Intersects two retained exact chords without materializing either
@@ -80351,7 +80487,7 @@ impl BezierAlgebraicChord2 {
                     } else {
                         [first_high, first_low]
                     },
-                    second_range: if second_order == std::cmp::Ordering::Less {
+                    second_range: if self.data.parameter_axis.coordinate_increases {
                         [second_low, second_high]
                     } else {
                         [second_high, second_low]
@@ -82168,6 +82304,47 @@ impl BezierAlgebraicChordPairOverlap2 {
 }
 
 impl BezierAlgebraicChordRationalOverlap2 {
+    /// Restricts a certified monotone source branch while retaining both
+    /// endpoint witnesses and the original source/chord authority.
+    pub(crate) fn clipped_to_source_range(
+        &self,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        let [low, high] = match crate::bezier_split::intersect_parameter_ranges(
+            &self.source_range,
+            range,
+            policy,
+        )? {
+            Classification::Decided(Some(bounds)) => bounds,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let [start, end] = if self.orientation == RationalBezierOverlapOrientation2::Same {
+            [low, high]
+        } else {
+            [high, low]
+        };
+        let mut mapped = [None, None];
+        for (index, parameter) in [&start, &end].into_iter().enumerate() {
+            match self.chord_parameter_at_source_parameter(parameter, policy)? {
+                Classification::Decided(Some(parameter)) => mapped[index] = Some(parameter),
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        let [chord_start, chord_end] = mapped.map(|p| p.expect("two mapped boundaries"));
+        Ok(Classification::Decided(Some(Self {
+            chord: self.chord.clone(),
+            source: self.source.clone(),
+            chord_range: [chord_start, chord_end],
+            source_range: CurveParameterRange2::new_validated(start, end),
+            orientation: self.orientation,
+        })))
+    }
+
     pub(crate) fn chord_range(&self) -> [&BezierAlgebraicChordParameter2; 2] {
         [&self.chord_range[0], &self.chord_range[1]]
     }
@@ -82185,34 +82362,42 @@ impl BezierAlgebraicChordRationalOverlap2 {
         parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicChordParameter2>>> {
-        for (source_boundary, chord_boundary) in [
+        let mut orders = [std::cmp::Ordering::Equal; 2];
+        for (index, (source_boundary, chord_boundary)) in [
             (self.source_range.start(), &self.chord_range[0]),
             (self.source_range.end(), &self.chord_range[1]),
-        ] {
+        ]
+        .into_iter()
+        .enumerate()
+        {
             match parameter.cmp_by_refinement(source_boundary, policy)? {
                 Classification::Decided(std::cmp::Ordering::Equal) => {
                     return Ok(Classification::Decided(Some(chord_boundary.clone())));
                 }
-                Classification::Decided(_) => {}
+                Classification::Decided(order) => orders[index] = order,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
         }
-        let parameter =
-            match parameter.promoted_bezier_parameter_complete(&policy.strict_counterpart())? {
-                Classification::Decided(parameter) => parameter,
+        if orders[0] == orders[1] {
+            return Ok(Classification::Decided(None));
+        }
+        let point =
+            match rational_point_evidence_at_region_parameter(&self.source, parameter, policy)? {
+                Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let point = match rational_point_evidence_at_parameter(&self.source, &parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        self.chord.parameter_at_certified_point(point, policy)
+        // The retained monotone correspondence proves that every source
+        // parameter strictly between these paired boundaries lies in the
+        // finite chord's interior. Reuse that proof instead of reconstructing
+        // independent Cartesian fields to rediscover finite membership.
+        self.chord.validate_policy(policy)?;
+        Ok(Classification::Decided(Some(
+            self.chord.parameter_at_certified_interior_point(point),
+        )))
     }
 }
 
@@ -136081,8 +136266,20 @@ mod conversion_tests {
                 );
                 assert_eq!(
                     second_low.cmp_by_refinement(second_high, &policy).unwrap(),
-                    Classification::Decided(std::cmp::Ordering::Less)
+                    Classification::Decided(
+                        if orientation == RationalBezierOverlapOrientation2::Same {
+                            std::cmp::Ordering::Less
+                        } else {
+                            std::cmp::Ordering::Greater
+                        }
+                    )
                 );
+                for (first, second) in [(first_low, second_low), (first_high, second_high)] {
+                    assert_eq!(
+                        first.point().same_point(second.point(), &policy),
+                        Classification::Decided(true)
+                    );
+                }
             }
 
             let Classification::Decided(touching) = BezierAlgebraicChord2::try_new(
@@ -151587,7 +151784,7 @@ mod conversion_tests {
     }
 
     #[test]
-    fn oblique_retained_offset_chord_uses_recursive_rational_kernel() {
+    fn oblique_retained_offset_chord_reuses_exact_line_contacts() {
         let quarter = (Real::one() / Real::from(4_i8)).unwrap();
         let tenth = (Real::one() / Real::from(10_i8)).unwrap();
         let target = RationalBezier2::try_new(
@@ -151617,15 +151814,16 @@ mod conversion_tests {
 
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let work = || offset.rational_intersections(&target, None, &policy);
+            let work =
+                || offset.recursive_projective_rational_intersections(&target, None, &policy);
             #[cfg(feature = "dispatch-trace")]
             let result = hyperreal::dispatch_trace::with_recording(work);
             #[cfg(not(feature = "dispatch-trace"))]
             let result = work();
             #[cfg(feature = "dispatch-trace")]
             let trace = hyperreal::dispatch_trace::take_trace();
-            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
-                contacts,
+            let Classification::Decided(Some(
+                BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
             )) = result.unwrap()
             else {
                 panic!("the oblique retained-offset/rational crossing must decide");
@@ -151633,7 +151831,39 @@ mod conversion_tests {
             let [contact] = contacts.as_slice() else {
                 panic!("the oblique retained-offset crossing must be unique: {contacts:?}");
             };
-            assert_ne!(contact.tangent_cross_sign, RealSign::Zero);
+            let a = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+            let b = (Real::one() / Real::from(3_i8)).unwrap().sqrt().unwrap();
+            let length = (&a * &a + &b * &b).sqrt().unwrap();
+            let x = (Real::one() / Real::from(4_i8)).unwrap();
+            let y = &b - ((&b * &x + &tenth * length) / &a).unwrap();
+            let expected = CurvePoint2::from(Point2::new(x, y));
+            let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(fast)) =
+                offset
+                    .rational_intersections(&target, None, &policy)
+                    .unwrap()
+            else {
+                panic!("the shared exact-line dispatch must decide");
+            };
+            assert_eq!(fast.len(), 1);
+            for contact in [contact, &fast[0]] {
+                assert_eq!(contact.tangent_cross_sign, RealSign::Negative);
+                assert_eq!(
+                    contact.point.same_point(&expected, &CurveContext::STRICT),
+                    Classification::Decided(true)
+                );
+                let Classification::Decided(point) = rational_point_evidence_at_region_parameter(
+                    &target,
+                    contact.other_parameter(),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the retained line parameter must evaluate exactly");
+                };
+                assert_eq!(
+                    point.same_point(&expected, &CurveContext::STRICT),
+                    Classification::Decided(true)
+                );
+            }
             #[cfg(feature = "dispatch-trace")]
             assert_eq!(
                 trace.path_count(
@@ -151642,7 +151872,7 @@ mod conversion_tests {
                     "recursive-projective",
                 ),
                 1,
-                "the retained-offset chord must stay in the authoritative recursive kernel: {trace:?}",
+                "direct recursive replay must retain its own kernel coverage: {trace:?}",
             );
         }
     }

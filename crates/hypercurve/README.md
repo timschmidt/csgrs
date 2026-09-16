@@ -230,11 +230,17 @@ exact signatures.
   `CurveParameter2::compare` compares parameters in a shared support chart
   without requiring scalar payloads and reports predicate certainty.
   Curve and open-path intersections consume retained rational-source cuts
-  directly, clipping contacts and overlaps to both active domains. Overlap
-  boundaries retain their certified correspondence, including a shared
-  endpoint when clipping leaves no positive-length span. Self-crossings of
-  projectively corresponding supports retain their off-diagonal contacts.
-  Retraced components, exterior source domains, and generated line, circle,
+  and exact chords directly, clipping contacts and overlaps to both active domains.
+  Overlap boundaries retain their certified correspondence, including a shared
+  endpoint when clipping leaves no positive-length span. Chord pairs and
+  chord/rational-source pairs share the region intersection kernels while
+  retaining endpoint contacts for open paths. Overlap ranges pair corresponding
+  endpoints in the first curve's traversal order, including reversed overlaps.
+  Selected overlap cuts reuse their source-interval certificates, and evaluation
+  reuses finite-chord parameter certificates without reconstructing incidence.
+  Self-crossings of projectively corresponding supports retain their
+  off-diagonal contacts.
+  Retraced components, exterior source domains, and generated circle
   and parallel pair kernels still report explicit blockers where their
   common dispatch is unfinished.
   Generated curves keep their source chart when traversal is reversed.

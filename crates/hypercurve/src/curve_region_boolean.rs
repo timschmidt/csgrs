@@ -2860,28 +2860,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             pair.first_carrier_index
         };
-        let (source_parameter, include_authored_endpoint) = match shared_source_parameter {
-            Some(BezierParameter2::Algebraic(parameter)) => (Some(parameter.clone()), false),
-            Some(BezierParameter2::Exact(_)) => (None, false),
-            None => match chord
-                .algebraic_endpoint_parameter(&self.data.policy)
-                .map_err(|cause| self.invalid(other_index, cause))?
-            {
-                Classification::Decided(parameter) => (parameter, true),
-                Classification::Uncertain(_) => (None, false),
-            },
-        };
-        let general_intersections = || {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-pair",
-                "general-rational",
-            );
-            chord
-                .rational_intersections(rational, shared_source_parameter, &self.data.policy)
-                .map_err(|cause| self.invalid(other_index, cause))
-        };
         let collinear_support = if let Some(line) =
             regular_component.and_then(BezierParallelRationalComponent2::support_line)
         {
@@ -2897,6 +2875,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             false
         };
+        let mut linear_intersections = None;
         if !collinear_support && let Some(component) = regular_component {
             // Unit-chart projection is complete only when it covers the
             // retained range. Exterior ranges use the common domain replay.
@@ -2914,11 +2893,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Ok(None);
                 }
             }
-            if let Some(result) =
-                self.algebraic_chord_exact_linear_pair_result(pair, chord, chord_index, rational)?
-            {
-                return Ok(Some(result));
-            }
+            linear_intersections = chord
+                .exact_linear_rational_intersections(rational, &self.data.policy)
+                .map_err(|cause| self.invalid(other_index, cause))?;
         }
         let intersections = if collinear_support {
             #[cfg(feature = "dispatch-trace")]
@@ -2936,27 +2913,27 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     &self.data.policy,
                 )
                 .map_err(|cause| self.invalid(other_index, cause))?
-        } else if let Some(source_parameter) = source_parameter.as_ref() {
-            match chord
-                .source_related_intersections(
-                    rational,
-                    source_parameter,
-                    include_authored_endpoint,
-                    &self.data.policy,
-                )
-                .map_err(|cause| self.invalid(other_index, cause))?
+        } else if let Some(mut intersections) = linear_intersections {
+            // Two finite straight supports have at most the owned seam as
+            // an isolated contact when their authored carriers are adjacent.
+            // Positive overlaps retain their full correspondence.
+            if self.authored_carriers_are_adjacent(pair)
+                && let BezierAlgebraicChordRationalIntersections2::Contacts(contacts) =
+                    &mut intersections
             {
-                Classification::Decided(
-                    BezierAlgebraicChordRationalIntersections2::NotSourceRelated
-                    | BezierAlgebraicChordRationalIntersections2::DegenerateProjection,
-                )
-                | Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                    general_intersections()?
-                }
-                intersections => intersections,
+                contacts.clear();
             }
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-pair",
+                "exact-linear-parallel-chord-authority",
+            );
+            Classification::Decided(intersections)
         } else {
-            general_intersections()?
+            chord
+                .rational_intersections(rational, shared_source_parameter, &self.data.policy)
+                .map_err(|cause| self.invalid(other_index, cause))?
         };
         let complete = match intersections {
             Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
@@ -3064,103 +3041,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         Ok(Some(RegionPairResult {
             contacts,
             overlaps,
-            blockers: Vec::new(),
-        }))
-    }
-
-    /// Reuses the finite chord/chord authority when an analytic parallel has
-    /// an exact affine-line parameterization.  Its normalized line coordinate
-    /// is exactly the analytic source parameter, so contacts can remain in
-    /// their compact recursive tower instead of entering the higher-degree
-    /// chord/parallel resultant. Collinear overlaps continue through the
-    /// rational component authority, which already owns their correspondence.
-    fn algebraic_chord_exact_linear_pair_result(
-        &self,
-        pair: &RegionCarrierPair,
-        chord: &crate::BezierAlgebraicChord2,
-        chord_index: usize,
-        rational: &RationalBezier2,
-    ) -> ExactCurveResult<Option<RegionPairResult>> {
-        let Some(line) = rational.exact_linear_parameterization_line() else {
-            return Ok(None);
-        };
-        let line_chord = match crate::BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(line.start().clone()),
-            CurvePoint2::from(line.end().clone()),
-            &self.data.policy,
-        )
-        .map_err(|cause| self.invalid(chord_index, cause))?
-        {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(_) => return Ok(None),
-        };
-        if self
-            .data
-            .policy
-            .strict_predicate_pass(|| {
-                chord.is_strictly_one_sided_of_exact_line(&line, &self.data.policy)
-            })
-            .map_err(|cause| self.invalid(chord_index, cause))?
-            == Classification::Decided(true)
-        {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "algebraic-chord-pair",
-                "exact-linear-parallel-one-sided",
-            );
-            return Ok(Some(RegionPairResult::empty()));
-        }
-        let intersections = match chord
-            .chord_intersections(&line_chord, &self.data.policy)
-            .map_err(|cause| self.invalid(chord_index, cause))?
-        {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(_) => return Ok(None),
-        };
-        let BezierAlgebraicChordPairIntersections2::Contacts(contacts) = intersections else {
-            return Ok(None);
-        };
-        let chord_is_first = chord_index == pair.first_carrier_index;
-        let mut retained = Vec::with_capacity(contacts.len());
-        for contact in contacts {
-            let line_parameter = match contact
-                .second_parameter()
-                .exact_line_curve_parameter(&self.data.policy)
-                .map_err(|cause| self.invalid(chord_index, cause))?
-            {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(_) => return Ok(None),
-            };
-            let chord_parameter =
-                CurveParameter2::from_algebraic_chord(contact.first_parameter().clone());
-            let tangent_cross_sign =
-                orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
-            let (first_parameter, second_parameter) = if chord_is_first {
-                (chord_parameter, line_parameter)
-            } else {
-                (line_parameter, chord_parameter)
-            };
-            retained.push(RegionPairContactEvidence::direct(
-                first_parameter,
-                second_parameter,
-                Some(contact.point().clone()),
-                tangent_cross_sign != RealSign::Zero,
-                Some(tangent_cross_sign),
-            ));
-        }
-        if self.authored_carriers_are_adjacent(pair) {
-            retained.clear();
-        }
-        #[cfg(feature = "dispatch-trace")]
-        hyperreal::dispatch_trace::record(
-            "hypercurve",
-            "algebraic-chord-pair",
-            "exact-linear-parallel-chord-authority",
-        );
-        Ok(Some(RegionPairResult {
-            contacts: retained,
-            overlaps: Vec::new(),
             blockers: Vec::new(),
         }))
     }
@@ -6364,108 +6244,29 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 ),
             ));
         }
-        let (chord_carrier_index, source_carrier_index, source_overlap_range) = if chord_is_first {
-            (
-                pair.first_carrier_index,
-                pair.second_carrier_index,
-                &overlap.second_range,
-            )
+        let source_carrier_index = if chord_is_first {
+            pair.second_carrier_index
         } else {
-            (
-                pair.second_carrier_index,
-                pair.first_carrier_index,
-                &overlap.first_range,
-            )
+            pair.first_carrier_index
         };
-        let source_carrier = &self.data.carriers[source_carrier_index];
-        let (overlap_low, overlap_high) = ascending_range(source_overlap_range, &self.data.policy)?;
-        let source_low = if decided_parameter_cmp(
-            overlap_low,
-            &source_carrier.start,
-            &self.data.policy,
-        )?
-        .is_lt()
+        let carrier = &self.data.carriers[source_carrier_index];
+        let range = CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone());
+        let clipped = match source
+            .clipped_to_source_range(&range, &self.data.policy)
+            .map_err(|cause| self.invalid(source_carrier_index, cause))?
         {
-            source_carrier.start.clone()
-        } else {
-            overlap_low.clone()
-        };
-        let source_high =
-            if decided_parameter_cmp(overlap_high, &source_carrier.end, &self.data.policy)?.is_gt()
-            {
-                source_carrier.end.clone()
-            } else {
-                overlap_high.clone()
-            };
-        match decided_parameter_cmp(&source_low, &source_high, &self.data.policy)? {
-            Ordering::Less => {}
-            Ordering::Equal | Ordering::Greater => return Ok(None),
-        }
-
-        let map_source_parameter = |parameter: &CurveParameter2| match source
-            .chord_parameter_at_source_parameter(parameter, &self.data.policy)
-            .map_err(|cause| self.invalid(chord_carrier_index, cause))?
-        {
-            Classification::Decided(Some(parameter)) => {
-                Ok(CurveParameter2::from_algebraic_chord(parameter))
-            }
-            Classification::Decided(None) => {
-                Err(self.blocked(chord_carrier_index, UncertaintyReason::Boundary))
-            }
-            Classification::Uncertain(reason) => Err(self.blocked(chord_carrier_index, reason)),
-        };
-        let chord_at_source_low = map_source_parameter(&source_low)?;
-        let chord_at_source_high = map_source_parameter(&source_high)?;
-
-        // The overlap kernel deliberately keeps selected-fiber and recursive
-        // projective source roots compact while comparing, mapping, and
-        // clipping them. A published carrier range, however, must use that
-        // carrier's own Bezier parameter domain. Promote only the two
-        // surviving boundaries after their correlated chord endpoints have
-        // been recovered from the original retained identities.
-        let promote_source_boundary = |parameter: CurveParameter2| {
-            self.data.policy.strict_predicate_pass(|| {
-                match parameter
-                    .promoted_bezier_parameter_complete(&self.data.policy)
-                    .map_err(|cause| self.invalid(source_carrier_index, cause))?
-                {
-                    Classification::Decided(parameter) => Ok(CurveParameter2::from(parameter)),
-                    Classification::Uncertain(reason) => {
-                        Err(self.blocked(source_carrier_index, reason))
-                    }
-                }
-            })
-        };
-        let source_low = promote_source_boundary(source_low)?;
-        let source_high = promote_source_boundary(source_high)?;
-        let chord_order = decided_parameter_cmp(
-            &chord_at_source_low,
-            &chord_at_source_high,
-            &self.data.policy,
-        )?;
-        let (chord_range, source_range, orientation) = match chord_order {
-            Ordering::Less => (
-                CurveParameterRange2::new_validated(chord_at_source_low, chord_at_source_high),
-                CurveParameterRange2::new_validated(source_low, source_high),
-                RationalBezierOverlapOrientation2::Same,
-            ),
-            Ordering::Greater => (
-                CurveParameterRange2::new_validated(chord_at_source_high, chord_at_source_low),
-                CurveParameterRange2::new_validated(source_high, source_low),
-                RationalBezierOverlapOrientation2::Reversed,
-            ),
-            Ordering::Equal => {
-                return Err(self.blocked(chord_carrier_index, UncertaintyReason::Boundary));
+            Classification::Decided(Some(overlap)) => overlap,
+            Classification::Decided(None) => return Ok(None),
+            Classification::Uncertain(reason) => {
+                return Err(self.blocked(source_carrier_index, reason));
             }
         };
-        if orientation != overlap.orientation {
-            return Err(self.invalid(
-                chord_carrier_index,
-                CurveError::Topology(
-                    "clipped algebraic-chord overlap changed parameter orientation".into(),
-                ),
-            ));
-        }
+        let [start, end] = clipped.chord_range();
+        let chord_range = CurveParameterRange2::new_validated(
+            CurveParameter2::from_algebraic_chord(start.clone()),
+            CurveParameter2::from_algebraic_chord(end.clone()),
+        );
+        let source_range = clipped.source_range().clone();
         Ok(Some(if chord_is_first {
             (chord_range, source_range)
         } else {
@@ -17862,6 +17663,35 @@ mod certified_successor_tests {
         }
     }
 
+    fn assert_trim_endpoint_replay(
+        source: &Curve2,
+        trimmed: &crate::CurveRegionTrimFragment2,
+        expected: [Point2; 2],
+        policy: &CurveContext,
+    ) {
+        let curve = Curve2::from_retained_fragment(trimmed.fragment().clone());
+        let range = trimmed.fragment().curve_region_parameter_range();
+        for ((endpoint, parameter), expected) in
+            [(curve.start(), range.start()), (curve.end(), range.end())]
+                .into_iter()
+                .zip(expected)
+        {
+            let expected = CurvePoint2::from(expected);
+            assert_eq!(
+                endpoint.same_point(&expected, &CurveContext::STRICT),
+                Classification::Decided(true)
+            );
+            let evaluated = source
+                .point_at(parameter, policy)
+                .expect("the trim parameter must reenter source evaluation");
+            assert_eq!(evaluated.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(
+                evaluated.value.same_point(&expected, &CurveContext::STRICT),
+                Classification::Decided(true)
+            );
+        }
+    }
+
     #[test]
     fn curve_trim_retains_selected_field_algebraic_chord_boundaries() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -17870,7 +17700,7 @@ mod certified_successor_tests {
             let source = Curve2::from(
                 LineSeg2::try_new(
                     Point2::new(Real::from(-1_i8), half.clone()),
-                    Point2::new(Real::one(), half),
+                    Point2::new(Real::one(), half.clone()),
                 )
                 .expect("valid horizontal cutter"),
             );
@@ -17882,11 +17712,16 @@ mod certified_successor_tests {
             let [trimmed] = trimmed.value.as_slice() else {
                 panic!("the algebraic rectangle must retain one exact interval");
             };
-            assert!(matches!(
-                trimmed.fragment(),
-                BezierSplitFragment2::AlgebraicEndpointImages { .. }
-            ));
-            assert!(trimmed.represented_parameter_range().is_none());
+            let width = half.clone().sqrt().unwrap();
+            assert_trim_endpoint_replay(
+                &source,
+                trimmed,
+                [
+                    Point2::new(-width.clone(), half.clone()),
+                    Point2::new(width, half),
+                ],
+                &policy,
+            );
             assert_eq!(trimmed.start_boundary_contacts().len(), 1);
             assert_eq!(trimmed.end_boundary_contacts().len(), 1);
             assert_eq!(trimmed.start_boundary_contacts()[0].segment_index(), 3);
@@ -17930,11 +17765,15 @@ mod certified_successor_tests {
                 let [trimmed] = trimmed.value.as_slice() else {
                     panic!("the selected-field bottom edge must retain one exact interval");
                 };
-                assert!(matches!(
-                    trimmed.fragment(),
-                    BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                ));
-                assert!(trimmed.represented_parameter_range().is_none());
+                let width = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+                let mut expected = [
+                    Point2::new(-width.clone(), Real::zero()),
+                    Point2::new(width, Real::zero()),
+                ];
+                if reversed {
+                    expected.reverse();
+                }
+                assert_trim_endpoint_replay(&source, trimmed, expected, &policy);
                 let start_contact = trimmed
                     .start_boundary_contacts()
                     .iter()
