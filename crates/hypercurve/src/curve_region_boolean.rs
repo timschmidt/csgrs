@@ -3973,9 +3973,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
         rational: &RationalBezier2,
         cusp_is_first: bool,
     ) -> ExactCurveResult<RegionPairResult> {
+        let other = &self.data.carriers[if cusp_is_first {
+            pair.second_carrier_index
+        } else {
+            pair.first_carrier_index
+        }];
+        let range = CurveParameterRange2::new_validated(other.start.clone(), other.end.clone());
         let (intersections, parameter_map) = match cusp
             .semicircle()
-            .rational_intersections_with_parameter_map(rational, &self.data.policy)
+            .rational_intersections_with_parameter_map(rational, &range, &self.data.policy)
             .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
         {
             Classification::Decided(result) => result,

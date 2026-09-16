@@ -739,12 +739,12 @@ impl Pair<'_> {
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
         use crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2 as Intersections;
+        let span = if circle_first {
+            self.second
+        } else {
+            self.first
+        };
         if let Some(line) = rational.exact_linear_parameterization_line() {
-            let span = if circle_first {
-                self.second
-            } else {
-                self.first
-            };
             let chord = decided(
                 crate::BezierAlgebraicChord2::from_affine_line_range(
                     &line,
@@ -755,15 +755,10 @@ impl Pair<'_> {
             )?;
             return self.circle_chord(circle, &chord, circle_first, result);
         }
-        self.require_unit_domain(if circle_first {
-            self.second
-        } else {
-            self.first
-        })?;
         let (intersections, map) = decided(
             circle
                 .semicircle()
-                .rational_intersections_with_parameter_map(rational, self.policy),
+                .rational_intersections_with_parameter_map(rational, &span.range, self.policy),
             crate::CurveFamily2::CircularArc,
         )?;
         match intersections {
@@ -970,7 +965,7 @@ impl Pair<'_> {
             )
         }) && [first, second].into_iter().all(|source| {
             matches!(
-                source.unit_weight_sign(),
+                source.denominator_sign(&crate::CurveParameterRange2::unit()),
                 Classification::Decided(
                     hyperreal::RealSign::Positive | hyperreal::RealSign::Negative
                 )

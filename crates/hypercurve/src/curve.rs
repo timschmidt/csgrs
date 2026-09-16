@@ -6242,7 +6242,11 @@ fn retained_fillet_arc_cusp_overlap_is_positive(
     )? {
         let (intersections, _) = match cusp
             .semicircle()
-            .rational_intersections_with_parameter_map(&cell, policy)
+            .rational_intersections_with_parameter_map(
+                &cell,
+                &crate::CurveParameterRange2::unit(),
+                policy,
+            )
             .map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
             })? {
@@ -13424,7 +13428,7 @@ mod tests {
                 crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { contacts, overlaps: unexpected_overlaps },
                 _,
             )) = circle
-                .rational_intersections_with_parameter_map(&rational, &policy)
+                .rational_intersections_with_parameter_map(&rational, &crate::CurveParameterRange2::unit(), &policy)
                 .expect("the selected-circle kernel must retain the rational contact locally")
             else {
                 panic!("the selected half must publish its local rational-contact fiber");

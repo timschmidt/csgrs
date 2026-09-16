@@ -2191,7 +2191,9 @@ impl RationalBezier2 {
         {
             return Aabb2::from_points(points);
         }
-        if let Classification::Uncertain(reason) = self.unit_weight_sign() {
+        if let Classification::Uncertain(reason) =
+            self.denominator_sign(&crate::CurveParameterRange2::unit())
+        {
             return Classification::Uncertain(reason);
         }
         // A nonvanishing denominator on a compact interval has a common-sign
@@ -2277,7 +2279,9 @@ impl RationalBezier2 {
         axis: Axis2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        if let Classification::Uncertain(reason) = self.unit_weight_sign() {
+        if let Classification::Uncertain(reason) =
+            self.denominator_sign(&crate::CurveParameterRange2::unit())
+        {
             return Ok(Classification::Uncertain(reason));
         }
         if self.control_polygon_certifies_axis_monotone(axis, policy) {
@@ -2352,7 +2356,7 @@ impl RationalBezier2 {
         line: &LineSeg2,
         policy: &CurveContext,
     ) -> Classification<BezierLineContactRelation> {
-        let weight_sign = self.unit_weight_sign();
+        let weight_sign = self.denominator_sign(&crate::CurveParameterRange2::unit());
         let retained_regular_circle = if self.degree() == 2 {
             self.data
                 .lineage
@@ -2591,7 +2595,7 @@ impl RationalBezier2 {
         if self.degree() != 2 || self.retained_circular_conic().is_none() {
             return self.relation_to_line_with_contacts(line, policy);
         }
-        let weight_sign = match self.unit_weight_sign() {
+        let weight_sign = match self.denominator_sign(&crate::CurveParameterRange2::unit()) {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
@@ -2644,23 +2648,12 @@ impl RationalBezier2 {
         let unit_covers_range = CurveParameterDomain2::new(&unit, None)
             .contains_finite_range(range, &policy.strict_counterpart())?
             == Classification::Decided(true);
-        if !unit_covers_range
-            || !matches!(
-                self.unit_weight_sign(),
-                Classification::Decided(RealSign::Positive | RealSign::Negative)
-            )
-        {
-            match crate::bezier_offset::polynomial_is_nonzero_on_parameter_range(
-                &self.homogeneous_power_basis()?.weight,
-                range,
-                &policy.strict_counterpart(),
-            )? {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        match self.denominator_sign(range) {
+            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
         if unit_covers_range && self.has_certified_injective_axis(policy) {
             for (parameter, endpoint) in [(Real::zero(), self.start()), (Real::one(), self.end())] {
@@ -3342,7 +3335,9 @@ impl RationalBezier2 {
                 RationalBezierIntersectionContacts2::NoIntersection,
             ));
         }
-        if let Classification::Uncertain(reason) = self.unit_weight_sign() {
+        if let Classification::Uncertain(reason) =
+            self.denominator_sign(&crate::CurveParameterRange2::unit())
+        {
             return Ok(Classification::Uncertain(reason));
         }
         let basis = self.homogeneous_power_basis()?;
@@ -5094,7 +5089,10 @@ impl RationalBezier2 {
         if first_parameters.is_empty() {
             return Ok(None);
         }
-        if !matches!(self.unit_weight_sign(), Classification::Decided(_)) {
+        if !matches!(
+            self.denominator_sign(&crate::CurveParameterRange2::unit()),
+            Classification::Decided(_)
+        ) {
             return Ok(None);
         }
         let graph = [Axis2::X, Axis2::Y].into_iter().find_map(|axis| {
@@ -5259,56 +5257,67 @@ impl RationalBezier2 {
         }
     }
 
-    /// Certifies the denominator sign over the complete authored domain.
-    /// Control weights provide a cheap sufficient proof; mixed or zero control
-    /// weights use the exact denominator polynomial and do not reject a curve.
-    pub(crate) fn unit_weight_sign(&self) -> Classification<RealSign> {
-        if let Some(sign) = self.data.unit_weight_sign.get() {
-            return Classification::Decided(*sign);
-        }
-        // This is denominator evidence, independent of topology policy. Keep
-        // only certified successes so a later call can retry an unresolved proof.
+    /// Certifies the denominator sign on the requested closed parameter range.
+    /// Unit control-weight and cached proofs remain optional accelerators;
+    /// exterior and selected bounds use the shared finite-domain authority.
+    pub(crate) fn denominator_sign(
+        &self,
+        range: &crate::CurveParameterRange2,
+    ) -> Classification<RealSign> {
         let classify = || -> CurveResult<Classification<RealSign>> {
-            if let Classification::Decided(sign) = self.control_weight_sign() {
-                return Ok(Classification::Decided(sign));
-            }
-            let polynomial = match BezierParameterPolynomial::try_new_power_basis(
-                self.homogeneous_power_basis()?.weight.clone(),
-                &CurveContext::STRICT,
-            )? {
-                Classification::Decided(polynomial) => polynomial,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+            let strict = &CurveContext::STRICT;
+            let unit = crate::CurveParameterRange2::unit();
+            let is_unit = range.scalar_endpoints().is_some_and(|(start, end)| {
+                (start == &Real::zero() && end == &Real::one())
+                    || (start == &Real::one() && end == &Real::zero())
+            });
+            let inside_unit = is_unit
+                || matches!(
+                    crate::bezier_split::CurveParameterDomain2::new(&unit, None)
+                        .contains_finite_range(range, strict),
+                    Ok(Classification::Decided(true))
+                );
+            if inside_unit {
+                if let Some(sign) = self.data.unit_weight_sign.get() {
+                    return Ok(Classification::Decided(*sign));
                 }
-            };
-            match polynomial.isolate_unit_interval_roots(&CurveContext::STRICT)? {
-                Classification::Decided(roots) if roots.is_empty() => {}
-                Classification::Decided(_) => {
+                if let Classification::Decided(sign) = self.control_weight_sign() {
+                    // The control hull proves the whole unit interval, even
+                    // when this caller needs only one subrange.
+                    let _ = self.data.unit_weight_sign.set(sign);
+                    return Ok(Classification::Decided(sign));
+                }
+            }
+            let weight = &self.homogeneous_power_basis()?.weight;
+            match crate::bezier_offset::polynomial_is_nonzero_on_parameter_range(
+                weight, range, strict,
+            )? {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
-            Ok(
-                match real_sign(
-                    &self.homogeneous_controls()[0].weight,
-                    &CurveContext::STRICT,
-                ) {
-                    Some(sign @ (RealSign::Positive | RealSign::Negative)) => {
-                        Classification::Decided(sign)
+            let sign = range.start().polynomial_sign(weight, strict)?;
+            if let Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) = sign
+            {
+                // A proof on a proper subrange or a different chart cannot
+                // replace the whole-unit certificate.
+                if is_unit {
+                    let _ = self.data.unit_weight_sign.set(sign);
+                }
+                Ok(Classification::Decided(sign))
+            } else {
+                Ok(match sign {
+                    Classification::Decided(RealSign::Zero) => {
+                        Classification::Uncertain(UncertaintyReason::Boundary)
                     }
-                    Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
-                    None => Classification::Uncertain(UncertaintyReason::RealSign),
-                },
-            )
+                    result => result,
+                })
+            }
         };
         match classify() {
-            Ok(Classification::Decided(sign)) => {
-                let _ = self.data.unit_weight_sign.set(sign);
-                Classification::Decided(sign)
-            }
-            Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+            Ok(result) => result,
             Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
         }
     }
@@ -6565,7 +6574,10 @@ impl PolynomialGraph2 {
         curve: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        if !matches!(curve.unit_weight_sign(), Classification::Decided(_)) {
+        if !matches!(
+            curve.denominator_sign(&crate::CurveParameterRange2::unit()),
+            Classification::Decided(_)
+        ) {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }
         let basis = curve.homogeneous_power_basis()?;
@@ -10057,6 +10069,53 @@ mod tests {
     }
 
     #[test]
+    fn denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope() {
+        let range = |start, end| {
+            crate::CurveParameterRange2::new_validated(
+                Real::from(start).into(),
+                Real::from(end).into(),
+            )
+        };
+        for scale in [Real::one(), -Real::one()] {
+            // W(t)=scale*(2-t): the same support has opposite signs on
+            // [0,1] and [3,4], separated by its projective pole at t=2.
+            let curve = RationalBezier2::try_new(
+                vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+                vec![Real::from(2) * &scale, scale.clone()],
+            )
+            .unwrap();
+            let unit_sign = if scale == Real::one() {
+                RealSign::Positive
+            } else {
+                RealSign::Negative
+            };
+            let exterior_sign = if unit_sign == RealSign::Positive {
+                RealSign::Negative
+            } else {
+                RealSign::Positive
+            };
+            for (start, end, expected) in [
+                (0, 1, unit_sign),
+                (3, 4, exterior_sign),
+                (4, 3, exterior_sign),
+                (0, 1, unit_sign),
+                (-3, -2, unit_sign),
+            ] {
+                assert_eq!(
+                    curve.denominator_sign(&range(start, end)),
+                    Classification::Decided(expected)
+                );
+            }
+            for (start, end) in [(1, 3), (1, 2), (2, 3)] {
+                assert_eq!(
+                    curve.denominator_sign(&range(start, end)),
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                );
+            }
+        }
+    }
+
+    #[test]
     fn affine_subcurve_retains_zero_intermediate_weight_without_a_pole() {
         let half = (Real::one() / Real::from(2_i8)).unwrap();
         let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
@@ -10084,7 +10143,7 @@ mod tests {
                 &Point2::new(Real::from(2_i8), -two_thirds.clone())
             );
             assert_eq!(
-                extended.unit_weight_sign(),
+                extended.denominator_sign(&crate::CurveParameterRange2::unit()),
                 Classification::Decided(RealSign::Positive)
             );
         }

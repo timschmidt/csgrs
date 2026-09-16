@@ -287,10 +287,9 @@ impl FlattenableBezier for BezierSubcurve2 {
     fn certify_finite_domain(&self) -> Result<(), UncertaintyReason> {
         let sign = match self {
             Self::Quadratic(_) | Self::Cubic(_) => return Ok(()),
-            Self::RationalQuadratic(curve) => {
-                crate::RationalBezier2::from(curve.clone()).unit_weight_sign()
-            }
-            Self::Rational(curve) => curve.unit_weight_sign(),
+            Self::RationalQuadratic(curve) => crate::RationalBezier2::from(curve.clone())
+                .denominator_sign(&crate::CurveParameterRange2::unit()),
+            Self::Rational(curve) => curve.denominator_sign(&crate::CurveParameterRange2::unit()),
         };
         match sign {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => Ok(()),

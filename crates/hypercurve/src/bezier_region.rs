@@ -16616,7 +16616,12 @@ fn algebraic_ray_project_selected_fiber_parameters(
         let BezierParameter2::Algebraic(parameter) = point.retained_parameter() else {
             unreachable!();
         };
-        return algebraic_selected_fiber_parameters(incidence, parameter, policy);
+        return algebraic_selected_fiber_parameters(
+            incidence,
+            parameter,
+            &crate::CurveParameterRange2::unit(),
+            policy,
+        );
     };
     let second_count = incidence
         .coefficients
@@ -23644,7 +23649,11 @@ mod tests {
                 RationalBezier2::try_new(vec![p(0, -1), p(0, 1)], vec![Real::one(), Real::one()])
                     .unwrap();
             let Classification::Decided((intersections, parameter_map)) = circle
-                .rational_intersections_with_parameter_map(&vertical, &policy)
+                .rational_intersections_with_parameter_map(
+                    &vertical,
+                    &crate::CurveParameterRange2::unit(),
+                    &policy,
+                )
                 .unwrap()
             else {
                 panic!("the source-circle endpoint cuts must be exact");
@@ -24884,7 +24893,7 @@ mod tests {
                 .expect("the pair-radial probe is a finite rational line");
                 let (contacts, parameter_map) = match selected_radial
                     .semicircle()
-                    .rational_intersections_with_parameter_map(&line, &policy)
+                    .rational_intersections_with_parameter_map(&line, &crate::CurveParameterRange2::unit(), &policy)
                     .expect("the pair-radial/rational kernel is exact")
                 {
                     Classification::Decided((
@@ -24961,7 +24970,7 @@ mod tests {
                         match transformed_selected_radial
                             .semicircle()
                             .rational_intersections_with_parameter_map(
-                                &transformed_line,
+                                &transformed_line, &crate::CurveParameterRange2::unit(),
                                 &policy,
                             )
                             .expect("the transformed pair-radial/rational kernel is exact")
@@ -25026,7 +25035,7 @@ mod tests {
                             .expect("a second exact similarity retains pair provenance");
                         let nested_line = transformed_line.transform_similarity(&nested_reflection);
                         let nested_contacts = match nested_circle
-                            .rational_intersections_with_parameter_map(&nested_line, &policy)
+                            .rational_intersections_with_parameter_map(&nested_line, &crate::CurveParameterRange2::unit(), &policy)
                             .expect("the nested pair-radial/rational system remains exact")
                         {
                             Classification::Decided((
@@ -29515,7 +29524,7 @@ mod tests {
                 )
                 .unwrap();
                 let (contacts, map) = match circle
-                    .rational_intersections_with_parameter_map(&line, &policy)
+                    .rational_intersections_with_parameter_map(&line, &crate::CurveParameterRange2::unit(), &policy)
                     .unwrap()
                 {
                     Classification::Decided((
