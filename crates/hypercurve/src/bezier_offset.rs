@@ -11936,10 +11936,9 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
 
     /// Views a selected-fiber source point through the shared analytic-point
     /// carrier, following point-preserving coincident-overlap transports. A
-    /// rational source is its exact zero-distance parallel. This is reserved
-    /// for consumers that genuinely need a standalone recursive or
-    /// represented Cartesian field; topology keeps the compact derived point
-    /// above instead.
+    /// rational source is its exact zero-distance parallel. The view preserves
+    /// the selected parameter for local identity and coordinate queries;
+    /// consumers can request a recursive or represented field separately.
     fn selected_fiber_analytic_point(
         &self,
         policy: &CurveContext,
@@ -48012,8 +48011,10 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
     /// Returns the retained source point when this affine derivation is the
     /// identity. Keeping that provenance visible lets coordinate predicates
     /// reuse the source carrier's exact constant-coordinate and shared-field
-    /// proofs instead of comparing two reconstructed interval boxes.
-    pub(crate) fn identity_source_point(&self, policy: &CurveContext) -> Option<&CurvePoint2> {
+    /// proofs instead of comparing two reconstructed interval boxes. Selected
+    /// fibers reuse their source evaluation without promoting the parameter
+    /// or reconstructing either Cartesian coordinate.
+    pub(crate) fn identity_source_point(&self, policy: &CurveContext) -> Option<CurvePoint2> {
         self.data.source.validate_policy(policy).ok()?;
         if self.data.radial_scale != Real::one()
             || self.data.perpendicular_scale.zero_status() != ZeroKnowledge::Zero
@@ -48025,9 +48026,16 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         match &self.data.source {
             BezierAlgebraicCuspDerivedPointSource2::Mapped {
                 point: Some(point), ..
-            } => Some(point),
-            BezierAlgebraicCuspDerivedPointSource2::Chord(_)
-            | BezierAlgebraicCuspDerivedPointSource2::Mapped { point: None, .. } => None,
+            } => Some(point.clone()),
+            BezierAlgebraicCuspDerivedPointSource2::Mapped {
+                parameter,
+                point: None,
+            } => parameter
+                .selected_fiber_analytic_point(policy)
+                .ok()
+                .flatten()
+                .map(CurvePoint2::from),
+            BezierAlgebraicCuspDerivedPointSource2::Chord(_) => None,
         }
     }
 
@@ -82934,7 +82942,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         )
         && let Some(source) = derived.identity_source_point(policy)
     {
-        return algebraic_chord_point_coordinate_order(source, second, axis, policy);
+        return algebraic_chord_point_coordinate_order(&source, second, axis, policy);
     }
     if let CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(derived)) = second
         && !matches!(
@@ -82943,7 +82951,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         )
         && let Some(source) = derived.identity_source_point(policy)
     {
-        return algebraic_chord_point_coordinate_order(first, source, axis, policy);
+        return algebraic_chord_point_coordinate_order(first, &source, axis, policy);
     }
     let use_x = axis == Axis2::X;
     match (first, second) {
@@ -83123,7 +83131,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 first.identity_source_point(policy),
                 second.identity_source_point(policy),
             ) {
-                return algebraic_chord_point_coordinate_order(first, second, axis, policy);
+                return algebraic_chord_point_coordinate_order(&first, &second, axis, policy);
             }
             let first = CurvePoint2::from(first.clone());
             let second = CurvePoint2::from(second.clone());

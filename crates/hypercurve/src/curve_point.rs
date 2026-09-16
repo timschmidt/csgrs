@@ -296,7 +296,7 @@ impl CurvePoint2 {
             (_, CurvePointData2::AlgebraicCuspChordDerived(point))
                 if let Some(source) = point.identity_source_point(policy) =>
             {
-                return self.same_point(source, policy);
+                return self.same_point(&source, policy);
             }
             _ => {}
         }
