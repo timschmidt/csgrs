@@ -1118,12 +1118,10 @@ fn expected_line_circle_fillet() -> Contour2 {
 
 fn assert_corner_region_survives_boundary_paths(
     region: &CurveRegion2,
-    expected: Contour2,
+    expected: CurveRegion2,
     probes: &[(Point2, RegionPointLocation)],
     policy: &CurveContext,
 ) {
-    let expected =
-        certified(CurveRegion2::try_from_native_material_contours(vec![expected], policy).unwrap());
     let paths = decided(region.boundary_paths(policy).unwrap());
     assert_eq!(paths.len(), 1);
     let restored = certified(
@@ -1207,7 +1205,9 @@ fn unified_region_native_chamfer_uses_arc_sweep_evidence() {
         .unwrap();
         assert_corner_region_survives_boundary_paths(
             &chamfered,
-            expected,
+            certified(
+                CurveRegion2::try_from_native_material_contours(vec![expected], &policy).unwrap(),
+            ),
             &[
                 (p(4, 1), RegionPointLocation::Inside),
                 (p(4, 0), RegionPointLocation::Outside),
@@ -1243,7 +1243,9 @@ fn unified_region_native_fillet_retains_certified_arc_contacts() {
         let expected = expected_line_circle_fillet();
         assert_corner_region_survives_boundary_paths(
             &filleted,
-            expected,
+            certified(
+                CurveRegion2::try_from_native_material_contours(vec![expected], &policy).unwrap(),
+            ),
             &[
                 (
                     Point2::new(-Real::one(), q(1, 2)),
@@ -1322,7 +1324,13 @@ fn unified_region_corners_preserve_circular_geometry_across_representations() {
             ];
             assert_corner_region_survives_boundary_paths(
                 &chamfered,
-                expected_chamfer,
+                certified(
+                    CurveRegion2::try_from_native_material_contours(
+                        vec![expected_chamfer],
+                        &policy,
+                    )
+                    .unwrap(),
+                ),
                 &probes,
                 &policy,
             );
@@ -1336,7 +1344,13 @@ fn unified_region_corners_preserve_circular_geometry_across_representations() {
             };
             assert_corner_region_survives_boundary_paths(
                 &filleted,
-                expected_line_circle_fillet(),
+                certified(
+                    CurveRegion2::try_from_native_material_contours(
+                        vec![expected_line_circle_fillet()],
+                        &policy,
+                    )
+                    .unwrap(),
+                ),
                 &probes,
                 &policy,
             );
@@ -1458,7 +1472,13 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
                     );
                     assert_corner_region_survives_boundary_paths(
                         candidate,
-                        expected,
+                        certified(
+                            CurveRegion2::try_from_native_material_contours(
+                                vec![expected],
+                                &policy,
+                            )
+                            .unwrap(),
+                        ),
                         &[
                             (
                                 Point2::new(-Real::one(), q(1, 2)),
@@ -1546,6 +1566,51 @@ fn unified_region_corners_use_represented_bezier_incidence() {
     }
 }
 
+fn expected_parabola_chamfer(two_cuts: bool, policy: &CurveContext) -> CurveRegion2 {
+    // Q(t)=(t^2,2t), so the unit setback solves t^4+4t^2=1.
+    // Q(s+(1-s)u) is independently authored from its three exact controls.
+    let s_squared = Real::from(5).sqrt().unwrap() - Real::from(2);
+    let s = s_squared.clone().sqrt().unwrap();
+    let cut_y = Real::from(2) * &s;
+    let right = Point2::new(s_squared.clone(), cut_y.clone());
+    let right_tail = Curve2::from(QuadraticBezier2::new(
+        right.clone(),
+        Point2::new(s.clone(), Real::one() + &s),
+        p(1, 2),
+    ));
+    let line = |start, end| Curve2::from(LineSeg2::try_new(start, end).unwrap());
+    let curves = if two_cuts {
+        let left = Point2::new(-s_squared, cut_y);
+        vec![
+            Curve2::from(QuadraticBezier2::new(
+                p(-1, 2),
+                Point2::new(-s.clone(), Real::one() + &s),
+                left.clone(),
+            )),
+            line(left, right),
+            right_tail,
+            line(p(1, 2), p(-1, 2)),
+        ]
+    } else {
+        vec![
+            line(p(-4, 0), p(-1, 0)),
+            line(p(-1, 0), right),
+            right_tail,
+            line(p(1, 2), p(-4, 2)),
+            line(p(-4, 2), p(-4, 0)),
+        ]
+    };
+    certified(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+            &[CurvePath2::try_new(curves).unwrap()],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            policy,
+        )
+        .unwrap(),
+    )
+}
+
 #[test]
 fn unified_region_chamfer_retains_algebraic_bezier_cut() {
     let path = CurvePath2::try_new(vec![
@@ -1558,8 +1623,8 @@ fn unified_region_chamfer_retains_algebraic_bezier_cut() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-            .unwrap()
-            .into_value();
+            .map(certified)
+            .unwrap();
         let CurveCornerSolutions2::Unique(chamfered) = source
             .chamfer_loop_vertex_by_setbacks(
                 0,
@@ -1569,39 +1634,25 @@ fn unified_region_chamfer_retains_algebraic_bezier_cut() {
                 CurveCornerMode2::TrimOnly,
                 &policy,
             )
+            .map(certified)
             .unwrap()
-            .into_value()
         else {
             panic!("the algebraic line/Bezier setback must have one retained chamfer");
         };
-        let fragments = chamfered.boundary_loops()[0].fragments();
-        assert_eq!(fragments.len(), 5);
-        assert!(matches!(
-            fragments[1],
-            BezierSplitFragment2::AlgebraicChord(_)
-        ));
-        assert!(matches!(
-            fragments[2],
-            BezierSplitFragment2::AlgebraicEndpointImages { .. }
-        ));
         assert_eq!(
             decided(chamfered.loop_roles(&policy).unwrap()),
             vec![CurveRegionLoopRole::Material]
         );
-        {
-            assert_eq!(
-                certified(chamfered.classify_point(&p(-2, 1), &policy).unwrap()),
-                Classification::Decided(RegionPointLocation::Inside)
-            );
-            assert_eq!(
-                certified(chamfered.classify_point(&p(0, 0), &policy).unwrap()),
-                Classification::Decided(RegionPointLocation::Outside)
-            );
-            assert_eq!(
-                certified(chamfered.classify_point(&p(-1, 0), &policy).unwrap()),
-                Classification::Decided(RegionPointLocation::Boundary)
-            );
-        }
+        assert_corner_region_survives_boundary_paths(
+            &chamfered,
+            expected_parabola_chamfer(false, &policy),
+            &[
+                (p(-2, 1), RegionPointLocation::Inside),
+                (p(0, 0), RegionPointLocation::Outside),
+                (p(-1, 0), RegionPointLocation::Boundary),
+            ],
+            &policy,
+        );
     }
 }
 
@@ -1796,8 +1847,8 @@ fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (path, vertex_index) in &paths {
             let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(path), &policy)
-                .unwrap()
-                .into_value();
+                .map(certified)
+                .unwrap();
             let CurveCornerSolutions2::Unique(chamfered) = source
                 .chamfer_loop_vertex_by_setbacks(
                     0,
@@ -1807,63 +1858,40 @@ fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
+                .map(certified)
                 .unwrap()
-                .into_value()
             else {
                 panic!("two algebraic Bezier setbacks must define one retained chamfer");
             };
-            let fragments = chamfered.boundary_loops()[0].fragments();
-            assert_eq!(fragments.len(), 4);
-            assert_eq!(
-                fragments
-                    .iter()
-                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
-                    .count(),
-                1
-            );
-            assert_eq!(
-                fragments
-                    .iter()
-                    .filter(|fragment| matches!(
-                        fragment,
-                        BezierSplitFragment2::AlgebraicEndpointImages { .. }
-                    ))
-                    .count(),
-                2
-            );
             let distant = CurveRegion2::try_from_native_material_contours(
                 vec![square(10, 10, 12, 12)],
                 &policy,
             )
-            .unwrap()
-            .into_value();
+            .map(certified)
+            .unwrap();
             let evidence = chamfered
                 .intersect_region(&distant, &policy)
-                .unwrap()
-                .into_value();
+                .map(certified)
+                .unwrap();
             assert!(evidence.is_disjoint());
             assert_eq!(evidence.candidate_carrier_pair_count(), 0);
             let batch = chamfered
                 .boolean_regions(&distant, &policy)
-                .unwrap()
-                .into_value();
+                .map(certified)
+                .unwrap();
             assert!(batch.intersection().is_empty());
             assert_eq!(batch.union().boundary_loops().len(), 2);
             assert_eq!(batch.difference().boundary_loops().len(), 1);
-            {
-                assert_eq!(
-                    certified(chamfered.classify_point(&p(0, 1), &policy).unwrap()),
-                    Classification::Decided(RegionPointLocation::Inside)
-                );
-                assert_eq!(
-                    certified(chamfered.classify_point(&p(0, 0), &policy).unwrap()),
-                    Classification::Decided(RegionPointLocation::Outside)
-                );
-                assert_eq!(
-                    certified(chamfered.classify_point(&p(-1, 2), &policy).unwrap()),
-                    Classification::Decided(RegionPointLocation::Boundary)
-                );
-            }
+            assert_corner_region_survives_boundary_paths(
+                &chamfered,
+                expected_parabola_chamfer(true, &policy),
+                &[
+                    (p(0, 1), RegionPointLocation::Inside),
+                    (p(0, 0), RegionPointLocation::Outside),
+                    (p(-1, 2), RegionPointLocation::Boundary),
+                ],
+                &policy,
+            );
         }
     }
 }

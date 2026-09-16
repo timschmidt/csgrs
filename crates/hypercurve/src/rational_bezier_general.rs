@@ -6726,10 +6726,18 @@ fn push_unique_parameter_overlap_contact(
     first: BezierParameter2,
     second: BezierParameter2,
 ) {
-    if contacts
-        .iter()
-        .any(|contact| contact.0 == first && contact.1 == second)
-    {
+    // Endpoints are replayed from both curve charts. Independently constructed
+    // witnesses for the same parameter pair must remain one contact, or a
+    // single shared interval can look like multiple overlapping components.
+    if contacts.iter().any(|contact| {
+        matches!(
+            contact.0.same_value(&first, &CurveContext::STRICT),
+            Ok(Classification::Decided(true))
+        ) && matches!(
+            contact.1.same_value(&second, &CurveContext::STRICT),
+            Ok(Classification::Decided(true))
+        )
+    }) {
         return;
     }
     contacts.push((first, second));

@@ -95,6 +95,99 @@ fn rational_quadratic_exact_transcendental_pole_stays_projective() {
 }
 
 #[test]
+fn independent_quadratic_tail_overlap_retains_one_exact_interval() {
+    // Q(t)=(t^2,2t). The unit-distance cut has s^2=sqrt(5)-2;
+    // Q(s+(1-s)u) has the independently constructed controls below.
+    let s_squared = r(5).sqrt().unwrap() - r(2);
+    let s = s_squared.clone().sqrt().unwrap();
+    for swap_axes in [false, true] {
+        let point = |x: Real, y: Real| {
+            if swap_axes {
+                Point2::new(y, x)
+            } else {
+                Point2::new(x, y)
+            }
+        };
+        let source = RationalBezier2::try_new(
+            vec![point(r(0), r(0)), point(r(0), r(1)), point(r(1), r(2))],
+            vec![r(1); 3],
+        )
+        .unwrap();
+        let tail = RationalBezier2::try_new(
+            vec![
+                point(s_squared.clone(), r(2) * &s),
+                point(s.clone(), r(1) + &s),
+                point(r(1), r(2)),
+            ],
+            vec![r(1); 3],
+        )
+        .unwrap();
+        for reversed in [false, true] {
+            let tail = if reversed {
+                tail.reversed()
+            } else {
+                tail.clone()
+            };
+            for swap_curves in [false, true] {
+                let (first, second) = if swap_curves {
+                    (&tail, &source)
+                } else {
+                    (&source, &tail)
+                };
+                let (first_expected, second_expected) = if swap_curves {
+                    (
+                        [r(0), r(1)],
+                        if reversed {
+                            [r(1), s.clone()]
+                        } else {
+                            [s.clone(), r(1)]
+                        },
+                    )
+                } else {
+                    (
+                        [s.clone(), r(1)],
+                        if reversed { [r(1), r(0)] } else { [r(0), r(1)] },
+                    )
+                };
+                for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                    let RationalBezierIntersectionContacts2::Overlap(overlap) =
+                        first.intersection_contacts(second, &policy).unwrap()
+                    else {
+                        panic!("one shared parabola interval must replay exactly");
+                    };
+                    assert_eq!(
+                        overlap.orientation(),
+                        if reversed {
+                            RationalBezierOverlapOrientation2::Reversed
+                        } else {
+                            RationalBezierOverlapOrientation2::Same
+                        }
+                    );
+                    for (range, expected) in [
+                        (overlap.first_range(), &first_expected),
+                        (overlap.second_range(), &second_expected),
+                    ] {
+                        for (actual, expected) in
+                            [(range.start(), &expected[0]), (range.end(), &expected[1])]
+                        {
+                            assert_eq!(
+                                actual
+                                    .cmp_by_refinement(
+                                        &BezierParameter2::Exact(expected.clone()),
+                                        &CurveContext::STRICT
+                                    )
+                                    .unwrap(),
+                                Classification::Decided(std::cmp::Ordering::Equal)
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative() {
     let curve = RationalQuadraticBezier2::try_new(
         p(0, 0),
