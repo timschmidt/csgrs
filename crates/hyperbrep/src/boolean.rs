@@ -5,8 +5,8 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, BezierLineImageFitRelation, BezierSplitFragment2, BezierSubcurve2, BooleanOp,
-    Classification, Contour2, ContourPointLocation, Curve2, CurveContext, CurvePath2, CurveRegion2,
+    Aabb2, BezierLineImageFitRelation, BezierSubcurve2, BooleanOp, Classification, Contour2,
+    ContourPointLocation, Curve2, CurveContext, CurvePath2, CurveRegion2,
     CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionLoopRole, CurveString2,
     ExactCurveError, FillRule, LineArcIntersection, LineLineIntersection, LineSeg2,
     RationalBezier2, RationalQuadraticBezier2, RegionPointLocation, Segment2, UncertaintyReason,
@@ -3238,13 +3238,17 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
                 .map_err(GeometryError::from)?
                 .into_value()
             {
-                let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-                    return Ok(None);
+                let spans = match fragment.native_bezier_fragments(&CurveContext::STRICT) {
+                    Ok(spans) => spans.into_value(),
+                    Err(ExactCurveError::Blocked(_)) => return Ok(None),
+                    Err(error) => return Err(GeometryError::from(error).into()),
                 };
-                let Some(line) = lift_planar_line_image(plane, &curve)? else {
-                    return Ok(None);
-                };
-                traces.push(line);
+                for span in spans {
+                    let Some(line) = lift_planar_line_image(plane, span.curve())? else {
+                        return Ok(None);
+                    };
+                    traces.push(line);
+                }
             }
         } else {
             for fragment in curve
@@ -3840,18 +3844,26 @@ fn retained_curve_face_intervals(
             Err(error) => return Err(GeometryError::from(error)),
         };
         for fragment in trimmed {
-            let representative = match fragment
-                .fragment()
-                .representative_point(&CurveContext::STRICT)
-                .map_err(GeometryError::from)?
+            let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let middle = ((&pcurve_start + &pcurve_end) / Real::from(2_u8))
+                .expect("division by the nonzero integer two");
+            let representative = match carrier
+                .curve
+                .point_at(&middle.into(), &CurveContext::STRICT)
             {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                Ok(point) => point.into_value(),
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    return Ok(Classification::Uncertain(blocker.reason()));
                 }
+                Err(error) => return Err(GeometryError::from(error)),
+            };
+            let Some(representative) = representative.coordinates() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             match region
-                .classify_point(&representative, &CurveContext::STRICT)
+                .classify_point(representative, &CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value()
             {
@@ -3863,9 +3875,6 @@ fn retained_curve_face_intervals(
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
             let mut start = &carrier.spatial_scale * pcurve_start + &carrier.spatial_offset;
             let mut end = &carrier.spatial_scale * pcurve_end + &carrier.spatial_offset;
             let Some(mut start_contacts) = model_boundary_contacts(
@@ -6475,12 +6484,22 @@ fn trim_conic_to_planar_face(
             else {
                 return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
             };
-            let BezierSplitFragment2::Materialized { curve, .. } = fragment.into_fragment() else {
+            let spans = match fragment
+                .curve()
+                .native_bezier_fragments(&CurveContext::STRICT)
+            {
+                Ok(spans) => spans.into_value(),
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    return Ok(FacePairTrim::Unresolved(blocker.reason()));
+                }
+                Err(error) => return Err(GeometryError::from(error)),
+            };
+            let [span] = spans else {
                 return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
             };
             retained_fragments.push(
                 SurfaceIntersectionCurve::on_single_plane(
-                    lift_planar_bezier(surface, &curve)?,
+                    lift_planar_bezier(surface, span.curve())?,
                     surface,
                     operand,
                 )?
