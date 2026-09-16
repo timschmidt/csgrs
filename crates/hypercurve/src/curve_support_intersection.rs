@@ -984,6 +984,15 @@ impl Pair<'_> {
             return self.parallel_rational(&parallel, second, true, result);
         }
         let context = RationalBezierIntersectionContext::try_new(first, second, self.policy)?;
+        self.rational_context(&context, result)
+    }
+
+    fn rational_context(
+        &self,
+        context: &RationalBezierIntersectionContext,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let [first, second] = context.curves();
         let evidence = context.try_contacts()?;
         // The scalar context is a cheap complete authority for isolated
         // contacts and injective correspondences. Shared non-injective images
@@ -1790,9 +1799,13 @@ pub(super) fn intersect(
     first: &Curve2,
     second: &Curve2,
     policy: &CurveContext,
+    prepared: Option<&[PreparedRationalPair]>,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let first_spans = spans(first, policy)?;
     let second_spans = spans(second, policy)?;
+    debug_assert!(
+        prepared.is_none_or(|pairs| pairs.len() == first_spans.len() * second_spans.len())
+    );
     let mut result = Evidence::default();
     for (first_index, first) in first_spans.iter().enumerate() {
         for (second_index, second) in second_spans.iter().enumerate() {
@@ -1811,55 +1824,95 @@ pub(super) fn intersect(
                     )
                 })
             };
-            let outcome = match (&first.support, &second.support) {
-                (CurveSupport2::Bezier(first), CurveSupport2::Bezier(second)) => {
-                    pair.rational(&rational(first)?, &rational(second)?, &mut result)
+            // Native scheduling may retain a shared circle certificate or an
+            // injective lineage map. Publication still uses the same authority
+            // as restricted and generated supports, including every parameter
+            // component and residual contact of non-injective rational images.
+            let outcome = match prepared
+                .map(|pairs| &pairs[first_index * second_spans.len() + second_index])
+            {
+                Some(PreparedRationalPair::Rational(context)) => {
+                    pair.rational_context(context, &mut result)
                 }
-                (CurveSupport2::Line(first), CurveSupport2::Line(second)) => {
-                    pair.chords(first, second, &mut result)
+                Some(PreparedRationalPair::RetainedLineageOverlap {
+                    first_range,
+                    second_range,
+                    orientation,
+                }) => {
+                    result.overlaps.push(pair.overlap(
+                        [
+                            CurveParameterRange2::new_validated(
+                                first_range.start().clone().into(),
+                                first_range.end().clone().into(),
+                            ),
+                            CurveParameterRange2::new_validated(
+                                second_range.start().clone().into(),
+                                second_range.end().clone().into(),
+                            ),
+                        ],
+                        *orientation,
+                        [true, true],
+                        CurveOverlapCorrespondence2::affine(first_range, second_range),
+                    )?);
+                    Ok(())
                 }
-                (CurveSupport2::Line(chord), CurveSupport2::Bezier(source)) => {
-                    pair.chord_rational(chord, &rational(source)?, true, &mut result)
+                Some(PreparedRationalPair::Blocked(reason)) => {
+                    pair.blocker(
+                        &mut result,
+                        CurveIntersectionPairBlockerKind2::Uncertain(*reason),
+                    );
+                    Ok(())
                 }
-                (CurveSupport2::Bezier(source), CurveSupport2::Line(chord)) => {
-                    pair.chord_rational(chord, &rational(source)?, false, &mut result)
-                }
-                (CurveSupport2::Circle(first), CurveSupport2::Circle(second)) => {
-                    pair.circles(first, second, &mut result)
-                }
-                (CurveSupport2::Circle(circle), CurveSupport2::Line(chord)) => {
-                    pair.circle_chord(circle, chord, true, &mut result)
-                }
-                (CurveSupport2::Line(chord), CurveSupport2::Circle(circle)) => {
-                    pair.circle_chord(circle, chord, false, &mut result)
-                }
-                (CurveSupport2::Circle(circle), CurveSupport2::Bezier(source)) => {
-                    pair.circle_rational(circle, &rational(source)?, true, &mut result)
-                }
-                (CurveSupport2::Bezier(source), CurveSupport2::Circle(circle)) => {
-                    pair.circle_rational(circle, &rational(source)?, false, &mut result)
-                }
-                (CurveSupport2::Circle(circle), CurveSupport2::Parallel(parallel)) => {
-                    pair.circle_parallel(circle, parallel, true, &mut result)
-                }
-                (CurveSupport2::Parallel(parallel), CurveSupport2::Circle(circle)) => {
-                    pair.circle_parallel(circle, parallel, false, &mut result)
-                }
-                (CurveSupport2::Parallel(parallel), CurveSupport2::Bezier(source)) => {
-                    pair.parallel_rational(parallel, &rational(source)?, true, &mut result)
-                }
-                (CurveSupport2::Bezier(source), CurveSupport2::Parallel(parallel)) => {
-                    pair.parallel_rational(parallel, &rational(source)?, false, &mut result)
-                }
-                (CurveSupport2::Parallel(first), CurveSupport2::Parallel(second)) => {
-                    pair.parallels(first, second, &mut result)
-                }
-                (CurveSupport2::Line(chord), CurveSupport2::Parallel(parallel)) => {
-                    pair.chord_parallel(chord, parallel, true, &mut result)
-                }
-                (CurveSupport2::Parallel(parallel), CurveSupport2::Line(chord)) => {
-                    pair.chord_parallel(chord, parallel, false, &mut result)
-                }
+                None => match (&first.support, &second.support) {
+                    (CurveSupport2::Bezier(first), CurveSupport2::Bezier(second)) => {
+                        pair.rational(&rational(first)?, &rational(second)?, &mut result)
+                    }
+                    (CurveSupport2::Line(first), CurveSupport2::Line(second)) => {
+                        pair.chords(first, second, &mut result)
+                    }
+                    (CurveSupport2::Line(chord), CurveSupport2::Bezier(source)) => {
+                        pair.chord_rational(chord, &rational(source)?, true, &mut result)
+                    }
+                    (CurveSupport2::Bezier(source), CurveSupport2::Line(chord)) => {
+                        pair.chord_rational(chord, &rational(source)?, false, &mut result)
+                    }
+                    (CurveSupport2::Circle(first), CurveSupport2::Circle(second)) => {
+                        pair.circles(first, second, &mut result)
+                    }
+                    (CurveSupport2::Circle(circle), CurveSupport2::Line(chord)) => {
+                        pair.circle_chord(circle, chord, true, &mut result)
+                    }
+                    (CurveSupport2::Line(chord), CurveSupport2::Circle(circle)) => {
+                        pair.circle_chord(circle, chord, false, &mut result)
+                    }
+                    (CurveSupport2::Circle(circle), CurveSupport2::Bezier(source)) => {
+                        pair.circle_rational(circle, &rational(source)?, true, &mut result)
+                    }
+                    (CurveSupport2::Bezier(source), CurveSupport2::Circle(circle)) => {
+                        pair.circle_rational(circle, &rational(source)?, false, &mut result)
+                    }
+                    (CurveSupport2::Circle(circle), CurveSupport2::Parallel(parallel)) => {
+                        pair.circle_parallel(circle, parallel, true, &mut result)
+                    }
+                    (CurveSupport2::Parallel(parallel), CurveSupport2::Circle(circle)) => {
+                        pair.circle_parallel(circle, parallel, false, &mut result)
+                    }
+                    (CurveSupport2::Parallel(parallel), CurveSupport2::Bezier(source)) => {
+                        pair.parallel_rational(parallel, &rational(source)?, true, &mut result)
+                    }
+                    (CurveSupport2::Bezier(source), CurveSupport2::Parallel(parallel)) => {
+                        pair.parallel_rational(parallel, &rational(source)?, false, &mut result)
+                    }
+                    (CurveSupport2::Parallel(first), CurveSupport2::Parallel(second)) => {
+                        pair.parallels(first, second, &mut result)
+                    }
+                    (CurveSupport2::Line(chord), CurveSupport2::Parallel(parallel)) => {
+                        pair.chord_parallel(chord, parallel, true, &mut result)
+                    }
+                    (CurveSupport2::Parallel(parallel), CurveSupport2::Line(chord)) => {
+                        pair.chord_parallel(chord, parallel, false, &mut result)
+                    }
+                },
             };
             match outcome {
                 Ok(()) => {}

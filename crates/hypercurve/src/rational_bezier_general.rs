@@ -923,6 +923,10 @@ impl RationalBezierIntersectionContext {
         self.try_contact_view().cloned()
     }
 
+    pub(crate) fn curves(&self) -> [&RationalBezier2; 2] {
+        [&self.data.first, &self.data.second]
+    }
+
     pub(crate) fn overlap_parameter_correspondence(
         &self,
         overlap: &RationalBezierIntersectionOverlap2,

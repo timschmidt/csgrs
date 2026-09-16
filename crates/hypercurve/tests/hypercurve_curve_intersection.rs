@@ -1724,6 +1724,206 @@ fn retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs(
 }
 
 #[test]
+fn native_retraced_overlaps_survive_independent_restriction() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)));
+        let independent = Curve2::from(
+            RationalBezier2::try_new(vec![p(0, 0), p(2, 0), p(0, 0)], vec![r(1); 3])
+                .unwrap()
+                .elevated_to_degree(5)
+                .unwrap(),
+        );
+        for (first, second) in [
+            (&source, &source),
+            (&source, &independent),
+            (&independent, &source),
+        ] {
+            let result = first.intersect_curve(second, &policy).unwrap();
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert!(result.value.is_complete(), "{:?}", result.value.blockers());
+            assert!(result.value.contacts().is_empty());
+            // x=4t(1-t) has both t=u and t=1-u parameter components.
+            // A single identity correspondence cannot be reused on opposite
+            // restrictions even though their geometric images coincide.
+            let mut restrictions = Vec::new();
+            for overlap in result.value.overlaps() {
+                if let Some(overlap) = decided(
+                    overlap
+                        .restrict(
+                            [r(0).into(), q(1, 4).into()],
+                            [q(3, 4).into(), r(1).into()],
+                            &policy,
+                        )
+                        .unwrap()
+                        .into_value(),
+                ) {
+                    restrictions.push(overlap);
+                }
+            }
+            assert_eq!(restrictions.len(), 1);
+            let mut overlap = restrictions.pop().unwrap();
+            assert_eq!(
+                overlap.orientation(),
+                RationalBezierOverlapOrientation2::Reversed
+            );
+            for _ in 0..8 {
+                overlap = decided(
+                    overlap
+                        .restrict(
+                            [q(1, 8).into(), q(1, 4).into()],
+                            [q(3, 4).into(), q(7, 8).into()],
+                            &policy,
+                        )
+                        .unwrap()
+                        .into_value(),
+                )
+                .unwrap();
+                for (a, b) in [
+                    (
+                        overlap.first_range().start(),
+                        overlap.second_range().start(),
+                    ),
+                    (overlap.first_range().end(), overlap.second_range().end()),
+                ] {
+                    let a = first.point_at(a, &policy).unwrap().into_value();
+                    let b = second.point_at(b, &policy).unwrap().into_value();
+                    assert!(decided(a.coincides_with(&b, &policy).value));
+                }
+            }
+            let a = first
+                .subcurve(q(1, 8).into(), q(1, 4).into(), &policy)
+                .unwrap()
+                .into_value();
+            let b = second
+                .subcurve(q(3, 4).into(), q(7, 8).into(), &policy)
+                .unwrap()
+                .into_value();
+            let fresh = a.intersect_curve(&b, &policy).unwrap();
+            assert_eq!(fresh.certainty, CurveCertainty::Certified);
+            assert!(fresh.value.is_complete(), "{:?}", fresh.value.blockers());
+            assert_eq!(fresh.value.overlaps().len(), 1);
+        }
+    }
+}
+
+#[test]
+fn native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology() {
+    // x=12(2t-1)^2, y=12((2t-1)^3-(2t-1)/4).
+    // The diagonal overlap coexists with the ordered visits (1/4,3/4)
+    // and (3/4,1/4) to the transverse double point (3,0).
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let source = Curve2::from(CubicBezier2::new(
+            p(12, -9),
+            p(-4, 13),
+            p(-4, -13),
+            p(12, 9),
+        ));
+        for reversed in [false, true] {
+            let second = if reversed {
+                source.reversed(&policy).unwrap().into_value()
+            } else {
+                source.clone()
+            };
+            let result = source.intersect_curve(&second, &policy).unwrap();
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert!(result.value.is_complete(), "{:?}", result.value.blockers());
+            assert_eq!(result.value.contacts().len(), 2);
+            assert_eq!(result.value.overlaps().len(), 1);
+            for (a, b) in [(q(1, 4), q(3, 4)), (q(3, 4), q(1, 4))] {
+                let b = if reversed { r(1) - b } else { b };
+                let contact = result
+                    .value
+                    .contacts()
+                    .iter()
+                    .find(|contact| {
+                        decided(contact.first().parameter(&policy).unwrap())
+                            .compare(&a.clone().into(), &policy)
+                            .unwrap()
+                            .into_value()
+                            == Classification::Decided(std::cmp::Ordering::Equal)
+                    })
+                    .unwrap();
+                assert_eq!(
+                    decided(contact.second().parameter(&policy).unwrap())
+                        .compare(&b.into(), &policy)
+                        .unwrap()
+                        .into_value(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                assert!(contact.is_certified_transverse());
+                assert!(decided(
+                    contact
+                        .point()
+                        .coincides_with(&p(3, 0).into(), &policy)
+                        .value
+                ));
+            }
+            let topology = source.intersection_topology(&second, &policy).unwrap();
+            assert_eq!(topology.certainty, CurveCertainty::Certified);
+            assert!(topology.value.result().is_complete());
+            assert_eq!(topology.value.first().len(), 3);
+            assert_eq!(topology.value.second().len(), 3);
+            for piece in topology.value.first() {
+                let replay = piece.intersect_curve(&second, &policy).unwrap();
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                assert!(replay.value.is_complete(), "{:?}", replay.value.blockers());
+            }
+        }
+    }
+}
+
+#[test]
+fn native_nodal_spline_contacts_retain_authored_charts() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let controls = vec![p(12, -9), p(-4, 13), p(-4, -13), p(12, 9)];
+        let knots = [2, 2, 2, 2, 6, 6, 6, 6].map(r).to_vec();
+        let polynomial =
+            Curve2::try_polynomial_bspline(3, controls.clone(), knots.clone(), &policy)
+                .unwrap()
+                .into_value();
+        let rational = Curve2::try_nurbs(3, controls, vec![r(1); 4], knots, &policy)
+            .unwrap()
+            .into_value();
+        for (a, b) in [(&polynomial, &rational), (&rational, &polynomial)] {
+            let result = a.intersect_curve(b, &policy).unwrap();
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert!(result.value.is_complete(), "{:?}", result.value.blockers());
+            assert_eq!(result.value.contacts().len(), 2);
+            for expected in [(3, 5), (5, 3)] {
+                let contact = result
+                    .value
+                    .contacts()
+                    .iter()
+                    .find(|contact| {
+                        decided(contact.first().parameter(&policy).unwrap())
+                            .compare(&r(expected.0).into(), &policy)
+                            .unwrap()
+                            .into_value()
+                            == Classification::Decided(std::cmp::Ordering::Equal)
+                    })
+                    .unwrap();
+                let first = decided(contact.first().parameter(&policy).unwrap());
+                let second = decided(contact.second().parameter(&policy).unwrap());
+                assert_eq!(
+                    second
+                        .compare(&r(expected.1).into(), &policy)
+                        .unwrap()
+                        .into_value(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                for (curve, parameter) in [(a, first), (b, second)] {
+                    let point = curve.point_at(&parameter, &policy).unwrap();
+                    assert_eq!(point.certainty, CurveCertainty::Certified);
+                    assert!(decided(
+                        point.value.coincides_with(contact.point(), &policy).value
+                    ));
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn retained_retraced_domains_retain_every_parameter_component() {
     let selecting = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0)));
     let crossing = Curve2::from(

@@ -21,8 +21,8 @@ use crate::{
     CurveGeometry2, CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2,
     CurvePoint2, CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult,
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange,
-    Point2, RationalBezier2, RationalBezierIntersectionContact2,
-    RationalBezierIntersectionContacts2, RationalBezierOverlapOrientation2, UncertaintyReason,
+    Point2, RationalBezier2, RationalBezierIntersectionContacts2,
+    RationalBezierOverlapOrientation2, UncertaintyReason,
 };
 
 /// Exact location in a curve's retained span chart.
@@ -657,7 +657,7 @@ struct CurveIntersectionContextData {
 #[derive(Debug)]
 enum CurveIntersectionDispatch {
     SupportEvidence(CurveIntersectionResult2),
-    SpanPairs(Vec<CurveSpanPair>),
+    RationalPairs(Vec<PreparedRationalPair>),
     NativeLine(LineLineIntersection),
     NativeLineArc {
         order: LineArcOrder,
@@ -688,14 +688,7 @@ enum NativeArcIntersectionDispatch {
 }
 
 #[derive(Debug)]
-struct CurveSpanPair {
-    first_span_index: usize,
-    second_span_index: usize,
-    state: CurveSpanPairState,
-}
-
-#[derive(Debug)]
-enum CurveSpanPairState {
+enum PreparedRationalPair {
     Rational(RationalBezierIntersectionContext),
     RetainedLineageOverlap {
         first_range: ParamRange,
@@ -705,7 +698,7 @@ enum CurveSpanPairState {
     Blocked(UncertaintyReason),
 }
 
-fn build_span_pairs(
+fn prepare_rational_pairs(
     first_curve: &Curve2,
     second_curve: &Curve2,
     first_evaluators: &[RationalBezier2],
@@ -713,7 +706,7 @@ fn build_span_pairs(
     policy: &CurveContext,
     circle_relation: Option<&CircleCircleRelation>,
     mut batch_cache: Option<&mut CurveIntersectionBatchCache>,
-) -> ExactCurveResult<Vec<CurveSpanPair>> {
+) -> ExactCurveResult<Vec<PreparedRationalPair>> {
     let first_fragments =
         first_curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
     let second_fragments = second_curve
@@ -763,26 +756,18 @@ fn build_span_pairs(
             let retained_overlap = match retained_overlap {
                 Classification::Decided(overlap) => overlap,
                 Classification::Uncertain(reason) => {
-                    pairs.push(CurveSpanPair {
-                        first_span_index,
-                        second_span_index,
-                        state: CurveSpanPairState::Blocked(reason),
-                    });
+                    pairs.push(PreparedRationalPair::Blocked(reason));
                     continue;
                 }
             };
             if let Some(overlap) = retained_overlap {
-                pairs.push(CurveSpanPair {
-                    first_span_index,
-                    second_span_index,
-                    state: CurveSpanPairState::RetainedLineageOverlap {
-                        first_range: overlap.first,
-                        second_range: overlap.second,
-                        orientation: if overlap.same_orientation {
-                            RationalBezierOverlapOrientation2::Same
-                        } else {
-                            RationalBezierOverlapOrientation2::Reversed
-                        },
+                pairs.push(PreparedRationalPair::RetainedLineageOverlap {
+                    first_range: overlap.first,
+                    second_range: overlap.second,
+                    orientation: if overlap.same_orientation {
+                        RationalBezierOverlapOrientation2::Same
+                    } else {
+                        RationalBezierOverlapOrientation2::Reversed
                     },
                 });
                 continue;
@@ -799,9 +784,9 @@ fn build_span_pairs(
                     .as_ref()
                     .map(|parameters| parameters[second_span_index].as_slice()),
             ) {
-                Ok(intersection) => CurveSpanPairState::Rational(intersection),
+                Ok(intersection) => PreparedRationalPair::Rational(intersection),
                 Err(ExactCurveError::Blocked(blocker)) => {
-                    CurveSpanPairState::Blocked(blocker.reason())
+                    PreparedRationalPair::Blocked(blocker.reason())
                 }
                 Err(ExactCurveError::Invalid { cause, .. }) => {
                     return Err(ExactCurveError::invalid(
@@ -811,11 +796,7 @@ fn build_span_pairs(
                     ));
                 }
             };
-            pairs.push(CurveSpanPair {
-                first_span_index,
-                second_span_index,
-                state,
-            });
+            pairs.push(state);
         }
     }
     Ok(pairs)
@@ -1950,7 +1931,7 @@ impl CurveIntersectionContext {
         mut batch_cache: Option<&mut CurveIntersectionBatchCache>,
     ) -> ExactCurveResult<Self> {
         if first.geometry().is_none() || second.geometry().is_none() {
-            let result = curve_support_intersection::intersect(first, second, policy)?;
+            let result = curve_support_intersection::intersect(first, second, policy, None)?;
             return Ok(Self {
                 data: CurveIntersectionContextData {
                     first: first.clone(),
@@ -2032,8 +2013,9 @@ impl CurveIntersectionContext {
                             if has_native_point_image_span(first, policy)?
                                 || has_native_point_image_span(second, policy)?
                             {
-                                let result =
-                                    curve_support_intersection::intersect(first, second, policy)?;
+                                let result = curve_support_intersection::intersect(
+                                    first, second, policy, None,
+                                )?;
                                 (
                                     result.span_pair_count(),
                                     CurveIntersectionDispatch::SupportEvidence(result),
@@ -2062,8 +2044,8 @@ impl CurveIntersectionContext {
                                     }
                                     None => None,
                                 };
-                                let dispatch =
-                                    CurveIntersectionDispatch::SpanPairs(build_span_pairs(
+                                let dispatch = CurveIntersectionDispatch::RationalPairs(
+                                    prepare_rational_pairs(
                                         first,
                                         second,
                                         first_evaluators,
@@ -2071,7 +2053,8 @@ impl CurveIntersectionContext {
                                         policy,
                                         circle_relation.as_ref(),
                                         batch_cache,
-                                    )?);
+                                    )?,
+                                );
                                 (span_pair_count, dispatch)
                             }
                         }
@@ -2165,215 +2148,15 @@ impl CurveIntersectionContext {
                 self.data.span_pair_count,
             );
         }
-        let first_fragments = self.data.first.native_bezier_fragments_for_operation(
-            &self.data.policy,
-            CurveOperation2::Intersection,
-        )?;
-        let second_fragments = self.data.second.native_bezier_fragments_for_operation(
-            &self.data.policy,
-            CurveOperation2::Intersection,
-        )?;
-        let mut contacts = Vec::new();
-        let mut overlaps = Vec::new();
-        let mut blockers = Vec::new();
-        let CurveIntersectionDispatch::SpanPairs(pairs) = &self.data.dispatch else {
-            unreachable!("native dispatch returned before generic span replay")
+        let CurveIntersectionDispatch::RationalPairs(pairs) = &self.data.dispatch else {
+            unreachable!("native dispatch returned before common span replay")
         };
-        for pair in pairs {
-            let first_span_range = first_fragments[pair.first_span_index].span_range().clone();
-            let second_span_range = second_fragments[pair.second_span_index]
-                .span_range()
-                .clone();
-            if let CurveSpanPairState::RetainedLineageOverlap {
-                first_range,
-                second_range,
-                orientation,
-            } = &pair.state
-            {
-                overlaps.push(CurveIntersectionOverlap2 {
-                    first_span_index: pair.first_span_index,
-                    second_span_index: pair.second_span_index,
-                    first_range: CurveParameterRange2::new_validated(
-                        first_range.start().clone().into(),
-                        first_range.end().clone().into(),
-                    ),
-                    second_range: CurveParameterRange2::new_validated(
-                        second_range.start().clone().into(),
-                        second_range.end().clone().into(),
-                    ),
-                    orientation: *orientation,
-                    endpoint_inclusion: [true, true],
-                    parameter_correspondence: CurveOverlapCorrespondence2::affine(
-                        first_range,
-                        second_range,
-                    ),
-                });
-                continue;
-            }
-            let span_contacts = match &pair.state {
-                CurveSpanPairState::Blocked(reason) => {
-                    blockers.push(CurveIntersectionPairBlocker2 {
-                        first_span_index: pair.first_span_index,
-                        second_span_index: pair.second_span_index,
-                        kind: CurveIntersectionPairBlockerKind2::Uncertain(*reason),
-                    });
-                    continue;
-                }
-                CurveSpanPairState::Rational(intersection) => match intersection.try_contacts() {
-                    Ok(contacts) => contacts,
-                    Err(ExactCurveError::Blocked(blocker)) => {
-                        blockers.push(CurveIntersectionPairBlocker2 {
-                            first_span_index: pair.first_span_index,
-                            second_span_index: pair.second_span_index,
-                            kind: CurveIntersectionPairBlockerKind2::Uncertain(blocker.reason()),
-                        });
-                        continue;
-                    }
-                    Err(ExactCurveError::Invalid { cause, .. }) => {
-                        return Err(ExactCurveError::invalid(
-                            CurveOperation2::Intersection,
-                            self.data.first.family(),
-                            cause,
-                        ));
-                    }
-                },
-                CurveSpanPairState::RetainedLineageOverlap { .. } => {
-                    unreachable!("retained lineage overlap returned before contact replay")
-                }
-            };
-            match span_contacts {
-                RationalBezierIntersectionContacts2::NoIntersection => {}
-                RationalBezierIntersectionContacts2::Contacts(span_contacts) => {
-                    if let Classification::Uncertain(reason) = append_unique_contacts(
-                        &mut contacts,
-                        &span_contacts,
-                        &first_span_range,
-                        &second_span_range,
-                        pair.first_span_index,
-                        pair.second_span_index,
-                        &self.data.policy,
-                    ) {
-                        blockers.push(CurveIntersectionPairBlocker2 {
-                            first_span_index: pair.first_span_index,
-                            second_span_index: pair.second_span_index,
-                            kind: CurveIntersectionPairBlockerKind2::Uncertain(reason),
-                        });
-                        continue;
-                    }
-                }
-                RationalBezierIntersectionContacts2::Overlap(overlap) => {
-                    overlaps.push(CurveIntersectionOverlap2 {
-                        first_span_index: pair.first_span_index,
-                        second_span_index: pair.second_span_index,
-                        first_range: CurveParameterRange2::from_bezier_range(
-                            overlap.first_range().clone(),
-                        ),
-                        second_range: CurveParameterRange2::from_bezier_range(
-                            overlap.second_range().clone(),
-                        ),
-                        orientation: overlap.orientation(),
-                        endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
-                        parameter_correspondence: match &pair.state {
-                            CurveSpanPairState::Rational(intersection) => {
-                                CurveOverlapCorrespondence2::rational(
-                                    intersection.overlap_parameter_correspondence(&overlap),
-                                    &overlap,
-                                )
-                            }
-                            _ => unreachable!(
-                                "non-rational span states returned before overlap replay"
-                            ),
-                        },
-                    });
-                }
-                RationalBezierIntersectionContacts2::ContactsAndOverlap {
-                    contacts: span_contacts,
-                    overlap,
-                } => {
-                    if let Classification::Uncertain(reason) = append_unique_contacts(
-                        &mut contacts,
-                        &span_contacts,
-                        &first_span_range,
-                        &second_span_range,
-                        pair.first_span_index,
-                        pair.second_span_index,
-                        &self.data.policy,
-                    ) {
-                        blockers.push(CurveIntersectionPairBlocker2 {
-                            first_span_index: pair.first_span_index,
-                            second_span_index: pair.second_span_index,
-                            kind: CurveIntersectionPairBlockerKind2::Uncertain(reason),
-                        });
-                        continue;
-                    }
-                    overlaps.push(CurveIntersectionOverlap2 {
-                        first_span_index: pair.first_span_index,
-                        second_span_index: pair.second_span_index,
-                        first_range: CurveParameterRange2::from_bezier_range(
-                            overlap.first_range().clone(),
-                        ),
-                        second_range: CurveParameterRange2::from_bezier_range(
-                            overlap.second_range().clone(),
-                        ),
-                        orientation: overlap.orientation(),
-                        endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
-                        parameter_correspondence: match &pair.state {
-                            CurveSpanPairState::Rational(intersection) => {
-                                CurveOverlapCorrespondence2::rational(
-                                    intersection.overlap_parameter_correspondence(&overlap),
-                                    &overlap,
-                                )
-                            }
-                            _ => unreachable!(
-                                "non-rational span states returned before overlap replay"
-                            ),
-                        },
-                    });
-                }
-                RationalBezierIntersectionContacts2::Incomplete {
-                    contacts: span_contacts,
-                    candidates,
-                } => {
-                    if let Classification::Uncertain(reason) = append_unique_contacts(
-                        &mut contacts,
-                        &span_contacts,
-                        &first_span_range,
-                        &second_span_range,
-                        pair.first_span_index,
-                        pair.second_span_index,
-                        &self.data.policy,
-                    ) {
-                        blockers.push(CurveIntersectionPairBlocker2 {
-                            first_span_index: pair.first_span_index,
-                            second_span_index: pair.second_span_index,
-                            kind: CurveIntersectionPairBlockerKind2::Uncertain(reason),
-                        });
-                        continue;
-                    }
-                    blockers.push(CurveIntersectionPairBlocker2 {
-                        first_span_index: pair.first_span_index,
-                        second_span_index: pair.second_span_index,
-                        kind: CurveIntersectionPairBlockerKind2::IncompleteReplay { candidates },
-                    });
-                }
-                RationalBezierIntersectionContacts2::DegenerateResultant => {
-                    blockers.push(CurveIntersectionPairBlocker2 {
-                        first_span_index: pair.first_span_index,
-                        second_span_index: pair.second_span_index,
-                        kind: CurveIntersectionPairBlockerKind2::SharedComponent,
-                    });
-                }
-            }
-        }
-        Ok(CurveIntersectionResult2 {
-            data: Arc::new(CurveIntersectionResultData {
-                span_pair_count: self.data.span_pair_count,
-                contacts: contacts.into(),
-                overlaps: overlaps.into(),
-                blockers: blockers.into(),
-                parameter_components: None,
-            }),
-        })
+        curve_support_intersection::intersect(
+            &self.data.first,
+            &self.data.second,
+            &self.data.policy,
+            Some(pairs),
+        )
     }
 
     fn build_topology(&self) -> ExactCurveResult<CurveIntersectionTopology2> {
@@ -2859,51 +2642,6 @@ pub(crate) fn arrangement_from_curve_pieces<'a>(
     Ok(BezierArrangementGraph2::from_certified_fragments(fragments))
 }
 
-fn append_unique_contacts(
-    output: &mut Vec<CurveIntersectionContact2>,
-    contacts: &[RationalBezierIntersectionContact2],
-    first_span_range: &CurveSpanRange2,
-    second_span_range: &CurveSpanRange2,
-    first_span_index: usize,
-    second_span_index: usize,
-    policy: &CurveContext,
-) -> Classification<()> {
-    let original_len = output.len();
-    for contact in contacts {
-        let candidate = CurveIntersectionContact2 {
-            first: CurveLocation2 {
-                span_index: first_span_index,
-                span_range: first_span_range.clone(),
-                local_parameter: contact.first_parameter().clone().into(),
-            },
-            second: CurveLocation2 {
-                span_index: second_span_index,
-                span_range: second_span_range.clone(),
-                local_parameter: contact.second_parameter().clone().into(),
-            },
-            point: contact.point().clone(),
-            certified_transverse: contact.is_certified_transverse(),
-            tangent_cross_sign: contact.tangent_cross_sign(),
-        };
-        match matching_contact_index(output, &candidate, policy) {
-            Classification::Decided(Some(index)) => {
-                // A duplicate span-pair replay can contribute stronger evidence.
-                // Retain it even when the parameter pair is already present.
-                output[index].certified_transverse |= candidate.certified_transverse;
-                if output[index].tangent_cross_sign.is_none() {
-                    output[index].tangent_cross_sign = candidate.tangent_cross_sign;
-                }
-            }
-            Classification::Decided(None) => output.push(candidate),
-            Classification::Uncertain(reason) => {
-                output.truncate(original_len);
-                return Classification::Uncertain(reason);
-            }
-        }
-    }
-    Classification::Decided(())
-}
-
 fn matching_contact_index(
     contacts: &[CurveIntersectionContact2],
     candidate: &CurveIntersectionContact2,
@@ -3042,13 +2780,15 @@ mod native_dispatch_tests {
         let mut cache = CurveIntersectionBatchCache::default();
         for first_span in first.spans() {
             for second_span in second.spans() {
-                CurveIntersectionContext::try_new_with_batch_cache(
+                let context = CurveIntersectionContext::try_new_with_batch_cache(
                     &Curve2::from(first_span.curve().clone()),
                     &Curve2::from(second_span.curve().clone()),
                     &CurveContext::STRICT,
                     &mut cache,
                 )
                 .unwrap();
+                let result = context.result().unwrap();
+                assert!(result.is_complete(), "{:?}", result.blockers());
             }
         }
         assert_eq!(cache.circular_support_relations.len(), 1);
