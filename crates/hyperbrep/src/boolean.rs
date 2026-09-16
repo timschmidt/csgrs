@@ -3940,7 +3940,7 @@ fn model_boundary_contacts(
             .ok_or(GeometryError::UnsupportedIntersection)?;
         let edge_use_id = *wire
             .edge_uses()
-            .get(contact.segment_index())
+            .get(contact.carrier().fragment_index())
             .ok_or(GeometryError::UnsupportedIntersection)?;
         let Some(pcurve_point) = contact.point().and_then(|point| point.coordinates()) else {
             return Ok(None);
