@@ -6728,6 +6728,7 @@ fn fillet_offset_centers(
                 .circle_incidence(
                     arc.support().center(),
                     &(signed_radius * signed_radius),
+                    &parallel_source.curve_parameter_range(),
                     &[],
                     policy,
                 )
@@ -11440,7 +11441,12 @@ fn bezier_chamfer_cuts(
     let radius_squared = setback * setback;
     let parallel = exact_corner_bezier_parallel(source, Real::zero(), operation, family)?;
     let mut parameters = match parallel
-        .source_circle_incidence(corner, &radius_squared, policy)
+        .source_circle_incidence(
+            corner,
+            &radius_squared,
+            &crate::CurveParameterRange2::unit(),
+            policy,
+        )
         .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
     {
         Classification::Decided(parameters) => parameters,

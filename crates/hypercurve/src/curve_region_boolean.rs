@@ -1985,6 +1985,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .circle_incidence(
                 arc.center(),
                 arc.radius_squared_ref(),
+                &crate::CurveParameterRange2::unit(),
                 &certified_tangent_parameters,
                 &self.data.policy,
             )
