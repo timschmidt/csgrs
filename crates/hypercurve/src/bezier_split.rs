@@ -865,7 +865,25 @@ fn parameter_is_in_ordered_closed_range(
 }
 
 impl CurveParameterRange2 {
-    pub(crate) fn unit() -> Self {
+    /// Constructs a nonempty oriented range without replacing either exact endpoint.
+    pub fn try_new(
+        start: CurveParameter2,
+        end: CurveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        Ok(match start.cmp_by_refinement(&end, policy)? {
+            Classification::Decided(Ordering::Less | Ordering::Greater) => {
+                Classification::Decided(Self { start, end })
+            }
+            Classification::Decided(Ordering::Equal) => {
+                return Err(CurveError::InvalidBezierRange);
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        })
+    }
+
+    /// Returns the ascending unit range `[0, 1]`.
+    pub fn unit() -> Self {
         Self::new_validated(Real::zero().into(), Real::one().into())
     }
 
@@ -1522,7 +1540,10 @@ impl BezierParallelFragment2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
         if distance_sign != RealSign::Zero {
-            let analysis = match parallel.singularity_analysis(policy)? {
+            let analysis = match parallel.singularity_analysis(
+                &CurveParameterRange2::from_bezier_range(range.clone()),
+                policy,
+            )? {
                 Classification::Decided(analysis) => analysis,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

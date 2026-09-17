@@ -5,10 +5,10 @@ use hypercurve::{
     BezierAlgebraicParameter2, BezierParallelFragment2, BezierParallelVerificationOptions,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
     BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveContext, CurveIntersectionCandidates2, CurvePath2,
-    CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2,
-    OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
-    Similarity2,
+    CurveBoundaryInteriorSide2, CurveContext, CurveIntersectionCandidates2, CurveParameterRange2,
+    CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule,
+    LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -166,7 +166,9 @@ fn bench_bezier_parallel_cusp_isolation(iterations: u32) -> CurveResult<()> {
     let started = Instant::now();
     let mut roots = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(analysis) = parallel.singularity_analysis(&policy)? else {
+        let Classification::Decided(analysis) =
+            parallel.singularity_analysis(&CurveParameterRange2::unit(), &policy)?
+        else {
             panic!("Bezier parallel cusp isolation became uncertain");
         };
         roots += black_box(analysis.parallel_cusps().len());

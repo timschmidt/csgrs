@@ -5104,7 +5104,7 @@ fn exact_offset_spans_from_materialized_curve(
         BezierSubcurve2::Rational(curve) => BezierParallelSource2::Rational(curve.clone()),
     };
     let parallel = BezierParallel2::from_source(source, distance.clone());
-    let analysis = match parallel.singularity_analysis(policy)? {
+    let analysis = match parallel.singularity_analysis(&CurveParameterRange2::unit(), policy)? {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
@@ -6091,7 +6091,7 @@ fn exact_offset_span_from_retained_parallel_fragment(
     // every other cut stays in its original parameter authority.
     let mut source_endpoints = [None, None];
     let mut boundaries = vec![range.start().clone()];
-    let analysis = match composed.singularity_analysis(policy) {
+    let analysis = match composed.singularity_analysis(&range, policy) {
         Ok(Classification::Decided(analysis)) => Some(analysis),
         // Zero displacement already defines the source without a unit normal.
         // Optional endpoint-frame recovery must not narrow that existing domain.
@@ -28353,8 +28353,9 @@ mod tests {
                     .unwrap(),
                 Classification::Decided(Some(_))
             ));
-            let Classification::Decided(analysis) =
-                independent_parallel.singularity_analysis(&policy).unwrap()
+            let Classification::Decided(analysis) = independent_parallel
+                .singularity_analysis(&CurveParameterRange2::unit(), &policy)
+                .unwrap()
             else {
                 panic!("retained line provenance must certify constant nonzero speed");
             };
@@ -30968,7 +30969,7 @@ mod tests {
             .parallel_left(half)
             .expect("the source has an exact analytic parallel");
         let analysis = parallel
-            .singularity_analysis(&construction_policy)
+            .singularity_analysis(&CurveParameterRange2::unit(), &construction_policy)
             .expect("the parallel cusp analysis is valid");
         let Classification::Decided(analysis) = analysis else {
             panic!("the exact cusp analysis must be decided");

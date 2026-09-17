@@ -76600,7 +76600,7 @@ impl BezierAlgebraicChord2 {
                 }
                 Ok(identity.or(tangent.then_some(RealSign::Zero)))
             };
-            let singularities = match parallel.singularity_analysis(strict)? {
+            let singularities = match parallel.singularity_analysis(range, strict)? {
                 Classification::Decided(analysis) => analysis,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -110609,6 +110609,7 @@ impl CertifiedPythagoreanHodographOffset2 {
 /// Exact singularity evidence for a retained Bezier parallel.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierParallelSingularityAnalysis2 {
+    range: CurveParameterRange2,
     source_singularities: Vec<BezierParameter2>,
     parallel_cusps: Vec<BezierParameter2>,
     source_speed_squared_degree: usize,
@@ -110616,6 +110617,11 @@ pub struct BezierParallelSingularityAnalysis2 {
 }
 
 impl BezierParallelSingularityAnalysis2 {
+    /// Returns the closed exact range covered by this analysis.
+    pub const fn range(&self) -> &CurveParameterRange2 {
+        &self.range
+    }
+
     /// Returns every isolated parameter where the source derivative vanishes.
     pub fn source_singularities(&self) -> &[BezierParameter2] {
         &self.source_singularities
@@ -110626,12 +110632,12 @@ impl BezierParallelSingularityAnalysis2 {
         &self.parallel_cusps
     }
 
-    /// Returns whether the source normal is defined over the complete parameter domain.
+    /// Returns whether the source normal is defined over the requested closed range.
     pub fn source_is_regular(&self) -> bool {
         self.source_singularities.is_empty()
     }
 
-    /// Returns whether the retained parallel is cusp-free over every regular source span.
+    /// Returns whether the parallel is cusp-free on every regular source span in the range.
     pub fn parallel_is_cusp_free(&self) -> bool {
         self.parallel_cusps.is_empty()
     }
@@ -110657,11 +110663,12 @@ impl BezierParallelSingularityAnalysis2 {
 /// degree-six polynomial introduced by squaring.  The linear/quadratic formula
 /// is itself the exact construction certificate; it does not ask a generic
 /// scalar equality predicate to rediscover cancellation in nested radicals.
-/// If its degree, discriminant sign, or unit-domain membership is unresolved,
+/// If its degree, discriminant sign, or exact range membership is unresolved,
 /// the caller retains the complete algebraic isolator.
 fn exact_quadratic_parallel_cusp_candidates(
     speed_squared: &[Real],
     signed_curvature_term: &[Real],
+    range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Option<Vec<BezierParameter2>>> {
     let curvature = polynomial_trim_structural_zeros(signed_curvature_term.to_vec());
@@ -110712,10 +110719,12 @@ fn exact_quadratic_parallel_cusp_candidates(
     };
     let mut roots = Vec::with_capacity(candidates.len());
     for candidate in candidates {
-        match in_closed_unit_interval(&candidate, policy) {
-            Some(true) => roots.push(BezierParameter2::Exact(candidate)),
-            Some(false) => {}
-            None => return Ok(None),
+        match CurveParameterDomain2::new(range, None)
+            .contains_finite_parameter(&candidate.clone().into(), policy)?
+        {
+            Classification::Decided(true) => roots.push(BezierParameter2::Exact(candidate)),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(_) => return Ok(None),
         }
     }
     Ok(Some(roots))
@@ -119745,7 +119754,8 @@ impl BezierParallel2 {
             source_derivative_y + self.distance() * normal_derivative_y,
         );
         if derivative.zero_status() == ZeroKnowledge::Unknown
-            && let Ok(Classification::Decided(analysis)) = self.singularity_analysis(policy)
+            && let Ok(Classification::Decided(analysis)) =
+                self.singularity_analysis(&CurveParameterRange2::unit(), policy)
             && analysis
                 .parallel_cusps()
                 .iter()
@@ -119763,7 +119773,10 @@ impl BezierParallel2 {
         Ok(Classification::Decided(derivative))
     }
 
-    /// Isolates source singularities and distance-dependent parallel cusps exactly.
+    /// Isolates source singularities and parallel cusps on a closed exact range.
+    ///
+    /// Poles outside the range do not restrict this query. Root evidence stays
+    /// in the source chart, and selected endpoint authorities decide membership.
     ///
     /// On regular source spans a parallel cusp satisfies
     /// `d * (P'' x P') + |P'|^3 = 0`. The root scheduler isolates the polynomial
@@ -119771,8 +119784,10 @@ impl BezierParallel2 {
     /// the opposite-sign roots introduced by squaring.
     pub fn singularity_analysis(
         &self,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelSingularityAnalysis2>> {
+        let domain = CurveParameterDomain2::new(range, None);
         let source = match self.rational_source() {
             Some(source) => Some(source.homogeneous_power_basis()?),
             None => None,
@@ -119789,7 +119804,7 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            match weight_polynomial.isolate_unit_interval_roots(policy)? {
+            match domain.finite_roots(&weight_polynomial, policy)? {
                 Classification::Decided(roots) if roots.is_empty() => {}
                 Classification::Decided(_) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -119813,13 +119828,14 @@ impl BezierParallel2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let source_singularities = match speed_polynomial.isolate_unit_interval_roots(policy)? {
+        let source_singularities = match domain.finite_roots(&speed_polynomial, policy)? {
             Classification::Decided(roots) => roots,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
             return Ok(Classification::Decided(
                 BezierParallelSingularityAnalysis2 {
+                    range: range.clone(),
                     source_singularities,
                     parallel_cusps: Vec::new(),
                     source_speed_squared_degree: speed_polynomial.degree(),
@@ -119846,10 +119862,11 @@ impl BezierParallel2 {
                 match exact_quadratic_parallel_cusp_candidates(
                     &speed_squared,
                     &signed_curvature_term,
+                    range,
                     policy,
                 )? {
                     Some(candidates) => candidates,
-                    None => match cusp_polynomial.isolate_unit_interval_roots(policy)? {
+                    None => match domain.finite_roots(&cusp_polynomial, policy)? {
                         Classification::Decided(roots) => roots,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
@@ -119857,7 +119874,7 @@ impl BezierParallel2 {
                     },
                 }
             } else {
-                match cusp_polynomial.isolate_unit_interval_roots(policy)? {
+                match domain.finite_roots(&cusp_polynomial, policy)? {
                     Classification::Decided(roots) => roots,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -119885,6 +119902,7 @@ impl BezierParallel2 {
         }
         Ok(Classification::Decided(
             BezierParallelSingularityAnalysis2 {
+                range: range.clone(),
                 source_singularities,
                 parallel_cusps,
                 source_speed_squared_degree: speed_polynomial.degree(),
@@ -120362,7 +120380,7 @@ impl BezierParallel2 {
         options: &BezierParallelVerificationOptions,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelApproximation2>> {
-        let analysis = match self.singularity_analysis(policy)? {
+        let analysis = match self.singularity_analysis(&CurveParameterRange2::unit(), policy)? {
             Classification::Decided(analysis) => analysis,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -120855,7 +120873,7 @@ impl QuadraticBezier2 {
     ) -> CurveResult<Classification<CertifiedBezierParallelPath2>> {
         let analysis = match self
             .parallel_left(distance.clone())?
-            .singularity_analysis(policy)?
+            .singularity_analysis(&CurveParameterRange2::unit(), policy)?
         {
             Classification::Decided(analysis) => analysis,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -120940,7 +120958,7 @@ impl CubicBezier2 {
     ) -> CurveResult<Classification<CertifiedBezierParallelPath2>> {
         let analysis = match self
             .parallel_left(distance.clone())?
-            .singularity_analysis(policy)?
+            .singularity_analysis(&CurveParameterRange2::unit(), policy)?
         {
             Classification::Decided(analysis) => analysis,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -121187,10 +121205,11 @@ fn append_exact_rational_parallel(
     policy: &CurveContext,
     output: &mut Vec<Curve2>,
 ) -> CurveResult<Classification<()>> {
-    let singularities = match parallel.singularity_analysis(policy)? {
-        Classification::Decided(singularities) => singularities,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let singularities =
+        match parallel.singularity_analysis(&CurveParameterRange2::unit(), policy)? {
+            Classification::Decided(singularities) => singularities,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     if !singularities.source_is_regular() || !singularities.parallel_is_cusp_free() {
         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
     }
@@ -121216,10 +121235,11 @@ fn append_polynomial_parallel<F>(
 where
     F: FnOnce() -> CurveResult<Classification<CertifiedBezierParallelPath2>>,
 {
-    let singularities = match parallel.singularity_analysis(policy)? {
-        Classification::Decided(singularities) => singularities,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let singularities =
+        match parallel.singularity_analysis(&CurveParameterRange2::unit(), policy)? {
+            Classification::Decided(singularities) => singularities,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
     if !singularities.source_is_regular() || !singularities.parallel_is_cusp_free() {
         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
     }
@@ -135543,6 +135563,78 @@ mod conversion_tests {
     }
 
     #[test]
+    fn finite_parallel_regularity_clips_against_selected_endpoint_authorities() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 4),
+            Point2::new(q(1, 2), 2.into()),
+            Point2::from_values(1, 1),
+        );
+        let pole = RationalBezier2::try_new(
+            vec![Point2::new(0.into(), q(-1, 2)), Point2::from_values(-1, -1)],
+            vec![(-2).into(), (-1).into()],
+        )
+        .unwrap()
+        .parallel_left(q(1, 10))
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (selected, _, _) = selected_fiber_quartile_parameters(&policy);
+            // The first selected root is sqrt(1/2)/2. Keep the fiber
+            // authority for 1+4*root = 1+sqrt(2), strictly above t=2.
+            let selected = CurveParameter2::from_selected_fiber(selected);
+            let Classification::Decided(bound) = selected
+                .affine_image_unbounded(&Real::from(4), &Real::one(), &policy)
+                .unwrap()
+            else {
+                panic!("selected affine endpoint")
+            };
+            assert!(bound.as_bezier_parameter().is_none());
+            assert_eq!(
+                bound
+                    .cmp_by_refinement(&Real::from(2).into(), &policy)
+                    .unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater)
+            );
+            for reversed in [false, true] {
+                for includes_cusp in [false, true] {
+                    let (start, end) = if includes_cusp {
+                        (Real::one().into(), bound.clone())
+                    } else {
+                        (bound.clone(), Real::from(4).into())
+                    };
+                    let (start, end) = if reversed { (end, start) } else { (start, end) };
+                    let Classification::Decided(range) =
+                        CurveParameterRange2::try_new(start.clone(), end.clone(), &policy).unwrap()
+                    else {
+                        panic!("selected finite range")
+                    };
+                    assert_eq!(range.start(), &start);
+                    assert_eq!(range.end(), &end);
+                    let parallel = source.parallel_left(q(1, 2)).unwrap();
+                    let Classification::Decided(analysis) =
+                        parallel.singularity_analysis(&range, &policy).unwrap()
+                    else {
+                        panic!("finite selected cusp analysis")
+                    };
+                    assert_eq!(analysis.range(), &range);
+                    assert!(analysis.source_is_regular());
+                    assert_eq!(analysis.parallel_cusps().len(), usize::from(includes_cusp));
+                    match pole.singularity_analysis(&range, &policy).unwrap() {
+                        Classification::Uncertain(UncertaintyReason::Boundary) if includes_cusp => {
+                        }
+                        Classification::Decided(analysis) if !includes_cusp => {
+                            assert!(analysis.source_is_regular());
+                            assert!(analysis.parallel_is_cusp_free());
+                            assert_eq!(analysis.range(), &range);
+                        }
+                        other => panic!("selected range decides pole ownership: {other:?}"),
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn algebraic_chord_is_one_word_and_reverses_without_rounding() {
         let policy = CurveContext::STRICT;
         let start = CurvePoint2::from(Point2::from_values(0, 0));
@@ -138719,7 +138811,9 @@ mod conversion_tests {
         )
         .parallel_left(half)
         .unwrap();
-        let Classification::Decided(analysis) = parallel.singularity_analysis(policy).unwrap()
+        let Classification::Decided(analysis) = parallel
+            .singularity_analysis(&CurveParameterRange2::unit(), policy)
+            .unwrap()
         else {
             panic!("general cusp analysis must be decided");
         };
@@ -165120,7 +165214,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             .parallel_left(half.clone())
             .unwrap();
         let Classification::Decided(analysis) = parallel
-            .singularity_analysis(&CurveContext::STRICT)
+            .singularity_analysis(&CurveParameterRange2::unit(), &CurveContext::STRICT)
             .unwrap()
         else {
             panic!("general cubic cusp analysis must be decided");

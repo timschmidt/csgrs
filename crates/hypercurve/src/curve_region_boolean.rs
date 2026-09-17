@@ -20334,7 +20334,7 @@ mod certified_successor_tests {
         .expect("valid analytic parallel");
         let analysis = decided(
             parallel
-                .singularity_analysis(policy)
+                .singularity_analysis(&CurveParameterRange2::unit(), policy)
                 .expect("certified singularity analysis"),
         );
         let BezierParameter2::Algebraic(parameter) = &analysis.parallel_cusps()[0] else {

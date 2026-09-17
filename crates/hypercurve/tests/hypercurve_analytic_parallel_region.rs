@@ -2,9 +2,10 @@ use hypercurve::{
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2,
-    LineSide, OffsetCornerStyle2, Point2, QuadraticBezier2, Real, RegionPointLocation,
+    CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext,
+    CurveParameterRange2, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule,
+    FiniteProjectionOptions, LineSeg2, LineSide, OffsetCornerStyle2, Point2, QuadraticBezier2,
+    Real, RegionPointLocation,
 };
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
@@ -702,7 +703,10 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     let parallel = QuadraticBezier2::new(point(0, 0), Point2::new(half, Real::zero()), point(1, 1))
         .parallel_left(Real::one())
         .unwrap();
-    let analysis = match parallel.singularity_analysis(policy).unwrap() {
+    let analysis = match parallel
+        .singularity_analysis(&CurveParameterRange2::unit(), policy)
+        .unwrap()
+    {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
     };
@@ -775,7 +779,10 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
     let parallel = source
         .parallel_left((Real::one() / Real::from(2_u8)).unwrap())
         .unwrap();
-    let analysis = match parallel.singularity_analysis(policy).unwrap() {
+    let analysis = match parallel
+        .singularity_analysis(&CurveParameterRange2::unit(), policy)
+        .unwrap()
+    {
         Classification::Decided(analysis) => analysis,
         Classification::Uncertain(reason) => panic!("cusp analysis: {reason:?}"),
     };
