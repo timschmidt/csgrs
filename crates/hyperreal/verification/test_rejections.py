@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check that executable contracts and magnitude theorems reject arithmetic defects."""
+"""Check that executable contracts and arithmetic theorems reject arithmetic defects."""
 
 from pathlib import Path
 import shutil
@@ -12,7 +12,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from verify_verus import ROOT, verifier  # noqa: E402
 
 
+MODEL_FILES = {"magnitude_model.rs", "integer_approximation_model.rs"}
+
+
 MUTATIONS = [
+    ("word.rs", "(false, (-(precision as i64)) as u32)", "(false, precision as u32)"),
+    ("word.rs", "(true, (precision - 1) as u32)", "(true, precision as u32)"),
     ("float.rs", "exponent: -149,", "exponent: -148,"),
     ("float.rs", "exponent: -1074,", "exponent: -1073,"),
     ("word.rs", "Some(left.cmp(&right))", "Some(right.cmp(&left))"),
@@ -115,6 +120,10 @@ MUTATIONS = [
     ("aggregate.rs", "Some(super::dyadic::normalize_word(negative, magnitude, maximum))", "None"),
     ("aggregate.rs", "Some(super::dyadic::normalize_word(negative, magnitude, maximum))",
      "Some(super::dyadic::normalize_word(negative, magnitude, 0))"),
+    ("integer_approximation_model.rs", "(value / pow2(preliminary_bits) as int + 1) / 2",
+     "(value / pow2(preliminary_bits) as int - 1) / 2"),
+    ("integer_approximation_model.rs", "requires denominator > 0, gap > 0,",
+     "requires denominator > 0, gap >= 0,"),
     ("magnitude_model.rs", "- if below_aligned(numerator, denominator, numerator_bits, denominator_bits)",
      "+ if below_aligned(numerator, denominator, numerator_bits, denominator_bits)"),
     ("magnitude_model.rs", "&& numerator * binary_denominator(exponent) < 2 * binary_numerator(exponent) * denominator",
@@ -128,15 +137,16 @@ def main():
         root = Path(temporary)
         source = root / "verified"
         shutil.copytree(ROOT / "src/verified", source)
-        shutil.copy2(ROOT / "verification/magnitude_model.rs", root / "magnitude_model.rs")
-        paths = {name: (root / name if name == "magnitude_model.rs" else source / name)
+        for name in MODEL_FILES:
+            shutil.copy2(ROOT / "verification" / name, root / name)
+        paths = {name: (root / name if name in MODEL_FILES else source / name)
                  for name, _, _ in MUTATIONS}
         originals = {name: path.read_text() for name, path in paths.items()}
         for name, before, _ in MUTATIONS:
             if originals[name].count(before) != 1:
                 sys.exit(f"Mutation no longer uniquely matches {name}: {before}")
         (root / "lib.rs").write_text(
-            "#![feature(proc_macro_hygiene)]\nmod verified;\nmod magnitude_model;\n")
+            "#![feature(proc_macro_hygiene)]\nmod verified;\nmod magnitude_model;\nmod integer_approximation_model;\n")
         command = [str(verus), "--edition=2024", "--crate-type=lib", "--no-cheating", str(root / "lib.rs")]
         baseline = subprocess.run(command, capture_output=True, text=True)
         if baseline.returncode:
@@ -148,7 +158,7 @@ def main():
             result = subprocess.run(command, capture_output=True, text=True)
             path.write_text(original)
             failures = ["postcondition not satisfied", "invariant not satisfied"]
-            if name == "magnitude_model.rs":
+            if name in MODEL_FILES:
                 failures += ["assertion failed", "requires not satisfied"]
             if result.returncode == 0 or not any(message in result.stderr for message in failures):
                 sys.exit(f"Expected contract rejection for {name}: {after}\n{result.stdout}{result.stderr}")

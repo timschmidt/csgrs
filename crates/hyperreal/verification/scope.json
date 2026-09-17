@@ -1,6 +1,7 @@
 {
   "objective": "100% Verus-based proof of hyperreal behavior",
   "verified_executable_contracts": [
+    "verified::word::approximation_scale_plan",
     "verified::float::decode_f32",
     "verified::float::decode_f64",
     "verified::word::compare_products",
@@ -132,7 +133,10 @@
     "bit_length_model::leading_zeros_determine_word_bit_length",
     "bit_length_model::normalized_limb_bit_length",
     "bit_length_model::binary_shift_bit_length",
-    "bit_length_model::bit_lengths_determine_order"
+    "bit_length_model::bit_lengths_determine_order",
+    "integer_approximation_model::rounded_shift_error",
+    "integer_approximation_model::precision_plan_is_nearest",
+    "integer_approximation_model::cache_coarsening_preserves_unit_error"
   ],
   "obligations": [
     {
@@ -161,7 +165,7 @@
     },
     {
       "area": "Computable expression semantics, approximation error and convergence",
-      "status": "unverified"
+      "status": "partial"
     },
     {
       "area": "Elementary, transcendental, probability and special functions",

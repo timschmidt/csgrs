@@ -33,8 +33,8 @@ impl Approximation {
         // cache selection live in `Computable` constructors so kernels can assume
         // their documented preconditions and avoid repeated shape checks.
         match self {
-            Int(i) => scale(i.clone(), -p),
-            One => scale(signed::ONE.deref().clone(), -p),
+            Int(i) => scale_at_precision(i.clone(), p),
+            One => scale_at_precision(signed::ONE.deref().clone(), p),
             Constant(c) => c.approximate(signal, p),
             Inverse(c) => inverse(signal, c, p),
             Negate(c) => -c.approx_signal(signal, p),
