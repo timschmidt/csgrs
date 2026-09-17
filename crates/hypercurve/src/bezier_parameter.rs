@@ -1524,6 +1524,117 @@ impl BezierParameter2 {
         Ok(Classification::Decided(Self::Algebraic(mapped)))
     }
 
+    /// Transports a finite scalar through a projective chart. The original
+    /// singleton selects the image; refining away a chart pole and composing
+    /// its polynomial preserves that identity without isolating all images.
+    pub(crate) fn projective_image_unbounded(
+        &self,
+        numerator: &[Real; 2],
+        denominator: &[Real; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        policy.strict_predicate_pass(|| {
+            match signed_coefficients_at_parameter(denominator, self, policy)? {
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+            let map = |value: &Real| -> CurveResult<Real> {
+                ((&numerator[0] + &numerator[1] * value)
+                    / (&denominator[0] + &denominator[1] * value))
+                    .map_err(CurveError::from)
+            };
+            if let Self::Exact(value) = self {
+                return Ok(Classification::Decided(Self::Exact(map(value)?)));
+            }
+            let determinant = &numerator[1] * &denominator[0] - &numerator[0] * &denominator[1];
+            let orientation = match real_sign(&determinant, policy) {
+                Some(RealSign::Zero) => {
+                    for index in [0, 1] {
+                        if matches!(
+                            real_sign(&denominator[index], policy),
+                            Some(RealSign::Positive | RealSign::Negative)
+                        ) {
+                            return Ok(Classification::Decided(Self::Exact(
+                                (&numerator[index] / &denominator[index])?,
+                            )));
+                        }
+                    }
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                }
+                Some(sign) => sign,
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
+            if denominator[1].zero_status() == hyperreal::ZeroKnowledge::Zero {
+                return self.affine_image_unbounded(
+                    &(&numerator[1] / &denominator[0])?,
+                    &(&numerator[0] / &denominator[0])?,
+                    policy,
+                );
+            }
+            let mut refined = self.clone();
+            let parameter = loop {
+                let Self::Algebraic(parameter) = &refined else {
+                    let Self::Exact(value) = &refined else {
+                        unreachable!()
+                    };
+                    return Ok(Classification::Decided(Self::Exact(map(value)?)));
+                };
+                let lower = real_sign(
+                    &Real::eval_poly(denominator, parameter.interval().start()),
+                    policy,
+                );
+                let upper = real_sign(
+                    &Real::eval_poly(denominator, parameter.interval().end()),
+                    policy,
+                );
+                if matches!(lower, Some(RealSign::Positive | RealSign::Negative)) && lower == upper
+                {
+                    break parameter;
+                }
+                let next = refined.clone().refined_isolating_interval(1, policy);
+                if next == refined {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                }
+                refined = next;
+            };
+            let Some(coefficients) = compose_univariate_polynomial_linear_fractional(
+                parameter.polynomial().coefficients(),
+                &-denominator[0].clone(),
+                &numerator[0],
+                &denominator[1],
+                &-numerator[1].clone(),
+                policy.predicate_policy(),
+            ) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+            };
+            let polynomial =
+                match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let first = map(parameter.interval().start())?;
+            let second = map(parameter.interval().end())?;
+            let (start, end) = if orientation == RealSign::Positive {
+                (first, second)
+            } else {
+                (second, first)
+            };
+            let mapped = BezierAlgebraicParameter2::from_certified_singleton(
+                polynomial,
+                BezierParameterInterval { start, end },
+            );
+            if parameter.data.shared.simple_root.get() == Some(&true) {
+                let _ = mapped.data.shared.simple_root.set(true);
+            }
+            Ok(Classification::Decided(Self::Algebraic(mapped)))
+        })
+    }
+
     /// Maps an exterior parameter on the ray incident to `anchor` back into
     /// the compact coordinate used by [`BezierParameterPolynomial::isolate_incident_ray_roots`].
     ///
@@ -1543,53 +1654,27 @@ impl BezierParameter2 {
             BezierParameterRayDirection2::Decreasing => -Real::one(),
             BezierParameterRayDirection2::Increasing => Real::one(),
         };
-        let map = |parameter: &Real| -> CurveResult<Real> {
-            ((parameter - anchor) / (parameter - anchor + &direction_sign))
-                .map_err(CurveError::from)
+        let mapped = match self.projective_image_unbounded(
+            &[-anchor.clone(), Real::one()],
+            &[direction_sign - anchor, Real::one()],
+            policy,
+        )? {
+            Classification::Decided(mapped) => mapped,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let parameter = match self {
-            Self::Exact(parameter) => {
-                return Self::exact(map(parameter)?, policy);
+        for (bound, outside) in [
+            (Real::zero(), Ordering::Less),
+            (Real::one(), Ordering::Greater),
+        ] {
+            match mapped.cmp_by_refinement(&Self::Exact(bound), policy)? {
+                Classification::Decided(order) if order == outside => {
+                    return Err(CurveError::InvalidBezierParameter);
+                }
+                Classification::Decided(_) => {}
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
-            Self::Algebraic(parameter) => parameter,
-        };
-
-        // Q(x) = (1-x)^degree P(anchor + direction*x/(1-x)).
-        let coefficients = match compose_univariate_polynomial_linear_fractional(
-            parameter.polynomial().coefficients(),
-            &(&direction_sign - anchor),
-            anchor,
-            &-Real::one(),
-            &Real::one(),
-            policy.predicate_policy(),
-        ) {
-            Some(coefficients) => coefficients,
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
-        let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)?
-        {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let first = map(parameter.interval().start())?;
-        let second = map(parameter.interval().end())?;
-        let (start, end) = match direction {
-            BezierParameterRayDirection2::Increasing => (first, second),
-            BezierParameterRayDirection2::Decreasing => (second, first),
-        };
-        let interval = match BezierParameterInterval::try_new(start, end, policy)? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let mapped = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
-        if parameter.data.shared.simple_root.get() == Some(&true) {
-            let _ = mapped.data.shared.simple_root.set(true);
         }
-        Ok(Classification::Decided(Self::Algebraic(mapped)))
+        Ok(Classification::Decided(mapped))
     }
 
     /// Maps a compact incident-ray coordinate back to its original affine
@@ -1604,54 +1689,11 @@ impl BezierParameter2 {
             BezierParameterRayDirection2::Decreasing => -Real::one(),
             BezierParameterRayDirection2::Increasing => Real::one(),
         };
-        let map = |parameter: &Real| -> CurveResult<Real> {
-            let distance = (parameter / (Real::one() - parameter))?;
-            Ok(anchor + &direction_sign * distance)
-        };
-        let parameter = match self {
-            Self::Exact(parameter) => {
-                return Ok(Classification::Decided(Self::Exact(map(parameter)?)));
-            }
-            Self::Algebraic(parameter) => parameter,
-        };
-
-        // If x=(t-anchor)/(t-anchor+direction), inverse substitution gives
-        // the exact defining polynomial for t.
-        let coefficients = match compose_univariate_polynomial_linear_fractional(
-            parameter.polynomial().coefficients(),
-            &Real::one(),
-            &-anchor.clone(),
-            &Real::one(),
-            &(&direction_sign - anchor),
-            policy.predicate_policy(),
-        ) {
-            Some(coefficients) => coefficients,
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
-        let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)?
-        {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let first = map(parameter.interval().start())?;
-        let second = map(parameter.interval().end())?;
-        let (start, end) = match direction {
-            BezierParameterRayDirection2::Increasing => (first, second),
-            BezierParameterRayDirection2::Decreasing => (second, first),
-        };
-        let interval = match BezierParameterInterval::try_new_ordered(start, end, policy)? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let mapped = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
-        if parameter.data.shared.simple_root.get() == Some(&true) {
-            let _ = mapped.data.shared.simple_root.set(true);
-        }
-        Ok(Classification::Decided(Self::Algebraic(mapped)))
+        self.projective_image_unbounded(
+            &[anchor.clone(), direction_sign - anchor],
+            &[Real::one(), -Real::one()],
+            policy,
+        )
     }
 
     /// Promotes an algebraic parameter that has a represented exact scalar value.
@@ -4445,6 +4487,89 @@ mod conversion_tests {
                 source.simple_root_classifications(&roots, &policy).unwrap(),
                 vec![Classification::Decided(true)]
             );
+        }
+    }
+
+    #[test]
+    fn projective_images_preserve_exterior_singletons_across_unused_poles() {
+        let root = Real::from(2).sqrt().unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // This singleton straddles the first map's pole at 3/2.
+            let interval = decided(
+                BezierParameterInterval::try_new_ordered(Real::one(), Real::from(2), &policy)
+                    .unwrap(),
+                "wide singleton",
+            );
+            let source =
+                BezierParameter2::Algebraic(BezierAlgebraicParameter2::from_certified_singleton(
+                    polynomial(&[-2, 0, 1]),
+                    interval,
+                ));
+            for (numerator, denominator) in [
+                ([2, 3], [-3, 2]),
+                ([2, 3], [3, 2]),
+                ([2, 4], [1, 2]),
+                ([-2, 3], [2, 0]),
+            ] {
+                let numerator = numerator.map(Real::from);
+                let denominator = denominator.map(Real::from);
+                let expected = ((&numerator[0] + &numerator[1] * &root)
+                    / (&denominator[0] + &denominator[1] * &root))
+                    .unwrap();
+                for source in [&source, &BezierParameter2::Exact(root.clone())] {
+                    let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                        source.projective_image_unbounded(&numerator, &denominator, attempt)
+                    })
+                    .unwrap();
+                    assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+                    let mapped = decided(outcome.value, "finite projective image");
+                    assert_eq!(
+                        mapped
+                            .cmp_by_refinement(&BezierParameter2::Exact(expected.clone()), &policy)
+                            .unwrap(),
+                        Classification::Decided(Ordering::Equal)
+                    );
+                    if numerator != [Real::from(2), Real::from(4)] {
+                        let inverse_numerator = [numerator[0].clone(), -denominator[0].clone()];
+                        let inverse_denominator = [-numerator[1].clone(), denominator[1].clone()];
+                        let returned = decided(
+                            mapped
+                                .projective_image_unbounded(
+                                    &inverse_numerator,
+                                    &inverse_denominator,
+                                    &policy,
+                                )
+                                .unwrap(),
+                            "inverse projective chart",
+                        );
+                        assert_eq!(
+                            returned.cmp_by_refinement(source, &policy).unwrap(),
+                            Classification::Decided(Ordering::Equal)
+                        );
+                    }
+                }
+            }
+            assert_eq!(
+                BezierParameter2::Exact(Real::from(2))
+                    .projective_image_unbounded(
+                        &[Real::one(), Real::zero()],
+                        &[Real::from(-2), Real::one()],
+                        &policy
+                    )
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            );
+            for source in [&source, &BezierParameter2::Exact(root.clone())] {
+                for (anchor, direction) in [
+                    (Real::from(2), BezierParameterRayDirection2::Increasing),
+                    (Real::zero(), BezierParameterRayDirection2::Decreasing),
+                ] {
+                    assert!(matches!(
+                        source.incident_ray_compact_parameter(&anchor, direction, &policy),
+                        Err(CurveError::InvalidBezierParameter)
+                    ));
+                }
+            }
         }
     }
 

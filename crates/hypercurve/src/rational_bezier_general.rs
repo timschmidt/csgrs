@@ -314,6 +314,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                 &second_to_first_scale,
                 reversed,
                 true,
+                &CurveParameterRange2::unit(),
                 policy,
             ),
             Self::General {
@@ -375,15 +376,16 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         let (Some(second_start), Some(second_end)) = (second_start, second_end) else {
             return fallback;
         };
-        let first_subcurve = match first.subcurve_between_exact(first_start, first_end, policy) {
-            Ok(Classification::Decided(curve)) => curve,
-            Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
-        };
-        let second_subcurve = match second.subcurve_between_exact(second_start, second_end, policy)
-        {
-            Ok(Classification::Decided(curve)) => curve,
-            Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
-        };
+        let first_subcurve =
+            match first.subcurve_between_affine_exact(first_start, first_end, policy) {
+                Ok(Classification::Decided(curve)) => curve,
+                Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
+            };
+        let second_subcurve =
+            match second.subcurve_between_affine_exact(second_start, second_end, policy) {
+                Ok(Classification::Decided(curve)) => curve,
+                Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
+            };
         let second_to_first_scale =
             match first_subcurve.endpoint_parameter_relation(&second_subcurve, reversed, policy) {
                 Classification::Decided(Some(RationalBezierEndpointParameterRelation2::Affine)) => {
@@ -418,6 +420,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                 second_to_first_scale,
                 *reversed,
                 true,
+                &CurveParameterRange2::from_bezier_range(second_range.clone()),
                 policy,
             ),
             Self::RangeProjective {
@@ -458,6 +461,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                 second_to_first_scale,
                 *reversed,
                 false,
+                &CurveParameterRange2::from_bezier_range(first_range.clone()),
                 policy,
             ),
             Self::RangeProjective {
@@ -662,27 +666,10 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let lower = match mapped.cmp_by_refinement(
-            &CurveParameter2::from(BezierParameter2::Exact(Real::zero())),
-            policy,
-        )? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let upper = match mapped.cmp_by_refinement(
-            &CurveParameter2::from(BezierParameter2::Exact(Real::one())),
-            policy,
-        )? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(
-            (!lower.is_lt() && !upper.is_gt()).then_some(mapped),
-        ))
+        let target_range = CurveParameterRange2::from_bezier_range(target_range.clone());
+        Ok(CurveParameterDomain2::new(&target_range, None)
+            .contains_finite_parameter(&mapped, policy)?
+            .map(|inside| inside.then_some(mapped)))
     }
 
     fn map_promoted_region_parameter(
@@ -7087,6 +7074,7 @@ fn endpoint_projective_parameter_image(
     second_to_first_scale: &Real,
     reversed: bool,
     first_to_second: bool,
+    range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let (numerator, denominator) = endpoint_projective_parameter_coefficients(
@@ -7094,7 +7082,7 @@ fn endpoint_projective_parameter_image(
         reversed,
         first_to_second,
     );
-    projective_parameter_image(parameter, &numerator, &denominator, policy)
+    projective_parameter_image(parameter, &numerator, &denominator, range, policy)
 }
 
 fn endpoint_projective_parameter_coefficients(
@@ -7141,7 +7129,18 @@ fn range_projective_parameter_image(
     ) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    projective_parameter_image(parameter, &numerator, &denominator, policy)
+    let target_range = if first_to_second {
+        second_range
+    } else {
+        first_range
+    };
+    projective_parameter_image(
+        parameter,
+        &numerator,
+        &denominator,
+        &CurveParameterRange2::from_bezier_range(target_range.clone()),
+        policy,
+    )
 }
 
 fn range_projective_parameter_coefficients(
@@ -7191,33 +7190,24 @@ fn projective_parameter_image(
     parameter: &BezierParameter2,
     numerator: &[Real; 2],
     denominator: &[Real; 2],
+    range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    if let Some(parameter) = parameter.scalar() {
-        let numerator = &numerator[0] + &numerator[1] * parameter;
-        let denominator = &denominator[0] + &denominator[1] * parameter;
-        let mapped = match numerator / denominator {
-            Ok(mapped) => mapped,
-            Err(_) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-        };
-        return Ok(match in_closed_unit_interval(&mapped, policy) {
-            Some(true) => Classification::Decided(Some(BezierParameter2::Exact(mapped))),
-            Some(false) => Classification::Decided(None),
-            None => Classification::Uncertain(UncertaintyReason::Ordering),
-        });
-    }
-    let root = parameter_root_representation(parameter, policy);
-    let candidate = match conic_parameter_candidate(
-        &root.polynomial_coefficients,
-        &(numerator.to_vec(), denominator.to_vec()),
+    let mapped = match CurveParameter2::from(parameter.clone()).projective_image_unbounded(
+        numerator,
+        denominator,
         policy,
     )? {
-        Classification::Decided(candidate) => candidate,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
+        Classification::Decided(mapped) => mapped,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    conic_parameter_from_candidates(std::slice::from_ref(&candidate), parameter, policy)
+    match CurveParameterDomain2::new(range, None).contains_finite_parameter(&mapped, policy)? {
+        Classification::Decided(true) => mapped
+            .promoted_bezier_parameter_complete(policy)
+            .map(|result| result.map(Some)),
+        Classification::Decided(false) => Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
 }
 
 fn overlap_parameter_on_curve(
@@ -11214,57 +11204,61 @@ mod tests {
 
     #[test]
     fn range_projective_correspondence_maps_and_inverts_oriented_ranges() {
-        let first_range = BezierParameterRange2::from_exact(
-            (Real::one() / Real::from(4_i8)).unwrap(),
-            (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-        );
-        let second_low = (Real::one() / Real::from(5_i8)).unwrap();
-        let second_high = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
-        let scale = Real::from(2_i8);
+        for shift in [Real::from(-2), Real::zero(), Real::from(2)] {
+            let first_range = BezierParameterRange2::from_exact(
+                &shift + (Real::one() / Real::from(4_i8)).unwrap(),
+                &shift + (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+            );
+            let second_low = &shift + (Real::one() / Real::from(5_i8)).unwrap();
+            let second_high = &shift + (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+            let scale = Real::from(2_i8);
 
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            for (reversed, second_range) in [
-                (
-                    false,
-                    BezierParameterRange2::from_exact(second_low.clone(), second_high.clone()),
-                ),
-                (
-                    true,
-                    BezierParameterRange2::from_exact(second_high.clone(), second_low.clone()),
-                ),
-            ] {
-                for (first, expected_second) in [
-                    (first_range.start(), second_range.start()),
-                    (first_range.end(), second_range.end()),
-                ] {
-                    let Classification::Decided(Some(mapped)) = range_projective_parameter_image(
-                        first,
-                        &first_range,
-                        &second_range,
-                        &scale,
-                        reversed,
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                for (reversed, second_range) in [
+                    (
+                        false,
+                        BezierParameterRange2::from_exact(second_low.clone(), second_high.clone()),
+                    ),
+                    (
                         true,
-                        &policy,
-                    )
-                    .unwrap() else {
-                        panic!("range projective map did not map an endpoint");
-                    };
-                    assert_eq!(mapped, expected_second.clone());
-                    let Classification::Decided(Some(round_trip)) =
-                        range_projective_parameter_image(
-                            &mapped,
-                            &first_range,
-                            &second_range,
-                            &scale,
-                            reversed,
-                            false,
-                            &policy,
-                        )
-                        .unwrap()
-                    else {
-                        panic!("range projective inverse did not map an endpoint");
-                    };
-                    assert_eq!(round_trip, first.clone());
+                        BezierParameterRange2::from_exact(second_high.clone(), second_low.clone()),
+                    ),
+                ] {
+                    for (first, expected_second) in [
+                        (first_range.start(), second_range.start()),
+                        (first_range.end(), second_range.end()),
+                    ] {
+                        let Classification::Decided(Some(mapped)) =
+                            range_projective_parameter_image(
+                                first,
+                                &first_range,
+                                &second_range,
+                                &scale,
+                                reversed,
+                                true,
+                                &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("range projective map did not map an endpoint");
+                        };
+                        assert_eq!(mapped, expected_second.clone());
+                        let Classification::Decided(Some(round_trip)) =
+                            range_projective_parameter_image(
+                                &mapped,
+                                &first_range,
+                                &second_range,
+                                &scale,
+                                reversed,
+                                false,
+                                &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("range projective inverse did not map an endpoint");
+                        };
+                        assert_eq!(round_trip, first.clone());
+                    }
                 }
             }
         }

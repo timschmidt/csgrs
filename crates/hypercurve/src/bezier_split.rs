@@ -549,8 +549,7 @@ impl CurveParameter2 {
     }
 
     /// Applies one finite projective chart while preserving a retained local
-    /// scalar authority. Ordinary Bezier parameters are mapped by their
-    /// correspondence before reaching this method.
+    /// scalar authority, including ordinary algebraic singleton parameters.
     pub(crate) fn projective_image_unbounded(
         &self,
         numerator: &[Real; 2],
@@ -558,14 +557,16 @@ impl CurveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match &self.data {
+            CurveParameterData2::Bezier(parameter) => Ok(parameter
+                .projective_image_unbounded(numerator, denominator, policy)?
+                .map(Self::from)),
             CurveParameterData2::SelectedFiber(parameter) => Ok(parameter
                 .projective_image_unbounded(numerator, denominator, policy)?
                 .map(Self::from_selected_fiber)),
             CurveParameterData2::RecursiveProjective(parameter) => Ok(parameter
                 .projective_image_unbounded(numerator, denominator, policy)?
                 .map(Self::from_recursive_projective)),
-            CurveParameterData2::Bezier(_)
-            | CurveParameterData2::AlgebraicChord(_)
+            CurveParameterData2::AlgebraicChord(_)
             | CurveParameterData2::AlgebraicCusp(_)
             | CurveParameterData2::AlgebraicCuspComplement(_) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
