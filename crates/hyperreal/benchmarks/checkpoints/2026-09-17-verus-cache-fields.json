@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "status": "cache_word_model_milestone_not_atomic_implementation_verification",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "9f9324797bc67c42b66782ac96e7e3c1a4f64e80",
+  "runtime_reference": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+  "verification": {
+    "units": 583,
+    "production_contracts": 94,
+    "model_theorems": 112,
+    "source_hashes": 130,
+    "all_match_commit": true,
+    "no_cheating": true,
+    "entire_target": true,
+    "open_obligation_groups": 13
+  },
+  "new_models": [
+    "Actual cache masks select disjoint fields.",
+    "Bound decoding ignores fields outside its mask.",
+    "The bound-update expression installs the checked encoding and preserves every retained field and exact-sign tag.",
+    "The exact-sign update expression installs a valid encoded tag and preserves the bound and other fields.",
+    "The initial packing expression preserves bounds, exact signs, both inverse-trig flags and every signed16-bit demand."
+  ],
+  "guards": {
+    "fresh_cache_mutations_rejected": 19,
+    "new_cases": 6,
+    "acceptance_tests": 10,
+    "prior_unchanged_bound_mutations": 54,
+    "prior_unchanged_kernel_public_mutations": 106,
+    "prior_artifacts": [
+      "benchmarks/checkpoints/2026-09-17-verus-bound-composition.json",
+      "benchmarks/checkpoints/2026-09-17-verus-certified-planning.json"
+    ],
+    "note": "No fresh combined179-case run is claimed."
+  },
+  "runtime": {
+    "all_production_manifest_lock_bytes_unchanged": true,
+    "proof_only_change": true
+  },
+  "limits": [
+    "The word expressions match the currently inspected constructor and update loops, but these new lemmas do not verify those production bodies, atomic memory orderings, compare-exchange retries, publication invariants or caller preconditions.",
+    "The pure decoder model is not a proof of the still-unverified production bound decoder.",
+    "Cache payloads must still be shown to denote their graph values; bit preservation alone supplies no mathematical fact.",
+    "The cache obligation group is partial because pure production codecs and these word-level models are checked; all thirteen groups remain open.",
+    "Baseline acceptance remains pending."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-cache-fields.tar.gz",
+    "bytes": 318847,
+    "files": 181,
+    "sha256": "238497d8f16ddadbed15984318f2c36382994c9fc048e739085324ca261b6171"
+  }
+}
