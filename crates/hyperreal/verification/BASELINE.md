@@ -94,6 +94,25 @@ the clone finding; that overlay remains experimental. Raw counters, samples,
 assembly and the completed pinned Hypercurve follow-up failures are retained
 with the checkpoint. No live Hypercurve files were changed.
 
+The [shared-clone checkpoint](../benchmarks/checkpoints/2026-09-17-verus-shared-clone.json)
+records the subsequently adopted runtime `561e36a`. Cloning symbolic reals
+reuses an existing immutable computable graph, and the primitive cache getter
+is inlined. Six alternating original Criterion pairs show median time changes
+of -75.17% for `pi_pow` cloning, -54.64% for `pi` cloning and -43.05% for
+cached tangent conversion against the fixed pre-Verus baseline. Every pair
+improves in these three cases; raw samples, external comparator rows and paired
+bootstrap intervals are retained. These focused results resolve those specific
+timing findings for this runtime, without establishing performance parity
+across the repository. The full benchmark screen, resource comparison and
+downstream qualification remain separate requirements.
+
+Default and all-feature all-target checks, the representation matrix, strict
+Clippy and all 6,492 frozen AddressSanitizer corpus inputs pass for this
+runtime. Its proof report verifies 363 units, including 52 production contracts
+and 65 model theorems, while all 13 full-crate obligation groups remain open.
+The prior square-root metadata checkpoint retains the rejected clone variants
+and the failures that led to the metadata and fixed-decimal precision repairs.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
