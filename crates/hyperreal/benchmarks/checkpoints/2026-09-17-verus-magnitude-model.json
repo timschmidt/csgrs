@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "status": "proof_milestone_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "f7e256c2b61cb86cbac0ecd7fed9cf93f51a5787",
+  "runtime_revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+  "verification": {
+    "units": 395,
+    "executable_contracts": 55,
+    "model_theorems": 71,
+    "source_hashes": 112,
+    "source_hashes_match_commit": true,
+    "entire_proof_target": true,
+    "no_cheating": true
+  },
+  "new_model_theorems": [
+    "magnitude_model::bit_lengths_determine_binade",
+    "magnitude_model::binary_scales_compose",
+    "magnitude_model::binary_scale_preserves_binade",
+    "magnitude_model::binade_is_unique",
+    "magnitude_model::checked_exponent_denotes_scaled_binade"
+  ],
+  "rejections": {
+    "incorrect_executables": 77,
+    "incorrect_magnitude_definitions": 2,
+    "assumption_bypass_rejected": true,
+    "acceptance_guard_tests": 7
+  },
+  "erasure": {
+    "runtime_revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+    "command": [
+      "cargo",
+      "+nightly",
+      "rustc",
+      "--locked",
+      "--lib",
+      "--no-default-features",
+      "--",
+      "-Zunpretty=expanded"
+    ],
+    "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/expansion-target",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_BUILD_JOBS": "4",
+      "CCACHE_DISABLE": "1"
+    },
+    "exit_code": 0,
+    "word_source_sha256": "867e1f97cd6f4e5f2b612381282f8511f15095e5b04746451ba9f9abf6b702bc",
+    "baseline_sha256": "99986a4a43a85aa6eef35d6cd13399704037d0ceb42b3cd8b685b6266855dd22",
+    "candidate_sha256": "99986a4a43a85aa6eef35d6cd13399704037d0ceb42b3cd8b685b6266855dd22",
+    "byte_identical": true,
+    "note": "Only production diff is ghost specification extraction. New verification-only magnitude module is outside normal Cargo compilation."
+  },
+  "limits": [
+    "All13full-implementation obligation groups remain open.",
+    "The rational magnitude model requires correct mathematical bit lengths and aligned comparisons; the BigUint caller and dependency refinement remain unproved.",
+    "These are proof-only changes; runtime equality is established by the matched normal-Rust expansion. Existing current-runtime timing, resource and consumer assessment items remain pending.",
+    "Initial typing, algebraic-proof and visibility failures are retained as failures, not qualifying evidence."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-magnitude-model.tar.gz",
+    "bytes": 255355,
+    "files": 25,
+    "sha256": "5a5029fe2c38a01e4912a72382a8cc072c6bd45ab70f8c6cf559302410c5546e"
+  }
+}

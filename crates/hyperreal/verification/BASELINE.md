@@ -196,6 +196,45 @@ differences remain assessment items; the twenty-form workload does not prove
 full resource parity. Current native timings and downstream qualification
 remain pending.
 
+The [magnitude model checkpoint](../benchmarks/checkpoints/2026-09-17-verus-magnitude-model.json)
+in `f7e256c` connects the executable exponent specification to a unique rational
+binary interval and proves signed binary scaling. The official proof passes
+395 units, 55 production contracts and 71 model theorems. All 77 executable
+mutations, two magnitude-model mutations, the assumption-bypass guard and seven
+acceptance guards pass. Normal expanded Rust is byte-identical to `ee773bb`.
+The first model-guard invocation rejected the deliberately overlapping
+intervals through failed proof preconditions; its driver did not recognize that
+diagnostic. That invocation and the successful corrected suite are retained.
+BigUint bit-length/comparison refinement and all thirteen broader obligation
+groups remain open.
+
+The [fixed consumer supplement](../benchmarks/checkpoints/2026-09-17-verus-consumer-fixed-inputs.json)
+builds four benchmark-only overlays on both the baseline and `ee773bb`.
+Every variant replays the same 400 stored inputs in their original order.
+All eight builds and all eight 101-row fixture replays pass; each consumer's
+aggregate row repeats its same 100 inputs. This removes timing-based promotion
+from the supplemental comparison while preserving the original adaptive
+harness. Native timings remain pending.
+
+The [current consumer build checkpoint](../benchmarks/checkpoints/2026-09-17-verus-consumer-magnitude-builds.json)
+contains all **41** non-tracing benchmark targets in the pinned baseline
+manifests; the earlier working count of 42 was incorrect. Five additional
+feature-gated tracing targets belong to the separate trace checks. Current
+release suites pass for Hyperlattice (204 tests), Hyperlimit (361), Hypertri
+(191), Hypersolve (860) and Hypermesh (222, with seven ignored). Hypercurve's
+complete release suite and long cases, the remaining consumer validation
+matrices and native comparisons remain pending. All temporary sources were
+restored, and live Hypercurve was untouched.
+
+The [bounded peak attribution](../benchmarks/checkpoints/2026-09-17-verus-magnitude-peak.json)
+reproduces the 176-byte whole-process increase with deeper allocation stacks.
+Its 160 heap bytes comprise 112 bytes allocated through cache publication and
+48 through approximation evaluation; allocator bookkeeping adds 16 bytes and
+stack usage is unchanged. This identifies allocation paths, not the source
+change responsible for their lifetimes. Per-case allocation windows subtract
+warmed starting live bytes, whereas the whole-process peak includes warmup
+and process caches. The resource assessment remains open.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
