@@ -2,6 +2,73 @@
 mod tests {
     use super::*;
     use std::mem::size_of;
+    #[test]
+    fn magnitude_bit_length_boundaries_apply_offset_before_narrowing() {
+        let maximum = i32::MAX as u64;
+        for (n, d, below, offset, expected) in [
+            (maximum + 1, 1, false, 0, Some(i32::MAX)),
+            (maximum + 2, 1, true, 0, Some(i32::MAX)),
+            (maximum + 2, 1, false, 0, None),
+            (maximum + 3, 1, false, -2, Some(i32::MAX)),
+            (1, maximum + 2, false, 0, Some(i32::MIN)),
+            (1, maximum + 2, true, 0, None),
+            (1, maximum + 3, false, 1, Some(i32::MIN)),
+            (u64::MAX, u64::MAX, false, 0, Some(0)),
+            (u64::MAX, u64::MAX, true, 0, Some(-1)),
+            (u64::MAX, 1, false, i32::MIN, None),
+            (1, u64::MAX, false, i32::MAX, None),
+        ] {
+            assert_eq!(crate::verified::word::checked_bit_length_msd(n, d, below, offset), expected);
+        }
+    }
+
+    #[test]
+    fn rational_magnitude_certificate_matches_exact_intervals() {
+        fn check(numerator: BigUint, denominator: BigUint, sign: Sign) {
+            let expected = num::BigRational::new(BigInt::from(numerator.clone()), BigInt::from(denominator.clone()));
+            let value = Rational::from_parts_raw_unreduced(
+                if numerator.is_zero() { NoSign } else { sign }, numerator, denominator,
+            );
+            let actual = value.msd_exact_with_offset(0);
+            if expected.is_zero() {
+                assert_eq!(actual, None);
+                return;
+            }
+            let (msd, power_of_two) = actual.expect("nonzero magnitude is known");
+            let lower = if msd >= 0 {
+                num::BigRational::from_integer(BigInt::one() << msd as usize)
+            } else {
+                num::BigRational::new(BigInt::one(), BigInt::one() << msd.unsigned_abs() as usize)
+            };
+            assert!(lower <= expected);
+            assert!(expected < &lower + &lower);
+            assert_eq!(power_of_two, expected == lower);
+        }
+        for n in 0_u8..=20 {
+            for d in 1_u8..=20 {
+                for sign in [Plus, Minus] {
+                    check(BigUint::from(n), BigUint::from(d), sign);
+                }
+            }
+        }
+        for bits in [129_usize, 257, 1025, 2048] {
+            let common = (BigUint::one() << bits) + 7_u8;
+            for (n, d) in [(1_u8, 1_u8), (2, 1), (1, 2), (3, 2), (2, 3), (1, 3)] {
+                for shift in [-513_i32, -65, -1, 0, 1, 65, 513] {
+                    let mut numerator = &common * n;
+                    let mut denominator = &common * d;
+                    if shift >= 0 {
+                        numerator <<= shift as usize;
+                    } else {
+                        denominator <<= shift.unsigned_abs() as usize;
+                    }
+                    for sign in [Plus, Minus] {
+                        check(numerator.clone(), denominator.clone(), sign);
+                    }
+                }
+            }
+        }
+    }
     use std::sync::atomic::Ordering as AtomicOrdering;
 
     fn limbs_to_biguint(limbs: &[u64]) -> BigUint {

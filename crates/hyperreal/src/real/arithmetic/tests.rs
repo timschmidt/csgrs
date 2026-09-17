@@ -4,6 +4,79 @@ mod tests {
     use std::mem::size_of;
 
     #[test]
+    fn radical_magnitude_facts_follow_signed_binary_scales() {
+        for (radicand, root_msd) in [(2, 0), (3, 0), (5, 1), (7, 1)] {
+            let root = Real::from(radicand).sqrt().unwrap();
+            for shift in -8_i32..=8 {
+                let scale = if shift >= 0 {
+                    Rational::new(1_i64 << shift)
+                } else {
+                    Rational::fraction(1, 1_u64 << -shift).unwrap()
+                };
+                for scale in [scale.clone(), -scale] {
+                    let expected_sign = if scale.sign() == Sign::Minus {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    };
+                    let value = &root * &Real::new(scale);
+                    let facts = value.structural_facts();
+                    assert_eq!(facts.sign, Some(expected_sign));
+                    assert_eq!(facts.magnitude, Some(MagnitudeBits {
+                        msd: root_msd + shift,
+                        exact_msd: true,
+                    }));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn radical_magnitude_facts_preserve_lazy_and_wide_scales() {
+        let root = Real::from(2).sqrt().unwrap();
+        for common_bits in [0_usize, 129, 257, 1025] {
+            let common = (BigUint::from(1_u8) << common_bits) + 1_u8;
+            for (numerator, denominator, msd, exact_msd) in [
+                (1_u8, 1_u8, 0, true),
+                (2, 1, 1, true),
+                (1, 2, -1, true),
+                (3, 2, 0, false),
+                (2, 3, -1, false),
+                (5, 4, 0, false),
+            ] {
+                for sign in [Sign::Plus, Sign::Minus] {
+                    // Keep lazy storage intact rather than having multiplication
+                    // canonicalize the test input before the facts query.
+                    let mut value = root.clone();
+                    value.rational = Rational::from_parts_raw_unreduced(
+                        sign, &common * numerator, &common * denominator,
+                    );
+                    let facts = value.structural_facts();
+                    assert_eq!(facts.sign, Some(if sign == Sign::Plus {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    }));
+                    assert_eq!(facts.magnitude, Some(MagnitudeBits { msd, exact_msd }));
+                }
+            }
+        }
+        for shift in [-257_i32, 257] {
+            let power = BigUint::from(1_u8) << shift.unsigned_abs() as usize;
+            let (numerator, denominator) = if shift > 0 {
+                (power, BigUint::from(1_u8))
+            } else {
+                (BigUint::from(1_u8), power)
+            };
+            let mut value = root.clone();
+            value.rational = Rational::from_parts_raw_unreduced(Sign::Plus, numerator, denominator);
+            assert_eq!(value.structural_facts().magnitude, Some(MagnitudeBits {
+                msd: shift, exact_msd: true,
+            }));
+        }
+    }
+
+    #[test]
     fn operations_work_on_refs() {
         let a = Real::new(Rational::new(2));
         let b = Real::new(Rational::new(3));
