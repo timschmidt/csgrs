@@ -452,6 +452,22 @@ peak increase. The remaining feature/coverage, trace, long-case and native
 consumer comparisons were not complete at this checkpoint. Live Hypercurve
 remains untouched, and all failures are retained as unresolved outcomes.
 
+The [cache codec checkpoint](../benchmarks/checkpoints/2026-09-17-verus-cache-codecs.json)
+at `9418f85` verifies three pure methods from the actual production representation
+file. Bound encoding preserves all typed states, signs, optional signed exponents
+and exactness flags; a separate decoder specification proves lossless packing.
+Exact-sign encoding and decoding preserve all five cache states, with valid tags
+and unused bits zero. Decoding requires a valid input tag. Atomic operations,
+publication, cache validity, memory ownership and callers remain unverified.
+
+The official run passes 496 units, 69 production contracts and 99 model theorems,
+with all 128 repository hashes matching the commit. Thirteen new cache mutation
+guards and ten acceptance/dependency tests pass. The unchanged kernel/model and
+bound inputs retain their earlier 85 and 25 mutation results; no fresh combined
+123-mutation run is claimed. Strict all-feature all-target Clippy passes, and
+ordinary expanded Rust remains byte-identical to `cdc6d3a`. All thirteen broader
+proof groups and baseline acceptance remain incomplete.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
