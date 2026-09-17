@@ -116,6 +116,191 @@ pub(crate) proof fn addition_with_guard_bits_preserves_error(left: real, right: 
             -unit / 4real <= b as real * (unit / 4real) - right <= unit / 4real;
 }
 
+/// Mathematical counterpart of `scale`, including its signed right-shift
+/// rounding. Connecting this specification to BigInt operations remains open.
+pub(crate) open spec fn scaled_integer(value: int, shift: int) -> int {
+    if shift >= 0 { value * pow2(shift as nat) }
+    else { rounded_after_shift(value, (-shift - 1) as nat) }
+}
+
+pub(crate) proof fn binary_scaling_has_half_unit_error(value: int, shift: int)
+    ensures -0.5real <= scaled_integer(value, shift) as real
+        - value as real * binary_unit(shift) <= 0.5real,
+{
+    binary_unit_positive(shift);
+    vstd::arithmetic::power::lemma_pow0(2);
+    if shift >= 0 {
+        cast_product(value, pow2(shift as nat) as int);
+        assert(binary_denominator(shift) == 1);
+        assert(binary_unit(shift) == pow2(shift as nat) as real) by (nonlinear_arith)
+            requires binary_unit(shift) == pow2(shift as nat) as real / 1real;
+        assert(scaled_integer(value, shift) as real == value as real * binary_unit(shift));
+    } else {
+        rounded_shift_real_error(value, (-shift - 1) as nat);
+        let factor = pow2((-shift) as nat) as real;
+        let result = scaled_integer(value, shift) as real;
+        assert(-0.5real <= result - value as real / factor <= 0.5real)
+            by (nonlinear_arith)
+            requires factor > 0real,
+                -factor < 2real * (result * factor - value as real) <= factor;
+        assert(binary_unit(shift) == 1real / factor);
+        assert(result - value as real * binary_unit(shift) == result - value as real / factor)
+            by (nonlinear_arith)
+            requires factor > 0real, binary_unit(shift) == 1real / factor;
+    }
+}
+
+/// A cached integer's bit length supplies the upper bound required by the
+/// multiplication anchor even when its binade differs from the exact value's.
+pub(crate) proof fn cached_bit_length_bounds_real(value: real, approximation: int, precision: int, bits: nat)
+    requires approximates(value, approximation, binary_unit(precision)),
+        -(pow2(bits) as int) < approximation < pow2(bits),
+    ensures -binary_unit(precision + bits) <= value <= binary_unit(precision + bits),
+{
+    binary_unit_positive(precision);
+    binary_unit_composes(precision, bits as int);
+    vstd::arithmetic::power::lemma_pow0(2);
+    let factor = pow2(bits) as real;
+    assert(binary_unit(bits as int) == factor) by (nonlinear_arith)
+        requires binary_unit(bits as int) == factor / 1real;
+    assert(-factor + 1real <= approximation as real <= factor - 1real);
+    assert(-binary_unit(precision + bits) <= value <= binary_unit(precision + bits))
+        by (nonlinear_arith)
+        requires binary_unit(precision) > 0real,
+            binary_unit(precision + bits) == binary_unit(precision) * factor,
+            -factor + 1real <= approximation as real <= factor - 1real,
+            -binary_unit(precision) <= approximation as real * binary_unit(precision) - value
+                <= binary_unit(precision);
+}
+
+proof fn bounded_real_product(left: real, right: real, left_bound: real, right_bound: real)
+    requires left_bound >= 0real, right_bound >= 0real,
+        -left_bound <= left <= left_bound, -right_bound <= right <= right_bound,
+    ensures -(left_bound * right_bound) <= left * right <= left_bound * right_bound,
+{
+    assert(-(left_bound * right_bound) <= left * right <= left_bound * right_bound)
+        by (nonlinear_arith)
+        requires left_bound >= 0real, right_bound >= 0real,
+            -left_bound <= left <= left_bound, -right_bound <= right <= right_bound;
+}
+
+/// Three guard bits leave a quarter of the requested unit for each operand's
+/// error. The known operand needs only this upper bound, not an exact binade.
+pub(crate) proof fn asymmetric_product_before_rounding(
+    left: real, right: real, a: int, b: int, left_unit: real, right_unit: real,
+    left_bound: real, right_bound: real, unit: real,
+)
+    requires unit > 0real, left_bound > 0real, right_bound > 0real,
+        approximates(left, a, left_unit), approximates(right, b, right_unit),
+        -2real * left_bound <= left <= 2real * left_bound,
+        -2real * right_bound <= b as real * right_unit <= 2real * right_bound,
+        8real * left_unit * right_bound == unit,
+        8real * right_unit * left_bound == unit,
+    ensures -unit / 2real <= (a * b) as real * (left_unit * right_unit) - left * right
+        <= unit / 2real,
+{
+    let first_error = a as real * left_unit - left;
+    let second_error = b as real * right_unit - right;
+    bounded_real_product(first_error, b as real * right_unit, left_unit, 2real * right_bound);
+    bounded_real_product(left, second_error, 2real * left_bound, right_unit);
+    cast_product(a, b);
+    assert((a * b) as real * (left_unit * right_unit) - left * right
+        == first_error * (b as real * right_unit) + left * second_error) by (nonlinear_arith)
+        requires (a * b) as real == a as real * b as real,
+            first_error == a as real * left_unit - left,
+            second_error == b as real * right_unit - right;
+    assert(-unit / 2real <= (a * b) as real * (left_unit * right_unit) - left * right
+        <= unit / 2real) by (nonlinear_arith)
+        requires 8real * left_unit * right_bound == unit,
+            8real * right_unit * left_bound == unit,
+            -(left_unit * (2real * right_bound)) <= first_error * (b as real * right_unit)
+                <= left_unit * (2real * right_bound),
+            -((2real * left_bound) * right_unit) <= left * second_error
+                <= (2real * left_bound) * right_unit,
+            (a * b) as real * (left_unit * right_unit) - left * right
+                == first_error * (b as real * right_unit) + left * second_error;
+}
+
+proof fn three_guard_bits(precision: int, magnitude: int)
+    ensures 8real * binary_unit(precision - magnitude - 3) * binary_unit(magnitude)
+        == binary_unit(precision),
+{
+    lemma2_to64();
+    vstd::arithmetic::power::lemma_pow0(2);
+    binary_unit_composes(precision - magnitude - 3, magnitude);
+    binary_unit_composes(precision - 3, 3);
+    assert(binary_unit(3) == 8real) by (nonlinear_arith)
+        requires binary_numerator(3) == 8, binary_denominator(3) == 1,
+            binary_unit(3) == binary_numerator(3) as real / binary_denominator(3) as real;
+    assert(8real * binary_unit(precision - magnitude - 3) * binary_unit(magnitude)
+        == binary_unit(precision)) by (nonlinear_arith)
+        requires binary_unit(precision - magnitude - 3) * binary_unit(magnitude)
+                == binary_unit(precision - 3),
+            binary_unit(precision - 3) * 8real == binary_unit(precision);
+}
+
+/// The asymmetric production schedule, with unbounded precision arithmetic
+/// and input approximation/size obligations made explicit.
+pub(crate) proof fn asymmetric_multiplication_preserves_error(
+    left: real, right: real, a: int, b: int, precision: int,
+    left_magnitude: int, right_magnitude: int,
+)
+    requires
+        approximates(right, b, binary_unit(precision - left_magnitude - 3)),
+        approximates(left, a, binary_unit(precision - right_magnitude - 3)),
+        -2real * binary_unit(left_magnitude) <= left <= 2real * binary_unit(left_magnitude),
+        -2real * binary_unit(right_magnitude)
+            <= b as real * binary_unit(precision - left_magnitude - 3)
+            <= 2real * binary_unit(right_magnitude),
+    ensures approximates(left * right,
+        scaled_integer(a * b, precision - left_magnitude - right_magnitude - 6),
+        binary_unit(precision)),
+{
+    let lp = precision - right_magnitude - 3;
+    let rp = precision - left_magnitude - 3;
+    let shift = lp + rp - precision;
+    binary_unit_positive(precision); binary_unit_positive(left_magnitude);
+    binary_unit_positive(right_magnitude);
+    three_guard_bits(precision, left_magnitude);
+    three_guard_bits(precision, right_magnitude);
+    asymmetric_product_before_rounding(left, right, a, b, binary_unit(lp), binary_unit(rp),
+        binary_unit(left_magnitude), binary_unit(right_magnitude), binary_unit(precision));
+    binary_scaling_has_half_unit_error(a * b, shift);
+    binary_unit_composes(lp, rp);
+    binary_unit_composes(shift, precision);
+    let product = (a * b) as real;
+    let result = scaled_integer(a * b, shift) as real;
+    let unit = binary_unit(precision);
+    assert(-unit <= result * unit - left * right <= unit) by (nonlinear_arith)
+        requires unit > 0real,
+            -0.5real <= result - product * binary_unit(shift) <= 0.5real,
+            -unit / 2real <= product * (binary_unit(lp) * binary_unit(rp)) - left * right
+                <= unit / 2real,
+            binary_unit(shift) * unit == binary_unit(lp) * binary_unit(rp);
+}
+
+pub(crate) proof fn asymmetric_zero_product_preserves_error(
+    left: real, right: real, precision: int, left_magnitude: int,
+)
+    requires approximates(right, 0, binary_unit(precision - left_magnitude - 3)),
+        -2real * binary_unit(left_magnitude) <= left <= 2real * binary_unit(left_magnitude),
+    ensures approximates(left * right, 0, binary_unit(precision)),
+{
+    binary_unit_positive(precision); binary_unit_positive(left_magnitude);
+    three_guard_bits(precision, left_magnitude);
+    let bound = binary_unit(left_magnitude);
+    let other_unit = binary_unit(precision - left_magnitude - 3);
+    assert(-other_unit <= right <= other_unit) by (nonlinear_arith)
+        requires -other_unit <= 0real * other_unit - right <= other_unit;
+    bounded_real_product(left, right, 2real * bound, other_unit);
+    assert(-binary_unit(precision) <= -left * right <= binary_unit(precision)) by (nonlinear_arith)
+        requires binary_unit(precision) > 0real, 8real * other_unit * bound == binary_unit(precision),
+            -(2real * bound * other_unit) <= left * right <= 2real * bound * other_unit;
+    assert(approximates(left * right, 0, binary_unit(precision))) by (nonlinear_arith)
+        requires binary_unit(precision) > 0real,
+            -binary_unit(precision) <= -left * right <= binary_unit(precision);
+}
+
 pub(crate) proof fn cache_coarsening_preserves_real_error(value: real, cached: int, unit: real, gap: nat)
     requires gap > 0, approximates(value, cached, unit),
     ensures approximates(value, rounded_after_shift(cached, (gap - 1) as nat), unit * pow2(gap) as real),

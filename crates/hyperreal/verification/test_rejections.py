@@ -135,6 +135,20 @@ MUTATIONS = [
      "+ if below_aligned(numerator, denominator, numerator_bits, denominator_bits)"),
     ("magnitude_model.rs", "&& numerator * binary_denominator(exponent) < 2 * binary_numerator(exponent) * denominator",
      "&& numerator * binary_denominator(exponent) <= 2 * binary_numerator(exponent) * denominator"),
+    ("real_approximation_model.rs", "if shift >= 0 { value * pow2(shift as nat) }",
+     "if shift >= 0 { value * pow2(shift as nat + 1) }"),
+    ("real_approximation_model.rs", "else { rounded_after_shift(value, (-shift - 1) as nat) }",
+     "else { rounded_after_shift(value, (-shift - 1) as nat) + 1 }"),
+    ("real_approximation_model.rs", "-(pow2(bits) as int) < approximation < pow2(bits),",
+     "-(pow2(bits) as int) <= approximation <= pow2(bits),"),
+    ("real_approximation_model.rs", "-2real * left_bound <= left <= 2real * left_bound,",
+     "-3real * left_bound <= left <= 3real * left_bound,"),
+    ("real_approximation_model.rs", "ensures -unit / 2real <= (a * b) as real * (left_unit * right_unit) - left * right",
+     "ensures -unit / 4real <= (a * b) as real * (left_unit * right_unit) - left * right"),
+    ("real_approximation_model.rs", "scaled_integer(a * b, precision - left_magnitude - right_magnitude - 6),",
+     "scaled_integer(a * b, precision - left_magnitude - right_magnitude - 5),"),
+    ("real_approximation_model.rs", "requires approximates(right, 0, binary_unit(precision - left_magnitude - 3)),",
+     "requires approximates(right, 8, binary_unit(precision - left_magnitude - 3)),"),
 ]
 
 
@@ -166,7 +180,7 @@ def main():
             path.write_text(original)
             failures = ["postcondition not satisfied", "invariant not satisfied"]
             if name in MODEL_FILES:
-                failures += ["assertion failed", "requires not satisfied"]
+                failures += ["assertion failed", "requires not satisfied", "precondition not satisfied"]
             if result.returncode == 0 or not any(message in result.stderr for message in failures):
                 sys.exit(f"Expected contract rejection for {name}: {after}\n{result.stdout}{result.stderr}")
             print(f"Rejected incorrect {name}: {after}")
