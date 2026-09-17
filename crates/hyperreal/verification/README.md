@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies thirty-two production contracts (thirty-one
-functions and one constant) and thirty-nine arithmetic model theorems. The rest
+The current proof target verifies thirty-eight production contracts (thirty-seven
+functions and one constant) and forty-one arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -80,6 +80,9 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `product::multiply_accumulate` | Exact low/high limbs of a limb product plus an existing digit and carry; the complete sum cannot overflow `u128`. | `product::multiply` |
 | `product::multiply` | Exact schoolbook product for arbitrary fixed input lengths when the output has at least their combined length, including both carry loops, zero-length inputs, unused high limbs, bounds and termination. | Dyadic accumulators and compact/wide line-parameter carriers |
 | `product::split_u128`, `product::multiply_u128` | Exact decomposition of all `u128` values into two limbs and exact four-limb products, with the generic multiplier's precondition discharged. | Compact dyadic products and stack accumulators |
+| `accumulate::highest_nonzero`, `accumulate::aligned_digit`, `accumulate::add_word` | Exact highest occupied limb, shifted digit and addition with carry for all admissible inputs. | Direct shifted accumulation |
+| `accumulate::add_shifted` | Exact in-place addition of a product times `2^shift`; `None` iff the mathematical sum exceeds the buffer. An oversized addend leaves the buffer unchanged; carry overflow leaves the sum modulo the buffer width. Zero products, arbitrary `u64` shifts, bounds and termination are covered. | Dyadic product accumulators |
+| `accumulate::add_product`, `accumulate::add_wide_product` | Composition of multiplication, alignment and accumulation, including overflow and resulting buffer contents, with helper preconditions discharged. The wide wrapper retains both scalar-width paths. | `DyadicStackAccumulator` |
 
 The GCD specification is proved to preserve exactly the positive common
 divisors, to be positive away from `(0, 0)`, and to be the greatest common
@@ -97,6 +100,10 @@ The product proof tracks the integer represented by all processed rows and the
 pending carry. A positional-update lemma connects each array write to its
 integer contribution. This proves the final carry slot is zero before each
 write, including the slot where the former dyadic loops had an overflow guard.
+The alignment theorems characterize the highest shifted limb and prove that
+the assembled digits denote multiplication by the corresponding power of two.
+Accumulation then preserves the complete integer sum plus the pending carry;
+its final overflow decision and partially written failure state are proved.
 [`rational_model.rs`](rational_model.rs) defines signed, unbounded
 fractions with positive denominators, without assuming canonical reduction.
 Its seventeen theorems establish equivalence and ordering laws, rescaling,
@@ -118,10 +125,12 @@ still need implementation proofs. The matrix theorem establishes the intended
 GCD identity; it does not silently certify those dependency operations, the
 wide GCD dispatch loop, or the recursive half-GCD tier.
 Dyadic multiplication uses the same verified generic kernel for 2×2, 4×1,
-4×2 and 4×4 limbs. Binary alignment, accumulation, signed sums, parameter
-comparison and the surrounding geometric algorithms still need their own
-implementation proofs. Shared verified multiplication alone does not establish
-the full dyadic or geometry API contracts.
+4×2 and 4×4 limbs. The product accumulators also use verified alignment and
+addition without allocating another full-width buffer. Their array lengths
+must not exceed `u32::MAX / 64`; production uses at most six limbs. Signed
+differences, normalization, parameter comparison and the surrounding geometric
+algorithms still need their own implementation proofs. These kernels alone
+do not establish the full dyadic or geometry API contracts.
 
 The table uses a bounded-depth recursive traversal during const evaluation;
 its values are computed by the same verified functions in both builds. The
@@ -129,10 +138,13 @@ its values are computed by the same verified functions in both builds. The
 and bit operations because upstream vstd does not yet specify those Rust
 intrinsics. The limb subtractor similarly uses wrapping subtraction and
 explicit borrow comparisons in place of unspecified overflowing intrinsics.
+The accumulator similarly uses wrapping addition and explicit carry
+comparisons. Its shifted target index stays in `u64` until the buffer check
+proves conversion to `usize` is safe, including on narrower targets.
 No project assumptions were added to cover these operations.
 
 `test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of twenty-nine
+first verifies the unmodified bodies, and then requires rejection of thirty-six
 incorrect implementations and an attempted assumption bypass. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
@@ -150,6 +162,11 @@ Product tests compare against `BigUint` across full carry chains, empty inputs,
 asymmetric lengths, padded output buffers, and both scalar paths through the
 wide dyadic accumulator. Further mutations omit carry, return a zero product,
 misplace the high half of a word and multiply by the wrong operand.
+Shifted accumulation tests cover every bit alignment across the tested buffer
+widths, empty inputs and outputs, zero padding, `u64::MAX` shifts, exact sums,
+and both failure-state cases against `BigUint`. Mutations reject lost carry,
+incorrect zero/fallback results, broken digit extraction and ignored shifts
+in both product wrappers.
 
 ## Remaining work and completion criteria
 

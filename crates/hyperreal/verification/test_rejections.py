@@ -53,6 +53,15 @@ MUTATIONS = [
      "let limbs = [word as u64, (word >> 63) as u64];"),
     ("product.rs", "multiply(&split_u128(left), &split_u128(right))",
      "multiply(&split_u128(left), &split_u128(left))"),
+    ("accumulate.rs", "return Some(index);", "return None;"),
+    ("accumulate.rs", "    digit\n}", "    0\n}"),
+    ("accumulate.rs", "first_carry || second_carry", "first_carry && second_carry"),
+    ("accumulate.rs", "return Some(());", "return None;"),
+    ("accumulate.rs", "    Some(())\n}", "    None\n}"),
+    ("accumulate.rs", "let product = super::product::multiply_u128(left, right);\n    add_shifted(accumulator, &product, shift)",
+     "let product = super::product::multiply_u128(left, right);\n    add_shifted(accumulator, &product, 0)"),
+    ("accumulate.rs", "return add_shifted(accumulator, &product, shift);",
+     "return add_shifted(accumulator, &product, 0);"),
 ]
 
 
