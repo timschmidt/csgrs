@@ -391,6 +391,14 @@ denotations, rational import, mapping, addition, square, multiplication, public
 magnitude conversion, constants and concurrency remain outside the added proof
 boundary. All thirteen whole-implementation obligation groups remain open.
 
+The [metadata runtime screen](../benchmarks/checkpoints/2026-09-17-verus-metadata-screen.json)
+compares `cdc6d3a` with the fixed pre-Verus baseline across all nine ordinary
+benchmark suites. All eighteen processes pass, with 1,449 matching cases and
+unchanged workload hashes. The short screen flags 157 positive, nonoverlapping
+within-run intervals, including external comparator rows. Every case and raw
+sample is retained. These flags require longer alternating repeats; the screen
+does not establish performance parity or final acceptance.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
