@@ -86,12 +86,9 @@ impl Clone for Real {
             };
         }
 
-        // `Computable` caches are accelerators, not semantic state. Most Real
-        // clones in hyperlattice matrix kernels are cold exact symbols, so
-        // cloning the full payload just to preserve an empty cache is wasted
-        // work. Rebuild exact symbolic computables from the compact class
-        // certificate; keep opaque irrational payloads and abort-attached values
-        // as true clones because their graph shape or signal cannot be inferred.
+        // Computable clones share immutable nodes and synchronized caches.
+        // Reuse the payload when present, retaining the certificate fallback
+        // for exact symbols whose payload has not been materialized.
         let computable =
             if self.abort_signal().is_some() || matches!(self.class, Irrational | ConstOffset(_)) {
                 // ConstOffset payloads are shallow enough to clone and expensive
@@ -101,7 +98,7 @@ impl Clone for Real {
             } else if matches!(self.class, One) {
                 None
             } else {
-                Some(self.class.computable_certificate())
+                Some(self.computable_clone())
             };
 
         Self {

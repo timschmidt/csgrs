@@ -113,6 +113,7 @@ impl AtomicPrimitiveApproxCache {
         Self(std::sync::atomic::AtomicU64::new(Self::encode(value)))
     }
 
+    #[inline]
     pub(super) fn get(&self) -> PrimitiveApproxCache {
         Self::decode(self.0.load(std::sync::atomic::Ordering::Relaxed))
     }
@@ -615,10 +616,8 @@ impl Class {
     }
 
     fn computable_certificate(&self) -> Computable {
-        // Exact symbolic classes are small certificates for a computable value.
-        // Cloning a cold `Real` in dense algebra should copy the certificate and
-        // rebuild this lightweight wrapper instead of duplicating a larger
-        // Computable payload whose cache is usually empty.
+        // Materialize a missing computable payload from its exact symbolic
+        // certificate. Existing immutable payloads can be shared by cloning.
         match self {
             One => Computable::one(),
             Pi => Computable::pi(),
