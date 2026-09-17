@@ -1614,7 +1614,7 @@
     "coverage_percent": 91.24,
     "scope": "598f059; add6365 adds one separately validated regression test and corrects only the fuzz harness"
   },
-  "baseline_test_failure": "Untouched baseline lacks exact_quadratic_normal_form in the no-GMP-analog API inventory; default/all-target and coverage runs stop at that assertion. Supplementary baseline suites with only that test classification repaired are in progress; original logs are retained.",
+  "baseline_test_failure": "Untouched baseline lacks exact_quadratic_normal_form in the no-GMP-analog API inventory; default/all-target and coverage runs stop at that assertion. Supplementary default/all-feature all-target and complete coverage matrices PASS with only that classification entry added. Production sources and benchmark fixtures remain unchanged; original failure logs and the exact test-only patch are preserved.",
   "fuzz": {
     "initial_runs": [
       {
@@ -2441,7 +2441,284 @@
       }
     ],
     "finding": "Both revisions return a legitimate unknown for root_8(1/92)^8 - 1/92 at -512 precision. A derived maximum certificate depth of 730 bits supports the corrected -1024 harness request. The five-byte seed and degree/denominator/nonzero controls are committed in add6365. Each corrected run completed 2727 sanitizer executions over 2575 saved corpus files.",
-    "sanitizer_limitation": "AddressSanitizer retained. LeakSanitizer failed under ptrace; diagnostic logs preserved before retrying with detect_leaks=0."
+    "sanitizer_limitation": "AddressSanitizer retained. LeakSanitizer failed under ptrace; diagnostic logs preserved before retrying with detect_leaks=0.",
+    "saved_corpus_replays": [
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "computable_approximation",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "computable_approximation",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 158.36443781852722,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation-saved-corpus/run.log",
+        "corpus_files": 1055
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "rational_arithmetic",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "rational_arithmetic",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 0.9792649745941162,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic-saved-corpus/run.log",
+        "corpus_files": 963
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "real_exact",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_exact",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 4.381816387176514,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact-saved-corpus/run.log",
+        "corpus_files": 1750
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "string_parsing",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "string_parsing",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 0.4948761463165283,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing-saved-corpus/run.log",
+        "corpus_files": 117
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "structural_representations",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "structural_representations",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 3.8082475662231445,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations-saved-corpus/run.log",
+        "corpus_files": 32
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "computable_approximation",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "computable_approximation",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 150.82388591766357,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation-saved-corpus/run.log",
+        "corpus_files": 1055
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "rational_arithmetic",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "rational_arithmetic",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 0.9685227870941162,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic-saved-corpus/run.log",
+        "corpus_files": 963
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "real_exact",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_exact",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 6.180152177810669,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact-saved-corpus/run.log",
+        "corpus_files": 1750
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "string_parsing",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "string_parsing",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 1.335146427154541,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing-saved-corpus/run.log",
+        "corpus_files": 117
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "structural_representations",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "structural_representations",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations-saved-corpus/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations-saved-corpus/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 5.75949764251709,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations-saved-corpus/run.log",
+        "corpus_files": 32
+      }
+    ],
+    "saved_corpora": {
+      "files_by_target": {
+        "computable_approximation": 1055,
+        "rational_arithmetic": 963,
+        "real_elementary": 2575,
+        "real_exact": 1750,
+        "string_parsing": 117,
+        "structural_representations": 32
+      },
+      "total_files": 6492,
+      "archive": "2026-09-17-verus-corpora.tar.gz",
+      "sha256": "e0bdf29cc1dd82bf4340380acf01207dac129e9885764d443fdebfbfd55b3f3b",
+      "bytes": 327236,
+      "note": "The real_elementary corrected-harness runs already replayed all 2575 frozen inputs; the other five targets subsequently replayed the full frozen corpora. All twelve final per-revision/target replay results passed with AddressSanitizer enabled and LeakSanitizer disabled only after its ptrace diagnostic."
+    }
   },
   "consumers": {
     "hyperlattice": {
@@ -2483,12 +2760,249 @@
   },
   "pending": [
     "Full-crate implementation, caller, dependency and completeness proofs",
-    "Supplementary baseline all-target and coverage completion",
     "All nine Criterion suites and longer confirmation of pilot changes",
-    "Complete saved-corpus replay for remaining five fuzz targets",
     "All downstream tests, performance guards, profiles, lint/UI/WASM infrastructure",
     "Resolve measured performance/resource regressions according to the priority order",
     "Final source-bound qualification of the completed implementation"
   ],
-  "artifact_directory": "/tmp/hyperreal-verus-baseline-scmfudw9"
+  "artifact_directory": "/tmp/hyperreal-verus-baseline-scmfudw9",
+  "baseline_supplementary_validation": {
+    "production_revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "test_overlay": "tests/gmp_api_coverage.rs",
+    "overlay_sha256": "2366c3bbb0ace1c927102665f2f005dba624b175d3a8fa6bd62ffaedbc4ba253",
+    "classification": "Supplementary baseline with only the missing no-GMP-analog inventory entry; original failures retained separately",
+    "results": [
+      {
+        "name": "tests-default",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--all-targets",
+          "--no-fail-fast"
+        ],
+        "environment_overrides": {},
+        "exit_code": 0,
+        "start_unix": 1789628316.59138,
+        "seconds": 191.94617772102356,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline-audit-repair/tests-default.log",
+        "sha256": "63a8ab1767b9af2f51628268b40674f62a51f775fc8013db03c6a1989cce9291"
+      },
+      {
+        "name": "tests-all",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--all-features",
+          "--all-targets",
+          "--no-fail-fast"
+        ],
+        "environment_overrides": {},
+        "exit_code": 0,
+        "start_unix": 1789628508.538021,
+        "seconds": 198.30623602867126,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline-audit-repair/tests-all.log",
+        "sha256": "4545ff50cf8a42bb12ac3a70df0d7472dfdcae1a3da6220beb37954260622393"
+      },
+      {
+        "name": "coverage-matrix",
+        "command": [
+          "bash",
+          "scripts/coverage.sh"
+        ],
+        "environment_overrides": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/coverage-target"
+        },
+        "exit_code": 0,
+        "start_unix": 1789628706.8447309,
+        "seconds": 459.3978343009949,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline-audit-repair/coverage-matrix.log",
+        "sha256": "601437a287d2aa5fb5e8cd7d43793ac9252fc1b55221e6f057c28a20f14f8bb1"
+      }
+    ]
+  },
+  "baseline_supplementary_summary": {
+    "tests-default": {
+      "tests": 766,
+      "benchmark_fixtures": 1271
+    },
+    "tests-all": {
+      "tests": 869,
+      "benchmark_fixtures": 1447
+    },
+    "coverage": {
+      "executable_production_lines": 28191,
+      "hit_lines": 25705,
+      "percent": 91.18
+    }
+  },
+  "expanded_runtime_source": {
+    "baseline": {
+      "command": [
+        "cargo",
+        "+nightly",
+        "rustc",
+        "--locked",
+        "--lib",
+        "--no-default-features",
+        "--",
+        "-Zunpretty=expanded"
+      ],
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "expanded_sha256": "8c590f7f91e913e12c94375eefe3a74619e54462b3dc93d7a2fe231827daf5d0",
+      "expanded_bytes": 1768511,
+      "expanded_lines": 35597,
+      "tokei": {
+        "Rust": {
+          "blanks": 95,
+          "children": {
+            "Markdown": [
+              {
+                "name": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/expanded-runtime.rs",
+                "stats": {
+                  "blanks": 266,
+                  "blobs": {},
+                  "code": 0,
+                  "comments": 1744
+                }
+              }
+            ]
+          },
+          "code": 33491,
+          "comments": 0,
+          "inaccurate": false,
+          "reports": [
+            {
+              "name": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/expanded-runtime.rs",
+              "stats": {
+                "blanks": 95,
+                "blobs": {
+                  "Markdown": {
+                    "blanks": 266,
+                    "blobs": {},
+                    "code": 0,
+                    "comments": 1744
+                  }
+                },
+                "code": 33491,
+                "comments": 0
+              }
+            }
+          ]
+        },
+        "Total": {
+          "blanks": 95,
+          "children": {
+            "Rust": [
+              {
+                "name": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/expanded-runtime.rs",
+                "stats": {
+                  "blanks": 95,
+                  "blobs": {
+                    "Markdown": {
+                      "blanks": 266,
+                      "blobs": {},
+                      "code": 0,
+                      "comments": 1744
+                    }
+                  },
+                  "code": 33491,
+                  "comments": 0
+                }
+              }
+            ]
+          },
+          "code": 33491,
+          "comments": 0,
+          "inaccurate": false,
+          "reports": []
+        }
+      }
+    },
+    "candidate": {
+      "command": [
+        "cargo",
+        "+nightly",
+        "rustc",
+        "--locked",
+        "--lib",
+        "--no-default-features",
+        "--",
+        "-Zunpretty=expanded"
+      ],
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "expanded_sha256": "7a01c7dfcec171ed7489601b681ab9d34aa1a1abc3f28d6cbe225d2dfdfd7515",
+      "expanded_bytes": 1783660,
+      "expanded_lines": 36019,
+      "tokei": {
+        "Rust": {
+          "blanks": 96,
+          "children": {
+            "Markdown": [
+              {
+                "name": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/expanded-runtime.rs",
+                "stats": {
+                  "blanks": 267,
+                  "blobs": {},
+                  "code": 0,
+                  "comments": 1811
+                }
+              }
+            ]
+          },
+          "code": 33844,
+          "comments": 0,
+          "inaccurate": false,
+          "reports": [
+            {
+              "name": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/expanded-runtime.rs",
+              "stats": {
+                "blanks": 96,
+                "blobs": {
+                  "Markdown": {
+                    "blanks": 267,
+                    "blobs": {},
+                    "code": 0,
+                    "comments": 1811
+                  }
+                },
+                "code": 33844,
+                "comments": 0
+              }
+            }
+          ]
+        },
+        "Total": {
+          "blanks": 96,
+          "children": {
+            "Rust": [
+              {
+                "name": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/expanded-runtime.rs",
+                "stats": {
+                  "blanks": 96,
+                  "blobs": {
+                    "Markdown": {
+                      "blanks": 267,
+                      "blobs": {},
+                      "code": 0,
+                      "comments": 1811
+                    }
+                  },
+                  "code": 33844,
+                  "comments": 0
+                }
+              }
+            ]
+          },
+          "code": 33844,
+          "comments": 0,
+          "inaccurate": false,
+          "reports": []
+        }
+      }
+    }
+  },
+  "expanded_runtime_source_note": "Same nightly compiler, no-default-feature macro-expanded library, with cfg(test) and ghost annotations erased. Includes compiler-generated derives, imports and declarations; reports both total lines and tokei code lines. This is an auxiliary source-size view, not emitted machine-code size.",
+  "catalogs_byte_identical": true
 }
