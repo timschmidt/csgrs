@@ -1,0 +1,497 @@
+{
+  "schema": 1,
+  "status": "correctness_repair_and_intermediate_qualification_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "89c89e278671719e568ce3acbea686821f91b8a2",
+  "counterexamples": {
+    "chained_sum": {
+      "expression": "(16 + n*pi)*pi at approximation precision0",
+      "affected": "Both pre-Verus baseline and cdc6d3a",
+      "n512": {
+        "actual": 5102,
+        "mpfr_interval_contains": "5103.502935815188"
+      },
+      "n1024": {
+        "actual": 10154,
+        "mpfr_interval_contains": "10156.74038917294"
+      },
+      "contract": "Returned integer must differ by at most one from the exact value."
+    },
+    "reciprocal": {
+      "expression": "1 / ((2-sqrt(4-2^-16))*pi) at approximation precision0",
+      "baseline_actual": 83443,
+      "cdc6d3a_actual": 98304,
+      "mpfr_interval_contains": "83442.947226216",
+      "affected": "Regression exposed by the earlier square-root metadata repair."
+    },
+    "tolerance": {
+      "expression": "Compare sqrt(pi) + (16 + 512*pi) to sqrt(pi) at absolute tolerance2^5",
+      "baseline_and_89c89e2": "Equal",
+      "independent_gap_lower_bound": 1552,
+      "followup_fix": "b3a23a4",
+      "exact_comparison": "Remains correctly ordered on both variants.",
+      "note": "The later tolerance repair requires its own affected qualification."
+    }
+  },
+  "repair": "Reciprocal, addition, multiplication and square-root precision kernels consume certified magnitudes or refine by approximation. Heuristic construction retains inexact hints.",
+  "verification": {
+    "units": 548,
+    "production_contracts": 91,
+    "model_theorems": 103,
+    "source_hashes": 130,
+    "all_hashes_match_candidate": true,
+    "entire_target": true,
+    "no_cheating": true,
+    "open_obligation_groups": 13,
+    "mutation_guards_rejected": 157,
+    "assumption_bypass_rejected": true,
+    "acceptance_tests_passed": 10
+  },
+  "ordinary_checks": {
+    "all_passed": true,
+    "runs": [
+      {
+        "label": "candidate",
+        "step": "directed-regressions",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "certified_planning_tests",
+          "--",
+          "--nocapture"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 5.679013967514038
+      },
+      {
+        "label": "candidate",
+        "step": "default-all-targets",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--all-targets"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 192.92329835891724
+      },
+      {
+        "label": "candidate",
+        "step": "all-feature-all-targets",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--all-features",
+          "--all-targets"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 208.86189246177673
+      },
+      {
+        "label": "candidate",
+        "step": "representations",
+        "command": [
+          "bash",
+          "scripts/representation_coverage.sh"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 11.793009996414185
+      },
+      {
+        "label": "candidate",
+        "step": "clippy-all",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 7.480455160140991
+      },
+      {
+        "label": "candidate",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 0.4226830005645752
+      }
+    ],
+    "counts": {
+      "default": {
+        "passed_tests": 801,
+        "successful_benchmark_fixtures": 1271
+      },
+      "all-feature": {
+        "passed_tests": 904,
+        "successful_benchmark_fixtures": 1447
+      }
+    },
+    "directed_mpfr_regressions": 3
+  },
+  "remaining_build_checks": {
+    "all_passed": true,
+    "runs": [
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "ordinary-bench-build",
+        "command": [
+          "cargo",
+          "bench",
+          "--locked",
+          "--features",
+          "simple",
+          "--benches",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true"
+        },
+        "exit_code": 0,
+        "seconds": 68.43147540092468
+      },
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "release-build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "--all-features",
+          "--examples",
+          "--bins",
+          "--message-format=json"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true"
+        },
+        "exit_code": 0,
+        "seconds": 10.233421087265015
+      },
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "dispatch-build",
+        "command": [
+          "cargo",
+          "bench",
+          "--locked",
+          "--features",
+          "dispatch-trace",
+          "--bench",
+          "dispatch_trace",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true"
+        },
+        "exit_code": 0,
+        "seconds": 10.013362407684326
+      },
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "docs-all",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--all-features",
+          "--no-deps"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true",
+          "RUSTDOCFLAGS": "-D warnings"
+        },
+        "exit_code": 0,
+        "seconds": 0.9921815395355225
+      },
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "fuzz-check",
+        "command": [
+          "cargo",
+          "check",
+          "--locked",
+          "--manifest-path",
+          "fuzz/Cargo.toml",
+          "--bins"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true"
+        },
+        "exit_code": 0,
+        "seconds": 2.038890838623047
+      },
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "wasm-default",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "--target",
+          "wasm32-unknown-unknown",
+          "--no-default-features",
+          "--lib"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true"
+        },
+        "exit_code": 0,
+        "seconds": 6.870381593704224
+      },
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "wasm-all",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--release",
+          "--target",
+          "wasm32-unknown-unknown",
+          "--all-features",
+          "--lib",
+          "--bins"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true"
+        },
+        "exit_code": 0,
+        "seconds": 8.553839921951294
+      },
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "coverage-matrix",
+        "command": [
+          "bash",
+          "scripts/coverage.sh"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/coverage-target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true"
+        },
+        "exit_code": 0,
+        "seconds": 460.9453318119049
+      },
+      {
+        "revision": "89c89e278671719e568ce3acbea686821f91b8a2",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/expansion-target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "4",
+          "CCACHE_DISABLE": "1",
+          "CARGO_NET_OFFLINE": "true"
+        },
+        "exit_code": 0,
+        "seconds": 0.27774882316589355
+      }
+    ]
+  },
+  "frozen_fuzz": {
+    "targets": 6,
+    "inputs": 6492,
+    "all_passed": true,
+    "sanitizer": "address",
+    "leak_checker": "Disabled for the previously observed ptrace limitation.",
+    "corpus_artifact": "benchmarks/checkpoints/2026-09-17-verus-corpora.tar.gz",
+    "corpus_sha256": "e0bdf29cc1dd82bf4340380acf01207dac129e9885764d443fdebfbfd55b3f3b"
+  },
+  "coverage": {
+    "legacy_report": {
+      "lines": 28753,
+      "hit": 26221,
+      "missed": 2532,
+      "percent": 91.19
+    },
+    "corrected_production_only": {
+      "lines": 27734,
+      "hit": 25202,
+      "missed": 2532,
+      "percent": 90.87041176894786
+    },
+    "removed_test_only_rows": {
+      "src/computable/approximation.rs": {
+        "lines": 26,
+        "hit": 26,
+        "missed": 0
+      },
+      "src/computable/approximation/e_plan_tests.rs": {
+        "lines": 88,
+        "hit": 88,
+        "missed": 0
+      },
+      "src/computable/node/cache_rescale_tests.rs": {
+        "lines": 105,
+        "hit": 105,
+        "missed": 0
+      },
+      "src/computable/node/certified_planning_tests.rs": {
+        "lines": 74,
+        "hit": 74,
+        "missed": 0
+      },
+      "src/computable/node/exp_relation_reuse_tests.rs": {
+        "lines": 124,
+        "hit": 124,
+        "missed": 0
+      },
+      "src/computable/node/exp_relation_tests.rs": {
+        "lines": 195,
+        "hit": 195,
+        "missed": 0
+      },
+      "src/computable/node/fractional_separation_tests.rs": {
+        "lines": 122,
+        "hit": 122,
+        "missed": 0
+      },
+      "src/computable/node/linear_demand_tests.rs": {
+        "lines": 174,
+        "hit": 174,
+        "missed": 0
+      },
+      "src/computable/node/magnitude_boundary_tests.rs": {
+        "lines": 74,
+        "hit": 74,
+        "missed": 0
+      },
+      "src/computable/node/precision_boundary_tests.rs": {
+        "lines": 37,
+        "hit": 37,
+        "missed": 0
+      }
+    },
+    "note": "Raw reports are preserved. The legacy named-test-module accounting defect is repaired separately, and neither metric is a formal proof percentage."
+  },
+  "failed_probe_preparation": [
+    "A guessed license filename failed git archive before the tolerance probe ran.",
+    "A partial diagnostic snapshot omitted an explicitly named Cargo example; both manifests failed to parse. The corrected complete target inputs permit both probes to run."
+  ],
+  "limits": [
+    "The 548-unit proof establishes the certificate query conditional on valid incoming bounds; graph, caller, cache and approximation-kernel proofs remain open.",
+    "This revision remains affected by the separately discovered tolerance-comparison defect, repaired in b3a23a4.",
+    "No native timing, resource-profile parity or downstream acceptance is claimed for this intermediate revision.",
+    "Probe processes return success to record results; reported numerical counterexamples are failures, not passing arithmetic checks.",
+    "Source/corpus hashes and raw evidence are preserved. Frozen executable bytes remain in temporary storage; build metadata and binary hashes are archived.",
+    "All thirteen whole-implementation proof groups and final baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-certified-planning.tar.gz",
+    "bytes": 2998161,
+    "files": 363,
+    "sha256": "e92938acaeabc6c992c569c8b3c92753c51c6277b9a3f3f13179169a15e2b3a1"
+  }
+}
