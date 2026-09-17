@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies fifty-six production contracts (fifty-five
-functions and one constant) and seventy-eight arithmetic model theorems. The rest
+functions and one constant) and eighty-seven arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -227,6 +227,18 @@ precision. The `BigInt` shifts/addition, leaf dispatch, related-constant cache
 identities and concurrent cache implementation still need refinement proofs.
 The cache theorem assumes its input error bound; it does not certify arbitrary
 cached values or the kernels producing them.
+
+Nine theorems in [`real_approximation_model.rs`](real_approximation_model.rs)
+extend the error model to the verifier's exact mathematical reals. Signed binary
+units compose, and the integer precision plan gives a valid real approximation.
+Negation, exact binary offsets, addition with two guard bits and cache
+coarsening preserve the one-unit error bound. A quarter-unit approximation
+followed by rounding returns either the floor or ceiling, as required by
+`near_integer`; an approximation separated from zero by more than one unit
+certifies its sign. These are compositional mathematical results, conditional
+on each input approximation's error bound. They do not establish the production
+graph's real denotation, its precision arithmetic, dependency operations,
+transcendental error bounds, domain validity, abort semantics or convergence.
 
 The float proofs stop at decomposition into a signed integer times a power of
 two. The `BigUint` construction, reduction, retained-fact cache, and public
