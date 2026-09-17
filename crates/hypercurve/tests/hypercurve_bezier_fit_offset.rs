@@ -1230,31 +1230,43 @@ fn exact_parallel_point_incidence_rejects_the_opposite_normal_branch() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
-            parallel.point_incidence(&p(1, 1), &policy).unwrap(),
+            parallel
+                .point_incidence(&p(1, 1), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(vec![
                 BezierParameter2::Exact(q(1, 2))
             ]))
         );
         assert_eq!(
-            parallel.point_incidence(&p(1, -1), &policy).unwrap(),
+            parallel
+                .point_incidence(&p(1, -1), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(Vec::new()))
         );
         assert_eq!(
-            parallel.contains_point(&p(1, 1), &policy).unwrap(),
+            parallel
+                .contains_point(&p(1, 1), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(true)
         );
         assert_eq!(
-            parallel.contains_point(&p(1, -1), &policy).unwrap(),
+            parallel
+                .contains_point(&p(1, -1), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(false)
         );
         assert_eq!(
-            right_parallel.point_incidence(&p(1, -1), &policy).unwrap(),
+            right_parallel
+                .point_incidence(&p(1, -1), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(vec![
                 BezierParameter2::Exact(q(1, 2))
             ]))
         );
         assert_eq!(
-            right_parallel.point_incidence(&p(1, 1), &policy).unwrap(),
+            right_parallel
+                .point_incidence(&p(1, 1), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(Vec::new()))
         );
     }
@@ -1267,17 +1279,85 @@ fn parallel_point_incidence_uses_approximate_512_only_as_a_terminal_decision() {
     let parallel = source.parallel_left(undecidable_zero).unwrap();
 
     assert_eq!(
-        parallel.point_incidence(&p(1, 0), &CurveContext::STRICT),
+        parallel.point_incidence(
+            &p(1, 0),
+            &CurveParameterRange2::unit(),
+            &CurveContext::STRICT
+        ),
         Ok(Classification::Uncertain(
             hypercurve::UncertaintyReason::RealSign
         ))
     );
     assert_eq!(
-        parallel.point_incidence(&p(1, 0), &CurveContext::APPROXIMATE_512),
+        parallel.point_incidence(
+            &p(1, 0),
+            &CurveParameterRange2::unit(),
+            &CurveContext::APPROXIMATE_512
+        ),
         Ok(Classification::Decided(
             BezierParallelIncidence2::Parameters(vec![BezierParameter2::Exact(q(1, 2))])
         ))
     );
+}
+
+#[test]
+fn finite_parallel_point_incidence_owns_poles_roots_and_normal_sheets() {
+    let source =
+        RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(), -Real::one()]).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for reversed in [false, true] {
+            let endpoints = if reversed { [3, 2] } else { [2, 3] };
+            let Classification::Decided(range) = CurveParameterRange2::try_new(
+                r(endpoints[0]).into(),
+                r(endpoints[1]).into(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("exact finite range")
+            };
+            for distance in [Real::zero(), q(1, 10)] {
+                let parallel = source.parallel_left(distance.clone()).unwrap();
+                let shift = (distance.clone() / r(2).sqrt().unwrap()).unwrap();
+                let point = Point2::new(q(2, 3) + &shift, q(2, 3) - &shift);
+                let Classification::Decided(BezierParallelIncidence2::Parameters(parameters)) =
+                    parallel.point_incidence(&point, &range, &policy).unwrap()
+                else {
+                    panic!("the exterior endpoint remains incident despite a remote pole")
+                };
+                assert_eq!(parameters.len(), 1);
+                assert_eq!(
+                    parameters[0]
+                        .cmp_by_refinement(&BezierParameter2::Exact(r(2)), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                if distance != Real::zero() {
+                    let opposite = Point2::new(q(2, 3) - &shift, q(2, 3) + &shift);
+                    assert_eq!(
+                        parallel.contains_point(&opposite, &range, &policy).unwrap(),
+                        Classification::Decided(false)
+                    );
+                }
+            }
+            let stationary = QuadraticBezier2::new(p(0, 0), p(0, 0), p(1, 0))
+                .parallel_left(Real::one())
+                .unwrap();
+            assert_eq!(
+                stationary
+                    .contains_point(&Point2::new(q(25, 4), Real::one()), &range, &policy)
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+            assert_eq!(
+                source
+                    .parallel_left(Real::zero())
+                    .unwrap()
+                    .contains_point(&p(0, 0), &range, &policy)
+                    .unwrap(),
+                Classification::Decided(false)
+            );
+        }
+    }
 }
 
 #[test]
@@ -1288,8 +1368,9 @@ fn exact_parallel_point_incidence_retains_algebraic_parameters() {
     let parallel = source.parallel_left(r(1)).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(BezierParallelIncidence2::Parameters(parameters)) =
-            parallel.point_incidence(&p(1, 1), &policy).unwrap()
+        let Classification::Decided(BezierParallelIncidence2::Parameters(parameters)) = parallel
+            .point_incidence(&p(1, 1), &CurveParameterRange2::unit(), &policy)
+            .unwrap()
         else {
             panic!("algebraic parallel incidence was not decided");
         };
@@ -1299,7 +1380,9 @@ fn exact_parallel_point_incidence_retains_algebraic_parameters() {
         assert_eq!(parameter.polynomial().degree(), 2);
 
         assert_eq!(
-            parallel.point_incidence(&p(1, -1), &policy).unwrap(),
+            parallel
+                .point_incidence(&p(1, -1), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(Vec::new()))
         );
     }
@@ -1314,7 +1397,11 @@ fn rational_parallel_point_incidence_preserves_projective_parameterization() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
             parallel
-                .point_incidence(&Point2::new(q(5, 4), r(2)), &policy)
+                .point_incidence(
+                    &Point2::new(q(5, 4), r(2)),
+                    &CurveParameterRange2::unit(),
+                    &policy
+                )
                 .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(vec![
                 BezierParameter2::Exact(q(1, 2))
@@ -1322,7 +1409,11 @@ fn rational_parallel_point_incidence_preserves_projective_parameterization() {
         );
         assert_eq!(
             parallel
-                .point_incidence(&Point2::new(q(5, 4), r(-2)), &policy)
+                .point_incidence(
+                    &Point2::new(q(5, 4), r(-2)),
+                    &CurveParameterRange2::unit(),
+                    &policy
+                )
                 .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(Vec::new()))
         );
@@ -1337,11 +1428,15 @@ fn collapsed_circular_parallel_reports_entire_curve_point_incidence() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
-            parallel.point_incidence(&p(0, 0), &policy).unwrap(),
+            parallel
+                .point_incidence(&p(0, 0), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(BezierParallelIncidence2::EntireCurve)
         );
         assert_eq!(
-            parallel.point_incidence(&p(1, 0), &policy).unwrap(),
+            parallel
+                .point_incidence(&p(1, 0), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(Vec::new()))
         );
     }
@@ -1366,16 +1461,20 @@ fn parallel_point_incidence_rejects_projective_poles_and_source_singularities() 
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
-            projective.point_incidence(&p(0, 0), &policy).unwrap(),
+            projective
+                .point_incidence(&p(0, 0), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
         );
         assert_eq!(
-            singular.point_incidence(&p(0, 1), &policy).unwrap(),
+            singular
+                .point_incidence(&p(0, 1), &CurveParameterRange2::unit(), &policy)
+                .unwrap(),
             Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
         );
         assert_eq!(
             zero_distance_singular
-                .point_incidence(&p(0, 0), &policy)
+                .point_incidence(&p(0, 0), &CurveParameterRange2::unit(), &policy)
                 .unwrap(),
             Classification::Decided(BezierParallelIncidence2::Parameters(vec![
                 BezierParameter2::Exact(r(0))
@@ -1383,7 +1482,7 @@ fn parallel_point_incidence_rejects_projective_poles_and_source_singularities() 
         );
         assert_eq!(
             zero_distance_constant
-                .point_incidence(&p(3, 4), &policy)
+                .point_incidence(&p(3, 4), &CurveParameterRange2::unit(), &policy)
                 .unwrap(),
             Classification::Decided(BezierParallelIncidence2::EntireCurve)
         );

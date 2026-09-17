@@ -6880,7 +6880,12 @@ fn fillet_offset_centers(
                         policy,
                     )
                 } else {
-                    previous.parallel_intersections_in_domain(next, parameter_domains, policy)
+                    previous.parallel_intersections_in_domain(
+                        next,
+                        parameter_domains,
+                        crate::bezier_offset::ParameterComponentQuery2::Existence,
+                        policy,
+                    )
                 })
                 .map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)

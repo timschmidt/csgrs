@@ -17005,81 +17005,27 @@ fn retained_fragment_contains_point(
                     RationalBezierPointIncidence2::Parameters(parameters) => !parameters.is_empty(),
                 }))
         }
-        BezierSplitFragment2::AnalyticParallel(fragment) => {
-            match fragment.parallel().point_incidence(point, policy)? {
-                Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
-                    Ok(Classification::Decided(true))
-                }
-                Classification::Decided(crate::BezierParallelIncidence2::Parameters(
-                    parameters,
-                )) => {
-                    for parameter in parameters {
-                        match retained_parameter_contains(
-                            &parameter,
-                            fragment.range().start(),
-                            fragment.range().end(),
-                            false,
-                            false,
-                            policy,
-                        )? {
-                            Classification::Decided(true) => {
-                                return Ok(Classification::Decided(true));
-                            }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
-                    }
-                    Ok(Classification::Decided(false))
-                }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
-        }
+        BezierSplitFragment2::AnalyticParallel(fragment) => fragment.parallel().contains_point(
+            point,
+            &CurveParameterRange2::from_bezier_range(fragment.range().clone()),
+            policy,
+        ),
         BezierSplitFragment2::SelectedFiber(fragment) => {
-            let parameters = if let Some(curve) = fragment.rational_curve() {
-                return Ok(curve
+            if let Some(curve) = fragment.rational_curve() {
+                Ok(curve
                     .point_incidence_on_range(point, fragment.range(), policy)?
                     .map(|incidence| match incidence {
                         RationalBezierPointIncidence2::EntireCurve => true,
                         RationalBezierPointIncidence2::Parameters(parameters) => {
                             !parameters.is_empty()
                         }
-                    }));
+                    }))
             } else {
-                let parallel = fragment
+                fragment
                     .analytic_parallel()
-                    .expect("a selected-fiber source is rational or analytic");
-                match parallel.point_incidence(point, policy)? {
-                    Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
-                        return Ok(Classification::Decided(true));
-                    }
-                    Classification::Decided(crate::BezierParallelIncidence2::Parameters(
-                        parameters,
-                    )) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            };
-            for parameter in parameters {
-                match retained_curve_region_parameter_contains(
-                    &parameter,
-                    fragment.range(),
-                    false,
-                    fragment.is_reversed(),
-                    policy,
-                )? {
-                    Classification::Decided(true) => {
-                        return Ok(Classification::Decided(true));
-                    }
-                    Classification::Decided(false) => {}
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                    .expect("a selected-fiber source is rational or analytic")
+                    .contains_point(point, fragment.range(), policy)
             }
-            Ok(Classification::Decided(false))
         }
         BezierSplitFragment2::AlgebraicChord(chord) => chord.contains_point(point, policy),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {

@@ -738,18 +738,17 @@ impl Pair<'_> {
         Ok(())
     }
 
-    fn require_unit_domain(&self, span: &Span) -> ExactCurveResult<()> {
-        let unit = CurveParameterRange2::unit();
-        for endpoint in [span.range.start(), span.range.end()] {
-            if !contains(&unit, endpoint, span.support.family(), self.policy)? {
-                return Err(ExactCurveError::blocked(
-                    CurveOperation2::Intersection,
-                    span.support.family(),
-                    UncertaintyReason::Unsupported,
-                ));
-            }
-        }
-        Ok(())
+    fn unit_domain_covers(&self, span: &Span) -> bool {
+        self.policy.bounded_exact_predicate_pass(|| {
+            matches!(
+                crate::bezier_split::CurveParameterDomain2::new(
+                    &CurveParameterRange2::unit(),
+                    None
+                )
+                .contains_finite_range(&span.range, self.policy),
+                Ok(Classification::Decided(true))
+            )
+        })
     }
 
     fn circle_rational(
@@ -885,7 +884,13 @@ impl Pair<'_> {
                 _ => {}
             }
         }
-        self.require_unit_domain(span)?;
+        if !self.unit_domain_covers(span) {
+            return Err(ExactCurveError::blocked(
+                CurveOperation2::Intersection,
+                span.support.family(),
+                UncertaintyReason::Unsupported,
+            ));
+        }
         let intersections = match span.range.as_bezier_parameters() {
             Some((start, end)) => circle.semicircle().parallel_intersections_in_range(
                 parallel,
@@ -1406,15 +1411,24 @@ impl Pair<'_> {
                 self.first.support.family(),
             ),
             CurveSupport2::Bezier(source) => {
-                Curve2::from(RationalBezier2::try_from_subcurve(source).map_err(|cause| {
-                    ExactCurveError::invalid(
-                        CurveOperation2::Intersection,
-                        self.first.support.family(),
-                        cause,
-                    )
-                })?)
-                .point_at(parameter, self.policy)
-                .map(CurveOutcome::into_value)
+                let parallel = RationalBezier2::try_from_subcurve(source)
+                    .and_then(|source| source.parallel_left(Real::zero()))
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Intersection,
+                            self.first.support.family(),
+                            cause,
+                        )
+                    })?;
+                crate::bezier_offset::BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                    parallel, parameter, Real::zero(), self.policy,
+                )
+                .map(CurvePoint2::from)
+                .ok_or_else(|| ExactCurveError::blocked(
+                    CurveOperation2::Intersection,
+                    self.first.support.family(),
+                    UncertaintyReason::Unsupported,
+                ))
             }
             _ => Err(ExactCurveError::blocked(
                 CurveOperation2::Intersection,
@@ -1596,8 +1610,25 @@ impl Pair<'_> {
         parallel_first: bool,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
-        for span in [self.first, self.second] {
-            self.require_unit_domain(span)?;
+        if !self.unit_domain_covers(self.first) || !self.unit_domain_covers(self.second) {
+            let zero = rational.parallel_left(Real::zero()).map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    if parallel_first {
+                        self.second
+                    } else {
+                        self.first
+                    }
+                    .support
+                    .family(),
+                    cause,
+                )
+            })?;
+            return if parallel_first {
+                self.finite_parallels(parallel, &zero, result)
+            } else {
+                self.finite_parallels(&zero, parallel, result)
+            };
         }
         let span = if parallel_first {
             self.first
@@ -1817,8 +1848,8 @@ impl Pair<'_> {
         second: &crate::BezierParallel2,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
-        for span in [self.first, self.second] {
-            self.require_unit_domain(span)?;
+        if !self.unit_domain_covers(self.first) || !self.unit_domain_covers(self.second) {
+            return self.finite_parallels(first, second, result);
         }
         let family = self.first.support.family();
         let evidence = decided(
@@ -1830,6 +1861,27 @@ impl Pair<'_> {
             ),
             family,
         )?;
+        self.parallel_evidence(first, second, &evidence, result)
+    }
+
+    fn finite_parallels(
+        &self,
+        first: &crate::BezierParallel2,
+        second: &crate::BezierParallel2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let (evidence, positive_dimensional) = decided(
+            first.parallel_intersections_in_domain(
+                second,
+                [self.first, self.second]
+                    .map(|span| crate::bezier_split::CurveParameterDomain2::new(&span.range, None)),
+                crate::bezier_offset::ParameterComponentQuery2::RetainFinite,
+                self.policy,
+            ),
+            self.first.support.family(),
+        )?
+        .into_parts();
+        debug_assert!(!positive_dimensional, "finite pairs retain every component");
         self.parallel_evidence(first, second, &evidence, result)
     }
 
@@ -3339,6 +3391,241 @@ mod analytic_dispatch_tests {
     }
     fn trim(curve: &Curve2, start: Real, end: Real, policy: &CurveContext) -> Curve2 {
         certified(curve.subcurve(start.into(), end.into(), policy).unwrap())
+    }
+
+    fn finite_parallel(
+        source: QuadraticBezier2,
+        distance: Real,
+        bounds: [Real; 2],
+        policy: &CurveContext,
+    ) -> Curve2 {
+        Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(exact(
+            BezierParallelFragment2::try_new(
+                source.parallel_left(distance).unwrap(),
+                BezierParameterRange2::from_exact(bounds[0].clone(), bounds[1].clone()),
+                policy,
+            )
+            .unwrap(),
+        )))
+    }
+
+    #[test]
+    fn finite_analytic_pairs_replay_transverse_and_tangent_contacts() {
+        // P(t)=(t,(t-2)^2), d=-1/4: x is strictly increasing,
+        // and its unique minimum is the exact point (2,-1/4).
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let cap = finite_parallel(
+                QuadraticBezier2::new(p(0, 4), Point2::new(q(1, 2), 2.into()), p(1, 1)),
+                q(-1, 4),
+                [1.into(), 3.into()],
+                &policy,
+            );
+            let vertical = finite_parallel(
+                QuadraticBezier2::new(
+                    Point2::new(q(9, 4), 0.into()),
+                    Point2::new(q(9, 4), q(1, 2)),
+                    Point2::new(q(9, 4), 1.into()),
+                ),
+                q(1, 4),
+                [(-1).into(), 1.into()],
+                &policy,
+            );
+            let rational_vertical = Curve2::from(LineSeg2::try_new(p(2, -1), p(2, 1)).unwrap());
+            let exterior_vertical = finite_rational(
+                RationalBezier2::try_new(vec![p(2, 0), p(2, 1)], vec![Real::one(); 2]).unwrap(),
+                [(-1).into(), 1.into()],
+                false,
+                &policy,
+            );
+            let selected_vertical = finite_rational(
+                RationalBezier2::try_new(vec![p(2, 0), p(2, 1)], vec![Real::one(); 2]).unwrap(),
+                [(-1).into(), 1.into()],
+                true,
+                &policy,
+            );
+            let tangent = Curve2::from(
+                LineSeg2::try_new(
+                    Point2::new(1.into(), q(-1, 4)),
+                    Point2::new(3.into(), q(-1, 4)),
+                )
+                .unwrap(),
+            );
+            let disjoint = Curve2::from(LineSeg2::try_new(p(1, -1), p(3, -1)).unwrap());
+            for (other, count, transverse) in [
+                (&vertical, 1, true),
+                (&rational_vertical, 1, true),
+                (&exterior_vertical, 1, true),
+                (&selected_vertical, 1, true),
+                (&tangent, 1, false),
+                (&disjoint, 0, false),
+            ] {
+                for reverse in [false, true] {
+                    let cap = oriented(&cap, reverse, &policy);
+                    for swapped in [false, true] {
+                        let (first, second) = if swapped {
+                            (other, &cap)
+                        } else {
+                            (&cap, other)
+                        };
+                        let result = query(first, second, &policy);
+                        assert_eq!(result.contacts().len(), count);
+                        assert!(result.overlaps().is_empty());
+                        for contact in result.contacts() {
+                            assert_eq!(contact.is_certified_transverse(), transverse);
+                            let expected = Point2::new(2.into(), q(-1, 4)).into();
+                            same(contact.point(), &expected, &policy);
+                            for (curve, location) in
+                                [(first, contact.first()), (second, contact.second())]
+                            {
+                                let point = certified(
+                                    curve
+                                        .point_at(
+                                            &exact(location.parameter(&policy).unwrap()),
+                                            &policy,
+                                        )
+                                        .unwrap(),
+                                );
+                                same(&point, &expected, &policy);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_analytic_pairs_retain_components_in_the_original_charts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let finite = finite_parallel(
+                QuadraticBezier2::new(p(0, 4), Point2::new(q(1, 2), 2.into()), p(1, 1)),
+                q(-1, 4),
+                [1.into(), 3.into()],
+                &policy,
+            );
+            let native = finite_parallel(
+                QuadraticBezier2::new(p(1, 1), p(2, -1), p(3, 1)),
+                q(-1, 4),
+                [0.into(), 1.into()],
+                &policy,
+            );
+            for reverse in [false, true] {
+                let native = oriented(&native, reverse, &policy);
+                for swapped in [false, true] {
+                    let (first, second) = if swapped {
+                        (&native, &finite)
+                    } else {
+                        (&finite, &native)
+                    };
+                    let result = query(first, second, &policy);
+                    assert_eq!(result.overlaps().len(), 1, "{result:?}");
+                    assert!(result.contacts().is_empty());
+                    assert_eq!(
+                        result.overlaps()[0].orientation(),
+                        if reverse {
+                            RationalBezierOverlapOrientation2::Reversed
+                        } else {
+                            RationalBezierOverlapOrientation2::Same
+                        },
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_analytic_constant_images_retain_the_complete_parameter_fiber() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let cap = finite_parallel(
+                QuadraticBezier2::new(p(0, 4), Point2::new(q(1, 2), 2.into()), p(1, 1)),
+                q(-1, 4),
+                [1.into(), 3.into()],
+                &policy,
+            );
+            let point = Point2::new(2.into(), q(-1, 4));
+            let constant = finite_parallel(
+                QuadraticBezier2::new(point.clone(), point.clone(), point.clone()),
+                Real::zero(),
+                [2.into(), 3.into()],
+                &policy,
+            );
+            let rational = RationalBezier2::try_new(
+                vec![point.clone(), point.clone()],
+                vec![Real::one(), -Real::one()],
+            )
+            .unwrap();
+            let rational =
+                Curve2::from_retained_fragment(BezierSplitFragment2::AnalyticParallel(exact(
+                    BezierParallelFragment2::try_new(
+                        rational.parallel_left(Real::zero()).unwrap(),
+                        BezierParameterRange2::from_exact(2.into(), 3.into()),
+                        &policy,
+                    )
+                    .unwrap(),
+                )));
+            for constant in [constant, rational] {
+                for swapped in [false, true] {
+                    let (first, second) = if swapped {
+                        (&constant, &cap)
+                    } else {
+                        (&cap, &constant)
+                    };
+                    let result = query(first, second, &policy);
+                    let [component] = result.parameter_components() else {
+                        panic!("one point-image fiber: {result:?}")
+                    };
+                    same(component.point(), &point.clone().into(), &policy);
+                    let (single, fiber) = if swapped {
+                        (component.second_parameters(), component.first_parameters())
+                    } else {
+                        (component.first_parameters(), component.second_parameters())
+                    };
+                    let CurveParameterSet2::Single(parameter) = single else {
+                        panic!("one cap visit")
+                    };
+                    assert_eq!(
+                        parameter
+                            .same_value(&Real::from(2).into(), &policy)
+                            .unwrap(),
+                        Classification::Decided(true),
+                    );
+                    let CurveParameterSet2::Range(range) = fiber else {
+                        panic!("the full constant domain")
+                    };
+                    assert_eq!(
+                        range.scalar_endpoints(),
+                        Some((&Real::from(2), &Real::from(3)))
+                    );
+                }
+                // Ordinary incidence retains the whole parameter rectangle,
+                // even when both operands are the same constant support.
+                // It does not apply the off-diagonal self-intersection rule.
+                let result = query(&constant, &constant, &policy);
+                let [component] = result.parameter_components() else {
+                    panic!("one constant-image parameter rectangle: {result:?}")
+                };
+                assert!(result.contacts().is_empty() && result.overlaps().is_empty());
+                same(component.point(), &point.clone().into(), &policy);
+                for parameters in [component.first_parameters(), component.second_parameters()] {
+                    let CurveParameterSet2::Range(range) = parameters else {
+                        panic!("the complete constant domain")
+                    };
+                    assert_eq!(
+                        range.scalar_endpoints(),
+                        Some((&Real::from(2), &Real::from(3)))
+                    );
+                }
+                let disjoint = finite_parallel(
+                    QuadraticBezier2::new(p(7, 8), p(7, 8), p(7, 8)),
+                    Real::zero(),
+                    [2.into(), 3.into()],
+                    &policy,
+                );
+                for (first, second) in [(&constant, &disjoint), (&disjoint, &constant)] {
+                    assert!(query(first, second, &policy).is_disjoint());
+                }
+            }
+        }
     }
 
     #[test]
