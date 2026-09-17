@@ -87,7 +87,25 @@ impl BoundInfo {
         Self::with_sign(r.sign(), r.msd_exact())
     }
 
-    #[cfg(not(verus_keep_ghost))]
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        requires match self {
+            Self::NonZero { msd: Some(value), .. } => call_requires(f, (value,)),
+            _ => true,
+        },
+        ensures match self {
+            Self::NonZero { sign, msd, exact_msd } => match result {
+                Self::NonZero { sign: result_sign, msd: result_msd, exact_msd: result_exact } =>
+                    result_sign == sign && result_exact == exact_msd
+                    && match msd {
+                        Some(value) => call_ensures(f, (value,), result_msd),
+                        None => result_msd == None,
+                    },
+                _ => false,
+            },
+            _ => result == self,
+        },
+    ))]
     fn map_msd(self, f: impl FnOnce(Precision) -> Option<Precision>) -> Self {
         match self {
             Self::NonZero {

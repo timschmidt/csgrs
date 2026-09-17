@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies sixty-five production contracts (sixty-four
-functions and one constant) and ninety-five arithmetic model theorems. The rest
+The current proof target verifies sixty-six production contracts (sixty-five
+functions and one constant) and ninety-seven arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -80,12 +80,12 @@ dependency on Verus. The annotation mechanism is described in the upstream
 [attribute syntax guide](https://verus-lang.github.io/verus/guide/exec_attr.html).
 
 The proof target also includes the production `computable/node/bounds.rs`
-directly. Nine constructor, transformation and query contracts preserve the
+directly. Ten constructor, transformation and query contracts preserve the
 typed bound state, exponent calculations and the distinction between zero and
-an unavailable exponent. Eight denotation lemmas connect these checked contracts
+an unavailable exponent. Ten denotation lemmas connect these checked contracts
 to sign, nonzero and exact real-binade certificates, conditional on valid input
 bounds. They do not yet establish the denotation of an incoming bound or cache.
-Rational import, mapping callbacks, addition, square,
+Rational import, production mapping callbacks, addition, square,
 multiplication, public magnitude conversion, constants and concurrent caches
 remain outside this added boundary. Normal builds retain every operation.
 
@@ -101,6 +101,7 @@ attribute implementation and disappear from normal builds.
 | Executable kernel | Checked behavior | Production caller |
 | --- | --- | --- |
 | `BoundInfo::with_sign`, `BoundInfo::with_sign_msd` | Complete typed constructor result, including nonzero signs with unavailable exponents. | Computable structural bound construction |
+| `BoundInfo::map_msd` | Preserves every non-magnitude field and maps exactly the available exponent through the callback's contract; zero, unknown and unavailable exponents retain their distinct states. | Binary-offset bound propagation |
 | `BoundInfo::negate`, `BoundInfo::inverse`, `BoundInfo::sqrt`, `negate_sign` | Exact sign/metadata transformation; inverse exponent overflow remains unavailable; square-root exponents use floor division. | Computable bound propagation |
 | `BoundInfo::known_msd`, `BoundInfo::planning_msd`, `BoundInfo::known_sign` | Zero sentinel iff the bound is `Zero`, and returned exponents/signs match the stored metadata. | Computable magnitude/sign queries |
 | `approximation_scale_plan` | Exact direction and shift count for every `i32` precision, including the `2^31` left shift at `i32::MIN`. | Integer-leaf approximation |
@@ -228,6 +229,11 @@ Each lemma names the checked production method through `call_ensures`; no
 copied implementation supplies those contracts. Inexact planning magnitudes
 have no claimed error bound here. Establishing valid inputs in the expression
 graph, rational import, cache publication and all callers remains open.
+Binary scaling shifts exact real binades by the same mathematical exponent.
+The mapping refinement connects this fact to `map_msd` when its callback returns
+the checked exponent sum; unrepresentable results retain valid sign and nonzero
+certificates without asserting a magnitude. The production callback closures
+and the expression graph's incoming certificates still need caller proofs.
 The checked bit-length helper proves the final exponent range calculation.
 Its shared exponent specification is connected to five theorems in
 [`magnitude_model.rs`](magnitude_model.rs). Bit-length bounds and one aligned

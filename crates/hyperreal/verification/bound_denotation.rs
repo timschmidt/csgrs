@@ -138,4 +138,43 @@ proof fn queried_sign_is_a_certificate(bound: &BoundInfo, value: real, result: O
     requires bound_denotes(*bound, value), call_ensures(BoundInfo::known_sign, (bound,), result),
     ensures sign_denotes(result, value),
 {}
+proof fn binary_scaling_preserves_real_binade(value: real, exponent: int, offset: int)
+    requires real_binade(value, exponent),
+    ensures real_binade(value * binary_unit(offset), exponent + offset),
+{
+    binary_unit_positive(offset);
+    binary_unit_composes(exponent, offset);
+    let scale = binary_unit(offset);
+    let unit = binary_unit(exponent);
+    assert(absolute(value * scale) == absolute(value) * scale) by (nonlinear_arith)
+        requires scale > 0real;
+    assert(real_binade(value * scale, exponent + offset)) by (nonlinear_arith)
+        requires scale > 0real, unit <= absolute(value) < 2real * unit,
+            absolute(value * scale) == absolute(value) * scale,
+            binary_unit(exponent + offset) == unit * scale;
+}
+
+proof fn binary_offset_preserves_bound_denotation<F: FnOnce(i32) -> Option<i32>>(
+    bound: BoundInfo, value: real, offset: int, f: F, result: BoundInfo,
+)
+    requires bound_denotes(bound, value),
+        forall|exponent: i32, mapped: Option<i32>| #[trigger] call_ensures(f, (exponent,), mapped)
+            ==> mapped == checked_metadata_exponent(exponent as int + offset),
+        call_ensures(BoundInfo::map_msd, (bound, f), result),
+    ensures bound_denotes(result, value * binary_unit(offset)),
+{
+    binary_unit_positive(offset);
+    assert(value > 0real ==> value * binary_unit(offset) > 0real) by (nonlinear_arith)
+        requires binary_unit(offset) > 0real;
+    assert(value < 0real ==> value * binary_unit(offset) < 0real) by (nonlinear_arith)
+        requires binary_unit(offset) > 0real;
+    assert(value != 0real ==> value * binary_unit(offset) != 0real) by (nonlinear_arith)
+        requires binary_unit(offset) > 0real;
+    match bound {
+        BoundInfo::NonZero { msd: Some(exponent), exact_msd: true, .. } => {
+            binary_scaling_preserves_real_binade(value, exponent as int, offset);
+        },
+        _ => {},
+    }
+}
 }

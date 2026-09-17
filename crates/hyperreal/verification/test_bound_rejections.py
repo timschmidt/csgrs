@@ -16,6 +16,10 @@ MUTATIONS = [
     ('with_sign_msd', 'Sign::NoSign => Self::Zero,', 'Sign::NoSign => Self::Unknown,'),
     ('with_sign_msd', 'sign: Some(sign),', 'sign: Some(Sign::NoSign),'),
     ('with_sign_msd', '                msd,', '                msd: None,'),
+    ('map_msd', 'msd: msd.and_then(f),', 'msd: None,'),
+    ('map_msd', 'msd: msd.and_then(f),\n                exact_msd,',
+     'msd: msd.and_then(f),\n                exact_msd: false,'),
+    ('map_msd', 'other => other,', 'other => Self::Unknown,'),
     ('negate', '} => Self::NonZero {\n                sign: Some(Sign::Minus),',
      '} => Self::NonZero {\n                sign: Some(Sign::Plus),'),
     ('inverse', '1_i32.checked_sub(value)', '1_i32.checked_add(value)'),
@@ -42,6 +46,12 @@ MODEL_MUTATIONS = [
      'ensures real_binade(root, exponent as int / 2 + 1),'),
     ('zero certificate', 'ensures result == Some(None) ==> value == 0real,',
      'ensures result == Some(None) ==> value != 0real,'),
+    ('binary scaling exponent', 'ensures real_binade(value * binary_unit(offset), exponent + offset),',
+     'ensures real_binade(value * binary_unit(offset), exponent + offset + 1),'),
+    ('mapped offset direction', 'ensures bound_denotes(result, value * binary_unit(offset)),',
+     'ensures bound_denotes(result, value * binary_unit(-offset)),'),
+    ('mapping callback', '==> mapped == checked_metadata_exponent(exponent as int + offset),',
+     '==> mapped == checked_metadata_exponent(exponent as int),'),
 ]
 
 
