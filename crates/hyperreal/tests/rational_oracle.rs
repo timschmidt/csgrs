@@ -22,6 +22,51 @@ proptest! {
     #![proptest_config(ProptestConfig::with_cases(2_048))]
 
     #[test]
+    fn binary32_import_matches_independent_exact_rational(bits in any::<u32>()) {
+        let value = f32::from_bits(bits);
+        let actual = Rational::try_from(value);
+        if let Some(expected) = BigRational::from_float(value) {
+            let actual = actual.expect("finite binary32 value");
+            prop_assert_eq!(BigInt::from_biguint(actual.sign(), actual.numerator().clone()), expected.numer().clone());
+            prop_assert_eq!(BigInt::from(actual.denominator().clone()), expected.denom().clone());
+        } else if value.is_nan() {
+            prop_assert_eq!(actual, Err(Problem::NotANumber));
+        } else {
+            prop_assert_eq!(actual, Err(Problem::Infinity));
+        }
+    }
+
+    #[test]
+    fn binary64_import_matches_independent_exact_rational(bits in any::<u64>()) {
+        let value = f64::from_bits(bits);
+        let actual = Rational::try_from(value);
+        if let Some(expected) = BigRational::from_float(value) {
+            let actual = actual.expect("finite binary64 value");
+            prop_assert_eq!(BigInt::from_biguint(actual.sign(), actual.numerator().clone()), expected.numer().clone());
+            prop_assert_eq!(BigInt::from(actual.denominator().clone()), expected.denom().clone());
+        } else if value.is_nan() {
+            prop_assert_eq!(actual, Err(Problem::NotANumber));
+        } else {
+            prop_assert_eq!(actual, Err(Problem::Infinity));
+        }
+    }
+
+    #[test]
+    fn two_limb_reduction_matches_independent_gcd(
+        numerator in any::<u128>(),
+        denominator in 1_u128..=u128::MAX,
+        negative in any::<bool>(),
+    ) {
+        let numerator = if negative { -BigInt::from(numerator) } else { BigInt::from(numerator) };
+        let expected = BigRational::new(numerator.clone(), BigInt::from(denominator));
+        let actual = Rational::from_bigint_fraction(numerator, BigUint::from(denominator)).unwrap();
+        // Compare canonical parts directly, so a defect in Hyperreal's own
+        // equality implementation cannot make this oracle check pass.
+        prop_assert_eq!(BigInt::from_biguint(actual.sign(), actual.numerator().clone()), expected.numer().clone());
+        prop_assert_eq!(BigInt::from(actual.denominator().clone()), expected.denom().clone());
+    }
+
+    #[test]
     fn construction_and_arithmetic_match_big_rational(
         an in -1_000_000_i64..=1_000_000,
         ad in 1_u64..=1_000_000,

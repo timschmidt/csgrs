@@ -12,6 +12,7 @@
 //! or return explicit uncertainty without hiding primitive-float fallbacks.
 
 mod rational;
+mod verified;
 pub use crate::rational::{
     ExactDyadicLine2, ExactDyadicLineParameters2, ExactDyadicLinePoint2,
     ExactDyadicWideLineParameters2, ExactDyadicWideLinePoint2, Rational,

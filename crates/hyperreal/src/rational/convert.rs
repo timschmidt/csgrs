@@ -1,3 +1,4 @@
+use crate::verified::float::{FloatParts, decode_f32, decode_f64};
 use crate::{Problem, Rational};
 use num::BigUint;
 use num::bigint::Sign;
@@ -109,44 +110,28 @@ impl TryFrom<f32> for Rational {
     type Error = Problem;
 
     fn try_from(n: f32) -> Result<Rational, Self::Error> {
-        // Decode IEEE-754 directly. This mirrors the f64 path and keeps exact
-        // binary fractions in dyadic form instead of promoting to a larger ratio.
-        const NEG_BITS: u32 = 0x8000_0000;
-        const EXP_BITS: u32 = 0x7f80_0000;
-        const SIG_BITS: u32 = 0x007f_ffff;
-        debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u32::MAX);
-
-        let bits = n.to_bits();
-        let neg = (bits & NEG_BITS) == NEG_BITS;
-        let exp = (bits & EXP_BITS) >> EXP_BITS.trailing_zeros();
-        let sig = bits & SIG_BITS;
-        match exp {
-            0 => {
-                if sig == 0 {
-                    Ok(Rational::zero())
+        match decode_f32(n.to_bits()) {
+            FloatParts::Finite {
+                negative,
+                significand,
+                exponent,
+            } => {
+                if exponent <= 0 {
+                    // The decoder proves that binary32 significands fit 24 bits.
+                    Ok(pow2_fraction_u32(
+                        significand as u32,
+                        (-exponent) as u32,
+                        negative,
+                    ))
                 } else {
-                    Ok(pow2_fraction_u32(sig, 149, neg))
+                    Ok(integer_from_unsigned_magnitude(
+                        BigUint::from(significand) << exponent as u32,
+                        negative,
+                    ))
                 }
             }
-            1..=150 => {
-                let n = SIG_BITS + 1 + sig;
-                Ok(pow2_fraction_u32(n, 150 - exp, neg))
-            }
-            151..=254 => {
-                let n = SIG_BITS + 1 + sig;
-                Ok(integer_from_unsigned_magnitude(
-                    BigUint::from(n) << (exp - 150),
-                    neg,
-                ))
-            }
-            255 => {
-                if sig == 0 {
-                    Err(Problem::Infinity)
-                } else {
-                    Err(Problem::NotANumber)
-                }
-            }
-            _ => unreachable!(),
+            FloatParts::Infinity => Err(Problem::Infinity),
+            FloatParts::NotANumber => Err(Problem::NotANumber),
         }
     }
 }
@@ -155,43 +140,23 @@ impl TryFrom<f64> for Rational {
     type Error = Problem;
 
     fn try_from(n: f64) -> Result<Rational, Self::Error> {
-        // Decode IEEE-754 directly instead of formatting through decimal or
-        // building a general ratio first. Most finite f64 values are dyadic;
-        // preserving that representation keeps later exact rational arithmetic
-        // on the reduced power-of-two fast path.
-        const NEG_BITS: u64 = 0x8000_0000_0000_0000;
-        const EXP_BITS: u64 = 0x7ff0_0000_0000_0000;
-        const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
-        debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u64::MAX);
-
-        let bits = n.to_bits();
-        let neg = (bits & NEG_BITS) == NEG_BITS;
-        let exp = (bits & EXP_BITS) >> EXP_BITS.trailing_zeros();
-        let sig = bits & SIG_BITS;
-        let rational = match exp {
-            0 => {
-                if sig == 0 {
-                    Rational::zero()
+        let rational = match decode_f64(n.to_bits()) {
+            FloatParts::Finite {
+                negative,
+                significand,
+                exponent,
+            } => {
+                if exponent <= 0 {
+                    pow2_fraction_u64(significand, (-exponent) as u32, negative)
                 } else {
-                    pow2_fraction_u64(sig, 1074, neg)
+                    integer_from_unsigned_magnitude(
+                        BigUint::from(significand) << exponent as u32,
+                        negative,
+                    )
                 }
             }
-            1..=1075 => {
-                let n = SIG_BITS + 1 + sig;
-                pow2_fraction_u64(n, (1075 - exp) as u32, neg)
-            }
-            1076..=2046 => {
-                let n = SIG_BITS + 1 + sig;
-                integer_from_unsigned_magnitude(BigUint::from(n) << (exp - 1075), neg)
-            }
-            2047 => {
-                if sig == 0 {
-                    return Err(Problem::Infinity);
-                } else {
-                    return Err(Problem::NotANumber);
-                }
-            }
-            _ => unreachable!(),
+            FloatParts::Infinity => return Err(Problem::Infinity),
+            FloatParts::NotANumber => return Err(Problem::NotANumber),
         };
         rational.mark_exact_f64_view();
         Ok(rational)

@@ -182,15 +182,12 @@ fn normalized_biguint_significand_interval(value: &BigUint) -> Option<(u64, u64,
 }
 
 fn compare_word_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp::Ordering> {
-    let left_cross = left
-        .numerator
-        .to_u128()?
-        .checked_mul(right.denominator.to_u128()?)?;
-    let right_cross = right
-        .numerator
-        .to_u128()?
-        .checked_mul(left.denominator.to_u128()?)?;
-    Some(left_cross.cmp(&right_cross))
+    crate::verified::word::compare_products(
+        left.numerator.to_u128()?,
+        left.denominator.to_u128()?,
+        right.numerator.to_u128()?,
+        right.denominator.to_u128()?,
+    )
 }
 
 fn compare_dyadic_magnitudes(left: &Rational, right: &Rational) -> Option<std::cmp::Ordering> {

@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+"""Check that the production contracts reject plausible arithmetic defects."""
+
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+from verify_verus import ROOT, verifier  # noqa: E402
+
+
+MUTATIONS = [
+    ("float.rs", "exponent: -149,", "exponent: -148,"),
+    ("float.rs", "exponent: -1074,", "exponent: -1073,"),
+    ("word.rs", "Some(left.cmp(&right))", "Some(right.cmp(&left))"),
+    ("word.rs", "Some((false, 0))", "Some((false, 1))"),
+    ("word.rs", "value.checked_mul(1_u128 << shift)", "value.checked_add(1_u128 << shift)"),
+    ("division.rs", "return difference;", "return 0;"),
+    ("division.rs", "smaller = remainder;", "smaller = 0;"),
+    ("gcd.rs", "64 + ((value >> 64) as u64).trailing_zeros()",
+     "63 + ((value >> 64) as u64).trailing_zeros()"),
+    ("gcd.rs", "table[start] = small_gcd((start / 64) as u8, (start % 64) as u8);",
+     "table[start] = 0;"),
+    ("gcd.rs", "return left << common_shift;", "return left;"),
+    ("gcd.rs", "return 1_u128 << shift;", "return 1_u128;"),
+    ("gcd.rs", "divisor << common_shift\n", "divisor\n"),
+    ("limbs.rs", "return ordering;", "return Ordering::Equal;"),
+    ("limbs.rs", "first_borrow || second_borrow", "first_borrow && second_borrow"),
+    ("limbs.rs", "words[index] = shifted;\n        index += 1;",
+     "words[index] = 0;\n        index += 1;"),
+    ("limbs.rs", "return index as u32 * 64 + word.trailing_zeros();",
+     "return word.trailing_zeros();"),
+    ("limbs.rs", "words[index] = shifted;\n    }\n    proof! {\n        let source = word_left_shifted",
+     "words[index] = 0;\n    }\n    proof! {\n        let source = word_left_shifted"),
+    ("limbs.rs", "Some(words[0] as u128 | (words[1] as u128) << 64)",
+     "Some(words[0] as u128)"),
+    ("fixed_gcd.rs", "shift: common_shift,", "shift: 0,"),
+]
+
+
+def main():
+    verus = verifier()
+    with tempfile.TemporaryDirectory(prefix="hyperreal-proof-rejections-") as temporary:
+        root = Path(temporary)
+        source = root / "verified"
+        shutil.copytree(ROOT / "src/verified", source)
+        (root / "lib.rs").write_text("#![feature(proc_macro_hygiene)]\nmod verified;\n")
+        command = [str(verus), "--edition=2024", "--crate-type=lib", "--no-cheating", str(root / "lib.rs")]
+        baseline = subprocess.run(command, capture_output=True, text=True)
+        if baseline.returncode:
+            sys.exit(f"Unmutated kernel proofs failed:\n{baseline.stdout}{baseline.stderr}")
+        for name, before, after in MUTATIONS:
+            path = source / name
+            original = path.read_text()
+            if original.count(before) != 1:
+                sys.exit(f"Mutation no longer uniquely matches {name}: {before}")
+            path.write_text(original.replace(before, after))
+            result = subprocess.run(command, capture_output=True, text=True)
+            path.write_text(original)
+            if result.returncode == 0 or not any(message in result.stderr for message in
+                ["postcondition not satisfied", "invariant not satisfied"]):
+                sys.exit(f"Expected contract rejection for {name}: {after}\n{result.stdout}{result.stderr}")
+            print(f"Rejected incorrect {name}: {after}")
+        # The production runner's --no-cheating gate must also reject an
+        # attempted proof bypass, even if every postcondition becomes vacuous.
+        path = source / "word.rs"
+        original = path.read_text()
+        before = "let left = left_numerator.checked_mul(right_denominator)?;"
+        path.write_text(original.replace(before, "proof! { assume(false); }\n" + before))
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode == 0 or "not allowed" not in result.stderr:
+            sys.exit(f"Expected rejection of assume(false):\n{result.stdout}{result.stderr}")
+        print("Rejected attempted assumption bypass")
+
+
+if __name__ == "__main__":
+    main()
