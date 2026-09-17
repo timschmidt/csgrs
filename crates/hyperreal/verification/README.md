@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies thirty-eight production contracts (thirty-seven
-functions and one constant) and forty-one arithmetic model theorems. The rest
+The current proof target verifies forty-two production contracts (forty-one
+functions and one constant) and forty-four arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -83,6 +83,10 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `accumulate::highest_nonzero`, `accumulate::aligned_digit`, `accumulate::add_word` | Exact highest occupied limb, shifted digit and addition with carry for all admissible inputs. | Direct shifted accumulation |
 | `accumulate::add_shifted` | Exact in-place addition of a product times `2^shift`; `None` iff the mathematical sum exceeds the buffer. An oversized addend leaves the buffer unchanged; carry overflow leaves the sum modulo the buffer width. Zero products, arbitrary `u64` shifts, bounds and termination are covered. | Dyadic product accumulators |
 | `accumulate::add_product`, `accumulate::add_wide_product` | Composition of multiplication, alignment and accumulation, including overflow and resulting buffer contents, with helper preconditions discharged. The wide wrapper retains both scalar-width paths. | `DyadicStackAccumulator` |
+| `limbs::resize` | Exact conversion between limb widths, including zero extension and empty buffers; `None` iff the input cannot fit the output width. | Wide dyadic result conversion |
+| `dyadic::difference` | Exact sign and magnitude of the positive accumulator minus the negative accumulator; `None` iff they cancel to zero. | `dyadic::finish` |
+| `dyadic::normalize` | Exact removal of the common binary factor, preserving a positive magnitude and producing an integer or odd numerator. The resulting numerator and power-of-two denominator have GCD one. | `dyadic::finish` |
+| `dyadic::finish` | Composition of difference and reduction with helper preconditions discharged: exact zero/sign classification, bounded exponent reduction, coprimality and preservation of the signed fraction by cross multiplication. | `Rational::finish_dyadic_stack_sum` |
 
 The GCD specification is proved to preserve exactly the positive common
 divisors, to be positive away from `(0, 0)`, and to be the greatest common
@@ -104,6 +108,10 @@ The alignment theorems characterize the highest shifted limb and prove that
 the assembled digits denote multiplication by the corresponding power of two.
 Accumulation then preserves the complete integer sum plus the pending carry;
 its final overflow decision and partially written failure state are proved.
+Dyadic reduction lemmas prove exact division by a prefix of a known binary
+factor, preservation of the signed fraction, and coprimality of a canonical
+dyadic numerator and denominator. The finishing kernel composes these with
+the existing limb comparison, subtraction, trailing-zero and shift proofs.
 [`rational_model.rs`](rational_model.rs) defines signed, unbounded
 fractions with positive denominators, without assuming canonical reduction.
 Its seventeen theorems establish equivalence and ordering laws, rescaling,
@@ -128,9 +136,11 @@ Dyadic multiplication uses the same verified generic kernel for 2×2, 4×1,
 4×2 and 4×4 limbs. The product accumulators also use verified alignment and
 addition without allocating another full-width buffer. Their array lengths
 must not exceed `u32::MAX / 64`; production uses at most six limbs. Signed
-differences, normalization, parameter comparison and the surrounding geometric
-algorithms still need their own implementation proofs. These kernels alone
-do not establish the full dyadic or geometry API contracts.
+differences, normalization and the result-width checks now use verified
+kernels too. The loops that plan scales and dispatch signed terms, the sign
+type adapters, `BigUint` materialization, parameter comparisons and surrounding
+geometric algorithms still need implementation proofs. These kernels alone do
+not establish the full dyadic or geometry API contracts.
 
 The table uses a bounded-depth recursive traversal during const evaluation;
 its values are computed by the same verified functions in both builds. The
@@ -144,7 +154,7 @@ proves conversion to `usize` is safe, including on narrower targets.
 No project assumptions were added to cover these operations.
 
 `test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of thirty-six
+first verifies the unmodified bodies, and then requires rejection of forty-two
 incorrect implementations and an attempted assumption bypass. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
@@ -167,6 +177,12 @@ widths, empty inputs and outputs, zero padding, `u64::MAX` shifts, exact sums,
 and both failure-state cases against `BigUint`. Mutations reject lost carry,
 incorrect zero/fallback results, broken digit extraction and ignored shifts
 in both product wrappers.
+Finishing tests compare signed numerators and canonical denominators directly
+with `BigRational`, exercising every trailing-zero position across the stack,
+borrow chains, cancellation, both signs and maximal exponent metadata. Width
+conversion tests check every single-bit boundary, padding, truncation and
+empty buffers. Mutations reject wrong signs, unreduced output exponents,
+vacuous zero results and corrupt narrowed values.
 
 ## Remaining work and completion criteria
 

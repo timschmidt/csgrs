@@ -815,3 +815,65 @@ pub(crate) fn to_u128<const N: usize>(words: &[u64; N]) -> Option<u128> {
     }
     Some(words[0] as u128 | (words[1] as u128) << 64)
 }
+
+/// Copy into a different limb width, rejecting exactly the values that do
+/// not fit. Larger output buffers are filled with zero above the input.
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures result.is_none() <==> value(words@) >= weight(O as nat),
+        match result {
+            Some(output) => value(output@) == value(words@)
+                && forall|index: int| 0 <= index < O ==> #[trigger] output[index] == limb(words@, index),
+            None => true,
+        },
+))]
+#[inline]
+pub(crate) fn resize<const N: usize, const O: usize>(words: &[u64; N]) -> Option<[u64; O]> {
+    if O < N {
+        let mut index = O;
+        #[cfg_attr(verus_keep_ghost, verus_spec(
+            invariant O <= index <= N,
+                forall|higher: int| O <= higher < index ==> #[trigger] words[higher] == 0,
+            decreases N - index,
+        ))]
+        while index < N {
+            if words[index] != 0 {
+                proof! {
+                    prefix_split(words@, O as int, N as int);
+                    let upper = words@.subrange(O as int, N as int);
+                    prefix_zero(upper, upper.len() as int);
+                    assert(upper[index as int - O] == words[index as int]);
+                    assert(value(upper) > 0);
+                    weight_step(O as nat);
+                    assert(value(words@) >= weight(O as nat)) by (nonlinear_arith)
+                        requires value(words@) == prefix(words@, O as int) + weight(O as nat) * value(upper),
+                            prefix(words@, O as int) >= 0, value(upper) > 0, weight(O as nat) > 0;
+                }
+                return None;
+            }
+            index += 1;
+        }
+    }
+    let mut output = [0_u64; O];
+    let mut index = 0;
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        invariant index <= O,
+            forall|done: int| 0 <= done < index ==> #[trigger] output[done] == limb(words@, done),
+            forall|higher: int| O <= higher < N ==> #[trigger] words[higher] == 0,
+        decreases O - index,
+    ))]
+    while index < O {
+        output[index] = if index < N { words[index] } else { 0 };
+        index += 1;
+    }
+    proof! {
+        if O <= N {
+            prefix_equal(output@, words@, O as int);
+            extend_prefix_zero(words@, O as int, N as int);
+        } else {
+            prefix_equal(output@, words@, N as int);
+            extend_prefix_zero(output@, N as int, O as int);
+        }
+        prefix_bound(output@, O as int);
+    }
+    Some(output)
+}

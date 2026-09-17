@@ -679,62 +679,8 @@ impl DyadicStackAccumulator {
         crate::verified::accumulate::add_wide_product(&mut self.0, &left, right, shift)
     }
 
-    fn difference(positive: Self, negative: Self) -> Option<(Sign, Self)> {
-        let ordering = positive
-            .0
-            .iter()
-            .rev()
-            .cmp(negative.0.iter().rev());
-        let (sign, larger, smaller) = match ordering {
-            Ordering::Greater => (Plus, positive, negative),
-            Ordering::Less => (Minus, negative, positive),
-            Ordering::Equal => return None,
-        };
-        let mut result = Self::default();
-        let mut borrow = false;
-        for index in 0..DYADIC_STACK_LIMBS {
-            let (value, first_borrow) = larger.0[index].overflowing_sub(smaller.0[index]);
-            let (value, second_borrow) = value.overflowing_sub(u64::from(borrow));
-            result.0[index] = value;
-            borrow = first_borrow || second_borrow;
-        }
-        debug_assert!(!borrow);
-        Some((sign, result))
-    }
-
-    fn trailing_zeros(&self) -> u64 {
-        let (index, value) = self
-            .0
-            .iter()
-            .copied()
-            .enumerate()
-            .find(|(_, value)| *value != 0)
-            .expect("nonzero accumulator has a nonzero limb");
-        u64::try_from(index * 64).expect("fixed accumulator width fits u64")
-            + u64::from(value.trailing_zeros())
-    }
-
-    fn shift_right(&mut self, shift: u64) {
-        let word_shift = usize::try_from(shift / 64).expect("bounded shift fits usize");
-        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
-        if word_shift != 0 {
-            self.0.copy_within(word_shift.., 0);
-            self.0[DYADIC_STACK_LIMBS - word_shift..].fill(0);
-        }
-        if bit_shift != 0 {
-            for index in 0..DYADIC_STACK_LIMBS {
-                let high = self.0.get(index + 1).copied().unwrap_or(0);
-                self.0[index] =
-                    (self.0[index] >> bit_shift) | (high << (64 - bit_shift));
-            }
-        }
-    }
-
     fn to_u128(self) -> Option<u128> {
-        self.0[2..]
-            .iter()
-            .all(|value| *value == 0)
-            .then(|| u128::from(self.0[0]) | (u128::from(self.0[1]) << 64))
+        crate::verified::limbs::to_u128(&self.0)
     }
 
     fn into_biguint(self) -> BigUint {
@@ -2966,8 +2912,8 @@ impl Rational {
         negative: DyadicStackAccumulator,
         max_shift: u64,
     ) -> DyadicStackSum {
-        let Some((sign, mut magnitude)) =
-            DyadicStackAccumulator::difference(positive, negative)
+        let Some((minus, magnitude, denominator_shift)) =
+            crate::verified::dyadic::finish(positive.0, negative.0, max_shift)
         else {
             return DyadicStackSum {
                 sign: NoSign,
@@ -2975,12 +2921,10 @@ impl Rational {
                 denominator_shift: 0,
             };
         };
-        let common_shift = magnitude.trailing_zeros().min(max_shift);
-        magnitude.shift_right(common_shift);
         DyadicStackSum {
-            sign,
-            magnitude,
-            denominator_shift: max_shift - common_shift,
+            sign: if minus { Minus } else { Plus },
+            magnitude: DyadicStackAccumulator(magnitude),
+            denominator_shift,
         }
     }
 
@@ -3004,14 +2948,9 @@ impl Rational {
     }
 
     fn dyadic_stack_sum_wide_word(sum: DyadicStackSum) -> Option<DyadicWideWord> {
-        if sum.magnitude.0[4..].iter().any(|limb| *limb != 0) {
-            return None;
-        }
         Some(DyadicWideWord {
             sign: sum.sign,
-            magnitude: sum.magnitude.0[..4]
-                .try_into()
-                .expect("four-limb prefix has fixed width"),
+            magnitude: crate::verified::limbs::resize(&sum.magnitude.0)?,
             denominator_shift: sum.denominator_shift,
         })
     }

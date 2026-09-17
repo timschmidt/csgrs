@@ -38,7 +38,11 @@
     "verified::accumulate::add_word",
     "verified::accumulate::add_shifted",
     "verified::accumulate::add_product",
-    "verified::accumulate::add_wide_product"
+    "verified::accumulate::add_wide_product",
+    "verified::limbs::resize",
+    "verified::dyadic::difference",
+    "verified::dyadic::normalize",
+    "verified::dyadic::finish"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -65,6 +69,9 @@
     "verified::product::prefix_update",
     "verified::accumulate::shifted_extent",
     "verified::accumulate::aligned_value",
+    "verified::dyadic::cancel_power_two",
+    "verified::dyadic::reduction_preserves_fraction",
+    "verified::dyadic::canonical_is_reduced",
     "rational_model::equivalence_reflexive",
     "rational_model::equivalence_symmetric",
     "rational_model::equivalence_transitive",
