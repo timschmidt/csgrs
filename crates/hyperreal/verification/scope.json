@@ -65,7 +65,8 @@
     "computable_bounds::BoundInfo::known_msd",
     "computable_bounds::BoundInfo::planning_msd",
     "computable_bounds::BoundInfo::known_sign",
-    "computable_bounds::negate_sign"
+    "computable_bounds::negate_sign",
+    "computable_bounds::BoundInfo::map_msd"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -162,7 +163,9 @@
     "computable_bounds::positive_root_binade",
     "computable_bounds::square_root_preserves_bound_denotation",
     "computable_bounds::queried_magnitude_is_a_certificate",
-    "computable_bounds::queried_sign_is_a_certificate"
+    "computable_bounds::queried_sign_is_a_certificate",
+    "computable_bounds::binary_scaling_preserves_real_binade",
+    "computable_bounds::binary_offset_preserves_bound_denotation"
   ],
   "obligations": [
     {
