@@ -13,6 +13,7 @@ macro_rules! proof_decl {
     ($($tokens:tt)*) => {};
 }
 
+pub(crate) mod accumulate;
 pub(crate) mod division;
 pub(crate) mod fixed_gcd;
 pub(crate) mod float;

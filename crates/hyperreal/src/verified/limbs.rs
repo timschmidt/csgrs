@@ -197,7 +197,7 @@ proof fn shifted_digit_correct(low: u64, high: u64, shift: u32)
             bottom == (high as nat) % factor, factor * other == radix();
 }
 
-proof fn extend_prefix_zero(words: Seq<u64>, start: int, end: int)
+pub(crate) proof fn extend_prefix_zero(words: Seq<u64>, start: int, end: int)
     requires 0 <= start <= end <= words.len(),
         forall|index: int| start <= index < end ==> #[trigger] words[index] == 0,
     ensures prefix(words, start) == prefix(words, end),
@@ -249,6 +249,8 @@ proof fn shift_prefix_carry(source: Seq<u64>, output: Seq<u64>, factor: nat, len
     if length == 0 {
         lemma2_to64();
         let remainder = (limb(source, 0) as nat) % factor;
+        assert(prefix(output, 0) * factor == 0) by (nonlinear_arith)
+            requires prefix(output, 0) == 0;
         assert(remainder * weight(0) == remainder) by (nonlinear_arith)
             requires weight(0) == 1;
     } else {
@@ -333,16 +335,16 @@ proof fn first_nonzero_factor(words: Seq<u64>, index: int)
         quotient as int, 0);
 }
 
-spec fn word_left_shifted(words: Seq<u64>, shift: nat) -> Seq<u64> {
+pub(crate) open spec fn word_left_shifted(words: Seq<u64>, shift: nat) -> Seq<u64> {
     Seq::new(words.len(), |index: int| limb(words, index - shift))
 }
 
-spec fn left_shifted_limb(words: Seq<u64>, index: int, shift: u32) -> u64 {
+pub(crate) open spec fn left_shifted_limb(words: Seq<u64>, index: int, shift: u32) -> u64 {
     if shift == 0 { limb(words, index) }
     else { (limb(words, index) << shift) | (limb(words, index - 1) >> (64 - shift)) }
 }
 
-proof fn word_left_shift_value(words: Seq<u64>, shift: nat)
+pub(crate) proof fn word_left_shift_value(words: Seq<u64>, shift: nat)
     requires shift < words.len(),
     ensures value(word_left_shifted(words, shift))
         == prefix(words, words.len() as int - shift) * weight(shift),
@@ -372,7 +374,7 @@ proof fn prefix_is_value_below_bound(words: Seq<u64>, length: int)
     assert(weight(length as nat) * tail == 0) by (nonlinear_arith) requires tail == 0;
 }
 
-proof fn left_shifted_digit_correct(current: u64, previous: u64, shift: u32)
+pub(crate) proof fn left_shifted_digit_correct(current: u64, previous: u64, shift: u32)
     requires 0 < shift < 64,
     ensures
         ((current << shift) | (previous >> (64 - shift))) as nat
@@ -434,7 +436,7 @@ proof fn left_shift_prefix_carry(source: Seq<u64>, output: Seq<u64>, factor: nat
     }
 }
 
-proof fn left_shift_value(source: Seq<u64>, output: Seq<u64>, factor: nat, other: nat)
+pub(crate) proof fn left_shift_value(source: Seq<u64>, output: Seq<u64>, factor: nat, other: nat)
     requires factor > 0, other > 0, source.len() == output.len(),
         value(source) * factor < weight(source.len()),
         forall|index: int| 0 <= index < source.len() ==>

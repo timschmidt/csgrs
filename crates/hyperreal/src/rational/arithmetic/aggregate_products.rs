@@ -666,58 +666,8 @@ impl ExactDyadicWideLineParameters2 {
 }
 
 impl DyadicStackAccumulator {
-    /// Add a precomputed magnitude after binary alignment without building a
-    /// second full-width stack value. Product bits occupy disjoint portions of
-    /// adjacent shifted limbs; arithmetic carries are then propagated only as
-    /// far as the occupied result requires.
-    #[inline]
-    fn add_shifted_limbs<const N: usize>(
-        &mut self,
-        product: [u64; N],
-        shift: u64,
-    ) -> Option<()> {
-        let Some(last_source) = product.iter().rposition(|limb| *limb != 0) else {
-            return Some(());
-        };
-        let word_shift = usize::try_from(shift / 64).ok()?;
-        let bit_shift = u32::try_from(shift % 64).expect("limb bit shift fits u32");
-        let has_high_limb =
-            bit_shift != 0 && product[last_source] >> (64 - bit_shift) != 0;
-        let last_offset = last_source + usize::from(has_high_limb);
-        let last_target = word_shift.checked_add(last_offset)?;
-        if last_target >= DYADIC_STACK_LIMBS {
-            return None;
-        }
-
-        let mut carry = false;
-        for offset in 0..=last_offset {
-            let mut addend = product.get(offset).copied().unwrap_or(0) << bit_shift;
-            if bit_shift != 0 && offset != 0 {
-                addend |= product[offset - 1] >> (64 - bit_shift);
-            }
-            let target = word_shift + offset;
-            let (sum, first_carry) = self.0[target].overflowing_add(addend);
-            let (sum, second_carry) = sum.overflowing_add(u64::from(carry));
-            self.0[target] = sum;
-            carry = first_carry || second_carry;
-        }
-
-        let mut target = last_target + 1;
-        while carry {
-            if target == DYADIC_STACK_LIMBS {
-                return None;
-            }
-            let (sum, next_carry) = self.0[target].overflowing_add(1);
-            self.0[target] = sum;
-            carry = next_carry;
-            target += 1;
-        }
-        Some(())
-    }
-
     fn add_product(&mut self, left: u128, right: u128, shift: u64) -> Option<()> {
-        let product = crate::verified::product::multiply_u128(left, right);
-        self.add_shifted_limbs(product, shift)
+        crate::verified::accumulate::add_product(&mut self.0, left, right, shift)
     }
 
     fn add_wide_word_product(
@@ -726,13 +676,7 @@ impl DyadicStackAccumulator {
         right: u128,
         shift: u64,
     ) -> Option<()> {
-        if let Ok(right) = u64::try_from(right) {
-            let product = crate::verified::product::multiply::<4, 1, 5>(&left, &[right]);
-            return self.add_shifted_limbs(product, shift);
-        }
-        let right = crate::verified::product::split_u128(right);
-        let product = crate::verified::product::multiply::<4, 2, DYADIC_STACK_LIMBS>(&left, &right);
-        self.add_shifted_limbs(product, shift)
+        crate::verified::accumulate::add_wide_product(&mut self.0, &left, right, shift)
     }
 
     fn difference(positive: Self, negative: Self) -> Option<(Sign, Self)> {

@@ -32,7 +32,13 @@
     "verified::product::multiply_accumulate",
     "verified::product::multiply",
     "verified::product::split_u128",
-    "verified::product::multiply_u128"
+    "verified::product::multiply_u128",
+    "verified::accumulate::highest_nonzero",
+    "verified::accumulate::aligned_digit",
+    "verified::accumulate::add_word",
+    "verified::accumulate::add_shifted",
+    "verified::accumulate::add_product",
+    "verified::accumulate::add_wide_product"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -57,6 +63,8 @@
     "verified::lehmer::unimodular_preserves_gcd",
     "verified::lehmer::magnitude_row",
     "verified::product::prefix_update",
+    "verified::accumulate::shifted_extent",
+    "verified::accumulate::aligned_value",
     "rational_model::equivalence_reflexive",
     "rational_model::equivalence_symmetric",
     "rational_model::equivalence_transitive",

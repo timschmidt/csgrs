@@ -102,6 +102,70 @@ mod tests {
     }
 
     #[test]
+    fn shifted_accumulation_matches_biguint_and_failure_state() {
+        fn check<const N: usize, const M: usize>() {
+            let mut state = 0x082e_fa98_ec4e_6c89_u64;
+            let width = u64::try_from(64 * M).unwrap();
+            let limit = BigUint::one() << (64 * M);
+            for case in 0..16 {
+                let product: [u64; N] = std::array::from_fn(|index| {
+                    state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                    match case {
+                        0 => 0,
+                        1 => u64::MAX,
+                        2 => if index + 1 == N { 1_u64 << 63 } else { 0 },
+                        3 => u64::from(index == 0),
+                        _ => state,
+                    }
+                });
+                let original: [u64; M] = std::array::from_fn(|index| match case % 3 {
+                    0 => 0,
+                    1 => u64::MAX,
+                    _ => if index.is_multiple_of(2) { u64::MAX } else { 1 },
+                });
+                let source = limbs_to_biguint(&product);
+                let initial = limbs_to_biguint(&original);
+                for shift in (0..=width + 64).chain([u64::MAX]) {
+                    let mut accumulator = original;
+                    let result = crate::verified::accumulate::add_shifted(
+                        &mut accumulator, &product, shift,
+                    );
+                    // Avoid materializing a giant oracle integer for a shift
+                    // that already puts every nonzero source past the buffer.
+                    if !source.is_zero() && shift >= width {
+                        assert_eq!(result, None);
+                        assert_eq!(accumulator, original);
+                        continue;
+                    }
+                    let addend = if source.is_zero() {
+                        BigUint::ZERO
+                    } else {
+                        &source << usize::try_from(shift).unwrap()
+                    };
+                    let total = &initial + &addend;
+                    assert_eq!(result.is_some(), total < limit, "{N}/{M}, case={case}, shift={shift}");
+                    if addend >= limit {
+                        assert_eq!(accumulator, original);
+                    } else {
+                        assert_eq!(limbs_to_biguint(&accumulator), total % &limit);
+                    }
+                }
+            }
+        }
+
+        check::<0, 0>();
+        check::<0, 6>();
+        check::<6, 0>();
+        check::<1, 1>();
+        check::<2, 4>();
+        check::<4, 2>();
+        check::<4, 6>();
+        check::<5, 6>();
+        check::<6, 6>();
+        check::<9, 3>();
+    }
+
+    #[test]
     fn direct_shifted_stack_products_match_biguint_boundaries() {
         let cases = [
             (1_u128, 1_u128, 0_u64),
