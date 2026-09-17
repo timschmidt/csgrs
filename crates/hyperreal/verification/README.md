@@ -180,7 +180,9 @@ from normal Rust builds.
 
 Factor-sequence theorems prove that dividing a factor divides every containing
 prefix, cross-cancelling any pair preserves the complete fraction, and pairwise
-cross-coprimality produces coprime numerator and denominator products. They
+cross-coprimality produces coprime numerator and denominator products. Reducing
+the next pair also preserves coprimality of every pair already processed by
+the numerator-major traversal, including zero numerators. These theorems
 include empty products and zero numerators. Prefix order remains explicit:
 a native checked product can overflow before encountering a later zero.
 

@@ -275,4 +275,53 @@ pub(crate) proof fn mutually_coprime_products(numerators: Seq<u128>, denominator
     }
     coprime_factors(numerators, denominator, numerators.len() as int);
 }
+
+/// Reducing the next pair preserves every already-processed coprime pair.
+/// This is the induction step for the numerator-major cancellation loop.
+pub(crate) proof fn cancel_preserves_processed_coprimality(
+    numerators: Seq<u128>, denominators: Seq<u128>, ni: int, di: int,
+)
+    requires
+        0 <= ni < numerators.len(), 0 <= di < denominators.len(),
+        forall|j: int| 0 <= j < denominators.len() ==> #[trigger] denominators[j] > 0,
+        forall|i: int, j: int| 0 <= i < numerators.len() && 0 <= j < denominators.len()
+            && (i < ni || i == ni && j < di)
+            ==> gcd(#[trigger] numerators[i] as nat, #[trigger] denominators[j] as nat) == 1,
+    ensures ({
+        let divisor = gcd(numerators[ni] as nat, denominators[di] as nat);
+        let ns = numerators.update(ni, (numerators[ni] as nat / divisor) as u128);
+        let ds = denominators.update(di, (denominators[di] as nat / divisor) as u128);
+        &&& forall|j: int| 0 <= j < ds.len() ==> #[trigger] ds[j] > 0
+        &&& forall|i: int, j: int| 0 <= i < ns.len() && 0 <= j < ds.len()
+            && (i < ni || i == ni && j <= di)
+            ==> gcd(#[trigger] ns[i] as nat, #[trigger] ds[j] as nat) == 1
+    }),
+{
+    let numerator = numerators[ni] as nat;
+    let denominator = denominators[di] as nat;
+    let divisor = gcd(numerator, denominator);
+    super::gcd::gcd_reduction(numerator, denominator);
+    super::division::gcd_characterization(numerator, denominator);
+    let n = (numerator / divisor) as u128;
+    let d = (denominator / divisor) as u128;
+    let ns = numerators.update(ni, n);
+    let ds = denominators.update(di, d);
+    assert forall|j: int| 0 <= j < ds.len() implies #[trigger] ds[j] > 0 by {
+        if j != di { assert(ds[j] == denominators[j]); }
+    }
+    assert forall|i: int, j: int| 0 <= i < ns.len() && 0 <= j < ds.len()
+        && (i < ni || i == ni && j <= di)
+        implies gcd(#[trigger] ns[i] as nat, #[trigger] ds[j] as nat) == 1 by {
+        if i == ni && j == di {
+            assert(gcd(n as nat, d as nat) == 1);
+        } else {
+            assert(gcd(numerators[i] as nat, denominators[j] as nat) == 1);
+            if i == ni {
+                coprime_quotients(numerator, denominators[j] as nat, divisor, 1);
+            } else if j == di {
+                coprime_quotients(numerators[i] as nat, denominator, 1, divisor);
+            }
+        }
+    }
+}
 }
