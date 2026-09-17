@@ -152,6 +152,93 @@ fn compare(
 }
 
 impl Curve2 {
+    /// Constructs a finite Bezier image in its original source chart.
+    ///
+    /// The oriented range may extend outside `[0, 1]` and may retain selected
+    /// algebraic parameters. Rational denominators must be nonzero throughout
+    /// this closed range; poles elsewhere on the support do not prevent
+    /// construction. The source equations and endpoint evidence are retained
+    /// without rebasing the control net or reconstructing selected scalars.
+    ///
+    /// The public parameter domain is ascending; the supplied range determines
+    /// traversal. Use [`Self::subcurve`] to restrict an existing finite curve.
+    pub fn try_from_bezier_range(
+        source: BezierSubcurve2,
+        range: CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            let support = CurveSupport2::Bezier(source);
+            let family = support.family();
+            let invalid =
+                |cause| ExactCurveError::invalid(CurveOperation2::Construction, family, cause);
+            let order = decided(
+                range
+                    .start()
+                    .cmp_by_refinement(range.end(), attempt)
+                    .map_err(invalid)?,
+                family,
+            )
+            .map_err(|error| error.with_operation(CurveOperation2::Construction))?;
+            let (range, reversed) = match order {
+                Ordering::Less => (range, false),
+                Ordering::Greater => (
+                    CurveParameterRange2::new_validated(range.end().clone(), range.start().clone()),
+                    true,
+                ),
+                Ordering::Equal => return Err(invalid(CurveError::InvalidCurveRange)),
+            };
+            let CurveSupport2::Bezier(source) = &support else {
+                unreachable!()
+            };
+            let rational = if matches!(
+                source,
+                BezierSubcurve2::RationalQuadratic(_) | BezierSubcurve2::Rational(_)
+            ) || range.as_bezier_parameters().is_none()
+            {
+                Some(RationalBezier2::try_from_subcurve(source).map_err(invalid)?)
+            } else {
+                None
+            };
+            if let Some(rational) = &rational {
+                match rational.denominator_sign(&range) {
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                    result => {
+                        let reason = match result {
+                            Classification::Uncertain(reason) => reason,
+                            _ => UncertaintyReason::Boundary,
+                        };
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Construction,
+                            family,
+                            reason,
+                        ));
+                    }
+                }
+            }
+            let (support, endpoints) = if range.as_bezier_parameters().is_some() {
+                (support, None)
+            } else {
+                let rational = rational.expect("selected Bezier evaluator");
+                let point = |parameter| {
+                    curve_evaluation::rational_point(&rational, parameter, family, attempt)
+                        .map_err(|error| error.with_operation(CurveOperation2::Construction))
+                };
+                let endpoints = [point(range.start())?, point(range.end())?];
+                // The selected points and their restricted support share the
+                // same prepared homogeneous source and coefficient evidence.
+                (
+                    CurveSupport2::Bezier(BezierSubcurve2::Rational(rational)),
+                    Some(endpoints),
+                )
+            };
+            support
+                .restrict_certified(range, endpoints, reversed, attempt)
+                .map(Self::from_retained_fragment)
+                .map_err(invalid)
+        })
+    }
+
     /// Prepares connected spans with their original public parameter charts.
     /// Native curves, selected restrictions and generated supports use the
     /// same shape; cached authored restrictions remain borrowed.

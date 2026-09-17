@@ -256,7 +256,7 @@ fn validate_rational_point(
     }
 }
 
-fn rational_point(
+pub(super) fn rational_point(
     source: &RationalBezier2,
     parameter: &CurveParameter2,
     family: CurveFamily2,
