@@ -131,11 +131,13 @@ impl BoundInfo {
             Self::NonZero {
                 sign: Some(Sign::Plus),
                 msd,
-                ..
+                exact_msd,
             } => Self::NonZero {
                 sign: Some(Sign::Plus),
-                msd: msd.map(|value| value / 2),
-                exact_msd: false,
+                // 2^k <= x < 2^(k+1) implies that sqrt(x)'s binade is
+                // floor(k / 2), including negative odd exponents.
+                msd: msd.map(crate::verified::word::floor_half),
+                exact_msd,
             },
             _ => Self::Unknown,
         }

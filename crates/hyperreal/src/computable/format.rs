@@ -173,7 +173,9 @@ impl fmt::Display for Computable {
         // output precision so cancellation and arbitrarily tiny values remain
         // productive. Zero is also a safe scale when no leading bit is found.
         let stop = -enough_bits(0, f.precision());
-        let msd = self.iter_msd_stop(stop).unwrap_or(0);
+        // A retained exact MSD can be far below `stop`. Fixed decimal places
+        // still need only the absolute output precision, even in that case.
+        let msd = self.iter_msd_stop(stop).unwrap_or(0).max(0);
         let bits = enough_bits(msd, f.precision());
         let appr = self.approx(msd - bits);
         if self.sign_until(msd - bits) == Some(RealSign::Negative) {

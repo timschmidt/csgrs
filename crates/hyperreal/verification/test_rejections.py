@@ -18,6 +18,8 @@ MUTATIONS = [
     ("word.rs", "Some(left.cmp(&right))", "Some(right.cmp(&left))"),
     ("word.rs", "Some((false, 0))", "Some((false, 1))"),
     ("word.rs", "value.checked_mul(1_u128 << shift)", "value.checked_add(1_u128 << shift)"),
+    ("word.rs", "    half\n}", "    value / 2\n}"),
+    ("word.rs", "    half\n}", "    ((value as u32) >> 1) as i32\n}"),
     ("division.rs", "return difference;", "return 0;"),
     ("division.rs", "smaller = remainder;", "smaller = 0;"),
     ("gcd.rs", "64 + ((value >> 64) as u64).trailing_zeros()",

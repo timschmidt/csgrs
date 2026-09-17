@@ -155,3 +155,18 @@ pub(crate) fn checked_shift_left_u64(value: u128, shift: u64) -> Option<u128> {
     }
     checked_shift_left(value, shift as u32)
 }
+
+/// Halve a binary exponent, rounding toward negative infinity.
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures 2 * (result as int) <= value as int,
+        (value as int) < 2 * (result as int) + 2,
+))]
+#[inline]
+pub(crate) fn floor_half(value: i32) -> i32 {
+    let half = value >> 1;
+    proof! {
+        assert(2 * (half as i64) <= value as i64 && (value as i64) < 2 * (half as i64) + 2)
+            by (bit_vector) requires half == value >> 1;
+    }
+    half
+}
