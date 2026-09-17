@@ -12111,70 +12111,17 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 }
             }
         } else if let Some(frame) = semicircle.data.frame.chord_normal() {
-            let cross_scale = -(radial * &turn);
-            let represented_tangent = frame.anchor.certified_unit_tangent().or_else(|| {
-                frame
-                    .anchor
-                    .certified_axis_direction()
-                    .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
-            });
-            let sign = match if let Some((tangent_x, tangent_y)) = represented_tangent {
-                parallel.vector_source_tangent_cross_dot_linear_combination_sign(
+            match frame
+                .anchor
+                .tangent_cross_dot_parallel_source_linear_combination_sign(
+                    parallel,
                     parameter,
-                    &tangent_x,
-                    &tangent_y,
-                    &cross_scale,
+                    &(-(radial * &turn)),
                     &tangential,
                     policy,
-                )
-            } else {
-                frame
-                    .anchor
-                    .tangent_cross_dot_parallel_linear_combination_sign(
-                        parallel,
-                        parameter,
-                        &cross_scale,
-                        &tangential,
-                        policy,
-                    )
-            }? {
+                )? {
                 Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            #[cfg(feature = "dispatch-trace")]
-            if let Classification::Decided(scale) =
-                parallel.parallel_derivative_scale_sign(parameter, policy)?
-            {
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "selected-parallel-contact-derivative-scale",
-                    match scale {
-                        RealSign::Negative => "negative",
-                        RealSign::Zero => "zero",
-                        RealSign::Positive => "positive",
-                    },
-                );
-            }
-            if frame.anchor.certified_unit_tangent().is_some()
-                || frame.anchor.certified_axis_direction().is_some()
-            {
-                sign
-            } else {
-                let derivative_scale =
-                    match parallel.parallel_derivative_scale_sign(parameter, policy)? {
-                        Classification::Decided(
-                            sign @ (RealSign::Negative | RealSign::Positive),
-                        ) => sign,
-                        Classification::Decided(RealSign::Zero) => {
-                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                product_sign(sign, derivative_scale)
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         } else {
             let anchor = semicircle.source_parallel().ok_or_else(|| {
@@ -12560,13 +12507,13 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         } else {
             1_i8
         });
-        // The selected chart starts on left_normal(T_parallel), while the
+        // The selected chart starts on left_normal(T_source), while the
         // contact radial is left_normal(T_chord).  The angular predicate is
-        //   tangential * (T_parallel dot T_chord)
-        //     - radial * turn * (T_parallel x T_chord).
+        //   tangential * (T_source dot T_chord)
+        //     - radial * turn * (T_source x T_chord).
         // The chord primitive signs the swapped cross product, so its cross
         // coefficient is positive `radial * turn`.
-        let raw_sign = match chord.tangent_cross_dot_parallel_linear_combination_sign(
+        let raw_sign = match chord.tangent_cross_dot_parallel_source_linear_combination_sign(
             parallel,
             parallel_parameter,
             &(radial * turn),
@@ -87740,6 +87687,38 @@ impl BezierAlgebraicChord2 {
         dot_scale: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
+        let source_sign = match self.tangent_cross_dot_parallel_source_linear_combination_sign(
+            parallel,
+            parameter,
+            cross_scale,
+            dot_scale,
+            policy,
+        )? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let scale = match parallel.parallel_derivative_scale_sign(parameter, policy)? {
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(Classification::Decided(product_sign(source_sign, scale)))
+    }
+
+    /// Signs the same chord relation against the parallel's source tangent.
+    /// Circle normal frames use this direction even where the parallel's
+    /// derivative reverses. The traversal predicate above applies that scale
+    /// only when the actual parallel tangent is requested.
+    fn tangent_cross_dot_parallel_source_linear_combination_sign(
+        &self,
+        parallel: &BezierParallel2,
+        parameter: &BezierParameter2,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
         // A retained oriented unit tangent is already the complete chord-side
         // authority for this predicate. Keep the parallel parameter as the
         // only algebraic axis instead of rebuilding two endpoint fields and a
@@ -87759,21 +87738,7 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let derivative_scale = match parallel
-                .parallel_derivative_scale_sign(parameter, policy)?
-            {
-                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-                Classification::Decided(RealSign::Zero) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            return Ok(Classification::Decided(product_sign(
-                source_sign,
-                derivative_scale,
-            )));
+            return Ok(Classification::Decided(source_sign));
         }
         let support = match self.independent_support_system(policy)? {
             Classification::Decided(support) => support,
@@ -87842,19 +87807,7 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let derivative_scale = match parallel.parallel_derivative_scale_sign(parameter, policy)? {
-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(product_sign(
-            source_sign,
-            derivative_scale,
-        )))
+        Ok(Classification::Decided(source_sign))
     }
 
     pub(crate) fn tangent_cross_vector_sign(
@@ -182853,6 +182806,137 @@ mod chord_overlap_transport_tests {
                 assert_eq!(ranges.1.start(), &retained);
                 assert!(ranges.1.start().as_selected_fiber().is_some());
                 source = ranges.1;
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod parallel_normal_source_angle_tests {
+    use super::*;
+    use std::cmp::Ordering;
+
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("exact fixture: {reason:?}"),
+        }
+    }
+
+    #[test]
+    fn selected_chord_parallel_normal_angles_use_source_direction() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t)=(t,t²) has source tangent (1,0) at t=0. The distance-one
+        // parallel has the opposite tangent there: Q'(0)=(-1,0). Both
+        // normal frames still use the source's upward unit normal.
+        let source = BezierParallelSource2::Quadratic(QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(1, 2), Real::zero()),
+            Point2::from_values(1, 1),
+        ));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for distance in [0, 1] {
+                let parallel = BezierParallel2::from_source(source.clone(), Real::from(distance));
+                let selected = BezierParameter2::Exact(Real::zero());
+                assert_eq!(
+                    decided(
+                        parallel
+                            .parallel_derivative_scale_sign(&selected, &policy)
+                            .unwrap()
+                    ),
+                    if distance == 0 {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    }
+                );
+                for clockwise in [false, true] {
+                    let tangent = (Real::from(4), Real::from(if clockwise { -3 } else { 3 }));
+                    for unit_evidence in [false, true] {
+                        let chord = if unit_evidence {
+                            let unit = decided(
+                                crate::direction::UnitDirection2::from_direction(&tangent).unwrap(),
+                            );
+                            decided(
+                                BezierAlgebraicChord2::from_unit_direction(&unit, &policy).unwrap(),
+                            )
+                        } else {
+                            decided(
+                                BezierAlgebraicChord2::try_new(
+                                    Point2::from_values(0, 0).into(),
+                                    Point2::new(tangent.0.clone(), tangent.1.clone()).into(),
+                                    &policy,
+                                )
+                                .unwrap(),
+                            )
+                        };
+                        for radius in [-1, 1] {
+                            let radius = Real::from(radius);
+                            let circle = decided(
+                                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                                    parallel.clone(),
+                                    selected.clone(),
+                                    radius.clone(),
+                                    clockwise,
+                                    &policy,
+                                )
+                                .unwrap(),
+                            )
+                            .unwrap();
+                            let center = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
+                                parallel.clone(),
+                                selected.clone(),
+                                &policy,
+                            ));
+                            let contact = chord
+                                .normal_displaced_point_evidence(center, radius.clone(), &policy)
+                                .unwrap();
+                            let parameter = decided(
+                                circle
+                                    .certified_selected_chord_parallel_normal_contact_parameter(
+                                        chord.clone(),
+                                        contact.clone(),
+                                        radius.clone(),
+                                        if clockwise {
+                                            RealSign::Negative
+                                        } else {
+                                            RealSign::Positive
+                                        },
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                            );
+                            // At u=1/4 the half-circle chart has cos=4/5,
+                            // sin=3/5. This independent 3-4-5 construction
+                            // fixes the contact point and its exact angular order.
+                            let expected = CurvePoint2::from(Point2::new(
+                                -tangent.1.clone() * q(1, 5) * &radius,
+                                Real::from(distance) + q(4, 5) * &radius,
+                            ));
+                            assert_eq!(
+                                contact.same_point(&expected, &policy),
+                                Classification::Decided(true)
+                            );
+                            let evaluated =
+                                decided(circle.point_evidence_at(&q(1, 4), &policy).unwrap());
+                            assert_eq!(
+                                evaluated.same_point(&expected, &policy),
+                                Classification::Decided(true)
+                            );
+                            for (cut, expected_order) in [
+                                (q(1, 8), Ordering::Greater),
+                                (q(1, 4), Ordering::Equal),
+                                (q(3, 8), Ordering::Less),
+                            ] {
+                                assert_eq!(
+                                    parameter.order_to_real(&cut, &policy).unwrap(),
+                                    Classification::Decided(expected_order),
+                                    "distance={distance} clockwise={clockwise} unit_evidence={unit_evidence} radius={radius:?} cut={cut:?} policy={policy:?}"
+                                );
+                            }
+                        }
+                    }
+                }
             }
         }
     }
