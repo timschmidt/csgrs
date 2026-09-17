@@ -715,7 +715,7 @@ impl CurveSupport2 {
         match self {
             Self::Bezier(curve) => curve.has_certified_injective_image(policy),
             Self::Parallel(parallel) => {
-                parallel.regular_fragment_has_certified_injective_axis(policy)
+                parallel.regular_fragment_has_certified_injective_axis(range, policy)
                     || matches!(
                         parallel.exact_rational_parallel_component(policy),
                         Ok(Classification::Decided(Some(curve)))

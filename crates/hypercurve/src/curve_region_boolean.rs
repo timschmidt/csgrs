@@ -5116,6 +5116,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         let one_sided = chord
                             .rational_control_hull_is_strictly_one_sided(
                                 &rational,
+                                &other_carrier.range(),
                                 &self.data.policy,
                             )
                             .map_err(|cause| self.invalid(other_index, cause))?;
@@ -5651,11 +5652,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
 
         for axis in [Axis2::X, Axis2::Y] {
-            if !first_parallel
-                .regular_fragment_has_certified_injective_axis_on(axis, &self.data.policy)
-                || !second_parallel
-                    .regular_fragment_has_certified_injective_axis_on(axis, &self.data.policy)
-            {
+            if !first_parallel.regular_fragment_has_certified_injective_axis_on(
+                axis,
+                &first.range(),
+                &self.data.policy,
+            ) || !second_parallel.regular_fragment_has_certified_injective_axis_on(
+                axis,
+                &second.range(),
+                &self.data.policy,
+            ) {
                 continue;
             }
             let Some((first_minimum, first_maximum)) =
@@ -5757,11 +5762,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
 
         for axis in [Axis2::X, Axis2::Y] {
-            if !first_parallel
-                .regular_fragment_has_certified_injective_axis_on(axis, &self.data.policy)
-                || !second_parallel
-                    .regular_fragment_has_certified_injective_axis_on(axis, &self.data.policy)
-            {
+            if !first_parallel.regular_fragment_has_certified_injective_axis_on(
+                axis,
+                &first.range(),
+                &self.data.policy,
+            ) || !second_parallel.regular_fragment_has_certified_injective_axis_on(
+                axis,
+                &second.range(),
+                &self.data.policy,
+            ) {
                 continue;
             }
             let first_order = compare_reals(
@@ -14565,6 +14574,11 @@ fn contacts_decided_distinct_from_carriers(
     }
     for (existing_slot, existing_carrier) in existing.carrier_indices.iter().copied().enumerate() {
         for (current_slot, current_carrier) in carrier_indices.iter().copied().enumerate() {
+            // The per-carrier cache below already covers contacts on one
+            // fragment. Separate fragments need a proof over their joining range.
+            if existing_carrier == current_carrier {
+                continue;
+            }
             let (
                 CurveSupport2::Parallel(existing_parallel),
                 CurveSupport2::Parallel(current_parallel),
@@ -14575,8 +14589,8 @@ fn contacts_decided_distinct_from_carriers(
             else {
                 continue;
             };
-            if existing_parallel == current_parallel
-                && matches!(
+            if existing_parallel != current_parallel
+                || !matches!(
                     locally_decidable_contact_parameter_cmp(
                         &existing.parameters[existing_slot],
                         parameters[current_slot],
@@ -14589,8 +14603,24 @@ fn contacts_decided_distinct_from_carriers(
                         ))?,
                     Classification::Decided(order) if order != Ordering::Equal
                 )
-                && existing_parallel.regular_fragment_has_certified_injective_axis(policy)
             {
+                continue;
+            }
+            let joining_range = CurveParameterRange2::new_validated(
+                existing.parameters[existing_slot].clone(),
+                parameters[current_slot].clone(),
+            );
+            // This optional exclusion must not promote independent scalar
+            // fields or consume approximation before exact point replay.
+            if policy.bounded_exact_predicate_pass(|| {
+                existing_parallel
+                    .regular_fragment_has_certified_injective_axis(&joining_range, policy)
+                    && matches!(
+                        existing_parallel.singularity_analysis(&joining_range, policy),
+                        Ok(Classification::Decided(analysis))
+                            if analysis.source_is_regular() && analysis.parallel_is_cusp_free()
+                    )
+            }) {
                 return Ok(true);
             }
         }
@@ -21198,6 +21228,98 @@ mod certified_successor_tests {
                         && contact.second_parameter() == expected.1
                 }));
             }
+        }
+    }
+
+    #[test]
+    fn cusp_separated_parallel_contacts_are_not_declared_distinct() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(s)=(x,x²), x=4s-2, has a strictly increasing source x.
+        // At distance 1, its parallel visits (0,5/4) at
+        // s=(2±sqrt(3)/2)/4. Each outer third is regular and injective,
+        // but the interval joining those visits crosses two parallel cusps.
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(-2, 4),
+            Point2::from_values(0, -4),
+            Point2::from_values(2, 4),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let delta = (Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap();
+        let left = ((Real::from(2) - &delta) / Real::from(4)).unwrap();
+        let right = ((Real::from(2) + delta) / Real::from(4)).unwrap();
+        let node = CurvePoint2::from(Point2::new(Real::zero(), q(5, 4)));
+        let horizontal = QuadraticBezier2::new(
+            Point2::new((-1).into(), q(5, 4)),
+            Point2::new(0.into(), q(5, 4)),
+            Point2::new(1.into(), q(5, 4)),
+        );
+        let carrier = |geometry, start: Real, end: Real| RegionCarrier {
+            operand: CurveRegionBooleanOperand2::First,
+            loop_index: 0,
+            fragment_index: 0,
+            family: CurveFamily2::QuadraticBezier,
+            geometry,
+            start: start.into(),
+            end: end.into(),
+            reversed: false,
+            filled_side_is_left: true,
+            selected_fiber_endpoint_points: None,
+            image_is_injective: OnceLock::new(),
+            bounds: OnceLock::new(),
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for parameter in [&left, &right] {
+                let point = decided(parallel.point_at(parameter, &policy).unwrap());
+                assert_eq!(
+                    CurvePoint2::from(point).same_point(&node, &policy),
+                    Classification::Decided(true)
+                );
+            }
+            let carriers = [
+                carrier(
+                    CurveSupport2::Parallel(parallel.clone()),
+                    Real::zero(),
+                    q(1, 3),
+                ),
+                carrier(
+                    CurveSupport2::Parallel(parallel.clone()),
+                    q(2, 3),
+                    Real::one(),
+                ),
+                carrier(
+                    CurveSupport2::Bezier(BezierSubcurve2::Quadratic(horizontal.clone())),
+                    Real::zero(),
+                    Real::one(),
+                ),
+            ];
+            for carrier in &carriers[..2] {
+                let analysis = decided(
+                    parallel
+                        .singularity_analysis(&carrier.range(), &policy)
+                        .unwrap(),
+                );
+                assert!(analysis.source_is_regular() && analysis.parallel_is_cusp_free());
+                assert!(carrier_has_certified_injective_image(carrier, &policy));
+            }
+            let half = CurveParameter2::from(q(1, 2));
+            let existing = ContactVertex {
+                point: Some(node.clone()),
+                topology_vertex: 0,
+                carrier_indices: [0, 2],
+                parameters: [left.clone().into(), half.clone()],
+            };
+            assert!(
+                !contacts_decided_distinct_from_carriers(
+                    &existing,
+                    [1, 2],
+                    [&right.clone().into(), &half],
+                    &carriers,
+                    &policy,
+                )
+                .unwrap(),
+                "two branch visits share the exact same point"
+            );
         }
     }
 

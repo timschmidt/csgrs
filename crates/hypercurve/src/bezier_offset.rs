@@ -82287,18 +82287,27 @@ impl BezierAlgebraicChord2 {
     /// Proves a complete rational Bezier control hull lies in one open
     /// half-plane of this chord's retained support.
     ///
-    /// Equal-sign nonzero homogeneous weights make every finite curve point a
-    /// positive affine combination of the authored controls. Classifying each
+    /// On the unit chart, equal-sign nonzero homogeneous weights make every
+    /// curve point a positive affine combination of the authored controls. Classifying each
     /// control through the chord's existing exact support predicate therefore
     /// excludes the complete curve without projecting the chord endpoints or
     /// building a bivariate intersection resultant.
     pub(crate) fn rational_control_hull_is_strictly_one_sided(
         &self,
         curve: &RationalBezier2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         self.validate_policy(policy)?;
         policy.bounded_exact_predicate_pass(|| {
+            // The authored control hull encloses only the unit chart.
+            if !matches!(
+                CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)
+                    .contains_finite_range(range, policy),
+                Ok(Classification::Decided(true))
+            ) {
+                return Ok(Classification::Decided(false));
+            }
             let mut common_weight_sign = None;
             for weight in curve.weights() {
                 let Some(sign @ (RealSign::Positive | RealSign::Negative)) =
@@ -110812,30 +110821,39 @@ impl BezierParallel2 {
         }
     }
 
-    /// Returns whether every regular cusp-free fragment has an injective coordinate.
+    /// Certifies an injective coordinate for a regular cusp-free fragment's range.
     ///
     /// A regular parallel derivative is the source derivative multiplied by
     /// one continuous scalar.  [`BezierParallelFragment2`](crate::BezierParallelFragment2)
     /// excludes source singularities and interior parallel cusps, so that
     /// scalar has one sign in the open fragment.  An injective source
     /// coordinate therefore remains monotone (possibly with reversed
-    /// orientation) on every such fragment.  This stronger whole-source test
-    /// lets unary arrangements omit an impossible within-fragment
-    /// self-intersection without weakening cross-fragment replay.
+    /// orientation) on such a fragment. The native source certificate covers
+    /// only the unit chart. A range joining separate fragments additionally
+    /// needs a regularity proof across every intervening parameter.
     pub(crate) fn regular_fragment_has_certified_injective_axis(
         &self,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> bool {
         [Axis2::X, Axis2::Y]
             .into_iter()
-            .any(|axis| self.regular_fragment_has_certified_injective_axis_on(axis, policy))
+            .any(|axis| self.regular_fragment_has_certified_injective_axis_on(axis, range, policy))
     }
 
     pub(crate) fn regular_fragment_has_certified_injective_axis_on(
         &self,
         axis: Axis2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> bool {
+        if !matches!(
+            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)
+                .contains_finite_range(range, &policy.strict_counterpart()),
+            Ok(Classification::Decided(true))
+        ) {
+            return false;
+        }
         self.source()
             .to_rational_bezier()
             .is_ok_and(|source| source.has_certified_injective_axis_on(axis, policy))
@@ -135560,6 +135578,75 @@ mod conversion_tests {
         let second = parameters.pop().unwrap();
         let first = parameters.pop().unwrap();
         (first, second, half.sqrt().unwrap())
+    }
+
+    #[test]
+    fn native_pruning_certificates_require_the_consumed_parameter_range() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // The nodal cubic has an increasing x on [0,1], but visits (0,0)
+        // twice on [-2,2]. A native source certificate cannot cover that range.
+        let parallel = CubicBezier2::new(
+            Point2::from_values(-1, 0),
+            Point2::new((-1).into(), q(-1, 3)),
+            Point2::new(q(-2, 3), q(-2, 3)),
+            Point2::from_values(0, 0),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        // All native control points of y=(t-2)^2-1/4 lie above y=0,
+        // while its exterior continuation crosses y=0 at 3/2 and 5/2.
+        let curve = RationalBezier2::try_new(
+            vec![
+                Point2::new(0.into(), q(15, 4)),
+                Point2::new(q(1, 2), q(7, 4)),
+                Point2::new(1.into(), q(3, 4)),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        let exterior =
+            CurveParameterRange2::new_validated(Real::from(-2).into(), Real::from(3).into());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(parallel.regular_fragment_has_certified_injective_axis(
+                &CurveParameterRange2::unit(),
+                &policy,
+            ));
+            assert!(!parallel.regular_fragment_has_certified_injective_axis(&exterior, &policy));
+            let first = parallel.point_at_affine(&Real::from(-1), &policy).unwrap();
+            let second = parallel.point_at_affine(&Real::one(), &policy).unwrap();
+            assert_eq!(first, Classification::Decided(Point2::from_values(0, 0)));
+            assert_eq!(second, first);
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                CurvePoint2::from(Point2::from_values(-4, 0)),
+                CurvePoint2::from(Point2::from_values(4, 0)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("exact horizontal chord")
+            };
+            assert_eq!(
+                chord
+                    .rational_control_hull_is_strictly_one_sided(
+                        &curve,
+                        &CurveParameterRange2::unit(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+            assert_eq!(
+                chord
+                    .rational_control_hull_is_strictly_one_sided(&curve, &exterior, &policy,)
+                    .unwrap(),
+                Classification::Decided(false)
+            );
+            for t in [q(3, 2), q(5, 2)] {
+                assert_eq!(
+                    curve.point_at_affine_classified(&t, &policy),
+                    Classification::Decided(Point2::new(t, Real::zero()))
+                );
+            }
+        }
     }
 
     #[test]
