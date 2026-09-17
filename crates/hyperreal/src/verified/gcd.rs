@@ -49,6 +49,48 @@ pub(crate) proof fn gcd_scaled(left: nat, right: nat, factor: nat)
     }
 }
 
+/// Cancel the complete common factor without changing the represented ratio.
+/// This also covers a zero numerator, whose reduced denominator is one.
+pub(crate) proof fn gcd_reduction(numerator: nat, denominator: nat)
+    requires denominator > 0,
+    ensures
+        gcd(numerator, denominator) > 0,
+        numerator / gcd(numerator, denominator) * gcd(numerator, denominator) == numerator,
+        denominator / gcd(numerator, denominator) * gcd(numerator, denominator) == denominator,
+        0 < denominator / gcd(numerator, denominator) <= denominator,
+        numerator / gcd(numerator, denominator) <= numerator,
+        gcd(numerator / gcd(numerator, denominator), denominator / gcd(numerator, denominator)) == 1,
+        numerator / gcd(numerator, denominator) * denominator
+            == numerator * (denominator / gcd(numerator, denominator)),
+        (numerator / gcd(numerator, denominator) == 0 <==> numerator == 0),
+        numerator == 0 ==> denominator / gcd(numerator, denominator) == 1,
+{
+    gcd_characterization(numerator, denominator);
+    let divisor = gcd(numerator, denominator);
+    let reduced_numerator = numerator / divisor;
+    let reduced_denominator = denominator / divisor;
+    lemma_fundamental_div_mod(numerator as int, divisor as int);
+    lemma_fundamental_div_mod(denominator as int, divisor as int);
+    assert(numerator == reduced_numerator * divisor
+        && denominator == reduced_denominator * divisor) by (nonlinear_arith)
+        requires numerator == divisor * reduced_numerator, denominator == divisor * reduced_denominator;
+    assert(0 < reduced_denominator <= denominator && reduced_numerator <= numerator
+        && (reduced_numerator == 0 <==> numerator == 0)) by (nonlinear_arith)
+        requires divisor > 0, denominator > 0, reduced_numerator >= 0, reduced_denominator >= 0,
+            numerator == reduced_numerator * divisor, denominator == reduced_denominator * divisor;
+    gcd_scaled(reduced_numerator, reduced_denominator, divisor);
+    assert(gcd(reduced_numerator, reduced_denominator) == 1) by (nonlinear_arith)
+        requires divisor > 0, divisor == gcd(reduced_numerator, reduced_denominator) * divisor;
+    assert(reduced_numerator * denominator == numerator * reduced_denominator) by (nonlinear_arith)
+        requires numerator == reduced_numerator * divisor, denominator == reduced_denominator * divisor;
+    if numerator == 0 {
+        lemma_small_mod(0, denominator);
+        reveal_with_fuel(gcd, 2);
+        assert(divisor == denominator);
+        lemma_div_by_self(denominator as int);
+    }
+}
+
 pub(crate) proof fn gcd_bound(left: nat, right: nat)
     ensures
         left > 0 ==> gcd(left, right) <= left,

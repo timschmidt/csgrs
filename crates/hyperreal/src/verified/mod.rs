@@ -19,6 +19,7 @@ pub(crate) mod division;
 pub(crate) mod dyadic;
 pub(crate) mod fixed_gcd;
 pub(crate) mod float;
+pub(crate) mod fraction;
 pub(crate) mod gcd;
 pub(crate) mod lehmer;
 pub(crate) mod limbs;

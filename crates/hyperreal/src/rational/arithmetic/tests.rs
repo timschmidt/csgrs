@@ -24,6 +24,23 @@ mod tests {
     }
 
     #[test]
+    fn native_fraction_reduction_matches_bigrational() {
+        let mut values = vec![0, 1, 3, 5, 63, 64, 65, u128::MAX - 1, u128::MAX];
+        for bit in [7, 16, 31, 32, 63, 64, 65, 95, 96, 126, 127] {
+            let power = 1_u128 << bit;
+            values.extend([power - 1, power, power + 1]);
+        }
+        for &numerator in &values {
+            for &denominator in values.iter().filter(|&&value| value != 0) {
+                let actual = crate::verified::fraction::reduce(numerator, denominator);
+                let expected = num::BigRational::new(BigInt::from(numerator), BigInt::from(denominator));
+                assert_eq!(BigInt::from(actual.0), *expected.numer());
+                assert_eq!(BigInt::from(actual.1), *expected.denom());
+            }
+        }
+    }
+
+    #[test]
     fn native_dyadic_normalization_matches_bigrational() {
         for bit in 0..128 {
             for magnitude in [1_u128 << bit, u128::MAX << bit] {
