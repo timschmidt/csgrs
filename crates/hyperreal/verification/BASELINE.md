@@ -116,7 +116,15 @@ and the failures that led to the metadata and fixed-decimal precision repairs.
 The [complete shared-clone screen](../benchmarks/checkpoints/2026-09-17-verus-shared-clone-screen.json)
 retains 1,449 matching cases across all nine suites. Its 236 positive
 nonoverlapping within-run interval flags, including external comparator rows,
-require longer alternating repeats. A short screen is not an acceptance test.
+were followed up in [four alternating pairs](../benchmarks/checkpoints/2026-09-17-verus-shared-clone-confirmations.json).
+All 64 processes succeeded, with identical selected cases and frozen binaries.
+Forty-seven cases were slower in all four pairs, including external comparator
+rows. Persistent Hyperreal signals include the square-root MSD query (+40.90%
+median paired mean change), symbolic pi inversion (+11.69%) and construction
+from a small signed integer (+9.94%). Every selected case, paired estimate,
+raw sample and comparator movement is retained. Other flags did not persist
+across all pairs; that alone does not establish parity. The remaining
+regressions require investigation, and this follow-up is not acceptance.
 The [resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-shared-clone-resources.json)
 records the completed release, lint, documentation, fuzz-build, WASM and
 seven-configuration coverage checks. Production executable-line coverage is
