@@ -85,6 +85,64 @@ proof fn inverse_preserves_bound_denotation(bound: BoundInfo, value: real, resul
     assert(1real / value != 0real) by (nonlinear_arith) requires value != 0real;
 }
 
+proof fn squaring_preserves_bound_denotation(bound: BoundInfo, value: real, result: BoundInfo)
+    requires bound_denotes(bound, value), call_ensures(BoundInfo::square, (bound,), result),
+    ensures bound_denotes(result, value * value),
+{
+    assert(value != 0real ==> value * value > 0real) by (nonlinear_arith);
+}
+
+proof fn multiplication_preserves_bound_denotation(
+    left: BoundInfo, right: BoundInfo, x: real, y: real, result: BoundInfo,
+)
+    requires bound_denotes(left, x), bound_denotes(right, y),
+        call_ensures(BoundInfo::multiply, (left, right), result),
+    ensures bound_denotes(result, x * y),
+{
+    assert(x != 0real && y != 0real ==> x * y != 0real) by (nonlinear_arith);
+    assert(x > 0real && y > 0real ==> x * y > 0real) by (nonlinear_arith);
+    assert(x < 0real && y < 0real ==> x * y > 0real) by (nonlinear_arith);
+    assert(x > 0real && y < 0real ==> x * y < 0real) by (nonlinear_arith);
+    assert(x < 0real && y > 0real ==> x * y < 0real) by (nonlinear_arith);
+}
+
+proof fn distinct_real_binades_order_magnitudes(x: real, y: real, left: int, right: int)
+    requires real_binade(x, left), real_binade(y, right), left < right,
+    ensures absolute(x) < absolute(y),
+{
+    binary_unit_positive(left);
+    binary_unit_composes(left, right - left);
+    vstd::arithmetic::power2::lemma_pow2_strictly_increases(0, (right - left) as nat);
+    lemma2_to64();
+    assert(binary_unit(right - left) >= 2real) by (nonlinear_arith)
+        requires right - left > 0,
+            vstd::arithmetic::power2::pow2((right - left) as nat) >= 2,
+            crate::magnitude_model::binary_denominator(right - left) == 1;
+    assert(2real * binary_unit(left) <= binary_unit(right)) by (nonlinear_arith)
+        requires binary_unit(left) > 0real, binary_unit(right - left) >= 2real,
+            binary_unit(right) == binary_unit(left) * binary_unit(right - left);
+}
+
+proof fn addition_preserves_bound_denotation(
+    left: BoundInfo, right: BoundInfo, x: real, y: real, result: BoundInfo,
+)
+    requires bound_denotes(left, x), bound_denotes(right, y),
+        call_ensures(BoundInfo::add, (left, right), result),
+    ensures bound_denotes(result, x + y),
+{
+    match (left, right) {
+        (BoundInfo::NonZero { msd: Some(l), exact_msd: true, .. },
+         BoundInfo::NonZero { msd: Some(r), exact_msd: true, .. }) => {
+            if l < r {
+                distinct_real_binades_order_magnitudes(x, y, l as int, r as int);
+            } else if r < l {
+                distinct_real_binades_order_magnitudes(y, x, r as int, l as int);
+            }
+        },
+        _ => {},
+    }
+}
+
 proof fn positive_root_binade(value: real, root: real, exponent: i32)
     requires value > 0real, root >= 0real, root * root == value,
         real_binade(value, exponent as int),

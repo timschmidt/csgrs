@@ -91,7 +91,10 @@
     "computable_bounds::BoundInfo::magnitude_bits",
     "computable_bounds::public_sign",
     "computable_bounds::private_sign",
-    "computable_bounds::BoundInfo::certified_sign_and_msd"
+    "computable_bounds::BoundInfo::certified_sign_and_msd",
+    "computable_bounds::BoundInfo::square",
+    "computable_bounds::BoundInfo::multiply",
+    "computable_bounds::BoundInfo::add"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -196,7 +199,11 @@
     "computable_bounds::exported_magnitude_is_a_certificate",
     "computable_bounds::public_sign_preserves_denotation",
     "computable_bounds::private_sign_preserves_denotation",
-    "computable_bounds::precision_facts_are_certificates"
+    "computable_bounds::precision_facts_are_certificates",
+    "computable_bounds::squaring_preserves_bound_denotation",
+    "computable_bounds::multiplication_preserves_bound_denotation",
+    "computable_bounds::distinct_real_binades_order_magnitudes",
+    "computable_bounds::addition_preserves_bound_denotation"
   ],
   "obligations": [
     {
