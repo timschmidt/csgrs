@@ -802,11 +802,11 @@ impl Computable {
     }
 
     /// Most Significant Digit (Bit).
-    /// May panic or give incorrect answers if not yet discovered.
+    /// Requires a cached approximation separated from zero and a representable exponent.
     fn known_msd(&self) -> Precision {
         if let Some((prec, appr)) = self.cached() {
-            let length = appr.magnitude().bits() as Precision;
-            prec + length - 1
+            crate::verified::word::checked_bit_length_msd(appr.magnitude().bits(), 1, false, prec)
+                .expect("Cached magnitude is outside the precision range")
         } else {
             panic!("Expected valid cache state for known MSD but it's invalid")
         }

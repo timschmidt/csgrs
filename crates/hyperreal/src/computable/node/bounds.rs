@@ -51,13 +51,12 @@ impl BoundInfo {
     }
 
     fn from_rational(r: &Rational) -> Self {
-        match r.msd_exact() {
-            Some(msd) => Self::with_sign(r.sign(), Some(msd)),
-            None => Self::Zero,
-        }
+        // An absent exponent can mean a nonzero magnitude outside i32. Only
+        // the rational's sign can certify that its value is zero.
+        Self::with_sign(r.sign(), r.msd_exact())
     }
 
-    fn map_msd(self, f: impl FnOnce(Precision) -> Precision) -> Self {
+    fn map_msd(self, f: impl FnOnce(Precision) -> Option<Precision>) -> Self {
         match self {
             Self::NonZero {
                 sign,
@@ -65,7 +64,7 @@ impl BoundInfo {
                 exact_msd,
             } => Self::NonZero {
                 sign,
-                msd: msd.map(f),
+                msd: msd.and_then(f),
                 exact_msd,
             },
             other => other,
@@ -100,7 +99,7 @@ impl BoundInfo {
         match self {
             Self::NonZero { sign, msd, .. } => Self::NonZero {
                 sign,
-                msd: msd.map(|value| 1 - value),
+                msd: msd.and_then(|value| 1_i32.checked_sub(value)),
                 exact_msd: false,
             },
             other => other,
@@ -118,7 +117,7 @@ impl BoundInfo {
                 // exact child MSD. Do not recursively double an already
                 // inexact estimate: the error would grow exponentially through
                 // a power tree.
-                msd: exact_msd.then(|| msd.map(|value| value * 2)).flatten(),
+                msd: exact_msd.then(|| msd.and_then(|value| value.checked_mul(2))).flatten(),
                 exact_msd: false,
             },
             Self::Unknown => Self::Unknown,
@@ -169,7 +168,7 @@ impl BoundInfo {
                     left_exact_msd.then_some(left_msd).flatten(),
                     right_exact_msd.then_some(right_msd).flatten(),
                 ) {
-                    (Some(left), Some(right)) => Some(left + right),
+                    (Some(left), Some(right)) => left.checked_add(right),
                     _ => None,
                 };
                 Self::NonZero {
@@ -214,19 +213,9 @@ impl BoundInfo {
                     }
                     _ => None,
                 };
-                let msd = match (left_sign, right_sign, left_msd, right_msd) {
-                    (_, _, Some(left), Some(right)) if left > right => Some(left),
-                    (_, _, Some(left), Some(right)) if right > left => Some(right),
-                    (Some(left_sign), Some(right_sign), Some(left), Some(right))
-                        if left_sign != right_sign && left > right + 1 =>
-                    {
-                        Some(left)
-                    }
-                    (Some(left_sign), Some(right_sign), Some(left), Some(right))
-                        if left_sign != right_sign && right > left + 1 =>
-                    {
-                        Some(right)
-                    }
+                let msd = match (left_msd, right_msd) {
+                    (Some(left), Some(right)) if left > right => Some(left),
+                    (Some(left), Some(right)) if right > left => Some(right),
                     _ => None,
                 };
                 match sign {
@@ -243,14 +232,16 @@ impl BoundInfo {
     }
 
     fn known_msd(&self) -> Option<Option<Precision>> {
+        // Some(None) certifies zero. A nonzero value without a representable
+        // exponent must remain an unresolved magnitude query.
         match self {
             Self::Unknown => None,
             Self::Zero => Some(None),
             Self::NonZero {
-                msd,
+                msd: Some(msd),
                 exact_msd: true,
                 ..
-            } => Some(*msd),
+            } => Some(Some(*msd)),
             Self::NonZero { .. } => None,
         }
     }
@@ -259,7 +250,8 @@ impl BoundInfo {
         match self {
             Self::Unknown => None,
             Self::Zero => Some(None),
-            Self::NonZero { msd, .. } => Some(*msd),
+            Self::NonZero { msd: Some(msd), .. } => Some(Some(*msd)),
+            Self::NonZero { msd: None, .. } => None,
         }
     }
 
