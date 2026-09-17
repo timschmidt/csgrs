@@ -45,7 +45,12 @@
     "verified::dyadic::finish",
     "verified::aggregate::plan",
     "verified::aggregate::add_product",
-    "verified::aggregate::sum_products"
+    "verified::aggregate::sum_products",
+    "verified::word::checked_shift_left_u64",
+    "verified::dyadic::normalize_word",
+    "verified::dyadic::difference_word",
+    "verified::aggregate::native_product",
+    "verified::aggregate::sum_products_word"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -75,6 +80,7 @@
     "verified::dyadic::cancel_power_two",
     "verified::dyadic::reduction_preserves_fraction",
     "verified::dyadic::canonical_is_reduced",
+    "verified::dyadic::word_alignment_preserves_fraction",
     "verified::aggregate::scale_bounds",
     "verified::aggregate::subtotal_monotone",
     "verified::aggregate::subtotals_denote_sum",

@@ -10,6 +10,171 @@ mod tests {
         })
     }
 
+    fn reference_dyadic_word(word: DyadicWord) -> num::BigRational {
+        num::BigRational::new(
+            BigInt::from_biguint(word.sign, BigUint::from(word.magnitude)),
+            BigInt::one() << usize::try_from(word.denominator_shift).unwrap(),
+        )
+    }
+
+    fn assert_dyadic_word_matches(word: DyadicWord, expected: num::BigRational) {
+        assert_eq!(word.sign, expected.numer().sign());
+        assert_eq!(&BigUint::from(word.magnitude), expected.numer().magnitude());
+        assert_eq!(word.denominator_shift, expected.denom().magnitude().bits() - 1);
+    }
+
+    #[test]
+    fn native_dyadic_normalization_matches_bigrational() {
+        for bit in 0..128 {
+            for magnitude in [1_u128 << bit, u128::MAX << bit] {
+                for negative in [false, true] {
+                    for shift in [0, 1, 63, 64, 65, 127, 128, 129, 256] {
+                        let actual = crate::verified::dyadic::normalize_word(negative, magnitude, shift);
+                        let input = DyadicWord { sign: if negative { Minus } else { Plus }, magnitude, denominator_shift: shift };
+                        let expected = reference_dyadic_word(input);
+                        assert!(actual.active);
+                        assert_eq!(actual.negative, negative);
+                        assert_eq!(&BigUint::from(actual.magnitude), expected.numer().magnitude());
+                        assert_eq!(actual.shift, expected.denom().magnitude().bits() - 1);
+                    }
+                    let extreme = crate::verified::dyadic::normalize_word(negative, 1_u128 << bit, u64::MAX);
+                    assert!(extreme.active);
+                    assert_eq!(extreme.negative, negative);
+                    assert_eq!(extreme.magnitude, 1);
+                    assert_eq!(extreme.shift, u64::MAX - bit);
+                }
+            }
+        }
+        for negative in [false, true] {
+            for shift in [0, 127, 128, u64::MAX] {
+                let zero = crate::verified::dyadic::normalize_word(negative, 0, shift);
+                assert!(!zero.active && !zero.negative);
+                assert_eq!((zero.magnitude, zero.shift), (0, 0));
+            }
+        }
+    }
+
+    #[test]
+    fn native_dyadic_difference_matches_exact_fallbacks() {
+        fn check(left: DyadicWord, right: DyadicWord) {
+            let maximum = left.denominator_shift.max(right.denominator_shift);
+            let left_shift = maximum - left.denominator_shift;
+            let right_shift = maximum - right.denominator_shift;
+            let left_raw = BigUint::from(left.magnitude) << usize::try_from(left_shift).unwrap();
+            let right_raw = BigUint::from(right.magnitude) << usize::try_from(right_shift).unwrap();
+            let limit = BigUint::from(u128::MAX);
+            let fits = left_shift < 128 && right_shift < 128 && left_raw <= limit && right_raw <= limit;
+            let total = BigInt::from_biguint(left.sign, left_raw) - BigInt::from_biguint(right.sign, right_raw);
+            let actual = Rational::difference_dyadic_words(left, right);
+            assert_eq!(actual.is_some(), fits && total.magnitude() <= &limit);
+            if let Some(word) = actual {
+                assert_dyadic_word_matches(word, reference_dyadic_word(left) - reference_dyadic_word(right));
+            }
+        }
+        let unit = DyadicWord { sign: Plus, magnitude: 1, denominator_shift: 0 };
+        for bit in 0..128 {
+            for shift in [0, 1, 63, 64, 65, 127, 128, 129, 255, 256] {
+                for sign in [Minus, NoSign, Plus] {
+                    let left = DyadicWord { magnitude: 1_u128 << bit, sign, ..unit };
+                    let right = DyadicWord { denominator_shift: shift, ..unit };
+                    check(left, right);
+                    check(right, left);
+                    check(DyadicWord { denominator_shift: shift, ..left }, right);
+                }
+            }
+        }
+        let mut state = 0xbb67_ae85_84ca_a73b_u64;
+        for index in 0..256 {
+            let mut next = || {
+                state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                state
+            };
+            let left = DyadicWord {
+                sign: [Minus, NoSign, Plus][index % 3],
+                magnitude: (u128::from(next()) << 64) | u128::from(next()),
+                denominator_shift: next() % 130,
+            };
+            let right = DyadicWord {
+                sign: [Minus, NoSign, Plus][(index / 3) % 3],
+                magnitude: (u128::from(next()) << 64) | u128::from(next()),
+                denominator_shift: next() % 130,
+            };
+            check(left, right);
+            check(left, DyadicWord { denominator_shift: left.denominator_shift, ..right });
+        }
+        check(DyadicWord { magnitude: u128::MAX, ..unit }, DyadicWord { sign: Minus, ..unit });
+        // Inactive operands still have their raw alignments checked.
+        check(DyadicWord { sign: NoSign, magnitude: u128::MAX, ..unit }, DyadicWord { denominator_shift: 1, ..unit });
+        let extreme = DyadicWord { denominator_shift: u64::MAX, ..unit };
+        let zero = Rational::difference_dyadic_words(extreme, extreme).unwrap();
+        assert_eq!((zero.sign, zero.magnitude, zero.denominator_shift), (NoSign, 0, 0));
+        assert!(Rational::difference_dyadic_words(extreme, unit).is_none());
+    }
+
+    #[test]
+    fn native_dyadic_product_sums_match_exact_fallbacks() {
+        fn check(left: [DyadicWord; 2], right: [DyadicWord; 2], positive: [bool; 2]) {
+            let shifts: [_; 2] = std::array::from_fn(|i| left[i].denominator_shift + right[i].denominator_shift);
+            let maximum = shifts[0].max(shifts[1]);
+            let limit = BigUint::from(u128::MAX);
+            let mut fits = true;
+            let mut total = BigInt::zero();
+            let mut expected = num::BigRational::zero();
+            for i in 0..2 {
+                let raw = BigUint::from(left[i].magnitude) * BigUint::from(right[i].magnitude);
+                let shift = maximum - shifts[i];
+                if left[i].sign != NoSign && right[i].sign != NoSign {
+                    fits &= shift < 128 && raw <= limit
+                        && (&raw << usize::try_from(shift).unwrap()) <= limit;
+                }
+                let term = BigInt::from_biguint(left[i].sign, BigUint::from(left[i].magnitude))
+                    * BigInt::from_biguint(right[i].sign, BigUint::from(right[i].magnitude));
+                let scaled = term << usize::try_from(shift).unwrap();
+                let fraction = reference_dyadic_word(left[i]) * reference_dyadic_word(right[i]);
+                if positive[i] { total += scaled; expected += fraction; }
+                else { total -= scaled; expected -= fraction; }
+            }
+            let actual = Rational::product_sum2_dyadic_words_word(left, right, positive);
+            assert_eq!(actual.is_some(), fits && total.magnitude() <= &limit);
+            if let Some(word) = actual { assert_dyadic_word_matches(word, expected); }
+        }
+        let unit = DyadicWord { sign: Plus, magnitude: 1, denominator_shift: 0 };
+        let large = DyadicWord { magnitude: u128::MAX, ..unit };
+        for shift in 0..=129 {
+            for positive in [[true, true], [true, false], [false, true], [false, false]] {
+                check([large, unit], [unit, DyadicWord { denominator_shift: shift, ..unit }], positive);
+                check([large, large], [large, large], positive);
+                check([DyadicWord { sign: NoSign, ..large }, large], [large, DyadicWord { denominator_shift: shift, ..unit }], positive);
+                check([DyadicWord { magnitude: 0, ..unit }, unit], [unit, DyadicWord { denominator_shift: shift, ..unit }], positive);
+            }
+        }
+        let mut state = 0x3c6e_f372_fe94_f82b_u64;
+        for case in 0..256 {
+            let mut make = |index: usize| {
+                state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                let low = state;
+                state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                let magnitude = if case % 2 == 0 { u128::from(low) } else { (u128::from(state) << 64) | u128::from(low) };
+                DyadicWord { sign: [Minus, NoSign, Plus][(case + index) % 3], magnitude, denominator_shift: state % 65 }
+            };
+            let left = std::array::from_fn(&mut make);
+            let right = std::array::from_fn(&mut make);
+            check(left, right, [case % 2 == 0, case % 3 == 0]);
+        }
+        let extreme = DyadicWord { denominator_shift: u64::MAX, ..unit };
+        let one_shift = DyadicWord { denominator_shift: 1, ..unit };
+        assert!(Rational::product_sum2_dyadic_words_word([extreme, unit], [one_shift, unit], [true; 2]).is_none());
+        let zero = Rational::product_sum2_dyadic_words_word([extreme; 2], [unit; 2], [true, false]).unwrap();
+        assert_eq!((zero.sign, zero.magnitude, zero.denominator_shift), (NoSign, 0, 0));
+
+        use crate::verified::aggregate::{Magnitude, Product, sum_products_word};
+        let wide = Product { active: true, negative: false, left: Magnitude::Wide([0; 4]), right: 0, left_shift: 0, right_shift: 0 };
+        assert!(sum_products_word(&[wide; 2]).is_none());
+        let skipped = sum_products_word(&[Product { active: false, ..wide }; 2]).unwrap();
+        assert!(!skipped.active && !skipped.negative);
+        assert_eq!((skipped.magnitude, skipped.shift), (0, 0));
+    }
+
     #[test]
     fn dyadic_product_sums_match_exact_subtotal_limits() {
         use crate::verified::aggregate::{Magnitude, Product, sum_products};

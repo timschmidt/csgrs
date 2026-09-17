@@ -83,6 +83,22 @@ MUTATIONS = [
      "super::dyadic::finish(negative, positive, maximum)"),
     ("aggregate.rs", "Some(result) => Some(result)", "Some(result) => None"),
     ("aggregate.rs", "Some((false, zero, 0))", "Some((true, zero, 0))"),
+    ("word.rs", "checked_shift_left(value, shift as u32)", "checked_shift_left(value, (shift % 64) as u32)"),
+    ("dyadic.rs", "            negative: false,\n            magnitude: 0,",
+     "            negative: true,\n            magnitude: 0,"),
+    ("dyadic.rs", "        magnitude: reduced,", "        magnitude: magnitude,"),
+    ("dyadic.rs", "        magnitude: reduced,\n        shift,",
+     "        magnitude: reduced,\n        shift: denominator_shift,"),
+    ("dyadic.rs", "Some(normalize_word(negative, magnitude, scale))", "None"),
+    ("dyadic.rs", "Some(normalize_word(negative, magnitude, scale))", "Some(normalize_word(!negative, magnitude, scale))"),
+    ("dyadic.rs", "        !right.negative,\n        right_magnitude,", "        right.negative,\n        right_magnitude,"),
+    ("aggregate.rs", "if !product.active {\n        return Some((false, 0));",
+     "if product.active {\n        return Some((false, 0));"),
+    ("aggregate.rs", "let magnitude = left.checked_mul(product.right)?;", "let magnitude = left.checked_add(product.right)?;"),
+    ("aggregate.rs", "Some((product.negative && scaled != 0, scaled))", "Some((!product.negative && scaled != 0, scaled))"),
+    ("aggregate.rs", "Some(super::dyadic::normalize_word(negative, magnitude, maximum))", "None"),
+    ("aggregate.rs", "Some(super::dyadic::normalize_word(negative, magnitude, maximum))",
+     "Some(super::dyadic::normalize_word(negative, magnitude, 0))"),
 ]
 
 

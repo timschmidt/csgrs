@@ -12,10 +12,54 @@ use vstd::{math::abs, prelude::*};
 use super::limbs;
 use core::cmp::Ordering;
 
+/// An inactive input denotes zero independently of its stored magnitude.
+/// Native normalization makes both the activity and zero sign canonical.
+#[cfg_attr(verus_keep_ghost, verus_verify)]
+#[derive(Clone, Copy)]
+pub(crate) struct Word {
+    pub active: bool,
+    pub negative: bool,
+    pub magnitude: u128,
+    pub shift: u64,
+}
+
 #[cfg(verus_keep_ghost)]
 verus! {
 pub(crate) open spec fn signed(negative: bool, magnitude: nat) -> int {
     if negative { -(magnitude as int) } else { magnitude as int }
+}
+
+pub(crate) open spec fn word_value(word: Word) -> int {
+    if word.active { signed(word.negative, word.magnitude as nat) } else { 0 }
+}
+
+pub(crate) open spec fn canonical_word(word: Word) -> bool {
+    &&& word.active == (word.magnitude > 0)
+    &&& (!word.active ==> !word.negative && word.shift == 0)
+    &&& (word.shift == 0 || word.magnitude % 2 == 1)
+    &&& gcd(word.magnitude as nat, pow2(word.shift as nat)) == 1
+}
+
+pub(crate) open spec fn word_scale(left: Word, right: Word) -> nat {
+    if left.shift > right.shift { left.shift as nat } else { right.shift as nat }
+}
+
+pub(crate) open spec fn aligned_word(word: Word, scale: nat) -> int {
+    word_value(word) * pow2((scale - word.shift) as nat)
+}
+
+pub(crate) open spec fn word_difference(left: Word, right: Word) -> int {
+    aligned_word(left, word_scale(left, right)) - aligned_word(right, word_scale(left, right))
+}
+
+pub(crate) proof fn word_alignment_preserves_fraction(word: Word, scale: nat)
+    requires word.shift <= scale,
+    ensures aligned_word(word, scale) * pow2(word.shift as nat) == word_value(word) * pow2(scale),
+{
+    lemma_pow2_adds(word.shift as nat, (scale - word.shift) as nat);
+    assert(aligned_word(word, scale) * pow2(word.shift as nat) == word_value(word) * pow2(scale))
+        by (nonlinear_arith)
+        requires pow2(scale) == pow2(word.shift as nat) * pow2((scale - word.shift) as nat);
 }
 
 /// Cancel any prefix of a known exact binary factor, retaining a positive
@@ -172,4 +216,94 @@ pub(crate) fn finish<const N: usize>(
             denominator_shift as nat, reduced_shift as nat);
     }
     Some((minus, magnitude, reduced_shift))
+}
+
+/// Canonical native-word reduction, using the same exact binary factors as
+/// the limb-buffer proof without materializing a limb array.
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures canonical_word(result), result.shift <= denominator_shift,
+        result.negative == (negative && magnitude != 0),
+        magnitude == result.magnitude as nat * pow2((denominator_shift - result.shift) as nat),
+        word_value(result) * pow2(denominator_shift as nat)
+            == signed(negative, magnitude as nat) * pow2(result.shift as nat),
+))]
+#[inline]
+pub(crate) fn normalize_word(negative: bool, magnitude: u128, denominator_shift: u64) -> Word {
+    if magnitude == 0 {
+        proof! {
+            canonical_is_reduced(0, 0);
+            lemma2_to64();
+            assert(0nat * pow2(denominator_shift as nat) == 0nat) by (nonlinear_arith);
+            assert(0int * pow2(denominator_shift as nat) == 0int) by (nonlinear_arith);
+        }
+        return Word {
+            active: false,
+            negative: false,
+            magnitude: 0,
+            shift: 0,
+        };
+    }
+    let trailing = super::gcd::trailing_zeros_u128(magnitude);
+    let common = (trailing as u64).min(denominator_shift) as u32;
+    proof! {
+        super::gcd::divide_trailing_factor(magnitude, common);
+        super::gcd::trailing_zeros_factor_u128(magnitude);
+    }
+    let reduced = magnitude >> common;
+    let shift = denominator_shift - common as u64;
+    proof! {
+        canonical_is_reduced(reduced as nat, shift as nat);
+        reduction_preserves_fraction(negative, magnitude as nat, reduced as nat,
+            denominator_shift as nat, shift as nat);
+    }
+    Word {
+        active: true,
+        negative,
+        magnitude: reduced,
+        shift,
+    }
+}
+
+/// Check both raw alignments before subtracting the signed native values.
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures ({
+        let scale = word_scale(left, right);
+        let total = word_difference(left, right);
+        &&& (result.is_none() <==> scale - left.shift >= 128 || scale - right.shift >= 128
+            || left.magnitude as nat * pow2((scale - left.shift) as nat) > u128::MAX
+            || right.magnitude as nat * pow2((scale - right.shift) as nat) > u128::MAX
+            || total > u128::MAX || total < -(u128::MAX as int))
+        &&& match result {
+            Some(word) => canonical_word(word) && word.shift <= scale
+                && word.negative == (total < 0)
+                && word.magnitude as nat * pow2((scale - word.shift) as nat) == abs(total)
+                && word_value(word) * pow2(scale) == total * pow2(word.shift as nat),
+            None => true,
+        }
+    }),
+))]
+#[inline]
+pub(crate) fn difference_word(left: Word, right: Word) -> Option<Word> {
+    let scale = left.shift.max(right.shift);
+    let left_scaled = super::word::checked_shift_left_u64(left.magnitude, scale - left.shift)?;
+    let right_scaled = super::word::checked_shift_left_u64(right.magnitude, scale - right.shift)?;
+    let left_magnitude = if left.active { left_scaled } else { 0 };
+    let right_magnitude = if right.active { right_scaled } else { 0 };
+    proof! {
+        assert(super::word::signed(left.negative, left_magnitude) == aligned_word(left, scale as nat))
+            by (nonlinear_arith)
+            requires left_scaled == left.magnitude as nat * pow2((scale - left.shift) as nat),
+                left_magnitude == (if left.active { left_scaled } else { 0u128 });
+        assert(super::word::signed(!right.negative, right_magnitude) == -aligned_word(right, scale as nat))
+            by (nonlinear_arith)
+            requires right_scaled == right.magnitude as nat * pow2((scale - right.shift) as nat),
+                right_magnitude == (if right.active { right_scaled } else { 0u128 });
+    }
+    let (negative, magnitude) = super::word::signed_add(
+        left.negative,
+        left_magnitude,
+        !right.negative,
+        right_magnitude,
+    )?;
+    Some(normalize_word(negative, magnitude, scale))
 }
