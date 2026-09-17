@@ -452,7 +452,7 @@ proof fn left_shift_value(source: Seq<u64>, output: Seq<u64>, factor: nat, other
     assert(carry * weight(source.len()) == 0) by (nonlinear_arith) requires carry == 0;
 }
 
-proof fn two_limbs_value(words: Seq<u64>)
+pub(crate) proof fn two_limbs_value(words: Seq<u64>)
     requires words.len() >= 2,
     ensures prefix(words, 2) == ((words[0] as u128) | ((words[1] as u128) << 64)),
         weight(2) == u128::MAX as nat + 1,

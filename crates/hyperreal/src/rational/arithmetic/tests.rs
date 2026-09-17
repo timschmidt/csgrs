@@ -20,6 +20,88 @@ mod tests {
     }
 
     #[test]
+    fn fixed_limb_products_match_biguint_across_carry_boundaries() {
+        fn check<const L: usize, const R: usize, const O: usize>() {
+            let mut state = 0xa409_3822_299f_31d0_u64;
+            for case in 0..128 {
+                let mut generate = |index: usize| {
+                    state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                    match case {
+                        0 => 0,
+                        1 => u64::MAX,
+                        2 => u64::from(index == 0),
+                        3 => if index.is_multiple_of(2) { u64::MAX } else { 0 },
+                        4 => 1_u64 << 63,
+                        _ => state,
+                    }
+                };
+                let left: [u64; L] = std::array::from_fn(&mut generate);
+                let right: [u64; R] = std::array::from_fn(&mut generate);
+                let product = crate::verified::product::multiply::<L, R, O>(&left, &right);
+                assert_eq!(
+                    limbs_to_biguint(&product),
+                    limbs_to_biguint(&left) * limbs_to_biguint(&right),
+                    "{L} by {R} limbs, output {O}, case {case}"
+                );
+                assert!(product[L + R..].iter().all(|limb| *limb == 0));
+            }
+        }
+
+        check::<0, 0, 0>();
+        check::<0, 2, 2>();
+        check::<2, 0, 2>();
+        check::<1, 1, 2>();
+        check::<2, 2, 4>();
+        check::<4, 1, 5>();
+        check::<4, 2, 6>();
+        check::<4, 4, 8>();
+        check::<3, 5, 10>();
+
+        let words = [0, 1, u128::from(u64::MAX), 1_u128 << 64, 1_u128 << 127, u128::MAX];
+        for left in words {
+            for right in words {
+                assert_eq!(
+                    limbs_to_biguint(&crate::verified::product::multiply_u128(left, right)),
+                    BigUint::from(left) * BigUint::from(right)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn wide_stack_products_match_biguint_on_both_scalar_paths() {
+        let maximum = [u64::MAX; 4];
+        let sparse = [1, 0, 0, 1 << 63];
+        for left in [[0; 4], maximum, sparse] {
+            for right in [0, 1, u128::from(u64::MAX), 1_u128 << 64, u128::MAX] {
+                for shift in [0, 1, 63, 64, 127, 128, 383, 384, u64::MAX] {
+                    let mut actual = DyadicStackAccumulator::default();
+                    actual.0[0] = 3;
+                    let product = limbs_to_biguint(&left) * BigUint::from(right);
+                    let fits = product.is_zero()
+                        || product.bits().checked_add(shift).is_some_and(|bits| bits <= 384);
+                    let result = actual.add_wide_word_product(left, right, shift);
+                    if fits {
+                        let expected = if product.is_zero() {
+                            BigUint::from(3_u8)
+                        } else {
+                            (product << usize::try_from(shift).unwrap()) + 3_u8
+                        };
+                        if expected.bits() <= 384 {
+                            assert_eq!(result, Some(()));
+                            assert_eq!(limbs_to_biguint(&actual.0), expected);
+                        } else {
+                            assert_eq!(result, None);
+                        }
+                    } else {
+                        assert_eq!(result, None);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn direct_shifted_stack_products_match_biguint_boundaries() {
         let cases = [
             (1_u128, 1_u128, 0_u64),
