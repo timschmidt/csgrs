@@ -1,0 +1,480 @@
+{
+  "schema": 1,
+  "status": "proof_and_correctness_milestone_not_acceptance",
+  "commit": "43ab484ab1ed8cb6b27b3f295b3b9825f095b9c8",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "verification_units": 363,
+  "production_contracts": 52,
+  "model_theorems": 65,
+  "open_obligation_groups": 13,
+  "source_hashes_checked": 111,
+  "no_cheating": true,
+  "changes": [
+    "floor_half verifies exact floor division by two for all i32 inputs, including negative odd exponents.",
+    "Square-root metadata retains exactness of an exact input binade and floors negative exponents.",
+    "Fixed-decimal formatting clamps its working MSD to at least zero, keeping the absolute precision request bounded even when a tiny exact MSD is already known."
+  ],
+  "selected_root_validation": [
+    {
+      "step": "sqrt-facts",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--lib",
+        "rational_square_roots_retain_exact_magnitude_facts"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672",
+        "src/real/arithmetic/representation.rs": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+      },
+      "exit_code": 0,
+      "seconds": 4.625791072845459
+    },
+    {
+      "step": "sqrt-format",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--lib",
+        "computable::format::tests::"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672",
+        "src/real/arithmetic/representation.rs": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+      },
+      "exit_code": 0,
+      "seconds": 0.12934303283691406
+    },
+    {
+      "step": "sqrt-semantics",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--test",
+        "adversarial_semantics"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672",
+        "src/real/arithmetic/representation.rs": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+      },
+      "exit_code": 0,
+      "seconds": 2.3549234867095947
+    }
+  ],
+  "mutation_rejections": 69,
+  "assumption_bypass_rejected": true,
+  "experiment_failures": [
+    {
+      "variant": "shared-clone-v1",
+      "qualification": [
+        {
+          "step": "fmt",
+          "command": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--",
+            "--check"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "patch_sha256": "73d575fb2b2e46f9342223f60929677bbf90c53a106c4868bc73c4d9ebb9f282",
+          "exit_code": 0,
+          "seconds": 0.4474985599517822
+        },
+        {
+          "step": "tests-default",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--all-targets"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "patch_sha256": "73d575fb2b2e46f9342223f60929677bbf90c53a106c4868bc73c4d9ebb9f282",
+          "exit_code": 101,
+          "seconds": 15.885165929794312
+        },
+        {
+          "step": "tests-all",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--all-features",
+            "--all-targets"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "patch_sha256": "73d575fb2b2e46f9342223f60929677bbf90c53a106c4868bc73c4d9ebb9f282",
+          "exit_code": 101,
+          "seconds": 18.01830744743347
+        },
+        {
+          "step": "representation-matrix",
+          "command": [
+            "bash",
+            "scripts/representation_coverage.sh"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "patch_sha256": "73d575fb2b2e46f9342223f60929677bbf90c53a106c4868bc73c4d9ebb9f282",
+          "exit_code": 0,
+          "seconds": 10.27247405052185
+        },
+        {
+          "step": "clippy-all",
+          "command": [
+            "cargo",
+            "clippy",
+            "--locked",
+            "--offline",
+            "--all-features",
+            "--all-targets",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "patch_sha256": "73d575fb2b2e46f9342223f60929677bbf90c53a106c4868bc73c4d9ebb9f282",
+          "exit_code": 0,
+          "seconds": 6.278882265090942
+        }
+      ],
+      "finding": "Both ordinary all-target commands fail adversarial_semantics on pi*sqrt2 forms. Named Sqrt2 retains an exact MSD while the generic sqrt drops exact_msd. These commands stopped early; remaining targets did not all run."
+    },
+    {
+      "variant": "shared-clone-v2",
+      "qualification": [
+        {
+          "step": "sqrt-facts",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--lib",
+            "rational_square_roots_retain_exact_magnitude_facts"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "source_sha256": {
+            "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+            "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+            "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+            "src/real/arithmetic/classification.rs": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672",
+            "src/real/arithmetic/representation.rs": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+          },
+          "exit_code": 0,
+          "seconds": 4.531819105148315
+        },
+        {
+          "step": "sqrt-semantics",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--test",
+            "adversarial_semantics"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "source_sha256": {
+            "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+            "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+            "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+            "src/real/arithmetic/classification.rs": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672",
+            "src/real/arithmetic/representation.rs": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+          },
+          "exit_code": 0,
+          "seconds": 2.254218339920044
+        },
+        {
+          "step": "fmt",
+          "command": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--",
+            "--check"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "source_sha256": {
+            "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+            "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+            "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+            "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+            "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+          },
+          "exit_code": 0,
+          "seconds": 0.43051815032958984
+        },
+        {
+          "step": "tests-default",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--all-targets",
+            "--no-fail-fast"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "source_sha256": {
+            "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+            "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+            "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+            "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+            "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+          },
+          "exit_code": 101,
+          "seconds": 184.40651750564575
+        },
+        {
+          "step": "tests-all",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "--offline",
+            "--all-features",
+            "--all-targets",
+            "--no-fail-fast"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "source_sha256": {
+            "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+            "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+            "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+            "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+            "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+          },
+          "exit_code": 101,
+          "seconds": 200.80080461502075
+        },
+        {
+          "step": "representation-matrix",
+          "command": [
+            "bash",
+            "scripts/representation_coverage.sh"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "source_sha256": {
+            "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+            "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+            "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+            "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+            "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+          },
+          "exit_code": 0,
+          "seconds": 10.857907056808472
+        },
+        {
+          "step": "clippy-all",
+          "command": [
+            "cargo",
+            "clippy",
+            "--locked",
+            "--offline",
+            "--all-features",
+            "--all-targets",
+            "--",
+            "-D",
+            "warnings"
+          ],
+          "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+          "environment": {
+            "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+            "CARGO_INCREMENTAL": "0",
+            "CARGO_PROFILE_DEV_DEBUG": "0",
+            "CARGO_PROFILE_TEST_DEBUG": "0",
+            "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+            "CARGO_BUILD_JOBS": "4",
+            "CCACHE_DISABLE": "1"
+          },
+          "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+          "source_sha256": {
+            "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+            "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+            "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+            "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+            "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+          },
+          "exit_code": 0,
+          "seconds": 6.76320219039917
+        }
+      ],
+      "finding": "With sqrt metadata repaired, full default/all-feature target runs fail only disp_tiny_computable_has_bounded_demand. A newly known tiny MSD causes fixed-decimal Display to request excessive relative precision. This motivated the committed absolute-demand fix."
+    }
+  ],
+  "limits": [
+    "The square-root binade identity and surrounding metadata invariants are not a complete Verus refinement proof; only the signed exponent kernel is newly verified.",
+    "The shared-computable-clone and inline-cache overlay remains isolated and unadopted at this checkpoint.",
+    "Full empirical qualification of the new runtime against the fixed baseline and the complete source/caller/dependency proof remain pending."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-sqrt-metadata.tar.gz",
+    "bytes": 113360,
+    "files": 63,
+    "sha256": "c0e4bc0a1be7abc2a1171968becea39b2fab9f1b5bc2aaabf82a5c4232857bc9"
+  }
+}
