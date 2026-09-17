@@ -19907,16 +19907,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let source = other.source_power_basis()?;
         let differential = other.differential()?;
-        if let Classification::Uncertain(reason) = policy
-            .strict_predicate_pass(|| BezierParallel2::certify_finite_source(&source, policy))?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
-        if let Classification::Uncertain(reason) =
-            BezierParallel2::certify_regular_differential(differential, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
         let target_weight = source
             .weight
             .map_or_else(|| vec![Real::one()], <[Real]>::to_vec);
@@ -20307,6 +20297,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     fn selected_parallel_normal_parallel_system(
         &self,
         other: &BezierParallel2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSelectedParallelNormalCircleParallelSystem2>> {
         let frame = self.data.frame.parallel_normal().ok_or_else(|| {
@@ -20330,6 +20321,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             &frame.center_support,
             other,
             &radius_squared,
+            range,
             Some(&frame.center_parameter),
             policy,
         )? {
@@ -20569,28 +20561,14 @@ impl BezierAlgebraicCuspSemicircle2 {
         })
     }
 
+    /// Formal homogeneous equations. Intersection admission owns the finite
+    /// source/normal proof; retained maps only replay its certified contacts.
     fn parallel_system(
         &self,
         other: &BezierParallel2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParallelSystem2>> {
+    ) -> CurveResult<BezierAlgebraicCuspSemicircleParallelSystem2> {
         let source = other.source_power_basis()?;
-        if let Classification::Uncertain(reason) =
-            BezierParallel2::certify_finite_source(&source, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
         let differential = other.differential()?;
-        let distance_sign = match real_sign(other.distance(), policy) {
-            Some(sign) => sign,
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        };
-        if distance_sign != RealSign::Zero
-            && let Classification::Uncertain(reason) =
-                BezierParallel2::certify_regular_differential(differential, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
 
         let unit_weight = [Real::one()];
         let weight = source.weight.unwrap_or(&unit_weight);
@@ -20726,21 +20704,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                 &(-self.turn_sign() * other.distance()),
             ),
         };
-        Ok(Classification::Decided(
-            BezierAlgebraicCuspSemicircleParallelSystem2 {
-                incidence,
-                circle: BezierAlgebraicCuspTwoTermExpression2 {
-                    rational: circle_rational,
-                    radical: circle_radical,
-                },
-                selected_half_plane,
-                diameter_side,
-                radius_squared_denominator,
-                speed_squared,
-                tangent_cross_source,
-                tangent_dot_source,
+        Ok(BezierAlgebraicCuspSemicircleParallelSystem2 {
+            incidence,
+            circle: BezierAlgebraicCuspTwoTermExpression2 {
+                rational: circle_rational,
+                radical: circle_radical,
             },
-        ))
+            selected_half_plane,
+            diameter_side,
+            radius_squared_denominator,
+            speed_squared,
+            tangent_cross_source,
+            tangent_dot_source,
+        })
     }
 
     /// Signs one linear combination of this circle tangent crossed and dotted
@@ -20781,12 +20757,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 policy,
             );
         }
-        let system = match self.parallel_system(other, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let system = self.parallel_system(other)?;
         let incidence =
             match reduce_algebraic_cusp_bivariate(system.incidence, self.cusp_parameter(), policy)?
             {
@@ -21023,7 +20994,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             tangent_dot_source,
             center_speed_squared,
             candidate_speed_squared,
-        } = match self.selected_parallel_normal_parallel_system(other, policy)? {
+        } = match self.selected_parallel_normal_parallel_system(other, range, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -21428,12 +21399,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         candidate: BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleParallelContact2>>> {
-        let system = match self.parallel_system(other, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let system = self.parallel_system(other)?;
         let reduce_expression = |expression| {
             reduce_algebraic_cusp_radical_expression(expression, self.cusp_parameter(), policy)
         };
@@ -21585,7 +21551,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     Classification::Uncertain(_) => return Ok(None),
                 },
             };
-            let common = match self.represented_center_parallel_system(other, &center, policy)? {
+            let common = match self.represented_center_parallel_system(other, &center)? {
                 Classification::Decided(common) => common,
                 Classification::Uncertain(_) => return Ok(None),
             };
@@ -23082,6 +23048,33 @@ impl BezierAlgebraicCuspSemicircle2 {
         } else {
             false
         };
+        // Homogeneous equation builders and their cached parameter maps are
+        // independent of the target domain. Prove the denominators needed by
+        // this query on its actual finite cell, including retained endpoints.
+        // The incident domain separately owns its rootless bridge and open
+        // pole/speed barrier. A remote native singularity is not a premise.
+        // The selected-normal builder shares this admission with fixed-distance
+        // queries below; its target range is passed explicitly.
+        if !self.uses_selected_parallel_normal_frame() {
+            let source = other.source_power_basis()?;
+            let needs_normal = represented_rational_frame
+                || self.data.frame.rational().is_none()
+                || real_sign(other.distance(), policy) != Some(RealSign::Zero);
+            let speed = needs_normal
+                .then(|| other.differential().map(parallel_speed_squared_polynomial))
+                .transpose()?;
+            for coefficients in source.weight.into_iter().chain(speed.as_deref()) {
+                match polynomial_is_nonzero_on_parameter_range(coefficients, range, policy)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        }
         if self.uses_selected_chord_normal_frame() {
             return self.represented_parallel_intersections(other, range, incident, policy);
         }
@@ -23133,12 +23126,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 .recursive_selected_radial_parallel_intersections(other, range, incident, policy);
         }
 
-        let system = match self.parallel_system(other, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let system = self.parallel_system(other)?;
         let (shared_cusp_witness, witnessed_circular_component) = if incident.is_none() {
             if native_range && other.rational_source().is_some() {
                 match other.exact_circular_parallel_component(&CurveContext::STRICT)? {
@@ -24193,12 +24181,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             ));
         }
-        let system = match self.parallel_system(other, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let system = self.parallel_system(other)?;
         let incidence =
             match reduce_algebraic_cusp_bivariate(system.incidence, self.cusp_parameter(), policy)?
             {
@@ -38356,6 +38339,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         Ok(Classification::Decided(system))
     }
 
+    /// Caches formal target equations, never a target-domain regularity proof.
     fn recursive_selected_radial_parallel_system(
         &self,
         other: &BezierParallel2,
@@ -38439,19 +38423,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let source = other.source_power_basis()?;
         let differential = other.differential()?;
-        if !unit_target_speed
-            && let Classification::Uncertain(reason) = policy
-                .strict_predicate_pass(|| BezierParallel2::certify_finite_source(&source, policy))?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
-        if !unit_target_speed
-            && let Classification::Uncertain(reason) = policy.strict_predicate_pass(|| {
-                BezierParallel2::certify_regular_differential(differential, policy)
-            })?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
         let unit_weight = [Real::one()];
         let source_weight = source.weight.unwrap_or(&unit_weight);
         let field = frame.field.clone();
@@ -38704,7 +38675,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         &self,
         other: &BezierParallel2,
         represented: &[AlgebraicRootRepresentation],
-        policy: &CurveContext,
     ) -> CurveResult<Classification<BezierRepresentedCenterParallelSystem2>> {
         if represented.len() < 2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -38716,16 +38686,6 @@ impl BezierAlgebraicCuspSemicircle2 {
         let center_y = coordinates[1].clone();
         let source = other.source_power_basis()?;
         let differential = other.differential()?;
-        if let Classification::Uncertain(reason) =
-            BezierParallel2::certify_finite_source(&source, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
-        if let Classification::Uncertain(reason) =
-            BezierParallel2::certify_regular_differential(differential, policy)?
-        {
-            return Ok(Classification::Uncertain(reason));
-        }
         let unit_weight = [Real::one()];
         let source_weight = source.weight.unwrap_or(&unit_weight);
         let rank = sources.len() + 1;
@@ -38804,7 +38764,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             frame.unit_radial[0].clone(),
             frame.unit_radial[1].clone(),
         ];
-        let common = match self.represented_center_parallel_system(other, &represented, policy)? {
+        let common = match self.represented_center_parallel_system(other, &represented)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -112623,6 +112583,7 @@ impl BezierParallel2 {
                     center_parallel,
                     self,
                     &radius_squared,
+                    &CurveParameterRange2::unit(),
                     None,
                     policy,
                 )? {
@@ -112917,6 +112878,7 @@ impl BezierParallel2 {
                 center_parallel,
                 self,
                 radius_squared,
+                &CurveParameterRange2::unit(),
                 None,
                 policy,
             )? {
@@ -113787,6 +113749,7 @@ impl BezierParallel2 {
             center_parallel,
             self,
             radius_squared,
+            &CurveParameterRange2::from_bezier_range(isolation_range.clone()),
             None,
             policy,
         )? {
@@ -129354,16 +129317,12 @@ fn parallel_fixed_distance_system(
     center: &BezierParallel2,
     candidate: &BezierParallel2,
     radius_squared: &Real,
+    candidate_range: &CurveParameterRange2,
     certified_center_parameter: Option<&BezierParameter2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelFixedDistanceSystem2>> {
     let center_source = center.source_power_basis()?;
     let candidate_source = candidate.source_power_basis()?;
-    if let Classification::Uncertain(reason) =
-        BezierParallel2::certify_finite_source(&candidate_source, policy)?
-    {
-        return Ok(Classification::Uncertain(reason));
-    }
     let center_differential = center.differential()?;
     let candidate_differential = candidate.differential()?;
     if let Some(parameter) = certified_center_parameter {
@@ -129396,10 +129355,19 @@ fn parallel_fixed_distance_system(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    if let Classification::Uncertain(reason) =
-        BezierParallel2::certify_regular_differential(candidate_differential, policy)?
+    let candidate_speed = parallel_speed_squared_polynomial(candidate_differential);
+    for coefficients in candidate_source
+        .weight
+        .into_iter()
+        .chain(Some(candidate_speed.as_slice()))
     {
-        return Ok(Classification::Uncertain(reason));
+        match polynomial_is_nonzero_on_parameter_range(coefficients, candidate_range, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
     }
 
     let unit = [Real::one()];
@@ -129421,10 +129389,7 @@ fn parallel_fixed_distance_system(
         &parallel_speed_squared_polynomial(center_differential),
         &unit,
     );
-    let candidate_speed_squared = bivariate_outer_product(
-        &unit,
-        &parallel_speed_squared_polynomial(candidate_differential),
-    );
+    let candidate_speed_squared = bivariate_outer_product(&unit, &candidate_speed);
     let candidate_tangent_x = bivariate_outer_product(&unit, &candidate_differential.tangent_x);
     let candidate_tangent_y = bivariate_outer_product(&unit, &candidate_differential.tangent_y);
     let candidate_normal_projection = bivariate_subtract(
@@ -141350,6 +141315,129 @@ mod conversion_tests {
                 ),
             );
         }
+    }
+
+    #[test]
+    fn selected_circle_domains_reject_consumed_poles_and_undefined_normals() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        // Same parabola as the public exterior chart: W=(2s-1)^2 and
+        // X(1/2)=9/4. Its native pole is genuine, not a projective cancellation.
+        let pole = RationalBezier2::try_new(
+            vec![
+                Point2::new(q(31, 8), 2.into()),
+                Point2::new(q(-17, 8), q(1, 2)),
+                Point2::new(q(7, 8), (-1).into()),
+            ],
+            vec![1.into(), (-1).into(), 1.into()],
+        )
+        .unwrap()
+        .parallel_left(q(1, 64))
+        .unwrap();
+        // P(s)=((s-1/2)^2,(s-1/2)^3) has an undefined two-sided unit
+        // normal at 1/2. Both sources are finite and regular on [2,5/2].
+        let stationary = CubicBezier2::new(
+            Point2::new(q(1, 4), q(-1, 8)),
+            Point2::new(q(-1, 12), q(1, 8)),
+            Point2::new(q(-1, 12), q(-1, 8)),
+            Point2::new(q(1, 4), q(1, 8)),
+        )
+        .parallel_left(q(1, 64))
+        .unwrap();
+        let mut rejected = 0;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center = QuadraticBezier2::new(
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 0),
+                Point2::from_values(2, 1),
+            )
+            .parallel_left(Real::one())
+            .unwrap();
+            let Classification::Decided(Some(normal_circle)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    center.clone(),
+                    BezierParameter2::Exact(q(1, 2)),
+                    Real::from(3),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the independent selected normal must construct")
+            };
+            let circles = [
+                synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy),
+                dense_chord_normal_unit_semicircle(&policy),
+                independent_pair_radial_unit_circle(&policy),
+                recursively_pair_radial_rational_center_half(&policy),
+                normal_circle,
+            ];
+            for source in [&pole, &stationary] {
+                let finite =
+                    CurveParameterRange2::new_validated(Real::from(2).into(), q(5, 2).into());
+                assert!(matches!(
+                    parallel_fixed_distance_system(
+                        &center,
+                        source,
+                        &Real::one(),
+                        &finite,
+                        Some(&BezierParameter2::Exact(q(1, 2))),
+                        &policy,
+                    )
+                    .unwrap(),
+                    Classification::Decided(_)
+                ));
+                for reversed in [false, true] {
+                    let target = if reversed {
+                        source.reversed()
+                    } else {
+                        source.clone()
+                    };
+                    for circle in &circles {
+                        if circle.uses_selected_radial_frame() {
+                            // A cached formal system proves no domain. Building
+                            // it must not admit a later range crossing a pole.
+                            assert!(matches!(
+                                circle
+                                    .recursive_selected_radial_parallel_system(&target, &policy,)
+                                    .unwrap(),
+                                Classification::Decided(_)
+                            ));
+                        }
+                        for endpoint in [false, true] {
+                            let mut range = if endpoint {
+                                CurveParameterRange2::new_validated(
+                                    q(1, 2).into(),
+                                    Real::one().into(),
+                                )
+                            } else {
+                                CurveParameterRange2::unit()
+                            };
+                            if reversed {
+                                range = CurveParameterRange2::new_validated(
+                                    range.end().unit_complement().unwrap(),
+                                    range.start().unit_complement().unwrap(),
+                                );
+                            }
+                            let result =
+                                circle.parallel_intersections(&target, &range, None, &policy);
+                            // An existing rational-component accelerator can
+                            // reject an undefined normal before generic domain
+                            // admission. Neither path may publish a contact set.
+                            assert!(
+                                matches!(
+                                    &result,
+                                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                                        | Err(CurveError::Topology(_))
+                                ),
+                                "consumed singularity: policy={policy:?}, reversed={reversed}, endpoint={endpoint}, result={result:?}"
+                            );
+                            rejected += 1;
+                        }
+                    }
+                }
+            }
+        }
+        assert_eq!(rejected, 80);
     }
 
     #[test]

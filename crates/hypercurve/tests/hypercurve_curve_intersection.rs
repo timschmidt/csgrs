@@ -3722,47 +3722,66 @@ mod finite_selected_circle_domains {
         circle
     }
     fn cap(chart: u8, policy: &CurveContext) -> Curve2 {
-        // P(t)=(-1/8+t^2,t), 0<=t<=1/8. The exterior chart is P(s-2)
-        // and the compact native chart is P(u/8). The normal displacement is 1/64.
-        let exterior = chart == 1;
-        let (source, start, end) = if exterior {
-            (
+        // The four increasing charts cover P(t)=(-1/8+t^2,t), 0<=t<=1/8.
+        // The last chart has a genuine unused native pole at s=1/2.
+        let (parallel, start, end) = match chart {
+            0 => (
+                QuadraticBezier2::new(
+                    Point2::new(q(-1, 8), Real::zero()),
+                    Point2::new(q(-1, 8), q(1, 16)),
+                    Point2::new(q(-7, 64), q(1, 8)),
+                )
+                .parallel_left(q(1, 64))
+                .unwrap(),
+                Real::zero(),
+                Real::one(),
+            ),
+            1 => (
                 QuadraticBezier2::new(
                     Point2::new(q(31, 8), (-2).into()),
                     Point2::new(q(15, 8), q(-3, 2)),
                     Point2::new(q(7, 8), (-1).into()),
-                ),
+                )
+                .parallel_left(q(1, 64))
+                .unwrap(),
                 Real::from(2),
                 q(17, 8),
-            )
-        } else {
-            (
-                QuadraticBezier2::new(
-                    Point2::new(q(-1, 8), Real::zero()),
-                    Point2::new(q(-1, 8), q(1, 16)),
-                    Point2::new(q(-7, 64), q(1, 8)),
-                ),
+            ),
+            2 => (
+                // t=u/(2u+6). Raw and reduced tangent frames must replay
+                // the same point without global parameter reconstruction.
+                RationalBezier2::try_new(
+                    vec![
+                        Point2::new(q(-1, 8), Real::zero()),
+                        Point2::new(q(-1, 8), q(1, 16)),
+                        Point2::new(q(-7, 64), q(1, 8)),
+                    ],
+                    vec![9.into(), 12.into(), 16.into()],
+                )
+                .unwrap()
+                .parallel_left(q(1, 64))
+                .unwrap(),
                 Real::zero(),
                 Real::one(),
-            )
-        };
-        let parallel = if chart == 2 {
-            // The rational chart t=u/(2u+6) has the same oriented image.
-            // Its raw hodograph contains the factor (3/2)(u+3); public
-            // point replay must reuse the equivalent reduced unit frame.
-            RationalBezier2::try_new(
-                vec![
-                    Point2::new(q(-1, 8), Real::zero()),
-                    Point2::new(q(-1, 8), q(1, 16)),
-                    Point2::new(q(-7, 64), q(1, 8)),
-                ],
-                vec![9.into(), 12.into(), 16.into()],
-            )
-            .unwrap()
-            .parallel_left(q(1, 64))
-            .unwrap()
-        } else {
-            source.parallel_left(q(1, 64)).unwrap()
+            ),
+            3 => (
+                // t=(s-2)/(2s-1), W=(2s-1)^2. The retained [2,5/2]
+                // cell is finite and regular despite the native pole.
+                RationalBezier2::try_new(
+                    vec![
+                        Point2::new(q(31, 8), 2.into()),
+                        Point2::new(q(-17, 8), q(1, 2)),
+                        Point2::new(q(7, 8), (-1).into()),
+                    ],
+                    vec![1.into(), (-1).into(), 1.into()],
+                )
+                .unwrap()
+                .parallel_left(q(1, 64))
+                .unwrap(),
+                Real::from(2),
+                q(5, 2),
+            ),
+            _ => unreachable!(),
         };
         let first = exact(parallel.point_at(&start, policy).unwrap());
         let last = exact(parallel.point_at(&end, policy).unwrap());
@@ -3808,7 +3827,7 @@ mod finite_selected_circle_domains {
         let (mut cases, mut contacts, mut replays, mut failures) = (0, 0, 0, 0);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let original_circle = circle(&policy);
-            for chart in 0..3 {
+            for chart in 0..4 {
                 let original_cap = cap(chart, &policy);
                 for reverse_circle in [false, true] {
                     for reverse_cap in [false, true] {
@@ -3877,7 +3896,7 @@ mod finite_selected_circle_domains {
         println!(
             "{{\"cases\":{cases},\"contacts\":{contacts},\"point_replays\":{replays},\"failures\":{failures}}}"
         );
-        assert_eq!(cases, 48);
+        assert_eq!(cases, 64);
         assert_eq!(failures, 0);
     }
 }
