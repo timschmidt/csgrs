@@ -352,6 +352,45 @@ still need refinement proofs. Other approximation kernels' precision limits
 remain open. Build, coverage, fuzz, resource, native timing and pinned-consumer
 qualification for this runtime are in progress; this is not baseline acceptance.
 
+The [metadata resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-metadata-resources.json)
+completes the remaining nine build/check steps and all 6,492 frozen ASan inputs
+for `cdc6d3a`. Checks already covered by its exact-source root matrix were not
+repeated. Coverage is 26,140 of 28,672 executable lines (91.17%). All resource
+profilers pass; twelve representation workloads allocate less than the fixed
+baseline, but both matched Massif pairs retain the 176-byte whole-process peak
+increase. Callgrind reports 28,722,126 instructions versus 29,845,483. WASM is
+1,662,080 bytes versus 1,646,116, and stripped native growth reaches 17,984 bytes.
+Ordinary expanded Rust contains 36,100 lines versus 35,597. These differences
+remain assessment items; profiler durations do not establish native performance.
+
+The [metadata consumer builds](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-builds.json)
+pass all 41 non-tracing targets and the same five complete release suites
+(204/361/191/860/222 passed, with seven Hypermesh tests ignored).
+The [fixed-input replay](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-fixed-inputs.json)
+passes four builds and four 101-row fixture runs on the unchanged 400 stored
+inputs. Hypercurve remains pinned to `8228394`; its full release and long cases,
+the remaining consumer checks and native comparisons are still pending.
+
+The [typed bound refinement](../benchmarks/checkpoints/2026-09-17-verus-bound-refinement.json)
+at `1514ad4` includes nine production bound functions directly in the proof
+target. Their contracts preserve complete typed results, checked inverse
+exponents, floor-halved square-root exponents, zero sentinels and available
+magnitude answers. The official run passes 443 units, 65 production contracts
+and 87 model theorems, with all 124 repository input hashes bound to that
+commit. A transparent import exposes the actual pinned dependency's sign enum;
+it supplies no equality or arithmetic assumptions. The evidence also binds
+169 source files across eight dependency packages and their compiled artifacts.
+
+All thirteen new bound mutations are rejected, including false zero certificates
+and dropped valid answers. Ten acceptance/dependency identity tests pass. The
+unchanged kernel/model sources retain their prior 85-mutation and assumption
+bypass evidence; no fresh combined 98-mutation run is claimed. Focused debug and
+release tests and strict all-feature Clippy pass. Initial and final annotations
+both erase to byte-identical ordinary Rust relative to `cdc6d3a`. Incoming bound
+denotations, rational import, mapping, addition, square, multiplication, public
+magnitude conversion, constants and concurrency remain outside the added proof
+boundary. All thirteen whole-implementation obligation groups remain open.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
