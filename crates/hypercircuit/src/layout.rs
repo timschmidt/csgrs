@@ -776,7 +776,7 @@ impl BoardBoundaryGeometry {
             }
         }
         for cutout in self.contour_paths.iter().skip(1) {
-            match curve_point_in_closed_box(cutout.start(), min, max) {
+            match curve_point_in_closed_box(&cutout.start(), min, max) {
                 Some(true) => return Ok(Classification::Decided(false)),
                 Some(false) => {}
                 None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
@@ -786,13 +786,28 @@ impl BoardBoundaryGeometry {
     }
 }
 
-fn curve_point_in_closed_box(point: &CurvePoint2, min: &Point2, max: &Point2) -> Option<bool> {
-    Some(
-        point.x().predicate_cmp(&min.x)? != Ordering::Less
-            && point.x().predicate_cmp(&max.x)? != Ordering::Greater
-            && point.y().predicate_cmp(&min.y)? != Ordering::Less
-            && point.y().predicate_cmp(&max.y)? != Ordering::Greater,
-    )
+fn curve_point_in_closed_box(
+    point: &hypercurve::CurvePoint2,
+    min: &Point2,
+    max: &Point2,
+) -> Option<bool> {
+    let min = hypercurve::CurvePoint2::from(curve_point(min));
+    let max = hypercurve::CurvePoint2::from(curve_point(max));
+    for axis in [hypercurve::Axis2::X, hypercurve::Axis2::Y] {
+        for (bound, outside) in [(&min, Ordering::Less), (&max, Ordering::Greater)] {
+            let Classification::Decided(order) = point
+                .compare_coordinate(bound, axis, &CurveContext::STRICT)
+                .ok()?
+                .into_value()
+            else {
+                return None;
+            };
+            if order == outside {
+                return Some(false);
+            }
+        }
+    }
+    Some(true)
 }
 
 fn point_line_segment_distance_squared(

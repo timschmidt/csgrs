@@ -1,14 +1,16 @@
 #![cfg(feature = "interchange")]
 
+#[cfg(feature = "drc")]
+use hypercircuit::Design;
 use hypercircuit::{
     AdapterKind, BoardContour, BoardContourSegment, BoardId, BoardOutline, Circuit, CircuitId,
-    Design, FabricationExportOptions, FabricationFileKind, FabricationPackage, KiCadExportOmission,
+    FabricationExportOptions, FabricationFileKind, FabricationPackage, KiCadExportOmission,
     KiCadExportOptions, KiCadImportOptions, KiCadImportReport, MaterializationOptions,
     MaterializationProjection, NegotiatedRoutePolicy, NegotiatedRouteStatus, PcbDesignRules,
     PcbLayout, PcbStackup, PlacementSolvePolicy, Real, SemanticDocument, StackupLayer,
     StackupLayerKind, TransientPolicy,
 };
-use hypercurve::{Classification, CurveContext, RegionPointLocation, UncertaintyReason};
+use hypercurve::{Classification, CurveContext, RegionPointLocation};
 use hyperlattice::Point2;
 use hyperpath::{ArcDirection, CubicBezier, ExplicitCircularArc, LinePathSegment, TraceLayer};
 
@@ -207,7 +209,7 @@ fn mixed_curve_board_contours_round_trip_and_render_without_chord_loss() {
         boundary
             .contains_disc(&p(6, 6), Real::one(), &CurveContext::STRICT)
             .unwrap(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        Classification::Decided(true)
     );
     assert_eq!(
         layout

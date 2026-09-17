@@ -14,9 +14,9 @@ use csgrs::curve::{self, CurveRegionExt};
 use csgrs::solid::{self, SolidExt};
 use csgrs::{AttributedMesh, GeometryCertainty, GeometryContext, GeometryOutcome};
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, Contour2, Curve2, CurveCertainty, CurveContext,
-    CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, ExactCurveResult,
-    FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
+    CircularArc2, Classification, Contour2, Curve2, CurveCertainty, CurveContext, CurveOutcome,
+    CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, ExactCurveResult, FillRule,
+    LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
 };
 use hyperlattice::Point2;
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy};
@@ -152,25 +152,6 @@ impl MaterializationDecisions {
         evaluate: impl FnOnce(&CurveContext) -> Result<CurveOutcome<Classification<T>>, E>,
     ) -> Result<Classification<T>, E> {
         self.consume(evaluate(&self.curves))
-    }
-
-    fn classify_value<T>(
-        &self,
-        mut evaluate: impl FnMut(&CurveContext) -> Classification<T>,
-    ) -> Classification<T> {
-        if self.curves != CurveContext::APPROXIMATE_512 {
-            return evaluate(&self.curves);
-        }
-        match evaluate(&CurveContext::STRICT) {
-            decided @ Classification::Decided(_) => decided,
-            Classification::Uncertain(_) => {
-                let classification = evaluate(&self.curves);
-                if classification.is_decided() {
-                    self.observe(GeometryCertainty::Approximate512Consumed);
-                }
-                classification
-            }
-        }
     }
 
     fn compare_reals(&self, left: &Real, right: &Real) -> Option<Ordering> {
@@ -3931,7 +3912,7 @@ fn union_layer_images(
         .into_iter()
         .map(|(layer, profiles)| {
             let source_feature_count = profiles.len();
-            let (copper, blocker) = match exact_compound_union(&profiles, decisions) {
+            let (copper, blocker) = match exact_compound_composition(&profiles, &[], decisions) {
                 Ok(profile) => (Some(profile), None),
                 Err(error) => (None, Some(error)),
             };
@@ -3960,7 +3941,7 @@ fn union_process_images(
         .into_iter()
         .map(|(role, profiles)| {
             let source_feature_count = profiles.len();
-            let (image, blocker) = match exact_compound_union(&profiles, decisions) {
+            let (image, blocker) = match exact_compound_composition(&profiles, &[], decisions) {
                 Ok(profile) => (Some(profile), None),
                 Err(error) => (None, Some(error)),
             };
@@ -3974,88 +3955,6 @@ fn union_process_images(
         .collect()
 }
 
-fn exact_compound_union(
-    profiles: &[CurveRegion2],
-    decisions: &MaterializationDecisions,
-) -> Result<CurveRegion2, String> {
-    let profiles = profiles
-        .iter()
-        .filter(|profile| !profile.is_empty())
-        .collect::<Vec<_>>();
-    if profiles.is_empty() {
-        return Ok(CurveRegion2::empty());
-    }
-
-    let policy = decisions.curve_policy();
-    let bounds = profiles
-        .iter()
-        .map(|profile| {
-            match decisions
-                .classify(|attempt| profile.bounds(attempt))
-                .map_err(|error| error.to_string())?
-            {
-                Classification::Decided(bounds) => Ok(bounds),
-                Classification::Uncertain(reason) => {
-                    Err(format!("exact aggregate bounds were uncertain: {reason:?}"))
-                }
-            }
-        })
-        .collect::<Result<Vec<_>, String>>()?;
-    let mut parents = (0..profiles.len()).collect::<Vec<_>>();
-    fn root(parents: &mut [usize], mut index: usize) -> usize {
-        while parents[index] != index {
-            parents[index] = parents[parents[index]];
-            index = parents[index];
-        }
-        index
-    }
-    for left in 0..bounds.len() {
-        for right in left + 1..bounds.len() {
-            match decisions.classify_value(|attempt| bounds[left].overlaps(&bounds[right], attempt))
-            {
-                Classification::Decided(false) => {}
-                Classification::Decided(true) => {
-                    let left_root = root(&mut parents, left);
-                    let right_root = root(&mut parents, right);
-                    parents[right_root] = left_root;
-                }
-                Classification::Uncertain(reason) => {
-                    return Err(format!(
-                        "exact aggregate bounds overlap was uncertain: {reason:?}"
-                    ));
-                }
-            }
-        }
-    }
-
-    let mut components = BTreeMap::<usize, Vec<&CurveRegion2>>::new();
-    for (index, profile) in profiles.iter().enumerate() {
-        let root = root(&mut parents, index);
-        components.entry(root).or_default().push(*profile);
-    }
-    let mut unions = Vec::with_capacity(components.len());
-    for component in components.into_values() {
-        let mut component = component.into_iter();
-        let first = component
-            .next()
-            .expect("each aggregate component contains a profile");
-        unions.push(component.try_fold(first.clone(), |aggregate, profile| {
-            decisions
-                .consume(aggregate.boolean_region(profile, BooleanOp::Union, policy))
-                .map_err(|error| format!("{error:?}"))
-        })?);
-    }
-    let mut unions = unions.into_iter();
-    let first = unions
-        .next()
-        .expect("at least one nonempty aggregate component exists");
-    unions.try_fold(first, |aggregate, profile| {
-        decisions
-            .consume(aggregate.boolean_region(&profile, BooleanOp::Union, decisions.curve_policy()))
-            .map_err(|error| format!("{error:?}"))
-    })
-}
-
 fn exact_compound_composition(
     positive: &[CurveRegion2],
     negative: &[CurveRegion2],
@@ -4064,12 +3963,11 @@ fn exact_compound_composition(
     let mut paths = Vec::new();
     let mut roles = Vec::new();
     let mut rules = Vec::new();
-    for (profile, invert_roles) in positive
+    for (region, invert_roles) in positive
         .iter()
         .map(|profile| (profile, false))
         .chain(negative.iter().map(|profile| (profile, true)))
     {
-        let region = profile;
         let Classification::Decided(mut profile_paths) = decisions
             .consume(region.boundary_paths(decisions.curve_policy()))
             .map_err(|error| error.to_string())?
@@ -4105,7 +4003,7 @@ fn exact_compound_composition(
     }
     let region = decisions
         .curve_operation(|policy| {
-            CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &paths, &roles, &rules, policy,
             )
         })
@@ -4121,8 +4019,8 @@ fn half(value: &Real) -> Result<Real, GeometryMaterializationError> {
 mod tests {
     use super::{
         MaterializationContext, MaterializationDecisions, MaterializationOptions,
-        exact_circle_profile, exact_compound_composition, exact_compound_union, half, pad_profile,
-        project_cubic_bezier, stroked_path_profile, transform_drill, transform_pad_profile,
+        exact_circle_profile, exact_compound_composition, half, pad_profile, project_cubic_bezier,
+        stroked_path_profile, transform_drill, transform_pad_profile,
     };
     use crate::{
         BoardSide, CircuitInstanceId, DrillShape, LandPatternId, LandPatternPad, PadId, PadShape,
@@ -4257,9 +4155,12 @@ mod tests {
     #[test]
     fn approximate_materialization_marks_consumed_terminal_pad_ordering() {
         let mut pad = rounded_pad("terminal", 0);
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
         pad.shape = PadShape::Obround {
-            width: Real::pi() + Real::e(),
-            height: Real::e() + Real::pi(),
+            width: Real::from(6),
+            height: Real::from(6) + unresolved_zero,
         };
 
         let strict = MaterializationDecisions::new(&MaterializationContext::STRICT);
@@ -4364,7 +4265,7 @@ mod tests {
             Real::from(3),
         );
 
-        let union = exact_compound_union(&[trace, via_land], &decisions).unwrap();
+        let union = exact_compound_composition(&[trace, via_land], &[], &decisions).unwrap();
         let profiles = curve::try_finite_profiles(&union, &decisions.geometry_context())
             .unwrap()
             .into_value();
@@ -4374,6 +4275,71 @@ mod tests {
             curve::contains_xy(&union, Real::from(15), Real::from(4)),
             Some(true)
         );
+    }
+
+    #[test]
+    fn additive_composition_preserves_holes_islands_and_duplicate_profiles() {
+        for context in [
+            MaterializationContext::STRICT,
+            MaterializationContext::APPROXIMATE_512,
+        ] {
+            let decisions = MaterializationDecisions::new(&context);
+            let policy = decisions.curve_policy();
+            let square = |half: i32| {
+                curve::translated(
+                    &curve::rectangle(Real::from(2 * half), Real::from(2 * half)),
+                    Real::from(-half),
+                    Real::from(-half),
+                )
+            };
+            let exterior = square(6);
+            let cut = square(4);
+            let ring = exterior
+                .boolean_region(&cut, BooleanOp::Difference, policy)
+                .unwrap()
+                .into_value();
+            let island = square(1);
+            let bridge = curve::translated(
+                &curve::rectangle(Real::from(2), Real::from(4)),
+                Real::from(3),
+                Real::from(-2),
+            );
+            let operands = [ring.clone(), island, bridge, ring, CurveRegion2::empty()];
+            let aggregate = exact_compound_composition(&operands, &[], &decisions).unwrap();
+            let sequential = operands
+                .iter()
+                .try_fold(CurveRegion2::empty(), |region, operand| {
+                    region
+                        .boolean_region(operand, BooleanOp::Union, policy)
+                        .map(|result| result.into_value())
+                })
+                .unwrap();
+            assert!(
+                aggregate
+                    .boolean_region(&sequential, BooleanOp::Xor, policy)
+                    .unwrap()
+                    .into_value()
+                    .is_empty()
+            );
+            for (x, y, inside) in [
+                (0, 0, true),
+                (2, 0, false),
+                (4, 0, true),
+                (5, 5, true),
+                (7, 0, false),
+            ] {
+                assert_eq!(
+                    curve::contains_xy(&aggregate, Real::from(x), Real::from(y)),
+                    Some(inside)
+                );
+            }
+            assert!(
+                exact_compound_composition(&[], &[], &decisions)
+                    .unwrap()
+                    .is_empty()
+            );
+            assert_eq!(decisions.certainty(), GeometryCertainty::Certified);
+        }
     }
 
     #[test]
