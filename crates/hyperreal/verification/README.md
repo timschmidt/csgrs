@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies fifty-two production contracts (fifty-one
-functions and one constant) and sixty-five arithmetic model theorems. The rest
+The current proof target verifies fifty-four production contracts (fifty-three
+functions and one constant) and sixty-six arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -95,6 +95,7 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `gcd_small_wide` | Exact GCD for a nonzero word and two-limb value, including the power-of-two shortcut. | `gcd_u128` |
 | `gcd_u128` | Exact GCD for every pair of 128-bit inputs; all dispatch paths, helper preconditions and final common-factor shifts are proved. | `Rational::gcd_word` |
 | `fraction::reduce` | Exact GCD quotients with a positive denominator, coprime parts, unchanged fraction and canonical `0/1`; division safety and the GCD helper's contract are proved. | General word reduction, cross-cancellation, normal-component reduction and scaled word quotients |
+| `fraction::checked_factors_product`, `fraction::cross_cancelled_product` | Complete numerator-major cancellation traversal with unit shortcuts, fraction preservation, positive denominators, coprime products and canonical zero. Failure iff an ordered post-cancellation numerator or denominator prefix exceeds `u128`, including overflow before a later zero. Array bounds, termination and helper preconditions are proved. | `Rational::product_term_words_cross_cancelled` |
 | `limbs::compare` | Ordering agrees with the unbounded integer denoted by little-endian limb arrays. | Fixed-buffer GCD |
 | `limbs::subtract_word`, `limbs::subtract` | Exact subtraction with borrow propagation; a no-larger subtrahend cannot leave a final borrow. | Fixed-buffer GCD |
 | `limbs::shift_right`, `limbs::shift_left` | Right shift is division by the corresponding power of two; left shift is exact multiplication when the result fits. In-place traversal preserves unread limbs. | Fixed-buffer GCD |
@@ -173,10 +174,10 @@ recurrence. They establish Euclid's divisibility lemma, preservation of
 coprimality under products and exact quotient cancellation, and uniqueness of
 signed reduced fractions with positive denominators. Normalization is therefore
 idempotent, and comparing normalized parts characterizes rational equivalence
-even for unreduced inputs. These are mathematical foundations for the native
-cross-cancellation loop and rational equality; those production implementations
-and their callers still require refinement proofs. The new theorems are erased
-from normal Rust builds.
+even for unreduced inputs. The native cross-cancellation traversal now refines
+these mathematical foundations. Rational equality and the surrounding callers
+still require refinement proofs. The mathematical theorems are erased from
+normal Rust builds.
 
 Factor-sequence theorems prove that dividing a factor divides every containing
 prefix, cross-cancelling any pair preserves the complete fraction, and pairwise
@@ -185,6 +186,12 @@ the next pair also preserves coprimality of every pair already processed by
 the numerator-major traversal, including zero numerators. These theorems
 include empty products and zero numerators. Prefix order remains explicit:
 a native checked product can overflow before encountering a later zero.
+The executable kernel preserves the original numerator-major pair order and
+unit shortcuts, then checks numerator and denominator prefixes in their original
+order. The adapter that imports `BigUint` parts and establishes positive native
+denominators remains outside this proof boundary. The new loop form also needs
+runtime qualification against the fixed baseline; verification alone does not
+establish code-generation or performance parity.
 
 The `floor_half` contract covers the integer exponent calculation. The
 positive-root binade identity and the surrounding metadata invariants still
@@ -233,7 +240,7 @@ proves conversion to `usize` is safe, including on narrower targets.
 No project assumptions were added to cover these operations.
 
 `test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of sixty-nine
+first verifies the unmodified bodies, and then requires rejection of seventy-three
 incorrect implementations and an attempted assumption bypass. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against

@@ -325,3 +325,211 @@ pub(crate) proof fn cancel_preserves_processed_coprimality(
     }
 }
 }
+
+#[cfg(verus_keep_ghost)]
+verus! {
+/// Every checked prefix must fit, even if a later zero makes the total small.
+pub(crate) open spec fn factors_fit(factors: Seq<u128>) -> bool {
+    forall|length: int| 0 <= length <= factors.len()
+        ==> #[trigger] factors_product(factors, length) <= u128::MAX
+}
+
+/// The numerator-major cancellation traversal, including its unit shortcuts.
+pub(crate) open spec fn cancelled_factors(
+    numerators: Seq<u128>, denominators: Seq<u128>, ni: int, di: int,
+) -> (Seq<u128>, Seq<u128>)
+    recommends 0 <= ni <= numerators.len(), 0 <= di <= denominators.len(),
+    decreases numerators.len() - ni, denominators.len() - di,
+{
+    if ni >= numerators.len() {
+        (numerators, denominators)
+    } else if numerators[ni] == 1 || di >= denominators.len() {
+        cancelled_factors(numerators, denominators, ni + 1, 0)
+    } else if denominators[di] == 1 {
+        cancelled_factors(numerators, denominators, ni, di + 1)
+    } else {
+        let divisor = gcd(numerators[ni] as nat, denominators[di] as nat);
+        let ns = numerators.update(ni, (numerators[ni] as nat / divisor) as u128);
+        let ds = denominators.update(di, (denominators[di] as nat / divisor) as u128);
+        cancelled_factors(ns, ds, ni, di + 1)
+    }
+}
+
+proof fn unit_is_coprime(denominator: nat)
+    requires denominator > 0,
+    ensures gcd(1, denominator) == 1,
+{
+    super::gcd::gcd_symmetric(1, denominator);
+    assert(gcd(denominator, 1) == gcd(1, 0));
+}
+
+proof fn product_fraction_transitive(
+    n0: nat, d0: nat, n1: nat, d1: nat, n2: nat, d2: nat,
+)
+    requires d1 > 0, n1 * d0 == n0 * d1, n2 * d1 == n1 * d2,
+    ensures n2 * d0 == n0 * d2,
+{
+    assert(n2 * d0 == n0 * d2) by (nonlinear_arith)
+        requires d1 > 0, n1 * d0 == n0 * d1, n2 * d1 == n1 * d2;
+}
+}
+
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures result.is_none() <==> !factors_fit(factors@),
+        match result {
+            Some(value) => value == factors_product(factors@, N as int),
+            None => true,
+        },
+))]
+#[inline]
+#[allow(
+    clippy::question_mark,
+    reason = "The overflow branch proves the exact prefix-overflow fallback condition."
+)]
+fn checked_factors_product<const N: usize>(factors: &[u128; N]) -> Option<u128> {
+    let mut value = 1_u128;
+    let mut index = 0;
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        invariant index <= N, value == factors_product(factors@, index as int),
+            forall|length: int| 0 <= length <= index
+                ==> #[trigger] factors_product(factors@, length) <= u128::MAX,
+        decreases N - index,
+    ))]
+    while index < N {
+        let Some(next) = value.checked_mul(factors[index]) else {
+            proof! {
+                assert(factors_product(factors@, index as int + 1) > u128::MAX);
+                assert(!factors_fit(factors@));
+            }
+            return None;
+        };
+        value = next;
+        index += 1;
+    }
+    Some(value)
+}
+
+/// Cross-cancel first, then multiply both arrays in their original order.
+/// The caller's conversion to positive native denominators is a separate proof
+/// obligation. This kernel must preserve the existing prefix-overflow fallback.
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    requires forall|j: int| 0 <= j < N ==> #[trigger] denominators[j] > 0,
+    ensures ({
+        let reduced = cancelled_factors(numerators@, denominators@, 0, 0);
+        &&& (result.is_none() <==> !factors_fit(reduced.0) || !factors_fit(reduced.1))
+        &&& match result {
+            Some((n, d)) => d > 0 && gcd(n as nat, d as nat) == 1
+                && n == factors_product(reduced.0, N as int)
+                && d == factors_product(reduced.1, N as int)
+                && n as nat * factors_product(denominators@, N as int)
+                    == factors_product(numerators@, N as int) * d as nat
+                && (n == 0 <==> factors_product(numerators@, N as int) == 0)
+                && (n == 0 ==> d == 1),
+            None => true,
+        }
+    }),
+))]
+#[inline]
+pub(crate) fn cross_cancelled_product<const N: usize>(
+    mut numerators: [u128; N],
+    mut denominators: [u128; N],
+) -> Option<(u128, u128)> {
+    proof_decl! { let ghost original_ns = numerators@; }
+    proof_decl! { let ghost original_ds = denominators@; }
+    proof_decl! { let ghost original_n = factors_product(original_ns, N as int); }
+    proof_decl! { let ghost original_d = factors_product(original_ds, N as int); }
+    proof_decl! { let ghost expected = cancelled_factors(original_ns, original_ds, 0, 0); }
+    let mut ni = 0;
+    proof! { factors_positive(original_ds, N as int); }
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        invariant ni <= N, original_ns.len() == N, original_ds.len() == N,
+            original_n == factors_product(original_ns, N as int),
+            original_d == factors_product(original_ds, N as int), original_d > 0,
+            expected == cancelled_factors(original_ns, original_ds, 0, 0),
+            expected == cancelled_factors(numerators@, denominators@, ni as int, 0),
+            forall|j: int| 0 <= j < N ==> #[trigger] denominators[j] > 0,
+            forall|i: int, j: int| 0 <= i < ni && 0 <= j < N
+                ==> gcd(#[trigger] numerators[i] as nat, #[trigger] denominators[j] as nat) == 1,
+            factors_product(numerators@, N as int) * original_d
+                == original_n * factors_product(denominators@, N as int),
+        decreases N - ni,
+    ))]
+    while ni < N {
+        let mut di = 0;
+        #[cfg_attr(verus_keep_ghost, verus_spec(
+            invariant ni < N, di <= N, original_ns.len() == N, original_ds.len() == N,
+                original_n == factors_product(original_ns, N as int),
+                original_d == factors_product(original_ds, N as int), original_d > 0,
+                expected == cancelled_factors(original_ns, original_ds, 0, 0),
+                expected == cancelled_factors(numerators@, denominators@, ni as int, di as int),
+                forall|j: int| 0 <= j < N ==> #[trigger] denominators[j] > 0,
+                forall|i: int, j: int| 0 <= i < N && 0 <= j < N
+                    && (i < ni || i == ni && j < di)
+                    ==> gcd(#[trigger] numerators[i] as nat, #[trigger] denominators[j] as nat) == 1,
+                factors_product(numerators@, N as int) * original_d
+                    == original_n * factors_product(denominators@, N as int),
+            decreases N - di,
+        ))]
+        while di < N && numerators[ni] != 1 {
+            if denominators[di] != 1 {
+                proof_decl! { let ghost before_ns = numerators@; }
+                proof_decl! { let ghost before_ds = denominators@; }
+                let (n, d) = reduce(numerators[ni], denominators[di]);
+                proof! {
+                    cancel_preserves_processed_coprimality(before_ns, before_ds, ni as int, di as int);
+                    cancel_preserves_product_fraction(before_ns, before_ds, ni as int, di as int);
+                    factors_positive(before_ds, N as int);
+                }
+                numerators[ni] = n;
+                denominators[di] = d;
+                proof! {
+                    assert(numerators@ == before_ns.update(ni as int, n));
+                    assert(denominators@ == before_ds.update(di as int, d));
+                    product_fraction_transitive(original_n, original_d,
+                        factors_product(before_ns, N as int), factors_product(before_ds, N as int),
+                        factors_product(numerators@, N as int), factors_product(denominators@, N as int));
+                    assert(expected == cancelled_factors(numerators@, denominators@, ni as int, di as int + 1));
+                }
+            } else {
+                proof! {
+                    assert(gcd(numerators[ni as int] as nat, 1) == gcd(1, 0));
+                    assert forall|i: int, j: int| 0 <= i < N && 0 <= j < N
+                        && (i < ni || i == ni && j <= di)
+                        implies gcd(#[trigger] numerators[i] as nat, #[trigger] denominators[j] as nat) == 1 by {
+                        if i == ni && j == di { assert(denominators[j] == 1); }
+                    }
+                    assert(expected == cancelled_factors(numerators@, denominators@, ni as int, di as int + 1));
+                }
+            }
+            di += 1;
+        }
+        proof! {
+            assert forall|i: int, j: int| 0 <= i <= ni && 0 <= j < N
+                implies gcd(#[trigger] numerators[i] as nat, #[trigger] denominators[j] as nat) == 1 by {
+                if i == ni && di < N {
+                    assert(numerators[i] == 1);
+                    unit_is_coprime(denominators[j] as nat);
+                }
+            }
+            assert(expected == cancelled_factors(numerators@, denominators@, ni as int + 1, 0));
+        }
+        ni += 1;
+    }
+    proof! {
+        assert(expected == (numerators@, denominators@));
+        factors_positive(denominators@, N as int);
+        mutually_coprime_products(numerators@, denominators@);
+    }
+    let magnitude = checked_factors_product(&numerators)?;
+    let denominator = checked_factors_product(&denominators)?;
+    proof! {
+        assert((magnitude == 0) == (original_n == 0)) by (nonlinear_arith)
+            requires denominator > 0, original_d > 0,
+                magnitude as nat * original_d == original_n * denominator as nat;
+        if magnitude == 0 {
+            super::gcd::gcd_symmetric(0, denominator as nat);
+            assert(gcd(denominator as nat, 0) == denominator);
+        }
+    }
+    Some((magnitude, denominator))
+}

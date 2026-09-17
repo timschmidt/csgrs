@@ -24,6 +24,91 @@ mod tests {
     }
 
     #[test]
+    fn native_cross_cancelled_products_match_independent_fraction_oracle() {
+        fn check<const N: usize>(numerators: [u128; N], denominators: [u128; N]) {
+            // Before the first zero, the reduced prefix numerator is exactly
+            // the numerator of that prefix over ALL original denominators.
+            // Its nonzero factors cannot shrink during later zero processing.
+            // This determines overflow without repeating the cancellation loop.
+            let zero = numerators.iter().position(|&value| value == 0);
+            let numerator = numerators[..zero.unwrap_or(N)]
+                .iter()
+                .fold(BigUint::one(), |product, &value| product * value);
+            let denominator = denominators
+                .iter()
+                .fold(BigUint::one(), |product, &value| product * value);
+            let reference = num::BigRational::new(BigInt::from(numerator), BigInt::from(denominator));
+            let limit = BigUint::from(u128::MAX);
+            let fits = reference.numer().magnitude() <= &limit
+                && (zero.is_some() || reference.denom().magnitude() <= &limit);
+            let actual = crate::verified::fraction::cross_cancelled_product(numerators, denominators);
+            assert_eq!(actual.is_some(), fits, "{numerators:?} / {denominators:?}");
+            if let Some((n, d)) = actual {
+                if zero.is_some() {
+                    assert_eq!((n, d), (0, 1));
+                } else {
+                    assert_eq!(BigInt::from(n), *reference.numer());
+                    assert_eq!(BigInt::from(d), *reference.denom());
+                }
+            }
+            let factors: [_; N] = std::array::from_fn(|i| Rational::from_parts_raw_unreduced(
+                if numerators[i] == 0 { NoSign } else { Plus },
+                BigUint::from(numerators[i]), BigUint::from(denominators[i]),
+            ));
+            assert_eq!(Rational::product_term_words_cross_cancelled(factors.each_ref()), actual);
+        }
+
+        check([], []);
+        for n in 0..=8 {
+            for d in 1..=8 {
+                check([n], [d]);
+                for n2 in 0..=8 {
+                    for d2 in 1..=8 {
+                        check([n, n2], [d, d2]);
+                    }
+                }
+            }
+        }
+        let max = u128::MAX;
+        for (ns, ds) in [
+            ([max, 2, 0], [1, 1, 1]),
+            ([max, 0, 2], [1, 1, 1]),
+            ([0, max, 2], [1, 1, 1]),
+            ([max, 2, 0], [2, 1, 1]),
+            ([max, 2, 0], [1, 1, max]),
+            ([max, max, 0], [2, 2, 1]),
+            ([max, max, max], [max, max, max]),
+            ([max, max - 1, 1], [max - 1, max, 1]),
+            ([2, 3, 5], [3, 5, 2]),
+            ([1, 1, 1], [max, 2, 1]),
+        ] {
+            check(ns, ds);
+        }
+        let mut state = 0xa54f_f53a_5f1d_36f1_u64;
+        for case in 0..256 {
+            let mut next = || {
+                state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                state
+            };
+            let mut ns = std::array::from_fn::<_, 4, _>(|_| {
+                (u128::from(next()) << 64) | u128::from(next())
+            });
+            let mut ds = std::array::from_fn::<_, 4, _>(|_| {
+                ((u128::from(next()) << 64) | u128::from(next())) | 1
+            });
+            if case % 3 == 0 {
+                ds.rotate_left(1);
+                ns = ds;
+                ns.rotate_left(1);
+            }
+            if case % 4 == 0 {
+                ns[(case / 4) % 4] = 0;
+            }
+            check(ns, ds);
+        }
+    }
+
+    #[test]
     fn native_fraction_reduction_matches_bigrational() {
         let mut values = vec![0, 1, 3, 5, 63, 64, 65, u128::MAX - 1, u128::MAX];
         for bit in [7, 16, 31, 32, 63, 64, 65, 95, 96, 126, 127] {
