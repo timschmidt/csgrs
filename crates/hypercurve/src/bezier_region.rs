@@ -16983,29 +16983,14 @@ fn retained_fragment_contains_point(
                     "retained algebraic source evaluator cache is incomplete".into(),
                 ));
             };
-            match evaluator.point_incidence(point, policy) {
-                Ok(RationalBezierPointIncidence2::EntireCurve) => Ok(Classification::Decided(true)),
-                Ok(RationalBezierPointIncidence2::Parameters(parameters)) => {
-                    for parameter in parameters {
-                        match retained_parameter_contains(
-                            &parameter, start, end, false, false, policy,
-                        )? {
-                            Classification::Decided(true) => {
-                                return Ok(Classification::Decided(true));
-                            }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
-                    }
-                    Ok(Classification::Decided(false))
-                }
-                Err(ExactCurveError::Blocked(blocker)) => {
-                    Ok(Classification::Uncertain(blocker.reason()))
-                }
-                Err(ExactCurveError::Invalid { cause, .. }) => Err(cause),
-            }
+            let range =
+                CurveParameterRange2::new_validated(start.clone().into(), end.clone().into());
+            Ok(evaluator
+                .point_incidence_on_range(point, &range, policy)?
+                .map(|incidence| match incidence {
+                    RationalBezierPointIncidence2::EntireCurve => true,
+                    RationalBezierPointIncidence2::Parameters(parameters) => !parameters.is_empty(),
+                }))
         }
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             match fragment.parallel().point_incidence(point, policy)? {
@@ -17040,16 +17025,14 @@ fn retained_fragment_contains_point(
         }
         BezierSplitFragment2::SelectedFiber(fragment) => {
             let parameters = if let Some(curve) = fragment.rational_curve() {
-                match curve.point_incidence(point, policy) {
-                    Ok(RationalBezierPointIncidence2::EntireCurve) => {
-                        return Ok(Classification::Decided(true));
-                    }
-                    Ok(RationalBezierPointIncidence2::Parameters(parameters)) => parameters,
-                    Err(ExactCurveError::Blocked(blocker)) => {
-                        return Ok(Classification::Uncertain(blocker.reason()));
-                    }
-                    Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
-                }
+                return Ok(curve
+                    .point_incidence_on_range(point, fragment.range(), policy)?
+                    .map(|incidence| match incidence {
+                        RationalBezierPointIncidence2::EntireCurve => true,
+                        RationalBezierPointIncidence2::Parameters(parameters) => {
+                            !parameters.is_empty()
+                        }
+                    }));
             } else {
                 let parallel = fragment
                     .analytic_parallel()
@@ -17589,11 +17572,23 @@ fn classify_point_with_retained_ray_skipping_origin(
                 fragment.is_reversed(),
             ),
         };
-        if !subcurve_control_hull_may_be_ahead(curve, point, direction_x, direction_y, policy) {
+        let unit = CurveParameterRange2::unit();
+        let active_range = range.as_ref().unwrap_or(&unit);
+        let unit_covers_range = matches!(
+            crate::bezier_split::CurveParameterDomain2::new(&unit, None)
+                .contains_finite_range(active_range, policy),
+            Ok(Classification::Decided(true))
+        );
+        if unit_covers_range
+            && !subcurve_control_hull_may_be_ahead(curve, point, direction_x, direction_y, policy)
+        {
             continue;
         }
-        let control_hull_order =
-            subcurve_control_hull_strict_order(curve, point, direction_x, direction_y, policy);
+        let control_hull_order = unit_covers_range
+            .then(|| {
+                subcurve_control_hull_strict_order(curve, point, direction_x, direction_y, policy)
+            })
+            .flatten();
         let certified_source_crossing = skipped_origin.and_then(|origin| {
             (origin.fragment_index == Some(fragment_index))
                 .then(|| {
@@ -17614,7 +17609,7 @@ fn classify_point_with_retained_ray_skipping_origin(
                     BezierSubcurve2::Rational(curve) => curve.retained_circular_conic().is_some(),
                     BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => false,
                 };
-                retained_circle.then(|| {
+                (unit_covers_range && retained_circle).then(|| {
                     RationalBezier2::try_from_subcurve(curve).map(|curve| {
                         curve.relation_to_line_with_certified_crossing(
                             &ray.line,
@@ -17627,6 +17622,9 @@ fn classify_point_with_retained_ray_skipping_origin(
             });
         let relation = match certified_circle_relation.transpose() {
             Ok(Some(relation)) => relation,
+            Ok(None) if !unit_covers_range => RationalBezier2::try_from_subcurve(curve)
+                .map(|curve| curve.relation_to_line_on_range(&ray.line, active_range, policy))
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
             Ok(None) => subcurve_relation_to_line_with_contacts(
                 curve,
                 &ray.line,
@@ -17634,6 +17632,18 @@ fn classify_point_with_retained_ray_skipping_origin(
                 policy,
             ),
             Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
+        let relation = if unit_covers_range
+            && active_range != &unit
+            && matches!(relation, Classification::Uncertain(_))
+        {
+            // The unused part of the unit chart may contain a pole even
+            // though this retained range is finite.
+            RationalBezier2::try_from_subcurve(curve)
+                .map(|curve| curve.relation_to_line_on_range(&ray.line, active_range, policy))
+                .unwrap_or(relation)
+        } else {
+            relation
         };
         let relation = match relation {
             Classification::Decided(relation) => relation,
@@ -18047,26 +18057,18 @@ pub(crate) fn retained_fragment_query_bounds(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
 ) -> Classification<Aabb2> {
-    match fragment {
-        BezierSplitFragment2::Materialized { curve, .. } => subcurve_query_bounds(curve, policy),
-        BezierSplitFragment2::RetainedBezier {
-            source_curve: curve,
-            ..
-        } => subcurve_query_bounds(curve, policy),
-        BezierSplitFragment2::AnalyticParallel(fragment) => fragment
-            .parallel()
-            .conservative_bounds()
-            .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
-        BezierSplitFragment2::AlgebraicChord(chord) => chord
+    if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
+        return chord
             .conservative_local_bounds_refined(0, policy)
-            .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
-        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment
-            .conservative_bounds()
-            .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
-        BezierSplitFragment2::SelectedFiber(fragment) => fragment
-            .conservative_bounds()
-            .unwrap_or_else(|_| Classification::Uncertain(UncertaintyReason::Unsupported)),
+            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
+    let range = if matches!(fragment, BezierSplitFragment2::Materialized { .. }) {
+        CurveParameterRange2::unit()
+    } else {
+        fragment.curve_region_parameter_range()
+    };
+    crate::curve_support::CurveSupport2::from_fragment(fragment)
+        .certified_outer_bounds(&range, 0, policy)
 }
 
 /// Conservatively rejects a retained fragment box from an exact forward ray.

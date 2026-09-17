@@ -152,7 +152,9 @@ exact signatures.
   `try_new` accepts affine authoring points and weights; `affine_control_points`
   returns an optional finite view. Splitting and degree elevation preserve the
   homogeneous representation without forcing every control into affine space.
-  Domain finiteness and local convex-hull certificates are separate proofs.
+  Domain finiteness and local convex-hull certificates are separate proofs. Retained
+  bounds and rational region point queries use the active finite interval,
+  including exterior charts and finite restrictions excluding source poles.
 - `BezierParameter2`, `BezierParameterRange2`, and
   `BezierRootIsolationResult2` retain exact algebraic parameter information.
 - Bézier analysis includes cusp and inflection classification, monotone spans,

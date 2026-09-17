@@ -205,6 +205,12 @@ struct RegionCarrier {
     bounds: OnceLock<Classification<Aabb2>>,
 }
 
+impl RegionCarrier {
+    fn range(&self) -> CurveParameterRange2 {
+        CurveParameterRange2::new_validated(self.start.clone(), self.end.clone())
+    }
+}
+
 #[derive(Debug)]
 struct RegionCarrierPair {
     first_carrier_index: usize,
@@ -760,10 +766,11 @@ fn retained_probe_outer_bounds(
         let mut accumulated = None::<Aabb2>;
         let mut complete = true;
         for carrier in carriers {
-            let bounds = match carrier
-                .geometry
-                .certified_outer_bounds_refined(refinement_steps, policy)
-            {
+            let bounds = match carrier.geometry.certified_outer_bounds(
+                &carrier.range(),
+                refinement_steps,
+                policy,
+            ) {
                 Classification::Decided(bounds) => bounds,
                 Classification::Uncertain(reason) => {
                     last_reason = reason;
@@ -1621,7 +1628,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let fragment = carrier
                 .geometry
                 .restrict_certified(
-                    CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone()),
+                    carrier.range(),
                     carrier.selected_fiber_endpoint_points.as_deref().cloned(),
                     carrier.reversed,
                     &self.data.policy,
@@ -4142,10 +4149,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let image = match &carrier.geometry {
             CurveSupport2::Parallel(parallel) => parallel
                 .exact_rational_parallel_component_on_regular_range(
-                    &CurveParameterRange2::new_validated(
-                        carrier.start.clone(),
-                        carrier.end.clone(),
-                    ),
+                    &carrier.range(),
                     &self.data.policy.strict_counterpart(),
                 )
                 .map(|result| result.map(|image| image.map(|image| image.curve().clone()))),
@@ -5328,9 +5332,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     )
                 };
                 if let Classification::Decided(bounds) = curve_carrier.bounds.get_or_init(|| {
-                    curve_carrier
-                        .geometry
-                        .certified_outer_bounds(&self.data.policy)
+                    curve_carrier.geometry.certified_outer_bounds(
+                        &curve_carrier.range(),
+                        0,
+                        &self.data.policy,
+                    )
                 }) && cusp
                     .semicircle()
                     .certifiably_disjoint_from_bounds(bounds, &self.data.policy)
@@ -5982,13 +5988,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 overlap.second_range.clone(),
             )));
         }
-        let range = |carrier: &RegionCarrier| {
-            CurveParameterRange2::new_validated(carrier.start.clone(), carrier.end.clone())
-        };
         match overlap
             .restrict_raw(
-                &range(first_carrier),
-                &range(second_carrier),
+                &first_carrier.range(),
+                &second_carrier.range(),
                 &self.data.policy,
             )
             .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
@@ -7967,9 +7970,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if !exact_local_seeds_cover_arrangement {
             let mut retained_bounds = Vec::with_capacity(self.data.carriers.len());
             for carrier in &self.data.carriers {
-                let cached = carrier
-                    .bounds
-                    .get_or_init(|| carrier.geometry.certified_outer_bounds(&self.data.policy));
+                let cached = carrier.bounds.get_or_init(|| {
+                    carrier
+                        .geometry
+                        .certified_outer_bounds(&carrier.range(), 0, &self.data.policy)
+                });
                 let bounds = match cached {
                     Classification::Decided(bounds) => Some(bounds.clone()),
                     Classification::Uncertain(_) => None,
@@ -9131,10 +9136,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let mut accumulated = None::<Aabb2>;
             let mut complete = true;
             for carrier in &self.data.carriers {
-                let bounds = match carrier
-                    .geometry
-                    .certified_outer_bounds_refined(refinement_steps, &self.data.policy)
-                {
+                let bounds = match carrier.geometry.certified_outer_bounds(
+                    &carrier.range(),
+                    refinement_steps,
+                    &self.data.policy,
+                ) {
                     Classification::Decided(bounds) => bounds,
                     Classification::Uncertain(reason) => {
                         last_reason = reason;
@@ -10990,7 +10996,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     }
                     let Classification::Decided(boundary_bounds) =
                         boundary.bounds.get_or_init(|| {
-                            boundary.geometry.certified_outer_bounds(&self.data.policy)
+                            boundary.geometry.certified_outer_bounds(
+                                &boundary.range(),
+                                0,
+                                &self.data.policy,
+                            )
                         })
                     else {
                         separated_from_boundary = false;
@@ -12240,11 +12250,15 @@ fn carrier_optional_outer_bounds_refined(
             .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
         _ if refinement_steps == 0 => carrier
             .bounds
-            .get_or_init(|| carrier.geometry.certified_outer_bounds(policy))
+            .get_or_init(|| {
+                carrier
+                    .geometry
+                    .certified_outer_bounds(&carrier.range(), 0, policy)
+            })
             .clone(),
         _ => carrier
             .geometry
-            .certified_outer_bounds_refined(refinement_steps, policy),
+            .certified_outer_bounds(&carrier.range(), refinement_steps, policy),
     };
     bounds.map(|bounds| {
         bounds
@@ -14730,14 +14744,18 @@ fn contacts_decided_distinct_from_carriers(
     for existing_carrier in existing.carrier_indices {
         for current_carrier in carrier_indices {
             let existing_bounds = carriers[existing_carrier].bounds.get_or_init(|| {
-                carriers[existing_carrier]
-                    .geometry
-                    .certified_outer_bounds(policy)
+                carriers[existing_carrier].geometry.certified_outer_bounds(
+                    &carriers[existing_carrier].range(),
+                    0,
+                    policy,
+                )
             });
             let current_bounds = carriers[current_carrier].bounds.get_or_init(|| {
-                carriers[current_carrier]
-                    .geometry
-                    .certified_outer_bounds(policy)
+                carriers[current_carrier].geometry.certified_outer_bounds(
+                    &carriers[current_carrier].range(),
+                    0,
+                    policy,
+                )
             });
             // Bounds are only an optional distinctness certificate. An
             // unresolved overlap must reach the exact point/parameter replay.

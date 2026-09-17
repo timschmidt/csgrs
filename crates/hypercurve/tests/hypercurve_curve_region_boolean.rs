@@ -14,6 +14,225 @@ fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
+#[test]
+fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
+    use hypercurve::{
+        BezierAlgebraicChord2, BezierParameter2, BezierSplitFragment2, BezierSubcurve2,
+        CurveRegionBoundaryLoop2, RationalQuadraticBezier2,
+    };
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("{reason:?}"),
+        }
+    }
+    let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for shift in [0, 1, -2] {
+            let s = Real::from(shift);
+            // Every chart traces the same cap, P(t) = (-(t-s)^2, t-s).
+            let controls = [
+                Point2::new(-(&s * &s), -&s),
+                Point2::new(-(&s * &s) + &s, ratio(1, 2) - &s),
+                Point2::new(-((Real::one() - &s) * (Real::one() - &s)), Real::one() - &s),
+            ];
+            let blend = |a: &Point2, b: &Point2| {
+                Point2::new(
+                    (a.x() + Real::from(2) * b.x()) * ratio(1, 3),
+                    (a.y() + Real::from(2) * b.y()) * ratio(1, 3),
+                )
+            };
+            let sources = [
+                BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                    controls[0].clone(),
+                    controls[1].clone(),
+                    controls[2].clone(),
+                )),
+                BezierSubcurve2::Cubic(CubicBezier2::new(
+                    controls[0].clone(),
+                    blend(&controls[0], &controls[1]),
+                    blend(&controls[2], &controls[1]),
+                    controls[2].clone(),
+                )),
+                BezierSubcurve2::RationalQuadratic(
+                    RationalQuadraticBezier2::try_new(
+                        controls[0].clone(),
+                        controls[1].clone(),
+                        controls[2].clone(),
+                        Real::one(),
+                        Real::one(),
+                        Real::one(),
+                    )
+                    .unwrap(),
+                ),
+                BezierSubcurve2::Rational(
+                    RationalBezier2::try_new(controls.to_vec(), vec![Real::one(); 3])
+                        .unwrap()
+                        .elevated_to_degree(5)
+                        .unwrap(),
+                ),
+            ];
+            for source in sources {
+                for reversed in [false, true] {
+                    let endpoints = if reversed {
+                        [point(0, 0), point(-1, 1)]
+                    } else {
+                        [point(-1, 1), point(0, 0)]
+                    };
+                    let boundary = CurveRegionBoundaryLoop2::new(
+                        vec![
+                            BezierSplitFragment2::RetainedBezier {
+                                source_curve: source.clone(),
+                                reversed,
+                                start: BezierParameter2::Exact(s.clone()),
+                                end: BezierParameter2::Exact(&s + Real::one()),
+                                start_image: None,
+                                end_image: None,
+                            },
+                            BezierSplitFragment2::AlgebraicChord(decided(
+                                BezierAlgebraicChord2::try_new(
+                                    endpoints[0].clone().into(),
+                                    endpoints[1].clone().into(),
+                                    &policy,
+                                )
+                                .unwrap(),
+                            )),
+                        ],
+                        &policy,
+                    )
+                    .unwrap();
+                    let region = CurveRegion2::try_new_with_loop_topology(
+                        vec![boundary],
+                        vec![CurveRegionLoopRole::Material],
+                        vec![FillRule::NonZero],
+                        vec![if reversed {
+                            CurveBoundaryInteriorSide2::Right
+                        } else {
+                            CurveBoundaryInteriorSide2::Left
+                        }],
+                    )
+                    .unwrap();
+                    let paths = region.boundary_paths(&policy).unwrap();
+                    assert_eq!(paths.certainty, CurveCertainty::Certified);
+                    let paths = decided(paths.value);
+                    let curve_bounds = paths[0].curves()[0].bounds().unwrap();
+                    let region_bounds = region.bounds(&policy).unwrap();
+                    assert_eq!(region_bounds.certainty, CurveCertainty::Certified);
+                    let region_bounds = decided(region_bounds.value);
+                    for n in 0..=4 {
+                        let t = ratio(n, 4);
+                        let sample = Point2::new(-(&t * &t), t);
+                        for bounds in [curve_bounds, &region_bounds] {
+                            assert_eq!(
+                                bounds.contains_point(&sample, &policy),
+                                Classification::Decided(true)
+                            );
+                        }
+                    }
+                    for (n, expected) in [
+                        (-5, RegionPointLocation::Outside),
+                        (-4, RegionPointLocation::Boundary),
+                        (-3, RegionPointLocation::Inside),
+                        (-2, RegionPointLocation::Boundary),
+                        (-1, RegionPointLocation::Outside),
+                        (0, RegionPointLocation::Outside),
+                        (1, RegionPointLocation::Outside),
+                    ] {
+                        let location = region
+                            .classify_point(&Point2::new(ratio(n, 8), ratio(1, 2)), &policy)
+                            .unwrap();
+                        assert_eq!(location.certainty, CurveCertainty::Certified);
+                        assert_eq!(
+                            location.value,
+                            Classification::Decided(expected),
+                            "shift={shift}, reversed={reversed}, n={n}, source={source:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn native_chart_poles_do_not_block_finite_region_queries() {
+    use hypercurve::{
+        BezierAlgebraicChord2, BezierParameter2, BezierSplitFragment2, BezierSubcurve2,
+        CurveRegionBoundaryLoop2,
+    };
+    let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+    let source = RationalBezier2::try_new(
+        vec![point(0, 0), point(0, 1), point(1, 0)],
+        vec![Real::one(), -Real::one(), -Real::one()],
+    )
+    .unwrap();
+    // W = 1-4t+2t² has a pole between these two finite restrictions.
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (start, end, side) in [
+            (Real::zero(), q(1, 4), CurveBoundaryInteriorSide2::Right),
+            (q(3, 4), Real::one(), CurveBoundaryInteriorSide2::Left),
+        ] {
+            let a = source.point_at(&start, &policy).unwrap();
+            let b = source.point_at(&end, &policy).unwrap();
+            let middle = source
+                .point_at(&((&start + &end) * q(1, 2)), &policy)
+                .unwrap();
+            let inside = Point2::new(
+                (a.x() + b.x() + Real::from(2) * middle.x()) * q(1, 4),
+                (a.y() + b.y() + Real::from(2) * middle.y()) * q(1, 4),
+            );
+            let Classification::Decided(chord) =
+                BezierAlgebraicChord2::try_new(b.clone().into(), a.clone().into(), &policy)
+                    .unwrap()
+            else {
+                panic!("represented chord");
+            };
+            let boundary = CurveRegionBoundaryLoop2::new(
+                vec![
+                    BezierSplitFragment2::RetainedBezier {
+                        source_curve: BezierSubcurve2::Rational(source.clone()),
+                        reversed: false,
+                        start: BezierParameter2::Exact(start),
+                        end: BezierParameter2::Exact(end),
+                        start_image: None,
+                        end_image: None,
+                    },
+                    BezierSplitFragment2::AlgebraicChord(chord),
+                ],
+                &policy,
+            )
+            .unwrap();
+            let region = CurveRegion2::try_new_with_loop_topology(
+                vec![boundary],
+                vec![CurveRegionLoopRole::Material],
+                vec![FillRule::NonZero],
+                vec![side],
+            )
+            .unwrap();
+            let bounds = region.bounds(&policy).unwrap();
+            assert_eq!(bounds.certainty, CurveCertainty::Certified);
+            let Classification::Decided(bounds) = bounds.value else {
+                panic!("finite region bounds");
+            };
+            for sample in [&a, &b, &middle, &inside] {
+                assert_eq!(
+                    bounds.contains_point(sample, &policy),
+                    Classification::Decided(true)
+                );
+            }
+            for (sample, expected) in [
+                (middle, RegionPointLocation::Boundary),
+                (inside, RegionPointLocation::Inside),
+                (point(1, 1), RegionPointLocation::Outside),
+            ] {
+                let location = region.classify_point(&sample, &policy).unwrap();
+                assert_eq!(location.certainty, CurveCertainty::Certified);
+                assert_eq!(location.value, Classification::Decided(expected));
+            }
+        }
+    }
+}
+
 fn sharp_offset() -> OffsetCornerStyle2 {
     OffsetCornerStyle2::Miter {
         limit: Real::from(1_000),

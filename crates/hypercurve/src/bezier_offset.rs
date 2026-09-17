@@ -36762,7 +36762,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         center_parameter: BezierAlgebraicParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        let envelope = match rational_circle_discovery_envelope(other, range, policy)? {
+        let envelope = match other.finite_discovery_envelope(range, policy)? {
             Classification::Decided(envelope) => envelope,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -37095,7 +37095,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         system: BezierSelectedRadialCircleRationalSystem2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        let envelope = match rational_circle_discovery_envelope(other, range, policy)? {
+        let envelope = match other.finite_discovery_envelope(range, policy)? {
             Classification::Decided(envelope) => envelope,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -37246,7 +37246,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         system: Arc<BezierRecursiveSelectedRadialParallelSystem2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        let envelope = match rational_circle_discovery_envelope(other, range, policy)? {
+        let envelope = match other.finite_discovery_envelope(range, policy)? {
             Classification::Decided(envelope) => envelope,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -39215,7 +39215,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         system: &BezierChordNormalDenseIntersectionSystem2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        let envelope = match rational_circle_discovery_envelope(other, range, policy)? {
+        let envelope = match other.finite_discovery_envelope(range, policy)? {
             Classification::Decided(envelope) => envelope,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -39424,7 +39424,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         parameter_system: BezierAlgebraicCuspSemicircleRationalParameterMapSystem2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        let envelope = match rational_circle_discovery_envelope(other, range, policy)? {
+        let envelope = match other.finite_discovery_envelope(range, policy)? {
             Classification::Decided(envelope) => envelope,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -40077,7 +40077,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         // evidence can identify an independently retained endpoint. Comparing
         // freshly isolated scalars before that replay reconstructs fields and
         // can lose a tangency proof already owned by the geometry.
-        let discovery_range = match rational_circle_discovery_envelope(other, range, policy)? {
+        let discovery_range = match other.finite_discovery_envelope(range, policy)? {
             Classification::Decided(range) => range,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -41148,7 +41148,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         angular_tangent: BivariatePolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleRationalIntersections2>> {
-        let envelope = match rational_circle_discovery_envelope(other, range, policy)? {
+        let envelope = match other.finite_discovery_envelope(range, policy)? {
             Classification::Decided(envelope) => envelope,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -131319,116 +131319,6 @@ fn bivariate_scale(mut polynomial: BivariatePolynomial, scale: &Real) -> Bivaria
     polynomial
 }
 
-/// Gives circle contact and component discovery a represented, pole-free chart.
-/// The returned bounds schedule cells; the caller's exact range still owns
-/// admission. An excluded pole in a selected endpoint's outer isolator must
-/// not become a component boundary or a point at infinity.
-fn rational_circle_discovery_envelope(
-    curve: &RationalBezier2,
-    range: &CurveParameterRange2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<CurveParameterRange2>> {
-    policy.strict_predicate_pass(|| {
-        let ([start, end], [lower, upper]) =
-            match CurveParameterDomain2::new(range, None).finite_envelope(policy)? {
-                Classification::Decided(envelope) => envelope,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-        let envelope = CurveParameterRange2::new_validated(
-            CurveParameter2::from(lower.clone()),
-            CurveParameter2::from(upper.clone()),
-        );
-        if matches!(
-            curve.denominator_sign(&envelope),
-            Classification::Decided(RealSign::Positive | RealSign::Negative)
-        ) {
-            return Ok(Classification::Decided(envelope));
-        }
-        let polynomial = match polynomial_from_coefficients(
-            curve.homogeneous_power_basis()?.weight.clone(),
-            policy,
-        )? {
-            Classification::Decided(Some(polynomial)) => polynomial,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let poles =
-            match CurveParameterDomain2::new(&envelope, None).finite_roots(&polynomial, policy)? {
-                Classification::Decided(poles) => poles,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-        let mut left_pole: Option<CurveParameter2> = None;
-        let mut right_pole: Option<CurveParameter2> = None;
-        for pole in poles {
-            let pole = CurveParameter2::from(pole);
-            match pole.cmp_by_refinement(start, policy)? {
-                Classification::Decided(std::cmp::Ordering::Less) => {
-                    let replace = match &left_pole {
-                        None => true,
-                        Some(previous) => match pole.cmp_by_refinement(previous, policy)? {
-                            Classification::Decided(order) => order == std::cmp::Ordering::Greater,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        },
-                    };
-                    if replace {
-                        left_pole = Some(pole);
-                    }
-                    continue;
-                }
-                Classification::Decided(std::cmp::Ordering::Equal) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Decided(std::cmp::Ordering::Greater) => {}
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
-            match pole.cmp_by_refinement(end, policy)? {
-                Classification::Decided(std::cmp::Ordering::Greater) => {
-                    let replace = match &right_pole {
-                        None => true,
-                        Some(previous) => match pole.cmp_by_refinement(previous, policy)? {
-                            Classification::Decided(order) => order == std::cmp::Ordering::Less,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        },
-                    };
-                    if replace {
-                        right_pole = Some(pole);
-                    }
-                }
-                Classification::Decided(_) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
-        }
-        let lower = match left_pole {
-            Some(pole) => match pole.strict_scalar_between_ordered(start, policy)? {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            },
-            None => lower.clone(),
-        };
-        let upper = match right_pole {
-            Some(pole) => match end.strict_scalar_between_ordered(&pole, policy)? {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            },
-            None => upper.clone(),
-        };
-        Ok(Classification::Decided(
-            CurveParameterRange2::new_validated(
-                CurveParameter2::from(lower),
-                CurveParameter2::from(upper),
-            ),
-        ))
-    })
-}
-
 /// Certifies finiteness or regularity on the actual closed scalar range.
 /// A strict hull is sufficient; otherwise the shared domain root authority
 /// clips against the original endpoint evidence.
@@ -168362,10 +168252,28 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     Classification::Decided(RealSign::Negative)
                 );
                 let Classification::Decided(envelope) =
-                    rational_circle_discovery_envelope(&curve, &range, &policy).unwrap()
+                    curve.finite_discovery_envelope(&range, &policy).unwrap()
                 else {
                     panic!("an excluded pole must be separated from the retained range")
                 };
+                let bounds = crate::curve_support::CurveSupport2::Bezier(
+                    BezierSubcurve2::Rational(curve.clone()),
+                )
+                .certified_outer_bounds(&range, 0, &policy);
+                let Classification::Decided(bounds) = bounds else {
+                    panic!("finite bounds must exclude the pole in the outer isolator");
+                };
+                for parameter in [Real::from(2), (Real::from(5) / Real::from(2)).unwrap()] {
+                    let Classification::Decided(point) =
+                        curve.point_at_affine_classified(&parameter, &policy)
+                    else {
+                        panic!("the selected interval contains finite points");
+                    };
+                    assert_eq!(
+                        bounds.contains_point(&point, &policy),
+                        Classification::Decided(true)
+                    );
+                }
                 assert_eq!(
                     curve.denominator_sign(&envelope),
                     Classification::Decided(RealSign::Negative)

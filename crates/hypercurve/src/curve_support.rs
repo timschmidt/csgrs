@@ -5,7 +5,9 @@
 //! ranges, traversal and region fill semantics belong to the caller; restricting
 //! a support reuses its coefficient field and surviving endpoint evidence.
 
-use crate::bezier_split::{BezierSelectedFiberFragment2, BezierSelectedFiberSource2};
+use crate::bezier_split::{
+    BezierSelectedFiberFragment2, BezierSelectedFiberSource2, CurveParameterDomain2,
+};
 use crate::{
     Aabb2, BezierParallel2, BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2,
     Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveParameterRange2,
@@ -33,6 +35,82 @@ mod tests {
         match value {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => panic!("expected exact evidence: {reason:?}"),
+        }
+    }
+
+    #[test]
+    fn exterior_bounds_include_interior_extrema_and_parallel_displacement() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t) = (t, (t-2)^2) has its minimum outside the native unit chart.
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 4),
+            Point2::new(q(1, 2), 2.into()),
+            Point2::from_values(1, 1),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (start, end) in [(1, 3), (3, 1)] {
+                let range = CurveParameterRange2::new_validated(
+                    Real::from(start).into(),
+                    Real::from(end).into(),
+                );
+                for distance in [-1, 0, 1] {
+                    let support = if distance == 0 {
+                        CurveSupport2::Bezier(BezierSubcurve2::Quadratic(source.clone()))
+                    } else {
+                        CurveSupport2::Parallel(source.parallel_left(q(distance, 4)).unwrap())
+                    };
+                    let bounds = decided(support.certified_outer_bounds(&range, 0, &policy));
+                    for n in 4..=12 {
+                        let point = decided(support.point_at(&q(n, 4), &policy).unwrap());
+                        assert_eq!(
+                            bounds.contains_point(&point, &policy),
+                            Classification::Decided(true)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_bounds_exclude_poles_elsewhere_in_the_native_chart() {
+        let source = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+            vec![Real::one(), -Real::one()],
+        )
+        .unwrap();
+        assert!(matches!(
+            source.certified_bounds_classified(),
+            Classification::Uncertain(_)
+        ));
+        let supports = [
+            CurveSupport2::Bezier(BezierSubcurve2::Rational(source.clone())),
+            CurveSupport2::Parallel(source.parallel_left(Real::one()).unwrap()),
+        ];
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        for support in supports {
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                for (start, end) in [(q(0, 1), q(1, 4)), (q(3, 4), q(1, 1))] {
+                    let range = CurveParameterRange2::new_validated(
+                        start.clone().into(),
+                        end.clone().into(),
+                    );
+                    let bounds = decided(support.certified_outer_bounds(&range, 0, &policy));
+                    for parameter in [&start, &end] {
+                        let point = decided(support.point_at(parameter, &policy).unwrap());
+                        assert_eq!(
+                            bounds.contains_point(&point, &policy),
+                            Classification::Decided(true)
+                        );
+                    }
+                }
+                let crossing_pole =
+                    CurveParameterRange2::new_validated(q(1, 4).into(), q(3, 4).into());
+                assert!(matches!(
+                    support.certified_outer_bounds(&crossing_pole, 0, &policy),
+                    Classification::Uncertain(_)
+                ));
+            }
         }
     }
 
@@ -127,7 +205,43 @@ mod tests {
     }
 }
 
-fn subcurve_certified_outer_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {
+fn subcurve_certified_outer_bounds(
+    curve: &BezierSubcurve2,
+    range: &CurveParameterRange2,
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
+    let unit = CurveParameterRange2::unit();
+    if matches!(
+        CurveParameterDomain2::new(&unit, None).contains_finite_range(range, policy),
+        Ok(Classification::Decided(true))
+    ) {
+        let bounds = native_subcurve_outer_bounds(curve);
+        if matches!(bounds, Classification::Decided(_)) || range == &unit {
+            return bounds;
+        }
+        // The full source may have a pole outside the active subrange.
+        // A missing whole-unit box must not reject a finite restriction.
+    }
+    let discover = || -> CurveResult<Classification<Aabb2>> {
+        let rational = RationalBezier2::try_from_subcurve(curve)?;
+        let envelope = match rational.finite_discovery_envelope(range, policy)? {
+            Classification::Decided(envelope) => envelope,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let (start, end) = envelope
+            .scalar_endpoints()
+            .expect("a finite discovery envelope has represented bounds");
+        Ok(
+            match curve.subcurve_between_affine_exact(start, end, policy)? {
+                Classification::Decided(curve) => native_subcurve_outer_bounds(&curve),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
+    };
+    discover().unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported))
+}
+
+fn native_subcurve_outer_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {
     let bounds = match curve {
         BezierSubcurve2::Quadratic(curve) => curve.control_hull_box(),
         BezierSubcurve2::Cubic(curve) => curve.control_hull_box(),
@@ -407,8 +521,11 @@ impl CurveSupport2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::Point2>> {
         match self {
+            Self::Bezier(BezierSubcurve2::Rational(curve)) => {
+                Ok(curve.point_at_affine_classified(parameter, policy))
+            }
             Self::Bezier(curve) => Ok(curve.point_at(parameter, policy)),
-            Self::Parallel(parallel) => parallel.point_at(parameter, policy),
+            Self::Parallel(parallel) => parallel.point_at_affine(parameter, policy),
             Self::Line(chord) => match chord.exact_line() {
                 Some(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
                 None => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
@@ -445,48 +562,55 @@ impl CurveSupport2 {
         }
     }
 
-    pub(crate) fn certified_outer_bounds(&self, policy: &CurveContext) -> Classification<Aabb2> {
-        match self {
-            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve),
-            Self::Parallel(parallel) => match parallel.conservative_bounds() {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-            Self::Line(chord) => match chord.conservative_bounds(policy) {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-            Self::Circle(fragment) => match fragment.conservative_bounds() {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-        }
-    }
-
-    pub(crate) fn certified_outer_bounds_refined(
+    /// Bounds the active finite image. Native hulls only certify their unit
+    /// chart; exterior ranges use a pole-free represented enclosure.
+    pub(crate) fn certified_outer_bounds(
         &self,
+        range: &CurveParameterRange2,
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> Classification<Aabb2> {
         match self {
-            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve),
-            Self::Parallel(parallel) => match parallel.conservative_bounds() {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
-            Self::Line(chord) => {
-                match chord.conservative_bounds_refined(refinement_steps, policy) {
-                    Ok(bounds) => bounds,
-                    Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
+            Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, range, policy),
+            Self::Parallel(parallel) => {
+                let unit = CurveParameterRange2::unit();
+                if matches!(
+                    CurveParameterDomain2::new(&unit, None).contains_finite_range(range, policy),
+                    Ok(Classification::Decided(true))
+                ) {
+                    let bounds = parallel
+                        .conservative_bounds()
+                        .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    if matches!(bounds, Classification::Decided(_)) || range == &unit {
+                        return bounds;
+                    }
                 }
+                let source = match parallel.source() {
+                    crate::BezierParallelSource2::Quadratic(curve) => {
+                        BezierSubcurve2::Quadratic(curve.clone())
+                    }
+                    crate::BezierParallelSource2::Cubic(curve) => {
+                        BezierSubcurve2::Cubic(curve.clone())
+                    }
+                    crate::BezierParallelSource2::Rational(curve) => {
+                        BezierSubcurve2::Rational(curve.clone())
+                    }
+                };
+                subcurve_certified_outer_bounds(&source, range, policy).map(|bounds| {
+                    let radius = parallel.distance().abs();
+                    Aabb2::new_unchecked(
+                        crate::Point2::new(bounds.min_x() - &radius, bounds.min_y() - &radius),
+                        crate::Point2::new(bounds.max_x() + &radius, bounds.max_y() + &radius),
+                    )
+                })
             }
-            Self::Circle(fragment) => match fragment
+            Self::Line(chord) => chord
+                .conservative_bounds_refined(refinement_steps, policy)
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            Self::Circle(fragment) => fragment
                 .semicircle()
                 .conservative_bounds_refined(refinement_steps, policy)
-            {
-                Ok(bounds) => bounds,
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            },
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
         }
     }
 

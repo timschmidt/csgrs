@@ -20,7 +20,6 @@
 use hyperreal::{Real, RealSign};
 use std::cmp::Ordering;
 
-use crate::Aabb2;
 use crate::CurvePoint2;
 use crate::bezier_offset::{
     BezierAlgebraicChordParameter2, BezierAlgebraicCuspSemicircleParameter2,
@@ -1468,15 +1467,6 @@ impl BezierSelectedFiberFragment2 {
             }
             BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
                 parallel.point_at(&parameter, policy)
-            }
-        }
-    }
-
-    pub(crate) fn conservative_bounds(&self) -> CurveResult<Classification<Aabb2>> {
-        match &self.source {
-            BezierSelectedFiberSource2::Rational(curve) => Ok(curve.certified_bounds_classified()),
-            BezierSelectedFiberSource2::AnalyticParallel(parallel) => {
-                parallel.conservative_bounds()
             }
         }
     }

@@ -258,15 +258,13 @@ impl CurveEnvelopeAccumulator {
         fragment: &BezierSplitFragment2,
         policy: &CurveContext,
     ) -> Classification<()> {
-        let (curve_box, kind) = match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => {
-                match retained_curve_bounds(curve) {
-                    Classification::Decided(curve_box) => {
-                        (curve_box, BezierRetainedEnvelopeSourceKind::Native)
-                    }
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-            }
+        let kind = if matches!(fragment, BezierSplitFragment2::Materialized { .. }) {
+            BezierRetainedEnvelopeSourceKind::Native
+        } else {
+            BezierRetainedEnvelopeSourceKind::Algebraic
+        };
+        let bounds = match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => retained_curve_bounds(curve),
             BezierSplitFragment2::RetainedBezier {
                 start,
                 end,
@@ -275,70 +273,43 @@ impl CurveEnvelopeAccumulator {
                 end_image,
                 ..
             } => {
-                match retained_algebraic_source_bounds(
-                    source_curve,
-                    start,
-                    end,
-                    start_image.as_ref(),
-                    end_image.as_ref(),
-                    policy,
+                let unit = crate::CurveParameterRange2::unit();
+                let bounds = if matches!(
+                    crate::bezier_split::CurveParameterDomain2::new(&unit, None)
+                        .contains_finite_range(&fragment.curve_region_parameter_range(), policy),
+                    Ok(Classification::Decided(true))
                 ) {
-                    Classification::Decided(curve_box) => {
-                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
-                    }
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-            }
-            BezierSplitFragment2::AnalyticParallel(fragment) => {
-                match fragment.parallel().conservative_bounds() {
-                    Ok(Classification::Decided(curve_box)) => {
-                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
-                    }
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
-                }
-            }
-            BezierSplitFragment2::AlgebraicChord(chord) => {
-                match chord.conservative_bounds(policy) {
-                    Ok(Classification::Decided(curve_box)) => {
-                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
-                    }
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
+                    retained_algebraic_source_bounds(
+                        source_curve,
+                        start,
+                        end,
+                        start_image.as_ref(),
+                        end_image.as_ref(),
+                        policy,
+                    )
+                } else {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                };
+                match bounds {
+                    Classification::Decided(_) => bounds,
+                    Classification::Uncertain(_) => {
+                        crate::bezier_region::retained_fragment_query_bounds(fragment, policy)
                     }
                 }
             }
-            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-                match fragment.conservative_bounds() {
-                    Ok(Classification::Decided(curve_box)) => {
-                        (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
-                    }
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
-                }
+            BezierSplitFragment2::AlgebraicChord(chord) => chord
+                .conservative_bounds(policy)
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment
+                .conservative_bounds()
+                .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+            BezierSplitFragment2::AnalyticParallel(_) | BezierSplitFragment2::SelectedFiber(_) => {
+                crate::bezier_region::retained_fragment_query_bounds(fragment, policy)
             }
-            BezierSplitFragment2::SelectedFiber(fragment) => match fragment.conservative_bounds() {
-                Ok(Classification::Decided(curve_box)) => {
-                    (curve_box, BezierRetainedEnvelopeSourceKind::Algebraic)
-                }
-                Ok(Classification::Uncertain(reason)) => {
-                    return Classification::Uncertain(reason);
-                }
-                Err(_) => {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                }
-            },
+        };
+        let curve_box = match bounds {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         self.envelope = match self.envelope.take() {
             Some(envelope) => match envelope.union(&curve_box) {

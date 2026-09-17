@@ -2611,6 +2611,38 @@ impl RationalBezier2 {
         )
     }
 
+    /// Isolates supporting-line contacts in the original finite chart. The
+    /// denominator sign belongs to this range, and the root certificates keep
+    /// the original polynomial and selected endpoint admission authority.
+    pub(crate) fn relation_to_line_on_range(
+        &self,
+        line: &LineSeg2,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> Classification<BezierLineContactRelation> {
+        let weight_sign = match self.denominator_sign(range) {
+            Classification::Decided(RealSign::Positive) => RealSign::Positive,
+            Classification::Decided(RealSign::Negative) => RealSign::Negative,
+            Classification::Decided(RealSign::Zero) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+        };
+        let distances = self.homogeneous_line_distances(line, weight_sign, policy);
+        let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis(distances, policy)
+        {
+            Ok(Classification::Decided(polynomial)) => polynomial,
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(CurveError::InvalidBezierPolynomial) => {
+                return Classification::Decided(BezierLineContactRelation::OnSupportingLine);
+            }
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
+        crate::bezier_topology::exact_line_contact_relation_from_polynomial(
+            polynomial, range, policy,
+        )
+    }
+
     /// Returns complete exact point-incidence parameter evidence.
     ///
     /// The two homogeneous equations `Nx - xW = 0` and `Ny - yW = 0`
@@ -5320,6 +5352,131 @@ impl RationalBezier2 {
             Ok(result) => result,
             Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
         }
+    }
+
+    /// Gives finite geometric queries a represented, pole-free discovery chart.
+    /// The returned bounds schedule cells; the caller's exact range still owns
+    /// admission. An excluded pole in a selected endpoint's outer isolator must
+    /// not become a component boundary or a point at infinity.
+    pub(crate) fn finite_discovery_envelope(
+        &self,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveParameterRange2>> {
+        policy.strict_predicate_pass(|| {
+            let ([start, end], [lower, upper]) = match CurveParameterDomain2::new(range, None)
+                .finite_envelope(policy)?
+            {
+                Classification::Decided(envelope) => envelope,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let envelope = CurveParameterRange2::new_validated(
+                CurveParameter2::from(lower.clone()),
+                CurveParameter2::from(upper.clone()),
+            );
+            if matches!(
+                self.denominator_sign(&envelope),
+                Classification::Decided(RealSign::Positive | RealSign::Negative)
+            ) {
+                return Ok(Classification::Decided(envelope));
+            }
+            let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+                self.homogeneous_power_basis()?.weight.clone(),
+                policy,
+            ) {
+                Ok(Classification::Decided(polynomial)) => polynomial,
+                Err(CurveError::InvalidBezierPolynomial) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Ok(Classification::Uncertain(reason)) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                Err(error) => return Err(error),
+            };
+            let poles = match CurveParameterDomain2::new(&envelope, None)
+                .finite_roots(&polynomial, policy)?
+            {
+                Classification::Decided(poles) => poles,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let mut left_pole: Option<CurveParameter2> = None;
+            let mut right_pole: Option<CurveParameter2> = None;
+            for pole in poles {
+                let pole = CurveParameter2::from(pole);
+                match pole.cmp_by_refinement(start, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Less) => {
+                        let replace = match &left_pole {
+                            None => true,
+                            Some(previous) => match pole.cmp_by_refinement(previous, policy)? {
+                                Classification::Decided(order) => {
+                                    order == std::cmp::Ordering::Greater
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            },
+                        };
+                        if replace {
+                            left_pole = Some(pole);
+                        }
+                        continue;
+                    }
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Decided(std::cmp::Ordering::Greater) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                match pole.cmp_by_refinement(end, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Greater) => {
+                        let replace = match &right_pole {
+                            None => true,
+                            Some(previous) => match pole.cmp_by_refinement(previous, policy)? {
+                                Classification::Decided(order) => order == std::cmp::Ordering::Less,
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            },
+                        };
+                        if replace {
+                            right_pole = Some(pole);
+                        }
+                    }
+                    Classification::Decided(_) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            let lower = match left_pole {
+                Some(pole) => match pole.strict_scalar_between_ordered(start, policy)? {
+                    Classification::Decided(value) => value,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+                None => lower.clone(),
+            };
+            let upper = match right_pole {
+                Some(pole) => match end.strict_scalar_between_ordered(&pole, policy)? {
+                    Classification::Decided(value) => value,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+                None => upper.clone(),
+            };
+            Ok(Classification::Decided(
+                CurveParameterRange2::new_validated(
+                    CurveParameter2::from(lower),
+                    CurveParameter2::from(upper),
+                ),
+            ))
+        })
     }
 
     pub(crate) fn control_weight_sign(&self) -> Classification<RealSign> {
@@ -9670,6 +9827,106 @@ mod tests {
 
     fn exact_f64(value: f64) -> Real {
         Real::try_from(value).expect("finite binary rational")
+    }
+
+    #[test]
+    fn finite_line_roots_preserve_tangency_crossing_and_denominator_sign() {
+        fn decided<T>(value: Classification<T>) -> T {
+            match value {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => panic!("{reason:?}"),
+            }
+        }
+        let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for sign in [-1, 1] {
+                let curve = RationalBezier2::try_new(
+                    vec![
+                        Point2::from_values(0, 4),
+                        Point2::new(ratio(1, 2), 2.into()),
+                        Point2::from_values(1, 1),
+                    ],
+                    vec![Real::from(sign); 3],
+                )
+                .unwrap();
+                for (lower, upper) in [(ratio(3, 2), Real::from(3)), (Real::from(3), ratio(3, 2))] {
+                    let range = CurveParameterRange2::new_validated(lower.into(), upper.into());
+                    for (height, expected, kind, direction) in [
+                        (
+                            Real::zero(),
+                            Real::from(2),
+                            BezierLineContactKind::Tangent,
+                            None,
+                        ),
+                        (
+                            Real::one(),
+                            Real::from(3),
+                            BezierLineContactKind::Crossing,
+                            Some(BezierLineCrossingDirection::NegativeToPositive),
+                        ),
+                    ] {
+                        let line = LineSeg2::try_new(
+                            Point2::new(Real::zero(), height.clone()),
+                            Point2::new(Real::one(), height),
+                        )
+                        .unwrap();
+                        let BezierLineContactRelation::Contacts { contacts } =
+                            decided(curve.relation_to_line_on_range(&line, &range, &policy))
+                        else {
+                            panic!("one exterior contact must survive");
+                        };
+                        let [contact] = contacts.as_slice() else {
+                            panic!("one contact");
+                        };
+                        assert_eq!(
+                            decided(
+                                contact
+                                    .parameter()
+                                    .cmp_by_refinement(&BezierParameter2::Exact(expected), &policy)
+                                    .unwrap()
+                            ),
+                            Ordering::Equal
+                        );
+                        assert_eq!(contact.kind(), kind);
+                        assert_eq!(contact.crossing_direction(), direction);
+                    }
+                    let line = LineSeg2::try_new(
+                        Point2::new(Real::zero(), ratio(1, 2)),
+                        Point2::new(Real::one(), ratio(1, 2)),
+                    )
+                    .unwrap();
+                    let BezierLineContactRelation::Contacts { contacts } =
+                        decided(curve.relation_to_line_on_range(&line, &range, &policy))
+                    else {
+                        panic!("an algebraic exterior contact must survive");
+                    };
+                    let [contact] = contacts.as_slice() else {
+                        panic!("one algebraic contact");
+                    };
+                    let BezierParameter2::Algebraic(parameter) = contact.parameter() else {
+                        panic!("the original polynomial root stays algebraic");
+                    };
+                    assert_eq!(
+                        signed_coefficients_at_parameter(
+                            parameter.polynomial().coefficients(),
+                            contact.parameter(),
+                            &policy
+                        )
+                        .unwrap(),
+                        Classification::Decided(RealSign::Zero)
+                    );
+                    let image = curve
+                        .point_at_algebraic_parameter(parameter, &policy)
+                        .unwrap();
+                    assert_eq!(
+                        image
+                            .coordinate_order_to_real(false, &ratio(1, 2), &policy)
+                            .unwrap(),
+                        Classification::Decided(Ordering::Equal)
+                    );
+                }
+            }
+        }
     }
 
     #[test]

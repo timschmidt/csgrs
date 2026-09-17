@@ -3057,7 +3057,11 @@ pub(crate) fn exact_line_contact_relation_from_bernstein_distances(
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    exact_line_contact_relation_from_polynomial(polynomial, policy)
+    exact_line_contact_relation_from_polynomial(
+        polynomial,
+        &crate::CurveParameterRange2::unit(),
+        policy,
+    )
 }
 
 /// Solves a quadratic line-incidence polynomial after removing one
@@ -3204,14 +3208,21 @@ fn exact_line_contact_relation_from_power_coefficients(
     if polynomial.degree() <= 2 {
         return exact_low_degree_power_line_contact_relation(polynomial.coefficients(), policy);
     }
-    exact_line_contact_relation_from_polynomial(polynomial, policy)
+    exact_line_contact_relation_from_polynomial(
+        polynomial,
+        &crate::CurveParameterRange2::unit(),
+        policy,
+    )
 }
 
-fn exact_line_contact_relation_from_polynomial(
+pub(crate) fn exact_line_contact_relation_from_polynomial(
     polynomial: BezierParameterPolynomial,
+    range: &crate::CurveParameterRange2,
     policy: &CurveContext,
 ) -> Classification<BezierLineContactRelation> {
-    let parameters = match polynomial.isolate_unit_interval_roots(policy) {
+    let parameters = match crate::bezier_split::CurveParameterDomain2::new(range, None)
+        .finite_roots(&polynomial, policy)
+    {
         Ok(Classification::Decided(parameters)) => parameters,
         Ok(Classification::Uncertain(reason)) => {
             return Classification::Uncertain(reason);
