@@ -1,9 +1,8 @@
 fn inverse(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
-    // Plan reciprocal precision from planning facts when available, otherwise fall
-    // back to iterative probing. This keeps exact zero short-circuited and avoids
-    // a full iterative MSD pass for structural operands that already expose a
-    // useful magnitude envelope.
-    let (sign, planned_msd) = c.planning_sign_and_msd();
+    // A raw planning hint may overestimate a near-cancelled denominator by an
+    // arbitrary amount. Use an exact magnitude or refine before sizing the
+    // reciprocal's numerator and denominator approximations.
+    let (sign, planned_msd) = c.certified_sign_and_msd();
     if sign == Some(Sign::NoSign) {
         return Zero::zero();
     }
@@ -55,8 +54,8 @@ fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) 
     // tiny terms when signs/MSDs are already known.
     let extra = 4;
     let cutoff = p - extra;
-    let (sign1, planning_msd1) = c1.planning_sign_and_msd();
-    let (sign2, planning_msd2) = c2.planning_sign_and_msd();
+    let (sign1, planning_msd1) = c1.certified_sign_and_msd();
+    let (sign2, planning_msd2) = c2.certified_sign_and_msd();
     if sign1 == Some(Sign::NoSign) {
         return c2.approx_signal(signal, p);
     }
@@ -131,8 +130,8 @@ fn multiply(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precis
     // If one side is effectively zero at the planning cutoff, the product is
     // zero at the requested precision without evaluating both sides deeply.
     let half_prec = (p >> 1) - 1;
-    let (sign1, msd1) = c1.planning_sign_and_msd();
-    let (sign2, msd2) = c2.planning_sign_and_msd();
+    let (sign1, msd1) = c1.certified_sign_and_msd();
+    let (sign2, msd2) = c2.certified_sign_and_msd();
     if sign1 == Some(Sign::NoSign) || sign2 == Some(Sign::NoSign) {
         return Zero::zero();
     }

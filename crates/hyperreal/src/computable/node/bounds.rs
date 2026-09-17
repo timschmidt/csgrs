@@ -386,6 +386,23 @@ impl BoundInfo {
 
     #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
     #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result.0 == match *self {
+            Self::Zero => Some(Sign::NoSign),
+            Self::NonZero { sign, .. } => sign,
+            Self::Unknown => None,
+        },
+        result.1 == match *self {
+            Self::Zero => Some(None),
+            Self::NonZero { msd: Some(msd), exact_msd: true, .. } => Some(Some(msd)),
+            _ => None,
+        },
+    ))]
+    fn certified_sign_and_msd(&self) -> (Option<Sign>, Option<Option<Precision>>) {
+        (self.known_sign(), self.known_msd())
+    }
+
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
         ensures result == match *self {
             Self::NonZero { msd: Some(msd), exact_msd, .. } =>
                 Some(MagnitudeBits { msd, exact_msd }),

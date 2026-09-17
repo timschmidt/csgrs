@@ -147,6 +147,16 @@ proof fn queried_sign_is_a_certificate(bound: &BoundInfo, value: real, result: O
     ensures sign_denotes(result, value),
 {}
 
+proof fn precision_facts_are_certificates(
+    bound: &BoundInfo, value: real, result: (Option<Sign>, Option<Option<i32>>),
+)
+    requires bound_denotes(*bound, value),
+        call_ensures(BoundInfo::certified_sign_and_msd, (bound,), result),
+    ensures sign_denotes(result.0, value),
+        result.1 == Some(None) ==> value == 0real,
+        match result.1 { Some(Some(e)) => real_binade(value, e as int), _ => true },
+{}
+
 proof fn exported_magnitude_is_a_certificate(bound: &BoundInfo, value: real, result: Option<MagnitudeBits>)
     requires bound_denotes(*bound, value), call_ensures(BoundInfo::magnitude_bits, (bound,), result),
     ensures match result {
