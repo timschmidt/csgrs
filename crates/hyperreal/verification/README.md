@@ -20,6 +20,7 @@ On Linux x86_64, with Python 3.11+, curl, unzip support in Python, and rustup:
 python3 scripts/verify_verus.py install
 python3 scripts/verify_verus.py verify
 python3 verification/test_rejections.py
+python3 verification/test_acceptance.py
 ```
 
 The installer downloads the official release pinned in
@@ -44,11 +45,28 @@ python3 scripts/verify_verus.py verify --require-complete
 ```
 
 This currently exits unsuccessfully after checking the proofs because the full
-objective's obligation groups remain open. [`scope.json`](scope.json) records
+objective's obligation groups remain open and baseline qualification is pending.
+[`scope.json`](scope.json) records
 those obligations; it is a work ledger, not itself evidence that any requirement
 is proved. There is no percentage derived from test counts, source hashes, or
 the number of lemmas. Completing an obligation also requires auditing the
 actual source, contracts, caller preconditions, and verifier results.
+
+The completion gate also checks [`acceptance.json`](acceptance.json) against the
+immutable baseline and priority order. Acceptance requires no unresolved items,
+assessments for all six priorities with explanations and evidence references,
+matching hashes of the current implementation/proof/test/workload/build inputs,
+and intact repository-local evidence artifacts. Generate the input inventory
+with `python3 scripts/check_verification_acceptance.py --sources`; the command
+without `--sources` checks empirical acceptance independently of the proofs.
+Frozen fuzz corpora and consumer snapshots belong in the hashed evidence.
+The gate validates the recorded assessment and its source binding; it does not
+derive performance parity from JSON fields, function counts or a single run.
+The measurement and source audits in [BASELINE.md](BASELINE.md) remain required.
+The assessment record is excluded from its own input hash to avoid a circular
+reference; the Verus evidence separately hashes that record and the checker.
+Guard tests reject stale sources, altered workloads, changed artifacts, a moved
+baseline, reordered priorities and incomplete assessments.
 
 ## Current executable proof boundary
 

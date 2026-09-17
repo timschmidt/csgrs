@@ -13,6 +13,8 @@ import sys
 import tempfile
 import zipfile
 
+from check_verification_acceptance import check_acceptance
+
 ROOT = Path(__file__).resolve().parents[1]
 PIN = json.loads((ROOT / "verification/toolchain.json").read_text())
 SCOPE = json.loads((ROOT / "verification/scope.json").read_text())
@@ -91,7 +93,8 @@ def verify(require_complete):
     path = verifier()
     def source_hashes():
         sources = sorted(ROOT.glob("src/**/*.rs")) + sorted(ROOT.glob("verification/*"))
-        sources += [Path(__file__).resolve(), ROOT / "Cargo.toml", ROOT / "Cargo.lock"]
+        sources += [Path(__file__).resolve(), ROOT / "scripts/check_verification_acceptance.py",
+                    ROOT / "Cargo.toml", ROOT / "Cargo.lock"]
         return {str(p.relative_to(ROOT)): sha256(p) for p in sources if p.is_file()}
 
     before = source_hashes()
@@ -135,8 +138,16 @@ def verify(require_complete):
     pending = [item for item in SCOPE["obligations"] if item["status"] != "complete"]
     if pending:
         print(f"Full-crate proof incomplete: {len(pending)} obligation groups remain open.")
-        if require_complete:
-            raise RuntimeError("The 100% completion gate is not satisfied")
+    if require_complete:
+        failures = ["The full-crate proof obligation audit is incomplete"] if pending else []
+        try:
+            check_acceptance(ROOT)
+        except (RuntimeError, OSError, ValueError, TypeError) as error:
+            failures.append(str(error))
+        if failures:
+            raise RuntimeError("The 100% completion gate is not satisfied: " + "; ".join(failures))
+        if before != source_hashes():
+            raise RuntimeError("Sources changed while checking baseline acceptance; rerun verification")
 
 
 def main():
@@ -145,7 +156,7 @@ def main():
     installer = commands.add_parser("install", help="install the pinned official Verus release")
     installer.add_argument("--archive", type=Path, help="use a local archive, still checking its SHA-256")
     checker = commands.add_parser("verify", help="verify all currently connected proof modules")
-    checker.add_argument("--require-complete", action="store_true", help="also require the full objective's coverage gate")
+    checker.add_argument("--require-complete", action="store_true", help="also require the full proof audit and source-bound baseline qualification")
     args = parser.parse_args()
     if args.command == "install":
         install(args.archive)
