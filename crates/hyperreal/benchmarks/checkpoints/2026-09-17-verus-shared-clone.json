@@ -1,0 +1,852 @@
+{
+  "schema": 1,
+  "status": "validated_runtime_milestone_not_acceptance",
+  "candidate": "561e36a6df4a91e9ede58a74eaea64dad0370238",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "overlay_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+  "overlay_patch_sha256": "006db1d96d76ae91fbee60b532fedd3aa63aef2d9a0986a08655f8d210bc9219",
+  "source_sha256": {
+    "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+    "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+    "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+    "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+    "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+    "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+  },
+  "validation": [
+    {
+      "step": "sqrt-facts",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--lib",
+        "rational_square_roots_retain_exact_magnitude_facts"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672",
+        "src/real/arithmetic/representation.rs": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+      },
+      "exit_code": 0,
+      "seconds": 4.625791072845459
+    },
+    {
+      "step": "sqrt-format",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--lib",
+        "computable::format::tests::"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672",
+        "src/real/arithmetic/representation.rs": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+      },
+      "exit_code": 0,
+      "seconds": 0.12934303283691406
+    },
+    {
+      "step": "sqrt-semantics",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--test",
+        "adversarial_semantics"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "9f19b29b3464db83a6ae1f39a4c364133ee5f5a81676ce8396319b409aa59672",
+        "src/real/arithmetic/representation.rs": "da14eee68ebdddabfe044b7252d0aa8d420213bda1d47b3603953e70d1a301e1"
+      },
+      "exit_code": 0,
+      "seconds": 2.3549234867095947
+    },
+    {
+      "step": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "exit_code": 0,
+      "seconds": 0.4362328052520752
+    },
+    {
+      "step": "tests-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--all-targets",
+        "--no-fail-fast"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "exit_code": 0,
+      "seconds": 181.47116613388062
+    },
+    {
+      "step": "tests-all",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "--all-features",
+        "--all-targets",
+        "--no-fail-fast"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "exit_code": 0,
+      "seconds": 195.4257025718689
+    },
+    {
+      "step": "representation-matrix",
+      "command": [
+        "bash",
+        "scripts/representation_coverage.sh"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "exit_code": 0,
+      "seconds": 9.92811107635498
+    },
+    {
+      "step": "clippy-all",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--offline",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "exit_code": 0,
+      "seconds": 6.05037784576416
+    },
+    {
+      "step": "bench-build",
+      "command": [
+        "cargo",
+        "bench",
+        "--locked",
+        "--offline",
+        "--features",
+        "simple",
+        "--benches",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "exit_code": 0,
+      "seconds": 53.0599570274353
+    },
+    {
+      "step": "probe-build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--release",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/representation-probe",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/probe-target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "CCACHE_DISABLE": "1"
+      },
+      "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "exit_code": 0,
+      "seconds": 9.847587585449219
+    }
+  ],
+  "tests": {
+    "tests-default": {
+      "passed": 785,
+      "failed": 0,
+      "ignored": 0,
+      "criterion_fixture_assertions": 1271
+    },
+    "tests-all": {
+      "passed": 888,
+      "failed": 0,
+      "ignored": 0,
+      "criterion_fixture_assertions": 1447
+    }
+  },
+  "fuzz": [
+    {
+      "target": "computable_approximation",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "computable_approximation",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/computable_approximation/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/computable_approximation/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "corpus_files": 1055,
+      "exit_code": 0,
+      "seconds": 144.31527304649353,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "rational_arithmetic",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "rational_arithmetic",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/rational_arithmetic/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/rational_arithmetic/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "corpus_files": 963,
+      "exit_code": 0,
+      "seconds": 0.9571628570556641,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "real_elementary",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "real_elementary",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/real_elementary/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/real_elementary/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "corpus_files": 2575,
+      "exit_code": 0,
+      "seconds": 2.1499016284942627,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "real_exact",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "real_exact",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/real_exact/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/real_exact/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "corpus_files": 1750,
+      "exit_code": 0,
+      "seconds": 4.128142833709717,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "string_parsing",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "string_parsing",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/string_parsing/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/string_parsing/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "corpus_files": 117,
+      "exit_code": 0,
+      "seconds": 0.4671976566314697,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    },
+    {
+      "target": "structural_representations",
+      "command": [
+        "cargo",
+        "+nightly",
+        "fuzz",
+        "run",
+        "structural_representations",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/structural_representations/corpus",
+        "--fuzz-dir",
+        "fuzz",
+        "--target-dir",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+        "--",
+        "-runs=0",
+        "-timeout=10",
+        "-seed=93537",
+        "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/clone-shared-v3-fuzz/structural_representations/artifacts/"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CCACHE_DISABLE": "1",
+        "CARGO_BUILD_JOBS": "2",
+        "ASAN_OPTIONS": "detect_leaks=0"
+      },
+      "source_sha256": {
+        "src/verified/word.rs": "56455dd5c0ff36623408737581de42c41c6fba7cca22f780a514b0817bb1882d",
+        "src/computable/node/bounds.rs": "0d170d01b551d22b7eea0f2f5209e7d94eefa7fea9ef9fe10b47b46ab5ffcde7",
+        "src/computable/node/tests.rs": "04e0168a3d0ba8f3d1f7a5326ce612c256cb946c835ccac5c1429e773ba8035e",
+        "src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+        "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+        "src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14"
+      },
+      "corpus_files": 32,
+      "exit_code": 0,
+      "seconds": 3.3556008338928223,
+      "sanitizer": "address",
+      "leak_checker_note": "LSan disabled for the previously observed ptrace limitation; ASan remains enabled."
+    }
+  ],
+  "proof": {
+    "verification_units": 363,
+    "production_contracts": 52,
+    "model_theorems": 65,
+    "open_obligation_groups": 13,
+    "source_hashes_checked": 111,
+    "no_cheating": true
+  },
+  "native": [
+    {
+      "case": "pi_pow_clone",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": 0.9440331704545946,
+        "cycles:u": 1.5956808779233445,
+        "instructions:u": -6.541644020918724e-06,
+        "branches:u": -8.41365011550188e-06,
+        "branch-misses:u": -17.414633141290803
+      },
+      "paired_cycles_change_percent": [
+        2.115547110428029,
+        1.3788812950682239,
+        0.14399034183216752,
+        1.812480460778465,
+        2.907097756142618,
+        -29.02510930079917
+      ]
+    },
+    {
+      "case": "pi_pow_clone",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": -75.23327448704339,
+        "cycles:u": -75.12900052013225,
+        "instructions:u": -89.28345028563385,
+        "branches:u": -89.07340010627797,
+        "branch-misses:u": -67.00905733416499
+      },
+      "paired_cycles_change_percent": [
+        -74.03400870222868,
+        -75.80104426159505,
+        -76.04880357510096,
+        -74.09300766269067,
+        -74.45695677866946,
+        -81.89512177005155
+      ]
+    },
+    {
+      "case": "pi_clone",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": -0.9108038450169831,
+        "cycles:u": -0.8455984819218554,
+        "instructions:u": -6.460716955869472e-06,
+        "branches:u": -7.66203321345138e-06,
+        "branch-misses:u": -1.7888099288035642
+      },
+      "paired_cycles_change_percent": [
+        -0.22916637370996584,
+        -0.6839726158061388,
+        -1.2996451218993177,
+        -1.007224348037572,
+        -1.1116395023612502,
+        0.4173791333907273
+      ]
+    },
+    {
+      "case": "pi_clone",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": -61.322326978894296,
+        "cycles:u": -61.226064768414346,
+        "instructions:u": -70.27451876869654,
+        "branches:u": -66.23122893029034,
+        "branch-misses:u": -39.21659116319995
+      },
+      "paired_cycles_change_percent": [
+        -61.10585451508497,
+        -61.66992726207576,
+        -61.4329958002218,
+        -61.31401954689417,
+        -61.13810998993452,
+        -60.34500092737636
+      ]
+    },
+    {
+      "case": "tan_pi_cached",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": 15.91684776699428,
+        "cycles:u": 15.550516624913048,
+        "instructions:u": 1.9379359339488644e-06,
+        "branches:u": 6.5248186076338754e-06,
+        "branch-misses:u": 3.2185530967330345
+      },
+      "paired_cycles_change_percent": [
+        15.687651843312311,
+        17.28953171961498,
+        14.341669585794193,
+        13.832623718127124,
+        16.560956862690702,
+        15.413381406513782
+      ]
+    },
+    {
+      "case": "tan_pi_cached",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": -43.04961731936641,
+        "cycles:u": -43.01806989328712,
+        "instructions:u": -35.99882154703815,
+        "branches:u": -33.3324288612592,
+        "branch-misses:u": -20.894544926711703
+      },
+      "paired_cycles_change_percent": [
+        -42.45215458322532,
+        -42.78522879202838,
+        -43.75890988218328,
+        -43.09801953308491,
+        -42.93812025348932,
+        -43.75986284257972
+      ]
+    }
+  ],
+  "criterion": [
+    {
+      "case": "real_representation_prepared/hyperreal_cached_f64/tan_pi",
+      "median_paired_mean_change_percent": -43.049135964868086,
+      "paired_mean_change_percent": [
+        -39.48122578342833,
+        -45.78107953064608,
+        -50.91491682912152,
+        -41.39430907025019,
+        -42.87430532413607,
+        -43.223966605600104
+      ],
+      "paired_median_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": -48.3479981798838,
+        "upper_bound": -40.43776742683926,
+        "method": "Exact percentile bootstrap over six paired rounds, median of within-round Criterion mean percentage changes; host effects and temporal correlation remain uncontrolled."
+      }
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_clone/pi",
+      "median_paired_mean_change_percent": -54.63898642723875,
+      "paired_mean_change_percent": [
+        -54.75671889509819,
+        -53.97133647877968,
+        -57.344427658867716,
+        -54.5212539593793,
+        -48.18878310924364,
+        -54.95492563158445
+      ],
+      "paired_median_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": -56.14967664522608,
+        "upper_bound": -51.08005979401166,
+        "method": "Exact percentile bootstrap over six paired rounds, median of within-round Criterion mean percentage changes; host effects and temporal correlation remain uncontrolled."
+      }
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_clone/pi_pow",
+      "median_paired_mean_change_percent": -75.16904050845022,
+      "paired_mean_change_percent": [
+        -74.88106073605225,
+        -75.4570202808482,
+        -75.5062355839039,
+        -74.73638307915493,
+        -73.19311221369762,
+        -76.14710812974408
+      ],
+      "paired_median_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": -75.82667185682399,
+        "upper_bound": -73.96474764642628,
+        "method": "Exact percentile bootstrap over six paired rounds, median of within-round Criterion mean percentage changes; host effects and temporal correlation remain uncontrolled."
+      }
+    },
+    {
+      "case": "real_representation_prepared/mpfr192_clone/pi_pow",
+      "median_paired_mean_change_percent": -0.24224346059310564,
+      "paired_mean_change_percent": [
+        -0.1428439321423336,
+        -0.3416429890438777,
+        -3.2800788550758075,
+        0.03061890417976887,
+        5.632370833384304,
+        -3.2451691205644617
+      ],
+      "paired_median_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": -3.2626239878201346,
+        "upper_bound": 2.8314948687820363,
+        "method": "Exact percentile bootstrap over six paired rounds, median of within-round Criterion mean percentage changes; host effects and temporal correlation remain uncontrolled."
+      }
+    },
+    {
+      "case": "real_representation_prepared/mpfr192_f64/tan_pi",
+      "median_paired_mean_change_percent": 2.908031793993049,
+      "paired_mean_change_percent": [
+        2.454090234059647,
+        3.665012873621909,
+        3.3619733539264507,
+        1.6857023362616408,
+        10.85446694387382,
+        -23.174579308138853
+      ],
+      "paired_median_interval": {
+        "confidence_level": 0.95,
+        "lower_bound": -10.744438485938606,
+        "upper_bound": 7.259739908747864,
+        "method": "Exact percentile bootstrap over six paired rounds, median of within-round Criterion mean percentage changes; host effects and temporal correlation remain uncontrolled."
+      }
+    }
+  ],
+  "findings": [
+    "Real clones reuse the existing Arc-backed Computable graph, with the original missing-payload certificate fallback. The atomic cache accessor is inlined.",
+    "The repeated original Criterion clone and cached-conversion cases improve against the immutable pre-Verus baseline. Auxiliary hardware-counter probes support these focused findings.",
+    "The previously rejected variants and their semantic/formatting failures are retained separately in the square-root metadata checkpoint. This variant includes both repairs.",
+    "Changed runtime source hashes match the successful isolated test/fuzz/build variant. Intervening mathematical proof additions erase from ordinary Rust; erasure evidence is retained in prior proof checkpoints."
+  ],
+  "limits": [
+    "Focused timings do not establish whole-repository parity. The complete benchmark screen, resource checks and downstream qualification remain pending at this checkpoint.",
+    "The unchanged external comparator rows show host variability and are retained. Six paired rounds and bootstrap intervals cannot eliminate uncontrolled host frequency, temperature, ASLR or unrelated activity.",
+    "Full implementation, caller, dependency and completeness proof obligations remain open; no 100% verification or final acceptance is claimed."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-shared-clone.tar.gz",
+    "bytes": 615977,
+    "files": 656,
+    "sha256": "7520912002b69bf45e5365e4cfa89f646a2983cf7731ba7e5ad8cba38b211018"
+  }
+}
