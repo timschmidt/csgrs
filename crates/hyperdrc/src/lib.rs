@@ -572,23 +572,10 @@ fn exact_backed_finite_polygons(
 }
 
 fn exact_component_regions(region: &CurveRegion2) -> Option<Vec<Arc<CurveRegion2>>> {
-    let policy = hypercurve::CurveContext::STRICT;
-    let profiles = match region
-        .boundary_profiles(&policy)
-        .map(hypercurve::CurveOutcome::into_value)
-    {
-        Ok(hypercurve::Classification::Decided(profiles)) => profiles,
-        Ok(hypercurve::Classification::Uncertain(_)) | Err(_) => return None,
-    };
-    profiles
-        .into_iter()
-        .map(|profile| {
-            let loops = std::iter::once(profile.material().clone())
-                .chain(profile.holes().iter().map(|hole| (*hole).clone()))
-                .collect();
-            CurveRegion2::new(loops).ok().map(Arc::new)
-        })
-        .collect()
+    region
+        .material_components(&hypercurve::CurveContext::STRICT)
+        .ok()
+        .map(|outcome| outcome.into_value().into_iter().map(Arc::new).collect())
 }
 
 fn finite_ring_to_linestring(points: &[[f64; 2]]) -> Option<LineString<f64>> {
