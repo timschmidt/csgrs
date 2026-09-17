@@ -36,6 +36,22 @@ MODEL_MUTATIONS = [
     ('magnitude presence', 'msd: if value & 16 != 0', 'msd: if value & 16 == 0'),
     ('magnitude payload', 'Some(((value >> 32) as u32) as i32)', 'Some(0)'),
     ('exact magnitude flag', 'exact_msd: value & 32 != 0,', 'exact_msd: value & 32 == 0,'),
+    ('bound update value',
+     'ensures bound_word((current & AtomicFacts::NON_BOUND_MASK) | encoded) == value,',
+     'ensures bound_word((current & AtomicFacts::NON_BOUND_MASK) | encoded) == BoundCache::Invalid,'),
+    ('bound update retained fields', '== current & AtomicFacts::NON_BOUND_MASK,',
+     '== encoded & AtomicFacts::NON_BOUND_MASK,'),
+    ('sign update bound',
+     'ensures bound_word((current & !AtomicFacts::EXACT_SIGN_MASK) | encoded) == bound_word(current),',
+     'ensures bound_word((current & !AtomicFacts::EXACT_SIGN_MASK) | encoded) == BoundCache::Invalid,'),
+    ('sign update value',
+     'exact_sign_denotation((current & !AtomicFacts::EXACT_SIGN_MASK) | encoded) == value,',
+     'exact_sign_denotation((current & !AtomicFacts::EXACT_SIGN_MASK) | encoded) == exact_sign_denotation(current),'),
+    ('construction demand', '(demand as u16 as u64) << AtomicFacts::LINEAR_DEMAND_SHIFT',
+     '(demand as u16 as u64) << AtomicFacts::MSD_SHIFT'),
+    ('construction inverse flag',
+     'if inverse_trig { AtomicFacts::CONTAINS_INVERSE_TRIG_OR_PI } else { 0 }',
+     'if inverse_trig { 0 } else { AtomicFacts::CONTAINS_INVERSE_TRIG_OR_PI }'),
 ]
 
 
