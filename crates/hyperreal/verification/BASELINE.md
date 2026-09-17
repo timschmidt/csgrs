@@ -161,6 +161,24 @@ are slower in every pair (median +3.97% and +5.76%). Its passing correctness
 checks and all raw timing data are retained; the faster unit cases do not
 dismiss those regressions.
 
+The [magnitude-range repair](../benchmarks/checkpoints/2026-09-17-verus-magnitude-range.json)
+in `ee773bb` fixes observed baseline errors. With pinned dependencies, a debug
+query of `2^2147483647` panics despite its representable exponent. In release,
+`2^2147483648` receives a false exact exponent of `-2147483648`. The repaired
+queries retain wide lengths and shifts, reuse their comparison, and apply the
+computable offset before narrowing. Actual large-value checks cover both
+signed limits, out-of-range results, and an outer exponent brought back into
+range by its offset. All six debug checks and three fixed release checks pass.
+
+The official proof verifies 375 units, 55 production contracts and 66 model
+theorems. Default/all-feature tests (790/893 executions), their 1,271/1,447
+benchmark fixtures, the representation matrix, strict Clippy, all 77 mutation
+rejections and 6,492 frozen ASan inputs pass. The initial probe's differing
+dependency resolution and the mutation driver's corrected textual anchor are
+retained explicitly. This is an exactness repair, with performance, resource,
+size, coverage and downstream qualification still pending for the new runtime.
+The full source/caller/dependency proof remains incomplete.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
