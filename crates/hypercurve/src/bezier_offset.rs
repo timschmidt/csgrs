@@ -1738,6 +1738,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                                 .exact_point_circle_tangent_parameter_candidates_on_target(
                                     &point,
                                     &self.parameter_map,
+                                    &self.mapped_other_range()?,
                                     policy,
                                 )?,
                             Classification::Decided(None) => Classification::Decided(None),
@@ -1753,6 +1754,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                                         data.one_field_circle_tangent_parameter_candidates_on_target(
                                             &point,
                                             &self.parameter_map,
+                                            &self.mapped_other_range()?,
                                             policy,
                                         )?
                                     } else {
@@ -1761,6 +1763,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                                                 .exact_point_circle_tangent_parameter_candidates_on_target(
                                                     &point,
                                                     &self.parameter_map,
+                                                    &self.mapped_other_range()?,
                                                     policy,
                                                 )?,
                                             Classification::Decided(None) => {
@@ -1783,6 +1786,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                                 } else {
                                     data.retained_point_parameter_candidates_on_target(
                                         &self.parameter_map,
+                                        &self.mapped_other_range()?,
                                         policy,
                                     )?
                                 }
@@ -1858,6 +1862,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     source_parameter.as_ref(),
                     &source_tangent,
                     &target_tangent,
+                    &self.mapped_other_range()?,
                     policy,
                 )? {
                     Classification::Decided(candidates) => candidates,
@@ -1877,7 +1882,11 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 return Ok(retained);
             }
 
-            match data.retained_point_parameter_candidates_on_target(&self.parameter_map, policy)? {
+            match data.retained_point_parameter_candidates_on_target(
+                &self.parameter_map,
+                &self.mapped_other_range()?,
+                policy,
+            )? {
                 Classification::Decided(Some(candidates)) => {
                     let retained = retain_unique_overlap_parameter(
                         candidates,
@@ -3754,10 +3763,13 @@ fn parallel_parameters_for_cusp_endpoint(
 
 /// Projects one bivariate relation through a compact selected source scalar.
 /// Every local image candidate is replayed against the authored source/image
-/// pair, so conjugate roots introduced by elimination never become geometry.
+/// pair on the requested finite range, so conjugate roots introduced by
+/// elimination never become geometry. Selected endpoints keep their policy
+/// identity and perform the final exact clipping.
 fn selected_fiber_polynomial_relation_parameters(
     source: &BezierAlgebraicSelectedFiberParameter2,
     relation: &BivariatePolynomial,
+    range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<Vec<BezierAlgebraicSelectedFiberParameter2>>>> {
     policy.strict_predicate_pass(|| {
@@ -3788,11 +3800,10 @@ fn selected_fiber_polynomial_relation_parameters(
         let Some(image_relation) = image.relation else {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         };
-        let candidates = match selected_fiber_parameters_in_interval(
+        let candidates = match selected_fiber_parameters_in_range(
             &image_relation,
             &source.data.authority.data.retained_parameter,
-            &Real::zero(),
-            &Real::one(),
+            range,
             policy,
         )? {
             Classification::Decided(Some(candidates)) => candidates,
@@ -3820,11 +3831,13 @@ fn selected_fiber_polynomial_relation_parameters(
 /// Maps one interior point between exact carriers of the same selected circle
 /// by their tangent line. On a circle, a tangent line identifies only the
 /// point and its antipode; one published semicircle overlap range contains at
-/// most one of those interior points.
+/// most one of those interior points. `range` is expressed in the target's
+/// own chart, before any reversal in the overlap correspondence.
 fn mapped_circle_tangent_parameter_candidates(
     source_parameter: BezierAlgebraicCuspSemicircleMappedPointParameterRef2<'_>,
     source_tangent: &[Vec<Real>; 2],
     target_tangent: &[Vec<Real>; 2],
+    range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
     let incidence = bivariate_subtract(
@@ -3832,53 +3845,35 @@ fn mapped_circle_tangent_parameter_candidates(
         &bivariate_outer_product(&source_tangent[1], &target_tangent[0]),
     );
     let candidates = match source_parameter {
-        BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(
-            BezierParameter2::Exact(parameter),
-        ) => {
-            let coefficients = bivariate_specialize_first(&incidence, parameter);
-            let mut nonzero = false;
-            for coefficient in &coefficients {
-                match real_sign(coefficient, policy) {
-                    Some(RealSign::Positive | RealSign::Negative) => nonzero = true,
-                    Some(RealSign::Zero) => {}
-                    None => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
-                    }
-                }
-            }
-            if !nonzero {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            let polynomial = match polynomial_from_coefficients(coefficients, policy)? {
-                Classification::Decided(Some(polynomial)) => polynomial,
-                Classification::Decided(None) => {
-                    return Err(CurveError::Topology(
-                        "nonzero tangent correspondence had no parameter polynomial".into(),
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+        BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(parameter) => {
+            // Tangent equations can carry radical coefficients from a
+            // transported chamfer. Keep the direct resultant first for an
+            // algebraic source: eager quotient-ring reduction can expand
+            // those coefficients before the small projection is available.
+            let projection = match parameter {
+                BezierParameter2::Exact(_) => selected_parameter_fiber_parameters(
+                    &incidence,
+                    parameter,
+                    MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+                    MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+                    range,
+                    policy,
+                )?,
+                BezierParameter2::Algebraic(parameter) => {
+                    algebraic_selected_fiber_parameters(&incidence, parameter, range, policy)?
                 }
             };
-            polynomial.isolate_unit_interval_roots(policy)?
-        }
-        BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(
-            BezierParameter2::Algebraic(parameter),
-        ) => match algebraic_selected_fiber_parameters(
-            &incidence,
-            parameter,
-            &crate::CurveParameterRange2::unit(),
-            policy,
-        )? {
-            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
-                Classification::Decided(parameters)
+            match projection {
+                Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
+                    parameters,
+                )) => Classification::Decided(parameters),
+                Classification::Decided(
+                    BezierAlgebraicFiberProjection2::IdenticallyZero
+                    | BezierAlgebraicFiberProjection2::Degenerate,
+                ) => Classification::Uncertain(UncertaintyReason::Unsupported),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
             }
-            Classification::Decided(
-                BezierAlgebraicFiberProjection2::IdenticallyZero
-                | BezierAlgebraicFiberProjection2::Degenerate,
-            ) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
+        }
         BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(parameter) => {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -3887,8 +3882,9 @@ fn mapped_circle_tangent_parameter_candidates(
                 "selected-fiber-local-image",
             );
             return Ok(
-                match selected_fiber_polynomial_relation_parameters(parameter, &incidence, policy)?
-                {
+                match selected_fiber_polynomial_relation_parameters(
+                    parameter, &incidence, range, policy,
+                )? {
                     Classification::Decided(Some(parameters)) => Classification::Decided(
                         parameters
                             .into_iter()
@@ -13264,12 +13260,13 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     fn retained_point_parameter_candidates_on_target(
         self: &Arc<Self>,
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<CurveParameter2>>>> {
         if let Some(point) = self.retained_one_field_point_image(policy)? {
-            match self
-                .one_field_circle_tangent_parameter_candidates_on_target(&point, target, policy)?
-            {
+            match self.one_field_circle_tangent_parameter_candidates_on_target(
+                &point, target, range, policy,
+            )? {
                 Classification::Decided(Some(parameters)) => {
                     return Ok(Classification::Decided(Some(parameters)));
                 }
@@ -13428,6 +13425,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         &self,
         point: &RationalBezierAlgebraicPointImage2,
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<CurveParameter2>>>> {
         let (parameter, tangent) = match self.one_field_circle_tangent_source(point, policy)? {
@@ -13437,13 +13435,16 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        self.circle_tangent_parameter_candidates_on_target(&parameter, &tangent, target, policy)
+        self.circle_tangent_parameter_candidates_on_target(
+            &parameter, &tangent, target, range, policy,
+        )
     }
 
     fn exact_point_circle_tangent_parameter_candidates_on_target(
         &self,
         point: &Point2,
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<CurveParameter2>>>> {
         let Some(center) = self.semicircle_carrier().exact_center(policy)? else {
@@ -13472,6 +13473,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             &BezierParameter2::Exact(Real::zero()),
             &[vec![-radial_y], vec![radial_x]],
             target,
+            range,
             policy,
         )
     }
@@ -13481,6 +13483,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         parameter: &BezierParameter2,
         tangent: &[Vec<Real>; 2],
         target: &BezierAlgebraicCuspSemicircleMappedOverlapMap2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<CurveParameter2>>>> {
         let target_tangent = match target {
@@ -13499,6 +13502,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(parameter),
             tangent,
             &target_tangent,
+            range,
             policy,
         )?
         .map(Some))
@@ -41574,6 +41578,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                 source_parameter.as_ref(),
                 &source_tangent,
                 &target_tangent,
+                &self.parameter_ranges().1,
                 policy,
             )? {
                 Classification::Decided(candidates) => candidates,
@@ -122678,16 +122683,22 @@ impl BezierParameterComponentOverlap2 {
                 &swapped_support
             }
         };
-        let support_roots =
-            match selected_fiber_polynomial_relation_parameters(parameter, support, policy)? {
-                Classification::Decided(Some(candidates)) => candidates,
-                Classification::Decided(None) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        // The stored fiber rank counts every root on the normalized chart.
+        // Clip to lifted_range only after selecting that ranked branch.
+        let support_roots = match selected_fiber_polynomial_relation_parameters(
+            parameter,
+            support,
+            &CurveParameterRange2::unit(),
+            policy,
+        )? {
+            Classification::Decided(Some(candidates)) => candidates,
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         for pair in support_roots.windows(2) {
             match pair[0].cmp_by_refinement(&pair[1], policy)? {
                 Classification::Decided(std::cmp::Ordering::Less) => {}
@@ -144653,6 +144664,7 @@ mod conversion_tests {
                     BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(&source),
                     &tangent,
                     &tangent,
+                    &CurveParameterRange2::unit(),
                     &policy,
                 )
             };
@@ -169558,6 +169570,259 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 }
             }
         }
+    }
+
+    #[test]
+    fn tangent_inverse_retains_exterior_selected_domain_evidence() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let exact = BezierParameter2::Exact((Real::one() / Real::from(4)).unwrap());
+            let algebraic = algebraic_parameter(vec![
+                -(Real::one() / Real::from(2)).unwrap(),
+                Real::zero(),
+                Real::one(),
+            ]);
+            let selected = degree_nine_selected_fiber_parameter_for_test(
+                (Real::one() / Real::from(2)).unwrap(),
+                32_768,
+                &policy,
+            );
+            let tangent = [vec![Real::zero(), Real::one()], vec![Real::one()]];
+            for (source, original) in [
+                (
+                    BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(&exact),
+                    CurveParameter2::from(exact.clone()),
+                ),
+                (
+                    BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(&algebraic),
+                    CurveParameter2::from(algebraic.clone()),
+                ),
+                (
+                    BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(&selected),
+                    CurveParameter2::from_selected_fiber(selected.clone()),
+                ),
+            ] {
+                for shift in [2, -2] {
+                    let shift = Real::from(shift);
+                    let Classification::Decided(expected) = original
+                        .affine_image_unbounded(&Real::one(), &shift, &policy)
+                        .unwrap()
+                    else {
+                        panic!("exact affine parameter image")
+                    };
+                    // Source tangent (u,1) and target tangent (v-shift,1)
+                    // are parallel exactly when v=u+shift. These are local
+                    // scalar relations, independent of a cached overlap map.
+                    let target_tangent = [vec![-shift.clone(), Real::one()], vec![Real::one()]];
+                    let lower = CurveParameter2::from(shift.clone());
+                    let upper = CurveParameter2::from(&shift + Real::one());
+                    for (start, end, includes_root) in [
+                        (lower.clone(), upper.clone(), true),
+                        (upper.clone(), lower, true),
+                        (expected.clone(), upper.clone(), true),
+                        (upper.clone(), expected.clone(), true),
+                        (upper, CurveParameter2::from(&shift + Real::from(2)), false),
+                    ] {
+                        let range = CurveParameterRange2::new_validated(start, end);
+                        let outcome =
+                            crate::policy::resolve_certified_operation(&policy, |attempt| {
+                                mapped_circle_tangent_parameter_candidates(
+                                    source,
+                                    &tangent,
+                                    &target_tangent,
+                                    &range,
+                                    attempt,
+                                )
+                            })
+                            .unwrap();
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        let Classification::Decided(candidates) = outcome.value else {
+                            panic!("finite tangent inverse must decide")
+                        };
+                        if includes_root {
+                            let [candidate] = candidates.as_slice() else {
+                                panic!("one affine image")
+                            };
+                            assert_eq!(
+                                candidate.same_value(&expected, &policy).unwrap(),
+                                Classification::Decided(true)
+                            );
+                            if matches!(
+                                source,
+                                BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Selected(_)
+                            ) {
+                                assert!(candidate.as_selected_fiber().is_some());
+                            }
+                        } else {
+                            assert!(candidates.is_empty());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_circle_tangent_inverse_replays_independent_cuts() {
+        use crate::curve_intersection::CurveCircleOverlap2 as Overlap;
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let quarter = RationalBezier2::from(
+            RationalQuadraticBezier2::try_new(
+                Point2::from_values(1, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(0, 1),
+                Real::one(),
+                Real::one(),
+                Real::from(2),
+            )
+            .unwrap(),
+        );
+        let cutter = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::zero(), half.clone()),
+                Point2::new(Real::one(), half),
+            ],
+            vec![Real::one(); 2],
+        )
+        .unwrap();
+        // R(t)=((1-t^2)/(1+t^2), 2t/(1+t^2)) meets y=1/2
+        // once in the first quadrant, at t=2-sqrt(3). The cut is authored
+        // by an independent line/circle contact, never by the target map.
+        let expected = Real::from(2) - Real::from(3).sqrt().unwrap();
+        let mut failures = 0;
+        let mut cases = 0;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
+            let Classification::Decided((
+                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps },
+                Some(map),
+            )) = circle
+                .rational_intersections_with_parameter_map(
+                    &cutter,
+                    &CurveParameterRange2::unit(),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("independent transverse circle cut")
+            };
+            assert!(overlaps.is_empty());
+            let [contact] = contacts.as_slice() else {
+                panic!("one first-quadrant cut")
+            };
+            let cut = CurveParameter2::from_algebraic_cusp(map.contact_parameter(contact));
+            for shift in [0, 2, -2] {
+                for reversed in [false, true] {
+                    for analytic in [false, true] {
+                        let shift = Real::from(shift);
+                        let source = if reversed {
+                            quarter.reversed()
+                        } else {
+                            quarter.clone()
+                        };
+                        let Classification::Decided(source) = source
+                            .subcurve_between_affine_exact(
+                                &(-shift.clone()),
+                                &(Real::one() - &shift),
+                                &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("exterior circle chart")
+                        };
+                        let range = if reversed {
+                            CurveParameterRange2::new_validated(
+                                (&shift + Real::one()).into(),
+                                shift.clone().into(),
+                            )
+                        } else {
+                            CurveParameterRange2::new_validated(
+                                shift.clone().into(),
+                                (&shift + Real::one()).into(),
+                            )
+                        };
+                        let overlaps: Vec<_> = if analytic {
+                            let scale = Similarity2::try_from_real_affine(
+                                Real::from(2),
+                                Real::zero(),
+                                Real::zero(),
+                                Real::from(2),
+                                Real::zero(),
+                                Real::zero(),
+                            )
+                            .unwrap();
+                            let parallel = source
+                                .transform_similarity(&scale)
+                                .parallel_left(if reversed { -Real::one() } else { Real::one() })
+                                .unwrap();
+                            assert!(parallel.data.certified_ph_offset.set(None).is_ok());
+                            match circle
+                                .parallel_intersections(&parallel, &range, None, &policy)
+                                .unwrap()
+                            {
+                                Classification::Decided(
+                                    BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
+                                        contacts,
+                                        overlaps,
+                                    },
+                                ) => {
+                                    assert!(contacts.is_empty());
+                                    overlaps.into_iter().map(Overlap::Mapped).collect()
+                                }
+                                other => panic!("finite analytic circle overlap: {other:?}"),
+                            }
+                        } else {
+                            match circle.rational_intersections(&source, &range, &policy).unwrap() {
+                                Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps }) => {
+                                    assert!(contacts.is_empty());
+                                    overlaps.into_iter().map(Overlap::Mapped).collect()
+                                }
+                                Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::SelectedFiber { contacts, overlaps }) => {
+                                    assert!(contacts.is_empty());
+                                    overlaps.into_iter().map(Overlap::Selected).collect()
+                                }
+                                other => panic!("finite rational circle overlap: {other:?}"),
+                            }
+                        };
+                        let [overlap] = overlaps.as_slice() else {
+                            panic!("one quarter-circle overlap")
+                        };
+                        let outcome =
+                            crate::policy::resolve_certified_operation(&policy, |attempt| {
+                                match overlap {
+                                    Overlap::Mapped(map) => map.map_parameter(&cut, true, attempt),
+                                    Overlap::Selected(map) => {
+                                        map.map_parameter(&cut, true, attempt)
+                                    }
+                                    Overlap::Pair(_) => unreachable!(),
+                                }
+                            })
+                            .unwrap();
+                        println!(
+                            "shift={shift:?} reversed={reversed} analytic={analytic} policy={policy:?}: {:?}",
+                            outcome.value
+                        );
+                        cases += 1;
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        let Classification::Decided(Some(parameter)) = outcome.value else {
+                            failures += 1;
+                            continue;
+                        };
+                        let expected = &shift
+                            + if reversed {
+                                Real::one() - &expected
+                            } else {
+                                expected.clone()
+                            };
+                        assert_eq!(
+                            parameter.same_value(&expected.into(), &policy).unwrap(),
+                            Classification::Decided(true)
+                        );
+                    }
+                }
+            }
+        }
+        assert_eq!(cases, 24);
+        assert_eq!(failures, 0, "finite inverses lost independent cuts");
     }
 
     fn finite_circle_component_inverse_charts(
