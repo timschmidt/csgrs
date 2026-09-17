@@ -610,3 +610,23 @@ fn options_bound_import_sampling_and_export_projection() {
 
     assert!(SvgGeometry2::empty().to_svg().is_err());
 }
+
+#[test]
+fn document_import_applies_fill_rule_before_normalizing_repeated_traversal() {
+    for (fill_rule, expected) in [
+        ("nonzero", hypercurve::RegionPointLocation::Inside),
+        ("evenodd", hypercurve::RegionPointLocation::Outside),
+    ] {
+        let document = format!(
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill-rule="{fill_rule}" d="M0 0 L4 0 L4 4 L0 4 L0 0 L4 0 L4 4 L0 4 Z"/></svg>"#
+        );
+        let geometry = import_svg_document(&document).unwrap();
+        assert_eq!(geometry.region().is_empty(), fill_rule == "evenodd");
+        let result = geometry
+            .region()
+            .classify_point(&point(2, 2), &CurveContext::STRICT)
+            .unwrap();
+        assert_eq!(result.certainty, hypercurve::CurveCertainty::Certified);
+        assert_eq!(result.value, Classification::Decided(expected));
+    }
+}

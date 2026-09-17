@@ -872,7 +872,7 @@ fn retired_signed_compound_circular_subtraction_case() -> RetiredFailureCase {
             .collect(),
     )
     .unwrap();
-    let first = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+    let first = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[capsule, via],
         &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
         &[FillRule::NonZero, FillRule::NonZero],

@@ -435,7 +435,7 @@ fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
 fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let paths = [square_path(0, 0, 4, 4), square_path(2, 0, 6, 4)];
-        let region = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &paths,
             &[CurveRegionLoopRole::Material; 2],
             &[FillRule::NonZero; 2],
@@ -453,7 +453,7 @@ fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
             assert!(report.value.contacts().is_empty());
             assert!(report.value.overlaps().is_empty());
         }
-        let canceled = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+        let canceled = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[paths[0].clone(), paths[0].clone()],
             &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
             &[FillRule::NonZero; 2],
@@ -1543,19 +1543,21 @@ fn empty_output_does_not_certify_an_approximate_normalization() {
         Curve2::from(LineSeg2::try_new(point(2, 0), point(0, 0)).unwrap()),
     ])
     .unwrap();
-    let authored = path_region(
-        &path,
-        CurveBoundaryInteriorSide2::Right,
-        &CurveContext::STRICT,
-    );
+    let construct = |policy: &CurveContext| {
+        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            std::slice::from_ref(&path),
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::EvenOdd],
+            &[CurveBoundaryInteriorSide2::Right],
+            policy,
+        )
+    };
     for _ in 0..2 {
-        let normalized = authored
-            .regularized_region(&CurveContext::APPROXIMATE_512)
-            .unwrap();
+        let normalized = construct(&CurveContext::APPROXIMATE_512).unwrap();
         assert_eq!(normalized.certainty, CurveCertainty::Approximate512Consumed);
         assert!(normalized.value.is_empty());
     }
-    assert!(authored.regularized_region(&CurveContext::STRICT).is_err());
+    assert!(construct(&CurveContext::STRICT).is_err());
     assert_eq!(
         height.certified_sign_until(-2048).sign(),
         Some(hyperreal::RealSign::Positive)

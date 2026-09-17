@@ -116,7 +116,7 @@ fn overlapping_material_rectangles() -> CurveRegion2 {
         )
         .unwrap()
     };
-    CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[rectangle(0, 3), rectangle(2, 5)],
         &[CurveRegionLoopRole::Material; 2],
         &[FillRule::NonZero; 2],

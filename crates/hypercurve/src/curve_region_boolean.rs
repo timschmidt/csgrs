@@ -1457,43 +1457,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // A finite traversal equal to its own reverse has zero winding
         // contribution. Remove it before asking a self-intersection solver
         // to enumerate its positive-dimensional retracing relation.
-        carriers.retain(|carrier| !carrier_is_symmetric_zero_chain(carrier));
+        carriers.retain(|carrier| !carrier_is_symmetric_zero_chain(carrier, policy));
         let carrier_count = carriers.len();
         let authored_carrier_pair_count =
             carrier_count.saturating_mul(carrier_count.saturating_add(1)) / 2;
-        let curves = prepare_bezier_carrier_curves(&carriers, policy)?;
-        let mut pairs = Vec::with_capacity(carrier_count.saturating_mul(2));
-        let mut intersection_cache = CurveIntersectionBatchCache::default();
-        for first_carrier_index in 0..carrier_count {
-            for second_carrier_index in first_carrier_index + 1..carrier_count {
-                let candidate = build_candidate_carrier_pair(
-                    &carriers,
-                    &curves,
-                    first_carrier_index,
-                    second_carrier_index,
-                    policy,
-                    &mut intersection_cache,
-                );
-                if let Some(pair) = candidate? {
-                    pairs.push(pair);
-                }
-            }
-            let carrier = &carriers[first_carrier_index];
-            if !carrier_has_certified_injective_image(carrier, policy) {
-                pairs.push(RegionCarrierPair {
-                    first_carrier_index,
-                    second_carrier_index: first_carrier_index,
-                    context: RegionCarrierPairContext::Common(CurveIntersectionContext::new_self(
-                        &match &curves[first_carrier_index] {
-                            Some(curve) => curve.clone(),
-                            None => prepare_carrier_curve(carrier, policy)?,
-                        },
-                        policy,
-                        &mut intersection_cache,
-                    )),
-                });
-            }
-        }
+        let pairs = build_unary_carrier_pairs(&carriers, policy)?;
         Ok(Self {
             data: CurveRegionBooleanContextData {
                 first: region,
@@ -11771,6 +11739,107 @@ fn prepare_bezier_carrier_curves(
         .collect()
 }
 
+fn carrier_scheduling_bounds(
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> Vec<Option<Aabb2>> {
+    policy.strict_predicate_pass(|| {
+        carriers
+            .iter()
+            .map(
+                |carrier| match carrier_optional_outer_bounds_refined(carrier, 0, policy) {
+                    Classification::Decided(bounds) => Some(bounds),
+                    Classification::Uncertain(_) => None,
+                },
+            )
+            .collect()
+    })
+}
+
+fn build_unary_carrier_pairs(
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<RegionCarrierPair>> {
+    let count = carriers.len();
+    let curves = prepare_bezier_carrier_curves(carriers, policy)?;
+    let mut pairs = Vec::with_capacity(count.saturating_mul(2));
+    let mut intersection_cache = CurveIntersectionBatchCache::default();
+    let mut visit = |first, second, _| -> ExactCurveResult<()> {
+        if first < second
+            && let Some(pair) = build_candidate_carrier_pair(
+                carriers,
+                &curves,
+                first,
+                second,
+                policy,
+                &mut intersection_cache,
+            )?
+        {
+            pairs.push(pair);
+        }
+        Ok(())
+    };
+    // Unary normalization has the same certified rejection authority as
+    // binary Booleans. Query the same envelopes on both sides and visit each
+    // unordered pair once. Unknown envelopes retain the complete fallback.
+    let scheduled = if count.saturating_mul(count) >= MIN_AABB_SWEEP_PAIR_COUNT {
+        let bounds = carrier_scheduling_bounds(carriers, policy);
+        visit_aabb_pair_candidates(
+            &bounds,
+            &bounds,
+            count,
+            count,
+            None,
+            &CurveContext::STRICT,
+            &mut visit,
+        )
+    } else {
+        None
+    };
+    match scheduled {
+        Some(result) => result?,
+        None => {
+            for first in 0..count {
+                for second in first + 1..count {
+                    visit(first, second, false)?;
+                }
+            }
+        }
+    }
+    let pair_count = pairs.len();
+    for (index, carrier) in carriers.iter().enumerate() {
+        if !carrier_has_certified_injective_image(carrier, policy) {
+            pairs.push(RegionCarrierPair {
+                first_carrier_index: index,
+                second_carrier_index: index,
+                context: RegionCarrierPairContext::Common(CurveIntersectionContext::new_self(
+                    &match &curves[index] {
+                        Some(curve) => curve.clone(),
+                        None => prepare_carrier_curve(carrier, policy)?,
+                    },
+                    policy,
+                    &mut intersection_cache,
+                )),
+            });
+        }
+    }
+    if pairs.len() != pair_count {
+        // Keep the original authored order: cross contacts followed by the
+        // source's own self contacts, before proceeding to the next carrier.
+        pairs.sort_unstable_by_key(|pair| {
+            (
+                pair.first_carrier_index,
+                if pair.first_carrier_index == pair.second_carrier_index {
+                    count
+                } else {
+                    pair.second_carrier_index
+                },
+            )
+        });
+    }
+    Ok(pairs)
+}
+
 fn build_cross_operand_carrier_pairs(
     carriers: &[RegionCarrier],
     first_carrier_count: usize,
@@ -11798,17 +11867,7 @@ fn build_cross_operand_carrier_pairs(
         // Retain one optional envelope per carrier, not one per Cartesian
         // pair. Only the rejection proof suppresses terminal approximation;
         // surviving pairs still enter their kernel with the original policy.
-        let bounds = policy.strict_predicate_pass(|| {
-            carriers
-                .iter()
-                .map(
-                    |carrier| match carrier_optional_outer_bounds_refined(carrier, 0, policy) {
-                        Classification::Decided(bounds) => Some(bounds),
-                        Classification::Uncertain(_) => None,
-                    },
-                )
-                .collect::<Vec<_>>()
-        });
+        let bounds = carrier_scheduling_bounds(carriers, policy);
         let (first_bounds, second_bounds) = bounds.split_at(first_carrier_count);
         if let Some(result) = visit_aabb_pair_candidates(
             first_bounds,
@@ -11950,21 +12009,26 @@ fn authored_carriers_are_adjacent_in_set(
 /// A reversal identity certifies a zero oriented boundary chain, even when
 /// the image is curved. This is a filled-set reduction, not a curve-image
 /// simplification: open curve queries must retain every parameter visit.
-fn carrier_is_symmetric_zero_chain(carrier: &RegionCarrier) -> bool {
+fn carrier_is_symmetric_zero_chain(carrier: &RegionCarrier, policy: &CurveContext) -> bool {
     if carrier.start.scalar() != Some(&Real::zero()) || carrier.end.scalar() != Some(&Real::one()) {
         return false;
     }
     let CurveSupport2::Bezier(curve) = &carrier.geometry else {
         return false;
     };
+    let equal =
+        |first: &Real, second: &Real| compare_reals(first, second, policy) == Some(Ordering::Equal);
+    let same_point = |first: &crate::Point2, second: &crate::Point2| {
+        equal(first.x(), second.x()) && equal(first.y(), second.y())
+    };
     match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.start() == curve.end(),
+        BezierSubcurve2::Quadratic(curve) => same_point(curve.start(), curve.end()),
         BezierSubcurve2::Cubic(curve) => {
-            curve.start() == curve.end() && curve.control1() == curve.control2()
+            same_point(curve.start(), curve.end()) && same_point(curve.control1(), curve.control2())
         }
         BezierSubcurve2::RationalQuadratic(curve) => {
-            curve.start() == curve.end()
-                && curve.start_weight() == curve.end_weight()
+            same_point(curve.start(), curve.end())
+                && equal(curve.start_weight(), curve.end_weight())
                 && matches!(
                     RationalBezier2::from(curve.clone())
                         .denominator_sign(&CurveParameterRange2::unit()),
@@ -11975,7 +12039,12 @@ fn carrier_is_symmetric_zero_chain(carrier: &RegionCarrier) -> bool {
             curve
                 .homogeneous_controls()
                 .iter()
-                .eq(curve.homogeneous_controls().iter().rev())
+                .zip(curve.homogeneous_controls().iter().rev())
+                .all(|(first, second)| {
+                    equal(first.x(), second.x())
+                        && equal(first.y(), second.y())
+                        && equal(first.weight(), second.weight())
+                })
                 && matches!(
                     curve.denominator_sign(&CurveParameterRange2::unit()),
                     Classification::Decided(RealSign::Positive | RealSign::Negative)
@@ -21554,6 +21623,35 @@ mod certified_successor_tests {
                     cartesian
                 );
             }
+            let unary_carriers = &carriers[..first_count];
+            let unary = build_unary_carrier_pairs(unary_carriers, &policy).unwrap();
+            let mut complete_unary = Vec::new();
+            for first_index in 0..first_count {
+                for second_index in first_index + 1..first_count {
+                    if let Some(pair) = build_candidate_carrier_pair(
+                        unary_carriers,
+                        &curves[..first_count],
+                        first_index,
+                        second_index,
+                        &policy,
+                        &mut cache,
+                    )
+                    .unwrap()
+                    {
+                        complete_unary.push((pair.first_carrier_index, pair.second_carrier_index));
+                    }
+                }
+                if !carrier_has_certified_injective_image(&unary_carriers[first_index], &policy) {
+                    complete_unary.push((first_index, first_index));
+                }
+            }
+            assert_eq!(
+                unary
+                    .iter()
+                    .map(|pair| (pair.first_carrier_index, pair.second_carrier_index))
+                    .collect::<Vec<_>>(),
+                complete_unary
+            );
             let evidence = first.intersect_region(&second, &policy).unwrap();
             assert_eq!(evidence.certainty, crate::CurveCertainty::Certified);
             assert!(evidence.value.is_complete());

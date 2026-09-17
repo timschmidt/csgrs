@@ -410,7 +410,7 @@ fn unordered_single_full_circle_is_a_closed_walk() {
 }
 
 #[test]
-fn unordered_line_arc_segments_materialize_without_exposing_native_ownership() {
+fn unordered_line_arc_segments_recover_the_exact_native_view() {
     let built = arrange_segments(
         vec![
             Segment2::Line(line(4, 0, 0, 0)),
@@ -422,19 +422,21 @@ fn unordered_line_arc_segments_materialize_without_exposing_native_ownership() {
     assert_eq!(built.source_segment_count(), 2);
     assert_eq!(
         built.output_boundary_segment_kind_counts(),
-        None,
-        "the unified arrangement may retain the circular span as an exact conic"
+        Some(SegmentKindCounts { lines: 1, arcs: 2 }),
+        "the two conic spans retain exact circular geometry"
     );
     let region = built.region().expect("semicircle should materialize");
     assert_eq!(
         classify(region, &p(2, -1)),
         Classification::Decided(RegionPointLocation::Inside)
     );
-    assert_eq!(
-        region.structural_facts(&policy()).unwrap().into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported),
-        "the exact conic result does not pretend to be a native line/arc carrier"
-    );
+    let Classification::Decided(facts) = region.structural_facts(&policy()).unwrap().into_value()
+    else {
+        panic!("the exact line and circular spans expose native facts");
+    };
+    assert_eq!(facts.material_contour_count, 1);
+    assert_eq!(facts.hole_contour_count, 0);
+    assert_eq!(facts.segment_kinds, SegmentKindCounts { lines: 1, arcs: 2 });
 }
 
 #[test]
@@ -493,11 +495,11 @@ fn contour_profiles_group_holes_with_their_exact_material_owner() {
 }
 
 #[test]
-fn contour_profiles_reject_holes_without_a_material_owner() {
+fn contour_profiles_remove_holes_without_a_material_owner() {
     let region = region(Vec::new(), vec![rectangle(2, 2, 4, 4)]);
     assert_eq!(
         region.boundary_profiles(&policy()).unwrap().into_value(),
-        Classification::Uncertain(UncertaintyReason::Unsupported)
+        Classification::Decided(Vec::new())
     );
 }
 
@@ -587,9 +589,11 @@ fn unified_finite_profiles_preserve_material_hole_bins_and_ownership() {
     assert_eq!(profiles.len(), 2);
     assert!(profiles.iter().all(|profile| profile.holes().len() == 1));
     assert_eq!(profiles[0].material().points()[0], [0.0, 0.0]);
-    assert_eq!(profiles[0].holes()[0].points()[0], [2.0, 2.0]);
+    assert!(profiles[0].holes()[0].points().contains(&[2.0, 2.0]));
+    assert_eq!(profiles[0].holes()[0].try_signed_ring_area().unwrap(), -4.0);
     assert_eq!(profiles[1].material().points()[0], [20.0, 0.0]);
-    assert_eq!(profiles[1].holes()[0].points()[0], [22.0, 2.0]);
+    assert!(profiles[1].holes()[0].points().contains(&[22.0, 2.0]));
+    assert_eq!(profiles[1].holes()[0].try_signed_ring_area().unwrap(), -4.0);
     assert_eq!(profiles[0].try_projected_filled_area().unwrap(), 96.0);
     assert_eq!(profiles[1].try_projected_filled_area().unwrap(), 96.0);
 }
@@ -812,7 +816,7 @@ proptest! {
         prop_assert_eq!(built.source_segment_count(), 2);
         prop_assert_eq!(
             built.output_boundary_segment_kind_counts(),
-            None
+            Some(SegmentKindCounts { lines: 1, arcs: 2 })
         );
         prop_assert_eq!(
             classify(

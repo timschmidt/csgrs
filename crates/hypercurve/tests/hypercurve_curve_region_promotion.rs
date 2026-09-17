@@ -10,7 +10,7 @@ use hypercurve::{
     CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveOutcome,
     CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
     FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
-    RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2, UncertaintyReason,
+    RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -328,6 +328,7 @@ impl<T> IntoCertifiedClassification<T> for CurveOutcome<Classification<T>> {
     }
 }
 
+#[track_caller]
 fn decided<T>(classification: impl IntoCertifiedClassification<T>) -> T {
     match classification.into_certified_classification() {
         Classification::Decided(value) => value,
@@ -338,6 +339,27 @@ fn decided<T>(classification: impl IntoCertifiedClassification<T>) -> T {
 fn certified<T>(outcome: CurveOutcome<T>) -> T {
     assert_eq!(outcome.certainty, CurveCertainty::Certified);
     outcome.value
+}
+
+fn boundary_vertex_at(
+    region: &CurveRegion2,
+    point: &Point2,
+    policy: &CurveContext,
+) -> (usize, usize) {
+    let point = CurvePoint2::from(point.clone());
+    let paths = decided(region.boundary_paths(policy).unwrap());
+    for (loop_index, path) in paths.iter().enumerate() {
+        assert_eq!(
+            path.curves().len(),
+            region.boundary_loops()[loop_index].len()
+        );
+        if let Some(vertex) = path.curves().iter().position(|curve| {
+            certified(curve.start().coincides_with(&point, policy)) == Classification::Decided(true)
+        }) {
+            return (loop_index, vertex);
+        }
+    }
+    panic!("the intended corner must survive on the regularized boundary: {point:?}");
 }
 
 fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
@@ -854,7 +876,7 @@ fn axis_aligned_algebraic_dumbbell_region(
 }
 
 #[test]
-fn unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics() {
+fn unified_native_constructor_regularizes_zero_signed_area_self_crossing() {
     let policy = CurveContext::STRICT;
     let contour = bow_tie_contour(FillRule::EvenOdd);
 
@@ -863,7 +885,17 @@ fn unified_native_constructor_retains_zero_signed_area_boundary_for_diagnostics(
         .into_value();
     let native = decided(region.native_contours_fast_path(&policy).unwrap());
 
-    assert_eq!(native.material_contours(), std::slice::from_ref(&contour));
+    assert_eq!(native.material_contours().len(), 2);
+    assert_eq!(
+        decided(region.filled_area(&policy).unwrap()),
+        Some(Real::from(8))
+    );
+    for point in [p(2, 1), p(2, 3)] {
+        assert_eq!(
+            decided(region.classify_point(&point, &policy).unwrap()),
+            RegionPointLocation::Inside
+        );
+    }
     assert!(native.hole_contours().is_empty());
 }
 
@@ -922,7 +954,7 @@ fn unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement(
     );
     assert_eq!(
         segmented.evidence().loop_evidence()[0].fill_rule(),
-        FillRule::NonZero
+        FillRule::EvenOdd
     );
     assert!(segmented.evidence().loop_evidence()[0].output_segment_count() > 4);
     assert!(matches!(
@@ -1530,13 +1562,13 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
                 } else {
                     path.clone()
                 };
-                let corner = if reversed { 3 } else { 1 };
                 let source = CurveRegion2::try_from_boundary_paths(&[path], &policy)
                     .map(certified)
                     .unwrap();
+                let (loop_index, corner) = boundary_vertex_at(&source, &p(0, 0), &policy);
                 let trim_count = source
                     .chamfer_loop_vertex_by_setbacks(
-                        0,
+                        loop_index,
                         corner,
                         q(1, 2),
                         q(1, 2),
@@ -1548,7 +1580,7 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
                     .candidate_count();
                 let extended = source
                     .chamfer_loop_vertex_by_setbacks(
-                        0,
+                        loop_index,
                         corner,
                         q(1, 2),
                         q(1, 2),
@@ -1803,44 +1835,33 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
     let top = Curve2::from(LineSeg2::try_new(p(1, 2), p(-4, 2)).unwrap());
     let left = Curve2::from(LineSeg2::try_new(p(-4, 2), p(-4, 0)).unwrap());
     let paths = [
-        (
-            CurvePath2::try_new(vec![
-                bottom.clone(),
-                curved.clone(),
-                top.clone(),
-                left.clone(),
-            ])
-            .unwrap(),
-            [1, 1, 2],
-            false,
-        ),
-        (
-            CurvePath2::try_new(vec![curved, top, left, bottom]).unwrap(),
-            [0, 0, 1],
-            false,
-        ),
-        (
-            CurvePath2::try_new(vec![
-                Curve2::from(LineSeg2::try_new(p(-4, 0), p(-4, 2)).unwrap()),
-                Curve2::from(LineSeg2::try_new(p(-4, 2), p(1, 2)).unwrap()),
-                Curve2::from(QuadraticBezier2::new(p(1, 2), p(0, 1), p(0, 0))),
-                Curve2::from(LineSeg2::try_new(p(0, 0), p(-4, 0)).unwrap()),
-            ])
-            .unwrap(),
-            [3, 4, 4],
-            true,
-        ),
+        (CurvePath2::try_new(vec![
+            bottom.clone(),
+            curved.clone(),
+            top.clone(),
+            left.clone(),
+        ])
+        .unwrap(),),
+        (CurvePath2::try_new(vec![curved, top, left, bottom]).unwrap(),),
+        (CurvePath2::try_new(vec![
+            Curve2::from(LineSeg2::try_new(p(-4, 0), p(-4, 2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-4, 2), p(1, 2)).unwrap()),
+            Curve2::from(QuadraticBezier2::new(p(1, 2), p(0, 1), p(0, 0))),
+            Curve2::from(LineSeg2::try_new(p(0, 0), p(-4, 0)).unwrap()),
+        ])
+        .unwrap(),),
     ];
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        for (path, vertices, chord_is_previous) in &paths {
+        for (path,) in &paths {
             let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(path), &policy)
                 .unwrap()
                 .into_value();
+            let (loop_index, corner) = boundary_vertex_at(&source, &p(0, 0), &policy);
             let first = source
                 .chamfer_loop_vertex_by_setbacks(
-                    0,
-                    vertices[0],
+                    loop_index,
+                    corner,
                     Real::one(),
                     Real::one(),
                     CurveCornerMode2::TrimOnly,
@@ -1852,10 +1873,11 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
                 panic!("the first Bezier setback must retain one algebraic chord");
             };
 
+            let (loop_index, corner) = boundary_vertex_at(&first, &p(-1, 0), &policy);
             let one_sided = first
                 .chamfer_loop_vertex_by_setbacks(
-                    0,
-                    vertices[1],
+                    loop_index,
+                    corner,
                     Real::zero(),
                     q(1, 4),
                     CurveCornerMode2::TrimOnly,
@@ -1867,15 +1889,11 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
                 one_sided.into_value(),
                 CurveCornerSolutions2::Unique(_)
             ));
-            let (over_previous, over_next) = if *chord_is_previous {
-                (Real::from(2), q(1, 4))
-            } else {
-                (q(1, 4), Real::from(2))
-            };
+            let (over_previous, over_next) = (q(1, 4), Real::from(2));
             let over = first
                 .chamfer_loop_vertex_by_setbacks(
-                    0,
-                    vertices[1],
+                    loop_index,
+                    corner,
                     over_previous,
                     over_next,
                     CurveCornerMode2::TrimOnly,
@@ -1892,8 +1910,8 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
             // chord. Its chord-side cut is a lazy exact unit-tangent displacement.
             let second = first
                 .chamfer_loop_vertex_by_setbacks(
-                    0,
-                    vertices[1],
+                    loop_index,
+                    corner,
                     q(1, 4),
                     q(1, 4),
                     CurveCornerMode2::TrimOnly,
@@ -1909,7 +1927,7 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
                 second.boundary_loops()[0]
                     .fragments()
                     .iter()
-                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(chord) if chord.exact_line().is_none()))
                     .count(),
                 2
             );
@@ -1917,10 +1935,20 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
             // The inserted chord and retained source chord now meet directly.
             // Both have independently selected endpoints and neither requires a
             // represented unit tangent.
+            let fragments = second.boundary_loops()[loop_index].fragments();
+            let general_chord = |fragment: &BezierSplitFragment2| matches!(fragment, BezierSplitFragment2::AlgebraicChord(chord) if chord.exact_line().is_none());
+            let corner = (0..fragments.len())
+                .find(|index| {
+                    general_chord(&fragments[*index])
+                        && general_chord(
+                            &fragments[(*index + fragments.len() - 1) % fragments.len()],
+                        )
+                })
+                .expect("the two general chords must share a vertex");
             let third = second
                 .chamfer_loop_vertex_by_setbacks(
-                    0,
-                    vertices[2],
+                    loop_index,
+                    corner,
                     q(1, 10),
                     q(1, 10),
                     CurveCornerMode2::TrimOnly,
@@ -1936,7 +1964,7 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
                 third.boundary_loops()[0]
                     .fragments()
                     .iter()
-                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(chord) if chord.exact_line().is_none()))
                     .count(),
                 3
             );
@@ -7267,10 +7295,9 @@ fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
     let policy = CurveContext::STRICT;
     for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
         let contour = bow_tie_contour(fill_rule);
-        let classification = CurveRegion2::try_from_regularized_native_contour(&contour, &policy)
-            .unwrap()
-            .into_value();
-        let region = decided(classification);
+        let region = CurveRegion2::try_from_native_material_contours(vec![contour], &policy)
+            .map(certified)
+            .unwrap();
         let native = decided(region.native_contours_fast_path(&policy).unwrap());
         assert_eq!(native.material_contours().len(), 2);
         assert!(native.hole_contours().is_empty());
@@ -7357,14 +7384,12 @@ fn authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings
 fn native_self_overlap_regularization_honors_winding_multiplicity() {
     let policy = CurveContext::STRICT;
 
-    let nonzero = decided(
-        CurveRegion2::try_from_regularized_native_contour(
-            &double_wound_square(FillRule::NonZero),
-            &policy,
-        )
-        .unwrap()
-        .into_value(),
-    );
+    let nonzero = CurveRegion2::try_from_native_material_contours(
+        vec![double_wound_square(FillRule::NonZero)],
+        &policy,
+    )
+    .map(certified)
+    .unwrap();
     let native = decided(nonzero.native_contours_fast_path(&policy).unwrap());
     assert_eq!(native.material_contours().len(), 1);
     assert!(native.hole_contours().is_empty());
@@ -7373,14 +7398,12 @@ fn native_self_overlap_regularization_honors_winding_multiplicity() {
         Some(Real::from(100))
     );
 
-    let even_odd = decided(
-        CurveRegion2::try_from_regularized_native_contour(
-            &double_wound_square(FillRule::EvenOdd),
-            &policy,
-        )
-        .unwrap()
-        .into_value(),
-    );
+    let even_odd = CurveRegion2::try_from_native_material_contours(
+        vec![double_wound_square(FillRule::EvenOdd)],
+        &policy,
+    )
+    .map(certified)
+    .unwrap();
     assert!(even_odd.is_empty());
 }
 
@@ -7416,7 +7439,7 @@ fn authoritative_curve_region_arrangement_regularizes_signed_loop_composition() 
             path_from_contour(&square(0, 0, 4, 4)),
             path_from_contour(&square(2, 0, 6, 4)),
         ];
-        let union = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+        let union = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &paths,
             &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Material],
             &[FillRule::NonZero, FillRule::NonZero],
@@ -7436,7 +7459,7 @@ fn authoritative_curve_region_arrangement_regularizes_signed_loop_composition() 
             Classification::Decided(RegionPointLocation::Inside)
         );
 
-        let cancellation = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+        let cancellation = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[paths[0].clone(), paths[0].clone()],
             &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
             &[FillRule::NonZero, FillRule::NonZero],
@@ -7481,25 +7504,38 @@ fn authoritative_curve_region_arrangement_regularizes_nonlinear_winding() {
 }
 
 #[test]
-fn all_family_nesting_rejects_crossing_loops_before_role_assignment() {
+fn crossing_authored_loops_publish_the_regularized_even_odd_set() {
     let curved = rational_cap_path();
     let cutter = path_from_contour(&square(-1, 2, 1, 5));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let raw = CurveRegion2::try_from_boundary_paths(&[curved.clone(), cutter.clone()], &policy)
-            .unwrap()
-            .into_value();
-        assert_eq!(
-            raw.curved_nesting_role_evidence(&policy)
-                .unwrap()
-                .into_value(),
-            Classification::Uncertain(UncertaintyReason::Boundary),
+        let region =
+            CurveRegion2::try_from_boundary_paths(&[curved.clone(), cutter.clone()], &policy)
+                .map(certified)
+                .unwrap();
+        assert!(
+            decided(region.filled_side_is_left(&policy).unwrap())
+                .iter()
+                .all(|left| *left)
         );
-        let roles = raw.loop_roles(&policy).unwrap();
-        assert_eq!(roles.certainty, CurveCertainty::Certified);
-        assert_eq!(
-            roles.into_value(),
-            Classification::Uncertain(UncertaintyReason::Boundary),
+        assert!(
+            decided(region.loop_roles(&policy).unwrap())
+                .iter()
+                .all(|role| *role == CurveRegionLoopRole::Material)
         );
+        for (point, expected) in [
+            (p(0, 0), RegionPointLocation::Inside),
+            (
+                Point2::new(Real::zero(), q(5, 2)),
+                RegionPointLocation::Outside,
+            ),
+            (p(0, 4), RegionPointLocation::Inside),
+            (p(3, 4), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                decided(region.classify_point(&point, &policy).unwrap()),
+                expected
+            );
+        }
     }
 }
 
@@ -7516,14 +7552,14 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
 
     assert_eq!(
         decided(promoted.loop_roles(&policy).unwrap()),
-        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material,]
+        vec![CurveRegionLoopRole::Material]
     );
     assert_eq!(
         decided(promoted.filled_side_is_left(&policy).unwrap()),
-        &[true, true]
+        &[true]
     );
     let profiles = decided(promoted.boundary_profiles(&policy).unwrap());
-    assert_eq!(profiles.len(), 2);
+    assert_eq!(profiles.len(), 1);
     assert!(profiles.iter().all(|profile| profile.holes().is_empty()));
 
     for (point, expected) in [
@@ -7574,7 +7610,7 @@ fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
 
     assert_eq!(
         decided(transformed.loop_roles(&policy).unwrap()),
-        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Material]
+        vec![CurveRegionLoopRole::Material]
     );
     assert_eq!(
         certified(transformed.classify_point(&p(15, 11), &policy).unwrap()),
@@ -7635,8 +7671,8 @@ fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
 fn exact_profiles_assign_holes_to_the_smallest_containing_material() {
     let policy = CurveContext::STRICT;
     let promoted = CurveRegion2::try_from_native_contours(
-        vec![square(0, 0, 10, 10), square(2, 2, 8, 8)],
-        vec![square(3, 3, 7, 7)],
+        vec![square(0, 0, 20, 20), square(4, 4, 16, 16)],
+        vec![square(2, 2, 18, 18), square(6, 6, 14, 14)],
         &policy,
     )
     .unwrap()
@@ -7645,12 +7681,13 @@ fn exact_profiles_assign_holes_to_the_smallest_containing_material() {
     let profiles = decided(promoted.boundary_profiles(&policy).unwrap());
 
     assert_eq!(profiles.len(), 2);
-    assert!(profiles[0].holes().is_empty());
+    assert_eq!(profiles[0].material_loop_index(), 0);
+    assert_eq!(profiles[0].hole_loop_indices(), &[2]);
     assert_eq!(profiles[1].material_loop_index(), 1);
-    assert_eq!(profiles[1].hole_loop_indices(), &[2]);
+    assert_eq!(profiles[1].hole_loop_indices(), &[3]);
     assert_eq!(
         decided(promoted.filled_area(&policy).unwrap()),
-        Some(Real::from(120))
+        Some(Real::from(224))
     );
 }
 
@@ -7680,7 +7717,10 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
             .unwrap()
             .into_value();
 
-        assert_eq!(transformed.loop_fill_rules(), Some([fill_rule].as_slice()));
+        assert_eq!(
+            transformed.boundary_loops().len(),
+            usize::from(fill_rule == FillRule::NonZero)
+        );
         assert_eq!(
             certified(transformed.classify_point(&p(10, 5), &policy).unwrap()),
             Classification::Decided(expected)
@@ -7709,7 +7749,10 @@ fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
         .unwrap()
         .into_value();
 
-        assert_eq!(region.loop_fill_rules(), Some([fill_rule].as_slice()));
+        assert_eq!(
+            region.boundary_loops().len(),
+            usize::from(fill_rule == FillRule::NonZero)
+        );
         assert_eq!(
             certified(region.classify_point(&p(5, 5), &policy).unwrap()),
             Classification::Decided(expected)
@@ -7806,8 +7849,8 @@ fn nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area() {
 
     assert_eq!(
         decided(region.filled_area(&policy).unwrap()),
-        None,
-        "a self-crossing traversal needs arrangement regularization before its Green integral is a filled-set area"
+        Some(Real::from(8)),
+        "both triangles contribute filled area despite their canceling authored Green integrals"
     );
 }
 
@@ -7824,11 +7867,7 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
 
     assert_eq!(
         decided(region.loop_roles(&policy).unwrap()),
-        vec![
-            CurveRegionLoopRole::Material,
-            CurveRegionLoopRole::Material,
-            CurveRegionLoopRole::Hole,
-        ]
+        vec![CurveRegionLoopRole::Material]
     );
     assert_eq!(
         certified(region.signed_depth(&p(1, 1), &policy).unwrap()),
@@ -7836,7 +7875,7 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
     );
     assert_eq!(
         certified(region.signed_depth(&p(3, 3), &policy).unwrap()),
-        Classification::Decided(2)
+        Classification::Decided(1)
     );
     assert_eq!(
         certified(region.signed_depth(&p(5, 5), &policy).unwrap()),
@@ -7913,10 +7952,10 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
 
     assert_eq!(
         decided(region.filled_side_is_left(&policy).unwrap()),
-        &[true, true]
+        &[true]
     );
     assert_eq!(
-        certified(region.classify_point(&p(5, 5), &policy).unwrap()),
+        certified(region.classify_point(&p(2, 5), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert!(matches!(
@@ -7940,10 +7979,11 @@ fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
         Classification::Uncertain(_)
     ));
 
+    let (loop_index, corner) = boundary_vertex_at(&region, &p(4, 0), &policy);
     let CurveCornerSolutions2::Unique(chamfered) = region
         .chamfer_loop_vertex_by_setbacks(
-            0,
-            1,
+            loop_index,
+            corner,
             q(1, 2),
             q(1, 2),
             CurveCornerMode2::TrimOnly,
@@ -7955,31 +7995,41 @@ fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
         panic!("the higher-order corner must have one trim-only chamfer");
     };
     let CurveCornerSolutions2::Multiple(filleted) = region
-        .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+        .fillet_loop_vertex_by_radius(
+            loop_index,
+            corner,
+            q(1, 2),
+            CurveCornerMode2::TrimOnly,
+            &policy,
+        )
         .unwrap()
         .into_value()
     else {
         panic!("the higher-order corner must retain every trim-only fillet");
     };
 
-    assert_eq!(chamfered.boundary_loops()[0].len(), 6);
+    assert_eq!(chamfered.boundary_loops()[loop_index].len(), 3);
     assert_eq!(filleted.len(), 2);
     let fillet_fragment_counts = filleted
         .iter()
-        .map(|candidate| candidate.boundary_loops()[0].len())
+        .map(|candidate| candidate.boundary_loops()[loop_index].len())
         .collect::<Vec<_>>();
     assert!(
-        fillet_fragment_counts.iter().all(|count| *count >= 6),
+        fillet_fragment_counts.iter().all(|count| *count >= 3),
         "unexpected fillet fragment counts: {fillet_fragment_counts:?}"
     );
     for edited in std::iter::once(&chamfered).chain(filleted.iter()) {
         assert_eq!(
+            decided(edited.classify_point(&p(1, -1), &policy).unwrap()),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(
             decided(edited.loop_roles(&policy).unwrap()),
-            vec![CurveRegionLoopRole::Material]
+            vec![CurveRegionLoopRole::Material; region.len()]
         );
         assert_eq!(
             edited.loop_fill_rules(),
-            Some([FillRule::NonZero].as_slice())
+            Some(vec![FillRule::EvenOdd; region.len()].as_slice())
         );
     }
 }
@@ -7987,63 +8037,31 @@ fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
 #[test]
 fn boundary_paths_obey_terminal_policy_once() {
     let (start_x, end_x) = support::terminally_equal_pair(Real::pi() + Real::e());
-    let start = Point2::new(start_x, Real::zero());
-    let end = Point2::new(end_x, Real::zero());
     let path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
-        start,
+        Point2::new(start_x, Real::zero()),
         p(0, 1),
-        end,
+        Point2::new(end_x, Real::zero()),
     ))])
-    .expect("one-curve path construction has no adjacency decision");
-    let constructed =
-        CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::APPROXIMATE_512)
-            .expect("the authorized terminal must construct the symbolic loop");
-    assert_eq!(
-        constructed.certainty,
-        CurveCertainty::Approximate512Consumed
-    );
-    let region = constructed.into_value();
-
-    let strict = region
-        .boundary_paths(&CurveContext::STRICT)
-        .expect("strict materialization must preserve the symbolic closing seam uncertainty");
-    assert_eq!(strict.certainty, CurveCertainty::Certified);
-    assert_eq!(
-        strict.value,
-        Classification::Uncertain(hypercurve::UncertaintyReason::RealSign)
-    );
-
-    let approximate = region
-        .boundary_paths(&CurveContext::APPROXIMATE_512)
-        .expect("the authorized terminal must materialize the exact boundary");
-    assert_eq!(
-        approximate.certainty,
-        CurveCertainty::Approximate512Consumed
-    );
-    let Classification::Decided(paths) = approximate.value else {
-        panic!("the symbolic boundary is exactly representable");
-    };
-    assert_eq!(paths.len(), 1);
-    assert_eq!(paths[0].curves().len(), 1);
-    assert!(matches!(
-        paths[0].curves()[0].geometry(),
-        Some(hypercurve::CurveGeometry2::QuadraticBezier(_))
-    ));
-
-    assert_eq!(
-        region
-            .boundary_paths(&CurveContext::APPROXIMATE_512)
-            .expect("terminal replay remains authorized")
-            .certainty,
-        CurveCertainty::Approximate512Consumed
-    );
-    assert_eq!(
-        region
-            .boundary_paths(&CurveContext::STRICT)
-            .expect("strict replay remains an explicit classification")
-            .value,
-        Classification::Uncertain(hypercurve::UncertaintyReason::RealSign)
-    );
+    .unwrap();
+    for _ in 0..2 {
+        let constructed = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            &CurveContext::APPROXIMATE_512,
+        )
+        .expect("the authorized terminal closes and cancels the retraced loop");
+        assert_eq!(
+            constructed.certainty,
+            CurveCertainty::Approximate512Consumed
+        );
+        assert!(constructed.value.is_empty());
+        assert!(
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                &CurveContext::STRICT,
+            )
+            .is_err()
+        );
+    }
 }
 
 #[test]
@@ -8098,7 +8116,7 @@ fn region_promotion_retains_hole_role_for_projection() {
     );
     assert_eq!(
         decided(promoted.filled_side_is_left(&policy).unwrap()),
-        &[true, false]
+        &[true, true]
     );
     assert_eq!(
         certified(promoted.classify_point(&p(5, 5), &policy).unwrap()),
@@ -8204,4 +8222,113 @@ fn selected_boundary_paths_retain_domains_through_repeated_region_roundtrips() {
         )
         .is_empty()
     );
+}
+
+#[test]
+fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (name, contours, roles, samples, loops) in [
+            (
+                "cancellation",
+                vec![square(0, 0, 4, 4), square(0, 0, 4, 4)],
+                vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+                vec![
+                    (p(0, 2), RegionPointLocation::Outside),
+                    (p(2, 2), RegionPointLocation::Outside),
+                ],
+                0,
+            ),
+            (
+                "filled seam",
+                vec![square(0, 0, 8, 8), square(2, 2, 6, 6)],
+                vec![CurveRegionLoopRole::Material; 2],
+                vec![
+                    (p(2, 4), RegionPointLocation::Inside),
+                    (p(4, 4), RegionPointLocation::Inside),
+                ],
+                1,
+            ),
+            (
+                "recursive islands",
+                vec![
+                    square(0, 0, 12, 12),
+                    square(2, 2, 10, 10),
+                    square(4, 4, 8, 8),
+                ],
+                vec![
+                    CurveRegionLoopRole::Material,
+                    CurveRegionLoopRole::Hole,
+                    CurveRegionLoopRole::Material,
+                ],
+                vec![
+                    (p(1, 6), RegionPointLocation::Inside),
+                    (p(3, 6), RegionPointLocation::Outside),
+                    (p(5, 6), RegionPointLocation::Inside),
+                ],
+                3,
+            ),
+        ] {
+            let paths = contours.iter().map(path_from_contour).collect::<Vec<_>>();
+            let rules = vec![FillRule::NonZero; paths.len()];
+            let (material, holes): (Vec<_>, Vec<_>) = contours
+                .into_iter()
+                .zip(&roles)
+                .partition(|(_, role)| **role == CurveRegionLoopRole::Material);
+            let constructed = [
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                    &paths, &roles, &rules, &policy,
+                )
+                .unwrap(),
+                CurveRegion2::try_from_native_contours(
+                    material.into_iter().map(|(contour, _)| contour).collect(),
+                    holes.into_iter().map(|(contour, _)| contour).collect(),
+                    &policy,
+                )
+                .unwrap(),
+            ];
+            for outcome in constructed {
+                assert_eq!(outcome.certainty, CurveCertainty::Certified, "{name}");
+                let region = outcome.into_value();
+                assert_eq!(region.len(), loops, "{name}");
+                assert!(
+                    decided(region.filled_side_is_left(&policy).unwrap())
+                        .iter()
+                        .all(|left| *left)
+                );
+                let exported = decided(region.boundary_paths(&policy).unwrap());
+                let replay = CurveRegion2::try_from_boundary_paths(&exported, &policy).unwrap();
+                assert_eq!(replay.certainty, CurveCertainty::Certified);
+                assert_eq!(replay.value.len(), loops);
+                for (point, expected) in &samples {
+                    for value in [&region, &replay.value] {
+                        assert_eq!(
+                            certified(value.classify_point(point, &policy).unwrap()),
+                            Classification::Decided(*expected),
+                            "{name}"
+                        );
+                    }
+                }
+            }
+        }
+        let twice = double_wound_quadratic_cap();
+        for outcome in [
+            CurveRegion2::try_from_boundary_paths(&[twice.clone()], &policy).unwrap(),
+            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[twice],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::EvenOdd],
+                &policy,
+            )
+            .unwrap(),
+        ] {
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            assert!(outcome.value.is_empty());
+            for point in [p(0, 4), p(0, 2)] {
+                assert_eq!(
+                    certified(outcome.value.classify_point(&point, &policy).unwrap()),
+                    Classification::Decided(RegionPointLocation::Outside)
+                );
+            }
+        }
+    }
 }

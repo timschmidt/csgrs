@@ -164,12 +164,7 @@ impl Curve2 {
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
-        match self.native_bezier_fragments_with_policy(policy)? {
-            Classification::Decided(fragments) => {
-                segment_native_fragments(fragments, options, policy)
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
+        segment_curves(std::slice::from_ref(self), options, policy)
     }
 }
 
@@ -180,12 +175,7 @@ impl CurvePath2 {
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
-        match self.native_bezier_fragments_with_policy(policy)? {
-            Classification::Decided(fragments) => {
-                segment_native_fragments(fragments, options, policy)
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
+        segment_curves(self.curves(), options, policy)
     }
 }
 
@@ -335,24 +325,52 @@ where
     })
 }
 
-fn segment_native_fragments(
-    fragments: &[crate::NativeBezierFragment2],
+fn segment_curves(
+    curves: &[Curve2],
     options: &BezierFlatteningOptions,
     policy: &CurveContext,
 ) -> ExactCurveResult<Classification<CertifiedCurvePolyline2>> {
     let mut points = Vec::new();
     let mut max_depth = 0_usize;
-    for fragment in fragments {
-        let polyline = match fragment.curve().flatten_certified(options, policy) {
-            Classification::Decided(polyline) => polyline,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+    let mut source_fragment_count = 0;
+    let mut append = |point: &Point2| {
+        if points.last() != Some(point) {
+            points.push(point.clone());
+        }
+    };
+    for curve in curves {
+        // The line image is sufficient for segmentation. Keep the retained
+        // chord's parameter chart on the curve; no native parameter map is
+        // invented for this output adapter.
+        if let Some(crate::BezierSplitFragment2::AlgebraicChord(chord)) = curve.retained_fragment()
+        {
+            chord.validate_policy(policy).map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    curve.family(),
+                    cause,
+                )
+            })?;
+            if let Some(line) = chord.exact_line() {
+                append(line.start());
+                append(line.end());
+                source_fragment_count += 1;
+                continue;
             }
+        }
+        let fragments = match curve.native_bezier_fragments_with_policy(policy)? {
+            Classification::Decided(fragments) => fragments,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        max_depth = max_depth.max(polyline.certificate().max_depth());
-        for point in polyline.points() {
-            if points.last() != Some(point) {
-                points.push(point.clone());
+        source_fragment_count += fragments.len();
+        for fragment in fragments {
+            let polyline = match fragment.curve().flatten_certified(options, policy) {
+                Classification::Decided(polyline) => polyline,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            max_depth = max_depth.max(polyline.certificate().max_depth());
+            for point in polyline.points() {
+                append(point);
             }
         }
     }
@@ -364,7 +382,7 @@ fn segment_native_fragments(
             segment_count,
             max_depth,
         },
-        source_fragment_count: fragments.len(),
+        source_fragment_count,
     }))
 }
 

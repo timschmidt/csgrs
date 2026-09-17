@@ -145,7 +145,7 @@ fn curve_string_aabb_unions_segment_boxes() {
 }
 
 #[test]
-fn region_aabb_unions_material_and_hole_boundaries() {
+fn region_aabb_ignores_holes_outside_material() {
     let material = Contour2::from_bulge_vertices(&[
         BulgeVertex2::new(p(0, 0), s(0)),
         BulgeVertex2::new(p(10, 0), s(0)),
@@ -167,7 +167,16 @@ fn region_aabb_unions_material_and_hole_boundaries() {
     let Classification::Decided(bbox) = region.bounds(&policy()).unwrap().into_value() else {
         panic!("region bbox should be decided");
     };
-    assert_bbox(&bbox, p(0, 0), p(24, 10));
+    assert_bbox(&bbox, p(0, 0), p(10, 10));
+    for point in [p(20, 4), p(22, 4)] {
+        assert_eq!(
+            region
+                .classify_point(&point, &policy())
+                .unwrap()
+                .into_value(),
+            Classification::Decided(hypercurve::RegionPointLocation::Outside)
+        );
+    }
 }
 
 #[test]

@@ -1256,8 +1256,8 @@ mod tests {
         assert_eq!(fragments.len(), 2);
         let expected = [
             (CurveRegionBoundaryKind2::Material, 3, p(0, 2)),
-            (CurveRegionBoundaryKind2::Hole, 3, p(2, 2)),
-            (CurveRegionBoundaryKind2::Hole, 1, p(4, 2)),
+            (CurveRegionBoundaryKind2::Hole, 1, p(2, 2)),
+            (CurveRegionBoundaryKind2::Hole, 3, p(4, 2)),
             (CurveRegionBoundaryKind2::Material, 1, p(6, 2)),
         ];
         let contacts = [

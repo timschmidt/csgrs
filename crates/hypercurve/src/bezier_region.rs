@@ -171,7 +171,6 @@ struct CurveRegionData2 {
     boundary_loops: Vec<CurveRegionBoundaryLoop2>,
     certified_loop_roles: Option<Arc<[CurveRegionLoopRole]>>,
     certified_loop_fill_rules: Option<Arc<[FillRule]>>,
-    signed_loop_composition: bool,
     regularized_filled_left_policy: Option<CurveContext>,
     certified_regularization: OnceLock<CurveRegion2>,
     strict_materialized_connectivity_certified: bool,
@@ -190,7 +189,6 @@ impl CurveRegionData2 {
             boundary_loops,
             certified_loop_roles: None,
             certified_loop_fill_rules: None,
-            signed_loop_composition: false,
             regularized_filled_left_policy: None,
             certified_regularization: OnceLock::new(),
             strict_materialized_connectivity_certified,
@@ -478,10 +476,6 @@ impl std::fmt::Debug for CurveRegion2 {
                 &self.data.certified_loop_fill_rules,
             )
             .field(
-                "signed_loop_composition",
-                &self.data.signed_loop_composition,
-            )
-            .field(
                 "regularized_filled_left_policy",
                 &self.data.regularized_filled_left_policy,
             )
@@ -495,7 +489,6 @@ impl PartialEq for CurveRegion2 {
             || (self.data.boundary_loops == other.data.boundary_loops
                 && self.data.certified_loop_roles == other.data.certified_loop_roles
                 && self.data.certified_loop_fill_rules == other.data.certified_loop_fill_rules
-                && self.data.signed_loop_composition == other.data.signed_loop_composition
                 && self.data.regularized_filled_left_policy
                     == other.data.regularized_filled_left_policy)
     }
@@ -4226,21 +4219,6 @@ fn curve_region_boundary_loop_from_native_material_contour(
         .without_arrangement_sources())
 }
 
-fn regularize_native_contour_with_curve_region(
-    contour: &Contour2,
-    policy: &CurveContext,
-) -> ExactCurveResult<CurveRegion2> {
-    let path = curve_path_from_native_contour(contour)?;
-    let raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw(
-        &[path],
-        &[CurveRegionLoopRole::Material],
-        &[contour.fill_rule()],
-        policy,
-        None,
-    )?;
-    raw.regularized_region_raw(policy)
-}
-
 struct ExactOffsetSpan2 {
     fragments: Vec<BezierSplitFragment2>,
     source_end: CurvePoint2,
@@ -7277,7 +7255,6 @@ fn regularized_exact_offset_band_arrangement(
         let data = band.data_mut_for_construction();
         data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(band_count));
         data.certified_loop_fill_rules = Some(Arc::from(vec![FillRule::NonZero; band_count]));
-        data.signed_loop_composition = true;
     }
     band = band
         .with_certified_filled_side_is_left(filled_sides_are_left)
@@ -10613,7 +10590,6 @@ impl CurveRegion2 {
             let mut data = CurveRegionData2::new(Vec::new());
             data.certified_loop_roles = self.data.certified_loop_roles.clone();
             data.certified_loop_fill_rules = self.data.certified_loop_fill_rules.clone();
-            data.signed_loop_composition = self.data.signed_loop_composition;
             data.regularized_filled_left_policy = self.data.regularized_filled_left_policy;
             self.data = Arc::new(data);
         }
@@ -10664,7 +10640,19 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
-            Self::try_from_native_contours_raw(material_contours, hole_contours, attempt)
+            // Region admission may discard authored subdivision vertices.
+            // Compact certified codirected line runs before building carriers;
+            // unresolved collinearity leaves the original contour intact.
+            let compact = |contour: Contour2| match contour
+                .merge_adjacent_collinear_lines(&CurveContext::STRICT)
+            {
+                Ok(Classification::Decided(compact)) => compact,
+                _ => contour,
+            };
+            let material_contours = material_contours.into_iter().map(compact).collect();
+            let hole_contours = hole_contours.into_iter().map(compact).collect();
+            Self::try_from_native_contours_raw(material_contours, hole_contours, attempt)?
+                .finish_construction(attempt)
         })
     }
 
@@ -10816,7 +10804,8 @@ impl CurveRegion2 {
                     CurveRegionLoopRole::Hole => holes.push(contour),
                 }
             }
-            Self::try_from_native_contours_raw(material, holes, attempt)
+            Self::try_from_native_contours_raw(material, holes, attempt)?
+                .finish_construction(attempt)
                 .map(Classification::Decided)
         })
     }
@@ -10852,26 +10841,6 @@ impl CurveRegion2 {
         Self::try_from_native_boundary_contours(contours.to_vec(), policy)
     }
 
-    /// Constructs unified filled topology from one possibly self-intersecting
-    /// native line/arc contour.
-    ///
-    /// Certified self-intersection points split the authored traversal into
-    /// simple cycles. [`FillRule::EvenOdd`] cycles are XORed, while
-    /// [`FillRule::NonZero`] cycles are accumulated as exact integer winding
-    /// layers. Positive-dimensional overlap fragments are paired by geometric
-    /// image rather than construction provenance. The specialized native
-    /// topology remains private implementation state; callers receive the
-    /// authoritative unified carrier.
-    pub fn try_from_regularized_native_contour(
-        contour: &Contour2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
-        resolve_certified_operation(policy, |attempt| {
-            regularize_native_contour_with_curve_region(contour, attempt)
-                .map(Classification::Decided)
-        })
-    }
-
     pub(crate) fn try_from_line_arc_region_raw(
         region: &LineArcRegion2,
         policy: &CurveContext,
@@ -10888,8 +10857,9 @@ impl CurveRegion2 {
     /// This is the canonical authored-loop constructor when nesting parity is
     /// not the intended topology—for example nested material islands or
     /// self-overlapping loops using non-zero winding. One role and fill rule
-    /// must be supplied for every boundary path. The semantics remain attached
-    /// across exact affine transforms and regenerated native fast paths.
+    /// must be supplied for every boundary path. Each filled loop contributes
+    /// +1 for material or -1 for a hole; positive total depth selects the set.
+    /// Construction returns its regularized boundary, with material on the left.
     pub fn try_from_boundary_paths_with_loop_semantics(
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
@@ -10899,29 +10869,8 @@ impl CurveRegion2 {
         resolve_certified_operation(policy, |attempt| {
             Self::try_from_boundary_paths_with_loop_semantics_raw(
                 paths, roles, fill_rules, attempt, None,
-            )
-        })
-    }
-
-    /// Constructs an exact signed composition from independently authored loops.
-    ///
-    /// Unlike a regularized region, material and hole operands may cross or
-    /// overlap. Point queries therefore accumulate each loop's certified signed
-    /// contribution directly instead of using a native region accelerator that
-    /// assumes disjoint material/hole topology. Native contours remain retained
-    /// for exact manufacturing output.
-    pub fn try_from_signed_boundary_paths_with_loop_semantics(
-        paths: &[CurvePath2],
-        roles: &[CurveRegionLoopRole],
-        fill_rules: &[FillRule],
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Self>> {
-        resolve_certified_operation(policy, |attempt| {
-            let mut region = Self::try_from_boundary_paths_with_loop_semantics_raw(
-                paths, roles, fill_rules, attempt, None,
-            )?;
-            region.data_mut_for_construction().signed_loop_composition = true;
-            Ok(region)
+            )?
+            .finish_construction(attempt)
         })
     }
 
@@ -10965,7 +10914,8 @@ impl CurveRegion2 {
                         .map(|side| *side == CurveBoundaryInteriorSide2::Left)
                         .collect(),
                 ),
-            )
+            )?
+            .finish_construction(attempt)
         })
     }
 
@@ -11010,17 +10960,25 @@ impl CurveRegion2 {
     /// Constructs a top-level exact curved region from closed boundary paths.
     ///
     /// Reuses each path's cached exact boundary, including generated selected
-    /// curves, without requiring native materialization.
+    /// curves, without requiring native materialization. Even-odd composition
+    /// of the input loops is regularized before publishing the region.
     pub fn try_from_boundary_paths(
         paths: &[CurvePath2],
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
-            Self::try_from_boundary_paths_raw(paths, attempt)
+            Self::try_from_boundary_paths_raw(paths, attempt)?.finish_construction(attempt)
         })
     }
 
-    fn try_from_boundary_paths_raw(
+    /// Authored loops are construction inputs. Publish only their regularized
+    /// filled boundary, with canceled seams removed and ownership retained.
+    fn finish_construction(self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        self.regularized_region_raw(policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Construction))
+    }
+
+    pub(crate) fn try_from_boundary_paths_raw(
         paths: &[CurvePath2],
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
@@ -11166,7 +11124,6 @@ impl CurveRegion2 {
             let data = transformed.data_mut_for_construction();
             data.certified_loop_roles = self.data.certified_loop_roles.clone();
             data.certified_loop_fill_rules = self.data.certified_loop_fill_rules.clone();
-            data.signed_loop_composition = self.data.signed_loop_composition;
             data.regularized_filled_left_policy =
                 retained_regularized_topology.then(|| policy.retained_object_policy());
         }
@@ -12193,7 +12150,7 @@ impl CurveRegion2 {
             &self.data.line_image_region,
             policy,
             |attempt| -> CurveResult<Classification<Option<LineArcRegion2>>> {
-                match self.materialized_native_line_arc_region(attempt)? {
+                match self.retained_native_line_arc_region(attempt)? {
                     Classification::Decided(region) => {
                         return Ok(Classification::Decided(Some(region)));
                     }
@@ -13054,7 +13011,6 @@ impl CurveRegion2 {
             let data = raw.data_mut_for_construction();
             data.certified_loop_roles = Some(Arc::from(roles));
             data.certified_loop_fill_rules = Some(Arc::from(fill_rules));
-            data.signed_loop_composition = true;
         }
         raw = raw
             .with_certified_filled_side_is_left(filled_sides.to_vec())
@@ -13074,7 +13030,6 @@ impl CurveRegion2 {
                 data.boundary_loops.len(),
             ));
             data.certified_loop_fill_rules = None;
-            data.signed_loop_composition = false;
             return Ok(Classification::Decided(raw));
         }
         let regularized = raw.regularized_region_raw(policy);
@@ -13314,15 +13269,12 @@ impl CurveRegion2 {
             .map(Classification::Decided)
     }
 
-    fn materialized_native_line_arc_region(
+    fn retained_native_line_arc_region(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<LineArcRegion2>> {
-        let Some(native_loops) = self.native_boundary_loops() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let mut contours = Vec::with_capacity(native_loops.len());
-        for (loop_index, boundary_loop) in native_loops.iter().enumerate() {
+        let mut contours = Vec::with_capacity(self.data.boundary_loops.len());
+        for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
             let fill_rule = self
                 .data
                 .certified_loop_fill_rules
@@ -13330,7 +13282,7 @@ impl CurveRegion2 {
                 .and_then(|rules| rules.get(loop_index))
                 .copied()
                 .unwrap_or(FillRule::NonZero);
-            match materialized_native_loop_to_contour(boundary_loop, fill_rule, policy)? {
+            match retained_native_loop_to_contour(boundary_loop, fill_rule, policy)? {
                 Classification::Decided(contour) => contours.push(contour),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -13416,7 +13368,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Vec<Classification<RegionPointLocation>>>> {
         resolve_certified_operation(policy, |attempt| {
-            if !self.data.signed_loop_composition
+            if self.has_regularized_filled_left_topology(attempt)
                 && let Classification::Decided(native) = self.native_line_arc_region(attempt)?
             {
                 return Ok(native.classify_points(points, attempt));
@@ -13565,7 +13517,7 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RegionPointLocation>> {
-        if !self.data.signed_loop_composition {
+        if self.has_regularized_filled_left_topology(policy) {
             match self.native_line_arc_region(policy)? {
                 Classification::Decided(region) => {
                     let classification = region.classify_point(point, policy);
@@ -13930,7 +13882,7 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
-        if !self.data.signed_loop_composition {
+        if self.has_regularized_filled_left_topology(policy) {
             match self.native_line_arc_region(policy)? {
                 Classification::Decided(region) => {
                     return Ok(region.signed_depth(point, policy));
@@ -15162,14 +15114,20 @@ fn retained_loop_to_native(
     Some(BezierBoundaryLoop2 { fragments })
 }
 
-fn materialized_native_loop_to_contour(
-    boundary_loop: &BezierBoundaryLoop2,
+fn retained_native_loop_to_contour(
+    boundary_loop: &CurveRegionBoundaryLoop2,
     fill_rule: FillRule,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Contour2>> {
     let mut segments = Vec::with_capacity(boundary_loop.len());
-    for curve in boundary_loop.fragments() {
-        match materialized_native_subcurve_segment(curve, policy)? {
+    for fragment in boundary_loop.fragments() {
+        let segment = match fragment {
+            BezierSplitFragment2::Materialized { curve, .. } => {
+                materialized_native_subcurve_segment(curve, policy)?
+            }
+            _ => retained_line_fragment_segment(fragment, policy)?.map(Segment2::Line),
+        };
+        match segment {
             Classification::Decided(segment) => segments.push(segment),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -23452,11 +23410,17 @@ mod tests {
                         ))
                 );
 
-                let (corner, previous_setback, next_setback) = if reversed {
-                    (2, line_setback.clone(), arc_setback.clone())
-                } else {
-                    (1, arc_setback.clone(), line_setback.clone())
-                };
+                let corner = region.boundary_loops()[0]
+                    .fragments()
+                    .iter()
+                    .position(|fragment| {
+                        Curve2::from_retained_fragment(fragment.clone())
+                            .start()
+                            .same_point(&CurvePoint2::from(p(0, 1)), &policy)
+                            == Classification::Decided(true)
+                    })
+                    .expect("the normalized quarter disk retains its arc-line corner");
+                let (previous_setback, next_setback) = (arc_setback.clone(), line_setback.clone());
                 let edited = region
                     .chamfer_loop_vertex_by_setbacks(
                         0,
@@ -31513,12 +31477,11 @@ mod tests {
         ])
         .unwrap();
         for first_policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let authored = CurveRegion2::try_from_boundary_paths(
+            let authored = CurveRegion2::try_from_boundary_paths_raw(
                 std::slice::from_ref(&path),
                 &CurveContext::STRICT,
             )
-            .unwrap()
-            .value;
+            .unwrap();
             let source = Arc::downgrade(&authored.data);
             let cloned = authored.clone();
             let normalized = authored.regularized_region(&first_policy).unwrap();
@@ -31545,6 +31508,48 @@ mod tests {
                     .unwrap()
                     .value,
                 Classification::Decided(RegionPointLocation::Inside),
+            );
+        }
+    }
+
+    #[test]
+    fn raw_crossing_loops_need_arrangement_before_nesting() {
+        let curved = CurvePath2::try_new(vec![
+            Curve2::from(
+                RationalBezier2::try_new(
+                    vec![p(-2, 0), p(0, 4), p(2, 0)],
+                    vec![Real::one(), Real::from(2), Real::one()],
+                )
+                .unwrap(),
+            ),
+            Curve2::from(LineSeg2::try_new(p(2, 0), p(2, -2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(2, -2), p(-2, -2)).unwrap()),
+            Curve2::from(LineSeg2::try_new(p(-2, -2), p(-2, 0)).unwrap()),
+        ])
+        .unwrap();
+        let corners = [p(-1, 2), p(1, 2), p(1, 5), p(-1, 5), p(-1, 2)];
+        let cutter = CurvePath2::try_new(
+            corners
+                .windows(2)
+                .map(|edge| {
+                    Curve2::from(LineSeg2::try_new(edge[0].clone(), edge[1].clone()).unwrap())
+                })
+                .collect(),
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let raw = CurveRegion2::try_from_boundary_paths_raw(
+                &[curved.clone(), cutter.clone()],
+                &policy,
+            )
+            .unwrap();
+            assert_eq!(
+                raw.curved_nesting_role_evidence_raw(&policy).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            );
+            assert_eq!(
+                raw.loop_roles_raw(&policy).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
             );
         }
     }
@@ -31581,13 +31586,7 @@ mod tests {
             approximate.certainty,
             CurveCertainty::Approximate512Consumed
         );
-        assert_eq!(approximate.value.len(), 1);
-        assert!(
-            !approximate
-                .value
-                .data
-                .strict_materialized_connectivity_certified
-        );
+        assert!(approximate.value.is_empty());
 
         let exact_start = p(0, 0);
         let exact_path = CurvePath2::try_new(vec![Curve2::from(QuadraticBezier2::new(
@@ -31599,6 +31598,7 @@ mod tests {
         let exact = CurveRegion2::try_from_boundary_paths(&[exact_path], &CurveContext::STRICT)
             .unwrap()
             .into_value();
+        assert!(exact.is_empty());
         assert!(exact.data.strict_materialized_connectivity_certified);
     }
 
@@ -32140,7 +32140,7 @@ mod tests {
         }
 
         let policy = CurveContext::STRICT;
-        let region = CurveRegion2::try_from_signed_boundary_paths_with_loop_semantics(
+        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[rectangle(-3, 3), rectangle(1, 7)],
             &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
             &[FillRule::NonZero, FillRule::NonZero],

@@ -1747,7 +1747,10 @@ mod tests {
             end,
         ))])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::APPROXIMATE_512)
+        let region =
+            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, |attempt| {
+                CurveRegion2::try_from_boundary_paths_raw(std::slice::from_ref(&path), attempt)
+            })
             .unwrap()
             .into_value();
 
