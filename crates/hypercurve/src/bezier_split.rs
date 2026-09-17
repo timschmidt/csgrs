@@ -1729,26 +1729,33 @@ impl BezierSubcurve2 {
         rational_curve_has_injective_axis(&curve, policy)
     }
 
-    pub(crate) fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
-        matches!(
-            self.certified_injective_axis(policy),
-            Ok(Classification::Decided(true))
-        )
-    }
-
     /// Classifies injectivity of the complete image, including retained conic
     /// spans whose provenance is stronger than a coordinate-axis certificate.
     pub(crate) fn certified_injective_image(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        if matches!(
-            self,
-            Self::RationalQuadratic(curve) if curve.retained_circular_conic().is_some()
-        ) || matches!(
-            self,
-            Self::Rational(curve) if curve.retained_circular_conic().is_some()
-        ) {
+        let circular_quadratic = match self {
+            Self::RationalQuadratic(curve) => curve.retained_circular_conic().is_some(),
+            Self::Rational(curve) => {
+                curve.retained_circular_conic().is_some()
+                    && matches!(
+                        curve.quadratic_homogeneous_controls(policy)?,
+                        Classification::Decided(Some(_))
+                    )
+            }
+            _ => false,
+        };
+        // A circle equation alone says nothing about repeated traversal.
+        // The retained nondegenerate quadratic chart supplies injectivity;
+        // degree elevations retain that proof only after exact reduction.
+        // Distinct endpoints exclude a collapsed chart with inherited support.
+        if circular_quadratic
+            && crate::classify::is_zero(
+                &self.start().distance_squared(self.end()),
+                &policy.strict_counterpart(),
+            ) == Some(false)
+        {
             return Ok(Classification::Decided(true));
         }
         self.certified_injective_axis(policy)

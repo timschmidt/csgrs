@@ -45,9 +45,9 @@ use crate::{
     CurveIntersectionPairBlocker2, CurveOperation2, CurveOutcome, CurveParameter2,
     CurveParameterRange2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, CurveResult,
     ExactCurveError, ExactCurveResult, FillRule, LineSeg2, LineSide, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, Real, RealSign,
-    RegionPointLocation, Segment2, UncertaintyReason,
+    RationalBezier2, RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
+    RationalBezierPointIncidence2, Real, RealSign, RegionPointLocation, Segment2,
+    UncertaintyReason,
 };
 
 /// Region operand that owns one retained Boolean carrier.
@@ -158,7 +158,6 @@ struct CurveRegionBooleanContextData<'a> {
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
     pairs: Vec<RegionCarrierPair>,
-    bezier_self_intersections: Vec<BezierSelfIntersectionCache>,
     parallel_self_intersections: Vec<ParallelSelfIntersectionCache>,
     strict_line_image_only: OnceLock<bool>,
     operand_bounds: [OnceLock<Box<RegionOperandBounds>>; 2],
@@ -181,12 +180,6 @@ enum RetainedPointProbeClassification {
 struct ParallelSelfIntersectionCache {
     parallel: BezierParallel2,
     result: OnceLock<CurveResult<Classification<BezierParallelPairIntersectionSet2>>>,
-}
-
-#[derive(Debug)]
-struct BezierSelfIntersectionCache {
-    curve: BezierSubcurve2,
-    result: OnceLock<CurveResult<Classification<RationalBezierIntersectionContacts2>>>,
 }
 
 #[derive(Clone, Debug)]
@@ -225,7 +218,6 @@ enum RegionCarrierPairContext {
     ParallelPair,
     ParallelSameImage,
     ParallelSelf,
-    BezierSelf,
     AlgebraicChordPair,
     CuspChord { cusp_is_first: bool },
     CuspRational { cusp_is_first: bool },
@@ -1352,7 +1344,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count: carrier_count,
                 authored_carrier_pair_count: 0,
                 pairs: Vec::new(),
-                bezier_self_intersections: Vec::new(),
                 parallel_self_intersections: Vec::new(),
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -1386,7 +1377,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let authored_carrier_pair_count =
             first_carrier_count.saturating_mul(carriers.len() - first_carrier_count);
         let pairs = build_cross_operand_carrier_pairs(&carriers, first_carrier_count, policy)?;
-        let bezier_self_intersections = build_bezier_self_intersection_caches(&carriers, &pairs);
         let parallel_self_intersections = build_parallel_self_intersection_caches(&carriers);
 
         Ok(Self {
@@ -1398,7 +1388,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
-                bezier_self_intersections,
                 parallel_self_intersections,
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -1451,7 +1440,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
-                bezier_self_intersections: Vec::new(),
                 parallel_self_intersections: Vec::new(),
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -1493,13 +1481,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
             let carrier = &carriers[first_carrier_index];
-            if !carrier.geometry.has_certified_injective_image(policy) {
+            if !carrier_has_certified_injective_image(carrier, policy) {
                 pairs.push(RegionCarrierPair {
                     first_carrier_index,
                     second_carrier_index: first_carrier_index,
                     context: match &carrier.geometry {
                         CurveSupport2::Parallel(_) => RegionCarrierPairContext::ParallelSelf,
-                        CurveSupport2::Bezier(_) => RegionCarrierPairContext::BezierSelf,
+                        CurveSupport2::Bezier(_) => RegionCarrierPairContext::Bezier(
+                            CurveIntersectionContext::try_new_bezier_self(
+                                curves[first_carrier_index]
+                                    .as_ref()
+                                    .expect("prepared Bezier carrier"),
+                                policy,
+                            )?,
+                        ),
                         CurveSupport2::Line(_) => {
                             unreachable!("an algebraic chord is an injective retained carrier")
                         }
@@ -1510,7 +1505,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 });
             }
         }
-        let bezier_self_intersections = build_bezier_self_intersection_caches(&carriers, &pairs);
         let parallel_self_intersections = build_parallel_self_intersection_caches(&carriers);
         Ok(Self {
             data: CurveRegionBooleanContextData {
@@ -1521,7 +1515,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count: carrier_count,
                 authored_carrier_pair_count,
                 pairs,
-                bezier_self_intersections,
                 parallel_self_intersections,
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -1590,7 +1583,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count: 1,
                 authored_carrier_pair_count: boundary_carriers.len(),
                 pairs,
-                bezier_self_intersections: Vec::new(),
                 parallel_self_intersections: Vec::new(),
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -1701,23 +1693,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .expect("every analytic carrier has an operation-scoped self-intersection cache")
             .result
             .get_or_init(|| parallel.self_intersections(&self.data.policy))
-            .clone()
-    }
-
-    fn bezier_self_intersections(
-        &self,
-        curve: &BezierSubcurve2,
-    ) -> CurveResult<Classification<RationalBezierIntersectionContacts2>> {
-        self.data
-            .bezier_self_intersections
-            .iter()
-            .find(|cache| cache.curve == *curve)
-            .expect("every Bezier carrier has an operation-scoped self-intersection cache")
-            .result
-            .get_or_init(|| {
-                RationalBezier2::try_from_subcurve(curve)?
-                    .self_intersection_contacts_classified(&self.data.policy)
-            })
             .clone()
     }
 
@@ -4243,56 +4218,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         .collect(),
                 })
             }
-            RegionCarrierPairContext::BezierSelf => {
-                let result = match self
-                    .bezier_self_intersections(first.geometry.bezier())
-                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
-                {
-                    Classification::Decided(result) => result,
-                    Classification::Uncertain(reason) => {
-                        return Ok(RegionPairResult {
-                            contacts: Vec::new(),
-                            overlaps: Vec::new(),
-                            blockers: vec![RegionPairBlocker::Uncertain(reason)],
-                        });
-                    }
-                };
-                let contact_evidence = |contact: &crate::RationalBezierIntersectionContact2| {
-                    RegionPairContactEvidence::direct_bezier(
-                        contact.first_parameter().clone(),
-                        contact.second_parameter().clone(),
-                        Some(contact.point().clone()),
-                        contact.is_certified_transverse(),
-                        contact.tangent_cross_sign(),
-                    )
-                };
-                let (contacts, blockers) = match result {
-                    RationalBezierIntersectionContacts2::NoIntersection => (Vec::new(), Vec::new()),
-                    RationalBezierIntersectionContacts2::Contacts(contacts) => {
-                        (contacts.iter().map(contact_evidence).collect(), Vec::new())
-                    }
-                    RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => (
-                        contacts.iter().map(contact_evidence).collect(),
-                        vec![RegionPairBlocker::IncompleteReplay],
-                    ),
-                    RationalBezierIntersectionContacts2::ContactsAndOverlap {
-                        contacts, ..
-                    } => (
-                        contacts.iter().map(contact_evidence).collect(),
-                        vec![RegionPairBlocker::Uncertain(UncertaintyReason::Boundary)],
-                    ),
-                    RationalBezierIntersectionContacts2::Overlap(_)
-                    | RationalBezierIntersectionContacts2::DegenerateResultant => (
-                        Vec::new(),
-                        vec![RegionPairBlocker::Uncertain(UncertaintyReason::Boundary)],
-                    ),
-                };
-                Ok(RegionPairResult {
-                    contacts,
-                    overlaps: Vec::new(),
-                    blockers,
-                })
-            }
             RegionCarrierPairContext::ParallelRational { parallel_is_first } => {
                 let (parallel_carrier, parallel, parallel_index, curve) = if *parallel_is_first {
                     (
@@ -4454,7 +4379,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         self.parallel_self_intersections(parallel)
                     }
                     RegionCarrierPairContext::Bezier(_)
-                    | RegionCarrierPairContext::BezierSelf
                     | RegionCarrierPairContext::AlgebraicChordPair
                     | RegionCarrierPairContext::CuspChord { .. }
                     | RegionCarrierPairContext::ParallelRational { .. }
@@ -5121,9 +5045,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             return Ok(RegionPairResult::empty());
                         }
                         if authored_adjacent
-                            && other_carrier
-                                .geometry
-                                .has_certified_injective_image(&self.data.policy)
+                            && carrier_has_certified_injective_image(
+                                other_carrier,
+                                &self.data.policy,
+                            )
                             && subcurve_is_strict_line_image(curve)
                             && let (Some(start), Some(end)) = (
                                 exact_carrier_point(
@@ -6042,7 +5967,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         RegionCarrierPairContext::ParallelPair => "parallel-pair",
                         RegionCarrierPairContext::ParallelSameImage => "parallel-same-image",
                         RegionCarrierPairContext::ParallelSelf => "parallel-self",
-                        RegionCarrierPairContext::BezierSelf => "bezier-self",
                         RegionCarrierPairContext::AlgebraicChordPair => "algebraic-chord-pair",
                         RegionCarrierPairContext::CuspChord {
                             cusp_is_first: true,
@@ -6958,7 +6882,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let current_source_edge = source_edge_index;
                 source_edge_index += 1;
                 let source_range = split.fragment.curve_region_parameter_range();
-                let (source_start, source_end) = (source_range.start(), source_range.end());
+                // Split ranges retain the carrier's source chart, while
+                // topology vertices follow the fragment's traversal.
+                let (source_start, source_end) = if self.data.carriers[carrier_index].reversed {
+                    (source_range.end(), source_range.start())
+                } else {
+                    (source_range.start(), source_range.end())
+                };
                 let source_start_branch = self.transition_contact_branch(
                     &topology,
                     carrier_index,
@@ -7306,7 +7236,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         topology,
                         carrier_index,
                         Some(vertex),
-                        if is_start { range.start() } else { range.end() },
+                        if is_start ^ self.data.carriers[carrier_index].reversed {
+                            range.start()
+                        } else {
+                            range.end()
+                        },
                     )?
                 };
                 let Some(branch) = branch else {
@@ -8615,9 +8549,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             || self.data.carriers.iter().any(|carrier| {
                 carrier.operand != CurveRegionBooleanOperand2::First
                     || carrier.loop_index != 0
-                    || !carrier
-                        .geometry
-                        .has_certified_injective_image(&self.data.policy)
+                    || !carrier_has_certified_injective_image(carrier, &self.data.policy)
             })
         {
             return None;
@@ -12093,27 +12025,6 @@ fn build_parallel_self_intersection_caches(
     caches
 }
 
-fn build_bezier_self_intersection_caches(
-    carriers: &[RegionCarrier],
-    pairs: &[RegionCarrierPair],
-) -> Vec<BezierSelfIntersectionCache> {
-    let mut caches = Vec::<BezierSelfIntersectionCache>::new();
-    for pair in pairs {
-        if !matches!(pair.context, RegionCarrierPairContext::BezierSelf) {
-            continue;
-        }
-        let curve = carriers[pair.first_carrier_index].geometry.bezier();
-        if caches.iter().any(|cache| cache.curve == *curve) {
-            continue;
-        }
-        caches.push(BezierSelfIntersectionCache {
-            curve: curve.clone(),
-            result: OnceLock::new(),
-        });
-    }
-    caches
-}
-
 /// A reversal identity certifies a zero oriented boundary chain, even when
 /// the image is curved. This is a filled-set reduction, not a curve-image
 /// simplification: open curve queries must retain every parameter visit.
@@ -13299,7 +13210,7 @@ fn adjacent_axis_algebraic_chord_circular_curve_is_endpoint_only(
     // This optional shortcut may decline to the complete contact kernel.
     // Its reconstructed scalar probes cannot consume terminal approximation.
     let policy = &policy.strict_counterpart();
-    if !curve_carrier.geometry.has_certified_injective_image(policy) {
+    if !carrier_has_certified_injective_image(curve_carrier, policy) {
         return Ok(Classification::Decided(false));
     }
     let Some((_, circle)) = retained_circular_support(curve) else {
@@ -14537,7 +14448,9 @@ fn carrier_has_certified_injective_image(carrier: &RegionCarrier, policy: &Curve
     if let Some(&injective) = carrier.image_is_injective.get() {
         return injective;
     }
-    let injective = carrier.geometry.has_certified_injective_image(policy);
+    let injective = carrier
+        .geometry
+        .has_certified_injective_image(&carrier.range(), policy);
     let _ = carrier.image_is_injective.set(injective);
     injective
 }
@@ -16024,7 +15937,6 @@ mod certified_successor_tests {
                         first_carrier_count: 1,
                         authored_carrier_pair_count: 1,
                         pairs: Vec::new(),
-                        bezier_self_intersections: Vec::new(),
                         parallel_self_intersections: Vec::new(),
                         strict_line_image_only: OnceLock::new(),
                         operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -16595,7 +16507,6 @@ mod certified_successor_tests {
                                     first_carrier_count: 2,
                                     authored_carrier_pair_count: 1,
                                     pairs: vec![pair],
-                                    bezier_self_intersections: Vec::new(),
                                     parallel_self_intersections: Vec::new(),
                                     strict_line_image_only: OnceLock::new(),
                                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -16772,7 +16683,6 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: vec![pair],
-                    bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -16885,7 +16795,6 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: vec![pair],
-                    bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -17026,7 +16935,6 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: vec![pair],
-                    bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -17997,7 +17905,6 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: Vec::new(),
-                    bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -18195,7 +18102,6 @@ mod certified_successor_tests {
                         second_carrier_index: 1,
                         context: RegionCarrierPairContext::AlgebraicChordPair,
                     }],
-                    bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -18361,7 +18267,6 @@ mod certified_successor_tests {
                             second_carrier_index: 1,
                             context: RegionCarrierPairContext::AlgebraicChordPair,
                         }],
-                        bezier_self_intersections: Vec::new(),
                         parallel_self_intersections: Vec::new(),
                         strict_line_image_only: OnceLock::new(),
                         operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -18608,7 +18513,6 @@ mod certified_successor_tests {
                     second_carrier_index: 1,
                     context: RegionCarrierPairContext::AlgebraicChordPair,
                 }],
-                bezier_self_intersections: Vec::new(),
                 parallel_self_intersections: Vec::new(),
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -19505,7 +19409,6 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: Vec::new(),
-                    bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -19901,6 +19804,160 @@ mod certified_successor_tests {
     }
 
     #[test]
+    fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
+        fn certified<T>(outcome: CurveOutcome<T>) -> T {
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            outcome.value
+        }
+        let p = Point2::from_values;
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for finite in [false, true] {
+                let cubic = if finite {
+                    CubicBezier2::new(
+                        p(-1, 0),
+                        Point2::new((-1).into(), q(-1, 3)),
+                        Point2::new(q(-2, 3), q(-2, 3)),
+                        p(0, 0),
+                    )
+                } else {
+                    CubicBezier2::new(
+                        p(3, -6),
+                        Point2::new(q(-7, 3), q(26, 3)),
+                        Point2::new(q(-7, 3), q(-26, 3)),
+                        p(3, 6),
+                    )
+                };
+                for elevated in [false, true] {
+                    let source = BezierSubcurve2::Cubic(cubic.clone());
+                    let source = if elevated {
+                        BezierSubcurve2::Rational(
+                            RationalBezier2::try_from_subcurve(&source)
+                                .unwrap()
+                                .elevated_to_degree(5)
+                                .unwrap(),
+                        )
+                    } else {
+                        source
+                    };
+                    let source =
+                        Curve2::from_retained_fragment(BezierSplitFragment2::RetainedBezier {
+                            source_curve: source,
+                            start: BezierParameter2::Exact(if finite {
+                                (-2).into()
+                            } else {
+                                0.into()
+                            }),
+                            end: BezierParameter2::Exact(if finite { 2.into() } else { 1.into() }),
+                            reversed: false,
+                            start_image: None,
+                            end_image: None,
+                        });
+                    for reversed in [false, true] {
+                        let mut curves = vec![
+                            source.clone(),
+                            Curve2::from(LineSeg2::try_new(p(3, 6), p(3, -6)).unwrap()),
+                        ];
+                        if reversed {
+                            curves = curves
+                                .into_iter()
+                                .rev()
+                                .map(|c| certified(c.reversed(&policy).unwrap()))
+                                .collect();
+                        }
+                        let path = CurvePath2::try_new(curves).unwrap();
+                        let mut region = certified(
+                            CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                                &[path],
+                                &[CurveRegionLoopRole::Material],
+                                &[FillRule::NonZero],
+                                &policy,
+                            )
+                            .unwrap(),
+                        );
+                        for generation in 0..2 {
+                            region = certified(region.regularized_region(&policy).unwrap_or_else(|error| {
+                                panic!("finite={finite} elevated={elevated} reversed={reversed} generation={generation}: {error:?}")
+                            }));
+                            for (point, location) in [
+                                (
+                                    Point2::new(q(-1, 2), Real::zero()),
+                                    RegionPointLocation::Inside,
+                                ),
+                                (p(1, 0), RegionPointLocation::Inside),
+                                (p(-2, 0), RegionPointLocation::Outside),
+                                (p(4, 0), RegionPointLocation::Outside),
+                                (p(0, 0), RegionPointLocation::Boundary),
+                            ] {
+                                assert_eq!(
+                                    certified(region.classify_point(&point, &policy).unwrap()),
+                                    Classification::Decided(location)
+                                );
+                            }
+                            let sides =
+                                decided(certified(region.filled_side_is_left(&policy).unwrap()));
+                            let paths = decided(certified(region.boundary_paths(&policy).unwrap()));
+                            let mut checked = 0;
+                            // Verify the actual owned side at the leftmost regular point.
+                            // Selected cuts need no scalar reconstruction to locate it.
+                            for (path, &left) in paths.iter().zip(sides) {
+                                for curve in path.curves() {
+                                    for parameter in [Real::zero(), q(1, 2)] {
+                                        let Ok(point) =
+                                            curve.point_at(&parameter.clone().into(), &policy)
+                                        else {
+                                            continue;
+                                        };
+                                        if certified(
+                                            certified(point)
+                                                .coincides_with(&p(-1, 0).into(), &policy),
+                                        ) != Classification::Decided(true)
+                                        {
+                                            continue;
+                                        }
+                                        checked += 1;
+                                        let tangent = certified(
+                                            curve.derivative_at(&parameter, &policy).unwrap(),
+                                        );
+                                        for sample_left in [false, true] {
+                                            let step =
+                                                if sample_left { q(1, 128) } else { q(-1, 128) };
+                                            let sample = Point2::new(
+                                                Real::from(-1) - &step * tangent.dy(),
+                                                &step * tangent.dx(),
+                                            );
+                                            let expected = if sample_left == left {
+                                                RegionPointLocation::Inside
+                                            } else {
+                                                RegionPointLocation::Outside
+                                            };
+                                            assert_eq!(
+                                                certified(
+                                                    region
+                                                        .classify_point(&sample, &policy)
+                                                        .unwrap()
+                                                ),
+                                                Classification::Decided(expected),
+                                                "finite={finite} elevated={elevated} reversed={reversed}"
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+                            assert_eq!(checked, 1);
+                            region = certified(
+                                region
+                                    .boolean_region(&region, BooleanOp::Union, &policy)
+                                    .unwrap(),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn regularization_removes_symmetric_polynomial_and_rational_retracing() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let origin = Point2::from_values(0, 0);
@@ -20048,7 +20105,6 @@ mod certified_successor_tests {
                         second_carrier_index: 1,
                         context: RegionCarrierPairContext::AlgebraicChordPair,
                     }],
-                    bezier_self_intersections: Vec::new(),
                     parallel_self_intersections: Vec::new(),
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -20967,8 +21023,14 @@ mod certified_successor_tests {
             Point2::from_values(0, 0),
         ));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            assert!(monotone.has_certified_injective_axis(&policy));
-            assert!(!retraced.has_certified_injective_axis(&policy));
+            assert!(matches!(
+                monotone.certified_injective_axis(&policy),
+                Ok(Classification::Decided(true))
+            ));
+            assert!(!matches!(
+                retraced.certified_injective_axis(&policy),
+                Ok(Classification::Decided(true))
+            ));
         }
     }
 

@@ -1976,6 +1976,23 @@ impl CurveIntersectionContext {
         Self::try_new_with_optional_batch_cache(first, second, policy, None)
     }
 
+    pub(crate) fn try_new_bezier_self(
+        curve: &Curve2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        let result = curve_support_intersection::bezier_self_intersections(curve, policy)?;
+        Ok(Self {
+            data: CurveIntersectionContextData {
+                first: curve.clone(),
+                second: curve.clone(),
+                policy: *policy,
+                span_pair_count: result.span_pair_count(),
+                dispatch: CurveIntersectionDispatch::SupportEvidence(result),
+                result: OnceLock::new(),
+            },
+        })
+    }
+
     pub(crate) fn try_new_with_batch_cache(
         first: &Curve2,
         second: &Curve2,

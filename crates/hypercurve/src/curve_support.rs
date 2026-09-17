@@ -39,6 +39,86 @@ mod tests {
     }
 
     #[test]
+    fn injectivity_certificates_own_their_domain_and_circle_chart() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let cubic = CurveSupport2::Bezier(BezierSubcurve2::Cubic(crate::CubicBezier2::new(
+                Point2::from_values(-1, 0),
+                Point2::new((-1).into(), q(-1, 3)),
+                Point2::new(q(-2, 3), q(-2, 3)),
+                Point2::from_values(0, 0),
+            )));
+            assert!(cubic.has_certified_injective_image(&CurveParameterRange2::unit(), &policy));
+            for t in [-2, -1, 0, 1, 2] {
+                let derivative = decided(cubic.derivative_at(&Real::from(t), &policy).unwrap());
+                assert_eq!(derivative.dx(), &Real::from(2 * t));
+                assert_eq!(derivative.dy(), &Real::from(3 * t * t - 1));
+            }
+
+            for (start, end) in [(-2, 2), (2, -2)] {
+                let range = CurveParameterRange2::new_validated(
+                    Real::from(start).into(),
+                    Real::from(end).into(),
+                );
+                assert!(!cubic.has_certified_injective_image(&range, &policy));
+            }
+            let arc = crate::CircularArc2::try_from_center(
+                Point2::from_values(1, 0),
+                Point2::from_values(0, 1),
+                Point2::from_values(0, 0),
+                false,
+            )
+            .unwrap();
+            let (implicit, circle) = crate::arc_bezier::circular_conic_provenance(&arc);
+            let quadratic = RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(1, 0),
+                    Point2::from_values(1, 1),
+                    Point2::from_values(0, 1),
+                ],
+                vec![Real::one(), q(1, 2).sqrt().unwrap(), Real::one()],
+            )
+            .unwrap()
+            .with_implicit_quadratic_conic(implicit, Some(circle));
+            let elevated = BezierSubcurve2::Rational(quadratic.elevated_to_degree(5).unwrap());
+            assert!(elevated.has_certified_injective_image(&policy));
+            let collapsed = decided(
+                quadratic
+                    .subcurve_between_exact(&q(1, 2), &q(1, 2), &policy)
+                    .unwrap(),
+            );
+            assert!(collapsed.retained_circular_conic().is_some());
+            assert!(!BezierSubcurve2::Rational(collapsed).has_certified_injective_image(&policy));
+            // s=4t(1-t), C(s)=((1-s²)/(1+s²),2s/(1+s²)) retraces
+            // a circular arc. Its genuine circle equation is not injectivity.
+            let retraced = RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(1, 0),
+                    Point2::from_values(1, 2),
+                    Point2::new(q(-5, 11), q(8, 11)),
+                    Point2::from_values(1, 2),
+                    Point2::from_values(1, 0),
+                ],
+                vec![Real::one(), Real::one(), q(11, 3), Real::one(), Real::one()],
+            )
+            .unwrap()
+            .with_implicit_quadratic_conic(
+                quadratic
+                    .retained_implicit_quadratic_conic()
+                    .unwrap()
+                    .clone(),
+                quadratic.retained_circular_conic().cloned(),
+            );
+            let retraced = BezierSubcurve2::Rational(retraced);
+            assert!(!retraced.has_certified_injective_image(&policy));
+            assert_eq!(
+                retraced.point_at(&q(1, 4), &policy),
+                retraced.point_at(&q(3, 4), &policy)
+            );
+        }
+    }
+
+    #[test]
     fn exterior_bounds_include_interior_extrema_and_parallel_displacement() {
         let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
         // P(t) = (t, (t-2)^2) has its minimum outside the native unit chart.
@@ -549,7 +629,7 @@ impl CurveSupport2 {
     ) -> CurveResult<Classification<CurveDerivative2>> {
         match self {
             Self::Bezier(curve) => RationalBezier2::try_from_subcurve(curve)
-                .map(|curve| curve.derivative_at_classified(parameter, policy)),
+                .map(|curve| curve.derivative_at_affine_classified(parameter, policy)),
             Self::Parallel(parallel) => parallel.derivative_at(parameter, policy),
             Self::Line(chord) => match chord.exact_line() {
                 Some(line) => Ok(Classification::Decided(CurveDerivative2::new(
@@ -614,9 +694,26 @@ impl CurveSupport2 {
         }
     }
 
-    pub(crate) fn has_certified_injective_axis(&self, policy: &CurveContext) -> bool {
+    /// These native injectivity certificates own the unit chart. A missing
+    /// certificate on the active range must leave self-incidence discovery live.
+    pub(crate) fn has_certified_injective_image(
+        &self,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> bool {
+        if matches!(self, Self::Line(_) | Self::Circle(_)) {
+            return true;
+        }
+        let unit = CurveParameterRange2::unit();
+        if !matches!(
+            CurveParameterDomain2::new(&unit, None)
+                .contains_finite_range(range, &policy.strict_counterpart()),
+            Ok(Classification::Decided(true))
+        ) {
+            return false;
+        }
         match self {
-            Self::Bezier(curve) => curve.has_certified_injective_axis(policy),
+            Self::Bezier(curve) => curve.has_certified_injective_image(policy),
             Self::Parallel(parallel) => {
                 parallel.regular_fragment_has_certified_injective_axis(policy)
                     || matches!(
@@ -625,17 +722,7 @@ impl CurveSupport2 {
                             if curve.has_certified_injective_axis(policy)
                     )
             }
-            Self::Line(_) => false,
-            Self::Circle(_) => false,
-        }
-    }
-
-    pub(crate) fn has_certified_injective_image(&self, policy: &CurveContext) -> bool {
-        match self {
-            Self::Bezier(curve) => curve.has_certified_injective_image(policy),
-            Self::Parallel(_) => self.has_certified_injective_axis(policy),
-            Self::Line(_) => true,
-            Self::Circle(_) => true,
+            Self::Line(_) | Self::Circle(_) => unreachable!("intrinsically injective support"),
         }
     }
 

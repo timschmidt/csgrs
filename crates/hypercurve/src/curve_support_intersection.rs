@@ -993,7 +993,7 @@ impl Pair<'_> {
             )
         });
         if !unit_covers_pair {
-            return self.finite_rational(first, second, result);
+            return self.finite_rational(first, second, false, result);
         }
         if self.rational_unit_circles(first, second, result)? {
             return Ok(());
@@ -1019,6 +1019,46 @@ impl Pair<'_> {
         }
         let context = RationalBezierIntersectionContext::try_new(first, second, self.policy)?;
         self.rational_context(&context, result)
+    }
+
+    fn rational_self(
+        &self,
+        source: &RationalBezier2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let unit = CurveParameterRange2::unit();
+        if matches!(
+            crate::bezier_split::CurveParameterDomain2::new(&unit, None)
+                .contains_finite_range(&self.first.range, &self.policy.strict_counterpart()),
+            Ok(Classification::Decided(true))
+        ) {
+            // Keep the symmetric unit-chart projection as a cheap authority
+            // for isolated self-contacts. Degenerate or shared components
+            // fall through to the same finite kernel as ordinary pairs.
+            if let Ok(Classification::Decided(evidence)) =
+                source.self_intersection_contacts_classified(self.policy)
+                && matches!(
+                    evidence,
+                    RationalBezierIntersectionContacts2::NoIntersection
+                        | RationalBezierIntersectionContacts2::Contacts(_)
+                )
+            {
+                for contact in evidence.isolated_contacts() {
+                    self.admit_contact(
+                        result,
+                        self.contact(
+                            contact.first_parameter().clone().into(),
+                            contact.second_parameter().clone().into(),
+                            contact.point().clone(),
+                            contact.is_certified_transverse(),
+                            contact.tangent_cross_sign(),
+                        ),
+                    )?;
+                }
+                return Ok(());
+            }
+        }
+        self.finite_rational(source, source, true, result)
     }
 
     fn rational_unit_circles(
@@ -1113,7 +1153,7 @@ impl Pair<'_> {
             && !(first.has_certified_injective_axis(self.policy)
                 && second.has_certified_injective_axis(self.policy)))
         {
-            return self.finite_rational(first, second, result);
+            return self.finite_rational(first, second, false, result);
         }
 
         for contact in evidence.isolated_contacts() {
@@ -1730,6 +1770,7 @@ impl Pair<'_> {
         &self,
         first: &RationalBezier2,
         second: &RationalBezier2,
+        off_diagonal: bool,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
         let family = self.first.support.family();
@@ -1738,6 +1779,7 @@ impl Pair<'_> {
                 first,
                 second,
                 [&self.first.range, &self.second.range],
+                off_diagonal,
                 self.policy,
             ),
             family,
@@ -1926,6 +1968,86 @@ impl Pair<'_> {
             kind,
         });
     }
+}
+
+/// Self-incidence for one prepared Bezier carrier, excluding the identity
+/// diagonal before projection. Publication shares ordinary pair evidence;
+/// retain one order of each off-diagonal contact and retracing component.
+pub(super) fn bezier_self_intersections(
+    curve: &Curve2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveIntersectionResult2> {
+    let spans = spans(curve, policy)?;
+    let [span] = spans.as_slice() else {
+        unreachable!("a prepared Bezier carrier owns one support span")
+    };
+    let CurveSupport2::Bezier(source) = &span.support else {
+        unreachable!("a prepared Bezier carrier owns a Bezier support")
+    };
+    let source = RationalBezier2::try_from_subcurve(source).map_err(|cause| {
+        ExactCurveError::invalid(CurveOperation2::Intersection, span.support.family(), cause)
+    })?;
+    let pair = Pair {
+        first: span,
+        second: span,
+        indices: [0, 0],
+        policy,
+    };
+    let mut result = Evidence::default();
+    match pair.rational_self(&source, &mut result) {
+        Ok(()) => {}
+        Err(ExactCurveError::Blocked(blocker)) => pair.blocker(
+            &mut result,
+            CurveIntersectionPairBlockerKind2::Uncertain(blocker.reason()),
+        ),
+        Err(error) => return Err(error),
+    }
+    let mut contacts = Vec::with_capacity(result.contacts.len());
+    for contact in result.contacts {
+        if decided(
+            contact
+                .first()
+                .local_parameter()
+                .cmp_by_refinement(contact.second().local_parameter(), policy),
+            span.support.family(),
+        )?
+        .is_lt()
+        {
+            contacts.push(contact);
+        }
+    }
+    let mut overlaps = Vec::with_capacity(result.overlaps.len());
+    for overlap in result.overlaps {
+        let mut order = decided(
+            overlap
+                .first_range()
+                .start()
+                .cmp_by_refinement(overlap.second_range().start(), policy),
+            span.support.family(),
+        )?;
+        if order.is_eq() {
+            order = decided(
+                overlap
+                    .first_range()
+                    .end()
+                    .cmp_by_refinement(overlap.second_range().end(), policy),
+                span.support.family(),
+            )?;
+        }
+        if order.is_lt() {
+            overlaps.push(overlap);
+        }
+    }
+    Ok(CurveIntersectionResult2 {
+        data: Arc::new(CurveIntersectionResultData {
+            span_pair_count: 1,
+            contacts: contacts.into(),
+            overlaps: overlaps.into(),
+            blockers: result.blockers.into(),
+            parameter_components: (!result.parameter_components.is_empty())
+                .then(|| result.parameter_components.into()),
+        }),
+    })
 }
 
 pub(super) fn intersect(
@@ -3458,6 +3580,218 @@ mod analytic_dispatch_tests {
         Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(exact(
             crate::BezierAlgebraicChord2::try_new(start.into(), end.into(), policy).unwrap(),
         )))
+    }
+
+    #[test]
+    fn finite_bezier_self_contacts_retain_domain_and_point_evidence() {
+        // P(t)=(t²-1,t³-t): the unit chart is injective, while the
+        // full retained interval visits the origin at -1 and 1.
+        let source = RationalBezier2::try_new(
+            vec![
+                p(-1, 0),
+                Point2::new((-1).into(), q(-1, 3)),
+                Point2::new(q(-2, 3), q(-2, 3)),
+                p(0, 0),
+            ],
+            vec![Real::one(); 4],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for degree in [3, 5] {
+                let source = source.elevated_to_degree(degree).unwrap();
+                let root = Real::from(2).sqrt().unwrap();
+                for (bounds, expected) in [
+                    ([(-2).into(), 2.into()], 1),
+                    ([(-1).into(), 1.into()], 1),
+                    ([-root.clone(), root], 1),
+                    ([(-2).into(), 0.into()], 0),
+                    ([0.into(), 1.into()], 0),
+                ] {
+                    for selected_bounds in [false, true] {
+                        let curve = finite_rational(
+                            source.clone(),
+                            bounds.clone(),
+                            selected_bounds,
+                            &policy,
+                        );
+                        for reversed in [false, true] {
+                            let curve = oriented(&curve, reversed, &policy);
+                            let result = bezier_self_intersections(&curve, &policy).unwrap();
+                            assert!(result.is_complete(), "{result:?}");
+                            assert_eq!(result.contacts().len(), expected);
+                            assert!(result.overlaps().is_empty());
+                            for contact in result.contacts() {
+                                assert!(contact.is_certified_transverse());
+                                assert_eq!(
+                                    contact
+                                        .first()
+                                        .local_parameter()
+                                        .same_value(&Real::from(-1).into(), &policy)
+                                        .unwrap(),
+                                    Classification::Decided(true)
+                                );
+                                assert_eq!(
+                                    contact
+                                        .second()
+                                        .local_parameter()
+                                        .same_value(&Real::one().into(), &policy)
+                                        .unwrap(),
+                                    Classification::Decided(true)
+                                );
+                                same(contact.point(), &p(0, 0).into(), &policy);
+                                for location in [contact.first(), contact.second()] {
+                                    let parameter = exact(location.parameter(&policy).unwrap());
+                                    same(
+                                        &certified(curve.point_at(&parameter, &policy).unwrap()),
+                                        contact.point(),
+                                        &policy,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_bezier_self_components_exclude_the_identity_diagonal() {
+        // P(t)=(t²,t⁴) retraces a parabolic image. On [-2,1], only
+        // [-1,0) corresponds to (0,1]; the fold itself is diagonal.
+        let source = RationalBezier2::try_new(
+            vec![
+                p(0, 0),
+                p(0, 0),
+                Point2::new(q(1, 6), Real::zero()),
+                Point2::new(q(1, 2), Real::zero()),
+                p(1, 1),
+            ],
+            vec![Real::one(); 5],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for selected_bounds in [false, true] {
+                let curve = finite_rational(
+                    source.clone(),
+                    [(-2).into(), 1.into()],
+                    selected_bounds,
+                    &policy,
+                );
+                let path = CurvePath2::try_new(vec![
+                    curve.clone(),
+                    Curve2::from(LineSeg2::try_new(p(1, 1), p(4, 16)).unwrap()),
+                ])
+                .unwrap();
+                let region = certified(
+                    crate::CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                        &[path],
+                        &[crate::CurveRegionLoopRole::Material],
+                        &[crate::FillRule::NonZero],
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                let region = certified(region.regularized_region(&policy).unwrap());
+                for (point, expected) in [
+                    (p(2, 5), crate::RegionPointLocation::Inside),
+                    (p(0, 0), crate::RegionPointLocation::Outside),
+                    (
+                        Point2::new(q(1, 2), q(1, 4)),
+                        crate::RegionPointLocation::Outside,
+                    ),
+                    (p(1, 1), crate::RegionPointLocation::Boundary),
+                ] {
+                    assert_eq!(
+                        certified(region.classify_point(&point, &policy).unwrap()),
+                        Classification::Decided(expected)
+                    );
+                }
+                let result = bezier_self_intersections(&curve, &policy).unwrap();
+                assert!(result.is_complete(), "{result:?}");
+                assert!(
+                    result.contacts().is_empty(),
+                    "a stationary fold is not an off-diagonal contact"
+                );
+                let [overlap] = result.overlaps() else {
+                    panic!("one unordered retracing component: {result:?}")
+                };
+                assert_eq!(
+                    overlap
+                        .first_range()
+                        .start()
+                        .same_value(&Real::from(-1).into(), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    overlap
+                        .first_range()
+                        .end()
+                        .same_value(&Real::zero().into(), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    overlap
+                        .second_range()
+                        .start()
+                        .same_value(&Real::one().into(), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    overlap
+                        .second_range()
+                        .end()
+                        .same_value(&Real::zero().into(), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
+                );
+                assert_eq!(overlap.endpoint_inclusion, [true, false]);
+                let CurveOverlapCorrespondence2::ParameterComponent {
+                    source,
+                    swapped: false,
+                } = &overlap.parameter_correspondence
+                else {
+                    panic!("retained component replay")
+                };
+                let parameter = selected(q(-1, 2), &policy);
+                let mapped = exact(
+                    source
+                        .map_curve_parameter(
+                            hypersolve::CurveResultantParameter::First,
+                            &parameter,
+                            &policy,
+                        )
+                        .unwrap(),
+                )
+                .unwrap();
+                assert_eq!(
+                    mapped.same_value(&q(1, 2).into(), &policy).unwrap(),
+                    Classification::Decided(true)
+                );
+                let restored = exact(
+                    source
+                        .map_curve_parameter(
+                            hypersolve::CurveResultantParameter::Second,
+                            &mapped,
+                            &policy,
+                        )
+                        .unwrap(),
+                )
+                .unwrap();
+                assert_eq!(
+                    restored.same_value(&parameter, &policy).unwrap(),
+                    Classification::Decided(true)
+                );
+                same(
+                    &certified(curve.point_at(&parameter, &policy).unwrap()),
+                    &certified(curve.point_at(&mapped, &policy).unwrap()),
+                    &policy,
+                );
+            }
+        }
     }
 
     #[test]

@@ -109014,6 +109014,7 @@ pub(crate) fn rational_pair_intersections_on_ranges(
     first: &RationalBezier2,
     second: &RationalBezier2,
     ranges: [&CurveParameterRange2; 2],
+    off_diagonal: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
     let strict = policy.strict_counterpart();
@@ -109081,7 +109082,7 @@ pub(crate) fn rational_pair_intersections_on_ranges(
             &second,
             ranges.map(|range| CurveParameterDomain2::new(range, None)),
             false,
-            false,
+            off_diagonal,
             ParameterComponentQuery2::RetainFinite,
             &strict,
         )?

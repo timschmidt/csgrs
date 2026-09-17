@@ -2033,6 +2033,17 @@ impl RationalBezier2 {
         if in_closed_unit_interval(parameter, policy) != Some(true) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         }
+        self.derivative_at_affine_classified(parameter, policy)
+    }
+
+    /// Evaluates the support derivative at any finite affine parameter.
+    /// Domain admission belongs to the caller; the quotient still certifies
+    /// a nonzero homogeneous denominator at the requested parameter.
+    pub(crate) fn derivative_at_affine_classified(
+        &self,
+        parameter: &Real,
+        policy: &CurveContext,
+    ) -> Classification<CurveDerivative2> {
         let Ok(power_basis) = self.homogeneous_power_basis() else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
