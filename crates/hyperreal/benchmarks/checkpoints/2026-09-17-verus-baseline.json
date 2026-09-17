@@ -1,0 +1,2494 @@
+{
+  "schema": 1,
+  "date": "2026-09-17",
+  "status": "in_progress_not_acceptance",
+  "baseline": {
+    "commit": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "subject": "Document shared integer magnitude GCD for algebraic consumers",
+    "first_verus_commit": "c5f7868",
+    "relationship": "baseline is the first Verus commit parent"
+  },
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory_use",
+    "binary_size",
+    "code_size"
+  ],
+  "runtime_candidate": "598f05944573133ae98e6c444fd9c26797ef49a2",
+  "latest_test_and_policy_commit": "add6365d65735e696e690fb492c6cb8c1ba2a179",
+  "scope": "Entire accumulated Verus delta from the fixed pre-Verus baseline. This is an interim checkpoint, not final qualification.",
+  "proof_status": {
+    "verification_units": 325,
+    "production_contracts": 50,
+    "model_theorems": 50,
+    "open_obligation_groups": 13,
+    "complete": false
+  },
+  "host": {
+    "platform": "Linux-7.2.5-100.fc43.x86_64-x86_64-with-glibc2.42",
+    "cpu_affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "timing_cpu": 2,
+    "timing_smt_sibling": 10,
+    "load": [
+      11.83447265625,
+      8.07666015625,
+      5.58935546875
+    ],
+    "cpu_frequency_control": "Uncontrolled powersave governor; no exclusive host CPU reservation",
+    "versions": {
+      "rustc": {
+        "command": [
+          "rustc",
+          "-Vv"
+        ],
+        "exit": 0,
+        "stdout": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n",
+        "stderr": ""
+      },
+      "cargo": {
+        "command": [
+          "cargo",
+          "-V"
+        ],
+        "exit": 0,
+        "stdout": "cargo 1.97.0 (c980f4866 2026-06-30)\n",
+        "stderr": ""
+      },
+      "nightly": {
+        "command": [
+          "rustc",
+          "+nightly",
+          "-Vv"
+        ],
+        "exit": 0,
+        "stdout": "rustc 1.97.0-nightly (ad3a598ca 2026-05-03)\nbinary: rustc\ncommit-hash: ad3a598ca4bc7c68bcbbce3e0d3be9a7618df190\ncommit-date: 2026-05-03\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0-nightly\nLLVM version: 22.1.4\n",
+        "stderr": ""
+      },
+      "valgrind": {
+        "command": [
+          "valgrind",
+          "--version"
+        ],
+        "exit": 0,
+        "stdout": "valgrind-3.27.1\n",
+        "stderr": ""
+      },
+      "heaptrack": {
+        "command": [
+          "heaptrack",
+          "--version"
+        ],
+        "exit": 0,
+        "stdout": "heaptrack 1.5.0\n",
+        "stderr": ""
+      },
+      "llvm_size": {
+        "command": [
+          "llvm-size",
+          "--version"
+        ],
+        "exit": 0,
+        "stdout": "llvm-size\nLLVM (http://llvm.org/):\n  LLVM version 21.1.8\n  Optimized build.\n",
+        "stderr": ""
+      },
+      "wasm_opt": {
+        "command": [
+          "wasm-opt",
+          "--version"
+        ],
+        "exit": 0,
+        "stdout": "wasm-opt version 116 (version_116)\n",
+        "stderr": ""
+      },
+      "system": {
+        "command": [
+          "uname",
+          "-a"
+        ],
+        "exit": 0,
+        "stdout": "Linux fedora 7.2.5-100.fc43.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026 x86_64 GNU/Linux\n",
+        "stderr": ""
+      }
+    },
+    "cpu_model": "AMD Ryzen 7 5800X3D 8-Core Processor"
+  },
+  "comparison_build": {
+    "root": "/tmp/hyperreal-verus-baseline-scmfudw9",
+    "source": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+    "target": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+    "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+    "candidate": "598f05944573133ae98e6c444fd9c26797ef49a2",
+    "compiler": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n",
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1"
+    }
+  },
+  "build_commands": [
+    [
+      "cargo",
+      "bench",
+      "--locked",
+      "--features",
+      "simple",
+      "--benches",
+      "--no-run",
+      "--message-format=json"
+    ],
+    [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "--all-features",
+      "--examples",
+      "--bins",
+      "--message-format=json"
+    ],
+    [
+      "cargo",
+      "bench",
+      "--locked",
+      "--features",
+      "dispatch-trace",
+      "--bench",
+      "dispatch_trace",
+      "--no-run",
+      "--message-format=json"
+    ]
+  ],
+  "fixture_identity": "All benches/, examples/, Cargo.lock and promoted_slow_offenders.txt blobs match between the two revisions. Both were built sequentially in the same checkout and target paths.",
+  "catalogs": {
+    "baseline": {
+      "float_convert": 11,
+      "real_representations": 140,
+      "borrowed_ops": 24,
+      "adversarial_transcendentals": 169,
+      "adversarial_library": 0,
+      "numerical_micro": 134,
+      "library_perf": 176,
+      "scalar_micro": 313,
+      "gmp_api": 480
+    },
+    "candidate": {
+      "float_convert": 11,
+      "real_representations": 140,
+      "borrowed_ops": 24,
+      "adversarial_library": 0,
+      "adversarial_transcendentals": 169,
+      "numerical_micro": 134,
+      "library_perf": 176,
+      "scalar_micro": 313,
+      "gmp_api": 480
+    }
+  },
+  "catalog_exception": "adversarial_library deliberately skips --list/--test; its two timing rows are pending an actual run.",
+  "dispatch": {
+    "identical": true,
+    "rows": 156,
+    "sha256": "c01db4e30694b0624b599ea5008057495fcc67c7467a49330c57b260f8fe5309"
+  },
+  "pilot": {
+    "classification": "short_run_screen_not_acceptance",
+    "pairs": 3,
+    "cases": [
+      {
+        "case": "rational_algorithm_dispatch_speed/reduce_backend_large_knuth_cold",
+        "median_change_percent": 4.373895155020047,
+        "paired_changes_percent": [
+          -0.20878847361236463,
+          4.373895155020047,
+          4.662499913392804
+        ],
+        "baseline_median_ns": 10605.333318264014,
+        "candidate_median_ns": 11066.704076367389
+      },
+      {
+        "case": "dense_algebra/rational_dot_64",
+        "median_change_percent": 2.1325836786303176,
+        "paired_changes_percent": [
+          0.5849731810953607,
+          7.769162511723149,
+          2.1325836786303176
+        ],
+        "baseline_median_ns": 1568.6241535920726,
+        "candidate_median_ns": 1634.4610339506173
+      },
+      {
+        "case": "pure_scalar_algorithm_speed/rational_mul_wide_dyadic_cold",
+        "median_change_percent": 1.6768774491750404,
+        "paired_changes_percent": [
+          1.6768774491750404,
+          3.3795537876157633,
+          1.5193850868148395
+        ],
+        "baseline_median_ns": 203.84884718359282,
+        "candidate_median_ns": 210.06848417321729
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/reduce_backend_single_limb_cold",
+        "median_change_percent": 1.547422008544963,
+        "paired_changes_percent": [
+          0.07465541070366122,
+          7.912205106084036,
+          1.547422008544963
+        ],
+        "baseline_median_ns": 142.42387612387614,
+        "candidate_median_ns": 144.62777452843983
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_192_bits",
+        "median_change_percent": 0.6185150301103004,
+        "paired_changes_percent": [
+          -1.038056476894611,
+          0.6185150301103004,
+          0.8485189417542838
+        ],
+        "baseline_median_ns": 8747.0470936214,
+        "candidate_median_ns": 8821.267445054946
+      },
+      {
+        "case": "dense_algebra/real_matmul_6",
+        "median_change_percent": 0.48980689303703695,
+        "paired_changes_percent": [
+          0.7333778745430397,
+          0.48980689303703695,
+          -0.6811026215286398
+        ],
+        "baseline_median_ns": 52114.94442838561,
+        "candidate_median_ns": 51759.98817567568
+      },
+      {
+        "case": "dense_algebra/rational_matmul_8",
+        "median_change_percent": 0.21388247869502663,
+        "paired_changes_percent": [
+          -0.7501763503509062,
+          0.21388247869502663,
+          0.26713859101963333
+        ],
+        "baseline_median_ns": 57306.54046345811,
+        "candidate_median_ns": 57459.62834821429
+      },
+      {
+        "case": "exact_product_sums/signed_product_sum_sparse_single_6x2",
+        "median_change_percent": -0.25199297126808906,
+        "paired_changes_percent": [
+          -0.2210956004246145,
+          -0.7502639604037742,
+          -0.25199297126808906
+        ],
+        "baseline_median_ns": 132.58011179683413,
+        "candidate_median_ns": 131.58541099935945
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/reduce_backend_knuth_cold",
+        "median_change_percent": -0.2961004893677899,
+        "paired_changes_percent": [
+          -0.7135681970927066,
+          1.3054855053837855,
+          -0.2961004893677899
+        ],
+        "baseline_median_ns": 747.2703001968505,
+        "candidate_median_ns": 757.0258056519583
+      },
+      {
+        "case": "exact_product_sums/real_signed_product_sum_mixed_symbolic_det3",
+        "median_change_percent": -0.6040563500584906,
+        "paired_changes_percent": [
+          -1.5112499491200193,
+          -0.6040563500584906,
+          2.8200736089356138
+        ],
+        "baseline_median_ns": 2322.5190249320704,
+        "candidate_median_ns": 2316.6345356550582
+      },
+      {
+        "case": "exact_product_sums/signed_product_sum_common_scale_6x2",
+        "median_change_percent": -0.7173902196934034,
+        "paired_changes_percent": [
+          -0.7173902196934034,
+          -3.5147841652476197,
+          0.2542930566892032
+        ],
+        "baseline_median_ns": 181.76358103335951,
+        "candidate_median_ns": 182.18913359262626
+      },
+      {
+        "case": "pure_scalar_algorithm_speed/rational_sub_wide_dyadic_cold",
+        "median_change_percent": -1.7832556241952457,
+        "paired_changes_percent": [
+          -1.7832556241952457,
+          -2.7759823223404534,
+          4.188838255240457
+        ],
+        "baseline_median_ns": 95.51523964767787,
+        "candidate_median_ns": 93.8119587646971
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_128_bits",
+        "median_change_percent": -1.8645969012666463,
+        "paired_changes_percent": [
+          -3.700118535006802,
+          -1.4912554429141855,
+          -1.8645969012666463
+        ],
+        "baseline_median_ns": 139.81967900892013,
+        "candidate_median_ns": 137.21260560675884
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_256_bits",
+        "median_change_percent": -2.077577977000389,
+        "paired_changes_percent": [
+          -2.077577977000389,
+          -0.5168961690315776,
+          -3.1571013993612174
+        ],
+        "baseline_median_ns": 8384.781876566416,
+        "candidate_median_ns": 8190.642581217909
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_192_bits",
+        "median_change_percent": -2.1578151213121566,
+        "paired_changes_percent": [
+          -2.1578151213121566,
+          3.640829175416127,
+          -3.5122488982001876
+        ],
+        "baseline_median_ns": 5580.64725011956,
+        "candidate_median_ns": 5394.707807807808
+      },
+      {
+        "case": "exact_product_sums/exact_rational_sparse_homogeneous_plane_intersection3",
+        "median_change_percent": -2.567799272326976,
+        "paired_changes_percent": [
+          -2.567799272326976,
+          -0.2597576256467615,
+          -3.347632204093376
+        ],
+        "baseline_median_ns": 256.51711729889695,
+        "candidate_median_ns": 249.93027262750175
+      },
+      {
+        "case": "exact_product_sums/real_signed_product_sum_rational_det3",
+        "median_change_percent": -2.9398729266920665,
+        "paired_changes_percent": [
+          -2.9398729266920665,
+          -2.3651910655434483,
+          -4.988255666944941
+        ],
+        "baseline_median_ns": 316.91692028187623,
+        "candidate_median_ns": 308.59619349900953
+      },
+      {
+        "case": "pure_scalar_algorithm_speed/rational_add_wide_dyadic_cold",
+        "median_change_percent": -3.034861584458426,
+        "paired_changes_percent": [
+          -4.798272132449988,
+          -3.034861584458426,
+          4.659609949026078
+        ],
+        "baseline_median_ns": 93.32684752747252,
+        "candidate_median_ns": 90.28925179983216
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_512_bits",
+        "median_change_percent": -3.223718823107513,
+        "paired_changes_percent": [
+          -3.0738857886941195,
+          -3.223718823107513,
+          -4.402416218215532
+        ],
+        "baseline_median_ns": 11274.93025210084,
+        "candidate_median_ns": 10903.119271353647
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_512_bits",
+        "median_change_percent": -3.4661527637016243,
+        "paired_changes_percent": [
+          -3.828479650003369,
+          -2.953144354496906,
+          -3.4661527637016243
+        ],
+        "baseline_median_ns": 12554.830944548872,
+        "candidate_median_ns": 12119.661324786324
+      },
+      {
+        "case": "exact_product_sums/signed_product_sum_lcm_6x2",
+        "median_change_percent": -4.222786955848856,
+        "paired_changes_percent": [
+          -4.222786955848856,
+          0.8770617493918831,
+          -4.364753754748563
+        ],
+        "baseline_median_ns": 365.37102983122094,
+        "candidate_median_ns": 350.2801532423846
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_4096_bits",
+        "median_change_percent": -4.401066462184566,
+        "paired_changes_percent": [
+          -4.401066462184566,
+          -4.5738536324861805,
+          -3.9696057786926753
+        ],
+        "baseline_median_ns": 120800.67446862347,
+        "candidate_median_ns": 115275.42843137254
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_4096_bits",
+        "median_change_percent": -4.644214918224288,
+        "paired_changes_percent": [
+          -4.644214918224288,
+          -6.445696970383585,
+          -1.636088277253811
+        ],
+        "baseline_median_ns": 131818.79553571428,
+        "candidate_median_ns": 126901.64453125
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_1024_bits",
+        "median_change_percent": -5.063232204420776,
+        "paired_changes_percent": [
+          -5.063232204420776,
+          -3.7497026502910424,
+          -6.037798518993432
+        ],
+        "baseline_median_ns": 22313.51247357294,
+        "candidate_median_ns": 21182.91888888889
+      },
+      {
+        "case": "dense_algebra/real_dot_36",
+        "median_change_percent": -6.000250883106806,
+        "paired_changes_percent": [
+          -7.62043077668797,
+          -6.000250883106806,
+          -5.042597652610836
+        ],
+        "baseline_median_ns": 5117.048324777833,
+        "candidate_median_ns": 4797.407113491291
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/gcd_selected_unbalanced_to_lehmer_1024_bits",
+        "median_change_percent": -6.069553610077428,
+        "paired_changes_percent": [
+          -4.453276561875008,
+          -8.460893394705815,
+          -6.069553610077428
+        ],
+        "baseline_median_ns": 25104.985889889198,
+        "candidate_median_ns": 23540.06265822785
+      },
+      {
+        "case": "rational_algorithm_dispatch_speed/reduce_fixed_512_coprime_cold",
+        "median_change_percent": -19.195936399434533,
+        "paired_changes_percent": [
+          -20.31775584747195,
+          -17.98551310905384,
+          -19.195936399434533
+        ],
+        "baseline_median_ns": 3572.0641969407266,
+        "candidate_median_ns": 2886.3730255490127
+      }
+    ],
+    "raw_archive": "2026-09-17-verus-baseline-pilot.json.gz",
+    "raw_archive_sha256": "df4f164637027766575942f5a5ff6c0954d7aa492afcaabc7347f66d308098f5",
+    "raw_archive_bytes": 83559,
+    "interpretation": "Short screening runs; follow up positive deltas and apparent improvements with longer repeated pairs. Do not interpret this as established parity."
+  },
+  "memory": {
+    "identical_csv": true,
+    "iterations_per_form": 64,
+    "rows": [
+      {
+        "representation": "One",
+        "iterations": "64",
+        "allocations": "514",
+        "deallocations": "512",
+        "reallocations": "0",
+        "allocated_bytes": "41072",
+        "deallocated_bytes": "40960",
+        "peak_live_delta_bytes": "752",
+        "retained_bytes": "112"
+      },
+      {
+        "representation": "Pi",
+        "iterations": "64",
+        "allocations": "709",
+        "deallocations": "704",
+        "reallocations": "0",
+        "allocated_bytes": "36824",
+        "deallocated_bytes": "36352",
+        "peak_live_delta_bytes": "880",
+        "retained_bytes": "472"
+      },
+      {
+        "representation": "PiPow",
+        "iterations": "64",
+        "allocations": "1408",
+        "deallocations": "1408",
+        "reallocations": "0",
+        "allocated_bytes": "75264",
+        "deallocated_bytes": "75264",
+        "peak_live_delta_bytes": "656",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "PiInv",
+        "iterations": "64",
+        "allocations": "768",
+        "deallocations": "768",
+        "reallocations": "0",
+        "allocated_bytes": "40448",
+        "deallocated_bytes": "40448",
+        "peak_live_delta_bytes": "408",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "PiExp",
+        "iterations": "64",
+        "allocations": "1219",
+        "deallocations": "1216",
+        "reallocations": "0",
+        "allocated_bytes": "65144",
+        "deallocated_bytes": "65024",
+        "peak_live_delta_bytes": "776",
+        "retained_bytes": "120"
+      },
+      {
+        "representation": "PiInvExp",
+        "iterations": "64",
+        "allocations": "1216",
+        "deallocations": "1216",
+        "reallocations": "0",
+        "allocated_bytes": "64512",
+        "deallocated_bytes": "64512",
+        "peak_live_delta_bytes": "648",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "PiSqrt",
+        "iterations": "64",
+        "allocations": "3790",
+        "deallocations": "3778",
+        "reallocations": "128",
+        "allocated_bytes": "166792",
+        "deallocated_bytes": "165904",
+        "peak_live_delta_bytes": "1704",
+        "retained_bytes": "888"
+      },
+      {
+        "representation": "ConstProduct",
+        "iterations": "64",
+        "allocations": "2816",
+        "deallocations": "2816",
+        "reallocations": "0",
+        "allocated_bytes": "140800",
+        "deallocated_bytes": "140800",
+        "peak_live_delta_bytes": "1096",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "ConstOffset",
+        "iterations": "64",
+        "allocations": "832",
+        "deallocations": "832",
+        "reallocations": "0",
+        "allocated_bytes": "37888",
+        "deallocated_bytes": "37888",
+        "peak_live_delta_bytes": "360",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "ConstProductSqrt",
+        "iterations": "64",
+        "allocations": "4544",
+        "deallocations": "4544",
+        "reallocations": "0",
+        "allocated_bytes": "217600",
+        "deallocated_bytes": "217600",
+        "peak_live_delta_bytes": "1448",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "Sqrt",
+        "iterations": "64",
+        "allocations": "2176",
+        "deallocations": "2176",
+        "reallocations": "128",
+        "allocated_bytes": "74240",
+        "deallocated_bytes": "74240",
+        "peak_live_delta_bytes": "568",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "Exp",
+        "iterations": "64",
+        "allocations": "1796",
+        "deallocations": "1792",
+        "reallocations": "0",
+        "allocated_bytes": "81192",
+        "deallocated_bytes": "80896",
+        "peak_live_delta_bytes": "880",
+        "retained_bytes": "296"
+      },
+      {
+        "representation": "Ln",
+        "iterations": "64",
+        "allocations": "768",
+        "deallocations": "768",
+        "reallocations": "0",
+        "allocated_bytes": "37376",
+        "deallocated_bytes": "37376",
+        "peak_live_delta_bytes": "408",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "LnAffine",
+        "iterations": "64",
+        "allocations": "2304",
+        "deallocations": "2304",
+        "reallocations": "0",
+        "allocated_bytes": "105984",
+        "deallocated_bytes": "105984",
+        "peak_live_delta_bytes": "728",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "LnProduct",
+        "iterations": "64",
+        "allocations": "1472",
+        "deallocations": "1472",
+        "reallocations": "0",
+        "allocated_bytes": "68096",
+        "deallocated_bytes": "68096",
+        "peak_live_delta_bytes": "664",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "Log10",
+        "iterations": "64",
+        "allocations": "1920",
+        "deallocations": "1920",
+        "reallocations": "64",
+        "allocated_bytes": "84992",
+        "deallocated_bytes": "84992",
+        "peak_live_delta_bytes": "800",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "Log2",
+        "iterations": "64",
+        "allocations": "1920",
+        "deallocations": "1920",
+        "reallocations": "64",
+        "allocated_bytes": "87040",
+        "deallocated_bytes": "87040",
+        "peak_live_delta_bytes": "808",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "SinPi",
+        "iterations": "64",
+        "allocations": "5120",
+        "deallocations": "5120",
+        "reallocations": "0",
+        "allocated_bytes": "198656",
+        "deallocated_bytes": "198656",
+        "peak_live_delta_bytes": "1000",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "TanPi",
+        "iterations": "64",
+        "allocations": "13248",
+        "deallocations": "13248",
+        "reallocations": "256",
+        "allocated_bytes": "437760",
+        "deallocated_bytes": "437760",
+        "peak_live_delta_bytes": "1000",
+        "retained_bytes": "0"
+      },
+      {
+        "representation": "Irrational",
+        "iterations": "64",
+        "allocations": "3712",
+        "deallocations": "3712",
+        "reallocations": "0",
+        "allocated_bytes": "129536",
+        "deallocated_bytes": "129536",
+        "peak_live_delta_bytes": "480",
+        "retained_bytes": "0"
+      }
+    ],
+    "profiles": {
+      "baseline": {
+        "massif_individual_peaks_bytes": {
+          "mem_heap_B": 9732,
+          "mem_heap_extra_B": 2524,
+          "mem_stacks_B": 12480
+        },
+        "massif_combined_peak_bytes": 24736,
+        "callgrind_instructions": 29845483,
+        "memcheck_errors": 0,
+        "heaptrack_totals": [
+          "",
+          "total runtime: 0.06s.",
+          "calls to allocation functions: 55408 (923466/s)",
+          "temporary memory allocations: 7029 (117150/s)",
+          "peak heap memory consumption: 83.92K",
+          "peak RSS (including heaptrack overhead): 6.85M",
+          "total memory leaked: 4.33K"
+        ]
+      },
+      "candidate": {
+        "massif_individual_peaks_bytes": {
+          "mem_heap_B": 9732,
+          "mem_heap_extra_B": 2524,
+          "mem_stacks_B": 12480
+        },
+        "massif_combined_peak_bytes": 24736,
+        "callgrind_instructions": 29846505,
+        "memcheck_errors": 0,
+        "heaptrack_totals": [
+          "",
+          "total runtime: 0.06s.",
+          "calls to allocation functions: 55408 (893677/s)",
+          "temporary memory allocations: 7029 (113370/s)",
+          "peak heap memory consumption: 83.92K",
+          "peak RSS (including heaptrack overhead): 6.85M",
+          "total memory leaked: 4.33K"
+        ]
+      }
+    }
+  },
+  "binary_sections": {
+    "baseline": {
+      "hyperreal": {
+        "text": 1996642,
+        "data": 227888,
+        "bss": 2032,
+        "section_total": 2226562
+      },
+      "float_convert": {
+        "text": 3567400,
+        "data": 445992,
+        "bss": 4272,
+        "section_total": 4017664
+      },
+      "real_representations": {
+        "text": 4841844,
+        "data": 458424,
+        "bss": 2820,
+        "section_total": 5303088
+      },
+      "borrowed_ops": {
+        "text": 4419515,
+        "data": 457520,
+        "bss": 2460,
+        "section_total": 4879495
+      },
+      "adversarial_transcendentals": {
+        "text": 4674531,
+        "data": 463176,
+        "bss": 4980,
+        "section_total": 5142687
+      },
+      "adversarial_library": {
+        "text": 4676299,
+        "data": 459016,
+        "bss": 3316,
+        "section_total": 5138631
+      },
+      "numerical_micro": {
+        "text": 5918947,
+        "data": 470232,
+        "bss": 1908,
+        "section_total": 6391087
+      },
+      "library_perf": {
+        "text": 7110023,
+        "data": 488712,
+        "bss": 6084,
+        "section_total": 7604819
+      },
+      "scalar_micro": {
+        "text": 7134463,
+        "data": 489464,
+        "bss": 5188,
+        "section_total": 7629115
+      },
+      "gmp_api": {
+        "text": 11016795,
+        "data": 496424,
+        "bss": 4260,
+        "section_total": 11517479
+      },
+      "readme_quickstart": {
+        "text": 1297031,
+        "data": 220696,
+        "bss": 2632,
+        "section_total": 1520359
+      },
+      "computable_refinement_steps": {
+        "text": 1256858,
+        "data": 218456,
+        "bss": 3688,
+        "section_total": 1479002
+      },
+      "computable_graphs": {
+        "text": 1268030,
+        "data": 218376,
+        "bss": 808,
+        "section_total": 1487214
+      },
+      "allocation_profile": {
+        "text": 1564731,
+        "data": 222448,
+        "bss": 4408,
+        "section_total": 1791587
+      },
+      "write_benchmarks_md": {
+        "text": 519057,
+        "data": 15696,
+        "bss": 3864,
+        "section_total": 538617
+      },
+      "dispatch_trace": {
+        "text": 2198349,
+        "data": 229720,
+        "bss": 3112,
+        "section_total": 2431181
+      }
+    },
+    "candidate": {
+      "hyperreal": {
+        "text": 2000018,
+        "data": 227752,
+        "bss": 2904,
+        "section_total": 2230674
+      },
+      "float_convert": {
+        "text": 3572604,
+        "data": 445896,
+        "bss": 3248,
+        "section_total": 4021748
+      },
+      "real_representations": {
+        "text": 4848700,
+        "data": 458488,
+        "bss": 4100,
+        "section_total": 5311288
+      },
+      "borrowed_ops": {
+        "text": 4426375,
+        "data": 457584,
+        "bss": 3692,
+        "section_total": 4887651
+      },
+      "adversarial_library": {
+        "text": 4683955,
+        "data": 458992,
+        "bss": 3852,
+        "section_total": 5146799
+      },
+      "adversarial_transcendentals": {
+        "text": 4681371,
+        "data": 463216,
+        "bss": 2204,
+        "section_total": 5146791
+      },
+      "numerical_micro": {
+        "text": 5925723,
+        "data": 470272,
+        "bss": 3292,
+        "section_total": 6399287
+      },
+      "library_perf": {
+        "text": 7116603,
+        "data": 488664,
+        "bss": 3668,
+        "section_total": 7608935
+      },
+      "scalar_micro": {
+        "text": 7140783,
+        "data": 489296,
+        "bss": 3148,
+        "section_total": 7633227
+      },
+      "gmp_api": {
+        "text": 11028827,
+        "data": 496344,
+        "bss": 4596,
+        "section_total": 11529767
+      },
+      "readme_quickstart": {
+        "text": 1302211,
+        "data": 220648,
+        "bss": 1592,
+        "section_total": 1524451
+      },
+      "computable_refinement_steps": {
+        "text": 1262070,
+        "data": 218408,
+        "bss": 2616,
+        "section_total": 1483094
+      },
+      "computable_graphs": {
+        "text": 1273242,
+        "data": 218328,
+        "bss": 3848,
+        "section_total": 1495418
+      },
+      "allocation_profile": {
+        "text": 1570063,
+        "data": 222400,
+        "bss": 3224,
+        "section_total": 1795687
+      },
+      "write_benchmarks_md": {
+        "text": 519057,
+        "data": 15696,
+        "bss": 3864,
+        "section_total": 538617
+      },
+      "dispatch_trace": {
+        "text": 2204453,
+        "data": 229448,
+        "bss": 5464,
+        "section_total": 2439365
+      }
+    }
+  },
+  "wasm_cli_bytes": {
+    "baseline": 1646116,
+    "candidate": 1653019
+  },
+  "source_groups": {
+    "baseline": {
+      "benchmarks": {
+        "files": 12,
+        "bytes": 546550,
+        "lines": 15466
+      },
+      "other_rust": {
+        "files": 11,
+        "bytes": 55190,
+        "lines": 1642
+      },
+      "other_production_source_including_inline_tests": {
+        "files": 81,
+        "bytes": 1792389,
+        "lines": 44737
+      },
+      "tests": {
+        "files": 18,
+        "bytes": 794920,
+        "lines": 21077
+      }
+    },
+    "candidate": {
+      "benchmarks": {
+        "files": 12,
+        "bytes": 546550,
+        "lines": 15466
+      },
+      "other_rust": {
+        "files": 11,
+        "bytes": 55190,
+        "lines": 1642
+      },
+      "other_production_source_including_inline_tests": {
+        "files": 81,
+        "bytes": 1771587,
+        "lines": 44226
+      },
+      "tests": {
+        "files": 18,
+        "bytes": 831967,
+        "lines": 21844
+      },
+      "shared_runtime_and_ghost_proofs": {
+        "files": 12,
+        "bytes": 157936,
+        "lines": 3742
+      },
+      "proof_harness_and_models": {
+        "files": 2,
+        "bytes": 8813,
+        "lines": 228
+      }
+    }
+  },
+  "source_size_note": "Shared src/verified files contain both executable Rust and ghost proofs; other production files still include inline test code. Categories are physical source counts, not an estimate of erased runtime code.",
+  "validation": [
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627144.2244928,
+      "seconds": 0.43276381492614746,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "check-default",
+      "command": [
+        "cargo",
+        "check",
+        "--locked",
+        "--all-targets"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627144.6575491,
+      "seconds": 9.571375370025635,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/check-default.log",
+      "sha256": "1848b6a425e0449b389adc4a00b0929431b30b27d33676c0919193b9343ec3d3"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "tests-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-targets"
+      ],
+      "environment_overrides": {},
+      "exit_code": 101,
+      "start_unix": 1789627154.2291827,
+      "seconds": 17.180257081985474,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/tests-default.log",
+      "sha256": "5d7e19009e90f46d75364e19644e22c1f2e6cd1701e187e31cfc6262f66c56b9"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "clippy-default",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627171.4097264,
+      "seconds": 5.308408260345459,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/clippy-default.log",
+      "sha256": "553e51c9f4c01e73d10ec49754cd2674a01a97ed6388aad0e6ad3ec620996dbc"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "check-all",
+      "command": [
+        "cargo",
+        "check",
+        "--locked",
+        "--all-features",
+        "--all-targets"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627176.7184217,
+      "seconds": 6.032985687255859,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/check-all.log",
+      "sha256": "f8f859c6b4868082ec32459aab20ccb0c5c9ddd998881c30901940e238b94e30"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "tests-all",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--all-targets"
+      ],
+      "environment_overrides": {},
+      "exit_code": 101,
+      "start_unix": 1789627182.7516878,
+      "seconds": 17.518165826797485,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/tests-all.log",
+      "sha256": "c2a5dc65ea5b45fd9831cfd24dbd5e3a4a2f1b1d47d6f0377062152935a88a50"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "clippy-all",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627200.2702343,
+      "seconds": 6.4039366245269775,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/clippy-all.log",
+      "sha256": "0f1b99a40a20a5b03974f50da6463168a114eb3f9a609f7ef1f4e3dc33844df9"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "doc-tests-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--doc"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627206.6744003,
+      "seconds": 0.5494439601898193,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/doc-tests-default.log",
+      "sha256": "f002a3e6e53d1f6baf2063be8a9ca7ecc23d083d209a57dd9ff5001768e6c510"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "doc-tests-all",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--doc"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627207.2241366,
+      "seconds": 0.6420207023620605,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/doc-tests-all.log",
+      "sha256": "01fdd678b00ac7afd283d2176290e47a0cf3c7c549f5c434dbc9edb73f292141"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "rustdoc-all",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--all-features",
+        "--no-deps"
+      ],
+      "environment_overrides": {
+        "RUSTDOCFLAGS": "-D warnings"
+      },
+      "exit_code": 0,
+      "start_unix": 1789627207.8663857,
+      "seconds": 2.032357931137085,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/rustdoc-all.log",
+      "sha256": "d493f090f74746b6316337576a60ab1b2605f05dcfcdbf8e6ad6bf82fc1020fe"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "representation-matrix",
+      "command": [
+        "bash",
+        "scripts/representation_coverage.sh"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627209.8990076,
+      "seconds": 10.427909851074219,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/representation-matrix.log",
+      "sha256": "bf5193ff8d990faf857ba7339dcc39831af6defb085c5b27ba234a838860313d"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "fuzz-check",
+      "command": [
+        "cargo",
+        "check",
+        "--locked",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bins"
+      ],
+      "environment_overrides": {
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "start_unix": 1789627220.3272061,
+      "seconds": 6.981647968292236,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/fuzz-check.log",
+      "sha256": "50252edee9af23d485c426eeb614f65c05eb8311c84fcc70ad5a4fdece9a415f"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "wasm-default",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "--target",
+        "wasm32-unknown-unknown",
+        "--no-default-features",
+        "--lib"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627227.3091388,
+      "seconds": 7.819573640823364,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/wasm-default.log",
+      "sha256": "cf4309ef7463fc415493a91da662e3528343424e8aa531ecd028c61aaaccb1aa"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "wasm-all",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "--target",
+        "wasm32-unknown-unknown",
+        "--all-features",
+        "--lib",
+        "--bins"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627235.1289847,
+      "seconds": 10.135566473007202,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/wasm-all.log",
+      "sha256": "291a2b569b6ca19e51987c72868f3d417a62b11d43f171d52dbcd873249f6ded"
+    },
+    {
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "label": "baseline",
+      "name": "coverage-matrix",
+      "command": [
+        "bash",
+        "scripts/coverage.sh"
+      ],
+      "environment_overrides": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/coverage-target"
+      },
+      "exit_code": 101,
+      "start_unix": 1789627245.2659662,
+      "seconds": 37.950785875320435,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/validation/coverage-matrix.log",
+      "sha256": "1ec2ffcb072d0512f91419248bbe986efcd8c73025807c8b6c269b261e71ac69"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627283.232751,
+      "seconds": 0.45102858543395996,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "check-default",
+      "command": [
+        "cargo",
+        "check",
+        "--locked",
+        "--all-targets"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627283.6840682,
+      "seconds": 3.183805227279663,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/check-default.log",
+      "sha256": "9e751fd85d562d2da44ba07c0e608975cfb74e6cd7f5402aa28972f277439f0e"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "tests-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-targets"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627286.8681479,
+      "seconds": 187.20008492469788,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/tests-default.log",
+      "sha256": "a5788080a96474a6ef4d0645b21e7b90e085bd9405f16c67d939542cc1cd87b6"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "clippy-default",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627474.0686493,
+      "seconds": 5.914795398712158,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/clippy-default.log",
+      "sha256": "46b62d30e9fad26c9fa02a27c183caf58a9946a85cc4cdd622f12a5b161ff4c0"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "check-all",
+      "command": [
+        "cargo",
+        "check",
+        "--locked",
+        "--all-features",
+        "--all-targets"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627479.9837906,
+      "seconds": 4.197271823883057,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/check-all.log",
+      "sha256": "a9f1cb5675e9adb72800170caca3e0ed0e5120ea6b1122acac17d0a3c49b61b6"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "tests-all",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--all-targets"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627484.1814203,
+      "seconds": 207.71009850502014,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/tests-all.log",
+      "sha256": "1b3d6aa902f649dc25e8eba1c79ce23e4760b4d1f2381520785c86fd166000eb"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "clippy-all",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627691.892112,
+      "seconds": 6.633835554122925,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/clippy-all.log",
+      "sha256": "4d3fbd0052adc477abe24151bc430abfa12005521f4e69863abd8d994356542b"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "doc-tests-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--doc"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627698.5263047,
+      "seconds": 0.568537712097168,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/doc-tests-default.log",
+      "sha256": "26cc8ed1b5246bb853b865bb2faf478ebf818cfa2f058e16e57c2c66d2b66125"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "doc-tests-all",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--doc"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627699.095121,
+      "seconds": 0.6496901512145996,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/doc-tests-all.log",
+      "sha256": "391151f8bcb081202650718c18e6fde73e3031af45777173058ad213ade06187"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "rustdoc-all",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--all-features",
+        "--no-deps"
+      ],
+      "environment_overrides": {
+        "RUSTDOCFLAGS": "-D warnings"
+      },
+      "exit_code": 0,
+      "start_unix": 1789627699.7450917,
+      "seconds": 0.9117875099182129,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/rustdoc-all.log",
+      "sha256": "0f2738037da1076dca37a10da28193519b573a015a90c83f3f66944c945585e1"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "representation-matrix",
+      "command": [
+        "bash",
+        "scripts/representation_coverage.sh"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627700.6572402,
+      "seconds": 10.587323665618896,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/representation-matrix.log",
+      "sha256": "62e8c7dc8684a8867a99d6bfdae8d9e3ac51f8a4e04c519ea02f0ba22b7f0be9"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "fuzz-check",
+      "command": [
+        "cargo",
+        "check",
+        "--locked",
+        "--manifest-path",
+        "fuzz/Cargo.toml",
+        "--bins"
+      ],
+      "environment_overrides": {
+        "CCACHE_DISABLE": "1"
+      },
+      "exit_code": 0,
+      "start_unix": 1789627711.2448478,
+      "seconds": 1.7254328727722168,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/fuzz-check.log",
+      "sha256": "1c60a32f65f918c43069d65792eb3ecb67c30636774abcc3646de2412d0cd791"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "wasm-default",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "--target",
+        "wasm32-unknown-unknown",
+        "--no-default-features",
+        "--lib"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627712.9706109,
+      "seconds": 6.073395252227783,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/wasm-default.log",
+      "sha256": "05f7e53b21cf248db438a340b652d2ae452d74f082501a95e24a947ed1967986"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "wasm-all",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "--target",
+        "wasm32-unknown-unknown",
+        "--all-features",
+        "--lib",
+        "--bins"
+      ],
+      "environment_overrides": {},
+      "exit_code": 0,
+      "start_unix": 1789627719.0443468,
+      "seconds": 7.391470670700073,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/wasm-all.log",
+      "sha256": "4a1513bf737e9455e5f177c39fdb7e5687aa7c6b7ea1bdb0e984d1e05a346b94"
+    },
+    {
+      "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+      "label": "candidate",
+      "name": "coverage-matrix",
+      "command": [
+        "bash",
+        "scripts/coverage.sh"
+      ],
+      "environment_overrides": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/coverage-target"
+      },
+      "exit_code": 0,
+      "start_unix": 1789627726.437159,
+      "seconds": 503.15518283843994,
+      "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/validation/coverage-matrix.log",
+      "sha256": "dfd0828c1b904628a95c3a2d688ddfe9a0e12ae96fafd1ee200200945ba7ccdb"
+    }
+  ],
+  "candidate_validation_summary": {
+    "default_all_target_tests": 782,
+    "default_benchmark_fixtures": 1271,
+    "all_feature_all_target_tests": 885,
+    "all_feature_benchmark_fixtures": 1447,
+    "coverage_executable_production_lines": 28499,
+    "coverage_hit_lines": 26003,
+    "coverage_percent": 91.24,
+    "scope": "598f059; add6365 adds one separately validated regression test and corrects only the fuzz harness"
+  },
+  "baseline_test_failure": "Untouched baseline lacks exact_quadratic_normal_form in the no-GMP-analog API inventory; default/all-target and coverage runs stop at that assertion. Supplementary baseline suites with only that test classification repaired are in progress; original logs are retained.",
+  "fuzz": {
+    "initial_runs": [
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "rational_arithmetic",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "rational_arithmetic",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627618.6523497,
+        "seconds": 51.501357316970825,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic/run.log",
+        "sha256": "60d544b4de94f5d683186d7b9015debaf5e52c103f592f71fc5bbb6b2d2acced",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "rational_arithmetic",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "rational_arithmetic",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627670.153955,
+        "seconds": 0.6998732089996338,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/rational_arithmetic/lsan-disabled-run.log",
+        "sha256": "5a9668be6f13d2f04969f1a7a1f3c30751b37fff5de7ba5e4036f2a3416784ed",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "real_exact",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_exact",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627670.8545058,
+        "seconds": 3.533967971801758,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact/run.log",
+        "sha256": "da91843b744aca282bbf9af0f17502487b65e8fc3503b4408a42fdb2dcc0ddc5",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "real_exact",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_exact",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627674.3886538,
+        "seconds": 1.7111358642578125,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_exact/lsan-disabled-run.log",
+        "sha256": "70f1c20926a2fc51f13aadc31451f74bc99775dd74a1236fa55ffba05df71b63",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "real_elementary",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_elementary",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627676.1003735,
+        "seconds": 1.7725424766540527,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary/run.log",
+        "sha256": "01949baf73b273b9725a297ac6bc24db0c156704f9727aaa3df5f137f4357e75",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "real_elementary",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_elementary",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 1,
+        "start_unix": 1789627677.8731246,
+        "seconds": 0.9560108184814453,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary/lsan-disabled-run.log",
+        "sha256": "9f92eeb9d1239355fc0bab5709361ce96421ab2081cc0ed5f80c073ad80c426e",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "computable_approximation",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "computable_approximation",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627678.8297515,
+        "seconds": 1.1182060241699219,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation/run.log",
+        "sha256": "a15d9b04d614f00b86e6cacfad6746daf3c3cc7ad97c804fac3f89bf399cdaf9",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "computable_approximation",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "computable_approximation",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627679.9482036,
+        "seconds": 4.2769060134887695,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/computable_approximation/lsan-disabled-run.log",
+        "sha256": "d307bcaab82214d546ba3f65861560dad0a6c6735606ddf91d8afa15eb851d71",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "structural_representations",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "structural_representations",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627684.2271383,
+        "seconds": 2.453274965286255,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations/run.log",
+        "sha256": "236ac5b1c5531206a4b02973dae82c816a1817611b017f631167f3bcde6bfed8",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "structural_representations",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "structural_representations",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627686.6806328,
+        "seconds": 39.457343339920044,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/structural_representations/lsan-disabled-run.log",
+        "sha256": "14b450f30a6c48e44313b1897f3d3bc24b8c9695cbc41e89a455ec0afcbe7a5f",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "string_parsing",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "string_parsing",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=256",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627726.139041,
+        "seconds": 0.9370713233947754,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing/run.log",
+        "sha256": "8364081b675782e5cdce289f3e894c6ae4e86b38f49888f903c79bb34504a133",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "string_parsing",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "string_parsing",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=256",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627727.076357,
+        "seconds": 0.6288301944732666,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/string_parsing/lsan-disabled-run.log",
+        "sha256": "af11f56f6e6e9b3741ec89e62f39626c4268da9c1a06d40cb164b3cddb4964d3",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "rational_arithmetic",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "rational_arithmetic",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627727.7168605,
+        "seconds": 44.07921862602234,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic/run.log",
+        "sha256": "ca8f5ed917fa3d2e3883179b6d76a15317913ddd557cdb66ec47e4632361d6d4",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "rational_arithmetic",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "rational_arithmetic",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627771.7963297,
+        "seconds": 0.9037265777587891,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/rational_arithmetic/lsan-disabled-run.log",
+        "sha256": "64485aa0356f383eefd05db561d3b38451ba1d454d8cad57f638a8e3eb8b2dd5",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "real_exact",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_exact",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627772.7007535,
+        "seconds": 5.330440521240234,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact/run.log",
+        "sha256": "98f7391da8c3dfc291a1cbff617459c7a3375e18c215dcd2554d2fc2e6aa379b",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "real_exact",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_exact",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627778.0316153,
+        "seconds": 2.652711868286133,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_exact/lsan-disabled-run.log",
+        "sha256": "94890e1378207e703ac908dca00411686695c7e46190374ba2e95268f88c5604",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "real_elementary",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_elementary",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627780.6849763,
+        "seconds": 2.154327154159546,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary/run.log",
+        "sha256": "1df392788d081c5c666e3aefb51d50cc74bb1278bdcfaa66276b9de22d2b5fbf",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "real_elementary",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_elementary",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 1,
+        "start_unix": 1789627782.8395796,
+        "seconds": 1.141662836074829,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary/lsan-disabled-run.log",
+        "sha256": "81fce655df482b40dcef416178b1e77dc7d1bc3c4e2d0bd196e211c21bc17d00",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "computable_approximation",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "computable_approximation",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627783.9818406,
+        "seconds": 1.2824833393096924,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation/run.log",
+        "sha256": "24ed2bbbbbe95d419c827335dfc0a84f77e64cff51a3fc92ae4c42071a535a0c",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "computable_approximation",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "computable_approximation",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627785.2646148,
+        "seconds": 4.958144426345825,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/computable_approximation/lsan-disabled-run.log",
+        "sha256": "52e7947a353de36ed0a8ed1cbb5faa6e012bb5ac1e6545d45ae7362b34d008ba",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "structural_representations",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "structural_representations",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627790.225256,
+        "seconds": 2.5411856174468994,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations/run.log",
+        "sha256": "2ecff975ce557f42659c5bbdf2e7221c532188e6f024130bc142db4a373e8ca2",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "structural_representations",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "structural_representations",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627792.766774,
+        "seconds": 44.65843391418457,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/structural_representations/lsan-disabled-run.log",
+        "sha256": "66b72a6f328234b81011aa3e3365da2e6d330dc147a6a9614c64bdbe424c3612",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "string_parsing",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "string_parsing",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=256",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing/artifacts/"
+        ],
+        "attempt": 1,
+        "exit_code": 1,
+        "start_unix": 1789627837.4265437,
+        "seconds": 0.9440596103668213,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing/run.log",
+        "sha256": "ff378a8ade03278fc229a5899bff20212162baec37a2531bcc71c2c9147133ed",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": null,
+        "LSAN_OPTIONS": null
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "target": "string_parsing",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "string_parsing",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=256",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing/artifacts/"
+        ],
+        "attempt": 2,
+        "exit_code": 0,
+        "start_unix": 1789627838.370879,
+        "seconds": 0.600092887878418,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/string_parsing/lsan-disabled-run.log",
+        "sha256": "ec5cf659710ed8b3cd7260c72326ff19675df553c369eca1a909f0bec1bd6305",
+        "sanitizer": "address",
+        "ASAN_OPTIONS": ":detect_leaks=0",
+        "LSAN_OPTIONS": null
+      }
+    ],
+    "corrected_harness": [
+      {
+        "label": "baseline",
+        "production_revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "harness_sha256": "db5ea3a2ea7e96732debd3e8ff3048b1175bdf88570c109273c3ab4401fdc2c9",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_elementary",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary-repaired/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary-repaired/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 44.640310287475586,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/fuzz/real_elementary-repaired/run.log"
+      },
+      {
+        "label": "candidate",
+        "production_revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "harness_sha256": "db5ea3a2ea7e96732debd3e8ff3048b1175bdf88570c109273c3ab4401fdc2c9",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_elementary",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary-repaired/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=1000",
+          "-timeout=10",
+          "-seed=93537",
+          "-max_len=64",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary-repaired/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 38.70036959648132,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/candidate/fuzz/real_elementary-repaired/run.log"
+      }
+    ],
+    "finding": "Both revisions return a legitimate unknown for root_8(1/92)^8 - 1/92 at -512 precision. A derived maximum certificate depth of 730 bits supports the corrected -1024 harness request. The five-byte seed and degree/denominator/nonzero controls are committed in add6365. Each corrected run completed 2727 sanitizer executions over 2575 saved corpus files.",
+    "sanitizer_limitation": "AddressSanitizer retained. LeakSanitizer failed under ptrace; diagnostic logs preserved before retrying with detect_leaks=0."
+  },
+  "consumers": {
+    "hyperlattice": {
+      "revision": "53427ce89f8c82c016e69a04e035787e2753adc8",
+      "source_repository": "/home/tim/Documents/GitHub/workspace/hyperlattice",
+      "snapshot": "/tmp/hyperreal-verus-baseline-scmfudw9/hyperlattice",
+      "excluded_live_worktree_changes": ""
+    },
+    "hyperlimit": {
+      "revision": "d64c3b897e2832e879b01e53e46c57260d071d4c",
+      "source_repository": "/home/tim/Documents/GitHub/workspace/hyperlimit",
+      "snapshot": "/tmp/hyperreal-verus-baseline-scmfudw9/hyperlimit",
+      "excluded_live_worktree_changes": ""
+    },
+    "hypertri": {
+      "revision": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+      "source_repository": "/home/tim/Documents/GitHub/workspace/hypertri",
+      "snapshot": "/tmp/hyperreal-verus-baseline-scmfudw9/hypertri",
+      "excluded_live_worktree_changes": ""
+    },
+    "hypersolve": {
+      "revision": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55",
+      "source_repository": "/home/tim/Documents/GitHub/workspace/hypersolve",
+      "snapshot": "/tmp/hyperreal-verus-baseline-scmfudw9/hypersolve",
+      "excluded_live_worktree_changes": ""
+    },
+    "hypercurve": {
+      "revision": "8228394f174be2ae607694682defb167f030f540",
+      "source_repository": "/home/tim/Documents/GitHub/workspace/hypercurve",
+      "snapshot": "/tmp/hyperreal-verus-baseline-scmfudw9/hypercurve",
+      "excluded_live_worktree_changes": " M src/bezier_offset.rs\n"
+    },
+    "hypermesh": {
+      "revision": "d9db5c45a0cecc2307aa66a6f7f1b0396350e4ee",
+      "source_repository": "/home/tim/Documents/GitHub/workspace/hypermesh",
+      "snapshot": "/tmp/hyperreal-verus-baseline-scmfudw9/hypermesh",
+      "excluded_live_worktree_changes": ""
+    }
+  },
+  "pending": [
+    "Full-crate implementation, caller, dependency and completeness proofs",
+    "Supplementary baseline all-target and coverage completion",
+    "All nine Criterion suites and longer confirmation of pilot changes",
+    "Complete saved-corpus replay for remaining five fuzz targets",
+    "All downstream tests, performance guards, profiles, lint/UI/WASM infrastructure",
+    "Resolve measured performance/resource regressions according to the priority order",
+    "Final source-bound qualification of the completed implementation"
+  ],
+  "artifact_directory": "/tmp/hyperreal-verus-baseline-scmfudw9"
+}
