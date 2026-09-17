@@ -154,7 +154,15 @@
     "real_approximation_model::addition_with_guard_bits_preserves_error",
     "real_approximation_model::cache_coarsening_preserves_real_error",
     "real_approximation_model::near_integer_is_adjacent",
-    "real_approximation_model::separated_approximation_certifies_sign"
+    "real_approximation_model::separated_approximation_certifies_sign",
+    "computable_bounds::constructor_preserves_certificates",
+    "computable_bounds::separated_approximation_yields_a_bound",
+    "computable_bounds::negation_preserves_bound_denotation",
+    "computable_bounds::inverse_preserves_bound_denotation",
+    "computable_bounds::positive_root_binade",
+    "computable_bounds::square_root_preserves_bound_denotation",
+    "computable_bounds::queried_magnitude_is_a_certificate",
+    "computable_bounds::queried_sign_is_a_certificate"
   ],
   "obligations": [
     {

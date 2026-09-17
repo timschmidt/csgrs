@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies sixty-five production contracts (sixty-four
-functions and one constant) and eighty-seven arithmetic model theorems. The rest
+functions and one constant) and ninety-five arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -82,8 +82,10 @@ dependency on Verus. The annotation mechanism is described in the upstream
 The proof target also includes the production `computable/node/bounds.rs`
 directly. Nine constructor, transformation and query contracts preserve the
 typed bound state, exponent calculations and the distinction between zero and
-an unavailable exponent. They do not yet establish the denotation of the
-incoming bound or cache. Rational import, mapping callbacks, addition, square,
+an unavailable exponent. Eight denotation lemmas connect these checked contracts
+to sign, nonzero and exact real-binade certificates, conditional on valid input
+bounds. They do not yet establish the denotation of an incoming bound or cache.
+Rational import, mapping callbacks, addition, square,
 multiplication, public magnitude conversion, constants and concurrent caches
 remain outside this added boundary. Normal builds retain every operation.
 
@@ -216,9 +218,16 @@ denominators remains outside this proof boundary. The new loop form also needs
 runtime qualification against the fixed baseline; verification alone does not
 establish code-generation or performance parity.
 
-The `floor_half` contract covers the integer exponent calculation. The
-positive-root binade identity and the surrounding metadata invariants still
-need to be connected to the complete real-denotation proof.
+The `floor_half` contract covers the integer exponent calculation.
+[`bound_denotation.rs`](bound_denotation.rs) proves the positive-root binade
+identity and connects it to the actual `BoundInfo::sqrt` contract, including
+negative odd exponents. Constructor, negation and reciprocal contracts preserve
+valid sign and exact-magnitude certificates. A separated approximation yields
+a sound sign/nonzero bound, and bound queries return sound certificates.
+Each lemma names the checked production method through `call_ensures`; no
+copied implementation supplies those contracts. Inexact planning magnitudes
+have no claimed error bound here. Establishing valid inputs in the expression
+graph, rational import, cache publication and all callers remains open.
 The checked bit-length helper proves the final exponent range calculation.
 Its shared exponent specification is connected to five theorems in
 [`magnitude_model.rs`](magnitude_model.rs). Bit-length bounds and one aligned
@@ -303,11 +312,12 @@ comparisons. Its shifted target index stays in `u64` until the buffer check
 proves conversion to `usize` is safe, including on narrower targets.
 No project assumptions were added to cover these operations.
 
-`test_rejections.py` copies the production kernels and magnitude model into a
-temporary directory, first verifies the unmodified proofs, and then requires
-rejection of seventy-seven incorrect implementations, two incorrect magnitude
-definitions and an attempted assumption bypass. The model guards reject a
-reversed comparison correction and overlapping adjacent binary intervals. This guards
+`test_rejections.py` copies the checked production sources and mathematical models
+into temporary directories, first verifies the unmodified proofs, and then
+requires rejection of incorrect implementations, false mathematical claims and
+an attempted assumption bypass. The model guards reject reversed comparison
+corrections, overlapping adjacent binary intervals, invalid approximation bounds
+and false sign, reciprocal, square-root and zero certificates. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
 `num::BigRational`, so Hyperreal's own equality cannot hide an error. GCD tests
