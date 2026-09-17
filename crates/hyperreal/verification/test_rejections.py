@@ -69,6 +69,20 @@ MUTATIONS = [
     ("dyadic.rs", "    Some((minus, magnitude, reduced_shift))\n}", "    None\n}"),
     ("dyadic.rs", "    Some((minus, magnitude, reduced_shift))\n}",
      "    Some((minus, magnitude, denominator_shift))\n}"),
+    ("aggregate.rs", "maximum = maximum.max(shift);", "maximum = shift;"),
+    ("aggregate.rs", "shifts[index] = shift;", "shifts[index] = 0;"),
+    ("aggregate.rs", ".checked_add(products[index].right_shift)?",
+     ".checked_sub(products[index].right_shift)?"),
+    ("aggregate.rs", "if product.active {\n            let shift", "if !product.active {\n            let shift"),
+    ("aggregate.rs", "if product.negative {", "if !product.negative {"),
+    ("aggregate.rs", "super::accumulate::add_product(accumulator, left, product.right, shift)",
+     "super::accumulate::add_product(accumulator, left, 0, shift)"),
+    ("aggregate.rs", "super::accumulate::add_wide_product(accumulator, &left, product.right, shift)",
+     "super::accumulate::add_wide_product(accumulator, &left, 0, shift)"),
+    ("aggregate.rs", "super::dyadic::finish(positive, negative, maximum)",
+     "super::dyadic::finish(negative, positive, maximum)"),
+    ("aggregate.rs", "Some(result) => Some(result)", "Some(result) => None"),
+    ("aggregate.rs", "Some((false, zero, 0))", "Some((true, zero, 0))"),
 ]
 
 

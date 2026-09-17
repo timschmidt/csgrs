@@ -2960,30 +2960,21 @@ impl Rational {
         right: [DyadicWord; N],
         positive_terms: [bool; N],
     ) -> Option<DyadicStackSum> {
-        let denominator_shifts: [u64; N] = core::array::from_fn(|index| {
-            left[index].denominator_shift + right[index].denominator_shift
-        });
-        let max_shift = denominator_shifts.into_iter().max().unwrap_or(0);
-        let mut positive = DyadicStackAccumulator::default();
-        let mut negative = DyadicStackAccumulator::default();
-        for index in 0..N {
+        use crate::verified::aggregate::{Magnitude, Product};
+        let products = core::array::from_fn(|index| {
             let sign = (if positive_terms[index] { Plus } else { Minus })
                 * left[index].sign
                 * right[index].sign;
-            let accumulator = match sign {
-                Plus => &mut positive,
-                Minus => &mut negative,
-                NoSign => continue,
-            };
-            accumulator.add_product(
-                left[index].magnitude,
-                right[index].magnitude,
-                max_shift - denominator_shifts[index],
-            )?;
-        }
-        Some(Self::finish_dyadic_stack_sum(
-            positive, negative, max_shift,
-        ))
+            Product {
+                active: sign != NoSign,
+                negative: sign == Minus,
+                left: Magnitude::Word(left[index].magnitude),
+                right: right[index].magnitude,
+                left_shift: left[index].denominator_shift,
+                right_shift: right[index].denominator_shift,
+            }
+        });
+        Self::product_sum_stack::<N>(products)
     }
 
     #[inline]
@@ -3051,30 +3042,40 @@ impl Rational {
         right: [DyadicWord; N],
         positive_terms: [bool; N],
     ) -> Option<DyadicStackSum> {
-        let denominator_shifts: [u64; N] = core::array::from_fn(|index| {
-            left[index].denominator_shift + right[index].denominator_shift
-        });
-        let max_shift = denominator_shifts.into_iter().max().unwrap_or(0);
-        let mut positive = DyadicStackAccumulator::default();
-        let mut negative = DyadicStackAccumulator::default();
-        for index in 0..N {
+        use crate::verified::aggregate::{Magnitude, Product};
+        let products = core::array::from_fn(|index| {
             let sign = (if positive_terms[index] { Plus } else { Minus })
                 * left[index].sign
                 * right[index].sign;
-            let accumulator = match sign {
-                Plus => &mut positive,
-                Minus => &mut negative,
-                NoSign => continue,
-            };
-            accumulator.add_wide_word_product(
-                left[index].magnitude,
-                right[index].magnitude,
-                max_shift - denominator_shifts[index],
-            )?;
-        }
-        Some(Self::finish_dyadic_stack_sum(
-            positive, negative, max_shift,
-        ))
+            Product {
+                active: sign != NoSign,
+                negative: sign == Minus,
+                left: Magnitude::Wide(left[index].magnitude),
+                right: right[index].magnitude,
+                left_shift: left[index].denominator_shift,
+                right_shift: right[index].denominator_shift,
+            }
+        });
+        Self::product_sum_stack::<N>(products)
+    }
+
+    fn product_sum_stack<const N: usize>(
+        products: [crate::verified::aggregate::Product; N],
+    ) -> Option<DyadicStackSum> {
+        let (minus, magnitude, denominator_shift) =
+            crate::verified::aggregate::sum_products::<N, DYADIC_STACK_LIMBS>(&products)?;
+        let sign = if magnitude == [0; DYADIC_STACK_LIMBS] {
+            NoSign
+        } else if minus {
+            Minus
+        } else {
+            Plus
+        };
+        Some(DyadicStackSum {
+            sign,
+            magnitude: DyadicStackAccumulator(magnitude),
+            denominator_shift,
+        })
     }
 
     fn dyadic_product_alignment<const N: usize>(

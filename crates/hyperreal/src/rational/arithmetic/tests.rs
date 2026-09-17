@@ -10,6 +10,188 @@ mod tests {
         })
     }
 
+    #[test]
+    fn dyadic_product_sums_match_exact_subtotal_limits() {
+        use crate::verified::aggregate::{Magnitude, Product, sum_products};
+
+        fn check<const N: usize, const M: usize>(products: [Product; N]) {
+            let shifts: Vec<_> = products.iter().map(|p| p.left_shift + p.right_shift).collect();
+            let maximum = shifts.iter().copied().max().unwrap_or(0);
+            let mut positive = BigUint::ZERO;
+            let mut negative = BigUint::ZERO;
+            for (product, shift) in products.iter().zip(shifts) {
+                if !product.active { continue; }
+                let left = match product.left {
+                    Magnitude::Word(word) => BigUint::from(word),
+                    Magnitude::Wide(words) => limbs_to_biguint(&words),
+                };
+                let magnitude = (left * BigUint::from(product.right))
+                    << usize::try_from(maximum - shift).unwrap();
+                if product.negative { negative += magnitude; } else { positive += magnitude; }
+            }
+            let capacity = BigUint::one() << (64 * M);
+            let actual = sum_products::<N, M>(&products);
+            assert_eq!(actual.is_some(), positive < capacity && negative < capacity);
+            if let Some((minus, words, shift)) = actual {
+                let expected = num::BigRational::new(
+                    BigInt::from(positive) - BigInt::from(negative),
+                    BigInt::one() << usize::try_from(maximum).unwrap(),
+                );
+                assert_eq!(minus, expected.numer().sign() == Minus);
+                assert_eq!(&limbs_to_biguint(&words), expected.numer().magnitude());
+                assert!(shift <= maximum);
+                assert_eq!(
+                    &(BigUint::one() << usize::try_from(shift).unwrap()),
+                    expected.denom().magnitude(),
+                );
+            }
+        }
+
+        let unit = Product {
+            active: true, negative: false, left: Magnitude::Word(1), right: 1,
+            left_shift: 0, right_shift: 0,
+        };
+        check::<0, 0>([]);
+        check::<0, 6>([]);
+        check::<1, 0>([unit]);
+        check::<1, 0>([Product { right: 0, ..unit }]);
+        for shift in 0..=384 {
+            let scale = Product { active: false, left_shift: shift, ..unit };
+            check::<2, 6>([unit, scale]);
+            check::<2, 6>([Product { negative: true, ..unit }, scale]);
+            check::<3, 6>([unit, Product { negative: true, ..unit }, scale]);
+        }
+        let largest = Product { left: Magnitude::Wide([u64::MAX; 4]), right: u128::MAX, ..unit };
+        check::<1, 6>([largest]);
+        check::<2, 6>([largest, Product { negative: true, ..largest }]);
+        // The final difference fits, but its positive subtotal does not.
+        check::<3, 6>([largest, largest, Product { negative: true, ..largest }]);
+
+        let mut state = 0x9e37_79b9_7f4a_7c15_u64;
+        for case in 0..128 {
+            let mut next = || {
+                state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                state
+            };
+            let products = std::array::from_fn(|index| {
+                let left = if index % 2 == 0 {
+                    Magnitude::Word((u128::from(next()) << 64) | u128::from(next()))
+                } else {
+                    Magnitude::Wide(std::array::from_fn(|_| next()))
+                };
+                let right = match (case + index) % 6 {
+                    0 => 0,
+                    1 => 1,
+                    2 => u128::from(u64::MAX),
+                    3 => u128::from(u64::MAX) + 1,
+                    4 => u128::MAX,
+                    _ => (u128::from(next()) << 64) | u128::from(next()),
+                };
+                let range = if case % 2 == 0 { 4 } else { 129 };
+                Product {
+                    active: (case + index) % 5 != 0, negative: (case + index) % 3 == 0,
+                    left, right, left_shift: next() % range, right_shift: next() % range,
+                }
+            });
+            check::<5, 1>(products);
+            check::<5, 2>(products);
+            check::<5, 6>(products);
+            check::<5, 9>(products);
+        }
+    }
+
+    #[test]
+    fn dyadic_product_sums_preserve_both_carrier_sign_adapters() {
+        fn word(value: DyadicWord) -> num::BigRational {
+            num::BigRational::new(
+                BigInt::from_biguint(value.sign, BigUint::from(value.magnitude)),
+                BigInt::one() << usize::try_from(value.denominator_shift).unwrap(),
+            )
+        }
+        fn wide(value: DyadicWideWord) -> num::BigRational {
+            num::BigRational::new(
+                BigInt::from_biguint(value.sign, limbs_to_biguint(&value.magnitude)),
+                BigInt::one() << usize::try_from(value.denominator_shift).unwrap(),
+            )
+        }
+        fn check(actual: DyadicStackSum, expected: num::BigRational) {
+            assert_eq!(actual.sign, expected.numer().sign());
+            assert_eq!(&limbs_to_biguint(&actual.magnitude.0), expected.numer().magnitude());
+            assert!(actual.denominator_shift <= 6);
+            assert_eq!(
+                &(BigUint::one() << usize::try_from(actual.denominator_shift).unwrap()),
+                expected.denom().magnitude(),
+            );
+        }
+        let mut state = 0x6a09_e667_f3bc_c909_u64;
+        for case in 0..128 {
+            let mut next = || {
+                state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                state
+            };
+            let left: [_; 3] = std::array::from_fn(|index| {
+                let sign = [Minus, NoSign, Plus][(case + index) % 3];
+                let magnitude = (u128::from(next()) << 64) | u128::from(next());
+                DyadicWord { sign, magnitude: if sign == NoSign { 0 } else { magnitude }, denominator_shift: next() % 4 }
+            });
+            let right: [_; 3] = std::array::from_fn(|index| {
+                let sign = [Minus, NoSign, Plus][(case / 3 + index) % 3];
+                let magnitude = (u128::from(next()) << 64) | u128::from(next());
+                DyadicWord { sign, magnitude: if sign == NoSign { 0 } else { magnitude }, denominator_shift: next() % 4 }
+            });
+            let left_wide = std::array::from_fn(|index| DyadicWideWord {
+                sign: left[index].sign,
+                magnitude: std::array::from_fn(|_| if left[index].sign == NoSign { 0 } else { next() }),
+                denominator_shift: left[index].denominator_shift,
+            });
+            let right_wide = right.map(|value| DyadicWord {
+                magnitude: value.magnitude & ((1_u128 << 80) - 1), ..value
+            });
+            let positive_terms = std::array::from_fn(|index| case & (1 << index) == 0);
+            let mut expected = num::BigRational::zero();
+            let mut expected_wide = num::BigRational::zero();
+            for index in 0..3 {
+                let term = word(left[index]) * word(right[index]);
+                let term_wide = wide(left_wide[index]) * word(right_wide[index]);
+                if positive_terms[index] {
+                    expected += term;
+                    expected_wide += term_wide;
+                } else {
+                    expected -= term;
+                    expected_wide -= term_wide;
+                }
+            }
+            check(Rational::product_sum_dyadic_words(left, right, positive_terms).unwrap(), expected);
+            check(Rational::product_sum_wide_narrow_words(left_wide, right_wide, positive_terms).unwrap(), expected_wide);
+        }
+    }
+
+    #[test]
+    fn dyadic_product_sums_check_maximal_exponent_metadata() {
+        use crate::verified::aggregate::{Magnitude, Product, sum_products};
+        let unit = Product {
+            active: true, negative: false, left: Magnitude::Word(1), right: 1,
+            left_shift: u64::MAX, right_shift: 0,
+        };
+        assert_eq!(sum_products::<1, 1>(&[unit]), Some((false, [1], u64::MAX)));
+        assert_eq!(sum_products::<2, 1>(&[unit, Product { negative: true, ..unit }]), Some((false, [0], 0)));
+        for active in [false, true] {
+            assert_eq!(sum_products::<1, 1>(&[Product { active, right_shift: 1, ..unit }]), None);
+        }
+        assert_eq!(sum_products::<2, 1>(&[
+            Product { left_shift: 0, right: 0, ..unit }, unit,
+        ]), Some((false, [1], u64::MAX)));
+        assert_eq!(sum_products::<2, 1>(&[
+            Product { left_shift: 0, ..unit }, Product { active: false, ..unit },
+        ]), None);
+
+        let left = DyadicWord { sign: Plus, magnitude: 1, denominator_shift: u64::MAX };
+        let wide = DyadicWideWord { sign: Plus, magnitude: [1, 0, 0, 0], denominator_shift: u64::MAX };
+        let right = DyadicWord { sign: Plus, magnitude: 1, denominator_shift: 1 };
+        assert!(Rational::product_sum_dyadic_words([left], [right], [true]).is_none());
+        assert!(Rational::product_sum_wide_narrow_words([wide], [right], [true]).is_none());
+    }
+
     fn assert_f64_enclosure_contains(value: &Rational) {
         let [lower, upper] = value.to_f64_enclosure().unwrap();
         assert!(lower.is_finite());
