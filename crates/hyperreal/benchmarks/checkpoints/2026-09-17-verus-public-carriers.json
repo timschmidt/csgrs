@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "status": "public_carrier_contract_milestone_not_complete",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "4a162ede6c97f0fbe2f3f5cca0dad147e6b5e08c",
+  "runtime_reference": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "verification": {
+    "units": 540,
+    "executable_contracts": 87,
+    "functions": 79,
+    "constants": 8,
+    "model_theorems": 99,
+    "source_hashes": 129,
+    "source_hashes_match_commit": true,
+    "no_cheating": true,
+    "entire_proof_target": true,
+    "open_obligation_groups": 13
+  },
+  "new_contracts": {
+    "certificate_accessors": 6,
+    "mask_operations": 5,
+    "mask_constants": 7,
+    "constant_symbols": "The pinned verifier reports the seven associated constants under structural::impl&%3. The source-bound scope inventory checks these exact symbols."
+  },
+  "negative_guards": {
+    "new_public_carrier_mutations_rejected": 21,
+    "acceptance_and_dependency_identity_tests": 10,
+    "reused_guards": [
+      {
+        "count": 85,
+        "artifact": "benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json"
+      },
+      {
+        "count": 25,
+        "artifact": "benchmarks/checkpoints/2026-09-17-verus-bound-mapping.json"
+      },
+      {
+        "count": 13,
+        "artifact": "benchmarks/checkpoints/2026-09-17-verus-cache-codecs.json"
+      }
+    ],
+    "note": "The prior guarded inputs are unchanged. No fresh combined 144-mutation or assumption-bypass run is claimed."
+  },
+  "ordinary_runtime": {
+    "byte_identical_expansion_to_runtime_reference": true,
+    "expanded_sha256": "ad33a1bc262c820ffee036dee9152bf7d8675f842f661aa964dbfb9317671d83",
+    "lines": 36100,
+    "checks": [
+      {
+        "label": "candidate",
+        "step": "clippy-all",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 6.964267015457153
+      },
+      {
+        "label": "candidate",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 0.3129711151123047
+      }
+    ],
+    "format_check": "cargo fmt --all -- --check passed",
+    "note": "The actual public method bodies, constant initializers and private field visibility are unchanged. Initial and final annotations erase to the same ordinary Rust as cdc6d3a."
+  },
+  "experiments": [
+    "Publishing a default spec constant exposed a private constructor and failed verification. A direct closed attribute was not supported in that position; neither attempt was accepted.",
+    "Executable constant contracts preserve private representation and verify the exact fixed bit-shift expressions. A redundant proof-only constant reader was removed because exec constants cannot be read in that proof context.",
+    "Decimal constant postconditions required bit-vector reasoning; the final contracts use equivalent exact fixed-bit expressions without changing runtime initializers.",
+    "The first successful 540-unit Verus run was rejected by the inventory gate because associated constants have internal impl symbols. The final inventory matches the pinned verifier output; no gate exception was added."
+  ],
+  "limits": [
+    "Accessors preserve every known answer and unknown state; the mathematical soundness of the certificate-producing algorithms remains open.",
+    "Dependency masks support every u16, including bits outside the named families. These contracts do not prove correctness of dependency classification or scheduling callers.",
+    "The public/private sign conversion adapters and BoundInfo magnitude export remain separate obligations, as do unchecked generated trait implementations.",
+    "All thirteen whole-implementation proof groups and baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-public-carriers.tar.gz",
+    "bytes": 865339,
+    "files": 228,
+    "sha256": "d537a5d5858176e4752c7a87b5d57bc97e17ff8405ea5d05be6c1124e01dc646"
+  }
+}
