@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from verify_verus import ROOT, verifier  # noqa: E402
 
 
-MODEL_FILES = {"magnitude_model.rs", "integer_approximation_model.rs"}
+MODEL_FILES = {"magnitude_model.rs", "integer_approximation_model.rs", "real_approximation_model.rs"}
 
 
 MUTATIONS = [
@@ -120,6 +120,10 @@ MUTATIONS = [
     ("aggregate.rs", "Some(super::dyadic::normalize_word(negative, magnitude, maximum))", "None"),
     ("aggregate.rs", "Some(super::dyadic::normalize_word(negative, magnitude, maximum))",
      "Some(super::dyadic::normalize_word(negative, magnitude, 0))"),
+    ("real_approximation_model.rs", "|| rounded_after_shift(approximation, 1) == -(-value).floor()",
+     "&& rounded_after_shift(approximation, 1) == -(-value).floor()"),
+    ("real_approximation_model.rs", "ensures approximation > 1 ==> value > 0real,",
+     "ensures approximation >= 1 ==> value > 0real,"),
     ("integer_approximation_model.rs", "(value / pow2(preliminary_bits) as int + 1) / 2",
      "(value / pow2(preliminary_bits) as int - 1) / 2"),
     ("integer_approximation_model.rs", "requires denominator > 0, gap > 0,",
@@ -146,7 +150,7 @@ def main():
             if originals[name].count(before) != 1:
                 sys.exit(f"Mutation no longer uniquely matches {name}: {before}")
         (root / "lib.rs").write_text(
-            "#![feature(proc_macro_hygiene)]\nmod verified;\nmod magnitude_model;\nmod integer_approximation_model;\n")
+            "#![feature(proc_macro_hygiene)]\nmod verified;\nmod magnitude_model;\nmod integer_approximation_model;\nmod real_approximation_model;\n")
         command = [str(verus), "--edition=2024", "--crate-type=lib", "--no-cheating", str(root / "lib.rs")]
         baseline = subprocess.run(command, capture_output=True, text=True)
         if baseline.returncode:

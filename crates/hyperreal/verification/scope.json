@@ -136,7 +136,16 @@
     "bit_length_model::bit_lengths_determine_order",
     "integer_approximation_model::rounded_shift_error",
     "integer_approximation_model::precision_plan_is_nearest",
-    "integer_approximation_model::cache_coarsening_preserves_unit_error"
+    "integer_approximation_model::cache_coarsening_preserves_unit_error",
+    "real_approximation_model::binary_unit_positive",
+    "real_approximation_model::binary_unit_composes",
+    "real_approximation_model::integer_plan_denotes_real",
+    "real_approximation_model::negation_preserves_error",
+    "real_approximation_model::binary_offset_preserves_error",
+    "real_approximation_model::addition_with_guard_bits_preserves_error",
+    "real_approximation_model::cache_coarsening_preserves_real_error",
+    "real_approximation_model::near_integer_is_adjacent",
+    "real_approximation_model::separated_approximation_certifies_sign"
   ],
   "obligations": [
     {
