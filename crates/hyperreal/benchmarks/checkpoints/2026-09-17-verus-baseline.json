@@ -2756,6 +2756,13 @@
       "source_repository": "/home/tim/Documents/GitHub/workspace/hypermesh",
       "snapshot": "/tmp/hyperreal-verus-baseline-scmfudw9/hypermesh",
       "excluded_live_worktree_changes": ""
+    },
+    "hypergraphics": {
+      "revision": "75219dede7a2387ab30c84664b1293ec71d736d2",
+      "source_repository": "/home/tim/Documents/GitHub/workspace/hypergraphics",
+      "snapshot": "/tmp/hyperreal-verus-baseline-scmfudw9/hypergraphics",
+      "excluded_live_worktree_changes": "",
+      "purpose": "Hypermesh UI dependency"
     }
   },
   "pending": [
@@ -12267,5 +12274,169 @@
       "baseline/hyperlattice/tests-all"
     ],
     "baseline_retry": "pending after current consumer driver releases the checkout and target"
+  },
+  "representation_diagnostics": {
+    "status": "investigation_not_timing_acceptance",
+    "probe_source_sha256": "ada1051b3ac285cc1b19e2a8090e3ace0bb32b38fab87ba234aaa08b82dde67d",
+    "builds": [
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "command": [
+          "cargo",
+          "build",
+          "--offline",
+          "--release",
+          "--message-format=json"
+        ],
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/probe-target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "2"
+        },
+        "seconds": 12.505177021026611,
+        "exit_code": 0,
+        "binary_sha256": "1d619a02f88457162fa59cb16a82552a590ed7cfb5ab3680e6954c982a087cb7"
+      },
+      {
+        "label": "candidate",
+        "revision": "598f05944573133ae98e6c444fd9c26797ef49a2",
+        "command": [
+          "cargo",
+          "build",
+          "--offline",
+          "--release",
+          "--message-format=json"
+        ],
+        "environment": {
+          "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/probe-target",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+          "CARGO_BUILD_JOBS": "2"
+        },
+        "seconds": 9.957879781723022,
+        "exit_code": 0,
+        "binary_sha256": "37c96c88b29b10b1258991bcc2300050c7a2decea3009439a1078054c74493da"
+      }
+    ],
+    "instruction_comparisons": [
+      {
+        "case": "pi_pow_clone",
+        "total_instructions": {
+          "baseline": {
+            "1000": 1561482,
+            "10000": 11893523
+          },
+          "candidate": {
+            "1000": 1561418,
+            "10000": 11893459
+          }
+        },
+        "additional_instructions_per_iteration_including_loop": {
+          "baseline": 1148.0045555555555,
+          "candidate": 1148.0045555555555
+        },
+        "same_instruction_slope": true
+      },
+      {
+        "case": "pi_clone",
+        "total_instructions": {
+          "baseline": {
+            "1000": 807645,
+            "10000": 4380686
+          },
+          "candidate": {
+            "1000": 807573,
+            "10000": 4380614
+          }
+        },
+        "additional_instructions_per_iteration_including_loop": {
+          "baseline": 397.00455555555556,
+          "candidate": 397.00455555555556
+        },
+        "same_instruction_slope": true
+      },
+      {
+        "case": "tan_pi_cached",
+        "total_instructions": {
+          "baseline": {
+            "1000": 679692,
+            "10000": 904729
+          },
+          "candidate": {
+            "1000": 679625,
+            "10000": 904662
+          }
+        },
+        "additional_instructions_per_iteration_including_loop": {
+          "baseline": 25.00411111111111,
+          "candidate": 25.00411111111111
+        },
+        "same_instruction_slope": true
+      }
+    ],
+    "assembly_inspection": [
+      {
+        "baseline_symbol": "000000000015b200 <hyperreal::real::arithmetic::Real as core::clone::Clone>::clone",
+        "candidate_symbol": "000000000015c340 <hyperreal::real::arithmetic::Real as core::clone::Clone>::clone",
+        "same_after_address_normalization": true,
+        "baseline_lines": 134,
+        "candidate_lines": 134
+      },
+      {
+        "baseline_symbol": "000000000024cf00 <hyperreal::real::arithmetic::Class>::computable_certificate",
+        "candidate_symbol": "000000000024cb90 <hyperreal::real::arithmetic::Class>::computable_certificate",
+        "same_after_address_normalization": false,
+        "baseline_lines": 756,
+        "candidate_lines": 756
+      },
+      {
+        "baseline_symbol": "000000000024e4d0 <hyperreal::real::arithmetic::Real>::to_f64_lossy_uncached",
+        "candidate_symbol": "000000000024e160 <hyperreal::real::arithmetic::Real>::to_f64_lossy_uncached",
+        "same_after_address_normalization": false,
+        "baseline_lines": 455,
+        "candidate_lines": 455
+      },
+      {
+        "baseline_symbol": "000000000025b5d0 <hyperreal::real::arithmetic::Real as core::clone::Clone>::clone",
+        "candidate_symbol": "000000000025b260 <hyperreal::real::arithmetic::Real as core::clone::Clone>::clone",
+        "same_after_address_normalization": true,
+        "baseline_lines": 106,
+        "candidate_lines": 106
+      },
+      {
+        "baseline_symbol": "00000000002bf580 <hyperreal::real::arithmetic::Real as core::clone::Clone>::clone",
+        "candidate_symbol": "00000000002bf210 <hyperreal::real::arithmetic::Real as core::clone::Clone>::clone",
+        "same_after_address_normalization": true,
+        "baseline_lines": 202,
+        "candidate_lines": 202
+      }
+    ],
+    "artifact": {
+      "path": "benchmarks/checkpoints/2026-09-17-verus-representation-diagnostics.tar.gz",
+      "bytes": 326761,
+      "sha256": "afe9d4d20f7462a48613c1d68b592862ffb28c395fc0d503dc4cd6a9ea004572"
+    },
+    "interpretation": "Three inspected Real::clone instruction sequences match after normalizing addresses; this does not establish identity of the entire called graph or machine layout. An auxiliary executable using the same public constructors has identical instruction-count slopes for 1000 versus 10000 clones/exports on both revisions. These count profiles were separate from native timing. Initial startup instruction totals differ by 64 to 72 instructions. Native benchmark slowdowns remain unresolved; equal counts do not establish equal cycle cost."
+  },
+  "consumer_second_interruption": {
+    "label": "baseline",
+    "step": "tests-all-remaining",
+    "consumer": "hypercurve",
+    "outcome": "interrupted_after_two_further_cases_exceeded_60_seconds",
+    "timestamp": 1789633209.5352652,
+    "not_counted_as_pass": true,
+    "slow_tests": [
+      "bezier_region::tests::pair_native_boolean_algebraic_chord_corner_publishes_a_third_generation_fillet",
+      "bezier_region::tests::selected_circle_and_analytic_parallel_extend_on_full_supports"
+    ],
+    "stdout": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/consumers/hypercurve/tests-all-remaining.stdout",
+    "stderr": "/tmp/hyperreal-verus-baseline-scmfudw9/baseline/consumers/hypercurve/tests-all-remaining.stderr",
+    "next_action": "Retry remaining tests excluding all four observed long-running cases, then isolate each with a 120-second limit on both revisions."
   }
 }

@@ -68,12 +68,22 @@ Qualification is **pending**, and the full Verus proof is **incomplete**.
 The [initial comparison checkpoint](../benchmarks/checkpoints/2026-09-17-verus-baseline.json)
 records the native-dyadic candidate `598f059`, three alternating pilot pairs,
 the complete local candidate validation matrix, allocation/heap/stack profiles,
-dispatch traces, native/WASM sizes and source counts. The
+dispatch traces, native/WASM sizes and source counts. The complete nine-suite
+screen measured 1,449 matching cases; longer alternating repeats include
+four pairs with identical executable and output paths. The
 [compressed raw pilot samples](../benchmarks/checkpoints/2026-09-17-verus-baseline-pilot.json.gz)
+and the [complete screen](../benchmarks/checkpoints/2026-09-17-verus-screen.json.gz),
+[longer repeats](../benchmarks/checkpoints/2026-09-17-verus-confirmations.json.gz)
+and [matched-path repeats](../benchmarks/checkpoints/2026-09-17-verus-matched-confirmations.json.gz)
 are retained with the checkpoint. Short timing runs identify follow-up cases;
-they do not establish parity. The checkpoint explicitly retains the baseline
-API-inventory failure and the inherited fuzz precision-budget defect corrected
-in `add6365`. Wider benchmarking and downstream qualification remain open.
+they do not establish parity. A persistent `pi_pow` cloning slowdown, unstable
+cached conversion measurements and other screen flags remain unresolved.
+The checkpoint explicitly retains the baseline API-inventory failure,
+supplementary baseline validation with only that test classification repaired,
+and the inherited fuzz precision-budget defect corrected in `add6365`.
+All six saved fuzz corpora pass with the corrected harness on both revisions;
+the frozen inputs are retained. Downstream qualification and final repeated
+performance comparisons remain open.
 
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The proof completion
