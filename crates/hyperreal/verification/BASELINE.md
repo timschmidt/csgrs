@@ -504,6 +504,34 @@ and successful documented script invocation are both retained. Callers,
 certificate producers, all thirteen broader proof groups and baseline
 acceptance remain incomplete.
 
+The [deep consumer comparison](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-deep.json)
+records all 256 Hypertri feature checks and all 256 feature test configurations
+passing on both revisions. The initial baseline test run exhausted the per-user
+temporary-filesystem quota at configuration 125; its partial output and isolated
+checkout recovery are retained separately from the complete rerun.
+
+Hyperlimit production coverage is 10,797/10,849 baseline and 10,798/10,849
+candidate. Hyperlattice coverage fails on the same Symbolica instance conflict
+on both revisions. Hypertri baseline coverage passes at 6,271/6,600; candidate
+coverage fails the unchanged 95% gate at 6,268/6,600. The three missing lines
+count unknown edge zero-status results. An isolated replay of all 22 frozen
+representation fixtures identifies `ConstProductSqrt`: the baseline reports
+four unknown edges, while the candidate correctly recognizes all four as
+axis-aligned. All other summaries agree, and an independent sine triangle
+still exercises unknown outcomes. This explains the coverage change without
+relabeling the failed gate as a pass.
+
+Both Hypersolve coverage runs stop at the same stale representation assertion.
+Paired isolated checks return `(2 - alpha)/7` with denominator one for
+`1/(4 + 2 alpha)`, where `alpha^2 = 1/2`. Independent exact rational arithmetic
+confirms equivalence with the fixture's `(1/2)/(2 + alpha)`. The original
+failures remain recorded; supplemental fixture qualification is separate.
+All ten dispatch-trace commands exit successfully, with 47 paired stdout
+summaries. Hyperlattice executes its four trace assertions but suppresses the
+report, leaving a separate count capture outstanding. Live Hypercurve remains
+untouched; its long-case partition, native comparisons and final acceptance
+are still pending at this checkpoint.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
