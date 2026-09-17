@@ -959,17 +959,16 @@ impl Real {
             None => ZeroKnowledge::Unknown,
         };
 
-        let magnitude = match (self.rational.msd_exact(), computable.magnitude) {
-            (Some(rational_msd), Some(magnitude)) => Some(MagnitudeBits {
-                msd: rational_msd + magnitude.msd,
-                // Adding binade indices is exact only when the outer scale is
-                // itself a power of two. General rational significands can
-                // carry the product into the next binade.
-                exact_msd: magnitude.exact_msd
-                    && self.rational.power_of_two_shift().is_some(),
-            }),
-            _ => computable.magnitude,
-        };
+        let magnitude = computable.magnitude.and_then(|magnitude| {
+            self.rational.msd_exact_with_offset(magnitude.msd).map(|(msd, power_of_two)| {
+                MagnitudeBits {
+                    msd,
+                    // Adding binade indices is exact only when the outer scale
+                    // is itself a power of two; general significands can carry.
+                    exact_msd: magnitude.exact_msd && power_of_two,
+                }
+            })
+        });
 
         RealStructuralFacts {
             sign,

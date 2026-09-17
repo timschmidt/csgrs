@@ -296,31 +296,35 @@ impl Rational {
         compare_shifted_biguints(left, shift, right, 0)
     }
 
+    #[inline]
     pub(crate) fn msd_exact(&self) -> Option<i32> {
-        // Exact binary magnitude from bit lengths only. This is used by Real
-        // and Computable structural queries to avoid an approximation just to
-        // choose working precision.
+        self.msd_exact_with_offset(0).map(|(msd, _)| msd)
+    }
+
+    /// Exact binary magnitude plus an offset, and a power-of-two certificate.
+    /// Keep bit lengths and alignment shifts wide until the final range check.
+    /// The same comparison determines whether the absolute scale is binary,
+    /// including when the stored numerator and denominator are unreduced.
+    #[inline]
+    pub(crate) fn msd_exact_with_offset(&self, offset: i32) -> Option<(i32, bool)> {
         if self.sign == NoSign {
             return None;
         }
-
-        let numerator_bits = self.numerator.bits() as i32;
-        let denominator_bits = self.denominator.bits() as i32;
-        let candidate = numerator_bits - denominator_bits;
-
-        let below = if candidate >= 0 {
-            Self::compare_shifted_to(&self.denominator, candidate as u64, &self.numerator)
-                == Ordering::Greater
+        let numerator_bits = self.numerator.bits();
+        let denominator_bits = self.denominator.bits();
+        let ordering = if numerator_bits >= denominator_bits {
+            Self::compare_shifted_to(
+                &self.denominator, numerator_bits - denominator_bits, &self.numerator,
+            ).reverse()
         } else {
-            Self::compare_shifted_to(&self.numerator, candidate.unsigned_abs() as u64, &self.denominator)
-                == Ordering::Less
+            Self::compare_shifted_to(
+                &self.numerator, denominator_bits - numerator_bits, &self.denominator,
+            )
         };
-
-        if below {
-            Some(candidate - 1)
-        } else {
-            Some(candidate)
-        }
+        let msd = crate::verified::word::checked_bit_length_msd(
+            numerator_bits, denominator_bits, ordering == Ordering::Less, offset,
+        )?;
+        Some((msd, ordering == Ordering::Equal))
     }
 
     #[inline]
