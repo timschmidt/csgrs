@@ -15572,7 +15572,7 @@ fn classify_algebraic_point_against_retained_loop_with_cusps(
                     algebraic_point_on_rational_fragment(fragment, point, policy)?
                 }
                 AlgebraicRayRetainedFragment2::AnalyticParallel(fragment) => {
-                    fragment.contains_point(point, policy)?
+                    fragment.contains_point(point, None, policy)?
                 }
                 AlgebraicRayRetainedFragment2::AlgebraicChord(fragment) => {
                     fragment.contains_algebraic_point(point, policy)?
@@ -27462,7 +27462,7 @@ mod tests {
                 panic!("the mixed loop must retain analytic and rational evaluators");
             };
             assert_eq!(
-                analytic.contains_point(&query, &policy).unwrap(),
+                analytic.contains_point(&query, None, &policy).unwrap(),
                 Classification::Decided(false),
             );
             assert_eq!(
@@ -27701,7 +27701,7 @@ mod tests {
                 panic!("the genuine-parallel algebraic ray must construct");
             };
             assert_eq!(
-                evaluator.contains_point(&query, &policy).unwrap(),
+                evaluator.contains_point(&query, None, &policy).unwrap(),
                 Classification::Decided(true),
             );
             assert_eq!(

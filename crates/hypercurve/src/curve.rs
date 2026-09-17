@@ -6528,7 +6528,15 @@ fn fillet_offset_centers(
             } else {
                 previous_family
             };
-            if point_on_fillet_offset(point, other, other_family, policy)? {
+            let other_is_previous = !matches!(previous, FilletOffsetCarrier2::Point { .. });
+            if point_on_fillet_offset(
+                point,
+                other,
+                other_is_previous,
+                domains[usize::from(!other_is_previous)],
+                other_family,
+                policy,
+            )? {
                 // The center is isolated, but tangency on the collapsed source
                 // offset is not. Do not manufacture one contact from a
                 // continuum of equally valid source-circle contacts.
@@ -9551,6 +9559,8 @@ fn fillet_offset_centers(
 fn point_on_fillet_offset(
     point: &CurvePoint2,
     support: &FilletOffsetCarrier2<'_, '_>,
+    previous: bool,
+    domain: FilletContactDomain2,
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<bool> {
@@ -9623,13 +9633,25 @@ fn point_on_fillet_offset(
                 })?;
             decided(side.map(|side| side == LineSide::On))
         }
-        FilletOffsetCarrier2::Parallel { support, .. } => decided(
-            support
-                .contains_point_evidence(point, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                })?,
-        ),
+        FilletOffsetCarrier2::Parallel { source, support } => {
+            let incident = if domain.mode() == CurveCornerMode2::TrimOrExtend {
+                Some(source.incident_domain(support, previous, family, policy)?)
+            } else {
+                None
+            };
+            decided(
+                support
+                    .contains_point_evidence(
+                        point,
+                        &source.curve_parameter_range(),
+                        incident.as_ref(),
+                        policy,
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })?,
+            )
+        }
         FilletOffsetCarrier2::AlgebraicChord { support, .. } => decided(
             support
                 .contains_point_evidence(point, policy)
