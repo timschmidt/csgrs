@@ -11958,6 +11958,87 @@ impl CurveRegion2 {
         resolve_certified_operation(policy, |attempt| self.boundary_profiles_raw(attempt))
     }
 
+    /// Returns each regularized material exterior with its owned holes.
+    ///
+    /// Islands inside holes become separate components. Components may touch
+    /// at isolated boundary points. Each result has its material loop first,
+    /// followed by its holes, and every boundary has material on its left.
+    /// Selected curves and certified connectivity are retained directly;
+    /// decomposition does not reconstruct endpoints or intersect the boundary
+    /// again after normalization and exact hole ownership have been decided.
+    pub fn material_components(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Vec<Self>>> {
+        resolve_certified_operation(policy, |attempt| {
+            let normalized = self
+                .regularized_region_raw(attempt)
+                .map_err(|error| error.with_operation(CurveOperation2::Construction))?;
+            let profiles = match normalized
+                .boundary_profiles_raw(attempt)
+                .map_err(curve_region_promotion_error)?
+            {
+                Classification::Decided(profiles) => profiles,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Construction,
+                        CurveFamily2::RationalBezier,
+                        reason,
+                    ));
+                }
+            };
+            if profiles.len() == 1
+                && profiles[0].material_loop_index == 0
+                && profiles[0]
+                    .hole_loop_indices
+                    .iter()
+                    .copied()
+                    .eq(1..normalized.len())
+            {
+                return Ok(vec![normalized]);
+            }
+            let retained_policy = attempt.retained_object_policy_with_dependencies(
+                normalized.data.regularized_filled_left_policy,
+            );
+            Ok(profiles
+                .into_iter()
+                .map(|profile| {
+                    let indices = std::iter::once(profile.material_loop_index)
+                        .chain(profile.hole_loop_indices.iter().copied());
+                    let fill_rules = normalized.loop_fill_rules().map(|rules| {
+                        indices
+                            .clone()
+                            .map(|index| rules[index])
+                            .collect::<Arc<[_]>>()
+                    });
+                    let boundaries = indices
+                        .map(|index| normalized.data.boundary_loops[index].clone())
+                        .collect::<Vec<_>>();
+                    let loop_count = boundaries.len();
+                    let mut data = CurveRegionData2::new(boundaries);
+                    data.certified_loop_roles = Some(
+                        std::iter::once(CurveRegionLoopRole::Material)
+                            .chain(std::iter::repeat_n(
+                                CurveRegionLoopRole::Hole,
+                                loop_count - 1,
+                            ))
+                            .collect(),
+                    );
+                    data.certified_loop_fill_rules = fill_rules;
+                    // Removing other complete material components preserves
+                    // this component's regularized boundary. Ownership and
+                    // the source normalization remain decision dependencies.
+                    data.regularized_filled_left_policy = Some(retained_policy);
+                    data.filled_side_is_left
+                        .certify(Arc::from(vec![true; loop_count]));
+                    Self {
+                        data: Arc::new(data),
+                    }
+                })
+                .collect())
+        })
+    }
+
     pub(crate) fn boundary_profiles_raw(
         &self,
         policy: &CurveContext,
@@ -18656,6 +18737,35 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    #[test]
+    fn material_component_reentry_shares_single_region_evidence() {
+        let vertices = [p(0, 0), p(4, 0), p(4, 4), p(0, 4)];
+        let path = CurvePath2::try_new(
+            (0..4)
+                .map(|i| {
+                    LineSeg2::try_new(vertices[i].clone(), vertices[(i + 1) % 4].clone())
+                        .unwrap()
+                        .into()
+                })
+                .collect(),
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let region =
+                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+                    .unwrap()
+                    .into_value();
+            let mut current = region.clone();
+            for _ in 0..16 {
+                let outcome = current.material_components(&policy).unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                assert_eq!(outcome.value.len(), 1);
+                current = outcome.into_value().pop().unwrap();
+                assert!(Arc::ptr_eq(&region.data, &current.data));
+            }
+        }
     }
 
     #[test]

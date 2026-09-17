@@ -1478,5 +1478,158 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
             .unwrap();
         assert_eq!(xor.certainty, CurveCertainty::Certified);
         assert!(xor.into_value().is_empty());
+        let translated = region
+            .transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &r(6),
+                &Real::zero(),
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        let union = region
+            .boolean_region(&translated, hypercurve::BooleanOp::Union, &policy)
+            .unwrap()
+            .into_value();
+        let components = union.material_components(&policy).unwrap();
+        assert_eq!(components.certainty, CurveCertainty::Certified);
+        assert_eq!(components.value.len(), 2);
+        for component in components.into_value() {
+            assert!(component.has_algebraic_fragments());
+            let replay = component.regularized_region(&policy).unwrap();
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.into_value(), component);
+        }
+    }
+}
+
+#[test]
+fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
+    fn square(a: i32, b: i32) -> hypercurve::CurvePath2 {
+        let points = [p(a, a), p(b, a), p(b, b), p(a, b)];
+        hypercurve::CurvePath2::try_new(
+            (0..4)
+                .map(|i| {
+                    hypercurve::LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone())
+                        .unwrap()
+                        .into()
+                })
+                .collect(),
+        )
+        .unwrap()
+    }
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let paths = [
+            square(4, 12),
+            square(6, 10),
+            square(0, 16),
+            square(2, 14),
+            square(20, 24),
+        ];
+        let region = CurveRegion2::try_from_boundary_paths(&paths, &policy)
+            .unwrap()
+            .into_value();
+        let outcome = region.material_components(&policy).unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let components = outcome.into_value();
+        assert_eq!(components.len(), 3);
+        let interior_samples = [
+            (p(1, 8), r(112), 2),
+            (p(5, 8), r(48), 2),
+            (p(22, 22), r(16), 1),
+        ];
+        for (point, expected_area, expected_loops) in interior_samples {
+            let owners = components
+                .iter()
+                .filter(|component| {
+                    decided(component.classify_point(&point, &policy).unwrap())
+                        == RegionPointLocation::Inside
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(owners.len(), 1);
+            let component = owners[0];
+            assert_eq!(component.len(), expected_loops);
+            assert_eq!(
+                decided(component.signed_area(&policy).unwrap()),
+                Some(expected_area)
+            );
+            let roles = decided(component.loop_roles(&policy).unwrap());
+            assert_eq!(roles[0], CurveRegionLoopRole::Material);
+            assert!(
+                roles[1..]
+                    .iter()
+                    .all(|role| *role == CurveRegionLoopRole::Hole)
+            );
+            assert!(
+                decided(component.filled_side_is_left(&policy).unwrap())
+                    .iter()
+                    .all(|left| *left)
+            );
+            assert_eq!(
+                component.material_components(&policy).unwrap().into_value(),
+                vec![component.clone()]
+            );
+        }
+        for point in [p(3, 8), p(8, 8), p(18, 18)] {
+            for component in &components {
+                assert_eq!(
+                    decided(component.classify_point(&point, &policy).unwrap()),
+                    RegionPointLocation::Outside
+                );
+            }
+        }
+        let mut recomposed = CurveRegion2::empty();
+        for (i, component) in components.iter().enumerate() {
+            for other in &components[i + 1..] {
+                assert!(
+                    component
+                        .boolean_region(other, hypercurve::BooleanOp::Intersection, &policy)
+                        .unwrap()
+                        .into_value()
+                        .is_empty()
+                );
+            }
+            recomposed = recomposed
+                .boolean_region(component, hypercurve::BooleanOp::Union, &policy)
+                .unwrap()
+                .into_value();
+        }
+        assert!(
+            region
+                .boolean_region(&recomposed, hypercurve::BooleanOp::Xor, &policy)
+                .unwrap()
+                .into_value()
+                .is_empty()
+        );
+        assert!(
+            CurveRegion2::empty()
+                .material_components(&policy)
+                .unwrap()
+                .into_value()
+                .is_empty()
+        );
+
+        // During the raw-constructor migration, decomposition still has to
+        // normalize any authored loops it receives before assigning ownership.
+        let authored = CurveRegion2::try_new_with_loop_topology(
+            vec![
+                retained_line_loop(&[p(0, 0), p(8, 0), p(8, 8), p(0, 8)]),
+                retained_line_loop(&[p(2, 2), p(6, 2), p(6, 6), p(2, 6)]),
+            ],
+            vec![CurveRegionLoopRole::Material; 2],
+            vec![hypercurve::FillRule::NonZero; 2],
+            vec![hypercurve::CurveBoundaryInteriorSide2::Left; 2],
+        )
+        .unwrap();
+        let components = authored.material_components(&policy).unwrap().into_value();
+        assert_eq!(components.len(), 1);
+        assert_eq!(components[0].len(), 1);
+        assert_eq!(
+            decided(components[0].classify_point(&p(2, 4), &policy).unwrap()),
+            RegionPointLocation::Inside
+        );
     }
 }
