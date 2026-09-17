@@ -620,3 +620,29 @@ a rationale and evidence references. These checks enforce the record's identity
 and completeness; interpreting measurements and resolving regressions still
 requires the audits above. Proof coverage itself is not an improvement in the
 baseline's supported behavior and cannot justify a runtime regression.
+
+The [asymmetric product proof](../benchmarks/checkpoints/2026-09-17-verus-asymmetric-product.json)
+is bound to `6124684`: 604 verification units, 94 production contracts and
+117 model theorems pass with `--no-cheating`. Five new conditional real-error
+lemmas cover signed scaling, cached bit-length upper bounds, asymmetric
+multiplication with three guard bits and its zero shortcut. Seven new mutation
+checks and the assumption-bypass control reject faults; ten acceptance and
+dependency-identity tests pass. The failed guard preparations are retained,
+including resource limits that were not accepted as mathematical rejections.
+All production, manifest and lockfile bytes still match `c61d6d8`. These
+models do not verify the graph, BigInt operations, machine precision arithmetic
+or all comparison separation conditions; thirteen obligation groups remain open.
+
+The [current consumer matrix](../benchmarks/checkpoints/2026-09-17-verus-consumer-bound-matrix.json)
+records all 41 ordinary benchmark builds, five release suites, 400 fixed-input
+fixtures plus their four aggregate rows, 51 core commands, both 256-configuration
+Hypertri powersets and five dispatch runs for `c61d6d8`. Core results are
+41 passes and ten failures, with original failure outcomes preserved against
+the fixed baseline. Original Hypertri coverage is 94.97%, below its 95% gate;
+Hyperlattice and Hypersolve coverage fail for the previously recorded license
+and fixture reasons. The
+[isolated supplemental controls](../benchmarks/checkpoints/2026-09-17-verus-consumer-bound-supplements.json)
+pass both corrected fixture coverages and capture identical four-workload
+Hyperlattice trace summaries. They do not relabel the original failures.
+The pinned Hypercurve long-case partition and native timings remain pending;
+live Hypercurve has not been changed.
