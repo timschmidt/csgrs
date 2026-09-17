@@ -50,6 +50,74 @@ pub(crate) enum BoundInfo {
     },
 }
 
+#[cfg(verus_keep_ghost)]
+verus! {
+pub(crate) open spec fn squared_bound(bound: BoundInfo) -> BoundInfo {
+    match bound {
+        BoundInfo::Zero => BoundInfo::Zero,
+        BoundInfo::NonZero { msd, exact_msd, .. } => BoundInfo::NonZero {
+            sign: Some(Sign::Plus), exact_msd: false,
+            msd: match (exact_msd, msd) {
+                (true, Some(e)) => checked_metadata_exponent(2 * e as int),
+                _ => None,
+            },
+        },
+        BoundInfo::Unknown => BoundInfo::Unknown,
+    }
+}
+
+pub(crate) open spec fn product_bound(left: BoundInfo, right: BoundInfo) -> BoundInfo {
+    match (left, right) {
+        (BoundInfo::Zero, _) | (_, BoundInfo::Zero) => BoundInfo::Zero,
+        (BoundInfo::NonZero { sign: ls, msd: lm, exact_msd: le },
+         BoundInfo::NonZero { sign: rs, msd: rm, exact_msd: re }) => BoundInfo::NonZero {
+            sign: match (ls, rs) {
+                (Some(Sign::Plus), Some(Sign::Plus)) | (Some(Sign::Minus), Some(Sign::Minus)) => Some(Sign::Plus),
+                (Some(Sign::Plus), Some(Sign::Minus)) | (Some(Sign::Minus), Some(Sign::Plus)) => Some(Sign::Minus),
+                _ => None,
+            },
+            msd: match (le, re, lm, rm) {
+                (true, true, Some(l), Some(r)) => checked_metadata_exponent(l as int + r as int),
+                _ => None,
+            },
+            exact_msd: false,
+        },
+        _ => BoundInfo::Unknown,
+    }
+}
+
+pub(crate) open spec fn sum_bound(left: BoundInfo, right: BoundInfo) -> BoundInfo {
+    match (left, right) {
+        (BoundInfo::Zero, other) | (other, BoundInfo::Zero) => other,
+        (BoundInfo::NonZero { sign: ls, msd: lm, exact_msd: le },
+         BoundInfo::NonZero { sign: rs, msd: rm, exact_msd: re }) => {
+            let sign = match (ls, rs) {
+                (Some(l), Some(r)) if l == r => Some(l),
+                (Some(Sign::Plus), Some(Sign::Minus)) | (Some(Sign::Minus), Some(Sign::Plus)) =>
+                    if le && re { match (lm, rm) {
+                        (Some(l), Some(r)) if l > r => ls,
+                        (Some(l), Some(r)) if r > l => rs,
+                        _ => None,
+                    } } else { None },
+                _ => None,
+            };
+            match sign {
+                Some(s) => BoundInfo::NonZero {
+                    sign: Some(s), exact_msd: false,
+                    msd: match (lm, rm) {
+                        (Some(l), Some(r)) if l > r => Some(l),
+                        (Some(l), Some(r)) if r > l => Some(r),
+                        _ => None,
+                    },
+                },
+                None => BoundInfo::Unknown,
+            }
+        },
+        _ => BoundInfo::Unknown,
+    }
+}
+}
+
 impl BoundInfo {
     #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
     #[cfg_attr(verus_keep_ghost, verus_spec(result =>
@@ -184,7 +252,10 @@ impl BoundInfo {
         }
     }
 
-    #[cfg(not(verus_keep_ghost))]
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == squared_bound(self),
+    ))]
     fn square(self) -> Self {
         match self {
             Self::Zero => Self::Zero,
@@ -196,7 +267,10 @@ impl BoundInfo {
                 // exact child MSD. Do not recursively double an already
                 // inexact estimate: the error would grow exponentially through
                 // a power tree.
-                msd: exact_msd.then(|| msd.and_then(|value| value.checked_mul(2))).flatten(),
+                msd: match (exact_msd, msd) {
+                    (true, Some(value)) => value.checked_mul(2),
+                    _ => None,
+                },
                 exact_msd: false,
             },
             Self::Unknown => Self::Unknown,
@@ -235,7 +309,10 @@ impl BoundInfo {
         }
     }
 
-    #[cfg(not(verus_keep_ghost))]
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == product_bound(self, other),
+    ))]
     fn multiply(self, other: Self) -> Self {
         match (self, other) {
             (Self::Zero, _) | (_, Self::Zero) => Self::Zero,
@@ -259,8 +336,8 @@ impl BoundInfo {
                     _ => None,
                 };
                 let msd = match (
-                    left_exact_msd.then_some(left_msd).flatten(),
-                    right_exact_msd.then_some(right_msd).flatten(),
+                    if left_exact_msd { left_msd } else { None },
+                    if right_exact_msd { right_msd } else { None },
                 ) {
                     (Some(left), Some(right)) => left.checked_add(right),
                     _ => None,
@@ -275,7 +352,10 @@ impl BoundInfo {
         }
     }
 
-    #[cfg(not(verus_keep_ghost))]
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == sum_bound(self, other),
+    ))]
     fn add(self, other: Self) -> Self {
         // Addition can certify sign when operands share a sign or one MSD
         // dominates an opposite-signed operand. Near-cancellation deliberately
@@ -295,15 +375,19 @@ impl BoundInfo {
                 },
             ) => {
                 let sign = match (left_sign, right_sign) {
-                    (Some(left), Some(right)) if left == right => Some(left),
+                    (Some(Sign::Plus), Some(Sign::Plus))
+                    | (Some(Sign::Minus), Some(Sign::Minus))
+                    | (Some(Sign::NoSign), Some(Sign::NoSign)) => left_sign,
                     (Some(Sign::Plus), Some(Sign::Minus))
-                    | (Some(Sign::Minus), Some(Sign::Plus))
-                        if left_exact_msd && right_exact_msd =>
-                    {
-                        match (left_msd, right_msd) {
-                            (Some(left), Some(right)) if left > right => left_sign,
-                            (Some(left), Some(right)) if right > left => right_sign,
-                            _ => None,
+                    | (Some(Sign::Minus), Some(Sign::Plus)) => {
+                        if left_exact_msd && right_exact_msd {
+                            match (left_msd, right_msd) {
+                                (Some(left), Some(right)) if left > right => left_sign,
+                                (Some(left), Some(right)) if right > left => right_sign,
+                                _ => None,
+                            }
+                        } else {
+                            None
                         }
                     }
                     _ => None,
