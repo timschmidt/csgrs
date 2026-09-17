@@ -532,6 +532,20 @@ report, leaving a separate count capture outstanding. Live Hypercurve remains
 untouched; its long-case partition, native comparisons and final acceptance
 are still pending at this checkpoint.
 
+The [isolated consumer supplements](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-supplements.json)
+retain the subsequent fixture checks for `cdc6d3a`. Adding the sine triangle
+restores Hypertri coverage to 6,271/6,600 on both revisions without changing
+production code or the 95% gate. Correcting Hypersolve's expected canonical
+representation lets both coverage runs pass the unchanged 85% gate, with
+34,192/39,571 baseline and 34,194/39,571 candidate lines covered. The first
+supplement attempt omitted tracked fuzz manifests needed by benchmark
+fixtures; its four compilation failures and the complete repaired rerun are
+both retained. All four Hyperlattice trace summaries were subsequently
+captured and agree between revisions. Corrected certification benchmarks were
+built on both revisions but have not been timed. These results concern the
+intermediate `cdc6d3a` runtime; the later certified-precision repair requires
+fresh affected qualification. No live consumer source was changed.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
