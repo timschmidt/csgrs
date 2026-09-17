@@ -115895,7 +115895,7 @@ impl BezierParallel2 {
     /// The structural parameter diagonal is divided from both equations before
     /// projection, so ordinary identity is not mistaken for overlap evidence.
     /// Any further shared component remains explicit incomplete replay.
-    pub(crate) fn self_intersections(
+    pub(crate) fn unit_self_intersections(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
@@ -116303,7 +116303,7 @@ impl BezierParallel2 {
                         &support,
                         &ParameterComponentSelector2::ParallelPair {
                             system: &system,
-                            unordered_self_pair: false,
+                            parameter_filter: None,
                         },
                         domains,
                         ParameterComponentQuery2::Existence,
@@ -116326,6 +116326,7 @@ impl BezierParallel2 {
                 source_isolated_projection = retain_parameter_component_pairs(
                     source_constraint.isolated_projection,
                     selected_pairs,
+                    Vec::new(),
                 );
             }
             let excluded =
@@ -116333,10 +116334,17 @@ impl BezierParallel2 {
                     CertifiedParallelSourceOverlapKind2::Excluded,
                 ));
             if let Some(residual_projection) = project_parallel_pair_without_components_in_domain(
-                &system, self, other, &excluded, domains, policy,
+                &system,
+                self,
+                other,
+                &excluded,
+                domains,
+                ParameterComponentQuery2::Existence,
+                None,
+                policy,
             )? {
                 match residual_projection {
-                    BezierParallelPairDomainProjection2::Isolated {
+                    BezierParallelPairDomainProjection2::Enumerated {
                         projection: residual_projection,
                         retained_contacts: residual_contacts,
                     } => {
@@ -116540,10 +116548,12 @@ impl BezierParallel2 {
     /// axis first certifies its own polynomial speed sign, so a unit-chart
     /// rational image cannot select an exterior normal. General parallels
     /// divide the structural diagonal from both radical equations. All routes
-    /// retain the ordered corner roles.
-    pub(crate) fn ordered_self_intersections_in_domain(
+    /// retain the ordered operand roles. Finite region queries retain every
+    /// component map; corner queries may request only component existence.
+    pub(crate) fn self_intersections_in_domain(
         &self,
         domains: [CurveParameterDomain2<'_>; 2],
+        query: ParameterComponentQuery2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         let strict = policy.strict_counterpart();
@@ -116553,12 +116563,7 @@ impl BezierParallel2 {
         };
         if distance_sign == RealSign::Zero {
             return self.zero_distance_pair_intersections_in_domain(
-                self,
-                domains,
-                false,
-                true,
-                ParameterComponentQuery2::Existence,
-                policy,
+                self, domains, false, true, query, policy,
             );
         }
         if let Classification::Decided(Some([first, second])) =
@@ -116567,12 +116572,7 @@ impl BezierParallel2 {
             let first = first.parallel_left(Real::zero())?;
             let second = second.parallel_left(Real::zero())?;
             return first.zero_distance_pair_intersections_in_domain(
-                &second,
-                domains,
-                false,
-                true,
-                ParameterComponentQuery2::Existence,
-                policy,
+                &second, domains, false, true, query, policy,
             );
         }
         let Some(system) = (match parallel_pair_equation_system(self, self, false, policy)? {
@@ -116617,19 +116617,23 @@ impl BezierParallel2 {
             },
             None => None,
         };
+        let diagonal =
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![-Real::one()]]);
+        let off_diagonal = bivariate_multiply(&diagonal, &diagonal);
         let mut source_isolated_projection = None;
         let mut retained_contacts = Vec::new();
         if let Some(source_constraint) = source_constraint {
             let mut selected_pairs = Vec::new();
+            let mut component_overlaps = Vec::new();
             if let Some(support) = source_constraint.component_support {
                 let selection = match select_parameter_component_in_domain(
                     &support,
                     &ParameterComponentSelector2::ParallelPair {
                         system: &system,
-                        unordered_self_pair: false,
+                        parameter_filter: Some(&off_diagonal),
                     },
                     domains,
-                    ParameterComponentQuery2::Existence,
+                    query,
                     policy,
                     config,
                 )? {
@@ -116638,17 +116642,19 @@ impl BezierParallel2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                if selection.positive_dimensional {
+                if selection.positive_dimensional && query == ParameterComponentQuery2::Existence {
                     return Ok(Classification::Decided(
                         BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
                     ));
                 }
                 selected_pairs = selection.selected_pairs;
+                component_overlaps = selection.component_overlaps;
                 retained_contacts.extend(selection.retained_contacts);
             }
             source_isolated_projection = retain_parameter_component_pairs(
                 source_constraint.isolated_projection,
                 selected_pairs,
+                component_overlaps,
             );
         }
         let Some(projection) = project_parallel_pair_without_components_in_domain(
@@ -116657,6 +116663,8 @@ impl BezierParallel2 {
             self,
             &source_diagonal_excluded,
             domains,
+            query,
+            Some(&off_diagonal),
             policy,
         )?
         else {
@@ -116671,7 +116679,7 @@ impl BezierParallel2 {
             ));
         };
         let mut projection = match projection {
-            BezierParallelPairDomainProjection2::Isolated {
+            BezierParallelPairDomainProjection2::Enumerated {
                 projection,
                 retained_contacts: residual_contacts,
             } => {
@@ -116702,7 +116710,27 @@ impl BezierParallel2 {
             }
             result => result,
         };
-        Ok(result.map(BezierParallelPairDomainIntersectionSet2::enumerated))
+        let mut result = match result {
+            Classification::Decided(result) => result,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        // Saturation removes the identity component, but residual branches
+        // can still meet it. Those visits are not off-diagonal self contacts.
+        let mut contacts = Vec::with_capacity(result.contacts.len());
+        for contact in result.contacts.iter() {
+            match contact
+                .first_parameter()
+                .cmp_by_refinement(contact.second_parameter(), &strict)?
+            {
+                Classification::Decided(std::cmp::Ordering::Equal) => {}
+                Classification::Decided(_) => contacts.push(contact.clone()),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        result.contacts = contacts.into();
+        Ok(Classification::Decided(
+            BezierParallelPairDomainIntersectionSet2::enumerated(result),
+        ))
     }
 
     /// Tries the exact-rational parallel-pair routes.
@@ -121961,7 +121989,7 @@ enum ParameterComponentSelector2<'a> {
     Positive(&'a BivariatePolynomial),
     ParallelPair {
         system: &'a BezierParallelPairEquationSystem2,
-        unordered_self_pair: bool,
+        parameter_filter: Option<&'a BivariatePolynomial>,
     },
 }
 
@@ -121971,7 +121999,7 @@ impl ParameterComponentSelector2<'_> {
             Self::Positive(branch) => vec![(*branch).clone()],
             Self::ParallelPair {
                 system,
-                unordered_self_pair,
+                parameter_filter,
             } => {
                 let mut boundaries = vec![
                     system.weight_product.clone(),
@@ -121982,11 +122010,8 @@ impl ParameterComponentSelector2<'_> {
                     system.norm_residual.clone(),
                     system.first_normal_projection.clone(),
                 ];
-                if *unordered_self_pair {
-                    boundaries.push(BivariatePolynomial::new(vec![
-                        vec![Real::zero(), Real::from(-1_i8)],
-                        vec![Real::one()],
-                    ]));
+                if let Some(filter) = parameter_filter {
+                    boundaries.push((*filter).clone());
                 }
                 boundaries
             }
@@ -122016,14 +122041,14 @@ impl ParameterComponentSelector2<'_> {
             ),
             Self::ParallelPair {
                 system,
-                unordered_self_pair,
+                parameter_filter,
             } => {
-                if *unordered_self_pair {
-                    match first.cmp_by_refinement(second, policy)? {
-                        Classification::Decided(std::cmp::Ordering::Less) => {}
-                        Classification::Decided(
-                            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                        ) => return Ok(Classification::Decided(false)),
+                if let Some(filter) = parameter_filter {
+                    match signed_bivariate_at_parameter_pair(filter, first, second, policy)? {
+                        Classification::Decided(RealSign::Positive) => {}
+                        Classification::Decided(RealSign::Zero | RealSign::Negative) => {
+                            return Ok(Classification::Decided(false));
+                        }
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
                         }
@@ -127766,8 +127791,9 @@ fn prepend_parallel_pair_projection(
 fn retain_parameter_component_pairs(
     projection: Option<BezierParallelPairProjection2>,
     pairs: Vec<BezierParallelIntersectionParameterPair2>,
+    overlaps: Vec<BezierParameterComponentOverlap2>,
 ) -> Option<BezierParallelPairProjection2> {
-    if pairs.is_empty() {
+    if pairs.is_empty() && overlaps.is_empty() {
         return projection;
     }
     let mut projection = projection.unwrap_or(BezierParallelPairProjection2 {
@@ -127781,6 +127807,15 @@ fn retain_parameter_component_pairs(
         residual_equations: None,
         radical_component_projection: None,
     });
+    if !overlaps.is_empty() {
+        let mut evidence = projection.component_overlap_evidence.to_vec();
+        evidence.extend(overlaps);
+        projection.component_overlaps = evidence
+            .iter()
+            .map(|overlap| overlap.overlap().clone())
+            .collect();
+        projection.component_overlap_evidence = evidence.into();
+    }
     let mut retained =
         projection.component_pairs[..projection.selected_component_pair_count].to_vec();
     for pair in pairs {
@@ -127949,7 +127984,12 @@ fn project_parallel_pair_without_components(
                         &radical_equations,
                         &ParameterComponentSelector2::ParallelPair {
                             system,
-                            unordered_self_pair,
+                            parameter_filter: unordered_self_pair.then_some(
+                                &BivariatePolynomial::new(vec![
+                                    vec![Real::zero(), Real::one()],
+                                    vec![-Real::one()],
+                                ]),
+                            ),
                         },
                         policy,
                         config,
@@ -128057,7 +128097,7 @@ fn project_parallel_pair_without_components(
 }
 
 enum BezierParallelPairDomainProjection2 {
-    Isolated {
+    Enumerated {
         projection: BezierParallelPairProjection2,
         retained_contacts: Vec<BezierParallelPairIntersectionContact2>,
     },
@@ -128437,7 +128477,7 @@ fn transform_parallel_pair_system_for_component_chart<'a>(
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum ParameterComponentQuery2 {
+pub(crate) enum ParameterComponentQuery2 {
     /// Corner solving needs only an existence certificate, including on rays.
     Existence,
     /// Finite intersections retain every correspondence and residual contact.
@@ -128701,6 +128741,7 @@ fn select_parameter_component_in_domain(
             };
             let chart_branch;
             let chart_system;
+            let chart_filter;
             let selector = match selector {
                 ParameterComponentSelector2::Positive(branch) => {
                     chart_branch = match transform_parameter_component_chart_polynomial(
@@ -128715,7 +128756,7 @@ fn select_parameter_component_in_domain(
                 }
                 ParameterComponentSelector2::ParallelPair {
                     system,
-                    unordered_self_pair,
+                    parameter_filter,
                 } => {
                     chart_system = match transform_parallel_pair_system_for_component_chart(
                         system,
@@ -128725,9 +128766,22 @@ fn select_parameter_component_in_domain(
                         Some(system) => system,
                         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
                     };
+                    chart_filter = match parameter_filter {
+                        Some(filter) => match transform_parameter_component_chart_polynomial(
+                            filter,
+                            first_chart,
+                            second_chart,
+                        ) {
+                            Some(filter) => Some(filter),
+                            None => {
+                                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                            }
+                        },
+                        None => None,
+                    };
                     ParameterComponentSelector2::ParallelPair {
                         system: &chart_system,
-                        unordered_self_pair: *unordered_self_pair,
+                        parameter_filter: chart_filter.as_deref(),
                     }
                 }
             };
@@ -128956,6 +129010,8 @@ fn project_parallel_pair_without_components_in_domain(
     second: &BezierParallel2,
     source_overlap: &Classification<CertifiedParallelSourceOverlap2>,
     domains: [CurveParameterDomain2<'_>; 2],
+    query: ParameterComponentQuery2,
+    parameter_filter: Option<&BivariatePolynomial>,
     policy: &CurveContext,
 ) -> CurveResult<Option<BezierParallelPairDomainProjection2>> {
     if !matches!(source_overlap, Classification::Decided(_)) {
@@ -129025,6 +129081,7 @@ fn project_parallel_pair_without_components_in_domain(
         initial_candidates
     };
     let mut retained_contacts = Vec::new();
+    let mut component_overlaps = Vec::new();
     let radical_component_projection = if let Some(support) = pair_component_support {
         let constraint = match parameter_domain_constraint(
             support,
@@ -129041,33 +129098,34 @@ fn project_parallel_pair_without_components_in_domain(
             let selection = match select_parameter_component_in_domain(
                 &component_support,
                 &ParameterComponentSelector2::ParallelPair {
-                    system: system,
-                    unordered_self_pair: false,
+                    system,
+                    parameter_filter,
                 },
                 domains,
-                ParameterComponentQuery2::Existence,
+                query,
                 policy,
                 config,
             )? {
                 Classification::Decided(selection) => selection,
                 Classification::Uncertain(_) => return Ok(None),
             };
-            if selection.positive_dimensional {
+            if selection.positive_dimensional && query == ParameterComponentQuery2::Existence {
                 return Ok(Some(
                     BezierParallelPairDomainProjection2::PositiveDimensional,
                 ));
             }
             selected_pairs = selection.selected_pairs;
+            component_overlaps = selection.component_overlaps;
             retained_contacts.extend(selection.retained_contacts);
         }
-        retain_parameter_component_pairs(constraint.isolated_projection, selected_pairs)
+        retain_parameter_component_pairs(constraint.isolated_projection, selected_pairs, Vec::new())
             .map(Box::new)
     } else {
         None
     };
     let residual_equations =
         (source_component_removed || residual_was_saturated).then(|| Box::new(residual_equations));
-    Ok(Some(BezierParallelPairDomainProjection2::Isolated {
+    Ok(Some(BezierParallelPairDomainProjection2::Enumerated {
         projection: BezierParallelPairProjection2 {
             candidates,
             basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
@@ -129075,8 +129133,11 @@ fn project_parallel_pair_without_components_in_domain(
                 Classification::Decided(source) => source.selected_overlap().cloned(),
                 Classification::Uncertain(_) => None,
             },
-            component_overlaps: Arc::from([]),
-            component_overlap_evidence: Arc::from([]),
+            component_overlaps: component_overlaps
+                .iter()
+                .map(|overlap| overlap.overlap().clone())
+                .collect(),
+            component_overlap_evidence: component_overlaps.into(),
             component_pairs: match source_overlap {
                 Classification::Decided(source) => source.contacts.clone(),
                 Classification::Uncertain(_) => Arc::from([]),
@@ -165172,7 +165233,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         let distance = (Real::one() / Real::from(2_u8)).unwrap();
         let parallel = source.parallel_left(distance).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let result = match parallel.self_intersections(&policy).unwrap() {
+            let result = match parallel.unit_self_intersections(&policy).unwrap() {
                 Classification::Decided(result) => result,
                 Classification::Uncertain(reason) => {
                     panic!("self-intersection replay: {reason:?}")
@@ -165530,7 +165591,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let parallel = curve.parallel_left(Real::zero()).unwrap();
                 // Populate finite-domain evidence first. It cannot authorize
                 // an unordered or injective exclusion on the extended axes.
-                let Classification::Decided(finite) = parallel.self_intersections(&policy).unwrap()
+                let Classification::Decided(finite) =
+                    parallel.unit_self_intersections(&policy).unwrap()
                 else {
                     panic!("the finite self-contact query must be decided")
                 };
@@ -165546,10 +165608,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         )
                     });
                     let Classification::Decided(result) = parallel
-                        .ordered_self_intersections_in_domain(
+                        .self_intersections_in_domain(
                             ranges
                                 .each_ref()
                                 .map(|range| CurveParameterDomain2::new(range, None)),
+                            ParameterComponentQuery2::Existence,
                             &policy,
                         )
                         .unwrap()
@@ -165589,7 +165652,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 for extend_first in [false, true] {
                     for extend_second in [false, true] {
                         let Classification::Decided(result) = parallel
-                            .ordered_self_intersections_in_domain(
+                            .self_intersections_in_domain(
                                 [
                                     CurveParameterDomain2::new(
                                         &CurveParameterRange2::unit(),
@@ -165600,6 +165663,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                         extend_second.then(|| domains[1].parameter_ray()),
                                     ),
                                 ],
+                                ParameterComponentQuery2::Existence,
                                 &policy,
                             )
                             .unwrap()
@@ -165760,7 +165824,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for source in &sources {
                 let parallel = source.parallel_left(Real::zero()).unwrap();
-                let result = match parallel.self_intersections(&policy).unwrap() {
+                let result = match parallel.unit_self_intersections(&policy).unwrap() {
                     Classification::Decided(result) => result,
                     Classification::Uncertain(reason) => {
                         panic!("exact rational self-contact remained uncertain: {reason:?}")
@@ -166189,10 +166253,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         });
                         let result = match policy
                             .strict_predicate_pass(|| {
-                                parallel.ordered_self_intersections_in_domain(
+                                parallel.self_intersections_in_domain(
                                     ranges
                                         .each_ref()
                                         .map(|range| CurveParameterDomain2::new(range, None)),
+                                    ParameterComponentQuery2::Existence,
                                     &policy,
                                 )
                             })
@@ -166310,10 +166375,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     bounds.map(|[a, b]| CurveParameterRange2::new_validated(a.into(), b.into()));
                 let result = match policy
                     .strict_predicate_pass(|| {
-                        source.ordered_self_intersections_in_domain(
+                        source.self_intersections_in_domain(
                             ranges
                                 .each_ref()
                                 .map(|range| CurveParameterDomain2::new(range, None)),
+                            ParameterComponentQuery2::Existence,
                             &policy,
                         )
                     })
@@ -166345,6 +166411,116 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         );
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_analytic_self_components_retain_original_parameter_filters() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t)=(u,u²), u=t³-t. The exterior regular branches below have
+        // positive u', so their common parabolic image selects the same
+        // normal sheet. It is not a PH source or a rational offset.
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::new(q(-1, 6), Real::zero()),
+                Point2::new(q(-1, 3), q(1, 15)),
+                Point2::new(q(-9, 20), q(1, 5)),
+                Point2::new(q(-7, 15), q(4, 15)),
+                Point2::new(q(-1, 3), Real::zero()),
+                Point2::from_values(0, 0),
+            ],
+            vec![Real::one(); 7],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parallel = source.parallel_left(q(1, 10)).unwrap();
+            for swapped in [false, true] {
+                let mut ranges = [
+                    CurveParameterRange2::new_validated(Real::from(-1).into(), q(-3, 4).into()),
+                    CurveParameterRange2::new_validated(Real::one().into(), q(9, 8).into()),
+                ];
+                if swapped {
+                    ranges.swap(0, 1);
+                }
+                for range in &ranges {
+                    assert!(matches!(
+                        parallel
+                            .exact_rational_parallel_component_on_regular_range(range, &policy)
+                            .unwrap(),
+                        Classification::Decided(None)
+                    ));
+                }
+                let (result, unenumerated) = match parallel
+                    .self_intersections_in_domain(
+                        ranges
+                            .each_ref()
+                            .map(|range| CurveParameterDomain2::new(range, None)),
+                        ParameterComponentQuery2::RetainFinite,
+                        &policy,
+                    )
+                    .unwrap()
+                {
+                    Classification::Decided(result) => result.into_parts(),
+                    Classification::Uncertain(reason) => {
+                        panic!("finite analytic component: {reason:?}")
+                    }
+                };
+                assert!(!unenumerated && result.is_complete(), "{result:?}");
+                assert!(result.contacts().is_empty());
+                assert_eq!(result.overlaps().len(), 1);
+                let [component] = result.component_overlaps() else {
+                    panic!("one retained correspondence: {result:?}")
+                };
+                let axis = if swapped {
+                    CurveResultantParameter::Second
+                } else {
+                    CurveResultantParameter::First
+                };
+                let parameter = CurveParameter2::from(q(-7, 8));
+                let mapped = match component
+                    .map_curve_parameter(axis, &parameter, &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    other => panic!("original finite parameter replay: {other:?}"),
+                };
+                assert_eq!(
+                    mapped
+                        .cmp_by_refinement(&Real::one().into(), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Greater)
+                );
+                assert_eq!(
+                    mapped.cmp_by_refinement(&q(9, 8).into(), &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Less)
+                );
+                assert_eq!(
+                    mapped
+                        .polynomial_sign(
+                            &[-q(105, 512), -Real::one(), Real::zero(), Real::one()],
+                            &policy
+                        )
+                        .unwrap(),
+                    Classification::Decided(RealSign::Zero)
+                );
+                let back_axis = if swapped {
+                    CurveResultantParameter::First
+                } else {
+                    CurveResultantParameter::Second
+                };
+                let back = match component
+                    .map_curve_parameter(back_axis, &mapped, &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    other => panic!("inverse finite parameter replay: {other:?}"),
+                };
+                assert_eq!(
+                    back.same_value(&parameter, &policy).unwrap(),
+                    Classification::Decided(true)
+                );
             }
         }
     }
@@ -166414,8 +166590,9 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             let axes = if swapped { [1, 0] } else { [0, 1] };
                             let result = match policy
                                 .strict_predicate_pass(|| {
-                                    parallel.ordered_self_intersections_in_domain(
+                                    parallel.self_intersections_in_domain(
                                         axes.map(|axis| domains[axis]),
+                                        ParameterComponentQuery2::Existence,
                                         &policy,
                                     )
                                 })
@@ -166494,10 +166671,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             .map(|[a, b]| CurveParameterRange2::new_validated(a.into(), b.into()));
             let result = match policy
                 .strict_predicate_pass(|| {
-                    parallel.ordered_self_intersections_in_domain(
+                    parallel.self_intersections_in_domain(
                         ranges
                             .each_ref()
                             .map(|range| CurveParameterDomain2::new(range, None)),
+                        ParameterComponentQuery2::Existence,
                         &policy,
                     )
                 })
@@ -166554,10 +166732,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     });
                     let result = match policy
                         .strict_predicate_pass(|| {
-                            parallel.ordered_self_intersections_in_domain(
+                            parallel.self_intersections_in_domain(
                                 ranges
                                     .each_ref()
                                     .map(|range| CurveParameterDomain2::new(range, None)),
+                                ParameterComponentQuery2::Existence,
                                 &policy,
                             )
                         })
@@ -166603,7 +166782,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         });
                         let result = match policy
                             .strict_predicate_pass(|| {
-                                parallel.ordered_self_intersections_in_domain(domains, &policy)
+                                parallel.self_intersections_in_domain(
+                                    domains,
+                                    ParameterComponentQuery2::Existence,
+                                    &policy,
+                                )
                             })
                             .unwrap()
                         {
@@ -175027,7 +175210,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         &[identity.clone(), identity.clone()],
                         &ParameterComponentSelector2::ParallelPair {
                             system: &system,
-                            unordered_self_pair: false,
+                            parameter_filter: None,
                         },
                         &policy,
                         config,
@@ -175093,7 +175276,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     &[complement.clone(), complement.clone()],
                     &ParameterComponentSelector2::ParallelPair {
                         system: &system,
-                        unordered_self_pair: true,
+                        parameter_filter: Some(&BivariatePolynomial::new(vec![
+                            vec![Real::zero(), Real::one()],
+                            vec![-Real::one()],
+                        ])),
                     },
                     &policy,
                     config,
@@ -175174,7 +175360,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             &component,
                             &ParameterComponentSelector2::ParallelPair {
                                 system: &system,
-                                unordered_self_pair: false,
+                                parameter_filter: None,
                             },
                             retained_parameter,
                             &policy,
@@ -175286,7 +175472,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 &support,
                                 &ParameterComponentSelector2::ParallelPair {
                                     system: &system,
-                                    unordered_self_pair: false,
+                                    parameter_filter: None,
                                 },
                                 [
                                     CurveParameterDomain2::new(
@@ -175412,7 +175598,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         &component,
                         &ParameterComponentSelector2::ParallelPair {
                             system: &system,
-                            unordered_self_pair: false,
+                            parameter_filter: None,
                         },
                         [
                             CurveParameterDomain2::new(
@@ -175545,7 +175731,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     &component,
                                     &ParameterComponentSelector2::ParallelPair {
                                         system: &system,
-                                        unordered_self_pair: false,
+                                        parameter_filter: None,
                                     },
                                     domains,
                                     ParameterComponentQuery2::Existence,
@@ -175591,7 +175777,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     &overlapping,
                                     &ParameterComponentSelector2::ParallelPair {
                                         system: &positive_component_selector_system(&overlapping),
-                                        unordered_self_pair: false,
+                                        parameter_filter: None,
                                     },
                                     domains,
                                     ParameterComponentQuery2::Existence,
@@ -175648,7 +175834,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     &support,
                     &ParameterComponentSelector2::ParallelPair {
                         system: &system,
-                        unordered_self_pair: false,
+                        parameter_filter: None,
                     },
                     [CurveParameterDomain2::new(&finite, None); 2],
                     ParameterComponentQuery2::Existence,
@@ -175678,7 +175864,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         &axis,
                         &ParameterComponentSelector2::ParallelPair {
                             system: &positive_component_selector_system(&axis),
-                            unordered_self_pair: false,
+                            parameter_filter: None,
                         },
                         [CurveParameterDomain2::new(&finite, None); 2],
                         ParameterComponentQuery2::Existence,
@@ -175704,7 +175890,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         &support,
                         &ParameterComponentSelector2::ParallelPair {
                             system: &system,
-                            unordered_self_pair: false,
+                            parameter_filter: None,
                         },
                         [
                             CurveParameterDomain2::new(
@@ -175773,7 +175959,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         &support,
                         &ParameterComponentSelector2::ParallelPair {
                             system: system,
-                            unordered_self_pair: false,
+                            parameter_filter: None,
                         },
                         [CurveParameterDomain2::new(&range, None); 2],
                         ParameterComponentQuery2::Existence,
@@ -175828,7 +176014,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 &support_before_barriers,
                 &ParameterComponentSelector2::ParallelPair {
                     system: &system,
-                    unordered_self_pair: false,
+                    parameter_filter: None,
                 },
                 [
                     CurveParameterDomain2::new(
@@ -175861,7 +176047,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 &support_beyond_barriers,
                 &ParameterComponentSelector2::ParallelPair {
                     system: &system,
-                    unordered_self_pair: false,
+                    parameter_filter: None,
                 },
                 [
                     CurveParameterDomain2::new(
@@ -175907,7 +176093,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     &axis_support,
                     &ParameterComponentSelector2::ParallelPair {
                         system: &axis_system,
-                        unordered_self_pair: false,
+                        parameter_filter: None,
                     },
                     [
                         CurveParameterDomain2::new(
@@ -176030,7 +176216,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     &support,
                                     &ParameterComponentSelector2::ParallelPair {
                                         system: &system,
-                                        unordered_self_pair: false,
+                                        parameter_filter: None,
                                     },
                                     [
                                         CurveParameterDomain2::new(
@@ -176147,7 +176333,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 &support,
                 &ParameterComponentSelector2::ParallelPair {
                     system: &system,
-                    unordered_self_pair: false,
+                    parameter_filter: None,
                 },
                 [
                     CurveParameterDomain2::new(
@@ -176338,6 +176524,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
+                ParameterComponentQuery2::Existence,
+                None,
                 &policy,
             )
             .unwrap();
@@ -176379,6 +176567,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
+                ParameterComponentQuery2::Existence,
+                None,
                 &policy,
             )
             .unwrap();
@@ -176402,7 +176592,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
             let first_barrier =
                 BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
-            let Some(BezierParallelPairDomainProjection2::Isolated { projection, .. }) =
+            let Some(BezierParallelPairDomainProjection2::Enumerated { projection, .. }) =
                 project_parallel_pair_without_components_in_domain(
                     &isolated_system,
                     &first,
@@ -176426,6 +176616,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             }),
                         ),
                     ],
+                    ParameterComponentQuery2::Existence,
+                    None,
                     &policy,
                 )
                 .unwrap()
@@ -176501,6 +176693,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
+                ParameterComponentQuery2::Existence,
+                None,
                 &policy,
             )
             .unwrap();

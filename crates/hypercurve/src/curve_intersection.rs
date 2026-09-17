@@ -554,6 +554,24 @@ pub(crate) struct CurveIntersectionContext {
 pub(crate) struct CurveIntersectionBatchCache {
     circular_support_relations: Vec<CircularSupportRelationCacheEntry>,
     circular_point_parameters: Vec<CircularPointParameterCacheEntry>,
+    unit_parallel_self_intersections: Vec<Arc<UnitParallelSelfIntersections>>,
+}
+
+/// Whole-unit discovery is reusable across finite restrictions, but never
+/// supplies their admission proof. The batch owns this lazy, policy-local work.
+#[derive(Debug)]
+struct UnitParallelSelfIntersections {
+    source: crate::BezierParallel2,
+    policy: CurveContext,
+    result: OnceLock<CurveResult<Classification<crate::BezierParallelPairIntersectionSet2>>>,
+}
+
+impl UnitParallelSelfIntersections {
+    fn result(&self) -> CurveResult<Classification<crate::BezierParallelPairIntersectionSet2>> {
+        self.result
+            .get_or_init(|| self.source.unit_self_intersections(&self.policy))
+            .clone()
+    }
 }
 
 #[derive(Debug)]
@@ -577,6 +595,28 @@ struct CircularPointParameterCacheEntry {
 }
 
 impl CurveIntersectionBatchCache {
+    fn unit_parallel_self_intersections(
+        &mut self,
+        source: crate::BezierParallel2,
+        policy: &CurveContext,
+    ) -> Arc<UnitParallelSelfIntersections> {
+        if let Some(cached) = self
+            .unit_parallel_self_intersections
+            .iter()
+            .find(|cached| cached.source == source && cached.policy == *policy)
+        {
+            return Arc::clone(cached);
+        }
+        let cached = Arc::new(UnitParallelSelfIntersections {
+            source,
+            policy: *policy,
+            result: OnceLock::new(),
+        });
+        self.unit_parallel_self_intersections
+            .push(Arc::clone(&cached));
+        cached
+    }
+
     fn circular_support_relation(
         &mut self,
         first_curve: &Curve2,
@@ -717,6 +757,7 @@ struct CurveIntersectionContextData {
 
 #[derive(Debug)]
 enum CurveIntersectionDispatch {
+    SupportSelf(Option<Arc<UnitParallelSelfIntersections>>),
     SupportEvidence(CurveIntersectionResult2),
     RationalPairs(Vec<PreparedRationalPair>),
     NativeLine(LineLineIntersection),
@@ -1976,21 +2017,30 @@ impl CurveIntersectionContext {
         Self::try_new_with_optional_batch_cache(first, second, policy, None)
     }
 
-    pub(crate) fn try_new_bezier_self(
+    /// Retains one prepared support query; algebra is evaluated only on demand.
+    pub(crate) fn new_self(
         curve: &Curve2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
-        let result = curve_support_intersection::bezier_self_intersections(curve, policy)?;
-        Ok(Self {
+        batch_cache: &mut CurveIntersectionBatchCache,
+    ) -> Self {
+        let unit_parallel = curve.retained_fragment().and_then(|fragment| {
+            match crate::curve_support::CurveSupport2::from_fragment(fragment) {
+                crate::curve_support::CurveSupport2::Parallel(source) => {
+                    Some(batch_cache.unit_parallel_self_intersections(source, policy))
+                }
+                _ => None,
+            }
+        });
+        Self {
             data: CurveIntersectionContextData {
                 first: curve.clone(),
                 second: curve.clone(),
                 policy: *policy,
-                span_pair_count: result.span_pair_count(),
-                dispatch: CurveIntersectionDispatch::SupportEvidence(result),
+                span_pair_count: 1,
+                dispatch: CurveIntersectionDispatch::SupportSelf(unit_parallel),
                 result: OnceLock::new(),
             },
-        })
+        }
     }
 
     pub(crate) fn try_new_with_batch_cache(
@@ -2168,6 +2218,13 @@ impl CurveIntersectionContext {
     }
 
     fn build_evidence(&self) -> ExactCurveResult<CurveIntersectionResult2> {
+        if let CurveIntersectionDispatch::SupportSelf(unit_parallel) = &self.data.dispatch {
+            return curve_support_intersection::self_intersections(
+                &self.data.first,
+                &self.data.policy,
+                unit_parallel.as_deref(),
+            );
+        }
         if let CurveIntersectionDispatch::SupportEvidence(result) = &self.data.dispatch {
             return Ok(result.clone());
         }

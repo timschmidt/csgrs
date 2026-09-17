@@ -366,7 +366,7 @@ impl<'a> PreparedTrimSource<'a> {
             )?;
         let result = context.build_intersection_evidence()?;
         if let Some(blocker) = result.blockers().first() {
-            let reason = if let Some(blocker) = blocker.native_blocker() {
+            let reason = if let Some(blocker) = blocker.pair_blocker() {
                 match blocker.kind() {
                     CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
                     CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {

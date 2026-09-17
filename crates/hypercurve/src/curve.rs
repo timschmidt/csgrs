@@ -6874,7 +6874,11 @@ fn fillet_offset_centers(
                     ),
                 ];
                 let incident = match (if identical_supports {
-                    previous.ordered_self_intersections_in_domain(parameter_domains, policy)
+                    previous.self_intersections_in_domain(
+                        parameter_domains,
+                        crate::bezier_offset::ParameterComponentQuery2::Existence,
+                        policy,
+                    )
                 } else {
                     previous.parallel_intersections_in_domain(next, parameter_domains, policy)
                 })

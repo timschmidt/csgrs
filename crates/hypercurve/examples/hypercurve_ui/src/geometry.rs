@@ -1127,7 +1127,7 @@ impl Shape {
                 .map_or_else(
                     || error.to_string(),
                     |blocker| {
-                        let kind = if let Some(native) = blocker.native_blocker() {
+                        let kind = if let Some(native) = blocker.pair_blocker() {
                             match native.kind() {
                                 CurveIntersectionPairBlockerKind2::Uncertain(_) => {
                                     "uncertain predicate"

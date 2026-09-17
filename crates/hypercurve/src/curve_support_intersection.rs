@@ -1830,8 +1830,61 @@ impl Pair<'_> {
             ),
             family,
         )?;
+        self.parallel_evidence(first, second, &evidence, result)
+    }
+
+    fn parallel_self(
+        &self,
+        source: &crate::BezierParallel2,
+        cached: Option<&UnitParallelSelfIntersections>,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let unit = CurveParameterRange2::unit();
+        if matches!(
+            crate::bezier_split::CurveParameterDomain2::new(&unit, None)
+                .contains_finite_range(&self.first.range, &self.policy.strict_counterpart()),
+            Ok(Classification::Decided(true))
+        ) {
+            let evidence = match cached {
+                Some(cached) => {
+                    debug_assert_eq!(cached.source, *source);
+                    debug_assert_eq!(cached.policy, *self.policy);
+                    cached.result()
+                }
+                None => source.unit_self_intersections(self.policy),
+            };
+            if let Ok(Classification::Decided(evidence)) = evidence
+                && evidence.is_complete()
+            {
+                return self.parallel_evidence(source, source, &evidence, result);
+            }
+        }
+        let (evidence, positive_dimensional) = decided(
+            source.self_intersections_in_domain(
+                [crate::bezier_split::CurveParameterDomain2::new(&self.first.range, None); 2],
+                crate::bezier_offset::ParameterComponentQuery2::RetainFinite,
+                self.policy,
+            ),
+            self.first.support.family(),
+        )?
+        .into_parts();
+        debug_assert!(
+            !positive_dimensional,
+            "finite self queries retain their components"
+        );
+        self.parallel_evidence(source, source, &evidence, result)
+    }
+
+    fn parallel_evidence(
+        &self,
+        first: &crate::BezierParallel2,
+        second: &crate::BezierParallel2,
+        evidence: &crate::BezierParallelPairIntersectionSet2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let family = self.first.support.family();
         self.pair_contacts(
-            &evidence,
+            evidence,
             |parameter| self.analytic_contact_point(parameter),
             result,
         )?;
@@ -1970,23 +2023,18 @@ impl Pair<'_> {
     }
 }
 
-/// Self-incidence for one prepared Bezier carrier, excluding the identity
+/// Self-incidence for one prepared rational or analytic carrier, excluding the identity
 /// diagonal before projection. Publication shares ordinary pair evidence;
 /// retain one order of each off-diagonal contact and retracing component.
-pub(super) fn bezier_self_intersections(
+pub(super) fn self_intersections(
     curve: &Curve2,
     policy: &CurveContext,
+    unit_parallel: Option<&UnitParallelSelfIntersections>,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let spans = spans(curve, policy)?;
     let [span] = spans.as_slice() else {
-        unreachable!("a prepared Bezier carrier owns one support span")
+        unreachable!("a prepared self carrier owns one support span")
     };
-    let CurveSupport2::Bezier(source) = &span.support else {
-        unreachable!("a prepared Bezier carrier owns a Bezier support")
-    };
-    let source = RationalBezier2::try_from_subcurve(source).map_err(|cause| {
-        ExactCurveError::invalid(CurveOperation2::Intersection, span.support.family(), cause)
-    })?;
     let pair = Pair {
         first: span,
         second: span,
@@ -1994,7 +2042,23 @@ pub(super) fn bezier_self_intersections(
         policy,
     };
     let mut result = Evidence::default();
-    match pair.rational_self(&source, &mut result) {
+    let incidence = match &span.support {
+        CurveSupport2::Bezier(source) => {
+            let source = RationalBezier2::try_from_subcurve(source).map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    span.support.family(),
+                    cause,
+                )
+            })?;
+            pair.rational_self(&source, &mut result)
+        }
+        CurveSupport2::Parallel(source) => pair.parallel_self(source, unit_parallel, &mut result),
+        CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
+            unreachable!("intrinsically injective supports need no self-incidence")
+        }
+    };
+    match incidence {
         Ok(()) => {}
         Err(ExactCurveError::Blocked(blocker)) => pair.blocker(
             &mut result,
@@ -3583,6 +3647,105 @@ mod analytic_dispatch_tests {
     }
 
     #[test]
+    fn finite_analytic_self_contacts_keep_the_selected_normal_sheet() {
+        let source = crate::CubicBezier2::new(
+            p(-1, 0),
+            Point2::new((-1).into(), q(-1, 3)),
+            Point2::new(q(-2, 3), q(-2, 3)),
+            p(0, 0),
+        )
+        .parallel_left(q(1, 10))
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for selected_bounds in [false, true] {
+                let bounds = [Real::from(-2), Real::from(2)];
+                let images = bounds
+                    .each_ref()
+                    .map(|t| CurvePoint2::from(exact(source.point_at_affine(t, &policy).unwrap())));
+                let [start, end] = bounds.map(|t| {
+                    if selected_bounds {
+                        selected(t, &policy)
+                    } else {
+                        t.into()
+                    }
+                });
+                let curve = Curve2::from_retained_fragment(
+                    CurveSupport2::Parallel(source.clone())
+                        .restrict_certified(
+                            CurveParameterRange2::new_validated(start, end),
+                            Some(images),
+                            false,
+                            &policy,
+                        )
+                        .unwrap(),
+                );
+                let result = self_intersections(&curve, &policy, None).unwrap();
+                assert!(result.is_complete(), "{result:?}");
+                assert!(result.overlaps().is_empty());
+                let [contact] = result.contacts() else {
+                    panic!("one selected-sheet node: {result:?}")
+                };
+                assert!(contact.is_certified_transverse());
+                let first = contact.first().local_parameter();
+                let second = contact.second().local_parameter();
+                // z=t² obeys 225z⁴-500z³+350z²-100z+24=0.
+                // The actual positive normal sheet has 9/10<z<1; the
+                // squared equation's z>1 conjugate must not be published.
+                for parameter in [first, second] {
+                    assert_eq!(
+                        parameter
+                            .polynomial_sign(
+                                &[
+                                    24.into(),
+                                    0.into(),
+                                    (-100).into(),
+                                    0.into(),
+                                    350.into(),
+                                    0.into(),
+                                    (-500).into(),
+                                    0.into(),
+                                    225.into()
+                                ],
+                                &policy
+                            )
+                            .unwrap(),
+                        Classification::Decided(hyperreal::RealSign::Zero)
+                    );
+                    assert_eq!(
+                        parameter
+                            .polynomial_sign(&[-q(9, 10), 0.into(), 1.into()], &policy)
+                            .unwrap(),
+                        Classification::Decided(hyperreal::RealSign::Positive)
+                    );
+                    assert_eq!(
+                        parameter
+                            .polynomial_sign(&[(-1).into(), 0.into(), 1.into()], &policy)
+                            .unwrap(),
+                        Classification::Decided(hyperreal::RealSign::Negative)
+                    );
+                }
+                let reflected = exact(
+                    first
+                        .affine_image_unbounded(&(-Real::one()), &Real::zero(), &policy)
+                        .unwrap(),
+                );
+                assert_eq!(
+                    reflected.same_value(second, &policy).unwrap(),
+                    Classification::Decided(true)
+                );
+                for location in [contact.first(), contact.second()] {
+                    let point = certified(
+                        curve
+                            .point_at(&exact(location.parameter(&policy).unwrap()), &policy)
+                            .unwrap(),
+                    );
+                    same(&point, contact.point(), &policy);
+                }
+            }
+        }
+    }
+
+    #[test]
     fn finite_bezier_self_contacts_retain_domain_and_point_evidence() {
         // P(t)=(t²-1,t³-t): the unit chart is injective, while the
         // full retained interval visits the origin at -1 and 1.
@@ -3616,7 +3779,7 @@ mod analytic_dispatch_tests {
                         );
                         for reversed in [false, true] {
                             let curve = oriented(&curve, reversed, &policy);
-                            let result = bezier_self_intersections(&curve, &policy).unwrap();
+                            let result = self_intersections(&curve, &policy, None).unwrap();
                             assert!(result.is_complete(), "{result:?}");
                             assert_eq!(result.contacts().len(), expected);
                             assert!(result.overlaps().is_empty());
@@ -3707,7 +3870,7 @@ mod analytic_dispatch_tests {
                         Classification::Decided(expected)
                     );
                 }
-                let result = bezier_self_intersections(&curve, &policy).unwrap();
+                let result = self_intersections(&curve, &policy, None).unwrap();
                 assert!(result.is_complete(), "{result:?}");
                 assert!(
                     result.contacts().is_empty(),
