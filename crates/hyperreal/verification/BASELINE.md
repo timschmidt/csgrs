@@ -546,6 +546,48 @@ built on both revisions but have not been timed. These results concern the
 intermediate `cdc6d3a` runtime; the later certified-precision repair requires
 fresh affected qualification. No live consumer source was changed.
 
+The [certified-precision checkpoint](../benchmarks/checkpoints/2026-09-17-verus-certified-planning.json)
+records two numerical defects found while auditing those metadata results.
+Both the baseline and `cdc6d3a` return 5,102 for `(16 + 512*pi)*pi` at precision
+zero, outside the required one-unit error from approximately 5,103.50294.
+For `1 / ((2 - sqrt(4 - 2^-16))*pi)`, the baseline's 83,443 satisfies the
+contract, while `cdc6d3a` returns 98,304. Directed MPFR intervals independently
+establish these counterexamples. Commit `89c89e2` makes error-sensitive
+precision kernels use exact magnitude certificates or approximation refinement.
+Its ordinary test matrices, all 6,492 frozen ASan inputs, release/WASM builds
+and coverage run pass. A subsequent comparison audit finds that both the
+baseline and this revision incorrectly collapse a perturbation exceeding 1,552
+to `Equal` at tolerance 32. Commit `b3a23a4` applies the same certificate
+requirement to this shortcut; known signs still supply exact ordering.
+
+The [bound composition proof](../benchmarks/checkpoints/2026-09-17-verus-bound-composition.json)
+then checks the actual square, multiply and add propagation operations. The
+complete target verifies 563 units, 94 production contracts and 107 model
+theorems. All 54 bound mutation guards and ten acceptance tests pass. Default
+and all-feature runs pass 802 and 905 test executions, plus 1,271 and 1,447
+benchmark fixtures. All typed outcomes are specified; real denotation remains
+conditional on valid incoming bounds. Inexact hints acquire no magnitude
+accuracy claim. Producer, graph, cache and caller obligations remain open,
+and current resource, timing and consumer qualification is separate.
+
+The [coverage accounting correction](../benchmarks/checkpoints/2026-09-17-verus-coverage-accounting.json)
+excludes dedicated test files and named trailing test modules that the old
+script counted as production. Reclassifying the preserved completed reports
+gives 24,871/27,357 baseline production lines and 25,202/27,734 for `89c89e2`,
+or 90.91% and 90.87%. The baseline report uses the previously preserved
+classification-only API-inventory repair; its original failed command remains
+a failure. Original reports are retained. These corrected counts replace the
+production-only interpretation of the two listed legacy reports; neither
+coverage measure is a formal proof percentage.
+
+The [pinned Hypercurve partition](../benchmarks/checkpoints/2026-09-17-verus-hypercurve-metadata-partition.json)
+completes the earlier `cdc6d3a` comparison with identical unsuccessful outcomes
+on both revisions: the remaining suite times out after 900 seconds, five
+isolated cases time out after 120 seconds each, and the retained mixed fillet
+fails on the same Boolean predicate blocker. These are not passing suites or
+native timing measurements. The temporary source is restored and live
+Hypercurve remains untouched.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
