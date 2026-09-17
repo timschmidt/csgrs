@@ -1,0 +1,365 @@
+{
+  "schema": 1,
+  "status": "experiment_not_adopted_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "runtime_base": "8c7484915da3f39d6a6754c7411277b2809cb467",
+  "overlay_patch_sha256": "323fc6f4bac75a4d00a9a11ca9c4bebc1a95f20c1f07102e79678b9434873ba4",
+  "native": [
+    {
+      "case": "pi_pow_clone",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": 0.853314314078929,
+        "cycles:u": 0.7641021655173497,
+        "instructions:u": 2.6893910209935257e-06,
+        "branches:u": -1.1554327661311703e-06,
+        "branch-misses:u": 9.425133269175634
+      },
+      "paired_cycles_change_percent": [
+        4.257220191336186,
+        5.217183170257678,
+        -0.7785368226072897,
+        -3.206911255912337,
+        -0.6061540090353312,
+        2.1343583400700306
+      ]
+    },
+    {
+      "case": "pi_pow_clone",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": 0.5981372345416403,
+        "cycles:u": 1.259858067712749,
+        "instructions:u": -0.9581635314186598,
+        "branches:u": -2.520948077946211,
+        "branch-misses:u": -0.806643259856149
+      },
+      "paired_cycles_change_percent": [
+        2.2848612430211634,
+        2.015006857772206,
+        -1.5437917354100494,
+        -0.7745453929607904,
+        2.5421719109236296,
+        0.5047092776532924
+      ]
+    },
+    {
+      "case": "pi_clone",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": -0.9578579054163594,
+        "cycles:u": -0.6185015792440018,
+        "instructions:u": -5.897137833610344e-06,
+        "branches:u": -1.5664964397865688e-05,
+        "branch-misses:u": -4.657617831156941
+      },
+      "paired_cycles_change_percent": [
+        -0.8389802896328402,
+        0.9175625032062928,
+        -0.39802286885516347,
+        -0.9816216139380218,
+        -0.27330405430340265,
+        -1.4011596678838667
+      ]
+    },
+    {
+      "case": "pi_clone",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": -14.916444776725584,
+        "cycles:u": -14.979866415719117,
+        "instructions:u": -3.778190442573898,
+        "branches:u": -7.7919001227236775,
+        "branch-misses:u": -6.202145350152721
+      },
+      "paired_cycles_change_percent": [
+        -15.243938383588706,
+        -14.715794447849529,
+        -14.345496969749838,
+        -15.816907367427845,
+        -14.70746392464065,
+        -17.929293544594692
+      ]
+    },
+    {
+      "case": "tan_pi_cached",
+      "label": "candidate",
+      "median_paired_change_percent": {
+        "task-clock": 15.167834264217905,
+        "cycles:u": 14.603395957999954,
+        "instructions:u": 6.179795741800831e-06,
+        "branches:u": 1.879947741922905e-05,
+        "branch-misses:u": 7.273173529803556
+      },
+      "paired_cycles_change_percent": [
+        17.748556797815617,
+        16.652082567992778,
+        14.971995459655552,
+        14.234796456344355,
+        11.018379803340238,
+        12.28531242574884
+      ]
+    },
+    {
+      "case": "tan_pi_cached",
+      "label": "fraction-candidate",
+      "median_paired_change_percent": {
+        "task-clock": -43.88241073690453,
+        "cycles:u": -43.89536596512159,
+        "instructions:u": -35.998814673113166,
+        "branches:u": -33.33242314198205,
+        "branch-misses:u": -20.783373368389636
+      },
+      "paired_cycles_change_percent": [
+        -43.45074159996712,
+        -43.75212794949637,
+        -43.683752792733756,
+        -44.038603980746814,
+        -44.4651841002472,
+        -44.1436907466086
+      ]
+    }
+  ],
+  "criterion": [
+    {
+      "case": "real_representation_prepared/hyperreal_cached_f64/tan_pi",
+      "label": "snapshot",
+      "median_paired_mean_change_percent": -37.26462531838155,
+      "paired_mean_change_percent": [
+        -51.38512797685901,
+        -32.14375120559671,
+        -3.0834858866209958,
+        -41.743545861162225,
+        -36.2823559027709,
+        -38.246894733992185
+      ]
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_clone/pi",
+      "label": "snapshot",
+      "median_paired_mean_change_percent": -10.085495998944761,
+      "paired_mean_change_percent": [
+        -11.05518223270674,
+        -18.453805069321362,
+        -9.115809765182782,
+        29.780453108637992,
+        -41.62172854639227,
+        -8.151023827904314
+      ]
+    },
+    {
+      "case": "real_representation_prepared/hyperreal_clone/pi_pow",
+      "label": "snapshot",
+      "median_paired_mean_change_percent": -2.130644417642169,
+      "paired_mean_change_percent": [
+        -1.490820915118929,
+        2.939154146733647,
+        -21.071891650602716,
+        -11.303433413030216,
+        -2.770467920165409,
+        12.773274043360082
+      ]
+    },
+    {
+      "case": "real_representation_prepared/mpfr192_clone/pi_pow",
+      "label": "snapshot",
+      "median_paired_mean_change_percent": 0.5186996719414472,
+      "paired_mean_change_percent": [
+        0.33435210858250297,
+        2.3067037380727573,
+        1.1757828701908002,
+        -0.7315355656904665,
+        0.7030472353003914,
+        -2.29905924051248
+      ]
+    },
+    {
+      "case": "real_representation_prepared/mpfr192_f64/tan_pi",
+      "label": "snapshot",
+      "median_paired_mean_change_percent": 2.0204733695554533,
+      "paired_mean_change_percent": [
+        1.6588878201755586,
+        1.4482501779101487,
+        77.09552836779294,
+        2.440341375722621,
+        -2.3515898393099754,
+        2.382058918935348
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "label": "baseline",
+      "command": [
+        "perf",
+        "record",
+        "--no-buildid-cache",
+        "-e",
+        "cycles:u",
+        "-c",
+        "100003",
+        "-o",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-criterion-profiles/baseline/perf.data",
+        "--",
+        "taskset",
+        "-c",
+        "2",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-profile-runtime/real_representations",
+        "--bench",
+        "^real_representation_prepared/hyperreal_clone/pi_pow$",
+        "--profile-time",
+        "5"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CRITERION_HOME": "/tmp/hyperreal-verus-baseline-scmfudw9/clone-profile-runtime/criterion",
+        "PERF_BUILDID_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/clone-criterion-profiles/buildid-cache",
+        "LC_ALL": "C"
+      },
+      "binary_sha256": "68a056f7b67a6b16562a8a94288b6d44673596efb1043ed3cd94b0e623fc30f5",
+      "exit_code": 0,
+      "seconds": 4.648311138153076,
+      "native_timing": false,
+      "report_exit_code": 0,
+      "annotate_exit_code": 0
+    },
+    {
+      "label": "fraction",
+      "command": [
+        "perf",
+        "record",
+        "--no-buildid-cache",
+        "-e",
+        "cycles:u",
+        "-c",
+        "100003",
+        "-o",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-criterion-profiles/fraction/perf.data",
+        "--",
+        "taskset",
+        "-c",
+        "2",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-profile-runtime/real_representations",
+        "--bench",
+        "^real_representation_prepared/hyperreal_clone/pi_pow$",
+        "--profile-time",
+        "5"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CRITERION_HOME": "/tmp/hyperreal-verus-baseline-scmfudw9/clone-profile-runtime/criterion",
+        "PERF_BUILDID_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/clone-criterion-profiles/buildid-cache",
+        "LC_ALL": "C"
+      },
+      "binary_sha256": "6195c9394850668bfffc0d8dc948c3e7eeede49ef8caf16905b8ea041ef80219",
+      "exit_code": 0,
+      "seconds": 4.592832326889038,
+      "native_timing": false,
+      "report_exit_code": 0,
+      "annotate_exit_code": 0
+    },
+    {
+      "label": "inline",
+      "command": [
+        "perf",
+        "record",
+        "--no-buildid-cache",
+        "-e",
+        "cycles:u",
+        "-c",
+        "100003",
+        "-o",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-criterion-profiles/inline/perf.data",
+        "--",
+        "taskset",
+        "-c",
+        "2",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-profile-runtime/real_representations",
+        "--bench",
+        "^real_representation_prepared/hyperreal_clone/pi_pow$",
+        "--profile-time",
+        "5"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CRITERION_HOME": "/tmp/hyperreal-verus-baseline-scmfudw9/clone-profile-runtime/criterion",
+        "PERF_BUILDID_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/clone-criterion-profiles/buildid-cache",
+        "LC_ALL": "C"
+      },
+      "binary_sha256": "e4b9cc097631089d1469379c7326b5a494fa0ed167729b93525b8761e33634cf",
+      "exit_code": 0,
+      "seconds": 5.045955419540405,
+      "native_timing": false,
+      "report_exit_code": 0,
+      "annotate_exit_code": 0
+    },
+    {
+      "label": "snapshot",
+      "command": [
+        "perf",
+        "record",
+        "--no-buildid-cache",
+        "-e",
+        "cycles:u",
+        "-c",
+        "100003",
+        "-o",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-criterion-profiles/snapshot/perf.data",
+        "--",
+        "taskset",
+        "-c",
+        "2",
+        "/tmp/hyperreal-verus-baseline-scmfudw9/clone-profile-runtime/real_representations",
+        "--bench",
+        "^real_representation_prepared/hyperreal_clone/pi_pow$",
+        "--profile-time",
+        "5"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "environment": {
+        "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CRITERION_HOME": "/tmp/hyperreal-verus-baseline-scmfudw9/clone-profile-runtime/criterion",
+        "PERF_BUILDID_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/clone-criterion-profiles/buildid-cache",
+        "LC_ALL": "C"
+      },
+      "binary_sha256": "6320060070b80fd56c5de4f50629731573d60281a904ef44b9769124dca10261",
+      "exit_code": 0,
+      "seconds": 4.838618278503418,
+      "native_timing": false,
+      "report_exit_code": 0,
+      "annotate_exit_code": 0
+    }
+  ],
+  "findings": [
+    "The direct atomic cache-copy variant has essentially the same measured instructions per iteration as the inline-accessor-only experiment; it has not justified another production change.",
+    "Criterion clone and unchanged MPFR export samples show substantial between-run variation, including one MPFR pair near +77%. The negative median clone ratio is not accepted as resolution of the existing regression.",
+    "Sampled original pi_pow clone profiles locate substantial work in Node construction, shared-constant wrappers, multiplication and node dropping. Computable already stores its immutable node in Arc; Real cloning currently reconstructs many symbolic payloads.",
+    "These sampled profiles ran separately from native timing. Profile elapsed times and raw event totals are not benchmark comparisons.",
+    "Full verification and fixed-baseline acceptance remain pending. The next shared-computable-clone experiment is separate and is not qualified by this checkpoint."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-clone-profiles.tar.gz",
+    "bytes": 4468219,
+    "files": 639,
+    "sha256": "cb145438b9b60cde6b4f3dbffeb00a8fc027c2f1099a6e2fb16a3a3303f8cce5"
+  }
+}
