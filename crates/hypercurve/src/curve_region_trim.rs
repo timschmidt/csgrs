@@ -1584,6 +1584,160 @@ mod tests {
     }
 
     #[test]
+    fn finite_bezier_carrier_preparation_preserves_trim_and_replay() {
+        use crate::{
+            BezierAlgebraicChord2, BezierParameter2, BezierSplitFragment2, BezierSubcurve2,
+            CurveRegionBoundaryLoop2, RationalBezier2,
+        };
+        let sources = [
+            QuadraticBezier2::new(
+                Point2::new(q(-1, 4), 0.into()),
+                Point2::new(q(-1, 4), q(1, 2)),
+                Point2::new(q(-1, 4), 1.into()),
+            ),
+            // x(u)=u²-3u/4-1/8, y(u)=u has the same cap entry/exit
+            // parameters 1/4 and 1/2, and cannot use a line-image shortcut.
+            QuadraticBezier2::new(
+                Point2::new(q(-1, 8), 0.into()),
+                Point2::new(q(-1, 2), q(1, 2)),
+                Point2::new(q(1, 8), 1.into()),
+            ),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for shift in [0, 1, -2] {
+                let s = Real::from(shift);
+                let cap = QuadraticBezier2::new(
+                    Point2::new(-(&s * &s), -&s),
+                    Point2::new(-(&s * &s) + &s, q(1, 2) - &s),
+                    Point2::new(-((Real::one() - &s) * (Real::one() - &s)), Real::one() - &s),
+                );
+                for support in [
+                    BezierSubcurve2::Quadratic(cap.clone()),
+                    BezierSubcurve2::Rational(
+                        RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                            cap.clone(),
+                        ))
+                        .unwrap()
+                        .elevated_to_degree(5)
+                        .unwrap(),
+                    ),
+                ] {
+                    for reverse_boundary in [false, true] {
+                        let endpoints = if reverse_boundary {
+                            [p(0, 0), p(-1, 1)]
+                        } else {
+                            [p(-1, 1), p(0, 0)]
+                        };
+                        let boundary = CurveRegionBoundaryLoop2::new(
+                            vec![
+                                BezierSplitFragment2::RetainedBezier {
+                                    source_curve: support.clone(),
+                                    reversed: reverse_boundary,
+                                    start: BezierParameter2::Exact(s.clone()),
+                                    end: BezierParameter2::Exact(&s + Real::one()),
+                                    start_image: None,
+                                    end_image: None,
+                                },
+                                BezierSplitFragment2::AlgebraicChord(decided(
+                                    BezierAlgebraicChord2::try_new(
+                                        endpoints[0].clone().into(),
+                                        endpoints[1].clone().into(),
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                                )),
+                            ],
+                            &policy,
+                        )
+                        .unwrap();
+                        let region = CurveRegion2::try_new_with_loop_topology(
+                            vec![boundary],
+                            vec![CurveRegionLoopRole::Material],
+                            vec![FillRule::NonZero],
+                            vec![if reverse_boundary {
+                                CurveBoundaryInteriorSide2::Right
+                            } else {
+                                CurveBoundaryInteriorSide2::Left
+                            }],
+                        )
+                        .unwrap();
+                        let normalized = region.regularized_region(&policy).unwrap();
+                        assert_eq!(normalized.certainty, CurveCertainty::Certified);
+                        for region in [&region, &normalized.value] {
+                            for source in &sources {
+                                for reverse_source in [false, true] {
+                                    let source = Curve2::from(source.clone());
+                                    let source = if reverse_source {
+                                        source.reversed(&policy).unwrap().value
+                                    } else {
+                                        source
+                                    };
+                                    let result = source
+                                        .trim_inside_region_with_parameters(region, &policy)
+                                        .unwrap();
+                                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                                    let [piece] = result.value.as_slice() else {
+                                        panic!(
+                                            "one finite cap crossing: shift={shift}, reverse_boundary={reverse_boundary}, reverse_source={reverse_source}"
+                                        );
+                                    };
+                                    let expected = if reverse_source {
+                                        (q(1, 2), q(3, 4))
+                                    } else {
+                                        (q(1, 4), q(1, 2))
+                                    };
+                                    assert_eq!(piece.represented_parameter_range(), Some(expected));
+                                    assert_trim_replay(&source, piece, &policy);
+                                    for (contacts, endpoint) in [
+                                        (piece.start_boundary_contacts(), piece.curve().start()),
+                                        (piece.end_boundary_contacts(), piece.curve().end()),
+                                    ] {
+                                        let [contact] = contacts else {
+                                            panic!("one boundary owner");
+                                        };
+                                        let replay = contact
+                                            .carrier()
+                                            .curve()
+                                            .point_at(contact.boundary_parameter(), &policy)
+                                            .unwrap();
+                                        assert_eq!(replay.certainty, CurveCertainty::Certified);
+                                        assert_eq!(
+                                            replay.value.same_point(&endpoint, &policy),
+                                            Classification::Decided(true)
+                                        );
+                                        if let Some(point) = contact.point() {
+                                            assert_eq!(
+                                                point.same_point(&endpoint, &policy),
+                                                Classification::Decided(true)
+                                            );
+                                        }
+                                    }
+                                    let repeated =
+                                        piece.curve().trim_inside_region(region, &policy).unwrap();
+                                    assert_eq!(repeated.certainty, CurveCertainty::Certified);
+                                    assert_eq!(repeated.value.len(), 1);
+                                    assert_eq!(
+                                        repeated.value[0]
+                                            .start()
+                                            .same_point(&piece.curve().start(), &policy),
+                                        Classification::Decided(true)
+                                    );
+                                    assert_eq!(
+                                        repeated.value[0]
+                                            .end()
+                                            .same_point(&piece.curve().end(), &policy),
+                                        Classification::Decided(true)
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn generated_chord_trim_preserves_holes_and_exact_endpoint_replay() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let parameter = sqrt_half_parameter(&policy);

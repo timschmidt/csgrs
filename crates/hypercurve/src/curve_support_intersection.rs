@@ -391,6 +391,27 @@ impl Pair<'_> {
         Ok(())
     }
 
+    fn admit_contact(
+        &self,
+        result: &mut Evidence,
+        contact: CurveIntersectionContact2,
+    ) -> ExactCurveResult<()> {
+        if contains(
+            &self.first.range,
+            contact.first().local_parameter(),
+            self.first.support.family(),
+            self.policy,
+        )? && contains(
+            &self.second.range,
+            contact.second().local_parameter(),
+            self.second.support.family(),
+            self.policy,
+        )? {
+            self.append_contact(result, contact)?;
+        }
+        Ok(())
+    }
+
     fn circle_contact(
         &self,
         circle: &crate::BezierAlgebraicCuspSemicircleFragment2,
@@ -974,6 +995,9 @@ impl Pair<'_> {
         if !unit_covers_pair {
             return self.finite_rational(first, second, result);
         }
+        if self.rational_unit_circles(first, second, result)? {
+            return Ok(());
+        }
         // A collapsed rational map has an entire parameter fiber, rather
         // than one isolated root. Reuse the zero-distance kernel's complete
         // point-component replay and the common finite-domain publication.
@@ -997,6 +1021,80 @@ impl Pair<'_> {
         self.rational_context(&context, result)
     }
 
+    fn rational_unit_circles(
+        &self,
+        first: &RationalBezier2,
+        second: &RationalBezier2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<bool> {
+        // A circle equation alone does not prove that an arbitrary rational
+        // parameterization is injective. Exact quadratic charts (including
+        // degree elevations) can reuse native angular incidence. The caller
+        // has already proved that the unit charts cover the active ranges.
+        if ![first, second].into_iter().all(|curve| {
+            curve.retained_circular_conic().is_some()
+                && matches!(
+                    curve.quadratic_homogeneous_controls(self.policy),
+                    Ok(Classification::Decided(Some(_)))
+                )
+        }) {
+            return Ok(false);
+        }
+        let first_curve = Curve2::from(first.clone());
+        let second_curve = Curve2::from(second.clone());
+        let Some(native) = native_arc_intersection(&first_curve, &second_curve, self.policy, None)?
+        else {
+            return Ok(false);
+        };
+        let evidence = match native {
+            NativeArcIntersectionDispatch::Points {
+                first_arc,
+                second_arc,
+                points,
+            } => build_native_arc_evidence(
+                &first_curve,
+                &second_curve,
+                &first_arc,
+                &second_arc,
+                &points,
+                self.policy,
+                1,
+            ),
+            NativeArcIntersectionDispatch::Coincident {
+                first_arc,
+                second_arc,
+            } => build_native_coincident_arc_evidence(
+                &first_curve,
+                &second_curve,
+                &first_arc,
+                &second_arc,
+                self.policy,
+                1,
+            ),
+        };
+        let evidence = match evidence {
+            Ok(evidence) => evidence,
+            Err(ExactCurveError::Blocked(_)) => return Ok(false),
+            Err(error) => return Err(error),
+        };
+        for contact in evidence.contacts() {
+            self.admit_contact(
+                result,
+                self.contact(
+                    contact.first().local_parameter().clone(),
+                    contact.second().local_parameter().clone(),
+                    contact.point().clone(),
+                    contact.is_certified_transverse(),
+                    contact.tangent_cross_sign(),
+                ),
+            )?;
+        }
+        for overlap in evidence.overlaps() {
+            self.rational_overlap(first, overlap, result)?;
+        }
+        Ok(true)
+    }
+
     fn rational_context(
         &self,
         context: &RationalBezierIntersectionContext,
@@ -1018,76 +1116,80 @@ impl Pair<'_> {
             return self.finite_rational(first, second, result);
         }
 
-        let family = self.first.support.family();
         for contact in evidence.isolated_contacts() {
-            let first_parameter = CurveParameter2::from(contact.first_parameter().clone());
-            let second_parameter = CurveParameter2::from(contact.second_parameter().clone());
-            if contains(&self.first.range, &first_parameter, family, self.policy)?
-                && contains(
-                    &self.second.range,
-                    &second_parameter,
-                    self.second.support.family(),
-                    self.policy,
-                )?
-            {
-                self.append_contact(
-                    result,
-                    self.contact(
-                        first_parameter,
-                        second_parameter,
-                        contact.point().clone(),
-                        contact.is_certified_transverse(),
-                        contact.tangent_cross_sign(),
-                    ),
-                )?;
-            }
+            self.admit_contact(
+                result,
+                self.contact(
+                    contact.first_parameter().clone().into(),
+                    contact.second_parameter().clone().into(),
+                    contact.point().clone(),
+                    contact.is_certified_transverse(),
+                    contact.tangent_cross_sign(),
+                ),
+            )?;
         }
         if let Some(overlap) = evidence.overlap() {
-            let correspondence = RationalCurveOverlap2::new(
-                context.overlap_parameter_correspondence(overlap),
-                overlap,
-            );
-            if let Some((first_range, second_range)) = decided(
-                correspondence.clipped_ranges(&self.first.range, &self.second.range, self.policy),
-                family,
-            )? {
-                let mut inclusion = [true, true];
-                for (index, parameter) in [first_range.start(), first_range.end()]
-                    .into_iter()
-                    .enumerate()
-                {
-                    inclusion[index] = self.overlap_includes(overlap, parameter)?;
-                }
-                result.overlaps.push(self.overlap(
-                    [first_range, second_range],
-                    overlap.orientation(),
-                    inclusion,
-                    CurveOverlapCorrespondence2::Rational {
-                        source: correspondence,
+            self.rational_overlap(
+                first,
+                &CurveIntersectionOverlap2 {
+                    first_span_index: self.indices[0],
+                    second_span_index: self.indices[1],
+                    first_range: CurveParameterRange2::from_bezier_range(
+                        overlap.first_range().clone(),
+                    ),
+                    second_range: CurveParameterRange2::from_bezier_range(
+                        overlap.second_range().clone(),
+                    ),
+                    orientation: overlap.orientation(),
+                    endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
+                    parameter_correspondence: CurveOverlapCorrespondence2::Rational {
+                        source: RationalCurveOverlap2::new(
+                            context.overlap_parameter_correspondence(overlap),
+                            overlap,
+                        ),
                         swapped: false,
                     },
-                )?);
-            } else {
-                // A regularized filled region can discard a singleton overlap.
-                // An open curve must retain the shared endpoint contact.
-                self.overlap_endpoint_contacts(first, overlap, &correspondence, result)?;
-            }
+                },
+                result,
+            )?;
+        }
+        Ok(())
+    }
+
+    fn rational_overlap(
+        &self,
+        first: &RationalBezier2,
+        overlap: &CurveIntersectionOverlap2,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        if let Some(clipped) = decided(
+            overlap.restrict_raw(&self.first.range, &self.second.range, self.policy),
+            self.first.support.family(),
+        )? {
+            result.overlaps.push(self.overlap(
+                [clipped.first_range, clipped.second_range],
+                clipped.orientation,
+                clipped.endpoint_inclusion,
+                clipped.parameter_correspondence,
+            )?);
+        } else {
+            // A regularized filled region can discard a singleton overlap.
+            // An open curve must retain the shared endpoint contact.
+            self.overlap_endpoint_contacts(first, overlap, result)?;
         }
         Ok(())
     }
 
     fn overlap_includes(
         &self,
-        overlap: &crate::RationalBezierIntersectionOverlap2,
+        range: &CurveParameterRange2,
+        inclusion: [bool; 2],
         parameter: &CurveParameter2,
     ) -> ExactCurveResult<bool> {
-        for (boundary, included) in [
-            (overlap.first_range().start(), overlap.includes_start()),
-            (overlap.first_range().end(), overlap.includes_end()),
-        ] {
+        for (boundary, included) in [(range.start(), inclusion[0]), (range.end(), inclusion[1])] {
             if !included
                 && decided(
-                    parameter.same_value(&boundary.clone().into(), self.policy),
+                    parameter.same_value(boundary, self.policy),
                     self.first.support.family(),
                 )?
             {
@@ -1100,18 +1202,23 @@ impl Pair<'_> {
     fn overlap_endpoint_contacts(
         &self,
         first: &RationalBezier2,
-        overlap: &crate::RationalBezierIntersectionOverlap2,
-        correspondence: &RationalCurveOverlap2,
+        overlap: &CurveIntersectionOverlap2,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
-        let first_overlap = CurveParameterRange2::from_bezier_range(overlap.first_range().clone());
-        let second_overlap =
-            CurveParameterRange2::from_bezier_range(overlap.second_range().clone());
+        let CurveOverlapCorrespondence2::Rational {
+            source: correspondence,
+            swapped: false,
+        } = &overlap.parameter_correspondence
+        else {
+            unreachable!("rational and native circle components retain their rational transport");
+        };
+        let first_overlap = overlap.first_range();
+        let second_overlap = overlap.second_range();
         for forward in [true, false] {
             let (span, range, other) = if forward {
-                (self.first, &first_overlap, self.second)
+                (self.first, first_overlap, self.second)
             } else {
-                (self.second, &second_overlap, self.first)
+                (self.second, second_overlap, self.first)
             };
             for parameter in [span.range.start(), span.range.end()] {
                 if !contains(range, parameter, span.support.family(), self.policy)? {
@@ -1143,7 +1250,11 @@ impl Pair<'_> {
                 } else {
                     (mapped, parameter.clone())
                 };
-                if !self.overlap_includes(overlap, &first_parameter)? {
+                if !self.overlap_includes(
+                    overlap.first_range(),
+                    overlap.endpoint_inclusion,
+                    &first_parameter,
+                )? {
                     continue;
                 }
                 let point = Curve2::from(first.clone())
@@ -1291,8 +1402,16 @@ impl Pair<'_> {
         )? {
             let lower_first = if swapped { &second_range } else { &first_range };
             let inclusion = [
-                self.overlap_includes(overlap, lower_first.start())?,
-                self.overlap_includes(overlap, lower_first.end())?,
+                self.overlap_includes(
+                    &CurveParameterRange2::from_bezier_range(overlap.first_range().clone()),
+                    [overlap.includes_start(), overlap.includes_end()],
+                    lower_first.start(),
+                )?,
+                self.overlap_includes(
+                    &CurveParameterRange2::from_bezier_range(overlap.first_range().clone()),
+                    [overlap.includes_start(), overlap.includes_end()],
+                    lower_first.end(),
+                )?,
             ];
             result.overlaps.push(self.overlap(
                 [first_range, second_range],
@@ -1331,7 +1450,11 @@ impl Pair<'_> {
                 } else {
                     (mapped, parameter.clone())
                 };
-                if !self.overlap_includes(overlap, if swapped { &second } else { &first })? {
+                if !self.overlap_includes(
+                    &CurveParameterRange2::from_bezier_range(overlap.first_range().clone()),
+                    [overlap.includes_start(), overlap.includes_end()],
+                    if swapped { &second } else { &first },
+                )? {
                     continue;
                 }
                 let point = self.analytic_contact_point(&first)?;
@@ -2645,6 +2768,83 @@ mod circle_dispatch_tests {
             .unwrap(),
         )
         .into()
+    }
+
+    #[test]
+    fn retained_quadratic_circle_pairs_clip_components_and_endpoint_contacts() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for major in [false, true] {
+                let arc =
+                    crate::CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), major).unwrap();
+                let (implicit, circle) = crate::arc_bezier::circular_conic_provenance(&arc);
+                let weight = q(1, 2).sqrt().unwrap();
+                let source = RationalBezier2::try_new(
+                    vec![p(1, 0), p(1, 1), p(0, 1)],
+                    vec![
+                        Real::one(),
+                        if major { -weight } else { weight },
+                        Real::one(),
+                    ],
+                )
+                .unwrap()
+                .with_implicit_quadratic_conic(implicit, Some(circle));
+                for degree in [2, 5] {
+                    let source = source.elevated_to_degree(degree).unwrap();
+                    let retain = |a, b| {
+                        Curve2::from_retained_fragment(BezierSplitFragment2::RetainedBezier {
+                            source_curve: BezierSubcurve2::Rational(source.clone()),
+                            start: BezierParameter2::Exact(q(a, 8)),
+                            end: BezierParameter2::Exact(q(b, 8)),
+                            reversed: false,
+                            start_image: None,
+                            end_image: None,
+                        })
+                    };
+                    // Each discovery starts with the same complete circle
+                    // chart. Its retained intervals own a component, one
+                    // isolated endpoint, or an empty intersection.
+                    for (a, b, contacts, overlaps) in [
+                        ((2, 6), (4, 8), 0, 1),
+                        ((0, 4), (4, 8), 1, 0),
+                        ((1, 3), (5, 7), 0, 0),
+                    ] {
+                        let first = retain(a.0, a.1);
+                        let second = retain(b.0, b.1);
+                        for first_reversed in [false, true] {
+                            for second_reversed in [false, true] {
+                                let first = oriented(&first, first_reversed, &policy);
+                                let second = oriented(&second, second_reversed, &policy);
+                                for (first, second) in [(&first, &second), (&second, &first)] {
+                                    let result = query(first, second, &policy);
+                                    assert_eq!(result.contacts().len(), contacts);
+                                    assert_eq!(result.overlaps().len(), overlaps);
+                                    assert!(result.parameter_components().is_empty());
+                                    if let Some(overlap) = result.overlaps().first() {
+                                        let mut endpoints = [
+                                            overlap.first_range().start().scalar().unwrap().clone(),
+                                            overlap.first_range().end().scalar().unwrap().clone(),
+                                        ];
+                                        if endpoints[0] == q(6, 8) {
+                                            endpoints.reverse();
+                                        }
+                                        assert_eq!(endpoints, [q(4, 8), q(6, 8)]);
+                                        assert!(overlap.includes_start() && overlap.includes_end());
+                                        assert_eq!(
+                                            overlap.orientation(),
+                                            if first_reversed == second_reversed {
+                                                RationalBezierOverlapOrientation2::Same
+                                            } else {
+                                                RationalBezierOverlapOrientation2::Reversed
+                                            }
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     #[test]

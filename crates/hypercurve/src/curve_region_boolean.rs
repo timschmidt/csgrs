@@ -1475,15 +1475,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let carrier_count = carriers.len();
         let authored_carrier_pair_count =
             carrier_count.saturating_mul(carrier_count.saturating_add(1)) / 2;
-        let curves = carriers
-            .iter()
-            .map(|carrier| match &carrier.geometry {
-                CurveSupport2::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                CurveSupport2::Parallel(_) | CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        let curves = prepare_bezier_carrier_curves(&carriers, policy)?;
         let mut pairs = Vec::with_capacity(carrier_count.saturating_mul(2));
         let mut intersection_cache = CurveIntersectionBatchCache::default();
         for first_carrier_index in 0..carrier_count {
@@ -1572,15 +1564,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             carrier
         }));
 
-        let curves = carriers
-            .iter()
-            .map(|carrier| match &carrier.geometry {
-                CurveSupport2::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                CurveSupport2::Parallel(_) | CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        // Every pair contains the chord probe, so no Bezier/Bezier context
+        // consumes a prepared curve. Keep the positional table empty.
+        let curves = vec![None; carriers.len()];
         let mut pairs = Vec::with_capacity(boundary_carriers.len());
         let mut intersection_cache = CurveIntersectionBatchCache::default();
         for second_carrier_index in 1..carriers.len() {
@@ -11881,6 +11867,37 @@ fn region_carrier_count(region: &CurveRegion2) -> usize {
         .sum()
 }
 
+/// Prepares pair operands in their original support charts. A native unit
+/// carrier stays native; retained ranges keep endpoint images and admission
+/// evidence for the common finite-domain intersection kernel.
+fn prepare_bezier_carrier_curves(
+    carriers: &[RegionCarrier],
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<Option<Curve2>>> {
+    carriers
+        .iter()
+        .map(|carrier| {
+            if !matches!(carrier.geometry, CurveSupport2::Bezier(_)) {
+                return Ok(None);
+            }
+            carrier
+                .geometry
+                .restrict_certified(
+                    carrier.range(),
+                    carrier.selected_fiber_endpoint_points.as_deref().cloned(),
+                    // Arrangement traversal is applied by the owning carrier. Pair
+                    // parameters and tangent signs use increasing source order.
+                    false,
+                    policy,
+                )
+                .map(|fragment| Some(Curve2::from_retained_fragment(fragment)))
+                .map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause)
+                })
+        })
+        .collect()
+}
+
 fn build_cross_operand_carrier_pairs(
     carriers: &[RegionCarrier],
     first_carrier_count: usize,
@@ -11888,13 +11905,7 @@ fn build_cross_operand_carrier_pairs(
 ) -> ExactCurveResult<Vec<RegionCarrierPair>> {
     let second_carrier_count = carriers.len() - first_carrier_count;
     let cartesian_pair_count = first_carrier_count.saturating_mul(second_carrier_count);
-    let curves = carriers
-        .iter()
-        .map(|carrier| match &carrier.geometry {
-            CurveSupport2::Bezier(curve) => Some(Curve2::from(curve.clone())),
-            _ => None,
-        })
-        .collect::<Vec<_>>();
+    let curves = prepare_bezier_carrier_curves(carriers, policy)?;
     let mut pairs = Vec::with_capacity(carriers.len().min(cartesian_pair_count));
     let mut intersection_cache = CurveIntersectionBatchCache::default();
     let mut visit = |first_index, second_index, _| -> ExactCurveResult<()> {
@@ -21355,13 +21366,7 @@ mod certified_successor_tests {
             }
             let indexed =
                 build_cross_operand_carrier_pairs(&carriers, first_count, &policy).unwrap();
-            let curves = carriers
-                .iter()
-                .map(|carrier| match &carrier.geometry {
-                    CurveSupport2::Bezier(curve) => Some(Curve2::from(curve.clone())),
-                    _ => None,
-                })
-                .collect::<Vec<_>>();
+            let curves = prepare_bezier_carrier_curves(&carriers, &policy).unwrap();
             let mut cache = CurveIntersectionBatchCache::default();
             let mut cartesian = Vec::new();
             for first_index in 0..first_count {
