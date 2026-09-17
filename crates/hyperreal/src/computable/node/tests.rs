@@ -1393,6 +1393,24 @@ mod tests {
     }
 
     #[test]
+    fn rational_square_roots_retain_exact_magnitude_facts() {
+        // Include negative odd exponents: truncating division would place
+        // sqrt(1/2) in the binade starting at one instead of one half.
+        for (numerator, denominator, msd) in [
+            (2, 1, 0), (3, 1, 0), (5, 1, 1), (7, 1, 1),
+            (1, 2, -1), (1, 3, -1), (1, 5, -2), (1, 7, -2),
+        ] {
+            let radicand = Rational::fraction(numerator, denominator).unwrap();
+            let root = Computable::sqrt_squarefree_rational(radicand);
+            assert_eq!(
+                root.structural_facts().magnitude,
+                Some(MagnitudeBits { msd, exact_msd: true }),
+                "sqrt({numerator}/{denominator})",
+            );
+        }
+    }
+
+    #[test]
     fn computable_is_send_and_sync() {
         fn assert_send_sync<T: Send + Sync>() {}
 

@@ -6,6 +6,7 @@
     "verified::word::compare_products",
     "verified::word::signed_add",
     "verified::word::checked_shift_left",
+    "verified::word::floor_half",
     "verified::division::gcd_remainder",
     "verified::division::reduce_gcd_to_word",
     "verified::gcd::small_gcd",

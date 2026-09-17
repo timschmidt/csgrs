@@ -1,7 +1,7 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies fifty-one production contracts (fifty
+The current proof target verifies fifty-two production contracts (fifty-one
 functions and one constant) and sixty-five arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
@@ -85,6 +85,7 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `compare_products` | A returned ordering matches exact unbounded cross products; `None` occurs exactly when a product exceeds `u128`. | Rational word-magnitude comparison |
 | `signed_add` | Exact signed sum, canonical zero sign, and overflow iff the mathematical magnitude exceeds `u128`. | Rational signed-word aggregates |
 | `checked_shift_left` | Exact multiplication by mathematical `2^shift`, or `None` for an unrepresentable factor or product. | Exact dyadic word scaling |
+| `floor_half` | Exact floor division by two for every signed 32-bit exponent, including negative odd values, with overflow safety. | Square-root magnitude metadata |
 | `gcd_remainder` | Exact Euclidean remainder without overflow/underflow for `left >= right > u64::MAX`, including the high-limb quotient estimate. | `reduce_gcd_to_word` |
 | `reduce_gcd_to_word` | For every pair of `u128`s, returns an ordered pair with a word-sized second operand and the same mathematical GCD; loop termination and remainder-call preconditions are proved. | Rational two-limb GCD |
 | `small_gcd`, `fill_small_gcd_table`, `build_small_gcd_table`, `SMALL_GCD_TABLE` | All 4,096 compile-time table entries equal mathematical GCD; recursive initialization terminates and preserves entries outside the filled range. | `gcd_u64` |
@@ -183,6 +184,10 @@ cross-coprimality produces coprime numerator and denominator products. They
 include empty products and zero numerators. Prefix order remains explicit:
 a native checked product can overflow before encountering a later zero.
 
+The `floor_half` contract covers the integer exponent calculation. The
+positive-root binade identity and the surrounding metadata invariants still
+need to be connected to the complete real-denotation proof.
+
 The float proofs stop at decomposition into a signed integer times a power of
 two. The `BigUint` construction, reduction, retained-fact cache, and public
 conversion wrappers are not yet verified. The scalar and fixed-buffer GCD
@@ -226,7 +231,7 @@ proves conversion to `usize` is safe, including on narrower targets.
 No project assumptions were added to cover these operations.
 
 `test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of sixty-four
+first verifies the unmodified bodies, and then requires rejection of sixty-nine
 incorrect implementations and an attempted assumption bypass. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
