@@ -1,5 +1,9 @@
+#[cfg(verus_keep_ghost)]
+use vstd::prelude::*;
+
 /// Exact sign knowledge exposed by structural inspection.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum RealSign {
     /// The value is strictly less than zero.
     Negative,
@@ -11,6 +15,7 @@ pub enum RealSign {
 
 /// Whether structural inspection can prove zero or nonzero status.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum ZeroKnowledge {
     /// The value is structurally known to be exactly zero.
     Zero,
@@ -28,6 +33,7 @@ pub enum ZeroKnowledge {
 /// object facts from bounded refinement without treating lossy primitive-float
 /// approximations as topology.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum RealSignCertificate {
     /// The sign followed from cheap structural facts already carried by `Real`.
     StructuralFacts,
@@ -51,6 +57,7 @@ pub enum RealSignCertificate {
 /// topology. This is the scalar-side counterpart of predicate reports in
 /// `hyperlimit`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum CertifiedRealSign {
     /// The sign was proved.
     Known {
@@ -68,6 +75,10 @@ pub enum CertifiedRealSign {
 
 impl CertifiedRealSign {
     /// Return the certified sign, if known.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == match self { Self::Known { sign, .. } => Some(sign), Self::Unknown { .. } => None },
+    ))]
     pub const fn sign(self) -> Option<RealSign> {
         match self {
             Self::Known { sign, .. } => Some(sign),
@@ -76,6 +87,10 @@ impl CertifiedRealSign {
     }
 
     /// Return whether the sign was proved.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == matches!(self, Self::Known { .. }),
+    ))]
     pub const fn is_known(self) -> bool {
         matches!(self, Self::Known { .. })
     }
@@ -89,6 +104,7 @@ impl CertifiedRealSign {
 /// by proving that the difference is exactly zero. Inequality is certified by
 /// exact structural facts or by proving a nonzero sign for the difference.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum RealEqualityCertificate {
     /// The existing structural `PartialEq` relation proved equality.
     StructuralEquality,
@@ -111,6 +127,7 @@ pub enum RealEqualityCertificate {
 /// `PartialOrd` uses this same scalar predicate and returns `None` when its
 /// bounded exact-real proof budget cannot certify an ordering.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum RealOrderingCertificate {
     /// The operands were structurally equal.
     StructuralEquality,
@@ -129,6 +146,7 @@ pub enum RealOrderingCertificate {
 
 /// Result of asking for a certified ordering under a bounded exact-real policy.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum CertifiedRealOrdering {
     /// Ordering was proved.
     Known {
@@ -146,6 +164,10 @@ pub enum CertifiedRealOrdering {
 
 impl CertifiedRealOrdering {
     /// Return the certified ordering, if known.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == match self { Self::Known { ordering, .. } => Some(ordering), Self::Unknown { .. } => None },
+    ))]
     pub const fn ordering(self) -> Option<core::cmp::Ordering> {
         match self {
             Self::Known { ordering, .. } => Some(ordering),
@@ -154,6 +176,10 @@ impl CertifiedRealOrdering {
     }
 
     /// Return whether ordering was proved.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == matches!(self, Self::Known { .. }),
+    ))]
     pub const fn is_known(self) -> bool {
         matches!(self, Self::Known { .. })
     }
@@ -166,6 +192,7 @@ impl CertifiedRealOrdering {
 /// precision budget did not prove the equality status; it must not be treated
 /// as approximate inequality.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum CertifiedRealEquality {
     /// Equality was proved.
     Equal {
@@ -186,6 +213,10 @@ pub enum CertifiedRealEquality {
 
 impl CertifiedRealEquality {
     /// Return the certified equality result, if known.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == match self { Self::Equal { .. } => Some(true), Self::NotEqual { .. } => Some(false), Self::Unknown { .. } => None },
+    ))]
     pub const fn as_bool(self) -> Option<bool> {
         match self {
             Self::Equal { .. } => Some(true),
@@ -195,6 +226,10 @@ impl CertifiedRealEquality {
     }
 
     /// Return whether equality status was proved.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == !matches!(self, Self::Unknown { .. }),
+    ))]
     pub const fn is_known(self) -> bool {
         !matches!(self, Self::Unknown { .. })
     }
@@ -205,6 +240,7 @@ impl CertifiedRealEquality {
 /// `exact_msd` is true when `msd` is known exactly. When it is false, `msd`
 /// is a conservative structural bound.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct MagnitudeBits {
     /// Most significant binary digit of the absolute value.
     pub msd: i32,
@@ -227,6 +263,7 @@ pub struct MagnitudeBits {
 /// - `exact_rational` means an owned exact rational value can be obtained from
 ///   [`crate::Real::exact_rational`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct RealStructuralFacts {
     /// Known sign, if structural inspection can prove it.
     pub sign: Option<RealSign>,
@@ -240,6 +277,7 @@ pub struct RealStructuralFacts {
 
 /// Known comparison result for cheap structural threshold tests.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum StructuralComparison {
     /// Structurally known to be less than the threshold.
     Less,
@@ -253,6 +291,7 @@ pub enum StructuralComparison {
 
 /// Conservative domain status for common real-valued functions.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum DomainStatus {
     /// The domain predicate is structurally known to hold.
     Valid,
@@ -264,6 +303,7 @@ pub enum DomainStatus {
 
 /// Coarse public category for the symbolic certificate carried by a `Real`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum StructuralKind {
     ExactRational,
     PiLike,
@@ -284,6 +324,7 @@ pub enum StructuralKind {
 /// by the exact-computation model: preserve expression shape cheaply, then let
 /// higher layers decide whether a solver or predicate can exploit it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum ExpressionDegree {
     /// The value is structurally independent of future symbolic variables.
     Constant,
@@ -299,45 +340,87 @@ pub enum ExpressionDegree {
 /// expression representation. Future symbolic variable leaves can extend this
 /// carrier without changing callers that only need family-level facts.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct SymbolicDependencyMask(u16);
 
 impl SymbolicDependencyMask {
     /// Dependency on no symbolic family.
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        ensures Self::NONE.model_bits() == 0,
+    ))]
     pub const NONE: Self = Self(0);
     /// Dependency on `pi`.
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        ensures Self::PI.model_bits() == (1u16 << 0u32),
+    ))]
     pub const PI: Self = Self(1 << 0);
     /// Dependency on `e` or `exp(rational)`.
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        ensures Self::EXP.model_bits() == (1u16 << 1u32),
+    ))]
     pub const EXP: Self = Self(1 << 1);
     /// Dependency on an explicit square-root factor.
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        ensures Self::SQRT.model_bits() == (1u16 << 2u32),
+    ))]
     pub const SQRT: Self = Self(1 << 2);
     /// Dependency on logarithm forms.
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        ensures Self::LOG.model_bits() == (1u16 << 3u32),
+    ))]
     pub const LOG: Self = Self(1 << 3);
     /// Dependency on exact trigonometric special forms.
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        ensures Self::TRIG.model_bits() == (1u16 << 4u32),
+    ))]
     pub const TRIG: Self = Self(1 << 4);
     /// Dependency on an opaque computable expression.
+    #[cfg_attr(verus_keep_ghost, verus_spec(
+        ensures Self::OPAQUE.model_bits() == (1u16 << 15u32),
+    ))]
     pub const OPAQUE: Self = Self(1 << 15);
 
     /// Build a dependency mask from raw bits.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result.model_bits() == bits,
+    ))]
     pub const fn from_bits(bits: u16) -> Self {
         Self(bits)
     }
 
     /// Return the raw mask bits.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == self.model_bits(),
+    ))]
     pub const fn bits(self) -> u16 {
         self.0
     }
 
     /// Return whether this mask contains `dependency`.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == ((self.model_bits() & dependency.model_bits()) == dependency.model_bits()),
+    ))]
     pub const fn contains(self, dependency: Self) -> bool {
         (self.0 & dependency.0) == dependency.0
     }
 
     /// Return whether no symbolic family is present.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == (self.model_bits() == 0),
+    ))]
     pub const fn is_empty(self) -> bool {
         self.0 == 0
     }
 
     /// Return the union of two masks.
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result.model_bits() == (self.model_bits() | other.model_bits()),
+    ))]
     pub const fn union(self, other: Self) -> Self {
         Self(self.0 | other.0)
     }
@@ -345,6 +428,7 @@ impl SymbolicDependencyMask {
 
 /// Cheap exact classification for values that are commonly special-cased.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum ZeroOneStatus {
     Zero,
     One,
@@ -360,6 +444,7 @@ pub enum ZeroOneStatus {
 /// scalar-layer counterpart to preserving inexpensive object facts before
 /// expanding arithmetic.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum ZeroOneMinusOneStatus {
     /// The value is structurally known to be exactly zero.
     Zero,
@@ -379,6 +464,7 @@ pub enum ZeroOneMinusOneStatus {
 /// is derived from stored limb bit lengths and does not canonicalize or refine.
 /// This mirrors the filter-first style of exact geometric computation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum RationalStorageClass {
     /// The exact rational is zero.
     Zero,
@@ -397,6 +483,7 @@ pub enum RationalStorageClass {
 /// are exposed for callers that can amortize the query rather than being used
 /// unconditionally in conversion hot paths.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub enum PrimitiveFloatStatus {
     /// The value is structurally zero.
     Zero,
@@ -413,6 +500,7 @@ pub enum PrimitiveFloatStatus {
 /// Primitive range facts for named rendering, IO, diagnostics, or external
 /// solver export planning.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct PrimitiveFacts {
     pub f32: PrimitiveFloatStatus,
     pub f64: PrimitiveFloatStatus,
@@ -420,6 +508,7 @@ pub struct PrimitiveFacts {
 
 /// Exact identity facts that are cheap enough to compute from stored fields.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct IdentityFacts {
     pub known_one: bool,
     pub known_minus_one: bool,
@@ -429,6 +518,7 @@ pub struct IdentityFacts {
 
 /// Exact-rational facts derived without approximation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct RationalFacts {
     pub exact_integer: bool,
     pub exact_small_integer_i64: bool,
@@ -445,6 +535,7 @@ pub struct RationalFacts {
 /// approximating. Algebraic reduction and domain filtering precede numerical
 /// refinement.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct OrderingFacts {
     pub cmp_one: StructuralComparison,
     pub abs_cmp_one: StructuralComparison,
@@ -457,6 +548,7 @@ pub struct OrderingFacts {
 /// simplifications before asking for numerical refinement. Filters must produce
 /// certificates or explicit uncertainty.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct DomainFacts {
     pub reciprocal: DomainStatus,
     pub sqrt: DomainStatus,
@@ -470,6 +562,7 @@ pub struct DomainFacts {
 
 /// Coarse facts about the symbolic certificate.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct SymbolicFacts {
     /// Coarse family of the current scalar representation.
     pub kind: StructuralKind,
@@ -496,6 +589,7 @@ pub struct SymbolicFacts {
 /// This intentionally layers on top of [`RealStructuralFacts`] instead of
 /// adding cost to the existing hot minimal query.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub struct RealDetailedFacts {
     pub base: RealStructuralFacts,
     pub identity: IdentityFacts,
@@ -504,4 +598,12 @@ pub struct RealDetailedFacts {
     pub ordering: OrderingFacts,
     pub domains: DomainFacts,
     pub symbolic: SymbolicFacts,
+}
+
+#[cfg(verus_keep_ghost)]
+verus! {
+impl SymbolicDependencyMask {
+    pub closed spec fn model_bits(self) -> u16 { self.0 }
+}
+
 }

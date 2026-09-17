@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies sixty-nine production contracts (sixty-eight
-functions and one constant) and ninety-nine arithmetic model theorems. The rest
+The current proof target verifies eighty-seven production contracts (seventy-nine
+functions and eight constants) and ninety-nine arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -96,6 +96,15 @@ and decoding preserve invalid, unknown, negative, zero and positive states;
 the decoder requires a valid sign tag. This does not establish the cache's
 atomic operations, storage invariant, memory ownership or caller preconditions.
 
+The public carriers in `structural.rs` contribute eleven checked accessors and
+mask operations plus seven checked mask constants. Certificate queries preserve
+every known answer and every unknown state. Mask operations cover all sixteen
+bits, including bits outside the named families. A closed ghost view preserves
+the mask field's private visibility. The pinned verifier reports the associated
+constants under `structural::impl&%3`; the scope inventory checks those exact
+symbols. These contracts do not prove that certificate producers report sound
+mathematical facts, or verify every generated trait implementation.
+
 The verifier builds `verification/dependencies` with its pinned Rust compiler
 and checks every registry dependency against the production lockfile. A
 transparent type declaration imports the actual `num::bigint::Sign` variants;
@@ -113,6 +122,8 @@ attribute implementation and disappear from normal builds.
 | `BoundInfo::known_msd`, `BoundInfo::planning_msd`, `BoundInfo::known_sign` | Zero sentinel iff the bound is `Zero`, and returned exponents/signs match the stored metadata. | Computable magnitude/sign queries |
 | `AtomicFacts::encode_bound` | Exact wire layout; the round-trip theorem recovers every typed bound, including both signed exponent limits and unavailable magnitudes. | Atomic bound-cache publication |
 | `AtomicFacts::encode_exact_sign`, `AtomicFacts::decode_exact_sign` | Lossless exact-sign encoding, zero unused bits, valid encoded tags, and exact decoding for every valid sign tag. | Atomic exact-sign cache |
+| Public certificate accessors | Exact extraction of known sign, ordering and equality answers; unknown stays `None`, and knownness matches the variant. | Predicate and solver certificate consumers |
+| `SymbolicDependencyMask` methods and constants | Exact raw-bit import/export, subset query, emptiness and union for every `u16`; named constants retain their specified bit positions. | Structural dependency planning |
 | `approximation_scale_plan` | Exact direction and shift count for every `i32` precision, including the `2^31` left shift at `i32::MIN`. | Integer-leaf approximation |
 | `decode_f32` | All 32-bit patterns decode to the IEEE sign, significand and binary exponent, or the correct nonfinite class; field bounds are proved. | `TryFrom<f32> for Rational` |
 | `decode_f64` | The corresponding result for all 64-bit patterns, including subnormals and both zero signs. | `TryFrom<f64> for Rational` |
