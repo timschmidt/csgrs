@@ -1844,30 +1844,7 @@ impl Rational {
             denominators[i] = term[i].denominator.to_u128()?;
         }
 
-        for numerator in &mut numerators {
-            if *numerator == 1 {
-                continue;
-            }
-            for denominator in &mut denominators {
-                if *denominator == 1 {
-                    continue;
-                }
-                (*numerator, *denominator) = crate::verified::fraction::reduce(*numerator, *denominator);
-                if *numerator == 1 {
-                    break;
-                }
-            }
-        }
-
-        let mut magnitude = 1_u128;
-        let mut denominator = 1_u128;
-        for factor in numerators {
-            magnitude = magnitude.checked_mul(factor)?;
-        }
-        for factor in denominators {
-            denominator = denominator.checked_mul(factor)?;
-        }
-        Some((magnitude, denominator))
+        crate::verified::fraction::cross_cancelled_product(numerators, denominators)
     }
 
     fn signed_product_sum_words<const TERMS: usize, const FACTORS: usize>(

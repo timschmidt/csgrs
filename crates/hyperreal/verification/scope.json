@@ -52,7 +52,9 @@
     "verified::dyadic::difference_word",
     "verified::aggregate::native_product",
     "verified::aggregate::sum_products_word",
-    "verified::fraction::reduce"
+    "verified::fraction::reduce",
+    "verified::fraction::checked_factors_product",
+    "verified::fraction::cross_cancelled_product"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
