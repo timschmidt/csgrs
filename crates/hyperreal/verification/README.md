@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies ninety-four production contracts (eighty-six
-functions and eight constants) and one hundred twelve arithmetic model theorems. The rest
+functions and eight constants) and one hundred seventeen arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -291,11 +291,17 @@ identities and concurrent cache implementation still need refinement proofs.
 The cache theorem assumes its input error bound; it does not certify arbitrary
 cached values or the kernels producing them.
 
-Nine theorems in [`real_approximation_model.rs`](real_approximation_model.rs)
+Fourteen theorems in [`real_approximation_model.rs`](real_approximation_model.rs)
 extend the error model to the verifier's exact mathematical reals. Signed binary
 units compose, and the integer precision plan gives a valid real approximation.
 Negation, exact binary offsets, addition with two guard bits and cache
-coarsening preserve the one-unit error bound. A quarter-unit approximation
+coarsening preserve the one-unit error bound. Signed integer scaling adds at
+most half a unit. The asymmetric multiplication schedule preserves one-unit
+accuracy with three guard bits, including its zero shortcut; cached integer
+bit lengths provide the upper magnitude bounds that schedule needs. Its
+operand approximations and magnitude bounds remain explicit premises. These
+results do not assume that a cached integer and exact real share a binade.
+A quarter-unit approximation
 followed by rounding returns either the floor or ceiling, as required by
 `near_integer`; an approximation separated from zero by more than one unit
 certifies its sign. These are compositional mathematical results, conditional
