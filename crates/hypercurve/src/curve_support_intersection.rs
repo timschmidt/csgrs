@@ -1610,7 +1610,30 @@ impl Pair<'_> {
         parallel_first: bool,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
-        if !self.unit_domain_covers(self.first) || !self.unit_domain_covers(self.second) {
+        let span = if parallel_first {
+            self.first
+        } else {
+            self.second
+        };
+        let family = span.support.family();
+        // Containment in the native chart does not prove the whole source is
+        // finite or regular. An unused pole can block native discovery while
+        // both retained ranges remain valid. Only complete native evidence
+        // may replace the finite-domain authority.
+        let evidence =
+            if self.unit_domain_covers(self.first) && self.unit_domain_covers(self.second) {
+                match parallel
+                    .intersections_on_regular_range(rational, &span.range, self.policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Intersection, family, cause)
+                    })? {
+                    Classification::Decided(evidence) if evidence.is_complete() => Some(evidence),
+                    Classification::Decided(_) | Classification::Uncertain(_) => None,
+                }
+            } else {
+                None
+            };
+        let Some(evidence) = evidence else {
             let zero = rational.parallel_left(Real::zero()).map_err(|cause| {
                 ExactCurveError::invalid(
                     CurveOperation2::Intersection,
@@ -1629,17 +1652,7 @@ impl Pair<'_> {
             } else {
                 self.finite_parallels(&zero, parallel, result)
             };
-        }
-        let span = if parallel_first {
-            self.first
-        } else {
-            self.second
         };
-        let family = span.support.family();
-        let evidence = decided(
-            parallel.intersections_on_regular_range(rational, &span.range, self.policy),
-            family,
-        )?;
         for contact in evidence.contacts() {
             let parameters = [
                 contact.parallel_parameter().clone().into(),
@@ -1852,15 +1865,21 @@ impl Pair<'_> {
             return self.finite_parallels(first, second, result);
         }
         let family = self.first.support.family();
-        let evidence = decided(
-            first.parallel_intersections_on_regular_ranges(
+        let evidence = match first
+            .parallel_intersections_on_regular_ranges(
                 second,
                 &self.first.range,
                 &self.second.range,
                 self.policy,
-            ),
-            family,
-        )?;
+            )
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Intersection, family, cause)
+            })? {
+            Classification::Decided(evidence) if evidence.is_complete() => evidence,
+            Classification::Decided(_) | Classification::Uncertain(_) => {
+                return self.finite_parallels(first, second, result);
+            }
+        };
         self.parallel_evidence(first, second, &evidence, result)
     }
 
@@ -3407,6 +3426,94 @@ mod analytic_dispatch_tests {
             )
             .unwrap(),
         )))
+    }
+
+    #[test]
+    fn finite_analytic_pairs_exclude_unused_native_poles() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for native in [false, true] {
+                // P(t)=(-t/(1-2t),-t/(1-2t)), t in [0,1/4], and
+                // P(u/4), u in [0,1]. Only the first source has a native pole.
+                let (end, weight, stop) = if native {
+                    (Point2::new(q(-1, 2), q(-1, 2)), q(1, 2), Real::one())
+                } else {
+                    (p(1, 1), -Real::one(), q(1, 4))
+                };
+                let source =
+                    RationalBezier2::try_new(vec![p(0, 0), end], vec![Real::one(), weight])
+                        .unwrap();
+                for displaced in [false, true] {
+                    let distance = if displaced {
+                        q(1, 4) * Real::from(2).sqrt().unwrap()
+                    } else {
+                        Real::zero()
+                    };
+                    let first = Curve2::from_retained_fragment(
+                        BezierSplitFragment2::AnalyticParallel(exact(
+                            BezierParallelFragment2::try_new(
+                                source.parallel_left(distance).unwrap(),
+                                BezierParameterRange2::from_exact(Real::zero(), stop.clone()),
+                                &policy,
+                            )
+                            .unwrap(),
+                        )),
+                    );
+                    let expected = if displaced {
+                        Point2::new(q(1, 12), q(-5, 12))
+                    } else {
+                        Point2::new(q(-1, 6), q(-1, 6))
+                    };
+                    let horizontal = QuadraticBezier2::new(
+                        Point2::new((-1).into(), expected.y().clone()),
+                        Point2::new(Real::zero(), expected.y().clone()),
+                        Point2::new(Real::one(), expected.y().clone()),
+                    );
+                    for second in [
+                        Curve2::from(horizontal.clone()),
+                        curve(horizontal.parallel_left(Real::zero()).unwrap(), &policy),
+                    ] {
+                        for a in [false, true] {
+                            for b in [false, true] {
+                                let first = oriented(&first, a, &policy);
+                                let second = oriented(&second, b, &policy);
+                                for (swapped, (first, second)) in
+                                    [(&first, &second), (&second, &first)]
+                                        .into_iter()
+                                        .enumerate()
+                                {
+                                    let result = query(first, second, &policy);
+                                    assert_eq!(result.contacts().len(), 1);
+                                    let contact = &result.contacts()[0];
+                                    // Zero-distance native rational discovery can
+                                    // defer tangent evidence. The displaced
+                                    // replay retains its transverse certificate.
+                                    if displaced {
+                                        assert!(contact.is_certified_transverse());
+                                    }
+                                    if let Some(cross) = contact.tangent_cross_sign() {
+                                        assert_eq!(
+                                            cross,
+                                            if a ^ b ^ (swapped != 0) {
+                                                hyperreal::RealSign::Negative
+                                            } else {
+                                                hyperreal::RealSign::Positive
+                                            }
+                                        );
+                                    }
+                                    assert!(result.overlaps().is_empty());
+                                    assert!(result.parameter_components().is_empty());
+                                    same(
+                                        result.contacts()[0].point(),
+                                        &expected.clone().into(),
+                                        &policy,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     #[test]
