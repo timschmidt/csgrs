@@ -142,6 +142,18 @@ to `561e36a`; the production cross-cancellation traversal and its caller
 preconditions still require refinement proofs. All 13 obligation groups and
 final baseline acceptance remain open.
 
+The [production cancellation kernel](../benchmarks/checkpoints/2026-09-17-verus-cross-cancel-kernel.json)
+in `da3a6fd` now proves the complete native pair traversal and ordered product
+checks, including the existing fallback when overflow precedes a later zero.
+The official proof passes 374 units, 54 production contracts and 66 model
+theorems. Default/all-feature tests and fixture assertions, the representation
+matrix, 73 mutation rejections and all 6,492 frozen ASan inputs pass. Strict
+Clippy passes after a scoped annotation preserves an explicit branch needed
+by the proof; the initial lint failure and the annotation-only correction are
+retained. New native binaries are built, but this runtime's timing, resource,
+size, coverage and downstream qualification remain pending. Importing native
+parts from `BigUint` and proving the callers' invariants also remain open.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
