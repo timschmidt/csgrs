@@ -50,7 +50,8 @@
     "verified::dyadic::normalize_word",
     "verified::dyadic::difference_word",
     "verified::aggregate::native_product",
-    "verified::aggregate::sum_products_word"
+    "verified::aggregate::sum_products_word",
+    "verified::fraction::reduce"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -59,6 +60,7 @@
     "verified::gcd::gcd_symmetric",
     "verified::gcd::gcd_subtract",
     "verified::gcd::gcd_scaled",
+    "verified::gcd::gcd_reduction",
     "verified::gcd::gcd_bound",
     "verified::gcd::gcd_odd_power_two",
     "verified::gcd::gcd_power_two_factors",
@@ -102,7 +104,8 @@
     "rational_model::identities",
     "rational_model::reciprocal_is_inverse",
     "rational_model::addition_respects_equivalence",
-    "rational_model::multiplication_respects_equivalence"
+    "rational_model::multiplication_respects_equivalence",
+    "rational_model::reduction_preserves_value"
   ],
   "obligations": [
     {"area": "Integer and rational mathematical semantics", "status": "partial"},

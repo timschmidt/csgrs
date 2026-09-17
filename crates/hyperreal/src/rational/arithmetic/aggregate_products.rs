@@ -1746,9 +1746,7 @@ impl Rational {
                 };
                 crate::trace_dispatch!("rational", "word-reduction", path);
             }
-            let divisor = Self::gcd_word(magnitude, denominator);
-            magnitude /= divisor;
-            denominator /= divisor;
+            (magnitude, denominator) = crate::verified::fraction::reduce(magnitude, denominator);
         }
         Self::from_reduced_word_parts(sign, magnitude, denominator)
     }
@@ -1854,9 +1852,7 @@ impl Rational {
                 if *denominator == 1 {
                     continue;
                 }
-                let divisor = Self::gcd_word(*numerator, *denominator);
-                *numerator /= divisor;
-                *denominator /= divisor;
+                (*numerator, *denominator) = crate::verified::fraction::reduce(*numerator, *denominator);
                 if *numerator == 1 {
                     break;
                 }
@@ -1963,8 +1959,8 @@ impl Rational {
             if sign == NoSign {
                 return Some((NoSign, 0, 1));
             }
-            let divisor = Rational::gcd_word(magnitude, denominator);
-            Some((sign, magnitude / divisor, denominator / divisor))
+            let (magnitude, denominator) = crate::verified::fraction::reduce(magnitude, denominator);
+            Some((sign, magnitude, denominator))
         }
 
         fn component(ab: [Word; 3], ac: [Word; 3], first: usize, second: usize) -> Option<(u128, u128, u128)> {
@@ -2000,8 +1996,8 @@ impl Rational {
                 Ordering::Less => (negative - positive, Minus),
                 Ordering::Equal => return (0, 1, NoSign),
             };
-            let divisor = Rational::gcd_word(magnitude, denominator);
-            (magnitude / divisor, denominator / divisor, sign)
+            let (magnitude, denominator) = crate::verified::fraction::reduce(magnitude, denominator);
+            (magnitude, denominator, sign)
         }
 
         fn compare_magnitudes(left: (u128, u128), right: (u128, u128)) -> Option<Ordering> {
@@ -2304,26 +2300,19 @@ impl Rational {
             return Some(Self::zero());
         }
 
-        let divisor = Self::gcd_word(magnitude, norm);
-        magnitude /= divisor;
-        norm /= divisor;
+        (magnitude, norm) = crate::verified::fraction::reduce(magnitude, norm);
         if scale_numerator == scale_denominator {
             scale_numerator = 1;
             scale_denominator = 1;
         } else {
-            let divisor = Self::gcd_word(scale_numerator, scale_denominator);
-            scale_numerator /= divisor;
-            scale_denominator /= divisor;
+            (scale_numerator, scale_denominator) =
+                crate::verified::fraction::reduce(scale_numerator, scale_denominator);
         }
         if scale_denominator != 1 {
-            let divisor = Self::gcd_word(magnitude, scale_denominator);
-            magnitude /= divisor;
-            scale_denominator /= divisor;
+            (magnitude, scale_denominator) = crate::verified::fraction::reduce(magnitude, scale_denominator);
         }
         if scale_numerator != 1 {
-            let divisor = Self::gcd_word(scale_numerator, norm);
-            scale_numerator /= divisor;
-            norm /= divisor;
+            (scale_numerator, norm) = crate::verified::fraction::reduce(scale_numerator, norm);
         }
 
         Some(Self::from_reduced_word_parts(

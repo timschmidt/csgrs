@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies fifty production contracts (forty-nine
-functions and one constant) and fifty arithmetic model theorems. The rest
+The current proof target verifies fifty-one production contracts (fifty
+functions and one constant) and fifty-two arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -93,6 +93,7 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `trailing_zeros_u128` | Exact trailing-zero count using the two 64-bit halves; the mathematical factorization theorem proves a positive odd quotient for nonzero inputs. | `gcd_u128`, `gcd_small_wide` |
 | `gcd_small_wide` | Exact GCD for a nonzero word and two-limb value, including the power-of-two shortcut. | `gcd_u128` |
 | `gcd_u128` | Exact GCD for every pair of 128-bit inputs; all dispatch paths, helper preconditions and final common-factor shifts are proved. | `Rational::gcd_word` |
+| `fraction::reduce` | Exact GCD quotients with a positive denominator, coprime parts, unchanged fraction and canonical `0/1`; division safety and the GCD helper's contract are proved. | General word reduction, cross-cancellation, normal-component reduction and scaled word quotients |
 | `limbs::compare` | Ordering agrees with the unbounded integer denoted by little-endian limb arrays. | Fixed-buffer GCD |
 | `limbs::subtract_word`, `limbs::subtract` | Exact subtraction with borrow propagation; a no-larger subtrahend cannot leave a final borrow. | Fixed-buffer GCD |
 | `limbs::shift_right`, `limbs::shift_left` | Right shift is division by the corresponding power of two; left shift is exact multiplication when the result fits. In-place traversal preserves unread limbs. | Fixed-buffer GCD |
@@ -156,9 +157,14 @@ sums keep their distinct raw-alignment and inactive-term rules while proving
 the complete success/fallback boundary and canonical results.
 [`rational_model.rs`](rational_model.rs) defines signed, unbounded
 fractions with positive denominators, without assuming canonical reduction.
-Its seventeen theorems establish equivalence and ordering laws, rescaling,
+Its eighteen theorems establish equivalence and ordering laws, rescaling,
 arithmetic closure, ring identities, reciprocal correctness, and respect for
-equivalent representations. These model theorems do not yet establish that
+equivalent representations. GCD cancellation proves that normalization yields
+a canonical signed fraction with the same value, including zero. The native
+fraction reducer uses those same exact quotient identities. Its eight production
+call sites retain their existing branch selection and arithmetic order; their
+positive-denominator preconditions and surrounding algorithms still need caller
+proofs. These model theorems do not yet establish that
 all `Rational` methods implement the model.
 
 The float proofs stop at decomposition into a signed integer times a power of

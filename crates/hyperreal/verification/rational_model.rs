@@ -3,6 +3,8 @@
 //! Hyperreal may retain unreduced internal fractions.
 use vstd::prelude::*;
 use vstd::arithmetic::mul::*;
+use crate::verified::division::gcd;
+use crate::verified::gcd::gcd_reduction;
 
 verus! {
 
@@ -23,6 +25,47 @@ pub struct Fraction {
 
 pub open spec fn valid(x: Fraction) -> bool {
     x.denominator > 0
+}
+
+pub(crate) open spec fn magnitude(numerator: int) -> nat {
+    if numerator < 0 { (-numerator) as nat } else { numerator as nat }
+}
+
+pub(crate) open spec fn canonical(x: Fraction) -> bool {
+    valid(x) && gcd(magnitude(x.numerator), x.denominator as nat) == 1
+}
+
+pub(crate) open spec fn reduce(x: Fraction) -> Fraction {
+    let divisor = gcd(magnitude(x.numerator), x.denominator as nat);
+    let reduced_magnitude = magnitude(x.numerator) / divisor;
+    Fraction {
+        numerator: if x.numerator < 0 { -(reduced_magnitude as int) } else { reduced_magnitude as int },
+        denominator: x.denominator / (divisor as int),
+    }
+}
+
+/// The native reducer's quotient contract yields canonical signed fractions.
+pub(crate) proof fn reduction_preserves_value(x: Fraction)
+    requires valid(x),
+    ensures
+        canonical(reduce(x)),
+        equivalent(x, reduce(x)),
+        (reduce(x).numerator == 0 <==> x.numerator == 0),
+        x.numerator == 0 ==> reduce(x).denominator == 1,
+{
+    let numerator = magnitude(x.numerator);
+    let denominator = x.denominator as nat;
+    gcd_reduction(numerator, denominator);
+    let divisor = gcd(numerator, denominator);
+    let reduced_numerator = numerator / divisor;
+    let reduced_denominator = denominator / divisor;
+    if x.numerator < 0 {
+        assert(equivalent(x, reduce(x))) by (nonlinear_arith)
+            requires numerator == -x.numerator, reduced_numerator * denominator == numerator * reduced_denominator,
+                reduce(x).numerator == -(reduced_numerator as int), reduce(x).denominator == reduced_denominator,
+                x.denominator == denominator;
+    }
+    assert(magnitude(reduce(x).numerator) == reduced_numerator);
 }
 
 pub open spec fn equivalent(x: Fraction, y: Fraction) -> bool {
