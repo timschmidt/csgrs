@@ -588,6 +588,28 @@ fails on the same Boolean predicate blocker. These are not passing suites or
 native timing measurements. The temporary source is restored and live
 Hypercurve remains untouched.
 
+The [current resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-bound-composition-resources.json)
+qualifies runtime `c61d6d8` with all nine remaining build/check steps and all
+6,492 frozen ASan inputs passing. Corrected production coverage is
+25,219/27,737 (90.92%). Every allocation row is retained: the Log10 and Log2
+workloads allocate more than the baseline, and matched whole-process Massif
+peaks rise from 24,896 to 25,224 bytes in both pairs. Callgrind instruction
+counts are 29,845,483 baseline and 29,787,464 candidate for the representation
+workload; this aggregate is not native timing or per-case performance parity.
+WASM grows from 1,646,116 to 1,662,191 bytes, and the largest stripped native
+increase is 17,760 bytes. These costs remain assessment items. Separate cache
+query and multiplication scheduling experiments are unadopted and do not
+replace this checkpoint's measured candidate.
+
+The [cache field milestone](../benchmarks/checkpoints/2026-09-17-verus-cache-fields.json)
+checks the construction and update word expressions using the production
+masks and verified encoder contracts. It verifies 583 units, 94 production
+contracts and 112 model theorems; all 19 cache mutation checks and ten
+acceptance tests pass. Production, manifest and lockfile bytes are unchanged
+from `c61d6d8`. These word-level results do not verify the atomic constructor,
+compare-exchange loops, memory ownership or publication invariants. All
+thirteen full-implementation groups remain open.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
