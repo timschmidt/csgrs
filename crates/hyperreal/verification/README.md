@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies fifty-five production contracts (fifty-four
-functions and one constant) and seventy-one arithmetic model theorems. The rest
+functions and one constant) and seventy-five arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -209,6 +209,13 @@ Rational queries retain full-width lengths and shifts, and real queries add
 the computable offset before narrowing. The `BigUint` bit-length/shifted
 comparison semantics and the full real-magnitude certificates still require
 refinement proofs.
+
+Four theorems in [`bit_length_model.rs`](bit_length_model.rs) connect the
+standard-library leading-zero specification and normalized limb denotation to
+exact mathematical bit lengths. They prove bit-length growth under arbitrary
+binary shifts and ordering when exact widths differ. Normalization of actual
+`BigUint` storage, its digit iterator, machine-width length arithmetic and the
+runtime borrowed comparison still require implementation proofs.
 
 The float proofs stop at decomposition into a signed integer times a power of
 two. The `BigUint` construction, reduction, retained-fact cache, and public
