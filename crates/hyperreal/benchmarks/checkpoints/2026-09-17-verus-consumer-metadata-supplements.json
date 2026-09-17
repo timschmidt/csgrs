@@ -1,0 +1,144 @@
+{
+  "schema": 1,
+  "status": "isolated_consumer_controls_for_intermediate_runtime_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "consumer_pins": {
+    "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "hyperlimit": "d64c3b897e2832e879b01e53e46c57260d071d4c",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55"
+  },
+  "coverage": {
+    "hypertri": {
+      "production_lines": 6600,
+      "hits_each": 6271,
+      "percent_each": 95.02,
+      "required_percent": 95,
+      "test_change": "A sine-coordinate triangle independently preserves coverage of unknown zero-status edges; no production branch or gate changes."
+    },
+    "hypersolve": {
+      "production_lines": 39571,
+      "baseline_hits": 34192,
+      "candidate_hits": 34194,
+      "percent_each": 86.41,
+      "required_percent": 85,
+      "fixture_change": "Expected retained-field numerator [2/7,-1/7] and denominator [1] match both implementations; exact Fraction polynomial multiplication independently checks the value."
+    }
+  },
+  "corrected_certification_bench": {
+    "matched_builds_passed": 2,
+    "native_timing_run": false
+  },
+  "lattice_trace": {
+    "builds_passed": 2,
+    "runs_passed": 2,
+    "paired_workloads": 4,
+    "columns": [
+      "dependency_dispatch",
+      "linear_algebra",
+      "exact_reducers",
+      "approximation",
+      "rational_temporaries",
+      "rational_reductions",
+      "rational_gcds"
+    ],
+    "baseline": {
+      "aabb_construction": [
+        7,
+        1,
+        6,
+        0,
+        7,
+        0,
+        0
+      ],
+      "algebra2_exact_helpers_and_facts": [
+        127,
+        36,
+        69,
+        0,
+        19,
+        0,
+        0
+      ],
+      "point_construction_facts_and_aggregation": [
+        346,
+        85,
+        236,
+        6,
+        67,
+        8,
+        6
+      ],
+      "projective_plane_line_and_point_algebra": [
+        162,
+        3,
+        138,
+        0,
+        49,
+        0,
+        0
+      ]
+    },
+    "candidate": {
+      "aabb_construction": [
+        7,
+        1,
+        6,
+        0,
+        7,
+        0,
+        0
+      ],
+      "algebra2_exact_helpers_and_facts": [
+        127,
+        36,
+        69,
+        0,
+        19,
+        0,
+        0
+      ],
+      "point_construction_facts_and_aggregation": [
+        346,
+        85,
+        236,
+        6,
+        67,
+        8,
+        6
+      ],
+      "projective_plane_line_and_point_algebra": [
+        162,
+        3,
+        138,
+        0,
+        49,
+        0,
+        0
+      ]
+    },
+    "identical_summary_counts": true
+  },
+  "failed_preparation": {
+    "coverage_failures_preserved": 4,
+    "cause": "The initial diagnostic snapshot omitted tracked fuzz/Cargo.toml files included by benchmark fixtures. Restoring every tracked pinned input allowed the complete rerun to pass.",
+    "successful_builds_in_failed_attempt": 2
+  },
+  "limits": [
+    "Only isolated pinned snapshots were changed; live consumers, including concurrently edited Hypercurve, were untouched.",
+    "Original unmodified consumer failures remain in the deep checkpoint; these supplemented checks do not relabel them.",
+    "These results qualify cdc6d3a only. Commit89c89e2 subsequently repairs discovered magnitude-planning accuracy defects and requires fresh affected qualification.",
+    "Trace counts are diagnostics, not native timings or allocation-byte measurements.",
+    "Copied report directories may contain incidental earlier reports; only completed command-specific reports support coverage counts.",
+    "Executable bytes remain frozen in temporary storage; their hashes and build records are archived.",
+    "Full proof and baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-supplements.tar.gz",
+    "bytes": 15967449,
+    "files": 248,
+    "sha256": "187731dc1031ee63c159371377b2698d2b040bfe4847345675e89339f8a7c4cb"
+  }
+}
