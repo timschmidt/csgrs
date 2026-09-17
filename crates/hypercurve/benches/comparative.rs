@@ -16,7 +16,7 @@ use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierSplitFragment2, CurveBoundaryInteriorSide2, CurvePoint2,
-    CurveRegionBoundaryLoop2, Similarity2,
+    Similarity2,
 };
 use hypercurve::{
     BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
@@ -622,12 +622,12 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     let chord = |start, end| {
         let chord =
             BezierAlgebraicChord2::try_new(start, end, &policy).expect("valid benchmark chord");
-        BezierSplitFragment2::AlgebraicChord(match chord {
+        Curve2::from(match chord {
             Classification::Decided(chord) => chord,
             Classification::Uncertain(reason) => panic!("benchmark chord: {reason:?}"),
         })
     };
-    let boundary = CurveRegionBoundaryLoop2::new(
+    let boundary = CurvePath2::try_new_with_policy(
         vec![
             chord(bottom_left.clone(), bottom_right.clone()),
             chord(bottom_right, top_right.clone()),
@@ -636,14 +636,17 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         ],
         &policy,
     )
-    .expect("closed benchmark boundary");
-    let hypercurve = CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    .expect("closed benchmark boundary")
+    .into_value();
+    let hypercurve = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        &policy,
     )
-    .expect("valid benchmark region");
+    .expect("valid benchmark region")
+    .into_value();
     let cavalier = cavalier_polyline(
         &[
             [0.0, 0.0],

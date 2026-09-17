@@ -4,11 +4,10 @@ use std::time::Instant;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParallelFragment2, BezierParallelVerificationOptions,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
-    BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveContext, CurveIntersectionCandidates2, CurveParameterRange2,
-    CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule,
-    LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
-    Segment2, Similarity2,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
+    CurveIntersectionCandidates2, CurveParameterRange2, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -809,7 +808,7 @@ fn curve_region_algebraic_partition_fixture(
     let parallel = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0)).parallel_left(Real::zero())?;
     let zero = BezierParameter2::Exact(Real::zero());
     let one = BezierParameter2::Exact(Real::one());
-    let mut fragments = if partitioned {
+    let mut curves = if partitioned {
         let Classification::Decided(polynomial) = BezierParameterPolynomial::try_new_power_basis(
             vec![s(-1), Real::zero(), s(2)],
             &policy,
@@ -841,7 +840,7 @@ fn curve_region_algebraic_partition_fixture(
                 else {
                     panic!("the benchmark parallel fragment must be decided");
                 };
-                Ok(BezierSplitFragment2::AnalyticParallel(fragment))
+                Ok(Curve2::from(fragment))
             })
             .collect::<CurveResult<Vec<_>>>()?
     } else {
@@ -854,22 +853,20 @@ fn curve_region_algebraic_partition_fixture(
         else {
             panic!("the benchmark full parallel fragment must be decided");
         };
-        vec![BezierSplitFragment2::AnalyticParallel(fragment)]
+        vec![Curve2::from(fragment)]
     };
-    fragments.push(BezierSplitFragment2::Materialized {
-        start: BezierParameter2::Exact(Real::zero()),
-        end: BezierParameter2::Exact(Real::one()),
-        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(1, 0), p(0, 0))),
-    });
+    curves.push(QuadraticBezier2::new(p(2, 0), p(1, 0), p(0, 0)).into());
     if cyclic_seam {
-        fragments.rotate_left(1);
+        curves.rotate_left(1);
     }
-    Ok(CurveRegion2::try_new_with_loop_topology(
-        vec![CurveRegionBoundaryLoop2::new(fragments, &policy)?],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Right],
-    )?)
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[CurvePath2::try_new(curves)?],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Right],
+        &policy,
+    )?
+    .into_value())
 }
 
 fn bench_curve_region_algebraic_partition_offset_lanes(

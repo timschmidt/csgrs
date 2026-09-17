@@ -2,11 +2,10 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
-    BezierSubcurve2, BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CubicBezier2,
-    Curve2, CurveBoundaryInteriorSide2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, Real,
+    BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BooleanOp, BulgeVertex2,
+    CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
+    CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2,
+    QuadraticBezier2, RationalBezier2, Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -109,14 +108,14 @@ fn exact_parameter(value: i32, policy: &CurveContext) -> BezierParameter2 {
     decided(BezierParameter2::exact(Real::from(value), policy).unwrap())
 }
 
-fn analytic_parallel_fragment(
+fn analytic_parallel_curve(
     start: Point2,
     midpoint: Point2,
     end: Point2,
     distance: i32,
     reversed: bool,
     policy: &CurveContext,
-) -> BezierSplitFragment2 {
+) -> Curve2 {
     let (start_parameter, end_parameter) = if reversed { (1, 0) } else { (0, 1) };
     let range = decided(
         BezierParameterRange2::try_new(
@@ -129,7 +128,7 @@ fn analytic_parallel_fragment(
     let parallel = QuadraticBezier2::new(start, midpoint, end)
         .parallel_left(Real::from(distance))
         .unwrap();
-    BezierSplitFragment2::AnalyticParallel(decided(
+    Curve2::from(decided(
         BezierParallelFragment2::try_new(parallel, range, policy).unwrap(),
     ))
 }
@@ -145,28 +144,25 @@ fn analytic_square(min_x: i32, max_x: i32, policy: &CurveContext) -> CurveRegion
     let fragments = edges
         .into_iter()
         .map(|(start, midpoint, end)| {
-            analytic_parallel_fragment(start, midpoint, end, 0, false, policy)
+            analytic_parallel_curve(start, midpoint, end, 0, false, policy)
         })
         .collect();
-    CurveRegion2::try_new_with_loop_topology(
-        vec![CurveRegionBoundaryLoop2::new(fragments, policy).unwrap()],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[CurvePath2::try_new_with_policy(fragments, policy)
+            .unwrap()
+            .into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
-fn materialized_line(start: Point2, end: Point2, policy: &CurveContext) -> BezierSplitFragment2 {
-    let midpoint = start.lerp(
-        &end,
-        (Real::one() / Real::from(2_u8)).expect("one half is represented"),
-    );
-    BezierSplitFragment2::Materialized {
-        start: exact_parameter(0, policy),
-        end: exact_parameter(1, policy),
-        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, midpoint, end)),
-    }
+fn quadratic_line(start: Point2, end: Point2) -> Curve2 {
+    let midpoint = start.lerp(&end, (Real::one() / Real::from(2_u8)).unwrap());
+    QuadraticBezier2::new(start, midpoint, end).into()
 }
 
 fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
@@ -177,23 +173,25 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     let left = decided(parallel.point_at(&Real::zero(), policy).unwrap());
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
     let lower_right = Point2::new(right.x().clone(), Real::from(-2));
-    let boundary = CurveRegionBoundaryLoop2::new(
+    let boundary = CurvePath2::try_new_with_policy(
         vec![
-            analytic_parallel_fragment(point(0, 0), point(2, 2), point(4, 0), 1, true, policy),
-            materialized_line(left, lower_left.clone(), policy),
-            materialized_line(lower_left, lower_right.clone(), policy),
-            materialized_line(lower_right, right, policy),
+            analytic_parallel_curve(point(0, 0), point(2, 2), point(4, 0), 1, true, policy),
+            quadratic_line(left, lower_left.clone()),
+            quadratic_line(lower_left, lower_right.clone()),
+            quadratic_line(lower_right, right),
         ],
         policy,
     )
     .unwrap();
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary.into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
 fn clipped_region(

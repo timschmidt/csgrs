@@ -12,8 +12,7 @@ use hypercurve::{Curve2, CurvePath2};
 
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2, CubicBezier2,
-    CurveBoundaryInteriorSide2, CurvePoint2, CurveRegionBoundaryLoop2,
+    BezierParameterPolynomial, CubicBezier2, CurveBoundaryInteriorSide2, CurvePoint2,
 };
 
 fn s(value: i32) -> Real {
@@ -723,7 +722,7 @@ fn positive_reciprocal_sqrt_parameter(
     positive_sqrt_ratio_parameter(1, denominator, policy)
 }
 
-fn source_related_algebraic_chord_region() -> CurveResult<CurveRegion2> {
+fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let third = q(1, 3);
     let controls = vec![
@@ -741,42 +740,28 @@ fn source_related_algebraic_chord_region() -> CurveResult<CurveRegion2> {
         controls[2].clone(),
         controls[3].clone(),
     );
-    let source_rational = RationalBezier2::try_new(controls, vec![Real::one(); 4])?;
-    let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
-    let split_parameter = BezierParameter2::Algebraic(parameter.clone());
-    let materialization = expect_decided(
-        source.split_at_parameters(std::slice::from_ref(&split_parameter), &policy)?,
-        "algebraic source split must remain exact",
-    );
-    let source_fragment = materialization.fragments()[0].clone();
-    let selected_point =
-        CurvePoint2::from(source_rational.point_at_algebraic_parameter(&parameter, &policy)?);
+    let parameter = BezierParameter2::Algebraic(positive_reciprocal_sqrt_parameter(2, &policy)?);
+    let source_curve = Curve2::from(source)
+        .subcurve(Real::zero().into(), parameter.into(), &policy)?
+        .into_value();
     let chord = expect_decided(
-        BezierAlgebraicChord2::try_new(selected_point, CurvePoint2::from(p(0, 0)), &policy)?,
+        BezierAlgebraicChord2::try_new(source_curve.end(), p(0, 0).into(), &policy)?,
         "source-related algebraic chord must remain exact",
     );
     let closure = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
-    let boundary = CurveRegionBoundaryLoop2::new(
-        vec![
-            source_fragment,
-            BezierSplitFragment2::AlgebraicChord(chord),
-            BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(Real::zero()),
-                end: BezierParameter2::Exact(Real::one()),
-                curve: BezierSubcurve2::Quadratic(closure),
-            },
-        ],
+    let path = CurvePath2::try_new(vec![source_curve, chord.into(), closure.into()])?;
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
         &policy,
-    )?;
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
-    )
+    )?
+    .into_value())
 }
 
-fn independent_field_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
+fn independent_field_algebraic_chord_regions()
+-> Result<[CurveRegion2; 2], Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let first_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let second_parameter = positive_reciprocal_sqrt_parameter(3, &policy)?;
@@ -784,74 +769,45 @@ fn independent_field_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]>
     let second_split_parameter = BezierParameter2::Algebraic(second_parameter.clone());
     let x_axis = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
     let y_axis = QuadraticBezier2::from_line_segment(line(0, 0, 0, 1));
-    let rational_line = |curve: &QuadraticBezier2| {
-        RationalBezier2::try_new(
-            curve.control_points().into_iter().cloned().collect(),
-            vec![Real::one(); 3],
-        )
-    };
-    let start = CurvePoint2::from(
-        rational_line(&x_axis)?.point_at_algebraic_parameter(&first_parameter, &policy)?,
-    );
-    let end = CurvePoint2::from(
-        rational_line(&y_axis)?.point_at_algebraic_parameter(&second_parameter, &policy)?,
-    );
+    let x_curve = Curve2::from(x_axis)
+        .subcurve(Real::zero().into(), first_split_parameter.into(), &policy)?
+        .into_value();
+    let y_curve = Curve2::from(y_axis)
+        .subcurve(Real::zero().into(), second_split_parameter.into(), &policy)?
+        .into_value()
+        .reversed(&policy)?
+        .into_value();
     let chord = expect_decided(
-        BezierAlgebraicChord2::try_new(start, end, &policy)?,
+        BezierAlgebraicChord2::try_new(x_curve.end(), y_curve.start(), &policy)?,
         "independent-field chord must remain exact",
     );
-    let x_fragment = expect_decided(
-        x_axis.split_at_parameters(std::slice::from_ref(&first_split_parameter), &policy)?,
-        "x-axis algebraic split must remain exact",
-    )
-    .fragments()[0]
-        .clone();
-    let y_fragment = expect_decided(
-        y_axis.split_at_parameters(std::slice::from_ref(&second_split_parameter), &policy)?,
-        "y-axis algebraic split must remain exact",
-    )
-    .fragments()[0]
-        .reversed()?;
-    let chord_loop = CurveRegionBoundaryLoop2::new(
-        vec![
-            BezierSplitFragment2::AlgebraicChord(chord),
-            y_fragment,
-            x_fragment,
-        ],
+    let chord_path = CurvePath2::try_new(vec![chord.into(), y_curve, x_curve])?;
+    let chord_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[chord_path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
         &policy,
-    )?;
-    let chord_region = CurveRegion2::try_new_with_loop_topology(
-        vec![chord_loop],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
-    )?;
-
-    let materialized_line = |start_x, start_y, end_x, end_y| BezierSplitFragment2::Materialized {
-        start: BezierParameter2::Exact(Real::zero()),
-        end: BezierParameter2::Exact(Real::one()),
-        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line(
-            start_x, start_y, end_x, end_y,
-        ))),
-    };
-    let source_loop = CurveRegionBoundaryLoop2::new(
-        vec![
-            materialized_line(0, 0, 1, 1),
-            materialized_line(1, 1, -1, 1),
-            materialized_line(-1, 1, 0, 0),
-        ],
+    )?
+    .into_value();
+    let source_path = CurvePath2::try_new(vec![
+        QuadraticBezier2::from_line_segment(line(0, 0, 1, 1)).into(),
+        QuadraticBezier2::from_line_segment(line(1, 1, -1, 1)).into(),
+        QuadraticBezier2::from_line_segment(line(-1, 1, 0, 0)).into(),
+    ])?;
+    let source_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[source_path],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
         &policy,
-    )?;
-    let source_region = CurveRegion2::try_new_with_loop_topology(
-        vec![source_loop],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
-    )?;
+    )?
+    .into_value();
     Ok([chord_region, source_region])
 }
 
-fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
+fn noninjective_collinear_algebraic_chord_paths()
+-> Result<[CurvePath2; 2], Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let first_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let second_parameter = positive_reciprocal_sqrt_parameter(3, &policy)?;
@@ -867,38 +823,15 @@ fn noninjective_collinear_algebraic_chord_regions() -> CurveResult<[CurveRegion2
         BezierAlgebraicChord2::try_new(first_endpoint, second_endpoint, &policy)?,
         "independent-field benchmark chord must remain exact",
     );
-    let chord_loop = CurveRegionBoundaryLoop2::new(
-        vec![
-            BezierSplitFragment2::AlgebraicChord(chord.clone()),
-            BezierSplitFragment2::AlgebraicChord(chord.reversed()),
-        ],
-        &policy,
-    )?;
-    let chord_region = CurveRegion2::try_new_with_loop_topology(
-        vec![chord_loop],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
-    )?;
-
-    let source_loop = CurveRegionBoundaryLoop2::new(
-        vec![BezierSplitFragment2::Materialized {
-            start: BezierParameter2::Exact(Real::zero()),
-            end: BezierParameter2::Exact(Real::one()),
-            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0))),
-        }],
-        &policy,
-    )?;
-    let source_region = CurveRegion2::try_new_with_loop_topology(
-        vec![source_loop],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
-    )?;
-    Ok([chord_region, source_region])
+    let chord_path = CurvePath2::try_new(vec![chord.clone().into(), chord.reversed().into()])?;
+    let source_path = CurvePath2::try_new(vec![
+        QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)).into(),
+    ])?;
+    Ok([chord_path, source_path])
 }
 
-fn strict_interior_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
+fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dyn std::error::Error>>
+{
     let policy = CurveContext::STRICT;
     let horizontal = RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?;
     let vertical = RationalBezier2::try_new(
@@ -926,34 +859,30 @@ fn strict_interior_algebraic_chord_regions() -> CurveResult<[CurveRegion2; 2]> {
     let second = chord(second_start.clone(), second_end.clone())?;
     let first_apex = CurvePoint2::from(Point2::new(q(16, 25), Real::from(-1_i8)));
     let second_apex = CurvePoint2::from(Point2::new(Real::one(), q(1, 20)));
-    let first_loop = CurveRegionBoundaryLoop2::new(
-        vec![
-            BezierSplitFragment2::AlgebraicChord(first),
-            BezierSplitFragment2::AlgebraicChord(chord(first_end, first_apex.clone())?),
-            BezierSplitFragment2::AlgebraicChord(chord(first_apex, first_start)?),
-        ],
-        &policy,
-    )?;
-    let second_loop = CurveRegionBoundaryLoop2::new(
-        vec![
-            BezierSplitFragment2::AlgebraicChord(second),
-            BezierSplitFragment2::AlgebraicChord(chord(second_end, second_apex.clone())?),
-            BezierSplitFragment2::AlgebraicChord(chord(second_apex, second_start)?),
-        ],
-        &policy,
-    )?;
-    let region = |boundary| {
-        CurveRegion2::try_new_with_loop_topology(
-            vec![boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![CurveBoundaryInteriorSide2::Left],
+    let first_path = CurvePath2::try_new(vec![
+        first.into(),
+        chord(first_end, first_apex.clone())?.into(),
+        chord(first_apex, first_start)?.into(),
+    ])?;
+    let second_path = CurvePath2::try_new(vec![
+        second.into(),
+        chord(second_end, second_apex.clone())?.into(),
+        chord(second_apex, second_start)?.into(),
+    ])?;
+    let region = |path| {
+        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &[path],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            &[CurveBoundaryInteriorSide2::Left],
+            &policy,
         )
+        .map(|outcome| outcome.into_value())
     };
-    Ok([region(first_loop)?, region(second_loop)?])
+    Ok([region(first_path)?, region(second_path)?])
 }
 
-fn axis_aligned_algebraic_offset_region() -> CurveResult<CurveRegion2> {
+fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let horizontal = |height: Real| {
@@ -975,13 +904,13 @@ fn axis_aligned_algebraic_offset_region() -> CurveResult<CurveRegion2> {
     let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
         BezierAlgebraicChord2::try_new(start, end, &policy).map(|chord| {
-            BezierSplitFragment2::AlgebraicChord(expect_decided(
+            Curve2::from(expect_decided(
                 chord,
                 "axis-aligned benchmark chord must remain exact",
             ))
         })
     };
-    let boundary = CurveRegionBoundaryLoop2::new(
+    let path = CurvePath2::try_new_with_policy(
         vec![
             chord(bottom_left.clone(), bottom_right.clone())?,
             chord(bottom_right, top_right.clone())?,
@@ -990,15 +919,18 @@ fn axis_aligned_algebraic_offset_region() -> CurveResult<CurveRegion2> {
         ],
         &policy,
     )?;
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
-    )
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[path.into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        &policy,
+    )?
+    .into_value())
 }
 
-fn axis_aligned_algebraic_dumbbell_offset_region() -> CurveResult<CurveRegion2> {
+fn axis_aligned_algebraic_dumbbell_offset_region()
+-> Result<CurveRegion2, Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let selected = |height: Real| {
@@ -1034,7 +966,7 @@ fn axis_aligned_algebraic_dumbbell_offset_region() -> CurveResult<CurveRegion2> 
     ];
     let mut fragments = Vec::with_capacity(points.len());
     for index in 0..points.len() {
-        fragments.push(BezierSplitFragment2::AlgebraicChord(expect_decided(
+        fragments.push(Curve2::from(expect_decided(
             BezierAlgebraicChord2::try_new(
                 points[index].clone(),
                 points[(index + 1) % points.len()].clone(),
@@ -1043,12 +975,14 @@ fn axis_aligned_algebraic_dumbbell_offset_region() -> CurveResult<CurveRegion2> 
             "axis-aligned dumbbell chord must remain exact",
         )));
     }
-    CurveRegion2::try_new_with_loop_topology(
-        vec![CurveRegionBoundaryLoop2::new(fragments, &policy)?],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
-    )
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[CurvePath2::try_new(fragments)?],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        &policy,
+    )?
+    .into_value())
 }
 
 fn orthogonal_dumbbell_offset_region() -> CurveRegion2 {
@@ -1156,7 +1090,7 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    if corner_lane_enabled("curve_region_source_related_algebraic_chord_regularize") {
+    if corner_lane_enabled("curve_region_source_related_algebraic_chord_regularization_reuse") {
         let retained = source_related_algebraic_chord_region()
             .expect("source-related algebraic chord benchmark fixture must remain exact");
         let started = Instant::now();
@@ -1175,7 +1109,7 @@ fn bench_represented_bezier_region_corner_lanes(
         assert_ne!(fragments, 0);
         let elapsed = started.elapsed();
         println!(
-            "curve_region_source_related_algebraic_chord_regularize: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
+            "curve_region_source_related_algebraic_chord_regularization_reuse: {iterations} iterations in {elapsed:?} ({:?}/iter), fragments={fragments}",
             elapsed / iterations
         );
     }
@@ -1198,14 +1132,14 @@ fn bench_represented_bezier_region_corner_lanes(
             elapsed / iterations
         );
     }
-    if corner_lane_enabled("curve_region_noninjective_collinear_algebraic_chord_intersection") {
-        let [chord_region, source_region] = noninjective_collinear_algebraic_chord_regions()
+    if corner_lane_enabled("curve_path_noninjective_collinear_algebraic_chord_intersection") {
+        let [chord_path, source_path] = noninjective_collinear_algebraic_chord_paths()
             .expect("noninjective collinear intersection fixture must remain exact");
         let started = Instant::now();
         let mut evidence_count = 0_usize;
         for _ in 0..iterations {
-            let evidence = black_box(&chord_region)
-                .intersect_region(black_box(&source_region), &policy)
+            let evidence = black_box(&chord_path)
+                .intersect_path(black_box(&source_path), &policy)
                 .expect("noninjective collinear chord intersection must remain exact")
                 .into_value();
             assert!(evidence.is_complete(), "{evidence:?}");
@@ -1214,7 +1148,7 @@ fn bench_represented_bezier_region_corner_lanes(
         assert_ne!(evidence_count, 0);
         let elapsed = started.elapsed();
         println!(
-            "curve_region_noninjective_collinear_algebraic_chord_intersection: {iterations} iterations in {elapsed:?} ({:?}/iter), evidence={evidence_count}",
+            "curve_path_noninjective_collinear_algebraic_chord_intersection: {iterations} iterations in {elapsed:?} ({:?}/iter), evidence={evidence_count}",
             elapsed / iterations
         );
     }
