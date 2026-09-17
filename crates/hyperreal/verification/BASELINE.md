@@ -468,6 +468,24 @@ bound inputs retain their earlier 85 and 25 mutation results; no fresh combined
 ordinary expanded Rust remains byte-identical to `cdc6d3a`. All thirteen broader
 proof groups and baseline acceptance remain incomplete.
 
+The [public carrier checkpoint](../benchmarks/checkpoints/2026-09-17-verus-public-carriers.json)
+at `4a162ed` verifies six certificate accessors, five dependency-mask operations
+and seven mask constants from the actual public production file. Every known
+answer and unknown state is preserved; masks support every `u16`, including bits
+outside the named families. Private field visibility and all runtime bodies
+remain unchanged. Certificate producers, dependency classification, sign
+conversion adapters and generated trait implementations remain separate proof
+obligations.
+
+The official run passes 540 units, 87 production contracts (79 functions and
+eight constants) and 99 model theorems. All 129 repository input hashes match
+the proof commit. Twenty-one new mutation guards, ten acceptance/dependency
+tests, formatting and strict all-feature all-target Clippy pass. Earlier
+unchanged kernel/model, bound and cache inputs retain their 85, 25 and 13
+mutation results; no fresh combined 144-mutation run is claimed. Ordinary
+expanded Rust remains byte-identical to `cdc6d3a`. All thirteen broader proof
+groups and baseline acceptance remain incomplete.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
