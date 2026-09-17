@@ -670,7 +670,7 @@ impl Computable {
         } else {
             BoundInfo::with_sign_msd(
                 appr.sign(),
-                Some(prec + magnitude_bits as Precision - 1),
+                crate::verified::word::checked_bit_length_msd(magnitude_bits, 1, false, prec),
                 false,
             )
         }
@@ -690,7 +690,7 @@ impl Computable {
             Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                 BoundInfo::Zero
             } else {
-                BoundInfo::with_sign(n.sign(), Some(n.magnitude().bits() as Precision - 1))
+                BoundInfo::with_sign(n.sign(), crate::verified::word::checked_bit_length_msd(n.magnitude().bits(), 1, false, 0))
             }),
             Approximation::Constant(constant) => Some(constant.bound_info()),
             Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
@@ -717,7 +717,7 @@ impl Computable {
             }
             Approximation::Offset(child, n) => child
                 .cheap_bound_shallow(budget - 1)
-                .map(|bound| bound.map_msd(|value| value + *n)),
+                .map(|bound| bound.map_msd(|value| value.checked_add(*n))),
             Approximation::Inverse(child) => child
                 .cheap_bound_shallow(budget - 1)
                 .map(BoundInfo::inverse),
@@ -783,7 +783,7 @@ impl Computable {
                 Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
                     BoundInfo::Zero
                 } else {
-                    BoundInfo::with_sign(n.sign(), Some(n.magnitude().bits() as Precision - 1))
+                    BoundInfo::with_sign(n.sign(), crate::verified::word::checked_bit_length_msd(n.magnitude().bits(), 1, false, 0))
                 }),
                 Approximation::Constant(constant) => Some(constant.bound_info()),
                 Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
@@ -885,7 +885,7 @@ impl Computable {
                 }
                 Frame::FinishOffset(node, offset) => {
                     let value = values.pop().expect("offset bound should exist");
-                    let result = value.map_msd(|msd| msd + offset);
+                    let result = value.map_msd(|msd| msd.checked_add(offset));
                     node.store_bound(&result);
                     values.push(result);
                 }
