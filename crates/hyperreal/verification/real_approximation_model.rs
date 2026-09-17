@@ -14,6 +14,11 @@ pub(crate) open spec fn approximates(value: real, approximation: int, unit: real
         && -unit <= approximation as real * unit - value <= unit
 }
 
+pub(crate) open spec fn strictly_approximates(value: real, approximation: int, unit: real) -> bool {
+    unit > 0real
+        && -unit < approximation as real * unit - value < unit
+}
+
 pub(crate) proof fn binary_unit_positive(precision: int)
     ensures binary_unit(precision) > 0real,
         binary_numerator(precision) > 0, binary_denominator(precision) > 0,
@@ -127,8 +132,13 @@ pub(crate) proof fn binary_scaling_has_half_unit_error(value: int, shift: int)
     ensures -0.5real <= scaled_integer(value, shift) as real
         - value as real * binary_unit(shift) <= 0.5real,
 {
-    binary_unit_positive(shift);
+    // Explicit exact-zero and halfway cases also make the rounding convention
+    // independently visible to the arithmetic mutation checks.
     vstd::arithmetic::power::lemma_pow0(2);
+    assert(scaled_integer(0, -1) == 0);
+    assert(scaled_integer(1, -1) == 1);
+    assert(scaled_integer(-1, -1) == 0);
+    binary_unit_positive(shift);
     if shift >= 0 {
         cast_product(value, pow2(shift as nat) as int);
         assert(binary_denominator(shift) == 1);
@@ -198,6 +208,9 @@ pub(crate) proof fn asymmetric_product_before_rounding(
         8real * right_unit * left_bound == unit,
     ensures -unit / 2real <= (a * b) as real * (left_unit * right_unit) - left * right
         <= unit / 2real,
+        (-2real * right_bound < b as real * right_unit < 2real * right_bound)
+            ==> -unit / 2real < (a * b) as real * (left_unit * right_unit) - left * right
+                < unit / 2real,
 {
     let first_error = a as real * left_unit - left;
     let second_error = b as real * right_unit - right;
@@ -219,6 +232,23 @@ pub(crate) proof fn asymmetric_product_before_rounding(
                 <= (2real * left_bound) * right_unit,
             (a * b) as real * (left_unit * right_unit) - left * right
                 == first_error * (b as real * right_unit) + left * second_error;
+    if -2real * right_bound < b as real * right_unit < 2real * right_bound {
+        assert(-(left_unit * (2real * right_bound)) < first_error * (b as real * right_unit)
+            < left_unit * (2real * right_bound)) by (nonlinear_arith)
+            requires left_unit > 0real, right_bound > 0real,
+                -left_unit <= first_error <= left_unit,
+                -2real * right_bound < b as real * right_unit < 2real * right_bound;
+        assert(-unit / 2real < (a * b) as real * (left_unit * right_unit) - left * right
+            < unit / 2real) by (nonlinear_arith)
+            requires 8real * left_unit * right_bound == unit,
+                8real * right_unit * left_bound == unit,
+                -(left_unit * (2real * right_bound)) < first_error * (b as real * right_unit)
+                    < left_unit * (2real * right_bound),
+                -((2real * left_bound) * right_unit) <= left * second_error
+                    <= (2real * left_bound) * right_unit,
+                (a * b) as real * (left_unit * right_unit) - left * right
+                    == first_error * (b as real * right_unit) + left * second_error;
+    }
 }
 
 proof fn three_guard_bits(precision: int, magnitude: int)
@@ -255,6 +285,12 @@ pub(crate) proof fn asymmetric_multiplication_preserves_error(
     ensures approximates(left * right,
         scaled_integer(a * b, precision - left_magnitude - right_magnitude - 6),
         binary_unit(precision)),
+        (-2real * binary_unit(right_magnitude)
+            < b as real * binary_unit(precision - left_magnitude - 3)
+            < 2real * binary_unit(right_magnitude))
+            ==> strictly_approximates(left * right,
+                scaled_integer(a * b, precision - left_magnitude - right_magnitude - 6),
+                binary_unit(precision)),
 {
     let lp = precision - right_magnitude - 3;
     let rp = precision - left_magnitude - 3;
@@ -277,6 +313,15 @@ pub(crate) proof fn asymmetric_multiplication_preserves_error(
             -unit / 2real <= product * (binary_unit(lp) * binary_unit(rp)) - left * right
                 <= unit / 2real,
             binary_unit(shift) * unit == binary_unit(lp) * binary_unit(rp);
+    if -2real * binary_unit(right_magnitude) < b as real * binary_unit(rp)
+        < 2real * binary_unit(right_magnitude) {
+        assert(-unit < result * unit - left * right < unit) by (nonlinear_arith)
+            requires unit > 0real,
+                -0.5real <= result - product * binary_unit(shift) <= 0.5real,
+                -unit / 2real < product * (binary_unit(lp) * binary_unit(rp)) - left * right
+                    < unit / 2real,
+                binary_unit(shift) * unit == binary_unit(lp) * binary_unit(rp);
+    }
 }
 
 pub(crate) proof fn asymmetric_zero_product_preserves_error(
@@ -338,5 +383,26 @@ pub(crate) proof fn separated_approximation_certifies_sign(value: real, approxim
         requires unit > 0real, -unit <= approximation as real * unit - value <= unit;
     assert(approximation < -1 ==> value < 0real) by (nonlinear_arith)
         requires unit > 0real, -unit <= approximation as real * unit - value <= unit;
+}
+
+/// The comparison kernel's two-integer gap certifies strict order only with
+/// strict input errors. An inclusive one-unit contract alone is insufficient.
+pub(crate) proof fn separated_strict_approximations_certify_order(left: real, right: real, a: int, b: int, unit: real)
+    requires strictly_approximates(left, a, unit), strictly_approximates(right, b, unit),
+    ensures a >= b + 2 ==> left > right,
+        b >= a + 2 ==> right > left,
+{
+    if a >= b + 2 {
+        assert(left > right) by (nonlinear_arith)
+            requires unit > 0real, a as real >= b as real + 2real,
+                -unit < a as real * unit - left < unit,
+                -unit < b as real * unit - right < unit;
+    }
+    if b >= a + 2 {
+        assert(right > left) by (nonlinear_arith)
+            requires unit > 0real, b as real >= a as real + 2real,
+                -unit < a as real * unit - left < unit,
+                -unit < b as real * unit - right < unit;
+    }
 }
 }

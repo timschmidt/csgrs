@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies ninety-four production contracts (eighty-six
-functions and eight constants) and one hundred seventeen arithmetic model theorems. The rest
+functions and eight constants) and one hundred eighteen arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -291,7 +291,7 @@ identities and concurrent cache implementation still need refinement proofs.
 The cache theorem assumes its input error bound; it does not certify arbitrary
 cached values or the kernels producing them.
 
-Fourteen theorems in [`real_approximation_model.rs`](real_approximation_model.rs)
+Fifteen theorems in [`real_approximation_model.rs`](real_approximation_model.rs)
 extend the error model to the verifier's exact mathematical reals. Signed binary
 units compose, and the integer precision plan gives a valid real approximation.
 Negation, exact binary offsets, addition with two guard bits and cache
@@ -301,6 +301,11 @@ accuracy with three guard bits, including its zero shortcut; cached integer
 bit lengths provide the upper magnitude bounds that schedule needs. Its
 operand approximations and magnitude bounds remain explicit premises. These
 results do not assume that a cached integer and exact real share a binade.
+When the sampled other operand lies strictly inside its upper binade bound,
+the product error is strictly less than one unit. A two-integer approximation
+gap then certifies strict ordering given strict input error bounds. Inclusive
+one-unit bounds alone are insufficient for that comparison rule; the production
+graph must still establish the stronger input property on every relevant path.
 A quarter-unit approximation
 followed by rounding returns either the floor or ceiling, as required by
 `near_integer`; an approximation separated from zero by more than one unit
