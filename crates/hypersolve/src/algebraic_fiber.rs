@@ -11,7 +11,9 @@
 use std::cmp::Ordering;
 
 mod refinement;
+mod subresultant;
 pub use refinement::AlgebraicFiberRootRefiner;
+pub use subresultant::{AlgebraicFiberSubresultantError, subresultant_in_algebraic_fiber};
 
 use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy, compare_reals};
 use hyperreal::{Real, RealSign, ZeroKnowledge};
@@ -1718,7 +1720,7 @@ fn primitive_local_polynomial_image_norm(
         .checked_sub(1)
         .ok_or(LocalFieldError::Undecided)?;
     let matrix = local_polynomial_quotient_multiplication_matrix(fiber, image_coefficients, field)?;
-    let local_image = local_polynomial_matrix_determinant(&matrix, fiber_degree, field)?;
+    let local_image = local_polynomial_matrix_determinant(&matrix, fiber_degree, None, field)?;
     primitive_local_image_coefficients(local_image, field)
 }
 
@@ -2059,12 +2061,26 @@ fn local_polynomial_quotient_multiplication_matrix(
     Ok(completed)
 }
 
+fn local_image_polynomial_multiply_reduced(
+    first: &[LocalFieldElement],
+    second: &[LocalFieldElement],
+    modulus: Option<&[LocalFieldElement]>,
+    field: &mut LocalAlgebraicField,
+) -> Result<LocalImagePolynomial, LocalFieldError> {
+    let product = local_image_polynomial_multiply(first, second, field)?;
+    match modulus {
+        Some(modulus) => local_polynomial_remainder(product, modulus, field),
+        None => Ok(product),
+    }
+}
+
 /// Division-free Berkowitz determinant over the commutative polynomial ring
 /// `Q(alpha)[z]`. The returned characteristic-polynomial constant is adjusted
 /// by `(-1)^n` to recover the determinant.
 fn local_polynomial_matrix_determinant(
     entries: &[LocalImagePolynomial],
     dimension: usize,
+    modulus: Option<&[LocalFieldElement]>,
     field: &mut LocalAlgebraicField,
 ) -> Result<LocalImagePolynomial, LocalFieldError> {
     if entries.len()
@@ -2078,12 +2094,15 @@ fn local_polynomial_matrix_determinant(
         0 => local_image_polynomial_one(field)?,
         1 => entries[0].clone(),
         2 => {
-            let diagonal = local_image_polynomial_multiply(&entries[0], &entries[3], field)?;
-            let off_diagonal = local_image_polynomial_multiply(&entries[1], &entries[2], field)?;
+            let diagonal =
+                local_image_polynomial_multiply_reduced(&entries[0], &entries[3], modulus, field)?;
+            let off_diagonal =
+                local_image_polynomial_multiply_reduced(&entries[1], &entries[2], modulus, field)?;
             local_image_polynomial_add(&diagonal, &off_diagonal, true, field)?
         }
         _ => {
-            let characteristic = local_polynomial_matrix_characteristic(entries, dimension, field)?;
+            let characteristic =
+                local_polynomial_matrix_characteristic(entries, dimension, modulus, field)?;
             let mut determinant = characteristic
                 .last()
                 .cloned()
@@ -2101,6 +2120,7 @@ fn local_polynomial_matrix_determinant(
 fn local_polynomial_matrix_characteristic(
     entries: &[LocalImagePolynomial],
     dimension: usize,
+    modulus: Option<&[LocalFieldElement]>,
     field: &mut LocalAlgebraicField,
 ) -> Result<Vec<LocalImagePolynomial>, LocalFieldError> {
     if entries.len()
@@ -2135,7 +2155,7 @@ fn local_polynomial_matrix_characteristic(
         }
     }
     let minor_characteristic =
-        local_polynomial_matrix_characteristic(&minor, minor_dimension, field)?;
+        local_polynomial_matrix_characteristic(&minor, minor_dimension, modulus, field)?;
 
     let mut first_column = Vec::new();
     first_column
@@ -2155,7 +2175,7 @@ fn local_polynomial_matrix_characteristic(
             {
                 continue;
             }
-            let term = local_image_polynomial_multiply(left, right, field)?;
+            let term = local_image_polynomial_multiply_reduced(left, right, modulus, field)?;
             product = Some(match product {
                 Some(product) => local_image_polynomial_add(&product, &term, false, field)?,
                 None => term,
@@ -2178,9 +2198,10 @@ fn local_polynomial_matrix_characteristic(
                 {
                     continue;
                 }
-                let term = local_image_polynomial_multiply(
+                let term = local_image_polynomial_multiply_reduced(
                     &minor[matrix_row * minor_dimension + matrix_column],
                     &vector[matrix_column],
+                    modulus,
                     field,
                 )?;
                 value = Some(match value {
@@ -2206,9 +2227,10 @@ fn local_polynomial_matrix_characteristic(
             {
                 continue;
             }
-            let term = local_image_polynomial_multiply(
+            let term = local_image_polynomial_multiply_reduced(
                 factor,
                 &minor_characteristic[source_power],
+                modulus,
                 field,
             )?;
             coefficient = Some(match coefficient {
@@ -4750,7 +4772,7 @@ mod tests {
             ]
         };
         let entries = vec![constant(1), constant(2), constant(3), constant(4)];
-        let determinant = local_polynomial_matrix_determinant(&entries, 2, &mut field)
+        let determinant = local_polynomial_matrix_determinant(&entries, 2, None, &mut field)
             .expect("valid two-by-two determinant");
 
         assert_eq!(determinant.len(), 1);
@@ -4758,7 +4780,7 @@ mod tests {
         assert!(determinant[0].denominator.is_none());
         assert_eq!(field.certainty, Certainty::Exact);
         assert!(matches!(
-            local_polynomial_matrix_determinant(&entries[..3], 2, &mut field),
+            local_polynomial_matrix_determinant(&entries[..3], 2, None, &mut field),
             Err(LocalFieldError::Undecided)
         ));
     }

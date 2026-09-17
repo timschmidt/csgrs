@@ -112,7 +112,8 @@ pub use algebraic_fiber::{
     AlgebraicFiberRationalReductionStatus, AlgebraicFiberRootCountReport,
     AlgebraicFiberRootCountStatus, AlgebraicFiberRootIsolationConfig,
     AlgebraicFiberRootIsolationReport, AlgebraicFiberRootIsolationStatus,
-    AlgebraicFiberRootRefiner, count_bivariate_common_fiber_roots_at_algebraic_parameter,
+    AlgebraicFiberRootRefiner, AlgebraicFiberSubresultantError,
+    count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
     count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
@@ -120,7 +121,7 @@ pub use algebraic_fiber::{
     isolate_bivariate_fiber_roots_at_algebraic_parameter, project_algebraic_fiber_polynomial_image,
     project_algebraic_fiber_polynomial_image_relation,
     project_bivariate_fiber_at_algebraic_parameter,
-    reduce_bivariate_rational_function_at_algebraic_parameter,
+    reduce_bivariate_rational_function_at_algebraic_parameter, subresultant_in_algebraic_fiber,
 };
 pub use algebraic_mobius::{
     AlgebraicRootMobiusTransformReport, AlgebraicRootMobiusTransformStatus,
