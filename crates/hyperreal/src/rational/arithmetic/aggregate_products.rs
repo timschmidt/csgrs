@@ -1295,70 +1295,9 @@ impl Rational {
     fn lehmer_gcd_matrix(larger: &BigUint, smaller: &BigUint) -> Option<[i128; 4]> {
         debug_assert!(larger >= smaller);
         let shift = larger.bits().saturating_sub(62);
-        let mut high_larger = (larger >> usize::try_from(shift).ok()?).to_i128()?;
-        let mut high_smaller = (smaller >> usize::try_from(shift).ok()?).to_i128()?;
-        if high_smaller == 0 {
-            return None;
-        }
-
-        // The matrix maps the original pair to consecutive Euclidean
-        // remainders. Two quotient estimates must agree at both interval
-        // endpoints before a step is retained; this is Lehmer's guard against
-        // a quotient depending on the discarded low limbs.
-        let (mut a, mut b, mut c, mut d) = (1_i128, 0_i128, 0_i128, 1_i128);
-        let mut steps = 0_u8;
-        while let Some(numerator_low) = high_larger.checked_add(a) {
-            let Some(numerator_high) = high_larger.checked_add(b) else {
-                break;
-            };
-            let Some(denominator_low) = high_smaller.checked_add(c) else {
-                break;
-            };
-            let Some(denominator_high) = high_smaller.checked_add(d) else {
-                break;
-            };
-            if numerator_low < 0
-                || numerator_high < 0
-                || denominator_low <= 0
-                || denominator_high <= 0
-            {
-                break;
-            }
-            let quotient = numerator_low / denominator_low;
-            if quotient == 0 || quotient != numerator_high / denominator_high {
-                break;
-            }
-
-            let Some(next_c) = a.checked_sub(quotient.checked_mul(c)?) else {
-                break;
-            };
-            let Some(next_d) = b.checked_sub(quotient.checked_mul(d)?) else {
-                break;
-            };
-            let Some(next_high_smaller) =
-                high_larger.checked_sub(quotient.checked_mul(high_smaller)?)
-            else {
-                break;
-            };
-            if next_high_smaller < 0 {
-                break;
-            }
-
-            // Scalar multiplication by coefficients larger than one machine
-            // word loses the property that makes a Lehmer batch cheap.
-            if [c, d, next_c, next_d]
-                .into_iter()
-                .any(|value| value.unsigned_abs() > u128::from(u64::MAX))
-            {
-                break;
-            }
-
-            (a, b, c, d) = (c, d, next_c, next_d);
-            (high_larger, high_smaller) = (high_smaller, next_high_smaller);
-            steps += 1;
-        }
-
-        (steps >= 2).then_some([a, b, c, d])
+        let high_larger = (larger >> usize::try_from(shift).ok()?).to_i128()?;
+        let high_smaller = (smaller >> usize::try_from(shift).ok()?).to_i128()?;
+        crate::verified::lehmer::matrix(high_larger, high_smaller)
     }
 
     fn apply_lehmer_gcd_matrix(
@@ -1369,11 +1308,11 @@ impl Rational {
         // Apply signed one-word coefficients without cloning wide values into
         // `BigInt`; a row magnitude is a sum or an absolute difference.
         let apply_row = |left: i128, right: i128| {
-            let left_coefficient = u64::try_from(left.unsigned_abs()).ok()?;
-            let right_coefficient = u64::try_from(right.unsigned_abs()).ok()?;
+            let (left_coefficient, right_coefficient, add) =
+                crate::verified::lehmer::row_coefficients(left, right)?;
             let mut left_product = larger * left_coefficient;
             let right_product = smaller * right_coefficient;
-            if left.is_negative() == right.is_negative() {
+            if add {
                 left_product += right_product;
                 Some(left_product)
             } else if left_product >= right_product {

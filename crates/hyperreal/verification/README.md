@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies twenty-four production contracts (twenty-three
-functions and one constant) and thirty-six arithmetic model theorems. The rest
+The current proof target verifies twenty-eight production contracts (twenty-seven
+functions and one constant) and thirty-eight arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -75,6 +75,8 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `limbs::trailing_zeros` | Zero returns the full buffer width; every nonzero array factors into the reported power of two times a positive odd integer. | Fixed-buffer GCD |
 | `limbs::to_u128` | Returns the exact integer iff it fits in 128 bits. | Fixed-buffer GCD scalar exit |
 | `fixed_gcd::gcd_fixed` | Exact GCD and termination for generic bounded limb arrays, including zero inputs, scalar exits, comparison, subtraction, normalization and restoration of common factors. | `Rational::gcd_fixed::<4/8>` |
+| `lehmer::coefficient_fits`, `lehmer::coefficient_magnitude`, `lehmer::row_coefficients` | Exact word magnitudes and sum/difference selection for signed coefficients, rejecting precisely those larger than `u64::MAX`. | `Rational::apply_lehmer_gcd_matrix` |
+| `lehmer::matrix` | Exact endpoint-agreement batch selection on ordered leading 62-bit values, including `None` cases, coefficient bounds, determinant ±1, strict reduction, checked-arithmetic safety and loop/counter bounds. | `Rational::lehmer_gcd_matrix` |
 
 The GCD specification is proved to preserve exactly the positive common
 divisors, to be positive away from `(0, 0)`, and to be the greatest common
@@ -82,6 +84,12 @@ divisor. Further lemmas prove symmetry, subtraction, scaling, odd-operand
 power-of-two cancellation, trailing-zero factorizations and exact bounded
 shifts. The limb model defines the positional integer value of an array and
 proves bounds, splitting, prefix equality and the characterization of zero.
+The Lehmer model proves that an integer matrix with determinant ±1 preserves
+GCD for arbitrary input magnitudes after taking absolute row values. A second
+theorem proves the sum/absolute-difference identity used by unsigned row
+application. The executable builder refines a bounded recursive specification
+over mathematical integers; coefficient growth proves the original `u8` step
+counter stays below 129, so the model's recursion budget covers every step.
 [`rational_model.rs`](rational_model.rs) defines signed, unbounded
 fractions with positive denominators, without assuming canonical reduction.
 Its seventeen theorems establish equivalence and ordering laws, rescaling,
@@ -97,6 +105,11 @@ arbitrary-precision GCD tiers, rational normalization and other callers still
 need formal refinement proofs. The fixed-buffer kernel requires between 2 and
 `u32::MAX / 64` limbs; the production wrapper enforces this bound with a const
 assertion and currently instantiates 4- and 8-limb buffers.
+The Lehmer builder and row-coefficient selection are now verified, but the
+leading-bit extraction and `BigUint` row multiplication/addition/subtraction
+still need implementation proofs. The matrix theorem establishes the intended
+GCD identity; it does not silently certify those dependency operations, the
+wide GCD dispatch loop, or the recursive half-GCD tier.
 
 The table uses a bounded-depth recursive traversal during const evaluation;
 its values are computed by the same verified functions in both builds. The
@@ -107,7 +120,7 @@ explicit borrow comparisons in place of unspecified overflowing intrinsics.
 No project assumptions were added to cover these operations.
 
 `test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of nineteen
+first verifies the unmodified bodies, and then requires rejection of twenty-five
 incorrect implementations and an attempted assumption bypass. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
@@ -117,6 +130,10 @@ all table entries, quotient-estimate boundaries and random full-width inputs.
 Fixed-buffer tests compare with `BigUint` GCD across borrow chains, zero cases,
 every trailing-zero position, whole-limb factor restoration and randomized
 256-bit operands.
+Lehmer tests check known batch/fallback results, Fibonacci chains approaching
+the 62-bit limit, signed coefficient limits, determinant and row bounds, and
+GCD preservation with discarded low limbs. Mutations also require rejection of
+an always-`None` batch builder, corrupt coefficients and reversed row signs.
 
 ## Remaining work and completion criteria
 
