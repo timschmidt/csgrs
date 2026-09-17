@@ -1,0 +1,316 @@
+{
+  "schema": 1,
+  "status": "in_progress_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "runtime_candidate": "8c7484915da3f39d6a6754c7411277b2809cb467",
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory use",
+    "binary size",
+    "code size"
+  ],
+  "implementation": "Verified GCD quotient reduction at eight existing native normalization/cross-cancellation sites; positive-denominator caller proofs remain open.",
+  "proof": {
+    "verification_units": 333,
+    "production_contracts": 51,
+    "model_theorems": 52,
+    "source_hashes": 111,
+    "open_obligation_groups": 13,
+    "no_cheating": true,
+    "source_hashes_rechecked": true,
+    "mutation_rejections": 67,
+    "assumption_bypass_rejected": true
+  },
+  "validation": [
+    {
+      "step": "default-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-targets"
+      ],
+      "exit_code": 0,
+      "seconds": 206.39567923545837,
+      "log": "/tmp/hyperreal-fraction-validation/default-tests.log"
+    },
+    {
+      "step": "all-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-targets",
+        "--all-features"
+      ],
+      "exit_code": 0,
+      "seconds": 230.8234407901764,
+      "log": "/tmp/hyperreal-fraction-validation/all-tests.log"
+    },
+    {
+      "step": "clippy-all",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 7.933403491973877,
+      "log": "/tmp/hyperreal-fraction-validation/clippy-all.log"
+    },
+    {
+      "step": "representations",
+      "command": [
+        "bash",
+        "scripts/representation_coverage.sh"
+      ],
+      "exit_code": 0,
+      "seconds": 10.831907510757446,
+      "log": "/tmp/hyperreal-fraction-validation/representations.log"
+    }
+  ],
+  "test_counts": {
+    "default-tests": {
+      "passed_executions": 784,
+      "ignored": 0,
+      "criterion_fixtures": 1271
+    },
+    "all-tests": {
+      "passed_executions": 887,
+      "ignored": 0,
+      "criterion_fixtures": 1447
+    }
+  },
+  "validation_source_path": "/home/tim/Documents/GitHub/workspace/hyperreal",
+  "compiler": "rustc 1.97.0 (2d8144b78 2026-07-07)\nbinary: rustc\ncommit-hash: 2d8144b7880597b6e6d3dfd63a9a9efae3f533d3\ncommit-date: 2026-07-07\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.0\nLLVM version: 22.1.6\n",
+  "validation_environment": {
+    "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/target",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+    "CARGO_BUILD_JOBS": "4"
+  },
+  "fuzz": {
+    "records": [
+      {
+        "revision": "8c7484915da3f39d6a6754c7411277b2809cb467",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "computable_approximation",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "computable_approximation",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/computable_approximation/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/computable_approximation/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 170.60505533218384,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/computable_approximation/run.log",
+        "log_sha256": "d34c1785920995f697c2b16b898ed75b276867f87d673c28c30b6b32cb71b96c",
+        "corpus_files": 1055,
+        "sanitizer": "address",
+        "ASAN_OPTIONS": "detect_leaks=0",
+        "leak_checker_note": "Previously observed unsupported ptrace environment; ASan stays enabled."
+      },
+      {
+        "revision": "8c7484915da3f39d6a6754c7411277b2809cb467",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "rational_arithmetic",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "rational_arithmetic",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/rational_arithmetic/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/rational_arithmetic/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 0.9156055450439453,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/rational_arithmetic/run.log",
+        "log_sha256": "5a99bae99157b440e8841d0efee7b7c751693e2aa46b82b68990c5e3c898ea10",
+        "corpus_files": 963,
+        "sanitizer": "address",
+        "ASAN_OPTIONS": "detect_leaks=0",
+        "leak_checker_note": "Previously observed unsupported ptrace environment; ASan stays enabled."
+      },
+      {
+        "revision": "8c7484915da3f39d6a6754c7411277b2809cb467",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "real_elementary",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_elementary",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/real_elementary/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/real_elementary/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 2.2678794860839844,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/real_elementary/run.log",
+        "log_sha256": "fb23fffeb2ba44c9767bb00f80596ce7e96dce2d2a83884c31d1bc741f406c1c",
+        "corpus_files": 2575,
+        "sanitizer": "address",
+        "ASAN_OPTIONS": "detect_leaks=0",
+        "leak_checker_note": "Previously observed unsupported ptrace environment; ASan stays enabled."
+      },
+      {
+        "revision": "8c7484915da3f39d6a6754c7411277b2809cb467",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "real_exact",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "real_exact",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/real_exact/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/real_exact/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 4.435814619064331,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/real_exact/run.log",
+        "log_sha256": "d14dcb71933fba3025be14c0f2b82d91f148c87c13910fdc77535106f0607ef4",
+        "corpus_files": 1750,
+        "sanitizer": "address",
+        "ASAN_OPTIONS": "detect_leaks=0",
+        "leak_checker_note": "Previously observed unsupported ptrace environment; ASan stays enabled."
+      },
+      {
+        "revision": "8c7484915da3f39d6a6754c7411277b2809cb467",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "string_parsing",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "string_parsing",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/string_parsing/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/string_parsing/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 0.4722471237182617,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/string_parsing/run.log",
+        "log_sha256": "d8b38f431763bdd219dc0893a876136c812dd05aea8644094d815a56b0632b23",
+        "corpus_files": 117,
+        "sanitizer": "address",
+        "ASAN_OPTIONS": "detect_leaks=0",
+        "leak_checker_note": "Previously observed unsupported ptrace environment; ASan stays enabled."
+      },
+      {
+        "revision": "8c7484915da3f39d6a6754c7411277b2809cb467",
+        "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "target": "structural_representations",
+        "command": [
+          "cargo",
+          "+nightly",
+          "fuzz",
+          "run",
+          "structural_representations",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/structural_representations/corpus",
+          "--fuzz-dir",
+          "fuzz",
+          "--target-dir",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-target",
+          "--",
+          "-runs=0",
+          "-timeout=10",
+          "-seed=93537",
+          "-artifact_prefix=/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/structural_representations/artifacts/"
+        ],
+        "exit_code": 0,
+        "seconds": 3.889709711074829,
+        "log": "/tmp/hyperreal-verus-baseline-scmfudw9/fraction-candidate/fuzz/structural_representations/run.log",
+        "log_sha256": "d415f2f41ac0f9e4dc7fedb5a7da174e4160be28e5ee25d58dccb0acd8ee5543",
+        "corpus_files": 32,
+        "sanitizer": "address",
+        "ASAN_OPTIONS": "detect_leaks=0",
+        "leak_checker_note": "Previously observed unsupported ptrace environment; ASan stays enabled."
+      }
+    ],
+    "fixed_input_files": 6492,
+    "corpus_archive": "benchmarks/checkpoints/2026-09-17-verus-corpora.tar.gz",
+    "address_sanitizer": true,
+    "leak_sanitizer": "disabled after the previously observed ptrace limitation",
+    "driver_repair": {
+      "driver_exit_code": 1,
+      "stage": "corpus-copy",
+      "reason": "The elementary target uses a separately repaired baseline corpus directory. The initial driver assumed all six targets shared the ordinary directory layout and stopped before executing the third target.",
+      "completed_targets": [
+        "computable_approximation",
+        "rational_arithmetic"
+      ],
+      "repair": "Read each pending input directly from the committed frozen corpus archive and verify its saved SHA-256. Preserve completed target logs."
+    },
+    "input_note": "Each copied input was checked against the frozen SHA-256 inventory. Different instrumentation may change libFuzzer initialization execution counts; input bytes are identical."
+  },
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-fraction-validation.tar.gz",
+    "bytes": 68134,
+    "sha256": "4cc23290a966afe695cb7b2873a7a8db8b8d87f79c67b4967eada10783cad8bc",
+    "files": 23
+  },
+  "pending": [
+    "Full implementation/caller/dependency proofs",
+    "Remaining release, documentation, WASM and seven-configuration coverage qualification",
+    "Native benchmark and resource comparisons against the fixed pre-Verus baseline",
+    "Downstream qualification of this runtime revision",
+    "Resolution of previous candidate performance and resource findings",
+    "Final source-bound acceptance"
+  ],
+  "previous_runtime_evidence": "benchmarks/checkpoints/2026-09-17-verus-baseline.json",
+  "previous_runtime_note": "The broad earlier evidence measures 598f059 and must not be relabeled as proof of parity for this newer runtime."
+}
