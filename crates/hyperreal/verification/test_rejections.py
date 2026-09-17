@@ -155,6 +155,10 @@ MUTATIONS = [
      "ensures a >= b + 1 ==> left > right,"),
     ("real_approximation_model.rs", "(-2real * right_bound < b as real * right_unit < 2real * right_bound)\n            ==> -unit / 2real <",
      "(-2real * right_bound <= b as real * right_unit <= 2real * right_bound)\n            ==> -unit / 2real <"),
+    ("real_approximation_model.rs", "new_unit < old_unit,\n    ensures cached > 1",
+     "new_unit <= old_unit,\n    ensures cached > 1"),
+    ("real_approximation_model.rs", "ensures cached > 1 ==> refined > 0,",
+     "ensures cached >= 1 ==> refined > 0,"),
 ]
 
 
