@@ -322,6 +322,36 @@ precision arithmetic, transcendental bounds, domain validity, abort behavior,
 concurrency and convergence still require refinement proofs. All 13 complete
 obligation groups remain open.
 
+The [precision consumer core checks](../benchmarks/checkpoints/2026-09-17-verus-consumer-precision-core.json)
+retain all 51 commands for `7b95cac`: 41 pass and ten fail. Every failing command
+also failed in the historical baseline run, whose original environment and
+outcomes are retained. These failures include a Symbolica instance conflict,
+formatting, strict lint/documentation checks and two Hypercurve UI tests.
+All three UI WASM/Trunk builds and four allocation profiles pass in the current
+run. The historical baseline's different Trunk environment and allocation
+failure prevent treating those outcomes as a matched runtime improvement.
+Live Hypercurve was untouched; failures remain unresolved.
+
+The [computable metadata repair](../benchmarks/checkpoints/2026-09-17-verus-computable-metadata.json)
+at `cdc6d3a` removes wrapped integer exponents and preserves nonzero bounds when
+the exact exponent cannot fit `i32`. Both the baseline and previous runtime
+panic in debug on integer `2^i32::MAX` metadata and falsely certify an exact
+`i32::MIN` exponent for `2^(i32::MAX+1)`. A direct private-constructor probe also
+finds that the previous runtime classified a nonzero rational as zero when its
+exponent was unavailable; public direct-rational and rational-times-pi zero
+queries did not reproduce that private defect. The repaired constructor retains
+the sign and leaves the magnitude unresolved. All seven public boundary cases
+pass in debug and release. The private diagnostic and focused checks used the
+same code with two earlier comments; both source versions are preserved.
+
+The exact committed repair passes 431 existing Verus units, 798/901 default and
+all-feature test executions, 1,271/1,447 benchmark fixtures, representation
+checks, strict Clippy and doctests. All 117 proof-input hashes match the commit.
+The checked exponent helper is verified; the bound operations and their callers
+still need refinement proofs. Other approximation kernels' precision limits
+remain open. Build, coverage, fuzz, resource, native timing and pinned-consumer
+qualification for this runtime are in progress; this is not baseline acceptance.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
