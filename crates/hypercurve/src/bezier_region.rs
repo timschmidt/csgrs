@@ -1273,15 +1273,9 @@ impl CurveRegionBoundaryLoop2 {
 
     /// Returns true when any retained fragment carries non-native algebraic geometry.
     pub fn has_algebraic_fragments(&self) -> bool {
-        self.fragments.iter().any(|fragment| {
-            matches!(
-                fragment,
-                BezierSplitFragment2::RetainedBezier { .. }
-                    | BezierSplitFragment2::AnalyticParallel(_)
-                    | BezierSplitFragment2::AlgebraicChord(_)
-                    | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-            )
-        })
+        self.fragments
+            .iter()
+            .any(|fragment| !matches!(fragment, BezierSplitFragment2::Materialized { .. }))
     }
 
     /// Returns exact signed area for implemented native integrals and certified
@@ -11159,8 +11153,8 @@ impl CurveRegion2 {
         Ok(transformed)
     }
 
-    /// Constructs an exact curved region from already materialized boundary loops.
-    pub fn new(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> CurveResult<Self> {
+    /// Validates raw boundary collections for internal normalization.
+    pub(crate) fn new(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> CurveResult<Self> {
         if boundary_loops.is_empty() {
             return Ok(Self::default());
         }
@@ -11168,13 +11162,12 @@ impl CurveRegion2 {
         Ok(Self::from_certified_boundary_loops(boundary_loops))
     }
 
-    /// Constructs retained exact loops with explicit role, fill, and interior-side topology.
+    /// Attaches authored role, fill, and interior-side hints before normalization.
     ///
-    /// This is the authoritative constructor for procedural carriers whose
-    /// Green integral is not represented as a native [`Real`], including
-    /// analytic Bezier parallels. The interior side is authored topology
-    /// evidence; it is never inferred from a finite projection.
-    pub fn try_new_with_loop_topology(
+    /// These hints retain procedural carrier semantics without requiring a
+    /// represented Green integral. They do not certify a regularized boundary;
+    /// public path admission normalizes the resulting internal region.
+    pub(crate) fn try_new_with_loop_topology(
         boundary_loops: Vec<CurveRegionBoundaryLoop2>,
         roles: Vec<CurveRegionLoopRole>,
         fill_rules: Vec<FillRule>,
@@ -15025,41 +15018,14 @@ fn retained_line_fragment_endpoints(
             let line = if let Some(line) = chord.exact_line() {
                 line
             } else {
-                let exact_endpoint =
-                    |point: &CurvePoint2| -> CurveResult<Classification<Option<Point2>>> {
-                        Ok(match point {
-                            CurvePoint2(CurvePointData2::Exact(point)) => {
-                                Classification::Decided(Some(point.clone()))
-                            }
-                            CurvePoint2(CurvePointData2::Algebraic(point)) => {
-                                Classification::Decided(point.exact_point(policy))
-                            }
-                            CurvePoint2(CurvePointData2::AlgebraicChordPair(point)) => {
-                                point.exact_represented_point(policy)?
-                            }
-                            CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
-                            | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
-                            | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
-                            | CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                            | CurvePoint2(
-                                CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_),
-                            ) => Classification::Decided(None),
-                        })
-                    };
-                let start = match exact_endpoint(chord.start())? {
-                    Classification::Decided(Some(point)) => point,
-                    Classification::Decided(None) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
+                let start = match retained_native_line_point(chord.start(), policy)? {
+                    Classification::Decided(point) => point,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let end = match exact_endpoint(chord.end())? {
-                    Classification::Decided(Some(point)) => point,
-                    Classification::Decided(None) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
+                let end = match retained_native_line_point(chord.end(), policy)? {
+                    Classification::Decided(point) => point,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
@@ -15074,10 +15040,91 @@ fn retained_line_fragment_endpoints(
         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
-        BezierSplitFragment2::SelectedFiber(_) => {
-            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        BezierSplitFragment2::SelectedFiber(fragment) => {
+            let Some(source) = fragment.rational_curve() else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            // The source's line-image and monotonicity certificates cover its
+            // unit chart. A restriction inside that chart has exactly the
+            // segment between its endpoints; collinearity alone would miss
+            // excursions beyond the endpoints of a nonmonotone restriction.
+            for (endpoint, limit, outside) in [
+                (
+                    fragment.range().start(),
+                    Real::zero(),
+                    std::cmp::Ordering::Less,
+                ),
+                (
+                    fragment.range().end(),
+                    Real::one(),
+                    std::cmp::Ordering::Greater,
+                ),
+            ] {
+                match endpoint.cmp_by_refinement(&limit.into(), policy)? {
+                    Classification::Decided(order) if order == outside => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
+                    Classification::Decided(_) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            let line = match source.fit_exact_line_image(policy)? {
+                Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
+                Classification::Decided(BezierLineImageFitRelation::NotLine) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let axis = match compare_reals(line.line().start().x(), line.line().end().x(), policy) {
+                Some(std::cmp::Ordering::Equal) => crate::Axis2::Y,
+                Some(_) => crate::Axis2::X,
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            };
+            match source.axis_monotonicity_classified(axis, policy)? {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+            let start = match retained_native_line_point(fragment.start_point(), policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            Ok(retained_native_line_point(fragment.end_point(), policy)?.map(|end| (start, end)))
         }
     }
+}
+
+/// Reuses exact scalar witnesses while retaining selected endpoint authority.
+fn retained_native_line_point(
+    point: &CurvePoint2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Point2>> {
+    let represented = match point {
+        CurvePoint2(CurvePointData2::Exact(point)) => Classification::Decided(Some(point.clone())),
+        CurvePoint2(CurvePointData2::Algebraic(point)) => {
+            Classification::Decided(point.exact_point(policy))
+        }
+        CurvePoint2(CurvePointData2::AlgebraicChordPair(point)) => {
+            point.exact_represented_point(policy)?
+        }
+        CurvePoint2(CurvePointData2::Endpoint(endpoint)) => match endpoint.resolve(policy)? {
+            Classification::Decided(Some(point)) => {
+                return retained_native_line_point(&point, policy);
+            }
+            Classification::Decided(None) => Classification::Decided(None),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+        _ => Classification::Decided(None),
+    };
+    Ok(match represented {
+        Classification::Decided(Some(point)) => Classification::Decided(point),
+        Classification::Decided(None) => Classification::Uncertain(UncertaintyReason::Unsupported),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
 }
 
 pub(crate) fn retained_line_fragment_segment(
@@ -18737,6 +18784,188 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    #[test]
+    fn retained_region_constructor_rejects_reused_arrangement_sources_across_loops() {
+        let boundary = |vertices: &[Point2], sources| {
+            let fragments = (0..vertices.len())
+                .map(|i| {
+                    let start = &vertices[i];
+                    let end = &vertices[(i + 1) % vertices.len()];
+                    BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                            start.clone(),
+                            start.lerp(end, q(1, 2)),
+                            end.clone(),
+                        )),
+                    }
+                })
+                .collect();
+            CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
+                fragments,
+                sources,
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+        };
+        let outer = boundary(
+            &[p(0, 0), p(6, 0), p(6, 6), p(0, 6)],
+            vec![
+                CurveRegionFragmentSource2::new(0, 0, 0),
+                CurveRegionFragmentSource2::new(1, 0, 1),
+                CurveRegionFragmentSource2::new(2, 0, 2),
+                CurveRegionFragmentSource2::new(3, 0, 3),
+            ],
+        );
+        let inner = boundary(
+            &[p(2, 2), p(4, 2), p(4, 4), p(2, 4)],
+            vec![
+                CurveRegionFragmentSource2::new(0, 1, 0),
+                CurveRegionFragmentSource2::new(4, 1, 1),
+                CurveRegionFragmentSource2::new(5, 1, 2),
+                CurveRegionFragmentSource2::new(6, 1, 3),
+            ],
+        );
+        assert!(matches!(
+            CurveRegion2::new(vec![outer, inner]),
+            Err(CurveError::Topology(_))
+        ));
+    }
+
+    #[test]
+    fn native_boundary_loops_convert_into_unified_region_validation() {
+        let boundary = BezierBoundaryLoop2::new(
+            vec![
+                BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
+                BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(1, -1), p(0, 0))),
+            ],
+            &CurveContext::STRICT,
+        )
+        .unwrap();
+        let boundary: CurveRegionBoundaryLoop2 = boundary.into();
+        assert!(matches!(
+            CurveRegion2::new(vec![boundary.clone(), boundary]),
+            Err(CurveError::Topology(_))
+        ));
+    }
+
+    #[test]
+    fn retained_region_constructor_rejects_duplicate_boundary_loops() {
+        let chord = |start: Point2, end: Point2| {
+            let Classification::Decided(chord) = crate::BezierAlgebraicChord2::try_new(
+                start.into(),
+                end.into(),
+                &CurveContext::STRICT,
+            )
+            .unwrap() else {
+                panic!("an exact chord is represented");
+            };
+            BezierSplitFragment2::AlgebraicChord(chord)
+        };
+        let boundary = CurveRegionBoundaryLoop2::new(
+            vec![chord(p(0, 0), p(1, 0)), chord(p(1, 0), p(0, 0))],
+            &CurveContext::STRICT,
+        )
+        .unwrap();
+        assert!(matches!(
+            CurveRegion2::new(vec![boundary.clone(), boundary]),
+            Err(CurveError::Topology(_))
+        ));
+    }
+
+    #[test]
+    fn selected_fiber_line_images_reuse_exact_real_endpoints_in_both_directions() {
+        let half_root_two = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-&half_root_two, Real::one()],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("exact scalar-tower polynomial");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(q(1, 2), Real::one(), &policy).unwrap()
+            else {
+                panic!("ordered root interval");
+            };
+            let Classification::Decided(parameter) =
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+            else {
+                panic!("unique exact scalar root");
+            };
+            let curve = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)))
+                .subcurve(
+                    Real::zero().into(),
+                    BezierParameter2::algebraic(parameter).into(),
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
+            let spans = curve
+                .source_spans(&policy, CurveOperation2::Subdivision)
+                .unwrap();
+            assert_eq!(spans.len(), 1);
+            assert!(matches!(
+                spans[0].fragment,
+                BezierSplitFragment2::SelectedFiber(_)
+            ));
+            let expected = (
+                p(0, 0),
+                Point2::new(Real::from(2) * &half_root_two, Real::zero()),
+            );
+            assert_eq!(
+                retained_line_fragment_endpoints(&spans[0].fragment, &policy).unwrap(),
+                Classification::Decided(expected.clone())
+            );
+            assert_eq!(
+                retained_line_fragment_endpoints(&spans[0].fragment.reversed().unwrap(), &policy)
+                    .unwrap(),
+                Classification::Decided((expected.1, expected.0))
+            );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_line_image_fit_rejects_nonmonotone_subrange_excursions() {
+        // x(t)=4t(1-t)^3+t^4 stays in [0,1] on the full source chart,
+        // but its [1/5,4/5] restriction leaves the interval of its endpoints.
+        let source = RationalBezier2::try_new(
+            vec![p(0, 0), p(1, 0), p(0, 0), p(0, 0), p(1, 0)],
+            vec![Real::one(); 5],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let start = q(1, 5);
+            let end = q(4, 5);
+            let Classification::Decided(first) = source.point_at_classified(&start, &policy) else {
+                panic!("finite start");
+            };
+            let Classification::Decided(last) = source.point_at_classified(&end, &policy) else {
+                panic!("finite end");
+            };
+            let fragment = BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    BezierSelectedFiberSource2::Rational(source.clone()),
+                    CurveParameterRange2::new_validated(start.into(), end.into()),
+                    first.into(),
+                    last.into(),
+                ),
+            );
+            assert!(matches!(
+                source.fit_exact_line_image(&policy).unwrap(),
+                Classification::Decided(BezierLineImageFitRelation::Fit(_))
+            ));
+            assert_eq!(
+                retained_line_fragment_endpoints(&fragment, &policy).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            );
+        }
     }
 
     #[test]
