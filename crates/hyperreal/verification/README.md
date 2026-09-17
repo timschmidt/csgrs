@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies forty-five production contracts (forty-four
-functions and one constant) and forty-nine arithmetic model theorems. The rest
+The current proof target verifies fifty production contracts (forty-nine
+functions and one constant) and fifty arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -90,6 +90,11 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `aggregate::plan` | Exact per-product exponents and their maximum, including empty inputs and inactive terms; `None` iff an exponent exceeds `u64::MAX`. | Stack product-sum planning |
 | `aggregate::add_product` | Both word and wide factor variants add the exact shifted product, with overflow iff the unsigned sum exceeds the buffer. Oversized addends leave it unchanged; carry overflow leaves the sum modulo its width. | `aggregate::sum_products` |
 | `aggregate::sum_products` | Complete planning, signed-term dispatch, accumulation and reduction loops for arbitrary term counts and bounded buffer widths. Failure iff an exponent or either unsigned subtotal overflows; success preserves the exact signed fraction with canonical zero, sign and coprime numerator/denominator. All helper preconditions and loop termination are proved. | Narrow and wide-to-narrow stack product sums |
+| `checked_shift_left_u64` | Exact native alignment with the complete `u64` metadata range checked before narrowing; failure iff the factor or result cannot fit a word, including zero magnitudes. | Native dyadic paths |
+| `dyadic::normalize_word` | Direct `u128` reduction with exact factor removal, coprimality, fraction preservation, canonical activity/sign and zero exponent, including maximal metadata. | Native differences and two-product sums |
+| `dyadic::difference_word` | Exact signed difference and canonical fraction; fallback iff either raw alignment or the signed difference exceeds the native range. Both raw alignments are checked even for inactive inputs. | `Rational::difference_dyadic_words` |
+| `aggregate::native_product` | Inactive terms produce zero; active terms require a word factor, representable alignment, and both raw/scaled products to fit. Success has the exact signed value and canonical zero sign. | Native product-sum fast path |
+| `aggregate::sum_products_word` | Complete two-product planning, native multiplication/alignment, signed addition and direct reduction, with exact fallback conditions and helper preconditions discharged. | `Rational::product_sum2_dyadic_words_word` |
 
 The GCD specification is proved to preserve exactly the positive common
 divisors, to be positive away from `(0, 0)`, and to be the greatest common
@@ -120,6 +125,11 @@ aligned products. It proves that each alignment preserves its original
 fraction and that raising the common denominator rescales the entire numerator
 exactly. Monotonic unsigned subtotals establish the complete loop's failure
 condition even when a later cancellation would make the final difference fit.
+Native-word normalization reuses the proved two-limb trailing-zero count and
+exact factor-division theorem. Its word-value model treats inactive inputs as
+zero and proves fraction-preserving alignment. Native differences and product
+sums keep their distinct raw-alignment and inactive-term rules while proving
+the complete success/fallback boundary and canonical results.
 [`rational_model.rs`](rational_model.rs) defines signed, unbounded
 fractions with positive denominators, without assuming canonical reduction.
 Its seventeen theorems establish equivalence and ordering laws, rescaling,
@@ -150,7 +160,10 @@ planning and signed-term loops, retaining both word/wide multiplication paths.
 Planning includes inactive terms, as in the previous carrier implementation,
 and checked exponent addition returns a fallback on overflow. The adapters
 that assemble product inputs and convert signs/results remain unverified.
-Scalar-only and `BigUint`-backed aggregate paths, `BigUint` materialization,
+Native dyadic differences and two-product sums now use verified kernels too,
+with native `u128` multiplication and shifts retained. The native and stack
+product-sum paths share their input adapter. Other scalar-only and
+`BigUint`-backed aggregate paths, `BigUint` materialization,
 parameter comparisons and surrounding geometric algorithms also still need
 implementation proofs. These kernels alone do not establish the full dyadic
 or geometry API contracts.
@@ -167,7 +180,7 @@ proves conversion to `usize` is safe, including on narrower targets.
 No project assumptions were added to cover these operations.
 
 `test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of fifty-two
+first verifies the unmodified bodies, and then requires rejection of sixty-four
 incorrect implementations and an attempted assumption bypass. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
@@ -203,6 +216,13 @@ empty inputs/buffers and maximal exponent metadata. Both production carrier
 adapters are checked against independently constructed signed fractions.
 Mutations reject incorrect scale plans, omitted or reversed signs, corrupt
 products, swapped subtotals, always-fallback results and negative zero.
+Native-word oracle tests check every trailing-bit position, shift boundaries,
+raw product and signed-sum overflow, inactive terms, negative zero and maximal
+metadata. They compare canonical numerators and denominators with `BigRational`
+and independently compute the fast paths' representability decisions. Added
+mutations reject truncated shifts, omitted normalization, incorrect zero/sign
+classification, broken native multiplication, ignored scales and unconditional
+fallbacks.
 
 ## Remaining work and completion criteria
 

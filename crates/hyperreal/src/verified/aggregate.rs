@@ -55,6 +55,14 @@ pub(crate) open spec fn aligned(product: Product, scale: nat) -> nat {
     magnitude(product) * pow2((scale - exponent(product)) as nat)
 }
 
+pub(crate) open spec fn native_product_fits(product: Product, scale: nat) -> bool {
+    !product.active || (
+        (match product.left { Magnitude::Word(_) => true, Magnitude::Wide(_) => false })
+        && exponent(product) <= scale && scale - exponent(product) < 128
+        && magnitude(product) <= u128::MAX && aligned(product, scale) <= u128::MAX
+    )
+}
+
 pub(crate) open spec fn subtotal(products: Seq<Product>, scale: nat, negative: bool, length: int) -> nat
     recommends 0 <= length <= products.len(),
     decreases length,
@@ -302,4 +310,64 @@ pub(crate) fn sum_products<const N: usize, const M: usize>(
             Some((false, zero, 0))
         }
     }
+}
+
+/// The scalar fast path skips inactive terms, and rejects active wide factors
+/// before evaluating their products. Alignment must itself fit a native word.
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    requires exponent(product) <= maximum,
+    ensures result.is_none() <==> !native_product_fits(product, maximum as nat),
+        match result {
+            Some((negative, magnitude)) => (magnitude == 0 ==> !negative)
+                && super::word::signed(negative, magnitude)
+                    == (if product.active { signed(product.negative, aligned(product, maximum as nat)) } else { 0int }),
+            None => true,
+        },
+))]
+#[inline]
+fn native_product(product: Product, maximum: u64) -> Option<(bool, u128)> {
+    if !product.active {
+        return Some((false, 0));
+    }
+    let left = match product.left {
+        Magnitude::Word(left) => left,
+        Magnitude::Wide(_) => return None,
+    };
+    let magnitude = left.checked_mul(product.right)?;
+    let shift = maximum - product.left_shift - product.right_shift;
+    let scaled = super::word::checked_shift_left_u64(magnitude, shift)?;
+    Some((product.negative && scaled != 0, scaled))
+}
+
+/// Preserve the two-term native fast path's checked product and signed-add
+/// behavior, then normalize directly with native-word shifts.
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures ({
+        let scale = common_scale(products@, 2);
+        let total = signed_sum(products@, scale, 2);
+        &&& (result.is_none() <==> scale > u64::MAX
+            || !native_product_fits(products[0], scale) || !native_product_fits(products[1], scale)
+            || total > u128::MAX || total < -(u128::MAX as int))
+        &&& match result {
+            Some(word) => super::dyadic::canonical_word(word) && word.shift <= scale
+                && word.negative == (total < 0)
+                && word.magnitude as nat * pow2((scale - word.shift) as nat) == abs(total)
+                && super::dyadic::word_value(word) * pow2(scale) == total * pow2(word.shift as nat),
+            None => true,
+        }
+    }),
+))]
+#[inline]
+pub(crate) fn sum_products_word(products: &[Product; 2]) -> Option<super::dyadic::Word> {
+    let (_shifts, maximum) = plan(products)?;
+    proof! {
+        assert(_shifts[0] == exponent(products[0]));
+        assert(_shifts[1] == exponent(products[1]));
+        reveal_with_fuel(signed_sum, 3);
+    }
+    let (left_negative, left) = native_product(products[0], maximum)?;
+    let (right_negative, right) = native_product(products[1], maximum)?;
+    let (negative, magnitude) =
+        super::word::signed_add(left_negative, left, right_negative, right)?;
+    Some(super::dyadic::normalize_word(negative, magnitude, maximum))
 }

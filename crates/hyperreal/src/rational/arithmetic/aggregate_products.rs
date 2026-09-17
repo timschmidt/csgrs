@@ -141,6 +141,22 @@ struct DyadicWord {
     denominator_shift: u64,
 }
 
+impl DyadicWord {
+    fn into_native(self) -> crate::verified::dyadic::Word {
+        crate::verified::dyadic::Word {
+            active: self.sign != NoSign,
+            negative: self.sign == Minus,
+            magnitude: self.magnitude,
+            shift: self.denominator_shift,
+        }
+    }
+
+    fn from_native(word: crate::verified::dyadic::Word) -> Self {
+        let sign = if !word.active { NoSign } else if word.negative { Minus } else { Plus };
+        Self { sign, magnitude: word.magnitude, denominator_shift: word.shift }
+    }
+}
+
 #[derive(Clone, Copy)]
 struct DyadicLineIntersectionPlan {
     first_start: [DyadicWord; 2],
@@ -2879,32 +2895,8 @@ impl Rational {
     }
 
     fn difference_dyadic_words(left: DyadicWord, right: DyadicWord) -> Option<DyadicWord> {
-        let denominator_shift = left.denominator_shift.max(right.denominator_shift);
-        let align = |value: DyadicWord| {
-            let shift = u32::try_from(denominator_shift - value.denominator_shift).ok()?;
-            Some((
-                value.sign,
-                Self::checked_word_shift_left(value.magnitude, shift)?,
-            ))
-        };
-        let (sign, mut magnitude) = Self::signed_word_sum(align(left)?, {
-            let (sign, magnitude) = align(right)?;
-            (-sign, magnitude)
-        })?;
-        if sign == NoSign {
-            return Some(DyadicWord {
-                sign,
-                magnitude: 0,
-                denominator_shift: 0,
-            });
-        }
-        let common_shift = u64::from(magnitude.trailing_zeros()).min(denominator_shift);
-        magnitude >>= common_shift;
-        Some(DyadicWord {
-            sign,
-            magnitude,
-            denominator_shift: denominator_shift - common_shift,
-        })
+        crate::verified::dyadic::difference_word(left.into_native(), right.into_native())
+            .map(DyadicWord::from_native)
     }
 
     fn finish_dyadic_stack_sum(
@@ -2960,8 +2952,16 @@ impl Rational {
         right: [DyadicWord; N],
         positive_terms: [bool; N],
     ) -> Option<DyadicStackSum> {
+        Self::product_sum_stack(Self::dyadic_word_products(left, right, positive_terms))
+    }
+
+    fn dyadic_word_products<const N: usize>(
+        left: [DyadicWord; N],
+        right: [DyadicWord; N],
+        positive_terms: [bool; N],
+    ) -> [crate::verified::aggregate::Product; N] {
         use crate::verified::aggregate::{Magnitude, Product};
-        let products = core::array::from_fn(|index| {
+        core::array::from_fn(|index| {
             let sign = (if positive_terms[index] { Plus } else { Minus })
                 * left[index].sign
                 * right[index].sign;
@@ -2973,8 +2973,7 @@ impl Rational {
                 left_shift: left[index].denominator_shift,
                 right_shift: right[index].denominator_shift,
             }
-        });
-        Self::product_sum_stack::<N>(products)
+        })
     }
 
     #[inline]
@@ -2983,39 +2982,8 @@ impl Rational {
         right: [DyadicWord; 2],
         positive_terms: [bool; 2],
     ) -> Option<DyadicWord> {
-        let denominator_shifts = [
-            left[0].denominator_shift + right[0].denominator_shift,
-            left[1].denominator_shift + right[1].denominator_shift,
-        ];
-        let max_shift = denominator_shifts[0].max(denominator_shifts[1]);
-        let product = |index: usize| {
-            let sign = (if positive_terms[index] { Plus } else { Minus })
-                * left[index].sign
-                * right[index].sign;
-            if sign == NoSign {
-                return Some((NoSign, 0));
-            }
-            let shift = u32::try_from(max_shift - denominator_shifts[index]).ok()?;
-            let magnitude = left[index]
-                .magnitude
-                .checked_mul(right[index].magnitude)
-                .and_then(|magnitude| Self::checked_word_shift_left(magnitude, shift))?;
-            Some((sign, magnitude))
-        };
-        let sum = Self::signed_word_sum(product(0)?, product(1)?)?;
-        if sum.0 == NoSign {
-            return Some(DyadicWord {
-                sign: NoSign,
-                magnitude: 0,
-                denominator_shift: 0,
-            });
-        }
-        let common_shift = u64::from(sum.1.trailing_zeros()).min(max_shift);
-        Some(DyadicWord {
-            sign: sum.0,
-            magnitude: sum.1 >> common_shift,
-            denominator_shift: max_shift - common_shift,
-        })
+        crate::verified::aggregate::sum_products_word(&Self::dyadic_word_products(left, right, positive_terms))
+            .map(DyadicWord::from_native)
     }
 
     fn cross_dyadic_words(left: [DyadicWord; 2], right: [DyadicWord; 2]) -> Option<DyadicStackSum> {

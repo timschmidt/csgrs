@@ -139,3 +139,19 @@ pub(crate) fn checked_shift_left(value: u128, shift: u32) -> Option<u128> {
         value.checked_mul(1_u128 << shift)
     }
 }
+
+/// Accept exponent metadata without narrowing it before checking the word bound.
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures result.is_none() <==> (shift >= 128 || value as nat * pow2(shift as nat) > u128::MAX),
+        match result {
+            Some(scaled) => scaled == value as nat * pow2(shift as nat) && shift < 128,
+            None => true,
+        },
+))]
+#[inline]
+pub(crate) fn checked_shift_left_u64(value: u128, shift: u64) -> Option<u128> {
+    if shift >= 128 {
+        return None;
+    }
+    checked_shift_left(value, shift as u32)
+}

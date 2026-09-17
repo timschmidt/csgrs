@@ -271,7 +271,7 @@ proof fn common_shift_preserves_gcd(left: u128, right: u128, shift: u32)
     gcd_scaled((left >> shift) as nat, (right >> shift) as nat, pow2(shift as nat));
 }
 
-proof fn divide_trailing_factor(value: u128, shift: u32)
+pub(crate) proof fn divide_trailing_factor(value: u128, shift: u32)
     requires value > 0, shift <= trailing_zeros_u128_spec(value),
     ensures shift < 128, 0 < value >> shift,
         value == (value >> shift) * pow2(shift as nat),
@@ -324,7 +324,7 @@ proof fn gcd_power_of_two_word(left: u64, right: u128, shift: u32)
         (result == 128 <==> value == 0),
 ))]
 #[inline]
-fn trailing_zeros_u128(value: u128) -> u32 {
+pub(crate) fn trailing_zeros_u128(value: u128) -> u32 {
     proof! { trailing_zeros_factor_u128(value); }
     let low = value as u64;
     if low != 0 {
