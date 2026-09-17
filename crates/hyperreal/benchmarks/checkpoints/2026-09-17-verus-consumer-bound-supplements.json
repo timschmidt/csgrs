@@ -1,0 +1,419 @@
+{
+  "schema": 1,
+  "status": "supplemental_qualification_not_acceptance",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+  "consumer_pins": {
+    "hyperlattice": "53427ce89f8c82c016e69a04e035787e2753adc8",
+    "hyperlimit": "d64c3b897e2832e879b01e53e46c57260d071d4c",
+    "hypertri": "6a2092c066964f3b7528299a72ef0ed1af4b1ff0",
+    "hypersolve": "3ac2e7510936a11c7bf2eac5dfbe3f9f851afe55"
+  },
+  "coverage": {
+    "baseline": {
+      "hypertri": {
+        "lines": 6600,
+        "hits": 6271,
+        "misses": 329,
+        "percent": 95.02
+      },
+      "hypersolve": {
+        "lines": 39571,
+        "hits": 34198,
+        "misses": 5373,
+        "percent": 86.42
+      }
+    },
+    "candidate": {
+      "hypertri": {
+        "lines": 6600,
+        "hits": 6271,
+        "misses": 329,
+        "percent": 95.02
+      },
+      "hypersolve": {
+        "lines": 39571,
+        "hits": 34194,
+        "misses": 5377,
+        "percent": 86.41
+      }
+    }
+  },
+  "fixture_context": "Frozen isolated diagnostics retain the sine-coordinate unknown-edge test for Hypertri and algebraically equivalent canonical-field expected payload for Hypersolve. Original sources and their failures remain recorded separately; no live consumer was changed.",
+  "previous_fixture_evidence": "benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-supplements.json",
+  "commands": [
+    {
+      "label": "baseline",
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "consumer": "hypertri",
+      "step": "coverage",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800s",
+        "bash",
+        "scripts/coverage.sh"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-diagnostics/hypertri",
+      "environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/hyperreal/target/consumer-diagnostic-coverage-scmfudw9",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_NET_OFFLINE": "true",
+        "CCACHE_DISABLE": "1",
+        "RUST_TEST_THREADS": "2",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 47.31496286392212
+    },
+    {
+      "label": "baseline",
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "consumer": "hypersolve",
+      "step": "coverage",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800s",
+        "bash",
+        "scripts/coverage.sh"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-diagnostics/hypersolve",
+      "environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/hyperreal/target/consumer-diagnostic-coverage-scmfudw9",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_NET_OFFLINE": "true",
+        "CCACHE_DISABLE": "1",
+        "RUST_TEST_THREADS": "2",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 110.52242374420166
+    },
+    {
+      "label": "baseline",
+      "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+      "consumer": "hypersolve",
+      "step": "corrected-bench-build",
+      "command": [
+        "cargo",
+        "bench",
+        "--locked",
+        "--all-features",
+        "--bench",
+        "certification",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-diagnostics/hypersolve",
+      "environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/hyperreal/target/consumer-diagnostics-scmfudw9",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_NET_OFFLINE": "true",
+        "CCACHE_DISABLE": "1",
+        "RUST_TEST_THREADS": "2",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 43.02517342567444
+    },
+    {
+      "label": "candidate",
+      "revision": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+      "consumer": "hypertri",
+      "step": "coverage",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800s",
+        "bash",
+        "scripts/coverage.sh"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-diagnostics/hypertri",
+      "environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/hyperreal/target/consumer-diagnostic-coverage-scmfudw9",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_NET_OFFLINE": "true",
+        "CCACHE_DISABLE": "1",
+        "RUST_TEST_THREADS": "2",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 50.182334899902344
+    },
+    {
+      "label": "candidate",
+      "revision": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+      "consumer": "hypersolve",
+      "step": "coverage",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800s",
+        "bash",
+        "scripts/coverage.sh"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-diagnostics/hypersolve",
+      "environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/hyperreal/target/consumer-diagnostic-coverage-scmfudw9",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_NET_OFFLINE": "true",
+        "CCACHE_DISABLE": "1",
+        "RUST_TEST_THREADS": "2",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 119.62881588935852
+    },
+    {
+      "label": "candidate",
+      "revision": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+      "consumer": "hypersolve",
+      "step": "corrected-bench-build",
+      "command": [
+        "cargo",
+        "bench",
+        "--locked",
+        "--all-features",
+        "--bench",
+        "certification",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-diagnostics/hypersolve",
+      "environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/hyperreal/target/consumer-diagnostics-scmfudw9",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+        "CARGO_BUILD_JOBS": "4",
+        "CARGO_NET_OFFLINE": "true",
+        "CCACHE_DISABLE": "1",
+        "RUST_TEST_THREADS": "2",
+        "HYPERLATTICE_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERLIMIT_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERTRI_SKIP_BENCHMARK_REPORTS": "1",
+        "HYPERSOLVE_SKIP_BENCHMARK_REPORTS": "1"
+      },
+      "exit_code": 0,
+      "seconds": 44.6418616771698
+    }
+  ],
+  "corrected_certification_benchmark": {
+    "matched_builds_passed": 2,
+    "native_timings_pending": true
+  },
+  "lattice_trace": {
+    "commands": [
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "build",
+        "command": [
+          "cargo",
+          "bench",
+          "--locked",
+          "--all-features",
+          "--bench",
+          "api_dispatch_trace",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-diagnostics/hyperlattice",
+        "exit_code": 0,
+        "seconds": 12.309934854507446
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "step": "trace",
+        "command": [
+          "/tmp/hyperreal-verus-baseline-scmfudw9/bound-composition-lattice-traces/runtime/trace"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/bound-composition-lattice-traces/runtime",
+        "removed_environment_variables": [
+          "HYPERLATTICE_SKIP_BENCHMARK_REPORTS",
+          "NO_COLOR"
+        ],
+        "exit_code": 0,
+        "seconds": 0.0020585060119628906,
+        "binary_sha256": "4e7f0a44e2864d149a1a6f4c5d99a36dcc557fd4226a085cbba110c84d2d21e9"
+      },
+      {
+        "label": "candidate",
+        "revision": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+        "step": "build",
+        "command": [
+          "cargo",
+          "bench",
+          "--locked",
+          "--all-features",
+          "--bench",
+          "api_dispatch_trace",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/consumer-diagnostics/hyperlattice",
+        "exit_code": 0,
+        "seconds": 12.172353267669678
+      },
+      {
+        "label": "candidate",
+        "revision": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+        "step": "trace",
+        "command": [
+          "/tmp/hyperreal-verus-baseline-scmfudw9/bound-composition-lattice-traces/runtime/trace"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/bound-composition-lattice-traces/runtime",
+        "removed_environment_variables": [
+          "HYPERLATTICE_SKIP_BENCHMARK_REPORTS",
+          "NO_COLOR"
+        ],
+        "exit_code": 0,
+        "seconds": 0.0018711090087890625,
+        "binary_sha256": "eb835a9fff6617d939f060ebcff5a11ae7948b60c5a93083df0cbded5e0c8ce4"
+      }
+    ],
+    "rows": {
+      "baseline": {
+        "aabb_construction": [
+          7,
+          1,
+          6,
+          0,
+          7,
+          0,
+          0
+        ],
+        "algebra2_exact_helpers_and_facts": [
+          127,
+          36,
+          69,
+          0,
+          19,
+          0,
+          0
+        ],
+        "point_construction_facts_and_aggregation": [
+          346,
+          85,
+          236,
+          6,
+          67,
+          8,
+          6
+        ],
+        "projective_plane_line_and_point_algebra": [
+          162,
+          3,
+          138,
+          0,
+          49,
+          0,
+          0
+        ]
+      },
+      "candidate": {
+        "aabb_construction": [
+          7,
+          1,
+          6,
+          0,
+          7,
+          0,
+          0
+        ],
+        "algebra2_exact_helpers_and_facts": [
+          127,
+          36,
+          69,
+          0,
+          19,
+          0,
+          0
+        ],
+        "point_construction_facts_and_aggregation": [
+          346,
+          85,
+          236,
+          6,
+          67,
+          8,
+          6
+        ],
+        "projective_plane_line_and_point_algebra": [
+          162,
+          3,
+          138,
+          0,
+          49,
+          0,
+          0
+        ]
+      }
+    },
+    "identical_summary_counts": true,
+    "columns": [
+      "dependency_dispatch",
+      "linear_algebra",
+      "exact_reducers",
+      "approximation",
+      "rational_temporaries",
+      "rational_reductions",
+      "rational_gcds"
+    ]
+  },
+  "limits": [
+    "Full proof, native benchmarks and baseline acceptance remain incomplete.",
+    "The original unmodified consumer outcomes are not relabeled by supplemental tests.",
+    "Baseline Hypersolve hit count differs from the prior baseline invocation; no deterministic coverage improvement or regression is inferred from these single counts.",
+    "Trace counts are diagnostics, not native timings. Executables remain frozen in temporary storage with hashes archived.",
+    "Live Hypercurve remains untouched."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-consumer-bound-supplements.tar.gz",
+    "files": 225,
+    "bytes": 18046636,
+    "sha256": "57a3b247ce69c8239f3e3b8a4fdb29eff75d06cb654a15aa11dcc06ab82c91cb"
+  }
+}
