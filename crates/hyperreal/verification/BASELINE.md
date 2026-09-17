@@ -175,9 +175,26 @@ theorems. Default/all-feature tests (790/893 executions), their 1,271/1,447
 benchmark fixtures, the representation matrix, strict Clippy, all 77 mutation
 rejections and 6,492 frozen ASan inputs pass. The initial probe's differing
 dependency resolution and the mutation driver's corrected textual anchor are
-retained explicitly. This is an exactness repair, with performance, resource,
-size, coverage and downstream qualification still pending for the new runtime.
-The full source/caller/dependency proof remains incomplete.
+retained explicitly. This is an exactness repair; the full source/caller/
+dependency proof remains incomplete.
+
+The [magnitude resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-magnitude-resources.json)
+records all twelve remaining build/check steps for `ee773bb`, including strict
+documentation, both WASM builds, seven coverage configurations and benchmark
+fixtures. Production executable-line coverage is 26,018 of 28,555 lines
+(91.12%); this is not formal proof coverage. All allocation, Callgrind, Massif,
+Memcheck, Heaptrack, dispatch and section-size commands pass. Twelve of twenty
+allocation workloads improve, retained bytes are unchanged, and Callgrind
+instructions decrease from 29,845,483 to 28,776,316. Memcheck reports no errors
+or definitely, indirectly or possibly lost bytes.
+
+The identical-path AB/BA Massif comparison still increases the exact whole-
+process peak from 24,896 to 25,072 bytes in both pairs. Native stripped binaries
+grow by up to 16,384 bytes, and WASM grows from 1,646,116 to 1,660,615 bytes.
+Expanded ordinary Rust has 36,082 lines versus 35,597 at the baseline. These
+differences remain assessment items; the twenty-form workload does not prove
+full resource parity. Current native timings and downstream qualification
+remain pending.
 
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
