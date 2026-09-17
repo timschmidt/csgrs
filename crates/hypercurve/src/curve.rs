@@ -275,6 +275,8 @@ impl CurveParameterLineage2 {
 ///
 /// Clones share the exact carrier and its retained calculations. Operations
 /// borrow this value directly, preserving the same caches and certificates.
+/// Native curves and validated generated fragments convert directly into
+/// this value, retaining their source domains and selected endpoint evidence.
 #[derive(Clone, Debug)]
 pub struct Curve2 {
     data: Arc<CurveData2>,
@@ -2530,6 +2532,30 @@ impl From<PolynomialSplineCurve2> for Curve2 {
 impl From<NurbsCurve2> for Curve2 {
     fn from(value: NurbsCurve2) -> Self {
         Self::new(CurveGeometry2::Nurbs(value))
+    }
+}
+
+impl From<crate::BezierAlgebraicChord2> for Curve2 {
+    fn from(value: crate::BezierAlgebraicChord2) -> Self {
+        Self::from_retained_fragment(crate::BezierSplitFragment2::AlgebraicChord(value))
+    }
+}
+
+impl From<crate::BezierParallelFragment2> for Curve2 {
+    fn from(value: crate::BezierParallelFragment2) -> Self {
+        Self::from_retained_fragment(crate::BezierSplitFragment2::AnalyticParallel(value))
+    }
+}
+
+impl From<crate::BezierAlgebraicCuspSemicircleFragment2> for Curve2 {
+    fn from(value: crate::BezierAlgebraicCuspSemicircleFragment2) -> Self {
+        Self::from_retained_fragment(crate::BezierSplitFragment2::AlgebraicCuspSemicircle(value))
+    }
+}
+
+impl From<crate::bezier_split::BezierSelectedFiberFragment2> for Curve2 {
+    fn from(value: crate::bezier_split::BezierSelectedFiberFragment2) -> Self {
+        Self::from_retained_fragment(crate::BezierSplitFragment2::SelectedFiber(value))
     }
 }
 

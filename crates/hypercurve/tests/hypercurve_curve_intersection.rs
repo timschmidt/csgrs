@@ -3783,8 +3783,6 @@ mod finite_selected_circle_domains {
             ),
             _ => unreachable!(),
         };
-        let first = exact(parallel.point_at(&start, policy).unwrap());
-        let last = exact(parallel.point_at(&end, policy).unwrap());
         let range = exact(
             BezierParameterRange2::try_new(
                 BezierParameter2::Exact(start),
@@ -3793,22 +3791,9 @@ mod finite_selected_circle_domains {
             )
             .unwrap(),
         );
-        let fragment = BezierSplitFragment2::AnalyticParallel(exact(
+        Curve2::from(exact(
             BezierParallelFragment2::try_new(parallel, range, policy).unwrap(),
-        ));
-        let via = p(8, -4);
-        let chord = |a: Point2, b: Point2| {
-            BezierSplitFragment2::AlgebraicChord(exact(
-                BezierAlgebraicChord2::try_new(a.into(), b.into(), policy).unwrap(),
-            ))
-        };
-        let boundary = CurveRegionBoundaryLoop2::new(
-            vec![fragment, chord(last, via.clone()), chord(via, first)],
-            policy,
-        )
-        .unwrap();
-        let region = CurveRegion2::new(vec![boundary]).unwrap();
-        exact(certified(region.boundary_paths(policy).unwrap()))[0].curves()[0].clone()
+        ))
     }
     fn oriented(curve: &Curve2, reverse: bool, policy: &CurveContext) -> Curve2 {
         if reverse {
