@@ -399,6 +399,25 @@ within-run intervals, including external comparator rows. Every case and raw
 sample is retained. These flags require longer alternating repeats; the screen
 does not establish performance parity or final acceptance.
 
+The [bound denotation checkpoint](../benchmarks/checkpoints/2026-09-17-verus-bound-denotation.json)
+at `3030b12` connects eight real-number lemmas to the checked production bound
+contracts. Valid input certificates remain sound through construction,
+negation, inversion and square root. The square-root binade proof covers
+negative odd exponents; separated approximations certify sign and nonzero
+status, and magnitude/sign queries return sound certificates. These results
+remain conditional on valid incoming metadata and approximation error bounds.
+
+The official run passes 460 units, 65 production contracts and 95 model
+theorems. All 125 repository input hashes match the proof commit; dependency
+source and artifact identities are checked. Thirteen production bound mutations,
+six denotation mutations and ten acceptance/dependency tests pass their guards.
+The unchanged kernel/model sources retain prior 85-mutation and assumption
+bypass evidence; no fresh combined 104-mutation run is claimed. Runtime sources,
+tests and Cargo inputs are unchanged from `1514ad4`, preserving its ordinary
+runtime erasure comparison with `cdc6d3a`. Expression-graph inputs, rational
+import, inexact planning bounds, cache validity and production callers remain
+open, along with all thirteen whole-implementation obligation groups.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and

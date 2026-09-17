@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "status": "conditional_bound_denotation_proof_not_complete",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "3030b12fee1e9c9e95a19baa34f40382dc3e13e7",
+  "runtime_reference": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "verification": {
+    "units": 460,
+    "executable_contracts": 65,
+    "model_theorems": 95,
+    "source_hashes": 125,
+    "source_hashes_match_commit": true,
+    "no_cheating": true,
+    "entire_proof_target": true,
+    "open_obligation_groups": 13
+  },
+  "new_theorems": [
+    "computable_bounds::constructor_preserves_certificates",
+    "computable_bounds::separated_approximation_yields_a_bound",
+    "computable_bounds::negation_preserves_bound_denotation",
+    "computable_bounds::inverse_preserves_bound_denotation",
+    "computable_bounds::positive_root_binade",
+    "computable_bounds::square_root_preserves_bound_denotation",
+    "computable_bounds::queried_magnitude_is_a_certificate",
+    "computable_bounds::queried_sign_is_a_certificate"
+  ],
+  "negative_guards": {
+    "production_bound_mutations_rejected": 13,
+    "bound_denotation_mutations_rejected": 6,
+    "acceptance_and_dependency_identity_tests": 10,
+    "unchanged_kernel_model_mutations": 85,
+    "reused_evidence": "benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json",
+    "note": "Nineteen bound guards were run on the final source. The unchanged kernel/model inputs retain their prior 85-mutation and assumption-bypass evidence; no fresh combined 104-mutation run is claimed."
+  },
+  "dependency_import": {
+    "packages": 8,
+    "source_files": 169,
+    "all_registry_pins_match_production": true,
+    "source_and_artifact_identity_checked": true,
+    "scope": "Transparent Sign datatype only. No external arithmetic or equality implementation is assumed or verified by this import."
+  },
+  "ordinary_runtime": {
+    "source_tests_and_cargo_inputs_identical_to": "1514ad44e84ba8c50bc7ec12a9535a7e12edd100",
+    "reused_erasure_evidence": "benchmarks/checkpoints/2026-09-17-verus-bound-refinement.json",
+    "note": "Only proof models, the proof entry module, scope documentation and rejection guards changed. Runtime sources are unchanged; the existing erasure comparison remains applicable."
+  },
+  "failed_experiments": [
+    "Initial draft visibility exceeded the production private methods; refinement lemmas retain module-local visibility.",
+    "The square-root proof needed explicit real-division and multiplication facts. Failed proof attempts are retained.",
+    "The first expanded mutation driver correctly rejected the weakened separation premise but did not recognize the precondition diagnostic. The failed invocation and corrected passing suite are retained."
+  ],
+  "limits": [
+    "Denotation lemmas are conditional on valid incoming sign, nonzero and exact-magnitude certificates. They use call_ensures for the actual checked production functions.",
+    "Inexact planning magnitudes have no claimed error bound. The expression graph, rational/BigInt import, cache validity and production callers remain open.",
+    "All thirteen whole-implementation obligation groups and baseline qualification remain incomplete. Existing timing, resource and pinned-consumer failures are not dismissed."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-bound-denotation.tar.gz",
+    "bytes": 662988,
+    "files": 309,
+    "sha256": "513d0293e03cff381086c8df050624708a25559325acd075d7ca6e5dd19439cb"
+  }
+}
