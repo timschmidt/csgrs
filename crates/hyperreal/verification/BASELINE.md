@@ -661,3 +661,18 @@ fall from 29,847,905 to 28,039,395; Memcheck reports zero errors. These are
 resource measurements, not native speed or acceptance evidence. The earlier
 experiments, complete patches and unresolved costs are retained. No experiment
 has been adopted; native comparisons remain pending.
+
+The [strict-error follow-up](../benchmarks/checkpoints/2026-09-17-verus-strict-product.json)
+binds 610 passing verification units, 94 production contracts and 118 model
+theorems to `0d056af`. It strengthens the product result to a strict one-unit
+bound under an open sampled-magnitude bound, and proves that a two-integer
+approximation gap certifies strict order when both input errors are strict.
+The inclusive error model alone cannot justify that ordering rule. All ten
+targeted product/order mutations and the assumption-bypass control are
+rejected; ten acceptance/dependency tests pass. Production callers still need
+to establish the premises. No runtime byte changed and all thirteen obligation
+groups remain open. The
+[detailed experimental peak profiles](../benchmarks/checkpoints/2026-09-17-verus-anchor-peak-diagnostics.json)
+retain allocation trees at each variant's whole-process peak; different peak
+locations and compiler inlining prevent attributing their differences to one
+source change. The measured 72-byte increase remains unresolved.
