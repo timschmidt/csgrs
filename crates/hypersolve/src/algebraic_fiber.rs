@@ -2074,9 +2074,84 @@ fn local_image_polynomial_multiply_reduced(
     }
 }
 
-/// Division-free Berkowitz determinant over the commutative polynomial ring
-/// `Q(alpha)[z]`. The returned characteristic-polynomial constant is adjusted
-/// by `(-1)^n` to recover the determinant.
+/// Eliminates a manifest rational unit before expanding a determinant.
+///
+/// Schur reduction needs only this scalar's inverse, even when the source
+/// quotient has zero divisors. Moving row r and column c to the front changes
+/// the determinant by (-1)^(r+c). Every product keeps the same source modulus.
+fn local_polynomial_matrix_scalar_unit_elimination(
+    entries: &[LocalImagePolynomial],
+    dimension: usize,
+    modulus: Option<&[LocalFieldElement]>,
+    field: &mut LocalAlgebraicField,
+) -> Result<Option<LocalImagePolynomial>, LocalFieldError> {
+    let Some((index, pivot)) = entries.iter().enumerate().find_map(|(index, entry)| {
+        let [value] = entry.as_slice() else {
+            return None;
+        };
+        let [constant] = value.numerator.as_slice() else {
+            return None;
+        };
+        (value.denominator.is_none()
+            && constant.exact_rational_ref().is_some()
+            && !constant.definitely_zero())
+        .then_some((index, constant))
+    }) else {
+        return Ok(None);
+    };
+    let pivot_row = index / dimension;
+    let pivot_column = index % dimension;
+    let inverse = LocalFieldElement::from_polynomial(
+        vec![(Real::one() / pivot).map_err(|_| LocalFieldError::Undecided)?],
+        field,
+    )?;
+    let mut minor = Vec::new();
+    minor
+        .try_reserve_exact((dimension - 1) * (dimension - 1))
+        .map_err(|_| LocalFieldError::Undecided)?;
+    for row in 0..dimension {
+        if row == pivot_row {
+            continue;
+        }
+        let multiplier = local_image_polynomial_scale(
+            &entries[row * dimension + pivot_column],
+            &inverse,
+            field,
+        )?;
+        for column in 0..dimension {
+            if column == pivot_column {
+                continue;
+            }
+            let removed = local_image_polynomial_multiply_reduced(
+                &multiplier,
+                &entries[pivot_row * dimension + column],
+                modulus,
+                field,
+            )?;
+            minor.push(local_image_polynomial_add(
+                &entries[row * dimension + column],
+                &removed,
+                true,
+                field,
+            )?);
+        }
+    }
+    let determinant = local_polynomial_matrix_determinant(&minor, dimension - 1, modulus, field)?;
+    let scale = if (pivot_row + pivot_column) % 2 == 0 {
+        pivot.clone()
+    } else {
+        -pivot
+    };
+    Ok(Some(local_image_polynomial_scale(
+        &determinant,
+        &LocalFieldElement::from_polynomial(vec![scale], field)?,
+        field,
+    )?))
+}
+
+/// Determinant over a commutative polynomial or source quotient ring.
+/// Manifest rational units reduce source-quotient matrices first. Otherwise,
+/// division-free Berkowitz arithmetic needs no inverse in the quotient ring.
 fn local_polynomial_matrix_determinant(
     entries: &[LocalImagePolynomial],
     dimension: usize,
@@ -2089,6 +2164,13 @@ fn local_polynomial_matrix_determinant(
             .ok_or(LocalFieldError::Undecided)?
     {
         return Err(LocalFieldError::Undecided);
+    }
+    if dimension > 2
+        && modulus.is_some()
+        && let Ok(Some(determinant)) =
+            local_polynomial_matrix_scalar_unit_elimination(entries, dimension, modulus, field)
+    {
+        return Ok(determinant);
     }
     let mut determinant = match dimension {
         0 => local_image_polynomial_one(field)?,
