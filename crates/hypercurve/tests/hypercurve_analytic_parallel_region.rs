@@ -3,7 +3,7 @@ use hypercurve::{
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierRetainedCurveEnvelope2,
     BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
     CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext,
-    CurveParameterRange2, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule,
+    CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
     FiniteProjectionOptions, LineSeg2, LineSide, OffsetCornerStyle2, Point2, QuadraticBezier2,
     Real, RegionPointLocation,
 };
@@ -66,6 +66,21 @@ fn assert_real_equal(left: &Real, right: &Real) {
     assert_eq!(left.partial_cmp(right), Some(std::cmp::Ordering::Equal));
 }
 
+fn loop_vertex_at(region: &CurveRegion2, point: Point2, policy: &CurveContext) -> usize {
+    let Classification::Decided(paths) = region.boundary_paths(policy).unwrap().value else {
+        panic!("normalized exact boundary paths");
+    };
+    assert_eq!(paths.len(), 1);
+    let point = point.into();
+    paths[0]
+        .curves()
+        .iter()
+        .position(|curve| {
+            curve.start().coincides_with(&point, policy).value == Classification::Decided(true)
+        })
+        .expect("the authored corner survives normalization")
+}
+
 fn analytic_square(min_x: i64, max_x: i64, policy: &CurveContext) -> CurveRegion2 {
     let midpoint_x = (min_x + max_x) / 2;
     let edges = [
@@ -77,30 +92,27 @@ fn analytic_square(min_x: i64, max_x: i64, policy: &CurveContext) -> CurveRegion
     let fragments = edges
         .into_iter()
         .map(|(start, midpoint, end)| {
-            BezierSplitFragment2::AnalyticParallel(line_parallel_fragment(
+            Curve2::from(line_parallel_fragment(
                 start, midpoint, end, 0, 0, 1, policy,
             ))
         })
         .collect();
-    CurveRegion2::try_new_with_loop_topology(
-        vec![CurveRegionBoundaryLoop2::new(fragments, policy).unwrap()],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[CurvePath2::try_new_with_policy(fragments, policy)
+            .unwrap()
+            .into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
-fn materialized_line(start: Point2, end: Point2, policy: &CurveContext) -> BezierSplitFragment2 {
-    let midpoint = start.lerp(
-        &end,
-        (Real::one() / Real::from(2_u8)).expect("one half is represented"),
-    );
-    BezierSplitFragment2::Materialized {
-        start: exact_parameter(0, policy),
-        end: exact_parameter(1, policy),
-        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, midpoint, end)),
-    }
+fn quadratic_line(start: Point2, end: Point2) -> Curve2 {
+    let midpoint = start.lerp(&end, (Real::one() / Real::from(2_u8)).unwrap());
+    QuadraticBezier2::new(start, midpoint, end).into()
 }
 
 fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
@@ -117,28 +129,30 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     };
     let analytic =
         match BezierParallelFragment2::try_new(parallel, range(1, 0, policy), policy).unwrap() {
-            Classification::Decided(fragment) => BezierSplitFragment2::AnalyticParallel(fragment),
+            Classification::Decided(fragment) => Curve2::from(fragment),
             Classification::Uncertain(reason) => panic!("curved parallel cap: {reason:?}"),
         };
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
     let lower_right = Point2::new(right.x().clone(), Real::from(-2));
-    let boundary = CurveRegionBoundaryLoop2::new(
+    let boundary = CurvePath2::try_new_with_policy(
         vec![
             analytic,
-            materialized_line(left, lower_left.clone(), policy),
-            materialized_line(lower_left, lower_right.clone(), policy),
-            materialized_line(lower_right, right, policy),
+            quadratic_line(left, lower_left.clone()),
+            quadratic_line(lower_left, lower_right.clone()),
+            quadratic_line(lower_right, right),
         ],
         policy,
     )
     .unwrap();
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary.into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
 fn analytic_rational_arc_corner_region(
@@ -151,7 +165,7 @@ fn analytic_rational_arc_corner_region(
         .unwrap();
     let analytic =
         match BezierParallelFragment2::try_new(analytic, range(0, 1, policy), policy).unwrap() {
-            Classification::Decided(fragment) => BezierSplitFragment2::AnalyticParallel(fragment),
+            Classification::Decided(fragment) => Curve2::from(fragment),
             Classification::Uncertain(reason) => panic!("analytic arc fixture: {reason:?}"),
         };
     let arc = if unit_end_weights {
@@ -174,38 +188,37 @@ fn analytic_rational_arc_corner_region(
         )
         .unwrap()
     };
-    let arc = BezierSplitFragment2::Materialized {
-        start: exact_parameter(0, policy),
-        end: exact_parameter(1, policy),
-        curve: BezierSubcurve2::RationalQuadratic(arc),
-    };
+    let arc = Curve2::from(arc);
     let lower_right = point(2, -1);
     let mut fragments = vec![
         analytic,
         arc,
-        materialized_line(point(2, 2), lower_right.clone(), policy),
-        materialized_line(lower_right, point(0, 0), policy),
+        quadratic_line(point(2, 2), lower_right.clone()),
+        quadratic_line(lower_right, point(0, 0)),
     ];
     if reversed {
         fragments = fragments
             .into_iter()
             .rev()
-            .map(|fragment| fragment.reversed().unwrap())
+            .map(|curve| curve.reversed(policy).unwrap().into_value())
             .collect();
     }
-    let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
-    let region = CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![if reversed {
+    let boundary = CurvePath2::try_new_with_policy(fragments, policy).unwrap();
+    let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary.into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[if reversed {
             CurveBoundaryInteriorSide2::Left
         } else {
             CurveBoundaryInteriorSide2::Right
         }],
+        policy,
     )
-    .unwrap();
-    (region, if reversed { 3 } else { 1 })
+    .unwrap()
+    .into_value();
+    let vertex = loop_vertex_at(&region, point(1, 1), policy);
+    (region, vertex)
 }
 
 #[test]
@@ -519,28 +532,30 @@ fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 
     };
     let analytic =
         match BezierParallelFragment2::try_new(parallel, range(1, 0, policy), policy).unwrap() {
-            Classification::Decided(fragment) => BezierSplitFragment2::AnalyticParallel(fragment),
+            Classification::Decided(fragment) => Curve2::from(fragment),
             Classification::Uncertain(reason) => panic!("curved parallel cap: {reason:?}"),
         };
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
     let lower_right = Point2::new(right.x().clone(), Real::from(-2));
-    let boundary = CurveRegionBoundaryLoop2::new(
+    let boundary = CurvePath2::try_new_with_policy(
         vec![
             analytic,
-            materialized_line(left, lower_left.clone(), policy),
-            materialized_line(lower_left, lower_right.clone(), policy),
-            materialized_line(lower_right, right, policy),
+            quadratic_line(left, lower_left.clone()),
+            quadratic_line(lower_left, lower_right.clone()),
+            quadratic_line(lower_right, right),
         ],
         policy,
     )
     .unwrap();
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary.into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
 fn check_policy(policy: CurveContext) {
@@ -580,7 +595,10 @@ fn check_policy(policy: CurveContext) {
     };
     assert_eq!(endpoint_envelope.native_endpoint_count(), 8);
 
-    assert!(region.has_algebraic_fragments());
+    assert_eq!(
+        region.filled_side_is_left(&policy).unwrap().value,
+        Classification::Decided(&[true][..]),
+    );
     let curve_envelope = match BezierRetainedCurveEnvelope2::from_region(&region, &policy) {
         Classification::Decided(envelope) => envelope,
         Classification::Uncertain(reason) => {
@@ -755,23 +773,25 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
         Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
     };
 
-    let boundary = CurveRegionBoundaryLoop2::new(
+    let boundary = CurvePath2::try_new_with_policy(
         vec![
-            BezierSplitFragment2::AnalyticParallel(first),
-            BezierSplitFragment2::AnalyticParallel(second),
-            materialized_line(end, start, policy),
+            Curve2::from(first),
+            Curve2::from(second),
+            quadratic_line(end, start),
         ],
         policy,
     )
     .expect("the shared analytic carrier and cusp parameter certify connectivity");
-    assert_eq!(boundary.len(), 3);
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Right],
+    assert_eq!(boundary.value.curves().len(), 3);
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary.into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Right],
+        policy,
     )
-    .expect("the radical cusp cap has exact authored topology")
+    .expect("the radical cusp cap has exact regularized topology")
+    .into_value()
 }
 
 fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
@@ -806,9 +826,7 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
                     Classification::Uncertain(reason) => panic!("parallel span: {reason:?}"),
                 };
             match BezierParallelFragment2::try_new(parallel.clone(), range, policy).unwrap() {
-                Classification::Decided(fragment) => {
-                    BezierSplitFragment2::AnalyticParallel(fragment)
-                }
+                Classification::Decided(fragment) => Curve2::from(fragment),
                 Classification::Uncertain(reason) => {
                     panic!("analytic parallel span: {reason:?}")
                 }
@@ -823,14 +841,18 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
     };
-    fragments.push(materialized_line(end, start, policy));
-    CurveRegion2::try_new_with_loop_topology(
-        vec![CurveRegionBoundaryLoop2::new(fragments, policy).unwrap()],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    fragments.push(quadratic_line(end, start));
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[CurvePath2::try_new_with_policy(fragments, policy)
+            .unwrap()
+            .into_value()],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
 #[test]
@@ -843,8 +865,9 @@ fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies(
 fn analytic_parallel_chamfers_retain_normalized_cut_points() {
     let setback = (Real::one() / Real::from(4_u8)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        for vertex in [0, 1] {
+        for (corner, analytic_next) in [(point(4, 3), true), (point(-1, 0), false)] {
             let source = rational_endpoint_curved_parallel_cap(&policy);
+            let vertex = loop_vertex_at(&source, corner, &policy);
             let outcome = source
                 .chamfer_loop_vertex_by_setbacks(
                     0,
@@ -927,7 +950,7 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
                 );
             }
 
-            let (previous_setback, next_setback) = if vertex == 0 {
+            let (previous_setback, next_setback) = if analytic_next {
                 (setback.clone(), Real::zero())
             } else {
                 (Real::zero(), setback.clone())
@@ -945,7 +968,7 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
             assert_eq!(one_sided.certainty, CurveCertainty::Certified);
             assert!(matches!(one_sided.value, CurveCornerSolutions2::Unique(_)));
 
-            let (previous_setback, next_setback) = if vertex == 0 {
+            let (previous_setback, next_setback) = if analytic_next {
                 (setback.clone(), Real::from(100_u8))
             } else {
                 (Real::from(100_u8), setback.clone())
@@ -974,8 +997,9 @@ fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
     let first_setback = (Real::one() / Real::from(4_u8)).unwrap();
     let second_setback = (Real::one() / Real::from(16_u8)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        for first_vertex in [0, 1] {
+        for corner in [point(4, 3), point(-1, 0)] {
             let source = rational_endpoint_curved_parallel_cap(&policy);
+            let first_vertex = loop_vertex_at(&source, corner, &policy);
             let first = source
                 .chamfer_loop_vertex_by_setbacks(
                     0,
@@ -994,10 +1018,28 @@ fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
             // The first cut is an algebraic parameter retained jointly by the
             // analytic fragment and its chord. Chamfer that new junction in
             // both carrier orientations without materializing its point.
+            let Classification::Decided(paths) = first.boundary_paths(&policy).unwrap().value
+            else {
+                panic!("exact edited boundary");
+            };
+            let curves = paths[0].curves();
+            let generated_chord = |curve: &Curve2| {
+                curve.family() == hypercurve::CurveFamily2::Line && curve.geometry().is_none()
+            };
+            let second_vertex = (0..curves.len())
+                .find(|&index| {
+                    let previous = &curves[(index + curves.len() - 1) % curves.len()];
+                    let next = &curves[index];
+                    (previous.family() == hypercurve::CurveFamily2::AnalyticParallel
+                        && generated_chord(next))
+                        || (generated_chord(previous)
+                            && next.family() == hypercurve::CurveFamily2::AnalyticParallel)
+                })
+                .expect("the selected analytic/chord junction is retained");
             let second = first
                 .chamfer_loop_vertex_by_setbacks(
                     0,
-                    1,
+                    second_vertex,
                     second_setback.clone(),
                     second_setback.clone(),
                     CurveCornerMode2::TrimOnly,
@@ -1136,12 +1178,18 @@ fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
 }
 
 #[test]
-fn cusp_split_analytic_self_crossing_regularizes_under_both_policies() {
+fn cusp_split_analytic_self_crossing_normalizes_at_admission() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let raw = self_crossing_cusp_split_parallel_region(&policy);
-        let regularized = raw.regularized_region(&policy).unwrap().into_value();
-        assert!(!regularized.is_empty());
-        assert_eq!(regularized.boundary_loops().len(), 3);
+        let region = self_crossing_cusp_split_parallel_region(&policy);
+        assert_eq!(region.boundary_loops().len(), 3);
+        assert_eq!(
+            region.filled_side_is_left(&policy).unwrap().value,
+            Classification::Decided(&[true; 3][..])
+        );
+        assert_eq!(
+            region.regularized_region(&policy).unwrap().into_value(),
+            region
+        );
     }
 }
 
