@@ -100,8 +100,12 @@ fuzz_target!(|input: Input| {
             let reconstructed = (0..degree)
                 .fold(Real::one(), |product, _| product * root.clone())
                 - positive;
+            // The radicand has numerator <= 17 and denominator <= 256.
+            // At degree n <= 9 the shared-generator separation bound is at
+            // most 8*n*(n+1) + n-1 <= 728 bits, plus two certification bits.
+            // 512 bits can legitimately remain unknown (e.g. root_8(1/92)).
             assert_eq!(
-                reconstructed.certified_sign_until(-512).sign(),
+                reconstructed.certified_sign_until(-1_024).sign(),
                 Some(RealSign::Zero)
             );
         }

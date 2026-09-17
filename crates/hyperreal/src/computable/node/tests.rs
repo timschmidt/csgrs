@@ -1088,6 +1088,40 @@ mod tests {
     }
 
     #[test]
+    fn fractional_root_reconstruction_fuzz_precision_and_nonzero_controls() {
+        for degree in 3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
+            for (numerator, denominator) in [(1, 92), (1, 129), (1, 256), (17, 255), (17, 256)] {
+                let identity = || {
+                    let radicand = crate::Real::new(Rational::fraction(numerator, denominator).unwrap());
+                    let root = radicand.clone().root_n(degree).unwrap();
+                    ((0..degree).fold(crate::Real::one(), |product, _| product * root.clone())
+                        - radicand)
+                        .fold()
+                };
+                let zero = identity();
+                let bound = zero.algebraic_separation_bound_bits().unwrap();
+                // A shared degree-n root of a/b, a <= 17 and b <= 256,
+                // has denominator/conjugate log bounds <= 8. Multiplying n
+                // copies and subtracting a/b gives this norm-separation bound.
+                let worst_bound = 8 * u64::from(degree) * u64::from(degree + 1)
+                    + u64::from(degree - 1);
+                assert!(bound <= worst_bound && bound + 2 <= 1_024,
+                    "{numerator}/{denominator}, degree={degree}, bound={bound}");
+                assert_eq!(zero.sign_until(-1_024), Some(RealSign::Zero));
+                for (sign, expected) in [(-1, RealSign::Negative), (1, RealSign::Positive)] {
+                    let delta = Rational::from_bigint_fraction(
+                        BigInt::from(sign), BigUint::one() << 600_usize,
+                    ).unwrap();
+                    let nonzero = identity().add(Computable::rational(delta));
+                    assert_ne!(nonzero.sign_until(-64), Some(RealSign::Zero));
+                    assert_eq!(nonzero.sign_until(-1_024), Some(expected),
+                        "{numerator}/{denominator}, degree={degree}, perturbation={sign}");
+                }
+            }
+        }
+    }
+
+    #[test]
     fn algebraic_generator_dependencies_and_perturbations_are_exact() {
         let dyadic = |power: usize| {
             Rational::from_bigint_fraction(
