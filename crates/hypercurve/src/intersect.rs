@@ -587,6 +587,11 @@ impl LineSeg2 {
         ) {
             return Ok(LineLineIntersection::None);
         }
+        if !policy.is_edge_preview()
+            && let Some(contact) = opposed_shared_endpoint_intersection(self, other)
+        {
+            return Ok(contact);
+        }
         if let Some(relation) = self.retained_offset_relation(other, policy) {
             return match relation {
                 RetainedLineRelation2::Coincident => intersect_collinear(self, other, policy),
@@ -1474,6 +1479,42 @@ fn non_parallel_endpoint_intersection(
         }
     }
     Ok(None)
+}
+
+fn opposed_shared_endpoint_intersection(
+    a: &LineSeg2,
+    b: &LineSeg2,
+) -> Option<LineLineIntersection> {
+    for (a_point, a_other, a_param) in [
+        (a.start(), a.end(), Real::zero()),
+        (a.end(), a.start(), Real::one()),
+    ] {
+        for (b_point, b_other, b_param) in [
+            (b.start(), b.end(), Real::zero()),
+            (b.end(), b.start(), Real::one()),
+        ] {
+            if a_point != b_point {
+                continue;
+            }
+            let (ax, ay) = a_other.delta_from(a_point);
+            let (bx, by) = b_other.delta_from(b_point);
+            // Distinct supports have only this common point. Coincident
+            // supports also have only this point when their outgoing rays
+            // oppose each other. A strictly negative dot product proves both
+            // cases without deciding an expanded zero cross product.
+            if compare_reals(&(ax * bx + ay * by), &Real::zero(), &CurveContext::STRICT)
+                == Some(Ordering::Less)
+            {
+                return Some(LineLineIntersection::Point {
+                    point: a_point.clone(),
+                    a_param,
+                    b_param,
+                    kind: IntersectionKind::Endpoint,
+                });
+            }
+        }
+    }
+    None
 }
 
 fn intersect_parallel(
@@ -2450,6 +2491,65 @@ mod tests {
         .unwrap()
             + Real::one();
         contact - domain + Real::from(2).powi_i64(-3000).unwrap()
+    }
+
+    #[test]
+    fn shared_line_endpoints_do_not_require_a_zero_determinant() {
+        let theta = (Real::pi() / Real::from(24)).unwrap();
+        let run = Real::from(2) * (theta.clone() - theta.clone().sin());
+        let rise = Real::from(2) * (Real::one() - theta.cos());
+        let scale = (Real::from(5) / Real::from(4)).unwrap();
+        let center = Point2::new((Real::pi() / Real::from(4)).unwrap(), Real::zero());
+        let first = LineSeg2::try_new(
+            center.translated(&scale * &run, -(&scale * &rise)),
+            center.clone(),
+        )
+        .unwrap();
+        let second = LineSeg2::try_new(center.clone(), center.translated(-run, rise)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reverse_first in [false, true] {
+                for reverse_second in [false, true] {
+                    let a = if reverse_first {
+                        first.reversed()
+                    } else {
+                        first.clone()
+                    };
+                    let b = if reverse_second {
+                        second.reversed()
+                    } else {
+                        second.clone()
+                    };
+                    let a_parameter = if reverse_first {
+                        Real::zero()
+                    } else {
+                        Real::one()
+                    };
+                    let b_parameter = if reverse_second {
+                        Real::one()
+                    } else {
+                        Real::zero()
+                    };
+                    for (left, right, expected_a, expected_b) in [
+                        (&a, &b, &a_parameter, &b_parameter),
+                        (&b, &a, &b_parameter, &a_parameter),
+                    ] {
+                        let LineLineIntersection::Point {
+                            point,
+                            a_param,
+                            b_param,
+                            kind,
+                        } = left.intersect_line(right, &policy).unwrap()
+                        else {
+                            panic!("opposed finite rays intersect only at their shared endpoint");
+                        };
+                        assert_eq!(point, center);
+                        assert_eq!(&a_param, expected_a);
+                        assert_eq!(&b_param, expected_b);
+                        assert_eq!(kind, IntersectionKind::Endpoint);
+                    }
+                }
+            }
+        }
     }
 
     #[test]
