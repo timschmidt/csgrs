@@ -1773,13 +1773,17 @@ pub fn bezier_region_with_context(
     let decisions = GeometryDecisions::new(context);
     let path =
         bezier_path(control, display_segments).ok_or(ValidationError::InvalidArguments)?;
-    let start = hyperlimit::Point2::new(path.start().x().clone(), path.start().y().clone());
-    let end = hyperlimit::Point2::new(path.end().x().clone(), path.end().y().clone());
-    if !decisions.decide(
-        hyperlimit::point2_equal(&start, &end, decisions.predicate_policy()),
-        "Bezier boundary closure",
-    )? {
-        return Err(ValidationError::InvalidArguments);
+    match decisions.consume_curve(
+        path.start()
+            .coincides_with(&path.end(), decisions.curve_policy()),
+    ) {
+        Classification::Decided(true) => {},
+        Classification::Decided(false) => return Err(ValidationError::InvalidArguments),
+        Classification::Uncertain(reason) => {
+            return Err(ValidationError::Geometry(format!(
+                "Bezier boundary closure is undecided: {reason:?}"
+            )));
+        },
     }
     let region = decisions.consume_curve(
         CurveRegion2::try_from_boundary_paths(
@@ -3580,8 +3584,8 @@ mod tests {
         let root = -(Real::from(5_u8) / Real::from(4_u8)).expect("four is nonzero");
         let rack = cycloidal_rack(Real::one(), teeth, Real::zero(), 8);
         let paths = match rack
-            .project_to_finite_curve_paths(&CurveContext::STRICT)
-            .expect("cycloidal rack edge projection")
+            .boundary_paths(&CurveContext::STRICT)
+            .expect("cycloidal rack exact boundary")
             .into_value()
         {
             Classification::Decided(paths) => paths,
@@ -3593,9 +3597,24 @@ mod tests {
 
         let curves = paths[0].curves();
         let vertices_at = |level: &Real| {
+            let witness = hypercurve::CurvePoint2::from(Point2::new(
+                Real::zero(),
+                level.clone(),
+            ));
             curves
                 .iter()
-                .filter(|curve| curve.start().y() == level)
+                .filter(|curve| {
+                    curve
+                        .start()
+                        .compare_coordinate(
+                            &witness,
+                            hypercurve::Axis2::Y,
+                            &CurveContext::STRICT,
+                        )
+                        .expect("finite rack coordinate order")
+                        .into_value()
+                        == Classification::Decided(Ordering::Equal)
+                })
                 .count()
         };
         assert_eq!(
@@ -3673,8 +3692,8 @@ mod tests {
                 "{name} must not acquire holes from a self-intersecting boundary"
             );
             let paths = match region
-                .project_to_finite_curve_paths(&CurveContext::STRICT)
-                .unwrap_or_else(|error| panic!("{name} edge projection failed: {error}"))
+                .boundary_paths(&CurveContext::STRICT)
+                .unwrap_or_else(|error| panic!("{name} exact boundary failed: {error}"))
                 .into_value()
             {
                 Classification::Decided(paths) => paths,
@@ -3723,6 +3742,10 @@ mod tests {
         assert!(bspline_path(&controls, 2, 8).is_some());
         assert!(bezier_path(&controls, 0).is_none());
         assert!(bspline_path(&controls, 2, 0).is_none());
+        assert!(matches!(
+            bezier_region_with_context(&controls, 16, &GeometryContext::STRICT),
+            Err(ValidationError::InvalidArguments)
+        ));
 
         let closed_controls = [
             [zero.clone(), zero.clone()],
