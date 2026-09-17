@@ -145,10 +145,16 @@ MUTATIONS = [
      "-3real * left_bound <= left <= 3real * left_bound,"),
     ("real_approximation_model.rs", "ensures -unit / 2real <= (a * b) as real * (left_unit * right_unit) - left * right",
      "ensures -unit / 4real <= (a * b) as real * (left_unit * right_unit) - left * right"),
-    ("real_approximation_model.rs", "scaled_integer(a * b, precision - left_magnitude - right_magnitude - 6),",
-     "scaled_integer(a * b, precision - left_magnitude - right_magnitude - 5),"),
+    ("real_approximation_model.rs", "ensures approximates(left * right,\n        scaled_integer(a * b, precision - left_magnitude - right_magnitude - 6),",
+     "ensures approximates(left * right,\n        scaled_integer(a * b, precision - left_magnitude - right_magnitude - 5),"),
     ("real_approximation_model.rs", "requires approximates(right, 0, binary_unit(precision - left_magnitude - 3)),",
      "requires approximates(right, 8, binary_unit(precision - left_magnitude - 3)),"),
+    ("real_approximation_model.rs", "requires strictly_approximates(left, a, unit), strictly_approximates(right, b, unit),",
+     "requires approximates(left, a, unit), approximates(right, b, unit),"),
+    ("real_approximation_model.rs", "ensures a >= b + 2 ==> left > right,",
+     "ensures a >= b + 1 ==> left > right,"),
+    ("real_approximation_model.rs", "(-2real * right_bound < b as real * right_unit < 2real * right_bound)\n            ==> -unit / 2real <",
+     "(-2real * right_bound <= b as real * right_unit <= 2real * right_bound)\n            ==> -unit / 2real <"),
 ]
 
 
