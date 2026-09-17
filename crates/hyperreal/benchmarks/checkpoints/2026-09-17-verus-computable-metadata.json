@@ -1,0 +1,1467 @@
+{
+  "schema": 1,
+  "status": "metadata_exactness_repair_qualification_in_progress",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "verification": {
+    "units": 431,
+    "executable_contracts": 56,
+    "model_theorems": 87,
+    "source_hashes": 117,
+    "source_hashes_match_commit": true,
+    "entire_proof_target": true,
+    "no_cheating": true,
+    "open_obligation_groups": 13
+  },
+  "negative_guards": {
+    "status": "unchanged kernels and model inputs; no fresh mutation replay",
+    "evidence": "benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json"
+  },
+  "counterexamples": {
+    "public_original": [
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 2.5374789237976074
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "zero",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "zero"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.0024645328521728516,
+        "binary_sha256": "26155f948d00303e43e7ce2dcf74e9c1ab2a98cbba48581d254202bff41bbde1",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "one",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "one"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.002383708953857422,
+        "binary_sha256": "26155f948d00303e43e7ce2dcf74e9c1ab2a98cbba48581d254202bff41bbde1",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "integer-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "integer-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.5290422439575195,
+        "binary_sha256": "26155f948d00303e43e7ce2dcf74e9c1ab2a98cbba48581d254202bff41bbde1",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "integer-above",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "integer-above"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.5433659553527832,
+        "binary_sha256": "26155f948d00303e43e7ce2dcf74e9c1ab2a98cbba48581d254202bff41bbde1",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "ratio-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "ratio-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.2986917495727539,
+        "binary_sha256": "26155f948d00303e43e7ce2dcf74e9c1ab2a98cbba48581d254202bff41bbde1",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.2939887046813965,
+        "binary_sha256": "26155f948d00303e43e7ce2dcf74e9c1ab2a98cbba48581d254202bff41bbde1",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.2905006408691406,
+        "binary_sha256": "26155f948d00303e43e7ce2dcf74e9c1ab2a98cbba48581d254202bff41bbde1",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 8.641917705535889
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "zero",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "zero"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.0022766590118408203,
+        "binary_sha256": "3c041d24b31a97f77683b052852948d4c3c9b778caa3436e93b93d5de174a8d0",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "one",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "one"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.0021376609802246094,
+        "binary_sha256": "3c041d24b31a97f77683b052852948d4c3c9b778caa3436e93b93d5de174a8d0",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "integer-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "integer-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.47364068031311035,
+        "binary_sha256": "3c041d24b31a97f77683b052852948d4c3c9b778caa3436e93b93d5de174a8d0",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "integer-above",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "integer-above"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.45831823348999023,
+        "binary_sha256": "3c041d24b31a97f77683b052852948d4c3c9b778caa3436e93b93d5de174a8d0",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "ratio-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "ratio-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.17156004905700684,
+        "binary_sha256": "3c041d24b31a97f77683b052852948d4c3c9b778caa3436e93b93d5de174a8d0",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.13769936561584473,
+        "binary_sha256": "3c041d24b31a97f77683b052852948d4c3c9b778caa3436e93b93d5de174a8d0",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.14127635955810547,
+        "binary_sha256": "3c041d24b31a97f77683b052852948d4c3c9b778caa3436e93b93d5de174a8d0",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 2.510305881500244
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "zero",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "zero"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.0022797584533691406,
+        "binary_sha256": "1ef0837f84c6534472ea6c36539fa0e9865f489551560a784ec5f25a54489d9f",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "one",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "one"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.0020723342895507812,
+        "binary_sha256": "1ef0837f84c6534472ea6c36539fa0e9865f489551560a784ec5f25a54489d9f",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "integer-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "integer-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.5394787788391113,
+        "binary_sha256": "1ef0837f84c6534472ea6c36539fa0e9865f489551560a784ec5f25a54489d9f",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "integer-above",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "integer-above"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.5257692337036133,
+        "binary_sha256": "1ef0837f84c6534472ea6c36539fa0e9865f489551560a784ec5f25a54489d9f",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "ratio-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "ratio-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 1.0170083045959473,
+        "binary_sha256": "1ef0837f84c6534472ea6c36539fa0e9865f489551560a784ec5f25a54489d9f",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.8432407379150391,
+        "binary_sha256": "1ef0837f84c6534472ea6c36539fa0e9865f489551560a784ec5f25a54489d9f",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-boundary-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.8435690402984619,
+        "binary_sha256": "1ef0837f84c6534472ea6c36539fa0e9865f489551560a784ec5f25a54489d9f",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 8.988915920257568
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "zero",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "zero"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.002274036407470703,
+        "binary_sha256": "2d2ce3c2a96eb673e53ba1c5f56e227f0f90828a16eab7a22d4037ddcad60b50",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "one",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "one"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.0021986961364746094,
+        "binary_sha256": "2d2ce3c2a96eb673e53ba1c5f56e227f0f90828a16eab7a22d4037ddcad60b50",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "integer-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "integer-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.473499059677124,
+        "binary_sha256": "2d2ce3c2a96eb673e53ba1c5f56e227f0f90828a16eab7a22d4037ddcad60b50",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "integer-above",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "integer-above"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 101,
+        "seconds": 0.45474720001220703,
+        "binary_sha256": "2d2ce3c2a96eb673e53ba1c5f56e227f0f90828a16eab7a22d4037ddcad60b50",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "ratio-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "ratio-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.18837308883666992,
+        "binary_sha256": "2d2ce3c2a96eb673e53ba1c5f56e227f0f90828a16eab7a22d4037ddcad60b50",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.17160987854003906,
+        "binary_sha256": "2d2ce3c2a96eb673e53ba1c5f56e227f0f90828a16eab7a22d4037ddcad60b50",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-boundary-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.16480731964111328,
+        "binary_sha256": "2d2ce3c2a96eb673e53ba1c5f56e227f0f90828a16eab7a22d4037ddcad60b50",
+        "native_timing": false
+      }
+    ],
+    "private_bound_constructor": [
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "180s",
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "metadata_bound_invariant_probe",
+          "--",
+          "--nocapture"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+        "exit_code": 101,
+        "seconds": 5.607814311981201
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "180s",
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "--release",
+          "metadata_bound_invariant_probe",
+          "--",
+          "--nocapture"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+        "exit_code": 101,
+        "seconds": 55.70750069618225
+      },
+      {
+        "label": "previous_candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "180s",
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "metadata_bound_invariant_probe",
+          "--",
+          "--nocapture"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+        "exit_code": 101,
+        "seconds": 6.4011499881744385
+      },
+      {
+        "label": "previous_candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "180s",
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "--release",
+          "metadata_bound_invariant_probe",
+          "--",
+          "--nocapture"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+        "exit_code": 101,
+        "seconds": 27.53648543357849
+      },
+      {
+        "label": "patched_candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "180s",
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "metadata_bound_invariant_probe",
+          "--",
+          "--nocapture"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+        "exit_code": 0,
+        "seconds": 6.587788105010986
+      },
+      {
+        "label": "patched_candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "180s",
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "--release",
+          "metadata_bound_invariant_probe",
+          "--",
+          "--nocapture"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/fuzz-source",
+        "exit_code": 0,
+        "seconds": 22.823690176010132
+      }
+    ],
+    "public_product_zero_status_control": [
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 2.589259386062622
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-product-boundary-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.37976646423339844,
+        "binary_sha256": "56afe1d74966084caeaf47bf4a331209dddcf2ee52a1df4e3083b1b5ccd36315",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-product-boundary-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.3663311004638672,
+        "binary_sha256": "56afe1d74966084caeaf47bf4a331209dddcf2ee52a1df4e3083b1b5ccd36315",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 8.999011039733887
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-product-boundary-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.16968989372253418,
+        "binary_sha256": "00b2b73ce94a29ef949c18c1b1b42e9f1abc8ad9c44da23839ac7acaafe27dd7",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-product-boundary-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.16171693801879883,
+        "binary_sha256": "00b2b73ce94a29ef949c18c1b1b42e9f1abc8ad9c44da23839ac7acaafe27dd7",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 2.567279100418091
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-product-boundary-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.9451210498809814,
+        "binary_sha256": "d33e73796d5accf5b913ba894d69d3e4ee2e3e6123a3c694e8e7a95ac11ee3e0",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-product-boundary-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.9331629276275635,
+        "binary_sha256": "d33e73796d5accf5b913ba894d69d3e4ee2e3e6123a3c694e8e7a95ac11ee3e0",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 8.898082733154297
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-product-boundary-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.18416619300842285,
+        "binary_sha256": "968e01c980a2a6dc0d408c812067ccaa3091f461e2c5a915ff2ccd7f694b6cfa",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-product-boundary-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-product-boundary-probe",
+        "exit_code": 0,
+        "seconds": 0.18267154693603516,
+        "binary_sha256": "968e01c980a2a6dc0d408c812067ccaa3091f461e2c5a915ff2ccd7f694b6cfa",
+        "native_timing": false
+      }
+    ],
+    "public_repaired": [
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 2.5572757720947266
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "zero",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-repair-probe",
+          "zero"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.0023603439331054688,
+        "binary_sha256": "f90c8b96246df7f26616d0825ab62c122be3f9945df60e21e53438df3568f198",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "one",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-repair-probe",
+          "one"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.0022318363189697266,
+        "binary_sha256": "f90c8b96246df7f26616d0825ab62c122be3f9945df60e21e53438df3568f198",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "integer-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-repair-probe",
+          "integer-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.559410572052002,
+        "binary_sha256": "f90c8b96246df7f26616d0825ab62c122be3f9945df60e21e53438df3568f198",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "integer-above",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-repair-probe",
+          "integer-above"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.5482883453369141,
+        "binary_sha256": "f90c8b96246df7f26616d0825ab62c122be3f9945df60e21e53438df3568f198",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "ratio-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-repair-probe",
+          "ratio-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 1.0552668571472168,
+        "binary_sha256": "f90c8b96246df7f26616d0825ab62c122be3f9945df60e21e53438df3568f198",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-repair-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.8247578144073486,
+        "binary_sha256": "f90c8b96246df7f26616d0825ab62c122be3f9945df60e21e53438df3568f198",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "debug",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-computable-metadata-repair-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.8355147838592529,
+        "binary_sha256": "f90c8b96246df7f26616d0825ab62c122be3f9945df60e21e53438df3568f198",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 8.892752647399902
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "zero",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-repair-probe",
+          "zero"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.002227306365966797,
+        "binary_sha256": "dfcf0ba1869b4592101fc2ef5cbf8d09c38bb7268bbad0c5882e84baccff3e6c",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "one",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-repair-probe",
+          "one"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.002100706100463867,
+        "binary_sha256": "dfcf0ba1869b4592101fc2ef5cbf8d09c38bb7268bbad0c5882e84baccff3e6c",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "integer-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-repair-probe",
+          "integer-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.46449828147888184,
+        "binary_sha256": "dfcf0ba1869b4592101fc2ef5cbf8d09c38bb7268bbad0c5882e84baccff3e6c",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "integer-above",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-repair-probe",
+          "integer-above"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.45403242111206055,
+        "binary_sha256": "dfcf0ba1869b4592101fc2ef5cbf8d09c38bb7268bbad0c5882e84baccff3e6c",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "ratio-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-repair-probe",
+          "ratio-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.17833566665649414,
+        "binary_sha256": "dfcf0ba1869b4592101fc2ef5cbf8d09c38bb7268bbad0c5882e84baccff3e6c",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-repair-probe",
+          "ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.16729354858398438,
+        "binary_sha256": "dfcf0ba1869b4592101fc2ef5cbf8d09c38bb7268bbad0c5882e84baccff3e6c",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+        "profile": "release",
+        "case": "negative-ratio-below",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-computable-metadata-repair-probe",
+          "negative-ratio-below"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/computable-metadata-repair-probe",
+        "exit_code": 0,
+        "seconds": 0.18210935592651367,
+        "binary_sha256": "dfcf0ba1869b4592101fc2ef5cbf8d09c38bb7268bbad0c5882e84baccff3e6c",
+        "native_timing": false
+      }
+    ],
+    "findings": [
+      "Both the fixed baseline and previous runtime panic in debug for integer 2^i32::MAX metadata. Both falsely certify exact i32::MIN for 2^(i32::MAX+1).",
+      "For the actual private rational-bound constructor with 1/2^(i32::MAX+2), the baseline reports a wrong exact positive exponent, and the previous runtime returns Zero. The repair preserves nonzero sign with an unavailable exponent.",
+      "Public direct rational and rational-times-pi zero-status queries did not reproduce the private false-zero bug. The product control checks zero status only, not approximation or inexact magnitude accuracy.",
+      "All seven public cases pass in debug and release on the exact committed repair."
+    ]
+  },
+  "root_correctness": {
+    "default-all-targets": {
+      "passed_test_executions_including_children": 798,
+      "benchmark_fixture_replays": 1271
+    },
+    "all-features-all-targets": {
+      "passed_test_executions_including_children": 901,
+      "benchmark_fixture_replays": 1447
+    }
+  },
+  "root_validation": [
+    {
+      "label": "candidate",
+      "step": "default-all-targets",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-targets",
+        "--no-fail-fast"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 189.7886621952057
+    },
+    {
+      "label": "candidate",
+      "step": "all-features-all-targets",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--all-targets",
+        "--no-fail-fast"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 192.94707584381104
+    },
+    {
+      "label": "candidate",
+      "step": "representations",
+      "command": [
+        "bash",
+        "scripts/representation_coverage.sh"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 10.546871185302734
+    },
+    {
+      "label": "candidate",
+      "step": "clippy-default",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 5.402400732040405
+    },
+    {
+      "label": "candidate",
+      "step": "clippy-all",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 6.740283489227295
+    },
+    {
+      "label": "candidate",
+      "step": "doc-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--doc"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 0.6023173332214355
+    },
+    {
+      "label": "candidate",
+      "step": "doc-all",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 0.6886248588562012
+    }
+  ],
+  "focused_validation": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "magnitude_boundary_tests"
+      ],
+      "exit_code": 0,
+      "seconds": 4.7727227210998535
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "--lib",
+        "magnitude_boundary_tests"
+      ],
+      "exit_code": 0,
+      "seconds": 14.036284923553467
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 6.288620233535767
+    }
+  ],
+  "preliminary_comment_only_differences": [
+    {
+      "folder": "metadata-invariant-probe",
+      "source": "src/computable/node/approximation_queries.rs",
+      "original_sha256": "b01c8ce6fb555907ae38640ee02034295c4a21383131fde056d3636bad0aeb7c",
+      "committed_sha256": "810119607cd4816656368787eb098a3f9c6683bae9940789db705ac735b9f1f2",
+      "diff": "--- \n+++ \n@@ -802,7 +802,7 @@\n     }\n \n     /// Most Significant Digit (Bit).\n-    /// May panic or give incorrect answers if not yet discovered.\n+    /// Requires a cached approximation separated from zero and a representable exponent.\n     fn known_msd(&self) -> Precision {\n         if let Some((prec, appr)) = self.cached() {\n             crate::verified::word::checked_bit_length_msd(appr.magnitude().bits(), 1, false, prec)\n"
+    },
+    {
+      "folder": "metadata-invariant-probe",
+      "source": "src/computable/node/bounds.rs",
+      "original_sha256": "7a0ca72056c07545115655f2a7f01c68caff173f60988c25d2cdd44d059b8c20",
+      "committed_sha256": "6091dd015a3f334b85d6337243fbf2e40071a0b9c2bedb9a63f433365c60b494",
+      "diff": "--- \n+++ \n@@ -51,6 +51,8 @@\n     }\n \n     fn from_rational(r: &Rational) -> Self {\n+        // An absent exponent can mean a nonzero magnitude outside i32. Only\n+        // the rational's sign can certify that its value is zero.\n         Self::with_sign(r.sign(), r.msd_exact())\n     }\n \n"
+    },
+    {
+      "folder": "computable-metadata-repair-focused",
+      "source": "src/computable/node/approximation_queries.rs",
+      "original_sha256": "b01c8ce6fb555907ae38640ee02034295c4a21383131fde056d3636bad0aeb7c",
+      "committed_sha256": "810119607cd4816656368787eb098a3f9c6683bae9940789db705ac735b9f1f2",
+      "diff": "--- \n+++ \n@@ -802,7 +802,7 @@\n     }\n \n     /// Most Significant Digit (Bit).\n-    /// May panic or give incorrect answers if not yet discovered.\n+    /// Requires a cached approximation separated from zero and a representable exponent.\n     fn known_msd(&self) -> Precision {\n         if let Some((prec, appr)) = self.cached() {\n             crate::verified::word::checked_bit_length_msd(appr.magnitude().bits(), 1, false, prec)\n"
+    },
+    {
+      "folder": "computable-metadata-repair-focused",
+      "source": "src/computable/node/bounds.rs",
+      "original_sha256": "7a0ca72056c07545115655f2a7f01c68caff173f60988c25d2cdd44d059b8c20",
+      "committed_sha256": "6091dd015a3f334b85d6337243fbf2e40071a0b9c2bedb9a63f433365c60b494",
+      "diff": "--- \n+++ \n@@ -51,6 +51,8 @@\n     }\n \n     fn from_rational(r: &Rational) -> Self {\n+        // An absent exponent can mean a nonzero magnitude outside i32. Only\n+        // the rational's sign can certify that its value is zero.\n         Self::with_sign(r.sign(), r.msd_exact())\n     }\n \n"
+    }
+  ],
+  "binding_notes": [
+    "Full root, public repair probe and official proof hashes match the committed runtime.",
+    "Private diagnostic and focused checks used an earlier overlay with identical code and two different comments. Exact differences and original hashes are retained.",
+    "Historical failures and unsuccessful zero-status hypotheses remain in the archive; they are not passes or omitted results."
+  ],
+  "limits": [
+    "The existing checked bit-length helper is verified. BoundInfo and production callers are not yet formally covered; 13 complete-implementation groups remain open.",
+    "Unrepresentable cached magnitudes now fail explicitly rather than wrap. This does not establish support for every precision in every approximation kernel.",
+    "Remaining build, coverage, fuzz, resource, timing and pinned-consumer qualification for this runtime is pending. No final baseline acceptance is claimed."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-computable-metadata.tar.gz",
+    "bytes": 197189,
+    "files": 190,
+    "sha256": "c479f2ef0ee1f065833bfa23dbcdd388523770017f19bdaf3fc87a048672ee43"
+  }
+}
