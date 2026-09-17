@@ -14,6 +14,7 @@ import tempfile
 import zipfile
 
 from check_verification_acceptance import check_acceptance
+from verus_dependencies import prepare_dependencies, check_dependency_identity
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN = json.loads((ROOT / "verification/toolchain.json").read_text())
@@ -92,16 +93,19 @@ def install(archive):
 def verify(require_complete):
     path = verifier()
     def source_hashes():
-        sources = sorted(ROOT.glob("src/**/*.rs")) + sorted(ROOT.glob("verification/*"))
+        sources = sorted(ROOT.glob("src/**/*.rs")) + sorted(ROOT.glob("verification/**/*"))
         sources += [Path(__file__).resolve(), ROOT / "scripts/check_verification_acceptance.py",
+                    ROOT / "scripts/verus_dependencies.py",
                     ROOT / "Cargo.toml", ROOT / "Cargo.lock"]
-        return {str(p.relative_to(ROOT)): sha256(p) for p in sources if p.is_file()}
+        return {str(p.relative_to(ROOT)): sha256(p) for p in sources if p.is_file()
+                and not {"target", "__pycache__"}.intersection(p.relative_to(ROOT).parts)}
 
     before = source_hashes()
     REPORTS.mkdir(parents=True, exist_ok=True)
+    dependency_args, dependencies = prepare_dependencies(ROOT, PIN, REPORTS)
     command = [
         str(path), "--edition=2024", "--crate-type=lib", "--crate-name=hyperreal_proofs",
-        "--no-cheating", "--output-json", "verification/lib.rs",
+        "--no-cheating", "--output-json", *dependency_args, "verification/lib.rs",
     ]
     result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
     (REPORTS / "verus.json").write_text(result.stdout)
@@ -124,12 +128,14 @@ def verify(require_complete):
             raise RuntimeError(f"Expected contract or theorem missing from Verus output: {name}")
     if before != source_hashes():
         raise RuntimeError("Sources changed while Verus was running; rerun verification")
+    check_dependency_identity(dependencies)
     evidence = {
         "command": command,
         "verus": report["verus"],
         "verification_results": verified,
         "sources": before,
         "scope": SCOPE,
+        "dependencies": dependencies,
     }
     (REPORTS / "evidence.json").write_text(json.dumps(evidence, indent=2) + "\n")
     print(f"Verus: {verified['verified']} verification units verified, 0 errors; "
@@ -148,6 +154,7 @@ def verify(require_complete):
             raise RuntimeError("The 100% completion gate is not satisfied: " + "; ".join(failures))
         if before != source_hashes():
             raise RuntimeError("Sources changed while checking baseline acceptance; rerun verification")
+        check_dependency_identity(dependencies)
 
 
 def main():

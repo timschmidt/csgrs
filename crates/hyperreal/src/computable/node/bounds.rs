@@ -1,8 +1,22 @@
+// The pinned verus_spec macro needs its method marker for associated functions.
+// Conditional markers and proof attributes disappear from ordinary Rust builds.
+#[cfg(verus_keep_ghost)]
+use vstd::prelude::*;
+
+#[cfg(verus_keep_ghost)]
+type MaybePrecision = Option<i32>;
+#[cfg(verus_keep_ghost)]
+verus! {
+pub open spec fn checked_metadata_exponent(value: int) -> Option<i32> {
+    if i32::MIN <= value <= i32::MAX { Some(value as i32) } else { None }
+}
+}
 pub type Precision = i32;
 const ATAN2_SIGN_REFINEMENT_FLOOR: Precision = -4096;
 const DEFAULT_COMPARE_REFINEMENT_FLOOR: Precision = -4096;
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub(crate) enum BoundCache {
     #[default]
     Invalid,
@@ -10,6 +24,7 @@ pub(crate) enum BoundCache {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub(crate) enum ExactSignCache {
     #[default]
     Invalid,
@@ -18,6 +33,7 @@ pub(crate) enum ExactSignCache {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 pub(crate) enum BoundInfo {
     // Unknown means the expression may still be zero or either sign; callers
     // must not use it to short-circuit exact predicates.
@@ -35,10 +51,24 @@ pub(crate) enum BoundInfo {
 }
 
 impl BoundInfo {
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures match sign {
+            Sign::NoSign => result == Self::Zero,
+            _ => result == Self::NonZero { sign: Some(sign), msd, exact_msd: true },
+        },
+    ))]
     fn with_sign(sign: Sign, msd: Option<Precision>) -> Self {
         Self::with_sign_msd(sign, msd, true)
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures match sign {
+            Sign::NoSign => result == Self::Zero,
+            _ => result == Self::NonZero { sign: Some(sign), msd, exact_msd },
+        },
+    ))]
     fn with_sign_msd(sign: Sign, msd: Option<Precision>, exact_msd: bool) -> Self {
         match sign {
             Sign::NoSign => Self::Zero,
@@ -50,12 +80,14 @@ impl BoundInfo {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn from_rational(r: &Rational) -> Self {
         // An absent exponent can mean a nonzero magnitude outside i32. Only
         // the rational's sign can certify that its value is zero.
         Self::with_sign(r.sign(), r.msd_exact())
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn map_msd(self, f: impl FnOnce(Precision) -> Option<Precision>) -> Self {
         match self {
             Self::NonZero {
@@ -71,6 +103,16 @@ impl BoundInfo {
         }
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == match self {
+            Self::NonZero { sign: Some(Sign::Plus), msd, exact_msd } =>
+                Self::NonZero { sign: Some(Sign::Minus), msd, exact_msd },
+            Self::NonZero { sign: Some(Sign::Minus), msd, exact_msd } =>
+                Self::NonZero { sign: Some(Sign::Plus), msd, exact_msd },
+            _ => self,
+        },
+    ))]
     fn negate(self) -> Self {
         match self {
             Self::NonZero {
@@ -95,17 +137,36 @@ impl BoundInfo {
         }
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == match self {
+            Self::NonZero { sign, msd, .. } => Self::NonZero {
+                sign, exact_msd: false,
+                msd: match msd {
+                    Some(e) => checked_metadata_exponent(1 - e as int),
+                    None => None,
+                },
+            },
+            _ => self,
+        },
+    ))]
     fn inverse(self) -> Self {
         match self {
             Self::NonZero { sign, msd, .. } => Self::NonZero {
                 sign,
-                msd: msd.and_then(|value| 1_i32.checked_sub(value)),
+                msd: msd.and_then(
+                    #[cfg_attr(verus_keep_ghost, verus_spec(result: MaybePrecision =>
+                        ensures result == checked_metadata_exponent(1 - value as int),
+                    ))]
+                    |value| 1_i32.checked_sub(value)
+                ),
                 exact_msd: false,
             },
             other => other,
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn square(self) -> Self {
         match self {
             Self::Zero => Self::Zero,
@@ -124,6 +185,20 @@ impl BoundInfo {
         }
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == match self {
+            Self::Zero => Self::Zero,
+            Self::NonZero { sign: Some(Sign::Plus), msd, exact_msd } => Self::NonZero {
+                sign: Some(Sign::Plus), exact_msd,
+                msd: match msd {
+                    Some(e) => Some((e as int / 2) as i32),
+                    None => None,
+                },
+            },
+            _ => Self::Unknown,
+        },
+    ))]
     fn sqrt(self) -> Self {
         match self {
             Self::Zero => Self::Zero,
@@ -142,6 +217,7 @@ impl BoundInfo {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn multiply(self, other: Self) -> Self {
         match (self, other) {
             (Self::Zero, _) | (_, Self::Zero) => Self::Zero,
@@ -181,6 +257,7 @@ impl BoundInfo {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn add(self, other: Self) -> Self {
         // Addition can certify sign when operands share a sign or one MSD
         // dominates an opposite-signed operand. Near-cancellation deliberately
@@ -231,6 +308,15 @@ impl BoundInfo {
         }
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures (result == Some(None)) <==> *self == Self::Zero,
+            result == match *self {
+                Self::Zero => Some(None),
+                Self::NonZero { msd: Some(msd), exact_msd: true, .. } => Some(Some(msd)),
+                _ => None,
+            },
+    ))]
     fn known_msd(&self) -> Option<Option<Precision>> {
         // Some(None) certifies zero. A nonzero value without a representable
         // exponent must remain an unresolved magnitude query.
@@ -246,6 +332,15 @@ impl BoundInfo {
         }
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures (result == Some(None)) <==> *self == Self::Zero,
+            result == match *self {
+                Self::Zero => Some(None),
+                Self::NonZero { msd: Some(msd), .. } => Some(Some(msd)),
+                _ => None,
+            },
+    ))]
     fn planning_msd(&self) -> Option<Option<Precision>> {
         match self {
             Self::Unknown => None,
@@ -255,6 +350,14 @@ impl BoundInfo {
         }
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == match *self {
+            Self::Zero => Some(Sign::NoSign),
+            Self::NonZero { sign, .. } => sign,
+            Self::Unknown => None,
+        },
+    ))]
     fn known_sign(&self) -> Option<Sign> {
         match self {
             Self::Zero => Some(Sign::NoSign),
@@ -263,6 +366,7 @@ impl BoundInfo {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn magnitude_bits(&self) -> Option<MagnitudeBits> {
         match self {
             Self::NonZero {
@@ -278,6 +382,7 @@ impl BoundInfo {
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 impl SharedConstant {
     fn bound_info(self) -> BoundInfo {
         // Coarse but exact-enough MSD facts for shared constants. These feed
@@ -385,6 +490,9 @@ impl SharedConstant {
     }
 }
 
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures result == match sign { Sign::Plus => Sign::Minus, Sign::Minus => Sign::Plus, Sign::NoSign => Sign::NoSign },
+))]
 fn negate_sign(sign: Sign) -> Sign {
     match sign {
         Sign::Plus => Sign::Minus,
@@ -393,6 +501,7 @@ fn negate_sign(sign: Sign) -> Sign {
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 fn public_sign(sign: Sign) -> RealSign {
     match sign {
         Sign::Minus => RealSign::Negative,
@@ -401,6 +510,7 @@ fn public_sign(sign: Sign) -> RealSign {
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 fn private_sign(sign: RealSign) -> Sign {
     match sign {
         RealSign::Negative => Sign::Minus,
@@ -409,10 +519,13 @@ fn private_sign(sign: RealSign) -> Sign {
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 use std::sync::atomic::AtomicBool;
 
+#[cfg(not(verus_keep_ghost))]
 pub type Signal = Arc<AtomicBool>;
 
+#[cfg(not(verus_keep_ghost))]
 pub(crate) fn should_stop(signal: &Option<Signal>) -> bool {
     use std::sync::atomic::Ordering::*;
     signal.as_ref().is_some_and(|s| s.load(Relaxed))
@@ -421,5 +534,6 @@ pub(crate) fn should_stop(signal: &Option<Signal>) -> bool {
 // Constants are value objects, so separate `Computable::pi()` calls are common.
 // A process-wide lock-free cache lets every worker reuse the finest certified
 // approximation instead of recomputing constants once per thread.
+#[cfg(not(verus_keep_ghost))]
 static SHARED_CONSTANT_CACHES: LazyLock<[ApproximationCache; SharedConstant::COUNT]> =
     LazyLock::new(|| std::array::from_fn(|_| ApproximationCache::default()));

@@ -29,7 +29,7 @@ def qualification_inputs(root):
     patterns = [
         "src/**/*", "tests/**/*", "benches/**/*", "examples/**/*",
         "fuzz/fuzz_targets/**/*", "scripts/*.py", "scripts/*.sh",
-        ".github/workflows/*.yml", ".github/workflows/*.yaml", "verification/*",
+        ".github/workflows/*.yml", ".github/workflows/*.yaml", "verification/**/*",
         ".cargo/**/*", "rust-toolchain", "rust-toolchain.toml",
         "Cargo.toml", "Cargo.lock", "build.rs", "fuzz/Cargo.toml", "fuzz/Cargo.lock",
         "promoted_slow_offenders.txt", "slow_performers.txt",

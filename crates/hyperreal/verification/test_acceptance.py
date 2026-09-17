@@ -8,6 +8,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+# Keep dependency identity checks on the existing CI acceptance-test entry point.
+from test_dependency_identity import DependencyIdentityTests  # noqa: F401
+
 MODULE = Path(__file__).resolve().parents[1] / "scripts/check_verification_acceptance.py"
 SPEC = importlib.util.spec_from_file_location("acceptance", MODULE)
 acceptance = importlib.util.module_from_spec(SPEC)
@@ -64,7 +67,7 @@ class AcceptanceTests(unittest.TestCase):
             self.check()
 
     def test_workload_and_build_changes_invalidate_evidence(self):
-        for name in ["benches/input.rs", "tests/oracle.rs", "fuzz/fuzz_targets/real.rs", "Cargo.toml", "scripts/check.sh", ".github/workflows/ci.yml", ".cargo/config.toml"]:
+        for name in ["benches/input.rs", "tests/oracle.rs", "fuzz/fuzz_targets/real.rs", "Cargo.toml", "scripts/check.sh", ".github/workflows/ci.yml", ".cargo/config.toml", "verification/dependencies/Cargo.lock", "verification/dependencies/src/lib.rs"]:
             with self.subTest(name=name):
                 path = self.root / name
                 path.parent.mkdir(parents=True, exist_ok=True)
