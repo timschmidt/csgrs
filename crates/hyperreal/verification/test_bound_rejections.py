@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Require the production bound contracts to reject broken metadata operations."""
+"""Reject broken production metadata operations and false denotation claims."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -29,6 +29,21 @@ MUTATIONS = [
     ('negate_sign', 'Sign::Plus => Sign::Minus,', 'Sign::Plus => Sign::Plus,'),
 ]
 
+MODEL_MUTATIONS = [
+    ('sign certificate', 'Some(Sign::Plus) => value > 0real,',
+     'Some(Sign::Plus) => value >= 0real,'),
+    ('approximation separation', 'approximation > 1 || approximation < -1,',
+     'approximation >= 1 || approximation <= -1,'),
+    ('negation denotation', 'ensures bound_denotes(result, -value),',
+     'ensures bound_denotes(result, value),'),
+    ('reciprocal sign', 'ensures bound_denotes(result, 1real / value),',
+     'ensures bound_denotes(result, -1real / value),'),
+    ('square-root binade', 'ensures real_binade(root, exponent as int / 2),',
+     'ensures real_binade(root, exponent as int / 2 + 1),'),
+    ('zero certificate', 'ensures result == Some(None) ==> value == 0real,',
+     'ensures result == Some(None) ==> value != 0real,'),
+]
+
 
 def mutate_body(source, method, before, after):
     anchor = 'fn ' + method + '('
@@ -54,9 +69,14 @@ def run_rejections(verus, dependency_args):
         shutil.copy2(ROOT / 'src/computable/node/bounds.rs', bound)
         shutil.copy2(ROOT / 'src/verified/word.rs', root / 'word.rs')
         shutil.copy2(ROOT / 'verification/computable_bounds.rs', root / 'verification/computable_bounds.rs')
+        denotation = root / 'verification/bound_denotation.rs'
+        shutil.copy2(ROOT / 'verification/bound_denotation.rs', denotation)
+        for name in ['magnitude_model', 'integer_approximation_model', 'real_approximation_model']:
+            shutil.copy2(ROOT / 'verification' / (name + '.rs'), root / (name + '.rs'))
         (root / 'lib.rs').write_text(
             '#![feature(proc_macro_hygiene)]\nmod verified {\n'
             f'#[path = "{root / "word.rs"}"] pub(crate) mod word;\n}}\n'
+            'mod magnitude_model;\nmod integer_approximation_model;\nmod real_approximation_model;\n'
             '#[path = "verification/computable_bounds.rs"] mod computable_bounds;\n')
         command = [str(verus), '--edition=2024', '--crate-type=lib', '--no-cheating',
                    *dependency_args, str(root / 'lib.rs')]
@@ -73,6 +93,19 @@ def run_rejections(verus, dependency_args):
                 raise RuntimeError(f'Expected contract rejection for {method}: {after}\n'
                                    + result.stdout + result.stderr)
             print(f'Rejected incorrect BoundInfo::{method}: {after}', flush=True)
+        original = denotation.read_text()
+        for name, before, after in MODEL_MUTATIONS:
+            if original.count(before) != 1:
+                raise RuntimeError('Bound denotation mutation anchor is not unique: ' + name)
+            denotation.write_text(original.replace(before, after))
+            result = subprocess.run(command, capture_output=True, text=True)
+            denotation.write_text(original)
+            failures = ['postcondition not satisfied', 'assertion failed',
+                        'requires not satisfied', 'precondition not satisfied']
+            if result.returncode == 0 or not any(message in result.stderr for message in failures):
+                raise RuntimeError(f'Expected denotation rejection for {name}: {after}\n'
+                                   + result.stdout + result.stderr)
+            print(f'Rejected incorrect bound denotation: {name}', flush=True)
 
 
 def main():

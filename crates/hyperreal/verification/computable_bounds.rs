@@ -1,5 +1,6 @@
 //! Verify the included production bound operations against their typed contracts.
-//! Real denotations, callers and the remaining bound operations remain open.
+//! Denotation lemmas refine these contracts conditional on valid input bounds.
+//! Production callers and the remaining bound operations remain open.
 use num::bigint::Sign;
 
 verus! {
@@ -10,3 +11,5 @@ pub struct ImportedSign(Sign);
 }
 
 include!("../src/computable/node/bounds.rs");
+
+include!("bound_denotation.rs");
