@@ -269,6 +269,11 @@ signals.
 
 ## Guarantees and boundaries
 
+Verus verification is in progress. Production arithmetic kernels and an
+unbounded rational model have checked proofs; the full crate is **not yet
+formally verified**. See the [proof commands, current boundary, and remaining
+obligations](verification/README.md).
+
 - Integer, fraction, decimal/scientific-text, and finite-float imports preserve
   their exact represented value.
 - `NaN` and infinities are rejected. IEEE negative zero imports as exact zero.

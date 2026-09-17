@@ -1243,60 +1243,15 @@ impl Rational {
         powers
     };
 
-    const SMALL_GCD_SIDE: usize = 64;
-    const SMALL_GCD_TABLE: [u8; Self::SMALL_GCD_SIDE * Self::SMALL_GCD_SIDE] = {
-        let mut table = [0_u8; Self::SMALL_GCD_SIDE * Self::SMALL_GCD_SIDE];
-        let mut left = 0;
-        while left < Self::SMALL_GCD_SIDE {
-            let mut right = 0;
-            while right < Self::SMALL_GCD_SIDE {
-                let mut larger = left;
-                let mut smaller = right;
-                while smaller != 0 {
-                    let remainder = larger % smaller;
-                    larger = smaller;
-                    smaller = remainder;
-                }
-                table[left * Self::SMALL_GCD_SIDE + right] = larger as u8;
-                right += 1;
-            }
-            left += 1;
-        }
-        table
-    };
-
     #[inline]
     fn gcd_u64(left: u64, right: u64) -> u64 {
-        if left == 0 {
-            return right;
-        }
-        if right == 0 {
-            return left;
-        }
-        if left < Self::SMALL_GCD_SIDE as u64 && right < Self::SMALL_GCD_SIDE as u64 {
-            let index = left as usize * Self::SMALL_GCD_SIDE + right as usize;
-            return u64::from(Self::SMALL_GCD_TABLE[index]);
-        }
-
-        let common_shift = left.trailing_zeros().min(right.trailing_zeros());
-        let mut left = left >> left.trailing_zeros();
-        let mut right = right;
-        loop {
-            right >>= right.trailing_zeros();
-            if left > right {
-                std::mem::swap(&mut left, &mut right);
-            }
-            right -= left;
-            if right == 0 {
-                return left << common_shift;
-            }
-        }
+        crate::verified::gcd::gcd_u64(left, right)
     }
 
     /// Run binary GCD in a bounded stack buffer, falling through when either
     /// operand exceeds the selected limb tier.
     fn gcd_fixed<const WORDS: usize>(left: &BigUint, right: &BigUint) -> Option<BigUint> {
-        debug_assert!(WORDS >= 2);
+        const { assert!(2 <= WORDS && WORDS <= (u32::MAX / 64) as usize) };
         let fixed = |value: &BigUint| {
             if value.bits() > u64::try_from(WORDS).expect("word count fits u64") * 64 {
                 return None;
@@ -1307,183 +1262,24 @@ impl Rational {
             }
             Some(words)
         };
-        let mut left = fixed(left)?;
-        let mut right = fixed(right)?;
-        let trailing_zeros = |words: &[u64; WORDS]| {
-            words
-                .iter()
-                .enumerate()
-                .find_map(|(index, word)| {
-                    (*word != 0).then_some(index as u32 * 64 + word.trailing_zeros())
-                })
-                .expect("wide gcd operands are nonzero")
-        };
-        let shift_right = |words: &mut [u64; WORDS], shift: u32| {
-            let word_shift = usize::try_from(shift / 64).expect("word shift fits usize");
-            let bit_shift = shift % 64;
-            for index in 0..WORDS {
-                let source = index + word_shift;
-                words[index] = if source >= WORDS {
-                    0
-                } else if bit_shift == 0 {
-                    words[source]
-                } else {
-                    (words[source] >> bit_shift)
-                        | words.get(source + 1).copied().unwrap_or(0) << (64 - bit_shift)
-                };
+        let left = fixed(left)?;
+        let right = fixed(right)?;
+        match crate::verified::fixed_gcd::gcd_fixed(left, right) {
+            crate::verified::fixed_gcd::FixedGcd::Word { value, shift } => {
+                Some(BigUint::from(value) << shift)
             }
-        };
-        let left_shift = trailing_zeros(&left);
-        let right_shift = trailing_zeros(&right);
-        let common_shift = left_shift.min(right_shift);
-        shift_right(&mut left, left_shift);
-        shift_right(&mut right, right_shift);
-        loop {
-            if left[2..].iter().all(|word| *word == 0)
-                && right[2..].iter().all(|word| *word == 0)
-            {
-                let left = u128::from(left[0]) | u128::from(left[1]) << 64;
-                let right = u128::from(right[0]) | u128::from(right[1]) << 64;
-                return Some(BigUint::from(Self::gcd_word(left, right)) << common_shift);
-            }
-            let mut index = WORDS;
-            let mut ordering = core::cmp::Ordering::Equal;
-            while index != 0 {
-                index -= 1;
-                ordering = left[index].cmp(&right[index]);
-                if !ordering.is_eq() {
-                    break;
-                }
-            }
-            if ordering.is_eq() {
-                break;
-            }
-            // The three-way comparison makes the following difference
-            // strictly positive, so the next normalization never sees zero.
-            if ordering.is_gt() {
-                core::mem::swap(&mut left, &mut right);
-            }
-            let mut borrow = false;
-            for index in 0..WORDS {
-                let (difference, first_borrow) = right[index].overflowing_sub(left[index]);
-                let (difference, second_borrow) = difference.overflowing_sub(u64::from(borrow));
-                right[index] = difference;
-                borrow = first_borrow || second_borrow;
-            }
-            debug_assert!(!borrow);
-            let right_shift = trailing_zeros(&right);
-            shift_right(&mut right, right_shift);
-        }
-
-        if common_shift != 0 {
-            let word_shift = usize::try_from(common_shift / 64).expect("word shift fits usize");
-            let bit_shift = common_shift % 64;
-            for index in (0..WORDS).rev() {
-                left[index] = if index < word_shift {
-                    0
-                } else if bit_shift == 0 {
-                    left[index - word_shift]
-                } else {
-                    (left[index - word_shift] << bit_shift)
-                        | index
-                            .checked_sub(word_shift + 1)
-                            .map(|source| left[source] >> (64 - bit_shift))
-                            .unwrap_or(0)
-                };
+            crate::verified::fixed_gcd::FixedGcd::Limbs(words) => {
+                let digits = words
+                    .into_iter()
+                    .flat_map(|word| [word as u32, (word >> 32) as u32])
+                    .collect();
+                Some(BigUint::new(digits))
             }
         }
-        let digits = left
-            .into_iter()
-            .flat_map(|word| [word as u32, (word >> 32) as u32])
-            .collect();
-        Some(BigUint::new(digits))
     }
 
     fn gcd_word(left: u128, right: u128) -> u128 {
-        if left == 0 {
-            return right;
-        }
-        if right == 0 {
-            return left;
-        }
-        if left <= u128::from(u64::MAX) && right <= u128::from(u64::MAX) {
-            return u128::from(Self::gcd_u64(left as u64, right as u64));
-        }
-        if left <= u128::from(u64::MAX) {
-            let left = left as u64;
-            if left.is_power_of_two() {
-                return 1_u128 << left.trailing_zeros().min(right.trailing_zeros());
-            }
-            return u128::from(Self::gcd_u64(left, (right % u128::from(left)) as u64));
-        }
-        if right <= u128::from(u64::MAX) {
-            let right = right as u64;
-            if right.is_power_of_two() {
-                return 1_u128 << right.trailing_zeros().min(left.trailing_zeros());
-            }
-            return u128::from(Self::gcd_u64(right, (left % u128::from(right)) as u64));
-        }
-
-        // Balanced two-limb inputs reach a machine word after only a few
-        // Euclidean steps. Stop there: u128 remainder is a compiler-rt call on
-        // common 64-bit targets, while the remaining binary GCD stays entirely
-        // in hardware-width arithmetic.
-        let common_shift = left.trailing_zeros().min(right.trailing_zeros());
-        let mut left = left >> common_shift;
-        let mut right = right >> common_shift;
-        if left < right {
-            core::mem::swap(&mut left, &mut right);
-        }
-        while right > u128::from(u64::MAX) {
-            // Consecutive Euclidean operands frequently have a small quotient.
-            // Resolve the first four cases with subtraction: 128-bit remainder
-            // is a compiler-runtime call on the 64-bit release targets we support.
-            let difference = left - right;
-            let remainder = if difference < right {
-                difference
-            } else {
-                let second_difference = difference - right;
-                if second_difference < right {
-                    second_difference
-                } else {
-                    let third_difference = second_difference - right;
-                    if third_difference < right {
-                        third_difference
-                    } else {
-                        let fourth_difference = third_difference - right;
-                        if fourth_difference < right {
-                            fourth_difference
-                        } else {
-                            // Dividing the high limbs by a strict upper bound
-                            // for the divisor yields a quotient that cannot
-                            // overshoot. It usually leaves the exact remainder
-                            // (or one divisor too much) without a compiler-rt
-                            // 128-bit remainder call.
-                            let high_quotient = ((left >> 64) as u64)
-                                / (((right >> 64) as u64) + 1);
-                            let approximate = left - right * u128::from(high_quotient);
-                            if approximate < right {
-                                approximate
-                            } else {
-                                let corrected = approximate - right;
-                                if corrected < right {
-                                    corrected
-                                } else {
-                                    corrected % right
-                                }
-                            }
-                        }
-                    }
-                }
-            };
-            left = right;
-            right = remainder;
-        }
-        if right == 0 {
-            return left << common_shift;
-        }
-        let remainder = (left % right) as u64;
-        u128::from(Self::gcd_u64(right as u64, remainder)) << common_shift
+        crate::verified::gcd::gcd_u128(left, right)
     }
 
     /// Compute an arbitrary-precision GCD without entering `BigUint`'s
@@ -2530,17 +2326,28 @@ impl Rational {
         match (first.0, second.0) {
             (NoSign, _) => Some(second),
             (_, NoSign) => Some(first),
-            (left, right) if left == right => Some((left, first.1.checked_add(second.1)?)),
-            _ if first.1 > second.1 => Some((first.0, first.1 - second.1)),
-            _ if second.1 > first.1 => Some((second.0, second.1 - first.1)),
-            _ => Some((NoSign, 0)),
+            _ => {
+                let (negative, magnitude) = crate::verified::word::signed_add(
+                    first.0 == Minus,
+                    first.1,
+                    second.0 == Minus,
+                    second.1,
+                )?;
+                let sign = if magnitude == 0 {
+                    NoSign
+                } else if negative {
+                    Minus
+                } else {
+                    Plus
+                };
+                Some((sign, magnitude))
+            }
         }
     }
 
     #[inline]
     fn checked_word_shift_left(value: u128, shift: u32) -> Option<u128> {
-        let factor = 1_u128.checked_shl(shift)?;
-        value.checked_mul(factor)
+        crate::verified::word::checked_shift_left(value, shift)
     }
 
     fn scaled_dyadic_word_part(

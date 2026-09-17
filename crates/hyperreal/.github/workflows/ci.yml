@@ -16,6 +16,25 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  verus:
+    name: Verus proofs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Verus
+        run: python3 scripts/verify_verus.py install
+
+      - name: Verify production kernels and rational semantics
+        run: python3 scripts/verify_verus.py verify
+
+      - name: Check rejection of incorrect implementations
+        run: python3 verification/test_rejections.py
+
   checks:
     name: Rust checks
     runs-on: ubuntu-latest

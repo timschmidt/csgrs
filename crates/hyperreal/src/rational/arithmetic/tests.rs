@@ -1005,6 +1005,20 @@ mod tests {
             }
         }
 
+        // Exercise every trailing-zero count on both sides of the 64-bit
+        // boundary, including the power-of-two shortcut and mixed high/low
+        // limbs. Uniform random inputs almost never reach these cases.
+        for left_shift in 0..128 {
+            for right_shift in 0..128 {
+                let left = 1_u128 << left_shift;
+                let right = 1_u128 << right_shift;
+                assert_eq!(Rational::gcd_word(left, right), reference(left, right));
+                let left = left | (1_u128 << 127);
+                let right = right | (1_u128 << 127);
+                assert_eq!(Rational::gcd_word(left, right), reference(left, right));
+            }
+        }
+
         let mut left = 0x243f_6a88_85a3_08d3_1319_8a2e_0370_7344_u128;
         let mut right = 0xa409_3822_299f_31d0_082e_fa98_ec4e_6c89_u128;
         for _ in 0..20_000 {
@@ -1020,6 +1034,41 @@ mod tests {
 
     #[test]
     fn fixed_512_gcd_matches_biguint_reference() {
+        let max_512 = (BigUint::one() << 512_usize) - BigUint::one();
+        for (left, right) in [
+            (BigUint::zero(), BigUint::zero()),
+            (BigUint::zero(), max_512.clone()),
+            (max_512.clone(), BigUint::zero()),
+            (max_512.clone(), &max_512 - BigUint::one()),
+            (BigUint::one() << 511_usize, &max_512 >> 1_usize),
+            (
+                (BigUint::one() << 384_usize) + BigUint::one(),
+                (BigUint::one() << 256_usize) - BigUint::one(),
+            ),
+        ] {
+            assert_eq!(
+                Rational::gcd_fixed::<8>(&left, &right),
+                Some(num::Integer::gcd(&left, &right)),
+            );
+        }
+        for shift in 0..512_usize {
+            let left = BigUint::one() << shift;
+            let right = (BigUint::one() << 511_usize)
+                | (BigUint::one() << (511 - shift));
+            let expected = Some(num::Integer::gcd(&left, &right));
+            assert_eq!(Rational::gcd_fixed::<8>(&left, &right), expected);
+            assert_eq!(Rational::gcd_fixed::<8>(&right, &left), expected);
+        }
+        // Equal odd parts stay in the array path and must restore both whole
+        // limbs and intra-limb bits without losing the most significant bit.
+        for shift in 0..256_usize {
+            let equal = ((BigUint::one() << 256_usize) + BigUint::from(21_u8)) << shift;
+            assert_eq!(Rational::gcd_fixed::<8>(&equal, &equal), Some(equal));
+        }
+        for shift in 0..128_usize {
+            let equal = ((BigUint::one() << 128_usize) + BigUint::from(21_u8)) << shift;
+            assert_eq!(Rational::gcd_fixed::<4>(&equal, &equal), Some(equal));
+        }
         let equal_256 = ((BigUint::one() << 200_usize) + BigUint::from(21_u8)) << 37_usize;
         assert_eq!(
             Rational::gcd_fixed::<4>(&equal_256, &equal_256),

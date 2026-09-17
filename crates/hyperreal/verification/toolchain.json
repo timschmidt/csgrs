@@ -1,0 +1,8 @@
+{
+  "version": "0.2026.09.13.671956e",
+  "commit": "671956ec527d3b7164779f767bdbfe769bedce6c",
+  "rust_toolchain": "1.98.1-x86_64-unknown-linux-gnu",
+  "archive": "verus-0.2026.09.13.671956e-x86-linux.zip",
+  "url": "https://github.com/verus-lang/verus/releases/download/release/0.2026.09.13.671956e/verus-0.2026.09.13.671956e-x86-linux.zip",
+  "sha256": "08c85b96e0fbbbdcb1b3a9fa8943dce7598c3e7b343680820f649b4e1efda4b4"
+}

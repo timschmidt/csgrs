@@ -19,6 +19,9 @@ cached-f64-approx = []
 dispatch-trace = []
 serde = ["dep:serde", "dep:serde_json", "dep:ciborium", "num/serde"]
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_keep_ghost)'] }
+
 [dependencies]
 ciborium = { version = "0.2.2", optional = true }
 num = { version = "0.4.3", features = ["num-bigint"] }
