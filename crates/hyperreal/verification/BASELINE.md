@@ -244,6 +244,23 @@ open pending longer alternating repeats; suite averages cannot dismiss them.
 The archive preserves all cases and raw Criterion output. It establishes
 neither performance parity nor acceptance of the runtime.
 
+The [limb bit-length model](../benchmarks/checkpoints/2026-09-17-verus-bit-length-model.json)
+passes 402 official verification units at `31f6977`, with 55 production
+contracts and 75 model theorems. Its four additional theorems connect normalized
+mathematical limbs to exact bit lengths, shifted widths and width-based ordering.
+All source hashes match that commit. Runtime sources and Cargo inputs are
+unchanged from the preceding magnitude proof; actual `BigUint` import and caller
+refinements remain open. Seven acceptance guard tests also pass.
+
+The [cold precision probes](../benchmarks/checkpoints/2026-09-17-verus-precision-counterexamples.json)
+expose the same two debug failures in the fixed baseline and `ee773bbf`:
+`pi().approx(i32::MAX)` overflows a related-cache precision and
+`zero().approx(i32::MIN)` overflows precision negation. Four debug/release builds
+and all 20 process outcomes are retained, including four panics. The release
+cases tested here return permitted values; these observations do not qualify
+precision arithmetic generally. The counterexamples require repair under the
+exactness-first priority.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
