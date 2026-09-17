@@ -695,3 +695,13 @@ the remaining suite times out at 900 seconds, five isolated cases time out at
 fails. All seven exit outcomes match the fixed baseline. None is counted as a
 completed passing command. The temporary dependency checkout is restored and
 the pinned Hypercurve inputs remain byte-identical; live Hypercurve is untouched.
+
+The [three-way native screen](../benchmarks/checkpoints/2026-09-17-verus-anchor-screen.json)
+completes all 27 serial runs across nine suites, retaining 1,449 matching cases
+per variant and every comparator. Against the fixed baseline, 321 committed
+runtime cases and 322 experimental cases have positive, nonoverlapping
+within-run median intervals; 327 experimental cases are flagged against the
+committed runtime. These are short-run follow-up signals, not confirmed
+regressions or acceptance. All raw samples, commands, input bindings and logs
+are archived. The optimization remains unadopted, and offset-rewrite and
+precision-boundary correctness probes are separate outstanding work.
