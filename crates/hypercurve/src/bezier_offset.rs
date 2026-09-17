@@ -92507,7 +92507,7 @@ impl BezierAnalyticParallelPoint2 {
         else {
             return Ok(None);
         };
-        if self.shares_carrier(start) {
+        if self == start {
             return Ok(Some(crate::classify::LineSide::On));
         }
         let (point_tangent_x_coefficients, point_tangent_y_coefficients) =
@@ -95221,16 +95221,6 @@ impl BezierAnalyticParallelPoint2 {
         ))))
     }
 
-    fn shares_carrier(&self, other: &Self) -> bool {
-        self.data.parallel == other.data.parallel
-            && self.data.parameter == other.data.parameter
-            && self.data.frame_tangent == other.data.frame_tangent
-            && self.data.tangent_distance == other.data.tangent_distance
-            && self.data.translation_x == other.data.translation_x
-            && self.data.translation_y == other.data.translation_y
-            && self.data.policy == other.data.policy
-    }
-
     fn translated(
         &self,
         delta_x: &Real,
@@ -95777,15 +95767,94 @@ impl BezierAnalyticParallelPoint2 {
         Ok(None)
     }
 
+    /// At one shared source parameter, tangent/normal displacement is the
+    /// linear map `a I + d J` applied to the unit tangent. It is injective
+    /// unless both displacements vanish. Compare the two unit directions in
+    /// that parameter's field, including raw and reduced hodographs, without
+    /// reconstructing a global parameter or either Cartesian coordinate.
+    fn shared_parameter_point_equality(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<bool>>> {
+        if self.data.parallel != other.data.parallel
+            || self.data.parameter != other.data.parameter
+            || self.data.tangent_distance != other.data.tangent_distance
+            || self.data.translation_x != other.data.translation_x
+            || self.data.translation_y != other.data.translation_y
+            || !policy.accepts_retained_policy(self.data.policy)
+            || !policy.accepts_retained_policy(other.data.policy)
+        {
+            return Ok(Classification::Decided(None));
+        }
+        policy.strict_predicate_pass(|| {
+            let distance = self.data.parallel.distance();
+            let tangent = &self.data.tangent_distance;
+            let displacement_squared = distance * distance + tangent * tangent;
+            if displacement_squared.zero_status() == ZeroKnowledge::Zero {
+                return Ok(Classification::Decided(Some(true)));
+            }
+            let (first_x, first_y) = self.frame_tangent_power_basis()?;
+            let (second_x, second_y) = other.frame_tangent_power_basis()?;
+            let cross = polynomial_subtract(
+                &polynomial_multiply(first_x, second_y),
+                &polynomial_multiply(first_y, second_x),
+            );
+            let same_direction = match self.parameter_polynomial_sign(&cross, policy)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => false,
+                Classification::Decided(RealSign::Zero) => {
+                    let dot = polynomial_add(
+                        &polynomial_multiply(first_x, second_x),
+                        &polynomial_multiply(first_y, second_y),
+                    );
+                    match self.parameter_polynomial_sign(&dot, policy)? {
+                        Classification::Decided(RealSign::Positive) => true,
+                        Classification::Decided(RealSign::Negative) => false,
+                        // A zero frame has no unit direction. Its one-sided
+                        // source-cusp meaning belongs to its retained frame.
+                        Classification::Decided(RealSign::Zero) => {
+                            return Ok(Classification::Decided(None));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if same_direction {
+                return Ok(Classification::Decided(Some(true)));
+            }
+            Ok(match real_sign(&displacement_squared, policy) {
+                Some(RealSign::Zero) => Classification::Decided(Some(true)),
+                Some(RealSign::Positive) => Classification::Decided(Some(false)),
+                _ => Classification::Uncertain(UncertaintyReason::RealSign),
+            })
+        })
+    }
+
     pub(crate) fn same_point_evidence(
         &self,
         other: &CurvePoint2,
         policy: &CurveContext,
     ) -> Classification<bool> {
-        if let CurvePoint2(CurvePointData2::AnalyticParallel(other)) = other
-            && self.shares_carrier(other)
-        {
-            return Classification::Decided(true);
+        if let CurvePoint2(CurvePointData2::AnalyticParallel(other)) = other {
+            if self == other {
+                return Classification::Decided(true);
+            }
+            if let Ok(Classification::Decided(Some(equal))) =
+                self.shared_parameter_point_equality(other, policy)
+            {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "analytic-point-equality",
+                    "shared-parameter-unit-directions",
+                );
+                return Classification::Decided(equal);
+            }
         }
         // Transporting a source and then evaluating its retained parameter
         // has the same meaning as transporting the selected point. Reuse
@@ -153428,6 +153497,76 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         let result = first.coincides_with(second, &policy);
                         assert_eq!(result.value, Classification::Decided(expected));
                         assert_eq!(result.certainty, CurveCertainty::Certified);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_analytic_point_replays_reduced_and_opposite_frames_locally() {
+        let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        // P(u)=(-1/8+t^2,t), t=u/(2u+6). Its homogeneous tangent is
+        // (3/2)(u+3)*(u,u+3), so F=(u,u+3) has the same unit direction
+        // throughout [0,1]. Negation and quarter-turn give distinct points
+        // for every nonzero fixed tangent/normal displacement.
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::new(q(-1, 8), Real::zero()),
+                Point2::new(q(-1, 8), q(1, 16)),
+                Point2::new(q(-7, 64), q(1, 8)),
+            ],
+            vec![Real::from(9), Real::from(12), Real::from(16)],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter = degree_nine_selected_fiber_parameter_for_test(q(1, 2), 32_768, &policy);
+            for normal in [q(-1, 64), Real::zero(), q(1, 64)] {
+                for tangent in [Real::zero(), q(1, 32)] {
+                    let parallel = source.parallel_left(normal.clone()).unwrap();
+                    let raw = BezierAnalyticParallelPoint2::new_with_tangent_distance_parameter(
+                        parallel.clone(),
+                        BezierAnalyticParallelPointParameter2::SelectedFiber(parameter.clone()),
+                        tangent.clone(),
+                        &policy,
+                    );
+                    for (x, y, same_direction) in [
+                        (
+                            vec![Real::zero(), Real::one()],
+                            vec![Real::from(3), Real::one()],
+                            true,
+                        ),
+                        (
+                            vec![Real::zero(), -Real::one()],
+                            vec![Real::from(-3), -Real::one()],
+                            false,
+                        ),
+                        (
+                            vec![Real::from(-3), -Real::one()],
+                            vec![Real::zero(), Real::one()],
+                            false,
+                        ),
+                    ] {
+                        let reduced = BezierAnalyticParallelPoint2::new_with_region_parameter_and_frame_tangent(
+                            parallel.clone(),
+                            &CurveParameter2::from_selected_fiber(parameter.clone()),
+                            Some(Arc::new(BezierAnalyticParallelTangentField2 { x, y })),
+                            tangent.clone(),
+                            &policy,
+                        )
+                        .unwrap();
+                        let expected =
+                            same_direction || (normal == Real::zero() && tangent == Real::zero());
+                        let first = CurvePoint2::from(raw.clone());
+                        let second = CurvePoint2::from(reduced.clone());
+                        for (first, second) in [(&first, &second), (&second, &first)] {
+                            let result = first.coincides_with(second, &policy);
+                            assert_eq!(result.value, Classification::Decided(expected));
+                            assert_eq!(result.certainty, CurveCertainty::Certified);
+                        }
+                        assert!(raw.data.recursive_projective_point.get().is_none());
+                        assert!(reduced.data.recursive_projective_point.get().is_none());
+                        assert!(parameter.data.represented_parameter.get().is_none());
                     }
                 }
             }

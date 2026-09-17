@@ -3721,9 +3721,10 @@ mod finite_selected_circle_domains {
         assert!(circle.geometry().is_none());
         circle
     }
-    fn cap(exterior: bool, policy: &CurveContext) -> Curve2 {
+    fn cap(chart: u8, policy: &CurveContext) -> Curve2 {
         // P(t)=(-1/8+t^2,t), 0<=t<=1/8. The exterior chart is P(s-2)
         // and the compact native chart is P(u/8). The normal displacement is 1/64.
+        let exterior = chart == 1;
         let (source, start, end) = if exterior {
             (
                 QuadraticBezier2::new(
@@ -3745,7 +3746,24 @@ mod finite_selected_circle_domains {
                 Real::one(),
             )
         };
-        let parallel = source.parallel_left(q(1, 64)).unwrap();
+        let parallel = if chart == 2 {
+            // The rational chart t=u/(2u+6) has the same oriented image.
+            // Its raw hodograph contains the factor (3/2)(u+3); public
+            // point replay must reuse the equivalent reduced unit frame.
+            RationalBezier2::try_new(
+                vec![
+                    Point2::new(q(-1, 8), Real::zero()),
+                    Point2::new(q(-1, 8), q(1, 16)),
+                    Point2::new(q(-7, 64), q(1, 8)),
+                ],
+                vec![9.into(), 12.into(), 16.into()],
+            )
+            .unwrap()
+            .parallel_left(q(1, 64))
+            .unwrap()
+        } else {
+            source.parallel_left(q(1, 64)).unwrap()
+        };
         let first = exact(parallel.point_at(&start, policy).unwrap());
         let last = exact(parallel.point_at(&end, policy).unwrap());
         let range = exact(
@@ -3786,12 +3804,12 @@ mod finite_selected_circle_domains {
     // Thus there is exactly one interior transverse contact. Changing the
     // finite parameter chart, traversal or operand order cannot change it.
     #[test]
-    fn retained_fillet_intersects_finite_analytic_parallel_in_both_charts() {
+    fn retained_fillet_intersects_finite_analytic_parallel_in_all_charts() {
         let (mut cases, mut contacts, mut replays, mut failures) = (0, 0, 0, 0);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let original_circle = circle(&policy);
-            for exterior in [false, true] {
-                let original_cap = cap(exterior, &policy);
+            for chart in 0..3 {
+                let original_cap = cap(chart, &policy);
                 for reverse_circle in [false, true] {
                     for reverse_cap in [false, true] {
                         let circle = oriented(&original_circle, reverse_circle, &policy);
@@ -3804,7 +3822,7 @@ mod finite_selected_circle_domains {
                                 (&circle, &cap)
                             };
                             let label = format!(
-                                "exterior={exterior} reverse_circle={reverse_circle} reverse_cap={reverse_cap} swapped={swapped} policy={policy:?}"
+                                "chart={chart} reverse_circle={reverse_circle} reverse_cap={reverse_cap} swapped={swapped} policy={policy:?}"
                             );
                             match first.intersect_curve(second, &policy) {
                                 Ok(outcome)
@@ -3859,7 +3877,7 @@ mod finite_selected_circle_domains {
         println!(
             "{{\"cases\":{cases},\"contacts\":{contacts},\"point_replays\":{replays},\"failures\":{failures}}}"
         );
-        assert_eq!(cases, 32);
+        assert_eq!(cases, 48);
         assert_eq!(failures, 0);
     }
 }
