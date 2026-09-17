@@ -418,6 +418,23 @@ runtime erasure comparison with `cdc6d3a`. Expression-graph inputs, rational
 import, inexact planning bounds, cache validity and production callers remain
 open, along with all thirteen whole-implementation obligation groups.
 
+The [magnitude mapping checkpoint](../benchmarks/checkpoints/2026-09-17-verus-bound-mapping.json)
+at `2d8cb1a` verifies the unchanged production `BoundInfo::map_msd` body and
+adds two binary-scaling refinements. Mapping preserves signs, zero/unknown
+states, exactness flags and every callback result. A checked exponent offset
+preserves valid real certificates; overflow leaves the magnitude unavailable
+while retaining sign and nonzero facts. Production callback closures and
+incoming expression-graph certificates still need caller proofs.
+
+The official run passes 468 units, 66 production contracts and 97 model
+theorems, with all 125 repository hashes matching the commit. Sixteen production
+bound mutations, nine denotation mutations and ten acceptance/dependency tests
+pass. The prior 85 unchanged kernel/model mutations and assumption-bypass check
+retain their existing evidence; no fresh combined 110-mutation run is claimed.
+Strict all-feature all-target Clippy passes, and the annotations erase to
+byte-identical ordinary Rust relative to `cdc6d3a`. All thirteen broader proof
+groups and baseline acceptance remain incomplete.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
