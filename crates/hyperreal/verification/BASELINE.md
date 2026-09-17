@@ -297,6 +297,31 @@ has 36,105 lines versus 35,597 in the baseline. All rows and raw profiles are
 retained. Current native timing, pinned-consumer qualification and the overall
 resource assessment remain open.
 
+The [precision consumer builds](../benchmarks/checkpoints/2026-09-17-verus-consumer-precision-builds.json)
+cover all 41 non-tracing targets at the pinned consumer revisions. Completed
+release suites report Hyperlattice 204, Hyperlimit 361, Hypertri 191, Hypersolve
+860 and Hypermesh 222 passed, with seven Hypermesh tests ignored. Hypercurve's
+build uses only pinned `8228394`; its full release and long-running tests remain
+pending. The [fixed-input supplement](../benchmarks/checkpoints/2026-09-17-verus-consumer-precision-fixed-inputs.json)
+also builds and replays all 101 rows in each of the four prepared consumer
+harnesses: 400 distinct stored inputs plus the aggregate scores reusing them.
+The unchanged baseline fixed-input builds are retained from the earlier
+checkpoint. The temporary consumer trees are restored clean after these runs.
+Neither build/replay checkpoint establishes native timing parity.
+
+The [real approximation model](../benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json)
+at `49f2b8f` passes 431 official verification units, with 56 production contracts
+and 87 model theorems. All 116 proof-input hashes match that commit. Nine added
+theorems connect the integer plan to exact real denotations and establish
+compositional error bounds for signed binary scaling, negation, guarded
+addition and cache coarsening, together with adjacent-integer and sign
+certificates. All 85 mutations, the assumption bypass and seven acceptance
+guards pass their rejection checks. Runtime sources, Cargo inputs and tests
+are unchanged from `7b95cac`. The production graph, dependency operations,
+precision arithmetic, transcendental bounds, domain validity, abort behavior,
+concurrency and convergence still require refinement proofs. All 13 complete
+obligation groups remain open.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
