@@ -646,3 +646,18 @@ pass both corrected fixture coverages and capture identical four-workload
 Hyperlattice trace summaries. They do not relabel the original failures.
 The pinned Hypercurve long-case partition and native timings remain pending;
 live Hypercurve has not been changed.
+
+The [allocation experiments](../benchmarks/checkpoints/2026-09-17-verus-anchor-experiments.json)
+remain isolated overlays. The second certified-anchor version preserves shared
+constant cache routing, avoids copying cached integers for magnitude queries,
+and schedules an unknown multiplication operand directly from one certified
+anchor. It passes 802 default and 905 all-feature test executions, 1,271 and
+1,447 benchmark fixtures, strict Clippy, representation checks, doctests and
+all 6,492 frozen ASan inputs. Its twenty measured allocation/byte/peak/retained
+rows are each at or below baseline. Matched whole-process combined peak is
+still 72 bytes higher in both pairs (24,896 to 24,968), with increased heap and
+allocator-overhead maxima recorded separately. Aggregate Callgrind counts
+fall from 29,847,905 to 28,039,395; Memcheck reports zero errors. These are
+resource measurements, not native speed or acceptance evidence. The earlier
+experiments, complete patches and unresolved costs are retained. No experiment
+has been adopted; native comparisons remain pending.
