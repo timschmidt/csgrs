@@ -113,6 +113,27 @@ and 65 model theorems, while all 13 full-crate obligation groups remain open.
 The prior square-root metadata checkpoint retains the rejected clone variants
 and the failures that led to the metadata and fixed-decimal precision repairs.
 
+The [complete shared-clone screen](../benchmarks/checkpoints/2026-09-17-verus-shared-clone-screen.json)
+retains 1,449 matching cases across all nine suites. Its 236 positive
+nonoverlapping within-run interval flags, including external comparator rows,
+require longer alternating repeats. A short screen is not an acceptance test.
+The [resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-shared-clone-resources.json)
+records the completed release, lint, documentation, fuzz-build, WASM and
+seven-configuration coverage checks. Production executable-line coverage is
+91.10%, which is separate from formal proof coverage. Allocation counts fall
+in 12 of 20 representation workloads, per-case peak allocations do not increase
+and retained bytes are unchanged. Matched exact-peak Massif runs nevertheless
+show a 176-byte increase in whole-process peak memory. Native and WASM binary
+size increases are also retained for assessment. The interrupted first coverage
+attempt and truncated diagnostic profile are explicitly excluded from passing
+results; the complete rerun and compact matched profiles succeeded.
+
+The subsequent [cancellation induction proof](../benchmarks/checkpoints/2026-09-17-verus-cancel-pair-proof.json)
+verifies 364 units and 66 model theorems. Normal expanded Rust is byte-identical
+to `561e36a`; the production cross-cancellation traversal and its caller
+preconditions still require refinement proofs. All 13 obligation groups and
+final baseline acceptance remain open.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
