@@ -39,6 +39,280 @@ mod tests {
     }
 
     #[test]
+    fn finite_parallel_derivatives_preserve_affine_charts_and_gauges() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t)=(t²-1,t³-t), and its independently expanded chart P(4s-2).
+        let source = crate::CubicBezier2::new(
+            Point2::from_values(-1, 0),
+            Point2::new((-1).into(), q(-1, 3)),
+            Point2::new(q(-2, 3), q(-2, 3)),
+            Point2::from_values(0, 0),
+        );
+        let chart = crate::CubicBezier2::new(
+            Point2::from_values(3, -6),
+            Point2::new(q(-7, 3), q(26, 3)),
+            Point2::new(q(-7, 3), q(-26, 3)),
+            Point2::from_values(3, 6),
+        );
+        let mut sources = vec![crate::BezierParallelSource2::Cubic(source.clone())];
+        for gauge in [1, -3] {
+            sources.push(crate::BezierParallelSource2::Rational(
+                RationalBezier2::try_new(
+                    source.control_points().into_iter().cloned().collect(),
+                    vec![Real::from(gauge); 4],
+                )
+                .unwrap(),
+            ));
+        }
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for distance in [Real::zero(), q(1, 10)] {
+                // Direct differentiation of the explicit offset gives these
+                // values at t=±2 and t=0; no kernel derivative supplies them.
+                let outer_scale = Real::one()
+                    - ((Real::from(26) * &distance)
+                        / (Real::from(137) * Real::from(137).sqrt().unwrap()))
+                    .unwrap();
+                let expected = [
+                    (
+                        -2,
+                        -Real::from(4) * &outer_scale,
+                        Real::from(11) * &outer_scale,
+                    ),
+                    (0, Real::zero(), Real::from(2) * &distance - Real::one()),
+                    (
+                        2,
+                        Real::from(4) * &outer_scale,
+                        Real::from(11) * &outer_scale,
+                    ),
+                ];
+                let chart = CurveSupport2::Parallel(chart.parallel_left(distance.clone()).unwrap());
+                for source in &sources {
+                    let parallel = BezierParallel2::from_source(source.clone(), distance.clone());
+                    for reversed in [false, true] {
+                        let support = CurveSupport2::Parallel(if reversed {
+                            parallel.reversed()
+                        } else {
+                            parallel.clone()
+                        });
+                        for (t, dx, dy) in &expected {
+                            let parameter = Real::from(if reversed { 1 - t } else { *t });
+                            let derivative =
+                                decided(support.derivative_at(&parameter, &policy).unwrap());
+                            let point = decided(support.point_at(&parameter, &policy).unwrap());
+                            let source_point = if *t == 0 {
+                                Point2::from_values(-1, 0)
+                            } else {
+                                Point2::from_values(3, 3 * t)
+                            };
+                            let expected_point = if *t == 0 {
+                                source_point.translated(distance.clone(), Real::zero())
+                            } else {
+                                let speed = Real::from(137).sqrt().unwrap();
+                                source_point.translated(
+                                    ((Real::from(-11) * &distance) / &speed).unwrap(),
+                                    ((Real::from(2 * t) * &distance) / speed).unwrap(),
+                                )
+                            };
+                            assert_eq!(
+                                CurvePoint2::from(point)
+                                    .same_point(&expected_point.into(), &policy),
+                                Classification::Decided(true)
+                            );
+                            let factor = Real::from(if reversed { -1 } else { 1 });
+                            for (actual, expected) in [(derivative.dx(), dx), (derivative.dy(), dy)]
+                            {
+                                assert_eq!(
+                                    crate::classify::is_zero(
+                                        &(actual - &factor * expected),
+                                        &policy
+                                    ),
+                                    Some(true),
+                                    "t={t}, reversed={reversed}, source={source:?}"
+                                );
+                            }
+                            let chart_derivative =
+                                decided(chart.derivative_at(&q(t + 2, 4), &policy).unwrap());
+                            for (actual, expected) in
+                                [(chart_derivative.dx(), dx), (chart_derivative.dy(), dy)]
+                            {
+                                assert_eq!(
+                                    crate::classify::is_zero(
+                                        &(actual - Real::from(4) * expected),
+                                        &policy
+                                    ),
+                                    Some(true)
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_parallel_cusp_derivatives_retain_the_selected_normal_sheet() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t)=(t,(t-2)²). The left parallel at distance one has two
+        // exterior cusps; the right parallel has derivative 2P' there.
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 4),
+            Point2::new(q(1, 2), 2.into()),
+            Point2::from_values(1, 1),
+        );
+        let range = CurveParameterRange2::new_validated(Real::one().into(), Real::from(3).into());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parallel = source.parallel_left(Real::one()).unwrap();
+            let analysis = decided(parallel.singularity_analysis(&range, &policy).unwrap());
+            assert!(analysis.source_is_regular());
+            assert_eq!(analysis.parallel_cusps().len(), 2);
+            let delta = ((Real::from(4).root_n(3).unwrap() - Real::one())
+                .sqrt()
+                .unwrap()
+                / Real::from(2))
+            .unwrap();
+            for (cusp, expected) in analysis
+                .parallel_cusps()
+                .iter()
+                .zip([Real::from(2) - &delta, Real::from(2) + delta])
+            {
+                let parameter = cusp.scalar().expect("represented quadratic cusp");
+                assert_eq!(
+                    crate::classify::is_zero(&(parameter - expected), &policy),
+                    Some(true)
+                );
+                for reversed in [false, true] {
+                    let (support, parameter) = if reversed {
+                        (parallel.reversed(), Real::one() - parameter)
+                    } else {
+                        (parallel.clone(), parameter.clone())
+                    };
+                    let derivative = decided(
+                        CurveSupport2::Parallel(support)
+                            .derivative_at(&parameter, &policy)
+                            .unwrap(),
+                    );
+                    assert_eq!(derivative.zero_status(), hyperreal::ZeroKnowledge::Zero);
+                }
+                let other = CurveSupport2::Parallel(source.parallel_left(-Real::one()).unwrap());
+                let derivative = decided(other.derivative_at(parameter, &policy).unwrap());
+                assert_eq!(
+                    crate::classify::is_zero(&(derivative.dx() - Real::from(2)), &policy),
+                    Some(true)
+                );
+                assert_eq!(
+                    crate::classify::is_zero(
+                        &(derivative.dy() - Real::from(4) * (parameter - Real::from(2))),
+                        &policy
+                    ),
+                    Some(true)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn parallel_source_tangents_exclude_poles_and_undefined_normals() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        let rational = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+            vec![Real::one(), -Real::one()],
+        )
+        .unwrap();
+        let stationary = QuadraticBezier2::new(
+            Point2::from_values(4, 0),
+            Point2::from_values(2, 0),
+            Point2::from_values(1, 0),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for distance in [Real::zero(), Real::one()] {
+                let parallel = rational.parallel_left(distance.clone()).unwrap();
+                assert_eq!(
+                    parallel.source_point_at(&q(1, 2), &policy),
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                );
+                assert_eq!(
+                    parallel.source_tangent_at(&q(1, 2), &policy).unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                );
+                let support = CurveSupport2::Parallel(parallel.clone());
+                assert_eq!(
+                    support.derivative_at(&q(1, 2), &policy).unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                );
+                for t in [-1, 2] {
+                    assert_eq!(
+                        parallel.source_point_at(&Real::from(t), &policy),
+                        Classification::Decided(Point2::new(q(-t, 1 - 2 * t), q(-t, 1 - 2 * t)))
+                    );
+                    assert_eq!(
+                        parallel.source_tangent_at(&Real::from(t), &policy).unwrap(),
+                        Classification::Decided((-Real::one(), -Real::one()))
+                    );
+                    let derivative =
+                        decided(support.derivative_at(&Real::from(t), &policy).unwrap());
+                    assert_eq!(derivative.dx(), &q(-1, 9));
+                    assert_eq!(derivative.dy(), &q(-1, 9));
+                }
+                let parallel = stationary.parallel_left(distance.clone()).unwrap();
+                assert_eq!(
+                    parallel.source_tangent_at(&Real::from(2), &policy).unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                );
+                let derivative = CurveSupport2::Parallel(parallel)
+                    .derivative_at(&Real::from(2), &policy)
+                    .unwrap();
+                if distance == Real::zero() {
+                    assert_eq!(
+                        decided(derivative).zero_status(),
+                        hyperreal::ZeroKnowledge::Zero
+                    );
+                } else {
+                    assert_eq!(
+                        derivative,
+                        Classification::Uncertain(UncertaintyReason::Boundary)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_parallel_representatives_use_their_finite_support_range() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(1, 2), Real::zero()),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                // This straight parallel is regular on every finite range.
+                let fragment = crate::BezierParallelFragment2::from_certified_range(
+                    parallel.clone(),
+                    BezierParameterRange2::new_validated(
+                        BezierParameter2::Exact(Real::from(2)),
+                        BezierParameter2::Exact(Real::from(4)),
+                    ),
+                    reversed,
+                );
+                let point = decided(fragment.representative_point(&policy).unwrap());
+                assert_eq!(point.y(), &Real::one());
+                assert_eq!(
+                    crate::classify::compare_reals(point.x(), &Real::from(2), &policy),
+                    Some(std::cmp::Ordering::Greater)
+                );
+                assert_eq!(
+                    crate::classify::compare_reals(point.x(), &Real::from(4), &policy),
+                    Some(std::cmp::Ordering::Less)
+                );
+            }
+        }
+    }
+
+    #[test]
     fn injectivity_certificates_own_their_domain_and_circle_chart() {
         let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -605,7 +879,7 @@ impl CurveSupport2 {
                 Ok(curve.point_at_affine_classified(parameter, policy))
             }
             Self::Bezier(curve) => Ok(curve.point_at(parameter, policy)),
-            Self::Parallel(parallel) => parallel.point_at_affine(parameter, policy),
+            Self::Parallel(parallel) => parallel.point_at(parameter, policy),
             Self::Line(chord) => match chord.exact_line() {
                 Some(line) => Ok(Classification::Decided(line.point_at(parameter.clone()))),
                 None => Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),

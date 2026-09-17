@@ -23040,7 +23040,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         for parameter in [Real::zero(), Real::one()] {
             let Classification::Decided(point) =
-                other.source_point_at(&parameter, &CurveContext::STRICT)?
+                other.source_point_at(&parameter, &CurveContext::STRICT)
             else {
                 continue;
             };
@@ -95419,11 +95419,7 @@ impl BezierAnalyticParallelPoint2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let source = match self
-            .data
-            .parallel
-            .source_point_at_unchecked(parameter, policy)
-        {
+        let source = match self.data.parallel.source_point_at(parameter, policy) {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -110677,9 +110673,8 @@ impl BezierParallelSingularityAnalysis2 {
 fn exact_quadratic_parallel_cusp_candidates(
     speed_squared: &[Real],
     signed_curvature_term: &[Real],
-    range: &CurveParameterRange2,
     policy: &CurveContext,
-) -> CurveResult<Option<Vec<BezierParameter2>>> {
+) -> CurveResult<Option<Vec<Real>>> {
     let curvature = polynomial_trim_structural_zeros(signed_curvature_term.to_vec());
     let [curvature] = curvature.as_slice() else {
         return Ok(None);
@@ -110726,17 +110721,10 @@ fn exact_quadratic_parallel_cusp_candidates(
         }
         _ => return Ok(None),
     };
-    let mut roots = Vec::with_capacity(candidates.len());
-    for candidate in candidates {
-        match CurveParameterDomain2::new(range, None)
-            .contains_finite_parameter(&candidate.clone().into(), policy)?
-        {
-            Classification::Decided(true) => roots.push(BezierParameter2::Exact(candidate)),
-            Classification::Decided(false) => {}
-            Classification::Uncertain(_) => return Ok(None),
-        }
-    }
-    Ok(Some(roots))
+    // These represented values carry the selected unsquared cusp identity.
+    // The consuming range owns admission; pointwise derivative replay needs
+    // the identity without discovering roots on an unrelated interval.
+    Ok(Some(candidates))
 }
 
 impl BezierParallel2 {
@@ -110891,10 +110879,15 @@ impl BezierParallel2 {
         parameter: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<(Real, Real)>> {
-        match in_closed_unit_interval(parameter, policy) {
-            Some(true) => {}
-            Some(false) => return Err(CurveError::InvalidBezierParameter),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+        if let Some(source) = self.rational_source() {
+            let weight = Real::eval_poly(&source.homogeneous_power_basis()?.weight, parameter);
+            match real_sign(&weight, policy) {
+                Some(RealSign::Positive | RealSign::Negative) => {}
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
         }
         let differential = self.differential()?;
         let tangent = (
@@ -114815,7 +114808,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<(CurvePoint2, Option<BezierParameter2>)>> {
         if let Some(parameter) = parameter.scalar() {
-            let point = match self.point_at_affine(parameter, policy)? {
+            let point = match self.point_at(parameter, policy)? {
                 Classification::Decided(point) => point,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -119339,12 +119332,11 @@ impl BezierParallel2 {
         else {
             return None;
         };
-        let Classification::Decided(other_derivatives) =
-            other.derivatives_at_classified(other_parameter, 1, policy)
+        let Classification::Decided(other_derivative) =
+            other.derivative_at_affine_classified(other_parameter, policy)
         else {
             return None;
         };
-        let other_derivative = other_derivatives.first()?;
         match real_sign(
             &(parallel_derivative.dx() * other_derivative.dy()
                 - parallel_derivative.dy() * other_derivative.dx()),
@@ -119575,26 +119567,13 @@ impl BezierParallel2 {
         &self.data.distance
     }
 
-    /// Evaluates the retained source at one represented parameter.
+    /// Evaluates the retained source at any finite affine parameter.
     ///
     /// Corner construction uses this after an offset-incidence solve has
     /// certified the same parameter on an analytic parallel. Keeping the
     /// source evaluation on the shared carrier avoids allocating a temporary
     /// zero-distance parallel merely to recover the tangency contact.
     pub(crate) fn source_point_at(
-        &self,
-        parameter: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Point2>> {
-        match in_closed_unit_interval(parameter, policy) {
-            Some(true) => {}
-            Some(false) => return Err(CurveError::InvalidBezierParameter),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-        }
-        Ok(self.source_point_at_unchecked(parameter, policy))
-    }
-
-    pub(crate) fn source_point_at_unchecked(
         &self,
         parameter: &Real,
         policy: &CurveContext,
@@ -119619,33 +119598,18 @@ impl BezierParallel2 {
         }
     }
 
-    /// Evaluates the exact analytic parallel at one represented parameter.
+    /// Evaluates this analytic parallel at any finite affine parameter.
+    ///
+    /// Fragment and operation ranges own parameter admission. Evaluation
+    /// certifies a finite source point and, for nonzero displacement, its
+    /// defined normal at the requested parameter.
     pub fn point_at(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
-        match in_closed_unit_interval(parameter, policy) {
-            Some(true) => {}
-            Some(false) => return Err(CurveError::InvalidBezierParameter),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-        }
-        self.point_at_affine(parameter, policy)
-    }
-
-    /// Evaluates this analytic parallel at any finite affine parameter.
-    ///
-    /// Exterior corner construction calls this only after its incident-cell
-    /// solver has proved that no source pole or tangent singularity separates
-    /// the parameter from the authored endpoint. The local weight and speed
-    /// predicates below remain authoritative at the selected parameter.
-    pub(crate) fn point_at_affine(
-        &self,
-        parameter: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Point2>> {
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
-            return Ok(self.source_point_at_unchecked(parameter, policy));
+            return Ok(self.source_point_at(parameter, policy));
         }
         let differential = self.differential()?;
         let source_point = if let Some(source) = self.rational_source() {
@@ -119693,17 +119657,15 @@ impl BezierParallel2 {
         )))
     }
 
-    /// Evaluates the exact first derivative of the analytic parallel.
+    /// Evaluates the exact first derivative at any finite affine parameter.
+    ///
+    /// Fragment and operation ranges own admission. Source poles and undefined
+    /// normals remain excluded; regular-source cusps have an exact zero derivative.
     pub fn derivative_at(
         &self,
         parameter: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveDerivative2>> {
-        match in_closed_unit_interval(parameter, policy) {
-            Some(true) => {}
-            Some(false) => return Err(CurveError::InvalidBezierParameter),
-            None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-        }
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
             return match self.source() {
                 BezierParallelSource2::Quadratic(_) | BezierParallelSource2::Cubic(_) => {
@@ -119714,7 +119676,7 @@ impl BezierParallel2 {
                     )))
                 }
                 BezierParallelSource2::Rational(source) => {
-                    Ok(source.derivative_at_classified(parameter, policy))
+                    Ok(source.derivative_at_affine_classified(parameter, policy))
                 }
             };
         }
@@ -119752,43 +119714,70 @@ impl BezierParallel2 {
         }
         let speed = speed_squared.clone().sqrt()?;
         let speed_cubed = &speed_squared * &speed;
-        let tangent_dot_derivative =
-            &tangent_x * &tangent_derivative_x + &tangent_y * &tangent_derivative_y;
-        let normal_derivative_x = ((Real::zero() - &tangent_derivative_y) / &speed)?
-            + ((&tangent_y * &tangent_dot_derivative) / &speed_cubed)?;
-        let normal_derivative_y = (tangent_derivative_x / &speed)?
-            - ((&tangent_x * tangent_dot_derivative) / speed_cubed)?;
-        let (source_derivative_x, source_derivative_y) = if let Some(weight) = weight {
-            let weight_squared = &weight * &weight;
-            (
-                (&tangent_x / &weight_squared)?,
-                (&tangent_y / weight_squared)?,
-            )
-        } else {
-            (tangent_x.clone(), tangent_y.clone())
-        };
-        let derivative = CurveDerivative2::new(
-            source_derivative_x + self.distance() * normal_derivative_x,
-            source_derivative_y + self.distance() * normal_derivative_y,
-        );
-        if derivative.zero_status() == ZeroKnowledge::Unknown
-            && let Ok(Classification::Decided(analysis)) =
-                self.singularity_analysis(&CurveParameterRange2::unit(), policy)
-            && analysis
-                .parallel_cusps()
-                .iter()
-                .any(|cusp| cusp.scalar() == Some(parameter))
+        // For H=(X'W-XW', Y'W-YW'), S=H·H and C=H'_x H_y-H'_y H_x,
+        // JH' S-JH(H·H')=H C. Both coordinates therefore share one scalar:
+        // Q'=H*(1/W²+d C/S^(3/2)), with W=1 for a polynomial source.
+        let curvature = &tangent_derivative_x * &tangent_y - &tangent_derivative_y * &tangent_x;
+        let weight_squared = weight.map_or_else(Real::one, |weight| &weight * &weight);
+        let source_scale = (Real::one() / &weight_squared)?;
+        let normal_curvature = self.distance() * curvature;
+        let mut scale = &source_scale + (&normal_curvature / speed_cubed)?;
+        if scale.zero_status() != ZeroKnowledge::Zero
+            && scale.exact_rational_ref().is_none()
+            && let Ok(Some(certified_scale)) =
+                policy.bounded_exact_predicate_pass(|| -> CurveResult<Option<Real>> {
+                    let Some(sign @ (RealSign::Positive | RealSign::Negative)) =
+                        real_sign(&normal_curvature, policy)
+                    else {
+                        return Ok(None);
+                    };
+                    // K²=S³ determines the magnitude without a nested square
+                    // root. Its sign distinguishes a cusp from the opposite
+                    // normal sheet, where the derivative is twice P'.
+                    let signed_curvature = &normal_curvature * &weight_squared;
+                    let squared_difference = &signed_curvature * &signed_curvature
+                        - &speed_squared * &speed_squared * &speed_squared;
+                    let selected_scale = if sign == RealSign::Negative {
+                        Real::zero()
+                    } else {
+                        Real::from(2_i8) * &source_scale
+                    };
+                    match crate::classify::is_zero(&squared_difference, policy) {
+                        Some(true) => return Ok(Some(selected_scale)),
+                        Some(false) => return Ok(None),
+                        None => {}
+                    }
+                    if matches!(self.source(), BezierParallelSource2::Quadratic(_)) {
+                        let speed_squared = parallel_speed_squared_polynomial(differential);
+                        let mut curvature = parallel_signed_curvature_polynomial(
+                            differential,
+                            None,
+                            self.distance(),
+                        );
+                        if sign == RealSign::Positive {
+                            curvature = polynomial_scale(&curvature, &-Real::one());
+                        }
+                        if exact_quadratic_parallel_cusp_candidates(
+                            &speed_squared,
+                            &curvature,
+                            policy,
+                        )?
+                        .is_some_and(|candidates| candidates.iter().any(|cusp| cusp == parameter))
+                        {
+                            return Ok(Some(selected_scale));
+                        }
+                    }
+                    Ok(None)
+                })
         {
-            // The represented radical was constructed by the exact selected-
-            // branch cusp equation. Reuse that certificate instead of asking
-            // scalar simplification to rediscover a nested-radical zero in
-            // both derivative coordinates.
-            return Ok(Classification::Decided(CurveDerivative2::new(
-                Real::zero(),
-                Real::zero(),
-            )));
+            // Reuse pointwise or represented selected-branch evidence without
+            // discovering a global root set or consuming approximation.
+            scale = certified_scale;
         }
-        Ok(Classification::Decided(derivative))
+        Ok(Classification::Decided(CurveDerivative2::new(
+            tangent_x * &scale,
+            tangent_y * scale,
+        )))
     }
 
     /// Isolates source singularities and parallel cusps on a closed exact range.
@@ -119875,30 +119864,45 @@ impl BezierParallel2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let candidates =
-            if matches!(self.source(), BezierParallelSource2::Quadratic(_)) && weight.is_none() {
-                match exact_quadratic_parallel_cusp_candidates(
-                    &speed_squared,
-                    &signed_curvature_term,
-                    range,
-                    policy,
-                )? {
-                    Some(candidates) => candidates,
-                    None => match domain.finite_roots(&cusp_polynomial, policy)? {
-                        Classification::Decided(roots) => roots,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
+        let represented_candidates = if matches!(self.source(), BezierParallelSource2::Quadratic(_))
+            && weight.is_none()
+        {
+            match exact_quadratic_parallel_cusp_candidates(
+                &speed_squared,
+                &signed_curvature_term,
+                policy,
+            )? {
+                Some(candidates) => {
+                    let mut roots = Vec::with_capacity(candidates.len());
+                    let mut complete = true;
+                    for candidate in candidates {
+                        match domain.contains_finite_parameter(&candidate.clone().into(), policy)? {
+                            Classification::Decided(true) => {
+                                roots.push(BezierParameter2::Exact(candidate))
+                            }
+                            Classification::Decided(false) => {}
+                            Classification::Uncertain(_) => {
+                                complete = false;
+                                break;
+                            }
                         }
-                    },
-                }
-            } else {
-                match domain.finite_roots(&cusp_polynomial, policy)? {
-                    Classification::Decided(roots) => roots,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
                     }
+                    complete.then_some(roots)
                 }
-            };
+                None => None,
+            }
+        } else {
+            None
+        };
+        let candidates = match represented_candidates {
+            Some(candidates) => candidates,
+            None => match domain.finite_roots(&cusp_polynomial, policy)? {
+                Classification::Decided(roots) => roots,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            },
+        };
         let mut parallel_cusps = Vec::new();
         for candidate in candidates {
             // On the squared cusp equation, a negative curvature term proves
@@ -135612,8 +135616,8 @@ mod conversion_tests {
                 &policy,
             ));
             assert!(!parallel.regular_fragment_has_certified_injective_axis(&exterior, &policy));
-            let first = parallel.point_at_affine(&Real::from(-1), &policy).unwrap();
-            let second = parallel.point_at_affine(&Real::one(), &policy).unwrap();
+            let first = parallel.point_at(&Real::from(-1), &policy).unwrap();
+            let second = parallel.point_at(&Real::one(), &policy).unwrap();
             assert_eq!(first, Classification::Decided(Point2::from_values(0, 0)));
             assert_eq!(second, first);
             let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
@@ -141325,9 +141329,7 @@ mod conversion_tests {
             .transform_similarity(&quarter_turn)
             .unwrap();
             assert_eq!(
-                parallel
-                    .point_at_affine(&Real::from(2_i8), &policy)
-                    .unwrap(),
+                parallel.point_at(&Real::from(2_i8), &policy).unwrap(),
                 Classification::Decided(Point2::new(Real::one(), Real::zero())),
             );
             let range = BezierParameterRange2::new_validated(

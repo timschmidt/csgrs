@@ -3661,7 +3661,7 @@ mod analytic_dispatch_tests {
                 let bounds = [Real::from(-2), Real::from(2)];
                 let images = bounds
                     .each_ref()
-                    .map(|t| CurvePoint2::from(exact(source.point_at_affine(t, &policy).unwrap())));
+                    .map(|t| CurvePoint2::from(exact(source.point_at(t, &policy).unwrap())));
                 let [start, end] = bounds.map(|t| {
                     if selected_bounds {
                         selected(t, &policy)

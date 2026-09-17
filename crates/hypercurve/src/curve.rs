@@ -10789,9 +10789,10 @@ fn decided_parallel_point(
     let point = if source_point {
         parallel.source_point_at(parameter, policy)
     } else {
-        parallel.point_at_affine(parameter, policy)
-    }
-    .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
+        parallel
+            .point_at(parameter, policy)
+            .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
+    };
     match point {
         Classification::Decided(point) => Ok(point),
         Classification::Uncertain(reason) => {
@@ -10808,7 +10809,7 @@ fn bezier_parallel_source_point_evidence(
     policy: &CurveContext,
 ) -> ExactCurveResult<CurvePoint2> {
     if let Some(parameter) = parameter.scalar() {
-        return match parallel.source_point_at_unchecked(parameter, policy) {
+        return match parallel.source_point_at(parameter, policy) {
             Classification::Decided(point) => Ok(point.into()),
             Classification::Uncertain(reason) => {
                 Err(ExactCurveError::blocked(operation, family, reason))
