@@ -1,7 +1,7 @@
 mod support;
 
 use hypercurve::{
-    BezierBoundaryLoop2, BezierSubcurve2, Classification, CurveContext, CurveError, CurveRegion2,
+    BezierSubcurve2, Classification, Curve2, CurveContext, CurveError, CurvePath2, CurveRegion2,
     Point2, PolynomialBSplineCurve2, RationalBSplineCurve2, Real, RetainedSpanAxisMonotonicity,
 };
 
@@ -298,16 +298,14 @@ fn extracted_bspline_spans_feed_unified_region_area() {
             .spans()
             .to_vec(),
     );
-    let region = CurveRegion2::new(vec![
-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
-            .unwrap()
-            .into(),
-    ])
-    .unwrap();
+    let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
+    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
+        .unwrap()
+        .into_value();
 
     assert_eq!(
         decided(region.signed_area(&policy()).unwrap().into_value()),
-        Some(q(-88, 3))
+        Some(q(88, 3))
     );
 }
 
@@ -524,12 +522,10 @@ fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
     fragments.extend(
         decided(lower.extract_bezier_spans(&policy()).unwrap()).native_subcurves(&policy()),
     );
-    let region = CurveRegion2::new(vec![
-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
-            .unwrap()
-            .into(),
-    ])
-    .unwrap();
+    let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
+    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
+        .unwrap()
+        .into_value();
 
     assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
 }
@@ -802,12 +798,10 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
     fragments.extend(
         decided(lower.extract_bezier_spans(&policy()).unwrap()).native_subcurves(&policy()),
     );
-    let region = CurveRegion2::new(vec![
-        BezierBoundaryLoop2::new(fragments, &CurveContext::STRICT)
-            .unwrap()
-            .into(),
-    ])
-    .unwrap();
+    let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
+    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
+        .unwrap()
+        .into_value();
 
     assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
 }

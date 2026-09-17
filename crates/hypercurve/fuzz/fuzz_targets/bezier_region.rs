@@ -3,9 +3,9 @@
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2,
     BezierParameterInterval, BezierParameterPolynomial, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierSplitFragment2, Classification, CurveContext,
-    CurvePoint2, CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real,
+    BezierRetainedEndpointEnvelope2, Classification, Curve2, CurveContext, CurvePath2, CurvePoint2,
+    CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2, RationalQuadraticBezier2,
+    Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -71,12 +71,8 @@ fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
     Some(BezierParameter2::algebraic(parameter))
 }
 
-fn algebraic_line_fragment(
-    start: Point2,
-    end: Point2,
-    policy: &CurveContext,
-) -> Option<BezierSplitFragment2> {
-    Some(BezierSplitFragment2::AlgebraicChord(
+fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> Option<Curve2> {
+    Some(Curve2::from(
         match BezierAlgebraicChord2::try_new(
             CurvePoint2::from(start),
             CurvePoint2::from(end),
@@ -221,19 +217,16 @@ fuzz_target!(|data: &[u8]| {
     ];
     let outer = algebraic_outer
         .into_iter()
-        .filter_map(|(start, end)| algebraic_line_fragment(start, end, &policy))
+        .filter_map(|(start, end)| algebraic_chord(start, end, &policy))
         .collect::<Vec<_>>();
     let inner = algebraic_inner
         .into_iter()
-        .filter_map(|(start, end)| algebraic_line_fragment(start, end, &policy))
+        .filter_map(|(start, end)| algebraic_chord(start, end, &policy))
         .collect::<Vec<_>>();
     if outer.len() == 4 && inner.len() == 4 {
-        if let (Ok(outer), Ok(inner)) = (
-            CurveRegionBoundaryLoop2::new(outer, &policy),
-            CurveRegionBoundaryLoop2::new(inner, &policy),
-        ) {
-            if let Ok(region) = CurveRegion2::new(vec![outer, inner]) {
-                let _ = region.loop_roles(&policy);
+        if let (Ok(outer), Ok(inner)) = (CurvePath2::try_new(outer), CurvePath2::try_new(inner)) {
+            if let Ok(region) = CurveRegion2::try_from_boundary_paths(&[outer, inner], &policy) {
+                let _ = region.value.loop_roles(&policy);
             }
         }
     }

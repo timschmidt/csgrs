@@ -145,14 +145,12 @@ fn algebraic_polynomial_parameter(
     )))
 }
 
-fn retained_algebraic_line_fragment(
-    start: Point2,
-    end: Point2,
-    policy: &CurveContext,
-) -> CurveResult<BezierSplitFragment2> {
-    Ok(BezierSplitFragment2::AlgebraicChord(decided(
-        BezierAlgebraicChord2::try_new(CurvePoint2::from(start), CurvePoint2::from(end), policy)?,
-    )))
+fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> CurveResult<Curve2> {
+    Ok(Curve2::from(decided(BezierAlgebraicChord2::try_new(
+        CurvePoint2::from(start),
+        CurvePoint2::from(end),
+        policy,
+    )?)))
 }
 
 fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> CurveResult<()> {
@@ -215,12 +213,12 @@ fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> Curve
     Ok(())
 }
 
-fn main() -> CurveResult<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let first_region = square_region(0, 0, 4, 4)?;
     let second_region = square_region(2, 0, 6, 4)?;
     if std::env::var_os("HYPERCURVE_BEZIER_REGION_MEASURE_ONLY").is_some() {
-        return benchmark_measurements(&first_region, &policy);
+        return Ok(benchmark_measurements(&first_region, &policy)?);
     }
     let region_clone_iterations = 1_000_000_u32;
     let started = Instant::now();
@@ -498,15 +496,10 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let algebraic_split = decided(upper.split_at_parameters(
-        &[algebraic_polynomial_parameter(
-            vec![r(-1), r(0), r(2)],
-            q(2, 3),
-            q(3, 4),
-            &policy,
-        )?],
-        &policy,
-    )?);
+    let algebraic_cut =
+        algebraic_polynomial_parameter(vec![r(-1), r(0), r(2)], q(2, 3), q(3, 4), &policy)?;
+    let algebraic_split =
+        decided(upper.split_at_parameters(std::slice::from_ref(&algebraic_cut), &policy)?);
     let mut algebraic_loop_fragments = algebraic_split.fragments().to_vec();
     algebraic_loop_fragments.extend(
         algebraic_split
@@ -517,13 +510,12 @@ fn main() -> CurveResult<()> {
             .collect::<CurveResult<Vec<_>>>()?,
     );
     let algebraic_loop = retained_loop(algebraic_loop_fragments)?;
-    let mut algebraic_region_fragments = algebraic_split.fragments().to_vec();
-    algebraic_region_fragments.push(BezierSplitFragment2::Materialized {
-        start: BezierParameter2::Exact(Real::zero()),
-        end: BezierParameter2::Exact(Real::one()),
-        curve: BezierSubcurve2::Quadratic(lower),
-    });
-    let algebraic_region = CurveRegion2::new(vec![retained_loop(algebraic_region_fragments)?])?;
+    let (head, tail) = Curve2::from(upper.clone())
+        .split_at(algebraic_cut.into(), &policy)?
+        .into_value();
+    let algebraic_path = CurvePath2::try_new(vec![head, tail, lower.into()])?;
+    let algebraic_region =
+        CurveRegion2::try_from_boundary_paths(&[algebraic_path], &policy)?.into_value();
     let algebraic_region_query = p(2, 0);
     decided(
         algebraic_region
@@ -593,20 +585,17 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let algebraic_line_region = CurveRegion2::new(vec![
-        retained_loop(vec![
-            retained_algebraic_line_fragment(p(-3, -3), p(3, -3), &policy)?,
-            retained_algebraic_line_fragment(p(3, -3), p(3, 3), &policy)?,
-            retained_algebraic_line_fragment(p(3, 3), p(-3, 3), &policy)?,
-            retained_algebraic_line_fragment(p(-3, 3), p(-3, -3), &policy)?,
-        ])?,
-        retained_loop(vec![
-            retained_algebraic_line_fragment(p(-1, -1), p(1, -1), &policy)?,
-            retained_algebraic_line_fragment(p(1, -1), p(1, 1), &policy)?,
-            retained_algebraic_line_fragment(p(1, 1), p(-1, 1), &policy)?,
-            retained_algebraic_line_fragment(p(-1, 1), p(-1, -1), &policy)?,
-        ])?,
-    ])?;
+    let mut algebraic_paths = Vec::with_capacity(2);
+    for (min, max) in [(-3, 3), (-1, 1)] {
+        algebraic_paths.push(CurvePath2::try_new(vec![
+            algebraic_chord(p(min, min), p(max, min), &policy)?,
+            algebraic_chord(p(max, min), p(max, max), &policy)?,
+            algebraic_chord(p(max, max), p(min, max), &policy)?,
+            algebraic_chord(p(min, max), p(min, min), &policy)?,
+        ])?);
+    }
+    let algebraic_line_region =
+        CurveRegion2::try_from_boundary_paths(&algebraic_paths, &policy)?.into_value();
     let started = Instant::now();
     let mut algebraic_line_role_checksum = 0_usize;
     for _ in 0..iterations {
