@@ -235,6 +235,15 @@ change responsible for their lifetimes. Per-case allocation windows subtract
 warmed starting live bytes, whereas the whole-process peak includes warmup
 and process caches. The resource assessment remains open.
 
+The [magnitude runtime screen](../benchmarks/checkpoints/2026-09-17-verus-magnitude-screen.json)
+compares the fixed baseline with `ee773bbf` across all nine ordinary benchmark
+suites: 18 successful processes and 1,449 matching cases. All workload files
+match both revisions. The short screen flags 281 positive, nonoverlapping
+within-run median intervals, including external comparators. Every flag remains
+open pending longer alternating repeats; suite averages cannot dismiss them.
+The archive preserves all cases and raw Criterion output. It establishes
+neither performance parity nor acceptance of the runtime.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
