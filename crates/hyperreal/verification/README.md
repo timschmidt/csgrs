@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies fifty-one production contracts (fifty
-functions and one constant) and fifty-two arithmetic model theorems. The rest
+functions and one constant) and fifty-nine arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -157,7 +157,7 @@ sums keep their distinct raw-alignment and inactive-term rules while proving
 the complete success/fallback boundary and canonical results.
 [`rational_model.rs`](rational_model.rs) defines signed, unbounded
 fractions with positive denominators, without assuming canonical reduction.
-Its eighteen theorems establish equivalence and ordering laws, rescaling,
+Its twenty-one theorems establish equivalence and ordering laws, rescaling,
 arithmetic closure, ring identities, reciprocal correctness, and respect for
 equivalent representations. GCD cancellation proves that normalization yields
 a canonical signed fraction with the same value, including zero. The native
@@ -166,6 +166,16 @@ call sites retain their existing branch selection and arithmetic order; their
 positive-denominator preconditions and surrounding algorithms still need caller
 proofs. These model theorems do not yet establish that
 all `Rational` methods implement the model.
+
+Bézout witnesses are constructed by induction over the mathematical Euclidean
+recurrence. They establish Euclid's divisibility lemma, preservation of
+coprimality under products and exact quotient cancellation, and uniqueness of
+signed reduced fractions with positive denominators. Normalization is therefore
+idempotent, and comparing normalized parts characterizes rational equivalence
+even for unreduced inputs. These are mathematical foundations for the native
+cross-cancellation loop and rational equality; those production implementations
+and their callers still require refinement proofs. The new theorems are erased
+from normal Rust builds.
 
 The float proofs stop at decomposition into a signed integer times a power of
 two. The `BigUint` construction, reduction, retained-fact cache, and public

@@ -61,6 +61,10 @@
     "verified::gcd::gcd_subtract",
     "verified::gcd::gcd_scaled",
     "verified::gcd::gcd_reduction",
+    "verified::fraction::gcd_bezout",
+    "verified::fraction::coprime_divides_product",
+    "verified::fraction::coprime_product",
+    "verified::fraction::coprime_quotients",
     "verified::gcd::gcd_bound",
     "verified::gcd::gcd_odd_power_two",
     "verified::gcd::gcd_power_two_factors",
@@ -105,7 +109,10 @@
     "rational_model::reciprocal_is_inverse",
     "rational_model::addition_respects_equivalence",
     "rational_model::multiplication_respects_equivalence",
-    "rational_model::reduction_preserves_value"
+    "rational_model::reduction_preserves_value",
+    "rational_model::canonical_unique",
+    "rational_model::reduction_is_idempotent",
+    "rational_model::canonical_form_characterizes_equivalence"
   ],
   "obligations": [
     {"area": "Integer and rational mathematical semantics", "status": "partial"},
