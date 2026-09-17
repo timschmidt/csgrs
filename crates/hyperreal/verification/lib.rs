@@ -6,3 +6,4 @@ mod verified;
 
 mod rational_model;
 mod magnitude_model;
+mod bit_length_model;
