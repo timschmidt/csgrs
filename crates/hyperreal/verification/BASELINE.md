@@ -435,6 +435,23 @@ Strict all-feature all-target Clippy passes, and the annotations erase to
 byte-identical ordinary Rust relative to `cdc6d3a`. All thirteen broader proof
 groups and baseline acceptance remain incomplete.
 
+The [fresh consumer core comparison](../benchmarks/checkpoints/2026-09-17-verus-consumer-metadata-core.json)
+records all 51 commands on both `a2da8e2` and `cdc6d3a`, with identical commands,
+controlled environments, working directories and pinned consumer sources.
+The baseline passes 40 and fails eleven; the candidate passes 41 and fails ten.
+Every candidate failure also occurs in the fresh control: the Symbolica instance
+conflict, five formatting checks, Hypersolve lint/docs, Hypercurve lint and
+Hypercurve UI tests. Both revisions fail the same two UI cases. All three UI
+WASM/Trunk builds and Hypercurve UI Clippy pass on both revisions.
+
+The candidate passes all four allocation profiles. Baseline Hypersolve fails
+the Pow10 dense-Bareiss counting-epoch assertion with 432 retained bytes; the
+candidate's corresponding row reports zero and its complete profile passes.
+This bounded improvement does not resolve the separately measured whole-process
+peak increase. The remaining feature/coverage, trace, long-case and native
+consumer comparisons were not complete at this checkpoint. Live Hypercurve
+remains untouched, and all failures are retained as unresolved outcomes.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
