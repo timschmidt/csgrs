@@ -4065,7 +4065,7 @@
   "limits": [
     "Original formatting, Clippy, docs, UI and coverage failures remain failures, including unlicensed Symbolica contention; no unrelated process or license file was modified.",
     "Hypertri original coverage remains below its95percent gate; the isolated supplemental unknown-edge test is recorded separately. Hypersolve original fixture assertion still fails; its independently justified fixture supplement does not replace that record.",
-    "Hypercurve full and isolated long-case partition is still running and is not included here. Only pinned8228394 is used; live Hypercurve remains untouched.",
+    "Hypercurve full and isolated long-case partition was still running when this archive was captured. The incidental partial files listed in pending_hypercurve_snapshot are excluded from all completed-command counts and qualification. Final results require their own checkpoint. Only pinned8228394 is used; live Hypercurve remains untouched.",
     "Native performance, full implementation proof and final baseline acceptance remain pending.",
     "Ignored and filtered release tests are not passes. Trace counts and fixture durations are not performance evidence.",
     "Coverage report directories can contain incidental earlier consumer reports; only completed command-specific production totals support coverage counts.",
@@ -4076,5 +4076,9 @@
     "files": 205,
     "bytes": 7299846,
     "sha256": "8c65887ff3428199ad0aceaee3c468324ce9422d33efe938e51b39ca90b888b6"
-  }
+  },
+  "pending_hypercurve_snapshot": [
+    "bound-composition-consumers/hypercurve-release/candidate/remaining-suite.log",
+    "bound-composition-consumers/hypercurve-release/inputs.json"
+  ]
 }
