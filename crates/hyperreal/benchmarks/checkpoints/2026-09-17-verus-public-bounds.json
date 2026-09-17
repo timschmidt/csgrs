@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "status": "public_bound_adapter_milestone_not_complete",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "3d17187a910772848ac6549ec9369b5af245dd45",
+  "runtime_reference": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "verification": {
+    "units": 546,
+    "executable_contracts": 90,
+    "functions": 82,
+    "constants": 8,
+    "model_theorems": 102,
+    "source_hashes": 129,
+    "source_hashes_match_commit": true,
+    "no_cheating": true,
+    "entire_proof_target": true,
+    "open_obligation_groups": 13
+  },
+  "new_contracts": [
+    "BoundInfo::magnitude_bits",
+    "public_sign",
+    "private_sign"
+  ],
+  "new_refinements": [
+    "Public magnitude export preserves valid nonzero and exact-binade certificates.",
+    "Both sign conversions preserve their real-number denotation."
+  ],
+  "negative_guards": {
+    "bound_mutations_rejected": 35,
+    "cache_mutations_rejected": 13,
+    "acceptance_and_dependency_identity_tests": 10,
+    "reused_guards": [
+      {
+        "count": 85,
+        "artifact": "benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json"
+      },
+      {
+        "count": 21,
+        "artifact": "benchmarks/checkpoints/2026-09-17-verus-public-carriers.json"
+      }
+    ],
+    "note": "The prior guarded inputs are unchanged. No fresh combined 154-mutation or assumption-bypass run is claimed."
+  },
+  "ordinary_runtime": {
+    "byte_identical_expansion_to_runtime_reference": true,
+    "expanded_sha256": "ad33a1bc262c820ffee036dee9152bf7d8675f842f661aa964dbfb9317671d83",
+    "lines": 36100,
+    "checks": [
+      {
+        "label": "candidate",
+        "step": "clippy-all",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 7.278438091278076
+      },
+      {
+        "label": "candidate",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 0.32469797134399414
+      }
+    ],
+    "format_check": "cargo fmt --all -- --check passed",
+    "note": "Only proof annotations changed in production; method bodies and types are unchanged."
+  },
+  "failed_attempts": [
+    "Invoking unittest by package path failed the acceptance-script sibling import. The documented direct script invocation passes all ten tests; both logs are retained."
+  ],
+  "limits": [
+    "Denotation lemmas require valid incoming certificates. Production callers and certificate producers remain open.",
+    "Inexact magnitude metadata is exported unchanged; no real-binade or error bound is asserted for it.",
+    "All thirteen whole-implementation proof groups and baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-public-bounds.tar.gz",
+    "bytes": 586578,
+    "files": 200,
+    "sha256": "617b2f655d35422dde624ae2378ac35086d060abc47c88e500d1da0efa8fc228"
+  }
+}

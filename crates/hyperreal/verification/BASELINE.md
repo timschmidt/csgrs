@@ -486,6 +486,24 @@ mutation results; no fresh combined 144-mutation run is claimed. Ordinary
 expanded Rust remains byte-identical to `cdc6d3a`. All thirteen broader proof
 groups and baseline acceptance remain incomplete.
 
+The [public bound adapter checkpoint](../benchmarks/checkpoints/2026-09-17-verus-public-bounds.json)
+at `3d17187` verifies the unchanged public/private sign conversion bodies and
+`BoundInfo::magnitude_bits`. Negative, zero and positive signs convert without
+loss, and magnitude export preserves both the exponent and its exactness flag.
+Three denotation lemmas connect these contracts to valid incoming real-number
+certificates. Inexact magnitudes acquire no new accuracy claim.
+
+The official run passes 546 units, 90 production contracts and 102 model
+theorems, with all 129 repository input hashes matching the commit. Thirty-five
+bound mutations, thirteen cache mutations and ten acceptance/dependency tests
+pass. The unchanged kernel/model and public-carrier inputs retain their earlier
+85 and 21 mutation results; no fresh combined 154-mutation run is claimed.
+Formatting and strict all-feature all-target Clippy pass, and ordinary expanded
+Rust remains byte-identical to `cdc6d3a`. The failed package-style test invocation
+and successful documented script invocation are both retained. Callers,
+certificate producers, all thirteen broader proof groups and baseline
+acceptance remain incomplete.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
