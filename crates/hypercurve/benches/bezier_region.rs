@@ -404,10 +404,9 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let region = decided(
-            CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy)
-                .into_value(),
-        );
+        let region = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy)
+            .expect("regularized arrangement region")
+            .into_value();
         checksum ^=
             black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
     }
@@ -418,10 +417,10 @@ fn main() -> CurveResult<()> {
     );
 
     let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
-    let classified_region = decided(
-        CurveRegion2::from_retained_arrangement_traversal(&graph, &retained_traversal, &policy)
-            .into_value(),
-    );
+    let classified_region =
+        CurveRegion2::try_from_arrangement_traversal(&graph, &retained_traversal, &policy)
+            .expect("regularized arrangement region")
+            .into_value();
     let classified_point = p(2, 0);
     decided(
         classified_region
@@ -473,10 +472,10 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut retained_checksum = 0_usize;
     for _ in 0..iterations {
-        let region = decided(
-            CurveRegion2::from_retained_arrangement_traversal(&graph, &retained_traversal, &policy)
-                .into_value(),
-        );
+        let region =
+            CurveRegion2::try_from_arrangement_traversal(&graph, &retained_traversal, &policy)
+                .expect("regularized arrangement region")
+                .into_value();
         retained_checksum ^=
             black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
         if let Classification::Decided(envelope) =
@@ -642,10 +641,13 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut overlap_checksum = 0_usize;
     for _ in 0..iterations {
-        let retained = decided(
-            CurveRegion2::from_retained_linear_overlap_traversal(&overlap_traversal, &policy)
-                .into_value(),
-        );
+        let retained = CurveRegion2::try_from_arrangement_traversal(
+            overlap_traversal.refinement().graph(),
+            overlap_traversal.traversal(),
+            &policy,
+        )
+        .expect("regularized arrangement region")
+        .into_value();
         overlap_checksum ^=
             black_box(format!("{:?}", decided(retained.signed_area(&policy)?.into_value())).len());
         if let Classification::Decided(roles) = retained.loop_roles(&policy)?.into_value() {
@@ -673,14 +675,10 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut conic_checksum = 0_usize;
     for _ in 0..iterations {
-        let region = decided(
-            CurveRegion2::from_retained_arrangement_traversal(
-                &conic_graph,
-                &conic_traversal,
-                &policy,
-            )
-            .into_value(),
-        );
+        let region =
+            CurveRegion2::try_from_arrangement_traversal(&conic_graph, &conic_traversal, &policy)
+                .expect("regularized arrangement region")
+                .into_value();
         conic_checksum ^=
             black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
     }

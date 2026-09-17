@@ -6889,7 +6889,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Err(self.blocked(0, reason));
             }
         };
-        let mut region = match CurveRegion2::from_certified_retained_arrangement_traversal(
+        let mut region = match CurveRegion2::from_certified_arrangement_traversal(
             &graph,
             &traversal,
             &self.data.policy,
@@ -10182,7 +10182,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
         };
-        let mut region = match CurveRegion2::from_certified_retained_arrangement_traversal(
+        let mut region = match CurveRegion2::from_certified_arrangement_traversal(
             &graph,
             &traversal,
             &self.data.policy,

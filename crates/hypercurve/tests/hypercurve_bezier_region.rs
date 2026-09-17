@@ -233,16 +233,15 @@ fn closed_polynomial_arrangement_materializes_retained_region_with_exact_area() 
     let graph =
         BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]).unwrap();
     let traversal = decided(graph.traverse_branch_free(&policy()));
-    let region = decided(
-        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
-            .into_value(),
-    );
+    let region = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy())
+        .expect("regularized arrangement region")
+        .into_value();
 
     assert_eq!(region.len(), 1);
     assert_eq!(region.boundary_loops()[0].len(), 4);
     assert_eq!(
         decided(region.signed_area(&policy()).unwrap()),
-        Some(q(-32, 3))
+        Some(q(32, 3))
     );
 }
 
@@ -256,11 +255,11 @@ fn open_arrangement_chain_does_not_materialize_region() {
         BezierArrangementGraph2::from_split_materializations(&[first_split, second_split]).unwrap();
     let traversal = decided(graph.traverse_branch_free(&policy()));
 
-    assert_eq!(
-        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
-            .into_value(),
-        Classification::Uncertain(UncertaintyReason::Boundary)
-    );
+    assert!(matches!(
+        CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy()),
+        Err(hypercurve::ExactCurveError::Blocked(blocker))
+            if blocker.reason() == UncertaintyReason::Boundary
+    ));
 }
 
 #[test]
@@ -365,16 +364,15 @@ fn conic_region_boundary_materializes_with_exact_area() {
     let graph =
         BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]).unwrap();
     let traversal = decided(graph.traverse_branch_free(&policy()));
-    let region = decided(
-        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
-            .into_value(),
-    );
+    let region = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy())
+        .expect("regularized arrangement region")
+        .into_value();
 
     assert_eq!(region.len(), 1);
     assert_eq!(region.boundary_loops()[0].len(), 4);
     let sqrt_three = Real::from(3_i8).sqrt().unwrap();
-    let expected = (Real::from(8_i8) / Real::from(3_i8)).unwrap()
-        - ((Real::from(32_i8) * sqrt_three * Real::pi()) / Real::from(27_i8)).unwrap();
+    let expected = ((Real::from(32_i8) * sqrt_three * Real::pi()) / Real::from(27_i8)).unwrap()
+        - (Real::from(8_i8) / Real::from(3_i8)).unwrap();
     let area = decided(region.signed_area(&policy()).unwrap())
         .expect("same-sign conic region area is supported");
     assert_real_close(&area, &expected, 1.0e-12);
@@ -405,25 +403,40 @@ fn resolved_linear_overlap_traversal_materializes_unified_region() {
     let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
     assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
 
-    let retained = decided(
-        CurveRegion2::from_retained_linear_overlap_traversal(&traversal, &policy()).into_value(),
-    );
+    let retained = CurveRegion2::try_from_arrangement_traversal(
+        traversal.refinement().graph(),
+        traversal.traversal(),
+        &policy(),
+    )
+    .expect("regularized arrangement region")
+    .into_value();
     assert_eq!(retained.len(), 1);
-    assert_eq!(retained.boundary_loops()[0].len(), 5);
+    assert_eq!(retained.boundary_loops()[0].len(), 4);
     assert!(!retained.has_algebraic_fragments());
     assert_eq!(
         decided(retained.signed_area(&policy()).unwrap()),
         Some(r(8))
     );
-    let retained_sources = retained.boundary_loops()[0]
-        .arrangement_sources()
-        .expect("linear-overlap retained loop keeps graph sources");
-    let role_evidence = decided(retained.curved_nesting_role_evidence(&policy()).unwrap());
-    let evidence_sources = role_evidence
-        .loop_arrangement_sources()
-        .expect("authoritative nesting evidence keeps loop sources");
-    assert_eq!(evidence_sources.len(), 1);
-    assert_eq!(evidence_sources[0].as_deref(), Some(retained_sources));
+    for (point, location) in [
+        (p(2, 1), RegionPointLocation::Inside),
+        (p(2, 0), RegionPointLocation::Boundary),
+        (p(5, 1), RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            decided(retained.classify_point(&point, &policy()).unwrap()),
+            location
+        );
+    }
+
+    // Exact line coalescing replaces the input subdivisions with four native
+    // edges. Their represented endpoints supply the geometric evidence.
+    assert_eq!(
+        decided(retained.loop_roles(&policy()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
+    let native = decided(retained.native_contours_fast_path(&policy()).unwrap());
+    assert_eq!(native.material_contours().len(), 1);
+    assert!(native.hole_contours().is_empty());
 }
 
 #[test]
@@ -475,13 +488,25 @@ fn resolved_rational_overlap_traversal_materializes_unified_region() {
     );
     assert_eq!(traversal.traversal().closed_count(), 1);
 
-    let retained = decided(
-        CurveRegion2::from_retained_rational_overlap_traversal(&traversal, &policy()).into_value(),
-    );
+    let retained = CurveRegion2::try_from_arrangement_traversal(
+        traversal.refinement().graph(),
+        traversal.traversal(),
+        &policy(),
+    )
+    .expect("regularized arrangement region")
+    .into_value();
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 5);
     assert!(!retained.has_algebraic_fragments());
-    assert!(retained.boundary_loops()[0].has_arrangement_sources());
+    let retained_sources = retained.boundary_loops()[0]
+        .arrangement_sources()
+        .expect("normalized curved boundary keeps arrangement provenance");
+    let role_evidence = decided(retained.curved_nesting_role_evidence(&policy()).unwrap());
+    let evidence_sources = role_evidence
+        .loop_arrangement_sources()
+        .expect("authoritative nesting evidence keeps loop sources");
+    assert_eq!(evidence_sources.len(), 1);
+    assert_eq!(evidence_sources[0].as_deref(), Some(retained_sources));
 
     assert!(decided(retained.signed_area(&policy()).unwrap()).is_some());
 }
@@ -505,15 +530,29 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
         &[1, 7]
     );
 
-    let retained = decided(
-        CurveRegion2::from_retained_linear_overlap_traversal(&traversal, &policy()).into_value(),
-    );
+    let retained = CurveRegion2::try_from_arrangement_traversal(
+        traversal.refinement().graph(),
+        traversal.traversal(),
+        &policy(),
+    )
+    .expect("regularized arrangement region")
+    .into_value();
     assert_eq!(retained.len(), 1);
-    assert_eq!(retained.boundary_loops()[0].len(), 6);
+    assert_eq!(retained.boundary_loops()[0].len(), 4);
     assert_eq!(
         decided(retained.signed_area(&policy()).unwrap()),
         Some(r(8))
     );
+    for (point, location) in [
+        (p(2, 1), RegionPointLocation::Inside),
+        (p(2, 0), RegionPointLocation::Boundary),
+        (p(5, 1), RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            decided(retained.classify_point(&point, &policy()).unwrap()),
+            location
+        );
+    }
 }
 
 #[test]
@@ -1076,10 +1115,9 @@ fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     ])
     .unwrap();
     let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
-    let retained = decided(
-        CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
-            .into_value(),
-    );
+    let retained = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy())
+        .expect("regularized arrangement region")
+        .into_value();
     let sources = retained.boundary_loops()[0]
         .arrangement_sources()
         .expect("graph-built retained loop keeps source provenance");
@@ -1279,14 +1317,166 @@ proptest! {
         ])
         .unwrap();
         let traversal = decided(graph.traverse_branch_free(&policy()));
-        let region = decided(
-            CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy())
-                .into_value(),
-        );
+        let region = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy()).expect("regularized arrangement region")
+                .into_value();
 
         prop_assert_eq!(
             decided(region.signed_area(&policy()).unwrap()),
-            Some(q(-8 * height, 3))
+            Some(q(8 * height, 3))
         );
+    }
+}
+
+#[test]
+fn arrangement_admission_regularizes_crossings_and_canceled_seams() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (loops, loop_count, area, samples) in [
+            (
+                vec![
+                    vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4)],
+                    vec![p(2, 0), p(6, 0), p(6, 4), p(2, 4)],
+                ],
+                2,
+                r(16),
+                vec![
+                    (p(3, 0), RegionPointLocation::Outside),
+                    (p(3, 2), RegionPointLocation::Outside),
+                    (p(1, 2), RegionPointLocation::Inside),
+                    (p(5, 2), RegionPointLocation::Inside),
+                ],
+            ),
+            (
+                vec![vec![p(0, 0), p(4, 4), p(0, 4), p(4, 0)]],
+                2,
+                r(8),
+                vec![
+                    (p(2, 1), RegionPointLocation::Inside),
+                    (p(2, 3), RegionPointLocation::Inside),
+                    (p(0, 2), RegionPointLocation::Outside),
+                    (p(2, 2), RegionPointLocation::Boundary),
+                ],
+            ),
+            (
+                vec![
+                    vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4)],
+                    vec![p(0, 0), p(4, 0), p(4, 4), p(0, 4)],
+                ],
+                0,
+                r(0),
+                vec![
+                    (p(0, 2), RegionPointLocation::Outside),
+                    (p(2, 2), RegionPointLocation::Outside),
+                ],
+            ),
+        ] {
+            let mut chains = Vec::new();
+            let mut fragments = Vec::new();
+            for points in loops {
+                let mut indices = Vec::new();
+                for i in 0..points.len() {
+                    let index = fragments.len();
+                    indices.push(index);
+                    let a = points[i].clone();
+                    let b = points[(i + 1) % points.len()].clone();
+                    fragments.push(materialized_line_fragment(
+                        index,
+                        a.clone(),
+                        a.lerp(&b, q(1, 2)),
+                        b,
+                    ));
+                }
+                chains.push(hypercurve::BezierArrangementChain2::new(indices, true).unwrap());
+            }
+            let graph = graph(fragments);
+            let traversal = hypercurve::BezierArrangementTraversal2::new(chains).unwrap();
+            let outcome = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy)
+                .expect("closed exact walks must publish their regularized set");
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            let region = outcome.into_value();
+            assert_eq!(region.len(), loop_count);
+            assert_eq!(decided(region.signed_area(&policy).unwrap()), Some(area));
+            assert!(
+                decided(region.filled_side_is_left(&policy).unwrap())
+                    .iter()
+                    .all(|left| *left)
+            );
+            for (point, expected) in samples {
+                assert_eq!(
+                    decided(region.classify_point(&point, &policy).unwrap()),
+                    expected
+                );
+            }
+            let replay = region.regularized_region(&policy).unwrap();
+            assert_eq!(replay.certainty, CurveCertainty::Certified);
+            assert_eq!(replay.into_value(), region);
+            let difference = region
+                .boolean_region(&region, hypercurve::BooleanOp::Difference, &policy)
+                .unwrap();
+            assert_eq!(difference.certainty, CurveCertainty::Certified);
+            assert!(difference.into_value().is_empty());
+        }
+    }
+}
+
+#[test]
+fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let upper = QuadraticBezier2::new(p(-1, 0), p(0, 2), p(1, 0));
+        let lower = QuadraticBezier2::new(p(1, 0), p(0, -2), p(-1, 0));
+        let split = decided(
+            upper
+                .split_at_parameters(
+                    &[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],
+                    &policy,
+                )
+                .unwrap(),
+        );
+        assert!(
+            split
+                .fragments()
+                .iter()
+                .all(BezierSplitFragment2::is_retained_bezier)
+        );
+        let graph = BezierArrangementGraph2::from_split_materializations(&[
+            split,
+            decided(lower.split_at_parameters(&[], &policy).unwrap()),
+        ])
+        .unwrap();
+        let traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
+        let outcome = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy)
+            .expect("selected exact curves close through arrangement admission");
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let region = outcome.into_value();
+        assert!(region.has_algebraic_fragments());
+        for (point, expected) in [
+            (p(0, 0), RegionPointLocation::Inside),
+            (p(0, 1), RegionPointLocation::Boundary),
+            (p(0, 2), RegionPointLocation::Outside),
+        ] {
+            assert_eq!(
+                decided(region.classify_point(&point, &policy).unwrap()),
+                expected
+            );
+        }
+        let paths = decided(region.boundary_paths(&policy).unwrap());
+        let reversed = paths
+            .iter()
+            .map(|path| {
+                let outcome = path.reversed(&policy).unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                outcome.into_value()
+            })
+            .collect::<Vec<_>>();
+        let reconstructed = CurveRegion2::try_from_boundary_paths(&reversed, &policy).unwrap();
+        assert_eq!(reconstructed.certainty, CurveCertainty::Certified);
+        let xor = region
+            .boolean_region(
+                &reconstructed.into_value(),
+                hypercurve::BooleanOp::Xor,
+                &policy,
+            )
+            .unwrap();
+        assert_eq!(xor.certainty, CurveCertainty::Certified);
+        assert!(xor.into_value().is_empty());
     }
 }

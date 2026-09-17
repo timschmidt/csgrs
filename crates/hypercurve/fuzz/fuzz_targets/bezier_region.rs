@@ -139,41 +139,47 @@ fuzz_target!(|data: &[u8]| {
 
     if let Ok(graph) = BezierArrangementGraph2::from_split_materializations(&materializations) {
         if let Classification::Decided(traversal) = graph.traverse_branch_free(&policy) {
-            let _ = CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy)
-                .into_value()
-                .map(|region| {
+            let _ = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy).map(
+                |outcome| {
+                    let region = outcome.into_value();
                     let _ = region.signed_area(&policy);
                     let _ = region.loop_roles(&policy);
                     let _ = region.curved_nesting_role_evidence(&policy);
                     let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                     let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-                });
+                },
+            );
         }
         if let Classification::Decided(traversal) =
             graph.traverse_retained_with_tangent_order(&policy)
         {
-            let _ = CurveRegion2::from_retained_arrangement_traversal(&graph, &traversal, &policy)
-                .into_value()
-                .map(|region| {
+            let _ = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy).map(
+                |outcome| {
+                    let region = outcome.into_value();
                     let _ = region.signed_area(&policy);
                     let _ = region.loop_roles(&policy);
                     let _ = region.curved_nesting_role_evidence(&policy);
                     let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                     let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-                });
+                },
+            );
         }
         if let Classification::Decided(traversal) =
             graph.traverse_retained_splitting_linear_overlaps(&policy)
         {
-            let _ = CurveRegion2::from_retained_linear_overlap_traversal(&traversal, &policy)
-                .into_value()
-                .map(|region| {
-                    let _ = region.signed_area(&policy);
-                    let _ = region.loop_roles(&policy);
-                    let _ = region.curved_nesting_role_evidence(&policy);
-                    let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
-                    let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-                });
+            let _ = CurveRegion2::try_from_arrangement_traversal(
+                traversal.refinement().graph(),
+                traversal.traversal(),
+                &policy,
+            )
+            .map(|outcome| {
+                let region = outcome.into_value();
+                let _ = region.signed_area(&policy);
+                let _ = region.loop_roles(&policy);
+                let _ = region.curved_nesting_role_evidence(&policy);
+                let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
+                let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
+            });
         }
     }
 

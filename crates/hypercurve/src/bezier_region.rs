@@ -64,17 +64,15 @@ use crate::{
     BezierArrangementTraversal2, BezierEndpoint, BezierEndpointPointImage2,
     BezierFlatteningOptions, BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
     BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallel2,
-    BezierParallelSource2, BezierParameter2, BezierParameterRange2,
-    BezierRetainedLinearOverlapTraversal2, BezierRetainedRationalOverlapTraversal2,
-    BezierSplitFragment2, BezierSubcurve2, BooleanOp, CircularArc2, Classification, Contour2,
-    ContourPointLocation, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2,
-    CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameter2,
-    CurveParameterRange2, CurveParameterSide2, CurvePath2, CurvePathIntersectionContact2,
-    CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, OffsetCap,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
-    RationalQuadraticBezier2, RegionPointLocation, RetainedTopologyStatus, Segment2,
-    SegmentKindCounts, UncertaintyReason,
+    BezierParallelSource2, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
+    BezierSubcurve2, BooleanOp, CircularArc2, Classification, Contour2, ContourPointLocation,
+    CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2,
+    CurveError, CurveFamily2, CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2,
+    CurveOutcome, CurveParameter2, CurveParameterRange2, CurveParameterSide2, CurvePath2,
+    CurvePathIntersectionContact2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult,
+    FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionPointLocation,
+    RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -11452,40 +11450,40 @@ impl CurveRegion2 {
         }
     }
 
-    /// Materializes retained region carriers from a decided retained traversal.
+    /// Constructs the regularized even-odd set of closed arrangement walks.
     ///
-    /// Every traversal chain must be closed. Materialized native fragments and
-    /// algebraic endpoint-image fragments are accepted as exact carriers;
-    /// unresolved fragments remain explicit boundary uncertainty. This mirrors
-    /// Materialized native fragments and retained algebraic carriers enter the
-    /// same authoritative region representation.
-    pub fn from_retained_arrangement_traversal(
+    /// The graph supplies exact carriers and selected-parameter evidence. A
+    /// closed traversal proves connectivity, but may still contain crossings,
+    /// overlaps, or canceled seams. Construction resolves those interactions
+    /// before publishing the region, with material on the left of its boundary.
+    /// Overlap refinements enter through their refined graph and traversal.
+    pub fn try_from_arrangement_traversal(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
         policy: &CurveContext,
-    ) -> CurveOutcome<Classification<Self>> {
-        resolve_certified_value(policy, |attempt| {
-            Self::from_retained_arrangement_traversal_raw(graph, traversal, attempt)
-        })
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(
+            policy,
+            |attempt| match Self::from_arrangement_traversal_raw(graph, traversal, attempt, true) {
+                Classification::Decided(region) => region.finish_construction(attempt),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                    CurveOperation2::Construction,
+                    CurveFamily2::RationalBezier,
+                    reason,
+                )),
+            },
+        )
     }
 
-    pub(crate) fn from_retained_arrangement_traversal_raw(
+    pub(crate) fn from_certified_arrangement_traversal(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
         policy: &CurveContext,
     ) -> Classification<Self> {
-        Self::from_retained_arrangement_traversal_impl(graph, traversal, policy, true)
+        Self::from_arrangement_traversal_raw(graph, traversal, policy, false)
     }
 
-    pub(crate) fn from_certified_retained_arrangement_traversal(
-        graph: &BezierArrangementGraph2,
-        traversal: &BezierArrangementTraversal2,
-        policy: &CurveContext,
-    ) -> Classification<Self> {
-        Self::from_retained_arrangement_traversal_impl(graph, traversal, policy, false)
-    }
-
-    fn from_retained_arrangement_traversal_impl(
+    fn from_arrangement_traversal_raw(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
         policy: &CurveContext,
@@ -11568,45 +11566,6 @@ impl CurveRegion2 {
         } else {
             Classification::Decided(Self::from_certified_boundary_loops(loops))
         }
-    }
-
-    /// Materializes retained region carriers from a resolved linear-overlap traversal.
-    ///
-    /// The input object already stores both proof stages: exact refinement at
-    /// certified linear-overlap endpoints and duplicate-subfragment traversal
-    /// over the refined graph.  This constructor keeps that graph/traversal
-    /// association intact while accepting both materialized native fragments
-    /// and algebraic endpoint-image carriers as retained exact objects.  It
-    /// still rejects unresolved carriers, open chains, and invalid refined
-    /// indices rather than sampling or repairing them.
-    pub fn from_retained_linear_overlap_traversal(
-        traversal: &BezierRetainedLinearOverlapTraversal2,
-        policy: &CurveContext,
-    ) -> CurveOutcome<Classification<Self>> {
-        resolve_certified_value(policy, |attempt| {
-            Self::from_retained_arrangement_traversal_raw(
-                traversal.refinement().graph(),
-                traversal.traversal(),
-                attempt,
-            )
-        })
-    }
-
-    /// Materializes retained carriers from a represented rational-overlap traversal.
-    ///
-    /// Native and algebraic endpoint-image fragments remain exact retained
-    /// objects; unresolved carriers and open chains remain explicit uncertainty.
-    pub fn from_retained_rational_overlap_traversal(
-        traversal: &BezierRetainedRationalOverlapTraversal2,
-        policy: &CurveContext,
-    ) -> CurveOutcome<Classification<Self>> {
-        resolve_certified_value(policy, |attempt| {
-            Self::from_retained_arrangement_traversal_raw(
-                traversal.refinement().graph(),
-                traversal.traversal(),
-                attempt,
-            )
-        })
     }
 
     /// Lowers retained exact line images and assigns roles through the
