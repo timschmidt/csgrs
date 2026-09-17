@@ -63,6 +63,47 @@ mod certified_planning_tests {
     }
 
     #[test]
+    fn tolerance_comparison_does_not_hide_a_large_perturbation() {
+        for terms in [0, 32, 512] {
+            for negative in [false, true] {
+                for negative_base in [false, true] {
+                    let mut perturbation = pi_sum(terms);
+                    if negative {
+                        perturbation = perturbation.negate();
+                    }
+                    let mut base = Computable::pi().sqrt();
+                    if negative_base {
+                        base = base.negate();
+                    }
+                    let exact_order = if negative {
+                        Ordering::Less
+                    } else {
+                        Ordering::Greater
+                    };
+                    // With no pi terms the gap is exactly 16 < 2^5. For
+                    // the other cases, pi > 3 proves 16 + terms*pi > 2^5
+                    // independently of any Hyperreal approximation.
+                    let expected = if terms == 0 {
+                        Ordering::Equal
+                    } else {
+                        assert!(16 + 3 * terms > 32);
+                        exact_order
+                    };
+                    for value in [
+                        base.clone().add(perturbation.clone()),
+                        perturbation.clone().add(base.clone()),
+                    ] {
+                        assert_eq!(value.compare_absolute(&base, 5), expected);
+                        assert_eq!(base.compare_absolute(&value, 5), expected.reverse());
+                        assert_eq!(value.try_compare_to_until(&base, 5), Some(exact_order));
+                        assert_eq!(base.try_compare_to_until(&value, 5), Some(exact_order.reverse()));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn near_cancelled_reciprocals_use_certified_precision() {
         for denominator in [256_u64, 1000, 65_536, 16_777_216] {
             for with_pi in [false, true] {

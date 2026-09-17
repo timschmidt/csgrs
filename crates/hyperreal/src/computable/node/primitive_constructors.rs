@@ -256,7 +256,10 @@ impl Computable {
             return None;
         }
 
-        let (perturb_sign, perturb_msd) = perturbation.planning_sign_and_msd();
+        // Only a certified magnitude can prove that the perturbation fits
+        // the tolerance. An inexact hint may drift through a long sum; its
+        // known sign still gives a valid ordering without approximation.
+        let (perturb_sign, perturb_msd) = perturbation.certified_sign_and_msd();
         let perturb_sign = perturb_sign?;
         if tolerance.is_some_and(|tolerance| {
             perturb_msd
