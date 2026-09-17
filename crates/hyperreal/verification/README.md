@@ -6,6 +6,12 @@ functions and one constant) and fifty arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
+The entire verification change must also meet the fixed
+[pre-Verus acceptance baseline](BASELINE.md), in the order exactness,
+completeness, performance, memory use, binary size and code size. Proof
+milestones do not move that baseline, and proof success alone does not
+establish performance or resource parity.
+
 ## Run the proofs
 
 On Linux x86_64, with Python 3.11+, curl, unzip support in Python, and rustup:
