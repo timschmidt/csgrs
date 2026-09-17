@@ -15,4 +15,4 @@ mod node;
 
 pub use node::Computable;
 pub use node::Precision;
-pub(crate) use node::{Signal, scale, shift, should_stop, signed, unsigned};
+pub(crate) use node::{Signal, scale, scale_at_precision, shift, should_stop, signed, unsigned};

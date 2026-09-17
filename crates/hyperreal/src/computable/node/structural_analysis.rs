@@ -573,8 +573,9 @@ impl Computable {
             return Some(cached);
         }
         if constant == SharedConstant::Tau
+                && let Some(pi_precision) = p.checked_sub(1)
                 && let Some(cached) =
-                    Self::cached_shared_constant_at_precision(SharedConstant::Pi, p - 1)
+                    Self::cached_shared_constant_at_precision(SharedConstant::Pi, pi_precision)
         {
             // tau is exactly 2*pi, so a pi approximation at precision p-1
             // is already a tau approximation at precision p. Populate the
@@ -584,8 +585,9 @@ impl Computable {
             return Some(cached);
         }
         if constant == SharedConstant::Pi
+                && let Some(tau_precision) = p.checked_add(1)
                 && let Some(cached) =
-                    Self::cached_shared_constant_at_precision(SharedConstant::Tau, p + 1)
+                    Self::cached_shared_constant_at_precision(SharedConstant::Tau, tau_precision)
         {
             // The same identity works in reverse: a tau approximation at
             // precision p+1 is already a pi approximation at precision p.

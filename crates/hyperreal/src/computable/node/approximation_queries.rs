@@ -50,7 +50,7 @@ impl Computable {
 
     /// An approximation of this Computable scaled to a specific precision.
     ///
-    /// Since the value is scaled, the approximation is roughly `value * 2^p`.
+    /// Since the value is scaled, the approximation is roughly `value * 2^(-p)`.
     /// Negative values of `p` request more precision.
     ///
     /// The approximation is scaled (thus, a larger value for more negative p)
@@ -107,8 +107,8 @@ impl Computable {
         // any synchronized cache, and the direct result uses no more limbs
         // than the requested precision.
         let uses_node_cache = match &self.internal.approximation {
-            Approximation::Int(value) => return scale(value.clone(), -p),
-            Approximation::One => return scale(signed::ONE.deref().clone(), -p),
+            Approximation::Int(value) => return scale_at_precision(value.clone(), p),
+            Approximation::One => return scale_at_precision(signed::ONE.deref().clone(), p),
             Approximation::Constant(constant) => {
                 if let Some(cached) = Self::cached_constant_at_precision(*constant, p) {
                     return cached;

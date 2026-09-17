@@ -5,6 +5,24 @@ use vstd::prelude::*;
 
 use core::cmp::Ordering;
 
+/// Select the integer approximation shift without negating an i32 precision.
+/// A rounded right shift first shifts by one fewer bit, then adds one and
+/// shifts once more, preserving halfway rounding toward positive infinity.
+#[cfg_attr(verus_keep_ghost, verus_spec(plan =>
+    ensures
+        plan.0 == (precision > 0),
+        if precision <= 0 { plan.1 as int == -(precision as int) }
+        else { plan.1 as int == precision as int - 1 },
+))]
+#[inline]
+pub(crate) fn approximation_scale_plan(precision: i32) -> (bool, u32) {
+    if precision <= 0 {
+        (false, (-(precision as i64)) as u32)
+    } else {
+        (true, (precision - 1) as u32)
+    }
+}
+
 /// Compare cross products without accepting a wrapped machine product.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures

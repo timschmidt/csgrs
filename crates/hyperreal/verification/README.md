@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies fifty-five production contracts (fifty-four
-functions and one constant) and seventy-five arithmetic model theorems. The rest
+The current proof target verifies fifty-six production contracts (fifty-five
+functions and one constant) and seventy-eight arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -80,6 +80,7 @@ dependency on Verus. The annotation mechanism is described in the upstream
 
 | Executable kernel | Checked behavior | Production caller |
 | --- | --- | --- |
+| `approximation_scale_plan` | Exact direction and shift count for every `i32` precision, including the `2^31` left shift at `i32::MIN`. | Integer-leaf approximation |
 | `decode_f32` | All 32-bit patterns decode to the IEEE sign, significand and binary exponent, or the correct nonfinite class; field bounds are proved. | `TryFrom<f32> for Rational` |
 | `decode_f64` | The corresponding result for all 64-bit patterns, including subnormals and both zero signs. | `TryFrom<f64> for Rational` |
 | `compare_products` | A returned ordering matches exact unbounded cross products; `None` occurs exactly when a product exceeds `u128`. | Rational word-magnitude comparison |
@@ -216,6 +217,16 @@ exact mathematical bit lengths. They prove bit-length growth under arbitrary
 binary shifts and ordering when exact widths differ. Normalization of actual
 `BigUint` storage, its digit iterator, machine-width length arithmetic and the
 runtime borrowed comparison still require implementation proofs.
+
+Three theorems in [`integer_approximation_model.rs`](integer_approximation_model.rs)
+prove signed nearest-integer rounding, with halfway values toward positive
+infinity, for the production precision plan. They also prove that coarsening a
+rational-centered cached approximation preserves its one-unit error bound.
+The shift plan itself is an executable verified kernel covering every `i32`
+precision. The `BigInt` shifts/addition, leaf dispatch, related-constant cache
+identities and concurrent cache implementation still need refinement proofs.
+The cache theorem assumes its input error bound; it does not certify arbitrary
+cached values or the kernels producing them.
 
 The float proofs stop at decomposition into a signed integer times a power of
 two. The `BigUint` construction, reduction, retained-fact cache, and public

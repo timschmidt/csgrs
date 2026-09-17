@@ -38,3 +38,4 @@ include!("node/exp_relation_reuse_tests.rs");
 include!("node/linear_demand_tests.rs");
 include!("node/fractional_separation_tests.rs");
 include!("node/cache_rescale_tests.rs");
+include!("node/precision_boundary_tests.rs");
