@@ -1,0 +1,149 @@
+{
+  "schema": 1,
+  "status": "typed_bound_proof_milestone_not_complete",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "1514ad44e84ba8c50bc7ec12a9535a7e12edd100",
+  "runtime_reference": "cdc6d3a74fd2240f8037efe218c9ea424fd4e501",
+  "verification": {
+    "units": 443,
+    "executable_contracts": 65,
+    "model_theorems": 87,
+    "source_hashes": 124,
+    "source_hashes_match_commit": true,
+    "no_cheating": true,
+    "entire_proof_target": true,
+    "open_obligation_groups": 13
+  },
+  "new_contracts": [
+    "BoundInfo::with_sign",
+    "BoundInfo::with_sign_msd",
+    "BoundInfo::negate",
+    "BoundInfo::inverse",
+    "BoundInfo::sqrt",
+    "BoundInfo::known_msd",
+    "BoundInfo::planning_msd",
+    "BoundInfo::known_sign",
+    "negate_sign"
+  ],
+  "negative_guards": {
+    "new_bound_mutations_rejected": 13,
+    "acceptance_and_dependency_identity_tests": 10,
+    "unchanged_kernel_model_mutations": 85,
+    "reused_evidence": "benchmarks/checkpoints/2026-09-17-verus-real-approximation-model.json",
+    "note": "Thirteen bound mutations were run on the final contracts. The unchanged kernel/model inputs retain the prior 85-mutation and assumption-bypass evidence; a fresh full 98-mutation run is not claimed."
+  },
+  "dependency_import": {
+    "packages": 8,
+    "source_files": 169,
+    "all_registry_pins_match_production": true,
+    "source_and_artifact_identity_checked": true,
+    "scope": "Transparent import of the actual Sign enum variants only; no arithmetic or equality operation is assumed or certified by this import."
+  },
+  "ordinary_runtime": {
+    "byte_identical_expansion_to_runtime_reference": true,
+    "expanded_sha256": "ad33a1bc262c820ffee036dee9152bf7d8675f842f661aa964dbfb9317671d83",
+    "lines": 36100,
+    "annotation_checks": [
+      {
+        "label": "candidate",
+        "step": "focused-debug",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--lib",
+          "magnitude_boundary_tests"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 4.705890893936157
+      },
+      {
+        "label": "candidate",
+        "step": "focused-release",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "--lib",
+          "magnitude_boundary_tests"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 14.058883666992188
+      },
+      {
+        "label": "candidate",
+        "step": "clippy-all",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 6.571834087371826
+      },
+      {
+        "label": "candidate",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 0.3201107978820801
+      }
+    ],
+    "final_erasure_check": [
+      {
+        "label": "candidate",
+        "step": "expanded-runtime",
+        "command": [
+          "cargo",
+          "+nightly",
+          "rustc",
+          "--locked",
+          "--lib",
+          "--no-default-features",
+          "--",
+          "-Zunpretty=expanded"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+        "exit_code": 0,
+        "seconds": 0.2883906364440918
+      }
+    ],
+    "note": "Focused debug/release and strict all-feature Clippy used the initial annotations. Final strengthened query contracts have identical ordinary expansion, which also matches the fully qualified metadata runtime."
+  },
+  "failed_experiments": [
+    "The exploratory sign build initially used different transitive pins; subsequent trials and the official proof use the exact production dependency versions and checksums.",
+    "An explicit equality experiment fails without a verified equality implementation. No assumption was added to make it pass.",
+    "Copied-body API experiments exposed attribute expansion, closure-contract and unsupported Option::flatten/bool::then_some limitations. These trials are diagnostics, not production proof. The official harness includes the production file directly.",
+    "The first bound rejection driver did not recognize a correctly rejected inverse closure postcondition. Its unsuccessful run is retained; the final driver recognizes that diagnostic and passes all thirteen mutations."
+  ],
+  "limits": [
+    "Typed contracts cover complete constructor/transformation/query results, including unavailable exponents and preservation of available answers. Real denotation and validity of incoming bound/cache states remain open.",
+    "Rational import, mapping callbacks, addition, square, multiplication, public magnitude conversion, constant certificates and concurrency remain outside the added executable boundary.",
+    "All thirteen whole-implementation obligation groups and baseline qualification remain incomplete. Earlier timing/resource and pinned-consumer failures are not dismissed."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-bound-refinement.tar.gz",
+    "bytes": 879573,
+    "files": 277,
+    "sha256": "ff71c9ec87c6486705a36918b70ebf184b48cca9d033057c3ef1b5bf77b5b882"
+  }
+}
