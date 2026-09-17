@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies fifty-one production contracts (fifty
-functions and one constant) and fifty-nine arithmetic model theorems. The rest
+functions and one constant) and sixty-five arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -176,6 +176,12 @@ even for unreduced inputs. These are mathematical foundations for the native
 cross-cancellation loop and rational equality; those production implementations
 and their callers still require refinement proofs. The new theorems are erased
 from normal Rust builds.
+
+Factor-sequence theorems prove that dividing a factor divides every containing
+prefix, cross-cancelling any pair preserves the complete fraction, and pairwise
+cross-coprimality produces coprime numerator and denominator products. They
+include empty products and zero numerators. Prefix order remains explicit:
+a native checked product can overflow before encountering a later zero.
 
 The float proofs stop at decomposition into a signed integer times a power of
 two. The `BigUint` construction, reduction, retained-fact cache, and public
