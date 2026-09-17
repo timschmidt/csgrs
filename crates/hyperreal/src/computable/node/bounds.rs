@@ -384,7 +384,14 @@ impl BoundInfo {
         }
     }
 
-    #[cfg(not(verus_keep_ghost))]
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == match *self {
+            Self::NonZero { msd: Some(msd), exact_msd, .. } =>
+                Some(MagnitudeBits { msd, exact_msd }),
+            _ => None,
+        },
+    ))]
     fn magnitude_bits(&self) -> Option<MagnitudeBits> {
         match self {
             Self::NonZero {
@@ -519,7 +526,13 @@ fn negate_sign(sign: Sign) -> Sign {
     }
 }
 
-#[cfg(not(verus_keep_ghost))]
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures result == match sign {
+        Sign::Minus => RealSign::Negative,
+        Sign::NoSign => RealSign::Zero,
+        Sign::Plus => RealSign::Positive,
+    },
+))]
 fn public_sign(sign: Sign) -> RealSign {
     match sign {
         Sign::Minus => RealSign::Negative,
@@ -528,7 +541,13 @@ fn public_sign(sign: Sign) -> RealSign {
     }
 }
 
-#[cfg(not(verus_keep_ghost))]
+#[cfg_attr(verus_keep_ghost, verus_spec(result =>
+    ensures result == match sign {
+        RealSign::Negative => Sign::Minus,
+        RealSign::Zero => Sign::NoSign,
+        RealSign::Positive => Sign::Plus,
+    },
+))]
 fn private_sign(sign: RealSign) -> Sign {
     match sign {
         RealSign::Negative => Sign::Minus,
