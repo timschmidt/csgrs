@@ -6277,9 +6277,7 @@ fn retained_fillet_arc_cusp_overlap_is_positive(
             }
             crate::bezier_offset::BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { overlaps, .. } => {
                 for overlap in overlaps {
-                    let cell_overlap = crate::CurveParameterRange2::from_bezier_range(
-                        overlap.other_range().clone(),
-                    );
+                    let cell_overlap = overlap.other_range().clone();
                     if retained_fillet_cusp_mapped_overlap_is_positive(
                         cusp,
                         &overlap,
@@ -7269,7 +7267,7 @@ fn fillet_offset_centers(
                 None
             };
             let projected_range = if let Some(domain) = incident_domain.as_ref() {
-                let expanded = match domain
+                match domain
                     .expanded_range(
                         &CurveParameterRange2::from_bezier_range(analytic_range.clone()),
                         policy,
@@ -7285,15 +7283,9 @@ fn fillet_offset_centers(
                             reason,
                         ));
                     }
-                };
-                // This search envelope and the ray anchor are represented
-                // scalars. The authored selected range above still owns cuts.
-                let (start, end) = expanded
-                    .as_bezier_parameters()
-                    .expect("expanding a represented search envelope keeps ordinary endpoints");
-                BezierParameterRange2::new_validated(start.clone(), end.clone())
+                }
             } else {
-                analytic_range.clone()
+                CurveParameterRange2::from_bezier_range(analytic_range.clone())
             };
             let complementary_support = (cusp_mode == CurveCornerMode2::TrimOrExtend)
                 .then(|| cusp_support.semicircle().complementary_half());
@@ -7305,20 +7297,12 @@ fn fillet_offset_centers(
             for (cusp_circle, complementary) in std::iter::once((cusp_support.semicircle(), false))
                 .chain(complementary_support.as_ref().map(|circle| (circle, true)))
             {
-                let result = if let Some(domain) = incident_domain.as_ref() {
-                    cusp_circle.parallel_intersections_with_incident_ray(
-                        analytic_support,
-                        &projected_range,
-                        domain,
-                        policy,
-                    )
-                } else {
-                    cusp_circle.parallel_intersections_in_range(
-                        analytic_support,
-                        &analytic_range,
-                        policy,
-                    )
-                };
+                let result = cusp_circle.parallel_intersections(
+                    analytic_support,
+                    &projected_range,
+                    incident_domain.as_ref(),
+                    policy,
+                );
                 let intersections = match result.map_err(|cause| {
                     ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
                 })? {
@@ -7597,9 +7581,7 @@ fn fillet_offset_centers(
                                 policy,
                             )?;
                             let overlaps_incident = if let Some(domain) = incident_domain.as_ref() {
-                                let other_overlap = crate::CurveParameterRange2::from_bezier_range(
-                                    overlap.other_range().clone(),
-                                );
+                                let other_overlap = overlap.other_range().clone();
                                 let incident_range = retained_fillet_incident_overlap_range(
                                     &other_overlap,
                                     domain,

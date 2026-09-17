@@ -4260,6 +4260,7 @@ pub(crate) enum CurveTangent2 {
     RetainedParallel {
         parallel: BezierParallel2,
         source_parallel: BezierParallel2,
+        source_range: CurveParameterRange2,
         parameter: BezierParameter2,
         /// Original compact selected-fiber scalar, when this tangent came
         /// from a selected region fragment. Keeping its one-word authority
@@ -4376,7 +4377,7 @@ impl CurveTangent2 {
             range.end()
         };
         exact_parallel_region_endpoint_tangent(
-            &parallel, &parallel, parameter, scale, reversed, policy,
+            &parallel, &parallel, &range, parameter, scale, reversed, policy,
         )
     }
 
@@ -5703,6 +5704,7 @@ fn exact_parallel_region_point_evidence(
 fn exact_parallel_region_endpoint_tangent(
     parallel: &BezierParallel2,
     source_parallel: &BezierParallel2,
+    source_range: &CurveParameterRange2,
     parameter: &CurveParameter2,
     scale: RealSign,
     reversed: bool,
@@ -5718,6 +5720,7 @@ fn exact_parallel_region_endpoint_tangent(
         return exact_parallel_endpoint_tangent(
             parallel,
             source_parallel,
+            source_range,
             parameter,
             scale,
             reversed,
@@ -5736,6 +5739,7 @@ fn exact_parallel_region_endpoint_tangent(
         return Ok(Classification::Decided(CurveTangent2::RetainedParallel {
             parallel: parallel.clone(),
             source_parallel: source_parallel.clone(),
+            source_range: source_range.clone(),
             parameter,
             selected_source_parameter: Some(selected_source_parameter.clone()),
             source_direction,
@@ -6243,6 +6247,7 @@ fn exact_offset_span_from_retained_parallel_fragment(
         Ok(exact_parallel_region_endpoint_tangent(
             &composed,
             &parallel,
+            &range,
             parameter,
             scale,
             fragment.is_reversed(),
@@ -6520,6 +6525,7 @@ fn exact_parallel_point_evidence(
 fn exact_parallel_endpoint_tangent(
     parallel: &BezierParallel2,
     source_parallel: &BezierParallel2,
+    source_range: &CurveParameterRange2,
     parameter: &BezierParameter2,
     scale: RealSign,
     reversed: bool,
@@ -6533,6 +6539,7 @@ fn exact_parallel_endpoint_tangent(
     Ok(Classification::Decided(CurveTangent2::RetainedParallel {
         parallel: parallel.clone(),
         source_parallel: source_parallel.clone(),
+        source_range: source_range.clone(),
         parameter: parameter.clone(),
         selected_source_parameter: None,
         source_direction,
@@ -7560,6 +7567,7 @@ fn append_retained_parallel_round_join(
                 parameter,
                 selected_source_parameter,
                 source_direction,
+                ..
             }),
             BezierSplitFragment2::AnalyticParallel(_) | BezierSplitFragment2::SelectedFiber(_),
             _,
@@ -7585,6 +7593,7 @@ fn append_retained_parallel_round_join(
                 parameter,
                 selected_source_parameter,
                 source_direction,
+                ..
             }),
             BezierSplitFragment2::AnalyticParallel(_) | BezierSplitFragment2::SelectedFiber(_),
         ) => (
@@ -9364,6 +9373,7 @@ fn exact_selected_circle_retained_parallel_tangent_cross_and_dot(
     at_start: bool,
     _parallel: &BezierParallel2,
     source_parallel: &BezierParallel2,
+    source_range: &CurveParameterRange2,
     parameter: &BezierParameter2,
     selected_source_parameter: Option<
         &crate::bezier_offset::BezierAlgebraicSelectedFiberParameter2,
@@ -9422,6 +9432,7 @@ fn exact_selected_circle_retained_parallel_tangent_cross_and_dot(
         source_fragment,
         at_start,
         source_parallel,
+        source_range,
         parameter,
         selected_source_parameter,
         source_direction,
@@ -9821,6 +9832,7 @@ fn curve_tangent_cross_sign(
             CurveTangent2::RetainedParallel {
                 parallel,
                 source_parallel,
+                source_range,
                 parameter,
                 selected_source_parameter,
                 source_direction,
@@ -9838,6 +9850,7 @@ fn curve_tangent_cross_sign(
                 *at_start,
                 parallel,
                 source_parallel,
+                source_range,
                 parameter,
                 selected_source_parameter.as_ref(),
                 *source_direction,
@@ -9849,6 +9862,7 @@ fn curve_tangent_cross_sign(
             CurveTangent2::RetainedParallel {
                 parallel,
                 source_parallel,
+                source_range,
                 parameter,
                 selected_source_parameter,
                 source_direction,
@@ -9871,6 +9885,7 @@ fn curve_tangent_cross_sign(
                 *at_start,
                 parallel,
                 source_parallel,
+                source_range,
                 parameter,
                 selected_source_parameter.as_ref(),
                 *source_direction,
@@ -10354,6 +10369,7 @@ fn curve_tangents_are_opposite(
             CurveTangent2::RetainedParallel {
                 parallel,
                 source_parallel,
+                source_range,
                 parameter,
                 selected_source_parameter,
                 source_direction,
@@ -10363,6 +10379,7 @@ fn curve_tangents_are_opposite(
             CurveTangent2::RetainedParallel {
                 parallel,
                 source_parallel,
+                source_range,
                 parameter,
                 selected_source_parameter,
                 source_direction,
@@ -10379,6 +10396,7 @@ fn curve_tangents_are_opposite(
                 *at_start,
                 parallel,
                 source_parallel,
+                source_range,
                 parameter,
                 selected_source_parameter.as_ref(),
                 *source_direction,
@@ -16504,11 +16522,8 @@ fn algebraic_point_retained_rational_curve_ray_winding(
     let incidence =
         algebraic_point_rational_curve_linear_equation(&fragment.curve, point, &side_x, &side_y)?;
 
-    if let (BezierParameter2::Algebraic(retained), Some((start, end))) =
-        (point.retained_parameter(), range.as_bezier_parameters())
-    {
-        let range = BezierParameterRange2::new_validated(start.clone(), end.clone());
-        if bivariate_fiber_strict_sign_on_parameter_range(&incidence, retained, &range, policy)?
+    if let BezierParameter2::Algebraic(retained) = point.retained_parameter() {
+        if bivariate_fiber_strict_sign_on_parameter_range(&incidence, retained, range, policy)?
             .is_some()
         {
             return Ok(Classification::Decided(0));

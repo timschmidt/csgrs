@@ -5245,28 +5245,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         pair.first_carrier_index,
                     )
                 };
-                let parallel_range = match (
-                    parallel_carrier.start.as_bezier_parameter(),
-                    parallel_carrier.end.as_bezier_parameter(),
-                ) {
-                    (Some(start), Some(end)) => Some(BezierParameterRange2::new_validated(
-                        start.clone(),
-                        end.clone(),
-                    )),
-                    // A selected-fiber carrier still uses the analytic
-                    // parallel's authored parameterization. Solve its complete
-                    // support and let the generic carrier-range predicate
-                    // retain only contacts inside the compact local interval.
-                    _ => None,
-                };
-                if parallel_range.is_some()
-                    && let Classification::Decided(Some(rational)) = parallel
-                        .exact_rational_parallel_component(&CurveContext::STRICT)
-                        .map_err(|cause| self.invalid(parallel_index, cause))?
+                let parallel_range = CurveParameterRange2::new_validated(
+                    parallel_carrier.start.clone(),
+                    parallel_carrier.end.clone(),
+                );
+                if let Classification::Decided(Some(component)) = self.data.policy.bounded_exact_predicate_pass(|| parallel
+                    .exact_rational_parallel_component_on_regular_range(&parallel_range, &self.data.policy))
+                    .map_err(|cause| self.invalid(parallel_index, cause))?
                     // Exact affine lines are owned by the shared lower
                     // circle/parallel kernel, which delegates to the same
                     // circle/chord authority used by fillets and offsets.
-                    && rational.exact_linear_parameterization_line().is_none()
+                    && component.curve().exact_linear_parameterization_line().is_none()
                 {
                     #[cfg(feature = "dispatch-trace")]
                     hyperreal::dispatch_trace::record(
@@ -5277,7 +5266,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let result = self.algebraic_cusp_rational_pair_result(
                         pair,
                         cusp,
-                        &rational,
+                        component.curve(),
                         *cusp_is_first,
                     )?;
                     if result.blockers.is_empty() {
@@ -5294,17 +5283,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         "rational-component-fallback",
                     );
                 }
-                let intersections = match match parallel_range.as_ref() {
-                    Some(range) => cusp.semicircle().parallel_intersections_in_range(
-                        parallel,
-                        range,
-                        &self.data.policy,
-                    ),
-                    None => cusp
-                        .semicircle()
-                        .parallel_intersections(parallel, &self.data.policy),
-                }
-                .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+                let intersections = match cusp
+                    .semicircle()
+                    .parallel_intersections(parallel, &parallel_range, None, &self.data.policy)
+                    .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
                 {
                     Classification::Decided(result) => result,
                     Classification::Uncertain(reason) => {

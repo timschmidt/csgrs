@@ -840,11 +840,14 @@ impl Pair<'_> {
         } else {
             self.first
         };
-        let strict = self.policy.strict_counterpart();
         // The rational component is optional. Keep its attempt separate so a
         // failed projection cannot erase the native selected-circle replay.
-        if let Classification::Decided(Some(component)) = parallel
-            .exact_rational_parallel_component_on_regular_range(&span.range, &strict)
+        if let Classification::Decided(Some(component)) = self
+            .policy
+            .bounded_exact_predicate_pass(|| {
+                parallel
+                    .exact_rational_parallel_component_on_regular_range(&span.range, self.policy)
+            })
             .map_err(|cause| {
                 ExactCurveError::invalid(
                     CurveOperation2::Intersection,
@@ -869,7 +872,7 @@ impl Pair<'_> {
                 first: if circle_first { self.first } else { &image },
                 second: if circle_first { &image } else { self.second },
                 indices: self.indices,
-                policy: &strict,
+                policy: self.policy,
             })
             .circle_rational(circle, component.curve(), circle_first, &mut candidate)
             {
@@ -884,23 +887,10 @@ impl Pair<'_> {
                 _ => {}
             }
         }
-        if !self.unit_domain_covers(span) {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Intersection,
-                span.support.family(),
-                UncertaintyReason::Unsupported,
-            ));
-        }
-        let intersections = match span.range.as_bezier_parameters() {
-            Some((start, end)) => circle.semicircle().parallel_intersections_in_range(
-                parallel,
-                &BezierParameterRange2::new_validated(start.clone(), end.clone()),
-                self.policy,
-            ),
-            None => circle
+        let intersections =
+            circle
                 .semicircle()
-                .parallel_intersections(parallel, self.policy),
-        };
+                .parallel_intersections(parallel, &span.range, None, self.policy);
         match decided(intersections, crate::CurveFamily2::CircularArc)? {
             Intersections::Mapped { contacts, overlaps } => {
                 let map = if contacts
