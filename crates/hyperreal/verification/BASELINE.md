@@ -687,3 +687,11 @@ refinement invariant. Both new mutations and the assumption-bypass control are
 rejected, and ten acceptance/dependency tests pass. Runtime bytes remain those
 of `c61d6d8`; concurrency, ownership and all thirteen obligation groups remain
 open.
+
+The [completed pinned Hypercurve partition](../benchmarks/checkpoints/2026-09-17-verus-hypercurve-bound-partition.json)
+records the final `c61d6d8` outcomes against the unchanged baseline controls:
+the remaining suite times out at 900 seconds, five isolated cases time out at
+120 seconds each, and the retained rational-arc/analytic-parallel fillet case
+fails. All seven exit outcomes match the fixed baseline. None is counted as a
+completed passing command. The temporary dependency checkout is restored and
+the pinned Hypercurve inputs remain byte-identical; live Hypercurve is untouched.
