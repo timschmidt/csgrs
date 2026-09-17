@@ -2,7 +2,7 @@ mod support;
 
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2, CurveRegionBoundaryLoop2,
+    BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2,
 };
 use hypercurve::{
     BezierFlatteningOptions, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
@@ -397,11 +397,11 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
     let bottom_left = CurvePoint2::from(p(0, 0));
     let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
-        BezierSplitFragment2::AlgebraicChord(decided(
+        Curve2::from(decided(
             BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
         ))
     };
-    let boundary = CurveRegionBoundaryLoop2::new(
+    let boundary = CurvePath2::try_new_with_policy(
         vec![
             chord(bottom_left.clone(), bottom_right.clone()),
             chord(bottom_right, top_right.clone()),
@@ -410,14 +410,17 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
         ],
         policy,
     )
-    .unwrap();
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    .unwrap()
+    .into_value();
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
 // Independent boundary of [0, sqrt(1/2)] x [0, 1] dilated by a positive disk.
@@ -568,7 +571,7 @@ fn shifted_algebraic_rectangle_boundary(
     reverse: bool,
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
-) -> CurveRegionBoundaryLoop2 {
+) -> CurvePath2 {
     let point = |x: i64, y: i64| {
         CurvePoint2::from(
             RationalBezier2::try_new(vec![p(x, y), p(x + 1, y)], vec![Real::one(); 2])
@@ -585,7 +588,7 @@ fn shifted_algebraic_rectangle_boundary(
     ];
     let fragments = (0..points.len())
         .map(|index| {
-            BezierSplitFragment2::AlgebraicChord(decided(
+            Curve2::from(decided(
                 BezierAlgebraicChord2::try_new(
                     points[index].clone(),
                     points[(index + 1) % points.len()].clone(),
@@ -599,12 +602,14 @@ fn shifted_algebraic_rectangle_boundary(
         fragments
             .into_iter()
             .rev()
-            .map(|fragment| fragment.reversed().unwrap())
+            .map(|fragment| fragment.reversed(policy).unwrap().into_value())
             .collect()
     } else {
         fragments
     };
-    CurveRegionBoundaryLoop2::new(fragments, policy).unwrap()
+    CurvePath2::try_new_with_policy(fragments, policy)
+        .unwrap()
+        .into_value()
 }
 
 fn algebraic_material_hole_rectangle(
@@ -627,23 +632,25 @@ fn algebraic_material_hole_rectangle(
         shifted_algebraic_rectangle_boundary(0, 0, 12, 4, reverse, &parameter, policy),
         shifted_algebraic_rectangle_boundary(5, 1, 7, 3, reverse, &parameter, policy),
     ];
-    CurveRegion2::try_new_with_loop_topology(
-        boundaries,
-        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
-        vec![fill_rule; 2],
-        if reverse {
-            vec![
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &boundaries,
+        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
+        &[fill_rule; 2],
+        &if reverse {
+            [
                 CurveBoundaryInteriorSide2::Right,
                 CurveBoundaryInteriorSide2::Left,
             ]
         } else {
-            vec![
+            [
                 CurveBoundaryInteriorSide2::Left,
                 CurveBoundaryInteriorSide2::Right,
             ]
         },
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
 #[test]
@@ -775,7 +782,7 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     ];
     let fragments = (0..points.len())
         .map(|index| {
-            BezierSplitFragment2::AlgebraicChord(decided(
+            Curve2::from(decided(
                 BezierAlgebraicChord2::try_new(
                     points[index].clone(),
                     points[(index + 1) % points.len()].clone(),
@@ -785,14 +792,18 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
             ))
         })
         .collect();
-    let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![FillRule::NonZero],
-        vec![CurveBoundaryInteriorSide2::Left],
+    let boundary = CurvePath2::try_new_with_policy(fragments, policy)
+        .unwrap()
+        .into_value();
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary],
+        &[CurveRegionLoopRole::Material],
+        &[FillRule::NonZero],
+        &[CurveBoundaryInteriorSide2::Left],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
 fn axis_aligned_algebraic_dumbbell_region(
@@ -842,7 +853,7 @@ fn axis_aligned_algebraic_dumbbell_region(
     ];
     let fragments = (0..points.len())
         .map(|index| {
-            BezierSplitFragment2::AlgebraicChord(decided(
+            Curve2::from(decided(
                 BezierAlgebraicChord2::try_new(
                     points[index].clone(),
                     points[(index + 1) % points.len()].clone(),
@@ -856,23 +867,27 @@ fn axis_aligned_algebraic_dumbbell_region(
         fragments
             .iter()
             .rev()
-            .map(|fragment| fragment.reversed().unwrap())
+            .map(|fragment| fragment.reversed(policy).unwrap().into_value())
             .collect()
     } else {
         fragments
     };
-    let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
-    CurveRegion2::try_new_with_loop_topology(
-        vec![boundary],
-        vec![CurveRegionLoopRole::Material],
-        vec![fill_rule],
-        vec![if reverse {
+    let boundary = CurvePath2::try_new_with_policy(fragments, policy)
+        .unwrap()
+        .into_value();
+    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        &[boundary],
+        &[CurveRegionLoopRole::Material],
+        &[fill_rule],
+        &[if reverse {
             CurveBoundaryInteriorSide2::Right
         } else {
             CurveBoundaryInteriorSide2::Left
         }],
+        policy,
     )
     .unwrap()
+    .into_value()
 }
 
 #[test]
@@ -2780,11 +2795,11 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
         let origin = CurvePoint2::from(p(0, 0));
         let top = CurvePoint2::from(p(0, 1));
         let chord = |start, end| {
-            BezierSplitFragment2::AlgebraicChord(decided(
+            Curve2::from(decided(
                 BezierAlgebraicChord2::try_new(start, end, &policy).unwrap(),
             ))
         };
-        let boundary = CurveRegionBoundaryLoop2::new(
+        let boundary = CurvePath2::try_new_with_policy(
             vec![
                 chord(origin.clone(), selected.clone()),
                 chord(selected, top.clone()),
@@ -2792,14 +2807,17 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
             ],
             &policy,
         )
-        .unwrap();
-        let source = CurveRegion2::try_new_with_loop_topology(
-            vec![boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![CurveBoundaryInteriorSide2::Left],
+        .unwrap()
+        .into_value();
+        let source = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            &[CurveBoundaryInteriorSide2::Left],
+            &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
 
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
@@ -3783,75 +3801,65 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
         }
 
         let source = rounded();
-        let mut seam_fragments = source.boundary_loops()[0].fragments().to_vec();
-        let cusp_index = seam_fragments
+        let paths = decided(source.boundary_paths(&policy).unwrap());
+        let mut curves = paths[0].curves().to_vec();
+        let cusp_index = curves
             .iter()
-            .position(|fragment| {
-                matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
-            })
-            .expect("the round offset must retain a cusp");
-        seam_fragments.rotate_left(cusp_index);
-        let seam_fragment_count = seam_fragments.len();
-        let seam_boundary = CurveRegionBoundaryLoop2::new(seam_fragments.clone(), &policy).unwrap();
-        let seam = CurveRegion2::try_new_with_loop_topology(
-            vec![seam_boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![CurveBoundaryInteriorSide2::Left],
-        )
-        .unwrap();
-        let seam_cut = seam
-            .chamfer_loop_vertex_by_setbacks(
-                0,
-                0,
-                setback.clone(),
-                setback.clone(),
-                CurveCornerMode2::TrimOnly,
+            .position(|curve| curve.family() == CurveFamily2::CircularArc)
+            .expect("the round offset must retain a circular join");
+        curves.rotate_left(cusp_index);
+        let seam_corner = curves[0].start();
+        let seam_curve_count = curves.len();
+        let authored = CurvePath2::try_new_with_policy(curves, &policy)
+            .unwrap()
+            .into_value();
+        for reverse in [false, true] {
+            let path = if reverse {
+                authored.reversed(&policy).unwrap().into_value()
+            } else {
+                authored.clone()
+            };
+            let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                &[path],
+                &[CurveRegionLoopRole::Material],
+                &[FillRule::NonZero],
+                &[if reverse {
+                    CurveBoundaryInteriorSide2::Right
+                } else {
+                    CurveBoundaryInteriorSide2::Left
+                }],
                 &policy,
             )
-            .expect("the loop seam must not alter a retained cusp chamfer");
-        assert_eq!(seam_cut.certainty, CurveCertainty::Certified);
-        assert!(matches!(seam_cut.value, CurveCornerSolutions2::Unique(_)));
-
-        let reversed_fragments = seam_fragments
-            .iter()
-            .rev()
-            .map(|fragment| fragment.reversed().unwrap())
-            .collect();
-        let reversed_boundary = CurveRegionBoundaryLoop2::new(reversed_fragments, &policy).unwrap();
-        let reversed = CurveRegion2::try_new_with_loop_topology(
-            vec![reversed_boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![CurveBoundaryInteriorSide2::Right],
-        )
-        .unwrap();
-        let reversed_cut = reversed
-            .chamfer_loop_vertex_by_setbacks(
-                0,
-                0,
-                setback.clone(),
-                setback.clone(),
-                CurveCornerMode2::TrimOnly,
-                &policy,
-            )
-            .expect("reversed retained cusp traversal must chamfer exactly");
-        assert_eq!(reversed_cut.certainty, CurveCertainty::Certified);
-        let CurveCornerSolutions2::Unique(reversed_cut) = reversed_cut.value else {
-            panic!("the reversed seam cusp must have one exact chamfer");
-        };
-        assert_eq!(
-            reversed_cut.boundary_loops()[0].fragments().len(),
-            seam_fragment_count + 1,
-        );
-        assert_eq!(
-            certified(
-                reversed_cut
-                    .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
-                    .unwrap(),
-            ),
-            Classification::Decided(RegionPointLocation::Inside),
-        );
+            .unwrap()
+            .into_value();
+            let paths = decided(region.boundary_paths(&policy).unwrap());
+            let vertex = paths[0]
+                .curves()
+                .iter()
+                .position(|curve| decided(curve.start().coincides_with(&seam_corner, &policy)))
+                .expect("the authored cusp seam survives normalization");
+            let cut = region
+                .chamfer_loop_vertex_by_setbacks(
+                    0,
+                    vertex,
+                    setback.clone(),
+                    setback.clone(),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .expect("either authored traversal must retain the exact cusp seam chamfer");
+            let CurveCornerSolutions2::Unique(cut) = certified(cut) else {
+                panic!("the authored seam cusp must have one exact chamfer");
+            };
+            assert_eq!(cut.boundary_loops()[0].len(), seam_curve_count + 1);
+            assert_eq!(
+                decided(
+                    cut.classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                        .unwrap()
+                ),
+                RegionPointLocation::Inside,
+            );
+        }
     }
 }
 
@@ -3876,37 +3884,38 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
                 .unwrap() else {
                     panic!("an exact rectangle edge must define a retained chord");
                 };
-                BezierSplitFragment2::AlgebraicChord(chord)
+                Curve2::from(chord)
             })
             .collect();
-        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
-        CurveRegion2::try_new_with_loop_topology(
-            vec![boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![CurveBoundaryInteriorSide2::Left],
+        let boundary = CurvePath2::try_new_with_policy(fragments, policy)
+            .unwrap()
+            .into_value();
+        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            &[CurveBoundaryInteriorSide2::Left],
+            policy,
         )
         .unwrap()
+        .into_value()
     };
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reverse in [false, true] {
             let seam_source = exact_chord_rectangle(&policy, 0);
             let seam_source = if reverse {
-                let fragments = seam_source.boundary_loops()[0]
-                    .fragments()
-                    .iter()
-                    .rev()
-                    .map(|fragment| fragment.reversed().unwrap())
-                    .collect();
-                let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap();
-                CurveRegion2::try_new_with_loop_topology(
-                    vec![boundary],
-                    vec![CurveRegionLoopRole::Material],
-                    vec![FillRule::NonZero],
-                    vec![CurveBoundaryInteriorSide2::Right],
+                let paths = decided(seam_source.boundary_paths(&policy).unwrap());
+                let boundary = paths[0].reversed(&policy).unwrap().into_value();
+                CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                    &[boundary],
+                    &[CurveRegionLoopRole::Material],
+                    &[FillRule::NonZero],
+                    &[CurveBoundaryInteriorSide2::Right],
+                    &policy,
                 )
                 .unwrap()
+                .into_value()
             } else {
                 seam_source
             };
@@ -3927,8 +3936,15 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
         }
 
         let source = exact_chord_rectangle(&policy, 0);
+        let (loop_index, vertex_index) = boundary_vertex_at(&source, &p(4, 0), &policy);
         let first = source
-            .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+            .fillet_loop_vertex_by_radius(
+                loop_index,
+                vertex_index,
+                q(1, 2),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .expect("canonical exact chords must reuse the authoritative fillet solver");
         assert_eq!(first.certainty, CurveCertainty::Certified);
         let CurveCornerSolutions2::Unique(first) = first.value else {
@@ -4030,7 +4046,7 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
         let incoming = selected(p(-5, 0), p(-4, 0));
         let outgoing = selected(p(0, 4), p(0, 5));
         let chord = |start, end| {
-            BezierSplitFragment2::AlgebraicChord(decided(
+            Curve2::from(decided(
                 BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
             ))
         };
@@ -4043,20 +4059,24 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
             fragments = fragments
                 .iter()
                 .rev()
-                .map(|fragment| fragment.reversed().unwrap())
+                .map(|fragment| fragment.reversed(policy).unwrap().into_value())
                 .collect();
             CurveBoundaryInteriorSide2::Right
         } else {
             CurveBoundaryInteriorSide2::Left
         };
-        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
-        CurveRegion2::try_new_with_loop_topology(
-            vec![boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![interior_side],
+        let boundary = CurvePath2::try_new_with_policy(fragments, policy)
+            .unwrap()
+            .into_value();
+        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            &[interior_side],
+            policy,
         )
         .unwrap()
+        .into_value()
     };
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -4145,41 +4165,13 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
         let corner = CurvePoint2::from(p(0, 0));
         let upper_right = CurvePoint2::from(p(1, 1));
         let chord = |start, end| {
-            BezierSplitFragment2::AlgebraicChord(decided(
+            Curve2::from(decided(
                 BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
             ))
         };
 
-        let native_arc = CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap();
-        let native_path = CurvePath2::try_new(vec![
-            Curve2::from(LineSeg2::try_new(p(-3, 0), p(0, 0)).unwrap()),
-            Curve2::from(native_arc),
-            Curve2::from(LineSeg2::try_new(p(1, 1), p(-3, 1)).unwrap()),
-            Curve2::from(LineSeg2::try_new(p(-3, 1), p(-3, 0)).unwrap()),
-        ])
-        .unwrap();
-        let native = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &[native_path],
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::NonZero],
-            policy,
-        )
-        .unwrap()
-        .into_value();
-        let arc = native.boundary_loops()[0]
-            .fragments()
-            .iter()
-            .find(|fragment| {
-                matches!(
-                    fragment,
-                    BezierSplitFragment2::Materialized {
-                        curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
-                        ..
-                    }
-                )
-            })
-            .expect("the native quarter circle materializes as one rational quadratic")
-            .clone();
+        let arc =
+            Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap());
         let mut fragments = vec![
             chord(lower_left.clone(), corner),
             arc,
@@ -4190,20 +4182,24 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
             fragments = fragments
                 .iter()
                 .rev()
-                .map(|fragment| fragment.reversed().unwrap())
+                .map(|fragment| fragment.reversed(policy).unwrap().into_value())
                 .collect();
             CurveBoundaryInteriorSide2::Right
         } else {
             CurveBoundaryInteriorSide2::Left
         };
-        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
-        CurveRegion2::try_new_with_loop_topology(
-            vec![boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![interior_side],
+        let boundary = CurvePath2::try_new_with_policy(fragments, policy)
+            .unwrap()
+            .into_value();
+        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            &[interior_side],
+            policy,
         )
         .unwrap()
+        .into_value()
     };
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -4612,19 +4608,11 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
         let corner = CurvePoint2::from(p(0, 0));
         let upper_right = CurvePoint2::from(p(1, 2));
         let chord = |start, end| {
-            BezierSplitFragment2::AlgebraicChord(decided(
+            Curve2::from(decided(
                 BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
             ))
         };
-        let quadratic = BezierSplitFragment2::Materialized {
-            start: hypercurve::BezierParameter2::Exact(Real::zero()),
-            end: hypercurve::BezierParameter2::Exact(Real::one()),
-            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                p(0, 0),
-                p(0, 1),
-                p(1, 2),
-            )),
-        };
+        let quadratic = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)));
         let mut fragments = vec![
             chord(lower_left.clone(), corner),
             quadratic,
@@ -4635,20 +4623,24 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
             fragments = fragments
                 .iter()
                 .rev()
-                .map(|fragment| fragment.reversed().unwrap())
+                .map(|fragment| fragment.reversed(policy).unwrap().into_value())
                 .collect();
             CurveBoundaryInteriorSide2::Right
         } else {
             CurveBoundaryInteriorSide2::Left
         };
-        let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
-        CurveRegion2::try_new_with_loop_topology(
-            vec![boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![interior_side],
+        let boundary = CurvePath2::try_new_with_policy(fragments, policy)
+            .unwrap()
+            .into_value();
+        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &[boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            &[interior_side],
+            policy,
         )
         .unwrap()
+        .into_value()
     };
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -5539,14 +5531,7 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
                     )
             })
             .expect("the exact support must follow its incident selected circle");
-        let BezierSplitFragment2::AlgebraicChord(retained) = &fragments[retained_index] else {
-            unreachable!("the retained fragment was selected as a chord")
-        };
         let cusp_index = (retained_index + fragments.len() - 1) % fragments.len();
-        let cusp = match &fragments[cusp_index] {
-            fragment @ BezierSplitFragment2::AlgebraicCuspSemicircle(_) => fragment.clone(),
-            _ => panic!("the correlated chord must retain its adjacent selected circle"),
-        };
         let mapped_chamfer = first
             .chamfer_loop_vertex_by_setbacks(
                 0,
@@ -5597,44 +5582,39 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
             );
         }
         let before_cusp_index = (cusp_index + fragments.len() - 1) % fragments.len();
-        let (preceding, closure_end) = match &fragments[before_cusp_index] {
-            BezierSplitFragment2::AlgebraicChord(chord) => (chord.clone(), chord.start().clone()),
-            _ => panic!("the selected circle must retain its preceding endpoint evidence"),
-        };
         let after_retained_index = (retained_index + 1) % fragments.len();
-        let (after_retained, closure_start) = match &fragments[after_retained_index] {
-            fragment @ BezierSplitFragment2::Materialized { curve, .. } => (
-                fragment.clone(),
-                CurvePoint2::from(decided(curve.point_at(&Real::one(), &policy))),
-            ),
-            fragment @ BezierSplitFragment2::AlgebraicChord(chord) => {
-                (fragment.clone(), chord.end().clone())
-            }
-            _ => panic!("the exact-support chord must retain its exact vertical neighbor"),
-        };
-        let closure = |start, end| {
-            BezierSplitFragment2::AlgebraicChord(decided(
-                BezierAlgebraicChord2::try_new(start, end, &policy).unwrap(),
-            ))
-        };
-        let retained_boundary = CurveRegionBoundaryLoop2::new(
+        let paths = decided(first.boundary_paths(&policy).unwrap());
+        let curves = paths[0].curves();
+        assert_eq!(curves.len(), fragments.len());
+        let closure = decided(
+            BezierAlgebraicChord2::try_new(
+                curves[after_retained_index].end(),
+                curves[before_cusp_index].start(),
+                &policy,
+            )
+            .unwrap(),
+        );
+        let retained_boundary = CurvePath2::try_new_with_policy(
             vec![
-                BezierSplitFragment2::AlgebraicChord(retained.clone()),
-                after_retained,
-                closure(closure_start, closure_end),
-                BezierSplitFragment2::AlgebraicChord(preceding),
-                cusp,
+                curves[retained_index].clone(),
+                curves[after_retained_index].clone(),
+                Curve2::from(closure),
+                curves[before_cusp_index].clone(),
+                curves[cusp_index].clone(),
             ],
             &policy,
         )
-        .unwrap();
-        let retained_region = CurveRegion2::try_new_with_loop_topology(
-            vec![retained_boundary],
-            vec![CurveRegionLoopRole::Material],
-            vec![FillRule::NonZero],
-            vec![CurveBoundaryInteriorSide2::Left],
+        .unwrap()
+        .into_value();
+        let retained_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &[retained_boundary],
+            &[CurveRegionLoopRole::Material],
+            &[FillRule::NonZero],
+            &[CurveBoundaryInteriorSide2::Left],
+            &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
 
         let replay_points = [
             Point2::new(-Real::one(), Real::zero()),
@@ -6356,42 +6336,27 @@ fn algebraic_chord_expansion_merges_coupled_material_loops_exactly() {
             )
             .expect("the second retained material loop must translate exactly")
             .into_value();
-        let mut boundaries = first
-            .into_boundary_loops()
-            .into_iter()
-            .chain(second.into_boundary_loops())
-            .collect::<Vec<_>>();
+        let mut boundaries = decided(first.boundary_paths(&policy).unwrap());
+        boundaries.extend(decided(second.boundary_paths(&policy).unwrap()));
         if reverse {
             boundaries = boundaries
                 .into_iter()
-                .map(|boundary| {
-                    CurveRegionBoundaryLoop2::new(
-                        boundary
-                            .into_fragments()
-                            .into_iter()
-                            .rev()
-                            .map(|fragment| fragment.reversed().unwrap())
-                            .collect(),
-                        &policy,
-                    )
-                    .unwrap()
-                })
+                .map(|path| path.reversed(&policy).unwrap().into_value())
                 .collect();
         }
-        let source = CurveRegion2::try_new_with_loop_topology(
-            boundaries,
-            vec![CurveRegionLoopRole::Material; 2],
-            vec![fill_rule; 2],
-            vec![
-                if reverse {
-                    CurveBoundaryInteriorSide2::Right
-                } else {
-                    CurveBoundaryInteriorSide2::Left
-                };
-                2
-            ],
+        let source = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            &boundaries,
+            &[CurveRegionLoopRole::Material; 2],
+            &[fill_rule; 2],
+            &[if reverse {
+                CurveBoundaryInteriorSide2::Right
+            } else {
+                CurveBoundaryInteriorSide2::Left
+            }; 2],
+            &policy,
         )
-        .unwrap();
+        .unwrap()
+        .into_value();
 
         let merged = source
             .offset(Real::one(), &miter, &policy)
