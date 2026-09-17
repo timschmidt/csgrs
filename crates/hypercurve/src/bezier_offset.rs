@@ -16290,7 +16290,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         {
             return Ok(Classification::Uncertain(reason));
         }
-        match center_support.parallel_derivative_scale_sign(&center_parameter, policy)? {
+        match center_support
+            .parallel_derivative_scale_sign(&center_parameter.clone().into(), policy)?
+        {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -17300,7 +17302,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a regular fillet contact retained a zero tangent relation".into(),
             ));
         }
-        match other.parallel_derivative_scale_sign(&other_parameter, policy)? {
+        match other.parallel_derivative_scale_sign(&other_parameter.clone().into(), policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -20860,16 +20862,17 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let derivative_scale =
-            match other.parallel_derivative_scale_sign(&contact.parallel_parameter, policy)? {
-                Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
-                Classification::Decided(RealSign::Zero) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let derivative_scale = match other
+            .parallel_derivative_scale_sign(&contact.parallel_parameter.clone().into(), policy)?
+        {
+            Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let center_side_sign =
             product_sign(endpoint_factor, product_sign(radial_sign, derivative_scale));
         let center_side = match center_side_sign {
@@ -21313,13 +21316,15 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let derivative_scale =
-                match other.parallel_derivative_scale_sign_selected_fiber(&candidate, policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let derivative_scale = match other.parallel_derivative_scale_sign(
+                &CurveParameter2::from_selected_fiber(candidate.clone()),
+                policy,
+            )? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let tangent_cross_sign = product_sign(tangent_cross_source, derivative_scale);
             retained.push((candidate, location, tangent_cross_sign));
         }
@@ -77837,7 +77842,7 @@ impl BezierAlgebraicChord2 {
             let derivative_scale = match if let Some(sign) = derivative_scale_sign {
                 Classification::Decided(sign)
             } else {
-                parallel.parallel_derivative_scale_sign(&candidate, policy)?
+                parallel.parallel_derivative_scale_sign(&candidate.clone().into(), policy)?
             } {
                 Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
                 Classification::Decided(RealSign::Zero) => {
@@ -87697,13 +87702,14 @@ impl BezierAlgebraicChord2 {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let scale = match parallel.parallel_derivative_scale_sign(parameter, policy)? {
-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let scale =
+            match parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
+                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
         Ok(Classification::Decided(product_sign(source_sign, scale)))
     }
 
@@ -100850,11 +100856,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             if stored_cross == RealSign::Zero {
                 return Ok(Classification::Decided(Some(RealSign::Zero)));
             }
-            let mapped_scale = match map
-                .data
-                .parallel
-                .parallel_derivative_scale_sign(&contact.parallel_parameter, policy)?
-            {
+            let mapped_scale = match map.data.parallel.parallel_derivative_scale_sign(
+                &contact.parallel_parameter.clone().into(),
+                policy,
+            )? {
                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
                 Classification::Decided(RealSign::Zero) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -100899,7 +100904,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 let mapped_scale = match map
                     .data
                     .parallel
-                    .parallel_derivative_scale_sign(parameter, policy)?
+                    .parallel_derivative_scale_sign(&parameter.clone().into(), policy)?
                 {
                     Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
                         sign
@@ -109944,8 +109949,9 @@ fn rational_self_contact_on_parallel(
     policy: &CurveContext,
 ) -> CurveResult<BezierParallelIntersectionContact2> {
     let tangent_relation = match (
-        parallel.parallel_derivative_scale_sign(&contact.parallel_parameter, policy)?,
-        parallel.parallel_derivative_scale_sign(&contact.other_parameter, policy)?,
+        parallel
+            .parallel_derivative_scale_sign(&contact.parallel_parameter.clone().into(), policy)?,
+        parallel.parallel_derivative_scale_sign(&contact.other_parameter.clone().into(), policy)?,
         parallel.source_tangent_pair_cross_and_dot_signs(
             &contact.parallel_parameter,
             parallel,
@@ -111235,7 +111241,7 @@ impl BezierParallel2 {
             Some(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
-            None => match self.parallel_derivative_scale_sign(parameter, policy)? {
+            None => match self.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
                 Classification::Decided(RealSign::Zero) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -117056,7 +117062,7 @@ impl BezierParallel2 {
                 if let Some(signs) = regular_branch_scale_signs {
                     Ok(Classification::Decided(signs[index]))
                 } else {
-                    parallel.parallel_derivative_scale_sign(parameter, policy)
+                    parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy)
                 }
             };
         let (
@@ -117515,9 +117521,12 @@ impl BezierParallel2 {
         )
     }
 
+    /// Returns the parallel/source derivative orientation at this exact
+    /// contact, reusing its scalar, selected-fiber, or projective authority.
+    /// A fillet support can cross cusps between contacts on one source range.
     pub(crate) fn parallel_derivative_scale_sign(
         &self,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         if self
@@ -117528,7 +117537,10 @@ impl BezierParallel2 {
         {
             return Ok(Classification::Decided(RealSign::Positive));
         }
-        if let Some(parameter) = parameter.scalar() {
+        if let Some(parameter) = parameter
+            .as_bezier_parameter()
+            .and_then(BezierParameter2::scalar)
+        {
             return self.parallel_derivative_scale_sign_at_exact(parameter, policy);
         }
         self.parallel_derivative_scale_sign_from_polynomials(parameter, policy)
@@ -117634,7 +117646,7 @@ impl BezierParallel2 {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::classify::LineSide>> {
-        match self.parallel_derivative_scale_sign(parameter, policy)? {
+        match self.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -117664,65 +117676,9 @@ impl BezierParallel2 {
         )
     }
 
-    fn parallel_derivative_scale_sign_selected_fiber(
-        &self,
-        parameter: &BezierAlgebraicSelectedFiberParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
-            return Ok(Classification::Decided(RealSign::Positive));
-        }
-        let source = self.source_power_basis()?;
-        let differential = self.differential()?;
-        let speed_squared = parallel_speed_squared_polynomial(differential);
-        let signed_curvature =
-            parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
-        let sign = |polynomial: &[Real]| {
-            parameter.predicate_sign(&bivariate_outer_product(&[Real::one()], polynomial), policy)
-        };
-        match sign(&speed_squared)? {
-            Classification::Decided(RealSign::Positive) => {}
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Decided(RealSign::Zero));
-            }
-            Classification::Decided(RealSign::Negative) => {
-                return Err(CurveError::Topology(
-                    "parallel source speed squared was certified negative".into(),
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        match sign(&signed_curvature)? {
-            Classification::Decided(RealSign::Positive | RealSign::Zero) => {
-                Ok(Classification::Decided(RealSign::Positive))
-            }
-            Classification::Decided(RealSign::Negative) => {
-                let squared_difference = polynomial_subtract(
-                    &polynomial_multiply(&signed_curvature, &signed_curvature),
-                    &polynomial_power(&speed_squared, 3),
-                );
-                Ok(match sign(&squared_difference)? {
-                    Classification::Decided(RealSign::Positive) => {
-                        Classification::Decided(RealSign::Negative)
-                    }
-                    Classification::Decided(RealSign::Negative) => {
-                        Classification::Decided(RealSign::Positive)
-                    }
-                    Classification::Decided(RealSign::Zero) => {
-                        Classification::Decided(RealSign::Zero)
-                    }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                })
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
-    }
-
     fn parallel_derivative_scale_sign_from_polynomials(
         &self,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
@@ -117733,7 +117689,7 @@ impl BezierParallel2 {
         let speed_squared = parallel_speed_squared_polynomial(differential);
         let signed_curvature =
             parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
-        match signed_coefficients_at_parameter(&speed_squared, parameter, policy)? {
+        match parameter.polynomial_sign(&speed_squared, policy)? {
             Classification::Decided(RealSign::Positive) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Decided(RealSign::Zero));
@@ -117747,7 +117703,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match signed_coefficients_at_parameter(&signed_curvature, parameter, policy)? {
+        match parameter.polynomial_sign(&signed_curvature, policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Zero) => {
                 Ok(Classification::Decided(RealSign::Positive))
             }
@@ -117757,8 +117713,7 @@ impl BezierParallel2 {
                     &polynomial_power(&speed_squared, 3),
                 );
                 Ok(
-                    match signed_coefficients_at_parameter(&squared_difference, parameter, policy)?
-                    {
+                    match parameter.polynomial_sign(&squared_difference, policy)? {
                         Classification::Decided(RealSign::Positive) => {
                             Classification::Decided(RealSign::Negative)
                         }
@@ -118016,7 +117971,7 @@ impl BezierParallel2 {
             return Ok(None);
         }
         Ok(
-            match self.parallel_derivative_scale_sign(parameter, policy)? {
+            match self.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
                 Classification::Decided(scale @ (RealSign::Positive | RealSign::Negative)) => {
                     Some(product_sign(source, scale))
                 }
@@ -166467,7 +166422,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         assert_eq!(
                             parallel.parallel_derivative_scale_sign_at_exact(&parameter, &policy),
                             parallel.parallel_derivative_scale_sign_from_polynomials(
-                                &retained, &policy,
+                                &retained.clone().into(),
+                                &policy,
                             ),
                             "source={source:?}, distance={distance:?}, parameter={parameter:?}, policy={policy:?}",
                         );
@@ -182841,7 +182797,7 @@ mod parallel_normal_source_angle_tests {
                 assert_eq!(
                     decided(
                         parallel
-                            .parallel_derivative_scale_sign(&selected, &policy)
+                            .parallel_derivative_scale_sign(&selected.clone().into(), &policy)
                             .unwrap()
                     ),
                     if distance == 0 {

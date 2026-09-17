@@ -6043,7 +6043,7 @@ fn retained_parallel_range_scale_sign(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    parallel.parallel_derivative_scale_sign(&BezierParameter2::Exact(parameter), policy)
+    parallel.parallel_derivative_scale_sign(&parameter.into(), policy)
 }
 
 fn exact_offset_span_from_retained_parallel_fragment(
@@ -9212,14 +9212,15 @@ fn exact_algebraic_chord_retained_parallel_relation(
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
         }
     };
-    let parallel_scale = match parallel.parallel_derivative_scale_sign(parameter, policy) {
-        Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
-        Ok(Classification::Decided(RealSign::Zero)) => {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
-        }
-        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
-        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-    };
+    let parallel_scale =
+        match parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy) {
+            Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
+            Ok(Classification::Decided(RealSign::Zero)) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
     Classification::Decided(exact_sign_product(
         relation,
         exact_sign_product(source_direction, parallel_scale),
@@ -9258,16 +9259,17 @@ fn exact_retained_parallel_tangent_cross_and_dot_vector(
         }
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
-    let parallel_scale = match parallel.parallel_derivative_scale_sign(parameter, policy) {
-        Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
-        Ok(Classification::Decided(RealSign::Zero)) => {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
-        }
-        Ok(Classification::Uncertain(reason)) => {
-            return Classification::Uncertain(reason);
-        }
-        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-    };
+    let parallel_scale =
+        match parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy) {
+            Ok(Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative))) => sign,
+            Ok(Classification::Decided(RealSign::Zero)) => {
+                return Classification::Uncertain(UncertaintyReason::Boundary);
+            }
+            Ok(Classification::Uncertain(reason)) => {
+                return Classification::Uncertain(reason);
+            }
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
+        };
     let factor = exact_sign_product(source_direction, parallel_scale);
     Classification::Decided((
         exact_sign_reverse(exact_sign_product(vector_cross_parallel, factor)),

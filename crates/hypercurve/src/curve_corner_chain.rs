@@ -2010,7 +2010,7 @@ impl<'a> CurveCornerChain2<'a> {
             || terminal_circle.uses_selected_chord_normal_frame()
         {
             let derivative_scale = match other_parallel
-                .parallel_derivative_scale_sign(&other_parameter, policy)
+                .parallel_derivative_scale_sign(&other_parameter.clone().into(), policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
             {
                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
