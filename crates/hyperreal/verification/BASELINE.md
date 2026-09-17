@@ -154,6 +154,13 @@ retained. New native binaries are built, but this runtime's timing, resource,
 size, coverage and downstream qualification remain pending. Importing native
 parts from `BigUint` and proving the callers' invariants also remain open.
 
+The [unit-scale shortcut trial](../benchmarks/checkpoints/2026-09-17-verus-unit-scale-trial.json)
+remains unadopted. Six balanced orders improve the square-root structural
+query by 30.30% against the baseline, but tau and a non-unit dense expression
+are slower in every pair (median +3.97% and +5.76%). Its passing correctness
+checks and all raw timing data are retained; the faster unit cases do not
+dismiss those regressions.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
