@@ -72,6 +72,7 @@
     "verified::fraction::cancel_preserves_product_fraction",
     "verified::fraction::coprime_factors",
     "verified::fraction::mutually_coprime_products",
+    "verified::fraction::cancel_preserves_processed_coprimality",
     "verified::gcd::gcd_bound",
     "verified::gcd::gcd_odd_power_two",
     "verified::gcd::gcd_power_two_factors",
