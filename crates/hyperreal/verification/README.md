@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies sixty-six production contracts (sixty-five
-functions and one constant) and ninety-seven arithmetic model theorems. The rest
+The current proof target verifies sixty-nine production contracts (sixty-eight
+functions and one constant) and ninety-nine arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -89,6 +89,13 @@ Rational import, production mapping callbacks, addition, square,
 multiplication, public magnitude conversion, constants and concurrent caches
 remain outside this added boundary. Normal builds retain every operation.
 
+The production `computable/node/representation.rs` file also supplies three
+pure cache codecs. Bound packing preserves every typed state, sign, optional
+signed exponent and exactness flag, with unused bits zero. Exact-sign packing
+and decoding preserve invalid, unknown, negative, zero and positive states;
+the decoder requires a valid sign tag. This does not establish the cache's
+atomic operations, storage invariant, memory ownership or caller preconditions.
+
 The verifier builds `verification/dependencies` with its pinned Rust compiler
 and checks every registry dependency against the production lockfile. A
 transparent type declaration imports the actual `num::bigint::Sign` variants;
@@ -104,6 +111,8 @@ attribute implementation and disappear from normal builds.
 | `BoundInfo::map_msd` | Preserves every non-magnitude field and maps exactly the available exponent through the callback's contract; zero, unknown and unavailable exponents retain their distinct states. | Binary-offset bound propagation |
 | `BoundInfo::negate`, `BoundInfo::inverse`, `BoundInfo::sqrt`, `negate_sign` | Exact sign/metadata transformation; inverse exponent overflow remains unavailable; square-root exponents use floor division. | Computable bound propagation |
 | `BoundInfo::known_msd`, `BoundInfo::planning_msd`, `BoundInfo::known_sign` | Zero sentinel iff the bound is `Zero`, and returned exponents/signs match the stored metadata. | Computable magnitude/sign queries |
+| `AtomicFacts::encode_bound` | Exact wire layout; the round-trip theorem recovers every typed bound, including both signed exponent limits and unavailable magnitudes. | Atomic bound-cache publication |
+| `AtomicFacts::encode_exact_sign`, `AtomicFacts::decode_exact_sign` | Lossless exact-sign encoding, zero unused bits, valid encoded tags, and exact decoding for every valid sign tag. | Atomic exact-sign cache |
 | `approximation_scale_plan` | Exact direction and shift count for every `i32` precision, including the `2^31` left shift at `i32::MIN`. | Integer-leaf approximation |
 | `decode_f32` | All 32-bit patterns decode to the IEEE sign, significand and binary exponent, or the correct nonfinite class; field bounds are proved. | `TryFrom<f32> for Rational` |
 | `decode_f64` | The corresponding result for all 64-bit patterns, including subnormals and both zero signs. | `TryFrom<f64> for Rational` |

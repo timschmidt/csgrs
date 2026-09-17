@@ -5,6 +5,7 @@
 /// approximations proven for that node.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg(not(verus_keep_ghost))]
 pub struct Computable {
     pub(super) internal: Arc<Node>,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -16,6 +17,7 @@ pub struct Computable {
 /// one atomic reference-count update instead of two of each.
 #[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+#[cfg(not(verus_keep_ghost))]
 pub(super) struct Node {
     #[cfg_attr(feature = "serde", serde(skip, default))]
     facts: AtomicFacts,
@@ -24,6 +26,7 @@ pub(super) struct Node {
     cache: ApproximationCache,
 }
 
+#[cfg(not(verus_keep_ghost))]
 impl Node {
     pub(crate) fn new(
         approximation: Approximation,
@@ -123,6 +126,7 @@ impl Node {
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 struct CachedApproximation {
     precision: Precision,
     value: BigInt,
@@ -132,10 +136,12 @@ struct CachedApproximation {
 /// inside the lock avoids a second allocation and atomic reference-count update
 /// for every published approximation. Readers clone or coarsen the integer
 /// under the read lock; only the owned result escapes the guard.
+#[cfg(not(verus_keep_ghost))]
 struct ApproximationCache(
     std::sync::atomic::AtomicPtr<std::sync::RwLock<Option<CachedApproximation>>>,
 );
 
+#[cfg(not(verus_keep_ghost))]
 impl ApproximationCache {
     fn new() -> Self {
         Self(std::sync::atomic::AtomicPtr::new(std::ptr::null_mut()))
@@ -228,18 +234,21 @@ impl ApproximationCache {
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 impl Default for ApproximationCache {
     fn default() -> Self {
         Self::new()
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 impl std::fmt::Debug for ApproximationCache {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.get().fmt(formatter)
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 impl Drop for ApproximationCache {
     fn drop(&mut self) {
         let pointer = *self.0.get_mut();
@@ -251,6 +260,7 @@ impl Drop for ApproximationCache {
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 impl Deref for Node {
     type Target = Approximation;
 
@@ -260,8 +270,10 @@ impl Deref for Node {
 }
 
 #[derive(Debug)]
+#[cfg_attr(verus_keep_ghost, verus_verify)]
 struct AtomicFacts(std::sync::atomic::AtomicU64);
 
+#[cfg(not(verus_keep_ghost))]
 impl Default for AtomicFacts {
     fn default() -> Self {
         Self(std::sync::atomic::AtomicU64::new(0))
@@ -269,28 +281,44 @@ impl Default for AtomicFacts {
 }
 
 impl AtomicFacts {
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const TAG_INVALID: u64 = 0;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const TAG_UNKNOWN: u64 = 1;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const TAG_ZERO: u64 = 2;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const TAG_NONZERO: u64 = 3;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const SIGN_SHIFT: u32 = 2;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const MSD_PRESENT: u64 = 1 << 4;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const EXACT_MSD: u64 = 1 << 5;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const EXACT_SIGN_SHIFT: u32 = 6;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const EXACT_SIGN_MASK: u64 = 0b111 << Self::EXACT_SIGN_SHIFT;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const INVERSE_TRIG_OR_PI_KNOWN: u64 = 1 << 9;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const CONTAINS_INVERSE_TRIG_OR_PI: u64 = 1 << 10;
     // Signed saturated precision decrement along Add/Negate/Offset paths.
     // Used only for child ordering, never as a numerical bound. Deserialized
     // nodes default to zero and retain ordinary evaluation order.
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const LINEAR_DEMAND_SHIFT: u32 = 16;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const LINEAR_DEMAND_MASK: u64 = (u16::MAX as u64) << Self::LINEAR_DEMAND_SHIFT;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const NON_BOUND_MASK: u64 = Self::EXACT_SIGN_MASK
         | Self::INVERSE_TRIG_OR_PI_KNOWN
         | Self::CONTAINS_INVERSE_TRIG_OR_PI
         | Self::LINEAR_DEMAND_MASK;
+    #[cfg_attr(verus_keep_ghost, verus_verify)]
     const MSD_SHIFT: u32 = 32;
 
+    #[cfg(not(verus_keep_ghost))]
     fn new(
         bound: BoundCache,
         exact_sign: ExactSignCache,
@@ -310,17 +338,20 @@ impl AtomicFacts {
         ))
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn linear_demand(&self) -> i16 {
         ((self.0.load(std::sync::atomic::Ordering::Relaxed) & Self::LINEAR_DEMAND_MASK)
             >> Self::LINEAR_DEMAND_SHIFT) as u16 as i16
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn contains_inverse_trig_or_pi(&self) -> Option<bool> {
         let bits = self.0.load(std::sync::atomic::Ordering::Relaxed);
         (bits & Self::INVERSE_TRIG_OR_PI_KNOWN != 0)
             .then_some(bits & Self::CONTAINS_INVERSE_TRIG_OR_PI != 0)
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn store_contains_inverse_trig_or_pi(&self, value: bool) {
         let bits = Self::INVERSE_TRIG_OR_PI_KNOWN
             | if value {
@@ -331,7 +362,16 @@ impl AtomicFacts {
         self.0.fetch_or(bits, std::sync::atomic::Ordering::Relaxed);
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures result == encoded_bound_bits(value),
+    ))]
     fn encode_bound(value: BoundCache) -> u64 {
+        #[cfg(verus_keep_ghost)]
+        proof! {
+            assert(Self::MSD_PRESENT == 16u64) by (bit_vector);
+            assert(Self::EXACT_MSD == 32u64) by (bit_vector);
+        }
         match value {
             BoundCache::Invalid => Self::TAG_INVALID,
             BoundCache::Valid(BoundInfo::Unknown) => Self::TAG_UNKNOWN,
@@ -360,6 +400,7 @@ impl AtomicFacts {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn decode_bound(value: u64) -> BoundCache {
         match value & 0b11 {
             Self::TAG_INVALID => BoundCache::Invalid,
@@ -385,12 +426,14 @@ impl AtomicFacts {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn bound(&self) -> BoundCache {
         Self::decode_bound(
             self.0.load(std::sync::atomic::Ordering::Relaxed) & !Self::EXACT_SIGN_MASK,
         )
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn snapshot(&self) -> (BoundCache, ExactSignCache) {
         let encoded = self.0.load(std::sync::atomic::Ordering::Relaxed);
         (
@@ -399,6 +442,7 @@ impl AtomicFacts {
         )
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn set_bound(&self, value: BoundCache) {
         let encoded = Self::encode_bound(value);
         let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
@@ -416,6 +460,7 @@ impl AtomicFacts {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn set_bound_if_invalid(&self, value: BoundCache) {
         let encoded = Self::encode_bound(value);
         let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
@@ -436,6 +481,7 @@ impl AtomicFacts {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn set_bound_if_unresolved(&self, value: BoundCache) {
         let encoded = Self::encode_bound(value);
         let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
@@ -457,6 +503,12 @@ impl AtomicFacts {
         }
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        ensures exact_sign_denotation(result) == value,
+            result & !0x1c0u64 == 0,
+            ((result >> 6) & 7) <= 4,
+    ))]
     fn encode_exact_sign(value: ExactSignCache) -> u64 {
         let encoded = match value {
             ExactSignCache::Invalid => 0,
@@ -465,10 +517,27 @@ impl AtomicFacts {
             ExactSignCache::Valid(Sign::NoSign) => 3,
             ExactSignCache::Valid(Sign::Plus) => 4,
         };
+        #[cfg(verus_keep_ghost)]
+        proof! {
+            assert((((encoded as u64) << 6u32) >> 6u32) & 7u64 == encoded) by (bit_vector)
+                requires encoded <= 4u64;
+            assert(((encoded as u64) << 6u32) & !0x1c0u64 == 0u64) by (bit_vector)
+                requires encoded <= 4u64;
+        }
         encoded << Self::EXACT_SIGN_SHIFT
     }
 
+    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+        requires ((value >> 6) & 7) <= 4,
+        ensures result == exact_sign_denotation(value),
+    ))]
     fn decode_exact_sign(value: u64) -> ExactSignCache {
+        #[cfg(verus_keep_ghost)]
+        proof! {
+            assert(Self::EXACT_SIGN_MASK == 0x1c0u64) by (bit_vector);
+            assert((value & 0x1c0u64) >> 6u32 == (value >> 6u32) & 7u64) by (bit_vector);
+        }
         match (value & Self::EXACT_SIGN_MASK) >> Self::EXACT_SIGN_SHIFT {
             0 => ExactSignCache::Invalid,
             1 => ExactSignCache::Unknown,
@@ -479,10 +548,12 @@ impl AtomicFacts {
         }
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn exact_sign(&self) -> ExactSignCache {
         Self::decode_exact_sign(self.0.load(std::sync::atomic::Ordering::Relaxed))
     }
 
+    #[cfg(not(verus_keep_ghost))]
     fn replace_exact_sign(&self, value: ExactSignCache) -> ExactSignCache {
         let encoded = Self::encode_exact_sign(value);
         let mut current = self.0.load(std::sync::atomic::Ordering::Relaxed);
@@ -501,6 +572,7 @@ impl AtomicFacts {
     }
 }
 
+#[cfg(not(verus_keep_ghost))]
 pub(crate) mod signed {
     use num::{BigInt, One};
     use std::sync::LazyLock;
@@ -518,6 +590,7 @@ pub(crate) mod signed {
     pub(crate) static SIXTY_FOUR: LazyLock<BigInt> = LazyLock::new(|| BigInt::from(64_u8));
 }
 
+#[cfg(not(verus_keep_ghost))]
 pub(crate) mod unsigned {
     use num::{BigUint, One};
     use std::sync::LazyLock;
@@ -531,12 +604,17 @@ pub(crate) mod unsigned {
     pub(crate) static SIX: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(6_u8));
 }
 
+#[cfg(not(verus_keep_ghost))]
 static HALF_PI_SHORTCUT_RATIONAL_LIMIT: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(3, 2).unwrap());
+#[cfg(not(verus_keep_ghost))]
 static NEAR_LARGE_RATIONAL_TRIG_THRESHOLD: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(7, 2).unwrap());
+#[cfg(not(verus_keep_ghost))]
 static INVERSE_ENDPOINT_RATIONAL_THRESHOLD: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(7, 8).unwrap());
+#[cfg(not(verus_keep_ghost))]
 static THREE_HALVES_RATIONAL: LazyLock<Rational> =
     LazyLock::new(|| Rational::fraction(3, 2).unwrap());
+#[cfg(not(verus_keep_ghost))]
 static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());
