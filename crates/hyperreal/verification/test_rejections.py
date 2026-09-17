@@ -11,6 +11,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from verify_verus import ROOT, verifier  # noqa: E402
 from test_bound_rejections import main as reject_bound_mutations  # noqa: E402
+from test_cache_rejections import main as reject_cache_mutations  # noqa: E402
 
 
 MODEL_FILES = {"magnitude_model.rs", "integer_approximation_model.rs", "real_approximation_model.rs"}
@@ -179,6 +180,7 @@ def main():
             sys.exit(f"Expected rejection of assume(false):\n{result.stdout}{result.stderr}")
         print("Rejected attempted assumption bypass")
     reject_bound_mutations()
+    reject_cache_mutations()
 
 
 if __name__ == "__main__":
