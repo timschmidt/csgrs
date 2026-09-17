@@ -62,6 +62,13 @@ MUTATIONS = [
      "let product = super::product::multiply_u128(left, right);\n    add_shifted(accumulator, &product, 0)"),
     ("accumulate.rs", "return add_shifted(accumulator, &product, shift);",
      "return add_shifted(accumulator, &product, 0);"),
+    ("limbs.rs", "    Some(output)\n}", "    Some([0_u64; O])\n}"),
+    ("limbs.rs", "    Some(output)\n}", "    None\n}"),
+    ("dyadic.rs", "Some((false, magnitude))", "Some((true, magnitude))"),
+    ("dyadic.rs", "    reduced_shift\n}", "    denominator_shift\n}"),
+    ("dyadic.rs", "    Some((minus, magnitude, reduced_shift))\n}", "    None\n}"),
+    ("dyadic.rs", "    Some((minus, magnitude, reduced_shift))\n}",
+     "    Some((minus, magnitude, denominator_shift))\n}"),
 ]
 
 

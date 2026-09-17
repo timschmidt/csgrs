@@ -166,6 +166,106 @@ mod tests {
     }
 
     #[test]
+    fn finished_dyadic_differences_match_bigrational() {
+        fn check(positive: [u64; 6], negative: [u64; 6], shift: u64) {
+            let actual = Rational::finish_dyadic_stack_sum(
+                DyadicStackAccumulator(positive), DyadicStackAccumulator(negative), shift,
+            );
+            let numerator = BigInt::from(limbs_to_biguint(&positive))
+                - BigInt::from(limbs_to_biguint(&negative));
+            let expected = num::BigRational::new(
+                numerator, BigInt::one() << usize::try_from(shift).unwrap(),
+            );
+            assert_eq!(actual.sign, expected.numer().sign());
+            assert_eq!(&limbs_to_biguint(&actual.magnitude.0), expected.numer().magnitude());
+            assert!(actual.denominator_shift <= shift);
+            assert_eq!(
+                &(BigUint::one() << usize::try_from(actual.denominator_shift).unwrap()),
+                expected.denom().magnitude()
+            );
+        }
+
+        let shifts = [0, 1, 63, 64, 65, 127, 128, 191, 255, 320, 383, 384, 512];
+        for bit in 0..384 {
+            let mut power = [0; 6];
+            power[bit / 64] = 1_u64 << (bit % 64);
+            for shift in shifts {
+                check(power, [0; 6], shift);
+                check([0; 6], power, shift);
+                check(power, [1, 0, 0, 0, 0, 0], shift);
+            }
+        }
+        let mut state = 0x4528_21e6_38d0_1377_u64;
+        for _ in 0..64 {
+            let mut next = |_| {
+                state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                state
+            };
+            let positive = std::array::from_fn(&mut next);
+            let negative = std::array::from_fn(&mut next);
+            for shift in shifts {
+                check(positive, negative, shift);
+                check(positive, positive, shift);
+            }
+        }
+
+        let power = [0, 0, 0, 0, 0, 1_u64 << 63];
+        for (positive, negative, sign) in [(power, [0; 6], Plus), ([0; 6], power, Minus)] {
+            let actual = Rational::finish_dyadic_stack_sum(
+                DyadicStackAccumulator(positive), DyadicStackAccumulator(negative), u64::MAX,
+            );
+            assert_eq!(actual.sign, sign);
+            assert_eq!(actual.magnitude.0, [1, 0, 0, 0, 0, 0]);
+            assert_eq!(actual.denominator_shift, u64::MAX - 383);
+        }
+        let zero = Rational::finish_dyadic_stack_sum(
+            DyadicStackAccumulator(power), DyadicStackAccumulator(power), u64::MAX,
+        );
+        assert_eq!(zero.sign, NoSign);
+        assert_eq!(zero.magnitude.0, [0; 6]);
+        assert_eq!(zero.denominator_shift, 0);
+        assert_eq!(crate::verified::dyadic::finish([], [], u64::MAX), None);
+    }
+
+    #[test]
+    fn resized_limb_buffers_reject_exactly_unrepresentable_values() {
+        fn check<const N: usize, const O: usize>() {
+            let limit = BigUint::one() << (64 * O);
+            let verify = |words: [u64; N]| {
+                let value = limbs_to_biguint(&words);
+                let actual = crate::verified::limbs::resize::<N, O>(&words);
+                assert_eq!(actual.is_some(), value < limit);
+                if let Some(output) = actual {
+                    assert_eq!(limbs_to_biguint(&output), value);
+                }
+            };
+            verify([0; N]);
+            verify([u64::MAX; N]);
+            for bit in 0..64 * N {
+                let mut words = [0; N];
+                words[bit / 64] = 1_u64 << (bit % 64);
+                verify(words);
+            }
+            let mut state = 0xbe54_66cf_34e9_0c6c_u64;
+            for _ in 0..64 {
+                verify(std::array::from_fn(|_| {
+                    state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+                    state
+                }));
+            }
+        }
+        check::<0, 0>();
+        check::<0, 4>();
+        check::<4, 0>();
+        check::<1, 1>();
+        check::<2, 4>();
+        check::<6, 4>();
+        check::<4, 6>();
+        check::<6, 2>();
+        check::<9, 3>();
+    }
+
+    #[test]
     fn direct_shifted_stack_products_match_biguint_boundaries() {
         let cases = [
             (1_u128, 1_u128, 0_u64),
