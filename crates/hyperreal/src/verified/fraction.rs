@@ -126,4 +126,153 @@ pub(crate) proof fn coprime_quotients(numerator: nat, denominator: nat, left_div
         lemma_small_mod(1, divisor);
     }
 }
+
+/// Prefix products retain the ordering relevant to checked native multiplication.
+pub(crate) open spec fn factors_product(factors: Seq<u128>, length: int) -> nat
+    recommends 0 <= length <= factors.len(),
+    decreases length,
+{
+    if length <= 0 { 1 } else {
+        factors_product(factors, length - 1) * factors[length - 1] as nat
+    }
+}
+
+pub(crate) proof fn factors_positive(factors: Seq<u128>, length: int)
+    requires 0 <= length <= factors.len(),
+        forall|i: int| 0 <= i < length ==> #[trigger] factors[i] > 0,
+    ensures factors_product(factors, length) > 0,
+    decreases length,
+{
+    if length > 0 {
+        factors_positive(factors, length - 1);
+        assert(factors_product(factors, length) > 0) by (nonlinear_arith)
+            requires factors_product(factors, length - 1) > 0, factors[length - 1] > 0,
+                factors_product(factors, length)
+                    == factors_product(factors, length - 1) * factors[length - 1] as nat;
+    }
+}
+
+pub(crate) proof fn factors_unit(factors: Seq<u128>, length: int)
+    requires 0 <= length <= factors.len(),
+        forall|i: int| 0 <= i < length ==> #[trigger] factors[i] == 1,
+    ensures factors_product(factors, length) == 1,
+    decreases length,
+{
+    if length > 0 { factors_unit(factors, length - 1); }
+}
+
+/// An exact factor division divides every containing prefix by the same amount.
+/// This formulation also covers a zero factor, without cancelling that zero.
+pub(crate) proof fn factors_update_quotient(
+    factors: Seq<u128>, index: int, quotient: u128, divisor: nat, length: int,
+)
+    requires 0 <= index < factors.len(), 0 <= length <= factors.len(),
+        factors[index] as nat == quotient as nat * divisor,
+    ensures
+        index < length ==> factors_product(factors.update(index, quotient), length) * divisor
+            == factors_product(factors, length),
+        index >= length ==> factors_product(factors.update(index, quotient), length)
+            == factors_product(factors, length),
+    decreases length,
+{
+    if length > 0 {
+        factors_update_quotient(factors, index, quotient, divisor, length - 1);
+        let updated = factors.update(index, quotient);
+        if index < length {
+            assert(factors_product(updated, length) * divisor == factors_product(factors, length))
+                by (nonlinear_arith) requires
+                    index < length,
+                    factors_product(updated, length)
+                        == factors_product(updated, length - 1) * updated[length - 1] as nat,
+                    factors_product(factors, length)
+                        == factors_product(factors, length - 1) * factors[length - 1] as nat,
+                    index == length - 1 ==> updated[length - 1] == quotient
+                        && factors_product(updated, length - 1) == factors_product(factors, length - 1)
+                        && factors[length - 1] as nat == quotient as nat * divisor,
+                    index < length - 1 ==> updated[length - 1] == factors[length - 1]
+                        && factors_product(updated, length - 1) * divisor
+                            == factors_product(factors, length - 1);
+        }
+    }
+}
+
+/// Cross-cancelling any numerator/denominator pair preserves the whole fraction.
+pub(crate) proof fn cancel_preserves_product_fraction(
+    numerators: Seq<u128>, denominators: Seq<u128>, ni: int, di: int,
+)
+    requires 0 <= ni < numerators.len(), 0 <= di < denominators.len(), denominators[di] > 0,
+    ensures ({
+        let divisor = gcd(numerators[ni] as nat, denominators[di] as nat);
+        let ns = numerators.update(ni, (numerators[ni] as nat / divisor) as u128);
+        let ds = denominators.update(di, (denominators[di] as nat / divisor) as u128);
+        factors_product(ns, ns.len() as int) * factors_product(denominators, denominators.len() as int)
+            == factors_product(numerators, numerators.len() as int) * factors_product(ds, ds.len() as int)
+    }),
+{
+    let divisor = gcd(numerators[ni] as nat, denominators[di] as nat);
+    super::gcd::gcd_reduction(numerators[ni] as nat, denominators[di] as nat);
+    let n = (numerators[ni] as nat / divisor) as u128;
+    let d = (denominators[di] as nat / divisor) as u128;
+    lemma_fundamental_div_mod(numerators[ni] as int, divisor as int);
+    lemma_fundamental_div_mod(denominators[di] as int, divisor as int);
+    factors_update_quotient(numerators, ni, n, divisor, numerators.len() as int);
+    factors_update_quotient(denominators, di, d, divisor, denominators.len() as int);
+    let ns = numerators.update(ni, n);
+    let ds = denominators.update(di, d);
+    assert(factors_product(ns, ns.len() as int) * factors_product(denominators, denominators.len() as int)
+        == factors_product(numerators, numerators.len() as int) * factors_product(ds, ds.len() as int))
+        by (nonlinear_arith) requires
+            factors_product(ns, ns.len() as int) * divisor == factors_product(numerators, numerators.len() as int),
+            factors_product(ds, ds.len() as int) * divisor == factors_product(denominators, denominators.len() as int);
+}
+
+pub(crate) proof fn coprime_factors(factors: Seq<u128>, denominator: nat, length: int)
+    requires denominator > 0, 0 <= length <= factors.len(),
+        forall|i: int| 0 <= i < length ==> gcd(#[trigger] factors[i] as nat, denominator) == 1,
+    ensures gcd(factors_product(factors, length), denominator) == 1,
+    decreases length,
+{
+    if length == 0 {
+        super::gcd::gcd_symmetric(1, denominator);
+        assert(gcd(denominator, 1) == gcd(1, 0));
+    } else {
+        coprime_factors(factors, denominator, length - 1);
+        coprime_product(factors_product(factors, length - 1), factors[length - 1] as nat, denominator);
+    }
+}
+
+/// Pairwise cross-coprimality gives a reduced product, including zero numerators.
+pub(crate) proof fn mutually_coprime_products(numerators: Seq<u128>, denominators: Seq<u128>)
+    requires
+        forall|j: int| 0 <= j < denominators.len() ==> #[trigger] denominators[j] > 0,
+        forall|i: int, j: int| 0 <= i < numerators.len() && 0 <= j < denominators.len()
+            ==> gcd(#[trigger] numerators[i] as nat, #[trigger] denominators[j] as nat) == 1,
+    ensures gcd(factors_product(numerators, numerators.len() as int),
+        factors_product(denominators, denominators.len() as int)) == 1,
+{
+    factors_positive(denominators, denominators.len() as int);
+    let denominator = factors_product(denominators, denominators.len() as int);
+    assert forall|i: int| 0 <= i < numerators.len() implies
+        gcd(#[trigger] numerators[i] as nat, denominator) == 1 by {
+        let numerator = numerators[i] as nat;
+        if numerator == 0 {
+            assert forall|j: int| 0 <= j < denominators.len() implies #[trigger] denominators[j] == 1 by {
+                assert(gcd(numerator, denominators[j] as nat) == 1);
+                lemma_small_mod(0, denominators[j] as nat);
+                reveal_with_fuel(gcd, 2);
+                assert(gcd(0, denominators[j] as nat) == denominators[j]);
+            }
+            factors_unit(denominators, denominators.len() as int);
+            assert(gcd(0, 1) == 1) by { reveal_with_fuel(gcd, 2); }
+        } else {
+            assert forall|j: int| 0 <= j < denominators.len() implies
+                gcd(#[trigger] denominators[j] as nat, numerator) == 1 by {
+                super::gcd::gcd_symmetric(numerator, denominators[j] as nat);
+            }
+            coprime_factors(denominators, numerator, denominators.len() as int);
+            super::gcd::gcd_symmetric(denominator, numerator);
+        }
+    }
+    coprime_factors(numerators, denominator, numerators.len() as int);
+}
 }
