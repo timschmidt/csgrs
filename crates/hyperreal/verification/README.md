@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies forty-two production contracts (forty-one
-functions and one constant) and forty-four arithmetic model theorems. The rest
+The current proof target verifies forty-five production contracts (forty-four
+functions and one constant) and forty-nine arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -87,6 +87,9 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `dyadic::difference` | Exact sign and magnitude of the positive accumulator minus the negative accumulator; `None` iff they cancel to zero. | `dyadic::finish` |
 | `dyadic::normalize` | Exact removal of the common binary factor, preserving a positive magnitude and producing an integer or odd numerator. The resulting numerator and power-of-two denominator have GCD one. | `dyadic::finish` |
 | `dyadic::finish` | Composition of difference and reduction with helper preconditions discharged: exact zero/sign classification, bounded exponent reduction, coprimality and preservation of the signed fraction by cross multiplication. | `Rational::finish_dyadic_stack_sum` |
+| `aggregate::plan` | Exact per-product exponents and their maximum, including empty inputs and inactive terms; `None` iff an exponent exceeds `u64::MAX`. | Stack product-sum planning |
+| `aggregate::add_product` | Both word and wide factor variants add the exact shifted product, with overflow iff the unsigned sum exceeds the buffer. Oversized addends leave it unchanged; carry overflow leaves the sum modulo its width. | `aggregate::sum_products` |
+| `aggregate::sum_products` | Complete planning, signed-term dispatch, accumulation and reduction loops for arbitrary term counts and bounded buffer widths. Failure iff an exponent or either unsigned subtotal overflows; success preserves the exact signed fraction with canonical zero, sign and coprime numerator/denominator. All helper preconditions and loop termination are proved. | Narrow and wide-to-narrow stack product sums |
 
 The GCD specification is proved to preserve exactly the positive common
 divisors, to be positive away from `(0, 0)`, and to be the greatest common
@@ -112,6 +115,11 @@ Dyadic reduction lemmas prove exact division by a prefix of a known binary
 factor, preservation of the signed fraction, and coprimality of a canonical
 dyadic numerator and denominator. The finishing kernel composes these with
 the existing limb comparison, subtraction, trailing-zero and shift proofs.
+The aggregate model relates positive/negative subtotals to the signed sum of
+aligned products. It proves that each alignment preserves its original
+fraction and that raising the common denominator rescales the entire numerator
+exactly. Monotonic unsigned subtotals establish the complete loop's failure
+condition even when a later cancellation would make the final difference fit.
 [`rational_model.rs`](rational_model.rs) defines signed, unbounded
 fractions with positive denominators, without assuming canonical reduction.
 Its seventeen theorems establish equivalence and ordering laws, rescaling,
@@ -137,10 +145,15 @@ Dyadic multiplication uses the same verified generic kernel for 2×2, 4×1,
 addition without allocating another full-width buffer. Their array lengths
 must not exceed `u32::MAX / 64`; production uses at most six limbs. Signed
 differences, normalization and the result-width checks now use verified
-kernels too. The loops that plan scales and dispatch signed terms, the sign
-type adapters, `BigUint` materialization, parameter comparisons and surrounding
-geometric algorithms still need implementation proofs. These kernels alone do
-not establish the full dyadic or geometry API contracts.
+kernels too. Narrow and wide-to-narrow stack product sums now use verified
+planning and signed-term loops, retaining both word/wide multiplication paths.
+Planning includes inactive terms, as in the previous carrier implementation,
+and checked exponent addition returns a fallback on overflow. The adapters
+that assemble product inputs and convert signs/results remain unverified.
+Scalar-only and `BigUint`-backed aggregate paths, `BigUint` materialization,
+parameter comparisons and surrounding geometric algorithms also still need
+implementation proofs. These kernels alone do not establish the full dyadic
+or geometry API contracts.
 
 The table uses a bounded-depth recursive traversal during const evaluation;
 its values are computed by the same verified functions in both builds. The
@@ -154,7 +167,7 @@ proves conversion to `usize` is safe, including on narrower targets.
 No project assumptions were added to cover these operations.
 
 `test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of forty-two
+first verifies the unmodified bodies, and then requires rejection of fifty-two
 incorrect implementations and an attempted assumption bypass. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
@@ -183,6 +196,13 @@ borrow chains, cancellation, both signs and maximal exponent metadata. Width
 conversion tests check every single-bit boundary, padding, truncation and
 empty buffers. Mutations reject wrong signs, unreduced output exponents,
 vacuous zero results and corrupt narrowed values.
+Product-sum tests compare unsigned subtotal capacity decisions with `BigUint`
+and canonical results with `BigRational`. They cover every stack alignment,
+inactive terms, cancellation after an oversized subtotal, mixed factor widths,
+empty inputs/buffers and maximal exponent metadata. Both production carrier
+adapters are checked against independently constructed signed fractions.
+Mutations reject incorrect scale plans, omitted or reversed signs, corrupt
+products, swapped subtotals, always-fallback results and negative zero.
 
 ## Remaining work and completion criteria
 

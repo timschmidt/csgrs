@@ -14,6 +14,7 @@ macro_rules! proof_decl {
 }
 
 pub(crate) mod accumulate;
+pub(crate) mod aggregate;
 pub(crate) mod division;
 pub(crate) mod dyadic;
 pub(crate) mod fixed_gcd;
