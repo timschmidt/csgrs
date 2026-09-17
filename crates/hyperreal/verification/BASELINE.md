@@ -86,5 +86,12 @@ the frozen inputs are retained. Downstream qualification and final repeated
 performance comparisons remain open.
 
 Completion requires both the full source/caller/dependency proof audit and
-source-bound qualification evidence against this baseline. The proof completion
-gate alone does not assess empirical performance or resource usage.
+source-bound qualification evidence against this baseline. The
+`verify --require-complete` gate requires both the proof obligation audit and
+an accepted [assessment record](acceptance.json). It rejects pending or
+unresolved assessments, a changed reference/order, stale source/workload hashes
+and missing or changed evidence artifacts. All six priority assessments require
+a rationale and evidence references. These checks enforce the record's identity
+and completeness; interpreting measurements and resolving regressions still
+requires the audits above. Proof coverage itself is not an improvement in the
+baseline's supported behavior and cannot justify a runtime regression.

@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "priority_order": [
+    "exactness",
+    "completeness",
+    "performance",
+    "memory_use",
+    "binary_size",
+    "code_size"
+  ],
+  "status": "pending",
+  "candidate_sources": {},
+  "evidence": {},
+  "assessments": {
+    "exactness": { "status": "pending" },
+    "completeness": { "status": "pending" },
+    "performance": { "status": "pending" },
+    "memory_use": { "status": "pending" },
+    "binary_size": { "status": "pending" },
+    "code_size": { "status": "pending" }
+  },
+  "unresolved": [
+    "Full implementation, caller, dependency and completeness proof obligations remain open.",
+    "The intermediate runtime comparison is recorded in benchmarks/checkpoints/2026-09-17-verus-baseline.json; it is not final acceptance.",
+    "Persistent cloning and other timing signals, resource changes and downstream qualification remain unresolved.",
+    "Final evidence must bind the completed implementation and measurement inputs to the immutable pre-Verus baseline."
+  ]
+}

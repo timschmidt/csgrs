@@ -35,6 +35,9 @@ jobs:
       - name: Check rejection of incorrect implementations
         run: python3 verification/test_rejections.py
 
+      - name: Check baseline acceptance evidence guards
+        run: python3 verification/test_acceptance.py
+
   checks:
     name: Rust checks
     runs-on: ubuntu-latest
