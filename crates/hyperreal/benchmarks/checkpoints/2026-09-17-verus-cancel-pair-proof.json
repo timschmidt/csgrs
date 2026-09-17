@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "proof_milestone_not_acceptance",
+  "proof_commit": "f12834269d63890b062cb321f5f872cb2d2888e7",
+  "runtime_reference": "561e36a6df4a91e9ede58a74eaea64dad0370238",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "verification_units": 364,
+  "production_contracts": 52,
+  "model_theorems": 66,
+  "source_hashes_checked": 111,
+  "open_obligation_groups": 13,
+  "no_cheating": true,
+  "new_theorem": "Reducing the next numerator/denominator pair preserves positivity and coprimality of every already processed pair, including zero numerators.",
+  "erasure": {
+    "proof_commit": "f12834269d63890b062cb321f5f872cb2d2888e7",
+    "runtime_reference": "561e36a6df4a91e9ede58a74eaea64dad0370238",
+    "command": [
+      "cargo",
+      "+nightly",
+      "rustc",
+      "--locked",
+      "--lib",
+      "--no-default-features",
+      "--",
+      "-Zunpretty=expanded"
+    ],
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/hyperreal-verus-baseline-scmfudw9/expansion-target",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "HYPERREAL_SKIP_BENCHMARK_REPORTS": "1",
+      "CARGO_BUILD_JOBS": "4",
+      "CCACHE_DISABLE": "1",
+      "CARGO_NET_OFFLINE": "true"
+    },
+    "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+    "exit_code": 0,
+    "seconds": 0.2847123146057129,
+    "reference_sha256": "0ca37b8fd4eb5a0ccee00286193282f17bf7a485dc88d1d9afdb68c69f52f17f",
+    "expanded_sha256": "0ca37b8fd4eb5a0ccee00286193282f17bf7a485dc88d1d9afdb68c69f52f17f",
+    "byte_identical_expanded_rust": true
+  },
+  "limits": [
+    "The production cross-cancellation traversal and caller preconditions still require refinement proofs.",
+    "Full implementation/dependency verification and empirical baseline acceptance remain incomplete."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-cancel-pair-proof.tar.gz",
+    "bytes": 249129,
+    "files": 12,
+    "sha256": "10620372fd3cf2798639169cc68dc826c2032c1ae8eea3627e5fa7fd48dc7d7e"
+  }
+}
