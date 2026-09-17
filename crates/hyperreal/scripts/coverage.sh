@@ -128,7 +128,7 @@ echo "Instrumented Rust source (inline #[cfg(test)] code included):"
 
 # LLVM's file summary combines production code with inline unit-test modules.
 # Derive a second physical executable-line view from the annotated report,
-# excluding dedicated test-only source files and trailing `mod tests { ... }`
+# excluding dedicated test-only source files and trailing `#[cfg(test)]` modules
 # blocks. Executions from those tests still count toward production lines.
 echo
 echo "Production executable lines (test-only source excluded):"
@@ -147,7 +147,7 @@ echo "Production executable lines (test-only source excluded):"
             relative = substr(file, length(prefix) + 1)
             boundary = 999999
 
-            if (relative ~ /(^|\/)tests\.rs$/ || relative == "src/real/normal_reference.rs") {
+            if (relative ~ /(^|\/)(tests|[[:alnum:]_]+_tests)\.rs$/ || relative == "src/real/normal_reference.rs") {
                 boundary = 1
             } else {
                 source_line_number = 0
@@ -161,7 +161,7 @@ echo "Production executable lines (test-only source excluded):"
                     if (pending_cfg_test != 0 && source_line ~ /^[[:space:]]*$/) {
                         continue
                     }
-                    if (pending_cfg_test != 0 && source_line ~ /^[[:space:]]*mod[[:space:]]+tests[[:space:]]*\{/) {
+                    if (pending_cfg_test != 0 && source_line ~ /^[[:space:]]*mod[[:space:]]+[[:alpha:]_][[:alnum:]_]*[[:space:]]*\{/) {
                         boundary = pending_cfg_test
                         break
                     }
