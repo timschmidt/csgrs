@@ -1,7 +1,7 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies fifty-six production contracts (fifty-five
+The current proof target verifies sixty-five production contracts (sixty-four
 functions and one constant) and eighty-seven arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
@@ -21,6 +21,7 @@ python3 scripts/verify_verus.py install
 python3 scripts/verify_verus.py verify
 python3 verification/test_rejections.py
 python3 verification/test_acceptance.py
+python3 verification/test_dependency_identity.py
 ```
 
 The installer downloads the official release pinned in
@@ -78,8 +79,28 @@ implementation standing in for a production body, and no new runtime
 dependency on Verus. The annotation mechanism is described in the upstream
 [attribute syntax guide](https://verus-lang.github.io/verus/guide/exec_attr.html).
 
+The proof target also includes the production `computable/node/bounds.rs`
+directly. Nine constructor, transformation and query contracts preserve the
+typed bound state, exponent calculations and the distinction between zero and
+an unavailable exponent. They do not yet establish the denotation of the
+incoming bound or cache. Rational import, mapping callbacks, addition, square,
+multiplication, public magnitude conversion, constants and concurrent caches
+remain outside this added boundary. Normal builds retain every operation.
+
+The verifier builds `verification/dependencies` with its pinned Rust compiler
+and checks every registry dependency against the production lockfile. A
+transparent type declaration imports the actual `num::bigint::Sign` variants;
+it assumes no equality or arithmetic implementation. Dependency source and
+artifact hashes are checked before and after proof checking and retained in
+the evidence. Derived sign equality and unsupported standard-library methods
+remain proof obligations. Conditional method markers use the pinned Verus
+attribute implementation and disappear from normal builds.
+
 | Executable kernel | Checked behavior | Production caller |
 | --- | --- | --- |
+| `BoundInfo::with_sign`, `BoundInfo::with_sign_msd` | Complete typed constructor result, including nonzero signs with unavailable exponents. | Computable structural bound construction |
+| `BoundInfo::negate`, `BoundInfo::inverse`, `BoundInfo::sqrt`, `negate_sign` | Exact sign/metadata transformation; inverse exponent overflow remains unavailable; square-root exponents use floor division. | Computable bound propagation |
+| `BoundInfo::known_msd`, `BoundInfo::planning_msd`, `BoundInfo::known_sign` | Zero sentinel iff the bound is `Zero`, and returned exponents/signs match the stored metadata. | Computable magnitude/sign queries |
 | `approximation_scale_plan` | Exact direction and shift count for every `i32` precision, including the `2^31` left shift at `i32::MIN`. | Integer-leaf approximation |
 | `decode_f32` | All 32-bit patterns decode to the IEEE sign, significand and binary exponent, or the correct nonfinite class; field bounds are proved. | `TryFrom<f32> for Rational` |
 | `decode_f64` | The corresponding result for all 64-bit patterns, including subnormals and both zero signs. | `TryFrom<f64> for Rational` |

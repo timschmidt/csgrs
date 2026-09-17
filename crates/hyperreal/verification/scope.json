@@ -56,7 +56,16 @@
     "verified::fraction::reduce",
     "verified::fraction::checked_factors_product",
     "verified::fraction::cross_cancelled_product",
-    "verified::word::checked_bit_length_msd"
+    "verified::word::checked_bit_length_msd",
+    "computable_bounds::BoundInfo::with_sign",
+    "computable_bounds::BoundInfo::with_sign_msd",
+    "computable_bounds::BoundInfo::negate",
+    "computable_bounds::BoundInfo::inverse",
+    "computable_bounds::BoundInfo::sqrt",
+    "computable_bounds::BoundInfo::known_msd",
+    "computable_bounds::BoundInfo::planning_msd",
+    "computable_bounds::BoundInfo::known_sign",
+    "computable_bounds::negate_sign"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -182,7 +191,7 @@
     },
     {
       "area": "Structural facts, certificates, intervals and explicit uncertainty",
-      "status": "unverified"
+      "status": "partial"
     },
     {
       "area": "Caches, atomics, concurrency, unsafe memory, cancellation and resources",
