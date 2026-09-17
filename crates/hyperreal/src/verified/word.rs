@@ -36,6 +36,13 @@ pub(crate) fn compare_products(
 
 #[cfg(verus_keep_ghost)]
 verus! {
+pub(crate) open spec fn bit_length_msd(
+    numerator_bits: u64, denominator_bits: u64, below: bool, offset: i32,
+) -> int {
+    numerator_bits as int - denominator_bits as int
+        - (if below { 1int } else { 0int }) + offset as int
+}
+
 pub(crate) open spec fn signed(negative: bool, magnitude: u128) -> int {
     if negative { -(magnitude as int) } else { magnitude as int }
 }
@@ -174,8 +181,7 @@ pub(crate) fn floor_half(value: i32) -> i32 {
 /// Convert the exact bit-length difference and comparison correction plus an offset to an MSD.
 #[cfg_attr(verus_keep_ghost, verus_spec(result =>
     ensures ({
-        let exact = numerator_bits as int - denominator_bits as int
-            - (if below { 1int } else { 0int }) + offset as int;
+        let exact = bit_length_msd(numerator_bits, denominator_bits, below, offset);
         &&& (result.is_none() <==> exact < i32::MIN || exact > i32::MAX)
         &&& match result { Some(msd) => msd == exact, None => true }
     }),

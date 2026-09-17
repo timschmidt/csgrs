@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies fifty-five production contracts (fifty-four
-functions and one constant) and sixty-six arithmetic model theorems. The rest
+functions and one constant) and seventy-one arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -198,6 +198,13 @@ The `floor_half` contract covers the integer exponent calculation. The
 positive-root binade identity and the surrounding metadata invariants still
 need to be connected to the complete real-denotation proof.
 The checked bit-length helper proves the final exponent range calculation.
+Its shared exponent specification is connected to five theorems in
+[`magnitude_model.rs`](magnitude_model.rs). Bit-length bounds and one aligned
+comparison determine the unique interval `2^msd <= |n/d| < 2^(msd+1)`.
+Aligned equality characterizes an exact power-of-two scale even for unreduced
+parts. Signed binary scaling moves that interval by exactly its exponent.
+These theorems support arbitrary mathematical exponents; the executable helper
+checks only the final result against `i32`.
 Rational queries retain full-width lengths and shifts, and real queries add
 the computable offset before narrowing. The `BigUint` bit-length/shifted
 comparison semantics and the full real-magnitude certificates still require
@@ -245,9 +252,11 @@ comparisons. Its shifted target index stays in `u64` until the buffer check
 proves conversion to `usize` is safe, including on narrower targets.
 No project assumptions were added to cover these operations.
 
-`test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of seventy-seven
-incorrect implementations and an attempted assumption bypass. This guards
+`test_rejections.py` copies the production kernels and magnitude model into a
+temporary directory, first verifies the unmodified proofs, and then requires
+rejection of seventy-seven incorrect implementations, two incorrect magnitude
+definitions and an attempted assumption bypass. The model guards reject a
+reversed comparison correction and overlapping adjacent binary intervals. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
 `num::BigRational`, so Hyperreal's own equality cannot hide an error. GCD tests

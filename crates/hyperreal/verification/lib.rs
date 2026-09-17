@@ -5,3 +5,4 @@
 mod verified;
 
 mod rational_model;
+mod magnitude_model;

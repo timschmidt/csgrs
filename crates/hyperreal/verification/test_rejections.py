@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check that the production contracts reject plausible arithmetic defects."""
+"""Check that executable contracts and magnitude theorems reject arithmetic defects."""
 
 from pathlib import Path
 import shutil
@@ -115,6 +115,10 @@ MUTATIONS = [
     ("aggregate.rs", "Some(super::dyadic::normalize_word(negative, magnitude, maximum))", "None"),
     ("aggregate.rs", "Some(super::dyadic::normalize_word(negative, magnitude, maximum))",
      "Some(super::dyadic::normalize_word(negative, magnitude, 0))"),
+    ("magnitude_model.rs", "- if below_aligned(numerator, denominator, numerator_bits, denominator_bits)",
+     "+ if below_aligned(numerator, denominator, numerator_bits, denominator_bits)"),
+    ("magnitude_model.rs", "&& numerator * binary_denominator(exponent) < 2 * binary_numerator(exponent) * denominator",
+     "&& numerator * binary_denominator(exponent) <= 2 * binary_numerator(exponent) * denominator"),
 ]
 
 
@@ -124,23 +128,29 @@ def main():
         root = Path(temporary)
         source = root / "verified"
         shutil.copytree(ROOT / "src/verified", source)
-        originals = {name: (source / name).read_text() for name, _, _ in MUTATIONS}
+        shutil.copy2(ROOT / "verification/magnitude_model.rs", root / "magnitude_model.rs")
+        paths = {name: (root / name if name == "magnitude_model.rs" else source / name)
+                 for name, _, _ in MUTATIONS}
+        originals = {name: path.read_text() for name, path in paths.items()}
         for name, before, _ in MUTATIONS:
             if originals[name].count(before) != 1:
                 sys.exit(f"Mutation no longer uniquely matches {name}: {before}")
-        (root / "lib.rs").write_text("#![feature(proc_macro_hygiene)]\nmod verified;\n")
+        (root / "lib.rs").write_text(
+            "#![feature(proc_macro_hygiene)]\nmod verified;\nmod magnitude_model;\n")
         command = [str(verus), "--edition=2024", "--crate-type=lib", "--no-cheating", str(root / "lib.rs")]
         baseline = subprocess.run(command, capture_output=True, text=True)
         if baseline.returncode:
             sys.exit(f"Unmutated kernel proofs failed:\n{baseline.stdout}{baseline.stderr}")
         for name, before, after in MUTATIONS:
-            path = source / name
+            path = paths[name]
             original = originals[name]
             path.write_text(original.replace(before, after))
             result = subprocess.run(command, capture_output=True, text=True)
             path.write_text(original)
-            if result.returncode == 0 or not any(message in result.stderr for message in
-                ["postcondition not satisfied", "invariant not satisfied"]):
+            failures = ["postcondition not satisfied", "invariant not satisfied"]
+            if name == "magnitude_model.rs":
+                failures += ["assertion failed", "requires not satisfied"]
+            if result.returncode == 0 or not any(message in result.stderr for message in failures):
                 sys.exit(f"Expected contract rejection for {name}: {after}\n{result.stdout}{result.stderr}")
             print(f"Rejected incorrect {name}: {after}")
         # The production runner's --no-cheating gate must also reject an

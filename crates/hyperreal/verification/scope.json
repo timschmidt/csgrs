@@ -123,7 +123,12 @@
     "rational_model::reduction_preserves_value",
     "rational_model::canonical_unique",
     "rational_model::reduction_is_idempotent",
-    "rational_model::canonical_form_characterizes_equivalence"
+    "rational_model::canonical_form_characterizes_equivalence",
+    "magnitude_model::bit_lengths_determine_binade",
+    "magnitude_model::binary_scales_compose",
+    "magnitude_model::binary_scale_preserves_binade",
+    "magnitude_model::binade_is_unique",
+    "magnitude_model::checked_exponent_denotes_scaled_binade"
   ],
   "obligations": [
     {
