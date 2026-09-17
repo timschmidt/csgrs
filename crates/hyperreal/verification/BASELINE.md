@@ -85,6 +85,15 @@ All six saved fuzz corpora pass with the corrected harness on both revisions;
 the frozen inputs are retained. Downstream qualification and final repeated
 performance comparisons remain open.
 
+The subsequent [cache investigation](../benchmarks/checkpoints/2026-09-17-verus-cache-diagnostics.json)
+compares the fraction-reduction runtime `8c74849` with the same fixed baseline.
+Six balanced original Criterion rounds retain a median 4.19% `pi_pow` clone
+slowdown. A native cached-conversion probe also consistently regresses.
+Inlining the cache accessor improves cached conversion, but does not resolve
+the clone finding; that overlay remains experimental. Raw counters, samples,
+assembly and the completed pinned Hypercurve follow-up failures are retained
+with the checkpoint. No live Hypercurve files were changed.
+
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
 `verify --require-complete` gate requires both the proof obligation audit and
