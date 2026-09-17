@@ -190,6 +190,7 @@
     "real_approximation_model::near_integer_is_adjacent",
     "real_approximation_model::separated_approximation_certifies_sign",
     "real_approximation_model::separated_strict_approximations_certify_order",
+    "real_approximation_model::finer_cache_preserves_separated_sign",
     "computable_bounds::constructor_preserves_certificates",
     "computable_bounds::separated_approximation_yields_a_bound",
     "computable_bounds::negation_preserves_bound_denotation",

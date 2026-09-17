@@ -405,4 +405,29 @@ pub(crate) proof fn separated_strict_approximations_certify_order(left: real, ri
                 -unit < b as real * unit - right < unit;
     }
 }
+
+/// A strictly finer valid cache entry cannot lose the nonzero sign established
+/// by a previous approximation separated from zero. This supports the two
+/// cache reads in MSD queries, conditional on the cache refinement invariant.
+pub(crate) proof fn finer_cache_preserves_separated_sign(
+    value: real, cached: int, refined: int, old_unit: real, new_unit: real,
+)
+    requires approximates(value, cached, old_unit), approximates(value, refined, new_unit),
+        new_unit < old_unit,
+    ensures cached > 1 ==> refined > 0,
+        cached < -1 ==> refined < 0,
+{
+    if cached > 1 {
+        assert(refined as real > 0real) by (nonlinear_arith)
+            requires old_unit > new_unit > 0real, cached as real >= 2real,
+                -old_unit <= cached as real * old_unit - value <= old_unit,
+                -new_unit <= refined as real * new_unit - value <= new_unit;
+    }
+    if cached < -1 {
+        assert((refined as real) < 0real) by (nonlinear_arith)
+            requires old_unit > new_unit > 0real, cached as real <= -2real,
+                -old_unit <= cached as real * old_unit - value <= old_unit,
+                -new_unit <= refined as real * new_unit - value <= new_unit;
+    }
+}
 }
