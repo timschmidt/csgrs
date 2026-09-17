@@ -3,6 +3,7 @@
 //! Hyperreal may retain unreduced internal fractions.
 use vstd::prelude::*;
 use vstd::arithmetic::mul::*;
+use vstd::arithmetic::div_mod::{lemma_mod_multiples_basic, lemma_small_mod};
 use crate::verified::division::gcd;
 use crate::verified::gcd::gcd_reduction;
 
@@ -66,6 +67,75 @@ pub(crate) proof fn reduction_preserves_value(x: Fraction)
                 x.denominator == denominator;
     }
     assert(magnitude(reduce(x).numerator) == reduced_numerator);
+}
+
+proof fn canonical_denominator_divides_other(x: Fraction, y: Fraction)
+    requires canonical(x), valid(y), equivalent(x, y),
+    ensures y.denominator % x.denominator == 0,
+{
+    let numerator = magnitude(x.numerator);
+    let coefficient = if x.numerator < 0 { -y.numerator } else { y.numerator };
+    if x.numerator < 0 {
+        assert(numerator * y.denominator == coefficient * x.denominator) by (nonlinear_arith)
+            requires numerator == -x.numerator, coefficient == -y.numerator,
+                x.numerator * y.denominator == y.numerator * x.denominator;
+    } else {
+        assert(numerator * y.denominator == coefficient * x.denominator);
+    }
+    lemma_mod_multiples_basic(coefficient, x.denominator);
+    crate::verified::fraction::coprime_divides_product(numerator, y.denominator as nat, x.denominator as nat);
+}
+
+/// Equivalent reduced fractions with positive denominators have identical parts.
+pub(crate) proof fn canonical_unique(x: Fraction, y: Fraction)
+    requires canonical(x), canonical(y), equivalent(x, y),
+    ensures x.numerator == y.numerator, x.denominator == y.denominator,
+{
+    canonical_denominator_divides_other(x, y);
+    equivalence_symmetric(x, y);
+    canonical_denominator_divides_other(y, x);
+    if x.denominator < y.denominator {
+        lemma_small_mod(x.denominator as nat, y.denominator as nat);
+    } else if y.denominator < x.denominator {
+        lemma_small_mod(y.denominator as nat, x.denominator as nat);
+    }
+    assert(x.numerator == y.numerator) by (nonlinear_arith)
+        requires x.denominator > 0, x.denominator == y.denominator,
+            x.numerator * y.denominator == y.numerator * x.denominator;
+}
+
+pub(crate) proof fn reduction_is_idempotent(x: Fraction)
+    requires valid(x),
+    ensures reduce(reduce(x)).numerator == reduce(x).numerator,
+        reduce(reduce(x)).denominator == reduce(x).denominator,
+{
+    reduction_preserves_value(x);
+    reduction_preserves_value(reduce(x));
+    canonical_unique(reduce(x), reduce(reduce(x)));
+}
+
+/// Canonical parts characterize value equality even for unreduced inputs.
+pub(crate) proof fn canonical_form_characterizes_equivalence(x: Fraction, y: Fraction)
+    requires valid(x), valid(y),
+    ensures equivalent(x, y) <==> (reduce(x).numerator == reduce(y).numerator
+        && reduce(x).denominator == reduce(y).denominator),
+{
+    reduction_preserves_value(x);
+    reduction_preserves_value(y);
+    let left = reduce(x);
+    let right = reduce(y);
+    if equivalent(x, y) {
+        equivalence_symmetric(x, left);
+        equivalence_transitive(left, x, y);
+        equivalence_transitive(left, y, right);
+        canonical_unique(left, right);
+    }
+    if left.numerator == right.numerator && left.denominator == right.denominator {
+        assert(equivalent(left, right));
+        equivalence_transitive(x, left, right);
+        equivalence_symmetric(y, right);
+        equivalence_transitive(x, right, y);
+    }
 }
 
 pub open spec fn equivalent(x: Fraction, y: Fraction) -> bool {
