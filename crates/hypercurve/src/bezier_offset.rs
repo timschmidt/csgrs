@@ -10525,9 +10525,9 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
             }
         };
         match self {
-            Self::Rational { curve, .. } => {
-                Ok(curve.point_at_classified(&parameter, policy).map(Some))
-            }
+            Self::Rational { curve, .. } => Ok(curve
+                .point_at_affine_classified(&parameter, policy)
+                .map(Some)),
             Self::Parallel { parallel, .. } => Ok(parallel.point_at(&parameter, policy)?.map(Some)),
         }
     }
@@ -10552,14 +10552,14 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
             } => match parameter {
                 BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(parameter) => {
                     match parameter {
-                        BezierParameter2::Exact(parameter) => {
-                            Ok(curve.point_at_classified(parameter, policy).map(|point| {
+                        BezierParameter2::Exact(parameter) => Ok(curve
+                            .point_at_affine_classified(parameter, policy)
+                            .map(|point| {
                                 [
                                     AlgebraicRootRepresentation::from_exact_value(point.x()),
                                     AlgebraicRootRepresentation::from_exact_value(point.y()),
                                 ]
-                            }))
-                        }
+                            })),
                         BezierParameter2::Algebraic(parameter) => {
                             Ok(RationalBezierAlgebraicPointImage2::from_parametric_source(
                                 curve.clone(),
@@ -10688,12 +10688,12 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                                 parameter.clone(),
                                 policy,
                             );
-                            return Ok(one_field_point_parameter_candidates_on_rational_target(
-                                &point, target, policy,
-                            )?
-                            .map(|parameters| {
-                                Some(curve_region_parameters_from_bezier(parameters))
-                            }));
+                            return one_field_point_parameter_candidates(
+                                &point.into(),
+                                &target.parallel_left(Real::zero())?,
+                                &CurveParameterRange2::unit(),
+                                policy,
+                            );
                         }
                         return Ok(Classification::Uncertain(reason));
                     }
@@ -11639,40 +11639,44 @@ fn analytic_parallel_point_bounds_over_interval_with_tangent(
 /// roots without constructing a Cartesian primitive element. An optional
 /// positive branch predicate selects one sheet of an implicit carrier.
 fn one_field_common_zero_parameter_candidates(
-    parameter: &BezierParameter2,
+    parameter: &BezierAlgebraicParameter2,
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
     positive_branch: Option<&BivariatePolynomial>,
+    range: &CurveParameterRange2,
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
+) -> CurveResult<Classification<Option<Vec<CurveParameter2>>>> {
     let mut last_reason = UncertaintyReason::Unsupported;
+    let mut identically_zero = 0;
     for (incidence, replay) in [(first, second), (second, first)] {
-        let candidates = match selected_parameter_fiber_parameters(
-            incidence,
-            parameter,
-            MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-            MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
-            &CurveParameterRange2::unit(),
-            policy,
-        )? {
-            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
-                candidates
-            }
-            Classification::Decided(
-                BezierAlgebraicFiberProjection2::IdenticallyZero
-                | BezierAlgebraicFiberProjection2::Degenerate,
-            ) => continue,
-            Classification::Uncertain(reason) => {
-                last_reason = reason;
-                continue;
-            }
-        };
+        let candidates =
+            match selected_fiber_parameters_in_range(incidence, parameter, range, policy)? {
+                Classification::Decided(Some(candidates)) => candidates,
+                Classification::Decided(None) => {
+                    identically_zero += 1;
+                    continue;
+                }
+                Classification::Uncertain(reason) => {
+                    last_reason = reason;
+                    continue;
+                }
+            };
         let mut retained = Vec::with_capacity(candidates.len());
         let mut retry_reason = None;
         for candidate in candidates {
-            match algebraic_selected_correlated_predicate_sign(
-                incidence, replay, parameter, &candidate, policy,
-            )? {
+            // The desired sheet is strictly positive. Reject an unsigned
+            // candidate before asking whether its remaining incidence is zero.
+            if let Some(branch) = positive_branch {
+                match candidate.predicate_sign(branch, policy)? {
+                    Classification::Decided(RealSign::Positive) => {}
+                    Classification::Decided(RealSign::Negative | RealSign::Zero) => continue,
+                    Classification::Uncertain(reason) => {
+                        retry_reason = Some(reason);
+                        break;
+                    }
+                }
+            }
+            match candidate.predicate_sign(replay, policy)? {
                 Classification::Decided(RealSign::Zero) => {}
                 Classification::Decided(RealSign::Negative | RealSign::Positive) => continue,
                 Classification::Uncertain(reason) => {
@@ -11680,99 +11684,87 @@ fn one_field_common_zero_parameter_candidates(
                     break;
                 }
             }
-            if let Some(branch) = positive_branch {
-                match algebraic_selected_correlated_predicate_sign(
-                    incidence, branch, parameter, &candidate, policy,
-                )? {
-                    Classification::Decided(RealSign::Positive) => {}
-                    Classification::Decided(RealSign::Negative) => continue,
-                    Classification::Decided(RealSign::Zero) => {
-                        return Err(CurveError::Topology(
-                            "implicit carrier branch vanished at a certified regular incidence"
-                                .to_owned(),
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        retry_reason = Some(reason);
-                        break;
-                    }
-                }
-            }
-            retained.push(candidate);
+            retained.push(CurveParameter2::from_selected_fiber(candidate));
         }
         if let Some(reason) = retry_reason {
             last_reason = reason;
             continue;
         }
-        return Ok(Classification::Decided(retained));
+        return Ok(Classification::Decided(Some(retained)));
+    }
+    if identically_zero == 2 {
+        if let Some(branch) = positive_branch {
+            // The caller proved a finite, regular source frame. With both
+            // incidence equations identically zero and nonzero displacement,
+            // the normal branch cannot vanish anywhere in this interval.
+            // Its sign at one interior point therefore owns the whole fiber.
+            let sample = match range.strict_interior_scalar(policy)? {
+                Classification::Decided(sample) => sample,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            match signed_coefficients_at_parameter(
+                &bivariate_specialize_second(branch, &sample),
+                &BezierParameter2::Algebraic(parameter.clone()),
+                policy,
+            )? {
+                Classification::Decided(RealSign::Positive) => {}
+                Classification::Decided(RealSign::Negative) => {
+                    return Ok(Classification::Decided(Some(Vec::new())));
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "implicit carrier branch vanished on a certified regular component".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        // An empty inverse and an entire parameter fiber are distinct.
+        return Ok(Classification::Decided(None));
     }
     Ok(Classification::Uncertain(last_reason))
 }
 
-/// Recovers every finite rational-target parameter at one point already
-/// represented in a single selected algebraic field.
-fn one_field_point_parameter_candidates_on_rational_target(
-    point: &RationalBezierAlgebraicPointImage2,
-    target: &RationalBezier2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-    let parameter = match algebraic_chord_image_parameter(point, policy)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let [point_x, point_y, point_weight] =
-        match algebraic_chord_owned_coordinate_polynomials(point, policy)? {
-            Classification::Decided(coordinates) => coordinates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    let target = target.homogeneous_power_basis()?;
-    let target_equation = |point_coordinate: &[Real], target_coordinate: &[Real]| {
-        bivariate_subtract(
-            &bivariate_outer_product(&point_weight, target_coordinate),
-            &bivariate_outer_product(point_coordinate, &target.weight),
-        )
-    };
-    let x = target_equation(&point_x, &target.x_numerator);
-    let y = target_equation(&point_y, &target.y_numerator);
-    let point_parameter = BezierParameter2::Algebraic(parameter.clone());
-    one_field_common_zero_parameter_candidates(&point_parameter, &x, &y, None, policy)
-}
-
-/// Recovers every parameter of one analytic parallel at a singly-selected
-/// point. The two offset incidence equations are kept bivariate so the point
-/// and target parameters remain correlated; the signed normal predicate then
-/// removes the opposite implicit offset sheet.
-fn one_field_point_parameter_candidates_on_parallel_target(
-    point: &RationalBezierAlgebraicPointImage2,
+/// Inverts an exact or singly-selected point on a finite target domain.
+/// Rational curves use the zero-distance specialization: unsquared coordinate
+/// incidence needs no normal, even at stationary or constant source points.
+/// Nonzero offsets retain correlated incidence and signed normal-sheet replay.
+fn one_field_point_parameter_candidates(
+    point: &CurvePoint2,
     target: &BezierParallel2,
+    range: &CurveParameterRange2,
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-    let evidence = CurvePoint2::from(point.clone());
-    let point = match algebraic_axis_point_coordinates(&evidence, policy)? {
+) -> CurveResult<Classification<Option<Vec<CurveParameter2>>>> {
+    if let CurvePoint2(CurvePointData2::Exact(point)) = point {
+        // Keep the scalar GCD path for an already represented point.
+        return Ok(target.point_incidence(point, range, policy)?.map(
+            |incidence| match incidence {
+                BezierParallelIncidence2::Parameters(parameters) => {
+                    Some(curve_region_parameters_from_bezier(parameters))
+                }
+                BezierParallelIncidence2::EntireCurve => None,
+            },
+        ));
+    }
+    let point = match algebraic_axis_point_coordinates(point, policy)? {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
+    };
+    let BezierParameter2::Algebraic(parameter) = &point.parameter else {
+        unreachable!("represented points use scalar point incidence above");
     };
     let distance_sign = match real_sign(target.distance(), policy) {
         Some(sign) => sign,
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
     let source = target.source_power_basis()?;
-    let differential = target.differential()?;
-    if let Classification::Uncertain(reason) =
-        BezierParallel2::certify_finite_source(&source, policy)?
-    {
-        return Ok(Classification::Uncertain(reason));
-    }
-    if distance_sign != RealSign::Zero
-        && let Classification::Uncertain(reason) =
-            BezierParallel2::certify_regular_differential(differential, policy)?
-    {
+    if let Classification::Uncertain(reason) = target.certify_source_frame_in_domain(
+        SelectedThirdAxisDomain2::Finite(range),
+        None,
+        policy,
+    )? {
         return Ok(Classification::Uncertain(reason));
     }
 
@@ -11786,6 +11778,12 @@ fn one_field_point_parameter_candidates_on_parallel_target(
         &bivariate_outer_product(&point.y, source_weight),
         &bivariate_outer_product(&point.denominator, source.y_numerator),
     );
+    if distance_sign == RealSign::Zero {
+        return one_field_common_zero_parameter_candidates(
+            parameter, &delta_x, &delta_y, None, range, policy,
+        );
+    }
+    let differential = target.differential()?;
     let tangent_x = bivariate_outer_product(&[Real::one()], &differential.tangent_x);
     let tangent_y = bivariate_outer_product(&[Real::one()], &differential.tangent_y);
     let orthogonality = bivariate_add(
@@ -11804,28 +11802,25 @@ fn one_field_point_parameter_candidates_on_parallel_target(
             &distance_squared,
         ),
     );
-    let branch = if distance_sign == RealSign::Zero {
-        None
+    let orientation = bivariate_subtract(
+        &bivariate_multiply(&delta_y, &tangent_x),
+        &bivariate_multiply(&delta_x, &tangent_y),
+    );
+    let orientation = if source.weight.is_some() {
+        bivariate_multiply(
+            &orientation,
+            &bivariate_outer_product(&[Real::one()], source_weight),
+        )
     } else {
-        let orientation = bivariate_subtract(
-            &bivariate_multiply(&delta_y, &tangent_x),
-            &bivariate_multiply(&delta_x, &tangent_y),
-        );
-        let orientation = if source.weight.is_some() {
-            bivariate_multiply(
-                &orientation,
-                &bivariate_outer_product(&[Real::one()], source_weight),
-            )
-        } else {
-            orientation
-        };
-        Some(bivariate_scale(orientation, target.distance()))
+        orientation
     };
+    let branch = bivariate_scale(orientation, target.distance());
     one_field_common_zero_parameter_candidates(
-        &point.parameter,
+        parameter,
         &orthogonality,
         &distance_relation,
-        branch.as_ref(),
+        Some(&branch),
+        range,
         policy,
     )
 }
@@ -13278,22 +13273,28 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         }
         match target {
             BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(target) => self
-                .retained_point_parameter_candidates_on_rational_target(&target.data.curve, policy),
+                .retained_point_parameter_candidates_on_rational_target(
+                    &target.data.curve,
+                    range,
+                    policy,
+                ),
             BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(target) => {
                 if let Some(point) = self.retained_one_field_point_image(policy)? {
-                    return Ok(one_field_point_parameter_candidates_on_parallel_target(
-                        &point,
+                    return one_field_point_parameter_candidates(
+                        &point.into(),
                         &target.data.parallel,
+                        range,
                         policy,
-                    )?
-                    .map(|parameters| Some(curve_region_parameters_from_bezier(parameters))));
+                    );
                 }
                 if let Classification::Decided(Some(curve)) = target
                     .data
                     .parallel
                     .exact_circular_parallel_component(&policy.strict_counterpart())?
-                    && let decided @ Classification::Decided(Some(_)) =
-                        self.retained_point_parameter_candidates_on_rational_target(&curve, policy)?
+                    && let decided @ Classification::Decided(Some(_)) = self
+                        .retained_point_parameter_candidates_on_rational_target(
+                            &curve, range, policy,
+                        )?
                 {
                     // Preserve the authored analytic parameter while solving
                     // the retained point through its exact rational circle.
@@ -13316,7 +13317,11 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let contacts = match chord.parallel_intersections(&target.data.parallel, policy)? {
+                let contacts = match chord.parallel_intersections_on_regular_range(
+                    &target.data.parallel,
+                    range,
+                    policy,
+                )? {
                     Classification::Decided(
                         BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
                     ) => contacts,
@@ -13351,13 +13356,16 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     fn retained_point_parameter_candidates_on_rational_target(
         self: &Arc<Self>,
         target: &RationalBezier2,
+        range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<CurveParameter2>>>> {
         if let Some(point) = self.retained_one_field_point_image(policy)? {
-            return Ok(one_field_point_parameter_candidates_on_rational_target(
-                &point, target, policy,
-            )?
-            .map(|parameters| Some(curve_region_parameters_from_bezier(parameters))));
+            return one_field_point_parameter_candidates(
+                &point.into(),
+                &target.parallel_left(Real::zero())?,
+                range,
+                policy,
+            );
         }
         let (chord, point) = match self.retained_point_probe_chord(policy)? {
             Classification::Decided(Some(probe)) => probe,
@@ -13366,8 +13374,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let intersections =
-            chord.rational_intersections(target, &CurveParameterRange2::unit(), None, policy)?;
+        let intersections = chord.rational_intersections(target, range, None, policy)?;
         let contacts = match intersections {
             Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
                 contacts,
@@ -41533,6 +41540,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                             } else {
                                 data.retained_point_parameter_candidates_on_rational_target(
                                     &self.map.data.curve,
+                                    &self.parameter_ranges().1,
                                     policy,
                                 )?
                             }
@@ -41591,6 +41599,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter {
             match data.retained_point_parameter_candidates_on_rational_target(
                 &self.map.data.curve,
+                &self.parameter_ranges().1,
                 policy,
             )? {
                 Classification::Decided(Some(candidates)) => {
@@ -78087,16 +78096,17 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
         self.validate_policy(policy)?;
-        let strict = policy.strict_counterpart();
-        let component_sample = match range.strict_interior_scalar(&strict)? {
-            Classification::Decided(sample) => sample,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let frame = match parallel
-            .source_oriented_regularized_tangent_field_at_interior(&component_sample, &strict)?
-        {
+        let component_sample =
+            match policy.strict_predicate_pass(|| range.strict_interior_scalar(policy))? {
+                Classification::Decided(sample) => sample,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let frame = match policy.strict_predicate_pass(|| {
+            parallel
+                .source_oriented_regularized_tangent_field_at_interior(&component_sample, policy)
+        })? {
             Classification::Decided(frame) => frame,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -106498,6 +106508,7 @@ fn algebraic_selected_fiber_root_predicate_sign(
     let retained_root = parameter_representation(refined_retained, policy);
     let mut latest = root.clone();
     let mut refinement_steps = 0_usize;
+    let mut exact_nonzero = false;
     let next_refinement_steps = |steps: usize| {
         if steps == 0 {
             Ok(2)
@@ -106554,53 +106565,81 @@ fn algebraic_selected_fiber_root_predicate_sign(
         if policy.has_bounded_exact_predicate_budget() {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
-        if refinement_steps < 32 {
-            refinement_steps = next_refinement_steps(refinement_steps)?;
-            continue;
-        }
-        let predicate_policy = if refinement_steps == 512 && policy.permits_approximate_512() {
-            policy.predicate_policy()
-        } else {
-            hypersolve::PredicatePolicy::STRICT
-        };
-        let zero_report = count_bivariate_common_fiber_roots_at_algebraic_parameter(
-            incidence,
+        // Immediate Bernstein signs are only an optional fact lookup. A
+        // radical coefficient may never acquire such a fact as the parameter
+        // box shrinks. Full replay also evaluates certified Real intervals,
+        // so a separated nonzero value can finish without further root work.
+        if let Some(enclosure) = RealInterval::evaluate_bivariate_power_basis(
             predicate,
-            CurveResultantParameter::First,
-            &retained_root,
-            &latest.lower,
-            &latest.upper,
-            predicate_policy,
-        );
-        let exact_nonzero = zero_report.certainty == PredicateCertainty::Exact
-            && zero_report.status == AlgebraicFiberRootCountStatus::Counted
-            && zero_report.distinct_root_count == Some(0);
-        if zero_report.certainty == PredicateCertainty::Approximate {
-            policy.observe_approximate_512();
-        }
-        match zero_report.status {
-            AlgebraicFiberRootCountStatus::Counted
-                if zero_report
-                    .distinct_root_count
-                    .is_some_and(|count| count > 0) =>
+            &RealInterval {
+                lower: retained_refined.interval().start().clone(),
+                upper: retained_refined.interval().end().clone(),
+            },
+            &RealInterval {
+                lower: latest.lower.clone(),
+                upper: latest.upper.clone(),
+            },
+        ) {
+            if RealInterval::compare_to_zero(&enclosure.lower) == Some(std::cmp::Ordering::Greater)
             {
-                return Ok(Classification::Decided(RealSign::Zero));
+                return Ok(Classification::Decided(RealSign::Positive));
             }
-            AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
-                return Ok(Classification::Decided(RealSign::Zero));
+            if RealInterval::compare_to_zero(&enclosure.upper) == Some(std::cmp::Ordering::Less) {
+                return Ok(Classification::Decided(RealSign::Negative));
             }
-            AlgebraicFiberRootCountStatus::Counted
-            | AlgebraicFiberRootCountStatus::EndpointRoot => {}
-            AlgebraicFiberRootCountStatus::InvalidEvidence
-            | AlgebraicFiberRootCountStatus::InvalidInterval => {
-                return Err(CurveError::InvalidBezierAlgebraicParameter);
+        }
+        // A zero predicate cannot acquire a strict interval sign. Replay its
+        // common-root certificate before spending more on interval refinement;
+        // once nonzero is proved, retain that fact while refining its sign.
+        if !exact_nonzero {
+            let predicate_policy = if refinement_steps == 512 && policy.permits_approximate_512() {
+                policy.predicate_policy()
+            } else {
+                hypersolve::PredicatePolicy::STRICT
+            };
+            let zero_report = count_bivariate_common_fiber_roots_at_algebraic_parameter(
+                incidence,
+                predicate,
+                CurveResultantParameter::First,
+                &retained_root,
+                &latest.lower,
+                &latest.upper,
+                predicate_policy,
+            );
+            exact_nonzero = zero_report.certainty == PredicateCertainty::Exact
+                && zero_report.status == AlgebraicFiberRootCountStatus::Counted
+                && zero_report.distinct_root_count == Some(0);
+            if zero_report.certainty == PredicateCertainty::Approximate {
+                policy.observe_approximate_512();
             }
-            AlgebraicFiberRootCountStatus::UnsupportedCoefficient => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            AlgebraicFiberRootCountStatus::Undecided => {
-                if refinement_steps == 512 && policy.permits_approximate_512() {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            match zero_report.status {
+                AlgebraicFiberRootCountStatus::Counted
+                    if zero_report
+                        .distinct_root_count
+                        .is_some_and(|count| count > 0) =>
+                {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                AlgebraicFiberRootCountStatus::IdenticallyZeroFiber => {
+                    return Ok(Classification::Decided(RealSign::Zero));
+                }
+                AlgebraicFiberRootCountStatus::Counted
+                | AlgebraicFiberRootCountStatus::EndpointRoot => {}
+                AlgebraicFiberRootCountStatus::InvalidEvidence
+                | AlgebraicFiberRootCountStatus::InvalidInterval => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                AlgebraicFiberRootCountStatus::UnsupportedCoefficient => {
+                    // Keep the existing interval opportunity when the algebraic
+                    // replay cannot admit these coefficients.
+                    if refinement_steps >= 32 {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    }
+                }
+                AlgebraicFiberRootCountStatus::Undecided => {
+                    if refinement_steps == 512 && policy.permits_approximate_512() {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                    }
                 }
             }
         }
@@ -169823,6 +169862,385 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         }
         assert_eq!(cases, 24);
         assert_eq!(failures, 0, "finite inverses lost independent cuts");
+    }
+
+    fn assert_finite_point_inverse(
+        point: &CurvePoint2,
+        target: &BezierParallel2,
+        range: &CurveParameterRange2,
+        expected: &[Real],
+        policy: &CurveContext,
+    ) {
+        let outcome = crate::policy::resolve_certified_operation(policy, |attempt| {
+            one_field_point_parameter_candidates(point, target, range, attempt)
+        })
+        .unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let Classification::Decided(Some(parameters)) = outcome.value else {
+            panic!("finite point inverse: {:?}", outcome.value)
+        };
+        assert_eq!(parameters.len(), expected.len());
+        for value in expected {
+            assert_eq!(
+                parameters
+                    .iter()
+                    .filter(|parameter| {
+                        parameter.same_value(&value.clone().into(), policy).unwrap()
+                            == Classification::Decided(true)
+                    })
+                    .count(),
+                1,
+                "missing or duplicated inverse at {value:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn finite_one_field_point_inverse_preserves_analytic_domain_and_sheet() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        let alpha = algebraic_parameter(vec![-q(1, 2), Real::zero(), Real::one()]);
+        let BezierParameter2::Algebraic(selected_alpha) = &alpha else {
+            unreachable!()
+        };
+        let root = q(1, 2).sqrt().unwrap();
+        let inv_sqrt3 = (Real::one() / Real::from(3).sqrt().unwrap()).unwrap();
+        let parabola = RationalBezier2::try_new(
+            vec![
+                Point2::new(Real::from(0), Real::from(0)),
+                Point2::new(q(1, 2), Real::zero()),
+                Point2::new(Real::from(1), Real::from(1)),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // At t=sqrt(1/2), P(t)=(t,t²) has unit normal
+            // (-2t,1)/sqrt(3). This point is specified independently of
+            // target evaluation, contact discovery and inverse caches.
+            for shift in [0, 2, -2] {
+                for reversed in [false, true] {
+                    let curve = if reversed {
+                        parabola.reversed()
+                    } else {
+                        parabola.clone()
+                    };
+                    let Classification::Decided(curve) = curve
+                        .subcurve_between_affine_exact(
+                            &Real::from(-shift),
+                            &Real::from(1 - shift),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("affine target")
+                    };
+                    let target = curve
+                        .parallel_left(Real::from(if reversed { -1 } else { 1 }))
+                        .unwrap();
+                    let (start, end) = if reversed {
+                        (Real::zero(), q(1, 2))
+                    } else {
+                        (q(1, 2), Real::one())
+                    };
+                    let range = CurveParameterRange2::new_validated(
+                        (Real::from(shift) + start).into(),
+                        (Real::from(shift) + end).into(),
+                    );
+                    for normal_sign in [1, -1] {
+                        let normal = Real::from(normal_sign) * &inv_sqrt3;
+                        let x_scale = Real::one() - Real::from(2) * &normal;
+                        let y = q(1, 2) + &normal;
+                        let source = RationalBezier2::try_new(
+                            vec![
+                                Point2::new(Real::zero(), y.clone()),
+                                Point2::new(x_scale.clone(), y.clone()),
+                            ],
+                            vec![Real::from(-1); 2],
+                        )
+                        .unwrap();
+                        let image: CurvePoint2 =
+                            RationalBezierAlgebraicPointImage2::from_parametric_source(
+                                source,
+                                selected_alpha.clone(),
+                                &policy,
+                            )
+                            .into();
+                        let expected = if normal_sign == 1 {
+                            vec![
+                                Real::from(shift)
+                                    + if reversed {
+                                        Real::one() - &root
+                                    } else {
+                                        root.clone()
+                                    },
+                            ]
+                        } else {
+                            Vec::new()
+                        };
+                        println!(
+                            "analytic inverse shift={shift} reversed={reversed} sheet={normal_sign} policy={policy:?} selected source"
+                        );
+                        assert_finite_point_inverse(&image, &target, &range, &expected, &policy);
+                        println!(
+                            "analytic inverse shift={shift} reversed={reversed} sheet={normal_sign} policy={policy:?} exact source"
+                        );
+                        assert_finite_point_inverse(
+                            &Point2::new(&root * &x_scale, y).into(),
+                            &target,
+                            &range,
+                            &expected,
+                            &policy,
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_one_field_point_inverse_handles_folds_poles_and_constant_fibers() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        let alpha = algebraic_parameter(vec![-q(1, 2), Real::zero(), Real::one()]);
+        let BezierParameter2::Algebraic(alpha) = alpha else {
+            unreachable!()
+        };
+        let root = q(1, 2).sqrt().unwrap();
+        let fourth_root = root.clone().sqrt().unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let line = RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::from(0), Real::from(0)),
+                    Point2::new(Real::from(1), Real::from(0)),
+                ],
+                vec![Real::one(); 2],
+            )
+            .unwrap();
+            let point: CurvePoint2 = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                line,
+                alpha.clone(),
+                &policy,
+            )
+            .into();
+            for shift in [0, 2, -2] {
+                let h = Real::from(shift);
+                let fold = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(&h * &h, Real::zero()),
+                        Point2::new(&h * &h - &h, Real::zero()),
+                        Point2::new((Real::one() - &h) * (Real::one() - &h), Real::zero()),
+                    ],
+                    vec![Real::one(); 3],
+                )
+                .unwrap()
+                .parallel_left(Real::zero())
+                .unwrap();
+                let range = CurveParameterRange2::new_validated(
+                    (&h - Real::one()).into(),
+                    (&h + Real::one()).into(),
+                );
+                assert_finite_point_inverse(
+                    &point,
+                    &fold,
+                    &range,
+                    &[&h - &fourth_root, &h + &fourth_root],
+                    &policy,
+                );
+                assert_finite_point_inverse(
+                    &Point2::new(Real::from(0), Real::from(0)).into(),
+                    &fold,
+                    &range,
+                    &[h],
+                    &policy,
+                );
+            }
+            // R(s)=(s/(2s-1),0) has an unused pole at 1/2. Its tangent
+            // points left on either side; the positive offset therefore has
+            // y=-1, even when its homogeneous weight is negative.
+            let target = RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::from(0), Real::from(0)),
+                    Point2::new(Real::from(1), Real::from(0)),
+                ],
+                vec![Real::from(-1), Real::one()],
+            )
+            .unwrap()
+            .parallel_left(Real::one())
+            .unwrap();
+            let range =
+                CurveParameterRange2::new_validated(Real::one().into(), Real::from(2).into());
+            for y in [-1, 1] {
+                let query = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(Real::from(0), Real::from(y)),
+                        Point2::new(Real::from(1), Real::from(y)),
+                    ],
+                    vec![Real::from(-1); 2],
+                )
+                .unwrap();
+                let query = RationalBezierAlgebraicPointImage2::from_parametric_source(
+                    query,
+                    alpha.clone(),
+                    &policy,
+                )
+                .into();
+                let expected = if y == -1 {
+                    vec![Real::one() + &root]
+                } else {
+                    Vec::new()
+                };
+                assert_finite_point_inverse(&query, &target, &range, &expected, &policy);
+            }
+            let negative_range =
+                CurveParameterRange2::new_validated(Real::from(-2).into(), Real::from(-1).into());
+            assert_finite_point_inverse(
+                &Point2::new(q(3, 8), Real::from(-1)).into(),
+                &target,
+                &negative_range,
+                &[-q(3, 2)],
+                &policy,
+            );
+            let constant = RationalBezier2::try_new(
+                vec![Point2::new(Real::from(3), Real::from(4)); 2],
+                vec![Real::one(); 2],
+            )
+            .unwrap()
+            .parallel_left(Real::zero())
+            .unwrap();
+            assert!(matches!(
+                one_field_point_parameter_candidates(
+                    &Point2::new(Real::from(3), Real::from(4)).into(),
+                    &constant,
+                    &range,
+                    &policy
+                )
+                .unwrap(),
+                Classification::Decided(None)
+            ));
+            assert_finite_point_inverse(
+                &Point2::new(Real::from(3), Real::from(5)).into(),
+                &constant,
+                &range,
+                &[],
+                &policy,
+            );
+            let quarter = RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::one(), Real::zero()),
+                    Point2::new(Real::one(), Real::one()),
+                    Point2::new(Real::zero(), Real::one()),
+                ],
+                vec![Real::one(), Real::one(), Real::from(2)],
+            )
+            .unwrap();
+            let origin = Point2::new(Real::zero(), Real::zero());
+            let constant_query =
+                RationalBezier2::try_new(vec![origin.clone(); 2], vec![Real::one(); 2]).unwrap();
+            let selected_origin: CurvePoint2 =
+                RationalBezierAlgebraicPointImage2::from_parametric_source(
+                    constant_query,
+                    alpha.clone(),
+                    &policy,
+                )
+                .into();
+            for distance in [1, -1] {
+                let target = quarter.parallel_left(Real::from(distance)).unwrap();
+                for query in [&selected_origin, &origin.clone().into()] {
+                    let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                        one_field_point_parameter_candidates(
+                            query,
+                            &target,
+                            &CurveParameterRange2::unit(),
+                            attempt,
+                        )
+                    })
+                    .unwrap();
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    if distance == 1 {
+                        assert!(matches!(outcome.value, Classification::Decided(None)));
+                    } else {
+                        assert!(
+                            matches!(outcome.value, Classification::Decided(Some(parameters)) if parameters.is_empty())
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_one_field_point_inverse_clips_selected_endpoints_and_evaluates_local_sources() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        let root = q(1, 2).sqrt().unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let alpha = algebraic_parameter(vec![-q(1, 2), Real::zero(), Real::one()]);
+            for shift in [2, -2] {
+                let h = Real::from(shift);
+                let curve = RationalBezier2::try_new(
+                    vec![
+                        Point2::new(-h.clone(), Real::zero()),
+                        Point2::new(Real::one() - &h, Real::zero()),
+                    ],
+                    vec![Real::one(); 2],
+                )
+                .unwrap();
+                let target = curve.parallel_left(Real::zero()).unwrap();
+                let original = CurveParameter2::from(alpha.clone());
+                let Classification::Decided(endpoint) = original
+                    .affine_image_unbounded(&Real::one(), &h, &policy)
+                    .unwrap()
+                else {
+                    panic!("selected endpoint")
+                };
+                let value = &h + &root;
+                let compact = CurveParameter2::from_selected_fiber(
+                    degree_nine_selected_fiber_parameter_for_test(q(1, 2), 32_768, &policy),
+                );
+                let Classification::Decided(compact) = compact
+                    .affine_image_unbounded(&Real::one(), &h, &policy)
+                    .unwrap()
+                else {
+                    panic!("compact selected endpoint")
+                };
+                for (start, end, inside) in [
+                    (h.clone().into(), endpoint.clone(), true),
+                    (endpoint.clone(), h.clone().into(), true),
+                    (endpoint.clone(), (&h + Real::one()).into(), true),
+                    ((&h + q(3, 4)).into(), (&h + Real::one()).into(), false),
+                    (h.clone().into(), compact.clone(), false),
+                    (compact, (&h + Real::one()).into(), true),
+                ] {
+                    let range = CurveParameterRange2::new_validated(start, end);
+                    let expected = if inside {
+                        vec![value.clone()]
+                    } else {
+                        Vec::new()
+                    };
+                    assert_finite_point_inverse(
+                        &Point2::new(root.clone(), Real::zero()).into(),
+                        &target,
+                        &range,
+                        &expected,
+                        &policy,
+                    );
+                }
+                let source = BezierAlgebraicCuspSemicircleMappedPointSource2::Rational {
+                    curve,
+                    parameter: BezierAlgebraicCuspSemicircleMappedPointParameter2::Ordinary(
+                        BezierParameter2::Exact(value),
+                    ),
+                    policy,
+                };
+                let Classification::Decided(Some(point)) = source.exact_point(&policy).unwrap()
+                else {
+                    panic!("local exterior source point")
+                };
+                assert_eq!(point, Point2::new(root.clone(), Real::zero()));
+                assert!(matches!(
+                    source.represented_coordinates(&policy).unwrap(),
+                    Classification::Decided(_)
+                ));
+            }
+        }
     }
 
     fn finite_circle_component_inverse_charts(
