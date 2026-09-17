@@ -19,4 +19,5 @@ pub(crate) mod float;
 pub(crate) mod gcd;
 pub(crate) mod lehmer;
 pub(crate) mod limbs;
+pub(crate) mod product;
 pub(crate) mod word;

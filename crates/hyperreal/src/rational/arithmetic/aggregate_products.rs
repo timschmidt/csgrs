@@ -300,25 +300,7 @@ impl ExactDyadicLineParameters2 {
 
     #[inline]
     fn multiply_magnitudes(left: u128, right: u128) -> [u64; 4] {
-        let left = [left as u64, (left >> 64) as u64];
-        let right = [right as u64, (right >> 64) as u64];
-        let mut product = [0_u64; 4];
-        for (left_index, left_limb) in left.into_iter().enumerate() {
-            let mut carry = 0_u128;
-            for (right_index, right_limb) in right.into_iter().enumerate() {
-                let index = left_index + right_index;
-                let total = u128::from(product[index])
-                    + u128::from(left_limb) * u128::from(right_limb)
-                    + carry;
-                product[index] = total as u64;
-                carry = total >> 64;
-            }
-            let index = left_index + 2;
-            let total = u128::from(product[index]) + carry;
-            product[index] = total as u64;
-            debug_assert_eq!(total >> 64, 0);
-        }
-        product
+        crate::verified::product::multiply_u128(left, right)
     }
 
     #[inline]
@@ -551,20 +533,7 @@ impl ExactDyadicWideLineParameters2 {
     }
 
     fn multiply_magnitudes(left: [u64; 4], right: [u64; 4]) -> [u64; 8] {
-        let mut product = [0_u64; 8];
-        for (left_index, left_limb) in left.into_iter().enumerate() {
-            let mut carry = 0_u128;
-            for (right_index, right_limb) in right.into_iter().enumerate() {
-                let index = left_index + right_index;
-                let total = u128::from(product[index])
-                    + u128::from(left_limb) * u128::from(right_limb)
-                    + carry;
-                product[index] = total as u64;
-                carry = total >> 64;
-            }
-            product[left_index + 4] = carry as u64;
-        }
-        product
+        crate::verified::product::multiply(&left, &right)
     }
 
     fn shifted_product(product: [u64; 8], shift: u128) -> [u64; 16] {
@@ -747,24 +716,7 @@ impl DyadicStackAccumulator {
     }
 
     fn add_product(&mut self, left: u128, right: u128, shift: u64) -> Option<()> {
-        let left = [left as u64, (left >> 64) as u64];
-        let right = [right as u64, (right >> 64) as u64];
-        let mut product = [0_u64; 4];
-        for (left_index, left_limb) in left.into_iter().enumerate() {
-            let mut carry = 0_u128;
-            for (right_index, right_limb) in right.into_iter().enumerate() {
-                let index = left_index + right_index;
-                let total = u128::from(product[index])
-                    + u128::from(left_limb) * u128::from(right_limb)
-                    + carry;
-                product[index] = total as u64;
-                carry = total >> 64;
-            }
-            let index = left_index + 2;
-            let total = u128::from(product[index]) + carry;
-            product[index] = total as u64;
-            debug_assert_eq!(total >> 64, 0);
-        }
+        let product = crate::verified::product::multiply_u128(left, right);
         self.add_shifted_limbs(product, shift)
     }
 
@@ -775,35 +727,11 @@ impl DyadicStackAccumulator {
         shift: u64,
     ) -> Option<()> {
         if let Ok(right) = u64::try_from(right) {
-            let mut product = [0_u64; 5];
-            let mut carry = 0_u128;
-            for index in 0..4 {
-                let total = u128::from(left[index]) * u128::from(right) + carry;
-                product[index] = total as u64;
-                carry = total >> 64;
-            }
-            product[4] = carry as u64;
+            let product = crate::verified::product::multiply::<4, 1, 5>(&left, &[right]);
             return self.add_shifted_limbs(product, shift);
         }
-        let right = [right as u64, (right >> 64) as u64];
-        let mut product = [0_u64; DYADIC_STACK_LIMBS];
-        for (left_index, left_limb) in left.into_iter().enumerate() {
-            let mut carry = 0_u128;
-            for (right_index, right_limb) in right.into_iter().enumerate() {
-                let index = left_index + right_index;
-                let total = u128::from(product[index])
-                    + u128::from(left_limb) * u128::from(right_limb)
-                    + carry;
-                product[index] = total as u64;
-                carry = total >> 64;
-            }
-            let index = left_index + 2;
-            let total = u128::from(product[index]) + carry;
-            product[index] = total as u64;
-            if total >> 64 != 0 {
-                return None;
-            }
-        }
+        let right = crate::verified::product::split_u128(right);
+        let product = crate::verified::product::multiply::<4, 2, DYADIC_STACK_LIMBS>(&left, &right);
         self.add_shifted_limbs(product, shift)
     }
 

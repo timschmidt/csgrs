@@ -46,6 +46,13 @@ MUTATIONS = [
     ("lehmer.rs", "Some([a, b, c, d])", "Some([a, b, c, 0])"),
     ("lehmer.rs", "if steps >= 2 { Some([a, b, c, d]) } else { None }", "None"),
     ("lehmer.rs", "        a = c;", "        a = d;"),
+    ("product.rs", "addend as u128 + left as u128 * right as u128 + carry as u128;",
+     "addend as u128 + left as u128 * right as u128;"),
+    ("product.rs", "    product\n}", "    [0_u64; O]\n}"),
+    ("product.rs", "let limbs = [word as u64, (word >> 64) as u64];",
+     "let limbs = [word as u64, (word >> 63) as u64];"),
+    ("product.rs", "multiply(&split_u128(left), &split_u128(right))",
+     "multiply(&split_u128(left), &split_u128(left))"),
 ]
 
 

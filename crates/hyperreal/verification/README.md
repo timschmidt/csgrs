@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies twenty-eight production contracts (twenty-seven
-functions and one constant) and thirty-eight arithmetic model theorems. The rest
+The current proof target verifies thirty-two production contracts (thirty-one
+functions and one constant) and thirty-nine arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -77,6 +77,9 @@ dependency on Verus. The annotation mechanism is described in the upstream
 | `fixed_gcd::gcd_fixed` | Exact GCD and termination for generic bounded limb arrays, including zero inputs, scalar exits, comparison, subtraction, normalization and restoration of common factors. | `Rational::gcd_fixed::<4/8>` |
 | `lehmer::coefficient_fits`, `lehmer::coefficient_magnitude`, `lehmer::row_coefficients` | Exact word magnitudes and sum/difference selection for signed coefficients, rejecting precisely those larger than `u64::MAX`. | `Rational::apply_lehmer_gcd_matrix` |
 | `lehmer::matrix` | Exact endpoint-agreement batch selection on ordered leading 62-bit values, including `None` cases, coefficient bounds, determinant ±1, strict reduction, checked-arithmetic safety and loop/counter bounds. | `Rational::lehmer_gcd_matrix` |
+| `product::multiply_accumulate` | Exact low/high limbs of a limb product plus an existing digit and carry; the complete sum cannot overflow `u128`. | `product::multiply` |
+| `product::multiply` | Exact schoolbook product for arbitrary fixed input lengths when the output has at least their combined length, including both carry loops, zero-length inputs, unused high limbs, bounds and termination. | Dyadic accumulators and compact/wide line-parameter carriers |
+| `product::split_u128`, `product::multiply_u128` | Exact decomposition of all `u128` values into two limbs and exact four-limb products, with the generic multiplier's precondition discharged. | Compact dyadic products and stack accumulators |
 
 The GCD specification is proved to preserve exactly the positive common
 divisors, to be positive away from `(0, 0)`, and to be the greatest common
@@ -90,6 +93,10 @@ theorem proves the sum/absolute-difference identity used by unsigned row
 application. The executable builder refines a bounded recursive specification
 over mathematical integers; coefficient growth proves the original `u8` step
 counter stays below 129, so the model's recursion budget covers every step.
+The product proof tracks the integer represented by all processed rows and the
+pending carry. A positional-update lemma connects each array write to its
+integer contribution. This proves the final carry slot is zero before each
+write, including the slot where the former dyadic loops had an overflow guard.
 [`rational_model.rs`](rational_model.rs) defines signed, unbounded
 fractions with positive denominators, without assuming canonical reduction.
 Its seventeen theorems establish equivalence and ordering laws, rescaling,
@@ -110,6 +117,11 @@ leading-bit extraction and `BigUint` row multiplication/addition/subtraction
 still need implementation proofs. The matrix theorem establishes the intended
 GCD identity; it does not silently certify those dependency operations, the
 wide GCD dispatch loop, or the recursive half-GCD tier.
+Dyadic multiplication uses the same verified generic kernel for 2×2, 4×1,
+4×2 and 4×4 limbs. Binary alignment, accumulation, signed sums, parameter
+comparison and the surrounding geometric algorithms still need their own
+implementation proofs. Shared verified multiplication alone does not establish
+the full dyadic or geometry API contracts.
 
 The table uses a bounded-depth recursive traversal during const evaluation;
 its values are computed by the same verified functions in both builds. The
@@ -120,7 +132,7 @@ explicit borrow comparisons in place of unspecified overflowing intrinsics.
 No project assumptions were added to cover these operations.
 
 `test_rejections.py` copies the production kernels into a temporary directory,
-first verifies the unmodified bodies, and then requires rejection of twenty-five
+first verifies the unmodified bodies, and then requires rejection of twenty-nine
 incorrect implementations and an attempted assumption bypass. This guards
 against a proof job that silently stops checking executable behavior. Runtime
 oracle tests compare canonical numerator and denominator values against
@@ -134,6 +146,10 @@ Lehmer tests check known batch/fallback results, Fibonacci chains approaching
 the 62-bit limit, signed coefficient limits, determinant and row bounds, and
 GCD preservation with discarded low limbs. Mutations also require rejection of
 an always-`None` batch builder, corrupt coefficients and reversed row signs.
+Product tests compare against `BigUint` across full carry chains, empty inputs,
+asymmetric lengths, padded output buffers, and both scalar paths through the
+wide dyadic accumulator. Further mutations omit carry, return a zero product,
+misplace the high half of a word and multiply by the wrong operand.
 
 ## Remaining work and completion criteria
 

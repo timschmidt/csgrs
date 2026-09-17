@@ -28,7 +28,11 @@
     "verified::lehmer::coefficient_fits",
     "verified::lehmer::coefficient_magnitude",
     "verified::lehmer::row_coefficients",
-    "verified::lehmer::matrix"
+    "verified::lehmer::matrix",
+    "verified::product::multiply_accumulate",
+    "verified::product::multiply",
+    "verified::product::split_u128",
+    "verified::product::multiply_u128"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -52,6 +56,7 @@
     "verified::limbs::prefix_zero",
     "verified::lehmer::unimodular_preserves_gcd",
     "verified::lehmer::magnitude_row",
+    "verified::product::prefix_update",
     "rational_model::equivalence_reflexive",
     "rational_model::equivalence_symmetric",
     "rational_model::equivalence_transitive",
@@ -75,7 +80,7 @@
     {"area": "Primitive integer and IEEE-754 import, lossy export, parsing and formatting", "status": "partial"},
     {"area": "Rational construction, normalization, arithmetic, ordering, roots and powers", "status": "partial"},
     {"area": "BigInt/BigUint implementation refinement, GCD, Barrett, Toom and NTT algorithms", "status": "partial"},
-    {"area": "Exact aggregates, dyadic carriers, determinants, linear algebra and filters", "status": "unverified"},
+    {"area": "Exact aggregates, dyadic carriers, determinants, linear algebra and filters", "status": "partial"},
     {"area": "Real denotation, symbolic rewriting, equality and domain handling", "status": "unverified"},
     {"area": "Computable expression semantics, approximation error and convergence", "status": "unverified"},
     {"area": "Elementary, transcendental, probability and special functions", "status": "unverified"},
