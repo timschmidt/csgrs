@@ -1914,28 +1914,41 @@ fn retained_subcurve_parallel(
 /// A normalized boundary can still be concave between its junctions. The
 /// convex-offset shortcut needs a certificate for every intervening carrier,
 /// in addition to the endpoint turn checks made during span assembly.
-fn fragment_certifies_nonnegative_turn(fragment: &BezierSplitFragment2) -> CurveResult<bool> {
+fn fragment_certifies_nonnegative_turn(
+    fragment: &BezierSplitFragment2,
+    policy: &CurveContext,
+) -> CurveResult<bool> {
     match fragment {
         BezierSplitFragment2::AlgebraicChord(_) => Ok(true),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             Ok(fragment.semicircle().is_clockwise() == fragment.is_reversed())
         }
-        BezierSplitFragment2::Materialized { curve, .. } => {
-            retained_subcurve_parallel(curve, Real::zero())?
-                .certifies_nonnegative_turn_on_unit_domain(false)
-        }
+        BezierSplitFragment2::Materialized { curve, .. } => retained_subcurve_parallel(
+            curve,
+            Real::zero(),
+        )?
+        .certifies_nonnegative_turn(&CurveParameterRange2::unit(), false, policy),
         BezierSplitFragment2::RetainedBezier {
             source_curve,
             reversed,
+            start,
+            end,
             ..
-        } => retained_subcurve_parallel(source_curve, Real::zero())?
-            .certifies_nonnegative_turn_on_unit_domain(*reversed),
-        BezierSplitFragment2::AnalyticParallel(fragment) => fragment
-            .parallel()
-            .certifies_nonnegative_turn_on_unit_domain(fragment.is_reversed()),
+        } => retained_subcurve_parallel(source_curve, Real::zero())?.certifies_nonnegative_turn(
+            &CurveParameterRange2::new_validated(start.clone().into(), end.clone().into()),
+            *reversed,
+            policy,
+        ),
+        BezierSplitFragment2::AnalyticParallel(fragment) => {
+            fragment.parallel().certifies_nonnegative_turn(
+                &CurveParameterRange2::from_bezier_range(fragment.range().clone()),
+                fragment.is_reversed(),
+                policy,
+            )
+        }
         BezierSplitFragment2::SelectedFiber(fragment) => fragment
             .parallel_carrier()
-            .certifies_nonnegative_turn_on_unit_domain(fragment.is_reversed()),
+            .certifies_nonnegative_turn(fragment.range(), fragment.is_reversed(), policy),
     }
 }
 
@@ -12905,7 +12918,7 @@ impl CurveRegion2 {
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
             if certified_convex_filled_left_dilation {
                 for fragment in boundary_loop.fragments() {
-                    if !fragment_certifies_nonnegative_turn(fragment)
+                    if !fragment_certifies_nonnegative_turn(fragment, policy)
                         .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
                     {
                         certified_convex_filled_left_dilation = false;
@@ -18765,6 +18778,239 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    #[test]
+    fn retained_fragment_turn_certificates_own_the_consumed_range() {
+        // P(t)=(t,t²-t³/3) has turning polynomial 2-2t and nonzero
+        // x derivative. It turns left on [0,1] and right on [2,3].
+        let source = CubicBezier2::new(
+            p(0, 0),
+            Point2::new(q(1, 3), Real::zero()),
+            Point2::new(q(2, 3), q(1, 3)),
+            Point2::new(Real::one(), q(2, 3)),
+        );
+        let rational =
+            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(source.clone())).unwrap();
+        let native = BezierSplitFragment2::Materialized {
+            start: BezierParameter2::Exact(Real::from(2)),
+            end: BezierParameter2::Exact(Real::from(3)),
+            curve: BezierSubcurve2::Cubic(source.clone()),
+        };
+        let range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::from(2)),
+            BezierParameter2::Exact(Real::from(3)),
+        );
+        let fragments = [
+            BezierSplitFragment2::RetainedBezier {
+                reversed: false,
+                start: range.start().clone(),
+                end: range.end().clone(),
+                source_curve: BezierSubcurve2::Cubic(source.clone()),
+                start_image: None,
+                end_image: None,
+            },
+            BezierSplitFragment2::AnalyticParallel(
+                crate::BezierParallelFragment2::from_certified_range(
+                    source.parallel_left(Real::zero()).unwrap(),
+                    range.clone(),
+                    false,
+                ),
+            ),
+            BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    BezierSelectedFiberSource2::Rational(rational),
+                    CurveParameterRange2::from_bezier_range(range),
+                    Point2::new(Real::from(2), q(4, 3)).into(),
+                    p(3, 0).into(),
+                ),
+            ),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // Materialized provenance bounds do not replace its own local chart.
+            assert!(fragment_certifies_nonnegative_turn(&native, &policy).unwrap());
+            for fragment in &fragments {
+                assert!(
+                    !fragment_certifies_nonnegative_turn(fragment, &policy).unwrap(),
+                    "the exterior fragment turns strictly right"
+                );
+                assert!(
+                    fragment_certifies_nonnegative_turn(&fragment.reversed().unwrap(), &policy)
+                        .unwrap(),
+                    "reversing the exterior range makes its turning positive"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn zero_distance_parallel_admission_excludes_source_poles() {
+        let source =
+            RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(), -Real::one()])
+                .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parallel = source.parallel_left(Real::zero()).unwrap();
+            assert_eq!(
+                parallel.point_at(&q(1, 2), &policy).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            );
+            let range = BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            );
+            assert!(
+                matches!(
+                    crate::BezierParallelFragment2::try_new(parallel, range, &policy).unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                ),
+                "a zero-distance fragment still needs a finite source throughout its range"
+            );
+        }
+    }
+
+    #[test]
+    fn finite_parallel_admission_preserves_regular_and_zero_distance_images() {
+        let range = |start: Real, end: Real| {
+            BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(start),
+                BezierParameter2::Exact(end),
+            )
+        };
+        let rational =
+            RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(), -Real::one()])
+                .unwrap();
+        let stationary = QuadraticBezier2::new(p(4, 0), p(2, 0), p(1, 0));
+        let constant =
+            RationalBezier2::try_new(vec![p(3, 7), p(3, 7)], vec![Real::one(), Real::from(2)])
+                .unwrap();
+        let parabola = QuadraticBezier2::new(p(0, 4), Point2::new(q(1, 2), Real::from(2)), p(1, 1));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reverse in [false, true] {
+                for distance in [Real::zero(), q(1, 10)] {
+                    let parallel = rational.parallel_left(distance).unwrap();
+                    let range = if reverse {
+                        range(Real::from(3), Real::from(2))
+                    } else {
+                        range(Real::from(2), Real::from(3))
+                    };
+                    let Classification::Decided(fragment) =
+                        crate::BezierParallelFragment2::try_new(parallel, range, &policy).unwrap()
+                    else {
+                        panic!("a pole outside the finite range cannot block admission")
+                    };
+                    assert_eq!(fragment.is_reversed(), reverse);
+                    assert_eq!(
+                        fragment.range().scalar_endpoints(),
+                        Some((&Real::from(2), &Real::from(3)))
+                    );
+                    assert!(matches!(
+                        fragment.representative_point(&policy).unwrap(),
+                        Classification::Decided(_)
+                    ));
+                }
+            }
+            let Classification::Decided(fragment) = crate::BezierParallelFragment2::try_new(
+                stationary.parallel_left(Real::zero()).unwrap(),
+                range(Real::one(), Real::from(3)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("zero distance preserves a stationary source")
+            };
+            assert_eq!(
+                fragment
+                    .parallel()
+                    .point_at(&Real::from(2), &policy)
+                    .unwrap(),
+                Classification::Decided(p(0, 0))
+            );
+            assert!(
+                !fragment_certifies_nonnegative_turn(
+                    &BezierSplitFragment2::AnalyticParallel(fragment),
+                    &policy
+                )
+                .unwrap(),
+                "source stationarity in the active range prevents a convexity shortcut"
+            );
+            assert!(matches!(
+                crate::BezierParallelFragment2::try_new(
+                    stationary.parallel_left(Real::one()).unwrap(),
+                    range(Real::one(), Real::from(3)),
+                    &policy,
+                ),
+                Err(CurveError::Topology(_))
+            ));
+            let Classification::Decided(fragment) = crate::BezierParallelFragment2::try_new(
+                constant.parallel_left(Real::zero()).unwrap(),
+                range(Real::from(2), Real::from(3)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("zero distance preserves a finite constant image")
+            };
+            assert_eq!(
+                fragment.representative_point(&policy).unwrap(),
+                Classification::Decided(p(3, 7))
+            );
+            assert!(matches!(
+                crate::BezierParallelFragment2::try_new(
+                    constant.parallel_left(Real::one()).unwrap(),
+                    range(Real::from(2), Real::from(3)),
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+
+            let parallel = parabola.parallel_left(Real::one()).unwrap();
+            let active_range = range(Real::one(), Real::from(3));
+            assert!(
+                matches!(
+                    crate::BezierParallelFragment2::try_new(
+                        parallel.clone(),
+                        active_range.clone(),
+                        &policy,
+                    ),
+                    Err(CurveError::Topology(_))
+                ),
+                "interior cusps still require splitting"
+            );
+            let Classification::Decided(analysis) = parallel
+                .singularity_analysis(
+                    &CurveParameterRange2::from_bezier_range(active_range),
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("finite cusp analysis")
+            };
+            assert_eq!(analysis.parallel_cusps().len(), 2);
+            let parameters = [
+                BezierParameter2::Exact(Real::one()),
+                analysis.parallel_cusps()[0].clone(),
+                analysis.parallel_cusps()[1].clone(),
+                BezierParameter2::Exact(Real::from(3)),
+            ];
+            for endpoints in parameters.windows(2) {
+                let Classification::Decided(fragment) = crate::BezierParallelFragment2::try_new(
+                    parallel.clone(),
+                    BezierParameterRange2::new_validated(
+                        endpoints[0].clone(),
+                        endpoints[1].clone(),
+                    ),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("cusp endpoints retain their exact boundary authority")
+                };
+                assert_eq!(fragment.range().start(), &endpoints[0]);
+                assert_eq!(fragment.range().end(), &endpoints[1]);
+                assert!(matches!(
+                    fragment.representative_point(&policy).unwrap(),
+                    Classification::Decided(_)
+                ));
+            }
+        }
     }
 
     #[test]

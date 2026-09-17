@@ -30,8 +30,9 @@ use crate::bezier_parameter::{
     BezierParameterRay2, BezierParameterRefinement2, bernstein_to_power_coefficients,
     coefficients_value_interval_on_parameter_interval,
     coefficients_value_interval_on_real_interval, deep_exact_coefficients_sign_at_parameter,
-    divide_by_linear_root, power_to_bernstein_coefficients, signed_coefficients_at_parameter,
-    strict_coefficients_sign_on_parameter_interval, univariate_unit_interval_strict_bernstein_sign,
+    divide_by_linear_root, power_to_bernstein_coefficients, restrict_power_basis_to_interval,
+    signed_coefficients_at_parameter, strict_coefficients_sign_on_parameter_interval,
+    univariate_unit_interval_strict_bernstein_sign,
 };
 use crate::bezier_split::CurveParameterDomain2;
 use crate::classify::{classify_oriented_line, compare_reals, in_closed_unit_interval, real_sign};
@@ -117429,8 +117430,8 @@ impl BezierParallel2 {
             .has_exact_affine_line_parameterization()
     }
 
-    /// Certifies nonnegative tangent turning on every regular fragment in the
-    /// unit source domain. Reversing traversal reverses the curvature sign.
+    /// Certifies nonnegative tangent turning over the consumed finite range.
+    /// Reversing traversal reverses the curvature sign.
     ///
     /// For the homogeneous tangent numerator `v`, both rational division and
     /// a regular parallel multiply `cross(v, v')` by a positive factor. A
@@ -117439,44 +117440,74 @@ impl BezierParallel2 {
     /// regularity is essential: a cusp can reverse the tangent even when this
     /// polynomial never changes sign. An inconclusive hull is not a rejection
     /// of the curve; the caller must use its general arrangement path.
-    pub(crate) fn certifies_nonnegative_turn_on_unit_domain(
+    pub(crate) fn certifies_nonnegative_turn(
         &self,
+        range: &CurveParameterRange2,
         reversed: bool,
+        policy: &CurveContext,
     ) -> CurveResult<bool> {
-        let differential = self.differential()?;
-        let curvature = polynomial_trim_structural_zeros(polynomial_subtract(
-            &polynomial_multiply(&differential.tangent_x, &differential.tangent_derivative_y),
-            &polynomial_multiply(&differential.tangent_y, &differential.tangent_derivative_x),
-        ));
-        let positive_turn = if reversed {
-            RealSign::Negative
-        } else {
-            RealSign::Positive
-        };
-        for control in
-            power_to_bernstein_coefficients(&curvature, curvature.len().saturating_sub(1))?
-        {
-            match real_sign(&control, &CurveContext::STRICT) {
-                Some(RealSign::Zero) => {}
-                Some(sign) if sign == positive_turn => {}
-                _ => return Ok(false),
-            }
-        }
-        for component in [&differential.tangent_x, &differential.tangent_y] {
-            if univariate_unit_interval_strict_bernstein_sign(component, &CurveContext::STRICT)?
-                .is_some()
+        policy.bounded_exact_predicate_pass(|| {
+            let unit = CurveParameterRange2::unit();
+            let native = matches!(
+                CurveParameterDomain2::new(&unit, None).contains_finite_range(range, policy),
+                Ok(Classification::Decided(true))
+            );
+            // Preserve the cheap whole-unit proof when it covers this range.
+            // Otherwise an outward finite envelope is only a sufficient sign
+            // certificate; it never replaces the retained endpoint authority.
+            let envelope = if native { &unit } else { range };
+            let (_, [lower, upper]) =
+                match CurveParameterDomain2::new(envelope, None).finite_envelope(policy) {
+                    Ok(Classification::Decided(envelope)) => envelope,
+                    Ok(Classification::Uncertain(_)) | Err(_) => return Ok(false),
+                };
+            let differential = self.differential()?;
+            let curvature = polynomial_trim_structural_zeros(polynomial_subtract(
+                &polynomial_multiply(&differential.tangent_x, &differential.tangent_derivative_y),
+                &polynomial_multiply(&differential.tangent_y, &differential.tangent_derivative_x),
+            ));
+            let curvature = if native {
+                curvature
+            } else {
+                restrict_power_basis_to_interval(&curvature, lower, upper)
+            };
+            let positive_turn = if reversed {
+                RealSign::Negative
+            } else {
+                RealSign::Positive
+            };
+            for control in
+                power_to_bernstein_coefficients(&curvature, curvature.len().saturating_sub(1))?
             {
-                return Ok(true);
+                match real_sign(&control, policy) {
+                    Some(RealSign::Zero) => {}
+                    Some(sign) if sign == positive_turn => {}
+                    _ => return Ok(false),
+                }
             }
-        }
-        let speed_squared = polynomial_trim_structural_zeros(polynomial_add(
-            &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
-            &polynomial_multiply(&differential.tangent_y, &differential.tangent_y),
-        ));
-        Ok(
-            univariate_unit_interval_strict_bernstein_sign(&speed_squared, &CurveContext::STRICT)?
-                == Some(RealSign::Positive),
-        )
+            for component in [&differential.tangent_x, &differential.tangent_y] {
+                let restricted =
+                    (!native).then(|| restrict_power_basis_to_interval(component, lower, upper));
+                if univariate_unit_interval_strict_bernstein_sign(
+                    restricted.as_deref().unwrap_or(component),
+                    policy,
+                )?
+                .is_some()
+                {
+                    return Ok(true);
+                }
+            }
+            let speed_squared = parallel_speed_squared_polynomial(differential);
+            let speed_squared = if native {
+                speed_squared
+            } else {
+                restrict_power_basis_to_interval(&speed_squared, lower, upper)
+            };
+            Ok(
+                univariate_unit_interval_strict_bernstein_sign(&speed_squared, policy)?
+                    == Some(RealSign::Positive),
+            )
+        })
     }
 
     /// Returns which strict side of its oriented tangent contains the local

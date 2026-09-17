@@ -1497,7 +1497,11 @@ impl BezierSelectedFiberFragment2 {
 }
 
 impl BezierParallelFragment2 {
-    /// Constructs a regular analytic parallel fragment from an oriented range.
+    /// Constructs an analytic parallel fragment on an exact finite oriented range.
+    ///
+    /// The range may extend beyond the authored unit chart. Source poles are
+    /// excluded at every distance; zero distance permits stationary or constant
+    /// sources without requiring a normal.
     ///
     /// Source singularities are forbidden on a nonzero-distance fragment.
     /// Parallel cusps may be range endpoints, where later arrangement splitting
@@ -1518,32 +1522,25 @@ impl BezierParallelFragment2 {
             Ordering::Greater => (range.reversed(), true),
             Ordering::Equal => return Err(CurveError::InvalidBezierRange),
         };
-        let zero = BezierParameter2::Exact(Real::zero());
-        let one = BezierParameter2::Exact(Real::one());
-        for (parameter, boundary, invalid_when) in [
-            (range.start(), &zero, Ordering::Less),
-            (range.end(), &one, Ordering::Greater),
-        ] {
-            match parameter.cmp_by_refinement(boundary, policy)? {
-                Classification::Decided(order) if order == invalid_when => {
-                    return Err(CurveError::InvalidBezierRange);
-                }
-                Classification::Decided(_) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-
         let distance_sign = match crate::classify::real_sign(parallel.distance(), policy) {
             Some(sign) => sign,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        if distance_sign != RealSign::Zero {
-            let analysis = match parallel.singularity_analysis(
-                &CurveParameterRange2::from_bezier_range(range.clone()),
-                policy,
-            )? {
+        let active_range = CurveParameterRange2::from_bezier_range(range.clone());
+        if distance_sign == RealSign::Zero {
+            if let crate::BezierParallelSource2::Rational(source) = parallel.source() {
+                match source.denominator_sign(&active_range) {
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                    Classification::Decided(RealSign::Zero) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+        } else {
+            let analysis = match parallel.singularity_analysis(&active_range, policy)? {
                 Classification::Decided(analysis) => analysis,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));

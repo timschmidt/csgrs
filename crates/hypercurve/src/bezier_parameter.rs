@@ -2570,7 +2570,11 @@ pub(crate) fn univariate_unit_interval_strict_bernstein_sign(
 /// Composes `p(start + u * (end-start))` in power basis. Horner composition
 /// keeps only one degree-sized temporary instead of retaining every affine
 /// power used by the former offset-local implementation.
-fn restrict_power_basis_to_interval(coefficients: &[Real], start: &Real, end: &Real) -> Vec<Real> {
+pub(crate) fn restrict_power_basis_to_interval(
+    coefficients: &[Real],
+    start: &Real,
+    end: &Real,
+) -> Vec<Real> {
     let Some((leading, remaining)) = coefficients.split_last() else {
         return Vec::new();
     };
