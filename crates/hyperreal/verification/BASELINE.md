@@ -676,3 +676,14 @@ groups remain open. The
 retain allocation trees at each variant's whole-process peak; different peak
 locations and compiler inlining prevent attributing their differences to one
 source change. The measured 72-byte increase remains unresolved.
+
+The [cache-refinement sign theorem](../benchmarks/checkpoints/2026-09-17-verus-cache-refinement.json)
+raises the checked target to 613 verification units, 94 production contracts
+and 119 model theorems. If two cache entries validly approximate the same real
+and the later entry has a strictly smaller unit, it retains the nonzero sign
+certified by an earlier integer whose absolute value exceeds one. This supports
+the two cache reads in magnitude queries, conditional on the unverified cache
+refinement invariant. Both new mutations and the assumption-bypass control are
+rejected, and ten acceptance/dependency tests pass. Runtime bytes remain those
+of `c61d6d8`; concurrency, ownership and all thirteen obligation groups remain
+open.

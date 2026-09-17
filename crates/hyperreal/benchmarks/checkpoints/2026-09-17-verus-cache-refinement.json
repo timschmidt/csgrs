@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "status": "conditional_cache_refinement_model_not_concurrency_proof",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "proof_revision": "fbcf56f5e2e495e45f2eebc59105787105eec939",
+  "runtime_reference": "c61d6d876d30be92faa038d1ad9fe657e241fe0c",
+  "verification": {
+    "units": 613,
+    "production_contracts": 94,
+    "model_theorems": 119,
+    "source_hashes": 130,
+    "all_match_commit": true,
+    "no_cheating": true,
+    "entire_target": true,
+    "open_obligation_groups": 13
+  },
+  "model": "Two valid approximations of the same real, with a strictly smaller unit for the second, preserve the nonzero sign whenever the first integer is greater than one in absolute value. This supports two cache reads in magnitude queries under the cache refinement invariant.",
+  "guards": {
+    "new_mutations_rejected": 2,
+    "assumption_bypass_rejected": true,
+    "acceptance_and_dependency_tests": 10,
+    "full_combined_suite_rerun": false
+  },
+  "runtime_bytes_unchanged": true,
+  "dependency_source_archive": "benchmarks/checkpoints/2026-09-17-verus-strict-product.tar.gz",
+  "limits": [
+    "Cache publication, ownership, actual locking/atomics, denotation validity and every caller remain open obligations. The proof assumes both entries approximate the same real and that publication strictly improves precision.",
+    "A preliminary cast/comparison syntax failure is retained; the final entire target and guard checks pass.",
+    "All thirteen obligation groups and baseline acceptance remain incomplete. No runtime experiment has been adopted."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-cache-refinement.tar.gz",
+    "files": 9,
+    "bytes": 34197,
+    "sha256": "869a7278e2e4687790cc3b98ab3a84f2e0f92c529144c8973c579f28cb1e32d8"
+  }
+}
