@@ -1340,6 +1340,13 @@ impl Computable {
         (bound.known_sign(), bound.planning_msd())
     }
 
+    pub(crate) fn certified_sign_and_msd(&self) -> (Option<Sign>, Option<Option<Precision>>) {
+        // Inexact hints can drift through sums or become severe underestimates
+        // after cancellation and inversion. Error-sensitive precision choices
+        // must use a certificate or obtain a fresh approximation instead.
+        self.cheap_bound().certified_sign_and_msd()
+    }
+
     pub(crate) fn exact_rational(&self) -> Option<Rational> {
         // Only exact leaf nodes are exposed here. Keeping this narrow prevents
         // constructor shortcuts from accidentally forcing approximation of a

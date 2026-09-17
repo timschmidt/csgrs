@@ -136,7 +136,7 @@ fn sqrt(signal: &Option<Signal>, c: &Computable, p: Precision) -> BigInt {
     let fp_op_prec: i32 = 150;
 
     let max_prec_needed = p.saturating_mul(2).saturating_sub(1);
-    let (known_sign, planned_msd) = c.planning_sign_and_msd();
+    let (known_sign, planned_msd) = c.certified_sign_and_msd();
     if known_sign == Some(Sign::NoSign) {
         return Zero::zero();
     }
