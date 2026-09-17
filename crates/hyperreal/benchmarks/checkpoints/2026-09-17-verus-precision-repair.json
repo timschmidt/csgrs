@@ -1,0 +1,875 @@
+{
+  "schema": 1,
+  "status": "exactness_repair_qualification_in_progress",
+  "baseline": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+  "candidate": "7b95cac24091482cc3c01355fcc3de6cfa8a13a3",
+  "verification": {
+    "units": 410,
+    "executable_contracts": 56,
+    "model_theorems": 78,
+    "source_hashes": 115,
+    "source_hashes_match_commit": true,
+    "entire_proof_target": true,
+    "no_cheating": true,
+    "open_obligation_groups": 13
+  },
+  "negative_guards": {
+    "incorrect_executable_mutations": 79,
+    "incorrect_model_mutations": 4,
+    "assumption_bypass_rejected": true,
+    "acceptance_guard_tests": 7
+  },
+  "counterexamples": {
+    "baseline_debug": [
+      "cold pi at i32::MAX panics in related-cache precision addition",
+      "zero, one and negative one at i32::MIN panic in precision negation"
+    ],
+    "baseline_release": [
+      "one and negative one at i32::MIN incorrectly return zero"
+    ],
+    "fixed_candidate": "All seven cold-process cases pass in debug and release, including positive/negative exact values with 2147483649 bits and 2147483648 trailing zero bits.",
+    "raw_processes": [
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 2.486536979675293
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "pi-control",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "pi-control"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.002614259719848633,
+        "binary_sha256": "897ee81840dc6461418f38e8c2f58ab68c1cd6f8b11f31318b2e4bfc71845e93",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "pi-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "pi-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 101,
+        "seconds": 0.002349853515625,
+        "binary_sha256": "897ee81840dc6461418f38e8c2f58ab68c1cd6f8b11f31318b2e4bfc71845e93",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "tau-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "tau-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0025691986083984375,
+        "binary_sha256": "897ee81840dc6461418f38e8c2f58ab68c1cd6f8b11f31318b2e4bfc71845e93",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "zero-control",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "zero-control"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0022835731506347656,
+        "binary_sha256": "897ee81840dc6461418f38e8c2f58ab68c1cd6f8b11f31318b2e4bfc71845e93",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "zero-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "zero-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 101,
+        "seconds": 0.0022516250610351562,
+        "binary_sha256": "897ee81840dc6461418f38e8c2f58ab68c1cd6f8b11f31318b2e4bfc71845e93",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "one-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "one-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 101,
+        "seconds": 0.0022001266479492188,
+        "binary_sha256": "897ee81840dc6461418f38e8c2f58ab68c1cd6f8b11f31318b2e4bfc71845e93",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "debug",
+        "case": "negative-one-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "negative-one-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 101,
+        "seconds": 0.002215862274169922,
+        "binary_sha256": "897ee81840dc6461418f38e8c2f58ab68c1cd6f8b11f31318b2e4bfc71845e93",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 9.475932836532593
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "pi-control",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "pi-control"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.002399921417236328,
+        "binary_sha256": "abc7d70cad227c09af52504e1d42ebe65f2c757336318fe86bbce21693dab38e",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "pi-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "pi-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.002229452133178711,
+        "binary_sha256": "abc7d70cad227c09af52504e1d42ebe65f2c757336318fe86bbce21693dab38e",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "tau-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "tau-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0022962093353271484,
+        "binary_sha256": "abc7d70cad227c09af52504e1d42ebe65f2c757336318fe86bbce21693dab38e",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "zero-control",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "zero-control"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0023479461669921875,
+        "binary_sha256": "abc7d70cad227c09af52504e1d42ebe65f2c757336318fe86bbce21693dab38e",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "zero-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "zero-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0021774768829345703,
+        "binary_sha256": "abc7d70cad227c09af52504e1d42ebe65f2c757336318fe86bbce21693dab38e",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "one-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "one-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 101,
+        "seconds": 0.0021932125091552734,
+        "binary_sha256": "abc7d70cad227c09af52504e1d42ebe65f2c757336318fe86bbce21693dab38e",
+        "native_timing": false
+      },
+      {
+        "label": "baseline",
+        "revision": "a2da8e2b5de9a1a4653d3662f2f05cb6533fd7ef",
+        "profile": "release",
+        "case": "negative-one-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "negative-one-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 101,
+        "seconds": 0.002184152603149414,
+        "binary_sha256": "abc7d70cad227c09af52504e1d42ebe65f2c757336318fe86bbce21693dab38e",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "debug",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 2.567850351333618
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "debug",
+        "case": "pi-control",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "pi-control"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0025720596313476562,
+        "binary_sha256": "04b0e93ee2ad459dc6b1c1d5314176ad59713f84b7626936afd0ad4ee16bc8d7",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "debug",
+        "case": "pi-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "pi-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.002386331558227539,
+        "binary_sha256": "04b0e93ee2ad459dc6b1c1d5314176ad59713f84b7626936afd0ad4ee16bc8d7",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "debug",
+        "case": "tau-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "tau-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.002324342727661133,
+        "binary_sha256": "04b0e93ee2ad459dc6b1c1d5314176ad59713f84b7626936afd0ad4ee16bc8d7",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "debug",
+        "case": "zero-control",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "zero-control"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.002359628677368164,
+        "binary_sha256": "04b0e93ee2ad459dc6b1c1d5314176ad59713f84b7626936afd0ad4ee16bc8d7",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "debug",
+        "case": "zero-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "zero-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0023577213287353516,
+        "binary_sha256": "04b0e93ee2ad459dc6b1c1d5314176ad59713f84b7626936afd0ad4ee16bc8d7",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "debug",
+        "case": "one-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "one-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.3506486415863037,
+        "binary_sha256": "04b0e93ee2ad459dc6b1c1d5314176ad59713f84b7626936afd0ad4ee16bc8d7",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "debug",
+        "case": "negative-one-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/debug/hyperreal-precision-full-range-probe",
+          "negative-one-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.34905505180358887,
+        "binary_sha256": "04b0e93ee2ad459dc6b1c1d5314176ad59713f84b7626936afd0ad4ee16bc8d7",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "release",
+        "case": "build",
+        "command": [
+          "cargo",
+          "build",
+          "--locked",
+          "--offline",
+          "--release"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 8.9131019115448
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "release",
+        "case": "pi-control",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "pi-control"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0025331974029541016,
+        "binary_sha256": "f2eea74481f489eab3424065e83a7beba1335d8a1dd632325637a3970c96f763",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "release",
+        "case": "pi-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "pi-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0022554397583007812,
+        "binary_sha256": "f2eea74481f489eab3424065e83a7beba1335d8a1dd632325637a3970c96f763",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "release",
+        "case": "tau-max",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "tau-max"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0021278858184814453,
+        "binary_sha256": "f2eea74481f489eab3424065e83a7beba1335d8a1dd632325637a3970c96f763",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "release",
+        "case": "zero-control",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "zero-control"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0021004676818847656,
+        "binary_sha256": "f2eea74481f489eab3424065e83a7beba1335d8a1dd632325637a3970c96f763",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "release",
+        "case": "zero-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "zero-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.0025827884674072266,
+        "binary_sha256": "f2eea74481f489eab3424065e83a7beba1335d8a1dd632325637a3970c96f763",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "release",
+        "case": "one-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "one-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.16813111305236816,
+        "binary_sha256": "f2eea74481f489eab3424065e83a7beba1335d8a1dd632325637a3970c96f763",
+        "native_timing": false
+      },
+      {
+        "label": "candidate",
+        "revision": "ee773bbf4a158bbf4b09134f99dff3a3e45421d8",
+        "profile": "release",
+        "case": "negative-one-min",
+        "command": [
+          "timeout",
+          "--signal=TERM",
+          "--kill-after=10s",
+          "60s",
+          "/tmp/hyperreal-verus-baseline-scmfudw9/boundary-target/release/hyperreal-precision-full-range-probe",
+          "negative-one-min"
+        ],
+        "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/precision-full-range-probe",
+        "exit_code": 0,
+        "seconds": 0.1604628562927246,
+        "binary_sha256": "f2eea74481f489eab3424065e83a7beba1335d8a1dd632325637a3970c96f763",
+        "native_timing": false
+      }
+    ]
+  },
+  "root_correctness": {
+    "default-all-targets": {
+      "passed_test_executions_including_children": 795,
+      "benchmark_fixture_replays": 1271
+    },
+    "all-features-all-targets": {
+      "passed_test_executions_including_children": 898,
+      "benchmark_fixture_replays": 1447
+    }
+  },
+  "root_validation": [
+    {
+      "label": "baseline",
+      "step": "debug",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "precision_limits"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 101,
+      "seconds": 2.365940809249878
+    },
+    {
+      "label": "baseline",
+      "step": "release",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "--test",
+        "precision_limits"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 6.76049542427063
+    },
+    {
+      "label": "candidate",
+      "step": "default-all-targets",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-targets",
+        "--no-fail-fast"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 191.98879194259644
+    },
+    {
+      "label": "candidate",
+      "step": "all-features-all-targets",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--all-targets",
+        "--no-fail-fast"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 207.94993591308594
+    },
+    {
+      "label": "candidate",
+      "step": "representations",
+      "command": [
+        "bash",
+        "scripts/representation_coverage.sh"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 11.07869005203247
+    },
+    {
+      "label": "candidate",
+      "step": "clippy-default",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 5.724806547164917
+    },
+    {
+      "label": "candidate",
+      "step": "clippy-all",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 6.701314449310303
+    },
+    {
+      "label": "candidate",
+      "step": "doc-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--doc"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 0.5380196571350098
+    },
+    {
+      "label": "candidate",
+      "step": "doc-all",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/tmp/hyperreal-verus-baseline-scmfudw9/source",
+      "exit_code": 0,
+      "seconds": 0.8925426006317139
+    }
+  ],
+  "focused_validation": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--lib",
+        "precision_boundary_tests"
+      ],
+      "exit_code": 0,
+      "seconds": 4.659585952758789
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "--lib",
+        "precision_boundary_tests"
+      ],
+      "exit_code": 0,
+      "seconds": 13.84495759010315
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 6.261958122253418
+    }
+  ],
+  "cold_contract_validation": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--test",
+        "precision_limits"
+      ],
+      "exit_code": 0,
+      "seconds": 2.495981216430664
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "--test",
+        "precision_limits"
+      ],
+      "exit_code": 0,
+      "seconds": 7.170786619186401
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--test",
+        "precision_limits"
+      ],
+      "exit_code": 0,
+      "seconds": 3.301476001739502
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--all-features",
+        "--release",
+        "--test",
+        "precision_limits"
+      ],
+      "exit_code": 0,
+      "seconds": 9.563385725021362
+    }
+  ],
+  "binding_notes": [
+    "All library overlay hashes match the committed repair. Unchanged files derive from the pinned EE runtime.",
+    "The original complete root replay used a zero-only assertion for cold Pi/Tau. The committed test admits both integers allowed by the public one-unit error contract and passes in default/all-features debug/release; its exact source and replays are retained.",
+    "The first external probe had four compiler failures because it called a private constructor. Those logs are retained separately; the corrected public-constructor probe supplies the counterexamples and repair evidence.",
+    "Two failed model-proof trials are preserved as failures; the official source-bound 410-unit run is the qualifying proof."
+  ],
+  "limits": [
+    "This proves the executable precision plan and mathematical signed rounding/cache coarsening. BigInt operations, caller refinement, constant identities, cache concurrency and all 13 complete-implementation groups remain open.",
+    "Other kernels still contain unresolved precision arithmetic; this repair does not establish all-kernel support at every precision.",
+    "Remaining build/coverage/fuzz/resource/native-timing and pinned-consumer qualification for this runtime is in progress. Earlier runtime benchmark flags remain unresolved; no acceptance is claimed."
+  ],
+  "artifact": {
+    "path": "benchmarks/checkpoints/2026-09-17-verus-precision-repair.tar.gz",
+    "bytes": 197192,
+    "files": 163,
+    "sha256": "8799ee167a09863e3fba30525d0d5e5f0efc8b140040bf563977fc1b1c9c4d78"
+  }
+}

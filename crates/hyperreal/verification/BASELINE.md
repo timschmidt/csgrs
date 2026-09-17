@@ -258,8 +258,30 @@ expose the same two debug failures in the fixed baseline and `ee773bbf`:
 `zero().approx(i32::MIN)` overflows precision negation. Four debug/release builds
 and all 20 process outcomes are retained, including four panics. The release
 cases tested here return permitted values; these observations do not qualify
-precision arithmetic generally. The counterexamples require repair under the
-exactness-first priority.
+precision arithmetic generally. These counterexamples motivated the repair below.
+
+The [precision repair](../benchmarks/checkpoints/2026-09-17-verus-precision-repair.json)
+at `7b95cac` preserves the full integer-leaf shift range and checks the Pi/Tau
+related-cache precision before lookup. Extended probes also expose a release
+error in the fixed baseline: both `1` and `-1` approximate to zero at
+`i32::MIN`. The repair returns the exact signed values with 2,147,483,649 bits.
+All seven cold-process cases pass in both debug and release. This improves
+integer-leaf behavior without narrowing its precision domain; other kernels'
+precision arithmetic remains a separate open obligation.
+
+That commit passes 410 official verification units, with 56 production contracts
+and 78 model theorems; all 115 proof-input hashes match the commit. The executable
+shift plan and signed rounding/cache-coarsening models are proved. The complete
+`BigInt`, caller, constant-identity and concurrent-cache refinements remain open.
+All 83 arithmetic mutations are rejected, as is the assumption bypass, and seven
+acceptance guard tests pass. Default/all-features checks pass 795/898 test
+executions (including the fresh-process children) and 1,271/1,447 benchmark
+fixture replays. Representation, strict Clippy and doc-test checks pass too.
+The cold constant regression accepts both integers allowed by the public error
+contract and separately passes all four default/all-features debug/release
+combinations. Remaining build, coverage, fuzz, resource, timing and downstream
+qualification is pending for this runtime. Earlier timing flags are unresolved;
+this correctness milestone does not establish baseline acceptance.
 
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
