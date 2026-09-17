@@ -38,6 +38,14 @@ MUTATIONS = [
     ("limbs.rs", "Some(words[0] as u128 | (words[1] as u128) << 64)",
      "Some(words[0] as u128)"),
     ("fixed_gcd.rs", "shift: common_shift,", "shift: 0,"),
+    ("lehmer.rs", "value >= -(u64::MAX as i128) && value <= u64::MAX as i128",
+     "value >= -(u64::MAX as i128) && value < u64::MAX as i128"),
+    ("lehmer.rs", "Some(if value < 0 {\n        (-value) as u64\n    } else {\n        value as u64\n    })", "Some(0)"),
+    ("lehmer.rs", "Some((left_magnitude, right_magnitude, (left < 0) == (right < 0)))",
+     "Some((left_magnitude, right_magnitude, (left < 0) != (right < 0)))"),
+    ("lehmer.rs", "Some([a, b, c, d])", "Some([a, b, c, 0])"),
+    ("lehmer.rs", "if steps >= 2 { Some([a, b, c, d]) } else { None }", "None"),
+    ("lehmer.rs", "        a = c;", "        a = d;"),
 ]
 
 
@@ -47,6 +55,10 @@ def main():
         root = Path(temporary)
         source = root / "verified"
         shutil.copytree(ROOT / "src/verified", source)
+        originals = {name: (source / name).read_text() for name, _, _ in MUTATIONS}
+        for name, before, _ in MUTATIONS:
+            if originals[name].count(before) != 1:
+                sys.exit(f"Mutation no longer uniquely matches {name}: {before}")
         (root / "lib.rs").write_text("#![feature(proc_macro_hygiene)]\nmod verified;\n")
         command = [str(verus), "--edition=2024", "--crate-type=lib", "--no-cheating", str(root / "lib.rs")]
         baseline = subprocess.run(command, capture_output=True, text=True)
@@ -54,9 +66,7 @@ def main():
             sys.exit(f"Unmutated kernel proofs failed:\n{baseline.stdout}{baseline.stderr}")
         for name, before, after in MUTATIONS:
             path = source / name
-            original = path.read_text()
-            if original.count(before) != 1:
-                sys.exit(f"Mutation no longer uniquely matches {name}: {before}")
+            original = originals[name]
             path.write_text(original.replace(before, after))
             result = subprocess.run(command, capture_output=True, text=True)
             path.write_text(original)

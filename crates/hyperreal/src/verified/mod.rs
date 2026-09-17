@@ -17,5 +17,6 @@ pub(crate) mod division;
 pub(crate) mod fixed_gcd;
 pub(crate) mod float;
 pub(crate) mod gcd;
+pub(crate) mod lehmer;
 pub(crate) mod limbs;
 pub(crate) mod word;

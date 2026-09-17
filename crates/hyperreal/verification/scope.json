@@ -24,7 +24,11 @@
     "verified::limbs::trailing_zeros",
     "verified::limbs::shift_left",
     "verified::limbs::to_u128",
-    "verified::fixed_gcd::gcd_fixed"
+    "verified::fixed_gcd::gcd_fixed",
+    "verified::lehmer::coefficient_fits",
+    "verified::lehmer::coefficient_magnitude",
+    "verified::lehmer::row_coefficients",
+    "verified::lehmer::matrix"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -46,6 +50,8 @@
     "verified::limbs::prefix_equal",
     "verified::limbs::prefix_split",
     "verified::limbs::prefix_zero",
+    "verified::lehmer::unimodular_preserves_gcd",
+    "verified::lehmer::magnitude_row",
     "rational_model::equivalence_reflexive",
     "rational_model::equivalence_symmetric",
     "rational_model::equivalence_transitive",

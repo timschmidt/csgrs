@@ -1367,6 +1367,85 @@ mod tests {
     }
 
     #[test]
+    fn lehmer_batches_preserve_gcd_at_leading_word_boundaries() {
+        use crate::verified::lehmer::matrix;
+
+        fn check_pair(larger: u64, smaller: u64) -> bool {
+            let Some(coefficients @ [a, b, c, d]) = matrix(larger.into(), smaller.into()) else {
+                return false;
+            };
+            let determinant = BigInt::from(a) * d - BigInt::from(b) * c;
+            assert_eq!(determinant.magnitude(), &BigUint::one());
+            assert!(coefficients.iter().all(|value| value.unsigned_abs() <= u128::from(u64::MAX)));
+            for (left, right) in [(a, b), (c, d)] {
+                let row = BigInt::from(left) * larger + BigInt::from(right) * smaller;
+                assert!(row >= BigInt::ZERO && row < BigInt::from(larger));
+            }
+
+            // Discarded low limbs need not follow the leading pair's exact
+            // quotients. The signed matrix must still preserve the full GCD.
+            let wide_larger = (BigUint::from(larger) << 256_usize) + 17_u8;
+            let wide_smaller = (BigUint::from(smaller) << 256_usize) + 3_u8;
+            let (first, second) =
+                Rational::apply_lehmer_gcd_matrix(&wide_larger, &wide_smaller, coefficients)
+                    .expect("the transformed magnitudes must fit below the larger input");
+            assert_eq!(
+                num::Integer::gcd(&first, &second),
+                num::Integer::gcd(&wide_larger, &wide_smaller)
+            );
+            true
+        }
+
+        const LIMIT: u64 = 1 << 62;
+        assert_eq!(matrix(55, 34), Some([-1, 2, 2, -3]));
+        assert_eq!(matrix(13, 8), None);
+        for (larger, smaller) in [(0, 0), (1, 0), (1, 1), (LIMIT - 1, 1), (LIMIT - 1, LIMIT - 1)] {
+            assert_eq!(matrix(larger.into(), smaller.into()), None);
+        }
+
+        // Consecutive Fibonacci values exercise long runs of quotient one.
+        let (mut smaller, mut larger) = (1, 2);
+        let mut accepted = 0;
+        while larger < LIMIT {
+            accepted += usize::from(check_pair(larger, smaller));
+            (smaller, larger) = (larger, smaller + larger);
+        }
+        assert!(accepted > 70);
+
+        let mut state = 0x1319_8a2e_0370_7344_u64;
+        for _ in 0..256 {
+            state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+            let larger = (state & (LIMIT - 1)) | (LIMIT >> 1);
+            state = state.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+            check_pair(larger, state % larger);
+        }
+        check_pair(LIMIT - 1, (LIMIT - 1) * 3 / 5);
+    }
+
+    #[test]
+    fn lehmer_row_coefficients_handle_signed_word_boundaries() {
+        use crate::verified::lehmer::row_coefficients;
+
+        let word_max = i128::from(u64::MAX);
+        for left in [-word_max, -1, 0, 1, word_max] {
+            for right in [-word_max, -1, 0, 1, word_max] {
+                assert_eq!(
+                    row_coefficients(left, right),
+                    Some((
+                        u64::try_from(left.unsigned_abs()).unwrap(),
+                        u64::try_from(right.unsigned_abs()).unwrap(),
+                        left.is_negative() == right.is_negative(),
+                    ))
+                );
+            }
+        }
+        for oversized in [i128::MIN, -word_max - 1, word_max + 1, i128::MAX] {
+            assert_eq!(row_coefficients(oversized, 0), None);
+            assert_eq!(row_coefficients(0, oversized), None);
+        }
+    }
+
+    #[test]
     fn unsigned_lehmer_matrix_application_matches_signed_magnitudes() {
         fn signed_reference(
             larger: &BigUint,
