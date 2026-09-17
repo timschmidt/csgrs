@@ -49,13 +49,14 @@ def main():
         for name in ['bounds.rs', 'representation.rs']:
             shutil.copy2(ROOT / 'src/computable/node' / name, root / 'src/computable/node' / name)
         shutil.copy2(ROOT / 'src/verified/word.rs', root / 'word.rs')
+        shutil.copy2(ROOT / 'src/structural.rs', root / 'structural.rs')
         for name in ['computable_bounds', 'bound_denotation', 'computable_cache', 'cache_encoding_model',
                      'magnitude_model', 'integer_approximation_model', 'real_approximation_model']:
             shutil.copy2(ROOT / 'verification' / (name + '.rs'), root / 'verification' / (name + '.rs'))
         modules = ['computable_bounds', 'computable_cache', 'magnitude_model',
                    'integer_approximation_model', 'real_approximation_model']
         (root / 'lib.rs').write_text(
-            '#![feature(proc_macro_hygiene)]\nmod verified {\n'
+            '#![feature(proc_macro_hygiene)]\nmod structural;\nmod verified {\n'
             f'#[path = "{root / "word.rs"}"] pub(crate) mod word;\n}}\n'
             + ''.join(f'#[path = "verification/{name}.rs"] mod {name};\n' for name in modules))
         command = [str(verus), '--edition=2024', '--crate-type=lib', '--no-cheating',

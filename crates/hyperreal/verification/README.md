@@ -1,8 +1,8 @@
 # Verus verification of Hyperreal
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
-The current proof target verifies eighty-seven production contracts (seventy-nine
-functions and eight constants) and ninety-nine arithmetic model theorems. The rest
+The current proof target verifies ninety production contracts (eighty-two
+functions and eight constants) and one hundred two arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -80,13 +80,13 @@ dependency on Verus. The annotation mechanism is described in the upstream
 [attribute syntax guide](https://verus-lang.github.io/verus/guide/exec_attr.html).
 
 The proof target also includes the production `computable/node/bounds.rs`
-directly. Ten constructor, transformation and query contracts preserve the
+directly. Thirteen constructor, transformation and query contracts preserve the
 typed bound state, exponent calculations and the distinction between zero and
-an unavailable exponent. Ten denotation lemmas connect these checked contracts
+an unavailable exponent. Thirteen denotation lemmas connect these checked contracts
 to sign, nonzero and exact real-binade certificates, conditional on valid input
 bounds. They do not yet establish the denotation of an incoming bound or cache.
 Rational import, production mapping callbacks, addition, square,
-multiplication, public magnitude conversion, constants and concurrent caches
+multiplication, constants and concurrent caches
 remain outside this added boundary. Normal builds retain every operation.
 
 The production `computable/node/representation.rs` file also supplies three
@@ -120,6 +120,7 @@ attribute implementation and disappear from normal builds.
 | `BoundInfo::map_msd` | Preserves every non-magnitude field and maps exactly the available exponent through the callback's contract; zero, unknown and unavailable exponents retain their distinct states. | Binary-offset bound propagation |
 | `BoundInfo::negate`, `BoundInfo::inverse`, `BoundInfo::sqrt`, `negate_sign` | Exact sign/metadata transformation; inverse exponent overflow remains unavailable; square-root exponents use floor division. | Computable bound propagation |
 | `BoundInfo::known_msd`, `BoundInfo::planning_msd`, `BoundInfo::known_sign` | Zero sentinel iff the bound is `Zero`, and returned exponents/signs match the stored metadata. | Computable magnitude/sign queries |
+| `BoundInfo::magnitude_bits`, `public_sign`, `private_sign` | Complete public magnitude export with the exactness flag preserved, and lossless conversion of negative, zero and positive signs. Conditional denotation lemmas preserve valid certificates without certifying an inexact magnitude. | Public structural facts and private sign import |
 | `AtomicFacts::encode_bound` | Exact wire layout; the round-trip theorem recovers every typed bound, including both signed exponent limits and unavailable magnitudes. | Atomic bound-cache publication |
 | `AtomicFacts::encode_exact_sign`, `AtomicFacts::decode_exact_sign` | Lossless exact-sign encoding, zero unused bits, valid encoded tags, and exact decoding for every valid sign tag. | Atomic exact-sign cache |
 | Public certificate accessors | Exact extraction of known sign, ordering and equality answers; unknown stays `None`, and knownness matches the variant. | Predicate and solver certificate consumers |

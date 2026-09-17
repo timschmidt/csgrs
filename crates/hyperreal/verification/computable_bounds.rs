@@ -2,6 +2,7 @@
 //! Denotation lemmas refine these contracts conditional on valid input bounds.
 //! Production callers and the remaining bound operations remain open.
 use num::bigint::Sign;
+use crate::structural::{MagnitudeBits, RealSign};
 
 verus! {
 // Import the actual enum variants from the pinned dependency. This declaration

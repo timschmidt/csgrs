@@ -23,6 +23,14 @@ pub(crate) open spec fn sign_denotes(sign: Option<Sign>, value: real) -> bool {
     }
 }
 
+pub(crate) open spec fn public_sign_denotes(sign: RealSign, value: real) -> bool {
+    match sign {
+        RealSign::Negative => value < 0real,
+        RealSign::Zero => value == 0real,
+        RealSign::Positive => value > 0real,
+    }
+}
+
 // This predicate covers sign, nonzero and exact magnitude certificates.
 // It intentionally does not claim an error bound for inexact planning metadata.
 pub(crate) open spec fn bound_denotes(bound: BoundInfo, value: real) -> bool {
@@ -138,6 +146,25 @@ proof fn queried_sign_is_a_certificate(bound: &BoundInfo, value: real, result: O
     requires bound_denotes(*bound, value), call_ensures(BoundInfo::known_sign, (bound,), result),
     ensures sign_denotes(result, value),
 {}
+
+proof fn exported_magnitude_is_a_certificate(bound: &BoundInfo, value: real, result: Option<MagnitudeBits>)
+    requires bound_denotes(*bound, value), call_ensures(BoundInfo::magnitude_bits, (bound,), result),
+    ensures match result {
+        Some(bits) => value != 0real && (bits.exact_msd ==> real_binade(value, bits.msd as int)),
+        None => true,
+    },
+{}
+
+proof fn public_sign_preserves_denotation(sign: Sign, value: real, result: RealSign)
+    requires sign_denotes(Some(sign), value), call_ensures(public_sign, (sign,), result),
+    ensures public_sign_denotes(result, value),
+{}
+
+proof fn private_sign_preserves_denotation(sign: RealSign, value: real, result: Sign)
+    requires public_sign_denotes(sign, value), call_ensures(private_sign, (sign,), result),
+    ensures sign_denotes(Some(result), value),
+{}
+
 proof fn binary_scaling_preserves_real_binade(value: real, exponent: int, offset: int)
     requires real_binade(value, exponent),
     ensures real_binade(value * binary_unit(offset), exponent + offset),

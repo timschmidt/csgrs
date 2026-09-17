@@ -31,6 +31,13 @@ MUTATIONS = [
      'Self::NonZero { msd: Some(_msd), .. } => None,'),
     ('known_sign', 'Self::Zero => Some(Sign::NoSign),', 'Self::Zero => Some(Sign::Plus),'),
     ('negate_sign', 'Sign::Plus => Sign::Minus,', 'Sign::Plus => Sign::Plus,'),
+    ('magnitude_bits', 'msd: *msd,', 'msd: 0,'),
+    ('magnitude_bits', 'exact_msd: *exact_msd,', 'exact_msd: true,'),
+    ('magnitude_bits', '_ => None,', '_ => Some(MagnitudeBits { msd: 0, exact_msd: true }),'),
+    ('public_sign', 'Sign::Minus => RealSign::Negative,', 'Sign::Minus => RealSign::Positive,'),
+    ('public_sign', 'Sign::NoSign => RealSign::Zero,', 'Sign::NoSign => RealSign::Positive,'),
+    ('private_sign', 'RealSign::Positive => Sign::Plus,', 'RealSign::Positive => Sign::Minus,'),
+    ('private_sign', 'RealSign::Zero => Sign::NoSign,', 'RealSign::Zero => Sign::Plus,'),
 ]
 
 MODEL_MUTATIONS = [
@@ -52,6 +59,12 @@ MODEL_MUTATIONS = [
      'ensures bound_denotes(result, value * binary_unit(-offset)),'),
     ('mapping callback', '==> mapped == checked_metadata_exponent(exponent as int + offset),',
      '==> mapped == checked_metadata_exponent(exponent as int),'),
+    ('public positive sign', 'RealSign::Positive => value > 0real,',
+     'RealSign::Positive => value >= 0real,'),
+    ('exported magnitude nonzero', 'Some(bits) => value != 0real && (bits.exact_msd',
+     'Some(bits) => value == 0real && (bits.exact_msd'),
+    ('inexact magnitude', '(bits.exact_msd ==> real_binade(value, bits.msd as int))',
+     'real_binade(value, bits.msd as int)'),
 ]
 
 
@@ -78,6 +91,7 @@ def run_rejections(verus, dependency_args):
         bound = root / 'src/computable/node/bounds.rs'
         shutil.copy2(ROOT / 'src/computable/node/bounds.rs', bound)
         shutil.copy2(ROOT / 'src/verified/word.rs', root / 'word.rs')
+        shutil.copy2(ROOT / 'src/structural.rs', root / 'structural.rs')
         shutil.copy2(ROOT / 'verification/computable_bounds.rs', root / 'verification/computable_bounds.rs')
         denotation = root / 'verification/bound_denotation.rs'
         shutil.copy2(ROOT / 'verification/bound_denotation.rs', denotation)
@@ -86,7 +100,7 @@ def run_rejections(verus, dependency_args):
         (root / 'lib.rs').write_text(
             '#![feature(proc_macro_hygiene)]\nmod verified {\n'
             f'#[path = "{root / "word.rs"}"] pub(crate) mod word;\n}}\n'
-            'mod magnitude_model;\nmod integer_approximation_model;\nmod real_approximation_model;\n'
+            'mod structural;\nmod magnitude_model;\nmod integer_approximation_model;\nmod real_approximation_model;\n'
             '#[path = "verification/computable_bounds.rs"] mod computable_bounds;\n')
         command = [str(verus), '--edition=2024', '--crate-type=lib', '--no-cheating',
                    *dependency_args, str(root / 'lib.rs')]

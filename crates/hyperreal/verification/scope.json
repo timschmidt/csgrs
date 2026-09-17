@@ -87,7 +87,10 @@
     "structural::impl&%3::SQRT",
     "structural::impl&%3::LOG",
     "structural::impl&%3::TRIG",
-    "structural::impl&%3::OPAQUE"
+    "structural::impl&%3::OPAQUE",
+    "computable_bounds::BoundInfo::magnitude_bits",
+    "computable_bounds::public_sign",
+    "computable_bounds::private_sign"
   ],
   "verified_model_theorems": [
     "verified::division::gcd_preserves_common_divisors",
@@ -188,7 +191,10 @@
     "computable_bounds::binary_scaling_preserves_real_binade",
     "computable_bounds::binary_offset_preserves_bound_denotation",
     "computable_cache::packed_bound_fields",
-    "computable_cache::encoded_bound_round_trip"
+    "computable_cache::encoded_bound_round_trip",
+    "computable_bounds::exported_magnitude_is_a_certificate",
+    "computable_bounds::public_sign_preserves_denotation",
+    "computable_bounds::private_sign_preserves_denotation"
   ],
   "obligations": [
     {
