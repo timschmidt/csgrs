@@ -279,9 +279,23 @@ executions (including the fresh-process children) and 1,271/1,447 benchmark
 fixture replays. Representation, strict Clippy and doc-test checks pass too.
 The cold constant regression accepts both integers allowed by the public error
 contract and separately passes all four default/all-features debug/release
-combinations. Remaining build, coverage, fuzz, resource, timing and downstream
-qualification is pending for this runtime. Earlier timing flags are unresolved;
-this correctness milestone does not establish baseline acceptance.
+combinations. Earlier timing flags remain unresolved; this correctness milestone
+does not establish baseline acceptance.
+
+The [precision runtime resource checkpoint](../benchmarks/checkpoints/2026-09-17-verus-precision-resources.json)
+completes the remaining 13 build/check steps, the coverage matrix and all 6,492
+frozen ASan inputs across six fuzz targets for `7b95cac`. Coverage reports 26,068
+of 28,605 executable lines hit (91.13%); this is testing coverage, not a formal
+proof percentage. All allocation, Callgrind, Massif, Memcheck and Heaptrack
+commands pass. Twelve of 20 representation workloads allocate less, per-case
+measured peaks do not increase and retained bytes are unchanged. Two matched
+AB/BA Massif pairs still show the whole-process peak increasing from 24,896 to
+25,072 bytes. That 176-byte difference remains unresolved. Callgrind instructions
+decrease from 29,845,483 to 28,676,945. WASM grows from 1,646,116 to 1,661,702 bytes,
+and stripped native artifacts grow by up to 17,376 bytes. Expanded ordinary Rust
+has 36,105 lines versus 35,597 in the baseline. All rows and raw profiles are
+retained. Current native timing, pinned-consumer qualification and the overall
+resource assessment remain open.
 
 Completion requires both the full source/caller/dependency proof audit and
 source-bound qualification evidence against this baseline. The
