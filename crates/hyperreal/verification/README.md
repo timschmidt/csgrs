@@ -2,7 +2,7 @@
 
 The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
 The current proof target verifies ninety-four production contracts (eighty-six
-functions and eight constants) and one hundred seven arithmetic model theorems. The rest
+functions and eight constants) and one hundred twelve arithmetic model theorems. The rest
 of the crate is still awaiting implementation refinement proofs. A passing
 Verus job must not be described as 100% verification of Hyperreal.
 
@@ -94,6 +94,11 @@ signed exponent and exactness flag, with unused bits zero. Exact-sign packing
 and decoding preserve invalid, unknown, negative, zero and positive states;
 the decoder requires a valid sign tag. This does not establish the cache's
 atomic operations, storage invariant, memory ownership or caller preconditions.
+Word-level lemmas also establish that the construction expression retains all
+four fields, that a bound update preserves the sign and construction hints,
+and that a sign update preserves the bound and other fields. These lemmas use
+the production constants and checked encoder contracts. They do not verify the
+atomic constructor or compare-exchange loops.
 
 The public carriers in `structural.rs` contribute eleven checked accessors and
 mask operations plus seven checked mask constants. Certificate queries preserve

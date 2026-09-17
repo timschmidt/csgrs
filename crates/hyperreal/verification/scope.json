@@ -203,7 +203,12 @@
     "computable_bounds::squaring_preserves_bound_denotation",
     "computable_bounds::multiplication_preserves_bound_denotation",
     "computable_bounds::distinct_real_binades_order_magnitudes",
-    "computable_bounds::addition_preserves_bound_denotation"
+    "computable_bounds::addition_preserves_bound_denotation",
+    "computable_cache::cache_field_masks",
+    "computable_cache::bound_denotation_ignores_other_fields",
+    "computable_cache::bound_update_preserves_other_fields",
+    "computable_cache::exact_sign_update_preserves_bound",
+    "computable_cache::initial_cache_word_preserves_all_fields"
   ],
   "obligations": [
     {
@@ -244,7 +249,7 @@
     },
     {
       "area": "Caches, atomics, concurrency, unsafe memory, cancellation and resources",
-      "status": "unverified"
+      "status": "partial"
     },
     {
       "area": "Simple expression language, CLI, JSON/CBOR and all feature combinations",
