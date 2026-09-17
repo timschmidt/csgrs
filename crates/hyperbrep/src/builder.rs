@@ -5,9 +5,8 @@ use std::fmt;
 
 use hypercurve::{
     Aabb2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, Contour2,
-    ContourPointLocation, Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveGeometry2,
-    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2 as CurvePoint2,
-    RationalBezier2, Segment2,
+    ContourPointLocation, Curve2, CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, LineSeg2,
+    Point2 as CurvePoint2, RationalBezier2, Segment2,
 };
 use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
@@ -1870,13 +1869,11 @@ pub fn extrude_path_regions(
     Ok((builder.finish()?, solids))
 }
 
-/// Extrudes the exact material profiles retained by a certified curve region.
+/// Extrudes the normalized material components of an exact curve region.
 ///
-/// The region remains the topology authority: material/hole ownership and the
-/// filled side of every loop are consumed directly instead of reconstructing
-/// and re-certifying independent paths. Fully materialized boundary fragments
-/// are reversed only when needed to put material on the left before B-rep
-/// topology is authored; retained algebraic-only fragments remain unsupported.
+/// Hypercurve owns normalization, hole ownership, and filled-left orientation.
+/// Each component retains those certificates for the resulting solid's planar
+/// support. Unsupported persistent boundary families remain explicit errors.
 pub(crate) fn extrude_curve_region(
     region: &CurveRegion2,
     z_min: Real,
@@ -1884,128 +1881,40 @@ pub(crate) fn extrude_curve_region(
     context: &CurveContext,
 ) -> Result<(Model, Vec<SolidId>), ConstructionError> {
     require_increasing(&z_min, &z_max, Axis::Z)?;
-    let filled_sides = match region
-        .filled_side_is_left(context)
+    let components = region
+        .material_components(context)
         .map_err(GeometryError::from)?
-        .into_value()
-    {
-        Classification::Decided(filled_sides) => filled_sides.to_vec(),
-        Classification::Uncertain(reason) => {
-            return Err(
-                BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason)).into(),
-            );
-        }
-    };
-    if region.boundary_loops().len() != filled_sides.len() {
-        return Err(GeometryError::UnsupportedPcurveContour.into());
-    }
-    let loop_curves = region
-        .boundary_loops()
-        .iter()
-        .zip(filled_sides.iter().copied())
-        .map(|(boundary, filled_side_is_left)| {
-            persistent_region_boundary_curves(boundary.fragments(), !filled_side_is_left)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    let profiles = match region
-        .boundary_profiles(context)
-        .map_err(GeometryError::from)?
-        .into_value()
-    {
-        Classification::Decided(profiles) => profiles,
-        Classification::Uncertain(reason) => {
-            return Err(
-                BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason)).into(),
-            );
-        }
-    };
-
+        .into_value();
     let mut builder = ModelBuilder::new();
-    let mut solids = Vec::with_capacity(profiles.len());
-    for profile in profiles {
-        let loop_indices = std::iter::once(profile.material_loop_index())
-            .chain(profile.hole_loop_indices().iter().copied())
-            .collect::<Vec<_>>();
-        let mut loops = Vec::with_capacity(loop_indices.len());
-        loops.push(
-            loop_curves
-                .get(profile.material_loop_index())
-                .cloned()
-                .ok_or(GeometryError::UnsupportedPcurveContour)?,
-        );
-        loops.extend(
-            profile
-                .hole_loop_indices()
-                .iter()
-                .map(|index| {
-                    loop_curves
-                        .get(*index)
-                        .cloned()
-                        .ok_or(GeometryError::UnsupportedPcurveContour)
-                })
-                .collect::<Result<Vec<_>, _>>()?,
-        );
-        let mut area = Real::zero();
-        for index in &loop_indices {
-            let signed_area = match region.boundary_loops()[*index]
-                .signed_area(context)
-                .map_err(GeometryError::from)?
-                .into_value()
-            {
-                Classification::Decided(Some(area)) => area,
-                Classification::Decided(None) => {
-                    return Err(GeometryError::UnsupportedMeasurement.into());
-                }
-                Classification::Uncertain(reason) => {
-                    return Err(BuildError::Geometry(
-                        GeometryError::PlanarClassificationUnresolved(reason),
-                    )
-                    .into());
-                }
-            };
-            if filled_sides[*index] {
-                area += signed_area;
-            } else {
-                area -= signed_area;
+    let mut solids = Vec::with_capacity(components.len());
+    for component in components {
+        let loops = component
+            .boundary_loops()
+            .iter()
+            .map(|boundary| persistent_region_boundary_curves(boundary.fragments(), false))
+            .collect::<Result<Vec<_>, _>>()?;
+        let area = match component
+            .signed_area(context)
+            .map_err(GeometryError::from)?
+            .into_value()
+        {
+            Classification::Decided(Some(area)) => area,
+            Classification::Decided(None) => {
+                return Err(GeometryError::UnsupportedMeasurement.into());
             }
-        }
-        let profile_region = CurveRegion2::try_new_with_loop_topology(
-            loop_indices
-                .iter()
-                .map(|index| region.boundary_loops()[*index].clone())
-                .collect(),
-            std::iter::once(CurveRegionLoopRole::Material)
-                .chain(std::iter::repeat_n(
-                    CurveRegionLoopRole::Hole,
-                    profile.hole_loop_indices().len(),
-                ))
-                .collect(),
-            loop_indices
-                .iter()
-                .map(|index| {
-                    region
-                        .loop_fill_rules()
-                        .map_or(FillRule::EvenOdd, |rules| rules[*index])
-                })
-                .collect(),
-            loop_indices
-                .iter()
-                .map(|index| {
-                    if filled_sides[*index] {
-                        CurveBoundaryInteriorSide2::Left
-                    } else {
-                        CurveBoundaryInteriorSide2::Right
-                    }
-                })
-                .collect(),
-        )
-        .map_err(GeometryError::from)?;
+            Classification::Uncertain(reason) => {
+                return Err(
+                    BuildError::Geometry(GeometryError::PlanarClassificationUnresolved(reason))
+                        .into(),
+                );
+            }
+        };
         solids.push(add_persistent_curve_region(
             &mut builder,
             &loops,
             z_min.clone(),
             z_max.clone(),
-            Some((profile_region, area)),
+            Some((component, area)),
         )?);
     }
     Ok((builder.finish()?, solids))
