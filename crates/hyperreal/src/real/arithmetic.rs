@@ -17,6 +17,7 @@ include!("arithmetic/classification.rs");
 include!("arithmetic/canonical_constants.rs");
 include!("arithmetic/representation.rs");
 include!("arithmetic/facts.rs");
+include!("arithmetic/quadratic_tower_sign.rs");
 include!("arithmetic/linear_algebra.rs");
 include!("arithmetic/inversion.rs");
 include!("arithmetic/elementary_functions.rs");
