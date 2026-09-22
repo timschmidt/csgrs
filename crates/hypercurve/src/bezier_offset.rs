@@ -116235,11 +116235,12 @@ impl BezierParallel2 {
         }
         if query == ParameterComponentQuery2::RetainFinite {
             debug_assert!(domains.iter().all(|domain| domain.extension.is_none()));
-            // These equations use pointwise source normals. One-sided source
-            // cusp endpoints need their branch frame; do not certify a complete
-            // finite result after silently excluding an undefined normal.
+            // Pointwise source normals are undefined at a source cusp. A zero
+            // only at an endpoint still has one regular branch frame. An open
+            // interior zero does not, and must not be published as a contact.
             let strict = policy.strict_counterpart();
             let mut rational_images = [None, None];
+            let mut endpoint_cusp = [false, false];
             for (index, (parallel, domain)) in [self, other].into_iter().zip(domains).enumerate() {
                 match real_sign(parallel.distance(), &strict) {
                     Some(RealSign::Zero) => {
@@ -116249,18 +116250,32 @@ impl BezierParallel2 {
                     Some(_) => {}
                     None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
                 }
-                match polynomial_is_nonzero_on_parameter_range(
-                    &parallel_speed_squared_polynomial(parallel.differential()?),
-                    domain.finite,
-                    policy,
-                )? {
+                let speed = parallel_speed_squared_polynomial(parallel.differential()?);
+                match polynomial_is_nonzero_on_parameter_range(&speed, domain.finite, policy)? {
                     Classification::Decided(true) => {}
                     Classification::Decided(false) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        match polynomial_roots_touch_only_range_endpoints(
+                            &speed,
+                            domain.finite,
+                            policy,
+                        )? {
+                            Classification::Decided(true) => endpoint_cusp[index] = true,
+                            Classification::Decided(false) => {
+                                return Ok(Classification::Uncertain(
+                                    UncertaintyReason::Boundary,
+                                ));
+                            }
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
                     }
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
+                }
+                if endpoint_cusp[index] {
+                    continue;
                 }
                 // A PH image must own the requested normal sheet. Native
                 // materialization cannot be reused across an exterior speed zero.
@@ -116274,6 +116289,22 @@ impl BezierParallel2 {
                 {
                     rational_images[index] = Some(component.curve().parallel_left(Real::zero())?);
                 }
+            }
+            if endpoint_cusp[0] || endpoint_cusp[1] {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "parallel-pair-domain",
+                    "one-sided-source-cusp",
+                );
+                return Ok(self
+                    .parallel_intersections_on_regular_ranges(
+                        other,
+                        domains[0].finite,
+                        domains[1].finite,
+                        policy,
+                    )?
+                    .map(BezierParallelPairDomainIntersectionSet2::enumerated));
             }
             match rational_images.each_ref() {
                 [Some(first), Some(second)] => {
@@ -131540,6 +131571,46 @@ fn bivariate_scale(mut polynomial: BivariatePolynomial, scale: &Real) -> Bivaria
     polynomial
 }
 
+/// `true` when every root on the closed range is an endpoint.
+///
+/// An identically zero polynomial is an interior singularity. An uncertain
+/// endpoint comparison stays uncertain instead of dropping a one-sided frame.
+fn polynomial_roots_touch_only_range_endpoints(
+    coefficients: &[Real],
+    range: &CurveParameterRange2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    let polynomial = match polynomial_from_coefficients(coefficients.to_vec(), policy)? {
+        Classification::Decided(Some(polynomial)) => polynomial,
+        Classification::Decided(None) => return Ok(Classification::Decided(false)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let roots = match CurveParameterDomain2::new(range, None).finite_roots(&polynomial, policy)? {
+        Classification::Decided(roots) => roots,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    if roots.is_empty() {
+        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+    }
+    for root in roots {
+        let root = CurveParameter2::from(root);
+        let at_start = root.cmp_by_refinement(range.start(), policy)?;
+        let at_end = root.cmp_by_refinement(range.end(), policy)?;
+        match (at_start, at_end) {
+            (Classification::Decided(std::cmp::Ordering::Equal), _)
+            | (_, Classification::Decided(std::cmp::Ordering::Equal)) => {}
+            (
+                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater),
+                Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater),
+            ) => return Ok(Classification::Decided(false)),
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+    }
+    Ok(Classification::Decided(true))
+}
+
 /// Certifies finiteness or regularity on the actual closed scalar range.
 /// A strict hull is sufficient; otherwise the shared domain root authority
 /// clips against the original endpoint evidence.
@@ -133854,6 +133925,127 @@ mod conversion_tests {
                     source.scalar() == Some(&two_thirds) && circle.scalar() == Some(&Real::one())
                 }));
             }
+        }
+    }
+
+    #[test]
+    fn finite_domain_admits_one_sided_source_cusp_contacts() {
+        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source = CubicBezier2::new(
+            Point2::from_values(1, -1),
+            Point2::new(-third.clone(), Real::one()),
+            Point2::new(-third, -Real::one()),
+            Point2::from_values(1, 1),
+        );
+        let parallel = source
+            .parallel_left(-(Real::one() / Real::from(4_i8)).unwrap())
+            .unwrap();
+        let before = CurveParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(half.clone()),
+        ));
+        let after = CurveParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(half.clone()),
+            BezierParameter2::Exact(Real::one()),
+        ));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let regular = match parallel
+                .parallel_intersections_on_regular_ranges(&parallel, &before, &after, &policy)
+                .unwrap()
+            {
+                Classification::Decided(result) => result,
+                Classification::Uncertain(reason) => {
+                    panic!("one-sided regular sheets remained uncertain: {reason:?}")
+                }
+            };
+            let domain = match parallel
+                .parallel_intersections_in_domain(
+                    &parallel,
+                    [
+                        CurveParameterDomain2::new(&before, None),
+                        CurveParameterDomain2::new(&after, None),
+                    ],
+                    ParameterComponentQuery2::RetainFinite,
+                    &policy,
+                )
+                .unwrap()
+            {
+                Classification::Decided(result) => result,
+                Classification::Uncertain(reason) => {
+                    panic!("one-sided domain contacts remained uncertain: {reason:?}")
+                }
+            };
+            let (domain, positive_dimensional) = domain.into_parts();
+            assert!(!positive_dimensional);
+            assert!(domain.is_complete(), "{domain:?}");
+            assert_eq!(domain.contacts().len(), regular.contacts().len());
+            assert!(
+                domain.contacts().iter().any(|contact| {
+                    curve_region_parameter_is_in_bezier_range(
+                        contact.first_parameter(),
+                        &BezierParameterRange2::new_validated(
+                            BezierParameter2::Exact(Real::zero()),
+                            BezierParameter2::Exact(half.clone()),
+                        ),
+                        true,
+                        &policy,
+                    ) == Ok(Classification::Decided(true))
+                        && curve_region_parameter_is_in_bezier_range(
+                            contact.second_parameter(),
+                            &BezierParameterRange2::new_validated(
+                                BezierParameter2::Exact(half.clone()),
+                                BezierParameter2::Exact(Real::one()),
+                            ),
+                            true,
+                            &policy,
+                        ) == Ok(Classification::Decided(true))
+                }),
+                "{domain:?}"
+            );
+            let limit = match parallel
+                .source_cusp_limit_point_and_tangent_support(
+                    &parallel,
+                    &BezierParameter2::Exact(half.clone()),
+                    &before,
+                    RealSign::Positive,
+                    &policy,
+                )
+                .unwrap()
+            {
+                Classification::Decided(limit) => limit,
+                Classification::Uncertain(reason) => {
+                    panic!("one-sided cusp limit remained uncertain: {reason:?}")
+                }
+            };
+            assert!(
+                limit.1.start().same_point(limit.1.end(), &policy)
+                    != Classification::Decided(true)
+            );
+            let interior = CurveParameterRange2::from_bezier_range(
+                BezierParameterRange2::new_validated(
+                    BezierParameter2::Exact((Real::one() / Real::from(4_i8)).unwrap()),
+                    BezierParameter2::Exact((Real::from(3_i8) / Real::from(4_i8)).unwrap()),
+                ),
+            );
+            let interior_cusp = parallel
+                .parallel_intersections_in_domain(
+                    &parallel,
+                    [
+                        CurveParameterDomain2::new(&interior, None),
+                        CurveParameterDomain2::new(&interior, None),
+                    ],
+                    ParameterComponentQuery2::RetainFinite,
+                    &policy,
+                )
+                .unwrap();
+            assert!(
+                matches!(
+                    interior_cusp,
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                ),
+                "an open interior source cusp is not a one-sided frame"
+            );
         }
     }
 
