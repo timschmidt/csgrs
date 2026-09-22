@@ -22,6 +22,22 @@ impl Real {
         self.tower_computable().quadratic_tower_sign()
     }
 
+    /// Rational center `s` when this value is `s + r√q` with `r > 0` and only
+    /// one real choice of `q`. The conjugate `s - r√q` is the other real root.
+    pub fn quadratic_tower_positive_rational_branch(&self) -> Option<Rational> {
+        self.tower_computable()
+            .quadratic_tower_positive_rational_branch()
+    }
+
+    /// Rational polynomial satisfied by a value in the quadratic tower.
+    ///
+    /// Coefficients run from low degree to high. `None` means the value is
+    /// outside the tower or its integers exceed the reduction bound.
+    pub fn quadratic_tower_annihilating_polynomial(&self) -> Option<Vec<Rational>> {
+        self.tower_computable()
+            .quadratic_tower_annihilating_polynomial()
+    }
+
     /// Evaluate `coefficients[0] + coefficients[1] t + ...` at `t = ±sqrt(square)`.
     ///
     /// The root is the principal square root when `positive_root` is set.
@@ -68,6 +84,40 @@ mod quadratic_tower_real_tests {
         assert_eq!(
             Real::sign_polynomial_at_rational_square_root(&coefficients, &half, false),
             Some(RealSign::Negative)
+        );
+    }
+
+    #[test]
+    fn shifted_fourth_root_has_a_rational_annihilator() {
+        let beta = Real::from(Rational::fraction(1, 2).unwrap())
+            .sqrt()
+            .unwrap()
+            .sqrt()
+            .unwrap();
+        let value = Real::from(2) + &beta;
+        assert_eq!(
+            value.quadratic_tower_positive_rational_branch(),
+            Some(Rational::new(2))
+        );
+        assert_eq!(
+            value.quadratic_tower_annihilating_polynomial(),
+            Some(vec![
+                Rational::fraction(31, 2).unwrap(),
+                Rational::new(-32),
+                Rational::new(24),
+                Rational::new(-8),
+                Rational::one(),
+            ])
+        );
+        assert_eq!(
+            beta.quadratic_tower_annihilating_polynomial(),
+            Some(vec![
+                Rational::fraction(-1, 2).unwrap(),
+                Rational::zero(),
+                Rational::zero(),
+                Rational::zero(),
+                Rational::one(),
+            ])
         );
     }
 
