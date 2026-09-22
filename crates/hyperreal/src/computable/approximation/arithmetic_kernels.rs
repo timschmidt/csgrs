@@ -97,7 +97,8 @@ fn add(signal: &Option<Signal>, c1: &Computable, c2: &Computable, p: Precision) 
 }
 
 fn msd_from_appr(prec: Precision, appr: &BigInt) -> Precision {
-    prec + appr.magnitude().bits() as Precision - 1
+    crate::verified::word::checked_bit_length_msd(appr.magnitude().bits(), 1, false, prec)
+        .expect("Approximation magnitude is outside the precision range")
 }
 
 fn multiply_with_known_msd(

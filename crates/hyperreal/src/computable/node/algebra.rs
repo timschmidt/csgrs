@@ -1165,10 +1165,12 @@ impl Computable {
             return child.clone().inverse().negate();
         }
         if let Approximation::Offset(child, n) = &self.internal.approximation
+            && let Some(inverse_offset) = n.checked_neg()
             && child.exact_sign().is_some_and(|sign| sign != Sign::NoSign)
         {
             // 1/(x*2^n) = (1/x)*2^-n, preserving the cheap binary scale.
-            return child.clone().inverse().shift_left(-n);
+            // Keep the inverse node below when the new exponent does not fit.
+            return child.clone().inverse().shift_left(inverse_offset);
         }
         if let Approximation::Multiply(left, right) = &self.internal.approximation {
             if let Some(scale) = left.exact_rational()
@@ -1262,10 +1264,13 @@ impl Computable {
                 _ => {}
             }
         }
-        if let Approximation::Offset(child, n) = &self.internal.approximation {
+        if let Approximation::Offset(child, n) = &self.internal.approximation
+            && let Some(squared_offset) = n.checked_mul(2)
+        {
             // (x * 2^n)^2 is x^2 * 2^(2n); keeping powers of two as offsets is much
-            // cheaper than multiplying by an exact rational scale.
-            return child.clone().square().shift_left(n * 2);
+            // cheaper than multiplying by an exact rational scale. Retain the
+            // square node below when the doubled exponent does not fit.
+            return child.clone().square().shift_left(squared_offset);
         }
         if let Approximation::Multiply(left, right) = &self.internal.approximation {
             if let Some(scale) = left.exact_rational() {
