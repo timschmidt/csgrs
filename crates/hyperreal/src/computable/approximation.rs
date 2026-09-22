@@ -25,6 +25,10 @@ include!("approximation/statistics.rs");
 mod e_plan_tests;
 
 #[cfg(test)]
+#[path = "approximation/precision_tests.rs"]
+mod precision_tests;
+
+#[cfg(test)]
 mod chudnovsky_pi_tests {
     use super::*;
     use rug::{Float, float::Constant, float::Round};
