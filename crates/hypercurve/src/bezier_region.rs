@@ -12258,8 +12258,9 @@ impl CurveRegion2 {
     /// polynomial or rational Bezier carriers use the same exact interaction
     /// solver as open paths. Authored spline and NURBS boundaries are already
     /// canonical native Bezier spans here, so they take that route without a
-    /// second decomposition. Every candidate is rebuilt with this region's
-    /// material/hole and fill semantics. Interior algebraic Bezier contacts
+    /// second decomposition. Every candidate is regularized with this region's
+    /// fill semantics; cuts can merge, split, or remove boundary loops.
+    /// Interior algebraic Bezier contacts
     /// retain their selected parameters and exact point images, joined by one
     /// compact algebraic chord instead of falling through to historical
     /// contour machinery. `TrimOrExtend` keeps retained straight and direct
@@ -12319,8 +12320,9 @@ impl CurveRegion2 {
     /// Solves a boundary-loop circular fillet from an exact radius.
     ///
     /// Exact candidates come from the same carrier-interaction authority used
-    /// by open [`CurvePath2`] editing and are rebuilt without changing loop role
-    /// or fill rule. Represented direct and canonical spline/NURBS Bezier trims
+    /// by open [`CurvePath2`] editing. Edited boundaries are regularized with
+    /// this region's fill semantics before publication. Represented direct
+    /// and canonical spline/NURBS Bezier trims
     /// use the retained path authority. Retained affine algebraic chords and
     /// direct polynomial or rational Beziers paired with affine lines also
     /// support exact exterior-ray fillet contacts. Direct Bezier incident
@@ -12367,8 +12369,8 @@ impl CurveRegion2 {
         // The corner solver owns the two trim/contact equalities, while the
         // source loop owns every unaffected join. Retained selected fields can
         // make either cut impossible to re-prove by independent Cartesian
-        // endpoint comparison, so publish the already-certified chain instead
-        // of discarding the pair-owned evidence here.
+        // endpoint comparison, so retain the already-certified chain while
+        // normalizing the edited boundaries.
         let edited_loop = CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
             fragments, None, policy,
         )
@@ -12413,10 +12415,24 @@ impl CurveRegion2 {
                 ));
             }
         };
+        // Selected-circle chains on one loop already carry the corner solver's
+        // certified contacts. Re-arranging them repeats that algebraic probe.
+        // Every other edit can meet another boundary or split one loop, so
+        // publish the regularized set.
+        let selected_circle_chain = edited_loop
+            .fragments()
+            .iter()
+            .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)));
         let mut loops = self.data.boundary_loops.clone();
         loops[loop_index] = edited_loop;
-        Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
-            .map_err(|cause| curve_region_edit_error(operation, cause))
+        let edited = Self::try_new_with_loop_topology(loops, roles, fill_rules, interior_sides)
+            .map_err(|cause| curve_region_edit_error(operation, cause))?;
+        if self.data.boundary_loops.len() == 1 && selected_circle_chain {
+            return Ok(edited);
+        }
+        edited
+            .regularized_region_raw(policy)
+            .map_err(|error| error.with_operation(operation))
     }
 
     fn boundary_paths_for_operation(
@@ -12554,7 +12570,9 @@ impl CurveRegion2 {
             }
         }
 
-        let region = Self::try_from_native_contours_raw(material, holes, policy)?;
+        let region = Self::try_from_native_contours_raw(material, holes, policy)?
+            .regularized_region_raw(policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Subdivision))?;
         Ok(Classification::Decided(
             CurveRegionCertifiedSegmentationResult2 {
                 region,

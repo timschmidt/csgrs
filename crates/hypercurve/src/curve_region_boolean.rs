@@ -10063,9 +10063,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Err(cause) => return Err(self.invalid(0, cause)),
             };
         filled_sides.extend(intersection_filled_sides.iter().map(|side| !side));
-        // XOR is union with the intersection's filled side removed. Retain the
-        // two exact boundary sets directly when a second Boolean traversal
-        // cannot materialize that difference.
+        // XOR is the union with the intersection removed. Concatenating those
+        // boundaries preserves the set, including loops whose filled side was
+        // flipped, but shared edges are not yet a normalized boundary.
         let mut union_loops = union
             .boundary_loops()
             .iter()
@@ -10081,15 +10081,46 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .cloned()
                 .map(crate::CurveRegionBoundaryLoop2::without_arrangement_sources),
         );
-        CurveRegion2::new(union_loops)
-            .and_then(|region| region.with_certified_filled_side_is_left(filled_sides))
+        let union_count = union.boundary_loops().len();
+        let mut loops = union_loops;
+        let mut sides = filled_sides;
+        let intersection_loops = loops.split_off(union_count);
+        let mut intersection_sides = sides.split_off(union_count);
+        // A structurally repeated loop contributes even-odd twice and is not
+        // admissible region evidence. Cancel those pairs before publication;
+        // partial edge coincidence still goes through unary regularization.
+        for (intersection_loop, intersection_side) in intersection_loops
+            .into_iter()
+            .zip(intersection_sides.drain(..))
+        {
+            if let Some(index) = loops
+                .iter()
+                .position(|union_loop| union_loop.fragments() == intersection_loop.fragments())
+            {
+                loops.remove(index);
+                sides.remove(index);
+            } else {
+                loops.push(intersection_loop);
+                sides.push(intersection_side);
+            }
+        }
+        if loops.is_empty() {
+            return Ok(CurveRegion2::empty());
+        }
+        let region = CurveRegion2::new(loops)
+            .and_then(|region| region.with_certified_filled_side_is_left(sides))
             .map_err(|cause| {
                 ExactCurveError::invalid(
                     CurveOperation2::Boolean,
                     CurveFamily2::RationalBezier,
                     cause,
                 )
-            })
+            })?;
+        // Unary regularization cancels coincident seams. It does not call XOR,
+        // so this fallback cannot recurse into itself.
+        region
+            .regularized_region_raw(&self.data.policy)
+            .map_err(|error| error.with_operation(CurveOperation2::Boolean))
     }
 
     fn build_boolean_region_from_topology(
@@ -21477,6 +21508,96 @@ mod certified_successor_tests {
         )
         .unwrap()
         .into_value()
+    }
+
+    fn half_point(x: i8, y: i8) -> Point2 {
+        let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
+        Point2::new(Real::from(x) * &half, Real::from(y) * &half)
+    }
+
+    #[test]
+    fn xor_composition_fallback_removes_coincident_seams() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let assert_locations =
+                |region: &CurveRegion2, samples: &[(Point2, RegionPointLocation)]| {
+                    assert!(region.has_regularized_filled_left_topology(&policy));
+                    assert_eq!(region.regularized_region_raw(&policy).unwrap(), *region);
+                    for (point, expected) in samples {
+                        assert_eq!(
+                            region.classify_point_raw(point, &policy).unwrap(),
+                            Classification::Decided(*expected),
+                            "policy {policy:?} at {point:?}"
+                        );
+                    }
+                };
+
+            let left = square_region(0, 0, 2, 2);
+            let right = square_region(1, 0, 3, 2);
+            let union = left
+                .boolean_region_raw(&right, BooleanOp::Union, &policy)
+                .unwrap();
+            let intersection = left
+                .boolean_region_raw(&right, BooleanOp::Intersection, &policy)
+                .unwrap();
+            let context = CurveRegionBooleanContext::try_new(&left, &right, &policy).unwrap();
+            let xor = context
+                .compose_xor_from_exact_regions(&union, &intersection)
+                .unwrap();
+            let public_xor = left
+                .boolean_region_raw(&right, BooleanOp::Xor, &policy)
+                .unwrap();
+            assert_eq!(
+                xor.len(),
+                2,
+                "the shared horizontal seams split into two loops"
+            );
+            assert_eq!(public_xor.len(), xor.len());
+            let overlap_samples = [
+                (half_point(1, 2), RegionPointLocation::Inside),
+                (half_point(3, 2), RegionPointLocation::Outside),
+                (half_point(5, 2), RegionPointLocation::Inside),
+                (half_point(3, 0), RegionPointLocation::Outside),
+                (Point2::from_values(1, 1), RegionPointLocation::Boundary),
+                (Point2::from_values(0, 1), RegionPointLocation::Boundary),
+                (Point2::from_values(3, 1), RegionPointLocation::Boundary),
+            ];
+            assert_locations(&xor, &overlap_samples);
+            assert_locations(&public_xor, &overlap_samples);
+
+            let identical = context
+                .compose_xor_from_exact_regions(&left, &left)
+                .unwrap();
+            assert!(identical.is_empty());
+            assert_eq!(
+                identical
+                    .classify_point_raw(&Point2::from_values(1, 1), &policy)
+                    .unwrap(),
+                Classification::Decided(RegionPointLocation::Outside)
+            );
+
+            let outer = square_region(0, 0, 6, 6);
+            let inner = square_region(1, 1, 2, 2);
+            let nested_union = outer
+                .boolean_region_raw(&inner, BooleanOp::Union, &policy)
+                .unwrap();
+            let nested_intersection = outer
+                .boolean_region_raw(&inner, BooleanOp::Intersection, &policy)
+                .unwrap();
+            let nested = CurveRegionBooleanContext::try_new(&outer, &inner, &policy)
+                .unwrap()
+                .compose_xor_from_exact_regions(&nested_union, &nested_intersection)
+                .unwrap();
+            assert_eq!(nested.len(), 2);
+            assert_locations(
+                &nested,
+                &[
+                    (half_point(1, 6), RegionPointLocation::Inside),
+                    (half_point(3, 3), RegionPointLocation::Outside),
+                    (Point2::from_values(0, 3), RegionPointLocation::Boundary),
+                    (Point2::from_values(1, 1), RegionPointLocation::Boundary),
+                ],
+            );
+        }
     }
 
     #[test]

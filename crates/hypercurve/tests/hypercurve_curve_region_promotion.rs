@@ -477,6 +477,7 @@ fn rounded_algebraic_rectangle_oracle(distance: &Real, policy: &CurveContext) ->
 fn parabola_extension_contact(region: &CurveRegion2, policy: &CurveContext) -> Option<CurvePoint2> {
     let parabola = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 4)));
     let corner = p(1, 1).into();
+    let mut furthest: Option<CurvePoint2> = None;
     for path in decided(region.boundary_paths(policy).unwrap()) {
         for curve in path.curves() {
             let start = curve.start();
@@ -513,11 +514,20 @@ fn parabola_extension_contact(region: &CurveRegion2, policy: &CurveContext) -> O
                 && topology.result().overlaps().len() == 1
                 && topology.first().len() == 1
             {
-                return Some(contact);
+                if furthest.as_ref().is_none_or(|previous| {
+                    decided(
+                        contact
+                            .compare_coordinate(previous, hypercurve::Axis2::X, policy)
+                            .unwrap(),
+                    )
+                    .is_gt()
+                }) {
+                    furthest = Some(contact);
+                }
             }
         }
     }
-    None
+    furthest
 }
 
 fn has_certified_boundary_overlap(
@@ -1243,7 +1253,24 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
         decided(one_sided.native_contours_fast_path(&policy).unwrap()).material_contours()[0]
             .segments()
             .len(),
-        5
+        4,
+        "normalization coalesces the collinear one-sided chamfer"
+    );
+    assert_eq!(
+        decided(one_sided.filled_area(&policy).unwrap()),
+        Some(Real::from(16))
+    );
+    assert_eq!(
+        decided(one_sided.classify_point(&p(4, 1), &policy).unwrap()),
+        RegionPointLocation::Boundary
+    );
+    assert!(
+        certified(
+            one_sided
+                .boolean_region(&source, hypercurve::BooleanOp::Xor, &policy)
+                .unwrap()
+        )
+        .is_empty()
     );
     assert_eq!(
         source
@@ -1310,16 +1337,8 @@ fn assert_corner_region_survives_boundary_paths(
     policy: &CurveContext,
 ) {
     let paths = decided(region.boundary_paths(policy).unwrap());
-    assert_eq!(paths.len(), 1);
-    let restored = certified(
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-            &paths,
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::NonZero],
-            policy,
-        )
-        .unwrap(),
-    );
+    assert_eq!(paths.len(), expected.len());
+    let restored = certified(CurveRegion2::try_from_boundary_paths(&paths, policy).unwrap());
     for (label, actual) in [("generated", region), ("restored", &restored)] {
         for (point, location) in probes {
             assert_eq!(
@@ -7993,8 +8012,12 @@ fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
             vec![CurveRegionLoopRole::Material; region.len()]
         );
         assert_eq!(
-            edited.loop_fill_rules(),
-            Some(vec![FillRule::EvenOdd; region.len()].as_slice())
+            decided(edited.filled_side_is_left(&policy).unwrap()),
+            vec![true; edited.len()]
+        );
+        assert_eq!(
+            certified(edited.regularized_region(&policy).unwrap()),
+            *edited
         );
     }
 }
@@ -8292,6 +8315,98 @@ fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
                 assert_eq!(
                     certified(outcome.value.classify_point(&point, &policy).unwrap()),
                     Classification::Decided(RegionPointLocation::Outside)
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn region_corner_edits_publish_normalized_hole_openings() {
+    let square_path = |a, b| {
+        let points = [p(a, a), p(b, a), p(b, b), p(a, b)];
+        CurvePath2::try_new(
+            (0..4)
+                .map(|i| {
+                    LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone())
+                        .unwrap()
+                        .into()
+                })
+                .collect(),
+        )
+        .unwrap()
+    };
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for fillet in [false, true] {
+            let source = CurveRegion2::try_from_boundary_paths(
+                &[square_path(0, 8), square_path(1, 3)],
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            let (loop_index, vertex) = boundary_vertex_at(&source, &p(0, 0), &policy);
+            let outcome = if fillet {
+                source.fillet_loop_vertex_by_radius(
+                    loop_index,
+                    vertex,
+                    Real::from(5),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+            } else {
+                source.chamfer_loop_vertex_by_setbacks(
+                    loop_index,
+                    vertex,
+                    Real::from(5),
+                    Real::from(5),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+            }
+            .unwrap();
+            let CurveCornerSolutions2::Unique(region) = certified(outcome) else {
+                panic!("the square corner has one in-domain cut");
+            };
+            assert_eq!(region.len(), 1, "the corner cut opens the hole");
+            assert!(decided(region.filled_side_is_left(&policy).unwrap())[0]);
+            assert_eq!(
+                region.regularized_region(&policy).unwrap().into_value(),
+                region
+            );
+            let mut samples = vec![
+                (p(6, 6), RegionPointLocation::Inside),
+                (p(0, 6), RegionPointLocation::Boundary),
+            ];
+            if fillet {
+                let coordinate = Real::from(5) - Real::from(5) * q(1, 2).sqrt().unwrap();
+                samples.extend([
+                    (p(1, 1), RegionPointLocation::Outside),
+                    (
+                        Point2::new(coordinate.clone(), coordinate),
+                        RegionPointLocation::Outside,
+                    ),
+                    (p(1, 2), RegionPointLocation::Boundary),
+                    (p(2, 1), RegionPointLocation::Boundary),
+                ]);
+            } else {
+                // The surviving void is a half-unit triangle; the outer
+                // five-unit corner cut removes an area of 25/2.
+                assert_eq!(
+                    decided(region.filled_area(&policy).unwrap()),
+                    Some(Real::from(51))
+                );
+                samples.extend([
+                    (p(1, 2), RegionPointLocation::Outside),
+                    (p(2, 1), RegionPointLocation::Outside),
+                    (Point2::new(q(5, 2), q(5, 2)), RegionPointLocation::Outside),
+                    (p(2, 3), RegionPointLocation::Boundary),
+                    (p(3, 2), RegionPointLocation::Boundary),
+                ]);
+            }
+            for (point, expected) in samples {
+                assert_eq!(
+                    decided(region.classify_point(&point, &policy).unwrap()),
+                    expected
                 );
             }
         }
