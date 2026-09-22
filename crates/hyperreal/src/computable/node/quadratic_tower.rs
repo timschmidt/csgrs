@@ -45,6 +45,10 @@ impl Quad {
     }
 
     fn add(self, other: Self) -> Option<Self> {
+        admit_rational(&self.rational)?;
+        admit_rational(&self.scale)?;
+        admit_rational(&other.rational)?;
+        admit_rational(&other.scale)?;
         let disc = self.same_disc(&other)?;
         let mut sum = Self {
             rational: &self.rational + &other.rational,
@@ -66,13 +70,20 @@ impl Quad {
     }
 
     fn mul(self, other: Self) -> Option<Self> {
+        admit_rational(&self.rational)?;
+        admit_rational(&self.scale)?;
+        admit_rational(&other.rational)?;
+        admit_rational(&other.scale)?;
         let disc = self.same_disc(&other)?;
         let cross = &self.rational * &other.scale + &self.scale * &other.rational;
+        admit_rational(&cross)?;
         let mut rational = &self.rational * &other.rational;
         if self.scale.sign() != Sign::NoSign && other.scale.sign() != Sign::NoSign {
             let disc = disc.as_ref()?;
+            admit_rational(disc)?;
             rational = rational + &self.scale * &other.scale * disc;
         }
+        admit_rational(&rational)?;
         let mut product = Self {
             rational,
             scale: cross,
@@ -100,6 +111,8 @@ impl Quad {
     }
 
     fn inverse(self) -> Option<Self> {
+        admit_rational(&self.rational)?;
+        admit_rational(&self.scale)?;
         if self.is_zero() {
             return None;
         }
@@ -119,6 +132,8 @@ impl Quad {
     }
 
     fn sign(&self) -> Option<RealSign> {
+        admit_rational(&self.rational)?;
+        admit_rational(&self.scale)?;
         if self.scale.sign() == Sign::NoSign {
             return Some(rational_sign(&self.rational));
         }
@@ -276,6 +291,18 @@ fn quad_eq(left: &Quad, right: &Quad) -> bool {
     left.rational == right.rational && left.scale == right.scale && left.disc == right.disc
 }
 
+const TOWER_RATIONAL_BIT_LIMIT: u64 = 8_192;
+
+fn admit_rational(value: &Rational) -> Option<()> {
+    if value.numerator().bits() <= TOWER_RATIONAL_BIT_LIMIT
+        && value.denominator().bits() <= TOWER_RATIONAL_BIT_LIMIT
+    {
+        Some(())
+    } else {
+        None
+    }
+}
+
 fn rational_sign(value: &Rational) -> RealSign {
     match value.sign() {
         Sign::Minus => RealSign::Negative,
@@ -410,6 +437,7 @@ fn tower_from_computable(value: &Computable) -> Option<Tower> {
         }
         *remaining -= 1;
         let parsed = if let Some(rational) = value.exact_rational() {
+            admit_rational(&rational)?;
             Some(Tower::rational(rational))
         } else {
             match &value.internal.approximation {
@@ -472,9 +500,105 @@ impl Tower {
     }
 }
 
+fn quad_rational_parts(quad: &Quad) -> Option<(Rational, Rational, Option<Rational>)> {
+    admit_rational(&quad.rational)?;
+    admit_rational(&quad.scale)?;
+    if quad.scale.sign() == Sign::NoSign {
+        return Some((quad.rational.clone(), Rational::zero(), None));
+    }
+    Some((
+        quad.rational.clone(),
+        quad.scale.clone(),
+        Some(quad.disc.clone()?),
+    ))
+}
+
+fn one_real_outer_square_root(radicand: &Quad) -> bool {
+    if radicand.sign() != Some(RealSign::Positive) {
+        return false;
+    }
+    if radicand.scale.sign() == Sign::NoSign {
+        return true;
+    }
+    let conjugate = Quad {
+        rational: radicand.rational.clone(),
+        scale: -radicand.scale.clone(),
+        disc: radicand.disc.clone(),
+    };
+    conjugate.sign() == Some(RealSign::Negative)
+}
+
+fn positive_rational_branch(tower: &Tower) -> Option<Rational> {
+    if tower.even.scale.sign() != Sign::NoSign || tower.odd.scale.sign() != Sign::NoSign {
+        return None;
+    }
+    if tower.odd.rational.sign() != Sign::Plus {
+        return None;
+    }
+    if !one_real_outer_square_root(tower.radicand.as_ref()?) {
+        return None;
+    }
+    admit_rational(&tower.even.rational)?;
+    Some(tower.even.rational.clone())
+}
+
+fn quad_annihilator(quad: &Quad) -> Option<Vec<Rational>> {
+    let (constant, scale, disc) = quad_rational_parts(quad)?;
+    if scale.sign() == Sign::NoSign {
+        return Some(vec![-constant, Rational::one()]);
+    }
+    let disc = disc?;
+    Some(vec![
+        &constant * &constant - &disc * &scale * &scale,
+        -&Rational::new(2) * &constant,
+        Rational::one(),
+    ])
+}
+
+fn tower_annihilator(tower: &Tower) -> Option<Vec<Rational>> {
+    if tower.odd.is_zero() {
+        return quad_annihilator(&tower.even);
+    }
+    let radicand = tower.radicand.as_ref()?;
+    let carried = tower
+        .odd
+        .clone()
+        .mul(tower.odd.clone())?
+        .mul(radicand.clone())?;
+    let remainder = tower
+        .even
+        .clone()
+        .mul(tower.even.clone())?
+        .add(carried.neg())?;
+    let (a0, a1, disc_a) = quad_rational_parts(&tower.even)?;
+    let (c0, c1, disc_c) = quad_rational_parts(&remainder)?;
+    let disc = match (disc_a, disc_c) {
+        (Some(left), Some(right)) if left == right => left,
+        (Some(disc), None) | (None, Some(disc)) => disc,
+        (None, None) => Rational::zero(),
+        _ => return None,
+    };
+    let four = Rational::new(4);
+    Some(vec![
+        &c0 * &c0 - &disc * &c1 * &c1,
+        -&four * &a0 * &c0 + &four * &disc * &a1 * &c1,
+        &four * &a0 * &a0 + &Rational::new(2) * &c0 - &four * &disc * &a1 * &a1,
+        -&four * &a0,
+        Rational::one(),
+    ])
+}
+
 impl Computable {
     pub(crate) fn quadratic_tower_sign(&self) -> Option<RealSign> {
         tower_from_computable(self)?.sign()
+    }
+
+    pub(crate) fn quadratic_tower_positive_rational_branch(&self) -> Option<Rational> {
+        positive_rational_branch(&tower_from_computable(self)?)
+    }
+
+    pub(crate) fn quadratic_tower_annihilating_polynomial(&self) -> Option<Vec<Rational>> {
+        tower_annihilator(&tower_from_computable(self)?)
     }
 
     pub(crate) fn sign_polynomial_at_rational_square_root(
