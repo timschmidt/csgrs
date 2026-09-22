@@ -22,6 +22,7 @@
 //! algebraic wrapper when the exact root already lives in the scalar tower.
 
 use std::cmp::Ordering;
+use std::ops::Neg;
 use std::sync::Arc;
 use std::sync::{Mutex, OnceLock};
 
@@ -2321,6 +2322,18 @@ fn polynomial_sign_by_algebraic_replay(
         }
         BezierParameter2::Algebraic(parameter) => parameter,
     };
+    // A rational square root keeps its nested quadratic coefficients in the
+    // scalar tower. That decides exact cancellations before a new Sturm
+    // sequence treats an expanded zero as an undecided coefficient sign.
+    if let Some(sign) = rational_square_root_polynomial_sign(coefficients, algebraic) {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-parameter-sign",
+            "rational-square-root-tower",
+        );
+        return Ok(Classification::Decided(sign));
+    }
     // The parameter already owns a singleton certificate. Sign its image
     // through Hypersolve before isolating the roots of a new filter: nearby
     // filter roots need not force refinement of this selected parameter.
@@ -2404,6 +2417,53 @@ fn polynomial_sign_by_algebraic_replay(
             return Ok(Classification::Uncertain(reason));
         }
     }
+}
+
+fn rational_square_root_polynomial_sign(
+    coefficients: &[Real],
+    algebraic: &BezierAlgebraicParameter2,
+) -> Option<RealSign> {
+    let [constant, linear, leading] = algebraic.polynomial().coefficients() else {
+        return None;
+    };
+    let linear = linear.exact_rational()?;
+    if linear.sign() != num::bigint::Sign::NoSign {
+        return None;
+    }
+    let constant = constant.exact_rational()?;
+    let leading = leading.exact_rational()?;
+    if leading.sign() == num::bigint::Sign::NoSign {
+        return None;
+    }
+    let square = constant.neg() * leading.inverse().ok()?;
+    if square.sign() == num::bigint::Sign::Minus {
+        return None;
+    }
+    let positive = rational_square_root_is_positive(algebraic.interval())?;
+    Real::sign_polynomial_at_rational_square_root(coefficients, &square, positive)
+}
+
+fn rational_square_root_is_positive(interval: &BezierParameterInterval) -> Option<bool> {
+    match (
+        endpoint_real_sign(interval.start())?,
+        endpoint_real_sign(interval.end())?,
+    ) {
+        (RealSign::Positive | RealSign::Zero, RealSign::Positive)
+        | (RealSign::Zero, RealSign::Zero) => Some(true),
+        (RealSign::Negative, RealSign::Negative | RealSign::Zero) => Some(false),
+        _ => None,
+    }
+}
+
+fn endpoint_real_sign(value: &Real) -> Option<RealSign> {
+    if let Some(rational) = value.exact_rational() {
+        return Some(match rational.sign() {
+            num::bigint::Sign::Minus => RealSign::Negative,
+            num::bigint::Sign::NoSign => RealSign::Zero,
+            num::bigint::Sign::Plus => RealSign::Positive,
+        });
+    }
+    value.structural_facts().sign
 }
 
 fn strict_polynomial_sign_on_refined_parameter_interval(
