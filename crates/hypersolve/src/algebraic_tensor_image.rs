@@ -297,13 +297,12 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
     projection
 }
 
-/// Reduces a selected root to an exact rational or pure-quadratic point when a
-/// bounded rational proposal is proved by exact polynomial divisibility.
+/// Retains an exact scalar witness for a selected linear or quadratic root,
+/// or an exactly proved low-degree factor of a higher-degree polynomial.
 ///
-/// This is an explicit recursive-frame optimization, not a topology
-/// predicate. Approximation only proposes `q`; exact division proves the
-/// source eliminant contains the factor, and STRICT validation proves the
-/// existing selected interval isolates one root of that factor.
+/// Low-degree roots come directly from the coefficients, independent of the
+/// isolating interval's width. For higher degrees, approximation only proposes
+/// a rational factor; exact division and STRICT interval validation prove it.
 pub fn compact_algebraic_root_low_degree_witness(
     root: &AlgebraicRootRepresentation,
 ) -> Option<AlgebraicRootRepresentation> {
@@ -313,22 +312,33 @@ pub fn compact_algebraic_root_low_degree_witness(
     {
         return None;
     }
+    let direct = (|| -> Option<Vec<Real>> {
+        match root.polynomial_coefficients.as_slice() {
+            [constant, linear] => Some(vec![(-constant / linear).ok()?]),
+            [constant, linear, quadratic] => {
+                let center = (-linear / (Real::from(2) * quadratic)).ok()?;
+                let radius = (&center * &center - (constant / quadratic).ok()?)
+                    .sqrt()
+                    .ok()?;
+                Some(vec![&center - &radius, center + radius])
+            }
+            _ => None,
+        }
+    })();
+    if let Some(candidates) = direct {
+        return compact_selected_root_from_candidates(
+            root,
+            &root.polynomial_coefficients,
+            candidates,
+        );
+    }
     if let Some(witness) = exact_bounded_denominator_root_in_interval(
         &root.polynomial_coefficients,
         &root.interval,
         64,
     ) {
-        let mut compact = root.clone();
-        compact.polynomial_coefficients = vec![-witness.clone(), Real::one()];
-        compact.interval = IsolatedRootInterval {
-            lower: witness.clone(),
-            upper: witness.clone(),
-            exact_root: Some(witness),
-            distinct_root_count: 1,
-        };
-        compact.validation =
-            validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT);
-        if compact.is_valid() {
+        let factor = [-witness.clone(), Real::one()];
+        if let Some(compact) = compact_selected_root_from_candidates(root, &factor, [witness]) {
             return Some(compact);
         }
     }
@@ -350,36 +360,59 @@ pub fn compact_algebraic_root_low_degree_witness(
             continue;
         }
         let positive = (-factor[0].clone()).sqrt().ok()?;
-        let inside = |candidate: &Real| {
-            matches!(
-                compare_reals(&root.interval.lower, candidate, PredicatePolicy::STRICT,).value(),
-                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-            ) && matches!(
-                compare_reals(candidate, &root.interval.upper, PredicatePolicy::STRICT,).value(),
-                Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-            )
-        };
-        let negative = -positive.clone();
-        let witness = match (inside(&negative), inside(&positive)) {
-            (true, false) => negative,
-            (false, true) => positive,
-            (false, false) | (true, true) => continue,
-        };
-        let mut compact = root.clone();
-        compact.polynomial_coefficients = factor;
-        compact.interval = IsolatedRootInterval {
-            lower: witness.clone(),
-            upper: witness.clone(),
-            exact_root: Some(witness),
-            distinct_root_count: 1,
-        };
-        compact.validation =
-            validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT);
-        if compact.is_valid() {
+        if let Some(compact) =
+            compact_selected_root_from_candidates(root, &factor, [-positive.clone(), positive])
+        {
             return Some(compact);
         }
     }
     None
+}
+
+/// The caller supplies either the original polynomial or an exactly proved
+/// factor. Exactly one distinct candidate must lie in the selected interval;
+/// an existing point witness supplies its effective singleton interval.
+/// STRICT point validation then proves the published polynomial identity.
+fn compact_selected_root_from_candidates(
+    source: &AlgebraicRootRepresentation,
+    polynomial: &[Real],
+    candidates: impl IntoIterator<Item = Real>,
+) -> Option<AlgebraicRootRepresentation> {
+    let lower = source
+        .exact_point_witness()
+        .unwrap_or(&source.interval.lower);
+    let upper = source
+        .exact_point_witness()
+        .unwrap_or(&source.interval.upper);
+    let mut selected = None;
+    for witness in candidates {
+        if compare_reals(lower, &witness, PredicatePolicy::STRICT).value()?
+            == std::cmp::Ordering::Greater
+            || compare_reals(&witness, upper, PredicatePolicy::STRICT).value()?
+                == std::cmp::Ordering::Greater
+        {
+            continue;
+        }
+        if let Some(previous) = &selected {
+            if compare_reals(previous, &witness, PredicatePolicy::STRICT).value()?
+                != std::cmp::Ordering::Equal
+            {
+                return None;
+            }
+        }
+        selected = Some(witness);
+    }
+    let witness = selected?;
+    let mut compact = source.clone();
+    compact.polynomial_coefficients = polynomial.to_vec();
+    compact.interval = IsolatedRootInterval {
+        lower: witness.clone(),
+        upper: witness.clone(),
+        exact_root: Some(witness),
+        distinct_root_count: 1,
+    };
+    compact.validation = validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT);
+    compact.is_valid().then_some(compact)
 }
 
 fn exact_polynomial_divides(polynomial: &[Real], factor: &[Real]) -> bool {
@@ -1021,6 +1054,162 @@ mod tests {
             ),
             None,
         );
+    }
+
+    #[test]
+    fn selected_low_degree_witness_does_not_depend_on_interval_precision() {
+        for denominator in [11, 13, 17, 1009] {
+            let square = (Real::one() / real(denominator)).unwrap();
+            let radius = square.clone().sqrt().unwrap();
+            for center in [real(0), real(2)] {
+                for gauge in [real(-3), Real::one()] {
+                    for positive in [false, true] {
+                        let expected = if positive {
+                            &center + &radius
+                        } else {
+                            &center - &radius
+                        };
+                        let epsilon = (Real::one() / real(1024)).unwrap();
+                        for (lower, upper) in [
+                            if positive {
+                                (center.clone(), &center + Real::one())
+                            } else {
+                                (&center - Real::one(), center.clone())
+                            },
+                            (&expected - &epsilon, &expected + &epsilon),
+                        ] {
+                            let root = AlgebraicRootRepresentation {
+                                constraint_index: 7,
+                                symbol: SymbolId(19),
+                                interval_index: usize::from(positive),
+                                polynomial_coefficients: vec![
+                                    &gauge * (&center * &center - &square),
+                                    real(-2) * &gauge * &center,
+                                    gauge.clone(),
+                                ],
+                                interval: IsolatedRootInterval {
+                                    lower,
+                                    upper,
+                                    exact_root: None,
+                                    distinct_root_count: 1,
+                                },
+                                validation: AlgebraicRootValidationReport {
+                                    status: AlgebraicRootValidationStatus::Valid,
+                                    message: None,
+                                },
+                            };
+                            let compact = compact_algebraic_root_low_degree_witness(&root).expect(
+                                "the original quadratic supplies its exact selected witness",
+                            );
+                            assert_eq!(compact.exact_point_witness(), Some(&expected));
+                            assert_eq!(
+                                compact.polynomial_coefficients,
+                                root.polynomial_coefficients
+                            );
+                            assert_eq!(compact.constraint_index, root.constraint_index);
+                            assert_eq!(compact.symbol, root.symbol);
+                            assert_eq!(compact.interval_index, root.interval_index);
+                            assert_eq!(
+                                validate_algebraic_root_representation(
+                                    &compact,
+                                    PredicatePolicy::STRICT
+                                )
+                                .status,
+                                AlgebraicRootValidationStatus::Valid
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_low_degree_witness_accepts_exact_nonrational_coefficients() {
+        let sqrt_two = real(2).sqrt().unwrap();
+        for (polynomial, expected, lower, upper) in [
+            (
+                vec![-Real::one(), real(1009)],
+                (Real::one() / real(1009)).unwrap(),
+                real(0),
+                real(1),
+            ),
+            (
+                vec![-sqrt_two.clone(), real(3)],
+                (&sqrt_two / real(3)).unwrap(),
+                real(0),
+                real(1),
+            ),
+            (
+                vec![-sqrt_two.clone(), Real::zero(), Real::one()],
+                sqrt_two.sqrt().unwrap(),
+                real(1),
+                real(2),
+            ),
+        ] {
+            let root = AlgebraicRootRepresentation {
+                constraint_index: 3,
+                symbol: SymbolId(23),
+                interval_index: 0,
+                polynomial_coefficients: polynomial,
+                interval: IsolatedRootInterval {
+                    lower,
+                    upper,
+                    exact_root: None,
+                    distinct_root_count: 1,
+                },
+                validation: AlgebraicRootValidationReport {
+                    status: AlgebraicRootValidationStatus::Valid,
+                    message: None,
+                },
+            };
+            let compact = compact_algebraic_root_low_degree_witness(&root)
+                .expect("an exact scalar coefficient need not have a rational payload");
+            assert_eq!(compact.exact_point_witness(), Some(&expected));
+            assert_eq!(
+                validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT).status,
+                AlgebraicRootValidationStatus::Valid
+            );
+        }
+        let mut ambiguous = square_root(2);
+        ambiguous.interval.lower = real(-2);
+        ambiguous.interval.upper = real(2);
+        assert!(
+            compact_algebraic_root_low_degree_witness(&ambiguous).is_none(),
+            "an unvalidated two-root interval cannot select either sign"
+        );
+        for witness in [real(2).sqrt().unwrap(), -real(2).sqrt().unwrap()] {
+            ambiguous.interval.exact_root = Some(witness.clone());
+            let compact = compact_algebraic_root_low_degree_witness(&ambiguous)
+                .expect("an existing point witness retains its selected branch");
+            assert_eq!(compact.exact_point_witness(), Some(&witness));
+        }
+    }
+
+    #[test]
+    fn selected_quadratic_witness_preserves_repeated_and_endpoint_roots() {
+        for (polynomial, expected, lower, upper) in [
+            (vec![real(4), real(-4), real(1)], real(2), real(1), real(3)),
+            (vec![real(4), real(-4), real(1)], real(2), real(2), real(2)),
+            (vec![real(0), real(-2), real(1)], real(0), real(0), real(1)),
+            (vec![real(0), real(-2), real(1)], real(2), real(1), real(2)),
+        ] {
+            let mut root = exact_root(2);
+            root.polynomial_coefficients = polynomial;
+            root.interval = IsolatedRootInterval {
+                lower,
+                upper,
+                exact_root: None,
+                distinct_root_count: 1,
+            };
+            let compact = compact_algebraic_root_low_degree_witness(&root)
+                .expect("a single distinct root may be repeated or on an interval endpoint");
+            assert_eq!(compact.exact_point_witness(), Some(&expected));
+            assert_eq!(
+                compact.polynomial_coefficients,
+                root.polynomial_coefficients
+            );
+        }
     }
 
     #[test]
