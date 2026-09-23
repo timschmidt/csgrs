@@ -1,5 +1,5 @@
 mod bivariate;
-pub(crate) use bivariate::regular_rational_fiber_sturm_rows;
+pub(crate) use bivariate::rational_fiber_subresultants;
 
 use hyperreal::{Rational, Real};
 use num::{BigInt, Integer, One, Signed, Zero};
