@@ -460,7 +460,7 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
         .unwrap()
         .into_value();
     assert_eq!(boundary.len(), 3);
-    assert_eq!(boundary.fragments().len(), 3);
+    assert_eq!(boundary.len(), 3);
 }
 
 #[test]

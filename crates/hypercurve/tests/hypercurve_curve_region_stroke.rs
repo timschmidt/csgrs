@@ -1,10 +1,10 @@
+use hypercurve::CurveFamily2;
 mod support;
 
 use hypercurve::{
-    BezierSplitFragment2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveCertainty, CurveContext, CurveError, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2,
-    OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
-    RegionPointLocation,
+    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveCertainty, CurveContext,
+    CurveError, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, OffsetCap, OffsetCornerStyle2,
+    Point2, QuadraticBezier2, RationalBezier2, Real, RegionPointLocation,
 };
 
 fn s(value: i32) -> Real {
@@ -466,9 +466,9 @@ fn nonlinear_path_stroke_retains_exact_parallels_under_both_policies() {
     assert_eq!(strict.value, approximate.value);
     assert!(strict.value.boundary_loops().iter().any(|loop_| {
         loop_
-            .fragments()
+            .curves()
             .iter()
-            .any(|fragment| matches!(fragment, BezierSplitFragment2::AnalyticParallel(_)))
+            .any(|fragment| fragment.family() == CurveFamily2::AnalyticParallel)
     }));
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert!(matches!(
@@ -676,9 +676,9 @@ fn rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies() {
     assert_eq!(strict.value, approximate.value);
     assert!(strict.value.boundary_loops().iter().any(|loop_| {
         loop_
-            .fragments()
+            .curves()
             .iter()
-            .any(|fragment| matches!(fragment, BezierSplitFragment2::AnalyticParallel(_)))
+            .any(|fragment| fragment.family() == CurveFamily2::AnalyticParallel)
     }));
 }
 

@@ -113,7 +113,7 @@ fn assert_region_topology(region: &CurveRegion2, operation: &str) {
     };
     assert_eq!(material_count + hole_count, region.boundary_loops().len());
     for boundary in region.boundary_loops() {
-        assert!(!boundary.fragments().is_empty());
+        assert!(!boundary.is_empty());
     }
 }
 

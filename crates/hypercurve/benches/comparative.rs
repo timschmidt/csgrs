@@ -1,3 +1,4 @@
+use hypercurve::CurveFamily2;
 #[path = "common/pathological.rs"]
 mod pathological_fixture;
 
@@ -15,8 +16,7 @@ use curvo::prelude::{
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSplitFragment2, CurveBoundaryInteriorSide2, CurvePoint2,
-    Similarity2,
+    BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2, Similarity2,
 };
 use hypercurve::{
     BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
@@ -244,7 +244,7 @@ fn hypercurve_boolean_result_size(
     result
         .boundary_loops()
         .iter()
-        .map(|boundary| boundary.fragments().len())
+        .map(|boundary| boundary.len())
         .sum()
 }
 
@@ -537,7 +537,7 @@ fn benchmark_contour_offset(runner: &Runner) {
             .value
             .boundary_loops()
             .iter()
-            .map(|boundary| boundary.fragments().len())
+            .map(|boundary| boundary.len())
             .sum::<usize>()
     });
     runner.measure(name, "cavalier_contours", || {
@@ -680,7 +680,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .into_value()
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum()
         });
         runner.measure(offset_name, "hypercurve_exact_miter", || {
@@ -690,7 +690,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 .into_value()
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum()
         });
         runner.measure(offset_name, "cavalier_f64", || {
@@ -715,7 +715,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             region
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum::<usize>()
         };
         let expansion_complete = rounded.offset(expansion.clone(), &round, &policy).is_ok();
@@ -804,7 +804,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             region
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum::<usize>()
         };
 
@@ -880,7 +880,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             region
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum::<usize>()
         };
         let evidence_complete = first
@@ -1019,13 +1019,12 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         let selected_endpoint_count = exact_intersection
             .boundary_loops()
             .iter()
-            .flat_map(|boundary| boundary.fragments())
-            .filter_map(|fragment| match fragment {
-                BezierSplitFragment2::AlgebraicChord(chord) => Some(
-                    usize::from((chord.start()).coordinates().is_none())
-                        + usize::from((chord.end()).coordinates().is_none()),
-                ),
-                _ => None,
+            .flat_map(|boundary| boundary.curves())
+            .filter_map(|curve| {
+                (curve.family() == CurveFamily2::Line).then_some(
+                    usize::from(curve.start().coordinates().is_none())
+                        + usize::from(curve.end().coordinates().is_none()),
+                )
             })
             .sum::<usize>();
         assert!(selected_endpoint_count >= 2);
@@ -1045,7 +1044,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
             region
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum::<usize>()
         };
         let transform_complete = transformed_region().is_ok();
@@ -1209,7 +1208,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                 ]
                 .into_iter()
                 .flat_map(CurveRegion2::boundary_loops)
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum(),
                 Err(_) => 0,
             },
@@ -1293,7 +1292,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                     ]
                     .into_iter()
                     .flat_map(CurveRegion2::boundary_loops)
-                    .map(|boundary| boundary.fragments().len())
+                    .map(|boundary| boundary.len())
                     .sum(),
                     Err(_) => 0,
                 },
@@ -1420,7 +1419,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                     ]
                     .into_iter()
                     .flat_map(CurveRegion2::boundary_loops)
-                    .map(|boundary| boundary.fragments().len())
+                    .map(|boundary| boundary.len())
                     .sum(),
                     Err(_) => 0,
                 },
@@ -1513,7 +1512,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                     ]
                     .into_iter()
                     .flat_map(CurveRegion2::boundary_loops)
-                    .map(|boundary| boundary.fragments().len())
+                    .map(|boundary| boundary.len())
                     .sum()
                 });
             }
@@ -1606,7 +1605,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                                 .value
                                 .boundary_loops()
                                 .iter()
-                                .map(|boundary| boundary.fragments().len())
+                                .map(|boundary| boundary.len())
                                 .sum()
                         })
                 },
@@ -1627,7 +1626,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
                     ]
                     .into_iter()
                     .flat_map(CurveRegion2::boundary_loops)
-                    .map(|boundary| boundary.fragments().len())
+                    .map(|boundary| boundary.len())
                     .sum(),
                     Err(_) => 0,
                 },
@@ -1694,7 +1693,7 @@ fn benchmark_orthogonal_neck_split(runner: &Runner) {
             .into_value()
             .boundary_loops()
             .iter()
-            .map(|boundary| boundary.fragments().len())
+            .map(|boundary| boundary.len())
             .sum()
     });
     runner.measure(name, "cavalier_contours", || {

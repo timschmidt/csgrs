@@ -81,17 +81,15 @@ pub struct BezierBoundaryLoop2 {
     fragments: Vec<BezierSubcurve2>,
 }
 
-/// A closed retained Bezier/conic boundary loop.
+/// A closed boundary of exact curves, with retained endpoint connectivity.
 ///
-/// This carrier may contain retained analytic and algebraic fragments,
-/// including endpoint images, chords, and cusp joins, in addition to native
-/// [`BezierBoundaryLoop2`] fragments.
-/// It is a concrete exact-object region boundary in the exactness model's sense: the algebraic
-/// pieces remain replayable construction evidence, not sampled coordinates.
+/// [`Self::curves`] exposes authored and generated curves through the same
+/// interface while preserving their selected parameters and construction evidence.
 #[derive(Clone, Debug)]
 pub struct CurveRegionBoundaryLoop2 {
     fragments: Vec<BezierSplitFragment2>,
     connectivity_policy: Option<CurveContext>,
+    curves: OnceLock<Arc<[Curve2]>>,
     rational_evaluators: OnceLock<CurveResult<Vec<Option<RationalBezier2>>>>,
     arrangement_sources: Option<Vec<CurveRegionFragmentSource2>>,
 }
@@ -842,6 +840,7 @@ impl From<BezierBoundaryLoop2> for CurveRegionBoundaryLoop2 {
                 .collect(),
             arrangement_sources: None,
             connectivity_policy: None,
+            curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
         }
     }
@@ -1133,6 +1132,7 @@ impl CurveRegionBoundaryLoop2 {
             fragments,
             arrangement_sources: None,
             connectivity_policy: Some(policy.retained_object_policy()),
+            curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
         })
     }
@@ -1158,6 +1158,7 @@ impl CurveRegionBoundaryLoop2 {
             fragments,
             arrangement_sources: Some(arrangement_sources),
             connectivity_policy: Some(policy.retained_object_policy()),
+            curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
         })
     }
@@ -1194,6 +1195,7 @@ impl CurveRegionBoundaryLoop2 {
             fragments,
             arrangement_sources: Some(arrangement_sources),
             connectivity_policy: Some(policy.retained_object_policy()),
+            curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
         }
     }
@@ -1232,18 +1234,31 @@ impl CurveRegionBoundaryLoop2 {
             fragments,
             arrangement_sources,
             connectivity_policy: Some(policy.retained_object_policy()),
+            curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
         })
     }
 
-    /// Returns retained split fragments in loop order.
-    pub fn fragments(&self) -> &[BezierSplitFragment2] {
-        &self.fragments
+    /// Returns each exact boundary curve in traversal order.
+    ///
+    /// Analytic parallels, algebraic chords, selected circles, and selected-fiber
+    /// cuts are [`Curve2`] values. Later Boolean, offset, fillet, and chamfer
+    /// steps accept those values directly. [`Curve2::geometry`] remains the
+    /// optional native definition.
+    ///
+    /// Repeated access borrows the same curves and their cached calculations.
+    pub fn curves(&self) -> &[Curve2] {
+        self.curves.get_or_init(|| {
+            self.fragments
+                .iter()
+                .cloned()
+                .map(Curve2::from_retained_fragment)
+                .collect()
+        })
     }
 
-    /// Consumes the loop and returns retained split fragments.
-    pub fn into_fragments(self) -> Vec<BezierSplitFragment2> {
-        self.fragments
+    pub(crate) fn fragments(&self) -> &[BezierSplitFragment2] {
+        &self.fragments
     }
 
     pub(crate) fn without_arrangement_sources(mut self) -> Self {
@@ -10732,6 +10747,7 @@ impl CurveRegion2 {
                 fragments,
                 arrangement_sources: None,
                 connectivity_policy: Some(policy.retained_object_policy()),
+                curves: OnceLock::new(),
                 rational_evaluators: OnceLock::new(),
             });
         }
@@ -12442,12 +12458,7 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<Classification<Vec<CurvePath2>>> {
         let mut paths = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary_loop in &self.data.boundary_loops {
-            let curves = boundary_loop
-                .fragments()
-                .iter()
-                .cloned()
-                .map(Curve2::from_retained_fragment)
-                .collect();
+            let curves = boundary_loop.curves().to_vec();
             let retained_policy = boundary_loop
                 .connectivity_policy
                 .or(self.data.regularized_filled_left_policy)
@@ -30388,6 +30399,36 @@ mod tests {
                             assert!(chord_adjacencies >= 1);
                         });
                     }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn boundary_curve_views_share_retained_domains_and_endpoint_evidence() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let region =
+                nonrepresented_chord_rational_arc_corner_region(&policy, false, false, false);
+            let paths = region.boundary_paths(&policy).unwrap();
+            assert_eq!(paths.certainty, CurveCertainty::Certified);
+            let Classification::Decided(paths) = paths.value else {
+                panic!("retained boundary curves must remain exact connected paths");
+            };
+            assert_eq!(paths.len(), region.boundary_loops().len());
+            for (boundary, path) in region.boundary_loops().iter().zip(&paths) {
+                let curves = boundary.curves();
+                assert!(curves.iter().any(|curve| curve.geometry().is_none()));
+                assert!(std::ptr::eq(curves, boundary.curves()));
+                let cloned_boundary = boundary.clone();
+                assert!(std::ptr::eq(curves, cloned_boundary.curves()));
+                assert_eq!(curves.len(), path.curves().len());
+                for (curve, replay) in curves.iter().zip(path.curves()) {
+                    assert!(std::ptr::eq(
+                        curve.parameter_domain(),
+                        replay.parameter_domain()
+                    ));
+                    assert_eq!(curve.start(), replay.start());
+                    assert_eq!(curve.end(), replay.end());
                 }
             }
         }

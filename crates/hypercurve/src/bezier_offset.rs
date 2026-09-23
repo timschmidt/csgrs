@@ -11222,27 +11222,6 @@ fn mapped_point_parameters_through_rational_overlaps(
     Ok(Classification::Decided(Some(mapped)))
 }
 
-/// Returns an exact rational carrier with the analytic parallel's authored
-/// parameter when one is available. Circular recognition precedes the general
-/// PH test because it is both cheaper and covers non-PH rational conics.
-/// Failure to materialize is not a geometric uncertainty: callers retain the
-/// analytic carrier and continue through its authoritative local relation.
-fn exact_rational_parallel_point_carrier(
-    parallel: &BezierParallel2,
-    policy: &CurveContext,
-) -> CurveResult<Option<RationalBezier2>> {
-    let strict = policy.strict_counterpart();
-    if let Classification::Decided(Some(curve)) =
-        parallel.exact_circular_parallel_component(&strict)?
-    {
-        return Ok(Some(curve));
-    }
-    Ok(match parallel.exact_rational_parallel_component(&strict)? {
-        Classification::Decided(curve) => curve,
-        Classification::Uncertain(_) => None,
-    })
-}
-
 /// Encloses one exact analytic-parallel point without adjoining its normalized
 /// tangent field to the retained source parameter.
 fn analytic_parallel_point_bounds_refined(
@@ -145174,9 +145153,12 @@ mod conversion_tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let (_, parallel, _) = general_analytic_circle_overlap(&policy);
-            let carrier = exact_rational_parallel_point_carrier(&parallel, &policy)
+            let Classification::Decided(Some(carrier)) = parallel
+                .exact_circular_parallel_component(&policy.strict_counterpart())
                 .unwrap()
-                .expect("the analytic circle parallel has an exact rational point carrier");
+            else {
+                panic!("the analytic circle parallel has an exact rational point carrier");
+            };
             let reversed_carrier = carrier.reversed();
             let reversed_parallel = parallel.reversed();
             let Classification::Decided(parallel_rational_evidence) =

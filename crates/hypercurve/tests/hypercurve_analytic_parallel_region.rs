@@ -1,11 +1,10 @@
 use hypercurve::{
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierSplitFragment2, BezierSubcurve2, Classification,
-    CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext,
-    CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
-    FiniteProjectionOptions, LineSeg2, LineSide, OffsetCornerStyle2, Point2, QuadraticBezier2,
-    Real, RegionPointLocation,
+    BezierRetainedEndpointEnvelope2, Classification, CubicBezier2, Curve2,
+    CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveFamily2, CurveParameterRange2,
+    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2,
+    LineSide, OffsetCornerStyle2, Point2, QuadraticBezier2, Real, RegionPointLocation,
 };
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
@@ -108,6 +107,33 @@ fn analytic_square(min_x: i64, max_x: i64, policy: &CurveContext) -> CurveRegion
     )
     .unwrap()
     .into_value()
+}
+
+#[test]
+fn boundary_curves_reenter_boolean_without_native_conversion() {
+    let policy = CurveContext::STRICT;
+    let region = analytic_square(0, 4, &policy);
+    let curves = region.boundary_loops()[0].curves();
+    assert!(curves.iter().any(|curve| {
+        curve.family() == CurveFamily2::AnalyticParallel && curve.geometry().is_none()
+    }));
+    let path = CurvePath2::try_new_with_policy(curves.to_vec(), &policy)
+        .expect("generated analytic boundary curves remain one exact path")
+        .into_value();
+    let replay = CurveRegion2::try_from_boundary_paths(&[path], &policy)
+        .expect("the exact boundary path re-enters region construction")
+        .into_value();
+    let disjoint = analytic_square(10, 14, &policy);
+    let batch = replay
+        .boolean_regions(&disjoint, &policy)
+        .expect("an analytic boundary re-enters Boolean operations");
+    assert_eq!(batch.certainty, CurveCertainty::Certified);
+    assert!(batch.value.intersection().is_empty());
+    assert_eq!(batch.value.union().boundary_loops().len(), 2);
+    assert_eq!(
+        replay.classify_point(&point(2, 2), &policy).unwrap().value,
+        Classification::Decided(RegionPointLocation::Inside)
+    );
 }
 
 fn quadratic_line(start: Point2, end: Point2) -> Curve2 {
@@ -248,12 +274,12 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
                 };
                 assert!(!candidates.is_empty());
                 for candidate in candidates {
-                    assert!(candidate.boundary_loops()[0].fragments().iter().any(
-                        |fragment| matches!(
-                            fragment,
-                            BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                        )
-                    ));
+                    assert!(
+                        candidate.boundary_loops()[0]
+                            .curves()
+                            .iter()
+                            .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+                    );
                     let disjoint = analytic_square(5, 6, &policy);
                     let replay = candidate
                         .boolean_regions(&disjoint, &policy)
@@ -507,11 +533,9 @@ fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
                 };
                 assert!(candidates.iter().all(|candidate| {
                     candidate.boundary_loops()[0]
-                        .fragments()
+                        .curves()
                         .iter()
-                        .any(|fragment| {
-                            matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
-                        })
+                        .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
                 }));
             }
         }
@@ -885,32 +909,25 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
                     panic!("the analytic-parallel corner must have one finite chamfer: {other:?}")
                 }
             };
-            let fragments = region.boundary_loops()[0].fragments();
+            let fragments = region.boundary_loops()[0].curves();
             assert_eq!(fragments.len(), 5);
             assert_eq!(
                 fragments
                     .iter()
-                    .filter(|fragment| {
-                        matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
-                    })
+                    .filter(|fragment| { fragment.family() == CurveFamily2::AnalyticParallel })
                     .count(),
                 1
             );
             assert_eq!(
                 fragments
                     .iter()
-                    .filter(|fragment| {
-                        matches!(fragment, BezierSplitFragment2::AlgebraicChord(_))
-                    })
+                    .filter(|fragment| { fragment.family() == CurveFamily2::Line })
                     .count(),
                 1
             );
             let chord = fragments
                 .iter()
-                .find_map(|fragment| match fragment {
-                    BezierSplitFragment2::AlgebraicChord(chord) => Some(chord),
-                    _ => None,
-                })
+                .find(|fragment| fragment.family() == CurveFamily2::Line)
                 .expect("the chamfer is retained as one authoritative exact chord");
             assert_eq!(
                 [chord.start(), chord.end()]
@@ -1050,23 +1067,19 @@ fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
             let CurveCornerSolutions2::Unique(second) = second.value else {
                 panic!("the algebraic-endpoint analytic chamfer must be unique");
             };
-            let fragments = second.boundary_loops()[0].fragments();
+            let fragments = second.boundary_loops()[0].curves();
             assert_eq!(fragments.len(), 6);
             assert_eq!(
                 fragments
                     .iter()
-                    .filter(|fragment| {
-                        matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
-                    })
+                    .filter(|fragment| { fragment.family() == CurveFamily2::AnalyticParallel })
                     .count(),
                 1
             );
             assert_eq!(
                 fragments
                     .iter()
-                    .filter(|fragment| {
-                        matches!(fragment, BezierSplitFragment2::AlgebraicChord(_))
-                    })
+                    .filter(|fragment| { fragment.family() == CurveFamily2::Line })
                     .count(),
                 2
             );
@@ -1142,21 +1155,9 @@ fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
             .iter()
             .map(|boundary| {
                 boundary
-                    .fragments()
+                    .curves()
                     .iter()
-                    .map(|fragment| match fragment {
-                        BezierSplitFragment2::Materialized { curve, .. } => match curve {
-                            BezierSubcurve2::Quadratic(_) => 0_u8,
-                            BezierSubcurve2::Cubic(_) => 1,
-                            BezierSubcurve2::RationalQuadratic(_) => 2,
-                            BezierSubcurve2::Rational(_) => 3,
-                        },
-                        BezierSplitFragment2::RetainedBezier { .. } => 4,
-                        BezierSplitFragment2::AnalyticParallel(_) => 5,
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => 6,
-                        BezierSplitFragment2::AlgebraicChord(_) => 8,
-                        BezierSplitFragment2::SelectedFiber(_) => 9,
-                    })
+                    .map(Curve2::family)
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();

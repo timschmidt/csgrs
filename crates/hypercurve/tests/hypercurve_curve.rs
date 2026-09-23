@@ -1,11 +1,10 @@
 mod support;
 
 use hypercurve::{
-    BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveContext, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveError,
-    CurveFamily2, CurveGeometry2, CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError,
-    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
-    RegionPointLocation, UncertaintyReason,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveCornerMode2,
+    CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveGeometry2,
+    CurveOperation2, CurvePath2, CurveRegion2, ExactCurveError, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
 };
 use hypercurve::{ContourPointLocation, CurveCertainty};
 use hyperreal::CertifiedRealEquality;
@@ -1793,18 +1792,16 @@ fn retained_circular_conic_pairs_extend_on_native_supports() {
                 let region = CurveRegion2::try_from_boundary_paths(&[boundary_path], &policy)
                     .unwrap()
                     .into_value();
-                let fragments = region.boundary_loops()[0].fragments();
+                let fragments = region.boundary_loops()[0].curves();
                 let corner = (0..fragments.len())
                     .find(|index| {
-                        let is_rational_arc = |fragment: &BezierSplitFragment2| {
-                            matches!(
-                                fragment,
-                                BezierSplitFragment2::Materialized {
-                                    curve: BezierSubcurve2::RationalQuadratic(_)
-                                        | BezierSubcurve2::Rational(_),
-                                    ..
-                                }
-                            )
+                        let is_rational_arc = |curve: &Curve2| {
+                            curve.geometry().is_some()
+                                && matches!(
+                                    curve.family(),
+                                    CurveFamily2::RationalQuadraticBezier
+                                        | CurveFamily2::RationalBezier
+                                )
                         };
                         is_rational_arc(&fragments[(index + fragments.len() - 1) % fragments.len()])
                             && is_rational_arc(&fragments[*index])

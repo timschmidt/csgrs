@@ -1184,12 +1184,6 @@ fn circular_boolean_outputs_publish_native_boundaries_under_both_policies() {
             let (lines, arcs) = native_segment_counts(region, &policy);
             assert_eq!(lines, 0);
             assert!(arcs > 0);
-            assert!(region.boundary_loops().iter().all(|boundary| {
-                boundary
-                    .fragments()
-                    .iter()
-                    .all(|fragment| !fragment.is_retained_bezier())
-            }));
         }
 
         let first = capsule(0);
@@ -1245,12 +1239,6 @@ fn elevated_circular_boolean_outputs_publish_native_boundaries() {
             let (lines, arcs) = native_segment_counts(region, &policy);
             assert_eq!(lines, 0);
             assert!(arcs > 0);
-            assert!(region.boundary_loops().iter().all(|boundary| {
-                boundary
-                    .fragments()
-                    .iter()
-                    .all(|fragment| !fragment.is_retained_bezier())
-            }));
         }
     }
 }
@@ -1458,24 +1446,14 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
         .unwrap();
     assert_eq!(normalized.certainty, CurveCertainty::Approximate512Consumed);
     let has_certified_gap = normalized.value.boundary_loops().iter().any(|boundary| {
-        let fragments = boundary.fragments();
+        let fragments = boundary.curves();
         fragments
             .iter()
             .zip(fragments.iter().cycle().skip(1))
             .any(|(first, second)| {
-                let endpoint = |fragment: &hypercurve::BezierSplitFragment2, start| match fragment {
-                    hypercurve::BezierSplitFragment2::Materialized { curve, .. } => {
-                        Some(if start {
-                            curve.start().clone()
-                        } else {
-                            curve.end().clone()
-                        })
-                    }
-                    hypercurve::BezierSplitFragment2::AlgebraicChord(chord) => {
-                        let point = if start { chord.start() } else { chord.end() };
-                        point.coordinates().cloned()
-                    }
-                    _ => None,
+                let endpoint = |curve: &Curve2, start: bool| {
+                    let point = if start { curve.start() } else { curve.end() };
+                    point.coordinates().cloned()
                 };
                 let (Some(first), Some(second)) = (endpoint(first, false), endpoint(second, true))
                 else {

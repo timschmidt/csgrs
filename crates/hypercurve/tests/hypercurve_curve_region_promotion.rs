@@ -5,12 +5,11 @@ use hypercurve::{
     BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2,
 };
 use hypercurve::{
-    BezierFlatteningOptions, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification,
-    Contour2, CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2,
-    CurveCornerNoSolution2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveOutcome,
-    CurvePath2, CurveRegion2, CurveRegionLoopRole, ExactCurveError, FillRule,
-    FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2,
-    RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
+    BezierFlatteningOptions, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
+    CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2,
+    CurveError, CurveFamily2, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    ExactCurveError, FillRule, FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, RationalBezier2, Real, RegionPointLocation, Segment2, Similarity2,
 };
 use hyperreal::SymbolicDependencyMask;
 
@@ -20,6 +19,43 @@ fn p(x: i64, y: i64) -> Point2 {
 
 fn q(numerator: i64, denominator: i64) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
+}
+
+fn is_native(curve: &Curve2, family: CurveFamily2) -> bool {
+    curve.geometry().is_some() && curve.family() == family
+}
+
+fn represented_at(curve: &Curve2, start: bool, point: &Point2) -> bool {
+    let endpoint = if start { curve.start() } else { curve.end() };
+    endpoint.coordinates() == Some(point)
+}
+
+fn has_retained_rational_domain(curve: &Curve2) -> bool {
+    curve.family() == CurveFamily2::RationalBezier
+        && curve.geometry().is_none()
+        && curve.parameter_domain().scalar_endpoints().is_none()
+}
+
+fn is_line(curve: &Curve2) -> bool {
+    curve.family() == CurveFamily2::Line
+}
+
+fn is_circle_join(curve: &Curve2) -> bool {
+    curve.family() == CurveFamily2::CircularArc
+}
+
+fn is_analytic_parallel(curve: &Curve2) -> bool {
+    curve.family() == CurveFamily2::AnalyticParallel
+}
+
+fn is_parallel_support(previous: &Curve2, next: &Curve2) -> bool {
+    let support = |curve: &Curve2| is_line(curve) || curve.geometry().is_some();
+    (is_analytic_parallel(previous) && support(next))
+        || (support(previous) && is_analytic_parallel(next))
+}
+
+fn is_round_join(curve: &Curve2) -> bool {
+    is_native(curve, CurveFamily2::RationalQuadraticBezier) || is_circle_join(curve)
 }
 
 fn sharp_offset() -> OffsetCornerStyle2 {
@@ -710,13 +746,12 @@ fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
             region
                 .boundary_loops()
                 .iter()
-                .flat_map(|boundary| boundary.fragments())
-                .filter_map(|fragment| match fragment {
-                    BezierSplitFragment2::AlgebraicChord(chord) => Some(
-                        usize::from((chord.start()).coordinates().is_none())
-                            + usize::from((chord.end()).coordinates().is_none()),
-                    ),
-                    _ => None,
+                .flat_map(|boundary| boundary.curves())
+                .filter_map(|curve| {
+                    (curve.family() == CurveFamily2::Line).then_some(
+                        usize::from(curve.start().coordinates().is_none())
+                            + usize::from(curve.end().coordinates().is_none()),
+                    )
                 })
                 .sum::<usize>()
         };
@@ -1017,9 +1052,9 @@ fn repeated_region_offsets_compose_retained_exact_parallels_under_both_policies(
         .into_value();
     assert!(
         strict_first.boundary_loops()[0]
-            .fragments()
+            .curves()
             .iter()
-            .all(|fragment| matches!(fragment, BezierSplitFragment2::AnalyticParallel(_)))
+            .all(|fragment| fragment.family() == CurveFamily2::AnalyticParallel)
     );
     assert_eq!(
         decided(strict_first.loop_roles(&CurveContext::STRICT).unwrap()),
@@ -1058,11 +1093,11 @@ fn repeated_region_offsets_compose_retained_exact_parallels_under_both_policies(
         .unwrap();
     assert_eq!(approximate_repeated.certainty, CurveCertainty::Certified);
     assert_eq!(approximate_repeated.value, strict_direct.value);
-    for fragment in approximate_repeated.value.boundary_loops()[0].fragments() {
-        let BezierSplitFragment2::AnalyticParallel(fragment) = fragment else {
-            panic!("the composed non-PH quadratic parallel must stay analytic");
-        };
-        assert_eq!(fragment.parallel().distance(), &-q(3, 10));
+    for curve in approximate_repeated.value.boundary_loops()[0].curves() {
+        assert!(
+            is_analytic_parallel(&curve),
+            "the composed non-PH quadratic parallel must stay analytic"
+        );
     }
 }
 
@@ -1956,12 +1991,14 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
             let CurveCornerSolutions2::Unique(second) = second.into_value() else {
                 panic!("the materialized/algebraic-chord corner must have one chamfer");
             };
-            assert_eq!(second.boundary_loops()[0].fragments().len(), 6);
+            assert_eq!(second.boundary_loops()[0].len(), 6);
             assert_eq!(
                 second.boundary_loops()[0]
-                    .fragments()
+                    .curves()
                     .iter()
-                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(chord) if chord.exact_line().is_none()))
+                    .filter(|fragment| fragment.family() == CurveFamily2::Line
+                        && (fragment.start().coordinates().is_none()
+                            || fragment.end().coordinates().is_none()))
                     .count(),
                 2
             );
@@ -1969,8 +2006,12 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
             // The inserted chord and retained source chord now meet directly.
             // Both have independently selected endpoints and neither requires a
             // represented unit tangent.
-            let fragments = second.boundary_loops()[loop_index].fragments();
-            let general_chord = |fragment: &BezierSplitFragment2| matches!(fragment, BezierSplitFragment2::AlgebraicChord(chord) if chord.exact_line().is_none());
+            let fragments = second.boundary_loops()[loop_index].curves();
+            let general_chord = |fragment: &Curve2| {
+                fragment.family() == CurveFamily2::Line
+                    && (fragment.start().coordinates().is_none()
+                        || fragment.end().coordinates().is_none())
+            };
             let corner = (0..fragments.len())
                 .find(|index| {
                     general_chord(&fragments[*index])
@@ -1993,12 +2034,14 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
             let CurveCornerSolutions2::Unique(third) = third.into_value() else {
                 panic!("the algebraic-chord/algebraic-chord corner must have one chamfer");
             };
-            assert_eq!(third.boundary_loops()[0].fragments().len(), 7);
+            assert_eq!(third.boundary_loops()[0].len(), 7);
             assert_eq!(
                 third.boundary_loops()[0]
-                    .fragments()
+                    .curves()
                     .iter()
-                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(chord) if chord.exact_line().is_none()))
+                    .filter(|fragment| fragment.family() == CurveFamily2::Line
+                        && (fragment.start().coordinates().is_none()
+                            || fragment.end().coordinates().is_none()))
                     .count(),
                 3
             );
@@ -2148,9 +2191,9 @@ fn algebraic_chamfer_participates_in_a_disjoint_boolean_batch() {
         assert_eq!(batch.xor().boundary_loops().len(), 2);
         assert!(
             batch.difference().boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .any(|fragment| fragment.family() == CurveFamily2::Line)
         );
     }
 }
@@ -2187,9 +2230,9 @@ fn one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver() {
         assert_eq!(regularized.boundary_loops().len(), 1);
         assert!(
             regularized.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .any(|fragment| fragment.family() == CurveFamily2::Line)
         );
         assert_eq!(
             certified(regularized.classify_point(&p(-2, 1), &policy).unwrap()),
@@ -2426,9 +2469,9 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         assert_eq!(expanded.boundary_loops().len(), 1);
         assert!(
             expanded.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .any(|fragment| fragment.family() == CurveFamily2::Line)
         );
         assert_eq!(
             certified(
@@ -2496,7 +2539,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
             .offset(distance.clone(), &OffsetCornerStyle2::Bevel, &policy)
             .expect("algebraic bevel joins must remain exact");
         assert_eq!(beveled.certainty, CurveCertainty::Certified);
-        assert!(beveled.value.boundary_loops()[0].fragments().len() >= 8);
+        assert!(beveled.value.boundary_loops()[0].len() >= 8);
 
         let limited_miter = source
             .offset(
@@ -2557,12 +2600,9 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         }
         assert!(
             rounded.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                ))
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
         );
         for (point, expected) in [
             (
@@ -2601,12 +2641,9 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
         assert_eq!(expanded.certainty, CurveCertainty::Certified);
         assert!(
             expanded.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                ))
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
         );
         assert_eq!(
             certified(
@@ -2755,12 +2792,9 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
         }
         assert!(
             collapsed_round.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .all(|fragment| !matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                ))
+                .all(|fragment| fragment.family() != CurveFamily2::CircularArc)
         );
         assert_eq!(
             certified(
@@ -2894,12 +2928,9 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
         assert_eq!(rounded.certainty, CurveCertainty::Certified);
         assert!(
             rounded.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                ))
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
         );
 
         #[cfg(feature = "dispatch-trace")]
@@ -3019,9 +3050,9 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
         assert_eq!(transformed.certainty, CurveCertainty::Certified);
         assert_eq!(
             transformed.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .filter(|fragment| fragment.family() == CurveFamily2::Line)
                 .count(),
             4
         );
@@ -3042,12 +3073,9 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
         assert_eq!(transformed_round.certainty, CurveCertainty::Certified);
         assert!(
             transformed_round.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                ))
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
         );
         let transformed_boundary = Point2::new(Real::from(2) + &distance, q(13, 4));
         assert_eq!(
@@ -3070,12 +3098,9 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
         assert_eq!(rotated_round.certainty, CurveCertainty::Certified);
         assert!(
             rotated_round.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                ))
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
         );
         assert_eq!(
             certified(
@@ -3380,16 +3405,11 @@ fn cusp_chord_boolean_boundary_reoffsets_with_exact_bevels() {
             .intersection()
             .clone();
         assert!(intersection.boundary_loops().iter().any(|boundary| {
-            boundary.fragments().windows(2).any(|pair| {
+            boundary.curves().windows(2).any(|pair| {
                 matches!(
-                    (&pair[0], &pair[1]),
-                    (
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_),
-                        BezierSplitFragment2::AlgebraicChord(_)
-                    ) | (
-                        BezierSplitFragment2::AlgebraicChord(_),
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                    )
+                    (pair[0].family(), pair[1].family()),
+                    (CurveFamily2::CircularArc, CurveFamily2::Line)
+                        | (CurveFamily2::Line, CurveFamily2::CircularArc)
                 )
             })
         }));
@@ -3523,13 +3543,12 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
             .intersection()
             .boundary_loops()
             .iter()
-            .flat_map(|boundary| boundary.fragments())
-            .filter_map(|fragment| match fragment {
-                BezierSplitFragment2::AlgebraicChord(chord) => Some(
-                    usize::from((chord.start()).coordinates().is_none())
-                        + usize::from((chord.end()).coordinates().is_none()),
-                ),
-                _ => None,
+            .flat_map(|boundary| boundary.curves())
+            .filter_map(|curve| {
+                (curve.family() == CurveFamily2::Line).then_some(
+                    usize::from(curve.start().coordinates().is_none())
+                        + usize::from(curve.end().coordinates().is_none()),
+                )
             })
             .sum::<usize>();
         assert!(retained_correlated_chord_endpoints >= 2);
@@ -3656,15 +3675,15 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
         };
         for cusp_is_next in [true, false] {
             let source = rounded();
-            let fragments = source.boundary_loops()[0].fragments();
+            let fragments = source.boundary_loops()[0].curves();
             let cusp_index = fragments
                 .iter()
                 .enumerate()
                 .find_map(|(index, fragment)| {
                     (index > 0
                         && index + 1 < fragments.len()
-                        && matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)))
-                    .then_some(index)
+                        && fragment.family() == CurveFamily2::CircularArc)
+                        .then_some(index)
                 })
                 .expect("the round offset must retain a non-seam cusp fragment");
             let vertex = if cusp_is_next {
@@ -3686,17 +3705,12 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
             let CurveCornerSolutions2::Unique(first) = first.value else {
                 panic!("a retained cusp endpoint must have one interior setback cut");
             };
-            assert_eq!(
-                first.boundary_loops()[0].fragments().len(),
-                fragments.len() + 1
-            );
+            assert_eq!(first.boundary_loops()[0].len(), fragments.len() + 1);
             assert!(
                 first.boundary_loops()[0]
-                    .fragments()
+                    .curves()
                     .iter()
-                    .any(|fragment| {
-                        matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
-                    })
+                    .any(|fragment| { fragment.family() == CurveFamily2::CircularArc })
             );
 
             let extended = rounded()
@@ -3750,10 +3764,7 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
             let CurveCornerSolutions2::Unique(repeated) = repeated.value else {
                 panic!("the repeated retained cusp chamfer must be unique");
             };
-            assert_eq!(
-                repeated.boundary_loops()[0].fragments().len(),
-                fragments.len() + 2
-            );
+            assert_eq!(repeated.boundary_loops()[0].len(), fragments.len() + 2);
             let repeated_extended = first
                 .chamfer_loop_vertex_by_setbacks(
                     0,
@@ -3969,22 +3980,20 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
         let CurveCornerSolutions2::Unique(first) = first.value else {
             panic!("a convex exact-chord corner must have one in-domain fillet");
         };
-        let fragments = first.boundary_loops()[0].fragments();
+        let fragments = first.boundary_loops()[0].curves();
         assert_eq!(fragments.len(), 5);
         assert_eq!(
             fragments
                 .iter()
-                .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .filter(|fragment| fragment.family() == CurveFamily2::Line)
                 .count(),
             4,
         );
-        assert!(fragments.iter().any(|fragment| matches!(
-            fragment,
-            BezierSplitFragment2::Materialized {
-                curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
-                ..
-            }
-        )));
+        assert!(
+            fragments
+                .iter()
+                .any(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
+        );
         assert!(matches!(
             certified(first.filled_area(&policy).unwrap()),
             Classification::Decided(Some(_))
@@ -3993,10 +4002,8 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
         let fragment_count = fragments.len();
         let next_chord_corner = (0..fragment_count)
             .find(|index| {
-                matches!(
-                    fragments[(index + fragment_count - 1) % fragment_count],
-                    BezierSplitFragment2::AlgebraicChord(_)
-                ) && matches!(fragments[*index], BezierSplitFragment2::AlgebraicChord(_))
+                is_line(&fragments[(index + fragment_count - 1) % fragment_count])
+                    && is_line(&fragments[*index])
             })
             .expect("the once-filleted rectangle retains another chord/chord corner");
         let second = first
@@ -4101,19 +4108,15 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reverse in [false, true] {
             let region = source(&policy, reverse);
-            let fragments = region.boundary_loops()[0].fragments();
+            let fragments = region.boundary_loops()[0].curves();
             let corner = (0..fragments.len())
                 .find(|index| {
-                    let BezierSplitFragment2::AlgebraicChord(previous) =
-                        &fragments[(index + fragments.len() - 1) % fragments.len()]
-                    else {
-                        return false;
-                    };
-                    let BezierSplitFragment2::AlgebraicChord(next) = &fragments[*index] else {
-                        return false;
-                    };
-                    previous.end().coordinates() == Some(&p(0, 0))
-                        && next.start().coordinates() == Some(&p(0, 0))
+                    let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[*index];
+                    is_line(previous)
+                        && is_line(next)
+                        && represented_at(previous, false, &p(0, 0))
+                        && represented_at(next, true, &p(0, 0))
                 })
                 .expect("the selected-endpoint triangle retains its represented corner");
             let result = region
@@ -4129,22 +4132,20 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
             let CurveCornerSolutions2::Unique(filleted) = result.value else {
                 panic!("the selected-endpoint right angle must have one exact fillet");
             };
-            let fragments = filleted.boundary_loops()[0].fragments();
+            let fragments = filleted.boundary_loops()[0].curves();
             assert_eq!(fragments.len(), 4);
             assert_eq!(
                 fragments
                     .iter()
-                    .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                    .filter(|fragment| fragment.family() == CurveFamily2::Line)
                     .count(),
                 3,
             );
-            assert!(fragments.iter().any(|fragment| matches!(
-                fragment,
-                BezierSplitFragment2::Materialized {
-                    curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
-                    ..
-                }
-            )));
+            assert!(
+                fragments
+                    .iter()
+                    .any(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
+            );
             assert_eq!(
                 certified(filleted.classify_point(&p(-2, 1), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Inside),
@@ -4224,35 +4225,19 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reverse in [false, true] {
             let region = source(&policy, reverse);
-            let fragments = region.boundary_loops()[0].fragments();
+            let fragments = region.boundary_loops()[0].curves();
             let corner = (0..fragments.len())
                 .find(|index| {
-                    match (
-                        &fragments[(index + fragments.len() - 1) % fragments.len()],
-                        &fragments[*index],
-                    ) {
-                        (
-                            BezierSplitFragment2::AlgebraicChord(previous),
-                            BezierSplitFragment2::Materialized {
-                                curve: hypercurve::BezierSubcurve2::RationalQuadratic(next),
-                                ..
-                            },
-                        ) => {
-                            previous.end().coordinates() == Some(&p(0, 0))
-                                && next.start() == &p(0, 0)
-                        }
-                        (
-                            BezierSplitFragment2::Materialized {
-                                curve: hypercurve::BezierSubcurve2::RationalQuadratic(previous),
-                                ..
-                            },
-                            BezierSplitFragment2::AlgebraicChord(next),
-                        ) => {
-                            previous.end() == &p(0, 0)
-                                && next.start().coordinates() == Some(&p(0, 0))
-                        }
-                        _ => false,
-                    }
+                    let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[*index];
+                    (is_line(previous)
+                        && is_native(next, CurveFamily2::RationalQuadraticBezier)
+                        && represented_at(previous, false, &p(0, 0))
+                        && represented_at(next, true, &p(0, 0)))
+                        || (is_native(previous, CurveFamily2::RationalQuadraticBezier)
+                            && is_line(next)
+                            && represented_at(previous, false, &p(0, 0))
+                            && represented_at(next, true, &p(0, 0)))
                 })
                 .expect("the mixed selected-chord/circular corner remains explicit");
             let result = region
@@ -4304,20 +4289,15 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
     }
 
     fn corner_index(region: &CurveRegion2) -> usize {
-        let fragments = region.boundary_loops()[0].fragments();
+        let fragments = region.boundary_loops()[0].curves();
         (0..fragments.len())
             .find(|index| {
                 let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
                 let next = &fragments[*index];
-                matches!(
-                    (previous, next),
-                    (
-                        BezierSplitFragment2::Materialized {
-                            curve: previous, ..
-                        },
-                        BezierSplitFragment2::Materialized { curve: next, .. }
-                    ) if previous.end() == &p(1, 1) && next.start() == &p(1, 1)
-                )
+                previous.geometry().is_some()
+                    && next.geometry().is_some()
+                    && represented_at(previous, false, &p(1, 1))
+                    && represented_at(next, true, &p(1, 1))
             })
             .expect("the line/parabola corner remains explicit")
     }
@@ -4468,36 +4448,17 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
     }
 
     fn corner_index(region: &CurveRegion2) -> usize {
-        let fragments = region.boundary_loops()[0].fragments();
+        let fragments = region.boundary_loops()[0].curves();
         (0..fragments.len())
             .find(|index| {
                 let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
                 let next = &fragments[*index];
-                matches!(
-                    (previous, next),
-                    (
-                        BezierSplitFragment2::Materialized {
-                            curve: BezierSubcurve2::Quadratic(previous),
-                            ..
-                        },
-                        BezierSplitFragment2::Materialized {
-                            curve: BezierSubcurve2::RationalQuadratic(next),
-                            ..
-                        }
-                    ) if previous.end() == &p(1, 1) && next.start() == &p(1, 1)
-                ) || matches!(
-                    (previous, next),
-                    (
-                        BezierSplitFragment2::Materialized {
-                            curve: BezierSubcurve2::RationalQuadratic(previous),
-                            ..
-                        },
-                        BezierSplitFragment2::Materialized {
-                            curve: BezierSubcurve2::Quadratic(next),
-                            ..
-                        }
-                    ) if previous.end() == &p(1, 1) && next.start() == &p(1, 1)
-                )
+                ((is_native(previous, CurveFamily2::QuadraticBezier)
+                    && is_native(next, CurveFamily2::RationalQuadraticBezier))
+                    || (is_native(previous, CurveFamily2::RationalQuadraticBezier)
+                        && is_native(next, CurveFamily2::QuadraticBezier)))
+                    && represented_at(previous, false, &p(1, 1))
+                    && represented_at(next, true, &p(1, 1))
             })
             .expect("the arc/parabola corner remains explicit")
     }
@@ -4665,35 +4626,19 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reverse in [false, true] {
             let region = source(&policy, reverse);
-            let fragments = region.boundary_loops()[0].fragments();
+            let fragments = region.boundary_loops()[0].curves();
             let corner = (0..fragments.len())
                 .find(|index| {
-                    match (
-                        &fragments[(index + fragments.len() - 1) % fragments.len()],
-                        &fragments[*index],
-                    ) {
-                        (
-                            BezierSplitFragment2::AlgebraicChord(previous),
-                            BezierSplitFragment2::Materialized {
-                                curve: hypercurve::BezierSubcurve2::Quadratic(next),
-                                ..
-                            },
-                        ) => {
-                            previous.end().coordinates() == Some(&p(0, 0))
-                                && next.start() == &p(0, 0)
-                        }
-                        (
-                            BezierSplitFragment2::Materialized {
-                                curve: hypercurve::BezierSubcurve2::Quadratic(previous),
-                                ..
-                            },
-                            BezierSplitFragment2::AlgebraicChord(next),
-                        ) => {
-                            previous.end() == &p(0, 0)
-                                && next.start().coordinates() == Some(&p(0, 0))
-                        }
-                        _ => false,
-                    }
+                    let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[*index];
+                    (is_line(previous)
+                        && is_native(next, CurveFamily2::QuadraticBezier)
+                        && represented_at(previous, false, &p(0, 0))
+                        && represented_at(next, true, &p(0, 0)))
+                        || (is_native(previous, CurveFamily2::QuadraticBezier)
+                            && is_line(next)
+                            && represented_at(previous, false, &p(0, 0))
+                            && represented_at(next, true, &p(0, 0)))
                 })
                 .expect("the mixed selected-chord/quadratic corner remains explicit");
             let result = region
@@ -4719,17 +4664,9 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
                 .into_iter()
                 .find(|candidate| {
                     candidate.boundary_loops()[0]
-                        .fragments()
+                        .curves()
                         .iter()
-                        .any(|fragment| {
-                            matches!(
-                                fragment,
-                                BezierSplitFragment2::Materialized {
-                                    curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
-                                    ..
-                                }
-                            )
-                        })
+                        .any(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
                 })
                 .expect("one exact candidate must publish the circular fillet span");
             assert_eq!(
@@ -4778,33 +4715,18 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
             .expect("the native line must clip the selected circle exactly");
         assert_eq!(clipped.certainty, CurveCertainty::Certified);
         let clipped = clipped.value.intersection().clone();
-        let fragments = clipped.boundary_loops()[0].fragments();
+        let fragments = clipped.boundary_loops()[0].curves();
         let fragment_count = fragments.len();
         let fragment_kinds = fragments
             .iter()
-            .map(|fragment| match fragment {
-                BezierSplitFragment2::Materialized { .. } => "materialized",
-                BezierSplitFragment2::RetainedBezier { .. } => "endpoint-images",
-                BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
-                BezierSplitFragment2::AlgebraicChord(_) => "chord",
-                BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
-                BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
-            })
+            .map(|fragment| fragment.family())
             .collect::<Vec<_>>();
         let corners = (0..fragment_count)
             .filter(|index| {
                 let previous = &fragments[(index + fragment_count - 1) % fragment_count];
                 let next = &fragments[*index];
-                matches!(
-                    (previous, next),
-                    (
-                        BezierSplitFragment2::AlgebraicChord(_),
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                    ) | (
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_),
-                        BezierSplitFragment2::AlgebraicChord(_)
-                    )
-                )
+                (is_line(previous) && is_circle_join(next))
+                    || (is_circle_join(previous) && is_line(next))
             })
             .collect::<Vec<_>>();
         if corners.is_empty() {
@@ -4814,7 +4736,7 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
         }
         let cusp_count = fragments
             .iter()
-            .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)))
+            .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
             .count();
 
         let mut outcomes = Vec::new();
@@ -4857,11 +4779,9 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
         for (_, filleted) in filleted {
             assert_eq!(
                 filleted.boundary_loops()[0]
-                    .fragments()
+                    .curves()
                     .iter()
-                    .filter(|fragment| {
-                        matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
-                    })
+                    .filter(|fragment| { fragment.family() == CurveFamily2::CircularArc })
                     .count(),
                 cusp_count + 1,
             );
@@ -4920,35 +4840,17 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
     };
 
     let region = source(&policy);
-    let fragments = region.boundary_loops()[0].fragments();
+    let fragments = region.boundary_loops()[0].curves();
     let fragment_count = fragments.len();
     let fragment_kinds = fragments
         .iter()
-        .map(|fragment| match fragment {
-            BezierSplitFragment2::Materialized { .. } => "materialized",
-            BezierSplitFragment2::RetainedBezier { .. } => "endpoint-images",
-            BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
-            BezierSplitFragment2::AlgebraicChord(_) => "chord",
-            BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
-            BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
-        })
+        .map(|fragment| fragment.family())
         .collect::<Vec<_>>();
     let corners = (0..fragment_count)
         .filter(|index| {
             let previous = &fragments[(index + fragment_count - 1) % fragment_count];
             let next = &fragments[*index];
-            matches!(
-                (previous, next),
-                (
-                    BezierSplitFragment2::AnalyticParallel(_),
-                    BezierSplitFragment2::AlgebraicChord(_)
-                        | BezierSplitFragment2::Materialized { .. }
-                ) | (
-                    BezierSplitFragment2::AlgebraicChord(_)
-                        | BezierSplitFragment2::Materialized { .. },
-                    BezierSplitFragment2::AnalyticParallel(_)
-                )
-            )
+            is_parallel_support(previous, next)
         })
         .collect::<Vec<_>>();
     assert_eq!(
@@ -4958,7 +4860,7 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
     );
     let selected_circle_count = fragments
         .iter()
-        .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)))
+        .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
         .count();
 
     let disjoint =
@@ -5002,9 +4904,9 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
     );
     for (corner, candidate, filleted) in filleted {
         let fillet_circle_count = filleted.boundary_loops()[0]
-            .fragments()
+            .curves()
             .iter()
-            .filter(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_)))
+            .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
             .count();
         assert!(
             (selected_circle_count + 1..=selected_circle_count + 2).contains(&fillet_circle_count),
@@ -5026,16 +4928,9 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
         assert!(replay.value.intersection().is_empty());
 
         let filleted_kinds = filleted.boundary_loops()[0]
-            .fragments()
+            .curves()
             .iter()
-            .map(|fragment| match fragment {
-                BezierSplitFragment2::Materialized { .. } => "materialized",
-                BezierSplitFragment2::RetainedBezier { .. } => "endpoint-images",
-                BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
-                BezierSplitFragment2::AlgebraicChord(_) => "chord",
-                BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "selected-circle",
-                BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
-            })
+            .map(|fragment| fragment.family())
             .collect::<Vec<_>>();
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
@@ -5125,12 +5020,9 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
         };
         assert_eq!(
             filleted.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .filter(|fragment| matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                ))
+                .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
                 .count(),
             1,
         );
@@ -5222,9 +5114,9 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
         .find(|region| {
             region.boundary_loops().iter().any(|boundary| {
                 boundary
-                    .fragments()
+                    .curves()
                     .iter()
-                    .any(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)))
+                    .any(|fragment| has_retained_rational_domain(fragment))
             })
         })
         .expect("the general retained-parameter Boolean must publish a selected-fiber fragment");
@@ -5243,9 +5135,9 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
             .into_value();
         assert!(transformed.boundary_loops().iter().any(|boundary| {
             boundary
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(fragment, BezierSplitFragment2::SelectedFiber(_)))
+                .any(|fragment| has_retained_rational_domain(fragment))
         }));
         let projected = selected
             .project_to_finite_profiles(&FiniteProjectionOptions::try_new(1.0e-1).unwrap(), &policy)
@@ -5282,15 +5174,9 @@ fn exact_high_degree_elevations_reenter_the_quadratic_corner_kernel() {
             .into_value();
         assert_eq!(
             region.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .filter(|fragment| matches!(
-                    fragment,
-                    BezierSplitFragment2::Materialized {
-                        curve: BezierSubcurve2::RationalQuadratic(_),
-                        ..
-                    }
-                ))
+                .filter(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
                 .count(),
             2,
         );
@@ -5351,17 +5237,24 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                 }
             };
             let has_projective_selected_circle = |candidate: &&CurveRegion2| {
-                let fragments = candidate.boundary_loops()[0].fragments();
+                let fragments = candidate.boundary_loops()[0].curves();
                 fragments
                     .iter()
                     .filter(|fragment| {
-                        matches!(fragment, BezierSplitFragment2::RetainedBezier { .. })
+                        fragment.geometry().is_none()
+                            && matches!(
+                                fragment.family(),
+                                CurveFamily2::QuadraticBezier
+                                    | CurveFamily2::CubicBezier
+                                    | CurveFamily2::RationalQuadraticBezier
+                                    | CurveFamily2::RationalBezier
+                            )
                     })
                     .count()
                     >= 2
-                    && fragments.iter().any(|fragment| {
-                        matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
-                    })
+                    && fragments
+                        .iter()
+                        .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
             };
             let filleted = candidates
                 .iter()
@@ -5399,24 +5292,12 @@ fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
             .expect("the exact analytic miter must retain its tangent construction")
             .into_value();
         let assert_tangent_corners = |region: &CurveRegion2| {
-            let fragments = region.boundary_loops()[0].fragments();
+            let fragments = region.boundary_loops()[0].curves();
             let corners = (0..fragments.len())
                 .filter(|index| {
-                    matches!(
-                        (
-                            &fragments[(index + fragments.len() - 1) % fragments.len()],
-                            &fragments[*index],
-                        ),
-                        (
-                            BezierSplitFragment2::AnalyticParallel(_),
-                            BezierSplitFragment2::Materialized { .. }
-                                | BezierSplitFragment2::AlgebraicChord(_)
-                        ) | (
-                            BezierSplitFragment2::Materialized { .. }
-                                | BezierSplitFragment2::AlgebraicChord(_),
-                            BezierSplitFragment2::AnalyticParallel(_)
-                        )
-                    )
+                    let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                    let next = &fragments[*index];
+                    is_parallel_support(previous, next)
                 })
                 .collect::<Vec<_>>();
             assert_eq!(corners.len(), 2);
@@ -5466,24 +5347,12 @@ fn analytic_parallel_rejected_miters_remain_transverse_fillet_candidates() {
             )
             .expect("the rejected analytic miter must become an exact bevel")
             .into_value();
-        let fragments = region.boundary_loops()[0].fragments();
+        let fragments = region.boundary_loops()[0].curves();
         let corners = (0..fragments.len())
             .filter(|index| {
-                matches!(
-                    (
-                        &fragments[(index + fragments.len() - 1) % fragments.len()],
-                        &fragments[*index],
-                    ),
-                    (
-                        BezierSplitFragment2::AnalyticParallel(_),
-                        BezierSplitFragment2::Materialized { .. }
-                            | BezierSplitFragment2::AlgebraicChord(_)
-                    ) | (
-                        BezierSplitFragment2::Materialized { .. }
-                            | BezierSplitFragment2::AlgebraicChord(_),
-                        BezierSplitFragment2::AnalyticParallel(_)
-                    )
-                )
+                let previous = &fragments[(index + fragments.len() - 1) % fragments.len()];
+                let next = &fragments[*index];
+                is_parallel_support(previous, next)
             })
             .collect::<Vec<_>>();
         assert_eq!(corners.len(), 2);
@@ -5538,16 +5407,13 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         let first = rounded.boolean_regions(&cutter, &policy).unwrap();
         assert_eq!(first.certainty, CurveCertainty::Certified);
         let first = first.into_value().intersection().clone();
-        let fragments = first.boundary_loops()[0].fragments();
+        let fragments = first.boundary_loops()[0].curves();
         let retained_index = fragments
             .iter()
             .enumerate()
             .position(|(index, fragment)| {
-                matches!(fragment, BezierSplitFragment2::AlgebraicChord(_))
-                    && matches!(
-                        fragments[(index + fragments.len() - 1) % fragments.len()],
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_),
-                    )
+                fragment.family() == CurveFamily2::Line
+                    && is_circle_join(&fragments[(index + fragments.len() - 1) % fragments.len()])
             })
             .expect("the exact support must follow its incident selected circle");
         let cusp_index = (retained_index + fragments.len() - 1) % fragments.len();
@@ -5567,12 +5433,9 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         };
         assert!(
             mapped_chamfer.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .any(|fragment| matches!(
-                    fragment,
-                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                ))
+                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
         );
         let mapped_reentry = mapped_chamfer
             .chamfer_loop_vertex_by_setbacks(
@@ -5994,7 +5857,7 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
         let post_collapse = source.offset(-q(3, 20), &miter, &policy).unwrap();
         assert_eq!(post_collapse.certainty, CurveCertainty::Certified);
         assert_eq!(post_collapse.value.boundary_loops().len(), 1);
-        assert_eq!(post_collapse.value.boundary_loops()[0].fragments().len(), 4);
+        assert_eq!(post_collapse.value.boundary_loops()[0].len(), 4);
         for (point, expected) in [
             (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
             (Point2::new(q(11, 20), q(1, 4)), RegionPointLocation::Inside),
@@ -6100,7 +5963,7 @@ fn algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
                     .value
                     .boundary_loops()
                     .iter()
-                    .all(|boundary| boundary.fragments().len() == 4)
+                    .all(|boundary| boundary.len() == 4)
             );
             for (point, expected) in [
                 (p(2, 2), RegionPointLocation::Inside),
@@ -6296,9 +6159,9 @@ fn sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
         assert_eq!(sheared.certainty, CurveCertainty::Certified);
         assert!(
             sheared.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .all(|fragment| fragment.family() == CurveFamily2::Line)
         );
 
         let split = sheared
@@ -6392,9 +6255,9 @@ fn algebraic_chord_expansion_merges_coupled_material_loops_exactly() {
         );
         assert!(
             merged.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .all(|fragment| fragment.family() == CurveFamily2::Line)
         );
         for (point, expected) in [
             (Point2::new(q(1, 4), q(1, 2)), RegionPointLocation::Inside),
@@ -6455,8 +6318,8 @@ fn algebraic_chord_material_hole_contact_and_hole_collapse_are_exact() {
                 .value
                 .boundary_loops()
                 .iter()
-                .flat_map(|boundary| boundary.fragments())
-                .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .flat_map(|boundary| boundary.curves())
+                .all(|fragment| fragment.family() == CurveFamily2::Line)
         );
         for (point, expected) in [
             (p(2, 2), RegionPointLocation::Inside),
@@ -6492,9 +6355,9 @@ fn algebraic_chord_material_hole_contact_and_hole_collapse_are_exact() {
         );
         assert!(
             hole_collapsed.value.boundary_loops()[0]
-                .fragments()
+                .curves()
                 .iter()
-                .all(|fragment| matches!(fragment, BezierSplitFragment2::AlgebraicChord(_)))
+                .all(|fragment| fragment.family() == CurveFamily2::Line)
         );
         assert_eq!(
             certified(
@@ -6720,24 +6583,12 @@ fn unified_region_contraction_preserves_non_miter_corner_styles() {
         assert_eq!(bevel.value.boundary_loops().len(), 1);
         assert_eq!(limited_miter.value.boundary_loops().len(), 1);
         assert_eq!(miter.value.boundary_loops().len(), 1);
-        let round_fragments = round.value.boundary_loops()[0].fragments();
-        let bevel_fragments = bevel.value.boundary_loops()[0].fragments();
-        let limited_miter_fragments = limited_miter.value.boundary_loops()[0].fragments();
-        let miter_fragments = miter.value.boundary_loops()[0].fragments();
-        assert!(round_fragments.iter().any(|fragment| matches!(
-            fragment,
-            BezierSplitFragment2::Materialized {
-                curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
-                ..
-            } | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-        )));
-        assert!(!bevel_fragments.iter().any(|fragment| matches!(
-            fragment,
-            BezierSplitFragment2::Materialized {
-                curve: hypercurve::BezierSubcurve2::RationalQuadratic(_),
-                ..
-            } | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-        )));
+        let round_fragments = round.value.boundary_loops()[0].curves();
+        let bevel_fragments = bevel.value.boundary_loops()[0].curves();
+        let limited_miter_fragments = limited_miter.value.boundary_loops()[0].curves();
+        let miter_fragments = miter.value.boundary_loops()[0].curves();
+        assert!(round_fragments.iter().any(is_round_join));
+        assert!(!bevel_fragments.iter().any(is_round_join));
         assert_eq!(limited_miter_fragments.len(), bevel_fragments.len());
         assert_eq!(
             decided(limited_miter.value.filled_area(&policy).unwrap()),

@@ -1,11 +1,11 @@
 #![cfg(feature = "svg")]
 
 use hypercurve::{
-    BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, CubicBezier2, Curve2,
-    CurveContext, CurveFamily2, CurvePath2, LineSeg2, NurbsCurve2, Point2, PolynomialSplineCurve2,
-    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, Segment2, Similarity2,
-    SvgError, SvgGeometry2, SvgOptions, export_svg_document, import_svg_document,
-    import_svg_document_with_options, parse_svg_path_data,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveFamily2, CurvePath2,
+    LineSeg2, NurbsCurve2, Point2, PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2,
+    RationalQuadraticBezier2, Real, Segment2, Similarity2, SvgError, SvgGeometry2, SvgOptions,
+    export_svg_document, import_svg_document, import_svg_document_with_options,
+    parse_svg_path_data,
 };
 
 fn rational(numerator: i64, denominator: i64) -> Real {
@@ -187,14 +187,10 @@ fn document_import_preserves_cubic_fills_and_strokes() {
             .region()
             .boundary_loops()
             .iter()
-            .flat_map(|boundary| boundary.fragments())
-            .any(|fragment| matches!(
-                fragment,
-                BezierSplitFragment2::Materialized {
-                    curve: BezierSubcurve2::Cubic(_),
-                    ..
-                }
-            ))
+            .flat_map(|boundary| boundary.curves())
+            .any(|curve| {
+                curve.geometry().is_some() && curve.family() == CurveFamily2::CubicBezier
+            })
     );
     assert!(geometry.wires().is_empty());
     assert_eq!(geometry.paths().len(), 1);

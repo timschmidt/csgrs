@@ -1079,9 +1079,7 @@ fn bench_represented_bezier_region_corner_lanes(
                 .regularized_region(&policy)
                 .expect("one-field algebraic chamfer regularization must remain exact")
                 .into_value();
-            fragments += black_box(&regularized).boundary_loops()[0]
-                .fragments()
-                .len();
+            fragments += black_box(&regularized).boundary_loops()[0].curves().len();
         }
         assert_ne!(fragments, 0);
         let elapsed = started.elapsed();
@@ -1103,7 +1101,7 @@ fn bench_represented_bezier_region_corner_lanes(
             fragments += black_box(&regularized)
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum::<usize>();
         }
         assert_ne!(fragments, 0);
@@ -1184,7 +1182,7 @@ fn bench_represented_bezier_region_corner_lanes(
                 .offset(q(1, 10), black_box(&style), &policy)
                 .expect("axis-aligned algebraic offset must remain exact")
                 .into_value();
-            fragments += black_box(&offset).boundary_loops()[0].fragments().len();
+            fragments += black_box(&offset).boundary_loops()[0].len();
         }
         assert_ne!(fragments, 0);
         let elapsed = started.elapsed();
@@ -1204,7 +1202,7 @@ fn bench_represented_bezier_region_corner_lanes(
                 .offset(q(1, 10), black_box(&style), &policy)
                 .expect("axis-aligned algebraic round offset must remain exact")
                 .into_value();
-            fragments += black_box(&offset).boundary_loops()[0].fragments().len();
+            fragments += black_box(&offset).boundary_loops()[0].len();
         }
         assert_ne!(fragments, 0);
         let elapsed = started.elapsed();
@@ -1230,7 +1228,7 @@ fn bench_represented_bezier_region_corner_lanes(
                 .offset(q(1, 10), black_box(&style), &policy)
                 .expect("repeated algebraic offset must remain exact")
                 .into_value();
-            fragments += black_box(&offset).boundary_loops()[0].fragments().len();
+            fragments += black_box(&offset).boundary_loops()[0].len();
         }
         assert_ne!(fragments, 0);
         let elapsed = started.elapsed();
@@ -1264,7 +1262,7 @@ fn bench_represented_bezier_region_corner_lanes(
             fragments += black_box(&offset)
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum::<usize>();
         }
         assert_ne!(fragments, 0);
@@ -1298,7 +1296,7 @@ fn bench_represented_bezier_region_corner_lanes(
             fragments += black_box(&offset)
                 .boundary_loops()
                 .iter()
-                .map(|boundary| boundary.fragments().len())
+                .map(|boundary| boundary.len())
                 .sum::<usize>();
         }
         assert_ne!(fragments, 0);
