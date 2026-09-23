@@ -214,21 +214,57 @@ impl Tower {
     }
 
     fn mul(self, other: Self) -> Option<Self> {
-        let radicand = self.match_radicand(&other)?;
-        let mut even = self.even.clone().mul(other.even.clone())?;
-        let odd = self
-            .even
-            .mul(other.odd.clone())?
-            .add(self.odd.clone().mul(other.even)?)?;
-        if !self.odd.is_zero() && !other.odd.is_zero() {
-            let radicand = radicand.as_ref()?;
-            even = even.add(self.odd.mul(other.odd)?.mul(radicand.clone())?)?;
-        }
-        Some(Self {
-            even,
-            odd: odd.clone(),
-            radicand: if odd.is_zero() { None } else { radicand },
+        let shared = (|| {
+            let radicand = self.match_radicand(&other)?;
+            let mut even = self.even.clone().mul(other.even.clone())?;
+            let odd = self
+                .even
+                .clone()
+                .mul(other.odd.clone())?
+                .add(self.odd.clone().mul(other.even.clone())?)?;
+            if !self.odd.is_zero() && !other.odd.is_zero() {
+                let radicand = radicand.as_ref()?;
+                even = even.add(
+                    self.odd
+                        .clone()
+                        .mul(other.odd.clone())?
+                        .mul(radicand.clone())?,
+                )?;
+            }
+            Some(Self {
+                even,
+                odd: odd.clone(),
+                radicand: if odd.is_zero() { None } else { radicand },
+            })
+        })();
+        shared.or_else(|| {
+            // Different outer radicals can have a product in the same small
+            // tower. Combine their squares before adjoining another root:
+            // sqrt(a) / sqrt(b) needs only sqrt(a/b), with its sign retained.
+            let square = self.pure_square()?.mul(other.pure_square()?)?;
+            let product = sqrt_quad(square)?;
+            Some(if self.sign()? == other.sign()? {
+                product
+            } else {
+                product.neg()
+            })
         })
+    }
+
+    /// Square of a value with no sum across the outer quadratic generator.
+    /// A mixed value keeps its two terms and uses the general sign fallback.
+    fn pure_square(&self) -> Option<Quad> {
+        if self.odd.is_zero() {
+            return self.even.clone().mul(self.even.clone());
+        }
+        if self.even.is_zero() {
+            return self
+                .odd
+                .clone()
+                .mul(self.odd.clone())?
+                .mul(self.radicand.clone()?);
+        }
+        None
     }
 
     fn inverse(self) -> Option<Self> {

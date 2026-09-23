@@ -60,6 +60,38 @@ mod quadratic_tower_real_tests {
     use super::*;
 
     #[test]
+    fn independently_normalized_chord_normals_replay_exactly() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        for (a, b) in [(11, 13), (3, 7), (2, 5)] {
+            let alpha = q(1, a).sqrt().unwrap();
+            let beta = q(1, b).sqrt().unwrap();
+            let dx = Real::one() - &alpha;
+            let speed = (&dx * &dx + &beta * &beta).sqrt().unwrap();
+            let reduced_square = Real::one() + q(1, a) + q(1, b) - Real::from(2) * &alpha;
+            let other_speed = reduced_square.clone().sqrt().unwrap();
+            let nx = (-&beta / &speed).unwrap();
+            let ny = (&dx / &speed).unwrap();
+            for difference in [
+                &nx + (&beta / &other_speed).unwrap(),
+                &nx * &nx * &reduced_square - &beta * &beta,
+                &nx * &nx + &ny * &ny - Real::one(),
+            ] {
+                assert_eq!(difference.quadratic_tower_sign(), Some(RealSign::Zero));
+                assert_eq!((-&difference).quadratic_tower_sign(), Some(RealSign::Zero));
+                let epsilon = q(1, 1 << 20);
+                assert_eq!(
+                    (&difference + &epsilon).quadratic_tower_sign(),
+                    Some(RealSign::Positive)
+                );
+                assert_eq!(
+                    (&difference - epsilon).quadratic_tower_sign(),
+                    Some(RealSign::Negative)
+                );
+            }
+        }
+    }
+
+    #[test]
     fn polynomial_vanishes_at_both_square_roots_of_one_half() {
         let half = Rational::fraction(1, 2).unwrap();
         let coefficients = [Real::from(half.clone().neg()), Real::zero(), Real::one()];
