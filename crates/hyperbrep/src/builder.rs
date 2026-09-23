@@ -4,9 +4,9 @@ use std::collections::HashMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, BezierSplitFragment2, BezierSubcurve2, CircularArc2, Classification, Contour2,
-    ContourPointLocation, Curve2, CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, LineSeg2,
-    Point2 as CurvePoint2, RationalBezier2, Segment2,
+    Aabb2, BezierSubcurve2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2,
+    CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, LineSeg2, Point2 as CurvePoint2,
+    RationalBezier2, Segment2,
 };
 use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
@@ -1891,7 +1891,7 @@ pub(crate) fn extrude_curve_region(
         let loops = component
             .boundary_loops()
             .iter()
-            .map(|boundary| persistent_region_boundary_curves(boundary.fragments(), false))
+            .map(|boundary| persistent_planar_curves(boundary.curves()))
             .collect::<Result<Vec<_>, _>>()?;
         let area = match component
             .signed_area(context)
@@ -3627,39 +3627,9 @@ fn persistent_rational_bezier(curve: &BezierSubcurve2) -> Result<Curve2, Constru
         .map_err(Into::into)
 }
 
-fn persistent_materialized_fragment_curve(
-    fragment: &BezierSplitFragment2,
-) -> Result<Curve2, ConstructionError> {
-    let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
-        return Err(GeometryError::UnsupportedPcurveContour.into());
-    };
-    persistent_rational_bezier(curve)
-}
-
-fn persistent_region_boundary_curves(
-    fragments: &[BezierSplitFragment2],
-    reverse: bool,
-) -> Result<Vec<Curve2>, ConstructionError> {
-    if reverse {
-        fragments
-            .iter()
-            .rev()
-            .map(|fragment| {
-                let reversed = fragment.reversed().map_err(GeometryError::from)?;
-                persistent_materialized_fragment_curve(&reversed)
-            })
-            .collect()
-    } else {
-        fragments
-            .iter()
-            .map(persistent_materialized_fragment_curve)
-            .collect()
-    }
-}
-
-fn persistent_planar_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, ConstructionError> {
+fn persistent_planar_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, ConstructionError> {
     let mut persistent = Vec::new();
-    for curve in path.curves() {
+    for curve in curves {
         match curve.geometry() {
             None => return Err(ConstructionError::UnsupportedPlanarProfile),
             Some(CurveGeometry2::Line(_))
@@ -3852,7 +3822,7 @@ fn add_planar_path_wire(
     path: &CurvePath2,
     surface: &Surface,
 ) -> Result<crate::WireId, ConstructionError> {
-    let curves = persistent_planar_path_curves(path)?;
+    let curves = persistent_planar_curves(path.curves())?;
     let points = curves
         .iter()
         .map(|curve| {
