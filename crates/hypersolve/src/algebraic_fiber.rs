@@ -3919,18 +3919,30 @@ impl LocalAlgebraicField {
             return Ok(Ordering::Equal);
         }
 
-        // A general `Real` GCD may itself be undecided even when the local
-        // coefficient is nonzero. Continue narrowing the already-certified
-        // singleton: every nonzero continuous image eventually separates
-        // from zero. The bounded fallback preserves the API's non-hanging
-        // contract for an unresolved exact identity.
-        for _ in 0..LOCAL_FIELD_INTERVAL_SIGN_REFINEMENT_ROUNDS {
+        // A certified nonzero rational polynomial on an isolated rational
+        // defining polynomial has a finite separation bound. Reuse that proof
+        // by refining its owned root; a new Sturm-Tarski chain need not certify
+        // the same sign. The refined interval also serves later coefficients.
+        // General exact coefficients or unresolved identities keep the bounded
+        // interval schedule and their independent exact sign fallback.
+        let complete_by_refinement = vanishes == Some(false)
+            && self
+                .modulus()
+                .iter()
+                .chain(polynomial)
+                .all(|coefficient| coefficient.exact_rational_ref().is_some());
+        let mut rounds = 0_usize;
+        loop {
             let evaluation =
                 evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
             if let Some(sign) = local_evaluation_sign(&evaluation)? {
                 return Ok(sign);
             }
+            if !complete_by_refinement && rounds == LOCAL_FIELD_INTERVAL_SIGN_REFINEMENT_ROUNDS {
+                break;
+            }
             self.refine_root()?;
+            rounds += 1;
         }
         // Sign determination by a Sturm-Tarski query avoids narrowing the
         // source root to the magnitude of an expanded field coefficient.
@@ -6147,6 +6159,89 @@ mod tests {
                 assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
                 assert_eq!(report.distinct_root_count, Some(count));
                 assert_eq!(report.certainty, Certainty::Exact);
+            }
+        }
+    }
+
+    #[test]
+    fn certified_nonzero_signs_share_the_refined_degree_41_endpoint() {
+        // Boolean normalization compares a selected circle contact with its
+        // ordinary algebraic endpoint. Its linear common factor leaves this
+        // nonzero coefficient over the retained degree-41 presentation.
+        let source: serde_json::Value = serde_json::from_str(include_str!(
+            "../tests/data/nonph_fillet_circle_contact.json"
+        ))
+        .unwrap();
+        let data: serde_json::Value = serde_json::from_str(include_str!(
+            "../tests/data/nonph_fillet_endpoint_sign.json"
+        ))
+        .unwrap();
+        let read = |value: &serde_json::Value| {
+            Real::new(
+                value
+                    .as_str()
+                    .unwrap()
+                    .parse::<hyperreal::Rational>()
+                    .unwrap(),
+            )
+        };
+        let predicate = data["predicate"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(&read)
+            .collect::<Vec<_>>();
+        let opposite = predicate.iter().map(|value| -value).collect::<Vec<_>>();
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let root = represented_root(
+                source["base"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(&read)
+                    .collect(),
+                read(&data["interval"][0]),
+                read(&data["interval"][1]),
+                policy,
+            );
+            let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+            assert_eq!(field.sign_polynomial(&predicate).unwrap(), Ordering::Less);
+            let refinements = field.refinement_steps;
+            // A related query uses the same certified singleton instead of
+            // rebuilding a second sign proof over the same broad interval.
+            assert_eq!(field.sign_polynomial(&opposite).unwrap(), Ordering::Greater);
+            assert_eq!(field.refinement_steps, refinements);
+            assert_eq!(field.certainty, Certainty::Exact);
+        }
+    }
+
+    #[test]
+    fn certified_nonzero_signs_distinguish_small_values_from_selected_zeros() {
+        let epsilon = (Real::one()
+            / Real::new(hyperreal::Rational::from_bigint(
+                num::BigInt::from(1) << 192_usize,
+            )))
+        .unwrap();
+        let zero = vec![real(-2), real(0), real(1)];
+        let positive = vec![real(-2) + &epsilon, real(0), real(1)];
+        let negative = positive.iter().map(|value| -value).collect::<Vec<_>>();
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for (lower, upper) in [(-2, -1), (1, 2)] {
+                // Both selected conjugates have Q(alpha)=2^-192, despite
+                // the foreign factor t-3 in their defining polynomial.
+                let root = represented_root(
+                    vec![real(6), real(-2), real(-3), real(1)],
+                    real(lower),
+                    real(upper),
+                    policy,
+                );
+                let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+                assert_eq!(field.sign_polynomial(&zero).unwrap(), Ordering::Equal);
+                assert_eq!(field.sign_polynomial(&positive).unwrap(), Ordering::Greater);
+                let refinements = field.refinement_steps;
+                assert_eq!(field.sign_polynomial(&negative).unwrap(), Ordering::Less);
+                assert_eq!(field.refinement_steps, refinements);
+                assert_eq!(field.certainty, Certainty::Exact);
             }
         }
     }
