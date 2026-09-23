@@ -2822,10 +2822,69 @@ fn prepare_local_open_interval_root_count(
     )?))
 }
 
+/// Preserve a regular rational PRS in the polynomial ring before selecting
+/// the retained root. Every division is exact in Z[t]. Its Sturm multipliers
+/// are squares, so only nonvanishing of the selected leading coefficients is
+/// needed; no expanded local-field inverse is constructed. Global degree
+/// gaps and nonzero specialized rows which lose degree use the general field
+/// sequence. An entirely zero specialized row certifies its termination.
+fn rational_local_sturm_rows(
+    first: &[LocalFieldElement],
+    field: &mut LocalAlgebraicField,
+) -> Option<Vec<Vec<LocalFieldElement>>> {
+    if first
+        .iter()
+        .any(|coefficient| coefficient.denominator.is_some())
+    {
+        return None;
+    }
+    let coefficients = first
+        .iter()
+        .map(|coefficient| coefficient.numerator.clone())
+        .collect::<Vec<_>>();
+    let rows = crate::integer_interpolation::regular_rational_fiber_sturm_rows(&coefficients)?;
+    let mut proof = LocalAlgebraicField::new(&field.root, PredicatePolicy::STRICT).ok()?;
+    let mut sequence = Vec::with_capacity(rows.len());
+    for row in rows {
+        let degree = row.len();
+        let mut row = row
+            .into_iter()
+            .map(|coefficient| LocalFieldElement::from_polynomial(coefficient, &proof))
+            .collect::<Result<Vec<_>, _>>()
+            .ok()?;
+        trim_local_polynomial(&mut row, &mut proof).ok()?;
+        if local_polynomial_is_zero(&row, &mut proof).ok()? {
+            if sequence.is_empty() {
+                return None;
+            }
+            break;
+        }
+        if row.len() != degree {
+            return None;
+        }
+        sequence.push(row);
+    }
+    // Keep prior inverses and sign evidence; place the new STRICT decisions
+    // first when an earlier policy-dependent query used the same polynomial.
+    proof
+        .signed_polynomials
+        .append(&mut field.signed_polynomials);
+    field.signed_polynomials = proof.signed_polynomials;
+    field.root = proof.root;
+    field.refinement_steps += proof.refinement_steps;
+    field.observe_certainty(proof.certainty);
+    Some(sequence)
+}
+
 fn local_sturm_sequence(
     first: Vec<LocalFieldElement>,
     field: &mut LocalAlgebraicField,
 ) -> Result<Vec<Vec<LocalFieldElement>>, LocalFieldError> {
+    if let Some(rows) = rational_local_sturm_rows(&first, field) {
+        let mut sequence = vec![first];
+        sequence.extend(rows);
+        return Ok(sequence);
+    }
     let second = derivative_local_polynomial(&first, field)?;
     let mut sequence = vec![first, second];
     loop {
@@ -4621,7 +4680,7 @@ mod tests {
     }
 
     #[test]
-    fn normalized_sturm_rows_preserve_variations_and_repeated_roots() {
+    fn sturm_rows_preserve_variations_and_repeated_roots() {
         for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
             for scale_sign in [-1_i64, 1] {
                 let root = represented_root(
@@ -4649,14 +4708,6 @@ mod tests {
                         local_image_polynomial_multiply(&polynomial, &factor, &mut field).unwrap();
                 }
                 let sequence = local_sturm_sequence(polynomial, &mut field).unwrap();
-                for row in sequence.iter().skip(2) {
-                    let leading = row.last().unwrap();
-                    assert!(leading.denominator.is_none());
-                    assert!(
-                        leading.numerator == vec![Real::one()]
-                            || leading.numerator == vec![real(-1)]
-                    );
-                }
                 for (lower, upper, expected) in [
                     (real(-1), real(4), 3),
                     (Real::zero(), real(2), 1),
@@ -5969,6 +6020,189 @@ mod tests {
                     assert!(report.retained_refinement_steps > 0);
                     assert_eq!(report.certainty, Certainty::Exact);
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn rational_sturm_preserves_selected_multiplicity_and_negative_scales() {
+        // F(t,u)=u^3+t*u+1 has two distinct roots at
+        // t=-cbrt(27/4): beta=cbrt(1/2) is double and -2*beta is simple.
+        // The same reducible defining polynomial also owns t=5, where F is
+        // strictly increasing and has exactly one real root.
+        let defining = vec![real(-135), real(27), real(0), real(-20), real(4)];
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for (lower, upper, count, length) in [(-2, -1, 2, 3), (4, 6, 1, 4)] {
+                let root = represented_root(defining.clone(), real(lower), real(upper), policy);
+                for scale in [Real::one(), rational(-3, 7)] {
+                    let fiber = BivariatePolynomial::new(vec![
+                        vec![scale.clone(), real(0), real(0), scale.clone()],
+                        vec![real(0), scale],
+                    ]);
+                    let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+                    let local =
+                        local_fiber_polynomial(&fiber, CurveResultantParameter::First, &mut field)
+                            .unwrap();
+                    assert!(rational_local_sturm_rows(&local, &mut field).is_some());
+                    let report = count_bivariate_fiber_roots_at_algebraic_parameter(
+                        &fiber,
+                        CurveResultantParameter::First,
+                        &root,
+                        &real(-3),
+                        &real(3),
+                        policy,
+                    );
+                    assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
+                    assert_eq!(report.distinct_root_count, Some(count));
+                    assert_eq!(report.sturm_sequence_length, length);
+                    assert_eq!(report.certainty, Certainty::Exact);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn rational_sturm_declines_degree_changes_and_general_exact_coefficients() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let sqrt_three = real(3).sqrt().unwrap();
+            let cases = [
+                // F=u^4+u+t has one critical point. F(0)<0 and F(+/-2)>0
+                // at t=-sqrt(2), so there are exactly two real roots.
+                (
+                    vec![real(-2), real(0), real(1)],
+                    real(-2),
+                    real(-1),
+                    BivariatePolynomial::new(vec![
+                        vec![real(0), real(1), real(0), real(0), real(1)],
+                        vec![real(1)],
+                    ]),
+                    2,
+                ),
+                // At t=sqrt(3), the linear PRS row loses only its leading
+                // term. F=u*(u^2+t*u+1) has only the simple root zero.
+                (
+                    vec![real(-3), real(0), real(1)],
+                    real(1),
+                    real(2),
+                    BivariatePolynomial::new(vec![
+                        vec![real(0), real(1), real(0), real(1)],
+                        vec![real(0), real(0), real(1)],
+                    ]),
+                    1,
+                ),
+                // Arbitrary exact Real coefficients remain on their exact
+                // field path: (u-sqrt(3))*(u+1) has two represented roots.
+                (
+                    vec![real(-2), real(0), real(1)],
+                    real(1),
+                    real(2),
+                    BivariatePolynomial::new(vec![vec![
+                        -sqrt_three.clone(),
+                        Real::one() - &sqrt_three,
+                        Real::one(),
+                    ]]),
+                    2,
+                ),
+            ];
+            for (defining, lower, upper, fiber, count) in cases {
+                let root = represented_root(defining, lower, upper, policy);
+                let mut field = LocalAlgebraicField::new(&root, policy).unwrap();
+                let local =
+                    local_fiber_polynomial(&fiber, CurveResultantParameter::First, &mut field)
+                        .unwrap();
+                assert!(rational_local_sturm_rows(&local, &mut field).is_none());
+                let report = count_bivariate_fiber_roots_at_algebraic_parameter(
+                    &fiber,
+                    CurveResultantParameter::First,
+                    &root,
+                    &real(-2),
+                    &real(2),
+                    policy,
+                );
+                assert_eq!(report.status, AlgebraicFiberRootCountStatus::Counted);
+                assert_eq!(report.distinct_root_count, Some(count));
+                assert_eq!(report.certainty, Certainty::Exact);
+            }
+        }
+    }
+
+    #[test]
+    fn rational_sturm_isolates_degree_41_fillet_contact_in_both_orientations() {
+        // A radius-2/5 fillet between two non-PH quadratic Beziers, followed
+        // by Boolean normalization, retains this exact circle/curve fiber.
+        // Its one contact in [0,1] is repeated; the defining polynomial also
+        // contains degree-2 and degree-5 factors outside its selected isolator.
+        let data: serde_json::Value = serde_json::from_str(include_str!(
+            "../tests/data/nonph_fillet_circle_contact.json"
+        ))
+        .unwrap();
+        let read = |value: &serde_json::Value| {
+            Real::new(
+                value
+                    .as_str()
+                    .unwrap()
+                    .parse::<hyperreal::Rational>()
+                    .unwrap(),
+            )
+        };
+        let coefficients = data["incidence"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|row| {
+                row.as_array()
+                    .unwrap()
+                    .iter()
+                    .map(&read)
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        let mut transposed = vec![
+            vec![Real::zero(); coefficients.len()];
+            coefficients.iter().map(Vec::len).max().unwrap()
+        ];
+        for (i, row) in coefficients.iter().enumerate() {
+            for (j, value) in row.iter().enumerate() {
+                transposed[j][i] = value.clone();
+            }
+        }
+        let fibers = [
+            (
+                BivariatePolynomial::new(coefficients),
+                CurveResultantParameter::First,
+            ),
+            (
+                BivariatePolynomial::new(transposed),
+                CurveResultantParameter::Second,
+            ),
+        ];
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let root = represented_root(
+                data["base"].as_array().unwrap().iter().map(&read).collect(),
+                read(&data["base_interval"][0]),
+                read(&data["base_interval"][1]),
+                policy,
+            );
+            for (fiber, orientation) in &fibers {
+                let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                    fiber,
+                    *orientation,
+                    &root,
+                    &Real::zero(),
+                    &Real::one(),
+                    AlgebraicFiberRootIsolationConfig {
+                        max_subdivision_depth: 512,
+                        refinement_steps: 8,
+                    },
+                    policy,
+                );
+                assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
+                assert_eq!(report.intervals.len(), 1);
+                assert_eq!(report.intervals[0].distinct_root_count, 1);
+                assert!(report.intervals[0].lower >= Real::zero());
+                assert!(report.intervals[0].upper <= Real::one());
+                assert_eq!(report.sturm_sequence_length, 8);
+                assert_eq!(report.certainty, Certainty::Exact);
             }
         }
     }

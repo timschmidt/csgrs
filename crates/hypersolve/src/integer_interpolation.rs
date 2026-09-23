@@ -1,3 +1,6 @@
+mod bivariate;
+pub(crate) use bivariate::regular_rational_fiber_sturm_rows;
+
 use hyperreal::{Rational, Real};
 use num::{BigInt, Integer, One, Signed, Zero};
 
