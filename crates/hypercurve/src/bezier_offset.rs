@@ -37073,6 +37073,56 @@ impl BezierAlgebraicCuspSemicircle2 {
         })())
     }
 
+    /// The selected center lies on its retained parent circle. When the target
+    /// has that parent's center, the parent radius is an exact center-distance
+    /// certificate. The circle discriminant then uses only the three radii;
+    /// it need not rediscover a double root in expanded coordinate expressions.
+    pub(crate) fn has_certified_concentric_source_tangency(
+        &self,
+        other: &RationalBezier2,
+        policy: &CurveContext,
+    ) -> CurveResult<bool> {
+        let Some(frame) = self.data.frame.selected_radial() else {
+            return Ok(false);
+        };
+        // A proper quadratic circle chart visits each finite point at most
+        // once. Higher-degree parameterizations can revisit a tangent point
+        // away from their shared boundary endpoint and need full pair replay.
+        if !matches!(
+            other.quadratic_homogeneous_controls(&policy.strict_counterpart())?,
+            Classification::Decided(Some(_))
+        ) {
+            return Ok(false);
+        }
+        let Classification::Decided(Some(target)) = policy.strict_predicate_pass(|| {
+            crate::arc_bezier::rational_bezier_circular_arc(other, policy)
+        })?
+        else {
+            return Ok(false);
+        };
+        let parent = frame.center_parameter.semicircle_carrier();
+        let distance_squared = parent.radial_distance() * parent.radial_distance();
+        if policy.strict_predicate_pass(|| real_sign(&distance_squared, policy))
+            != Some(RealSign::Positive)
+        {
+            return Ok(false);
+        }
+        let radical_axis = &distance_squared + target.radius_squared()
+            - self.radial_distance() * self.radial_distance();
+        let discriminant = Real::from(4) * &distance_squared * target.radius_squared()
+            - &radical_axis * &radical_axis;
+        if policy.strict_predicate_pass(|| real_sign(&discriminant, policy)) != Some(RealSign::Zero)
+        {
+            return Ok(false);
+        }
+        let Classification::Decided(center) = parent.center_point_evidence(policy)? else {
+            return Ok(false);
+        };
+        Ok(policy.strict_predicate_pass(|| {
+            center.same_point(&CurvePoint2::from(target.center().clone()), policy)
+        }) == Classification::Decided(true))
+    }
+
     fn recursive_selected_radial_rational_intersections_internal(
         &self,
         other: &RationalBezier2,
@@ -103777,6 +103827,48 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             (std::cmp::Ordering::Greater, std::cmp::Ordering::Less) => Interior,
             _ => Exterior,
         }
+    }
+
+    /// Transports a certified sibling endpoint into this finite half-circle
+    /// chart. `None` proves that the point is outside the consumed fragment.
+    pub(crate) fn parameter_of_shared_circle_endpoint(
+        &self,
+        source: &Self,
+        at_start: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleParameter2>>> {
+        use std::cmp::Ordering::{Equal, Greater, Less};
+        self.validate_policy(policy)?;
+        source.validate_policy(policy)?;
+        let parameter = source.endpoint_parameter(at_start);
+        let mapped = match self
+            .semicircle()
+            .shared_frame_chart_relation(source.semicircle(), policy)
+        {
+            Classification::Decided(Some(false)) => parameter.clone(),
+            Classification::Decided(Some(true)) => match (
+                parameter.order_to_real(&Real::zero(), policy)?,
+                parameter.order_to_real(&Real::one(), policy)?,
+            ) {
+                (Classification::Decided(Equal), _) => {
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one())
+                }
+                (_, Classification::Decided(Equal)) => {
+                    BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero())
+                }
+                (Classification::Decided(Greater), Classification::Decided(Less)) => {
+                    return Ok(Classification::Decided(None));
+                }
+                _ => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+            },
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(self
+            .contains_parameter(&mapped, true, true, policy)?
+            .map(|contains| contains.then_some(mapped)))
     }
 
     pub(crate) fn parameter_location_by_order(

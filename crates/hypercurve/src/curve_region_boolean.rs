@@ -19,7 +19,7 @@ use crate::bezier_offset::{
 };
 use crate::bezier_offset::{
     BezierAlgebraicCuspSemicirclePairIntersections2,
-    BezierAlgebraicCuspSemicircleParallelIntersections2, BezierAlgebraicCuspSemicircleParameter2,
+    BezierAlgebraicCuspSemicircleParallelIntersections2,
     BezierAlgebraicCuspSemicircleRationalIntersections2, BezierParameterComponentOverlap2,
 };
 use crate::bezier_split::{BezierSelectedFiberSource2, CurveParameterDomain2};
@@ -1645,7 +1645,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         direction_y: &Real,
         regular_range: Option<&CurveParameterRange2>,
     ) -> ExactCurveResult<Option<(Real, RealSign)>> {
-        let Some((first_at_start, second_at_start)) = self.authored_carrier_shared_endpoints(pair)
+        let Some((first_at_start, second_at_start)) = self
+            .authored_carrier_shared_endpoints(pair.first_carrier_index, pair.second_carrier_index)
         else {
             return Ok(None);
         };
@@ -2266,14 +2267,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     fn authored_carriers_are_adjacent(&self, pair: &RegionCarrierPair) -> bool {
-        self.authored_carrier_shared_endpoints(pair).is_some()
+        self.authored_carrier_shared_endpoints(pair.first_carrier_index, pair.second_carrier_index)
+            .is_some()
     }
 
     /// Returns the authored endpoint shared by each carrier. `true` names its
     /// traversal start and `false` its traversal end.
-    fn authored_carrier_shared_endpoints(&self, pair: &RegionCarrierPair) -> Option<(bool, bool)> {
-        let first = &self.data.carriers[pair.first_carrier_index];
-        let second = &self.data.carriers[pair.second_carrier_index];
+    fn authored_carrier_shared_endpoints(
+        &self,
+        first: usize,
+        second: usize,
+    ) -> Option<(bool, bool)> {
+        let first = &self.data.carriers[first];
+        let second = &self.data.carriers[second];
         if first.operand != second.operand || first.loop_index != second.loop_index {
             return None;
         }
@@ -2302,56 +2308,48 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
     }
 
-    /// Recovers a full-circle endpoint tangency from an adjacent sibling
+    /// Recovers a full-circle endpoint contact from an adjacent sibling
     /// chart. Long selected arcs are stored as consecutive half-circle
-    /// fragments; a chord adjacent to one half is still tangent to the same
-    /// complete circle represented by the other half. Retain the sibling
-    /// chart and its endpoint as well as the chord endpoint: the authored
+    /// fragments; a curve adjacent to one half meets the same complete circle
+    /// represented by the other half. Retain the sibling chart and both
+    /// endpoint identities, with any additional contact proof: the authored
     /// angular parameter decides half-chart ownership without a new solve.
-    fn certified_supporting_circle_chord_endpoint_tangency(
+    fn authored_supporting_circle_endpoint(
         &self,
         cusp_index: usize,
-        chord_index: usize,
+        other_index: usize,
+        qualifies: impl Fn(&crate::BezierAlgebraicCuspSemicircleFragment2, bool) -> bool,
     ) -> Option<(usize, bool, bool)> {
         let cusp = match &self.data.carriers.get(cusp_index)?.geometry {
             CurveSupport2::Circle(cusp) => cusp,
             _ => return None,
         };
-        let chord_carrier = self.data.carriers.get(chord_index)?;
+        let other_carrier = self.data.carriers.get(other_index)?;
         let mut certified = None;
         for (candidate_index, candidate) in self.data.carriers.iter().enumerate() {
             let CurveSupport2::Circle(candidate_cusp) = &candidate.geometry else {
                 continue;
             };
-            if candidate.operand != chord_carrier.operand
-                || candidate.loop_index != chord_carrier.loop_index
+            if candidate.operand != other_carrier.operand
+                || candidate.loop_index != other_carrier.loop_index
                 || !cusp
                     .semicircle()
                     .shares_structural_supporting_circle(candidate_cusp.semicircle())
             {
                 continue;
             }
-            let pair = RegionCarrierPair {
-                first_carrier_index: candidate_index,
-                second_carrier_index: chord_index,
-                context: RegionCarrierPairContext::CuspChord {
-                    cusp_is_first: true,
-                },
-            };
-            let Some((candidate_at_start, chord_at_start)) =
-                self.authored_carrier_shared_endpoints(&pair)
+            let Some((candidate_at_start, other_at_start)) =
+                self.authored_carrier_shared_endpoints(candidate_index, other_index)
             else {
                 continue;
             };
-            if !candidate_cusp.certified_tangent_endpoint(candidate_at_start)
-                || candidate_cusp.selected_chord_normal_contact_endpoint(candidate_at_start)
-            {
+            if !qualifies(candidate_cusp, candidate_at_start) {
                 continue;
             }
             match certified {
-                Some((_, _, previous)) if previous != chord_at_start => return None,
+                Some((_, _, previous)) if previous != other_at_start => return None,
                 Some(_) => {}
-                None => certified = Some((candidate_index, candidate_at_start, chord_at_start)),
+                None => certified = Some((candidate_index, candidate_at_start, other_at_start)),
             }
         }
         certified
@@ -3258,8 +3256,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
             )
             .map_err(|cause| self.invalid(parallel_index, cause))?
         {
-            let shared_source_parameter = self.authored_carrier_shared_endpoints(pair).and_then(
-                |(first_at_start, second_at_start)| {
+            let shared_source_parameter = self
+                .authored_carrier_shared_endpoints(
+                    pair.first_carrier_index,
+                    pair.second_carrier_index,
+                )
+                .and_then(|(first_at_start, second_at_start)| {
                     let parallel_at_start = if parallel_index == pair.first_carrier_index {
                         first_at_start
                     } else {
@@ -3271,8 +3273,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         carrier_traversal_end(parallel_carrier)
                     }
                     .as_bezier_parameter()
-                },
-            );
+                });
             if let Some(result) = self.algebraic_chord_rational_pair_result(
                 pair,
                 chord,
@@ -4372,8 +4373,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         )
                     };
                     let mut certified_chord_endpoint_incidence = None;
-                    if let Some((first_at_start, second_at_start)) =
-                        self.authored_carrier_shared_endpoints(pair)
+                    if let Some((first_at_start, second_at_start)) = self
+                        .authored_carrier_shared_endpoints(
+                            pair.first_carrier_index,
+                            pair.second_carrier_index,
+                        )
                     {
                         let cusp_at_start = if *cusp_is_first {
                             first_at_start
@@ -4427,9 +4431,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         });
                     }
                     if let Some((sibling_index, sibling_at_start, chord_at_start)) = self
-                        .certified_supporting_circle_chord_endpoint_tangency(
+                        .authored_supporting_circle_endpoint(
                             cusp_index,
                             chord_index,
+                            |sibling, at_start| {
+                                sibling.certified_tangent_endpoint(at_start)
+                                    && !sibling.selected_chord_normal_contact_endpoint(at_start)
+                            },
                         )
                         && certified_chord_endpoint_incidence
                             .is_none_or(|incident| incident == chord_at_start)
@@ -4441,71 +4449,37 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             "supporting-circle-sibling-endpoint-tangent",
                         );
                         let sibling = self.data.carriers[sibling_index].geometry.circle();
-                        let parameter = sibling.endpoint_parameter(sibling_at_start);
-                        let mapped = self.data.policy.strict_predicate_pass(|| {
-                            use std::cmp::Ordering::{Equal, Greater, Less};
-                            Ok::<_, CurveError>(match cusp.semicircle().shared_frame_chart_relation(
-                                sibling.semicircle(),
-                                &self.data.policy,
-                            ) {
-                                Classification::Decided(Some(false)) => {
-                                    Classification::Decided(Some(parameter.clone()))
-                                }
-                                Classification::Decided(Some(true)) => {
-                                    match (
-                                        parameter.order_to_real(&Real::zero(), &self.data.policy)?,
-                                        parameter.order_to_real(&Real::one(), &self.data.policy)?,
-                                    ) {
-                                        (Classification::Decided(Equal), _) => Classification::Decided(Some(
-                                            BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one()),
-                                        )),
-                                        (_, Classification::Decided(Equal)) => Classification::Decided(Some(
-                                            BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
-                                        )),
-                                        (Classification::Decided(Greater), Classification::Decided(Less)) => {
-                                            Classification::Decided(None)
-                                        }
-                                        _ => Classification::Uncertain(UncertaintyReason::Ordering),
-                                    }
-                                }
-                                _ => Classification::Uncertain(UncertaintyReason::Unsupported),
+                        let mapped = self
+                            .data
+                            .policy
+                            .strict_predicate_pass(|| {
+                                cusp.parameter_of_shared_circle_endpoint(
+                                    sibling,
+                                    sibling_at_start,
+                                    &self.data.policy,
+                                )
                             })
-                        }).map_err(|cause| self.invalid(cusp_index, cause))?;
+                            .map_err(|cause| self.invalid(cusp_index, cause))?;
                         match mapped {
                             Classification::Decided(None) => return Ok(RegionPairResult::empty()),
                             Classification::Decided(Some(cusp_parameter)) => {
-                                match self
-                                    .data
-                                    .policy
-                                    .strict_predicate_pass(|| {
-                                        cusp.contains_parameter(
-                                            &cusp_parameter,
-                                            true,
-                                            true,
-                                            &self.data.policy,
-                                        )
-                                    })
-                                    .map_err(|cause| self.invalid(cusp_index, cause))?
-                                {
-                                    Classification::Decided(false) => {
-                                        return Ok(RegionPairResult::empty());
-                                    }
-                                    Classification::Decided(true) => {
-                                        let (chord_parameter, point) = if chord_at_start {
-                                            (chord.start_parameter(), chord.start().clone())
-                                        } else {
-                                            (chord.end_parameter(), chord.end().clone())
-                                        };
-                                        return self.retained_cusp_chord_pair_result(
-                                            cusp, chord, chord_index, *cusp_is_first,
-                                            vec![BezierAlgebraicCuspSemicircleRetainedChordContact2 {
-                                                cusp_parameter, chord_parameter, point,
-                                                tangent_cross_sign: RealSign::Zero,
-                                            }],
-                                        );
-                                    }
-                                    Classification::Uncertain(_) => {}
-                                }
+                                let (chord_parameter, point) = if chord_at_start {
+                                    (chord.start_parameter(), chord.start().clone())
+                                } else {
+                                    (chord.end_parameter(), chord.end().clone())
+                                };
+                                return self.retained_cusp_chord_pair_result(
+                                    cusp,
+                                    chord,
+                                    chord_index,
+                                    *cusp_is_first,
+                                    vec![BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                                        cusp_parameter,
+                                        chord_parameter,
+                                        point,
+                                        tangent_cross_sign: RealSign::Zero,
+                                    }],
+                                );
                             }
                             Classification::Uncertain(_) => {}
                         }
@@ -5196,6 +5170,74 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 );
                 let rational = RationalBezier2::try_from_subcurve(curve)
                     .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?;
+                let cusp_index = if *cusp_is_first {
+                    pair.first_carrier_index
+                } else {
+                    pair.second_carrier_index
+                };
+                if let Some((sibling_index, sibling_at_start, curve_at_start)) =
+                    self.authored_supporting_circle_endpoint(cusp_index, curve_index, |_, _| true)
+                    && cusp
+                        .semicircle()
+                        .has_certified_concentric_source_tangency(&rational, &self.data.policy)
+                        .map_err(|cause| self.invalid(curve_index, cause))?
+                {
+                    // Distinct tangent supporting circles share exactly one
+                    // point. Boundary connectivity owns its parameter on an
+                    // adjacent chart of this complete circle. Reuse that
+                    // identity and transport it to the consumed half chart.
+                    if sibling_index == cusp_index {
+                        return Ok(RegionPairResult::empty());
+                    }
+                    let sibling = self.data.carriers[sibling_index].geometry.circle();
+                    let mapped = self
+                        .data
+                        .policy
+                        .strict_predicate_pass(|| {
+                            cusp.parameter_of_shared_circle_endpoint(
+                                sibling,
+                                sibling_at_start,
+                                &self.data.policy,
+                            )
+                        })
+                        .map_err(|cause| self.invalid(cusp_index, cause))?;
+                    match mapped {
+                        Classification::Decided(None) => return Ok(RegionPairResult::empty()),
+                        Classification::Decided(Some(parameter)) => {
+                            let point = match sibling
+                                .endpoint_point_evidence(sibling_at_start, &self.data.policy)
+                                .map_err(|cause| self.invalid(cusp_index, cause))?
+                            {
+                                Classification::Decided(point) => point,
+                                Classification::Uncertain(_) => None,
+                            };
+                            let circle_parameter = CurveParameter2::from_algebraic_cusp(parameter);
+                            let curve_parameter = if curve_at_start {
+                                carrier_traversal_start_parameter(curve_carrier)
+                            } else {
+                                carrier_traversal_end_parameter(curve_carrier)
+                            }
+                            .clone();
+                            let (first_parameter, second_parameter) = if *cusp_is_first {
+                                (circle_parameter, curve_parameter)
+                            } else {
+                                (curve_parameter, circle_parameter)
+                            };
+                            return Ok(RegionPairResult {
+                                contacts: vec![RegionPairContactEvidence::direct(
+                                    first_parameter,
+                                    second_parameter,
+                                    point,
+                                    false,
+                                    Some(RealSign::Zero),
+                                )],
+                                overlaps: Vec::new(),
+                                blockers: Vec::new(),
+                            });
+                        }
+                        Classification::Uncertain(_) => {}
+                    }
+                }
                 self.algebraic_cusp_rational_pair_result(pair, cusp, &rational, *cusp_is_first)
             }
             RegionCarrierPairContext::CuspParallel { cusp_is_first } => {
@@ -5416,8 +5458,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             RegionCarrierPairContext::CuspPair => {
                 let first_cusp = first.geometry.circle();
                 let second_cusp = second.geometry.circle();
-                if let Some((first_at_start, second_at_start)) =
-                    self.authored_carrier_shared_endpoints(pair)
+                if let Some((first_at_start, second_at_start)) = self
+                    .authored_carrier_shared_endpoints(
+                        pair.first_carrier_index,
+                        pair.second_carrier_index,
+                    )
                     && (first_cusp.certified_tangent_endpoint(first_at_start)
                         || second_cusp.certified_tangent_endpoint(second_at_start))
                 {
@@ -8293,6 +8338,31 @@ impl<'a> CurveRegionBooleanContext<'a> {
             for &(_, carrier_index, split_index) in &work {
                 if actions[carrier_index][split_index].is_some() {
                     continue;
+                }
+                // Each successful seed propagates exact winding values before
+                // the next work item. Consume those values immediately: a
+                // second geometric probe can introduce an unrelated algebraic
+                // field merely to rediscover an already certified face action.
+                // Coincident cells still obey their chosen overlap ownership.
+                let edge = edge_index(carrier_index, split_index);
+                if !edge_overlapped[carrier_index][split_index]
+                    || edge_overlap_grouped[edge] && edge_owns_overlap[carrier_index][split_index]
+                {
+                    let derived = match action_from_windings(
+                        carrier_index,
+                        split_index,
+                        &transverse_face_windings,
+                        false,
+                    )? {
+                        Some(action) => Some(action),
+                        None => {
+                            action_from_windings(carrier_index, split_index, &face_windings, true)?
+                        }
+                    };
+                    if let Some(action) = derived {
+                        actions[carrier_index][split_index] = Some(action);
+                        continue;
+                    }
                 }
                 let split = &topology.split_fragments[carrier_index][split_index];
                 let decision = self.regularized_fragment_geometric_decision(
@@ -20056,6 +20126,106 @@ mod certified_successor_tests {
                                 region
                                     .boolean_region(&region, BooleanOp::Union, &policy)
                                     .unwrap(),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes() {
+        use crate::CurveRegionLoopRole::{Hole, Material};
+
+        // All boundaries are curved, so there is no affine seed. Integer
+        // circle equations give an independent membership oracle for the
+        // propagated winding actions, including four levels of nesting.
+        let cases = [
+            vec![(-1, 2, Material), (1, 2, Material)],
+            vec![(0, 2, Material), (4, 2, Material)],
+            vec![(0, 3, Material), (2, 1, Hole)],
+            vec![(0, 2, Material), (0, 2, Material)],
+            vec![
+                (0, 4, Material),
+                (0, 3, Hole),
+                (0, 2, Material),
+                (0, 1, Hole),
+            ],
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let weight = (Real::one() / Real::from(2)).unwrap().sqrt().unwrap();
+            for reversed in [false, true] {
+                for circles in &cases {
+                    let paths = circles
+                        .iter()
+                        .map(|&(center, radius, _)| {
+                            let point = |x, y| Point2::from_values(center + radius * x, radius * y);
+                            let mut curves = [
+                                [(1, 0), (1, 1), (0, 1)],
+                                [(0, 1), (-1, 1), (-1, 0)],
+                                [(-1, 0), (-1, -1), (0, -1)],
+                                [(0, -1), (1, -1), (1, 0)],
+                            ]
+                            .map(|[start, control, end]| {
+                                Curve2::from(
+                                    crate::RationalQuadraticBezier2::try_new(
+                                        point(start.0, start.1),
+                                        point(control.0, control.1),
+                                        point(end.0, end.1),
+                                        Real::one(),
+                                        weight.clone(),
+                                        Real::one(),
+                                    )
+                                    .unwrap(),
+                                )
+                            })
+                            .to_vec();
+                            if reversed {
+                                curves = curves
+                                    .into_iter()
+                                    .rev()
+                                    .map(|curve| curve.reversed(&policy).unwrap().value)
+                                    .collect();
+                            }
+                            CurvePath2::try_new(curves).unwrap()
+                        })
+                        .collect::<Vec<_>>();
+                    let raw = CurveRegion2::try_from_boundary_paths_with_loop_semantics_raw(
+                        &paths,
+                        &circles.iter().map(|circle| circle.2).collect::<Vec<_>>(),
+                        &vec![FillRule::NonZero; circles.len()],
+                        &policy,
+                        None,
+                    )
+                    .unwrap();
+                    let normalized = raw.regularized_region_raw(&policy).unwrap();
+                    assert!(normalized.has_regularized_filled_left_topology(&policy));
+                    for x in [-7, -3, -1, 1, 3, 5, 7, 9] {
+                        for y in [-5, -1, 1, 5] {
+                            // Half-integer coordinates cannot lie on any of
+                            // these integer-center, integer-radius circles.
+                            let depth: i32 = circles
+                                .iter()
+                                .filter(|&&(center, radius, _)| {
+                                    (x - 2 * center) * (x - 2 * center) + y * y
+                                        < 4 * radius * radius
+                                })
+                                .map(|circle| if circle.2 == Material { 1 } else { -1 })
+                                .sum();
+                            let expected = if depth > 0 {
+                                RegionPointLocation::Inside
+                            } else {
+                                RegionPointLocation::Outside
+                            };
+                            let point = Point2::new(
+                                (Real::from(x) / Real::from(2)).unwrap(),
+                                (Real::from(y) / Real::from(2)).unwrap(),
+                            );
+                            assert_eq!(
+                                normalized.classify_point_raw(&point, &policy).unwrap(),
+                                Classification::Decided(expected),
+                                "circles={circles:?}, reversed={reversed}, policy={policy:?}, twice_point=({x}, {y})"
                             );
                         }
                     }
