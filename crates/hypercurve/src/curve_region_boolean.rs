@@ -207,13 +207,23 @@ struct RegionCarrierPair {
 #[derive(Debug)]
 enum RegionCarrierPairContext {
     Common(CurveIntersectionContext),
-    ParallelRational { parallel_is_first: bool },
+    ParallelRational {
+        parallel_is_first: bool,
+    },
     ParallelPair,
     ParallelSameImage,
-    AlgebraicChordPair,
-    CuspChord { cusp_is_first: bool },
-    CuspRational { cusp_is_first: bool },
-    CuspParallel { cusp_is_first: bool },
+    AlgebraicChordPair {
+        endpoint_contact: Option<Box<RegionPairContactEvidence>>,
+    },
+    CuspChord {
+        cusp_is_first: bool,
+    },
+    CuspRational {
+        cusp_is_first: bool,
+    },
+    CuspParallel {
+        cusp_is_first: bool,
+    },
     CuspPair,
 }
 
@@ -1480,8 +1490,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn intersect_algebraic_probe_boundary(
         &self,
         probe: crate::BezierAlgebraicChord2,
+        endpoint_incidence: Option<(usize, &CurveParameter2)>,
     ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
-        self.intersect_algebraic_probe_carriers(probe, self.data.first, &self.data.carriers)
+        self.intersect_algebraic_probe_carriers(
+            probe,
+            self.data.first,
+            &self.data.carriers,
+            endpoint_incidence,
+        )
     }
 
     fn intersect_algebraic_probe_carriers(
@@ -1489,9 +1505,44 @@ impl<'a> CurveRegionBooleanContext<'a> {
         probe: crate::BezierAlgebraicChord2,
         boundary_region: &CurveRegion2,
         boundary_carriers: &[RegionCarrier],
+        endpoint_incidence: Option<(usize, &CurveParameter2)>,
     ) -> ExactCurveResult<CurveRegionIntersectionResult2> {
         let start = probe.start_parameter();
         let end = probe.end_parameter();
+        // The caller evaluated this source chart to construct the probe end.
+        // Retain that incidence; a strict transverse derivative makes it a
+        // simple factor, so replay can solve the residual contacts separately.
+        let mut endpoint_incidence_contact = endpoint_incidence.and_then(|(index, parameter)| {
+            let carrier = boundary_carriers.get(index)?;
+            let CurveSupport2::Bezier(_) = &carrier.geometry else {
+                return None;
+            };
+            let scalar = parameter.as_bezier_parameter()?.scalar()?;
+            let line = probe.exact_line()?;
+            let Classification::Decided(derivative) = carrier
+                .geometry
+                .derivative_at(scalar, &CurveContext::STRICT)
+                .ok()?
+            else {
+                return None;
+            };
+            let (dx, dy) = line.delta();
+            let cross = dx * derivative.dy() - dy * derivative.dx();
+            let sign = real_sign(&cross, &CurveContext::STRICT)?;
+            if sign == RealSign::Zero {
+                return None;
+            }
+            Some((
+                index + 1,
+                Box::new(RegionPairContactEvidence::direct(
+                    CurveParameter2::from_algebraic_chord(end.clone()),
+                    parameter.clone(),
+                    Some(probe.end().clone()),
+                    true,
+                    Some(sign),
+                )),
+            ))
+        });
         let mut carriers = Vec::with_capacity(boundary_carriers.len().saturating_add(1));
         carriers.push(RegionCarrier {
             operand: CurveRegionBooleanOperand2::First,
@@ -1518,7 +1569,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut pairs = Vec::with_capacity(boundary_carriers.len());
         let mut intersection_cache = CurveIntersectionBatchCache::default();
         for second_carrier_index in 1..carriers.len() {
-            if let Some(pair) = build_candidate_carrier_pair(
+            if let Some(mut pair) = build_candidate_carrier_pair(
                 &carriers,
                 &curves,
                 0,
@@ -1526,6 +1577,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 &self.data.policy,
                 &mut intersection_cache,
             )? {
+                if let Some((index, _)) = &endpoint_incidence_contact
+                    && *index == second_carrier_index
+                    && let RegionCarrierPairContext::AlgebraicChordPair { endpoint_contact } =
+                        &mut pair.context
+                {
+                    *endpoint_contact = Some(
+                        endpoint_incidence_contact
+                            .take()
+                            .expect("the matching probe incidence is present")
+                            .1,
+                    );
+                }
                 pairs.push(pair);
             }
         }
@@ -4618,7 +4681,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     )
                 }
             }
-            RegionCarrierPairContext::AlgebraicChordPair => {
+            RegionCarrierPairContext::AlgebraicChordPair { endpoint_contact } => {
                 {
                     let (chord, chord_index, other, other_index) =
                         match (&first.geometry, &second.geometry) {
@@ -4636,6 +4699,28 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             ),
                             _ => unreachable!("an algebraic-chord pair retains one chord"),
                         };
+                    if let Some(contact) = endpoint_contact
+                        && let CurveSupport2::Bezier(curve) = other
+                    {
+                        let parameter = if chord_index == pair.first_carrier_index {
+                            &contact.second_parameter
+                        } else {
+                            &contact.first_parameter
+                        };
+                        let rational = RationalBezier2::try_from_subcurve(curve)
+                            .map_err(|cause| self.invalid(other_index, cause))?;
+                        if let Some(mut result) = self.algebraic_chord_rational_pair_result(
+                            pair,
+                            chord,
+                            chord_index,
+                            &rational,
+                            None,
+                            parameter.as_bezier_parameter(),
+                        )? {
+                            result.contacts.push((**contact).clone());
+                            return Ok(result);
+                        }
+                    }
                     // Every retained-chord pairing below already owns a
                     // complete finite-domain kernel. Refining composite
                     // endpoints into an optional AABB duplicates those exact
@@ -5917,7 +6002,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         } => "rational-parallel",
                         RegionCarrierPairContext::ParallelPair => "parallel-pair",
                         RegionCarrierPairContext::ParallelSameImage => "parallel-same-image",
-                        RegionCarrierPairContext::AlgebraicChordPair => "algebraic-chord-pair",
+                        RegionCarrierPairContext::AlgebraicChordPair { .. } => {
+                            "algebraic-chord-pair"
+                        }
                         RegionCarrierPairContext::CuspChord {
                             cusp_is_first: true,
                         } => "cusp-chord",
@@ -7998,7 +8085,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             Classification::Decided(probe) => probe,
                             Classification::Uncertain(_) => continue,
                         };
-                        let evidence = match self.intersect_algebraic_probe_boundary(probe) {
+                        let evidence = match self.intersect_algebraic_probe_boundary(probe, None) {
                             Ok(evidence) if evidence.overlaps().is_empty() => evidence,
                             Ok(_) | Err(_) => continue,
                         };
@@ -8587,6 +8674,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
         fragment: &BezierSplitFragment2,
         has_single_boundary_jump: bool,
     ) -> ExactCurveResult<RegularizedFragmentDecision> {
+        // A native side ray may fail an equality that the retained boundary
+        // probe can replay from construction evidence. Exhaust both exact
+        // routes before a local comparison may consume approximation.
+        if self.data.policy.permits_approximate_512() {
+            match self.data.policy.strict_predicate_pass(|| {
+                self.regularized_fragment_geometric_decision(
+                    carrier_index,
+                    fragment,
+                    has_single_boundary_jump,
+                )
+            }) {
+                Err(ExactCurveError::Blocked(_)) => {}
+                result => return result,
+            }
+        }
         if let BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) = fragment {
             return self.regularized_algebraic_cusp_fragment_decision(carrier_index, fragment);
         }
@@ -8617,19 +8719,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
         );
         let mut upper = end.clone();
         let mut last_reason = UncertaintyReason::Boundary;
-        let local_circular_curve = match fragment {
-            BezierSplitFragment2::Materialized { curve, .. }
-                if retained_circular_support(curve).is_some() =>
-            {
-                Some(curve)
-            }
-            BezierSplitFragment2::Materialized { .. }
-            | BezierSplitFragment2::RetainedBezier { .. }
-            | BezierSplitFragment2::AnalyticParallel(_)
-            | BezierSplitFragment2::AlgebraicChord(_)
-            | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
-            BezierSplitFragment2::SelectedFiber(_) => None,
-        };
         // Retained circular-conic provenance is a construction certificate for
         // a proper rational parametrization of a nondegenerate minor arc.
         let retained_regular_circle = matches!(
@@ -8669,16 +8758,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // An endpoint witness is only needed when the adjacent algebraic
         // isolator still touches that endpoint. Otherwise the represented
         // interior gap is cheaper and avoids an unnecessary boundary ray.
-        let source_endpoint_witness = if local_circular_curve.is_none()
-            && retained_regular_circle
+        let source_endpoint_witness = if retained_regular_circle
             && carrier.start == *start
             && start.scalar().is_some_and(|boundary| {
                 end.as_bezier_parameter()
                     .is_some_and(|end| isolator_touches(end, boundary, true))
             }) {
             start.scalar().cloned()
-        } else if local_circular_curve.is_none()
-            && retained_regular_circle
+        } else if retained_regular_circle
             && carrier.end == *end
             && end.scalar().is_some_and(|boundary| {
                 start
@@ -8693,95 +8780,75 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut source_endpoint_witness_attempted = false;
         let mut boundary_probe_representative = None;
         for _ in 0..max_representatives {
-            let (parameter, representative, derivative, derivative_follows_boundary) =
-                if let Some(curve) = local_circular_curve {
-                    let half = (crate::Real::one() / crate::Real::from(2_u8))
-                        .map_err(|cause| self.invalid(carrier_index, cause.into()))?;
-                    let representative = match curve.point_at(&half, &self.data.policy) {
-                        Classification::Decided(point) => point,
-                        Classification::Uncertain(reason) => {
-                            last_reason = reason;
-                            break;
-                        }
-                    };
-                    let derivative_curve = RationalBezier2::try_from_subcurve(curve)
-                        .map_err(|cause| self.invalid(carrier_index, cause))?;
-                    let derivative =
-                        match derivative_curve.derivative_at_classified(&half, &self.data.policy) {
-                            Classification::Decided(derivative) => derivative,
+            // Keep the original chart and its parameter as the winding
+            // authority. Sampling a rematerialized circular fragment both
+            // expands its coordinate expressions and discards that identity.
+            let (parameter, representative, derivative) = {
+                let parameter = if !source_endpoint_witness_attempted {
+                    source_endpoint_witness_attempted = true;
+                    source_endpoint_witness.clone()
+                } else {
+                    None
+                };
+                let parameter = match parameter {
+                    Some(parameter) => parameter,
+                    None => {
+                        let parameter = match start
+                            .strict_scalar_between_ordered(&upper, &self.data.policy)
+                            .map_err(|cause| self.invalid(carrier_index, cause))?
+                        {
+                            Classification::Decided(parameter) => parameter,
                             Classification::Uncertain(reason) => {
                                 last_reason = reason;
                                 break;
                             }
                         };
-                    (None, representative, derivative, true)
-                } else {
-                    let parameter = if !source_endpoint_witness_attempted {
-                        source_endpoint_witness_attempted = true;
-                        source_endpoint_witness.clone()
-                    } else {
-                        None
-                    };
-                    let parameter = match parameter {
-                        Some(parameter) => parameter,
-                        None => {
-                            let parameter = match start
-                                .strict_scalar_between_ordered(&upper, &self.data.policy)
-                                .map_err(|cause| self.invalid(carrier_index, cause))?
-                            {
-                                Classification::Decided(parameter) => parameter,
-                                Classification::Uncertain(reason) => {
-                                    last_reason = reason;
-                                    break;
-                                }
-                            };
-                            upper =
-                                CurveParameter2::from(BezierParameter2::Exact(parameter.clone()));
-                            parameter
+                        upper = CurveParameter2::from(BezierParameter2::Exact(parameter.clone()));
+                        parameter
+                    }
+                };
+                let retained_endpoint = source_endpoint_witness
+                    .as_ref()
+                    .filter(|endpoint| *endpoint == &parameter)
+                    .and_then(|endpoint| match &carrier.geometry {
+                        CurveSupport2::Bezier(curve) if endpoint == &crate::Real::zero() => {
+                            Some(curve.endpoint_refs().0.clone())
                         }
-                    };
-                    let retained_endpoint = source_endpoint_witness
-                        .as_ref()
-                        .filter(|endpoint| *endpoint == &parameter)
-                        .and_then(|endpoint| match &carrier.geometry {
-                            CurveSupport2::Bezier(curve) if endpoint == &crate::Real::zero() => {
-                                Some(curve.endpoint_refs().0.clone())
-                            }
-                            CurveSupport2::Bezier(curve) if endpoint == &crate::Real::one() => {
-                                Some(curve.endpoint_refs().1.clone())
-                            }
-                            CurveSupport2::Bezier(_)
-                            | CurveSupport2::Parallel(_)
-                            | CurveSupport2::Line(_)
-                            | CurveSupport2::Circle(_) => None,
-                        });
-                    let representative = match retained_endpoint {
-                        Some(point) => point,
-                        None => match carrier
-                            .geometry
-                            .point_at(&parameter, &self.data.policy)
-                            .map_err(|cause| self.invalid(carrier_index, cause))?
-                        {
-                            Classification::Decided(point) => point,
-                            Classification::Uncertain(reason) => {
-                                last_reason = reason;
-                                continue;
-                            }
-                        },
-                    };
-                    let derivative = match carrier
+                        CurveSupport2::Bezier(curve) if endpoint == &crate::Real::one() => {
+                            Some(curve.endpoint_refs().1.clone())
+                        }
+                        CurveSupport2::Bezier(_)
+                        | CurveSupport2::Parallel(_)
+                        | CurveSupport2::Line(_)
+                        | CurveSupport2::Circle(_) => None,
+                    });
+                let representative = match retained_endpoint {
+                    Some(point) => point,
+                    None => match carrier
                         .geometry
-                        .derivative_at(&parameter, &self.data.policy)
+                        .point_at(&parameter, &self.data.policy)
                         .map_err(|cause| self.invalid(carrier_index, cause))?
                     {
-                        Classification::Decided(derivative) => derivative,
+                        Classification::Decided(point) => point,
                         Classification::Uncertain(reason) => {
                             last_reason = reason;
                             continue;
                         }
-                    };
-                    (Some(parameter), representative, derivative, false)
+                    },
                 };
+                let derivative = match carrier
+                    .geometry
+                    .derivative_at(&parameter, &self.data.policy)
+                    .map_err(|cause| self.invalid(carrier_index, cause))?
+                {
+                    Classification::Decided(derivative) => derivative,
+                    Classification::Uncertain(reason) => {
+                        last_reason = reason;
+                        continue;
+                    }
+                };
+                (parameter, representative, derivative)
+            };
             let tangent_squared =
                 derivative.dx() * derivative.dx() + derivative.dy() * derivative.dy();
             let regular = match crate::classify::is_zero(&tangent_squared, &self.data.policy) {
@@ -8792,11 +8859,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 None if retained_regular_circle => true,
                 None => {
-                    match rational_geometry.as_ref().zip(parameter.as_ref()).map(
-                        |(curve, parameter)| {
-                            curve.derivative_is_certified_nonzero_at(parameter, &self.data.policy)
-                        },
-                    ) {
+                    match rational_geometry.as_ref().map(|curve| {
+                        curve.derivative_is_certified_nonzero_at(&parameter, &self.data.policy)
+                    }) {
                         Some(Ok(Classification::Decided(true))) => true,
                         Some(Ok(Classification::Uncertain(reason))) => {
                             last_reason = reason;
@@ -8814,17 +8879,17 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 continue;
             }
             let (mut tangent_x, mut tangent_y) = (derivative.dx().clone(), derivative.dy().clone());
-            if carrier.reversed && !derivative_follows_boundary {
+            if carrier.reversed {
                 tangent_x = -tangent_x;
                 tangent_y = -tangent_y;
             }
-            boundary_probe_representative = Some(representative.clone());
-            let source_parameter = parameter
-                .map(|parameter| CurveParameter2::from(BezierParameter2::Exact(parameter)));
+            let source_parameter = CurveParameter2::from(BezierParameter2::Exact(parameter));
+            boundary_probe_representative =
+                Some((representative.clone(), source_parameter.clone()));
             let left = match self.fragment_side_classification(
                 carrier_index,
                 &representative,
-                source_parameter.as_ref(),
+                Some(&source_parameter),
                 &tangent_x,
                 &tangent_y,
                 true,
@@ -8839,7 +8904,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let right = match self.fragment_side_classification(
                 carrier_index,
                 &representative,
-                source_parameter.as_ref(),
+                Some(&source_parameter),
                 &tangent_x,
                 &tangent_y,
                 false,
@@ -8856,11 +8921,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
             ));
         }
         if last_reason == UncertaintyReason::Boundary
-            && let Some(representative) = boundary_probe_representative
+            && let Some((representative, parameter)) = boundary_probe_representative
         {
             return self.regularized_fragment_decision_by_boundary_probe(
                 carrier_index,
                 CurvePoint2::from(representative),
+                Some(&parameter),
             );
         }
         Err(self.blocked(carrier_index, last_reason))
@@ -9087,7 +9153,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             };
             let probe_end = CurveParameter2::from_algebraic_chord(probe.end_parameter());
-            let evidence = match self.intersect_algebraic_probe_boundary(probe) {
+            let evidence = match self.intersect_algebraic_probe_boundary(probe, None) {
                 Ok(evidence) => evidence,
                 Err(ExactCurveError::Blocked(blocker)) => {
                     last_reason = blocker.reason();
@@ -9318,6 +9384,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return self.regularized_fragment_decision_by_boundary_probe(
                     carrier_index,
                     CurvePoint2::from(representative),
+                    None,
                 );
             };
             let source_chord = match &self.data.carriers[carrier_index].geometry {
@@ -9353,6 +9420,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return self.regularized_fragment_decision_by_boundary_probe(
                         carrier_index,
                         CurvePoint2::from(representative),
+                        None,
                     );
                 }
                 Err(error) => return Err(error),
@@ -9367,6 +9435,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         return self.regularized_fragment_decision_by_boundary_probe(
                             carrier_index,
                             CurvePoint2::from(representative),
+                            None,
                         );
                     }
                     Err(error) => return Err(error),
@@ -9382,6 +9451,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return self.regularized_fragment_decision_by_boundary_probe(
                     carrier_index,
                     representative,
+                    None,
                 );
             }
         };
@@ -9408,6 +9478,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return self.regularized_fragment_decision_by_boundary_probe(
                     carrier_index,
                     CurvePoint2::from(representative),
+                    None,
                 );
             }
             Err(error) => return Err(error),
@@ -9422,6 +9493,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return self.regularized_fragment_decision_by_boundary_probe(
                         carrier_index,
                         CurvePoint2::from(representative),
+                        None,
                     );
                 }
                 Err(error) => return Err(error),
@@ -9446,6 +9518,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         &self,
         carrier_index: usize,
         representative: CurvePoint2,
+        source_parameter: Option<&CurveParameter2>,
     ) -> ExactCurveResult<RegularizedFragmentDecision> {
         let outer_bounds = match retained_probe_outer_bounds(&self.data.carriers, &self.data.policy)
         {
@@ -9529,7 +9602,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             };
             let probe_end = CurveParameter2::from_algebraic_chord(probe.end_parameter());
-            let evidence = match self.intersect_algebraic_probe_boundary(probe) {
+            let evidence = match self.intersect_algebraic_probe_boundary(
+                probe,
+                source_parameter.map(|parameter| (carrier_index, parameter)),
+            ) {
                 Ok(evidence) => evidence,
                 Err(ExactCurveError::Blocked(blocker)) => {
                     last_reason = blocker.reason();
@@ -11100,6 +11176,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 probe,
                 boundary_region,
                 &boundary_carriers,
+                None,
             ) {
                 Ok(evidence) => evidence,
                 Err(ExactCurveError::Blocked(blocker)) => {
@@ -12018,7 +12095,9 @@ fn build_candidate_carrier_pair(
             cusp_is_first: false,
         },
         (CurveSupport2::Line(_), _) | (_, CurveSupport2::Line(_)) => {
-            RegionCarrierPairContext::AlgebraicChordPair
+            RegionCarrierPairContext::AlgebraicChordPair {
+                endpoint_contact: None,
+            }
         }
         (CurveSupport2::Bezier(_), CurveSupport2::Bezier(_)) => {
             let first = curves[first_carrier_index]
@@ -16401,6 +16480,113 @@ mod certified_successor_tests {
         .expect("valid rational line")
     }
 
+    #[test]
+    fn boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts() {
+        let fraction = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        let a = fraction(1, 4);
+        let b = fraction(1, 2);
+        for r in [fraction(3, 4), fraction(1, 2).sqrt().unwrap()] {
+            // x=t, y=(t-a)(t-b)(t-r). A horizontal probe ending at t=r
+            // meets two other transverse branches. Its nearer start omits a.
+            let c0 = -(&a * &b * &r);
+            let c1 = &a * &b + (&a + &b) * &r;
+            let c2 = -(&a + &b + &r);
+            let source = RationalBezier2::try_new(
+                vec![
+                    Point2::new(Real::zero(), c0.clone()),
+                    Point2::new(fraction(1, 3), &c0 + &c1 * fraction(1, 3)),
+                    Point2::new(
+                        fraction(2, 3),
+                        &c0 + &c1 * fraction(2, 3) + &c2 * fraction(1, 3),
+                    ),
+                    Point2::new(Real::one(), &c0 + &c1 + &c2 + Real::one()),
+                ],
+                vec![Real::one(); 4],
+            )
+            .unwrap();
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                for reversed in [false, true] {
+                    let empty = CurveRegion2::empty();
+                    let geometry = CurveSupport2::Bezier(BezierSubcurve2::Rational(source.clone()));
+                    let context = CurveRegionBooleanContext {
+                        data: CurveRegionBooleanContextData {
+                            first: &empty,
+                            second: &empty,
+                            policy,
+                            carriers: vec![RegionCarrier {
+                                operand: CurveRegionBooleanOperand2::First,
+                                loop_index: 0,
+                                fragment_index: 0,
+                                family: geometry.family(),
+                                geometry,
+                                start: BezierParameter2::Exact(Real::zero()).into(),
+                                end: BezierParameter2::Exact(Real::one()).into(),
+                                reversed,
+                                filled_side_is_left: true,
+                                selected_fiber_endpoint_points: None,
+                                image_is_injective: OnceLock::new(),
+                                bounds: OnceLock::new(),
+                            }],
+                            first_carrier_count: 1,
+                            authored_carrier_pair_count: 0,
+                            pairs: Vec::new(),
+                            strict_line_image_only: OnceLock::new(),
+                            operand_bounds: std::array::from_fn(|_| OnceLock::new()),
+                        },
+                    };
+                    for (start, expected) in [
+                        (Real::from(-1_i8), vec![a.clone(), b.clone(), r.clone()]),
+                        (fraction(1, 3), vec![b.clone(), r.clone()]),
+                    ] {
+                        let representative =
+                            CurvePoint2::from(source.point_at(&r, &policy).unwrap());
+                        let probe = decided(
+                            crate::BezierAlgebraicChord2::try_new(
+                                Point2::new(start, Real::zero()).into(),
+                                representative.clone(),
+                                &policy,
+                            )
+                            .unwrap(),
+                        );
+                        let probe_end =
+                            CurveParameter2::from_algebraic_chord(probe.end_parameter());
+                        let source_parameter = BezierParameter2::Exact(r.clone()).into();
+                        let outcome = crate::policy::resolve_certified_operation(&policy, |_| {
+                            context.intersect_algebraic_probe_boundary(
+                                probe,
+                                Some((0, &source_parameter)),
+                            )
+                        })
+                        .unwrap();
+                        assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+                        let evidence = outcome.value;
+                        assert!(evidence.blockers().is_empty());
+                        assert!(evidence.overlaps().is_empty());
+                        assert_eq!(evidence.contacts().len(), expected.len());
+                        for parameter in expected {
+                            let parameter =
+                                CurveParameter2::from(BezierParameter2::Exact(parameter));
+                            let contacts = evidence
+                                .contacts()
+                                .iter()
+                                .filter(|contact| {
+                                    contact.second_parameter().same_value(&parameter, &policy)
+                                        == Ok(Classification::Decided(true))
+                                })
+                                .collect::<Vec<_>>();
+                            assert_eq!(contacts.len(), 1, "each finite branch occurs exactly once");
+                            assert!(contacts[0].is_certified_transverse());
+                            if parameter == source_parameter {
+                                assert_eq!(contacts[0].first_parameter(), &probe_end);
+                                assert_eq!(contacts[0].point(), Some(&representative));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn algebraic_chord_carrier(
         operand: CurveRegionBooleanOperand2,
         chord: crate::BezierAlgebraicChord2,
@@ -18020,7 +18206,9 @@ mod certified_successor_tests {
             let clipping_pair = RegionCarrierPair {
                 first_carrier_index: 0,
                 second_carrier_index: 1,
-                context: RegionCarrierPairContext::AlgebraicChordPair,
+                context: RegionCarrierPairContext::AlgebraicChordPair {
+                    endpoint_contact: None,
+                },
             };
             let clipping_result = clipping_context
                 .pair_result(&clipping_pair)
@@ -18207,7 +18395,9 @@ mod certified_successor_tests {
                     pairs: vec![RegionCarrierPair {
                         first_carrier_index: 0,
                         second_carrier_index: 1,
-                        context: RegionCarrierPairContext::AlgebraicChordPair,
+                        context: RegionCarrierPairContext::AlgebraicChordPair {
+                            endpoint_contact: None,
+                        },
                     }],
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -18371,7 +18561,9 @@ mod certified_successor_tests {
                         pairs: vec![RegionCarrierPair {
                             first_carrier_index: 0,
                             second_carrier_index: 1,
-                            context: RegionCarrierPairContext::AlgebraicChordPair,
+                            context: RegionCarrierPairContext::AlgebraicChordPair {
+                                endpoint_contact: None,
+                            },
                         }],
                         strict_line_image_only: OnceLock::new(),
                         operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -18616,7 +18808,9 @@ mod certified_successor_tests {
                 pairs: vec![RegionCarrierPair {
                     first_carrier_index: 0,
                     second_carrier_index: 1,
-                    context: RegionCarrierPairContext::AlgebraicChordPair,
+                    context: RegionCarrierPairContext::AlgebraicChordPair {
+                        endpoint_contact: None,
+                    },
                 }],
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
@@ -19499,7 +19693,9 @@ mod certified_successor_tests {
             let pair = RegionCarrierPair {
                 first_carrier_index: 0,
                 second_carrier_index: 1,
-                context: RegionCarrierPairContext::AlgebraicChordPair,
+                context: RegionCarrierPairContext::AlgebraicChordPair {
+                    endpoint_contact: None,
+                },
             };
             let context = CurveRegionBooleanContext {
                 data: CurveRegionBooleanContextData {
@@ -20380,7 +20576,9 @@ mod certified_successor_tests {
                     pairs: vec![RegionCarrierPair {
                         first_carrier_index: 0,
                         second_carrier_index: 1,
-                        context: RegionCarrierPairContext::AlgebraicChordPair,
+                        context: RegionCarrierPairContext::AlgebraicChordPair {
+                            endpoint_contact: None,
+                        },
                     }],
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),

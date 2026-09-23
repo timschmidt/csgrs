@@ -79542,6 +79542,22 @@ impl BezierAlgebraicChord2 {
         {
             return Ok(Classification::Decided(intersections));
         }
+        // A represented parameter can still contain arbitrary exact values.
+        // Reuse its certified incidence as a polynomial factor before circle
+        // reconstruction asks a freshly solved point to prove endpoint equality.
+        if matches!(excluded_source_parameter, Some(BezierParameter2::Exact(_)))
+            && let Classification::Decided(Some(intersections)) =
+                policy.strict_predicate_pass(|| {
+                    self.recursive_projective_rational_intersections(
+                        source,
+                        range,
+                        excluded_source_parameter,
+                        policy,
+                    )
+                })?
+        {
+            return Ok(Classification::Decided(intersections));
+        }
         let selected = match excluded_source_parameter {
             Some(BezierParameter2::Algebraic(parameter)) => Some(parameter.clone()),
             Some(BezierParameter2::Exact(_)) => None,
