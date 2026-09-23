@@ -5565,11 +5565,10 @@ impl RationalBezier2 {
         if affine && !affine_unresolved {
             return Classification::Decided(Some(RationalBezierEndpointParameterRelation2::Affine));
         }
-        if !matches!(self.control_weight_sign(), Classification::Decided(_))
-            || !matches!(other.control_weight_sign(), Classification::Decided(_))
-        {
-            return Classification::Uncertain(UncertaintyReason::RealSign);
-        }
+        // A positive endpoint-projective scale preserves the finite unit
+        // domain even when Bernstein weights have mixed signs. The full
+        // homogeneous weight identity below certifies the reparameterization;
+        // a same-sign control hull is not part of that theorem.
         let other_first = if reversed { degree - 1 } else { 1 };
         let scale_numerator = &other.weights()[other_first] * &self.weights()[0];
         let scale_denominator = &self.weights()[1] * &other.weights()[other_base];
@@ -10208,6 +10207,94 @@ mod tests {
             ],
         )
         .unwrap()
+    }
+
+    #[test]
+    fn mixed_weight_projective_overlap_preserves_the_finite_parameter_domain() {
+        // W(t)=1-3t+3t^2 >= 1/4. Scaling the middle and last weights by
+        // 2 and 4 composes t=2u/(1+u), whose denominator is positive on [0,1].
+        let first = finite_mixed_weight_quadratic();
+        let unit = BezierParameterRange2::from_exact(Real::zero(), Real::one());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for common_scale in [Real::one(), Real::from(-2)] {
+                let second = RationalBezier2::try_new(
+                    first.affine_control_points().unwrap().to_vec(),
+                    [Real::one(), Real::from(-1), Real::from(4)]
+                        .into_iter()
+                        .map(|weight| weight * &common_scale)
+                        .collect(),
+                )
+                .unwrap();
+                for reversed in [false, true] {
+                    let second = if reversed {
+                        second.reversed()
+                    } else {
+                        second.clone()
+                    };
+                    let Classification::Decided(RationalBezierSharedComponentReplay::Overlap(
+                        overlap,
+                    )) = first.image_overlap(&second, &policy)
+                    else {
+                        panic!("mixed weights must retain the complete projective overlap");
+                    };
+                    assert_eq!(
+                        overlap.orientation,
+                        if reversed {
+                            RationalBezierOverlapOrientation2::Reversed
+                        } else {
+                            RationalBezierOverlapOrientation2::Same
+                        }
+                    );
+                    let correspondence = RationalBezierOverlapParameterCorrespondence2::new(
+                        &first, &second, &policy,
+                    );
+                    for t in [
+                        Real::zero(),
+                        (Real::one() / Real::from(3)).unwrap(),
+                        Real::one(),
+                    ] {
+                        let parameter = BezierParameter2::Exact(t.clone());
+                        let mut expected = (&t / (Real::from(2) - &t)).unwrap();
+                        if reversed {
+                            expected = Real::one() - expected;
+                        }
+                        let Classification::Decided(Some(mapped)) = correspondence
+                            .map_first_to_second(&parameter, &unit, &unit, &policy)
+                            .unwrap()
+                        else {
+                            panic!("the finite projective image must be exact");
+                        };
+                        assert_eq!(mapped.scalar(), Some(&expected));
+                        assert_eq!(
+                            first.point_at_classified(&t, &policy),
+                            second.point_at_classified(&expected, &policy),
+                        );
+                        assert_eq!(
+                            correspondence
+                                .map_second_to_first(&mapped, &unit, &unit, &policy)
+                                .unwrap(),
+                            Classification::Decided(Some(parameter))
+                        );
+                    }
+                }
+            }
+            let complementary = RationalBezier2::try_new(
+                first.affine_control_points().unwrap().to_vec(),
+                vec![
+                    Real::one(),
+                    (Real::one() / Real::from(2)).unwrap(),
+                    Real::one(),
+                ],
+            )
+            .unwrap();
+            assert!(
+                matches!(
+                    first.endpoint_parameter_relation(&complementary, false, &policy),
+                    Classification::Decided(None)
+                ),
+                "a negative projective scale does not preserve the finite unit image"
+            );
+        }
     }
 
     #[test]

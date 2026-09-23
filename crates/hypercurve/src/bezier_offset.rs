@@ -50287,28 +50287,15 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         if Arc::ptr_eq(&self.data, &other.data) {
             return true;
         }
-        let (
-            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
-                first_semicircle: first_first,
-                second_semicircle: first_second,
-                source: first_source,
-            },
-            BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
-                first_semicircle: second_first,
-                second_semicircle: second_second,
-                source: second_source,
-            },
-        ) = (&self.data.parameter_map, &other.data.parameter_map)
-        else {
-            return false;
-        };
-        Arc::ptr_eq(&first_source.data, &second_source.data)
-            && first_first == second_first
-            && first_second == second_second
-            && self.data.first_boundaries == other.data.first_boundaries
+        // Each half-circle chart is injective. The same two exact carriers
+        // therefore determine the same parameter map independently of which
+        // intersection or similarity pass retained its certificate.
+        self.data.first_boundaries == other.data.first_boundaries
             && self.data.second_boundaries == other.data.second_boundaries
             && self.data.orientation == other.data.orientation
             && self.data.policy == other.data.policy
+            && self.semicircle(true) == other.semicircle(true)
+            && self.semicircle(false) == other.semicircle(false)
     }
 
     fn boundary_parameter(
@@ -152146,6 +152133,67 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 ),
                 Classification::Decided(true)
             );
+        }
+    }
+
+    #[test]
+    fn reconstructed_circle_overlap_reuses_parameter_identity_and_inverse() {
+        let quarter_turn = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::from(-1),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = synthetic_independent_unit_cusp_semicircle(&policy);
+            let rotated = first.transform_similarity(&quarter_turn).unwrap();
+            let source = BezierAlgebraicCuspSemicircleParameter2::Exact(
+                (Real::from(3) / Real::from(4)).unwrap(),
+            );
+            for reversed in [false, true] {
+                let second = if reversed {
+                    rotated.reversed()
+                } else {
+                    rotated.clone()
+                };
+                let reconstruct = || {
+                    let Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
+                    ) = first.pair_intersections(&second, &policy).unwrap()
+                    else {
+                        panic!("the rotated half circles share one quadrant");
+                    };
+                    overlap
+                };
+                let authored = reconstruct();
+                let replayed = reconstruct();
+                assert!(!Arc::ptr_eq(&authored.data, &replayed.data));
+                let cut = authored.map_parameter(&source, true);
+                let replay = replayed.map_parameter(&source, true);
+                assert!(
+                    cut.shares_exact_evidence(&replay),
+                    "rebuilding a certificate must retain the same mapped cut"
+                );
+                assert_eq!(
+                    cut.cmp_by_refinement(&replay, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                // tan(theta/2)=3; rotating the frame by pi/2 gives tan=1/2,
+                // hence local parameter 1/3 (2/3 on the reversed chart).
+                let expected = (Real::from(if reversed { 2 } else { 1 }) / Real::from(3)).unwrap();
+                assert_eq!(
+                    cut.order_to_real(&expected, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                let inverse = replayed.map_parameter(&cut, false);
+                assert!(
+                    inverse.shares_exact_evidence(&source),
+                    "the independently replayed inverse must remove the transport wrapper"
+                );
+            }
         }
     }
 
