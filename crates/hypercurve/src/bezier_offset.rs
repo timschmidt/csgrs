@@ -13960,8 +13960,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 source_first: second_side,
             },
         ) = (self, other)
-            && first_side == second_side
-            && first_overlap.shares_parameter_authority(second_overlap)
+            && first_overlap.shares_parameter_map(*first_side, second_overlap, *second_side)
             && first_overlap.has_exact_endpoint_map()
         {
             // A full coincident semicircle maps its local parameter by either
@@ -50283,19 +50282,23 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         }
     }
 
-    fn shares_parameter_authority(&self, other: &Self) -> bool {
-        if Arc::ptr_eq(&self.data, &other.data) {
+    fn shares_parameter_map(
+        &self,
+        source_first: bool,
+        other: &Self,
+        other_source_first: bool,
+    ) -> bool {
+        if source_first == other_source_first && Arc::ptr_eq(&self.data, &other.data) {
             return true;
         }
         // Each half-circle chart is injective. The same two exact carriers
         // therefore determine the same parameter map independently of which
-        // intersection or similarity pass retained its certificate.
-        self.data.first_boundaries == other.data.first_boundaries
-            && self.data.second_boundaries == other.data.second_boundaries
-            && self.data.orientation == other.data.orientation
+        // operand order, intersection, or similarity pass retained its proof.
+        // Boundary labels identify the overlap domain, not the chart map.
+        self.data.orientation == other.data.orientation
             && self.data.policy == other.data.policy
-            && self.semicircle(true) == other.semicircle(true)
-            && self.semicircle(false) == other.semicircle(false)
+            && self.semicircle(source_first) == other.semicircle(other_source_first)
+            && self.semicircle(!source_first) == other.semicircle(!other_source_first)
     }
 
     fn boundary_parameter(
@@ -50349,6 +50352,19 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         parameter: &BezierAlgebraicCuspSemicircleParameter2,
         source_first: bool,
     ) -> BezierAlgebraicCuspSemicircleParameter2 {
+        // Cancel a certified inverse before the full-overlap path can wrap a
+        // mapped cut in another unit complement. Pair enumeration order does
+        // not change which exact source and destination charts compose.
+        if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter
+            && let BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
+                overlap,
+                source,
+                source_first: mapped_source_first,
+            } = data.as_ref()
+            && overlap.shares_parameter_map(*mapped_source_first, self, !source_first)
+        {
+            return source.clone();
+        }
         if self.has_exact_endpoint_map() {
             return if self.data.orientation == RationalBezierOverlapOrientation2::Same {
                 parameter.clone()
@@ -50374,17 +50390,6 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             if parameter.shares_exact_evidence(&self.boundary_parameter(endpoint, source_first)) {
                 return self.boundary_parameter(endpoint, !source_first);
             }
-        }
-        if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter
-            && let BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
-                overlap,
-                source,
-                source_first: mapped_source_first,
-            } = data.as_ref()
-            && overlap.shares_parameter_authority(self)
-            && *mapped_source_first != source_first
-        {
-            return source.clone();
         }
         BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
             BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
@@ -51906,7 +51911,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                             first: second_side,
                         },
                     ) => {
-                        first_overlap.shares_parameter_authority(second_overlap)
+                        first_overlap.shares_parameter_map(true, second_overlap, true)
                             && first_endpoint == second_endpoint
                             && first_side == second_side
                     }
@@ -51922,9 +51927,11 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                             source_first: second_side,
                         },
                     ) => {
-                        first_overlap.shares_parameter_authority(second_overlap)
-                            && first_source.shares_exact_evidence(second_source)
-                            && first_side == second_side
+                        first_overlap.shares_parameter_map(
+                            *first_side,
+                            second_overlap,
+                            *second_side,
+                        ) && first_source.shares_exact_evidence(second_source)
                     }
                     (
                         BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
@@ -52782,8 +52789,11 @@ other => return match other {
                     source_first: second_source_side,
                 },
             ) = (first.as_ref(), second.as_ref())
-            && first_source_side == second_source_side
-            && first_overlap.shares_parameter_authority(second_overlap)
+            && first_overlap.shares_parameter_map(
+                *first_source_side,
+                second_overlap,
+                *second_source_side,
+            )
         {
             // One coincident-circle overlap is monotone on its retained
             // source range. Preserve the source order directly instead of
@@ -152159,28 +152169,18 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 } else {
                     rotated.clone()
                 };
-                let reconstruct = || {
+                let overlap = |a: &BezierAlgebraicCuspSemicircle2,
+                               b: &BezierAlgebraicCuspSemicircle2| {
                     let Classification::Decided(
                         BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
-                    ) = first.pair_intersections(&second, &policy).unwrap()
+                    ) = a.pair_intersections(b, &policy).unwrap()
                     else {
-                        panic!("the rotated half circles share one quadrant");
+                        panic!("the selected half circles share a positive span");
                     };
                     overlap
                 };
-                let authored = reconstruct();
-                let replayed = reconstruct();
-                assert!(!Arc::ptr_eq(&authored.data, &replayed.data));
+                let authored = overlap(&first, &second);
                 let cut = authored.map_parameter(&source, true);
-                let replay = replayed.map_parameter(&source, true);
-                assert!(
-                    cut.shares_exact_evidence(&replay),
-                    "rebuilding a certificate must retain the same mapped cut"
-                );
-                assert_eq!(
-                    cut.cmp_by_refinement(&replay, &policy).unwrap(),
-                    Classification::Decided(std::cmp::Ordering::Equal)
-                );
                 // tan(theta/2)=3; rotating the frame by pi/2 gives tan=1/2,
                 // hence local parameter 1/3 (2/3 on the reversed chart).
                 let expected = (Real::from(if reversed { 2 } else { 1 }) / Real::from(3)).unwrap();
@@ -152188,11 +152188,55 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     cut.order_to_real(&expected, &policy).unwrap(),
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
-                let inverse = replayed.map_parameter(&cut, false);
-                assert!(
-                    inverse.shares_exact_evidence(&source),
-                    "the independently replayed inverse must remove the transport wrapper"
-                );
+                for swapped in [false, true] {
+                    let replayed = if swapped {
+                        overlap(&second, &first)
+                    } else {
+                        overlap(&first, &second)
+                    };
+                    assert!(!Arc::ptr_eq(&authored.data, &replayed.data));
+                    let replay = replayed.map_parameter(&source, !swapped);
+                    assert!(
+                        cut.shares_exact_evidence(&replay),
+                        "rebuilding or swapping a pair must retain the same mapped cut"
+                    );
+                    assert_eq!(
+                        cut.cmp_by_refinement(&replay, &policy).unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Equal)
+                    );
+                    let inverse = replayed.map_parameter(&cut, swapped);
+                    assert!(
+                        inverse.shares_exact_evidence(&source),
+                        "the independently replayed inverse must remove the transport wrapper"
+                    );
+
+                    // Full reversed overlaps use a unit-complement fast path.
+                    // Repeated inverse transports must reuse this mapped cut,
+                    // keeping its proof depth and allocation identity bounded.
+                    let opposite = second.reversed();
+                    let forward = overlap(&second, &opposite);
+                    let backward = if swapped {
+                        overlap(&opposite, &second)
+                    } else {
+                        overlap(&second, &opposite)
+                    };
+                    let mut transported = cut.clone();
+                    for _ in 0..8 {
+                        transported = backward
+                            .map_parameter(&forward.map_parameter(&transported, true), swapped);
+                        let (
+                            BezierAlgebraicCuspSemicircleParameter2::Mapped(retained),
+                            BezierAlgebraicCuspSemicircleParameter2::Mapped(original),
+                        ) = (&transported, &cut)
+                        else {
+                            panic!("the quadrant cut must retain its original mapped authority");
+                        };
+                        assert!(
+                            Arc::ptr_eq(retained, original),
+                            "inverse transport must not accumulate proof wrappers"
+                        );
+                    }
+                }
             }
         }
     }
