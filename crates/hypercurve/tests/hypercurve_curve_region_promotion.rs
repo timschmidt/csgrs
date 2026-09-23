@@ -5237,8 +5237,12 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                 }
             };
             let has_projective_selected_circle = |candidate: &&CurveRegion2| {
-                let fragments = candidate.boundary_loops()[0].curves();
-                fragments
+                let curves = candidate
+                    .boundary_loops()
+                    .iter()
+                    .flat_map(|boundary| boundary.curves())
+                    .collect::<Vec<_>>();
+                curves
                     .iter()
                     .filter(|fragment| {
                         fragment.geometry().is_none()
@@ -5252,7 +5256,7 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                     })
                     .count()
                     >= 2
-                    && fragments
+                    && curves
                         .iter()
                         .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
             };
@@ -5268,12 +5272,45 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                 CurveRegion2::try_from_native_material_contours(vec![square(8, 8, 9, 9)], &policy)
                     .unwrap()
                     .into_value();
-            let replay = filleted
-                .boolean_regions(&distant, &policy)
-                .expect("the projective algebraic fillet must re-enter the Boolean kernel")
-                .into_value();
+            let replay = certified(
+                filleted
+                    .boolean_regions(&distant, &policy)
+                    .expect("the projective algebraic fillet must re-enter the Boolean kernel"),
+            );
             assert!(replay.intersection().is_empty());
-            assert_eq!(replay.union().boundary_loops().len(), 2);
+            // The extended sources cross, so the regularized result can have
+            // several components. At companion parameter -1/4, the point is
+            // (279/260, 5501/5200). The parabola crosses this horizontal ray to
+            // its left, and the fillet circle lies above y = 11/10.
+            for (point, expected) in [
+                (
+                    Point2::new(q(279, 260) - q(1, 10400), q(5501, 5200)),
+                    RegionPointLocation::Inside,
+                ),
+                (
+                    Point2::new(q(279, 260) + q(1, 10400), q(5501, 5200)),
+                    RegionPointLocation::Outside,
+                ),
+                (Point2::new(q(1, 2), q(1, 2)), RegionPointLocation::Inside),
+            ] {
+                let expected = Classification::Decided(expected);
+                for region in [filleted, replay.union()] {
+                    assert_eq!(
+                        certified(region.classify_point(&point, &policy).unwrap()),
+                        expected,
+                        "policy={policy:?}, reversed={reversed}"
+                    );
+                }
+            }
+            assert_eq!(
+                certified(
+                    replay
+                        .union()
+                        .classify_point(&Point2::new(q(17, 2), q(17, 2)), &policy)
+                        .unwrap()
+                ),
+                Classification::Decided(RegionPointLocation::Inside),
+            );
         }
     }
 }
