@@ -710,7 +710,7 @@ impl<'a> CurveCornerChain2<'a> {
             Some(replacement)
         } else {
             Some(match previous_cut.placement {
-                CornerPlacement2::Trim => vec![retained_corner_fragment_trim(
+                CornerPlacement2::Trim => retained_corner_fragment_trim(
                     &self.fragments()[previous_index],
                     previous_cut.parameter,
                     &previous_cut.point,
@@ -721,7 +721,9 @@ impl<'a> CurveCornerChain2<'a> {
                     true,
                     operation,
                     policy,
-                )?],
+                )?
+                .into_iter()
+                .collect(),
                 CornerPlacement2::Corner => {
                     vec![self.fragments()[previous_index].clone()]
                 }
@@ -744,7 +746,7 @@ impl<'a> CurveCornerChain2<'a> {
             Some(replacement)
         } else {
             Some(match next_cut.placement {
-                CornerPlacement2::Trim => vec![retained_corner_fragment_trim(
+                CornerPlacement2::Trim => retained_corner_fragment_trim(
                     &self.fragments()[next_index],
                     next_cut.parameter,
                     &next_cut.point,
@@ -755,7 +757,9 @@ impl<'a> CurveCornerChain2<'a> {
                     false,
                     operation,
                     policy,
-                )?],
+                )?
+                .into_iter()
+                .collect(),
                 CornerPlacement2::Corner => {
                     vec![self.fragments()[next_index].clone()]
                 }
