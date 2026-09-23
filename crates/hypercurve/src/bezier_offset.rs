@@ -5412,23 +5412,47 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         {
             return Ok(Classification::Decided(order));
         }
-        if other_algebraic == &self.data.authority.data.retained_parameter {
-            // This selected scalar is a root `u` in a fiber retained at
-            // `alpha`.  Comparing it with that very retained parameter needs
-            // only the local linear predicate `u-alpha`; evaluating the
-            // degree-multiplied global polynomial of alpha at u would discard
-            // the correlation and force needless interval re-isolation.
-            let difference = BivariatePolynomial::new(vec![
-                vec![Real::zero(), Real::one()],
-                vec![Real::from(-1_i8)],
-            ]);
-            return Ok(self
-                .predicate_sign(&difference, policy)?
-                .map(|sign| match sign {
-                    RealSign::Negative => std::cmp::Ordering::Less,
-                    RealSign::Zero => std::cmp::Ordering::Equal,
-                    RealSign::Positive => std::cmp::Ordering::Greater,
-                }));
+        if let Some((numerator, denominator)) =
+            other_algebraic.projective_map_from(&self.data.authority.data.retained_parameter)
+        {
+            // The chart retains beta = N(alpha)/D(alpha). Compare u with beta
+            // through u*D(alpha)-N(alpha), including D's sign, rather than
+            // evaluating beta's global polynomial in the selected fiber.
+            let difference = BivariatePolynomial::new(
+                (0..2)
+                    .map(|i| vec![-numerator[i].clone(), denominator[i].clone()])
+                    .collect(),
+            );
+            match self.predicate_sign(&difference, policy)? {
+                // Invertible chart construction already certified D(alpha)
+                // nonzero. Equality does not need to rediscover its sign.
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+                }
+                Classification::Decided(sign) => match signed_coefficients_at_parameter(
+                    &denominator,
+                    &BezierParameter2::Algebraic(
+                        self.data.authority.data.retained_parameter.clone(),
+                    ),
+                    &strict,
+                )? {
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
+                    Classification::Decided(denominator_sign) => {
+                        return Ok(Classification::Decided(if sign == denominator_sign {
+                            std::cmp::Ordering::Greater
+                        } else {
+                            std::cmp::Ordering::Less
+                        }));
+                    }
+                    Classification::Uncertain(_) => {}
+                },
+                Classification::Uncertain(_) => {}
+            }
+            // A retained chart is an additional replay route. Arbitrary
+            // exact coefficients may defeat this local predicate while the
+            // original polynomial still provides a usable zero certificate.
         }
         let other_predicate =
             bivariate_outer_product(&[Real::one()], other_algebraic.polynomial().coefficients());
@@ -171452,6 +171476,190 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 assert_eq!(outcome.value, Classification::Decided(sign));
                 assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
             }
+        }
+    }
+
+    #[test]
+    fn selected_fiber_comparison_reuses_high_degree_affine_root_identity() {
+        let mut coefficients = vec![Real::zero(); 42];
+        coefficients[0] = -Real::one();
+        coefficients[41] = Real::from(2);
+        let Classification::Decided(polynomial) =
+            BezierParameterPolynomial::try_new_power_basis(coefficients, &CurveContext::STRICT)
+                .unwrap()
+        else {
+            unreachable!()
+        };
+        let Classification::Decided(interval) =
+            BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)
+                .unwrap()
+        else {
+            unreachable!()
+        };
+        let retained = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
+        let scale = (Real::from(3) / Real::from(4)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(mapped) = BezierParameter2::Algebraic(retained.clone())
+                .affine_image_unbounded(&scale, &Real::zero(), &policy)
+                .unwrap()
+            else {
+                unreachable!()
+            };
+            let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![Real::zero(), Real::one()],
+                    vec![-scale.clone()],
+                ]),
+                retained.clone(),
+                &policy,
+            )
+            .parameter(IsolatedRootInterval {
+                lower: (Real::one() / Real::from(2)).unwrap(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            // The overlapping isolators need equality evidence. A bounded
+            // pass cannot reconstruct a cross-field GCD of degree 41, but
+            // the construction's linear identity already proves equality.
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                attempt.bounded_exact_predicate_pass(|| {
+                    selected.cmp_bezier_parameter(&mapped, attempt)
+                })
+            });
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(
+                outcome.value.unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
+            assert_eq!(selected.data.represented_parameter.get(), Some(&mapped));
+        }
+    }
+
+    #[test]
+    fn selected_fiber_comparison_replays_composed_projective_charts_with_signed_denominators() {
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-Real::one(), Real::zero(), Real::from(2)])
+        else {
+            unreachable!()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // beta=(alpha+1)/(1-2*alpha) has a negative denominator; its
+            // complement is another chart over the same original root.
+            let Classification::Decided(beta) = BezierParameter2::Algebraic(retained.clone())
+                .projective_image_unbounded(
+                    &[Real::one(), Real::one()],
+                    &[Real::one(), Real::from(-2)],
+                    &policy,
+                )
+                .unwrap()
+            else {
+                unreachable!()
+            };
+            let complement = beta.unit_complement();
+            let (
+                BezierParameter2::Algebraic(beta_root),
+                BezierParameter2::Algebraic(complement_root),
+            ) = (&beta, &complement)
+            else {
+                unreachable!()
+            };
+            assert_eq!(
+                complement_root.projective_map_from(beta_root),
+                Some(([Real::one(), -Real::one()], [Real::one(), Real::zero()]))
+            );
+            for (other, numerator) in [
+                (beta.clone(), [Real::one(), Real::one()]),
+                (complement, [Real::zero(), Real::from(-3)]),
+            ] {
+                let BezierParameter2::Algebraic(other_root) = &other else {
+                    unreachable!()
+                };
+                let denominator = [Real::one(), Real::from(-2)];
+                let relation = BivariatePolynomial::new(
+                    (0..2)
+                        .map(|i| vec![-numerator[i].clone(), denominator[i].clone()])
+                        .collect(),
+                );
+                let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                    relation,
+                    retained.clone(),
+                    &policy,
+                )
+                .parameter(IsolatedRootInterval {
+                    lower: other_root.interval().start().clone(),
+                    upper: other_root.interval().end().clone(),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                });
+                assert_eq!(
+                    policy
+                        .bounded_exact_predicate_pass(
+                            || selected.cmp_bezier_parameter(&other, &policy)
+                        )
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
+            }
+            // u=0 lies above beta, despite u*D(alpha)-N(alpha) being negative.
+            let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
+                retained.clone(),
+                &policy,
+            )
+            .parameter(IsolatedRootInterval {
+                lower: Real::from(-8),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            assert_eq!(
+                selected.cmp_bezier_parameter(&beta, &policy).unwrap(),
+                Classification::Decided(std::cmp::Ordering::Greater)
+            );
+        }
+    }
+
+    #[test]
+    fn selected_fiber_chart_uncertainty_preserves_exact_coefficient_replay() {
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-Real::one(), Real::zero(), Real::from(2)])
+        else {
+            unreachable!()
+        };
+        let scale = Real::from(2).sqrt().unwrap();
+        assert!(scale.exact_rational_ref().is_none());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(mapped) = BezierParameter2::Algebraic(retained.clone())
+                .affine_image_unbounded(&scale, &Real::zero(), &policy)
+                .unwrap()
+            else {
+                unreachable!()
+            };
+            // sqrt(2)*alpha=1. The independent fiber u-1=0 can prove equality
+            // through the transformed univariate polynomial even when a
+            // bounded pass cannot sign u-sqrt(2)*alpha in the local field.
+            let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![vec![-Real::one(), Real::one()]]),
+                retained.clone(),
+                &policy,
+            )
+            .parameter(IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: Real::from(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                attempt.bounded_exact_predicate_pass(|| {
+                    selected.cmp_bezier_parameter(&mapped, attempt)
+                })
+            });
+            assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(
+                outcome.value.unwrap(),
+                Classification::Decided(std::cmp::Ordering::Equal)
+            );
         }
     }
 

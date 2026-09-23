@@ -104,6 +104,38 @@ struct BezierAlgebraicParameterData {
     interval: BezierParameterInterval,
     root_count: usize,
     shared: Arc<BezierAlgebraicParameterSharedData>,
+    projective_source: Option<Arc<BezierAlgebraicParameterProjectiveSource>>,
+}
+
+/// A composed chart over one original selected root. Refinement shares this
+/// evidence; further chart changes compose four coefficients, never a history
+/// of transformed roots.
+#[derive(Debug)]
+struct BezierAlgebraicParameterProjectiveSource {
+    root: BezierAlgebraicParameter2,
+    numerator: [Real; 2],
+    denominator: [Real; 2],
+}
+
+fn normalized_projective_chart(
+    mut numerator: [Real; 2],
+    mut denominator: [Real; 2],
+) -> ([Real; 2], [Real; 2]) {
+    // Remove a known rational common scale without requiring rational
+    // coefficients. Repeated inverse charts must not accumulate powers of
+    // their determinant in otherwise unchanged homogeneous coordinates.
+    let scale = denominator.iter().chain(&numerator).find(|coefficient| {
+        coefficient
+            .exact_rational_ref()
+            .is_some_and(|value| value != &hyperreal::Rational::zero())
+    });
+    if let Some(scale) = scale.cloned().filter(|scale| scale != &Real::one()) {
+        for coefficient in numerator.iter_mut().chain(&mut denominator) {
+            *coefficient = (&*coefficient / &scale)
+                .expect("a known nonzero rational chart scale is invertible");
+        }
+    }
+    (numerator, denominator)
 }
 
 #[derive(Debug, Default)]
@@ -798,11 +830,17 @@ fn map_compact_incident_ray_root(
                     end: second,
                 },
             };
-            let mapped =
-                BezierAlgebraicParameter2::from_certified_singleton(source.clone(), interval);
-            if parameter.data.shared.simple_root.get() == Some(&true) {
-                let _ = mapped.data.shared.simple_root.set(true);
-            }
+            let direction_sign = match direction {
+                BezierParameterRayDirection2::Decreasing => -Real::one(),
+                BezierParameterRayDirection2::Increasing => Real::one(),
+            };
+            let mapped = BezierAlgebraicParameter2::from_certified_projective_image(
+                source.clone(),
+                interval,
+                &parameter,
+                [anchor.clone(), direction_sign - anchor],
+                [Real::one(), -Real::one()],
+            );
             Ok(BezierParameter2::Algebraic(mapped))
         }
     }
@@ -929,6 +967,7 @@ impl BezierAlgebraicParameter2 {
                 interval,
                 root_count: count,
                 shared: Arc::new(BezierAlgebraicParameterSharedData::default()),
+                projective_source: None,
             }),
         }))
     }
@@ -943,8 +982,93 @@ impl BezierAlgebraicParameter2 {
                 interval,
                 root_count: 1,
                 shared: Arc::new(BezierAlgebraicParameterSharedData::default()),
+                projective_source: None,
             }),
         }
+    }
+
+    /// The caller certifies a nonzero determinant and denominator at the
+    /// selected source root before transporting its singleton interval.
+    fn from_certified_projective_image(
+        polynomial: BezierParameterPolynomial,
+        interval: BezierParameterInterval,
+        source: &Self,
+        numerator: [Real; 2],
+        denominator: [Real; 2],
+    ) -> Self {
+        let (root, numerator, denominator) = match &source.data.projective_source {
+            Some(chart) => {
+                let compose = |row: &[Real; 2]| {
+                    std::array::from_fn(|i| {
+                        &row[0] * &chart.denominator[i] + &row[1] * &chart.numerator[i]
+                    })
+                };
+                (
+                    chart.root.clone(),
+                    compose(&numerator),
+                    compose(&denominator),
+                )
+            }
+            None => (source.clone(), numerator, denominator),
+        };
+        let (numerator, denominator) = normalized_projective_chart(numerator, denominator);
+        let parameter = Self {
+            data: Arc::new(BezierAlgebraicParameterData {
+                polynomial,
+                interval,
+                root_count: 1,
+                shared: Arc::new(BezierAlgebraicParameterSharedData::default()),
+                projective_source: Some(Arc::new(BezierAlgebraicParameterProjectiveSource {
+                    root,
+                    numerator,
+                    denominator,
+                })),
+            }),
+        };
+        if source.data.shared.simple_root.get() == Some(&true) {
+            let _ = parameter.data.shared.simple_root.set(true);
+        }
+        parameter
+    }
+
+    /// Returns the certified chart `self = N(other) / D(other)` when both
+    /// roots descend from the same selected root. Shared refinement authority
+    /// proves identity even when their current isolating intervals differ.
+    pub(crate) fn projective_map_from(&self, other: &Self) -> Option<([Real; 2], [Real; 2])> {
+        let same_root = |first: &Self, second: &Self| {
+            Arc::ptr_eq(&first.data.shared, &second.data.shared) || first == second
+        };
+        let identity = || ([Real::zero(), Real::one()], [Real::one(), Real::zero()]);
+        if same_root(self, other) {
+            return Some(identity());
+        }
+        let chart = |parameter: &Self| match &parameter.data.projective_source {
+            Some(chart) => (
+                chart.root.clone(),
+                chart.numerator.clone(),
+                chart.denominator.clone(),
+            ),
+            None => {
+                let (numerator, denominator) = identity();
+                (parameter.clone(), numerator, denominator)
+            }
+        };
+        let (first_root, first_n, first_d) = chart(self);
+        let (second_root, second_n, second_d) = chart(other);
+        if !same_root(&first_root, &second_root) {
+            return None;
+        }
+        // Compose this chart with the inverse of the other's chart.
+        Some(normalized_projective_chart(
+            [
+                &first_n[0] * &second_n[1] - &first_n[1] * &second_n[0],
+                &first_n[1] * &second_d[0] - &first_n[0] * &second_d[1],
+            ],
+            [
+                &first_d[0] * &second_n[1] - &first_d[1] * &second_n[0],
+                &first_d[1] * &second_d[0] - &first_d[0] * &second_d[1],
+            ],
+        ))
     }
 
     fn from_certified_simple_singleton(
@@ -996,6 +1120,7 @@ impl BezierAlgebraicParameter2 {
                 interval,
                 root_count: self.data.root_count,
                 shared: Arc::clone(&self.data.shared),
+                projective_source: self.data.projective_source.clone(),
             }),
         }
     }
@@ -1449,11 +1574,13 @@ impl BezierParameter2 {
                     start: Real::one() - parameter.interval().end(),
                     end: Real::one() - parameter.interval().start(),
                 };
-                let complemented =
-                    BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
-                if parameter.data.shared.simple_root.get() == Some(&true) {
-                    let _ = complemented.data.shared.simple_root.set(true);
-                }
+                let complemented = BezierAlgebraicParameter2::from_certified_projective_image(
+                    polynomial,
+                    interval,
+                    parameter,
+                    [Real::one(), -Real::one()],
+                    [Real::one(), Real::zero()],
+                );
                 Self::Algebraic(complemented)
             }
         }
@@ -1518,10 +1645,13 @@ impl BezierParameter2 {
             },
             RealSign::Zero => unreachable!(),
         };
-        let mapped = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
-        if parameter.data.shared.simple_root.get() == Some(&true) {
-            let _ = mapped.data.shared.simple_root.set(true);
-        }
+        let mapped = BezierAlgebraicParameter2::from_certified_projective_image(
+            polynomial,
+            interval,
+            parameter,
+            [offset.clone(), scale.clone()],
+            [Real::one(), Real::zero()],
+        );
         Ok(Classification::Decided(Self::Algebraic(mapped)))
     }
 
@@ -1625,13 +1755,13 @@ impl BezierParameter2 {
             } else {
                 (second, first)
             };
-            let mapped = BezierAlgebraicParameter2::from_certified_singleton(
+            let mapped = BezierAlgebraicParameter2::from_certified_projective_image(
                 polynomial,
                 BezierParameterInterval { start, end },
+                parameter,
+                numerator.clone(),
+                denominator.clone(),
             );
-            if parameter.data.shared.simple_root.get() == Some(&true) {
-                let _ = mapped.data.shared.simple_root.set(true);
-            }
             Ok(Classification::Decided(Self::Algebraic(mapped)))
         })
     }
@@ -4546,6 +4676,73 @@ mod conversion_tests {
             assert_eq!(
                 source.simple_root_classifications(&roots, &policy).unwrap(),
                 vec![Classification::Decided(true)]
+            );
+        }
+    }
+
+    #[test]
+    fn composed_projective_charts_share_one_root_without_growing_history_or_scale() {
+        let source = algebraic_parameter(&polynomial(&[-1, 0, 2]));
+        let BezierParameter2::Algebraic(original) = &source else {
+            unreachable!()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let mut current = source.clone();
+            // These inverse matrices multiply to -3 times the identity.
+            for _ in 0..4 {
+                current = decided(
+                    current
+                        .projective_image_unbounded(
+                            &[Real::one(), Real::one()],
+                            &[Real::from(-2), Real::one()],
+                            &policy,
+                        )
+                        .unwrap(),
+                    "forward chart",
+                );
+                current = decided(
+                    current
+                        .projective_image_unbounded(
+                            &[Real::one(), Real::from(2)],
+                            &[-Real::one(), Real::one()],
+                            &policy,
+                        )
+                        .unwrap(),
+                    "inverse chart",
+                );
+                let BezierParameter2::Algebraic(mapped) = &current else {
+                    unreachable!()
+                };
+                let chart = mapped.data.projective_source.as_ref().unwrap();
+                assert!(chart.root.data.projective_source.is_none());
+                assert!(Arc::ptr_eq(&chart.root.data.shared, &original.data.shared));
+                assert_eq!(chart.numerator, [Real::zero(), Real::one()]);
+                assert_eq!(chart.denominator, [Real::one(), Real::zero()]);
+            }
+            let refined = current.clone().refined_isolating_interval(8, &policy);
+            let (BezierParameter2::Algebraic(mapped), BezierParameter2::Algebraic(refined)) =
+                (&current, &refined)
+            else {
+                unreachable!()
+            };
+            assert!(Arc::ptr_eq(
+                mapped.data.projective_source.as_ref().unwrap(),
+                refined.data.projective_source.as_ref().unwrap()
+            ));
+            assert_eq!(
+                refined.projective_map_from(original),
+                Some(([Real::zero(), Real::one()], [Real::one(), Real::zero()]))
+            );
+            let conjugate = BezierAlgebraicParameter2::from_certified_singleton(
+                original.polynomial().clone(),
+                BezierParameterInterval {
+                    start: -Real::one(),
+                    end: -rational(1, 2),
+                },
+            );
+            assert!(
+                refined.projective_map_from(&conjugate).is_none(),
+                "a shared polynomial cannot identify different selected roots"
             );
         }
     }
