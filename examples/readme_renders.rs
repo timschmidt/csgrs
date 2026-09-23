@@ -9,8 +9,8 @@ use csgrs::{
     solid::{self, SolidExt},
 };
 use hypercurve::{
-    BezierSplitFragment2, Classification, CurveContext, CurveOutcome, CurvePath2,
-    CurveRegion2, CurveString2, FiniteProjectionOptions, FiniteRegionProfile2, Point2,
+    Classification, CurveContext, CurveOutcome, CurvePath2, CurveRegion2, CurveString2,
+    FiniteProjectionOptions, FiniteRegionProfile2, Point2,
 };
 use hyperlattice::{Point3, Real, Vector3};
 use image::{GrayImage, Luma, Rgba, RgbaImage};
@@ -561,21 +561,14 @@ fn exact_region_vertices(region: &CurveRegion2) -> Vec<Point2> {
     }
 
     // Higher-order regions have no native line/arc view. Draw only represented
-    // endpoints retained by the exact boundary itself. Algebraic endpoint
-    // images deliberately remain unmarked because turning an isolating interval
-    // into a screen coordinate would invent a projected vertex.
+    // endpoints retained by the exact boundary itself. A selected endpoint
+    // without coordinates stays unmarked: turning an isolating interval into a
+    // screen coordinate would invent a projected vertex.
     region
         .boundary_loops()
         .iter()
-        .flat_map(|boundary| boundary.fragments())
-        .filter_map(|fragment| match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => Some(curve.start().clone()),
-            BezierSplitFragment2::AnalyticParallel(_)
-            | BezierSplitFragment2::AlgebraicChord(_)
-            | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-            | BezierSplitFragment2::SelectedFiber(_)
-            | BezierSplitFragment2::AlgebraicEndpointImages { .. } => None,
-        })
+        .flat_map(|boundary| boundary.curves())
+        .filter_map(|curve| curve.start().coordinates().cloned())
         .collect()
 }
 
@@ -615,13 +608,22 @@ fn render_open_curves(name: &str, paths: &[CurvePath2], strings: &[CurveString2]
 
     let mut vertices = Vec::new();
     for path in paths {
-        vertices.extend(path.curves().iter().map(|edge| edge.start()));
-        vertices.push(path.end());
+        vertices.extend(
+            path.curves()
+                .iter()
+                .filter_map(|edge| edge.start().coordinates().cloned()),
+        );
+        vertices.extend(path.end().coordinates().cloned());
     }
     for string in strings {
-        vertices.extend(string.segments().iter().map(|segment| segment.start()));
+        vertices.extend(
+            string
+                .segments()
+                .iter()
+                .map(|segment| segment.start().clone()),
+        );
         if let Some(last) = string.segments().last() {
-            vertices.push(last.end());
+            vertices.push(last.end().clone());
         }
     }
     let radius = vertex_radius(vertices.len());
