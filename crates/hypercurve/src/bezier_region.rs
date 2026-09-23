@@ -17489,26 +17489,13 @@ fn classify_point_with_retained_ray_skipping_origin(
                     let sole_crossing_contact = contacts.len() == 1
                         && contacts[0].kind() == BezierLineContactKind::Crossing;
                     for contact in contacts {
-                        let retained = if let Some(range) = selected_range {
-                            retained_curve_region_parameter_contains(
-                                contact.parameter(),
-                                range,
-                                true,
-                                reversed,
-                                policy,
-                            )?
-                        } else {
-                            let range = ordinary_range
-                                .expect("an ordinary analytic fragment retains its range");
-                            retained_parameter_contains(
-                                contact.parameter(),
-                                range.start(),
-                                range.end(),
-                                true,
-                                reversed,
-                                policy,
-                            )?
-                        };
+                        let retained = retained_curve_region_parameter_contains(
+                            contact.parameter(),
+                            &regular_range,
+                            false,
+                            false,
+                            policy,
+                        )?;
                         match retained {
                             Classification::Decided(true) => {}
                             Classification::Decided(false) => continue,
@@ -17571,16 +17558,17 @@ fn classify_point_with_retained_ray_skipping_origin(
                             policy,
                         )? {
                             Classification::Decided(std::cmp::Ordering::Greater) => {
-                                if contact.kind() != BezierLineContactKind::Crossing {
-                                    continue;
+                                match retained_line_contact_winding_delta(
+                                    &contact,
+                                    Some(&regular_range),
+                                    reversed,
+                                    policy,
+                                )? {
+                                    Classification::Decided(delta) => winding += delta,
+                                    Classification::Uncertain(reason) => {
+                                        return Ok(Classification::Uncertain(reason));
+                                    }
                                 }
-                                let Some(delta) = line_contact_winding_delta(&contact, reversed)
-                                else {
-                                    return Ok(Classification::Uncertain(
-                                        UncertaintyReason::Unsupported,
-                                    ));
-                                };
-                                winding += delta;
                             }
                             Classification::Decided(std::cmp::Ordering::Equal) => {
                                 if let Some(origin) = skipped_origin
@@ -17862,46 +17850,13 @@ fn classify_point_with_retained_ray_skipping_origin(
                             }
                         }
                     };
-                    if matches!(ahead, Classification::Decided(std::cmp::Ordering::Greater)) {
-                        let range_endpoints = range
-                            .as_ref()
-                            .and_then(CurveParameterRange2::as_bezier_parameters);
-                        match retained_bezier_parameter_is_endpoint(
-                            contact.parameter(),
-                            range_endpoints,
-                            policy,
-                        )? {
-                            Classification::Decided(true) => {
-                                // A ray through a retained vertex cannot use
-                                // one fragment's half-open parameter interval
-                                // to infer the adjacent sector. Retry with a
-                                // direction that misses the vertex instead.
-                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                            }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
-                    }
-                    let retained = if let Some(range) = range.as_ref() {
-                        retained_curve_region_parameter_contains(
-                            contact.parameter(),
-                            range,
-                            true,
-                            reversed,
-                            policy,
-                        )?
-                    } else {
-                        retained_parameter_contains(
-                            contact.parameter(),
-                            &BezierParameter2::Exact(Real::zero()),
-                            &BezierParameter2::Exact(Real::one()),
-                            true,
-                            false,
-                            policy,
-                        )?
-                    };
+                    let retained = retained_curve_region_parameter_contains(
+                        contact.parameter(),
+                        range.as_ref().unwrap_or(&CurveParameterRange2::unit()),
+                        false,
+                        false,
+                        policy,
+                    )?;
                     match retained {
                         Classification::Decided(true) => {}
                         Classification::Decided(false) => continue,
@@ -17911,15 +17866,17 @@ fn classify_point_with_retained_ray_skipping_origin(
                     }
                     match ahead {
                         Classification::Decided(std::cmp::Ordering::Greater) => {
-                            if contact.kind() != BezierLineContactKind::Crossing {
-                                continue;
+                            match retained_line_contact_winding_delta(
+                                &contact,
+                                range.as_ref(),
+                                reversed,
+                                policy,
+                            )? {
+                                Classification::Decided(delta) => winding += delta,
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
                             }
-                            let Some(delta) = line_contact_winding_delta(&contact, reversed) else {
-                                return Ok(Classification::Uncertain(
-                                    UncertaintyReason::Unsupported,
-                                ));
-                            };
-                            winding += delta;
                         }
                         Classification::Decided(std::cmp::Ordering::Equal) => {
                             if skipped_origin.is_some()
@@ -17956,52 +17913,6 @@ fn retained_parameters_equal(
     first
         .cmp_by_refinement(second, policy)
         .map(|order| order.map(|order| order == std::cmp::Ordering::Equal))
-}
-
-fn retained_bezier_parameter_is_endpoint(
-    parameter: &BezierParameter2,
-    range_endpoints: Option<(&BezierParameter2, &BezierParameter2)>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let zero = BezierParameter2::Exact(Real::zero());
-    let one = BezierParameter2::Exact(Real::one());
-    let (start, end) = range_endpoints.unwrap_or((&zero, &one));
-    let at_start = parameter.same_value(start, policy)?;
-    let at_end = parameter.same_value(end, policy)?;
-    match (at_start, at_end) {
-        (Classification::Decided(true), _) | (_, Classification::Decided(true)) => {
-            Ok(Classification::Decided(true))
-        }
-        (Classification::Decided(false), Classification::Decided(false)) => {
-            Ok(Classification::Decided(false))
-        }
-        (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
-            Ok(Classification::Uncertain(reason))
-        }
-    }
-}
-
-fn retained_parameter_contains(
-    parameter: &BezierParameter2,
-    start: &BezierParameter2,
-    end: &BezierParameter2,
-    half_open: bool,
-    reversed: bool,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let start_order = match parameter.cmp_by_refinement(start, policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end_order = match parameter.cmp_by_refinement(end, policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let after_start = start_order == std::cmp::Ordering::Greater
-        || (start_order == std::cmp::Ordering::Equal && (!half_open || !reversed));
-    let before_end = end_order == std::cmp::Ordering::Less
-        || (end_order == std::cmp::Ordering::Equal && (!half_open || reversed));
-    Ok(Classification::Decided(after_start && before_end))
 }
 
 fn retained_curve_region_parameter_contains(
@@ -18226,14 +18137,6 @@ fn classify_point_with_ray(
             }
             BezierLineContactRelation::Contacts { contacts } => {
                 for contact in contacts {
-                    let one = BezierParameter2::Exact(Real::one());
-                    match contact.parameter().cmp_by_interval(&one, policy)? {
-                        Classification::Decided(std::cmp::Ordering::Equal) => continue,
-                        Classification::Decided(_) => {}
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
                     let ahead = if let Some(line_parameter) = contact.supporting_line_parameter() {
                         compare_reals(line_parameter, &Real::zero(), policy)
                             .map(Classification::Decided)
@@ -18281,15 +18184,14 @@ fn classify_point_with_ray(
                     };
                     match ahead {
                         Classification::Decided(std::cmp::Ordering::Greater) => {
-                            if contact.kind() != BezierLineContactKind::Crossing {
-                                continue;
+                            match retained_line_contact_winding_delta(
+                                &contact, None, false, policy,
+                            )? {
+                                Classification::Decided(delta) => winding += delta,
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
                             }
-                            let Some(delta) = line_contact_winding_delta(&contact, false) else {
-                                return Ok(Classification::Uncertain(
-                                    UncertaintyReason::Unsupported,
-                                ));
-                            };
-                            winding += delta;
                         }
                         Classification::Decided(std::cmp::Ordering::Equal) => {
                             return Ok(Classification::Decided(ContourPointLocation::Boundary));
@@ -18422,12 +18324,63 @@ fn subcurve_control_hull_strict_order(
     }
 }
 
-fn line_contact_winding_delta(contact: &BezierLineContact, reversed: bool) -> Option<i32> {
-    let delta = match contact.crossing_direction()? {
-        BezierLineCrossingDirection::NegativeToPositive => 1,
-        BezierLineCrossingDirection::PositiveToNegative => -1,
+/// Counts a contact from the strict ray side occupied inside the finite
+/// source interval. A start owns its positive after-side; an end owns its
+/// positive before-side. Reversal negates the contribution, not ownership.
+/// One-sided endpoint contacts retain `tangent_side` even when the supporting
+/// carrier cannot certify a continuation outside its domain.
+fn retained_line_contact_winding_delta(
+    contact: &BezierLineContact,
+    range: Option<&CurveParameterRange2>,
+    reversed: bool,
+    policy: &CurveContext,
+) -> CurveResult<Classification<i32>> {
+    let unit = CurveParameterRange2::unit();
+    let range = range.unwrap_or(&unit);
+    let parameter = CurveParameter2::from(contact.parameter().clone());
+    let start = match parameter.cmp_by_refinement(range.start(), policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    Some(if reversed { -delta } else { delta })
+    let end = match parameter.cmp_by_refinement(range.end(), policy)? {
+        Classification::Decided(order) => order,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    use std::cmp::Ordering::{Equal, Greater, Less};
+    if start == Less || end == Greater || (start == Equal && end == Equal) {
+        return Ok(Classification::Decided(0));
+    }
+    let at_start = start == Equal;
+    let at_end = end == Equal;
+    let (before_positive, after_positive) = match contact.kind() {
+        BezierLineContactKind::Crossing => match contact.crossing_direction() {
+            Some(BezierLineCrossingDirection::NegativeToPositive) => (false, true),
+            Some(BezierLineCrossingDirection::PositiveToNegative) => (true, false),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
+        },
+        BezierLineContactKind::Tangent if !at_start && !at_end => {
+            return Ok(Classification::Decided(0));
+        }
+        BezierLineContactKind::Tangent => match contact.tangent_side() {
+            Some(LineSide::Left) => (true, true),
+            Some(LineSide::Right) => (false, false),
+            Some(LineSide::On) | None => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+        },
+    };
+    let delta = if at_start {
+        i32::from(after_positive)
+    } else if at_end {
+        -i32::from(before_positive)
+    } else {
+        i32::from(after_positive) - i32::from(before_positive)
+    };
+    Ok(Classification::Decided(if reversed {
+        -delta
+    } else {
+        delta
+    }))
 }
 
 fn winding_location(winding: i32, fill_rule: FillRule) -> ContourPointLocation {
@@ -27659,6 +27612,89 @@ mod tests {
     }
 
     #[test]
+    fn selected_parallel_ray_vertices_use_spatial_endpoint_ownership() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let center_support = QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(p(-1, 0), p(-1, -1)).unwrap(),
+            )
+            .parallel_left(Real::zero())
+            .unwrap();
+            let Classification::Decided(Some(circle)) =
+                crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    center_support, BezierParameter2::Exact(Real::zero()), Real::one(), false, &policy,
+                ).unwrap()
+            else { panic!("the regular exact circle frame must construct") };
+            let Classification::Decided(quarter) =
+                crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
+                    circle.complementary_half(),
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
+                        Real::zero(),
+                    ),
+                    crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(q(1, 2)),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the lower-left quarter must construct")
+            };
+            let parallel =
+                QuadraticBezier2::from_line_segment(LineSeg2::try_new(p(-1, -1), p(0, 0)).unwrap())
+                    .parallel_left(Real::zero())
+                    .unwrap();
+            let selected = BezierSplitFragment2::SelectedFiber(
+                crate::bezier_split::BezierSelectedFiberFragment2::new(
+                    crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(parallel),
+                    CurveParameterRange2::unit(),
+                    p(-1, -1).into(),
+                    p(0, 0).into(),
+                ),
+            );
+            // Three quarters of the unit circle centered at (-1,0), closed
+            // by its diagonal chord. The entire boundary lies at x <= 0.
+            let fragments = vec![
+                BezierSplitFragment2::AlgebraicCuspSemicircle(
+                    crate::BezierAlgebraicCuspSemicircleFragment2::full(circle, &policy),
+                ),
+                BezierSplitFragment2::AlgebraicCuspSemicircle(quarter),
+                selected,
+            ];
+            for reversed in [false, true] {
+                let fragments = if reversed {
+                    fragments
+                        .iter()
+                        .rev()
+                        .map(|fragment| fragment.reversed().unwrap())
+                        .collect()
+                } else {
+                    fragments.clone()
+                };
+                let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap();
+                let origin = p(1, 0);
+                let ray = ray_candidates(&origin).remove(0);
+                assert_eq!(
+                    classify_point_with_retained_ray_skipping_origin(
+                        &boundary, &origin, &ray, None, &policy
+                    )
+                    .unwrap(),
+                    Classification::Decided(RetainedRayWinding::Winding(0)),
+                    "the left ray crosses both the arc and closing chord: reversed={reversed}, policy={policy:?}"
+                );
+                for (point, expected) in [
+                    (origin, ContourPointLocation::Outside),
+                    (p(-1, 0), ContourPointLocation::Inside),
+                    (p(0, 0), ContourPointLocation::Boundary),
+                ] {
+                    assert_eq!(
+                        boundary.classify_point_raw(&point, &policy).unwrap(),
+                        Classification::Decided(expected)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn selected_circle_and_analytic_parallel_extend_on_full_supports() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for curved in [false, true] {
@@ -27714,12 +27750,11 @@ mod tests {
                         "the full circle and analytic incident ray must add exterior centers"
                     );
                     for_each_corner_region(&extended.value, |filleted| {
-                        assert!(filleted.boundary_loops()[0].fragments().iter().any(
-                            |fragment| matches!(
-                                fragment,
-                                BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                            )
-                        ));
+                        assert!(filleted.boundary_loops().iter().any(|boundary| {
+                            boundary.fragments().iter().any(|fragment| {
+                                matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+                            })
+                        }));
                         assert_eq!(
                             filleted
                                 .classify_point(&p(0, 0), &policy)
@@ -27734,8 +27769,11 @@ mod tests {
                                     "the extended analytic fillet re-enters the Boolean kernel",
                                 );
                             assert_eq!(replay.certainty, CurveCertainty::Certified);
-                            assert_eq!(replay.value.union().boundary_loops().len(), 2);
-                            assert!(replay.value.intersection().is_empty());
+                            assert_disjoint_square_replay_preserves_set(
+                                filleted,
+                                &replay.value,
+                                &policy,
+                            );
                         }
                     });
                 }
