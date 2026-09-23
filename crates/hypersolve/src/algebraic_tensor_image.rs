@@ -303,6 +303,8 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
 /// Low-degree roots come directly from the coefficients, independent of the
 /// isolating interval's width. For higher degrees, approximation only proposes
 /// a rational factor; exact division and STRICT interval validation prove it.
+/// A validated genuinely rational witness retains its monic linear equation
+/// so later quotient reduction can eliminate that selected source entirely.
 pub fn compact_algebraic_root_low_degree_witness(
     root: &AlgebraicRootRepresentation,
 ) -> Option<AlgebraicRootRepresentation> {
@@ -416,7 +418,20 @@ fn compact_selected_root_from_candidates(
         distinct_root_count: 1,
     };
     compact.validation = validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT);
-    compact.is_valid().then_some(compact)
+    if !compact.is_valid() {
+        return None;
+    }
+    if let Some(witness) = compact
+        .exact_point_witness()
+        .filter(|value| value.exact_rational_ref().is_some())
+        .cloned()
+    {
+        // STRICT validation above proves the original equation at the
+        // selected point. Its rational payload gives a smaller defining
+        // equation without making future operations rediscover that root.
+        compact.polynomial_coefficients = vec![-witness, Real::one()];
+    }
+    Some(compact)
 }
 
 fn exact_polynomial_divides(polynomial: &[Real], factor: &[Real]) -> bool {
@@ -1213,7 +1228,7 @@ mod tests {
             assert_eq!(compact.exact_point_witness(), Some(&expected));
             assert_eq!(
                 compact.polynomial_coefficients,
-                root.polynomial_coefficients
+                vec![-expected, Real::one()]
             );
         }
         let mut excluded = exact_root(0);
@@ -1225,6 +1240,55 @@ mod tests {
             compact_algebraic_root_low_degree_witness(&excluded).is_none(),
             "a root only at an unwitnessed lower endpoint is not owned"
         );
+    }
+
+    #[test]
+    fn selected_rational_quadratic_witness_eliminates_its_tensor_axis() {
+        let third = (Real::one() / real(3)).unwrap();
+        let small = (Real::one() / real(1009)).unwrap();
+        for witness in [Real::zero(), third.clone(), -third, small] {
+            for gauge in [Real::one(), real(-2), real(2).sqrt().unwrap()] {
+                let epsilon = (Real::one() / real(10000)).unwrap();
+                let mut root = exact_root(0);
+                root.polynomial_coefficients = vec![
+                    &gauge * &witness * &witness,
+                    real(-2) * &gauge * &witness,
+                    gauge,
+                ];
+                root.interval = IsolatedRootInterval {
+                    lower: &witness - &epsilon,
+                    upper: &witness + epsilon,
+                    exact_root: None,
+                    distinct_root_count: 1,
+                };
+                let compact = compact_algebraic_root_low_degree_witness(&root)
+                    .expect("the repeated rational root has a unique exact point witness");
+                assert_eq!(compact.exact_point_witness(), Some(&witness));
+                assert_eq!(compact.constraint_index, root.constraint_index);
+                assert_eq!(compact.symbol, root.symbol);
+                assert_eq!(compact.interval_index, root.interval_index);
+                let polynomial = DenseTensorPolynomial::from_axis_polynomial(
+                    2,
+                    1,
+                    &[-witness.clone(), Real::one()],
+                )
+                .unwrap();
+                let reduced = polynomial
+                    .reduce_axis_modulo(
+                        1,
+                        &compact.polynomial_coefficients,
+                        PredicatePolicy::STRICT,
+                    )
+                    .unwrap();
+                assert_eq!(reduced.dimensions(), &[1, 1]);
+                assert_eq!(reduced.coefficients(), &[Real::zero()]);
+                assert_eq!(
+                    validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT)
+                        .status,
+                    AlgebraicRootValidationStatus::Valid
+                );
+            }
+        }
     }
 
     #[test]
