@@ -370,8 +370,9 @@ pub fn compact_algebraic_root_low_degree_witness(
 }
 
 /// The caller supplies either the original polynomial or an exactly proved
-/// factor. Exactly one distinct candidate must lie in the selected interval;
-/// an existing point witness supplies its effective singleton interval.
+/// factor. Exactly one distinct candidate must lie in the owned `(lower, upper]`
+/// interval, or the singleton for an exact point. An existing point witness
+/// supplies its effective singleton interval.
 /// STRICT point validation then proves the published polynomial identity.
 fn compact_selected_root_from_candidates(
     source: &AlgebraicRootRepresentation,
@@ -384,10 +385,13 @@ fn compact_selected_root_from_candidates(
     let upper = source
         .exact_point_witness()
         .unwrap_or(&source.interval.upper);
+    let singleton =
+        compare_reals(lower, upper, PredicatePolicy::STRICT).value()? == std::cmp::Ordering::Equal;
     let mut selected = None;
     for witness in candidates {
-        if compare_reals(lower, &witness, PredicatePolicy::STRICT).value()?
-            == std::cmp::Ordering::Greater
+        let lower_order = compare_reals(lower, &witness, PredicatePolicy::STRICT).value()?;
+        if lower_order == std::cmp::Ordering::Greater
+            || (lower_order == std::cmp::Ordering::Equal && !singleton)
             || compare_reals(&witness, upper, PredicatePolicy::STRICT).value()?
                 == std::cmp::Ordering::Greater
         {
@@ -1191,8 +1195,10 @@ mod tests {
         for (polynomial, expected, lower, upper) in [
             (vec![real(4), real(-4), real(1)], real(2), real(1), real(3)),
             (vec![real(4), real(-4), real(1)], real(2), real(2), real(2)),
-            (vec![real(0), real(-2), real(1)], real(0), real(0), real(1)),
+            (vec![real(0), real(-2), real(1)], real(0), real(-1), real(0)),
             (vec![real(0), real(-2), real(1)], real(2), real(1), real(2)),
+            (vec![real(0), real(-2), real(1)], real(2), real(0), real(2)),
+            (vec![real(0), real(1)], real(0), real(-1), real(0)),
         ] {
             let mut root = exact_root(2);
             root.polynomial_coefficients = polynomial;
@@ -1203,13 +1209,22 @@ mod tests {
                 distinct_root_count: 1,
             };
             let compact = compact_algebraic_root_low_degree_witness(&root)
-                .expect("a single distinct root may be repeated or on an interval endpoint");
+                .expect("a single owned root may be repeated, an upper endpoint or a singleton");
             assert_eq!(compact.exact_point_witness(), Some(&expected));
             assert_eq!(
                 compact.polynomial_coefficients,
                 root.polynomial_coefficients
             );
         }
+        let mut excluded = exact_root(0);
+        excluded.polynomial_coefficients = vec![real(0), real(-2), real(1)];
+        excluded.interval.upper = Real::one();
+        assert!(compact_algebraic_root_low_degree_witness(&excluded).is_some());
+        excluded.interval.exact_root = None;
+        assert!(
+            compact_algebraic_root_low_degree_witness(&excluded).is_none(),
+            "a root only at an unwitnessed lower endpoint is not owned"
+        );
     }
 
     #[test]
