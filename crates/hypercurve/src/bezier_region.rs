@@ -21910,12 +21910,11 @@ mod tests {
     }
 
     #[test]
-    fn one_fragment_ph_loop_projective_corners_retain_one_extended_interval() {
+    fn closed_ph_corner_edits_preserve_both_normalized_source_lobes() {
         // This is the regular closed PH cubic used by the direct projective
-        // self-contact regression. Its radius has the exterior pair
-        // (3/2,-1/2), so a one-fragment region must retain the single source
-        // interval from the next cut to the previous cut across both authored
-        // endpoints rather than trying to rebuild two copies of the carrier.
+        // self-contact regression: P(t)=(t(1-t)(1-2t), -sqrt(3)t(1-t))/6.
+        // The exterior cuts at -1/2 and 3/2 enclose two source lobes touching
+        // at P(0)=P(1). Regularization may split that interval across loops.
         let root_three = Real::from(3_i8).sqrt().unwrap();
         let control_x = (Real::one() / Real::from(18_i8)).unwrap();
         let control_y = -((&root_three / Real::from(18_i8)).unwrap());
@@ -21935,6 +21934,19 @@ mod tests {
             Point2::new(-control_x, control_y),
             p(0, 0),
         );
+        // Independent samples P(-1/4), P(1/4), P(3/4), P(5/4) require
+        // both exterior source arms and the original lower lobe to survive.
+        // The selected fillet circle has center (0,17sqrt(3)/48), and
+        // |P(t)-center|^2-r^2=(s^2-1)^2(4s^2+9)/36 for s=t-1/2.
+        // Thus it has no additional source crossing. Its lowest point is
+        // sqrt(3)/12; the chamfer lies at sqrt(3)/8. Both lie above the
+        // upper interior sample, while the lower lobe reaches -sqrt(3)/24.
+        let boundary_samples = [
+            Point2::new(-q(5, 64), &root_three * q(5, 96)),
+            Point2::new(q(1, 64), -(&root_three * q(1, 32))),
+            Point2::new(-q(1, 64), -(&root_three * q(1, 32))),
+            Point2::new(q(5, 64), &root_three * q(5, 96)),
+        ];
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
@@ -21975,27 +21987,49 @@ mod tests {
                         )
                     });
                 assert_eq!(fillets.certainty, CurveCertainty::Certified);
-                let (expected_previous, expected_next) = if reversed {
-                    (&next_cut, &previous_cut)
-                } else {
-                    (&previous_cut, &next_cut)
-                };
-                let assert_extended_interval = |solutions: &CurveCornerSolutions2<CurveRegion2>| {
+                let assert_extended_set = |solutions: &CurveCornerSolutions2<CurveRegion2>| {
                     let mut found = false;
                     for_each_corner_region(solutions, |edited| {
-                        let fragments = edited.boundary_loops()[0].fragments();
-                        found |= fragments.iter().any(|fragment| {
-                            matches!(
-                                fragment,
-                                BezierSplitFragment2::Materialized { curve, .. }
-                                    if curve.start() == expected_next
-                                        && curve.end() == expected_previous
-                            )
-                        });
+                        assert!(edited.has_regularized_filled_left_topology(&policy));
+                        let has_cut = |cut: &Point2| {
+                            edited.boundary_loops().iter().any(|boundary| {
+                                boundary.fragments().iter().any(|fragment| {
+                                    retained_fragment_has_exact_endpoint(fragment, cut)
+                                })
+                            })
+                        };
+                        if !has_cut(&next_cut) || !has_cut(&previous_cut) {
+                            return;
+                        }
+                        for (index, point) in boundary_samples.iter().enumerate() {
+                            let location = edited.classify_point(point, &policy).unwrap();
+                            assert_eq!(location.certainty, CurveCertainty::Certified);
+                            assert_eq!(
+                                location.value,
+                                Classification::Decided(RegionPointLocation::Boundary),
+                                "source sample {index}, reversed={reversed}, policy={policy:?}",
+                            );
+                        }
+                        for (point, expected) in [
+                            (
+                                Point2::new(Real::zero(), -q(1, 24)),
+                                RegionPointLocation::Inside,
+                            ),
+                            (
+                                Point2::new(Real::zero(), q(1, 24)),
+                                RegionPointLocation::Inside,
+                            ),
+                            (p(1, 1), RegionPointLocation::Outside),
+                        ] {
+                            let location = edited.classify_point(&point, &policy).unwrap();
+                            assert_eq!(location.certainty, CurveCertainty::Certified);
+                            assert_eq!(location.value, Classification::Decided(expected));
+                        }
+                        found = true;
                     });
-                    assert!(found, "the complementary extended source interval was lost");
+                    assert!(found, "the exact extended source lobes were lost");
                 };
-                assert_extended_interval(&fillets.value);
+                assert_extended_set(&fillets.value);
 
                 let chamfers = region
                     .chamfer_loop_vertex_by_setbacks(
@@ -22012,7 +22046,7 @@ mod tests {
                         )
                     });
                 assert_eq!(chamfers.certainty, CurveCertainty::Certified);
-                assert_extended_interval(&chamfers.value);
+                assert_extended_set(&chamfers.value);
             }
         }
     }
