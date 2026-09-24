@@ -377,7 +377,7 @@ enum BezierSelectedCircleFrame2 {
 #[derive(Debug, PartialEq)]
 struct BezierSelectedParallelNormalFrameData2 {
     center_support: BezierParallel2,
-    center_parameter: BezierParameter2,
+    center_parameter: CurveParameter2,
     /// Same oriented source tangent after a caller-certified positive affine
     /// reparameterization of an edited boundary envelope. The center remains
     /// on its original correlated support; this optional one-word authority
@@ -390,7 +390,7 @@ struct BezierSelectedParallelNormalFrameData2 {
 #[derive(Debug, PartialEq)]
 struct BezierSelectedParallelTangentAuthorityData2 {
     support: BezierParallel2,
-    parameter: BezierParameter2,
+    parameter: CurveParameter2,
     /// Maps this canonical support parameter back to the center support's
     /// authored parameter. The caller certifies that `source_scale` is
     /// positive, so source-tangent orientation is unchanged.
@@ -3492,92 +3492,11 @@ fn retain_direct_overlap_parameter(
 }
 
 pub(crate) fn overlap_parameter_is_in_range(
-    parameter: &BezierParameter2,
-    range: &BezierParameterRange2,
-    include_boundaries: bool,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let orientation = match range.start().cmp_by_refinement(range.end(), policy)? {
-        Classification::Decided(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
-        Classification::Decided(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
-        Classification::Decided(std::cmp::Ordering::Equal) => {
-            return Err(CurveError::DegenerateOverlapRange);
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let start = match parameter.cmp_by_refinement(range.start(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end = match parameter.cmp_by_refinement(range.end(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    Ok(Classification::Decided(match orientation {
-        std::cmp::Ordering::Less => {
-            (start.is_gt() || (include_boundaries && start.is_eq()))
-                && (end.is_lt() || (include_boundaries && end.is_eq()))
-        }
-        std::cmp::Ordering::Greater => {
-            (start.is_lt() || (include_boundaries && start.is_eq()))
-                && (end.is_gt() || (include_boundaries && end.is_eq()))
-        }
-        std::cmp::Ordering::Equal => unreachable!("the overlap range is positive-length"),
-    }))
-}
-
-fn selected_fiber_parameter_is_in_bezier_range(
-    parameter: &BezierAlgebraicSelectedFiberParameter2,
-    range: &BezierParameterRange2,
-    include_boundaries: bool,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let orientation = match range.start().cmp_by_refinement(range.end(), policy)? {
-        Classification::Decided(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
-        Classification::Decided(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
-        Classification::Decided(std::cmp::Ordering::Equal) => {
-            return Err(CurveError::DegenerateOverlapRange);
-        }
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let start = match parameter.cmp_bezier_parameter(range.start(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end = match parameter.cmp_bezier_parameter(range.end(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    Ok(Classification::Decided(match orientation {
-        std::cmp::Ordering::Less => {
-            (start.is_gt() || (include_boundaries && start.is_eq()))
-                && (end.is_lt() || (include_boundaries && end.is_eq()))
-        }
-        std::cmp::Ordering::Greater => {
-            (start.is_lt() || (include_boundaries && start.is_eq()))
-                && (end.is_gt() || (include_boundaries && end.is_eq()))
-        }
-        std::cmp::Ordering::Equal => unreachable!("the overlap range is positive-length"),
-    }))
-}
-
-fn curve_region_parameter_is_in_bezier_range(
     parameter: &CurveParameter2,
     range: &BezierParameterRange2,
     include_boundaries: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    if let Some(parameter) = parameter.as_bezier_parameter() {
-        return overlap_parameter_is_in_range(parameter, range, include_boundaries, policy);
-    }
-    if let Some(parameter) = parameter.as_selected_fiber() {
-        return selected_fiber_parameter_is_in_bezier_range(
-            parameter,
-            range,
-            include_boundaries,
-            policy,
-        );
-    }
     let start_parameter = CurveParameter2::from(range.start().clone());
     let end_parameter = CurveParameter2::from(range.end().clone());
     let orientation = match start_parameter.cmp_by_refinement(&end_parameter, policy)? {
@@ -6492,10 +6411,9 @@ struct BezierRecursiveProjectiveChordRationalSystem2 {
 struct BezierRecursiveProjectiveChordParallelSystem2 {
     field: BezierRecursiveQuadraticField2,
     base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-    /// Dense norm projection used only by the general all-roots enumerator.
-    /// A monotone local root deliberately leaves this absent and retains the
-    /// authored unsquared equation instead.
-    projection: Option<DenseTensorPolynomial>,
+    /// Global elimination is a demand-driven fallback. Local roots retain
+    /// their selected coefficient field and leave this cache empty.
+    projection: OnceLock<DenseTensorPolynomial>,
     incidence: BezierRecursiveQuadraticParallelExpression2,
     speed_squared: Vec<BezierRecursiveQuadraticValue2>,
     source_weight: Vec<BezierRecursiveQuadraticValue2>,
@@ -6719,12 +6637,32 @@ pub(crate) struct BezierRecursiveProjectiveParameter2 {
 #[derive(Debug)]
 struct BezierRecursiveProjectiveParameterData2 {
     authority: BezierRecursiveProjectiveParameterAuthority2,
+    /// Successful strict projection belongs to this selected root, including
+    /// its refinements and exact field embeddings. Distinct roots and changed
+    /// parameter charts own separate cells; uncertainty is never retained.
+    projection: Arc<BezierRecursiveParameterProjection2>,
     lower: Real,
     upper: Real,
     refinement_steps: usize,
     identity: Option<Arc<BezierRecursiveProjectiveParameterIdentity2>>,
     line_branch: i8,
     policy: CurveContext,
+}
+
+#[derive(Debug, Default)]
+struct BezierRecursiveParameterProjection2 {
+    parameter: OnceLock<BezierParameter2>,
+    /// One composed chart back to an unmapped selected root. Refinements
+    /// share this identity; a later projection replays the map rather than
+    /// eliminating an independently reconstructed image polynomial.
+    chart: Option<Arc<BezierRecursiveParameterChart2>>,
+}
+
+#[derive(Debug)]
+struct BezierRecursiveParameterChart2 {
+    source: BezierRecursiveProjectiveParameter2,
+    numerator: [Real; 2],
+    denominator: [Real; 2],
 }
 
 #[derive(Clone, Debug)]
@@ -10330,7 +10268,7 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
     SelectedParallelContact {
         semicircle: BezierAlgebraicCuspSemicircle2,
         parallel: BezierParallel2,
-        parameter: BezierParameter2,
+        parameter: CurveParameter2,
         location: BezierAlgebraicCuspSemicircleContactLocation2,
         radial_product_sign: RealSign,
         tangent_cross_sign: RealSign,
@@ -10398,7 +10336,7 @@ pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
     SelectedChordParallelNormalContact {
         semicircle: BezierAlgebraicCuspSemicircle2,
         parallel: BezierParallel2,
-        parallel_parameter: BezierParameter2,
+        parallel_parameter: CurveParameter2,
         chord: BezierAlgebraicChord2,
         radial_product_sign: RealSign,
         point: CurvePoint2,
@@ -11325,7 +11263,7 @@ fn mapped_point_parameters_through_rational_overlaps(
             return Ok(Classification::Decided(None));
         }
         match policy.strict_predicate_pass(|| {
-            curve_region_parameter_is_in_bezier_range(&source, overlap.first_range(), true, policy)
+            overlap_parameter_is_in_range(&source, overlap.first_range(), true, policy)
         })? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => continue,
@@ -12010,7 +11948,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             } => (
                 parallel.source().to_rational_bezier()?,
                 parallel.distance().clone(),
-                CurveParameter2::from(parameter.clone()),
+                parameter.clone(),
             ),
             Self::PairOverlapMap { source, .. } => {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
@@ -12167,6 +12105,14 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     "a selected parallel contact had no single center parameter".into(),
                 )
             })?;
+            let anchor_parameter =
+                match promote_curve_region_bezier_parameter(&anchor_parameter, policy)? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+
             let anchor_tangent = anchor.differential()?;
             let contact_tangent = parallel.differential()?;
             let tangent_cross = bivariate_subtract(
@@ -12181,10 +12127,16 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 &bivariate_scale(tangent_dot, &tangential),
                 &bivariate_scale(tangent_cross, &(radial * turn)),
             );
+            // This two-axis theorem requires a univariate parameter. Keep
+            // the original local contact authority in the published map.
+            let parameter = match promote_curve_region_bezier_parameter(parameter, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
             match signed_bivariate_at_parameter_pair(
                 &predicate,
                 &anchor_parameter,
-                parameter,
+                &parameter,
                 policy,
             )? {
                 Classification::Decided(sign) => sign,
@@ -12258,7 +12210,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         {
             return Ok(Classification::Decided(None));
         }
-        match parameter.same_value(candidate_parameter, policy)? {
+        match parameter.same_value(&candidate_parameter.clone().into(), policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -12983,7 +12935,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             } => Some(
                 BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
                     parallel,
-                    parameter,
+                    parameter: parameter.as_bezier_parameter()?,
                     policy: *policy,
                 },
             ),
@@ -13319,8 +13271,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 for contact in contacts {
                     match point.same_point(contact.point(), policy) {
                         Classification::Decided(true) => {
-                            candidates
-                                .push(CurveParameter2::from(contact.parallel_parameter().clone()));
+                            candidates.push(contact.parallel_parameter().clone());
                         }
                         Classification::Decided(false) => {}
                         Classification::Uncertain(reason) => {
@@ -14479,7 +14430,7 @@ pub(crate) enum BezierAlgebraicChordRationalIntersections2 {
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordParallelContact2 {
     chord_parameter: BezierAlgebraicChordParameter2,
-    parallel_parameter: BezierParameter2,
+    parallel_parameter: CurveParameter2,
     point: CurvePoint2,
     tangent_cross_sign: RealSign,
     tangent_dot_sign: RealSign,
@@ -16216,23 +16167,18 @@ impl BezierParallelAlgebraicCuspFrame2 {
 }
 
 /// Maps one edited-carrier parameter into its selected-circle source chart.
-/// The authored center alias remains the compact ordinary fast path; every
-/// other finite parameter keeps its native local authority.
+/// The authored center alias retains its original authority; every other
+/// finite parameter keeps its local chart.
 fn affine_tangent_source_region_parameter(
     parameter: &CurveParameter2,
-    authority_parameter: &BezierParameter2,
-    frame_parameter: &BezierParameter2,
+    authority_parameter: &CurveParameter2,
+    frame_parameter: &CurveParameter2,
     source_scale: &Real,
     source_offset: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurveParameter2>> {
-    if parameter
-        .as_bezier_parameter()
-        .is_some_and(|parameter| parameter == authority_parameter)
-    {
-        return Ok(Classification::Decided(CurveParameter2::from(
-            frame_parameter.clone(),
-        )));
+    if parameter == authority_parameter {
+        return Ok(Classification::Decided(frame_parameter.clone()));
     }
     parameter.affine_image_unbounded(source_scale, source_offset, policy)
 }
@@ -16254,10 +16200,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             .parameter
     }
 
-    fn selected_frame_parameter(&self) -> Option<BezierParameter2> {
+    fn selected_frame_parameter(&self) -> Option<CurveParameter2> {
         match &self.data.frame {
             BezierSelectedCircleFrame2::Rational(frame) => {
-                Some(BezierParameter2::Algebraic(frame.data.parameter.clone()))
+                Some(BezierParameter2::Algebraic(frame.data.parameter.clone()).into())
             }
             BezierSelectedCircleFrame2::ParallelNormal(frame) => {
                 Some(frame.center_parameter.clone())
@@ -16308,7 +16254,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// later as STRICT evidence.
     pub(crate) fn from_selected_parallel_normal(
         center_support: BezierParallel2,
-        center_parameter: BezierParameter2,
+        center_parameter: CurveParameter2,
         radial_distance: Real,
         clockwise: bool,
         policy: &CurveContext,
@@ -16319,13 +16265,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         if let Classification::Uncertain(reason) =
-            center_support.certify_source_frame_at(&center_parameter.clone().into(), policy)?
+            center_support.certify_source_frame_at(&center_parameter, policy)?
         {
             return Ok(Classification::Uncertain(reason));
         }
-        match center_support
-            .parallel_derivative_scale_sign(&center_parameter.clone().into(), policy)?
-        {
+        match center_support.parallel_derivative_scale_sign(&center_parameter, policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -16360,7 +16304,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     pub(crate) fn with_certified_parallel_normal_tangent_authority(
         &self,
         support: BezierParallel2,
-        parameter: BezierParameter2,
+        parameter: CurveParameter2,
         source_scale: Real,
         source_offset: Real,
         policy: &CurveContext,
@@ -17102,12 +17046,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         }
         Ok(Classification::Decided(CurvePoint2::from(
-            BezierAnalyticParallelPoint2::new_with_tangent_distance(
+            BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
                 frame.center_support.with_distance(normal_distance),
-                frame.center_parameter.clone(),
+                &frame.center_parameter,
                 tangent_distance,
                 policy,
-            ),
+            )
+            .expect("a parallel-normal frame owns a scalar parameter"),
         )))
     }
 
@@ -17205,11 +17150,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         Ok(Classification::Decided(CurvePoint2::from(
-            BezierAnalyticParallelPoint2::new(
+            BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
                 frame.center_support.clone(),
-                frame.center_parameter.clone(),
+                &frame.center_parameter,
+                Real::zero(),
                 policy,
-            ),
+            )
+            .expect("a parallel-normal frame owns a scalar parameter"),
         )))
     }
 
@@ -17222,8 +17169,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "a parallel-normal center crossed predicate policies".into(),
                 ));
             }
-            return match &frame.center_parameter {
-                BezierParameter2::Exact(parameter) => Ok(
+            return match frame.center_parameter.as_bezier_parameter() {
+                Some(BezierParameter2::Exact(parameter)) => Ok(
                     match policy.strict_predicate_pass(|| {
                         frame.center_support.point_at(parameter, policy)
                     })? {
@@ -17231,7 +17178,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         Classification::Uncertain(_) => None,
                     },
                 ),
-                BezierParameter2::Algebraic(parameter) => {
+                Some(BezierParameter2::Algebraic(parameter)) => {
                     let curve = match policy.strict_predicate_pass(|| {
                         frame
                             .center_support
@@ -17249,6 +17196,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     )
                     .exact_point(&CurveContext::STRICT))
                 }
+                None => Ok(None),
             };
         }
         if let Some(frame) = self.data.frame.selected_radial() {
@@ -17306,7 +17254,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     pub(crate) fn certified_selected_parallel_contact_parameter(
         &self,
         other: BezierParallel2,
-        other_parameter: BezierParameter2,
+        other_parameter: CurveParameter2,
         location: BezierAlgebraicCuspSemicircleContactLocation2,
         other_radial_sign: RealSign,
         tangent_cross_sign: RealSign,
@@ -17335,7 +17283,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a regular fillet contact retained a zero tangent relation".into(),
             ));
         }
-        match other.parallel_derivative_scale_sign(&other_parameter.clone().into(), policy)? {
+        match other.parallel_derivative_scale_sign(&other_parameter, policy)? {
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -17809,11 +17757,15 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a selected chord/parallel-normal interior contact had parallel tangents".into(),
             ));
         }
-        let center = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
-            frame.center_support.clone(),
-            frame.center_parameter.clone(),
-            policy,
-        ));
+        let center = CurvePoint2::from(
+            BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                frame.center_support.clone(),
+                &frame.center_parameter,
+                Real::zero(),
+                policy,
+            )
+            .expect("a parallel-normal frame owns a scalar parameter"),
+        );
         let contact_radial_distance = match chord.certified_normal_displacement_distance(
             &center,
             &point,
@@ -18320,10 +18272,9 @@ impl BezierAlgebraicCuspSemicircle2 {
     ) -> CurveResult<Classification<Aabb2>> {
         if let Some(parallel) = self.source_parallel()
             && let Some(parameter) = self.selected_frame_parameter()
-            && let Ok(Classification::Decided(interval)) =
-                parameter.known_interval(&CurveContext::STRICT)
-            && in_closed_unit_interval(interval.start(), &CurveContext::STRICT) == Some(true)
-            && in_closed_unit_interval(interval.end(), &CurveContext::STRICT) == Some(true)
+            && let Some((lower, upper)) = parameter.finite_envelope_bounds()
+            && in_closed_unit_interval(lower, &CurveContext::STRICT) == Some(true)
+            && in_closed_unit_interval(upper, &CurveContext::STRICT) == Some(true)
             && let Classification::Decided(source) = parallel.source().certified_bounds()
         {
             let expansion = parallel.distance().abs() + self.data.radial_distance.abs();
@@ -20326,7 +20277,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             other,
             &radius_squared,
             range,
-            &frame.center_parameter.clone().into(),
+            &frame.center_parameter,
             policy,
         )? {
             Classification::Decided(system) => system,
@@ -20880,12 +20831,18 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         let shares_tangent_parameter = if other.source() == frame.center_support.source() {
-            contact.parallel_parameter == frame.center_parameter
+            frame
+                .center_parameter
+                .same_value(&contact.parallel_parameter.clone().into(), policy)?
+                == Classification::Decided(true)
+        } else if let Some(authority) = frame.tangent_authority.as_ref() {
+            other.source() == authority.support.source()
+                && authority
+                    .parameter
+                    .same_value(&contact.parallel_parameter.clone().into(), policy)?
+                    == Classification::Decided(true)
         } else {
-            frame.tangent_authority.as_ref().is_some_and(|authority| {
-                other.source() == authority.support.source()
-                    && contact.parallel_parameter == authority.parameter
-            })
+            false
         };
         if !shares_tangent_parameter {
             return Ok(Classification::Decided(None));
@@ -20954,6 +20911,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "the parallel-normal kernel received a frame without one center parameter".into(),
             )
         })?;
+        let frame_parameter = match promote_curve_region_bezier_parameter(&frame_parameter, policy)?
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+
         let center_parameter = match frame_parameter {
             BezierParameter2::Algebraic(parameter) => parameter,
             BezierParameter2::Exact(parameter) => {
@@ -22226,14 +22189,18 @@ impl BezierAlgebraicCuspSemicircle2 {
         })?;
         let mapped_other = frame.center_support.with_distance(other.distance().clone());
         let map_parameter = |parameter: &BezierParameter2| {
-            if parameter == &authority.parameter {
+            if authority
+                .parameter
+                .same_value(&parameter.clone().into(), policy)?
+                == Classification::Decided(true)
+            {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
                     "selected-normal-affine-parameter",
                     "retained-center-identity",
                 );
-                return Ok(Classification::Decided(frame.center_parameter.clone()));
+                return promote_curve_region_bezier_parameter(&frame.center_parameter, policy);
             }
             parameter.affine_image_unbounded(
                 &authority.source_scale,
@@ -22311,14 +22278,18 @@ impl BezierAlgebraicCuspSemicircle2 {
         let inverse_scale = (Real::one() / &authority.source_scale)?;
         let inverse_offset = ((-&authority.source_offset) / &authority.source_scale)?;
         let inverse_parameter = |parameter: &BezierParameter2| {
-            if parameter == &frame.center_parameter {
+            if frame
+                .center_parameter
+                .same_value(&parameter.clone().into(), policy)?
+                == Classification::Decided(true)
+            {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
                     "selected-normal-affine-parameter",
                     "retained-authority-identity",
                 );
-                return Ok(Classification::Decided(authority.parameter.clone()));
+                return promote_curve_region_bezier_parameter(&authority.parameter, policy);
             }
             parameter.affine_image_unbounded(&inverse_scale, &inverse_offset, policy)
         };
@@ -27782,7 +27753,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                                     .data
                                     .frame
                                     .parallel_normal()
-                                    .is_some_and(|frame| parameter == &frame.center_parameter)
+                                    .is_some_and(|frame| frame.center_parameter.as_bezier_parameter() == Some(parameter))
                         ) =>
                 {
                     let center_frame = self
@@ -30461,7 +30432,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a selected parallel-normal line system crossed predicate policies".into(),
             ));
         }
-        let BezierParameter2::Algebraic(center_parameter) = &frame.center_parameter else {
+        let center_parameter =
+            match promote_curve_region_bezier_parameter(&frame.center_parameter, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+        let BezierParameter2::Algebraic(center_parameter) = &center_parameter else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let rational_line = RationalBezier2::try_new(
@@ -31764,11 +31740,15 @@ impl BezierAlgebraicCuspSemicircle2 {
             ));
         }
         let target_tangent = chord.certified_unit_tangent();
-        let center = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
-            frame.center_support.clone(),
-            frame.center_parameter.clone(),
-            policy,
-        ));
+        let center = CurvePoint2::from(
+            BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                frame.center_support.clone(),
+                &frame.center_parameter,
+                Real::zero(),
+                policy,
+            )
+            .expect("a parallel-normal frame owns a scalar parameter"),
+        );
         for (at_end, endpoint) in [(false, chord.start()), (true, chord.end())] {
             let CurvePoint2(CurvePointData2::AlgebraicChordParallel(displaced)) = endpoint else {
                 continue;
@@ -31841,7 +31821,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let frame_relation = if let Some(target_tangent) = target_tangent.as_ref() {
                 frame.center_support.vector_tangent_cross_and_dot_signs(
-                    &frame.center_parameter.clone().into(),
+                    &frame.center_parameter,
                     &target_tangent.0,
                     &target_tangent.1,
                     policy,
@@ -31853,18 +31833,24 @@ impl BezierAlgebraicCuspSemicircle2 {
                 // center parameter's own carrier and compare the two retained
                 // chords directly; their shared support relations decide the
                 // exact zero before any Cartesian compositum is attempted.
-                let tangent_start = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
-                    frame.center_support.clone(),
-                    frame.center_parameter.clone(),
-                    policy,
-                ));
-                let tangent_end =
-                    CurvePoint2::from(BezierAnalyticParallelPoint2::new_with_tangent_distance(
+                let tangent_start = CurvePoint2::from(
+                    BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
                         frame.center_support.clone(),
-                        frame.center_parameter.clone(),
+                        &frame.center_parameter,
+                        Real::zero(),
+                        policy,
+                    )
+                    .expect("a parallel-normal frame owns a scalar parameter"),
+                );
+                let tangent_end = CurvePoint2::from(
+                    BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                        frame.center_support.clone(),
+                        &frame.center_parameter,
                         Real::one(),
                         policy,
-                    ));
+                    )
+                    .expect("a parallel-normal frame owns a scalar parameter"),
+                );
                 let tangent =
                     match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
                         tangent_start,
@@ -32173,10 +32159,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 || self.has_recursive_selected_radial_line_parent());
         let prefer_selected_parallel_exact_line = prefer_authored_exact_line
             && self.uses_selected_parallel_normal_frame()
-            && matches!(
-                self.selected_frame_parameter(),
-                Some(BezierParameter2::Algebraic(_))
-            );
+            && self
+                .selected_frame_parameter()
+                .is_some_and(|parameter| parameter.scalar().is_none());
         if !prefer_authored_exact_line && !Arc::ptr_eq(&retained_support.data, &chord.data) {
             match self.chord_intersections_in_domain(retained_support, false, policy)? {
                 Classification::Decided(intersections) => {
@@ -32571,10 +32556,9 @@ impl BezierAlgebraicCuspSemicircle2 {
             );
         }
         if self.uses_selected_parallel_normal_frame()
-            && matches!(
-                self.selected_frame_parameter(),
-                Some(BezierParameter2::Algebraic(_))
-            )
+            && self
+                .selected_frame_parameter()
+                .is_some_and(|parameter| parameter.scalar().is_none())
         {
             let solve_line = if line_parameter_is_chord_parameter && clip_to_finite_chord {
                 Cow::Borrowed(&line)
@@ -34676,21 +34660,24 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a recursive parallel-normal circle frame crossed predicate policies".into(),
             ));
         }
-        if let Classification::Uncertain(reason) = frame.center_support.certify_source_frame_at(
-            &frame.center_parameter.clone().into(),
-            &CurveContext::STRICT,
-        )? {
+        if let Classification::Uncertain(reason) = frame
+            .center_support
+            .certify_source_frame_at(&frame.center_parameter, &CurveContext::STRICT)?
+        {
             return Ok(Classification::Uncertain(reason));
         }
+        let center_parameter =
+            match promote_curve_region_bezier_parameter(&frame.center_parameter, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
         let source = frame.center_support.source_power_basis()?;
         let differential = frame.center_support.differential()?;
         let dense =
             |coefficients: &[Real]| DenseTensorPolynomial::from_axis_polynomial(1, 0, coefficients);
         let Some((field, center, support_center)) = (|| {
             let field = BezierRecursiveQuadraticField2::base(
-                vec![bezier_parameter_root_representation(
-                    &frame.center_parameter,
-                )],
+                vec![bezier_parameter_root_representation(&center_parameter)],
                 dense(&parallel_speed_squared_polynomial(differential))?,
                 dense(&[Real::one()])?,
             )?;
@@ -36264,11 +36251,13 @@ impl BezierAlgebraicCuspSemicircle2 {
         let frame = self.data.frame.parallel_normal().ok_or_else(|| {
             CurveError::Topology("a certified arc tangent lost its parallel-normal frame".into())
         })?;
-        let center = BezierAnalyticParallelPoint2::new(
+        let center = BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
             frame.center_support.clone(),
-            frame.center_parameter.clone(),
+            &frame.center_parameter,
+            Real::zero(),
             &CurveContext::STRICT,
-        );
+        )
+        .expect("a parallel-normal frame owns a scalar parameter");
         match center.circle_residual_sign_to_exact(
             support.center(),
             &(signed_center_radius * signed_center_radius),
@@ -37227,7 +37216,18 @@ impl BezierAlgebraicCuspSemicircle2 {
                 system.expression_sign_at_parameter(&system.diameter, &boundary.parameter, policy)
             },
             |parameter| {
-                system.expression_sign_at_parameter(&system.tangent_dot_source, parameter, policy)
+                // The source dot already contains the circle's traversal
+                // sign. Component orientation needs cross(Q-C,Q') itself;
+                // the publisher applies clockwise/counterclockwise later.
+                Ok(system
+                    .expression_sign_at_parameter(&system.tangent_dot_source, parameter, policy)?
+                    .map(|sign| {
+                        if self.is_clockwise() {
+                            product_sign(sign, RealSign::Negative)
+                        } else {
+                            sign
+                        }
+                    }))
             },
         )
     }
@@ -37376,7 +37376,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "a recursive circle/rational solve exceeded its coefficient field".into(),
                 )
             })?;
-        match system.polynomial_is_identically_zero(&circle_polynomial, policy)? {
+        match recursive_quadratic_polynomial_is_identically_zero(&circle_polynomial, policy)? {
             Classification::Decided(true) => {
                 return Ok(self
                     .recursive_selected_radial_replay_rational_circle_component(
@@ -37508,6 +37508,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "the selected parallel-normal rational kernel lost its center parameter".into(),
             )
         })?;
+        let center_parameter =
+            match promote_curve_region_bezier_parameter(&center_parameter, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+
         let tangent_candidates = candidate.is_some();
         let tangent_certificate = match candidate {
             Some(candidate) => {
@@ -41835,9 +41841,20 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             ),
             &bivariate_multiply(&predicate.radical, &predicate.radical),
         );
-        let Some(BezierParameter2::Algebraic(center_parameter)) =
-            self.map.data.semicircle.selected_frame_parameter()
-        else {
+        let center_parameter = self
+            .map
+            .data
+            .semicircle
+            .selected_frame_parameter()
+            .ok_or_else(|| {
+                CurveError::Topology("selected overlap inverse lost its center".into())
+            })?;
+        let center_parameter =
+            match promote_curve_region_bezier_parameter(&center_parameter, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+        let BezierParameter2::Algebraic(center_parameter) = center_parameter else {
             return Err(CurveError::Topology(
                 "selected overlap inverse lost its algebraic center".into(),
             ));
@@ -51682,11 +51699,15 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             } = data.as_ref()
         {
             return Ok(Classification::Decided((source == semicircle).then(|| {
-                CurvePoint2::from(BezierAnalyticParallelPoint2::new(
-                    parallel.clone(),
-                    parameter.clone(),
-                    policy,
-                ))
+                CurvePoint2::from(
+                    BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                        parallel.clone(),
+                        parameter,
+                        Real::zero(),
+                        policy,
+                    )
+                    .expect("a retained parallel contact has a scalar parameter"),
+                )
             })));
         }
         if let Self::Mapped(data) = self
@@ -51786,9 +51807,11 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             && let Self::Mapped(data) = self
             && data.semicircle_carrier() == semicircle
             && let Some((map, contact)) = data.coincident_rational_source()
-            && let Some(other_parameter) = contact.other_parameter.as_bezier_parameter()
-            && let Some(point) =
-                exact_contact_point_evidence(&map.data.curve, other_parameter, policy)?
+            && let Classification::Decided(point) = rational_point_evidence_at_region_parameter(
+                &map.data.curve,
+                &contact.other_parameter,
+                policy,
+            )?
         {
             return Ok(Classification::Decided(Some(point)));
         }
@@ -58308,6 +58331,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         Ok(Classification::Decided(
             BezierRecursiveProjectiveParameter2 {
                 data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                    projection: parameter.data.projection.clone(),
                     authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
                         authority: parameter
                             .polynomial_authority()
@@ -58585,8 +58609,29 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         let strict = policy.strict_counterpart();
         let lower = BezierParameter2::Exact(parameter.data.lower.clone());
         let upper = BezierParameter2::Exact(parameter.data.upper.clone());
-        let mut selected = None;
+        let mut retained = Vec::new();
         for candidate in candidates {
+            let after_lower = candidate.cmp_by_refinement(&lower, &strict)?;
+            let before_upper = candidate.cmp_by_refinement(&upper, &strict)?;
+            match (after_lower, before_upper) {
+                (Classification::Decided(std::cmp::Ordering::Less), _)
+                | (_, Classification::Decided(std::cmp::Ordering::Greater)) => {}
+                (Classification::Decided(_), Classification::Decided(_)) => {
+                    retained.push(candidate)
+                }
+                (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        if retained.len() == 1 {
+            // The local certificate proves a root exists in this interval.
+            // Projection contains every such root; its unique candidate here
+            // must therefore be that same root, regardless of other sheets.
+            return Ok(Classification::Decided(retained.pop().unwrap()));
+        }
+        let mut selected = None;
+        for candidate in retained {
             let evaluation = recursive_quadratic_target_embedding(
                 &self.field,
                 &base,
@@ -58602,17 +58647,6 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
-            }
-            let after_lower = candidate.cmp_by_refinement(&lower, &strict)?;
-            let before_upper = candidate.cmp_by_refinement(&upper, &strict)?;
-            if !matches!(
-                after_lower,
-                Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
-            ) || !matches!(
-                before_upper,
-                Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Less)
-            ) {
-                continue;
             }
             if selected.is_some() {
                 return Err(CurveError::Topology(
@@ -58777,6 +58811,7 @@ impl BezierRecursiveProjectiveParameter2 {
         };
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                projection: Arc::default(),
                 authority: BezierRecursiveProjectiveParameterAuthority2::Monotone(authority),
                 lower: source_lower,
                 upper: source_upper,
@@ -58798,6 +58833,7 @@ impl BezierRecursiveProjectiveParameter2 {
         let refinement_steps = authority.source_refinement_steps;
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                projection: Arc::default(),
                 authority: BezierRecursiveProjectiveParameterAuthority2::Monotone(authority),
                 lower,
                 upper,
@@ -58841,6 +58877,7 @@ impl BezierRecursiveProjectiveParameter2 {
             );
             return Ok(Classification::Decided(Self {
                 data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                    projection: Arc::default(),
                     authority: BezierRecursiveProjectiveParameterAuthority2::Projective(scalar),
                     lower,
                     upper,
@@ -58856,6 +58893,7 @@ impl BezierRecursiveProjectiveParameter2 {
             if let Some(interval) = scalar.interval(refinement_steps) {
                 return Ok(Classification::Decided(Self {
                     data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                        projection: Arc::default(),
                         authority: BezierRecursiveProjectiveParameterAuthority2::Projective(scalar),
                         lower: interval.lower,
                         upper: interval.upper,
@@ -58893,6 +58931,7 @@ impl BezierRecursiveProjectiveParameter2 {
     ) -> Self {
         Self {
             data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                projection: self.data.projection.clone(),
                 authority: self.data.authority.clone(),
                 lower: self.data.lower.clone(),
                 upper: self.data.upper.clone(),
@@ -58915,6 +58954,7 @@ impl BezierRecursiveProjectiveParameter2 {
     ) -> Self {
         Self {
             data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                projection: self.data.projection.clone(),
                 authority: self.data.authority.clone(),
                 lower: self.data.lower.clone(),
                 upper: self.data.upper.clone(),
@@ -59011,6 +59051,7 @@ impl BezierRecursiveProjectiveParameter2 {
             .map_or_else(|| transform.clone(), |source| source.then(transform));
         Self {
             data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                projection: self.data.projection.clone(),
                 authority: self.data.authority.clone(),
                 lower: self.data.lower.clone(),
                 upper: self.data.upper.clone(),
@@ -59180,6 +59221,7 @@ impl BezierRecursiveProjectiveParameter2 {
             });
             let parameter = Self {
                 data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                    projection: self.data.projection.clone(),
                     authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
                         authority: authority.clone(),
                         // Exact field embedding preserves the polynomial's
@@ -59322,6 +59364,7 @@ impl BezierRecursiveProjectiveParameter2 {
             let refinement_steps = authority.source_refinement_steps;
             return Ok(Classification::Decided(Self {
                 data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                    projection: self.data.projection.clone(),
                     authority: BezierRecursiveProjectiveParameterAuthority2::Monotone(authority),
                     lower,
                     upper,
@@ -59362,6 +59405,7 @@ impl BezierRecursiveProjectiveParameter2 {
         };
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                projection: self.data.projection.clone(),
                 authority: self.data.authority.clone(),
                 lower,
                 upper,
@@ -59502,6 +59546,107 @@ impl BezierRecursiveProjectiveParameter2 {
         let chord_matches = authority.side_chord.shares_retained_support(chord);
         let parallel_matches = authority.side_parallel == *parallel;
         chord_matches && parallel_matches
+    }
+
+    pub(crate) fn cmp_selected_fiber_parameter(
+        &self,
+        other: &BezierAlgebraicSelectedFiberParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<std::cmp::Ordering>> {
+        use std::cmp::Ordering;
+        self.validate_policy(policy)?;
+        other.validate_policy(policy)?;
+        let strict = policy.strict_counterpart();
+        let separated = |lower: &Real, upper: &Real, other_lower: &Real, other_upper: &Real| {
+            if compare_reals(upper, other_lower, &strict) == Some(Ordering::Less) {
+                Some(Ordering::Less)
+            } else if compare_reals(other_upper, lower, &strict) == Some(Ordering::Less) {
+                Some(Ordering::Greater)
+            } else {
+                None
+            }
+        };
+        if let Some(order) = separated(
+            &self.data.lower,
+            &self.data.upper,
+            &other.root().lower,
+            &other.root().upper,
+        ) {
+            return Ok(Classification::Decided(order));
+        }
+        if self.data.projection.parameter.get().is_none()
+            && let Some(chart) = &self.data.projection.chart
+            && chart.source.data.projection.parameter.get().is_some()
+        {
+            // Replaying an already-projected source through its retained
+            // chart needs no new elimination and preserves coefficient-field
+            // identity for the direct comparison below.
+            let _ = self.promoted_bezier_parameter_complete(policy)?;
+        }
+        if let Some(native) = self.data.projection.parameter.get() {
+            if let Some(other_native) = other.data.representations.bezier.get()
+                && let Classification::Decided(order) = policy
+                    .strict_predicate_pass(|| native.cmp_by_refinement(other_native, policy))?
+            {
+                return Ok(Classification::Decided(order));
+            }
+            if let BezierParameter2::Algebraic(native) = native
+                && native
+                    .projective_map_from(&other.data.authority.data.retained_parameter)
+                    .is_some()
+                && let Classification::Decided(order) = policy.strict_predicate_pass(|| {
+                    other.cmp_bezier_parameter(&BezierParameter2::Algebraic(native.clone()), policy)
+                })?
+            {
+                // The prior projection already identifies an element of this
+                // fiber's coefficient field. Reuse that linear predicate
+                // before refining two enclosures of the same boundary root.
+                return Ok(Classification::Decided(order.reverse()));
+            }
+        }
+        for steps in [0, 2, 4, 8, 16, 32] {
+            let Classification::Decided(first) = self.refined(steps, policy)? else {
+                break;
+            };
+            let Classification::Decided(second) = other.refined(steps, policy)? else {
+                break;
+            };
+            if let Some(order) = separated(
+                &first.data.lower,
+                &first.data.upper,
+                &second.root().lower,
+                &second.root().upper,
+            ) {
+                return Ok(Classification::Decided(order));
+            }
+            if first.data.lower == first.data.upper && second.root().lower == second.root().upper {
+                if let Some(order) = compare_reals(&first.data.lower, &second.root().lower, &strict)
+                {
+                    return Ok(Classification::Decided(order));
+                }
+                break;
+            }
+        }
+        policy.strict_predicate_pass(|| {
+            let projected = self.promoted_bezier_parameter_complete(policy)?;
+            if let Classification::Decided(native) = &projected
+                && let Classification::Decided(order) =
+                    other.cmp_bezier_parameter(native, policy)?
+            {
+                return Ok(Classification::Decided(order.reverse()));
+            }
+            match other.promoted_bezier_parameter_complete(policy)? {
+                Classification::Decided(other_native) => match projected {
+                    Classification::Decided(native) => {
+                        native.cmp_by_refinement(&other_native, policy)
+                    }
+                    Classification::Uncertain(_) => {
+                        self.cmp_bezier_parameter(&other_native, policy)
+                    }
+                },
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        })
     }
 
     pub(crate) fn cmp_by_refinement(
@@ -59842,24 +59987,60 @@ impl BezierRecursiveProjectiveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
         self.validate_policy(policy)?;
-        if let Some(authority) = self.polynomial_authority() {
-            return policy.strict_predicate_pass(|| authority.promoted_parameter(self, policy));
+        if let Some(parameter) = self.data.projection.parameter.get() {
+            return Ok(Classification::Decided(parameter.clone()));
         }
-        if let Some(authority) = self.monotone_authority() {
-            return authority.promoted_mapped_parameter(policy);
-        }
-        let scalar = self
-            .projective_scalar()
-            .expect("a non-monotone recursive parameter owns a projective scalar");
-        if let Some(value) = scalar.exact_real_value() {
-            return Ok(Classification::Decided(BezierParameter2::Exact(value)));
-        }
-        policy.strict_predicate_pass(|| match scalar.represented_value(policy)? {
-            Classification::Decided(represented) => {
-                BezierParameter2::from_algebraic_root_representation_unbounded(&represented, policy)
+        let projected = policy.strict_predicate_pass(|| {
+            if let Some(chart) = &self.data.projection.chart {
+                let replayed = match chart.source.promoted_bezier_parameter_complete(policy)? {
+                    Classification::Decided(source) => source.projective_image_unbounded(
+                        &chart.numerator,
+                        &chart.denominator,
+                        policy,
+                    )?,
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                };
+                if let Classification::Decided(_) = replayed {
+                    return Ok(replayed);
+                }
+                // Reusing a source chart is an additional replay route. Its
+                // native conversion may be unresolved even when the mapped
+                // polynomial has a simpler exact projection.
             }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        })
+            if let Some(authority) = self.polynomial_authority() {
+                return authority.promoted_parameter(self, policy);
+            }
+            if let Some(authority) = self.monotone_authority() {
+                return authority.promoted_mapped_parameter(policy);
+            }
+            let scalar = self
+                .projective_scalar()
+                .expect("a non-monotone recursive parameter owns a projective scalar");
+            if let Some(value) = scalar.exact_real_value() {
+                return Ok(Classification::Decided(BezierParameter2::Exact(value)));
+            }
+            match scalar.represented_value(policy)? {
+                Classification::Decided(represented) => {
+                    BezierParameter2::from_algebraic_root_representation_unbounded(
+                        &represented,
+                        policy,
+                    )
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        })?;
+        if let Classification::Decided(parameter) = projected {
+            let _ = self.data.projection.parameter.set(parameter);
+            return Ok(Classification::Decided(
+                self.data
+                    .projection
+                    .parameter
+                    .get()
+                    .expect("strict projection was retained")
+                    .clone(),
+            ));
+        }
+        Ok(projected)
     }
 
     pub(crate) fn unit_complement(&self) -> Self {
@@ -59950,7 +60131,7 @@ impl BezierRecursiveProjectiveParameter2 {
             };
             return Self::from_mapped_monotone(authority, policy);
         }
-        if let Some(authority) = self.polynomial_authority() {
+        if self.polynomial_authority().is_some() {
             let denominator_sign =
                 policy.strict_predicate_pass(|| self.polynomial_sign(denominator, policy))?;
             match denominator_sign {
@@ -60005,11 +60186,79 @@ impl BezierRecursiveProjectiveParameter2 {
                 } else {
                     (second, first)
                 };
+            let (source, numerator, denominator) = match &self.data.projection.chart {
+                Some(chart) => {
+                    let compose = |row: &[Real; 2]| {
+                        std::array::from_fn(|i| {
+                            &row[0] * &chart.denominator[i] + &row[1] * &chart.numerator[i]
+                        })
+                    };
+                    (
+                        chart.source.clone(),
+                        compose(numerator),
+                        compose(denominator),
+                    )
+                }
+                None => (self.clone(), numerator.clone(), denominator.clone()),
+            };
+            let (numerator, denominator) =
+                crate::bezier_parameter::normalized_projective_chart(numerator, denominator);
+            if numerator[0].zero_status() == ZeroKnowledge::Zero
+                && denominator[1].zero_status() == ZeroKnowledge::Zero
+                && numerator[1] == denominator[0]
+            {
+                // The composed bijection is the identity. Keep the original
+                // selected root and its shared certificates, without growing
+                // either a construction chain or polynomial common scale.
+                if lower == source.data.lower && upper == source.data.upper {
+                    return Ok(Classification::Decided(source));
+                }
+                // Refinement performed between inverse maps still belongs
+                // to this root. Keep its tighter certified bracket, while
+                // reusing the original relation and projection authority.
+                return Ok(Classification::Decided(Self {
+                    data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                        projection: source.data.projection.clone(),
+                        authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
+                            authority: source
+                                .polynomial_authority()
+                                .expect("an identity chart retains its polynomial source")
+                                .clone(),
+                            endpoint_signs: if lower == upper {
+                                [RealSign::Zero; 2].map(OnceLock::from)
+                            } else {
+                                std::array::from_fn(|_| OnceLock::new())
+                            },
+                        },
+                        lower,
+                        upper,
+                        refinement_steps: refined
+                            .data
+                            .refinement_steps
+                            .max(source.data.refinement_steps),
+                        identity: source.data.identity.clone(),
+                        line_branch: source.data.line_branch,
+                        policy: source.data.policy,
+                    }),
+                }));
+            }
+            let source_authority = source
+                .polynomial_authority()
+                .expect("a polynomial chart retains its original polynomial root");
             let Some(coefficients) =
-                authority.projective_image_coefficients(numerator, denominator)
+                source_authority.projective_image_coefficients(&numerator, &denominator)
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
+            let field = source_authority.field.clone();
+            let projection = Arc::new(BezierRecursiveParameterProjection2 {
+                parameter: OnceLock::new(),
+                chart: Some(Arc::new(BezierRecursiveParameterChart2 {
+                    source,
+                    numerator,
+                    denominator,
+                })),
+            });
             // The transformed polynomial can have a different orientation.
             // Only an exact point bracket preserves its zero endpoint signs.
             let endpoint_signs = if lower == upper {
@@ -60019,9 +60268,10 @@ impl BezierRecursiveProjectiveParameter2 {
             };
             return Ok(Classification::Decided(Self {
                 data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                    projection,
                     authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
                         authority: Arc::new(BezierRecursivePolynomialParameterAuthority2 {
-                            field: authority.field.clone(),
+                            field,
                             coefficients,
                         }),
                         endpoint_signs,
@@ -61332,17 +61582,15 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             RealSign::Positive => std::cmp::Ordering::Greater,
         })
     }
+}
 
-    /// Certifies identity in the authored recursive field rather than in the
-    /// projected norm. A transient compositum can contain correlated copies
-    /// of one positive quadratic generator; its formal norm then has a zero
-    /// conjugate factor even when the authored-sheet coefficient is nonzero.
-    /// Only coefficient-wise zero is therefore authority for collinearity.
-    fn polynomial_is_identically_zero(
-        &self,
-        polynomial: &[BezierRecursiveQuadraticValue2],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
+/// Certifies identity on the authored coefficient sheet. A formal norm can
+/// vanish on a foreign conjugate without vanishing on the selected field.
+fn recursive_quadratic_polynomial_is_identically_zero(
+    polynomial: &[BezierRecursiveQuadraticValue2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<bool>> {
+    policy.strict_predicate_pass(|| {
         for coefficient in polynomial {
             match coefficient.sign(policy)? {
                 Classification::Decided(RealSign::Zero) => {}
@@ -61355,7 +61603,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             }
         }
         Ok(Classification::Decided(true))
-    }
+    })
 }
 
 impl BezierRecursiveQuadraticParallelExpression2 {
@@ -61591,25 +61839,6 @@ impl BezierRecursiveFixedDistanceSystem2 {
             target_parameter,
         )
     }
-
-    fn polynomial_is_identically_zero(
-        &self,
-        polynomial: &[BezierRecursiveQuadraticValue2],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
-        for coefficient in polynomial {
-            match coefficient.sign(policy)? {
-                Classification::Decided(RealSign::Zero) => {}
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                    return Ok(Classification::Decided(false));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        Ok(Classification::Decided(true))
-    }
 }
 
 impl BezierRecursiveProjectiveChordParallelIntervalSystem2 {
@@ -61702,16 +61931,13 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         domain: SelectedThirdAxisDomain2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        let Some(projection) = self.projection.as_ref() else {
+        let Some(projection) = self.incidence_projection() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         self.projected_parameters(projection, domain, policy)
     }
 
-    /// Constructs the squared norm only for a consumer that genuinely needs
-    /// global root enumeration.  Monotone Boolean contacts never call this
-    /// path; cold promotion remains complete for later carrier switches.
-    fn incidence_projection(&self) -> Option<DenseTensorPolynomial> {
+    fn incidence_polynomial(&self) -> Option<Vec<BezierRecursiveQuadraticValue2>> {
         // A source-only incidence has no target-speed radical. Squaring it
         // needlessly doubles multiplicities before each coefficient-field
         // norm, and can obscure selected zero coefficients during projection.
@@ -61721,13 +61947,144 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
             .iter()
             .all(BezierRecursiveQuadraticValue2::is_structurally_zero)
         {
-            return self.projected_polynomial(&self.incidence.rational);
+            return Some(self.incidence.rational.clone());
         }
-        self.projected_polynomial(
-            &self
-                .incidence
-                .squared_magnitude_difference(&self.speed_squared)?,
-        )
+        self.incidence
+            .squared_magnitude_difference(&self.speed_squared)
+    }
+
+    /// Cache only successful global elimination. Finite local isolation and
+    /// replay do not construct it, while later carrier switches can request it.
+    fn incidence_projection(&self) -> Option<&DenseTensorPolynomial> {
+        if self.projection.get().is_none() {
+            let projection = self.projected_polynomial(&self.incidence_polynomial()?)?;
+            let _ = self.projection.set(projection);
+        }
+        self.projection.get()
+    }
+
+    /// A complete local isolation report covers an outward finite envelope;
+    /// the retained endpoints, not that envelope, decide domain membership.
+    /// Repeated roots and unresolved coefficient signs use global elimination.
+    fn local_parameters(
+        &self,
+        domain: SelectedThirdAxisDomain2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Vec<CurveParameter2>>> {
+        let SelectedThirdAxisDomain2::Finite(range) = domain else {
+            return Ok(None);
+        };
+        let domain = CurveParameterDomain2::new(range, None);
+        let Classification::Decided((_, bounds)) = domain.finite_envelope(policy)? else {
+            return Ok(None);
+        };
+        if compare_reals(bounds[0], bounds[1], &CurveContext::STRICT)
+            != Some(std::cmp::Ordering::Less)
+        {
+            return Ok(None);
+        }
+        let Some(coefficients) = self.incidence_polynomial() else {
+            return Ok(None);
+        };
+        let Some(candidates) = recursive_quadratic_polynomial_local_parameters(
+            &self.field,
+            &coefficients,
+            bounds,
+            policy,
+        )?
+        else {
+            return Ok(None);
+        };
+        let mut retained = Vec::with_capacity(candidates.len());
+        for candidate in candidates {
+            match domain.contains_finite_parameter(&candidate, policy)? {
+                Classification::Decided(true) => retained.push(candidate),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(_) => return Ok(None),
+            }
+        }
+        Ok(Some(retained))
+    }
+
+    /// Some(true) proves the authored sheet is a component; Some(false)
+    /// proves the opposite sheet is. None means only a foreign coefficient
+    /// conjugate made the projection vanish. A common zero of A and B at the
+    /// sample is inconclusive: use their first nonzero Taylor coefficients.
+    fn norm_component_sheet_at_real(
+        &self,
+        sample: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<bool>>> {
+        let Some(norm) = self
+            .incidence
+            .squared_magnitude_difference(&self.speed_squared)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        match recursive_quadratic_polynomial_is_identically_zero(&norm, policy)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        for (polynomial, positive) in [(&self.source_weight, false), (&self.speed_squared, true)] {
+            match self.polynomial_sign_at_real(polynomial, sample, policy)? {
+                Classification::Decided(RealSign::Positive) => {}
+                Classification::Decided(RealSign::Negative) if !positive => {}
+                Classification::Decided(RealSign::Negative) => {
+                    return Err(CurveError::Topology(
+                        "a recursive norm component had negative squared speed".into(),
+                    ));
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        let derivative = |coefficients: &[BezierRecursiveQuadraticValue2]| {
+            coefficients
+                .iter()
+                .enumerate()
+                .skip(1)
+                .map(|(power, coefficient)| {
+                    coefficient.scale(&Real::from(i64::try_from(power).ok()?))
+                })
+                .collect::<Option<Vec<_>>>()
+        };
+        let mut rational = self.incidence.rational.clone();
+        let mut radical = self.incidence.radical.clone();
+        for _ in 0..rational.len().max(radical.len()) {
+            let first = self.polynomial_sign_at_real(&rational, sample, policy)?;
+            let second = self.polynomial_sign_at_real(&radical, sample, policy)?;
+            match (first, second) {
+                (
+                    Classification::Decided(RealSign::Zero),
+                    Classification::Decided(RealSign::Zero),
+                ) => {}
+                (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                (Classification::Decided(RealSign::Zero), _)
+                | (_, Classification::Decided(RealSign::Zero)) => {
+                    return Err(CurveError::Topology(
+                        "a zero norm with positive speed had unequal vanishing orders".into(),
+                    ));
+                }
+                (Classification::Decided(first), Classification::Decided(second)) => {
+                    // Norm identity and S>0 give equal vanishing orders and
+                    // squared magnitudes. Opposite leading signs cancel on
+                    // the positive speed sheet throughout this regular cell.
+                    return Ok(Classification::Decided(Some(first != second)));
+                }
+            }
+            let (Some(first), Some(second)) = (derivative(&rational), derivative(&radical)) else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            rational = first;
+            radical = second;
+        }
+        // All Taylor coefficients vanished, so both terms are identically zero.
+        Ok(Classification::Decided(Some(true)))
     }
 
     fn candidate_evaluation(
@@ -62131,7 +62488,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             let candidates = match self.projected_parameters(
-                &projection,
+                projection,
                 SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                 policy,
             )? {
@@ -62613,25 +62970,6 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         expression.sign_with_positive_speed(&self.speed_squared, policy, |polynomial| {
             self.polynomial_sign_at_region_parameter(polynomial, target_parameter, policy)
         })
-    }
-
-    fn polynomial_is_identically_zero(
-        &self,
-        polynomial: &[BezierRecursiveQuadraticValue2],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
-        for coefficient in polynomial {
-            match coefficient.sign(&policy.strict_counterpart())? {
-                Classification::Decided(RealSign::Zero) => {}
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                    return Ok(Classification::Decided(false));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        Ok(Classification::Decided(true))
     }
 
     fn contact_location_at_region_parameter(
@@ -64402,6 +64740,7 @@ fn recursive_quadratic_polynomial_local_parameters(
             } else {
                 CurveParameter2::from_recursive_projective(BezierRecursiveProjectiveParameter2 {
                     data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                        projection: Arc::default(),
                         authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
                             authority: authority.clone(),
                             endpoint_signs: std::array::from_fn(|_| OnceLock::new()),
@@ -64490,6 +64829,7 @@ fn recursive_projective_polynomial_parameters_with_crossing(
         });
         let parameter = BezierRecursiveProjectiveParameter2 {
             data: Arc::new(BezierRecursiveProjectiveParameterData2 {
+                projection: Arc::default(),
                 authority: BezierRecursiveProjectiveParameterAuthority2::Polynomial {
                     authority,
                     endpoint_signs: if crossing.lower == crossing.upper {
@@ -77122,7 +77462,6 @@ impl BezierAlgebraicChord2 {
                 parallel,
                 frame.as_deref(),
                 false,
-                false,
                 strict,
             )? {
                 Classification::Decided(Some(system)) => Arc::new(system),
@@ -77323,7 +77662,6 @@ impl BezierAlgebraicChord2 {
             let clipping_system = match self.recursive_projective_parallel_system_with_frame(
                 parallel,
                 frame.as_deref(),
-                false,
                 true,
                 policy,
             )? {
@@ -77558,7 +77896,6 @@ impl BezierAlgebraicChord2 {
         &self,
         parallel: &BezierParallel2,
         frame_tangent: Option<&BezierAnalyticParallelTangentField2>,
-        build_projection: bool,
         build_coordinate_differences: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveProjectiveChordParallelSystem2>>> {
@@ -77578,7 +77915,7 @@ impl BezierAlgebraicChord2 {
         {
             let caller = std::panic::Location::caller();
             eprintln!(
-                "recursive parallel system generic caller={}:{} projection={build_projection} coordinates={build_coordinate_differences}",
+                "recursive parallel system generic caller={}:{} coordinates={build_coordinate_differences}",
                 caller.file(),
                 caller.line(),
             );
@@ -77735,10 +78072,10 @@ impl BezierAlgebraicChord2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let mut system = BezierRecursiveProjectiveChordParallelSystem2 {
+        let system = BezierRecursiveProjectiveChordParallelSystem2 {
             base: field.base_and_extension_path().0,
             field,
-            projection: None,
+            projection: OnceLock::new(),
             incidence,
             speed_squared,
             source_weight,
@@ -77746,12 +78083,6 @@ impl BezierAlgebraicChord2 {
             tangent_dot,
             coordinate_differences,
         };
-        if build_projection {
-            let Some(projection) = system.incidence_projection() else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            system.projection = Some(projection);
-        }
         Ok(Classification::Decided(Some(system)))
     }
 
@@ -77777,6 +78108,47 @@ impl BezierAlgebraicChord2 {
         )? {
             return Ok(Classification::Uncertain(reason));
         }
+        if let Some(candidates) =
+            policy.bounded_exact_predicate_pass(|| system.local_parameters(domain, policy))?
+            && let Classification::Decided(contacts) =
+                policy.bounded_exact_predicate_pass(|| {
+                    self.recursive_projective_parallel_contacts(
+                        parallel,
+                        system,
+                        candidates,
+                        None,
+                        frame_tangent,
+                        derivative_scale_sign,
+                        clip_to_finite_chord,
+                        policy,
+                    )
+                })?
+        {
+            return Ok(Classification::Decided(contacts));
+        }
+        self.recursive_projective_parallel_intersections_from_projection(
+            parallel,
+            system,
+            frame_tangent,
+            derivative_scale_sign,
+            domain,
+            component_sample,
+            clip_to_finite_chord,
+            policy,
+        )
+    }
+
+    fn recursive_projective_parallel_intersections_from_projection(
+        &self,
+        parallel: &BezierParallel2,
+        system: &BezierRecursiveProjectiveChordParallelSystem2,
+        frame_tangent: Option<&Arc<BezierAnalyticParallelTangentField2>>,
+        derivative_scale_sign: Option<RealSign>,
+        domain: SelectedThirdAxisDomain2<'_>,
+        component_sample: Option<&Real>,
+        clip_to_finite_chord: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
         let (candidates, original_projection_is_discrete) = match system
             .parameters(domain, policy)?
         {
@@ -77789,28 +78161,13 @@ impl BezierAlgebraicChord2 {
                     None => domain.strict_sample(policy)?,
                 };
                 let sample = match sample {
-                    Classification::Decided(sample) => BezierParameter2::Exact(sample),
+                    Classification::Decided(sample) => sample,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let evaluation = match system.candidate_evaluation(&sample, policy)? {
-                    Classification::Decided(Some(evaluation)) => evaluation,
-                    Classification::Decided(None) => {
-                        return Ok(Classification::Decided(
-                            BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                // The projected component is only an enumerator. Its sampled
-                // authored-sheet replay is the final predicate, so an
-                // approximate caller may consume its terminal here after the
-                // retained exact sign authorities decline.
-                match system.expression_sign(&system.incidence, &evaluation, policy)? {
-                    Classification::Decided(RealSign::Zero) => {
+                match system.norm_component_sheet_at_real(&sample, policy)? {
+                    Classification::Decided(Some(true)) => {
                         #[cfg(feature = "dispatch-trace")]
                         hyperreal::dispatch_trace::record(
                             "hypercurve",
@@ -77821,13 +78178,18 @@ impl BezierAlgebraicChord2 {
                             BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent,
                         ));
                     }
-                    Classification::Decided(RealSign::Negative | RealSign::Positive) => {
+                    Classification::Decided(Some(false)) => {
                         #[cfg(feature = "dispatch-trace")]
                         hyperreal::dispatch_trace::record(
                             "hypercurve",
                             "recursive-chord-parallel-degenerate",
                             "opposite-speed-sheet",
                         );
+                    }
+                    Classification::Decided(None) => {
+                        return Ok(Classification::Decided(
+                            BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                        ));
                     }
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -77881,33 +78243,95 @@ impl BezierAlgebraicChord2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
+        self.recursive_projective_parallel_contacts(
+            parallel,
+            system,
+            candidates.into_iter().map(CurveParameter2::from).collect(),
+            original_projection_is_discrete.then(|| {
+                system
+                    .projection
+                    .get()
+                    .expect("the global chord/parallel enumerator retains its projection")
+            }),
+            frame_tangent,
+            derivative_scale_sign,
+            clip_to_finite_chord,
+            policy,
+        )
+    }
+
+    fn recursive_projective_parallel_contacts(
+        &self,
+        parallel: &BezierParallel2,
+        system: &BezierRecursiveProjectiveChordParallelSystem2,
+        candidates: Vec<CurveParameter2>,
+        projection: Option<&DenseTensorPolynomial>,
+        frame_tangent: Option<&Arc<BezierAnalyticParallelTangentField2>>,
+        derivative_scale_sign: Option<RealSign>,
+        clip_to_finite_chord: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
         let mut contacts = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            let projected_incidence = original_projection_is_discrete
-                .then(|| {
-                    let projection = system
-                        .projection
-                        .as_ref()
-                        .expect("the general chord/parallel enumerator owns its projection");
+            let projected_incidence = projection.zip(candidate.as_bezier_parameter()).and_then(
+                |(projection, parameter)| {
                     projected_selected_dense_candidate_box_incidence(
                         projection,
                         &system.base.sources,
-                        &candidate,
+                        parameter,
                         64,
                         64,
                     )
-                })
-                .flatten();
+                },
+            );
             let projected_certificate = match projected_incidence {
                 Some(BezierDenseCandidateBoxIncidence2::Root(certificate)) => Some(certificate),
                 Some(BezierDenseCandidateBoxIncidence2::Disjoint(_)) => continue,
                 None => None,
             };
-            let evaluation = match system.candidate_evaluation(&candidate, policy)? {
-                Classification::Decided(Some(evaluation)) => evaluation,
-                Classification::Decided(None) => continue,
+            let evaluation = if let Some(parameter) = candidate.as_bezier_parameter() {
+                match system.candidate_evaluation(parameter, policy)? {
+                    Classification::Decided(Some(evaluation)) => Some(evaluation),
+                    Classification::Decided(None) => continue,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            } else {
+                None
+            };
+            let polynomial_sign = |polynomial: &[BezierRecursiveQuadraticValue2]| {
+                if let Some(evaluation) = &evaluation {
+                    system.polynomial_sign(polynomial, evaluation, policy)
+                } else {
+                    recursive_projective_polynomial_sign_at_parameter(
+                        &system.field,
+                        polynomial,
+                        &candidate,
+                        policy,
+                    )
+                }
+            };
+            let weight_sign = match policy
+                .strict_predicate_pass(|| polynomial_sign(&system.source_weight))?
+            {
+                Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
+                }
+            };
+            let expression_sign = |expression: &BezierRecursiveQuadraticParallelExpression2| {
+                if let Some(evaluation) = &evaluation {
+                    system.expression_sign(expression, evaluation, policy)
+                } else {
+                    expression.sign_with_positive_speed(
+                        &system.speed_squared,
+                        policy,
+                        polynomial_sign,
+                    )
                 }
             };
             // This is the terminal authored-sheet predicate, not persistent
@@ -77915,15 +78339,16 @@ impl BezierAlgebraicChord2 {
             // able to consume APPROXIMATE_512 after every exact interval and
             // projected-zero certificate has declined.
             let replay = {
-                if let Some(certificate) = &projected_certificate {
+                if let (Some(certificate), Some(evaluation)) = (&projected_certificate, &evaluation)
+                {
                     system.certified_expression_replay_sign(
                         &system.incidence,
-                        &evaluation,
+                        evaluation,
                         certificate,
                         policy,
                     )
                 } else {
-                    system.expression_sign(&system.incidence, &evaluation, policy)
+                    expression_sign(&system.incidence)
                 }
             }?;
             match replay {
@@ -77933,37 +78358,25 @@ impl BezierAlgebraicChord2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let candidate = projected_certificate
+            let contact_parameter = projected_certificate
                 .as_ref()
                 .and_then(|certificate| certificate.candidate.exact_point_witness())
                 .cloned()
-                .map(BezierParameter2::Exact)
-                .unwrap_or(candidate);
-            let point = CurvePoint2::from(if let Some(frame) = frame_tangent {
-                BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
+                .map(CurveParameter2::from)
+                .unwrap_or_else(|| candidate.clone());
+            let Some(point) =
+                BezierAnalyticParallelPoint2::new_with_region_parameter_and_frame_tangent(
                     parallel.clone(),
-                    candidate.clone(),
-                    Arc::clone(frame),
+                    &contact_parameter,
+                    frame_tangent.cloned(),
                     Real::zero(),
                     policy,
                 )
-            } else {
-                BezierAnalyticParallelPoint2::new(parallel.clone(), candidate.clone(), policy)
-            });
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let point = CurvePoint2::from(point);
             let chord_parameter = if clip_to_finite_chord {
-                let weight_sign = match policy.strict_predicate_pass(|| {
-                    system.polynomial_sign(&system.source_weight, &evaluation, policy)
-                })? {
-                    Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => {
-                        sign
-                    }
-                    Classification::Decided(RealSign::Zero) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
                 let mut coordinate_signs = [RealSign::Zero; 2];
                 for (sign, difference) in coordinate_signs.iter_mut().zip(
                     system
@@ -77972,9 +78385,7 @@ impl BezierAlgebraicChord2 {
                         .expect("the all-roots system retains finite-chord coordinates")
                         .iter(),
                 ) {
-                    *sign = match policy.strict_predicate_pass(|| {
-                        system.expression_sign(difference, &evaluation, policy)
-                    })? {
+                    *sign = match policy.strict_predicate_pass(|| expression_sign(difference))? {
                         Classification::Decided(sign) => product_sign(sign, weight_sign),
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
@@ -77999,26 +78410,24 @@ impl BezierAlgebraicChord2 {
             } else {
                 self.parameter_at_certified_support_point(point.clone(), policy)?
             };
-            let source_cross = match policy.strict_predicate_pass(|| {
-                system.polynomial_sign(&system.tangent_cross, &evaluation, policy)
-            })? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let source_dot = match policy.strict_predicate_pass(|| {
-                system.polynomial_sign(&system.tangent_dot, &evaluation, policy)
-            })? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let source_cross =
+                match policy.strict_predicate_pass(|| polynomial_sign(&system.tangent_cross))? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            let source_dot =
+                match policy.strict_predicate_pass(|| polynomial_sign(&system.tangent_dot))? {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
             let derivative_scale = match if let Some(sign) = derivative_scale_sign {
                 Classification::Decided(sign)
             } else {
-                parallel.parallel_derivative_scale_sign(&candidate.clone().into(), policy)?
+                parallel.parallel_derivative_scale_sign(&contact_parameter, policy)?
             } {
                 Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
                 Classification::Decided(RealSign::Zero) => {
@@ -78030,7 +78439,7 @@ impl BezierAlgebraicChord2 {
             };
             contacts.push(BezierAlgebraicChordParallelContact2 {
                 chord_parameter,
-                parallel_parameter: candidate,
+                parallel_parameter: contact_parameter,
                 point,
                 tangent_cross_sign: product_sign(source_cross, derivative_scale),
                 tangent_dot_sign: product_sign(source_dot, derivative_scale),
@@ -78066,7 +78475,6 @@ impl BezierAlgebraicChord2 {
             let support_system = match self.recursive_projective_parallel_system_with_frame(
                 parallel,
                 frame_tangent.as_deref(),
-                true,
                 false,
                 policy,
             )? {
@@ -78128,7 +78536,6 @@ impl BezierAlgebraicChord2 {
             parallel,
             frame_tangent.as_deref(),
             true,
-            true,
             policy,
         )? {
             Classification::Decided(Some(system)) => system,
@@ -78155,11 +78562,11 @@ impl BezierAlgebraicChord2 {
     /// genuinely analytic parallel.
     ///
     /// Both authored endpoints enter their least shared recursive projective
-    /// tower. Hypersolve eliminates that tower from the squared one-radical
-    /// supporting-line equation, then exact authored-sheet replay rejects
-    /// conjugate and opposite-normal roots before finite chord containment and
-    /// tangent orientation are published. No approximate value selects a
-    /// carrier representation.
+    /// tower. Complete local root isolation keeps simple contacts in that
+    /// coefficient field; unresolved cases demand the global norm projection.
+    /// Both enumerators replay the authored positive-speed sheet before
+    /// finite chord containment and tangent orientation are published. No
+    /// approximate value selects a carrier representation.
     #[track_caller]
     pub(crate) fn parallel_intersections(
         &self,
@@ -78292,7 +78699,7 @@ impl BezierAlgebraicChord2 {
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
         self.validate_policy(policy)?;
         let system = match self
-            .recursive_projective_parallel_system_with_frame(parallel, None, true, true, policy)?
+            .recursive_projective_parallel_system_with_frame(parallel, None, true, policy)?
         {
             Classification::Decided(Some(system)) => system,
             Classification::Decided(None) => {
@@ -79410,8 +79817,7 @@ impl BezierAlgebraicChord2 {
             );
             Classification::Decided(false)
         } else {
-            system
-                .polynomial_is_identically_zero(&system.incidence, &policy.strict_counterpart())?
+            recursive_quadratic_polynomial_is_identically_zero(&system.incidence, policy)?
         };
         #[cfg(test)]
         if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
@@ -82673,7 +83079,7 @@ impl BezierAlgebraicChordParallelContact2 {
         &self.chord_parameter
     }
 
-    pub(crate) fn parallel_parameter(&self) -> &BezierParameter2 {
+    pub(crate) fn parallel_parameter(&self) -> &CurveParameter2 {
         &self.parallel_parameter
     }
 
@@ -88019,7 +88425,7 @@ impl BezierAlgebraicChord2 {
     pub(crate) fn tangent_cross_dot_parallel_linear_combination_sign(
         &self,
         parallel: &BezierParallel2,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         cross_scale: &Real,
         dot_scale: &Real,
         policy: &CurveContext,
@@ -88034,14 +88440,13 @@ impl BezierAlgebraicChord2 {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let scale =
-            match parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
-                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-                Classification::Decided(RealSign::Zero) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let scale = match parallel.parallel_derivative_scale_sign(parameter, policy)? {
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         Ok(Classification::Decided(product_sign(source_sign, scale)))
     }
 
@@ -88052,7 +88457,7 @@ impl BezierAlgebraicChord2 {
     fn tangent_cross_dot_parallel_source_linear_combination_sign(
         &self,
         parallel: &BezierParallel2,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         cross_scale: &Real,
         dot_scale: &Real,
         policy: &CurveContext,
@@ -88064,7 +88469,7 @@ impl BezierAlgebraicChord2 {
         if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent() {
             let source_sign = match parallel
                 .vector_source_tangent_cross_dot_linear_combination_sign(
-                    &parameter.clone().into(),
+                    parameter,
                     &tangent_x,
                     &tangent_y,
                     cross_scale,
@@ -88078,6 +88483,46 @@ impl BezierAlgebraicChord2 {
             };
             return Ok(Classification::Decided(source_sign));
         }
+        // A local root keeps its defining coefficient relations. The
+        // oriented support line is (-dy, dx, c) up to positive scale.
+        if parameter.as_bezier_parameter().is_none()
+            && let Some(line) = self.recursive_projective_support_line(policy)?
+        {
+            let differential = parallel.differential()?;
+            let coefficients = (|| {
+                let x_scale = line.x.scale(cross_scale)?.add(&line.y.scale(dot_scale)?)?;
+                let y_scale = line
+                    .y
+                    .scale(cross_scale)?
+                    .subtract(&line.x.scale(dot_scale)?)?;
+                recursive_quadratic_polynomial_combine(
+                    &differential
+                        .tangent_x
+                        .iter()
+                        .map(|value| x_scale.scale(value))
+                        .collect::<Option<Vec<_>>>()?,
+                    &differential
+                        .tangent_y
+                        .iter()
+                        .map(|value| y_scale.scale(value))
+                        .collect::<Option<Vec<_>>>()?,
+                    false,
+                )
+            })();
+            if let Some(coefficients) = coefficients
+                && let Some(root) = parameter.as_recursive_projective()
+                && let Classification::Decided(sign) =
+                    root.recursive_polynomial_sign_joined(&coefficients, policy)?
+            {
+                return Ok(Classification::Decided(sign));
+            }
+        }
+        // The independent trivariate fallback needs an ordinary root axis;
+        // promotion is demand-driven and does not replace the retained root.
+        let parameter = match promote_curve_region_bezier_parameter(parameter, policy)? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         let support = match self.independent_support_system(policy)? {
             Classification::Decided(support) => support,
             Classification::Uncertain(reason) => {
@@ -88137,7 +88582,7 @@ impl BezierAlgebraicChord2 {
             &relation,
             &support.first_parameter,
             &support.second_parameter,
-            parameter,
+            &parameter,
             policy,
         )? {
             Classification::Decided(sign) => product_sign(sign, support.chord_denominator_sign),
@@ -93471,7 +93916,6 @@ impl BezierAnalyticParallelPoint2 {
                 &self.data.parallel,
                 self.data.frame_tangent.as_deref(),
                 false,
-                false,
                 policy,
             )
         })? {
@@ -97048,9 +97492,9 @@ impl BezierAlgebraicChordPairPoint2 {
 
         let mut uncertainty = None;
         for chord in [&self.data.first, &self.data.second] {
-            let system = match chord.recursive_projective_parallel_system_with_frame(
-                parallel, None, true, false, policy,
-            )? {
+            let system = match chord
+                .recursive_projective_parallel_system_with_frame(parallel, None, false, policy)?
+            {
                 Classification::Decided(Some(system)) => system,
                 Classification::Decided(None) => {
                     uncertainty.get_or_insert(UncertaintyReason::Unsupported);
@@ -100135,12 +100579,13 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     ))));
                 }
                 Ok(Classification::Decided(Some(CurvePoint2::from(
-                    BezierAnalyticParallelPoint2::new_with_tangent_distance(
+                    BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
                         frame.center_support.with_distance(normal_distance),
-                        frame.center_parameter.clone(),
+                        &frame.center_parameter,
                         tangent_distance,
                         policy,
-                    ),
+                    )
+                    .expect("a parallel-normal frame owns a scalar parameter"),
                 ))))
             }
         }
@@ -100946,14 +101391,21 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             cross_scale * &tangent_source_scale + dot_scale * &tangent_normal_scale;
         let source_dot_scale =
             dot_scale * tangent_source_scale - cross_scale * tangent_normal_scale;
-        let (tangent_support, tangent_parameter) = frame.tangent_authority.as_ref().map_or(
-            (&frame.center_support, &frame.center_parameter),
-            |authority| (&authority.support, &authority.parameter),
+        let (tangent_support, tangent_parameter) = frame.tangent_authority.as_ref().map_or_else(
+            || (&frame.center_support, frame.center_parameter.clone()),
+            |authority| (&authority.support, authority.parameter.clone()),
         );
+        let tangent_parameter =
+            match promote_curve_region_bezier_parameter(&tangent_parameter, policy)? {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
         Ok(Some(
             tangent_support
                 .source_tangent_pair_cross_dot_linear_combination_sign(
-                    tangent_parameter,
+                    &tangent_parameter,
                     parallel,
                     parameter,
                     &source_cross_scale,
@@ -101827,12 +102279,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 },
             );
             if let (Some(parallel), Some(parameter)) = source {
-                let relation = parallel.vector_tangent_cross_and_dot_signs(
-                    &parameter.into(),
-                    &vector.0,
-                    &vector.1,
-                    policy,
-                )?;
+                let relation = parallel
+                    .vector_tangent_cross_and_dot_signs(&parameter, &vector.0, &vector.1, policy)?;
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
@@ -102639,7 +103087,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     pub(crate) fn endpoint_analytic_source(
         &self,
         start_endpoint: bool,
-    ) -> Option<(BezierParallel2, BezierParameter2)> {
+    ) -> Option<(BezierParallel2, CurveParameter2)> {
         let source_start = start_endpoint != self.data.reversed;
         let parameter = if source_start {
             &self.data.start
@@ -102658,6 +103106,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 Some((parallel, self.data.semicircle.selected_frame_parameter()?))
             }
             BezierAlgebraicCuspSemicircleParameter2::Mapped(data) => {
+                if let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact { parallel, parameter, policy, .. } = data.as_ref() {
+                    return (self.data.policy.accepts_retained_policy(*policy)
+                        && data.semicircle_carrier() == &self.data.semicircle)
+                        .then(|| (parallel.clone(), parameter.clone()));
+                }
                 let BezierAlgebraicCuspSemicircleMappedTangentSource2::Parallel {
                     parallel,
                     parameter,
@@ -102668,7 +103121,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 };
                 (self.data.policy.accepts_retained_policy(policy)
                     && data.semicircle_carrier() == &self.data.semicircle)
-                    .then(|| (parallel.clone(), parameter.clone()))
+                    .then(|| (parallel.clone(), parameter.clone().into()))
             }
         }
     }
@@ -103133,16 +103586,16 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                 parallel,
-                parameter: BezierParameter2::Exact(source_parameter),
+                parameter,
                 ..
-            } if chord.parallel_tangent_contacts().iter().any(|contact| {
+            } if parameter.scalar().is_some_and(|source_parameter| chord.parallel_tangent_contacts().iter().any(|contact| {
                 contact.parallel().source() == parallel.source()
                     && compare_reals(
                         contact.parameter(),
                         source_parameter,
                         &CurveContext::STRICT,
                     ) == Some(std::cmp::Ordering::Equal)
-            }) => return Ok(true),
+            })) => return Ok(true),
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact {
                 chord: source,
                 ..
@@ -103316,12 +103769,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             let represented_tangent = chord.certified_unit_tangent();
             let represented_parallel = match represented_tangent.as_ref() {
                 Some((x, y)) => policy.strict_predicate_pass(|| {
-                    parallel.vector_tangent_cross_and_dot_signs(
-                        &source_parameter.clone().into(),
-                        x,
-                        y,
-                        policy,
-                    )
+                    parallel.vector_tangent_cross_and_dot_signs(source_parameter, x, y, policy)
                 })?,
                 None => Classification::Uncertain(UncertaintyReason::Unsupported),
             };
@@ -103717,9 +104165,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         {
             return Ok(Some(point));
         }
-        let Some((parallel, BezierParameter2::Algebraic(parameter))) =
-            self.endpoint_analytic_source(start_endpoint)
-        else {
+        let Some((parallel, parameter)) = self.endpoint_analytic_source(start_endpoint) else {
+            return Ok(None);
+        };
+        let Some(BezierParameter2::Algebraic(parameter)) = parameter.as_bezier_parameter() else {
             return Ok(None);
         };
         let parameter = match parameter.represented_exact_point(policy)? {
@@ -109966,7 +110415,7 @@ fn parallel_parameter_pair_is_on_overlap_correspondence(
         (first_parameter, overlap.first_range()),
         (second_parameter, overlap.second_range()),
     ] {
-        match overlap_parameter_is_in_range(parameter, range, true, policy)? {
+        match overlap_parameter_is_in_range(&parameter.clone().into(), range, true, policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(false)),
             Classification::Uncertain(reason) => {
@@ -113799,17 +114248,19 @@ impl BezierParallel2 {
             BezierAlgebraicFiberProjection2::Parameters(candidates) => (candidates, true),
             BezierAlgebraicFiberProjection2::IdenticallyZero => {
                 let strict = policy.strict_counterpart();
-                let rational_zero = match system
-                    .polynomial_is_identically_zero(&system.incidence.rational, &strict)?
-                {
+                let rational_zero = match recursive_quadratic_polynomial_is_identically_zero(
+                    &system.incidence.rational,
+                    &strict,
+                )? {
                     Classification::Decided(zero) => zero,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let radical_zero = match system
-                    .polynomial_is_identically_zero(&system.incidence.radical, &strict)?
-                {
+                let radical_zero = match recursive_quadratic_polynomial_is_identically_zero(
+                    &system.incidence.radical,
+                    &strict,
+                )? {
                     Classification::Decided(zero) => zero,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -123114,8 +123565,12 @@ impl BezierParameterComponentOverlap2 {
                 }
             }
         }
-        match selected_fiber_parameter_is_in_bezier_range(parameter, retained_range, false, policy)?
-        {
+        match overlap_parameter_is_in_range(
+            &CurveParameter2::from_selected_fiber(parameter.clone()),
+            retained_range,
+            false,
+            policy,
+        )? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -123174,7 +123629,12 @@ impl BezierParameterComponentOverlap2 {
         let Some(mapped) = support_roots.into_iter().nth(rank) else {
             return Ok(Classification::Decided(None));
         };
-        match selected_fiber_parameter_is_in_bezier_range(&mapped, lifted_range, true, policy)? {
+        match overlap_parameter_is_in_range(
+            &CurveParameter2::from_selected_fiber(mapped.clone()),
+            lifted_range,
+            true,
+            policy,
+        )? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -123231,7 +123691,7 @@ impl BezierParameterComponentOverlap2 {
                 }
             }
         }
-        match curve_region_parameter_is_in_bezier_range(
+        match overlap_parameter_is_in_range(
             &CurveParameter2::from_recursive_projective(parameter.clone()),
             retained_range,
             false,
@@ -123282,7 +123742,7 @@ impl BezierParameterComponentOverlap2 {
         let Some(mapped) = candidates.into_iter().nth(rank) else {
             return Ok(Classification::Decided(None));
         };
-        match curve_region_parameter_is_in_bezier_range(&mapped, lifted_range, true, policy)? {
+        match overlap_parameter_is_in_range(&mapped, lifted_range, true, policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -123346,7 +123806,12 @@ impl BezierParameterComponentOverlap2 {
                 }
             }
         }
-        match overlap_parameter_is_in_range(parameter, retained_range, false, policy)? {
+        match overlap_parameter_is_in_range(
+            &parameter.clone().into(),
+            retained_range,
+            false,
+            policy,
+        )? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -123378,7 +123843,12 @@ impl BezierParameterComponentOverlap2 {
                 let Some(mapped) = roots.get(rank).cloned() else {
                     return Ok(Classification::Decided(None));
                 };
-                return match overlap_parameter_is_in_range(&mapped, lifted_range, true, policy)? {
+                return match overlap_parameter_is_in_range(
+                    &mapped.clone().into(),
+                    lifted_range,
+                    true,
+                    policy,
+                )? {
                     Classification::Decided(true) => Ok(Classification::Decided(Some(mapped))),
                     Classification::Decided(false) => Ok(Classification::Decided(None)),
                     Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
@@ -123386,7 +123856,12 @@ impl BezierParameterComponentOverlap2 {
             }
             let mut candidates = Vec::new();
             for (root_rank, root) in roots.into_iter().enumerate() {
-                match overlap_parameter_is_in_range(&root, lifted_range, true, policy)? {
+                match overlap_parameter_is_in_range(
+                    &root.clone().into(),
+                    lifted_range,
+                    true,
+                    policy,
+                )? {
                     Classification::Decided(true) => candidates.push((root_rank, root)),
                     Classification::Decided(false) => {}
                     Classification::Uncertain(reason) => {
@@ -123450,7 +123925,12 @@ impl BezierParameterComponentOverlap2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            match overlap_parameter_is_in_range(candidate_lifted, lifted_range, true, policy)? {
+            match overlap_parameter_is_in_range(
+                &candidate_lifted.clone().into(),
+                lifted_range,
+                true,
+                policy,
+            )? {
                 Classification::Decided(true) => {}
                 Classification::Decided(false) => continue,
                 Classification::Uncertain(reason) => {
@@ -135487,7 +135967,7 @@ mod conversion_tests {
             assert_eq!(domain.contacts().len(), regular.contacts().len());
             assert!(
                 domain.contacts().iter().any(|contact| {
-                    curve_region_parameter_is_in_bezier_range(
+                    overlap_parameter_is_in_range(
                         contact.first_parameter(),
                         &BezierParameterRange2::new_validated(
                             BezierParameter2::Exact(Real::zero()),
@@ -135496,7 +135976,7 @@ mod conversion_tests {
                         true,
                         &policy,
                     ) == Ok(Classification::Decided(true))
-                        && curve_region_parameter_is_in_bezier_range(
+                        && overlap_parameter_is_in_range(
                             contact.second_parameter(),
                             &BezierParameterRange2::new_validated(
                                 BezierParameter2::Exact(half.clone()),
@@ -135598,13 +136078,9 @@ mod conversion_tests {
             assert!(result.overlaps().is_empty(), "{result:?}");
             assert!(
                 result.contacts().iter().any(|contact| {
-                    curve_region_parameter_is_in_bezier_range(
-                        contact.first_parameter(),
-                        &before,
-                        true,
-                        &policy,
-                    ) == Ok(Classification::Decided(true))
-                        && curve_region_parameter_is_in_bezier_range(
+                    overlap_parameter_is_in_range(contact.first_parameter(), &before, true, &policy)
+                        == Ok(Classification::Decided(true))
+                        && overlap_parameter_is_in_range(
                             contact.second_parameter(),
                             &after,
                             true,
@@ -135866,7 +136342,7 @@ mod conversion_tests {
         let Classification::Decided(Some(circle)) =
             BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 support,
-                BezierParameter2::Algebraic(center_parameter),
+                BezierParameter2::Algebraic(center_parameter).into(),
                 Real::one(),
                 false,
                 policy,
@@ -143568,7 +144044,7 @@ mod conversion_tests {
             let Classification::Decided(Some(normal_circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     center.clone(),
-                    BezierParameter2::Exact(q(1, 2)),
+                    BezierParameter2::Exact(q(1, 2)).into(),
                     Real::from(3),
                     false,
                     &policy,
@@ -153196,7 +153672,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let Classification::Decided(Some(circle)) =
                     BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                         source.parallel_left(half.clone()).unwrap(),
-                        BezierParameter2::Algebraic(parameter),
+                        BezierParameter2::Algebraic(parameter).into(),
                         radius.clone(),
                         false,
                         &policy,
@@ -155648,7 +156124,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let parallel = source.parallel_left(Real::zero()).unwrap();
                     let Classification::Decided(Some(system)) = chord
                         .recursive_projective_parallel_system_with_frame(
-                            &parallel, None, false, false, &policy,
+                            &parallel, None, false, &policy,
                         )
                         .unwrap()
                     else {
@@ -156595,6 +157071,154 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     }
                     assert!(system.projection.is_none());
                     assert!(system.incidence_univariate.get().is_none());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let three_quarters = Real::one() - &quarter;
+        // With t=4u-2, this is P=(t,t^2/2) on the authored u interval.
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(-2, 2),
+            Point2::from_values(0, -2),
+            Point2::from_values(2, 2),
+        )
+        .parallel_left(quarter.clone())
+        .unwrap();
+        let range = CurveParameterRange2::unit();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (start_x, end_x, expected_count) in [
+                (Real::from(-2_i8), Real::from(2_i8), 2_usize),
+                (Real::from(-2_i8), Real::zero(), 1),
+                (-half.clone(), half.clone(), 0),
+            ] {
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    Point2::new(start_x, half.clone()).into(),
+                    Point2::new(end_x, half.clone()).into(),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the horizontal finite chord must construct")
+                };
+                for reversed in [false, true] {
+                    let chord = if reversed {
+                        chord.reversed()
+                    } else {
+                        chord.clone()
+                    };
+                    let Classification::Decided(Some(system)) = chord
+                        .recursive_projective_parallel_system_with_frame(
+                            &parallel, None, true, &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the chord and parabola retain their exact coefficient field")
+                    };
+                    assert!(system.projection.get().is_none());
+                    // Up to a nonzero factor the norm is
+                    // -4t^6+4t^4+4t^2-3. It has four simple real roots:
+                    // two with t^2 in (1/2,3/4), two with t^2 in (1,2).
+                    // Only the first pair cancels on the positive speed sheet.
+                    let norm = system
+                        .incidence
+                        .squared_magnitude_difference(&system.speed_squared)
+                        .unwrap();
+                    let candidates = policy
+                        .bounded_exact_predicate_pass(|| {
+                            recursive_quadratic_polynomial_local_parameters(
+                                &system.field,
+                                &norm,
+                                [&Real::zero(), &Real::one()],
+                                &policy,
+                            )
+                        })
+                        .unwrap()
+                        .expect("all four simple norm roots have local certificates");
+                    assert_eq!(candidates.len(), 4);
+                    assert!(
+                        candidates
+                            .iter()
+                            .all(|p| p.as_recursive_projective().is_some())
+                    );
+                    let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        attempt.bounded_exact_predicate_pass(|| {
+                            chord
+                                .recursive_projective_parallel_intersections_in_domain(
+                                    &parallel,
+                                    &system,
+                                    None,
+                                    None,
+                                    SelectedThirdAxisDomain2::Finite(&range),
+                                    None,
+                                    true,
+                                    attempt,
+                                )
+                                .unwrap()
+                        })
+                    });
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    let contacts = match outcome.value {
+                        Classification::Decided(
+                            BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
+                        ) => contacts,
+                        Classification::Uncertain(reason) => {
+                            panic!("the complete local contact set stayed uncertain: {reason:?}")
+                        }
+                        Classification::Decided(_) => {
+                            panic!("the four isolated norm roots cannot form a support component")
+                        }
+                    };
+                    assert_eq!(contacts.len(), expected_count);
+                    for contact in contacts {
+                        let parameter = contact.parallel_parameter().clone();
+                        assert!(parameter.as_recursive_projective().is_some());
+                        let order = |value: &Real| {
+                            policy
+                                .bounded_exact_predicate_pass(|| {
+                                    parameter.cmp_by_refinement(&value.clone().into(), &policy)
+                                })
+                                .unwrap()
+                        };
+                        assert_eq!(
+                            order(&quarter),
+                            Classification::Decided(std::cmp::Ordering::Greater)
+                        );
+                        assert_eq!(
+                            order(&three_quarters),
+                            Classification::Decided(std::cmp::Ordering::Less)
+                        );
+                        let source_cross = match order(&half) {
+                            Classification::Decided(std::cmp::Ordering::Less) => RealSign::Negative,
+                            Classification::Decided(std::cmp::Ordering::Greater) => {
+                                assert_eq!(expected_count, 2);
+                                RealSign::Positive
+                            }
+                            _ => panic!("neither contact is the central parabola parameter"),
+                        };
+                        let orientation = if reversed {
+                            RealSign::Negative
+                        } else {
+                            RealSign::Positive
+                        };
+                        assert_eq!(
+                            contact.tangent_cross_sign(),
+                            product_sign(source_cross, orientation)
+                        );
+                        assert_eq!(contact.tangent_dot_sign(), orientation);
+                        assert_eq!(
+                            policy
+                                .bounded_exact_predicate_pass(
+                                    || chord.contains_point(contact.point(), &policy)
+                                )
+                                .unwrap(),
+                            Classification::Decided(true),
+                        );
+                    }
+                    assert!(system.projection.get().is_none());
                 }
             }
         }
@@ -157945,65 +158569,99 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 Classification::Decided(None)
             ));
 
-            for weight_sign in [1_i8, -1_i8] {
-                let quarter = RationalBezier2::from(rational_unit_circle_quarter(
-                    Point2::from_values(0, 1),
-                    Point2::from_values(1, 1),
-                    Point2::from_values(1, 0),
-                    weight_sign,
-                ));
-                let Classification::Decided(frame) =
-                    circle.represented_circle_frame(&policy).unwrap()
-                else {
-                    panic!("the independent overlap frame must remain represented");
-                };
-                let component = circle
-                    .represented_rational_component_system(
-                        &quarter,
-                        &crate::CurveParameterRange2::unit(),
-                        &frame,
-                        &policy,
-                    )
-                    .unwrap();
-                let Classification::Decided(component) = component else {
-                    panic!("the represented overlap component must construct: {component:?}");
-                };
-                assert!(
-                    component.quadratic_selected_parameters.is_some(),
-                    "the represented overlap must use its retained conic inverse",
-                );
-                let result = circle
-                    .rational_intersections_with_parameter_map(
-                        &quarter,
-                        &crate::CurveParameterRange2::unit(),
-                        &policy,
-                    )
-                    .unwrap();
-                let Classification::Decided((
-                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
-                        overlaps,
-                        contacts: unexpected_contacts,
-                    },
-                    None,
-                )) = result
-                else {
-                    panic!("the represented coincident quarter must publish overlap: {result:?}");
-                };
-                assert!(unexpected_contacts.is_empty(), "unexpected contacts");
-                let [overlap] = overlaps.as_slice() else {
-                    panic!("the represented coincident quarter must retain one overlap cell");
-                };
-                assert_eq!(
-                    overlap.other_range(),
-                    &CurveParameterRange2::new_validated(
-                        (Real::zero()).into(),
-                        (Real::one()).into()
-                    ),
-                );
-                assert_eq!(
-                    overlap.orientation(),
-                    RationalBezierOverlapOrientation2::Same,
-                );
+            for (circle, reversed) in [(circle.clone(), false), (circle.reversed(), true)] {
+                for weight_sign in [1_i8, -1_i8] {
+                    let quarter = RationalBezier2::from(rational_unit_circle_quarter(
+                        Point2::from_values(0, 1),
+                        Point2::from_values(1, 1),
+                        Point2::from_values(1, 0),
+                        weight_sign,
+                    ));
+                    let Classification::Decided(frame) =
+                        circle.represented_circle_frame(&policy).unwrap()
+                    else {
+                        panic!("the independent overlap frame must remain represented");
+                    };
+                    let component = circle
+                        .represented_rational_component_system(
+                            &quarter,
+                            &crate::CurveParameterRange2::unit(),
+                            &frame,
+                            &policy,
+                        )
+                        .unwrap();
+                    let Classification::Decided(component) = component else {
+                        panic!("the represented overlap component must construct");
+                    };
+                    assert!(
+                        component.quadratic_selected_parameters.is_some(),
+                        "the represented overlap must use its retained conic inverse",
+                    );
+                    // Both paths must publish the same geometric orientation;
+                    // the recursive dot contains a traversal sign already.
+                    for recursive in [false, true] {
+                        let result = if recursive {
+                            let Classification::Decided(system) = circle
+                                .recursive_selected_radial_rational_system(
+                                    &quarter,
+                                    &CurveParameterRange2::unit(),
+                                    &policy,
+                                )
+                                .unwrap()
+                            else {
+                                panic!("the recursive overlap frame must construct");
+                            };
+                            circle
+                                .recursive_selected_radial_rational_intersections_internal(
+                                    &quarter,
+                                    &CurveParameterRange2::unit(),
+                                    true,
+                                    system,
+                                    &policy,
+                                )
+                                .unwrap()
+                        } else {
+                            circle
+                                .rational_intersections_with_parameter_map(
+                                    &quarter,
+                                    &CurveParameterRange2::unit(),
+                                    &policy,
+                                )
+                                .unwrap()
+                        };
+                        let Classification::Decided((
+                            BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                                overlaps,
+                                contacts: unexpected_contacts,
+                            },
+                            None,
+                        )) = result
+                        else {
+                            panic!("the coincident quarter must publish overlap");
+                        };
+                        assert!(unexpected_contacts.is_empty(), "unexpected contacts");
+                        let [overlap] = overlaps.as_slice() else {
+                            panic!(
+                                "the represented coincident quarter must retain one overlap cell"
+                            );
+                        };
+                        assert_eq!(
+                            overlap.other_range(),
+                            &CurveParameterRange2::new_validated(
+                                (Real::zero()).into(),
+                                (Real::one()).into()
+                            ),
+                        );
+                        assert_eq!(
+                            overlap.orientation(),
+                            if reversed {
+                                RationalBezierOverlapOrientation2::Reversed
+                            } else {
+                                RationalBezierOverlapOrientation2::Same
+                            },
+                        );
+                    }
+                }
             }
         }
     }
@@ -158775,38 +159433,62 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 vec![Real::one(), Real::one()],
             )
             .unwrap();
-            let result = circle
-                .rational_intersections_with_parameter_map(
-                    &secant,
-                    &crate::CurveParameterRange2::unit(),
-                    &policy,
-                )
-                .unwrap();
-            let Classification::Decided((
-                BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
-                    contacts,
-                    overlaps: unexpected_overlaps,
-                },
-                Some(parameter_map),
-            )) = result
-            else {
-                panic!("the rank-independent rational secant must complete: {result:?}");
-            };
-            assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
-            let [contact] = contacts.as_slice() else {
-                panic!("the selected half-circle must retain one secant contact: {contacts:?}");
-            };
-            let cusp_parameter = parameter_map.contact_parameter(contact);
-            let Classification::Decided(Some(point)) = cusp_parameter
-                .coincident_point_evidence(&circle, &policy)
-                .unwrap()
-            else {
-                panic!("the rank-independent rational contact must replay");
-            };
-            assert_eq!(
-                point.same_point(&contact.point, &policy),
-                Classification::Decided(true)
-            );
+            for recursive in [false, true] {
+                let result = if recursive {
+                    let Classification::Decided(system) = circle
+                        .recursive_selected_radial_rational_system(
+                            &secant,
+                            &CurveParameterRange2::unit(),
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the recursive secant system must construct");
+                    };
+                    circle
+                        .recursive_selected_radial_rational_intersections_internal(
+                            &secant,
+                            &CurveParameterRange2::unit(),
+                            true,
+                            system,
+                            &policy,
+                        )
+                        .unwrap()
+                } else {
+                    circle
+                        .rational_intersections_with_parameter_map(
+                            &secant,
+                            &CurveParameterRange2::unit(),
+                            &policy,
+                        )
+                        .unwrap()
+                };
+                let Classification::Decided((
+                    BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
+                        contacts,
+                        overlaps: unexpected_overlaps,
+                    },
+                    Some(parameter_map),
+                )) = result
+                else {
+                    panic!("the rank-independent rational secant must complete");
+                };
+                assert!(unexpected_overlaps.is_empty(), "unexpected overlaps");
+                let [contact] = contacts.as_slice() else {
+                    panic!("the selected half-circle must retain one secant contact");
+                };
+                let cusp_parameter = parameter_map.contact_parameter(contact);
+                let Classification::Decided(Some(point)) = cusp_parameter
+                    .coincident_point_evidence(&circle, &policy)
+                    .unwrap()
+                else {
+                    panic!("the rank-independent rational contact must replay");
+                };
+                assert_eq!(
+                    point.same_point(&contact.point, &policy),
+                    Classification::Decided(true)
+                );
+            }
 
             let assert_chord_contact = |target: &BezierAlgebraicChord2| {
                 assert!(matches!(
@@ -166910,42 +167592,76 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
                     ),
                 ] {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::reset();
-                    let work = || chord.parallel_intersections(&parallel, &policy);
-                    #[cfg(feature = "dispatch-trace")]
-                    let result = hyperreal::dispatch_trace::with_recording(work).unwrap();
-                    #[cfg(not(feature = "dispatch-trace"))]
-                    let result = work().unwrap();
-                    #[cfg(feature = "dispatch-trace")]
-                    let trace = hyperreal::dispatch_trace::take_trace();
-                    let Classification::Decided(
-                        BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
-                    ) = result
-                    else {
-                        panic!("the selected quadratic fiber must publish contacts: {result:?}")
-                    };
-                    let [contact] = contacts.as_slice() else {
-                        panic!("the selected quadratic fiber must retain one contact: {contacts:?}")
-                    };
-                    assert_eq!(
-                        policy
-                            .strict_predicate_pass(|| contact
-                                .parallel_parameter
-                                .cmp_by_refinement(&BezierParameter2::Exact(expected), &policy))
-                            .unwrap(),
-                        Classification::Decided(std::cmp::Ordering::Equal),
-                    );
-                    #[cfg(feature = "dispatch-trace")]
-                    assert_eq!(
-                        trace.path_count(
-                            "hypercurve",
-                            "selected-dense-degenerate",
-                            "tagged-norm-selected-fiber",
-                        ),
-                        1,
-                        "the saturated selected fiber must own projection: {trace:?}",
-                    );
+                    for projected in [true, false] {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::reset();
+                        let Classification::Decided(Some(system)) = chord
+                            .recursive_projective_parallel_system_with_frame(
+                                &parallel, None, true, &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("the selected chord coefficient field must construct")
+                        };
+                        // Keep coverage of the dense selected-fiber fallback as well
+                        // as the public dispatcher that can retain local roots.
+                        let work = || {
+                            if projected {
+                                chord.recursive_projective_parallel_intersections_from_projection(
+                                    &parallel,
+                                    &system,
+                                    None,
+                                    None,
+                                    SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
+                                    None,
+                                    true,
+                                    &policy,
+                                )
+                            } else {
+                                chord.parallel_intersections(&parallel, &policy)
+                            }
+                        };
+                        #[cfg(feature = "dispatch-trace")]
+                        let result = hyperreal::dispatch_trace::with_recording(work).unwrap();
+                        #[cfg(not(feature = "dispatch-trace"))]
+                        let result = work().unwrap();
+                        #[cfg(feature = "dispatch-trace")]
+                        let trace = hyperreal::dispatch_trace::take_trace();
+                        let Classification::Decided(
+                            BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
+                        ) = result
+                        else {
+                            panic!("the selected quadratic fiber must publish contacts: {result:?}")
+                        };
+                        let [contact] = contacts.as_slice() else {
+                            panic!(
+                                "the selected quadratic fiber must retain one contact: {contacts:?}"
+                            )
+                        };
+                        assert_eq!(
+                            policy
+                                .strict_predicate_pass(|| contact
+                                    .parallel_parameter
+                                    .cmp_by_refinement(
+                                        &CurveParameter2::from(expected.clone()),
+                                        &policy
+                                    ))
+                                .unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Equal),
+                        );
+                        #[cfg(feature = "dispatch-trace")]
+                        if projected {
+                            assert_eq!(
+                                trace.path_count(
+                                    "hypercurve",
+                                    "selected-dense-degenerate",
+                                    "tagged-norm-selected-fiber",
+                                ),
+                                1,
+                                "the saturated selected fiber must own projection: {trace:?}",
+                            );
+                        }
+                    }
                 }
 
                 // The same selected local authority owns both open incident
@@ -166991,7 +167707,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     assert_eq!(
                         policy
                             .strict_predicate_pass(|| contact.parallel_parameter.cmp_by_refinement(
-                                &BezierParameter2::Exact(expected.clone()),
+                                &CurveParameter2::from(expected.clone()),
                                 &policy
                             ))
                             .unwrap(),
@@ -167103,6 +167819,103 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 ),
                 1,
             );
+        }
+    }
+
+    #[test]
+    fn recursive_chord_parallel_zero_norm_midpoint_is_not_a_component() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // A clockwise unit-circle arc with positive rational weights. Its
+        // left unit offset is Q=2P; the opposite sheet collapses to the origin.
+        // Thus every line through the origin has an identically zero norm,
+        // although the authored arc crosses the vertical chord only at t=1/2.
+        let parallel = RationalBezier2::try_new(
+            vec![
+                Point2::new(q(-3, 5), q(4, 5)),
+                Point2::new(Real::zero(), q(5, 4)),
+                Point2::new(q(3, 5), q(4, 5)),
+            ],
+            vec![Real::one(), q(4, 5), Real::one()],
+        )
+        .unwrap()
+        .parallel_left(Real::one())
+        .unwrap();
+        let range = CurveParameterRange2::unit();
+        let quarter = q(1, 4);
+        let half = q(1, 2);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                Point2::from_values(0, 0).into(),
+                Point2::from_values(0, 3).into(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the vertical finite chord must construct")
+            };
+            for chord in [chord.clone(), chord.reversed()] {
+                let Classification::Decided(Some(system)) = chord
+                    .recursive_projective_parallel_system_with_frame(&parallel, None, true, &policy)
+                    .unwrap()
+                else {
+                    panic!("the exact circle coefficient field must construct")
+                };
+                assert!(matches!(
+                    system
+                        .parameters(SelectedThirdAxisDomain2::Finite(&range), &policy)
+                        .unwrap(),
+                    Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
+                ));
+                for sample in [&quarter, &half] {
+                    let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        chord
+                            .recursive_projective_parallel_intersections_in_domain(
+                                &parallel,
+                                &system,
+                                None,
+                                None,
+                                SelectedThirdAxisDomain2::Finite(&range),
+                                Some(sample),
+                                true,
+                                attempt,
+                            )
+                            .unwrap()
+                    });
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    let contacts = match outcome.value {
+                        Classification::Decided(
+                            BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
+                        ) => contacts,
+                        Classification::Uncertain(reason) => {
+                            panic!("the isolated circle contact stayed uncertain: {reason:?}")
+                        }
+                        Classification::Decided(_) => {
+                            panic!("a midpoint contact is not a coincident support component")
+                        }
+                    };
+                    assert_eq!(contacts.len(), 1);
+                    let contact = &contacts[0];
+                    assert_eq!(
+                        contact
+                            .parallel_parameter()
+                            .cmp_by_refinement(&half.clone().into(), &policy)
+                            .unwrap(),
+                        Classification::Decided(std::cmp::Ordering::Equal)
+                    );
+                    assert_eq!(
+                        contact
+                            .point()
+                            .same_point(&Point2::from_values(0, 2).into(), &policy),
+                        Classification::Decided(true)
+                    );
+                    assert_eq!(contact.tangent_dot_sign(), RealSign::Zero);
+                    let expected_cross = if chord.data.parameter_axis.coordinate_increases {
+                        RealSign::Negative
+                    } else {
+                        RealSign::Positive
+                    };
+                    assert_eq!(contact.tangent_cross_sign(), expected_cross);
+                }
+            }
         }
     }
 
@@ -171505,7 +172318,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         let Classification::Decided(Some(circle)) =
                             BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                                 support,
-                                parameter.clone(),
+                                parameter.clone().into(),
                                 Real::one(),
                                 false,
                                 &policy,
@@ -171585,7 +172398,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     center_support.clone(),
-                    center_parameter.clone(),
+                    center_parameter.clone().into(),
                     radius.clone(),
                     false,
                     &policy,
@@ -171600,7 +172413,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             );
             assert_eq!(
                 circle.selected_frame_parameter(),
-                Some(center_parameter.clone())
+                Some(center_parameter.clone().into())
             );
 
             let expected = |normal_distance: Real, tangent_distance: Real| {
@@ -171718,7 +172531,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(selected)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     center_support.clone(),
-                    center_parameter.clone(),
+                    center_parameter.clone().into(),
                     Real::one(),
                     false,
                     &policy,
@@ -171814,7 +172627,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     center_support.clone(),
-                    center_parameter.clone(),
+                    center_parameter.clone().into(),
                     one.clone(),
                     false,
                     &policy,
@@ -171875,7 +172688,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let Classification::Decided(Some(circle)) =
                     BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                         center_support.clone(),
-                        BezierParameter2::Exact(half.clone()),
+                        BezierParameter2::Exact(half.clone()).into(),
                         Real::from(radius),
                         false,
                         &policy,
@@ -175458,7 +176271,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         let Classification::Decided(Some(circle)) =
             BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 center_support.clone(),
-                BezierParameter2::Exact(half.clone()),
+                BezierParameter2::Exact(half.clone()).into(),
                 Real::one(),
                 false,
                 &CurveContext::APPROXIMATE_512,
@@ -175495,7 +176308,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Exact(half.clone()),
+                    BezierParameter2::Exact(half.clone()).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -175591,7 +176404,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     anchor.clone(),
-                    BezierParameter2::Exact(half.clone()),
+                    BezierParameter2::Exact(half.clone()).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -175603,7 +176416,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(parameter) = circle
                 .certified_selected_parallel_contact_parameter(
                     contact.clone(),
-                    BezierParameter2::Exact(half.clone()),
+                    CurveParameter2::from(half.clone()),
                     BezierAlgebraicCuspSemicircleContactLocation2::Interior,
                     RealSign::Positive,
                     RealSign::Positive,
@@ -175658,6 +176471,402 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
     }
 
     #[test]
+    fn recursive_parameter_projection_preserves_roots_through_refinement_and_charts() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let polynomial =
+            recursive_quadratic_real_polynomial(&field, &[-half, Real::zero(), Real::one()])
+                .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let roots = recursive_quadratic_polynomial_local_parameters(
+                &field,
+                &polynomial,
+                [&-Real::one(), &Real::one()],
+                &policy,
+            )
+            .unwrap()
+            .expect("both simple conjugates isolate locally");
+            assert_eq!(roots.len(), 2);
+            for (root, expected) in roots
+                .iter()
+                .zip([std::cmp::Ordering::Less, std::cmp::Ordering::Greater])
+            {
+                let root = root
+                    .as_recursive_projective()
+                    .expect("the irrational root remains local");
+                // This chart predates native projection. A later demand
+                // must retain its map back to the same original selection.
+                let prior_complement = root.unit_complement();
+                let Classification::Decided(native) =
+                    root.promoted_bezier_parameter_complete(&policy).unwrap()
+                else {
+                    panic!("the quadratic projection must be exact")
+                };
+                assert!(
+                    native
+                        .cmp_by_refinement(&BezierParameter2::Exact(Real::zero()), &policy)
+                        .unwrap()
+                        == Classification::Decided(expected)
+                );
+                let Classification::Decided(projected_complement) = prior_complement
+                    .promoted_bezier_parameter_complete(&policy)
+                    .unwrap()
+                else {
+                    panic!("the preexisting chart must replay its native source")
+                };
+                if let (BezierParameter2::Algebraic(source), BezierParameter2::Algebraic(image)) =
+                    (&native, &projected_complement)
+                {
+                    assert!(
+                        image.projective_map_from(source)
+                            == Some(([Real::one(), -Real::one()], [Real::one(), Real::zero()])),
+                        "projection must retain the exact chart, not only its image polynomial"
+                    );
+                }
+                let mut restored = root.clone();
+                for _ in 0..4 {
+                    for (numerator, denominator) in [
+                        ([Real::one(), Real::one()], [Real::from(-2_i8), Real::one()]),
+                        ([Real::one(), Real::from(2_i8)], [-Real::one(), Real::one()]),
+                    ] {
+                        let Classification::Decided(mapped) = restored
+                            .projective_image_unbounded(&numerator, &denominator, &policy)
+                            .unwrap()
+                        else {
+                            panic!("both inverse charts are regular at the selected root")
+                        };
+                        restored = mapped;
+                    }
+                    assert!(
+                        Arc::ptr_eq(&restored.data, &root.data),
+                        "composed inverse charts must recover the original root authority"
+                    );
+                }
+                let Classification::Decided(tighter_complement) =
+                    prior_complement.refined(8, &policy).unwrap()
+                else {
+                    panic!("the transformed simple root must refine")
+                };
+                let restored = tighter_complement.unit_complement();
+                assert!(
+                    restored.cmp_by_refinement(root, &policy).unwrap()
+                        == Classification::Decided(std::cmp::Ordering::Equal)
+                );
+                assert!(
+                    compare_reals(
+                        &(&restored.data.upper - &restored.data.lower),
+                        &(&root.data.upper - &root.data.lower),
+                        &CurveContext::STRICT,
+                    ) == Some(std::cmp::Ordering::Less),
+                    "inverse composition must preserve intervening refinement progress"
+                );
+                for steps in [0, 4, 12] {
+                    let Classification::Decided(refined) = root.refined(steps, &policy).unwrap()
+                    else {
+                        panic!("the simple local root must refine")
+                    };
+                    let Classification::Decided(projected) =
+                        refined.promoted_bezier_parameter_complete(&policy).unwrap()
+                    else {
+                        panic!("refinement preserves the exact projection")
+                    };
+                    assert!(
+                        projected.cmp_by_refinement(&native, &policy).unwrap()
+                            == Classification::Decided(std::cmp::Ordering::Equal)
+                    );
+                    let complement = refined.unit_complement();
+                    let Classification::Decided(projected_complement) = complement
+                        .promoted_bezier_parameter_complete(&policy)
+                        .unwrap()
+                    else {
+                        panic!("the changed chart must project its own selected value")
+                    };
+                    assert!(
+                        projected_complement
+                            .cmp_by_refinement(&native.unit_complement(), &policy)
+                            .unwrap()
+                            == Classification::Decided(std::cmp::Ordering::Equal)
+                    );
+                    assert!(
+                        projected_complement
+                            .cmp_by_refinement(&native, &policy)
+                            .unwrap()
+                            == Classification::Decided(expected.reverse())
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_parallel_contact_keeps_local_root_through_angular_and_point_queries() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        let half = q(1, 2);
+        // P(t)=(0,t^2-1/2) meets the unit circle centered at (1,0)
+        // tangentially at t=sqrt(1/2). Its source tangent points upward,
+        // so the contact is the exact midpoint of the left half-circle.
+        let contact = QuadraticBezier2::new(
+            Point2::new(Real::zero(), -half.clone()),
+            Point2::new(Real::zero(), -half.clone()),
+            Point2::new(Real::zero(), half.clone()),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let anchor = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(
+            vec![AlgebraicRootRepresentation::from_exact_value(&Real::zero())],
+            one.clone(),
+            one,
+        )
+        .unwrap();
+        let polynomial = recursive_quadratic_real_polynomial(
+            &field,
+            &[-half.clone(), Real::zero(), Real::one()],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let roots = recursive_quadratic_polynomial_local_parameters(
+                &field,
+                &polynomial,
+                [&half, &Real::one()],
+                &policy,
+            )
+            .unwrap()
+            .expect("the positive simple root has a local isolator");
+            assert_eq!(roots.len(), 1);
+            let selected = roots[0]
+                .as_recursive_projective()
+                .expect("the irrational root remains local");
+            // The same parameter may return from a later circle solve as
+            // a selected fiber. F=(u-alpha-shift)(u+1)^2 has one root in
+            // [1/2,1], while the repeated foreign root -1 stays outside.
+            // Mixed ordering must preserve equality and both nearby sides.
+            let BezierParameter2::Algebraic(alpha) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!()
+            };
+            for (shift, expected) in [
+                (q(-1, 1024), std::cmp::Ordering::Less),
+                (Real::zero(), std::cmp::Ordering::Equal),
+                (q(1, 1024), std::cmp::Ordering::Greater),
+            ] {
+                let square = [Real::one(), Real::from(2_i8), Real::one()];
+                let fiber = BezierAlgebraicSelectedFiberAuthority2::new(
+                    BivariatePolynomial::new(vec![
+                        polynomial_multiply(&[-shift, Real::one()], &square),
+                        polynomial_scale(&square, &Real::from(-1_i8)),
+                    ]),
+                    alpha.clone(),
+                    &policy,
+                )
+                .parameter(IsolatedRootInterval {
+                    lower: half.clone(),
+                    upper: Real::one(),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                });
+                let fiber = CurveParameter2::from_selected_fiber(fiber);
+                for (first, second, expected) in [
+                    (&fiber, &roots[0], expected),
+                    (&roots[0], &fiber, expected.reverse()),
+                ] {
+                    let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        first.cmp_by_refinement(second, attempt).unwrap()
+                    });
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    assert_eq!(outcome.value, Classification::Decided(expected));
+                }
+            }
+            let Classification::Decided(Some(local_frame)) =
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    contact.clone(),
+                    roots[0].clone(),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the normal frame itself must retain a local root")
+            };
+            // Q(u)=P(2u) uses the same positive source tangent. Retaining
+            // the canonical local root must map its endpoint back to the
+            // original center authority, without reconstructing either root.
+            let canonical_support = QuadraticBezier2::new(
+                Point2::new(Real::zero(), -half.clone()),
+                Point2::new(Real::zero(), -half.clone()),
+                Point2::new(Real::zero(), q(7, 2)),
+            )
+            .parallel_left(Real::zero())
+            .unwrap();
+            let Classification::Decided(canonical_parameter) = roots[0]
+                .affine_image_unbounded(&half, &Real::zero(), &policy)
+                .unwrap()
+            else {
+                panic!("the local positive affine chart must construct")
+            };
+            let canonical_frame = local_frame
+                .with_certified_parallel_normal_tangent_authority(
+                    canonical_support,
+                    canonical_parameter.clone(),
+                    Real::from(2_i8),
+                    Real::zero(),
+                    &policy,
+                )
+                .unwrap();
+            let frame = canonical_frame.data.frame.parallel_normal().unwrap();
+            let authority = frame.tangent_authority.as_ref().unwrap();
+            let Classification::Decided(restored) = affine_tangent_source_region_parameter(
+                &canonical_parameter,
+                &authority.parameter,
+                &frame.center_parameter,
+                &authority.source_scale,
+                &authority.source_offset,
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the canonical endpoint must retain the original center alias")
+            };
+            assert!(Arc::ptr_eq(
+                &selected.data,
+                &restored.as_recursive_projective().unwrap().data
+            ));
+            let retained_frame_parameter = local_frame.selected_frame_parameter().unwrap();
+            assert!(Arc::ptr_eq(
+                &selected.data,
+                &retained_frame_parameter
+                    .as_recursive_projective()
+                    .unwrap()
+                    .data
+            ));
+            let Classification::Decided(center) =
+                local_frame.center_point_evidence(&policy).unwrap()
+            else {
+                panic!("the local normal-frame center must be an exact point")
+            };
+            assert_eq!(
+                center.same_point(&Point2::from_values(0, 0).into(), &policy),
+                Classification::Decided(true)
+            );
+            for (parameter, expected) in [
+                (Real::zero(), Point2::from_values(-1, 0)),
+                (Real::one(), Point2::from_values(1, 0)),
+            ] {
+                let Classification::Decided(point) =
+                    local_frame.point_evidence_at(&parameter, &policy).unwrap()
+                else {
+                    panic!("the local normal-frame endpoint must retain its exact source")
+                };
+                assert_eq!(
+                    point.same_point(&expected.into(), &policy),
+                    Classification::Decided(true)
+                );
+            }
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                Point2::from_values(0, 0).into(),
+                Point2::from_values(2, 0).into(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the horizontal anchor must construct")
+            };
+            let circles = [
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    anchor.clone(),
+                    BezierParameter2::Exact(half.clone()).into(),
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap(),
+                BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+                    Point2::from_values(1, 0).into(),
+                    chord,
+                    Real::one(),
+                    false,
+                    &policy,
+                )
+                .unwrap(),
+            ];
+            for circle in circles {
+                let Classification::Decided(Some(circle)) = circle else {
+                    panic!("both exact normal frames must construct")
+                };
+                let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
+                    circle
+                        .certified_selected_parallel_contact_parameter(
+                            contact.clone(),
+                            roots[0].clone(),
+                            BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                            RealSign::Positive,
+                            RealSign::Positive,
+                            RealSign::Zero,
+                            attempt,
+                        )
+                        .unwrap()
+                });
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                let Classification::Decided(parameter) = outcome.value else {
+                    panic!("the local tangent contact must retain its circle parameter")
+                };
+                let BezierAlgebraicCuspSemicircleParameter2::Mapped(mapped) = &parameter else {
+                    panic!("the tangent contact must keep its selected map")
+                };
+                let BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
+                    parameter: retained,
+                    ..
+                } = mapped.as_ref()
+                else {
+                    panic!("the original contact authority must survive")
+                };
+                assert!(Arc::ptr_eq(
+                    &selected.data,
+                    &retained.as_recursive_projective().unwrap().data
+                ));
+                for (boundary, expected) in [
+                    (Real::zero(), std::cmp::Ordering::Greater),
+                    (q(1, 4), std::cmp::Ordering::Greater),
+                    (half.clone(), std::cmp::Ordering::Equal),
+                    (q(3, 4), std::cmp::Ordering::Less),
+                    (Real::one(), std::cmp::Ordering::Less),
+                ] {
+                    assert_eq!(
+                        parameter.order_to_real(&boundary, &policy).unwrap(),
+                        Classification::Decided(expected)
+                    );
+                }
+                let Classification::Decided(Some(point)) = parameter
+                    .coincident_point_evidence(&circle, &policy)
+                    .unwrap()
+                else {
+                    panic!("the local contact must publish its analytic point")
+                };
+                assert_eq!(
+                    point.same_point(&Point2::from_values(0, 0).into(), &policy),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    mapped
+                        .selected_parallel_contact_source_tangent_dot_sign(
+                            &contact,
+                            &BezierParameter2::Exact(half.clone()),
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided(None)
+                );
+            }
+        }
+    }
+
+    #[test]
     fn selected_parallel_normal_circle_intersects_rational_curves_exactly() {
         let source = QuadraticBezier2::new(
             Point2::from_values(0, 0),
@@ -175684,7 +176893,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     center_support.clone(),
-                    BezierParameter2::Exact(half.clone()),
+                    BezierParameter2::Exact(half.clone()).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -175800,7 +177009,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    center,
+                    center.into(),
                     Real::one(),
                     false,
                     &policy,
@@ -175939,7 +177148,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -176091,7 +177300,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -176517,7 +177726,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     radius.clone(),
                     false,
                     &policy,
@@ -176902,7 +178111,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -177280,7 +178489,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -177808,7 +179017,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -177872,7 +179081,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let Classification::Decided(Some(circle)) =
                     BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                         center_support.clone(),
-                        center_parameter.clone(),
+                        center_parameter.clone().into(),
                         Real::one(),
                         false,
                         &policy,
@@ -177884,7 +179093,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let circle = circle
                     .with_certified_parallel_normal_tangent_authority(
                         tangent_support.clone(),
-                        tangent_parameter.clone(),
+                        tangent_parameter.clone().into(),
                         Real::from(2_i8),
                         Real::zero(),
                         &policy,
@@ -177900,8 +179109,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let Classification::Decided(mapped_endpoint) =
                     affine_tangent_source_region_parameter(
                         &endpoint,
-                        &tangent_parameter,
-                        &center_parameter,
+                        &tangent_parameter.clone().into(),
+                        &center_parameter.clone().into(),
                         &Real::from(2_i8),
                         &Real::zero(),
                         &policy,
@@ -179138,7 +180347,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -179150,7 +180359,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(exact_center_circle)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     exact_support.clone(),
-                    BezierParameter2::Exact(half.clone()),
+                    BezierParameter2::Exact(half.clone()).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -179607,7 +180816,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(first_half)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -179799,7 +181008,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(first_half)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -179964,7 +181173,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(Some(first_half)) =
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    BezierParameter2::Algebraic(center_parameter),
+                    BezierParameter2::Algebraic(center_parameter).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -186169,7 +187378,7 @@ mod parallel_normal_source_angle_tests {
                             let circle = decided(
                                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                                     parallel.clone(),
-                                    selected.clone(),
+                                    selected.clone().into(),
                                     radius.clone(),
                                     clockwise,
                                     &policy,

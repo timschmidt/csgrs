@@ -2110,7 +2110,7 @@ impl Pair<'_> {
         )? {
             Intersections::Contacts(contacts) => {
                 for contact in contacts {
-                    let source = CurveParameter2::from(contact.parallel_parameter().clone());
+                    let source = contact.parallel_parameter().clone();
                     if !contains(&span.range, &source, span.support.family(), self.policy)? {
                         continue;
                     }
@@ -2425,7 +2425,7 @@ mod circle_dispatch_tests {
         let circle = exact(
             BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 support,
-                BezierParameter2::algebraic(parameter),
+                BezierParameter2::algebraic(parameter).into(),
                 Real::one(),
                 false,
                 policy,
@@ -2522,7 +2522,7 @@ mod circle_dispatch_tests {
                 .unwrap();
             let singular = BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 source.clone(),
-                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::zero()).into(),
                 Real::one(),
                 false,
                 &policy,
@@ -2534,7 +2534,7 @@ mod circle_dispatch_tests {
             ));
             let regular = BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 source,
-                BezierParameter2::Exact(q(1, 2)),
+                BezierParameter2::Exact(q(1, 2)).into(),
                 Real::one(),
                 false,
                 &policy,
@@ -3323,7 +3323,7 @@ mod circle_dispatch_tests {
             assert!(matches!(
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     source.clone(),
-                    BezierParameter2::Exact(q(1, 2)),
+                    BezierParameter2::Exact(q(1, 2)).into(),
                     Real::one(),
                     false,
                     &policy,
@@ -3347,7 +3347,7 @@ mod circle_dispatch_tests {
             let circle = exact(
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     source,
-                    BezierParameter2::algebraic(parameter),
+                    BezierParameter2::algebraic(parameter).into(),
                     Real::one(),
                     false,
                     &policy,

@@ -3021,8 +3021,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         orient_tangent_cross_sign(contact.tangent_cross_sign(), chord_is_first);
                     let chord_parameter =
                         CurveParameter2::from_algebraic_chord(contact.chord_parameter().clone());
-                    let parallel_parameter =
-                        CurveParameter2::from(contact.parallel_parameter().clone());
+                    let parallel_parameter = contact.parallel_parameter().clone();
                     let (first_parameter, second_parameter) = if chord_is_first {
                         (chord_parameter, parallel_parameter)
                     } else {
@@ -16704,7 +16703,7 @@ mod certified_successor_tests {
                     )
                     .parallel_left(Real::zero())
                     .unwrap(),
-                    BezierParameter2::Exact(half.clone()),
+                    BezierParameter2::Exact(half.clone()).into(),
                     Real::one(),
                     false,
                     &policy,

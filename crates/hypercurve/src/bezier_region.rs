@@ -1791,7 +1791,7 @@ pub(crate) fn curve_fragment_endpoints_equal(
 fn fragment_endpoint_analytic_source(
     fragment: &BezierSplitFragment2,
     start_endpoint: bool,
-) -> Option<(BezierParallel2, BezierParameter2)> {
+) -> Option<(BezierParallel2, CurveParameter2)> {
     match fragment {
         BezierSplitFragment2::RetainedBezier {
             source_curve,
@@ -1806,10 +1806,21 @@ fn fragment_endpoint_analytic_source(
             } else {
                 end
             }
-            .clone(),
+            .clone()
+            .into(),
         )),
         BezierSplitFragment2::AnalyticParallel(fragment) => Some((
             fragment.parallel().clone(),
+            if start_endpoint != fragment.is_reversed() {
+                fragment.range().start()
+            } else {
+                fragment.range().end()
+            }
+            .clone()
+            .into(),
+        )),
+        BezierSplitFragment2::SelectedFiber(fragment) => Some((
+            fragment.parallel_carrier(),
             if start_endpoint != fragment.is_reversed() {
                 fragment.range().start()
             } else {
@@ -7475,7 +7486,7 @@ fn append_retained_parallel_round_join(
         };
         let fillet = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
             source_parallel.clone(),
-            parameter.clone(),
+            parameter.clone().into(),
             radial_distance,
             fillet_clockwise,
             policy,
@@ -9073,7 +9084,7 @@ fn exact_algebraic_chord_retained_parallel_relation(
         let one = Real::one();
         match chord.tangent_cross_dot_parallel_linear_combination_sign(
             parallel,
-            parameter,
+            &parameter.clone().into(),
             if cross { &one } else { &zero },
             if cross { &zero } else { &one },
             policy,
@@ -23051,7 +23062,7 @@ mod tests {
         .expect("the selected vertical center support is regular");
         match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
             center_support,
-            sqrt_half_algebraic_parameter(policy),
+            sqrt_half_algebraic_parameter(policy).into(),
             Real::one(),
             true,
             policy,
@@ -24078,7 +24089,7 @@ mod tests {
             let Classification::Decided(Some(circle)) =
                 crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     center_support,
-                    sqrt_half_algebraic_parameter(&policy),
+                    sqrt_half_algebraic_parameter(&policy).into(),
                     three_halves.clone(),
                     false,
                     &policy,
@@ -27472,7 +27483,7 @@ mod tests {
             .unwrap();
             let Classification::Decided(Some(circle)) =
                 crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
-                    center_support, BezierParameter2::Exact(Real::zero()), Real::one(), false, &policy,
+                    center_support, BezierParameter2::Exact(Real::zero()).into(), Real::one(), false, &policy,
                 ).unwrap()
             else { panic!("the regular exact circle frame must construct") };
             let Classification::Decided(quarter) =
@@ -29056,15 +29067,28 @@ mod tests {
             for reversed in [false, true] {
                 let region = nonlinear_algebraic_endpoint_region(&policy, reversed);
                 let corner = if reversed { 2 } else { 1 };
-                let trim = region
-                    .fillet_loop_vertex_by_radius(
+                let trim_work = || {
+                    region.fillet_loop_vertex_by_radius(
                         0,
                         corner,
                         radius.clone(),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
-                    .expect("the finite nonlinear endpoint fillet must decide")
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let trim = hyperreal::dispatch_trace::with_recording(trim_work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let trim = trim_work();
+                let trim = trim
+                    .unwrap_or_else(|error| {
+                        #[cfg(feature = "dispatch-trace")]
+                        eprintln!(
+                            "nonlinear endpoint fillet dispatch: {:?}",
+                            hyperreal::dispatch_trace::take_trace()
+                        );
+                        panic!("the finite nonlinear endpoint fillet must decide: {error:?}");
+                    })
                     .into_value();
                 let extended = region
                     .fillet_loop_vertex_by_radius(
@@ -29081,22 +29105,137 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(extended.value.candidate_count() > trim.candidate_count());
+                let mut found_exterior_lobe = false;
                 for_each_corner_region(&extended.value, |edited| {
-                    let fragments = edited.boundary_loops()[0].fragments();
-                    assert!(fragments.iter().any(|fragment| matches!(
-                        fragment,
-                        BezierSplitFragment2::RetainedBezier { .. }
-                            | BezierSplitFragment2::AnalyticParallel(_)
-                    )));
-                    assert!(fragments.iter().any(|fragment| matches!(
-                        fragment,
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                            | BezierSplitFragment2::Materialized {
-                                curve: BezierSubcurve2::RationalQuadratic(_),
-                                ..
+                    assert!(edited.has_regularized_filled_left_topology(&policy));
+                    let fragments = edited
+                        .boundary_loops()
+                        .iter()
+                        .flat_map(|boundary| boundary.fragments())
+                        .collect::<Vec<_>>();
+                    // The incident parabola may now retain local selected
+                    // cuts. Its carrier spelling is immaterial: verify the
+                    // homogeneous identity X*W = Y^2 on the surviving source.
+                    assert!(
+                        fragments.iter().any(|fragment| {
+                            let parallel = match fragment {
+                                BezierSplitFragment2::RetainedBezier { source_curve, .. } => {
+                                    BezierParallel2::from_source(
+                                        BezierParallelSource2::Rational(
+                                            RationalBezier2::try_from_subcurve(source_curve)
+                                                .unwrap(),
+                                        ),
+                                        Real::zero(),
+                                    )
+                                }
+                                BezierSplitFragment2::AnalyticParallel(fragment) => {
+                                    fragment.parallel().clone()
+                                }
+                                BezierSplitFragment2::SelectedFiber(fragment) => {
+                                    fragment.parallel_carrier()
+                                }
+                                _ => return false,
+                            };
+                            if is_zero(parallel.distance(), &CurveContext::STRICT) != Some(true) {
+                                return false;
                             }
-                    )));
+                            let source = match parallel.source() {
+                                BezierParallelSource2::Quadratic(source) => {
+                                    RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                                        source.clone(),
+                                    ))
+                                    .unwrap()
+                                }
+                                BezierParallelSource2::Rational(source) => source.clone(),
+                                BezierParallelSource2::Cubic(_) => return false,
+                            };
+                            let power = source.homogeneous_power_basis().unwrap();
+                            if source.degree() != 2
+                                || power.weight.iter().skip(1).any(|weight| {
+                                    is_zero(weight, &CurveContext::STRICT) != Some(true)
+                                })
+                                || !matches!(
+                                    power.y_numerator.get(1).and_then(|coefficient| {
+                                        real_sign(coefficient, &CurveContext::STRICT)
+                                    }),
+                                    Some(RealSign::Positive | RealSign::Negative)
+                                )
+                            {
+                                return false;
+                            }
+                            let mut equation = vec![Real::zero(); 2 * source.degree() + 1];
+                            for (i, x) in power.x_numerator.iter().enumerate() {
+                                for (j, weight) in power.weight.iter().enumerate() {
+                                    equation[i + j] += x * weight;
+                                }
+                            }
+                            for (i, y) in power.y_numerator.iter().enumerate() {
+                                for (j, other_y) in power.y_numerator.iter().enumerate() {
+                                    equation[i + j] -= y * other_y;
+                                }
+                            }
+                            equation
+                                .iter()
+                                .all(|value| is_zero(value, &CurveContext::STRICT) == Some(true))
+                        }),
+                        "the exact incident parabola must survive the edit"
+                    );
+                    assert!(
+                        fragments.iter().any(|fragment| matches!(
+                            fragment,
+                            BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                                | BezierSplitFragment2::Materialized {
+                                    curve: BezierSubcurve2::RationalQuadratic(_),
+                                    ..
+                                }
+                        )),
+                        "the normalized candidate must retain its fillet: policy={policy:?}, reversed={reversed}, loops={}",
+                        edited.boundary_loops().len(),
+                    );
+                    let classify = |point: Point2| {
+                        let outcome = edited.classify_point(&point, &policy).unwrap();
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                        outcome.into_value()
+                    };
+                    // The radius-1/10 circle on the left of both supports
+                    // has a unique contact 69/100 < t < 7/10 < alpha. Its
+                    // line contact lies beyond alpha, so both incident ends
+                    // extend. The CCW exterior lobe meets the original CW
+                    // region at the corner; nonzero fill must retain both.
+                    // The first fixed witness lies strictly inside this disk.
+                    match classify(Point2::new(q(9, 20), q(3, 4))) {
+                        Classification::Decided(RegionPointLocation::Inside) => {
+                            found_exterior_lobe = true;
+                            for (point, expected) in [
+                                (
+                                    Point2::new(q(49, 100), q(7, 10)),
+                                    RegionPointLocation::Boundary,
+                                ),
+                                (
+                                    Point2::new(q(9, 16), q(3, 4)),
+                                    RegionPointLocation::Boundary,
+                                ),
+                                (Point2::new(q(1, 2), q(3, 5)), RegionPointLocation::Inside),
+                                (
+                                    Point2::new(q(197, 400), q(7, 10)),
+                                    RegionPointLocation::Outside,
+                                ),
+                            ] {
+                                assert_eq!(classify(point), Classification::Decided(expected));
+                            }
+                        }
+                        Classification::Decided(
+                            RegionPointLocation::Boundary | RegionPointLocation::Outside,
+                        ) => {}
+                        Classification::Uncertain(reason) => {
+                            panic!("the exact exterior-lobe witness must classify: {reason:?}")
+                        }
+                    }
                 });
+                assert!(
+                    found_exterior_lobe,
+                    "the admissible exterior fillet lobe must survive"
+                );
             }
         }
     }
@@ -29565,7 +29704,7 @@ mod tests {
                     .find(|contact| {
                         contact
                             .parallel_parameter()
-                            .cmp_by_refinement(&parallel_parameter, &policy)
+                            .cmp_by_refinement(&parallel_parameter.clone().into(), &policy)
                             .unwrap()
                             == Classification::Decided(std::cmp::Ordering::Equal)
                     })

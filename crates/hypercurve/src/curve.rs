@@ -3219,7 +3219,7 @@ pub(crate) enum RetainedFilletRadialFrame2 {
     /// general non-PH frame without adjoining the selected speed square root.
     ParallelNormal {
         center_support: BezierParallel2,
-        center_parameter: BezierParameter2,
+        center_parameter: CurveParameter2,
         policy: CurveContext,
     },
 }
@@ -5323,13 +5323,8 @@ impl FilletOffsetCarrier2<'_, '_> {
                     let Some(center_parameter) = center_frame
                         .parameter
                         .as_ref()
-                        .and_then(CurveParameter2::as_bezier_parameter)
                         .cloned()
-                        .or_else(|| {
-                            anchor_parameter
-                                .and_then(CurveParameter2::as_bezier_parameter)
-                                .cloned()
-                        })
+                        .or_else(|| anchor_parameter.cloned())
                     else {
                         return Ok(None);
                     };
@@ -5433,9 +5428,7 @@ impl FilletOffsetCarrier2<'_, '_> {
                             .as_ref()
                             .and_then(|evidence| evidence.center_parallel.as_ref())
                             .map(|frame| frame.support.clone()),
-                        anchor_parameter
-                            .and_then(CurveParameter2::as_bezier_parameter)
-                            .cloned(),
+                        anchor_parameter.cloned(),
                     ) {
                         (Some(center_support), Some(center_parameter)) => {
                             RetainedFilletRadialFrame2::ParallelNormal {
@@ -5536,44 +5529,15 @@ impl FilletOffsetCarrier2<'_, '_> {
                 (radial_frame, radial_distance)
             }
             Self::Parallel { source, support } => {
-                let radial_frame = if let Some(center_parameter) = anchor_parameter
-                    .and_then(CurveParameter2::as_bezier_parameter)
-                    .cloned()
-                {
+                let Some(center_parameter) = anchor_parameter.cloned() else {
+                    return Ok(None);
+                };
+                (
                     RetainedFilletRadialFrame2::ParallelNormal {
                         center_support: support.clone(),
                         center_parameter,
                         policy: *policy,
-                    }
-                } else if let Some(center_parameter) =
-                    anchor_parameter.filter(|parameter| parameter.is_retained_scalar())
-                {
-                    let anchor = match crate::BezierAlgebraicChord2::from_certified_retained_parallel_unit_tangent(
-                        support.clone(),
-                        center_parameter,
-                        policy,
-                    )
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                    })? {
-                        Classification::Decided(anchor) => anchor,
-                        Classification::Uncertain(reason) => {
-                            return Err(ExactCurveError::blocked(
-                                CurveOperation2::Fillet,
-                                family,
-                                reason,
-                            ));
-                        }
-                    };
-                    RetainedFilletRadialFrame2::ChordNormal {
-                        anchor,
-                        policy: *policy,
-                    }
-                } else {
-                    return Ok(None);
-                };
-                (
-                    radial_frame,
+                    },
                     source.parallel_distance() - support.distance(),
                 )
             }
@@ -7716,7 +7680,7 @@ fn fillet_offset_centers(
             })?;
             let offset_circle = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 axis_parallel,
-                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::zero()).into(),
                 signed_radius.clone(),
                 arc.support().is_clockwise(),
                 policy,
@@ -9339,7 +9303,7 @@ fn fillet_offset_centers(
             };
             for contact in intersections {
                 if !parallel_source.parameter_is_admissible(
-                    &contact.parallel_parameter().clone().into(),
+                    contact.parallel_parameter(),
                     analytic_is_previous,
                     domains[usize::from(!analytic_is_previous)],
                     incident_domain.as_ref(),
@@ -9352,7 +9316,7 @@ fn fillet_offset_centers(
                 let mut dot = contact.tangent_dot_sign();
                 let analytic_support_reverses_source = parallel_source.support_reverses_source_at(
                     analytic_support,
-                    &contact.parallel_parameter().clone().into(),
+                    contact.parallel_parameter(),
                     analytic_family,
                     policy,
                 )?;
@@ -9360,8 +9324,7 @@ fn fillet_offset_centers(
                     cross = reverse_fillet_sign(cross);
                     dot = reverse_fillet_sign(dot);
                 }
-                let analytic_parameter =
-                    CurveParameter2::from(contact.parallel_parameter().clone());
+                let analytic_parameter = contact.parallel_parameter().clone();
                 let (previous_parameter, next_parameter) = if chord_is_previous {
                     (None, Some(analytic_parameter))
                 } else {
@@ -13385,7 +13348,7 @@ mod tests {
                 policy,
             } => {
                 assert_eq!(center_support, support);
-                assert_eq!(retained_parameter, center_parameter);
+                assert_eq!(retained_parameter, center_parameter.into());
                 assert_eq!(policy, CurveContext::STRICT);
             }
             other => panic!("expected a selected parallel-normal frame, got {other:?}"),
@@ -13448,10 +13411,16 @@ mod tests {
                 )
                 .unwrap()
                 .expect("the selected fillet retains one exact radial frame");
-            assert!(matches!(
-                frame.radial_frame,
-                RetainedFilletRadialFrame2::ChordNormal { .. }
-            ));
+            let RetainedFilletRadialFrame2::ParallelNormal {
+                center_parameter, ..
+            } = &frame.radial_frame
+            else {
+                panic!("a local root retains the same parallel-normal frame as a native root")
+            };
+            assert!(
+                center_parameter == &parameter,
+                "the original selected center must survive"
+            );
             let retained = frame
                 .anchor_evidence
                 .as_ref()
@@ -13567,7 +13536,7 @@ mod tests {
             let Classification::Decided(Some(circle)) =
                 crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support.clone(),
-                    center_parameter,
+                    center_parameter.into(),
                     Real::one(),
                     false,
                     &policy,
@@ -14155,7 +14124,7 @@ mod tests {
             );
             let cusp_circle = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 cusp_axis.parallel_left(Real::zero()).unwrap(),
-                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::zero()).into(),
                 one.clone(),
                 false,
                 &policy,

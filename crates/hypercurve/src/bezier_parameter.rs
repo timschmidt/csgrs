@@ -117,7 +117,7 @@ struct BezierAlgebraicParameterProjectiveSource {
     denominator: [Real; 2],
 }
 
-fn normalized_projective_chart(
+pub(crate) fn normalized_projective_chart(
     mut numerator: [Real; 2],
     mut denominator: [Real; 2],
 ) -> ([Real; 2], [Real; 2]) {
@@ -1036,7 +1036,29 @@ impl BezierAlgebraicParameter2 {
     /// proves identity even when their current isolating intervals differ.
     pub(crate) fn projective_map_from(&self, other: &Self) -> Option<([Real; 2], [Real; 2])> {
         let same_root = |first: &Self, second: &Self| {
-            Arc::ptr_eq(&first.data.shared, &second.data.shared) || first == second
+            if Arc::ptr_eq(&first.data.shared, &second.data.shared) || first == second {
+                return true;
+            }
+            if first.polynomial() != second.polynomial() {
+                return false;
+            }
+            // Independently issued singleton certificates can select the
+            // same root with different brackets. Strict containment proves
+            // identity without changing half-open endpoint ownership. Mere
+            // overlap does not: two brackets can overlap between two roots.
+            let inside = |inner: &Self, outer: &Self| {
+                compare_reals(
+                    outer.interval().start(),
+                    inner.interval().start(),
+                    &CurveContext::STRICT,
+                ) == Some(Ordering::Less)
+                    && compare_reals(
+                        inner.interval().end(),
+                        outer.interval().end(),
+                        &CurveContext::STRICT,
+                    ) == Some(Ordering::Less)
+            };
+            inside(first, second) || inside(second, first)
         };
         let identity = || ([Real::zero(), Real::one()], [Real::one(), Real::zero()]);
         if same_root(self, other) {
@@ -4745,6 +4767,58 @@ mod conversion_tests {
                 "a shared polynomial cannot identify different selected roots"
             );
         }
+    }
+
+    #[test]
+    fn independent_singleton_charts_reuse_nested_root_identity() {
+        let source = algebraic_parameter(&polynomial(&[-1, 0, 2]));
+        let BezierParameter2::Algebraic(original) = &source else {
+            unreachable!()
+        };
+        // Both certificates select sqrt(1/2), but share neither allocation
+        // nor refinement history. The narrow interval lies strictly inside
+        // the original interval [1/2,1].
+        let independent = BezierAlgebraicParameter2::from_certified_singleton(
+            original.polynomial().clone(),
+            BezierParameterInterval {
+                start: rational(2, 3),
+                end: rational(3, 4),
+            },
+        );
+        assert!(!Arc::ptr_eq(
+            &original.data.shared,
+            &independent.data.shared
+        ));
+        let identity = Some(([Real::zero(), Real::one()], [Real::one(), Real::zero()]));
+        assert!(independent.projective_map_from(original) == identity);
+        assert!(original.projective_map_from(&independent) == identity);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let mapped = decided(
+                BezierParameter2::Algebraic(independent.clone())
+                    .affine_image_unbounded(&Real::from(2_i8), &Real::one(), &policy)
+                    .unwrap(),
+                "independent affine image",
+            );
+            let BezierParameter2::Algebraic(mapped) = mapped else {
+                unreachable!()
+            };
+            assert!(
+                mapped.projective_map_from(original)
+                    == Some(([Real::one(), Real::from(2_i8)], [Real::one(), Real::zero()])),
+                "the independent source certificate must survive its exact chart"
+            );
+        }
+        // These certified singleton intervals overlap, but select opposite
+        // roots. Overlap alone must never manufacture an identity chart.
+        let conjugate = BezierAlgebraicParameter2::from_certified_singleton(
+            original.polynomial().clone(),
+            BezierParameterInterval {
+                start: -Real::one(),
+                end: rational(2, 3),
+            },
+        );
+        assert!(original.projective_map_from(&conjugate).is_none());
+        assert!(conjugate.projective_map_from(original).is_none());
     }
 
     #[test]

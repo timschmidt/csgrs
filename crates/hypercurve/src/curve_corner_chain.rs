@@ -1696,7 +1696,7 @@ impl<'a> CurveCornerChain2<'a> {
     fn retained_fillet_sweep(
         frame: &RetainedFilletFrame2,
         other_parallel: &BezierParallel2,
-        other_parameter: &BezierParameter2,
+        other_parameter: &CurveParameter2,
         other_reversed: bool,
         fillet_clockwise: bool,
         policy: &CurveContext,
@@ -1720,7 +1720,7 @@ impl<'a> CurveCornerChain2<'a> {
                         let line_tangent = (unit_normal.1.clone(), -unit_normal.0.clone());
                         other_parallel
                             .vector_tangent_cross_and_dot_signs(
-                                &other_parameter.clone().into(),
+                                other_parameter,
                                 &line_tangent.0,
                                 &line_tangent.1,
                                 policy,
@@ -1752,7 +1752,7 @@ impl<'a> CurveCornerChain2<'a> {
                         }) {
                             other_parallel
                                 .vector_tangent_cross_and_dot_signs(
-                                    &other_parameter.clone().into(),
+                                    other_parameter,
                                     &tangent.0,
                                     &tangent.1,
                                     policy,
@@ -1941,7 +1941,7 @@ impl<'a> CurveCornerChain2<'a> {
         frame: &RetainedFilletFrame2,
         fillet: crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
         other_parallel: &BezierParallel2,
-        other_parameter: BezierParameter2,
+        other_parameter: CurveParameter2,
         other_reversed: bool,
         fillet_clockwise: bool,
         anchor_cut: &mut CornerTrimCut2,
@@ -1950,7 +1950,7 @@ impl<'a> CurveCornerChain2<'a> {
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record("hypercurve", "curve-region-fillet-parallel", "entered");
-        other_cut.parameter = CurveParameter2::from(other_parameter.clone());
+        other_cut.parameter = other_parameter.clone();
         let (sweep_halves, tangent_cross, tangent_dot) = Self::retained_fillet_sweep(
             frame,
             other_parallel,
@@ -2014,7 +2014,7 @@ impl<'a> CurveCornerChain2<'a> {
             || terminal_circle.uses_selected_chord_normal_frame()
         {
             let derivative_scale = match other_parallel
-                .parallel_derivative_scale_sign(&other_parameter.clone().into(), policy)
+                .parallel_derivative_scale_sign(&other_parameter, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
             {
                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
@@ -2130,7 +2130,13 @@ impl<'a> CurveCornerChain2<'a> {
                 "curve-region-fillet-parallel",
                 "parameter-map-decided",
             );
-            parameter_map.certified_interior_tangent_parameter(other_parameter)
+            let native_parameter = retained_corner_decision(
+                other_parameter
+                    .promoted_bezier_parameter_complete(policy)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?,
+                CurveOperation2::Fillet,
+            )?;
+            parameter_map.certified_interior_tangent_parameter(native_parameter)
         };
         Self::publish_retained_circle_fillet(
             frame.anchor_is_previous,
@@ -2966,18 +2972,15 @@ impl<'a> CurveCornerChain2<'a> {
             ) {
                 anchor_cut
                     .replacement_parallel_fragment()
-                    .zip(anchor_cut.parameter.as_bezier_parameter())
                     .zip(anchor_cut.replacement_parallel_source_parameter_map())
-                    .map(
-                        |((replacement, parameter), (source_scale, source_offset))| {
-                            (
-                                replacement.parallel().clone(),
-                                parameter.clone(),
-                                source_scale.clone(),
-                                source_offset.clone(),
-                            )
-                        },
-                    )
+                    .map(|(replacement, (source_scale, source_offset))| {
+                        (
+                            replacement.parallel().clone(),
+                            anchor_cut.parameter.clone(),
+                            source_scale.clone(),
+                            source_offset.clone(),
+                        )
+                    })
             } else {
                 None
             };
@@ -3244,10 +3247,7 @@ impl<'a> CurveCornerChain2<'a> {
                     center_support,
                     center_parameter,
                     ..
-                } => Some((
-                    center_support.clone(),
-                    CurveParameter2::from(center_parameter.clone()),
-                )),
+                } => Some((center_support.clone(), center_parameter.clone())),
                 RetainedFilletRadialFrame2::ChordNormal { .. } => frame
                     .anchor_evidence
                     .as_ref()
@@ -3370,10 +3370,9 @@ impl<'a> CurveCornerChain2<'a> {
                     });
             let other_fragment = replacement_companion.as_ref().unwrap_or(other_fragment);
             let allow_boundary_contact = allow_boundary_contact || replacement_companion.is_some();
-            if let BezierSplitFragment2::SelectedFiber(other_fragment) = other_fragment
-                && let Some(expected_parameter) = other_cut.parameter.as_bezier_parameter().cloned()
-            {
-                let expected = CurveParameter2::from(expected_parameter.clone());
+            if let BezierSplitFragment2::SelectedFiber(other_fragment) = other_fragment {
+                let expected_parameter = other_cut.parameter.clone();
+                let expected = &expected_parameter;
                 let compare = |boundary: &CurveParameter2| {
                     retained_corner_decision(
                         policy
@@ -3394,7 +3393,7 @@ impl<'a> CurveCornerChain2<'a> {
                     }
                     CornerPlacement2::Extension => {
                         retained_selected_corner_parameter_is_in_native_chart(
-                            &expected,
+                            expected,
                             CurveOperation2::Fillet,
                             policy,
                         )?
@@ -3435,17 +3434,7 @@ impl<'a> CurveCornerChain2<'a> {
                 _ => None,
             };
             if let Some(other_fragment) = other_parallel_fragment {
-                let expected_parameter = other_cut
-                    .parameter
-                    .as_bezier_parameter()
-                    .cloned()
-                    .ok_or_else(|| {
-                        ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            CurveFamily2::RationalBezier,
-                            UncertaintyReason::Unsupported,
-                        )
-                    })?;
+                let expected_parameter = other_cut.parameter.clone();
                 match crate::bezier_offset::overlap_parameter_is_in_range(
                     &expected_parameter,
                     other_fragment.range(),
@@ -3490,17 +3479,7 @@ impl<'a> CurveCornerChain2<'a> {
                 );
             }
             if let BezierSplitFragment2::Materialized { curve, .. } = other_fragment {
-                let expected_parameter = other_cut
-                    .parameter
-                    .as_bezier_parameter()
-                    .cloned()
-                    .ok_or_else(|| {
-                        ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            CurveFamily2::RationalBezier,
-                            UncertaintyReason::Unsupported,
-                        )
-                    })?;
+                let expected_parameter = other_cut.parameter.clone();
                 let rational = RationalBezier2::try_from_subcurve(curve)
                     .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
                 let source_parallel = rational
