@@ -21,10 +21,10 @@ mod cache_rescale_tests {
                 precision: -16,
                 value: value.clone(),
             };
-            assert_eq!(ApproximationCache::value_at_precision(&cached, -17), None);
+            assert_eq!(EvaluationCache::value_at_precision(&cached, -17), None);
             for gap in 0..=16 {
                 assert_eq!(
-                    ApproximationCache::value_at_precision(&cached, -16 + gap as i32),
+                    EvaluationCache::value_at_precision(&cached, -16 + gap as i32),
                     Some(rounded(&value, gap))
                 );
             }
@@ -40,7 +40,7 @@ mod cache_rescale_tests {
             let unit = BigInt::one() << bits;
             for n in [&unit - 1, unit.clone(), &unit + 1, &unit >> 1] {
                 for value in [n.clone(), -n] {
-                    let cache = ApproximationCache::new();
+                    let cache = EvaluationCache::new();
                     cache.store(-100_000, value.clone());
                     for gap in [
                         0,
@@ -78,7 +78,7 @@ mod cache_rescale_tests {
                 (i32::MIN, 0),
                 (i32::MIN, i32::MIN + 1),
             ] {
-                let cache = ApproximationCache::new();
+                let cache = EvaluationCache::new();
                 let value = BigInt::from(n);
                 cache.store(q, value.clone());
                 assert_eq!(cache.at_precision(p), Some(rounded(&value, p.abs_diff(q))));
@@ -104,7 +104,7 @@ mod cache_rescale_tests {
 
     #[test]
     fn cache_rescale_concurrent_monotone_publication() {
-        let cache = ApproximationCache::new();
+        let cache = EvaluationCache::new();
         let barrier = std::sync::Barrier::new(8);
         std::thread::scope(|scope| {
             for worker in 0..8 {

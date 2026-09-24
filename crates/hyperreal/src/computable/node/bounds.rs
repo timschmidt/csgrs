@@ -673,5 +673,5 @@ pub(crate) fn should_stop(signal: &Option<Signal>) -> bool {
 // A process-wide lock-free cache lets every worker reuse the finest certified
 // approximation instead of recomputing constants once per thread.
 #[cfg(not(verus_keep_ghost))]
-static SHARED_CONSTANT_CACHES: LazyLock<[ApproximationCache; SharedConstant::COUNT]> =
-    LazyLock::new(|| std::array::from_fn(|_| ApproximationCache::default()));
+static SHARED_CONSTANT_CACHES: LazyLock<[EvaluationCache; SharedConstant::COUNT]> =
+    LazyLock::new(|| std::array::from_fn(|_| EvaluationCache::default()));

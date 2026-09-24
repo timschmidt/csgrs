@@ -159,6 +159,18 @@ impl Quad {
 }
 
 impl Tower {
+    fn has_bounded_coefficients(&self) -> bool {
+        [&self.even, &self.odd]
+            .into_iter()
+            .chain(self.radicand.iter())
+            .all(|quad| {
+                [&quad.rational, &quad.scale]
+                    .into_iter()
+                    .chain(quad.disc.iter())
+                    .all(|coefficient| admit_rational(coefficient).is_some())
+            })
+    }
+
     fn quad(even: Quad) -> Self {
         Self {
             even,
@@ -183,6 +195,14 @@ impl Tower {
             odd: odd.clone(),
             radicand: if odd.is_zero() { None } else { self.radicand },
         }
+    }
+
+    fn scale_power_of_two(mut self, shift: i32) -> Option<Self> {
+        for quad in [&mut self.even, &mut self.odd] {
+            quad.rational = shifted_coefficient(&quad.rational, shift)?;
+            quad.scale = shifted_coefficient(&quad.scale, shift)?;
+        }
+        Some(self)
     }
 
     fn neg(self) -> Self {
@@ -547,84 +567,125 @@ fn sqrt_quad(quad: Quad) -> Option<Tower> {
     })
 }
 
-const TOWER_NODE_BUDGET: usize = 2048;
-
-fn power_of_two_factor(shift: i32) -> Option<Rational> {
-    if shift >= 0 {
-        let bits = usize::try_from(shift).ok()?;
-        Some(Rational::from_bigint(BigInt::one() << bits))
-    } else {
-        let bits = usize::try_from(shift.checked_neg()?).ok()?;
-        Rational::from_bigint_fraction(BigInt::one(), BigUint::one() << bits).ok()
+fn shifted_coefficient(value: &Rational, shift: i32) -> Option<Rational> {
+    if value.sign() == Sign::NoSign || shift == 0 {
+        return Some(value.clone());
     }
+    let numerator = value.numerator();
+    let denominator = value.denominator();
+    let bits = u64::from(shift.unsigned_abs());
+    // Cancel existing powers of two before checking the result size or
+    // allocating. A large shift can still leave a small exact coefficient.
+    let (shrink_n, shrink_d, grow_n, grow_d) = if shift > 0 {
+        let cancel = bits.min(denominator.trailing_zeros()?);
+        (0, cancel, bits - cancel, 0)
+    } else {
+        let cancel = bits.min(numerator.trailing_zeros()?);
+        (cancel, 0, 0, bits - cancel)
+    };
+    if (numerator.bits() - shrink_n).checked_add(grow_n)? > TOWER_RATIONAL_BIT_LIMIT
+        || (denominator.bits() - shrink_d).checked_add(grow_d)? > TOWER_RATIONAL_BIT_LIMIT
+    {
+        return None;
+    }
+    let numerator =
+        (numerator >> usize::try_from(shrink_n).ok()?) << usize::try_from(grow_n).ok()?;
+    let denominator =
+        (denominator >> usize::try_from(shrink_d).ok()?) << usize::try_from(grow_d).ok()?;
+    Rational::from_bigint_fraction(signed_magnitude(value.sign(), numerator), denominator).ok()
 }
 
 fn tower_from_computable(value: &Computable) -> Option<Tower> {
-    fn parse(
-        value: &Computable,
-        remaining: &mut usize,
-        memo: &mut Vec<(usize, Option<Tower>)>,
-    ) -> Option<Tower> {
-        let key = std::sync::Arc::as_ptr(&value.internal) as usize;
-        if let Some((_, cached)) = memo.iter().find(|(candidate, _)| *candidate == key) {
-            return cached.clone();
+    // Traverse the immutable DAG in postorder. Work is proportional to distinct
+    // nodes, with no recursive descent or arbitrary expression-width cutoff.
+    // Algebraic dimension and coefficient-size guards still bound reductions.
+    let key = |value: &Computable| Arc::as_ptr(&value.internal);
+    let mut memo = std::collections::HashMap::<*const Node, Tower>::new();
+    let mut pending = vec![(value, false)];
+    while let Some((current, ready)) = pending.pop() {
+        let current_key = key(current);
+        if memo.contains_key(&current_key) {
+            continue;
         }
-        if *remaining == 0 {
-            return None;
-        }
-        *remaining -= 1;
-        let parsed = if let Some(rational) = value.exact_rational() {
-            admit_rational(&rational)?;
-            Some(Tower::rational(rational))
-        } else {
-            match &value.internal.approximation {
-                Approximation::Constant(SharedConstant::Sqrt2) => {
-                    sqrt_quad(Quad::rational(Rational::new(2)))
-                }
-                Approximation::Constant(SharedConstant::Sqrt3) => {
-                    sqrt_quad(Quad::rational(Rational::new(3)))
-                }
-                Approximation::Negate(child) => Some(parse(child, remaining, memo)?.neg()),
-                Approximation::Offset(child, shift) => Some(
-                    parse(child, remaining, memo)?.scale_rational(&power_of_two_factor(*shift)?),
-                ),
-                Approximation::Add(left, right) => {
-                    Some(parse(left, remaining, memo)?.add(parse(right, remaining, memo)?)?)
-                }
-                Approximation::Multiply(left, right) => {
-                    Some(parse(left, remaining, memo)?.mul(parse(right, remaining, memo)?)?)
-                }
-                Approximation::Inverse(child) => Some(parse(child, remaining, memo)?.inverse()?),
-                Approximation::Square(child) => {
-                    let child = parse(child, remaining, memo)?;
-                    Some(child.clone().mul(child)?)
-                }
-                Approximation::Sqrt(child) => {
-                    sqrt_quad(parse(child, remaining, memo)?.even_quad()?)
-                }
-                Approximation::NthRoot(child, 2) => {
-                    sqrt_quad(parse(child, remaining, memo)?.even_quad()?)
+        if !ready {
+            if let Some(tower) = current.internal.cache.quadratic_tower() {
+                memo.insert(current_key, tower);
+                continue;
+            }
+            if let Some(rational) = current.exact_rational() {
+                admit_rational(&rational)?;
+                memo.insert(current_key, Tower::rational(rational));
+                continue;
+            }
+            pending.push((current, true));
+            match &current.internal.approximation {
+                Approximation::Constant(SharedConstant::Sqrt2 | SharedConstant::Sqrt3) => {}
+                Approximation::Negate(child)
+                | Approximation::Offset(child, _)
+                | Approximation::Inverse(child)
+                | Approximation::Square(child)
+                | Approximation::Sqrt(child)
+                | Approximation::NthRoot(child, 2) => pending.push((child, false)),
+                Approximation::Add(left, right) | Approximation::Multiply(left, right) => {
+                    pending.push((right, false));
+                    pending.push((left, false));
                 }
                 Approximation::LinearCombination3(combination) => {
-                    let mut sum = Tower::zero();
-                    for (coefficient, weight) in combination
-                        .coefficients
-                        .iter()
-                        .zip(combination.values.iter())
-                    {
-                        sum =
-                            sum.add(parse(coefficient, remaining, memo)?.scale_rational(weight))?;
-                    }
-                    Some(sum)
+                    pending.extend(
+                        combination
+                            .coefficients
+                            .iter()
+                            .rev()
+                            .map(|child| (child, false)),
+                    );
                 }
-                _ => None,
+                _ => return None,
             }
+            continue;
+        }
+        let child = |value: &Computable| memo.get(&key(value)).cloned();
+        let tower = match &current.internal.approximation {
+            Approximation::Constant(SharedConstant::Sqrt2) => {
+                sqrt_quad(Quad::rational(Rational::new(2)))?
+            }
+            Approximation::Constant(SharedConstant::Sqrt3) => {
+                sqrt_quad(Quad::rational(Rational::new(3)))?
+            }
+            Approximation::Negate(value) => child(value)?.neg(),
+            Approximation::Offset(value, shift) => child(value)?.scale_power_of_two(*shift)?,
+            Approximation::Add(left, right) => child(left)?.add(child(right)?)?,
+            Approximation::Multiply(left, right) => child(left)?.mul(child(right)?)?,
+            Approximation::Inverse(value) => child(value)?.inverse()?,
+            Approximation::Square(value) => {
+                let value = child(value)?;
+                value.clone().mul(value)?
+            }
+            Approximation::Sqrt(value) | Approximation::NthRoot(value, 2) => {
+                sqrt_quad(child(value)?.even_quad()?)?
+            }
+            Approximation::LinearCombination3(combination) => {
+                let mut sum = Tower::zero();
+                for (coefficient, weight) in combination
+                    .coefficients
+                    .iter()
+                    .zip(combination.values.iter())
+                {
+                    sum = sum.add(child(coefficient)?.scale_rational(weight))?;
+                }
+                sum
+            }
+            _ => return None,
         };
-        memo.push((key, parsed.clone()));
-        parsed
+        // A completed shared reduction proves this subexpression even if its
+        // parent later leaves the supported field. No failed result is cached.
+        if Arc::strong_count(&current.internal) > 1
+            && !matches!(current.internal.approximation, Approximation::Constant(_))
+        {
+            current.internal.cache.store_quadratic_tower(tower.clone());
+        }
+        memo.insert(current_key, tower);
     }
-    let mut budget = TOWER_NODE_BUDGET;
-    parse(value, &mut budget, &mut Vec::new())
+    memo.remove(&key(value))
 }
 
 impl Tower {
@@ -727,7 +788,16 @@ fn tower_annihilator(tower: &Tower) -> Option<Vec<Rational>> {
 
 impl Computable {
     pub(crate) fn quadratic_tower_sign(&self) -> Option<RealSign> {
-        tower_from_computable(self)?.sign()
+        let tower = tower_from_computable(self)?;
+        let sign = tower.sign()?;
+        // Retain the successful proof at the queried root. Later arithmetic
+        // can reuse its finite basis without replaying its construction DAG.
+        // Failed reductions remain retryable.
+        self.internal.cache.store_quadratic_tower(tower);
+        self.internal
+            .facts
+            .replace_exact_sign(ExactSignCache::Valid(private_sign(sign)));
+        Some(sign)
     }
 
     pub(crate) fn quadratic_tower_positive_rational_branch(&self) -> Option<Rational> {
@@ -768,8 +838,163 @@ impl Computable {
 mod quadratic_tower_tests {
     use super::*;
 
+    #[test]
+    fn cold_tower_proofs_replay_wide_dags_without_refinement() {
+        let opaque = |approximation| Computable {
+            internal: Arc::new(Node::new(
+                approximation,
+                BoundCache::Invalid,
+                ExactSignCache::Unknown,
+            )),
+            signal: None,
+        };
+        let root = Computable::sqrt_rational(Rational::new(3));
+        let mut layer = (1..=1024)
+            .map(|index| {
+                opaque(Approximation::Add(
+                    root.clone(),
+                    Computable::rational(Rational::new(index)),
+                ))
+            })
+            .collect::<Vec<_>>();
+        while layer.len() > 1 {
+            layer = layer
+                .chunks_exact(2)
+                .map(|pair| opaque(Approximation::Add(pair[0].clone(), pair[1].clone())))
+                .collect();
+        }
+        let sum = layer.pop().unwrap();
+        // This cold DAG exceeds the former visit limit while its reduced
+        // value has only two small coefficients.
+        assert_eq!(sum.immediate_sign(), None);
+        assert_eq!(sum.quadratic_tower_sign(), Some(RealSign::Positive));
+        assert_eq!(sum.clone().immediate_sign(), Some(RealSign::Positive));
+        let expected = root
+            .multiply_rational(Rational::new(1024))
+            .add(Computable::rational(Rational::new(1024 * 1025 / 2)));
+        let zero = opaque(Approximation::Add(sum, expected.negate()));
+        assert_eq!(zero.quadratic_tower_sign(), Some(RealSign::Zero));
+        assert_eq!(zero.clone().immediate_sign(), Some(RealSign::Zero));
+        assert!(zero.cached().is_none());
+
+        let outside = opaque(Approximation::Add(
+            Computable::sqrt_rational(Rational::new(2))
+                .add(Computable::sqrt_rational(Rational::new(3))),
+            Computable::sqrt_rational(Rational::new(5)),
+        ));
+        assert_eq!(outside.quadratic_tower_sign(), None);
+        assert_eq!(outside.immediate_sign(), None);
+        assert!(outside.internal.cache.cell().is_none());
+    }
+
     fn sqrt2() -> Computable {
         Computable::rational(Rational::new(2)).sqrt()
+    }
+
+    #[test]
+    fn tower_replay_handles_deep_and_exponentially_shared_graphs() {
+        let opaque = |approximation| Computable {
+            internal: Arc::new(Node::new(
+                approximation,
+                BoundCache::Invalid,
+                ExactSignCache::Unknown,
+            )),
+            signal: None,
+        };
+        let root = sqrt2();
+        let mut chain = vec![root.clone()];
+        for _ in 0..8192 {
+            chain.push(opaque(Approximation::Negate(chain.last().unwrap().clone())));
+        }
+        assert_eq!(
+            chain.last().unwrap().quadratic_tower_sign(),
+            Some(RealSign::Positive)
+        );
+        // Keep teardown independent of recursive Arc destruction.
+        while chain.pop().is_some() {}
+
+        let mut doubled = root.clone();
+        for _ in 0..32 {
+            doubled = opaque(Approximation::Add(doubled.clone(), doubled));
+        }
+        assert_eq!(doubled.quadratic_tower_sign(), Some(RealSign::Positive));
+        let expected = root.multiply_rational(Rational::from_bigint(BigInt::one() << 32));
+        assert_eq!(
+            doubled.add(expected.negate()).quadratic_tower_sign(),
+            Some(RealSign::Zero)
+        );
+        for shift in [i32::MIN, -100_000, 100_000, i32::MAX] {
+            let wide = opaque(Approximation::Offset(sqrt2(), shift));
+            assert_eq!(wide.quadratic_tower_sign(), None);
+            assert_eq!(wide.immediate_sign(), None);
+            assert!(wide.internal.cache.cell().is_none());
+            let zero = opaque(Approximation::Offset(Computable::zero(), shift));
+            assert_eq!(zero.quadratic_tower_sign(), Some(RealSign::Zero));
+        }
+        let large = Rational::from_bigint(BigInt::one() << 8000);
+        for (coefficient, shift, expected) in [
+            (large.clone().inverse().unwrap(), 16000, large.clone()),
+            (large.clone(), -16000, large.inverse().unwrap()),
+        ] {
+            let scaled = opaque(Approximation::Offset(
+                opaque(Approximation::Multiply(
+                    sqrt2(),
+                    Computable::rational(coefficient),
+                )),
+                shift,
+            ));
+            assert_eq!(scaled.quadratic_tower_sign(), Some(RealSign::Positive));
+            let difference = opaque(Approximation::Add(
+                scaled,
+                sqrt2().multiply_rational(expected).negate(),
+            ));
+            assert_eq!(difference.quadratic_tower_sign(), Some(RealSign::Zero));
+        }
+    }
+
+    #[test]
+    fn retained_forms_preserve_shared_dag_memoization() {
+        let root = sqrt2().add(Computable::one());
+        assert_eq!(root.quadratic_tower_sign(), Some(RealSign::Positive));
+        let mut layer = vec![root.clone(); 2048];
+        while layer.len() > 1 {
+            layer = layer
+                .chunks_exact(2)
+                .map(|pair| Computable {
+                    internal: Arc::new(Node::new(
+                        Approximation::Add(pair[0].clone(), pair[1].clone()),
+                        BoundCache::Invalid,
+                        ExactSignCache::Unknown,
+                    )),
+                    signal: None,
+                })
+                .collect();
+        }
+        // Shared retained values participate in the same per-call memo as
+        // freshly reduced nodes.
+        let sum = layer.pop().unwrap();
+        assert_eq!(sum.quadratic_tower_sign(), Some(RealSign::Positive));
+        let difference = sum.add(root.multiply_rational(Rational::new(2048)).negate());
+        assert_eq!(difference.quadratic_tower_sign(), Some(RealSign::Zero));
+    }
+
+    #[test]
+    fn tower_and_approximation_caches_can_publish_concurrently() {
+        let value = sqrt2().add(Computable::sqrt_rational(Rational::new(3)));
+        std::thread::scope(|scope| {
+            for precision in [-48, -96, -64, -128] {
+                let value = &value;
+                scope.spawn(move || {
+                    assert_eq!(value.quadratic_tower_sign(), Some(RealSign::Positive));
+                    let approximation = value.approx(precision);
+                    assert!(approximation > (BigInt::from(3) << -precision));
+                    assert!(approximation < (BigInt::from(4) << -precision));
+                    assert_eq!(value.quadratic_tower_sign(), Some(RealSign::Positive));
+                });
+            }
+        });
+        assert!(matches!(value.cached(), Some((precision, _)) if precision <= -128));
+        assert!(value.internal.cache.quadratic_tower().is_some());
     }
 
     #[test]
