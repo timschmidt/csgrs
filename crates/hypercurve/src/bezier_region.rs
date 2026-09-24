@@ -20072,9 +20072,13 @@ mod tests {
             assert!(chamfers.value.candidate_count() > 0);
             let mut retained_local_cut = false;
             for_each_corner_region(&chamfers.value, |edited| {
-                retained_local_cut |= edited.boundary_loops()[0]
-                    .fragments()
+                assert!(edited.has_regularized_filled_left_topology(&policy));
+                // The closing chord crosses the source again, so exact
+                // regularization can place the chamfer on a later loop.
+                retained_local_cut |= edited
+                    .boundary_loops()
                     .iter()
+                    .flat_map(|boundary| boundary.fragments())
                     .filter_map(|fragment| match fragment {
                         BezierSplitFragment2::SelectedFiber(fragment) => Some(fragment.range()),
                         _ => None,
@@ -20087,6 +20091,28 @@ mod tests {
                             && parameter.cmp_by_refinement(&center, &policy).unwrap()
                                 == Classification::Decided(std::cmp::Ordering::Less)
                     });
+                for (point, expected) in [
+                    // Both lobes survive the contact split. The small lobe
+                    // is between y=sqrt(x/2) and the original closing chord.
+                    (
+                        Point2::new(q(1, 1000), q(3, 200)),
+                        RegionPointLocation::Inside,
+                    ),
+                    (
+                        Point2::new(q(1, 5), Real::one()),
+                        RegionPointLocation::Inside,
+                    ),
+                    // This point lies in the corner removed by the chamfer.
+                    (
+                        Point2::new(q(12, 25), half.clone()),
+                        RegionPointLocation::Outside,
+                    ),
+                    (p(1, 1), RegionPointLocation::Outside),
+                ] {
+                    let location = edited.classify_point(&point, &policy).unwrap();
+                    assert_eq!(location.certainty, CurveCertainty::Certified);
+                    assert_eq!(location.value, Classification::Decided(expected));
+                }
             });
             assert!(retained_local_cut);
             #[cfg(feature = "dispatch-trace")]

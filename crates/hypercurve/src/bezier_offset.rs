@@ -79801,6 +79801,97 @@ impl BezierAlgebraicChord2 {
         )))
     }
 
+    /// Discharges a caller-owned endpoint contact on a pole-free conic span.
+    /// The line incidence has a numerator of degree at most two. Its strict
+    /// sign immediately inside the owned endpoint and at the opposite endpoint
+    /// agrees only if there is no second root. A further simple root would
+    /// reverse that sign; a further even root would require degree at least
+    /// three. A double root at the owned endpoint itself is permitted.
+    ///
+    /// The caller must first certify that the whole finite range is pole-free.
+    /// This sufficient proof uses local point bounds and the existing tangent
+    /// certificate; any failed optional construction leaves full isolation to
+    /// the caller.
+    fn rational_endpoint_contact_is_complete(
+        &self,
+        source: &RationalBezier2,
+        range: &CurveParameterRange2,
+        owned: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> bool {
+        policy
+            .bounded_exact_predicate_pass(|| -> CurveResult<bool> {
+                let power = source.homogeneous_power_basis()?;
+                if [&power.x_numerator, &power.y_numerator, &power.weight]
+                    .into_iter()
+                    .any(|coefficients| {
+                        coefficients
+                            .iter()
+                            .skip(3)
+                            .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
+                    })
+                {
+                    return Ok(false);
+                }
+                let other = if owned.cmp_by_refinement(range.start(), policy)?
+                    == Classification::Decided(std::cmp::Ordering::Equal)
+                {
+                    range.end()
+                } else if owned.cmp_by_refinement(range.end(), policy)?
+                    == Classification::Decided(std::cmp::Ordering::Equal)
+                {
+                    range.start()
+                } else {
+                    return Ok(false);
+                };
+                // Retain the refined authorities themselves: a bounded order
+                // query intentionally declines a stored isolator that still
+                // touches the other endpoint. Reusing the tighter envelopes
+                // also certifies the subsequent interior sample's order.
+                let (Classification::Decided(owned), Classification::Decided(other)) = (
+                    owned.refined_for_finite_envelope(4, policy)?,
+                    other.refined_for_finite_envelope(4, policy)?,
+                ) else {
+                    return Ok(false);
+                };
+                let direction = match other.cmp_by_refinement(&owned, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Less) => RealSign::Negative,
+                    Classification::Decided(std::cmp::Ordering::Greater) => RealSign::Positive,
+                    _ => return Ok(false),
+                };
+                let Classification::Decided(point) =
+                    rational_point_evidence_at_region_parameter(source, &other, policy)?
+                else {
+                    return Ok(false);
+                };
+                let side = match self
+                    .strict_oriented_side_by_local_interval_refinement(&point, policy)?
+                {
+                    Classification::Decided(crate::classify::LineSide::Left) => RealSign::Positive,
+                    Classification::Decided(crate::classify::LineSide::Right) => RealSign::Negative,
+                    _ => return Ok(false),
+                };
+                let parallel = source.parallel_left(Real::zero())?;
+                let refined_range = CurveParameterRange2::new_validated(other, owned.clone());
+                let Classification::Decided(interior) =
+                    refined_range.strict_interior_scalar(policy)?
+                else {
+                    return Ok(false);
+                };
+                let terminal = CurveParameterRange2::new_validated(
+                    BezierParameter2::Exact(interior).into(),
+                    owned,
+                );
+                let Classification::Decided(tangent) =
+                    self.parallel_tangent_cross_sign_on_region_range(&parallel, &terminal, policy)?
+                else {
+                    return Ok(false);
+                };
+                Ok(tangent != RealSign::Zero && side == product_sign(tangent, direction))
+            })
+            .unwrap_or(false)
+    }
+
     /// Discovers exact incidence evidence covering the finite source range.
     /// Unit-domain fast paths may retain wider certified components; consumers
     /// clip their contacts and correspondences to the active operand domains.
@@ -79816,12 +79907,12 @@ impl BezierAlgebraicChord2 {
         let unit = CurveParameterRange2::unit();
         let unit_covers_range = CurveParameterDomain2::new(&unit, None)
             .contains_finite_range(range, &policy.strict_counterpart())?;
-        if unit_covers_range != Classification::Decided(true)
-            || !matches!(
+        let finite_unit_source = unit_covers_range == Classification::Decided(true)
+            && matches!(
                 source.denominator_sign(&crate::CurveParameterRange2::unit()),
                 Classification::Decided(RealSign::Positive | RealSign::Negative)
-            )
-        {
+            );
+        if !finite_unit_source {
             match polynomial_is_nonzero_on_parameter_range(
                 &source.homogeneous_power_basis()?.weight,
                 range,
@@ -79833,6 +79924,21 @@ impl BezierAlgebraicChord2 {
                 }
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
+        }
+        if let Some(owned) = excluded_source_parameter
+            && self.rational_endpoint_contact_is_complete(source, range, owned, policy)
+        {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "algebraic-chord-rational-kernel",
+                "conic-owned-endpoint-complete",
+            );
+            return Ok(Classification::Decided(
+                BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
+            ));
+        }
+        if !finite_unit_source {
             return Ok(
                 match self.recursive_projective_rational_intersections(
                     source,
@@ -85244,6 +85350,21 @@ fn algebraic_chord_endpoint_bounds_refined_impl(
     if let Some(bounds) = composite {
         if bounds.is_decided() {
             return bounds;
+        }
+        if !local_only {
+            // A coarse determinant enclosure can contain zero even when its
+            // selected intersection is finite. Tighten the existing native
+            // evidence before constructing a complete common point field.
+            // A tighter conservative box also satisfies the original query.
+            for steps in [2, 4, 8, 16] {
+                if steps > refinement_steps {
+                    let refined =
+                        algebraic_chord_endpoint_local_bounds_refined(endpoint, steps, policy);
+                    if refined.is_decided() {
+                        return refined;
+                    }
+                }
+            }
         }
         if !local_only
             && let Some(bounds) =
@@ -133170,6 +133291,391 @@ mod conversion_tests {
                     }
                 }
             }
+        }
+    }
+
+    #[test]
+    fn chord_pair_bounds_refine_native_fibers_before_global_projection() {
+        use crate::classify::LineSide::{Left, Right};
+
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let height = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        // alpha^65=1/2, u³=alpha, P(u)=(2u²,u). The chord from
+        // P(u) to P(u)+(1,1) meets y=3/2 at (2u²-u+3/2,3/2).
+        // Its raw [0,1] singleton makes the interval determinant touch zero;
+        // native refinement suffices without the degree-195 global image.
+        let u = half
+            .clone()
+            .pow((Real::one() / Real::from(195)).unwrap())
+            .unwrap();
+        let expected = Point2::new(Real::from(2_i8) * &u * &u - &u + &height, height.clone());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let seed =
+                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
+            let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![Real::zero(), Real::zero(), Real::zero(), Real::one()],
+                    vec![Real::from(-1_i8)],
+                ]),
+                seed.data.authority.data.retained_parameter.clone(),
+                &policy,
+            )
+            .parameter(IsolatedRootInterval {
+                lower: Real::zero(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            let parallel = QuadraticBezier2::new(
+                Point2::from_values(0, 0),
+                Point2::new(Real::zero(), half.clone()),
+                Point2::from_values(2, 1),
+            )
+            .parallel_left(Real::zero())
+            .unwrap();
+            let start = CurvePoint2::from(BezierAnalyticParallelPoint2::new_selected_fiber(
+                parallel,
+                selected.clone(),
+                &policy,
+            ));
+            let Classification::Decided(end) = BezierAlgebraicChord2::translated_endpoint(
+                &start,
+                &Real::one(),
+                &Real::one(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the selected endpoint must translate exactly");
+            };
+            let first = BezierAlgebraicChord2::from_certified_monotone_axis_endpoints(
+                start,
+                end,
+                Axis2::X,
+                true,
+                &policy,
+            );
+            let second = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
+                Point2::new(Real::zero(), height.clone()).into(),
+                Point2::new(Real::from(4_i8), height.clone()).into(),
+                BezierAlgebraicChordAxisDirection2::PositiveX,
+                &policy,
+            );
+            let intersection = BezierAlgebraicChordPairPoint2::new(
+                first,
+                second,
+                [Right, Left],
+                [Left, Right],
+                RealSign::Negative,
+                &policy,
+            );
+            let point = CurvePoint2::from(intersection.clone());
+            assert!(matches!(
+                algebraic_chord_endpoint_local_bounds_refined(&point, 0, &policy),
+                Classification::Uncertain(_),
+            ));
+            for steps in [0, 8, 32] {
+                let Classification::Decided(bounds) = policy.bounded_exact_predicate_pass(|| {
+                    algebraic_chord_endpoint_bounds_refined(&point, steps, &policy)
+                }) else {
+                    panic!("the finite intersection must retain native bounds");
+                };
+                assert_eq!(
+                    bounds.contains_point(&expected, &CurveContext::STRICT),
+                    Classification::Decided(true),
+                );
+            }
+            assert!(selected.data.representations.bezier.get().is_none());
+            assert!(selected.data.representations.projective.get().is_none());
+            assert!(intersection.data.recursive_point.get().is_none());
+        }
+    }
+
+    #[test]
+    fn conic_owned_endpoint_reuses_local_evidence_on_finite_ranges() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected =
+                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
+            for gauge in [1, -3] {
+                let source = RationalBezier2::try_new(
+                    vec![
+                        Point2::from_values(0, 0),
+                        Point2::new(Real::zero(), half.clone()),
+                        Point2::from_values(2, 1),
+                    ],
+                    vec![Real::from(gauge); 3],
+                )
+                .unwrap();
+                for source in [source.clone(), source.elevated_to_degree(4).unwrap()] {
+                    for (owned, dx, dy) in [
+                        (CurveParameter2::from_selected_fiber(selected.clone()), 1, 2),
+                        (BezierParameter2::Exact(Real::from(2_i8)).into(), 1, 2),
+                        // At t=1/2, (2,1) is the tangent. Its double endpoint
+                        // contact is still the complete finite intersection.
+                        (BezierParameter2::Exact(half.clone()).into(), 2, 1),
+                    ] {
+                        let Classification::Decided(point) =
+                            rational_point_evidence_at_region_parameter(&source, &owned, &policy)
+                                .unwrap()
+                        else {
+                            panic!("the exact conic endpoint must remain representable");
+                        };
+                        let Classification::Decided(end) =
+                            BezierAlgebraicChord2::translated_endpoint(
+                                &point,
+                                &Real::from(dx),
+                                &Real::from(dy),
+                                &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("the chord endpoint must translate");
+                        };
+                        let Classification::Decided(chord) =
+                            BezierAlgebraicChord2::try_new(point, end, &policy).unwrap()
+                        else {
+                            panic!("the incident chord must construct");
+                        };
+                        for chord in [chord.clone(), chord.reversed()] {
+                            for (start, end) in [
+                                (BezierParameter2::Exact(Real::zero()).into(), owned.clone()),
+                                (owned.clone(), BezierParameter2::Exact(Real::zero()).into()),
+                            ] {
+                                let range = CurveParameterRange2::new_validated(start, end);
+                                let complete = chord.rational_endpoint_contact_is_complete(
+                                    &source, &range, &owned, &policy,
+                                );
+                                assert!(
+                                    complete,
+                                    "conic certificate declined: policy={policy:?}, degree={}, selected={}, direction=({dx},{dy}), owned_at_start={}",
+                                    source.degree(),
+                                    owned.as_selected_fiber().is_some(),
+                                    range.start() == &owned,
+                                );
+                                let Classification::Decided(
+                                    BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+                                ) = chord
+                                    .rational_intersections(&source, &range, Some(&owned), &policy)
+                                    .unwrap()
+                                else {
+                                    panic!("the owned endpoint must discharge the complete range");
+                                };
+                                assert!(contacts.is_empty());
+                            }
+                        }
+                    }
+                }
+            }
+            assert!(selected.data.representations.bezier.get().is_none());
+            assert!(selected.data.representations.projective.get().is_none());
+        }
+    }
+
+    #[test]
+    fn conic_owned_endpoint_preserves_a_second_interior_contact() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        let owned = CurveParameter2::from(BezierParameter2::Exact(q(3, 8)));
+        // P(t)=(2t²,t). The line through P(3/8) in direction (1,1)
+        // also meets P(1/8), strictly inside the retained source range.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for gauge in [1, -3] {
+                let source = RationalBezier2::try_new(
+                    vec![
+                        Point2::from_values(0, 0),
+                        Point2::new(Real::zero(), q(1, 2)),
+                        Point2::from_values(2, 1),
+                    ],
+                    vec![Real::from(gauge); 3],
+                )
+                .unwrap();
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    Point2::new(q(9, 32), q(3, 8)).into(),
+                    Point2::new(q(-23, 32), q(-5, 8)).into(),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the crossing chord must construct");
+                };
+                for chord in [chord.clone(), chord.reversed()] {
+                    for (start, end) in [
+                        (BezierParameter2::Exact(Real::zero()).into(), owned.clone()),
+                        (owned.clone(), BezierParameter2::Exact(Real::zero()).into()),
+                    ] {
+                        let range = CurveParameterRange2::new_validated(start, end);
+                        assert!(!chord.rational_endpoint_contact_is_complete(
+                            &source, &range, &owned, &policy,
+                        ));
+                        let Classification::Decided(
+                            BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+                        ) = chord
+                            .rational_intersections(&source, &range, Some(&owned), &policy)
+                            .unwrap()
+                        else {
+                            panic!("the complete conic contact set must remain decided");
+                        };
+                        let [contact] = contacts.as_slice() else {
+                            panic!("the unowned interior contact must remain");
+                        };
+                        assert_eq!(
+                            contact
+                                .other_parameter()
+                                .cmp_by_refinement(
+                                    &BezierParameter2::Exact(q(1, 8)).into(),
+                                    &policy
+                                )
+                                .unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Equal),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn conic_owned_endpoint_degree_guard_preserves_cubic_crossings() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // X=t, Y=(t-1/10)(t-1/5)(t-1), W=(t+1/100)^3.
+        // The side at zero agrees with the side immediately below one,
+        // and y'(t)>0 throughout [1/2,1], despite two further contacts.
+        let e = q(1, 100);
+        let e2 = &e * &e;
+        let e3 = &e2 * &e;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for gauge in [1, -3] {
+                let controls = [
+                    (Real::zero(), q(-1, 50), e3.clone()),
+                    (q(1, 3), q(13, 150), &e3 + &e2),
+                    (q(2, 3), q(-6, 25), &e3 + Real::from(2_i8) * &e2 + &e),
+                    (
+                        Real::one(),
+                        Real::zero(),
+                        &e3 + Real::from(3_i8) * (&e2 + &e) + Real::one(),
+                    ),
+                ]
+                .into_iter()
+                .map(|(x, y, w)| {
+                    crate::HomogeneousControl2::new(
+                        x * Real::from(gauge),
+                        y * Real::from(gauge),
+                        w * Real::from(gauge),
+                    )
+                })
+                .collect();
+                let Classification::Decided(source) =
+                    RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap()
+                else {
+                    panic!("the pole-free cubic must construct");
+                };
+                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                    source.end().clone().into(),
+                    Point2::from_values(100, 0).into(),
+                    &policy,
+                )
+                .unwrap() else {
+                    panic!("the horizontal crossing chord must construct");
+                };
+                let owned = CurveParameter2::from(BezierParameter2::Exact(Real::one()));
+                let range = CurveParameterRange2::unit();
+                let parallel = source.parallel_left(Real::zero()).unwrap();
+                let terminal = CurveParameterRange2::new_validated(
+                    BezierParameter2::Exact(q(1, 2)).into(),
+                    owned.clone(),
+                );
+                for (chord, derivative, side) in [
+                    (
+                        chord.clone(),
+                        RealSign::Positive,
+                        crate::classify::LineSide::Right,
+                    ),
+                    (
+                        chord.reversed(),
+                        RealSign::Negative,
+                        crate::classify::LineSide::Left,
+                    ),
+                ] {
+                    assert_eq!(
+                        chord
+                            .parallel_tangent_cross_sign_on_region_range(
+                                &parallel, &terminal, &policy,
+                            )
+                            .unwrap(),
+                        Classification::Decided(derivative),
+                    );
+                    assert_eq!(
+                        chord
+                            .strict_oriented_side_by_local_interval_refinement(
+                                &source.start().clone().into(),
+                                &policy,
+                            )
+                            .unwrap(),
+                        Classification::Decided(side),
+                    );
+                    assert!(
+                        !chord.rational_endpoint_contact_is_complete(
+                            &source, &range, &owned, &policy,
+                        )
+                    );
+                    let Classification::Decided(
+                        BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+                    ) = chord
+                        .rational_intersections(&source, &range, Some(&owned), &policy)
+                        .unwrap()
+                    else {
+                        panic!("the complete cubic contact set must remain decided");
+                    };
+                    assert_eq!(contacts.len(), 2);
+                    for parameter in [q(1, 10), q(1, 5)] {
+                        let expected = BezierParameter2::Exact(parameter).into();
+                        assert!(contacts.iter().any(|contact| {
+                            contact
+                                .other_parameter()
+                                .cmp_by_refinement(&expected, &policy)
+                                .unwrap()
+                                == Classification::Decided(std::cmp::Ordering::Equal)
+                        }));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn conic_owned_endpoint_still_requires_a_pole_free_range() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // X=t, Y=(t-1/4)(t-2), W=t-3/4. The pole at 3/4
+        // masks an additional root from the endpoint-side argument on [0,2].
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(source) = RationalBezier2::from_homogeneous_controls(
+                vec![
+                    crate::HomogeneousControl2::new(Real::zero(), q(1, 2), q(-3, 4)),
+                    crate::HomogeneousControl2::new(q(1, 2), q(-5, 8), q(-1, 4)),
+                    crate::HomogeneousControl2::new(Real::one(), q(-3, 4), q(1, 4)),
+                ],
+                &policy,
+            )
+            .unwrap() else {
+                panic!("finite authored endpoints may enclose a projective pole");
+            };
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                Point2::new(q(8, 5), Real::zero()).into(),
+                Point2::from_values(100, 0).into(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the horizontal chord must construct");
+            };
+            let owned = CurveParameter2::from(BezierParameter2::Exact(Real::from(2_i8)));
+            let range = CurveParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()).into(),
+                owned.clone(),
+            );
+            assert!(matches!(
+                chord
+                    .rational_intersections(&source, &range, Some(&owned), &policy)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            ));
         }
     }
 
