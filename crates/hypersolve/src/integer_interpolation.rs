@@ -975,10 +975,12 @@ mod tests {
         );
         let irrational = Real::from(2).sqrt().unwrap();
         assert!(
-            rational_polynomial_product_modulo(&[irrational.clone()], &right, &modulus).is_none()
+            rational_polynomial_product_modulo(std::slice::from_ref(&irrational), &right, &modulus)
+                .is_none()
         );
         assert!(
-            rational_polynomial_product_modulo(&left, &[irrational.clone()], &modulus).is_none()
+            rational_polynomial_product_modulo(&left, std::slice::from_ref(&irrational), &modulus)
+                .is_none()
         );
         assert!(
             rational_polynomial_product_modulo(&left, &right, &[irrational, Real::one()]).is_none()

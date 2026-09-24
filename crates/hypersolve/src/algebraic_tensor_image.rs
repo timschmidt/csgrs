@@ -399,12 +399,11 @@ fn compact_selected_root_from_candidates(
         {
             continue;
         }
-        if let Some(previous) = &selected {
-            if compare_reals(previous, &witness, PredicatePolicy::STRICT).value()?
+        if let Some(previous) = &selected
+            && compare_reals(previous, &witness, PredicatePolicy::STRICT).value()?
                 != std::cmp::Ordering::Equal
-            {
-                return None;
-            }
+        {
+            return None;
         }
         selected = Some(witness);
     }

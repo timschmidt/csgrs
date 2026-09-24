@@ -2137,7 +2137,7 @@ fn local_polynomial_matrix_scalar_unit_elimination(
         }
     }
     let determinant = local_polynomial_matrix_determinant(&minor, dimension - 1, modulus, field)?;
-    let scale = if (pivot_row + pivot_column) % 2 == 0 {
+    let scale = if (pivot_row + pivot_column).is_multiple_of(2) {
         pivot.clone()
     } else {
         -pivot
@@ -2897,7 +2897,7 @@ fn local_sturm_sequence(
             .all(|(previous, next)| previous.len() == next.len() + 1)
         {
             for (index, row) in rows.iter_mut().enumerate() {
-                if ((index + 1) / 2) % 2 == 1 {
+                if index.div_ceil(2) % 2 == 1 {
                     for coefficient in row {
                         coefficient.negate();
                     }
@@ -3122,10 +3122,10 @@ fn local_polynomial_greatest_common_divisor(
     if first.len() < second.len() {
         std::mem::swap(&mut first, &mut second);
     }
-    if let Some(mut rows) = rational_local_subresultant_rows(&first, &second, field) {
-        if let Some(last) = rows.pop() {
-            return Ok(last);
-        }
+    if let Some(mut rows) = rational_local_subresultant_rows(&first, &second, field)
+        && let Some(last) = rows.pop()
+    {
+        return Ok(last);
     }
     while !local_polynomial_is_zero(&second, field)? {
         let remainder = local_polynomial_remainder(first, &second, field)?;
@@ -3631,9 +3631,7 @@ impl LocalAlgebraicField {
                 let (quotient, remainder) = polynomial_div_rem(modulus.clone(), &gcd, strict)?;
                 if quotient.len() <= 1
                     || quotient.len() >= modulus.len()
-                    || !remainder
-                        .iter()
-                        .all(|value| strict_exact_zero_for_storage(value))
+                    || !remainder.iter().all(strict_exact_zero_for_storage)
                 {
                     return None;
                 }
@@ -3644,10 +3642,7 @@ impl LocalAlgebraicField {
             let mut current = polynomial_div_rem(polynomial.to_vec(), &modulus, strict)?.1;
             let mut previous_coefficient = vec![Real::zero()];
             let mut current_coefficient = vec![Real::one()];
-            while !current
-                .iter()
-                .all(|value| strict_exact_zero_for_storage(value))
-            {
+            while !current.iter().all(strict_exact_zero_for_storage) {
                 // Scale the Euclidean row and its Bezout coefficient
                 // together. Retaining irrelevant rational contents here
                 // causes exponential height growth even when the reduced

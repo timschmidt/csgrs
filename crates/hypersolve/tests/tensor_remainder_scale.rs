@@ -9,7 +9,7 @@ fn fraction(numerator: i64, denominator: u64) -> Real {
 fn tensor_remainders_preserve_wide_scale_and_independent_fiber_values() {
     let first_root = fraction(-3, 7);
     let second_root = fraction(5, 11);
-    let modulus = vec![
+    let modulus = [
         &first_root * &second_root,
         -(&first_root + &second_root),
         Real::one(),
