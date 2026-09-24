@@ -23,6 +23,8 @@ pub(super) struct Span {
     range: CurveParameterRange2,
     pub(super) chart: CurveSpanRange2,
     reversed: bool,
+    /// Point witnesses in the source range's endpoint order.
+    endpoint_points: Option<[CurvePoint2; 2]>,
 }
 
 fn decided<T>(value: CurveResult<Classification<T>>, family: CurveFamily2) -> ExactCurveResult<T> {
@@ -51,6 +53,14 @@ pub(super) fn spans(curve: &Curve2, policy: &CurveContext) -> ExactCurveResult<V
             },
             chart: span.chart(),
             reversed: span.fragment.source_is_reversed(),
+            endpoint_points: match &span.fragment {
+                BezierSplitFragment2::SelectedFiber(fragment) => Some(if fragment.is_reversed() {
+                    [fragment.end_point().clone(), fragment.start_point().clone()]
+                } else {
+                    [fragment.start_point().clone(), fragment.end_point().clone()]
+                }),
+                _ => None,
+            },
         })
         .collect())
 }
@@ -391,21 +401,80 @@ impl Pair<'_> {
         Ok(())
     }
 
+    fn admit_parameter(
+        &self,
+        span: &Span,
+        parameter: &mut CurveParameter2,
+        point: &CurvePoint2,
+    ) -> ExactCurveResult<bool> {
+        let outcome = crate::bezier_split::CurveParameterDomain2::new(&span.range, None)
+            .contains_finite_parameter(parameter, self.policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    span.support.family(),
+                    cause,
+                )
+            })?;
+        let reason = match outcome {
+            Classification::Decided(inside) => return Ok(inside),
+            Classification::Uncertain(reason) => reason,
+        };
+        if let Some(points) = &span.endpoint_points {
+            let strict = self.policy.strict_counterpart();
+            let endpoint = strict.bounded_exact_predicate_pass(|| {
+                let unit = CurveParameterRange2::unit();
+                let domain = crate::bezier_split::CurveParameterDomain2::new(&unit, None);
+                // Point equality identifies a parameter only in an injective
+                // chart containing both the contact and retained endpoints.
+                if !span.support.has_certified_injective_image(&unit, &strict)
+                    || !matches!(
+                        domain.contains_finite_range(&span.range, &strict),
+                        Ok(Classification::Decided(true))
+                    )
+                    || !matches!(
+                        domain.contains_finite_parameter(parameter, &strict),
+                        Ok(Classification::Decided(true))
+                    )
+                {
+                    return None;
+                }
+                [span.range.start(), span.range.end()]
+                    .into_iter()
+                    .zip(points)
+                    .find_map(|(boundary, endpoint)| {
+                        matches!(
+                            point.same_point(endpoint, &strict),
+                            Classification::Decided(true)
+                        )
+                        .then(|| boundary.clone())
+                    })
+            });
+            if let Some(endpoint) = endpoint {
+                *parameter = endpoint;
+                return Ok(true);
+            }
+        }
+        Err(ExactCurveError::blocked(
+            CurveOperation2::Intersection,
+            span.support.family(),
+            reason,
+        ))
+    }
+
     fn admit_contact(
         &self,
         result: &mut Evidence,
-        contact: CurveIntersectionContact2,
+        mut contact: CurveIntersectionContact2,
     ) -> ExactCurveResult<()> {
-        if contains(
-            &self.first.range,
-            contact.first().local_parameter(),
-            self.first.support.family(),
-            self.policy,
-        )? && contains(
-            &self.second.range,
-            contact.second().local_parameter(),
-            self.second.support.family(),
-            self.policy,
+        if self.admit_parameter(
+            self.first,
+            &mut contact.first.local_parameter,
+            &contact.point,
+        )? && self.admit_parameter(
+            self.second,
+            &mut contact.second.local_parameter,
+            &contact.point,
         )? {
             self.append_contact(result, contact)?;
         }
@@ -866,6 +935,7 @@ impl Pair<'_> {
                 range: span.range.clone(),
                 chart: span.chart.clone(),
                 reversed: span.reversed,
+                endpoint_points: span.endpoint_points.clone(),
             };
             let mut candidate = Evidence::default();
             match (Pair {

@@ -30667,91 +30667,95 @@ mod tests {
                             );
                         }
                         for_each_corner_region(&outcome.value, |filleted| {
-                            let fragments = filleted.boundary_loops()[0].fragments();
+                            assert!(filleted.has_regularized_filled_left_topology(&policy));
                             let mut fillet_spans = 0;
                             let mut chord_adjacencies = 0;
-                            for (index, fragment) in fragments.iter().enumerate() {
-                                let BezierSplitFragment2::Materialized {
-                                    curve: BezierSubcurve2::RationalQuadratic(curve),
-                                    ..
-                                } = fragment
-                                else {
-                                    continue;
-                                };
-                                let Ok(Classification::Decided(Some(arc))) =
-                                    crate::arc_bezier::rational_quadratic_circular_arc(
-                                        curve, &policy,
-                                    )
-                                else {
-                                    continue;
-                                };
-                                if crate::classify::is_zero(
-                                    &(arc.radius_squared_ref() - &radius_squared),
-                                    &CurveContext::STRICT,
-                                ) != Some(true)
-                                {
-                                    continue;
-                                }
-                                fillet_spans += 1;
-                                // Check the actual curve, independently of the
-                                // retained circle provenance and radius tag.
-                                for parameter in [
-                                    Real::zero(),
-                                    (Real::one() / Real::from(2_i8)).unwrap(),
-                                    Real::one(),
-                                ] {
-                                    let Classification::Decided(point) =
-                                        curve.point_at(parameter, &policy)
-                                    else {
-                                        panic!("the exact fillet chart evaluates");
-                                    };
-                                    assert_eq!(
-                                        crate::classify::real_sign(
-                                            &(point.distance_squared(arc.center())
-                                                - &radius_squared),
-                                            &CurveContext::STRICT
-                                        ),
-                                        Some(RealSign::Zero)
-                                    );
-                                }
-                                for (adjacent_index, contact, chord_at_end) in [
-                                    (
-                                        (index + fragments.len() - 1) % fragments.len(),
-                                        arc.start(),
-                                        true,
-                                    ),
-                                    ((index + 1) % fragments.len(), arc.end(), false),
-                                ] {
-                                    let BezierSplitFragment2::AlgebraicChord(chord) =
-                                        &fragments[adjacent_index]
+                            // Regularization can move a fillet to another boundary loop.
+                            for boundary in filleted.boundary_loops() {
+                                let fragments = boundary.fragments();
+                                for (index, fragment) in fragments.iter().enumerate() {
+                                    let BezierSplitFragment2::Materialized {
+                                        curve: BezierSubcurve2::RationalQuadratic(curve),
+                                        ..
+                                    } = fragment
                                     else {
                                         continue;
                                     };
-                                    let chord_point = if chord_at_end {
-                                        chord.end()
-                                    } else {
-                                        chord.start()
+                                    let Ok(Classification::Decided(Some(arc))) =
+                                        crate::arc_bezier::rational_quadratic_circular_arc(
+                                            curve, &policy,
+                                        )
+                                    else {
+                                        continue;
                                     };
-                                    assert_eq!(
-                                        chord_point.same_point(
-                                            &CurvePoint2::from(contact.clone(),),
-                                            &CurveContext::STRICT,
+                                    if crate::classify::is_zero(
+                                        &(arc.radius_squared_ref() - &radius_squared),
+                                        &CurveContext::STRICT,
+                                    ) != Some(true)
+                                    {
+                                        continue;
+                                    }
+                                    fillet_spans += 1;
+                                    // Check the actual curve, independently of the
+                                    // retained circle provenance and radius tag.
+                                    for parameter in [
+                                        Real::zero(),
+                                        (Real::one() / Real::from(2_i8)).unwrap(),
+                                        Real::one(),
+                                    ] {
+                                        let Classification::Decided(point) =
+                                            curve.point_at(parameter, &policy)
+                                        else {
+                                            panic!("the exact fillet chart evaluates");
+                                        };
+                                        assert_eq!(
+                                            crate::classify::real_sign(
+                                                &(point.distance_squared(arc.center())
+                                                    - &radius_squared),
+                                                &CurveContext::STRICT
+                                            ),
+                                            Some(RealSign::Zero)
+                                        );
+                                    }
+                                    for (adjacent_index, contact, chord_at_end) in [
+                                        (
+                                            (index + fragments.len() - 1) % fragments.len(),
+                                            arc.start(),
+                                            true,
                                         ),
-                                        Classification::Decided(true)
-                                    );
-                                    let (tangent_x, tangent_y) =
+                                        ((index + 1) % fragments.len(), arc.end(), false),
+                                    ] {
+                                        let BezierSplitFragment2::AlgebraicChord(chord) =
+                                            &fragments[adjacent_index]
+                                        else {
+                                            continue;
+                                        };
+                                        let chord_point = if chord_at_end {
+                                            chord.end()
+                                        } else {
+                                            chord.start()
+                                        };
+                                        assert_eq!(
+                                            chord_point.same_point(
+                                                &CurvePoint2::from(contact.clone(),),
+                                                &CurveContext::STRICT,
+                                            ),
+                                            Classification::Decided(true)
+                                        );
+                                        let (tangent_x, tangent_y) =
                                         chord.certified_unit_tangent().expect(
                                             "the retained cardinal chord keeps its unit tangent",
                                         );
-                                    let radial = contact.delta_from(arc.center());
-                                    assert_eq!(
-                                        crate::classify::real_sign(
-                                            &(&tangent_x * &radial.0 + &tangent_y * &radial.1),
-                                            &CurveContext::STRICT,
-                                        ),
-                                        Some(RealSign::Zero)
-                                    );
-                                    chord_adjacencies += 1;
+                                        let radial = contact.delta_from(arc.center());
+                                        assert_eq!(
+                                            crate::classify::real_sign(
+                                                &(&tangent_x * &radial.0 + &tangent_y * &radial.1),
+                                                &CurveContext::STRICT,
+                                            ),
+                                            Some(RealSign::Zero)
+                                        );
+                                        chord_adjacencies += 1;
+                                    }
                                 }
                             }
                             assert!(fillet_spans >= 1);

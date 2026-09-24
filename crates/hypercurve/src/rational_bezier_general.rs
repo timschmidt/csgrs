@@ -4148,12 +4148,30 @@ impl RationalBezier2 {
         first_circle_parameters: Option<&[Classification<Arc<[BezierParameter2]>>]>,
         second_circle_parameters: Option<&[Classification<Arc<[BezierParameter2]>>]>,
     ) -> CurveResult<Option<Classification<RationalBezierIntersectionContacts2>>> {
-        let (Some(first), Some(second)) = (
-            self.data.lineage.root.circular_conic.get(),
-            other.data.lineage.root.circular_conic.get(),
-        ) else {
-            return Ok(None);
-        };
+        for curve in [self, other] {
+            if curve.data.lineage.root.circular_conic.get().is_some() {
+                continue;
+            }
+            // Authored and trimmed conics may reach this query without a
+            // retained circle certificate. Recognize their support once;
+            // only certified recognition may enrich the shared root cache.
+            let Classification::Decided(Some(arc)) = policy.strict_predicate_pass(|| {
+                crate::arc_bezier::rational_bezier_circular_arc(curve, policy)
+            })?
+            else {
+                return Ok(None);
+            };
+            let (implicit, circular) = crate::arc_bezier::circular_conic_provenance(&arc);
+            let _ = curve
+                .data
+                .lineage
+                .root
+                .implicit_quadratic_conic
+                .set(implicit);
+            let _ = curve.data.lineage.root.circular_conic.set(circular);
+        }
+        let first = self.data.lineage.root.circular_conic.get().unwrap();
+        let second = other.data.lineage.root.circular_conic.get().unwrap();
         let computed_relation;
         let circle_relation = match circle_relation {
             Some(relation) => relation,
