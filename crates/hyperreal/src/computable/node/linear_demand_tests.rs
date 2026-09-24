@@ -125,7 +125,7 @@ mod linear_demand_tests {
         let lower = Rational::from_bigint_fraction(lower, denominator.clone()).unwrap();
         let upper = Rational::from_bigint_fraction(upper, denominator).unwrap();
         let check = |value: &Real, precision| {
-            let [actual_lo, actual_hi] = value.certified_dyadic_interval(precision).unwrap();
+            let [actual_lo, actual_hi] = value.certified_rational_interval(precision).unwrap();
             assert!(
                 actual_lo <= lower && actual_hi >= upper,
                 "precision {precision}"

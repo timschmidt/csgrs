@@ -235,7 +235,7 @@ fn benchmark_representations(criterion: &mut Criterion) {
                 bencher.iter(|| {
                     black_box(
                         black_box(&hyperreal)
-                            .certified_dyadic_interval(-192)
+                            .certified_rational_interval(-192)
                             .expect("finite representative is certifiable"),
                     )
                 });

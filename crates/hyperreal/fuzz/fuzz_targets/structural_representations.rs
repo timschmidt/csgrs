@@ -37,7 +37,7 @@ fuzz_target!(|data: &[u8]| {
 
     for (value, expected) in values.iter().zip(EXPECTED_KINDS) {
         assert_eq!(value.detailed_facts().symbolic.kind, expected);
-        assert!(value.certified_dyadic_interval(-512).is_some());
+        assert!(value.certified_rational_interval(-512).is_some());
 
         let negated = -value;
         assert_bounded_equal(&-negated, value);
@@ -72,7 +72,7 @@ fuzz_target!(|data: &[u8]| {
         assert_bounded_equal(&(left - right), &-(right - left));
 
         let quotient = (left / right).expect("representatives are nonzero");
-        assert!(quotient.certified_dyadic_interval(-512).is_some());
+        assert!(quotient.certified_rational_interval(-512).is_some());
 
         assert!(matches!(
             left.certified_eq_until(left, -512),
@@ -96,7 +96,7 @@ fuzz_target!(|data: &[u8]| {
 fn assert_certificates_match_bounded_evaluation(left: &Real, right: &Real) {
     let difference = left - right;
     let [lower, upper] = difference
-        .certified_dyadic_interval(-768)
+        .certified_rational_interval(-768)
         .expect("representative difference has a bounded approximation");
     let zero = Rational::zero();
 
@@ -130,10 +130,10 @@ fn assert_bounded_equal(left: &Real, right: &Real) {
     }
 
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(-512)
+        .certified_rational_interval(-512)
         .expect("representative has bounded approximation");
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(-512)
+        .certified_rational_interval(-512)
         .expect("representative has bounded approximation");
     assert!(
         left_lower <= right_upper && right_lower <= left_upper,
@@ -162,9 +162,7 @@ fn representative_values() -> Vec<Real> {
         sqrt_two,
         Real::from(2).exp().expect("finite exponential"),
         ln_three.clone(),
-        (Real::from(2) * &e)
-            .ln()
-            .expect("positive logarithm input"),
+        (Real::from(2) * &e).ln().expect("positive logarithm input"),
         &ln_two * &ln_three,
         Real::from(2).log10().expect("positive logarithm input"),
         Real::from(3).log2().expect("positive logarithm input"),

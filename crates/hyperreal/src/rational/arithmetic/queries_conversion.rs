@@ -679,6 +679,57 @@ impl Rational {
         BigInt::from_biguint(self.sign, whole)
     }
 
+    /// Smallest enclosing interval on the grid with spacing `2^precision`.
+    /// Unsigned quotient and remainder keep rounding exact for either sign,
+    /// including unreduced rationals and values smaller than one grid cell.
+    pub(crate) fn enclosing_dyadic_interval(&self, precision: i32) -> [Self; 2] {
+        if self.is_zero() {
+            return [Self::zero(), Self::zero()];
+        }
+        if precision <= 0
+            && self
+                .dyadic_denominator_shift_if_reduced()
+                .is_some_and(|shift| shift <= u64::from(precision.unsigned_abs()))
+        {
+            // Already on this grid: preserve the shared exact payload without
+            // constructing shifted integers or performing a division.
+            return [self.clone(), self.clone()];
+        }
+        let (floor, remainder) = if precision < 0 {
+            num::Integer::div_rem(
+                &(&self.numerator << precision.unsigned_abs() as usize),
+                &self.denominator,
+            )
+        } else {
+            num::Integer::div_rem(
+                &self.numerator,
+                &(&self.denominator << precision as usize),
+            )
+        };
+        let ceil = if remainder.is_zero() {
+            floor.clone()
+        } else {
+            &floor + BigUint::one()
+        };
+        let restore = |magnitude| {
+            let numerator = BigInt::from_biguint(self.sign, magnitude);
+            if precision < 0 {
+                Self::from_bigint_fraction(
+                    numerator,
+                    BigUint::one() << precision.unsigned_abs() as usize,
+                )
+                .expect("a dyadic grid has a nonzero denominator")
+            } else {
+                Self::from_bigint(numerator << precision as usize)
+            }
+        };
+        if self.sign == Minus {
+            [restore(ceil), restore(floor)]
+        } else {
+            [restore(floor), restore(ceil)]
+        }
+    }
+
     /// Compare the magnitudes of two rationals without flipping signs.
     ///
     /// This keeps exact-rational absolute comparisons in `Computable` on

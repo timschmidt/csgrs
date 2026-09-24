@@ -203,10 +203,10 @@ fn assert_same_value(left: &Real, right: &Real, context: &str) {
     }
 
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(-160)
+        .certified_rational_interval(-160)
         .unwrap_or_else(|| panic!("{context}: left value must have a certified interval"));
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(-160)
+        .certified_rational_interval(-160)
         .unwrap_or_else(|| panic!("{context}: right value must have a certified interval"));
     assert!(
         left_lower <= right_upper && right_lower <= left_upper,
@@ -229,7 +229,7 @@ fn every_public_kind_and_private_optimized_certificate_crosses_scalar_dispatch()
         );
         observed_kinds[structural_kind_index(facts.symbolic.kind)] = true;
         assert_eq!(case.value.immediate_sign(), Some(RealSign::Positive));
-        assert!(case.value.certified_dyadic_interval(-160).is_some());
+        assert!(case.value.certified_rational_interval(-160).is_some());
         assert_eq!(
             case.value.partial_cmp(&Real::zero()),
             Some(Ordering::Greater)
@@ -538,7 +538,7 @@ fn cache_scale_and_abort_state_space_preserves_certificates() {
         let signal = Arc::new(AtomicBool::new(false));
         value.abort(Arc::clone(&signal));
         assert!(!signal.load(AtomicOrdering::Relaxed));
-        assert!(value.certified_dyadic_interval(-160).is_some());
+        assert!(value.certified_rational_interval(-160).is_some());
     }
 
     let signal = Arc::new(AtomicBool::new(true));
@@ -1115,7 +1115,7 @@ fn every_computable_node_and_shared_constant_variant_round_trips_and_evaluates()
         assert_eq!(restored.approx(-24), value.approx(-24), "{name}");
         assert!(
             opaque_real_from_computable(&restored)
-                .certified_dyadic_interval(-48)
+                .certified_rational_interval(-48)
                 .is_some()
         );
     }

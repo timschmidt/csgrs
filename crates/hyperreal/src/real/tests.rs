@@ -1395,23 +1395,64 @@ mod tests {
     }
 
     #[test]
-    fn certified_dyadic_interval_is_exact_for_rationals_and_bounds_symbolic_values() {
+    fn certified_rational_interval_is_exact_for_rationals_and_bounds_symbolic_values() {
         let exact = Rational::fraction(7, 3).unwrap();
         assert_eq!(
-            Real::new(exact.clone()).certified_dyadic_interval(-32),
+            Real::new(exact.clone()).certified_rational_interval(-32),
             Some([exact.clone(), exact]),
         );
 
-        let [pi_lower, pi_upper] = Real::pi().certified_dyadic_interval(-32).unwrap();
+        let [pi_lower, pi_upper] = Real::pi().certified_rational_interval(-32).unwrap();
         assert!(pi_lower < pi_upper);
         assert!(pi_lower > Rational::new(3));
         assert!(pi_upper < Rational::new(4));
 
         let negative = -(Real::from(3) * Real::pi());
-        let [lower, upper] = negative.certified_dyadic_interval(-32).unwrap();
+        let [lower, upper] = negative.certified_rational_interval(-32).unwrap();
         assert!(lower <= upper);
         assert!(lower > Rational::new(-10));
         assert!(upper < Rational::new(-9));
+    }
+
+    #[test]
+    fn certified_dyadic_interval_encloses_rational_points_and_scaled_computables() {
+        let third = Rational::fraction(1, 3).unwrap();
+        let half = Rational::fraction(1, 2).unwrap();
+        let root = Real::from(2_i8).sqrt().unwrap();
+        for precision in [-128, -8, -1, 0, 2] {
+            for value in [
+                Real::zero(),
+                Real::new(third.clone()),
+                -Real::new(third.clone()),
+                Real::new(half.clone()),
+                -Real::new(half.clone()),
+                Real::new(third.clone()) * &root,
+                -Real::new(third.clone()) * &root,
+                Real::new(third.clone()) * Real::pi(),
+                -Real::new(third.clone()) * Real::pi(),
+            ] {
+                let [rational_lower, rational_upper] =
+                    value.certified_rational_interval(precision).unwrap();
+                let [lower, upper] = value.certified_dyadic_interval(precision).unwrap();
+                assert!(lower.is_dyadic() && upper.is_dyadic());
+                assert!(lower <= rational_lower && upper >= rational_upper);
+            }
+        }
+        assert_eq!(
+            Real::new(third).certified_dyadic_interval(-2),
+            Some([Rational::fraction(1, 4).unwrap(), half.clone()]),
+        );
+        assert_eq!(
+            Real::new(half.clone()).certified_dyadic_interval(-2),
+            Some([half.clone(), half]),
+        );
+        assert_eq!(
+            Real::new(Rational::fraction(-1, 3).unwrap()).certified_dyadic_interval(-2),
+            Some([
+                Rational::fraction(-1, 2).unwrap(),
+                Rational::fraction(-1, 4).unwrap(),
+            ]),
+        );
     }
 
     #[test]
@@ -1458,7 +1499,7 @@ mod tests {
         let value = Real::from(-2) * negative_argument.atan().unwrap() - pi_fraction(1, 8);
 
         assert_eq!(value.structural_facts().sign, None);
-        let [lower, upper] = value.certified_dyadic_interval(-64).unwrap();
+        let [lower, upper] = value.certified_rational_interval(-64).unwrap();
         assert!(lower > Rational::zero());
         assert!(upper >= lower);
         assert_eq!(
@@ -1515,7 +1556,7 @@ mod tests {
         let next_right_root = angular_pitch + right_root;
         let value = left_root - next_right_root;
 
-        let [lower, upper] = value.certified_dyadic_interval(-64).unwrap();
+        let [lower, upper] = value.certified_rational_interval(-64).unwrap();
         assert!(lower > Rational::zero());
         assert!(upper >= lower);
         assert_eq!(
@@ -5308,7 +5349,7 @@ mod tests {
             double_angle.clone().sin() - expected_sine,
             double_angle.cos() - expected_cosine,
         ] {
-            let [lower, upper] = difference.certified_dyadic_interval(-96).unwrap();
+            let [lower, upper] = difference.certified_rational_interval(-96).unwrap();
             assert!(lower <= Rational::zero());
             assert!(upper >= Rational::zero());
         }

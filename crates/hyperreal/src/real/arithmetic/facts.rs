@@ -1392,7 +1392,7 @@ impl Real {
         }
     }
 
-    /// Returns a closed dyadic-rational interval certified to contain this
+    /// Returns a closed rational interval certified to contain this
     /// value at the requested computable precision.
     ///
     /// A computable approximation at precision `p` is within one integer unit
@@ -1401,10 +1401,12 @@ impl Real {
     /// therefore yields conservative exact bounds. This is useful for broad
     /// phases that need a cheap separation certificate but do not need the
     /// exact ordering of overlapping values.
+    /// Exact rational values retain point intervals. Bounds may have arbitrary
+    /// rational denominators, including after scaling a computable value.
     ///
     /// Returns `None` if evaluation was aborted; aborted approximations are not
     /// certificates.
-    pub fn certified_dyadic_interval(&self, precision: i32) -> Option<[Rational; 2]> {
+    pub fn certified_rational_interval(&self, precision: i32) -> Option<[Rational; 2]> {
         fn scaled_integer(value: BigInt, precision: i32) -> Rational {
             if precision < 0 {
                 let shift = usize::try_from(precision.unsigned_abs())
@@ -1437,6 +1439,28 @@ impl Real {
         } else {
             [scaled_lower, scaled_upper]
         })
+    }
+
+    /// Returns certified bounds on the dyadic grid with spacing `2^precision`.
+    ///
+    /// First obtains a [`Self::certified_rational_interval`] at the same
+    /// computable precision, then rounds its lower bound down and upper bound
+    /// up. Thus every endpoint is dyadic even for arbitrary rational values
+    /// or rationally scaled computables. This controls denominator growth in
+    /// interval arithmetic; the exact value and its retained evidence stay
+    /// unchanged. Only exact values on the grid can produce point intervals.
+    ///
+    /// The rational scale still affects the initial enclosure width; the grid
+    /// spacing is not a bound on that width. Aborted evaluation returns `None`.
+    pub fn certified_dyadic_interval(&self, precision: i32) -> Option<[Rational; 2]> {
+        let [lower, upper] = self.certified_rational_interval(precision)?;
+        if lower == upper {
+            return Some(lower.enclosing_dyadic_interval(precision));
+        }
+        Some([
+            lower.enclosing_dyadic_interval(precision)[0].clone(),
+            upper.enclosing_dyadic_interval(precision)[1].clone(),
+        ])
     }
 }
 

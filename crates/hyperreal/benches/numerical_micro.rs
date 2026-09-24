@@ -991,35 +991,35 @@ fn bench_computable_algebraic_roots(c: &mut Criterion) {
     group.bench_function("root5_interval_p128_cold", |b| {
         b.iter_batched(
             || algebraic_root(17, 1, 5),
-            |value| black_box(value.certified_dyadic_interval(-128)),
+            |value| black_box(value.certified_rational_interval(-128)),
             BatchSize::SmallInput,
         )
     });
     group.bench_function("root5_interval_p2048_cold", |b| {
         b.iter_batched(
             || algebraic_root(17, 1, 5),
-            |value| black_box(value.certified_dyadic_interval(-2_048)),
+            |value| black_box(value.certified_rational_interval(-2_048)),
             BatchSize::SmallInput,
         )
     });
     group.bench_function("root9_interval_p128_cold", |b| {
         b.iter_batched(
             || algebraic_root(17, 1, 9),
-            |value| black_box(value.certified_dyadic_interval(-128)),
+            |value| black_box(value.certified_rational_interval(-128)),
             BatchSize::SmallInput,
         )
     });
     group.bench_function("root9_interval_p2048_cold", |b| {
         b.iter_batched(
             || algebraic_root(17, 1, 9),
-            |value| black_box(value.certified_dyadic_interval(-2_048)),
+            |value| black_box(value.certified_rational_interval(-2_048)),
             BatchSize::SmallInput,
         )
     });
     group.bench_function("root10_interval_p128_fallback_cold", |b| {
         b.iter_batched(
             || algebraic_root(17, 1, 10),
-            |value| black_box(value.certified_dyadic_interval(-128)),
+            |value| black_box(value.certified_rational_interval(-128)),
             BatchSize::SmallInput,
         )
     });

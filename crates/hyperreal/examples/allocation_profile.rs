@@ -244,7 +244,7 @@ fn measure(recipe: Recipe, iterations: u64) -> Measurement {
     // Populate shared constants and process-lifetime caches outside the measured
     // window. Each measured value and all of its owned accelerators are dropped.
     let warm = recipe.real();
-    black_box(warm.certified_dyadic_interval(-128));
+    black_box(warm.certified_rational_interval(-128));
     black_box(warm.to_f64_lossy());
     drop(warm);
 
@@ -256,7 +256,7 @@ fn measure(recipe: Recipe, iterations: u64) -> Measurement {
         black_box(value.detailed_facts());
         black_box(
             value
-                .certified_dyadic_interval(-128)
+                .certified_rational_interval(-128)
                 .expect("finite representative is certifiable"),
         );
         black_box(value.to_f64_lossy());

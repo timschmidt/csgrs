@@ -2,6 +2,65 @@
 mod tests {
     use super::*;
     use std::mem::size_of;
+
+    #[test]
+    fn dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid() {
+        let check = |value: Rational, precision: i32| {
+            let exact = num::BigRational::new(
+                BigInt::from_biguint(value.sign, value.numerator.clone()),
+                BigInt::from(value.denominator.clone()),
+            );
+            let grid = if precision < 0 {
+                num::BigRational::new(
+                    BigInt::one(),
+                    BigInt::one() << precision.unsigned_abs() as usize,
+                )
+            } else {
+                num::BigRational::from_integer(BigInt::one() << precision as usize)
+            };
+            let scaled = exact / &grid;
+            let expected = [scaled.floor(), scaled.ceil()];
+            let actual = value.enclosing_dyadic_interval(precision);
+            for (actual, expected) in actual.iter().zip(expected) {
+                assert!(actual.is_dyadic());
+                assert_eq!(
+                    num::BigRational::new(
+                        BigInt::from_biguint(actual.sign, actual.numerator.clone()),
+                        BigInt::from(actual.denominator.clone()),
+                    ),
+                    expected * &grid,
+                );
+            }
+        };
+        for numerator in 0_u8..=20 {
+            for denominator in 1_u8..=20 {
+                for sign in [Plus, Minus] {
+                    for precision in [-8, -1, 0, 1, 8] {
+                        check(
+                            Rational::from_parts_raw_unreduced(
+                                if numerator == 0 { NoSign } else { sign },
+                                BigUint::from(numerator),
+                                BigUint::from(denominator),
+                            ),
+                            precision,
+                        );
+                    }
+                }
+            }
+        }
+        let common = (BigUint::one() << 1025_usize) + 7_u8;
+        for sign in [Plus, Minus] {
+            for (n, d) in [(1_u8, 3_u8), (3, 1), (2, 3), (1, 2)] {
+                for precision in [-513, -65, -1, 0, 1, 65, 513] {
+                    check(
+                        Rational::from_parts_raw_unreduced(sign, &common * n, &common * d),
+                        precision,
+                    );
+                }
+            }
+        }
+    }
+
     #[test]
     fn magnitude_bit_length_boundaries_apply_offset_before_narrowing() {
         let maximum = i32::MAX as u64;

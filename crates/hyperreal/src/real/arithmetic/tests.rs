@@ -333,7 +333,7 @@ mod tests {
         ];
         for candidate in candidates {
             let [lower, upper] = candidate
-                .certified_dyadic_interval(RESULT_PRECISION)
+                .certified_rational_interval(RESULT_PRECISION)
                 .expect("unaborted sum has a certified interval");
             assert!(lower <= reference_lower);
             assert!(upper >= reference_upper);

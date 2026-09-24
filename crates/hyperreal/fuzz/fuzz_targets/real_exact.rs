@@ -162,10 +162,7 @@ fuzz_target!(|input: Input| {
         });
         assert_eq!(
             Real::exact_rational_interpolate_point3_known_dyadic(
-                start,
-                end,
-                &dyadic[2],
-                &dyadic[3],
+                start, end, &dyadic[2], &dyadic[3],
             )
             .expect("nonzero known-dyadic 3D interpolation"),
             expected_point3
@@ -302,7 +299,7 @@ fuzz_target!(|input: Input| {
         );
         let _ = value.certified_sign_until(-64);
         let _ = value.certified_cmp_until(a, -64);
-        let _ = value.certified_dyadic_interval(-64);
+        let _ = value.certified_rational_interval(-64);
         let _ = value.to_f64_exact_dyadic();
     }
 });
