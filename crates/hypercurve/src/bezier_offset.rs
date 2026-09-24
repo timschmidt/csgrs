@@ -34513,7 +34513,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return self.recursive_parallel_normal_frame_authority(policy);
             }
             BezierSelectedCircleFrame2::ChordNormal(_) => {
-                return Ok(Classification::Decided(None));
+                return self.recursive_chord_normal_frame_authority(policy);
             }
             BezierSelectedCircleFrame2::SelectedRadial(_) => {}
         }
@@ -34629,6 +34629,43 @@ impl BezierAlgebraicCuspSemicircle2 {
         })))
     }
 
+    /// Reuses the chord's normalized displacement authority for C-N. The
+    /// center and direction keep their selected fields and positive speed;
+    /// no Cartesian projection or second normalization kernel is needed.
+    fn recursive_chord_normal_frame_authority(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierRecursiveCircleFrame2>>> {
+        let Some(frame) = self.data.frame.chord_normal() else {
+            return Ok(Classification::Decided(None));
+        };
+        if !policy.accepts_retained_policy(frame.policy) {
+            return Err(CurveError::Topology(
+                "a recursive chord-normal circle frame crossed predicate policies".into(),
+            ));
+        }
+        let support_center = frame.anchor.normal_displaced_point_evidence(
+            frame.center.clone(),
+            -Real::one(),
+            policy,
+        )?;
+        let result = BezierRecursiveCircleFrame2::from_point_evidence(
+            &frame.center,
+            &support_center,
+            Real::one(),
+            policy,
+        )?;
+        #[cfg(feature = "dispatch-trace")]
+        if matches!(&result, Classification::Decided(Some(_))) {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-circle-frame-authority",
+                "chord-normal-import",
+            );
+        }
+        Ok(result)
+    }
+
     /// Recovers a selected-radial frame from its retained center and parent
     /// center point evidences.  This is the similarity-covariant fallback for
     /// a transformed recursive center whose original chord-map specialization
@@ -34661,35 +34698,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let points =
-            match recursive_projective_evidence_points(&[&center, &support_center], policy)? {
-                Classification::Decided(Some(points)) => points,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let [center, support_center]: [BezierRecursiveQuadraticProjectivePoint2; 2] = points
-            .try_into()
-            .expect("a selected-radial evidence frame retains two points");
-        let center = match positive_recursive_projective_point(center)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let support_center = match positive_recursive_projective_point(support_center)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(Some(BezierRecursiveCircleFrame2 {
-            field: center.denominator.field(),
-            center,
-            support_center,
-            normal_denominator: frame.normal_denominator.clone(),
-        })))
+        BezierRecursiveCircleFrame2::from_point_evidence(
+            &center,
+            &support_center,
+            frame.normal_denominator.clone(),
+            policy,
+        )
     }
 
     fn recursive_rational_circle_frame_authority_with_values(
@@ -62895,6 +62909,45 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
 }
 
 impl BezierRecursiveCircleFrame2 {
+    /// Imports a center and radial anchor together, retaining their shared
+    /// source roots and positive generators before publishing the frame.
+    fn from_point_evidence(
+        center: &CurvePoint2,
+        support_center: &CurvePoint2,
+        normal_denominator: Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Self>>> {
+        let points = match recursive_projective_evidence_points(&[center, support_center], policy)?
+        {
+            Classification::Decided(Some(points)) => points,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let [center, support_center]: [BezierRecursiveQuadraticProjectivePoint2; 2] = points
+            .try_into()
+            .expect("a circle frame retains its center and radial anchor");
+        let center = match positive_recursive_projective_point(center)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let support_center = match positive_recursive_projective_point(support_center)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        Ok(Classification::Decided(Some(Self {
+            field: center.denominator.field(),
+            center,
+            support_center,
+            normal_denominator,
+        })))
+    }
+
     /// Joins one correlated point field to this frame without constructing a
     /// primitive element. Shared ancestors merely lift zero coefficients;
     /// divergent descendants append their existing positive generators.
@@ -90402,15 +90455,18 @@ impl BezierAlgebraicChordParallelPoint2 {
                 .exact_real_value_with_retained_witnesses()
                 .and_then(|speed_squared| speed_squared.sqrt().ok())
                 .and_then(|speed| parent.constant(speed))
+                .filter(|speed| {
+                    speed
+                        .square()
+                        .and_then(|square| square.subtract(&speed_squared))
+                        .is_some_and(|difference| difference.is_structurally_zero())
+                })
             {
-                // A selected coordinate axis can carry an exact scalar
-                // witness even when its unreduced expression still names
-                // that axis.  Preserve Hyperreal's canonical square root as
-                // a parent-field constant instead of adjoining a redundant
-                // quadratic generator.  This is especially important for a
-                // bevel between two normalized incident chords: each local
-                // speed stays compact, and their shared contact field need
-                // not be promoted merely to compare the two generators.
+                // A scalar speed may replace a generator only when its
+                // square still replays against the retained radicand.
+                // Otherwise keep the defining relation over selected source
+                // axes; the generator also retains its scalar witness for
+                // cheap evaluation without discarding that relation.
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
@@ -169339,6 +169395,147 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         );
                         assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(equality.value, Classification::Decided(false));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn chord_normal_recursive_frame_retains_center_and_oriented_unit_normal() {
+        let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        let alpha = q(1, 11).sqrt().unwrap();
+        let beta = q(1, 13).sqrt().unwrap();
+        let dx = Real::one() - &alpha;
+        let speed = (&dx * &dx + &beta * &beta).sqrt().unwrap();
+        let oblique_normal = ((-&beta / &speed).unwrap(), (&dx / &speed).unwrap());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // The first two fixtures retain a center at the intersection of
+            // independently authored horizontal and vertical offset chords.
+            let axis = dense_chord_normal_unit_semicircle(&policy);
+            let independent =
+                dense_chord_normal_independent_circle(&policy, "recursive circle anchor");
+            let anchor = independent
+                .data
+                .frame
+                .chord_normal()
+                .unwrap()
+                .anchor
+                .clone();
+            let mut cases = vec![
+                (axis, Point2::from_values(0, 0), (Real::zero(), Real::one())),
+                (
+                    independent,
+                    Point2::from_values(0, 0),
+                    oblique_normal.clone(),
+                ),
+            ];
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![-q(1, 17), Real::zero(), Real::one()])
+            else {
+                panic!("the independent center stays algebraic")
+            };
+            let gamma = q(1, 17).sqrt().unwrap();
+            for gauge in [Real::one(), -Real::one()] {
+                let center = CurvePoint2::from(
+                    RationalBezierAlgebraicPointImage2::from_retained_expression(
+                        parameter.clone(),
+                        parameter_representation(&parameter, &policy),
+                        vec![Real::zero(), gauge.clone()],
+                        vec![gauge.clone(), gauge.clone()],
+                        vec![gauge],
+                        "independent recursive circle center",
+                    ),
+                );
+                assert!(center.coordinates().is_none());
+                let Classification::Decided(Some(circle)) =
+                    BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+                        center,
+                        anchor.clone(),
+                        Real::one(),
+                        false,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the retained center and chord must author a circle")
+                };
+                cases.push((
+                    circle,
+                    Point2::new(gamma.clone(), Real::one() + &gamma),
+                    oblique_normal.clone(),
+                ));
+            }
+            for (case, (circle, expected_center, normal)) in cases.into_iter().enumerate() {
+                let source = circle.data.frame.chord_normal().unwrap();
+                for reversed in [false, true] {
+                    let Classification::Decided(Some(circle)) =
+                        BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+                            source.center.clone(),
+                            if reversed {
+                                source.anchor.reversed()
+                            } else {
+                                source.anchor.clone()
+                            },
+                            Real::one(),
+                            false,
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("the oriented chord frame must author a circle")
+                    };
+                    let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        circle.recursive_circle_frame_authority(attempt)
+                    });
+                    assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+                    let Classification::Decided(Some(frame)) = result.value.unwrap() else {
+                        panic!("the chord normal and center must import together")
+                    };
+                    assert_eq!(frame.normal_denominator, Real::one());
+                    assert!(
+                        frame
+                            .field
+                            .same_field(&frame.support_center.denominator.field())
+                    );
+                    let check = |label: &str,
+                                 actual: &BezierRecursiveQuadraticValue2,
+                                 denominator: &BezierRecursiveQuadraticValue2,
+                                 expected: &Real| {
+                        assert_eq!(
+                            actual
+                                .subtract(&denominator.scale(expected).unwrap())
+                                .unwrap()
+                                .sign(&CurveContext::STRICT)
+                                .unwrap(),
+                            Classification::Decided(RealSign::Zero),
+                            "case={case}, reversed={reversed}, policy={policy:?}, coordinate={label}"
+                        );
+                    };
+                    check(
+                        "center-x",
+                        &frame.center.x,
+                        &frame.center.denominator,
+                        expected_center.x(),
+                    );
+                    check(
+                        "center-y",
+                        &frame.center.y,
+                        &frame.center.denominator,
+                        expected_center.y(),
+                    );
+                    let (nx, ny, denominator) = frame
+                        .center
+                        .difference_numerators(&frame.support_center)
+                        .unwrap();
+                    let direction = Real::from(if reversed { -1_i8 } else { 1_i8 });
+                    check("normal-x", &nx, &denominator, &(&direction * &normal.0));
+                    check("normal-y", &ny, &denominator, &(&direction * &normal.1));
+                    for point in [&frame.center, &frame.support_center] {
+                        assert_eq!(
+                            point.denominator.sign(&CurveContext::STRICT).unwrap(),
+                            Classification::Decided(RealSign::Positive)
+                        );
                     }
                 }
             }
