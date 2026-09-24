@@ -55,10 +55,10 @@ fn assert_bounded_equal(left: &Real, right: &Real) {
         return;
     }
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(precision)
+        .certified_rational_interval(precision)
         .expect("bounded left value");
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(precision)
+        .certified_rational_interval(precision)
         .expect("bounded right value");
     assert!(left_lower <= right_upper && right_lower <= left_upper);
 }

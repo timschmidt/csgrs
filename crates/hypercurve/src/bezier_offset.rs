@@ -7194,7 +7194,8 @@ fn represented_tensor_coordinate_refined(
                 && interval.lower.exact_rational_normal_form().is_none()
             {
                 let precision = refinement_steps.max(64).min(i32::MAX as usize) as i32;
-                if let Some([lower, upper]) = interval.lower.certified_dyadic_interval(-precision) {
+                if let Some([lower, upper]) = interval.lower.certified_rational_interval(-precision)
+                {
                     interval = RealInterval {
                         lower: Real::new(lower),
                         upper: Real::new(upper),
@@ -7491,7 +7492,7 @@ fn dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
                 // even when its certified magnitude is far too small to affect
                 // the result. Dyadic bounds are exact enclosures, not an
                 // approximate equality decision.
-                let [lower, upper] = coefficient.certified_dyadic_interval(precision)?;
+                let [lower, upper] = coefficient.certified_rational_interval(precision)?;
                 return Some(RealInterval {
                     lower: Real::new(lower),
                     upper: Real::new(upper),
@@ -60830,8 +60831,8 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
             let precision = -(refinement_steps.max(64).min(i32::MAX as usize) as i32);
             let x = self.x.exact_real_value_with_retained_witnesses()? * &inverse;
             let y = self.y.exact_real_value_with_retained_witnesses()? * inverse;
-            let [x_lower, x_upper] = x.certified_dyadic_interval(precision)?.map(Real::new);
-            let [y_lower, y_upper] = y.certified_dyadic_interval(precision)?.map(Real::new);
+            let [x_lower, x_upper] = x.certified_rational_interval(precision)?.map(Real::new);
+            let [y_lower, y_upper] = y.certified_rational_interval(precision)?.map(Real::new);
             Some(Aabb2::new_unchecked(
                 Point2::new(x_lower, y_lower),
                 Point2::new(x_upper, y_upper),
@@ -61854,7 +61855,7 @@ impl BezierRecursiveProjectiveChordParallelIntervalSystem2 {
                 upper: value,
             });
         }
-        let [lower, upper] = parameter.certified_dyadic_interval(self.precision)?;
+        let [lower, upper] = parameter.certified_rational_interval(self.precision)?;
         Some(RealInterval {
             lower: Real::new(lower),
             upper: Real::new(upper),
@@ -90811,7 +90812,7 @@ impl RealInterval {
             let Some(precision) = precision else {
                 return Some(root);
             };
-            let bounds = root.certified_dyadic_interval(precision)?;
+            let bounds = root.certified_rational_interval(precision)?;
             Some(Real::new(if lower {
                 bounds[0].clone()
             } else {
@@ -137224,8 +137225,8 @@ mod conversion_tests {
             let [x, y] = [Axis2::X, Axis2::Y].map(|axis| {
                 let interval = RealInterval::from_axis(&bounds, axis);
                 [
-                    Real::new(interval.lower.certified_dyadic_interval(-16).unwrap()[0].clone()),
-                    Real::new(interval.upper.certified_dyadic_interval(-16).unwrap()[1].clone()),
+                    Real::new(interval.lower.certified_rational_interval(-16).unwrap()[0].clone()),
+                    Real::new(interval.upper.certified_rational_interval(-16).unwrap()[1].clone()),
                 ]
             });
             let lower = Real::from(2_i8) * &x[0] - Real::from(3_i8) * &y[1] - Real::one();
@@ -138918,7 +138919,7 @@ mod conversion_tests {
                                     // A separately requested tighter scalar enclosure must
                                     // lie inside the chord's conservative coordinate band.
                                     let [inner_lower, inner_upper] = exact
-                                        .certified_dyadic_interval(-((gap_bits + 96) as i32))
+                                        .certified_rational_interval(-((gap_bits + 96) as i32))
                                         .unwrap();
                                     assert!(lower <= &Real::new(inner_lower));
                                     assert!(upper >= &Real::new(inner_upper));

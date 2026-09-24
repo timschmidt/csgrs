@@ -1641,12 +1641,12 @@ fn conservative_x_interval(bbox: &Aabb2) -> Option<[Rational; 2]> {
     Some([
         bbox.min_x().exact_rational_ref().cloned().or_else(|| {
             bbox.min_x()
-                .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)
+                .certified_rational_interval(CURVE_STRING_X_SWEEP_PRECISION)
                 .map(|interval| interval[0].clone())
         })?,
         bbox.max_x().exact_rational_ref().cloned().or_else(|| {
             bbox.max_x()
-                .certified_dyadic_interval(CURVE_STRING_X_SWEEP_PRECISION)
+                .certified_rational_interval(CURVE_STRING_X_SWEEP_PRECISION)
                 .map(|interval| interval[1].clone())
         })?,
     ])

@@ -788,7 +788,7 @@ fn map_compact_incident_ray_root(
             // it with an unrelated scalar-only parameter.
             let strict = CurveContext::STRICT;
             for precision in [-16, -32, -64, -128, -256, -512] {
-                let Some([lower, upper]) = mapped.certified_dyadic_interval(precision) else {
+                let Some([lower, upper]) = mapped.certified_rational_interval(precision) else {
                     break;
                 };
                 if lower == upper {
@@ -2780,7 +2780,7 @@ fn coefficients_dyadic_convex_hull(
         power_to_bernstein_coefficients(coefficients, coefficients.len().saturating_sub(1))?;
     let mut bounds = controls
         .into_iter()
-        .map(|control| control.certified_dyadic_interval(precision));
+        .map(|control| control.certified_rational_interval(precision));
     let Some(Some([mut lower, mut upper])) = bounds.next() else {
         return Ok(None);
     };
@@ -3588,7 +3588,7 @@ fn rational_bernstein_basis_value(coefficients: &[Real], weights: &[HyperRationa
 fn coefficient_intervals(coefficients: &[Real], precision: i32) -> Option<CoefficientIntervals> {
     coefficients
         .iter()
-        .map(|coefficient| coefficient.certified_dyadic_interval(precision))
+        .map(|coefficient| coefficient.certified_rational_interval(precision))
         .collect()
 }
 

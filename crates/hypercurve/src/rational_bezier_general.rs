@@ -7968,7 +7968,7 @@ fn determinant_local_bernstein_signs_from_enclosures(
 ) -> Option<(Vec<RealSign>, RealSign)> {
     let enclose = |value: &Real| {
         value
-            .certified_dyadic_interval(precision)
+            .certified_rational_interval(precision)
             .map(|interval| CertifiedRationalInterval {
                 lower: interval[0].clone(),
                 upper: interval[1].clone(),
@@ -8183,13 +8183,13 @@ fn locally_certified_rational_image_parameter(
         };
         let Some(lower_enclosure) = image_interval
             .lower
-            .certified_dyadic_interval(enclosure_precision)
+            .certified_rational_interval(enclosure_precision)
         else {
             continue;
         };
         let Some(upper_enclosure) = image_interval
             .upper
-            .certified_dyadic_interval(enclosure_precision)
+            .certified_rational_interval(enclosure_precision)
         else {
             continue;
         };

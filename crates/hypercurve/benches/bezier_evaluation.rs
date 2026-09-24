@@ -79,7 +79,7 @@ fn main() {
             power = &power * &parameter;
         }
         let expected = Real::sum_refs(&terms)
-            .certified_dyadic_interval(-160)
+            .certified_rational_interval(-160)
             .unwrap();
         let Classification::Decided(polynomial) =
             BezierParameterPolynomial::try_new_power_basis(coefficients, &CurveContext::STRICT)
@@ -91,7 +91,7 @@ fn main() {
         let mut certified = 0_usize;
         for _ in 0..iterations {
             let value = polynomial.evaluate(black_box(&parameter));
-            let interval = black_box(value.certified_dyadic_interval(-128).unwrap());
+            let interval = black_box(value.certified_rational_interval(-128).unwrap());
             assert!(
                 interval[0] <= expected[1] && expected[0] <= interval[1],
                 "{label}"

@@ -90,9 +90,9 @@ fn self_contact_x_overlap_schedule(
         .map(|bbox| {
             Some([
                 bbox.min_x()
-                    .certified_dyadic_interval(ENCLOSURE_PRECISION)?,
+                    .certified_rational_interval(ENCLOSURE_PRECISION)?,
                 bbox.max_x()
-                    .certified_dyadic_interval(ENCLOSURE_PRECISION)?,
+                    .certified_rational_interval(ENCLOSURE_PRECISION)?,
             ])
         })
         .collect::<Option<Vec<_>>>()?;
