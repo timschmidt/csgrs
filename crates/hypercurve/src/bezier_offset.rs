@@ -6422,11 +6422,10 @@ struct BezierRecursiveQuadraticParallelExpression2 {
 /// Arbitrary-depth selected-radial circle/analytic-parallel authority.
 ///
 /// The center and parameter-zero radial retain their shared recursive field.
-/// Only the final target parameter is eliminated for candidate enumeration;
-/// replay embeds that exact candidate as one additional base axis and then
-/// appends the positive target-speed root.  Consequently no Cartesian
-/// coordinate is materialized independently and no conjugate recursive sheet
-/// can enter topology.
+/// Global enumeration eliminates only the final target parameter. Replay can
+/// keep local polynomial roots in that field; native candidates embed as a
+/// base axis with a positive speed root. Both routes preserve the authored
+/// speed sheet without independently materializing Cartesian coordinates.
 #[derive(Debug)]
 struct BezierRecursiveSelectedRadialParallelSystem2 {
     field: BezierRecursiveQuadraticField2,
@@ -62603,6 +62602,22 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         if target_parameter.as_recursive_projective().is_some() {
+            match policy.strict_predicate_pass(|| {
+                recursive_projective_polynomial_sign_at_parameter(
+                    &self.field,
+                    &self.weight,
+                    target_parameter,
+                    policy,
+                )
+            })? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
             return recursive_projective_polynomial_sign_at_parameter(
                 &self.field,
                 polynomial,
@@ -62637,10 +62652,54 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
             };
             return self.polynomial_sign_at_region_parameter(&polynomial, target_parameter, policy);
         }
-        let Some(parameter) = target_parameter.as_bezier_parameter() else {
+        if let Some(parameter) = target_parameter.as_bezier_parameter() {
+            return self.expression_sign_at_parameter(expression, parameter, policy);
+        }
+        // Keep the positive speed procedural at a locally retained root.
+        // Component signs select its authored sheet; the squared difference
+        // compares magnitudes without adjoining or globally projecting it.
+        match policy.strict_predicate_pass(|| {
+            self.polynomial_sign_at_region_parameter(&self.speed_squared, target_parameter, policy)
+        })? {
+            Classification::Decided(RealSign::Positive) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Decided(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a recursive parallel target had negative speed squared".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let rational_sign = self.polynomial_sign_at_region_parameter(
+            &expression.rational,
+            target_parameter,
+            policy,
+        )?;
+        let radical_sign = self.polynomial_sign_at_region_parameter(
+            &expression.radical,
+            target_parameter,
+            policy,
+        )?;
+        if let (Classification::Decided(rational), Classification::Decided(radical)) =
+            (&rational_sign, &radical_sign)
+            && let Some(sign) = same_positive_root_sheet_signs(*rational, *radical)
+        {
+            return Ok(Classification::Decided(sign));
+        }
+        let Some(magnitude) = self.expression_polynomial(expression) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        self.expression_sign_at_parameter(expression, parameter, policy)
+        let magnitude_sign =
+            self.polynomial_sign_at_region_parameter(&magnitude, target_parameter, policy)?;
+        Ok(positive_root_sum_sign_from_components(
+            rational_sign,
+            radical_sign,
+            magnitude_sign,
+        ))
     }
 
     fn polynomial_is_identically_zero(
@@ -69890,6 +69949,31 @@ fn combined_sign_uncertainty(
     }
 }
 
+/// Combines signs for A+B*sqrt(S), with S strictly positive and magnitude
+/// A^2-B^2*S. A zero magnitude alone does not select the cancelling sheet.
+fn positive_root_sum_sign_from_components(
+    rational_sign: Classification<RealSign>,
+    radical_sign: Classification<RealSign>,
+    magnitude_sign: Classification<RealSign>,
+) -> Classification<RealSign> {
+    match magnitude_sign {
+        Classification::Decided(RealSign::Positive) => rational_sign,
+        Classification::Decided(RealSign::Negative) => radical_sign,
+        Classification::Decided(RealSign::Zero) => match (&rational_sign, &radical_sign) {
+            (Classification::Decided(rational_sign), Classification::Decided(radical_sign)) => {
+                Classification::Decided(
+                    same_positive_root_sheet_signs(*rational_sign, *radical_sign)
+                        .unwrap_or(RealSign::Zero),
+                )
+            }
+            _ => {
+                Classification::Uncertain(combined_sign_uncertainty(&rational_sign, &radical_sign))
+            }
+        },
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    }
+}
+
 #[track_caller]
 fn dense_positive_square_root_sum_sign(
     rational: &DenseTensorPolynomial,
@@ -69937,22 +70021,11 @@ fn dense_positive_square_root_sum_sign(
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let magnitude_sign = dense_polynomial_tuple_sign(&magnitude, sources, policy)?;
-    Ok(match magnitude_sign {
-        Classification::Decided(RealSign::Positive) => rational_sign,
-        Classification::Decided(RealSign::Negative) => radical_sign,
-        Classification::Decided(RealSign::Zero) => match (&rational_sign, &radical_sign) {
-            (Classification::Decided(rational_sign), Classification::Decided(radical_sign)) => {
-                Classification::Decided(
-                    same_positive_root_sheet_signs(*rational_sign, *radical_sign)
-                        .unwrap_or(RealSign::Zero),
-                )
-            }
-            _ => {
-                Classification::Uncertain(combined_sign_uncertainty(&rational_sign, &radical_sign))
-            }
-        },
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    })
+    Ok(positive_root_sum_sign_from_components(
+        rational_sign,
+        radical_sign,
+        magnitude_sign,
+    ))
 }
 
 #[track_caller]
@@ -156615,6 +156688,221 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert!(point.data.recursive_projective_point.get().is_none());
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_parallel_expression_signs_keep_the_selected_speed_sheet() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        let target = QuadraticBezier2::new(
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(q(1, 2), Real::zero()),
+            Point2::new(Real::one(), q(1, 2)),
+        )
+        .parallel_left(q(1, 4))
+        .unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        // P(t)=(t,t^2/2), so S(t)=1+t^2. At either real root of
+        // t^4-t^2-1=0, t^2 is the positive square root of S(t).
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = independent_pair_radial_unit_circle(&policy);
+            let Classification::Decided(system) = circle
+                .recursive_selected_radial_target_system(&target, false, false, &policy)
+                .unwrap()
+            else {
+                panic!("the parabola retains its exact nonconstant speed field")
+            };
+            assert!(!system.unit_target_speed);
+            assert!(system.projection.is_none());
+            let polynomial = |coefficients: &[Real]| {
+                recursive_quadratic_real_polynomial(&system.field, coefficients).unwrap()
+            };
+            let defining = polynomial(&[
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::one(),
+            ]);
+            for (lower, upper) in [(-2_i8, -1_i8), (1, 2)] {
+                let parameters = policy
+                    .bounded_exact_predicate_pass(|| {
+                        recursive_quadratic_polynomial_local_parameters(
+                            &system.field,
+                            &defining,
+                            [&Real::from(lower), &Real::from(upper)],
+                            &policy,
+                        )
+                    })
+                    .unwrap()
+                    .expect("the quartic has one simple root in either bracket");
+                let [parameter] = parameters.as_slice() else {
+                    panic!("the bracket must retain exactly one real root")
+                };
+                assert!(parameter.as_recursive_projective().is_some());
+                for orientation in [-1_i8, 1_i8] {
+                    for (shift, expected) in [
+                        (Real::zero(), RealSign::Zero),
+                        (tiny.clone(), RealSign::Positive),
+                        (-tiny.clone(), RealSign::Negative),
+                    ] {
+                        let expression = BezierRecursiveQuadraticParallelExpression2 {
+                            rational: polynomial(&[shift, Real::zero(), Real::from(orientation)]),
+                            radical: polynomial(&[Real::from(-orientation)]),
+                        };
+                        let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                            attempt.bounded_exact_predicate_pass(|| {
+                                system
+                                    .expression_sign_at_region_parameter(
+                                        &expression,
+                                        parameter,
+                                        attempt,
+                                    )
+                                    .unwrap()
+                            })
+                        });
+                        assert_eq!(result.value, Classification::Decided(expected));
+                        assert_eq!(result.certainty, CurveCertainty::Certified);
+                    }
+                    let same_sheet = BezierRecursiveQuadraticParallelExpression2 {
+                        rational: polynomial(&[
+                            Real::zero(),
+                            Real::zero(),
+                            Real::from(orientation),
+                        ]),
+                        radical: polynomial(&[Real::from(orientation)]),
+                    };
+                    let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        attempt.bounded_exact_predicate_pass(|| {
+                            system
+                                .expression_sign_at_region_parameter(
+                                    &same_sheet,
+                                    parameter,
+                                    attempt,
+                                )
+                                .unwrap()
+                        })
+                    });
+                    assert_eq!(
+                        result.value,
+                        Classification::Decided(if orientation > 0 {
+                            RealSign::Positive
+                        } else {
+                            RealSign::Negative
+                        }),
+                    );
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                }
+                assert!(system.incidence_univariate.get().is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_parallel_expression_signs_reject_poles_and_zero_speed() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = independent_pair_radial_unit_circle(&policy);
+            // Homogeneous (X,Y,W)=(1,t,t^4-t^2-1). All authored weights
+            // are negative and finite; the retained exterior root is a pole.
+            let Classification::Decided(pole) = RationalBezier2::from_homogeneous_controls(
+                [q(-1, 1), q(-1, 1), q(-7, 6), q(-3, 2), q(-1, 1)]
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, weight)| {
+                        crate::HomogeneousControl2::new(
+                            Real::one(),
+                            (Real::from(i32::try_from(index).unwrap()) / Real::from(4_i8)).unwrap(),
+                            weight,
+                        )
+                    })
+                    .collect(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the rational source has a finite authored unit interval")
+            };
+            // P(t)=(t^3/3-t/2,0), so its raw normal frame has zero speed
+            // at the positive root of t^2-1/2. No one-sided frame is supplied.
+            let stationary = CubicBezier2::new(
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(q(-1, 6), Real::zero()),
+                Point2::new(q(-1, 3), Real::zero()),
+                Point2::new(q(-1, 6), Real::zero()),
+            )
+            .parallel_left(q(1, 4))
+            .unwrap();
+            let pole_defining = vec![
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::from(-1_i8),
+                Real::zero(),
+                Real::one(),
+            ];
+            for (target, unit_speed, defining, lower, upper) in [
+                (
+                    pole.parallel_left(Real::zero()).unwrap(),
+                    true,
+                    pole_defining.clone(),
+                    Real::one(),
+                    Real::from(2_i8),
+                ),
+                (
+                    pole.parallel_left(q(1, 4)).unwrap(),
+                    false,
+                    pole_defining,
+                    Real::one(),
+                    Real::from(2_i8),
+                ),
+                (
+                    stationary,
+                    false,
+                    vec![q(-1, 2), Real::zero(), Real::one()],
+                    Real::zero(),
+                    Real::one(),
+                ),
+            ] {
+                let Classification::Decided(system) = circle
+                    .recursive_selected_radial_target_system(&target, unit_speed, false, &policy)
+                    .unwrap()
+                else {
+                    panic!("the formal field does not consume the query parameter")
+                };
+                let defining =
+                    recursive_quadratic_real_polynomial(&system.field, &defining).unwrap();
+                let parameters = policy
+                    .bounded_exact_predicate_pass(|| {
+                        recursive_quadratic_polynomial_local_parameters(
+                            &system.field,
+                            &defining,
+                            [&lower, &upper],
+                            &policy,
+                        )
+                    })
+                    .unwrap()
+                    .expect("the singular parameter has a retained root certificate");
+                let [parameter] = parameters.as_slice() else {
+                    panic!("the bracket owns exactly one singular parameter")
+                };
+                assert!(parameter.as_recursive_projective().is_some());
+                let zero = vec![system.field.constant(Real::zero()).unwrap()];
+                let expression = BezierRecursiveQuadraticParallelExpression2 {
+                    rational: zero.clone(),
+                    radical: zero,
+                };
+                let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                    attempt.bounded_exact_predicate_pass(|| {
+                        system
+                            .expression_sign_at_region_parameter(&expression, parameter, attempt)
+                            .unwrap()
+                    })
+                });
+                assert_eq!(
+                    result.value,
+                    Classification::Uncertain(UncertaintyReason::Boundary),
+                );
+                assert_eq!(result.certainty, CurveCertainty::Certified);
             }
         }
     }
