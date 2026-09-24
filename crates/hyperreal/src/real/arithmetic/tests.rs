@@ -2475,9 +2475,102 @@ mod tests {
                     power *= &oracle_x;
                 }
                 let actual = Real::eval_poly(&reals, &Real::new(x));
+                let expected_sign = match expected.cmp(&rug::Rational::new()) {
+                    std::cmp::Ordering::Less => RealSign::Negative,
+                    std::cmp::Ordering::Equal => RealSign::Zero,
+                    std::cmp::Ordering::Greater => RealSign::Positive,
+                };
+                assert_eq!(actual.immediate_sign(), Some(expected_sign));
+                assert_eq!((&actual + Real::one()) - &actual, Real::one());
                 assert_eq!(to_gmp(actual.exact_rational_ref().unwrap()), expected, "count={count}");
             }
         }
+    }
+
+    #[test]
+    fn polynomial_evaluation_retains_rational_scale_and_cancelled_suffixes() {
+        let to_gmp = |value: &Rational| {
+            let numerator = BigInt::from_biguint(value.sign(), value.numerator().clone());
+            format!("{numerator}/{}", value.denominator())
+                .parse::<rug::Rational>()
+                .unwrap()
+        };
+        for bits in [0_usize, 129, 513] {
+            let magnitude = (BigInt::from(1_u8) << bits) + BigInt::from(3_u8);
+            let denominator = (BigUint::from(1_u8) << (bits + 1)) + BigUint::from(7_u8);
+            for sign in [-1_i32, 1] {
+                let numerator = &magnitude * sign;
+                let x =
+                    Rational::from_bigint_fraction(numerator.clone(), denominator.clone()).unwrap();
+                for count in [2, 16, 64] {
+                    // At x=p/q every adjacent pair q*x-p vanishes. Preserve
+                    // the independently chosen residual and coefficient scale,
+                    // including zeros beyond the actual polynomial degree.
+                    let mut coefficients = vec![Rational::fraction(-7, 11).unwrap()];
+                    for _ in 0..count / 2 {
+                        coefficients.push(Rational::from_bigint(-&numerator));
+                        coefficients.push(Rational::from_unsigned_integer(denominator.clone()));
+                    }
+                    coefficients.extend([Rational::zero(), Rational::zero()]);
+                    for scale in [Rational::one(), Rational::fraction(-13, 17).unwrap()] {
+                        let coefficients = coefficients
+                            .iter()
+                            .map(|value| value * &scale)
+                            .collect::<Vec<_>>();
+                        let mut power = rug::Rational::from(1);
+                        let mut expected = rug::Rational::new();
+                        let oracle_x = to_gmp(&x);
+                        for coefficient in &coefficients {
+                            let mut term = to_gmp(coefficient);
+                            term *= &power;
+                            expected += term;
+                            power *= &oracle_x;
+                        }
+                        let residual = &Rational::fraction(-7, 11).unwrap() * &scale;
+                        assert_eq!(expected, to_gmp(&residual));
+                        for lazy in [false, true] {
+                            let retain = |value: &Rational| {
+                                let mut real = Real::new(value.clone());
+                                if lazy && !value.is_zero() {
+                                    let common =
+                                        (BigUint::from(1_u8) << 257_usize) + BigUint::from(1_u8);
+                                    real.rational = Rational::from_parts_raw_unreduced(
+                                        value.sign(),
+                                        value.numerator() * &common,
+                                        value.denominator() * common,
+                                    );
+                                }
+                                real
+                            };
+                            let reals = coefficients.iter().map(retain).collect::<Vec<_>>();
+                            let actual = Real::eval_poly(&reals, &retain(&x));
+                            // Reentry must preserve canonical payload queries,
+                            // not just numeric equality after GMP normalizes.
+                            let successor = &actual + Real::one();
+                            let successor = successor.exact_rational_ref().unwrap();
+                            let expected_successor = &residual + Rational::one();
+                            assert_eq!(successor.numerator(), expected_successor.numerator());
+                            assert_eq!(successor.denominator(), expected_successor.denominator());
+                            assert_eq!(
+                                to_gmp(actual.exact_rational_ref().unwrap()),
+                                expected,
+                                "bits={bits}, sign={sign}, count={count}, lazy={lazy}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        let wide = Real::new(Rational::from_bigint(BigInt::from(1_u8) << 1024_usize));
+        assert_eq!(Real::eval_poly(&[], &wide), Real::zero());
+        assert_eq!(
+            Real::eval_poly(&vec![Real::zero(); 65], &wide),
+            Real::zero()
+        );
+        assert_eq!(
+            Real::eval_poly(&[Real::from(7), Real::zero()], &wide),
+            Real::from(7)
+        );
     }
 
     #[test]

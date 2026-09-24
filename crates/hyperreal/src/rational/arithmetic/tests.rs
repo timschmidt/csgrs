@@ -4783,8 +4783,11 @@ mod tests {
         let actual = crate::dispatch_trace::with_recording(|| &unreduced - &right);
         let trace = crate::dispatch_trace::take_trace();
         assert_eq!(actual, expected);
-        assert_eq!(trace.path_count("rational", "sub", "wide-dyadic"), 0);
-        assert_ne!(trace.rational.gcds, 0);
+        // Canonicalize the lazy dyadic once using shifts, then reuse the
+        // ordinary reduced-input kernel without any general GCD.
+        assert_eq!(trace.path_count("rational", "canonicalization", "lazy-internal-coordinate"), 1);
+        assert_eq!(trace.path_count("rational", "sub", "wide-dyadic"), 1);
+        assert_eq!(trace.rational.gcds, 0);
     }
 
     #[test]
@@ -5820,6 +5823,100 @@ mod tests {
                         expected,
                         "ordering pair {i}, {j}",
                     );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn unreduced_arithmetic_preserves_canonical_queries_and_hashes() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        fn retained(value: &num::BigRational, common: &BigUint) -> Rational {
+            if common.is_one() {
+                return Rational::from_bigint_fraction(
+                    value.numer().clone(), value.denom().magnitude().clone(),
+                ).unwrap();
+            }
+            Rational::from_parts_raw_unreduced(
+                value.numer().sign(),
+                value.numer().magnitude() * common,
+                value.denom().magnitude() * common,
+            )
+        }
+
+        fn check(actual: Rational, expected: num::BigRational) {
+            let canonical = Rational::from_bigint_fraction(
+                expected.numer().clone(), expected.denom().magnitude().clone(),
+            ).unwrap();
+            // Numeric equality alone can hide a lost unreduced flag: it uses
+            // cross-products, whereas payload queries and hashing need the
+            // unique reduced representation.
+            assert!(actual == canonical, "exact numeric value");
+            assert_eq!(actual.sign(), expected.numer().sign());
+            assert!(actual.numerator() == expected.numer().magnitude(), "canonical numerator");
+            assert!(actual.denominator() == expected.denom().magnitude(), "canonical denominator");
+            assert_eq!(actual.is_zero(), expected.is_zero());
+            assert_eq!(actual.is_one(), expected.is_one());
+            assert_eq!(actual.is_minus_one(), expected == -num::BigRational::one());
+            assert_eq!(actual.is_integer(), expected.is_integer());
+            assert_eq!(actual.to_big_integer(), expected.is_integer().then(|| expected.to_integer()));
+            let mut actual_hash = DefaultHasher::new();
+            let mut canonical_hash = DefaultHasher::new();
+            actual.hash(&mut actual_hash);
+            canonical.hash(&mut canonical_hash);
+            assert_eq!(actual_hash.finish(), canonical_hash.finish(), "equal values hash equally");
+        }
+
+        let one = num::BigRational::one();
+        let two = &one + &one;
+        let mut values = [
+            (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1),
+            (-3, 2), (2, 3), (3, 2), (5, 7),
+        ].map(|(n, d)| num::BigRational::new(BigInt::from(n), BigInt::from(d))).to_vec();
+        let wide: BigInt = (BigInt::one() << 193_usize) + 1;
+        values.push(num::BigRational::new(wide.clone(), BigInt::from(3)));
+        values.push(num::BigRational::new(BigInt::from(-2), wide));
+        for bits in [0_usize, 129, 513] {
+            let common = (BigUint::one() << bits) + 2_u8;
+            for left in &values {
+                let lazy = retained(left, &common);
+                check(lazy.add_one(), left + &one);
+                check(lazy.subtract_one(), left - &one);
+                check(-&lazy, -left);
+                check(-retained(left, &common), -left);
+                if !left.is_zero() {
+                    check(lazy.clone().inverse().unwrap(), left.recip());
+                }
+                for shift in [0_i32, 1, 129] {
+                    check(
+                        lazy.divide_by_power_of_two(shift).unwrap(),
+                        left / num::BigRational::from_integer(BigInt::one() << shift as usize),
+                    );
+                }
+                for right in &values {
+                    // Both operand positions, and two independently scaled
+                    // lazy payloads, reach native and arbitrary-width kernels.
+                    for (left_scale, right_scale) in [
+                        (BigUint::one(), common.clone()),
+                        (common.clone(), BigUint::one()),
+                        (common.clone(), &common + 1_u8),
+                    ] {
+                        let a = retained(left, &left_scale);
+                        let b = retained(right, &right_scale);
+                        check(&a + &b, left + right);
+                        check(&a - &b, left - right);
+                        check(&a * &b, left * right);
+                        if !right.is_zero() {
+                            check(&a / &b, left / right);
+                        }
+                        check(Rational::average_pair(&a, &b), (left + right) / &two);
+                        check(Rational::mean_refs(&[&a, &b]).unwrap(), (left + right) / &two);
+                        check(Rational::signed_product_sum([true, false], [[&a, &a], [&b, &b]]),
+                            left * left - right * right);
+                        check(Rational::dot_products([&a, &b], [&b, &a]), left * right * &two);
+                    }
                 }
             }
         }

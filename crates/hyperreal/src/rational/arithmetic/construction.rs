@@ -42,13 +42,12 @@ impl Rational {
                 "canonicalization",
                 "lazy-internal-coordinate"
             );
-            let divisor = Self::gcd_magnitudes(&self.numerator, &self.denominator);
             CachedRationalProduct {
                 other: None,
-                result: Self::from_parts_raw(
+                result: Self::from_fraction_parts_reduced(
                     self.sign,
-                    &self.numerator / &divisor,
-                    &self.denominator / divisor,
+                    self.numerator.clone(),
+                    self.denominator.clone(),
                 ),
             }
         });
@@ -472,6 +471,9 @@ impl Rational {
     }
 
     pub(crate) fn add_one(&self) -> Self {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().add_one();
+        }
         if self.sign == NoSign {
             return Self::one();
         }
@@ -500,6 +502,9 @@ impl Rational {
     }
 
     pub(crate) fn subtract_one(&self) -> Self {
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().subtract_one();
+        }
         if self.sign == NoSign {
             return Self::from_integer_magnitude(Minus, ONE.deref().clone());
         }

@@ -93,6 +93,12 @@ const NO_GMP_ANALOG: &[&str] = &[
     // Total multivalued floor-or-ceiling choice; MPFR exposes directional or
     // nearest rounding, not this constructive relation.
     "near_integer",
+    // Exact selected radical-field certificates and branch reconstruction;
+    // GMP/MPFR has no matching algebraic identity or selected-root proof API.
+    "quadratic_tower_annihilating_polynomial",
+    "quadratic_tower_positive_rational_branch",
+    "quadratic_tower_sign",
+    "sign_polynomial_at_rational_square_root",
     // Certified domain/evidence queries. MPFR reports a value or NaN but does
     // not expose Hyperreal's proof state, precision schedule, or refinement API.
     "acosh_domain",
