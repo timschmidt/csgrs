@@ -21020,33 +21020,6 @@ mod tests {
         .expect("the retained analytic parabola loop has authored topology")
     }
 
-    fn analytic_fragment_has_exact_endpoint(
-        fragment: &BezierSplitFragment2,
-        expected: &Point2,
-        policy: &CurveContext,
-    ) -> bool {
-        let BezierSplitFragment2::AnalyticParallel(fragment) = fragment else {
-            return false;
-        };
-        [fragment.range().start(), fragment.range().end()]
-            .into_iter()
-            .any(|parameter| {
-                matches!(
-                    exact_parallel_point_evidence(fragment.parallel(), parameter, policy),
-                    Ok(Classification::Decided(point)) if point.coordinates() == Some(expected)
-                )
-            })
-    }
-
-    fn analytic_fragment_has_algebraic_endpoint(fragment: &BezierSplitFragment2) -> bool {
-        matches!(
-            fragment,
-            BezierSplitFragment2::AnalyticParallel(fragment)
-                if matches!(fragment.range().start(), BezierParameter2::Algebraic(_))
-                    || matches!(fragment.range().end(), BezierParameter2::Algebraic(_))
-        )
-    }
-
     fn retained_fragment_has_exact_endpoint(
         fragment: &BezierSplitFragment2,
         expected: &Point2,
@@ -21410,16 +21383,130 @@ mod tests {
     }
 
     #[test]
-    fn retained_analytic_multifragment_corner_extends_chamfer_and_fillet() {
+    fn retained_analytic_corners_preserve_normalized_sets() {
+        use RegionPointLocation::{Boundary, Inside, Outside};
+
         let exact_line_end =
             Point2::new(Real::one() + q(38280, 91901), Real::one() + q(83549, 91901));
         let algebraic_line_end = Point2::new(q(23, 13), q(37, 13));
         let exact_cut = Point2::new(q(6, 5), q(36, 25));
         let chamfer_setback = (Real::from(146_i16).sqrt().unwrap() / Real::from(25_i8)).unwrap();
+        // P(t)=(t,t^2) meets the outgoing line again at t=m-1. This
+        // crossing precedes the construction cut t=6/5, so normalization
+        // consumes that cut and the straight connector inside old material.
+        let crossing_parameter = q(83549, 38280) - Real::one();
+        let crossing = Point2::new(
+            crossing_parameter.clone(),
+            &crossing_parameter * &crossing_parameter,
+        );
+        let chamfer_samples = [
+            (
+                "exposed parabola",
+                Point2::new(q(11, 10), q(121, 100)),
+                Boundary,
+            ),
+            (
+                "added material",
+                Point2::new(q(11, 10), q(243, 200)),
+                Inside,
+            ),
+            ("source/line crossing", crossing.clone(), Boundary),
+            ("consumed construction cut", exact_cut.clone(), Inside),
+        ];
+        // For r=299/125 the exterior circle has center (-126/125,59/25).
+        // Its CCW continuation is the major arc, adding material beyond the
+        // original x=-2 wall. The source residual factors as
+        // (t-6/5)^2 * (t^2+(12/5)t+3/5), whose other roots are negative.
+        let exact_fillet_samples = [
+            (
+                "exposed parabola",
+                Point2::new(q(11, 10), q(121, 100)),
+                Boundary,
+            ),
+            (
+                "added source lobe",
+                Point2::new(q(11, 10), q(243, 200)),
+                Inside,
+            ),
+            ("source/line crossing", crossing, Boundary),
+            ("consumed tangent contact", exact_cut, Inside),
+            (
+                "circle extreme",
+                Point2::new(q(-17, 5), q(59, 25)),
+                Boundary,
+            ),
+            ("added circle interior", p(-3, 2), Inside),
+        ];
+        // For slope 12/5 and r=1/2 the exterior source contact lies in
+        // (7/5,141/100). Its entire tangent disk is inside old material:
+        // x>1/5, x<23/13, y>1 and y<37/13, on the material side of the
+        // outgoing line. Normalization consumes the algebraic contact and
+        // arc, leaving the visible rational crossing P(7/5).
+        let algebraic_fillet_samples = [
+            (
+                "exposed parabola",
+                Point2::new(q(13, 10), q(169, 100)),
+                Boundary,
+            ),
+            (
+                "added material",
+                Point2::new(q(13, 10), q(341, 200)),
+                Inside,
+            ),
+            (
+                "source/line crossing",
+                Point2::new(q(7, 5), q(49, 25)),
+                Boundary,
+            ),
+        ];
+        let common_samples = [
+            ("original interior", p(-1, 0), Inside),
+            ("far exterior", p(10, 10), Outside),
+        ];
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 for selected in [false, true] {
+                    let assert_extended_set = |solutions: &CurveCornerSolutions2<CurveRegion2>,
+                                               operation: &str,
+                                               samples: &[(
+                        &str,
+                        Point2,
+                        RegionPointLocation,
+                    )]| {
+                        let mut found = false;
+                        let mut observations = Vec::new();
+                        for_each_corner_region(solutions, |edited| {
+                            assert!(edited.has_regularized_filled_left_topology(&policy));
+                            let observed: Vec<_> = samples
+                                    .iter()
+                                    .chain(&common_samples)
+                                    .map(|(label, point, _)| {
+                                        let location = edited.classify_point(point, &policy).unwrap();
+                                        assert_eq!(
+                                            location.certainty,
+                                            CurveCertainty::Certified,
+                                            "{operation}: {label}, policy={policy:?}, reversed={reversed}, selected={selected}",
+                                        );
+                                        match location.value {
+                                            Classification::Decided(location) => location,
+                                            Classification::Uncertain(reason) => panic!(
+                                                "{operation}: {label} remained {reason:?}, policy={policy:?}, reversed={reversed}, selected={selected}"
+                                            ),
+                                        }
+                                    })
+                                    .collect();
+                            found |= observed
+                                .iter()
+                                .zip(samples.iter().chain(&common_samples))
+                                .all(|(actual, (_, _, expected))| actual == expected);
+                            observations.push(observed);
+                        });
+                        assert!(
+                            found,
+                            "{operation}: the exact extended set was lost, policy={policy:?}, reversed={reversed}, selected={selected}, locations={observations:?}",
+                        );
+                    };
                     let corner = if reversed { 5 } else { 1 };
                     let region = retained_analytic_parabola_extension_region(
                         selected,
@@ -21447,22 +21534,7 @@ mod tests {
                             )
                         });
                     assert_eq!(chamfers.certainty, CurveCertainty::Certified);
-                    let mut found_exact_chamfer = false;
-                    for_each_corner_region(&chamfers.value, |edited| {
-                        found_exact_chamfer |=
-                            edited.boundary_loops()[0]
-                                .fragments()
-                                .iter()
-                                .any(|fragment| {
-                                    analytic_fragment_has_exact_endpoint(
-                                        fragment, &exact_cut, &policy,
-                                    )
-                                });
-                    });
-                    assert!(
-                        found_exact_chamfer,
-                        "the represented exterior chamfer cut was lost"
-                    );
+                    assert_extended_set(&chamfers.value, "chamfer", &chamfer_samples);
 
                     let fillets = region
                         .fillet_loop_vertex_by_radius(
@@ -21478,22 +21550,7 @@ mod tests {
                             )
                         });
                     assert_eq!(fillets.certainty, CurveCertainty::Certified);
-                    let mut found_exact_fillet = false;
-                    for_each_corner_region(&fillets.value, |edited| {
-                        found_exact_fillet |=
-                            edited.boundary_loops()[0]
-                                .fragments()
-                                .iter()
-                                .any(|fragment| {
-                                    analytic_fragment_has_exact_endpoint(
-                                        fragment, &exact_cut, &policy,
-                                    )
-                                });
-                    });
-                    assert!(
-                        found_exact_fillet,
-                        "the represented exterior fillet cut was lost"
-                    );
+                    assert_extended_set(&fillets.value, "exact fillet", &exact_fillet_samples);
 
                     let algebraic = retained_analytic_parabola_extension_region(
                         selected,
@@ -21514,16 +21571,10 @@ mod tests {
                         )
                     });
                     assert_eq!(algebraic.certainty, CurveCertainty::Certified);
-                    let mut found_algebraic_fillet = false;
-                    for_each_corner_region(&algebraic.value, |edited| {
-                        found_algebraic_fillet |= edited.boundary_loops()[0]
-                            .fragments()
-                            .iter()
-                            .any(analytic_fragment_has_algebraic_endpoint);
-                    });
-                    assert!(
-                        found_algebraic_fillet,
-                        "the isolated exterior fillet cut was lost"
+                    assert_extended_set(
+                        &algebraic.value,
+                        "algebraic fillet",
+                        &algebraic_fillet_samples,
                     );
                 }
             }
