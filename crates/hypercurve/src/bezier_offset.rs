@@ -4223,11 +4223,17 @@ struct BezierSelectedPolynomialImage2 {
     identically_zero_image_relation: bool,
 }
 
+#[derive(Debug, Default)]
+struct BezierSelectedFiberRepresentations2 {
+    bezier: OnceLock<BezierParameter2>,
+    projective: OnceLock<BezierRecursiveProjectiveParameter2>,
+}
+
 #[derive(Debug)]
 struct BezierAlgebraicSelectedFiberParameterData2 {
     authority: BezierAlgebraicSelectedFiberAuthority2,
     root: IsolatedRootInterval,
-    represented_parameter: Arc<OnceLock<BezierParameter2>>,
+    representations: Arc<BezierSelectedFiberRepresentations2>,
 }
 
 impl PartialEq for BezierAlgebraicSelectedFiberParameterData2 {
@@ -4283,7 +4289,7 @@ impl BezierAlgebraicSelectedFiberAuthority2 {
             data: Arc::new(BezierAlgebraicSelectedFiberParameterData2 {
                 authority: self.clone(),
                 root,
-                represented_parameter: Arc::new(OnceLock::new()),
+                representations: Arc::new(BezierSelectedFiberRepresentations2::default()),
             }),
         }
     }
@@ -4458,12 +4464,126 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     /// Retains an alternate scalar representation after a strict equality
     /// proof. The defining fiber and singleton remain the primary authority.
     fn retain_certified_parameter(&self, parameter: BezierParameter2) {
-        let _ = self.data.represented_parameter.set(parameter);
+        let _ = self.data.representations.bezier.set(parameter);
     }
 
     /// Returns the represented scalar when exact fiber isolation recovered one.
     pub(crate) fn represented_value(&self) -> Option<&Real> {
         self.data.root.exact_root.as_ref()
+    }
+
+    /// Imports a linear or quadratic fiber root into its retained coefficient
+    /// field. The original certified singleton selects the radical branch;
+    /// neither the base root nor this scalar needs an independent global image.
+    /// Successful imports are shared across clones and interval refinements.
+    fn recursive_projective_parameter(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierRecursiveProjectiveParameter2>> {
+        self.validate_policy(policy)?;
+        if let Some(parameter) = self.data.representations.projective.get() {
+            return Ok(Some(parameter.clone()));
+        }
+        if self.represented_value().is_some() || self.data.representations.bezier.get().is_some() {
+            return Ok(None);
+        }
+        let incidence = &self.data.authority.data.incidence;
+        let degree = incidence
+            .coefficients
+            .iter()
+            .filter_map(|row| {
+                row.iter()
+                    .rposition(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
+            })
+            .max()
+            .unwrap_or(0);
+        if !(1..=2).contains(&degree) {
+            return Ok(None);
+        }
+        // This optional import never turns a failed field construction or
+        // bounded predicate into a restriction on the complete projection.
+        let attempt = policy.bounded_exact_predicate_pass(|| -> CurveResult<Option<_>> {
+            let source = certified_parameter_representation(
+                &self.data.authority.data.retained_parameter,
+                policy,
+            );
+            let Some(one) = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()])
+            else {
+                return Ok(None);
+            };
+            let Some(field) = BezierRecursiveQuadraticField2::base(vec![source], one.clone(), one)
+            else {
+                return Ok(None);
+            };
+            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+                unreachable!("a selected fiber begins at its retained base");
+            };
+            let coefficients = (0..=degree)
+                .map(|power| {
+                    let coefficients = incidence
+                        .coefficients
+                        .iter()
+                        .map(|row| row.get(power).cloned().unwrap_or_else(Real::zero))
+                        .collect::<Vec<_>>();
+                    recursive_quadratic_rational_value(
+                        base,
+                        DenseTensorPolynomial::from_axis_polynomial(1, 0, &coefficients)?,
+                    )
+                })
+                .collect::<Option<Vec<_>>>();
+            let Some(coefficients) = coefficients else {
+                return Ok(None);
+            };
+            let Some(roots) = recursive_quadratic_polynomial_projective_roots(
+                &field,
+                &coefficients,
+                None,
+                policy,
+            )?
+            else {
+                return Ok(None);
+            };
+            let mut selected = None;
+            for root in roots {
+                let lower = root.order_to_real(&self.data.root.lower, policy)?;
+                let upper = root.order_to_real(&self.data.root.upper, policy)?;
+                let (Classification::Decided(lower), Classification::Decided(upper)) =
+                    (lower, upper)
+                else {
+                    return Ok(None);
+                };
+                if lower != std::cmp::Ordering::Less && upper != std::cmp::Ordering::Greater {
+                    if selected.is_some() {
+                        return Ok(None);
+                    }
+                    selected = Some(root);
+                }
+            }
+            let Some(selected) = selected else {
+                return Ok(None);
+            };
+            Ok(
+                match BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                    selected,
+                    Some((self.data.root.lower.clone(), self.data.root.upper.clone())),
+                    policy,
+                )? {
+                    Classification::Decided(parameter) => Some(parameter),
+                    Classification::Uncertain(_) => None,
+                },
+            )
+        });
+        let Ok(Some(parameter)) = attempt else {
+            return Ok(None);
+        };
+        let _ = self.data.representations.projective.set(parameter);
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "selected-fiber-parameter",
+            "retained-projective-root",
+        );
+        Ok(self.data.representations.projective.get().cloned())
     }
 
     /// Materializes a rational function of this selected scalar when its
@@ -4780,7 +4900,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
         self.validate_policy(policy)?;
-        if let Some(parameter) = self.data.represented_parameter.get() {
+        if let Some(parameter) = self.data.representations.bezier.get() {
             return Ok(Classification::Decided(parameter.clone()));
         }
         if let Some(value) = self.represented_value() {
@@ -5060,7 +5180,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             data: Arc::new(BezierAlgebraicSelectedFiberParameterData2 {
                 authority: self.data.authority.clone(),
                 root,
-                represented_parameter: self.data.represented_parameter.clone(),
+                representations: self.data.representations.clone(),
             }),
         }))
     }
@@ -5357,7 +5477,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         self.validate_policy(policy)?;
-        if let Some(parameter) = self.data.represented_parameter.get() {
+        if let Some(parameter) = self.data.representations.bezier.get() {
             return parameter.cmp_by_refinement(other, policy);
         }
         let outcome = crate::policy::resolve_certified_value(policy, |attempt| {
@@ -94629,6 +94749,14 @@ impl BezierAnalyticParallelPoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
+        if let BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) =
+            &self.data.parameter
+            && let Some(parameter) = parameter.recursive_projective_parameter(policy)?
+            && let Ok(Classification::Decided(Some(point))) =
+                self.recursive_projective_point_from_recursive_parameter(&parameter, policy)
+        {
+            return Ok(Classification::Decided(Some(point)));
+        }
         if policy.has_bounded_exact_predicate_budget()
             && match &self.data.parameter {
                 BezierAnalyticParallelPointParameter2::SelectedFiber(_) => true,
@@ -133132,6 +133260,172 @@ mod conversion_tests {
         }
     }
 
+    #[test]
+    fn selected_fiber_points_reuse_projective_roots_without_global_promotion() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let sqrt_two = Real::from(2_i8).sqrt().unwrap();
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(Real::zero(), half.clone()),
+            Point2::from_values(2, 1),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let seed =
+                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
+            for gauge in [Real::one(), Real::from(-3_i8)] {
+                for (quadratic, lower, upper, sign) in [
+                    (true, -half.clone(), Real::zero(), RealSign::Negative),
+                    (true, Real::zero(), half.clone(), RealSign::Positive),
+                    (false, Real::zero(), Real::one(), RealSign::Positive),
+                ] {
+                    let coefficients = if quadratic {
+                        vec![Real::zero(), Real::zero(), &gauge * Real::from(4_i8)]
+                    } else {
+                        vec![Real::zero(), &gauge * &sqrt_two]
+                    };
+                    let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                        BivariatePolynomial::new(vec![coefficients, vec![-gauge.clone()]]),
+                        seed.data.authority.data.retained_parameter.clone(),
+                        &policy,
+                    )
+                    .parameter(IsolatedRootInterval {
+                        lower,
+                        upper,
+                        exact_root: None,
+                        distinct_root_count: 1,
+                    });
+                    let point = BezierAnalyticParallelPoint2::new_selected_fiber(
+                        parallel.clone(),
+                        selected.clone(),
+                        &policy,
+                    );
+                    let Classification::Decided(Some(point)) = policy
+                        .bounded_exact_predicate_pass(|| point.recursive_projective_point(&policy))
+                        .unwrap()
+                    else {
+                        panic!("a low-degree fiber point must import in its retained field");
+                    };
+                    assert!(selected.data.representations.bezier.get().is_none());
+                    let first = selected
+                        .recursive_projective_parameter(&policy)
+                        .unwrap()
+                        .expect("the selected projective root must be cached");
+                    let Classification::Decided(refined) = selected.refined(4, &policy).unwrap()
+                    else {
+                        panic!("the selected singleton must refine");
+                    };
+                    let second = refined
+                        .recursive_projective_parameter(&policy)
+                        .unwrap()
+                        .expect("refinement must preserve the cached representation");
+                    assert!(Arc::ptr_eq(&first.data, &second.data));
+                    assert!(Arc::ptr_eq(
+                        &selected.data.representations,
+                        &refined.data.representations,
+                    ));
+                    assert!(refined.data.representations.bezier.get().is_none());
+
+                    let field = point.denominator.field();
+                    let (base, extensions) = field.base_and_extension_path();
+                    assert_eq!(base.sources.len(), 1);
+                    assert_eq!(base.sources[0].polynomial_coefficients.len(), 66);
+                    assert_eq!(extensions.len(), usize::from(quadratic));
+                    let alpha = recursive_quadratic_rational_value(
+                        &base,
+                        DenseTensorPolynomial::from_axis_polynomial(
+                            1,
+                            0,
+                            &[Real::zero(), Real::one()],
+                        )
+                        .unwrap(),
+                    )
+                    .and_then(|value| field.lift(&value))
+                    .unwrap();
+                    // The source is P(t)=(2t²,t). These two independent
+                    // equations and the selected sign determine its point.
+                    let parabola = point
+                        .x
+                        .multiply(&point.denominator)
+                        .and_then(|value| {
+                            value.subtract(&point.y.square()?.scale(&Real::from(2_i8))?)
+                        })
+                        .unwrap();
+                    let fiber_value = if quadratic {
+                        point
+                            .y
+                            .square()
+                            .and_then(|value| value.scale(&Real::from(4_i8)))
+                    } else {
+                        point
+                            .y
+                            .multiply(&point.denominator)
+                            .and_then(|value| value.scale(&sqrt_two))
+                    }
+                    .and_then(|value| {
+                        value.subtract(&alpha.multiply(&point.denominator.square()?)?)
+                    })
+                    .unwrap();
+                    assert_eq!(
+                        parabola.sign(&policy).unwrap(),
+                        Classification::Decided(RealSign::Zero)
+                    );
+                    assert_eq!(
+                        fiber_value.sign(&policy).unwrap(),
+                        Classification::Decided(RealSign::Zero)
+                    );
+                    assert_eq!(
+                        point.denominator.sign(&policy).unwrap(),
+                        Classification::Decided(RealSign::Positive)
+                    );
+                    assert_eq!(
+                        point.y.sign(&policy).unwrap(),
+                        Classification::Decided(sign)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn nonquadratic_selected_fiber_keeps_its_defining_authority() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let seed =
+                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
+            let incidence = BivariatePolynomial::new(vec![
+                vec![Real::zero(), Real::zero(), Real::zero(), Real::one()],
+                vec![Real::from(-1_i8)],
+            ]);
+            let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                incidence.clone(),
+                seed.data.authority.data.retained_parameter.clone(),
+                &policy,
+            )
+            .parameter(IsolatedRootInterval {
+                lower: half.clone(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            });
+            assert!(
+                selected
+                    .recursive_projective_parameter(&policy)
+                    .unwrap()
+                    .is_none()
+            );
+            assert!(selected.data.representations.bezier.get().is_none());
+            assert!(selected.data.representations.projective.get().is_none());
+            assert_eq!(
+                policy
+                    .strict_predicate_pass(|| selected.predicate_sign(&incidence, &policy))
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero),
+            );
+        }
+    }
+
     fn clip_aligned_overlap_for_test(
         first: &BezierParameterRange2,
         second: &BezierParameterRange2,
@@ -136736,7 +137030,8 @@ mod conversion_tests {
                             .as_selected_fiber()
                             .unwrap()
                             .data
-                            .represented_parameter
+                            .representations
+                            .bezier
                             .get()
                             .is_none()),
                         "range clipping must not reconstruct global endpoint polynomials"
@@ -154837,7 +155132,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }
                         assert!(raw.data.recursive_projective_point.get().is_none());
                         assert!(reduced.data.recursive_projective_point.get().is_none());
-                        assert!(parameter.data.represented_parameter.get().is_none());
+                        assert!(parameter.data.representations.bezier.get().is_none());
                     }
                 }
             }
@@ -172094,7 +172389,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         .as_selected_fiber()
                         .unwrap()
                         .data
-                        .represented_parameter
+                        .representations
+                        .bezier
                         .get()
                         .is_none()),
                     "separating an excluded pole must keep the native selected authority"
@@ -172433,7 +172729,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 outcome.value.unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
-            assert_eq!(selected.data.represented_parameter.get(), Some(&mapped));
+            assert_eq!(selected.data.representations.bezier.get(), Some(&mapped));
         }
     }
 
@@ -172646,8 +172942,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 panic!("the imported singleton must refine");
             };
             assert!(Arc::ptr_eq(
-                &selected.data.represented_parameter,
-                &refined.data.represented_parameter,
+                &selected.data.representations,
+                &refined.data.representations,
             ));
             assert_eq!(
                 refined.cmp_bezier_parameter(&ordinary, &policy).unwrap(),
@@ -173692,7 +173988,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 }
             }
             assert!(
-                selected.data.represented_parameter.get().is_none(),
+                selected.data.representations.bezier.get().is_none(),
                 "an interior sample must leave the degree-135 endpoint in its selected fiber"
             );
         }
