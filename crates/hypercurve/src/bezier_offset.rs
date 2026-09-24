@@ -637,10 +637,10 @@ type BezierAlgebraicCuspSemicircleParameterCacheEntry2 = (
 
 #[derive(Clone, Debug)]
 enum BezierAlgebraicCuspSemicircleParameterCacheEvidence2 {
-    RepresentedRational(Option<Real>),
+    ScalarValue(Option<Real>),
     /// Only terminal-consumed values need this box; a second inline Real
     /// payload would enlarge every cache entry.
-    Approximate512Rational(Box<Option<Real>>),
+    Approximate512ScalarValue(Box<Option<Real>>),
     /// Exact represented radial coordinate reused by every angular-order
     /// comparison for the same rational contact.
     RepresentedDiameterCoordinate(Box<(AlgebraicRootRepresentation, CurveContext)>),
@@ -1908,7 +1908,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 }
             }
 
-            match parameter.represented_rational_value(policy)? {
+            match parameter.scalar_value(policy)? {
                 Classification::Decided(Some(parameter)) => {
                     return self.other_parameter_for_cusp(
                         &BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
@@ -2064,7 +2064,7 @@ fn rational_overlap_parameter_for_exact_cusp(
             } else {
                 candidate.clone()
             };
-            map.data.parameter_cache.retain_represented_rational_value(
+            map.data.parameter_cache.retain_scalar_value(
                 map_parameter,
                 Some(parameter.clone()),
                 policy,
@@ -2178,7 +2178,7 @@ fn rational_overlap_parameter_for_exact_cusp(
             } else {
                 candidate.clone()
             };
-            map.data.parameter_cache.retain_represented_rational_value(
+            map.data.parameter_cache.retain_scalar_value(
                 map_parameter,
                 Some(parameter.clone()),
                 policy,
@@ -2260,7 +2260,7 @@ fn rational_overlap_parameter_for_exact_cusp(
             } else {
                 candidate.clone()
             };
-            map.data.parameter_cache.retain_represented_rational_value(
+            map.data.parameter_cache.retain_scalar_value(
                 map_parameter,
                 Some(parameter.clone()),
                 policy,
@@ -2352,7 +2352,7 @@ fn rational_overlap_parameter_for_exact_cusp(
         } else {
             candidate.clone()
         };
-        map.data.parameter_cache.retain_represented_rational_value(
+        map.data.parameter_cache.retain_scalar_value(
             map_parameter,
             Some(parameter.clone()),
             policy,
@@ -2501,7 +2501,7 @@ fn promote_curve_region_bezier_parameter(
     policy.strict_predicate_pass(|| parameter.promoted_bezier_parameter_complete(policy))
 }
 
-fn rational_mapped_cusp_represented_rational(
+fn rational_mapped_cusp_scalar_value(
     map: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     contact: &BezierAlgebraicCuspSemicircleRationalMapContact2,
     policy: &CurveContext,
@@ -2513,9 +2513,9 @@ fn rational_mapped_cusp_represented_rational(
         ..
     } = &map.data.system
     else {
-        // A pair-radial angular value can be rational, but proving that fact
-        // requires eliminating both selected source roots.  It remains an
-        // exact mapped scalar until a caller actually needs such a promotion.
+        // Projecting this pair-radial angular value would require eliminating
+        // both selected source roots. Keep its exact mapped representation
+        // until a caller needs that scalar projection.
         return Ok(Classification::Decided(None));
     };
     let other_parameter =
@@ -2528,7 +2528,7 @@ fn rational_mapped_cusp_represented_rational(
     if let Some(value) = map
         .data
         .parameter_cache
-        .cached_represented_rational_value(&other_parameter, policy)
+        .cached_scalar_value(&other_parameter, policy)
     {
         return Ok(Classification::Decided(value));
     }
@@ -2580,23 +2580,19 @@ fn rational_mapped_cusp_represented_rational(
             )
         }
     };
-    let result = mapped_cusp_represented_rational_from_incidence(
-        incidence,
-        cusp_parameter,
-        policy,
-        |parameter| map.mapped_contact_order_to_real(contact, parameter, policy),
-    )?;
+    let result =
+        mapped_cusp_scalar_value_from_incidence(incidence, cusp_parameter, policy, |parameter| {
+            map.mapped_contact_order_to_real(contact, parameter, policy)
+        })?;
     if let Classification::Decided(value) = &result {
-        map.data.parameter_cache.retain_represented_rational_value(
-            other_parameter,
-            value.clone(),
-            policy,
-        );
+        map.data
+            .parameter_cache
+            .retain_scalar_value(other_parameter, value.clone(), policy);
     }
     Ok(result)
 }
 
-fn parallel_mapped_cusp_represented_rational(
+fn parallel_mapped_cusp_scalar_value(
     map: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
     contact: &BezierAlgebraicCuspSemicircleParallelContact2,
     policy: &CurveContext,
@@ -2604,17 +2600,17 @@ fn parallel_mapped_cusp_represented_rational(
     if let Some(value) = map
         .data
         .parameter_cache
-        .cached_represented_rational_value(&contact.parallel_parameter, policy)
+        .cached_scalar_value(&contact.parallel_parameter, policy)
     {
         return Ok(Classification::Decided(value));
     }
     let Some((cusp_parameter, _, diameter, radius_squared_denominator, speed_squared)) =
         map.data.one_field_system()
     else {
-        // A pair-radial map remains an exact procedural scalar. Discovering
-        // an independently represented rational value would require a second
-        // three-axis projection with the compact cusp parameter as its target;
-        // retain the exact map until that promotion is explicitly needed.
+        // A pair-radial map remains an exact procedural scalar. An independent
+        // scalar witness would require a second three-axis projection with
+        // the compact cusp parameter as its target; retain the exact map
+        // until that projection is needed.
         return Ok(Classification::Decided(None));
     };
     let other_parameter = match contact
@@ -2651,14 +2647,12 @@ fn parallel_mapped_cusp_represented_rational(
         ),
         &bivariate_multiply(&radical, &radical),
     );
-    let result = mapped_cusp_represented_rational_from_incidence(
-        incidence,
-        cusp_parameter,
-        policy,
-        |parameter| map.contact_order_to_real(contact, parameter, policy),
-    )?;
+    let result =
+        mapped_cusp_scalar_value_from_incidence(incidence, cusp_parameter, policy, |parameter| {
+            map.contact_order_to_real(contact, parameter, policy)
+        })?;
     if let Classification::Decided(value) = &result {
-        map.data.parameter_cache.retain_represented_rational_value(
+        map.data.parameter_cache.retain_scalar_value(
             contact.parallel_parameter.clone(),
             value.clone(),
             policy,
@@ -2667,7 +2661,7 @@ fn parallel_mapped_cusp_represented_rational(
     Ok(result)
 }
 
-fn mapped_cusp_represented_rational_from_incidence(
+fn mapped_cusp_scalar_value_from_incidence(
     incidence: BivariatePolynomial,
     cusp_parameter: &BezierParameter2,
     policy: &CurveContext,
@@ -2714,7 +2708,7 @@ fn mapped_cusp_represented_rational_from_incidence(
             }
             Classification::Decided(std::cmp::Ordering::Equal) => {
                 return Err(CurveError::Topology(
-                    "mapped cusp cut had multiple exact rational values".into(),
+                    "mapped cusp cut had multiple scalar value witnesses".into(),
                 ));
             }
             Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater) => {}
@@ -41638,7 +41632,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             parameter,
             BezierAlgebraicCuspSemicircleParameter2::Mapped(_)
         ) {
-            match parameter.represented_rational_value(policy)? {
+            match parameter.scalar_value(policy)? {
                 Classification::Decided(Some(parameter)) => {
                     return self.other_parameter_for_exact_cusp(&parameter, policy);
                 }
@@ -42302,7 +42296,7 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
         }
     }
 
-    fn cached_represented_rational_value(
+    fn cached_scalar_value(
         &self,
         parameter: &BezierParameter2,
         policy: &CurveContext,
@@ -42312,10 +42306,12 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
             .expect("cusp parameter cache mutex poisoned")
             .iter()
             .find_map(|(cached, evidence)| match evidence {
-                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(
-                    value,
-                ) if cached == parameter => Some(value.clone()),
-                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512Rational(
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ScalarValue(value)
+                    if cached == parameter =>
+                {
+                    Some(value.clone())
+                }
+                BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512ScalarValue(
                     value,
                 ) if cached == parameter && policy.permits_approximate_512() => {
                     policy.observe_approximate_512();
@@ -42325,18 +42321,18 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
             })
     }
 
-    fn retain_represented_rational_value(
+    fn retain_scalar_value(
         &self,
         parameter: BezierParameter2,
         value: Option<Real>,
         policy: &CurveContext,
     ) {
         let evidence = if policy.retained_object_policy().selects_approximate_512() {
-            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512Rational(Box::new(
-                value,
-            ))
+            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512ScalarValue(
+                Box::new(value),
+            )
         } else {
-            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(value)
+            BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ScalarValue(value)
         };
         let mut cache = self
             .entries
@@ -42346,14 +42342,14 @@ impl BezierAlgebraicCuspSemicircleParameterCache2 {
             cached == &parameter
                 && matches!(
                     retained,
-                    BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(_)
-                        | BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512Rational(_)
+                    BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ScalarValue(_)
+                        | BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512ScalarValue(_)
                 )
         }) {
             if !matches!(
                 (&*retained, &evidence),
-                (BezierAlgebraicCuspSemicircleParameterCacheEvidence2::RepresentedRational(_),
-                 BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512Rational(_))
+                (BezierAlgebraicCuspSemicircleParameterCacheEvidence2::ScalarValue(_),
+                 BezierAlgebraicCuspSemicircleParameterCacheEvidence2::Approximate512ScalarValue(_))
             ) {
                 *retained = evidence;
             }
@@ -42840,7 +42836,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             .and_then(|parameter| {
                 self.data
                     .parameter_cache
-                    .cached_represented_rational_value(parameter, policy)
+                    .cached_scalar_value(parameter, policy)
             })
             .flatten();
         if let Some(represented) = represented {
@@ -51301,31 +51297,28 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         Ok(Classification::Decided((lower, representative, upper)))
     }
 
-    /// Promotes a compact mapped cut only when its retained equations prove an
-    /// exact rational value. This is deliberately narrower than finite
-    /// projection: a nonrational mapped value remains mapped, while rational
-    /// and analytic source maps reconstruct a candidate polynomial in the
-    /// selected cusp field and accept a value only after exact map replay.
-    fn represented_rational_value(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<Real>>> {
+    /// Projects a cut into a scalar when its retained equations provide a
+    /// witness. The result can be any exact `Real`; this is not a rationality
+    /// test. Rational and analytic source maps reconstruct candidate values
+    /// in the selected cusp field and replay the map under the requested
+    /// policy. Cuts without an available scalar witness remain mapped.
+    fn scalar_value(&self, policy: &CurveContext) -> CurveResult<Classification<Option<Real>>> {
         self.validate_policy(policy)?;
         match self {
             Self::Exact(parameter) => Ok(Classification::Decided(Some(parameter.clone()))),
             Self::Mapped(data) => match data.as_ref() {
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
-                    rational_mapped_cusp_represented_rational(map, contact, policy)
+                    rational_mapped_cusp_scalar_value(map, contact, policy)
                 }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { map, contact } => {
-                    parallel_mapped_cusp_represented_rational(map, contact, policy)
+                    parallel_mapped_cusp_scalar_value(map, contact, policy)
                 }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap {
                     overlap,
                     source,
                     ..
                 } if overlap.has_exact_endpoint_map() => {
-                    Ok(source.represented_rational_value(policy)?.map(|parameter| {
+                    Ok(source.scalar_value(policy)?.map(|parameter| {
                         parameter.map(|parameter| {
                             if overlap.data.orientation == RationalBezierOverlapOrientation2::Same {
                                 parameter
@@ -51365,12 +51358,12 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 BezierAlgebraicCuspSemicircleMappedParameterData2::SimilarityTransport {
                     source,
                     ..
-                } => source.represented_rational_value(policy),
+                } => source.scalar_value(policy),
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer {
                     source,
                     half_angle,
                     ..
-                } => Ok(match source.represented_rational_value(policy)? {
+                } => Ok(match source.scalar_value(policy)? {
                     Classification::Decided(Some(source)) => {
                         cusp_chamfer_parameter_value(&source, half_angle, policy)?.map(Some)
                     }
@@ -51403,7 +51396,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         if semicircle.data.frame.rational().is_none() {
             return Ok(Classification::Decided(None));
         }
-        match self.represented_rational_value(policy)? {
+        match self.scalar_value(policy)? {
             Classification::Decided(Some(parameter)) => {
                 return Ok(semicircle.point_at(&parameter, policy)?.map(Some));
             }
@@ -51413,7 +51406,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             }
         }
         let Self::Mapped(data) = self else {
-            unreachable!("an exact cusp parameter always has a represented rational value");
+            unreachable!("an inline cusp parameter always has a scalar value");
         };
         if data.semicircle_carrier() != semicircle {
             return Ok(Classification::Decided(None));
@@ -51696,7 +51689,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         if source == offset {
             return self.coincident_point_image(source, policy);
         }
-        match self.represented_rational_value(policy)? {
+        match self.scalar_value(policy)? {
             Classification::Decided(Some(parameter)) => {
                 return Ok(offset.point_at(&parameter, policy)?.map(Some));
             }
@@ -51706,7 +51699,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             }
         }
         let Self::Mapped(data) = self else {
-            unreachable!("an exact cusp parameter always has a represented rational value");
+            unreachable!("an inline cusp parameter always has a scalar value");
         };
         if data.semicircle_carrier() != source {
             return Ok(Classification::Decided(None));
@@ -51761,7 +51754,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         if source == offset {
             return self.coincident_point_evidence(source, policy);
         }
-        match self.represented_rational_value(policy)? {
+        match self.scalar_value(policy)? {
             Classification::Decided(Some(parameter)) => {
                 return Ok(offset.point_evidence_at(&parameter, policy)?.map(Some));
             }
@@ -102729,7 +102722,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             Some(half_angle) => half_angle.clone(),
             None => Real::zero(),
         };
-        let represented = source.represented_rational_value(policy)?;
+        let represented = source.scalar_value(policy)?;
         let (parameter, point) = match represented {
             Classification::Decided(Some(source)) => {
                 let parameter =
@@ -103314,7 +103307,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             let half = (Real::one() / Real::from(2_i8))?;
             for start_endpoint in [true, false] {
                 let parameter = self.endpoint_parameter(start_endpoint);
-                let parameter = match parameter.represented_rational_value(policy)? {
+                let parameter = match parameter.scalar_value(policy)? {
                     Classification::Decided(Some(parameter)) => parameter,
                     Classification::Decided(None) => continue,
                     Classification::Uncertain(_) => continue,
@@ -134545,8 +134538,8 @@ mod conversion_tests {
                     panic!("the corresponding ordinary cut must remain mapped");
                 };
                 assert_eq!(
-                    rebuilt.represented_rational_value(&policy).unwrap(),
-                    expected.represented_rational_value(&policy).unwrap(),
+                    rebuilt.scalar_value(&policy).unwrap(),
+                    expected.scalar_value(&policy).unwrap(),
                 );
             }
         }
@@ -135993,7 +135986,7 @@ mod conversion_tests {
         let constructed =
             crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
                 assert_eq!(real_sign(&zero, attempt), Some(RealSign::Zero));
-                parameter.represented_rational_value(attempt).unwrap()
+                parameter.scalar_value(attempt).unwrap()
             });
         assert_eq!(
             constructed.certainty,
@@ -136005,7 +135998,7 @@ mod conversion_tests {
         );
         let replayed =
             crate::policy::resolve_certified_value(&CurveContext::APPROXIMATE_512, |attempt| {
-                parameter.represented_rational_value(attempt).unwrap()
+                parameter.scalar_value(attempt).unwrap()
             });
         assert_eq!(replayed.certainty, CurveCertainty::Approximate512Consumed);
         assert_eq!(replayed.value, Classification::Decided(Some(third.clone())));
@@ -136013,7 +136006,7 @@ mod conversion_tests {
         // cache entry can then answer either policy without a terminal.
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let certified = crate::policy::resolve_certified_value(&policy, |attempt| {
-                parameter.represented_rational_value(attempt).unwrap()
+                parameter.scalar_value(attempt).unwrap()
             });
             assert_eq!(certified.certainty, CurveCertainty::Certified);
             assert_eq!(
@@ -142737,9 +142730,7 @@ mod conversion_tests {
                 BezierAlgebraicCuspSemicircleParameter2::Mapped(_)
             ));
             assert_eq!(
-                cross_field_cusp_cut
-                    .represented_rational_value(&policy)
-                    .unwrap(),
+                cross_field_cusp_cut.scalar_value(&policy).unwrap(),
                 Classification::Decided(Some(quarter.clone())),
             );
             let Classification::Decided(cross_field_parallel_cut) = overlap
@@ -142790,9 +142781,7 @@ mod conversion_tests {
                 panic!("an algebraic rational-carrier cut must stay mapped");
             };
             assert_eq!(
-                algebraic_rational_cusp_cut
-                    .represented_rational_value(&policy)
-                    .unwrap(),
+                algebraic_rational_cusp_cut.scalar_value(&policy).unwrap(),
                 Classification::Decided(None),
             );
             let Classification::Decided(mapped_cut_fragment) =
@@ -143662,9 +143651,7 @@ mod conversion_tests {
                 panic!("an algebraic analytic-carrier cut must stay mapped");
             };
             assert_eq!(
-                algebraic_parallel_cusp_cut
-                    .represented_rational_value(&policy)
-                    .unwrap(),
+                algebraic_parallel_cusp_cut.scalar_value(&policy).unwrap(),
                 Classification::Decided(None),
             );
             let Classification::Decided(
@@ -146269,7 +146256,7 @@ mod conversion_tests {
                 panic!("the nonrepresented analytic cut must map onto the selected circle");
             };
             assert_eq!(
-                cusp_cut.represented_rational_value(&policy).unwrap(),
+                cusp_cut.scalar_value(&policy).unwrap(),
                 Classification::Decided(None),
             );
             let Classification::Decided(round_trip) = overlap
@@ -146723,7 +146710,7 @@ mod conversion_tests {
                 panic!("the algebraic conic cut must remain mapped");
             };
             assert_eq!(
-                cusp_cut.represented_rational_value(&policy).unwrap(),
+                cusp_cut.scalar_value(&policy).unwrap(),
                 Classification::Decided(None),
             );
             let Classification::Decided(fragment) =
@@ -147183,11 +147170,11 @@ mod conversion_tests {
                         Classification::Decided(std::cmp::Ordering::Greater),
                     );
                     assert_eq!(
-                        right_cut.represented_rational_value(&policy).unwrap(),
+                        right_cut.scalar_value(&policy).unwrap(),
                         Classification::Decided(None),
                     );
                     assert_eq!(
-                        left_cut.represented_rational_value(&policy).unwrap(),
+                        left_cut.scalar_value(&policy).unwrap(),
                         Classification::Decided(None),
                     );
                     let arc = BezierAlgebraicCuspSemicircleFragment2::try_new(
@@ -148228,7 +148215,7 @@ mod conversion_tests {
                     );
                     for parameter in [&right_target_parameter, &left_target_parameter] {
                         assert_eq!(
-                            parameter.represented_rational_value(&policy)?,
+                            parameter.scalar_value(&policy)?,
                             Classification::Decided(None),
                         );
                         assert_eq!(
@@ -153301,7 +153288,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     panic!("the algebraic rational-carrier cut must map to the cusp");
                 };
                 assert_eq!(
-                    cut.represented_rational_value(&policy).unwrap(),
+                    cut.scalar_value(&policy).unwrap(),
                     Classification::Decided(None),
                 );
                 (source, cut)
