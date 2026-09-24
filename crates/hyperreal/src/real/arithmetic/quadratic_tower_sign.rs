@@ -19,7 +19,16 @@ impl Real {
     /// `None` means this value is outside that tower or its square relations do
     /// not decide the sign. The original value is unchanged.
     pub fn quadratic_tower_sign(&self) -> Option<RealSign> {
-        self.tower_computable().quadratic_tower_sign()
+        let scale_sign = real_sign_from_num(self.rational.sign());
+        if scale_sign == RealSign::Zero || matches!(self.class, One) {
+            return Some(scale_sign);
+        }
+        // Query the shared payload so its reduction survives this call. The
+        // outer rational factor changes only the sign, not the required field.
+        multiply_public_sign(
+            Some(scale_sign),
+            self.computable_ref().quadratic_tower_sign(),
+        )
     }
 
     /// Rational center `s` when this value is `s + r√q` with `r > 0` and only
@@ -58,6 +67,26 @@ impl Real {
 #[cfg(test)]
 mod quadratic_tower_real_tests {
     use super::*;
+
+    #[test]
+    fn scaled_tower_sign_retains_the_shared_payload_proof() {
+        let root = Real::from(3).sqrt().unwrap() + Real::from(7).sqrt().unwrap();
+        let expanded = Real::from(10) + Real::from(2) * Real::from(21).sqrt().unwrap();
+        let difference = &root * &root - expanded;
+        for scale in [
+            Rational::fraction(7, 13).unwrap(),
+            Rational::fraction(-7, 13).unwrap(),
+        ] {
+            let value = &difference * Real::from(scale);
+            let shared = value.clone();
+            assert_eq!(value.quadratic_tower_sign(), Some(RealSign::Zero));
+            assert_eq!(shared.immediate_sign(), Some(RealSign::Zero));
+            for delta in [Real::one(), -Real::one()] {
+                let shifted = &value + &delta;
+                assert_eq!(shifted.quadratic_tower_sign(), delta.immediate_sign());
+            }
+        }
+    }
 
     #[test]
     fn biquadratic_bases_share_sums_products_and_inverses() {

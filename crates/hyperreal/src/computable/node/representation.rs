@@ -2,7 +2,7 @@
 ///
 /// This is a demand-driven exact-real representation: every node can produce an
 /// integer approximation at a requested binary precision, and caches store only
-/// approximations proven for that node.
+/// approximations and exact reductions proven for that node.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg(not(verus_keep_ghost))]
@@ -23,7 +23,7 @@ pub(super) struct Node {
     facts: AtomicFacts,
     approximation: Approximation,
     #[cfg_attr(feature = "serde", serde(skip, default))]
-    cache: ApproximationCache,
+    cache: EvaluationCache,
 }
 
 #[cfg(not(verus_keep_ghost))]
@@ -56,9 +56,14 @@ impl Node {
             ),
         };
         Self {
-            facts: AtomicFacts::new(bound, exact_sign, contains_inverse_trig_or_pi, linear_demand),
+            facts: AtomicFacts::new(
+                bound,
+                exact_sign,
+                contains_inverse_trig_or_pi,
+                linear_demand,
+            ),
             approximation,
-            cache: ApproximationCache::new(),
+            cache: EvaluationCache::new(),
         }
     }
 
@@ -71,8 +76,8 @@ impl Node {
         } else {
             self.contains_inverse_trig_or_pi()
         };
-        let demand = ((bits & AtomicFacts::LINEAR_DEMAND_MASK)
-            >> AtomicFacts::LINEAR_DEMAND_SHIFT) as u16 as i16;
+        let demand = ((bits & AtomicFacts::LINEAR_DEMAND_MASK) >> AtomicFacts::LINEAR_DEMAND_SHIFT)
+            as u16 as i16;
         (contains_inverse_trig_or_pi, demand)
     }
 
@@ -88,9 +93,7 @@ impl Node {
             Approximation::Negate(child)
             | Approximation::Offset(child, _)
             | Approximation::SincSmall(child)
-            | Approximation::CoscSmall(child) => {
-                child.internal.contains_inverse_trig_or_pi()
-            }
+            | Approximation::CoscSmall(child) => child.internal.contains_inverse_trig_or_pi(),
             Approximation::Add(left, right) | Approximation::Multiply(left, right) => {
                 left.internal.contains_inverse_trig_or_pi()
                     || right.internal.contains_inverse_trig_or_pi()
@@ -132,22 +135,27 @@ struct CachedApproximation {
     value: BigInt,
 }
 
-/// Lazily allocated synchronized single-value cache. Keeping the value directly
-/// inside the lock avoids a second allocation and atomic reference-count update
-/// for every published approximation. Readers clone or coarsen the integer
-/// under the read lock; only the owned result escapes the guard.
+#[derive(Default)]
 #[cfg(not(verus_keep_ghost))]
-struct ApproximationCache(
-    std::sync::atomic::AtomicPtr<std::sync::RwLock<Option<CachedApproximation>>>,
-);
+struct CachedEvaluation {
+    approximation: Option<CachedApproximation>,
+    quadratic_tower: Option<Box<Tower>>,
+}
+
+/// Lazily allocated synchronized evaluation cache. Approximation-only nodes
+/// pay for one optional pointer, not an inline algebraic normal form. A retained
+/// tower contains only rational coefficients and never keeps an expression
+/// graph alive. Readers clone under the lock; no guard escapes into evaluation.
+#[cfg(not(verus_keep_ghost))]
+struct EvaluationCache(std::sync::atomic::AtomicPtr<std::sync::RwLock<CachedEvaluation>>);
 
 #[cfg(not(verus_keep_ghost))]
-impl ApproximationCache {
+impl EvaluationCache {
     fn new() -> Self {
         Self(std::sync::atomic::AtomicPtr::new(std::ptr::null_mut()))
     }
 
-    fn cell(&self) -> Option<&std::sync::RwLock<Option<CachedApproximation>>> {
+    fn cell(&self) -> Option<&std::sync::RwLock<CachedEvaluation>> {
         let pointer = self.0.load(std::sync::atomic::Ordering::Acquire);
         if pointer.is_null() {
             None
@@ -158,12 +166,14 @@ impl ApproximationCache {
         }
     }
 
-    fn cell_or_init(&self) -> &std::sync::RwLock<Option<CachedApproximation>> {
+    fn cell_or_init(&self) -> &std::sync::RwLock<CachedEvaluation> {
         if let Some(cell) = self.cell() {
             return cell;
         }
 
-        let allocated = Box::into_raw(Box::new(std::sync::RwLock::new(None)));
+        let allocated = Box::into_raw(Box::new(
+            std::sync::RwLock::new(CachedEvaluation::default()),
+        ));
         let pointer = match self.0.compare_exchange(
             std::ptr::null_mut(),
             allocated,
@@ -183,14 +193,20 @@ impl ApproximationCache {
     }
 
     fn get(&self) -> Option<(Precision, BigInt)> {
-        let guard = self.cell()?.read().unwrap_or_else(|error| error.into_inner());
-        let cached = guard.as_ref()?;
+        let guard = self
+            .cell()?
+            .read()
+            .unwrap_or_else(|error| error.into_inner());
+        let cached = guard.approximation.as_ref()?;
         Some((cached.precision, cached.value.clone()))
     }
 
     fn at_precision(&self, p: Precision) -> Option<BigInt> {
-        let guard = self.cell()?.read().unwrap_or_else(|error| error.into_inner());
-        Self::value_at_precision(guard.as_ref()?, p)
+        let guard = self
+            .cell()?
+            .read()
+            .unwrap_or_else(|error| error.into_inner());
+        Self::value_at_precision(guard.approximation.as_ref()?, p)
     }
 
     #[inline(always)]
@@ -223,33 +239,55 @@ impl ApproximationCache {
         // Concurrent evaluations may finish out of order. Never let a coarser
         // result evict a finer result already published.
         if guard
+            .approximation
             .as_ref()
             .is_none_or(|cached| p < cached.precision)
         {
-            *guard = Some(CachedApproximation {
+            guard.approximation = Some(CachedApproximation {
                 precision: p,
                 value,
             });
         }
     }
+
+    fn quadratic_tower(&self) -> Option<Tower> {
+        let guard = self
+            .cell()?
+            .read()
+            .unwrap_or_else(|error| error.into_inner());
+        guard.quadratic_tower.as_deref().cloned()
+    }
+
+    fn store_quadratic_tower(&self, tower: Tower) {
+        if !tower.has_bounded_coefficients() {
+            return;
+        }
+        let mut guard = self
+            .cell_or_init()
+            .write()
+            .unwrap_or_else(|error| error.into_inner());
+        if guard.quadratic_tower.is_none() {
+            guard.quadratic_tower = Some(Box::new(tower));
+        }
+    }
 }
 
 #[cfg(not(verus_keep_ghost))]
-impl Default for ApproximationCache {
+impl Default for EvaluationCache {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[cfg(not(verus_keep_ghost))]
-impl std::fmt::Debug for ApproximationCache {
+impl std::fmt::Debug for EvaluationCache {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.get().fmt(formatter)
     }
 }
 
 #[cfg(not(verus_keep_ghost))]
-impl Drop for ApproximationCache {
+impl Drop for EvaluationCache {
     fn drop(&mut self) {
         let pointer = *self.0.get_mut();
         if !pointer.is_null() {
@@ -387,8 +425,7 @@ impl AtomicFacts {
                     Some(Sign::Minus) => 2,
                     Some(Sign::NoSign) => 3,
                 };
-                let mut encoded =
-                    Self::TAG_NONZERO | ((sign as u64) << Self::SIGN_SHIFT);
+                let mut encoded = Self::TAG_NONZERO | ((sign as u64) << Self::SIGN_SHIFT);
                 if let Some(msd) = msd {
                     encoded |= Self::MSD_PRESENT | ((msd as u32 as u64) << Self::MSD_SHIFT);
                 }
