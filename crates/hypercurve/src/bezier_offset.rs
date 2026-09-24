@@ -2159,11 +2159,6 @@ fn rational_overlap_parameter_for_exact_cusp(
             true,
             policy,
             |candidate| {
-                let candidate = candidate.as_bezier_parameter().ok_or_else(|| {
-                    CurveError::Topology(
-                        "a recursive rational inverse produced a non-Bezier candidate".into(),
-                    )
-                })?;
                 policy.strict_predicate_pass(|| {
                     system.diameter_parameter_sign(
                         candidate,
@@ -42788,7 +42783,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             system,
         } = &self.data.system
         {
-            return system.tangent_cross_dot_source_sign_at_region_parameter(
+            return system.tangent_cross_dot_source_sign(
                 &contact.other_parameter,
                 cross_scale,
                 dot_scale,
@@ -43028,7 +43023,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             system,
         } = &self.data.system
         {
-            let sign = system.diameter_parameter_sign_at_region_parameter(
+            let sign = system.diameter_parameter_sign(
                 &contact.other_parameter,
                 &denominator,
                 &radial_coefficient,
@@ -43295,7 +43290,7 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
             BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::RecursiveSelectedRadial {
                 system,
             } => system.tangent_cross_dot_source_sign(
-                &contact.parallel_parameter,
+                &CurveParameter2::from(contact.parallel_parameter.clone()),
                 cross_scale,
                 dot_scale,
                 policy,
@@ -43479,7 +43474,7 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
             BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::RecursiveSelectedRadial {
                 system,
             } => system.diameter_parameter_sign(
-                &contact.parallel_parameter,
+                &CurveParameter2::from(contact.parallel_parameter.clone()),
                 &denominator,
                 &radial_coefficient,
                 policy,
@@ -62906,35 +62901,38 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         cross_scale: &Real,
         dot_scale: &Real,
     ) -> Option<BezierRecursiveQuadraticParallelExpression2> {
+        // The stored dot expression includes one positive target-speed
+        // factor. Apply that same factor to cross before combining them.
         Some(BezierRecursiveQuadraticParallelExpression2 {
-            rational: recursive_quadratic_polynomial_combine(
+            rational: recursive_quadratic_polynomial_scale_real(
+                &self.tangent_dot_source.rational,
+                dot_scale,
+            )?,
+            radical: recursive_quadratic_polynomial_combine(
                 &recursive_quadratic_polynomial_scale_real(
                     &self.tangent_cross_source,
                     cross_scale,
                 )?,
                 &recursive_quadratic_polynomial_scale_real(
-                    &self.tangent_dot_source.rational,
+                    &self.tangent_dot_source.radical,
                     dot_scale,
                 )?,
                 false,
-            )?,
-            radical: recursive_quadratic_polynomial_scale_real(
-                &self.tangent_dot_source.radical,
-                dot_scale,
             )?,
         })
     }
 
     fn tangent_cross_dot_source_sign(
         &self,
-        target_parameter: &BezierParameter2,
+        target_parameter: &CurveParameter2,
         cross_scale: &Real,
         dot_scale: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        if let Some(fast_path) = self.direct_pair_fast_path.as_ref()
+        if let Some(parameter) = target_parameter.as_bezier_parameter()
+            && let Some(fast_path) = self.direct_pair_fast_path.as_ref()
             && let Classification::Decided(sign) = fast_path.tangent_cross_dot_source_sign(
-                target_parameter,
+                parameter,
                 cross_scale,
                 dot_scale,
                 policy,
@@ -62948,10 +62946,13 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
             );
             return Ok(Classification::Decided(sign));
         }
-        let interval_expression = self
-            .tangent_cross_dot_source_expression(cross_scale, dot_scale)
-            .and_then(|expression| self.expression_interval_sign(&expression, target_parameter));
-        if let Some(sign) = interval_expression {
+        let Some(expression) = self.tangent_cross_dot_source_expression(cross_scale, dot_scale)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if let Some(parameter) = target_parameter.as_bezier_parameter()
+            && let Some(sign) = self.expression_interval_sign(&expression, parameter)
+        {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -62966,86 +62967,20 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
             "recursive-circle-parallel-map-predicate",
             "recursive-tangent",
         );
-        let evaluation = match self.candidate_evaluation(target_parameter, policy)? {
-            Classification::Decided(Some(evaluation)) => evaluation,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let cross = evaluation
-            .polynomial_value(&self.tangent_cross_source)
-            .and_then(|value| value.scale(cross_scale))
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive circle/parallel tangent cross exceeded its field budget".into(),
-                )
-            })?;
-        let dot = evaluation
-            .expression_value(&self.tangent_dot_source)
-            .and_then(|value| value.scale(dot_scale))
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive circle/parallel tangent dot exceeded its field budget".into(),
-                )
-            })?;
-        cross
-            .add(&dot)
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive circle/parallel tangent predicate crossed fields".into(),
-                )
-            })?
-            .sign(policy)
-    }
-
-    fn tangent_cross_dot_source_sign_at_region_parameter(
-        &self,
-        target_parameter: &CurveParameter2,
-        cross_scale: &Real,
-        dot_scale: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        if let Some(parameter) = target_parameter.as_bezier_parameter() {
-            return self.tangent_cross_dot_source_sign(parameter, cross_scale, dot_scale, policy);
-        }
-        if !self.unit_target_speed {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let Some(dot) = self.expression_polynomial(&self.tangent_dot_source) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let Some(predicate) = recursive_quadratic_polynomial_combine(
-            &recursive_quadratic_polynomial_scale_real(&self.tangent_cross_source, cross_scale)
-                .ok_or_else(|| {
-                    CurveError::Topology(
-                        "a recursive circle/rational tangent cross exceeded its field".into(),
-                    )
-                })?,
-            &recursive_quadratic_polynomial_scale_real(&dot, dot_scale).ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive circle/rational tangent dot exceeded its field".into(),
-                )
-            })?,
-            false,
-        ) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        self.polynomial_sign_at_region_parameter(&predicate, target_parameter, policy)
+        self.expression_sign_at_region_parameter(&expression, target_parameter, policy)
     }
 
     fn diameter_parameter_sign(
         &self,
-        target_parameter: &BezierParameter2,
+        target_parameter: &CurveParameter2,
         denominator: &Real,
         radial_coefficient: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        if let Some(fast_path) = self.direct_pair_fast_path.as_ref()
+        if let Some(parameter) = target_parameter.as_bezier_parameter()
+            && let Some(fast_path) = self.direct_pair_fast_path.as_ref()
             && let Classification::Decided(sign) = fast_path.diameter_parameter_sign(
-                target_parameter,
+                parameter,
                 denominator,
                 radial_coefficient,
                 policy,
@@ -63059,9 +62994,12 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
             );
             return Ok(Classification::Decided(sign));
         }
-        if let Some(sign) = self
-            .diameter_parameter_expression(denominator, radial_coefficient)
-            .and_then(|expression| self.expression_interval_sign(&expression, target_parameter))
+        let Some(expression) = self.diameter_parameter_expression(denominator, radial_coefficient)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        if let Some(parameter) = target_parameter.as_bezier_parameter()
+            && let Some(sign) = self.expression_interval_sign(&expression, parameter)
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -63077,85 +63015,7 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
             "recursive-circle-parallel-map-predicate",
             "recursive-diameter",
         );
-        let evaluation = match self.candidate_evaluation(target_parameter, policy)? {
-            Classification::Decided(Some(evaluation)) => evaluation,
-            Classification::Decided(None) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let diameter = evaluation
-            .expression_value(&self.diameter)
-            .and_then(|value| value.scale(denominator))
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive circle/parallel diameter exceeded its field budget".into(),
-                )
-            })?;
-        let radius = evaluation
-            .expression_value(&self.radius_squared_denominator)
-            .and_then(|value| value.scale(radial_coefficient))
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive circle/parallel radius exceeded its field budget".into(),
-                )
-            })?;
-        diameter
-            .subtract(&radius)
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive circle/parallel angular predicate crossed fields".into(),
-                )
-            })?
-            .sign(policy)
-    }
-
-    fn diameter_parameter_sign_at_region_parameter(
-        &self,
-        target_parameter: &CurveParameter2,
-        denominator: &Real,
-        radial_coefficient: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        if let Some(parameter) = target_parameter.as_bezier_parameter() {
-            return self.diameter_parameter_sign(
-                parameter,
-                denominator,
-                radial_coefficient,
-                policy,
-            );
-        }
-        if !self.unit_target_speed {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        let (Some(diameter), Some(radius)) = (
-            self.expression_polynomial(&self.diameter),
-            self.expression_polynomial(&self.radius_squared_denominator),
-        ) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let Some(predicate) = recursive_quadratic_polynomial_combine(
-            &recursive_quadratic_polynomial_scale_real(&diameter, denominator).ok_or_else(
-                || {
-                    CurveError::Topology(
-                        "a recursive circle/rational diameter exceeded its field".into(),
-                    )
-                },
-            )?,
-            &recursive_quadratic_polynomial_scale_real(&radius, radial_coefficient).ok_or_else(
-                || {
-                    CurveError::Topology(
-                        "a recursive circle/rational radius exceeded its field".into(),
-                    )
-                },
-            )?,
-            true,
-        ) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        self.polynomial_sign_at_region_parameter(&predicate, target_parameter, policy)
+        self.expression_sign_at_region_parameter(&expression, target_parameter, policy)
     }
 }
 
@@ -156687,6 +156547,136 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     assert_eq!(outcome.value, Classification::Decided(expected));
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert!(point.data.recursive_projective_point.get().is_none());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_circle_queries_preserve_tangent_scale_and_local_roots() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(u)=(1/5+3u,17/20+4u+u^2). At u=0 its left 1/4
+        // parallel reaches Q=(0,1), with source tangent H=(3,4).
+        let native = QuadraticBezier2::new(
+            Point2::new(q(1, 5), q(17, 20)),
+            Point2::new(q(17, 10), q(57, 20)),
+            Point2::new(q(16, 5), q(117, 20)),
+        )
+        .parallel_left(q(1, 4))
+        .unwrap();
+        // Compose u=t^2-2: P(t)=(3t^2-29/5,t^4-63/20).
+        // At the positive root of t^2-2, Q is unchanged and H is
+        // multiplied by the strictly positive factor 2t.
+        let local = RationalBezier2::try_new(
+            vec![
+                Point2::new(q(-29, 5), q(-63, 20)),
+                Point2::new(q(-29, 5), q(-63, 20)),
+                Point2::new(q(-53, 10), q(-63, 20)),
+                Point2::new(q(-43, 10), q(-63, 20)),
+                Point2::new(q(-14, 5), q(-43, 20)),
+            ],
+            vec![Real::one(); 5],
+        )
+        .unwrap()
+        .parallel_left(q(1, 4))
+        .unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = independent_pair_radial_unit_circle(&policy);
+            let turn = real_sign(&circle.turn_sign(), &policy).unwrap();
+            for (target, local_parameter) in [(&native, false), (&local, true)] {
+                for retain_pair_accelerator in [false, true] {
+                    let Classification::Decided(mut system) = circle
+                        .recursive_selected_radial_target_system(target, false, false, &policy)
+                        .unwrap()
+                    else {
+                        panic!("the exact circle and parallel retain their recursive field")
+                    };
+                    if !retain_pair_accelerator {
+                        Arc::get_mut(&mut system).unwrap().direct_pair_fast_path = None;
+                    }
+                    let parameter = if local_parameter {
+                        let defining = recursive_quadratic_real_polynomial(
+                            &system.field,
+                            &[Real::from(-2_i8), Real::zero(), Real::one()],
+                        )
+                        .unwrap();
+                        let mut parameters = policy
+                            .bounded_exact_predicate_pass(|| {
+                                recursive_quadratic_polynomial_local_parameters(
+                                    &system.field,
+                                    &defining,
+                                    [&Real::one(), &Real::from(2_i8)],
+                                    &policy,
+                                )
+                            })
+                            .unwrap()
+                            .expect("the positive root has a local singleton certificate");
+                        assert_eq!(parameters.len(), 1);
+                        let parameter = parameters.pop().unwrap();
+                        assert!(parameter.as_recursive_projective().is_some());
+                        parameter
+                    } else {
+                        CurveParameter2::from(Real::zero())
+                    };
+                    let incidence = crate::policy::resolve_certified_value(&policy, |attempt| {
+                        attempt.bounded_exact_predicate_pass(|| {
+                            system
+                                .expression_sign_at_region_parameter(
+                                    &system.circle,
+                                    &parameter,
+                                    attempt,
+                                )
+                                .unwrap()
+                        })
+                    });
+                    assert_eq!(incidence.value, Classification::Decided(RealSign::Zero));
+                    assert_eq!(incidence.certainty, CurveCertainty::Certified);
+                    // The circle tangent is turn*(-1,0). Cross=-4*turn
+                    // and dot=-3*turn share the same positive source scale.
+                    // Hence (3+epsilon)*cross-4*dot = -4*turn*epsilon.
+                    for (shift, expected) in [
+                        (Real::zero(), RealSign::Zero),
+                        (tiny.clone(), product_sign(turn, RealSign::Negative)),
+                        (-tiny.clone(), turn),
+                    ] {
+                        let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                            attempt.bounded_exact_predicate_pass(|| {
+                                system
+                                    .tangent_cross_dot_source_sign(
+                                        &parameter,
+                                        &(Real::from(3_i8) + &shift),
+                                        &Real::from(-4_i8),
+                                        attempt,
+                                    )
+                                    .unwrap()
+                            })
+                        });
+                        assert_eq!(result.value, Classification::Decided(expected));
+                        assert_eq!(result.certainty, CurveCertainty::Certified);
+                    }
+                    // The retained start radial is (-alpha,-alpha),
+                    // alpha^2=1/2 and alpha>0. Its diameter coordinate
+                    // at Q=(0,1) is -alpha, strictly between -1 and 0.
+                    for (radial, expected) in [(-1_i8, RealSign::Positive), (0, RealSign::Negative)]
+                    {
+                        let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                            attempt.bounded_exact_predicate_pass(|| {
+                                system
+                                    .diameter_parameter_sign(
+                                        &parameter,
+                                        &Real::one(),
+                                        &Real::from(radial),
+                                        attempt,
+                                    )
+                                    .unwrap()
+                            })
+                        });
+                        assert_eq!(result.value, Classification::Decided(expected));
+                        assert_eq!(result.certainty, CurveCertainty::Certified);
+                    }
+                    assert!(system.projection.is_none());
+                    assert!(system.incidence_univariate.get().is_none());
                 }
             }
         }
