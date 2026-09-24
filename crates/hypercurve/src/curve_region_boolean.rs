@@ -2792,7 +2792,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         chord_index: usize,
         rational: &RationalBezier2,
         regular_component: Option<&BezierParallelRationalComponent2>,
-        shared_source_parameter: Option<&BezierParameter2>,
+        shared_source_parameter: Option<&CurveParameter2>,
     ) -> ExactCurveResult<Option<RegionPairResult>> {
         let other_index = if chord_index == pair.first_carrier_index {
             pair.second_carrier_index
@@ -3324,7 +3324,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     pair.first_carrier_index,
                     pair.second_carrier_index,
                 )
-                .and_then(|(first_at_start, second_at_start)| {
+                .map(|(first_at_start, second_at_start)| {
                     let parallel_at_start = if parallel_index == pair.first_carrier_index {
                         first_at_start
                     } else {
@@ -3335,7 +3335,6 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     } else {
                         carrier_traversal_end(parallel_carrier)
                     }
-                    .as_bezier_parameter()
                 });
             if let Some(result) = self.algebraic_chord_rational_pair_result(
                 pair,
@@ -4715,7 +4714,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             chord_index,
                             &rational,
                             None,
-                            parameter.as_bezier_parameter(),
+                            Some(parameter),
                         )? {
                             result.contacts.push((**contact).clone());
                             return Ok(result);
@@ -5164,7 +5163,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 } else {
                                     carrier_traversal_end(other_carrier)
                                 };
-                                shared_parameter.as_bezier_parameter()
+                                Some(shared_parameter)
                             } else {
                                 None
                             };

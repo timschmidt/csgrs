@@ -78351,7 +78351,7 @@ impl BezierAlgebraicChord2 {
         &self,
         line: &LineSeg2,
         source: &RationalBezier2,
-        excluded_source_parameter: Option<&BezierParameter2>,
+        excluded_source_parameter: Option<&CurveParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<BezierAlgebraicChordRationalIntersections2>>> {
         if source.retained_circular_conic().is_none() {
@@ -78429,6 +78429,7 @@ impl BezierAlgebraicChord2 {
                 return Ok(Some(Classification::Uncertain(UncertaintyReason::RealSign)));
             };
             for source_parameter in source_parameters {
+                let source_parameter = CurveParameter2::from(source_parameter);
                 if let Some(excluded) = excluded_source_parameter {
                     match source_parameter.cmp_by_refinement(excluded, policy)? {
                         Classification::Decided(std::cmp::Ordering::Equal) => continue,
@@ -78440,7 +78441,7 @@ impl BezierAlgebraicChord2 {
                 }
                 contacts.push(BezierAlgebraicChordRationalContact2 {
                     chord_parameter: chord_parameter.clone(),
-                    other_parameter: CurveParameter2::from(source_parameter),
+                    other_parameter: source_parameter,
                     point: point.clone(),
                     tangent_cross_sign,
                 });
@@ -79130,7 +79131,7 @@ impl BezierAlgebraicChord2 {
         &self,
         source: &RationalBezier2,
         range: &CurveParameterRange2,
-        excluded_source_parameter: Option<&BezierParameter2>,
+        excluded_source_parameter: Option<&CurveParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicChordRationalIntersections2>>> {
         macro_rules! recursive_rational_uncertain {
@@ -79419,7 +79420,7 @@ impl BezierAlgebraicChord2 {
             range,
             strict_unit_crossing,
             certified_endpoint_roots,
-            excluded_source_parameter.and_then(BezierParameter2::scalar),
+            excluded_source_parameter.and_then(CurveParameter2::scalar),
             policy,
         )? {
             Classification::Decided(parameters) => parameters,
@@ -79442,8 +79443,7 @@ impl BezierAlgebraicChord2 {
                 eprintln!("algebraic chord/rational stage=candidate-begin");
             }
             if let Some(excluded) = excluded_source_parameter {
-                let excluded = CurveParameter2::from(excluded.clone());
-                match candidate.cmp_by_refinement(&excluded, policy)? {
+                match candidate.cmp_by_refinement(excluded, policy)? {
                     Classification::Decided(std::cmp::Ordering::Equal) => continue,
                     Classification::Decided(_) => {}
                     Classification::Uncertain(reason) => {
@@ -79689,7 +79689,7 @@ impl BezierAlgebraicChord2 {
         &self,
         source: &RationalBezier2,
         range: &CurveParameterRange2,
-        excluded_source_parameter: Option<&BezierParameter2>,
+        excluded_source_parameter: Option<&CurveParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
         self.validate_policy(policy)?;
@@ -79738,7 +79738,9 @@ impl BezierAlgebraicChord2 {
         // A represented parameter can still contain arbitrary exact values.
         // Reuse its certified incidence as a polynomial factor before circle
         // reconstruction asks a freshly solved point to prove endpoint equality.
-        if matches!(excluded_source_parameter, Some(BezierParameter2::Exact(_)))
+        if excluded_source_parameter
+            .and_then(CurveParameter2::scalar)
+            .is_some()
             && let Classification::Decided(Some(intersections)) =
                 policy.strict_predicate_pass(|| {
                     self.recursive_projective_rational_intersections(
@@ -79751,14 +79753,19 @@ impl BezierAlgebraicChord2 {
         {
             return Ok(Classification::Decided(intersections));
         }
-        let selected = match excluded_source_parameter {
-            Some(BezierParameter2::Algebraic(parameter)) => Some(parameter.clone()),
-            Some(BezierParameter2::Exact(_)) => None,
-            None => match self.algebraic_endpoint_parameter(policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(_) => None,
-            },
-        };
+        // Diagonal fiber deflation needs a univariate algebraic root. Other
+        // retained locations still participate in general contact ownership.
+        let selected =
+            match excluded_source_parameter.and_then(CurveParameter2::as_bezier_parameter) {
+                Some(BezierParameter2::Algebraic(parameter)) => Some(parameter.clone()),
+                None if excluded_source_parameter.is_none() => {
+                    match self.algebraic_endpoint_parameter(policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(_) => None,
+                    }
+                }
+                Some(BezierParameter2::Exact(_)) | None => None,
+            };
         if let Some(parameter) = selected {
             match self.source_related_intersections(
                 source,
@@ -79813,7 +79820,7 @@ impl BezierAlgebraicChord2 {
             for contact in line_contacts {
                 let source_parameter = contact.parameter().clone();
                 if let Some(excluded) = excluded_source_parameter {
-                    match source_parameter.cmp_by_refinement(excluded, policy)? {
+                    match excluded.cmp_by_refinement(&source_parameter.clone().into(), policy)? {
                         Classification::Decided(std::cmp::Ordering::Equal) => continue,
                         Classification::Decided(_) => {}
                         Classification::Uncertain(reason) => {
@@ -80849,7 +80856,7 @@ impl BezierAlgebraicChord2 {
         &self,
         source: &RationalBezier2,
         range: &CurveParameterRange2,
-        excluded_source_parameter: Option<&BezierParameter2>,
+        excluded_source_parameter: Option<&CurveParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
         self.validate_policy(policy)?;
@@ -80925,7 +80932,7 @@ impl BezierAlgebraicChord2 {
             Classification::Decided(std::cmp::Ordering::Equal) => {
                 return self.collinear_point_contact(
                     self.start_parameter(),
-                    source_upper_parameter.clone(),
+                    source_upper_parameter.clone().into(),
                     self.start().clone(),
                     excluded_source_parameter,
                     policy,
@@ -80945,7 +80952,7 @@ impl BezierAlgebraicChord2 {
             Classification::Decided(std::cmp::Ordering::Equal) => {
                 return self.collinear_point_contact(
                     self.end_parameter(),
-                    source_lower_parameter.clone(),
+                    source_lower_parameter.clone().into(),
                     self.end().clone(),
                     excluded_source_parameter,
                     policy,
@@ -81030,11 +81037,7 @@ impl BezierAlgebraicChord2 {
             )),
             std::cmp::Ordering::Equal => {
                 if let Some(excluded) = excluded_source_parameter {
-                    let excluded = CurveParameter2::from(excluded.clone());
-                    match lower
-                        .source_parameter
-                        .cmp_by_refinement(&excluded, policy)?
-                    {
+                    match lower.source_parameter.cmp_by_refinement(excluded, policy)? {
                         Classification::Decided(std::cmp::Ordering::Equal) => {
                             return Ok(Classification::Decided(
                                 BezierAlgebraicChordRationalIntersections2::Contacts(Vec::new()),
@@ -81108,7 +81111,7 @@ impl BezierAlgebraicChord2 {
     pub(crate) fn collinear_rational_intersections_on_regular_component(
         &self,
         component: &BezierParallelRationalComponent2,
-        excluded_source_parameter: Option<&BezierParameter2>,
+        excluded_source_parameter: Option<&CurveParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
         self.validate_policy(policy)?;
@@ -81194,7 +81197,7 @@ impl BezierAlgebraicChord2 {
         &self,
         source: &RationalBezier2,
         range: &CurveParameterRange2,
-        excluded_source_parameter: Option<&BezierParameter2>,
+        excluded_source_parameter: Option<&CurveParameter2>,
         certified_monotone: Option<std::cmp::Ordering>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
@@ -81383,10 +81386,9 @@ impl BezierAlgebraicChord2 {
                 continue;
             }
             if let Some(excluded) = excluded_source_parameter {
-                let excluded = CurveParameter2::from(excluded.clone());
                 match boundary
                     .source_parameter
-                    .cmp_by_refinement(&excluded, policy)?
+                    .cmp_by_refinement(excluded, policy)?
                 {
                     Classification::Decided(std::cmp::Ordering::Equal) => continue,
                     Classification::Decided(_) => {}
@@ -81422,9 +81424,9 @@ impl BezierAlgebraicChord2 {
     fn collinear_point_contact(
         &self,
         chord_parameter: BezierAlgebraicChordParameter2,
-        source_parameter: BezierParameter2,
+        source_parameter: CurveParameter2,
         point: CurvePoint2,
-        excluded_source_parameter: Option<&BezierParameter2>,
+        excluded_source_parameter: Option<&CurveParameter2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordRationalIntersections2>> {
         if let Some(excluded) = excluded_source_parameter {
@@ -81444,7 +81446,7 @@ impl BezierAlgebraicChord2 {
             BezierAlgebraicChordRationalIntersections2::Contacts(vec![
                 BezierAlgebraicChordRationalContact2 {
                     chord_parameter,
-                    other_parameter: CurveParameter2::from(source_parameter),
+                    other_parameter: source_parameter,
                     point,
                     tangent_cross_sign: RealSign::Zero,
                 },
@@ -133043,6 +133045,93 @@ mod conversion_tests {
         }
     }
 
+    #[test]
+    fn chord_rational_contact_ownership_preserves_selected_fiber_parameters() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let beta = half.clone().sqrt().unwrap();
+        let radius = beta.clone().sqrt().unwrap();
+        let BezierParameter2::Algebraic(retained) =
+            algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+        else {
+            panic!("the selected base must retain its algebraic root");
+        };
+        // P(t)=(t,(2t-1)²) meets y=beta at two distinct parameters.
+        // Each owned contact is selected directly in Q(beta), without first
+        // projecting its parameter to an independent univariate root.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let authority = BezierAlgebraicSelectedFiberAuthority2::new(
+                BivariatePolynomial::new(vec![
+                    vec![Real::one(), Real::from(-4_i8), Real::from(4_i8)],
+                    vec![Real::from(-1_i8)],
+                ]),
+                retained.clone(),
+                &policy,
+            );
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                Point2::new(Real::zero(), beta.clone()).into(),
+                Point2::new(Real::one(), beta.clone()).into(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the exact horizontal chord must construct");
+            };
+            for gauge in [1, -3] {
+                let curve = RationalBezier2::try_new(
+                    vec![
+                        Point2::from_values(0, 1),
+                        Point2::new(half.clone(), Real::from(-1_i8)),
+                        Point2::from_values(1, 1),
+                    ],
+                    vec![Real::from(gauge); 3],
+                )
+                .unwrap();
+                for chord in [chord.clone(), chord.reversed()] {
+                    for (lower, upper, remaining) in [
+                        (Real::zero(), half.clone(), &half * (Real::one() + &radius)),
+                        (half.clone(), Real::one(), &half * (Real::one() - &radius)),
+                    ] {
+                        let owned = CurveParameter2::from_selected_fiber(authority.parameter(
+                            IsolatedRootInterval {
+                                lower,
+                                upper,
+                                exact_root: None,
+                                distinct_root_count: 1,
+                            },
+                        ));
+                        assert!(owned.as_bezier_parameter().is_none());
+                        let Classification::Decided(
+                            BezierAlgebraicChordRationalIntersections2::Contacts(contacts),
+                        ) = chord
+                            .rational_intersections(
+                                &curve,
+                                &CurveParameterRange2::unit(),
+                                Some(&owned),
+                                &policy,
+                            )
+                            .unwrap()
+                        else {
+                            panic!("selected contact ownership must remain decided");
+                        };
+                        let [contact] = contacts.as_slice() else {
+                            panic!("exactly the unowned contact must remain");
+                        };
+                        assert_eq!(
+                            policy
+                                .strict_predicate_pass(|| contact
+                                    .other_parameter()
+                                    .cmp_by_refinement(
+                                        &BezierParameter2::Exact(remaining).into(),
+                                        &policy
+                                    ))
+                                .unwrap(),
+                            Classification::Decided(std::cmp::Ordering::Equal),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     fn clip_aligned_overlap_for_test(
         first: &BezierParameterRange2,
         second: &BezierParameterRange2,
@@ -134224,7 +134313,7 @@ mod conversion_tests {
                     if point == &Point2::from_values(0, 2)
             ));
 
-            let excluded = BezierParameter2::Exact(Real::one());
+            let excluded = CurveParameter2::from(BezierParameter2::Exact(Real::one()));
             let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
                 excluded_contacts,
             )) = chord
@@ -137874,7 +137963,7 @@ mod conversion_tests {
                 chord
                     .rational_intersections(
                         &collinear_touch, &CurveParameterRange2::unit(),
-                        Some(&BezierParameter2::Exact(Real::one())),
+                        Some(&BezierParameter2::Exact(Real::one()).into()),
                         &policy,
                     )
                     .unwrap(),
@@ -138011,7 +138100,7 @@ mod conversion_tests {
                     carrier
                         .rational_intersections(
                             &crossing, &CurveParameterRange2::unit(),
-                            Some(&BezierParameter2::Exact(half.clone())),
+                            Some(&BezierParameter2::Exact(half.clone()).into()),
                             &policy,
                         )
                         .unwrap(),
@@ -138432,18 +138521,12 @@ mod conversion_tests {
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
             }
-            let Classification::Decided(excluded) = contacts[0]
-                .other_parameter()
-                .promoted_bezier_parameter_complete(&policy)
-                .unwrap()
-            else {
-                panic!("the retained retraced-source parameter must promote exactly");
-            };
+            let excluded = contacts[0].other_parameter();
             let excluded_result = chord
                 .rational_intersections(
                     &retraced,
                     &CurveParameterRange2::unit(),
-                    Some(&excluded),
+                    Some(excluded),
                     &policy,
                 )
                 .unwrap();
@@ -138459,7 +138542,7 @@ mod conversion_tests {
             assert!(matches!(
                 retained
                     .other_parameter()
-                    .cmp_by_refinement(&region_parameter(excluded), &policy)
+                    .cmp_by_refinement(excluded, &policy)
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Greater)
             ));
@@ -139466,7 +139549,7 @@ mod conversion_tests {
                 mixed_chord
                     .rational_intersections(
                         &tangent, &CurveParameterRange2::unit(),
-                        Some(&BezierParameter2::Exact(half.clone())),
+                        Some(&BezierParameter2::Exact(half.clone()).into()),
                         &policy,
                     )
                     .unwrap(),
@@ -139546,7 +139629,7 @@ mod conversion_tests {
                 mixed_chord
                     .rational_intersections(
                         &crossing_after_touch, &CurveParameterRange2::unit(),
-                        Some(&BezierParameter2::Exact(fraction(1, 4))),
+                        Some(&BezierParameter2::Exact(fraction(1, 4)).into()),
                         &policy,
                     )
                     .unwrap(),
