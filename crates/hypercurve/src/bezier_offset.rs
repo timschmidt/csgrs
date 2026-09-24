@@ -76756,14 +76756,15 @@ impl BezierAlgebraicChord2 {
                                 .multiply(&exact_interval(Real::from(2_i8)))?
                                 .add(&c1);
                             let q1 = delta.multiply(&derivative)?;
-                            let q2 = c2.multiply(&delta.square()?)?;
                             let first = q0.clone();
                             let middle = q0.add(&q1.multiply(
                                 &exact_interval(
                                     (Real::one() / Real::from(2_i8)).expect("two is nonzero"),
                                 ),
                             )?);
-                            let last = q0.add(&q1).add(&q2);
+                            // Endpoint evaluation avoids the dependency loss
+                            // from expanding (end - start) a second time.
+                            let last = evaluate(&end)?;
                             Some([first, middle, last])
                         })();
                         if let Some(controls) = controls {
@@ -76787,6 +76788,31 @@ impl BezierAlgebraicChord2 {
                             }
                             if let Some(sign) = source_sign_at_upper {
                                 control_signs[2] = sign_orders(sign);
+                            }
+                            let strict_endpoint_sign = |(lower, upper)| {
+                                if lower == Some(std::cmp::Ordering::Greater) {
+                                    Some(RealSign::Positive)
+                                } else if upper == Some(std::cmp::Ordering::Less) {
+                                    Some(RealSign::Negative)
+                                } else {
+                                    None
+                                }
+                            };
+                            if strict_signs_are_opposite(
+                                strict_endpoint_sign(control_signs[0]),
+                                strict_endpoint_sign(control_signs[2]),
+                            ) {
+                                // These controls enclose the actual endpoint
+                                // values. Opposite signs prove an interior zero,
+                                // so complete point-field projection cannot
+                                // make this optional monotonicity proof succeed.
+                                #[cfg(feature = "dispatch-trace")]
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "algebraic-chord-parallel-monotonicity",
+                                    "opposed-endpoint-signs",
+                                );
+                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                             }
                             #[cfg(test)]
                             if steps == 512
@@ -76845,10 +76871,16 @@ impl BezierAlgebraicChord2 {
             // tangent cross is strict everywhere in the open span.  Bernstein
             // positivity is the exact finite certificate for that case: zero
             // endpoint controls are harmless because every basis function is
-            // positive on `(0, 1)`.
+            // positive on `(0, 1)`. These unit-chart certificates apply only
+            // when that chart covers the entire retained range.
+            let unit = CurveParameterRange2::unit();
+            let unit_covers_range = CurveParameterDomain2::new(&unit, None)
+                .contains_finite_range(range, strict)?
+                == Classification::Decided(true);
             let represented_source_sign =
                 certified_direction_values
                     .as_ref()
+                    .filter(|_| unit_covers_range)
                     .and_then(|(direction_x, direction_y)| {
                         let degree = tangent_x_coefficients
                             .len()
@@ -76915,7 +76947,9 @@ impl BezierAlgebraicChord2 {
                 else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
-                source_sign = recursive_quadratic_open_unit_bernstein_sign(&cross);
+                if unit_covers_range {
+                    source_sign = recursive_quadratic_open_unit_bernstein_sign(&cross);
+                }
                 recursive_cross = Some((field, cross));
             }
 
@@ -76930,7 +76964,7 @@ impl BezierAlgebraicChord2 {
                 let (roots, mut root_classification_complete) =
                     match recursive_projective_polynomial_parameters(
                         field,
-                        cross.clone(), &CurveParameterRange2::unit(),
+                        cross.clone(), range,
                         strict,
                     )? {
                         Classification::Decided(roots) => (roots, true),
@@ -76988,7 +77022,7 @@ impl BezierAlgebraicChord2 {
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
                     "algebraic-chord-parallel-monotonicity",
-                    "open-unit-bernstein",
+                    "retained-range-sign",
                 );
                 let sign = product_sign(source_sign, derivative_scale);
                 return Ok(Classification::Decided(if direction_reversed {
@@ -132867,6 +132901,146 @@ mod conversion_tests {
 
     fn region_parameter(parameter: BezierParameter2) -> CurveParameter2 {
         CurveParameter2::from(parameter)
+    }
+
+    #[test]
+    fn chord_parallel_monotonicity_rejects_opposed_endpoint_signs() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t)=(t,t²), D=(1,1): cross(D,P'(t))=2t-1.
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(1, 2), Real::zero()),
+            Point2::from_values(1, 1),
+        );
+        let mut parallels = vec![source.parallel_left(Real::zero()).unwrap()];
+        for gauge in [1, -3] {
+            parallels.push(
+                RationalBezier2::try_new(
+                    source.control_points().into_iter().cloned().collect(),
+                    vec![Real::from(gauge); 3],
+                )
+                .unwrap()
+                .parallel_left(Real::zero())
+                .unwrap(),
+            );
+        }
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                CurvePoint2::from(Point2::from_values(0, 0)),
+                CurvePoint2::from(Point2::from_values(1, 1)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the exact diagonal chord must construct");
+            };
+            for (chord, orientation) in [
+                (chord.clone(), RealSign::Positive),
+                (chord.reversed(), RealSign::Negative),
+            ] {
+                for parallel in &parallels {
+                    for (lower, upper, sign) in [
+                        (Real::zero(), Real::one(), None),
+                        (Real::zero(), q(1, 4), Some(RealSign::Negative)),
+                        (q(3, 4), Real::one(), Some(RealSign::Positive)),
+                        // A zero at a closed endpoint still allows strict
+                        // monotonicity throughout the open retained interval.
+                        (Real::zero(), q(1, 2), Some(RealSign::Negative)),
+                        (q(1, 2), Real::one(), Some(RealSign::Positive)),
+                    ] {
+                        let range = CurveParameterRange2::new_validated(
+                            BezierParameter2::Exact(lower).into(),
+                            BezierParameter2::Exact(upper).into(),
+                        );
+                        let expected = match sign {
+                            Some(sign) => Classification::Decided(product_sign(sign, orientation)),
+                            None => Classification::Uncertain(UncertaintyReason::Boundary),
+                        };
+                        assert_eq!(
+                            chord
+                                .parallel_tangent_cross_sign_on_region_range(
+                                    parallel, &range, &policy
+                                )
+                                .unwrap(),
+                            expected,
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn chord_parallel_monotonicity_covers_the_retained_parameter_range() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t)=(t,15t/4-2t²+t³/3), D=(1,0). The cross polynomial
+        // (t-3/2)(t-5/2) is positive on [0,1] and at both ends of
+        // [1,3], but has two interior roots in that extended range.
+        let source = CubicBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(1, 3), q(5, 4)),
+            Point2::new(q(2, 3), q(11, 6)),
+            Point2::new(Real::one(), q(25, 12)),
+        );
+        let mut parallels = vec![source.parallel_left(Real::zero()).unwrap()];
+        for gauge in [1, -3] {
+            parallels.push(
+                RationalBezier2::try_new(
+                    source.control_points().into_iter().cloned().collect(),
+                    vec![Real::from(gauge); 4],
+                )
+                .unwrap()
+                .parallel_left(Real::zero())
+                .unwrap(),
+            );
+        }
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                CurvePoint2::from(Point2::from_values(0, 0)),
+                CurvePoint2::from(Point2::from_values(1, 0)),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the exact horizontal chord must construct");
+            };
+            for (chord, orientation) in [
+                (chord.clone(), RealSign::Positive),
+                (chord.reversed(), RealSign::Negative),
+            ] {
+                for parallel in &parallels {
+                    for (lower, upper, expected) in [
+                        (Real::one(), Real::from(3), None),
+                        (Real::zero(), Real::one(), Some(RealSign::Positive)),
+                        (Real::from(3), Real::from(4), Some(RealSign::Positive)),
+                        (q(7, 4), q(9, 4), Some(RealSign::Negative)),
+                        // Roots at the two endpoints do not invalidate a
+                        // strict sign in the open retained interval.
+                        (q(3, 2), q(5, 2), Some(RealSign::Negative)),
+                    ] {
+                        for (start, end) in [(lower.clone(), upper.clone()), (upper, lower)] {
+                            let range = CurveParameterRange2::new_validated(
+                                BezierParameter2::Exact(start).into(),
+                                BezierParameter2::Exact(end).into(),
+                            );
+                            let result = chord
+                                .parallel_tangent_cross_sign_on_region_range(
+                                    parallel, &range, &policy,
+                                )
+                                .unwrap();
+                            match expected {
+                                None => assert!(
+                                    matches!(result, Classification::Uncertain(_)),
+                                    "two interior tangent roots forbid a monotonicity certificate: {result:?}",
+                                ),
+                                Some(sign) => assert_eq!(
+                                    result,
+                                    Classification::Decided(product_sign(sign, orientation)),
+                                ),
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     fn clip_aligned_overlap_for_test(
