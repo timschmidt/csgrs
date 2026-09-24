@@ -109,7 +109,7 @@ fn assert_oracle_volume(batch: &BooleanMeshBatch, output: usize, expected: i64) 
         return;
     }
     let [lower, upper] = actual
-        .certified_dyadic_interval(-96)
+        .certified_rational_interval(-96)
         .expect("non-rational Boolean volume should have a certified enclosure");
     assert!(
         lower <= expected && expected <= upper,
@@ -160,11 +160,7 @@ fuzz_target!(|data: [u8; 8]| {
     ];
     let roots = [0, 1, 2, 3];
     let (views, program, output) = match api {
-        0 => (
-            raw_refs.as_slice(),
-            BooleanProgram::Operation(op),
-            0,
-        ),
+        0 => (raw_refs.as_slice(), BooleanProgram::Operation(op), 0),
         1 => (refs.as_slice(), BooleanProgram::Operation(op), 0),
         _ => (
             refs.as_slice(),

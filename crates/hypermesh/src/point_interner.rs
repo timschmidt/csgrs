@@ -600,9 +600,9 @@ where
 {
     let [x, y, z] = point.coordinates();
     Some([
-        x.certified_dyadic_interval(BROAD_PHASE_PRECISION)?,
-        y.certified_dyadic_interval(BROAD_PHASE_PRECISION)?,
-        z.certified_dyadic_interval(BROAD_PHASE_PRECISION)?,
+        x.certified_rational_interval(BROAD_PHASE_PRECISION)?,
+        y.certified_rational_interval(BROAD_PHASE_PRECISION)?,
+        z.certified_rational_interval(BROAD_PHASE_PRECISION)?,
     ])
 }
 
