@@ -230,7 +230,8 @@ fn signed_sqrt_interval_for_positive_source(
                 distinct_root_count: 1,
             });
         }
-        let [lower, upper] = positive.certified_dyadic_interval(SQRT_WITNESS_INTERVAL_PRECISION)?;
+        let [lower, upper] =
+            positive.certified_rational_interval(SQRT_WITNESS_INTERVAL_PRECISION)?;
         // Keep the root strictly inside the dyadic bracket even when a Real
         // witness has a rational value that its normal form did not expose.
         let padding = hyperreal::Rational::from(2_i8)

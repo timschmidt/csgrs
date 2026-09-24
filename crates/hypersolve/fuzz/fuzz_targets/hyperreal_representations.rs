@@ -53,7 +53,7 @@ fuzz_target!(|data: &[u8]| {
             format!("{value:?}").contains(&format!("class: {certificate}")),
             "representation recipe drifted"
         );
-        assert!(value.certified_dyadic_interval(MIN_PRECISION).is_some());
+        assert!(value.certified_rational_interval(MIN_PRECISION).is_some());
         exercise_solver_pipeline(value, &scale);
         exercise_positive_domains(value);
     }
@@ -86,7 +86,7 @@ fuzz_target!(|data: &[u8]| {
             value.detailed_facts().symbolic.kind,
             StructuralKind::ComputableOpaque
         );
-        assert!(value.certified_dyadic_interval(MIN_PRECISION).is_some());
+        assert!(value.certified_rational_interval(MIN_PRECISION).is_some());
         exercise_solver_pipeline(&value, &scale);
     }
 });
@@ -237,10 +237,10 @@ fn assert_bounded_equal(left: &Real, right: &Real) {
     }
 
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(MIN_PRECISION)
+        .certified_rational_interval(MIN_PRECISION)
         .expect("bounded left value");
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(MIN_PRECISION)
+        .certified_rational_interval(MIN_PRECISION)
         .expect("bounded right value");
     assert!(left_lower <= right_upper && right_lower <= left_upper);
 }

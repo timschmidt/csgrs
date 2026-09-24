@@ -1653,7 +1653,7 @@ mod tests {
     #[test]
     fn bareiss_determinant_uses_pivot_free_exact_fallback_before_policy_decision() {
         let [_lower, upper] = Real::pi()
-            .certified_dyadic_interval(-256)
+            .certified_rational_interval(-256)
             .expect("pi exposes certified dyadic intervals");
         let delayed_positive = Real::from(upper) - Real::pi();
         assert!(matches!(

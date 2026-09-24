@@ -1331,7 +1331,7 @@ mod tests {
     #[test]
     fn dense_tensor_multiplication_does_not_refine_opaque_coefficients_for_zero_pruning() {
         let [_lower, upper] = Real::pi()
-            .certified_dyadic_interval(-256)
+            .certified_rational_interval(-256)
             .expect("pi exposes a certified dyadic interval");
         let delayed_positive = Real::from(upper) - Real::pi();
         let left = DenseTensorPolynomial::try_new(vec![1], vec![delayed_positive.clone()])
@@ -1439,7 +1439,7 @@ mod tests {
     #[test]
     fn nominal_linear_quadratic_norm_does_not_require_leading_sign() {
         let [_lower, upper] = Real::pi()
-            .certified_dyadic_interval(-256)
+            .certified_rational_interval(-256)
             .expect("pi exposes certified dyadic intervals");
         let delayed_positive = Real::from(upper) - Real::pi();
         assert!(matches!(

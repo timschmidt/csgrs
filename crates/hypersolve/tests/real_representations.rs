@@ -208,10 +208,10 @@ fn assert_same_real(left: &Real, right: &Real, context: &str) {
     }
 
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(MIN_PRECISION)
+        .certified_rational_interval(MIN_PRECISION)
         .unwrap_or_else(|| panic!("{context}: left value is not bounded"));
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(MIN_PRECISION)
+        .certified_rational_interval(MIN_PRECISION)
         .unwrap_or_else(|| panic!("{context}: right value is not bounded"));
     assert!(
         left_lower <= right_upper && right_lower <= left_upper,
@@ -586,7 +586,7 @@ fn variable_depth_opaque_dags_cross_solver_evaluation_and_certification() {
             .enumerate()
         {
             let context_label = format!("opaque depth {depth} value {index}");
-            assert!(value.certified_dyadic_interval(MIN_PRECISION).is_some());
+            assert!(value.certified_rational_interval(MIN_PRECISION).is_some());
             let mut problem = Problem::default();
             let variable = problem.add_variable("opaque", value.clone());
             let symbol = SymbolId(variable.0);
