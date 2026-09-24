@@ -67,10 +67,10 @@ fn bounded_equal(left: &Real, right: &Real) -> bool {
         return true;
     }
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(-512)
+        .certified_rational_interval(-512)
         .expect("bounded left value");
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(-512)
+        .certified_rational_interval(-512)
         .expect("bounded right value");
     left_lower <= right_upper && right_lower <= left_upper
 }
