@@ -85513,9 +85513,10 @@ pub(crate) fn algebraic_point_distance_squared_at_most(
 /// Signs one retained affine point's squared-distance residual against a
 /// represented circle without flattening the point's selected field.
 ///
-/// A directly retained rational expression is evaluated in its own quotient
-/// field. More deeply nested point carriers use convergent exact enclosures;
-/// only APPROXIMATE_512 may turn a terminal overlap into equality.
+/// A native selected expression is evaluated in its own field. More deeply
+/// retained points use short strict enclosures before shared-field radial
+/// replay, which can prove exact incidence. The complete refinement fallback
+/// permits only APPROXIMATE_512 to turn a terminal overlap into equality.
 pub(crate) fn retained_point_circle_incidence_sign(
     point: &CurvePoint2,
     center: &Point2,
@@ -85573,6 +85574,22 @@ pub(crate) fn retained_point_circle_incidence_sign(
     };
     let mut terminal_refined = false;
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+        // Independent boxes cannot generally prove exact incidence. Reuse
+        // selected-root and radical relations after the cheap separation
+        // checks, without consuming an approximate terminal in this optional
+        // path or projecting independent Cartesian coordinates.
+        if refinement_steps == 8
+            && let Classification::Decided(Some(sign)) = policy.strict_predicate_pass(|| {
+                recursive_projective_point_evidence_circle_residual_sign(
+                    point,
+                    &CurvePoint2::from(center.clone()),
+                    radius_squared,
+                    policy,
+                )
+            })?
+        {
+            return Ok(Classification::Decided(sign));
+        }
         let Classification::Decided(bounds) =
             algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy)
         else {
@@ -138659,6 +138676,142 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(-1)
             );
+        }
+    }
+
+    #[test]
+    fn represented_circle_incidence_replays_retained_similarity_points() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let diagonal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+            QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 1)).unwrap(),
+            ),
+        ))
+        .unwrap();
+        let center = Point2::from_values(3, -2);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for direction in [-1_i8, 1] {
+                let BezierParameter2::Algebraic(parameter) =
+                    algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+                else {
+                    panic!("sqrt(1/2) must remain a selected algebraic parameter");
+                };
+                let source = CurvePoint2::from(
+                    diagonal
+                        .point_at_algebraic_parameter(&parameter, &policy)
+                        .unwrap(),
+                );
+                let transform = Similarity2::try_from_real_affine(
+                    Real::one(),
+                    -Real::one(),
+                    Real::from(direction),
+                    Real::from(direction),
+                    center.x().clone(),
+                    center.y().clone(),
+                )
+                .unwrap();
+                let point =
+                    CurvePoint2::from(BezierSimilarityPoint2::new(source, transform, &policy));
+                // P=(t,t), 2*t^2=1. Its image Q satisfies Q-center
+                // =(0,2*direction*t), with squared length exactly 2.
+                // Query the retained image before requesting any endpoint
+                // view or Cartesian projection, including under reflection.
+                for endpoint_view in [false, true] {
+                    let query = if endpoint_view {
+                        let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                            point.clone(),
+                            Point2::from_values(5, 0).into(),
+                            &policy,
+                        )
+                        .unwrap() else {
+                            panic!("the endpoint carrier must be a nonzero chord");
+                        };
+                        CurvePoint2::from_endpoint(
+                            Arc::new(BezierSplitFragment2::AlgebraicChord(chord)),
+                            true,
+                        )
+                    } else {
+                        point.clone()
+                    };
+                    for (radius_squared, expected) in [
+                        (2_i8, RealSign::Zero),
+                        (1, RealSign::Positive),
+                        (3, RealSign::Negative),
+                    ] {
+                        let outcome =
+                            crate::policy::resolve_certified_operation(&policy, |attempt| {
+                                retained_point_circle_incidence_sign(
+                                    &query,
+                                    &center,
+                                    &Real::from(radius_squared),
+                                    attempt,
+                                )
+                            })
+                            .unwrap();
+                        assert_eq!(
+                            outcome.value,
+                            Classification::Decided(expected),
+                            "direction={direction}, endpoint={endpoint_view}, radius_squared={radius_squared}",
+                        );
+                        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn represented_circle_retained_point_incidence_observes_requested_policy() {
+        let center = Point2::from_values(2, -3);
+        let transform = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            center.x().clone(),
+            center.y().clone(),
+        )
+        .unwrap();
+        let point = CurvePoint2::from(BezierSimilarityPoint2::new(
+            Point2::from_values(1, 0).into(),
+            transform,
+            &CurveContext::STRICT,
+        ));
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let opaque_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let radius_squared = Real::one() + opaque_zero;
+        for _ in 0..2 {
+            let query = |policy: &CurveContext, force_strict| {
+                crate::policy::resolve_certified_operation(policy, |attempt| {
+                    let classify = || {
+                        retained_point_circle_incidence_sign(
+                            &point,
+                            &center,
+                            &radius_squared,
+                            attempt,
+                        )
+                    };
+                    if force_strict {
+                        attempt.strict_predicate_pass(classify)
+                    } else {
+                        classify()
+                    }
+                })
+                .unwrap()
+            };
+            let strict = query(&CurveContext::STRICT, false);
+            assert!(matches!(strict.value, Classification::Uncertain(_)));
+            assert_eq!(strict.certainty, CurveCertainty::Certified);
+            let approximate = query(&CurveContext::APPROXIMATE_512, false);
+            assert_eq!(approximate.value, Classification::Decided(RealSign::Zero));
+            assert_eq!(
+                approximate.certainty,
+                CurveCertainty::Approximate512Consumed
+            );
+            let forced = query(&CurveContext::APPROXIMATE_512, true);
+            assert!(matches!(forced.value, Classification::Uncertain(_)));
+            assert_eq!(forced.certainty, CurveCertainty::Certified);
         }
     }
 
