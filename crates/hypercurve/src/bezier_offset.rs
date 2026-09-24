@@ -58458,6 +58458,31 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                 return Ok(Classification::Decided(sign));
             }
             if refinement_steps == 8 {
+                // A contact may already be a selected generator of this
+                // coefficient field. Reuse its certified root identity before
+                // a new singleton sign query or global scalar projection.
+                let base = self.field.base_and_extension_path().0;
+                for source in &base.sources {
+                    let sign = policy.bounded_exact_predicate_pass(
+                        || -> CurveResult<Option<RealSign>> {
+                            let Some(embedding) =
+                                parameter.coefficient_root_embedding(source, policy)?
+                            else {
+                                return Ok(None);
+                            };
+                            let Some(value) = embedding.polynomial_value(coefficients) else {
+                                return Ok(None);
+                            };
+                            Ok(match value.sign(&policy.strict_counterpart())? {
+                                Classification::Decided(sign) => Some(sign),
+                                Classification::Uncertain(_) => None,
+                            })
+                        },
+                    )?;
+                    if let Some(sign) = sign {
+                        return Ok(Classification::Decided(sign));
+                    }
+                }
                 // A selected root can belong to a proper factor of the
                 // defining polynomial. Intervals cannot prove that equality;
                 // ask the shared native-field authority before deeper
@@ -58517,14 +58542,18 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             }
         };
         let base = self.field.base_and_extension_path().0;
-        recursive_quadratic_target_embedding(&self.field, &base, &promoted)
-            .and_then(|embedding| embedding.polynomial_value(coefficients))
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a promoted recursive local predicate exceeded its field budget".into(),
-                )
-            })?
-            .sign(policy)
+        recursive_quadratic_target_embedding(
+            &self.field,
+            &base,
+            &bezier_parameter_root_representation(&promoted),
+        )
+        .and_then(|embedding| embedding.polynomial_value(coefficients))
+        .ok_or_else(|| {
+            CurveError::Topology(
+                "a promoted recursive local predicate exceeded its field budget".into(),
+            )
+        })?
+        .sign(policy)
     }
 
     fn promoted_parameter(
@@ -58564,8 +58593,12 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         let upper = BezierParameter2::Exact(parameter.data.upper.clone());
         let mut selected = None;
         for candidate in candidates {
-            let evaluation = recursive_quadratic_target_embedding(&self.field, &base, &candidate)
-                .and_then(|embedding| embedding.polynomial_value(&self.coefficients));
+            let evaluation = recursive_quadratic_target_embedding(
+                &self.field,
+                &base,
+                &bezier_parameter_root_representation(&candidate),
+            )
+            .and_then(|embedding| embedding.polynomial_value(&self.coefficients));
             let Some(evaluation) = evaluation else {
                 continue;
             };
@@ -59687,6 +59720,53 @@ impl BezierRecursiveProjectiveParameter2 {
         policy.strict_predicate_pass(|| first.cmp_by_refinement(&second, policy))
     }
 
+    /// Embeds this singleton root as an existing coefficient-field root.
+    /// A declined certificate is not evidence that the values differ.
+    fn coefficient_root_embedding(
+        &self,
+        source: &AlgebraicRootRepresentation,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<BezierRecursiveQuadraticTargetEmbedding2>> {
+        self.validate_policy(policy)?;
+        let Some(authority) = self.polynomial_authority() else {
+            return Ok(None);
+        };
+        if !source.is_valid() {
+            return Ok(None);
+        }
+        let base = authority.field.base_and_extension_path().0;
+        let (sources, _, _) =
+            recursive_quadratic_source_union(&base.sources, std::slice::from_ref(source));
+        if sources.len() != base.sources.len() {
+            return Ok(None);
+        }
+        let strict = policy.strict_counterpart();
+        if represented_order_to_real(source, &self.data.lower, &strict)
+            != Classification::Decided(std::cmp::Ordering::Greater)
+            || represented_order_to_real(source, &self.data.upper, &strict)
+                != Classification::Decided(std::cmp::Ordering::Less)
+        {
+            return Ok(None);
+        }
+        let Some(embedding) = recursive_quadratic_target_embedding(&authority.field, &base, source)
+        else {
+            return Ok(None);
+        };
+        let Some(value) = embedding.polynomial_value(&authority.coefficients) else {
+            return Ok(None);
+        };
+        if value.sign(&strict)? != Classification::Decided(RealSign::Zero) {
+            return Ok(None);
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-parameter-comparison",
+            "retained-generator-identity",
+        );
+        Ok(Some(embedding))
+    }
+
     pub(crate) fn cmp_bezier_parameter(
         &self,
         other: &BezierParameter2,
@@ -59696,38 +59776,11 @@ impl BezierRecursiveProjectiveParameter2 {
         if let Some(value) = other.scalar() {
             return self.order_to_real(value, policy);
         }
-        // A contact can already be one of the coefficient field's selected
-        // generators (for example, the endpoint used to construct a chord).
-        // Its defining-polynomial identity and the unique-root bracket prove
-        // equality without refining two coincident isolators indefinitely.
-        if let Some(authority) = self.polynomial_authority() {
-            let base = authority.field.base_and_extension_path().0;
-            let target = bezier_parameter_root_representation(other);
-            let (sources, _, _) = recursive_quadratic_source_union(&base.sources, &[target]);
-            if sources.len() == base.sources.len() {
-                let strict = &CurveContext::STRICT;
-                let lower = BezierParameter2::Exact(self.data.lower.clone());
-                let upper = BezierParameter2::Exact(self.data.upper.clone());
-                if matches!(
-                    other.cmp_by_refinement(&lower, strict)?,
-                    Classification::Decided(std::cmp::Ordering::Greater)
-                ) && matches!(
-                    other.cmp_by_refinement(&upper, strict)?,
-                    Classification::Decided(std::cmp::Ordering::Less)
-                ) && let Some(value) =
-                    recursive_quadratic_target_embedding(&authority.field, &base, other)
-                        .and_then(|embedding| embedding.polynomial_value(&authority.coefficients))
-                    && value.sign(strict)? == Classification::Decided(RealSign::Zero)
-                {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "recursive-parameter-comparison",
-                        "retained-generator-identity",
-                    );
-                    return Ok(Classification::Decided(std::cmp::Ordering::Equal));
-                }
-            }
+        if self
+            .coefficient_root_embedding(&bezier_parameter_root_representation(other), policy)?
+            .is_some()
+        {
+            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
         let mut refinement_steps = 0_usize;
         loop {
@@ -60928,11 +60981,10 @@ fn recursive_quadratic_polynomial_scale_real(
 fn recursive_quadratic_target_embedding(
     field: &BezierRecursiveQuadraticField2,
     base: &Arc<BezierRecursiveQuadraticBaseFieldData2>,
-    target_parameter: &BezierParameter2,
+    target: &AlgebraicRootRepresentation,
 ) -> Option<BezierRecursiveQuadraticTargetEmbedding2> {
-    let target = bezier_parameter_root_representation(target_parameter);
     let (sources, source_axes, target_axes) =
-        recursive_quadratic_source_union(&base.sources, &[target]);
+        recursive_quadratic_source_union(&base.sources, std::slice::from_ref(target));
     let embed_base = |polynomial: &DenseTensorPolynomial| {
         let embedded = dense_tensor_embed_axes(polynomial, sources.len(), &source_axes)?;
         Some(dense_reduce_selected_tuple_relations(embedded.clone(), &sources).unwrap_or(embedded))
@@ -61353,8 +61405,11 @@ fn recursive_quadratic_parallel_candidate_evaluation(
     target_parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticParallelEvaluation2>>> {
-    let Some(embedding) = recursive_quadratic_target_embedding(field, base, target_parameter)
-    else {
+    let Some(embedding) = recursive_quadratic_target_embedding(
+        field,
+        base,
+        &bezier_parameter_root_representation(target_parameter),
+    ) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let weight = embedding.polynomial_value(weight).ok_or_else(|| {
@@ -64338,14 +64393,18 @@ fn recursive_projective_polynomial_sign_at_parameter(
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let base = field.base_and_extension_path().0;
-    recursive_quadratic_target_embedding(field, &base, parameter)
-        .and_then(|embedding| embedding.polynomial_value(coefficients))
-        .ok_or_else(|| {
-            CurveError::Topology(
-                "a recursive polynomial predicate exceeded its retained field budget".into(),
-            )
-        })?
-        .sign(policy)
+    recursive_quadratic_target_embedding(
+        field,
+        &base,
+        &bezier_parameter_root_representation(parameter),
+    )
+    .and_then(|embedding| embedding.polynomial_value(coefficients))
+    .ok_or_else(|| {
+        CurveError::Topology(
+            "a recursive polynomial predicate exceeded its retained field budget".into(),
+        )
+    })?
+    .sign(policy)
 }
 
 enum BezierRecursiveOrderedFieldError2 {

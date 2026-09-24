@@ -21667,15 +21667,26 @@ mod tests {
                                 .expect("the exact cubic envelope")
                                 .clone(),
                         );
-                        for (parameter, point) in [
-                            (selected.range().start(), selected.start_point()),
-                            (selected.range().end(), selected.end_point()),
-                        ] {
+                        // The range stays ordered in the source chart, while
+                        // endpoint evidence follows the fragment's traversal.
+                        let (start, end) = if selected.is_reversed() {
+                            (selected.range().end(), selected.range().start())
+                        } else {
+                            (selected.range().start(), selected.range().end())
+                        };
+                        for (parameter, point) in
+                            [(start, selected.start_point()), (end, selected.end_point())]
+                        {
                             let replay = source.point_at(parameter, &policy).unwrap();
                             let equality = replay.value.coincides_with(point, &policy);
                             assert_eq!(replay.certainty, CurveCertainty::Certified);
                             assert_eq!(equality.certainty, CurveCertainty::Certified);
-                            assert_eq!(equality.value, Classification::Decided(true));
+                            assert_eq!(
+                                equality.value,
+                                Classification::Decided(true),
+                                "endpoint replay must respect traversal: input_reversed={reversed}, fragment_reversed={}",
+                                selected.is_reversed(),
+                            );
                         }
                     }
                 });
