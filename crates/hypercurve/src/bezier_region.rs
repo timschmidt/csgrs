@@ -30968,6 +30968,8 @@ mod tests {
     #[test]
     fn nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel() {
         let radius = (Real::one() / Real::from(10_i8)).unwrap();
+        let radius_squared = &radius * &radius;
+        let interior = Point2::new(q(1, 2).sqrt().unwrap(), q(1, 2));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let region = nonrepresented_chord_selected_circle_corner_region(&policy, reversed);
@@ -31001,46 +31003,73 @@ mod tests {
                             "extension must retain the complementary selected-circle branch"
                         );
                     }
+                    let mut retained_fillet_spans = 0;
                     for_each_corner_region(&outcome.value, |filleted| {
-                        let fragments = filleted.boundary_loops()[0].fragments();
-                        assert!(
-                            fragments
-                                .iter()
-                                .filter(|fragment| matches!(
-                                    fragment,
-                                    BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                                ))
-                                .count()
-                                >= 2
-                        );
+                        assert!(filleted.has_regularized_filled_left_topology(&policy));
+                        // Extension can split the walk into separate material
+                        // loops, or regularization can consume the fillet.
+                        // Inspect every surviving boundary in the exact set.
+                        let mut source_spans = 0;
                         let mut chord_adjacencies = 0;
-                        for (index, fragment) in fragments.iter().enumerate() {
-                            let BezierSplitFragment2::AlgebraicCuspSemicircle(circle) = fragment
-                            else {
-                                continue;
-                            };
-                            for (adjacent, shared_circle_start) in [
-                                (
-                                    &fragments[(index + fragments.len() - 1) % fragments.len()],
-                                    true,
-                                ),
-                                (&fragments[(index + 1) % fragments.len()], false),
-                            ] {
-                                let BezierSplitFragment2::AlgebraicChord(chord) = adjacent else {
+                        for boundary in filleted.boundary_loops() {
+                            let fragments = boundary.fragments();
+                            for (index, fragment) in fragments.iter().enumerate() {
+                                let BezierSplitFragment2::AlgebraicCuspSemicircle(circle) =
+                                    fragment
+                                else {
                                     continue;
                                 };
-                                if circle.certified_adjacent_chord_is_endpoint_only(
-                                    chord,
-                                    shared_circle_start,
-                                    &policy,
-                                ) == Ok(Classification::Decided(true))
+                                let radial = circle.semicircle().radial_distance();
+                                if crate::classify::is_zero(
+                                    &(radial * radial - &radius_squared),
+                                    &CurveContext::STRICT,
+                                ) == Some(true)
                                 {
-                                    chord_adjacencies += 1;
+                                    retained_fillet_spans += 1;
+                                } else {
+                                    assert_eq!(
+                                        crate::classify::is_zero(
+                                            &(radial * radial - Real::one()),
+                                            &CurveContext::STRICT,
+                                        ),
+                                        Some(true),
+                                    );
+                                    source_spans += 1;
+                                }
+                                for (adjacent, shared_circle_start) in [
+                                    (
+                                        &fragments[(index + fragments.len() - 1) % fragments.len()],
+                                        true,
+                                    ),
+                                    (&fragments[(index + 1) % fragments.len()], false),
+                                ] {
+                                    let BezierSplitFragment2::AlgebraicChord(chord) = adjacent
+                                    else {
+                                        continue;
+                                    };
+                                    if circle.certified_adjacent_chord_is_endpoint_only(
+                                        chord,
+                                        shared_circle_start,
+                                        &policy,
+                                    ) == Ok(Classification::Decided(true))
+                                    {
+                                        chord_adjacencies += 1;
+                                    }
                                 }
                             }
                         }
+                        assert!(source_spans > 0);
                         assert!(chord_adjacencies > 0);
+                        for (point, expected) in [
+                            (&interior, RegionPointLocation::Inside),
+                            (&p(4, 4), RegionPointLocation::Outside),
+                        ] {
+                            let location = filleted.classify_point(point, &policy).unwrap();
+                            assert_eq!(location.certainty, CurveCertainty::Certified);
+                            assert_eq!(location.value, Classification::Decided(expected));
+                        }
                     });
+                    assert!(retained_fillet_spans > 0);
                 }
             }
         }
