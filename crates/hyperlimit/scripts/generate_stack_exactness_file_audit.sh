@@ -72,7 +72,7 @@ for repository in "${repositories[@]}"; do
     fi
 
     if rg -q \
-      'to_f(32|64)|lossy|approx|epsilon|EPSILON|partial_cmp|total_cmp|signum|is_sign_|is_zero|known_sign|refine_(sign|zero)|certified_dyadic_interval|[<>=!]=?[[:space:]]*0([._[:alnum:]]*)?' \
+      'to_f(32|64)|lossy|approx|epsilon|EPSILON|partial_cmp|total_cmp|signum|is_sign_|is_zero|known_sign|refine_(sign|zero)|certified_(rational|dyadic)_interval|[<>=!]=?[[:space:]]*0([._[:alnum:]]*)?' \
       "$absolute_path"; then
       signals+=(scalar)
     fi

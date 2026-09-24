@@ -399,7 +399,7 @@ fn sign_scale_cache_and_abort_states_preserve_predicate_results() {
         // object from F32 to F64 before predicate use.
         let warmed_f32 = case.value.clone();
         let first_f32 = warmed_f32.to_f32_lossy().expect("finite representative");
-        assert!(warmed_f32.certified_dyadic_interval(-128).is_some());
+        assert!(warmed_f32.certified_rational_interval(-128).is_some());
         let second_f32 = warmed_f32.to_f32_lossy().expect("finite representative");
         // Without the optional binary32 cache, scalar refinement may select
         // the other adjacent float. Check both lossy views against the exact

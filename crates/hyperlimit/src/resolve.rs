@@ -240,7 +240,7 @@ fn refine_real_sign(value: &Real) -> Option<PredicateOutcome<Sign>> {
 
 fn approximate_real_sign(value: &Real, policy: PredicatePolicy) -> Option<PredicateOutcome<Sign>> {
     let precision = policy.final_approximation_precision()?;
-    let [lower, upper] = value.certified_dyadic_interval(precision)?;
+    let [lower, upper] = value.certified_rational_interval(precision)?;
     let zero = hyperreal::Rational::zero();
     let sign = if upper < zero {
         Sign::Negative

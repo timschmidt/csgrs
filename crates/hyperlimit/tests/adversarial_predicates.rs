@@ -83,7 +83,7 @@ fn scalar_ordering_accounts_for_inverse_atan_argument_signs() {
 fn scalar_ordering_does_not_treat_scaled_binade_estimates_as_exact() {
     let radius = rational(225, 8).sqrt().unwrap();
     let difference = &radius - &Real::from(4);
-    let [lower, _] = difference.certified_dyadic_interval(-128).unwrap();
+    let [lower, _] = difference.certified_rational_interval(-128).unwrap();
     assert!(lower > hyperreal::Rational::zero());
 
     assert_eq!(
@@ -96,7 +96,7 @@ fn scalar_ordering_does_not_treat_scaled_binade_estimates_as_exact() {
 fn scalar_comparison_cascade_matches_separated_full_evaluation_corpus() {
     fn evaluated_order(left: &Real, right: &Real) -> Option<core::cmp::Ordering> {
         let difference = left - right;
-        let [lower, upper] = difference.certified_dyadic_interval(-256)?;
+        let [lower, upper] = difference.certified_rational_interval(-256)?;
         let zero = hyperreal::Rational::zero();
         if upper < zero {
             Some(core::cmp::Ordering::Less)
