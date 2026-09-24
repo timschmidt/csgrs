@@ -103478,6 +103478,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         Ok(Classification::Decided(false))
     }
 
+    #[cfg(test)]
     pub(crate) fn endpoint_exact_point(
         &self,
         start_endpoint: bool,

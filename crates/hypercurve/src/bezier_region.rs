@@ -23,7 +23,6 @@ use std::sync::Arc;
 use std::sync::OnceLock;
 
 use hyperreal::{Real, RealSign};
-use hypersolve::AlgebraicRootRepresentation;
 use hypersolve::{
     AlgebraicFiberRootCountStatus, BivariatePolynomial, CurveResultantParameter,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
@@ -33,7 +32,6 @@ use crate::BezierParameterPolynomial;
 use crate::RationalBezierAlgebraicPointImage2;
 use crate::bezier::BezierParallelLineTangentContact2;
 use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
-use crate::bezier_arrangement::represented_roots_equal;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
 use crate::bezier_offset::BezierAlgebraicCuspSemicircleSimilarityCache2;
 use crate::bezier_offset::{
@@ -1464,12 +1462,22 @@ fn validate_retained_source_endpoint_image(
     policy: &CurveContext,
 ) -> CurveResult<()> {
     match boundary {
-        BezierParameter2::Exact(_) => {
+        BezierParameter2::Exact(parameter) => {
             if image.is_some() {
                 return Err(CurveError::Topology(
                     "retained exact endpoint must not carry algebraic endpoint image evidence"
                         .into(),
                 ));
+            }
+            // Connectivity may use source identity without projecting a point.
+            // Establish affine endpoint validity at admission, including the
+            // nonzero denominator of a rational chart, before that shortcut.
+            if let Classification::Uncertain(reason) =
+                subcurve_point_at(source_curve, parameter.clone(), policy)
+            {
+                return Err(CurveError::Topology(format!(
+                    "could not certify retained boundary exact endpoint from source curve: {reason:?}"
+                )));
             }
         }
         BezierParameter2::Algebraic(parameter) => {
@@ -1553,26 +1561,6 @@ fn validate_retained_region_arrangement_sources(
     )
 }
 
-#[derive(Clone, Debug, PartialEq)]
-struct RetainedEndpointEvidence {
-    point: Option<Point2>,
-    retained_point: Option<crate::CurvePoint2>,
-    algebraic: Option<(
-        Box<AlgebraicRootRepresentation>,
-        Box<AlgebraicRootRepresentation>,
-    )>,
-    source: Option<(BezierSubcurve2, BezierParameter2)>,
-    analytic_source: Option<(BezierParallel2, BezierParameter2)>,
-    algebraic_cusp_source: Option<(crate::BezierAlgebraicCuspSemicircleFragment2, bool)>,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-enum RetainedEndpointEquality {
-    Equal,
-    NotEqual,
-    Uncertified,
-}
-
 fn validate_retained_boundary_loop_connectivity(
     fragments: &[BezierSplitFragment2],
     policy: &CurveContext,
@@ -1582,17 +1570,15 @@ fn validate_retained_boundary_loop_connectivity(
         .zip(fragments.iter().cycle().skip(1))
         .take(fragments.len())
     {
-        let left_end = retained_fragment_endpoint_evidence(left, false, policy)?;
-        let right_start = retained_fragment_endpoint_evidence(right, true, policy)?;
-        match retained_endpoint_equality(&left_end, &right_start, policy) {
-            RetainedEndpointEquality::Equal => {}
-            RetainedEndpointEquality::NotEqual => {
+        match curve_fragment_endpoints_equal(left, false, right, true, policy) {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
                 return Err(CurveError::Topology(
                     "retained Bezier boundary loop fragments must be endpoint-connected and closed"
                         .into(),
                 ));
             }
-            RetainedEndpointEquality::Uncertified => {
+            Classification::Uncertain(_) => {
                 return Err(CurveError::Topology(
                     "retained Bezier boundary loop must carry certified endpoint connectivity evidence"
                         .into(),
@@ -1630,16 +1616,15 @@ fn validate_retained_arrangement_chain_connectivity(
             ));
         }
 
-        let left_end = retained_fragment_endpoint_evidence(left.fragment(), false, policy)?;
-        let right_start = retained_fragment_endpoint_evidence(right.fragment(), true, policy)?;
-        match retained_endpoint_equality(&left_end, &right_start, policy) {
-            RetainedEndpointEquality::Equal => {}
-            RetainedEndpointEquality::NotEqual => {
+        match curve_fragment_endpoints_equal(left.fragment(), false, right.fragment(), true, policy)
+        {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
                 return Err(CurveError::Topology(
                     "retained arrangement chain contains disconnected fragments".into(),
                 ));
             }
-            RetainedEndpointEquality::Uncertified => {
+            Classification::Uncertain(_) => {
                 return Err(CurveError::Topology(
                     "retained arrangement chain endpoint connectivity is uncertified".into(),
                 ));
@@ -1715,6 +1700,9 @@ pub(crate) fn curve_fragment_endpoint_point(
     Ok(Classification::Decided(Some(point)))
 }
 
+/// Compares retained endpoints before projecting their coordinates. Source and
+/// overlap identities are positive certificates; unrelated endpoints continue
+/// through the same exact point predicate used by paths and curve queries.
 pub(crate) fn curve_fragment_endpoints_equal(
     first: &BezierSplitFragment2,
     first_start: bool,
@@ -1722,179 +1710,117 @@ pub(crate) fn curve_fragment_endpoints_equal(
     second_start: bool,
     policy: &CurveContext,
 ) -> Classification<bool> {
-    let (Ok(first), Ok(second)) = (
-        retained_fragment_endpoint_evidence(first, first_start, policy),
-        retained_fragment_endpoint_evidence(second, second_start, policy),
-    ) else {
-        return Classification::Uncertain(UncertaintyReason::RealSign);
-    };
-    match retained_endpoint_equality(&first, &second, policy) {
-        RetainedEndpointEquality::Equal => Classification::Decided(true),
-        RetainedEndpointEquality::NotEqual => Classification::Decided(false),
-        RetainedEndpointEquality::Uncertified => {
-            Classification::Uncertain(UncertaintyReason::RealSign)
+    if let (
+        BezierSplitFragment2::RetainedBezier {
+            source_curve: first_curve,
+            start: first_lower,
+            end: first_upper,
+            reversed: first_reversed,
+            ..
+        },
+        BezierSplitFragment2::RetainedBezier {
+            source_curve: second_curve,
+            start: second_lower,
+            end: second_upper,
+            reversed: second_reversed,
+            ..
+        },
+    ) = (first, second)
+    {
+        let first_parameter = if first_start != *first_reversed {
+            first_lower
+        } else {
+            first_upper
+        };
+        let second_parameter = if second_start != *second_reversed {
+            second_lower
+        } else {
+            second_upper
+        };
+        if first_parameter == second_parameter && first_curve == second_curve {
+            return Classification::Decided(true);
         }
+    }
+    if let (
+        BezierSplitFragment2::AlgebraicCuspSemicircle(first),
+        BezierSplitFragment2::AlgebraicCuspSemicircle(second),
+    ) = (first, second)
+        && first.shares_endpoint_evidence(first_start, second, second_start)
+    {
+        return Classification::Decided(true);
+    }
+    if let (Some((first_curve, first_parameter)), Some((second_curve, second_parameter))) = (
+        fragment_endpoint_analytic_source(first, first_start),
+        fragment_endpoint_analytic_source(second, second_start),
+    ) && first_parameter == second_parameter
+        && first_curve.shares_parameterized_curve_evidence(&second_curve)
+    {
+        return Classification::Decided(true);
+    }
+
+    let first_point = curve_fragment_endpoint_point(first, first_start, policy);
+    let second_point = curve_fragment_endpoint_point(second, second_start, policy);
+    // A selected circle may certify a mapped chord contact without projecting
+    // its own endpoint. Preserve that incidence before requiring both points.
+    for (fragment, start, point) in [
+        (first, first_start, &second_point),
+        (second, second_start, &first_point),
+    ] {
+        if let (
+            BezierSplitFragment2::AlgebraicCuspSemicircle(circle),
+            Ok(Classification::Decided(Some(CurvePoint2(CurvePointData2::AlgebraicCuspChord(
+                point,
+            ))))),
+        ) = (fragment, point)
+            && circle.shares_endpoint_point_evidence(start, point)
+        {
+            return Classification::Decided(true);
+        }
+    }
+    match (first_point, second_point) {
+        (Ok(Classification::Decided(Some(first))), Ok(Classification::Decided(Some(second)))) => {
+            first.same_point(&second, policy)
+        }
+        (Ok(Classification::Uncertain(reason)), _) | (_, Ok(Classification::Uncertain(reason))) => {
+            Classification::Uncertain(reason)
+        }
+        _ => Classification::Uncertain(UncertaintyReason::RealSign),
     }
 }
 
-fn retained_fragment_endpoint_evidence(
+fn fragment_endpoint_analytic_source(
     fragment: &BezierSplitFragment2,
     start_endpoint: bool,
-    policy: &CurveContext,
-) -> CurveResult<RetainedEndpointEvidence> {
+) -> Option<(BezierParallel2, BezierParameter2)> {
     match fragment {
-        BezierSplitFragment2::Materialized { curve, .. } => {
-            let (start, end) = curve.endpoints();
-            Ok(RetainedEndpointEvidence {
-                point: Some(if start_endpoint {
-                    start.clone()
-                } else {
-                    end.clone()
-                }),
-                retained_point: Some(crate::CurvePoint2::from(if start_endpoint {
-                    start
-                } else {
-                    end
-                })),
-                algebraic: None,
-                source: None,
-                analytic_source: None,
-                algebraic_cusp_source: None,
-            })
-        }
         BezierSplitFragment2::RetainedBezier {
-            reversed,
+            source_curve,
             start,
             end,
-            source_curve,
-            start_image,
-            end_image,
-        } => {
-            let source_start_endpoint = start_endpoint != *reversed;
-            let parameter = if source_start_endpoint { start } else { end };
-            let image = if source_start_endpoint {
-                start_image.as_ref()
+            reversed,
+            ..
+        } => Some((
+            retained_subcurve_parallel(source_curve, Real::zero()).ok()?,
+            if start_endpoint != *reversed {
+                start
             } else {
-                end_image.as_ref()
-            };
-            let source = Some((source_curve.clone(), parameter.clone()));
-            let point = retained_endpoint_point_evidence(parameter, image, source_curve, policy)?;
-            let algebraic = image.and_then(retained_endpoint_algebraic_evidence);
-            let rational = RationalBezier2::try_from_subcurve(source_curve)?;
-            let retained_point = crate::rational_bezier_general::exact_contact_point_evidence(
-                &rational, parameter, policy,
-            )?;
-            let analytic_source = Some((
-                retained_subcurve_parallel(source_curve, Real::zero())?,
-                parameter.clone(),
-            ));
-            Ok(RetainedEndpointEvidence {
-                point,
-                retained_point,
-                algebraic,
-                source,
-                analytic_source,
-                algebraic_cusp_source: None,
-            })
-        }
-        BezierSplitFragment2::AnalyticParallel(fragment) => {
-            let parameter = if start_endpoint != fragment.is_reversed() {
+                end
+            }
+            .clone(),
+        )),
+        BezierSplitFragment2::AnalyticParallel(fragment) => Some((
+            fragment.parallel().clone(),
+            if start_endpoint != fragment.is_reversed() {
                 fragment.range().start()
             } else {
                 fragment.range().end()
-            };
-            let point = match parameter.scalar() {
-                Some(parameter) => match fragment.parallel().point_at(parameter, policy)? {
-                    Classification::Decided(point) => Some(point),
-                    Classification::Uncertain(_) => None,
-                },
-                None => None,
-            };
-            let retained_point = Some(match &point {
-                Some(point) => crate::CurvePoint2::from(point.clone()),
-                None => crate::CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
-                    fragment.parallel().clone(),
-                    parameter.clone(),
-                    policy,
-                )),
-            });
-            Ok(RetainedEndpointEvidence {
-                point,
-                retained_point,
-                algebraic: None,
-                source: None,
-                analytic_source: Some((fragment.parallel().clone(), parameter.clone())),
-                algebraic_cusp_source: None,
-            })
-        }
-        BezierSplitFragment2::AlgebraicChord(chord) => {
-            let endpoint = if start_endpoint {
-                chord.start()
-            } else {
-                chord.end()
-            };
-            let (point, algebraic) = match endpoint {
-                crate::CurvePoint2(CurvePointData2::Exact(point)) => (Some(point.clone()), None),
-                crate::CurvePoint2(CurvePointData2::Algebraic(image)) => (
-                    image.exact_point(policy),
-                    image.resolved(policy).and_then(|image| {
-                        Some((
-                            Box::new(image.x()?.representation()?.clone()),
-                            Box::new(image.y()?.representation()?.clone()),
-                        ))
-                    }),
-                ),
-                crate::CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
-                | crate::CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
-                | crate::CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
-                | crate::CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
-                | crate::CurvePoint2(CurvePointData2::AnalyticParallel(_))
-                | crate::CurvePoint2(
-                    CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_),
-                ) => (None, None),
-            };
-            Ok(RetainedEndpointEvidence {
-                point,
-                retained_point: Some(endpoint.clone()),
-                algebraic,
-                source: None,
-                analytic_source: None,
-                algebraic_cusp_source: None,
-            })
-        }
+            }
+            .clone(),
+        )),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-            let retained_point = match fragment.endpoint_point_evidence(start_endpoint, policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(_) => None,
-            };
-            Ok(RetainedEndpointEvidence {
-                point: fragment.endpoint_exact_point(start_endpoint, policy)?,
-                retained_point,
-                algebraic: None,
-                source: None,
-                analytic_source: fragment.endpoint_analytic_source(start_endpoint),
-                algebraic_cusp_source: Some((fragment.clone(), start_endpoint)),
-            })
+            fragment.endpoint_analytic_source(start_endpoint)
         }
-        BezierSplitFragment2::SelectedFiber(fragment) => {
-            let retained_point = if start_endpoint {
-                fragment.start_point().clone()
-            } else {
-                fragment.end_point().clone()
-            };
-            let point = match &retained_point {
-                crate::CurvePoint2(CurvePointData2::Exact(point)) => Some(point.clone()),
-                _ => None,
-            };
-            Ok(RetainedEndpointEvidence {
-                point,
-                retained_point: Some(retained_point),
-                algebraic: None,
-                source: None,
-                analytic_source: None,
-                algebraic_cusp_source: None,
-            })
-        }
+        _ => None,
     }
 }
 
@@ -1949,124 +1875,6 @@ fn fragment_certifies_nonnegative_turn(
             .parallel_carrier()
             .certifies_nonnegative_turn(fragment.range(), fragment.is_reversed(), policy),
     }
-}
-
-fn retained_endpoint_algebraic_evidence(
-    image: &crate::BezierAlgebraicEndpointImage2,
-) -> Option<(
-    Box<AlgebraicRootRepresentation>,
-    Box<AlgebraicRootRepresentation>,
-)> {
-    let (x, y) = match image.try_point().ok()? {
-        BezierEndpointPointImage2::Polynomial(point) => (
-            point.x()?.representation()?.clone(),
-            point.y()?.representation()?.clone(),
-        ),
-        BezierEndpointPointImage2::Rational(point) => (
-            point.x()?.representation()?.clone(),
-            point.y()?.representation()?.clone(),
-        ),
-    };
-    Some((Box::new(x), Box::new(y)))
-}
-
-fn retained_endpoint_point_evidence(
-    parameter: &BezierParameter2,
-    image: Option<&crate::BezierAlgebraicEndpointImage2>,
-    source_curve: &BezierSubcurve2,
-    policy: &CurveContext,
-) -> CurveResult<Option<Point2>> {
-    if let Some(image) = image
-        && let Some(point) = exact_point_from_image(image.point(), None)
-    {
-        return Ok(Some(point));
-    }
-
-    let BezierParameter2::Exact(value) = parameter else {
-        return Ok(None);
-    };
-    match subcurve_point_at(source_curve, value.clone(), policy) {
-        Classification::Decided(point) => Ok(Some(point)),
-        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
-            "could not certify retained boundary exact endpoint from source curve: {reason:?}"
-        ))),
-    }
-}
-
-fn retained_endpoint_equality(
-    left: &RetainedEndpointEvidence,
-    right: &RetainedEndpointEvidence,
-    policy: &CurveContext,
-) -> RetainedEndpointEquality {
-    if let (Some(left), Some(right)) = (&left.source, &right.source)
-        && left == right
-    {
-        return RetainedEndpointEquality::Equal;
-    }
-
-    if let (Some((left_parallel, left_parameter)), Some((right_parallel, right_parameter))) =
-        (&left.analytic_source, &right.analytic_source)
-        && left_parameter == right_parameter
-        && left_parallel.shares_parameterized_curve_evidence(right_parallel)
-    {
-        return RetainedEndpointEquality::Equal;
-    }
-
-    if let (Some((left, left_start)), Some((right, right_start))) =
-        (&left.algebraic_cusp_source, &right.algebraic_cusp_source)
-        && left.shares_endpoint_evidence(*left_start, right, *right_start)
-    {
-        return RetainedEndpointEquality::Equal;
-    }
-
-    {
-        let cusp_chord_matches =
-            |cusp: &Option<(crate::BezierAlgebraicCuspSemicircleFragment2, bool)>,
-             point: &Option<crate::CurvePoint2>| {
-                let (
-                    Some((cusp, start_endpoint)),
-                    Some(crate::CurvePoint2(CurvePointData2::AlgebraicCuspChord(point))),
-                ) = (cusp, point)
-                else {
-                    return false;
-                };
-                cusp.shares_endpoint_point_evidence(*start_endpoint, point)
-            };
-        if cusp_chord_matches(&left.algebraic_cusp_source, &right.retained_point)
-            || cusp_chord_matches(&right.algebraic_cusp_source, &left.retained_point)
-        {
-            return RetainedEndpointEquality::Equal;
-        }
-    }
-
-    if let (Some(left), Some(right)) = (&left.point, &right.point) {
-        return match is_zero(&left.distance_squared(right), policy) {
-            Some(true) => RetainedEndpointEquality::Equal,
-            Some(false) => RetainedEndpointEquality::NotEqual,
-            None => RetainedEndpointEquality::Uncertified,
-        };
-    }
-
-    if let (Some((left_x, left_y)), Some((right_x, right_y))) = (&left.algebraic, &right.algebraic)
-    {
-        let x_equal = represented_roots_equal(left_x, right_x, policy);
-        let y_equal = represented_roots_equal(left_y, right_y, policy);
-        return match (x_equal, y_equal) {
-            (Some(true), Some(true)) => RetainedEndpointEquality::Equal,
-            (Some(false), _) | (_, Some(false)) => RetainedEndpointEquality::NotEqual,
-            _ => RetainedEndpointEquality::Uncertified,
-        };
-    }
-
-    if let (Some(left), Some(right)) = (&left.retained_point, &right.retained_point) {
-        match left.same_point(right, policy) {
-            Classification::Decided(true) => return RetainedEndpointEquality::Equal,
-            Classification::Decided(false) => return RetainedEndpointEquality::NotEqual,
-            Classification::Uncertain(_) => {}
-        }
-    }
-
-    RetainedEndpointEquality::Uncertified
 }
 
 fn curve_path_from_native_contour(contour: &Contour2) -> ExactCurveResult<CurvePath2> {
@@ -5842,16 +5650,21 @@ fn promoted_endpoint_image_corner_chord(
         | Classification::Uncertain(_) => return Ok(None),
     };
     let endpoint = |start_endpoint| -> ExactCurveResult<_> {
-        retained_fragment_endpoint_evidence(fragment, start_endpoint, policy)
+        match curve_fragment_endpoint_point(fragment, start_endpoint, policy)
             .map_err(|cause| curve_region_edit_error(operation, cause))?
-            .retained_point
-            .ok_or_else(|| {
-                ExactCurveError::blocked(
-                    operation,
-                    CurveFamily2::RationalBezier,
-                    UncertaintyReason::Unsupported,
-                )
-            })
+        {
+            Classification::Decided(Some(point)) => Ok(point),
+            Classification::Decided(None) => Err(ExactCurveError::blocked(
+                operation,
+                CurveFamily2::RationalBezier,
+                UncertaintyReason::Unsupported,
+            )),
+            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                operation,
+                CurveFamily2::RationalBezier,
+                reason,
+            )),
+        }
     };
     let support = retained_algebraic_line_support(&line, operation, policy)?;
     match support
@@ -16004,15 +15817,14 @@ fn retained_fragment_algebraic_ray_endpoints(
     policy: &CurveContext,
 ) -> CurveResult<[CurvePoint2; 2]> {
     let endpoint = |start_endpoint| -> CurveResult<_> {
-        let evidence = retained_fragment_endpoint_evidence(fragment, start_endpoint, policy)?;
-        evidence
-            .retained_point
-            .or_else(|| evidence.point.map(CurvePoint2::from))
-            .ok_or_else(|| {
-                CurveError::Topology(
+        match curve_fragment_endpoint_point(fragment, start_endpoint, policy)? {
+            Classification::Decided(Some(point)) => Ok(point),
+            Classification::Decided(None) | Classification::Uncertain(_) => {
+                Err(CurveError::Topology(
                     "a retained algebraic-ray fragment lost exact endpoint evidence".into(),
-                )
-            })
+                ))
+            }
+        }
     };
     Ok([endpoint(true)?, endpoint(false)?])
 }
@@ -23775,17 +23587,12 @@ mod tests {
                         .iter()
                         .any(|fragment| {
                             [true, false].into_iter().any(|start_endpoint| {
-                                retained_fragment_endpoint_evidence(
-                                    fragment,
-                                    start_endpoint,
-                                    &policy,
+                                matches!(
+                                    curve_fragment_endpoint_point(fragment, start_endpoint, &policy),
+                                    Ok(Classification::Decided(Some(point)))
+                                        if point.same_point(&expected, &policy)
+                                            == Classification::Decided(true)
                                 )
-                                .ok()
-                                .and_then(|evidence| evidence.retained_point)
-                                .is_some_and(|point| {
-                                    point.same_point(&expected, &policy)
-                                        == Classification::Decided(true)
-                                })
                             })
                         })
                 };
@@ -27181,10 +26988,19 @@ mod tests {
             let vertices = exact_fragments
                 .iter()
                 .map(|fragment| {
-                    retained_fragment_endpoint_evidence(fragment, true, &construction_policy)
-                        .expect("the reference cutter endpoint is exact")
-                        .point
-                        .expect("the reference cutter endpoint is represented")
+                    let Classification::Decided(Some(point)) =
+                        curve_fragment_endpoint_point(fragment, true, &construction_policy)
+                            .expect("the reference cutter endpoint is exact")
+                    else {
+                        panic!("the reference cutter endpoint has exact evidence");
+                    };
+                    let Classification::Decided(point) =
+                        retained_native_line_point(&point, &construction_policy)
+                            .expect("the reference cutter endpoint projects exactly")
+                    else {
+                        panic!("the reference cutter endpoint is represented");
+                    };
+                    point
                 })
                 .collect::<Vec<_>>();
             let parameter = positive_inverse_sqrt_parameter(2, &construction_policy);
@@ -32288,6 +32104,58 @@ mod tests {
             retained_line_fragment_segment(&split.fragments()[0], &policy),
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         ));
+    }
+
+    #[test]
+    fn retained_boundary_identity_requires_finite_affine_endpoints() {
+        // The line has W(t)=1-2t; the conic has W(t)=(1-2t)^2.
+        // Their homogeneous numerators are nonzero at t=1/2, so that
+        // parameter is a true pole, even when both fragments share it.
+        let sources = [
+            BezierSubcurve2::Rational(
+                RationalBezier2::try_new(vec![p(0, 0), p(2, 0)], vec![Real::one(), -Real::one()])
+                    .unwrap(),
+            ),
+            BezierSubcurve2::RationalQuadratic(
+                RationalQuadraticBezier2::try_new(
+                    p(0, 0),
+                    p(1, 1),
+                    p(2, 0),
+                    Real::one(),
+                    -Real::one(),
+                    Real::one(),
+                )
+                .unwrap(),
+            ),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (family, source) in sources.iter().enumerate() {
+                for (range, (start, end, finite)) in [
+                    (Real::zero(), q(1, 4), true),
+                    (q(3, 4), Real::one(), true),
+                    (Real::zero(), q(1, 2), false),
+                    (q(1, 2), Real::one(), false),
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    let fragments =
+                        [false, true].map(|reversed| BezierSplitFragment2::RetainedBezier {
+                            source_curve: source.clone(),
+                            start: BezierParameter2::Exact(start.clone()),
+                            end: BezierParameter2::Exact(end.clone()),
+                            reversed,
+                            start_image: None,
+                            end_image: None,
+                        });
+                    assert_eq!(
+                        CurveRegionBoundaryLoop2::new(fragments.into(), &policy).is_ok(),
+                        finite,
+                        "shared parameter identity needs affine endpoints: policy={policy:?}, family={family}, range={range}",
+                    );
+                }
+            }
+        }
     }
 
     #[test]

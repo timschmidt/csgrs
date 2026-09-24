@@ -377,7 +377,8 @@ impl CurvePoint2 {
                     crate::bezier_arrangement::represented_roots_equal(first_x, second_x, policy),
                     crate::bezier_arrangement::represented_roots_equal(first_y, second_y, policy),
                 ) {
-                    (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
+                    (Some(false), _) | (_, Some(false)) => Classification::Decided(false),
+                    (Some(true), Some(true)) => Classification::Decided(true),
                     _ => Classification::Uncertain(UncertaintyReason::RealSign),
                 }
             }
@@ -422,7 +423,8 @@ impl CurvePoint2 {
                     crate::bezier_arrangement::represented_roots_equal(x, &exact_x, policy),
                     crate::bezier_arrangement::represented_roots_equal(y, &exact_y, policy),
                 ) {
-                    (Some(x_equal), Some(y_equal)) => Classification::Decided(x_equal && y_equal),
+                    (Some(false), _) | (_, Some(false)) => Classification::Decided(false),
+                    (Some(true), Some(true)) => Classification::Decided(true),
                     _ => Classification::Uncertain(UncertaintyReason::RealSign),
                 }
             }
