@@ -466,17 +466,17 @@ impl CurveString2 {
         let source_boxes = self
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment))
+            .map(decided_segment_aabb)
             .collect::<Vec<_>>();
         let start_boxes = start_cutter
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment))
+            .map(decided_segment_aabb)
             .collect::<Vec<_>>();
         let end_boxes = end_cutter
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment))
+            .map(decided_segment_aabb)
             .collect::<Vec<_>>();
         let start_events = intersect_curve_strings_with_cached_aabbs(
             self,
@@ -763,12 +763,12 @@ impl CurveString2 {
         let self_boxes = self
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment))
+            .map(decided_segment_aabb)
             .collect::<Vec<_>>();
         let other_boxes = other
             .segments
             .iter()
-            .map(|segment| decided_segment_aabb(segment))
+            .map(decided_segment_aabb)
             .collect::<Vec<_>>();
         intersect_curve_strings_with_cached_aabbs(self, other, &self_boxes, &other_boxes, policy)
     }

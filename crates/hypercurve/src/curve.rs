@@ -6910,7 +6910,7 @@ fn fillet_offset_centers(
             for contact in intersections.contacts() {
                 let point = analytic_parallel_point_evidence(
                     previous,
-                    &contact.first_parameter().clone().into(),
+                    &contact.first_parameter().clone(),
                     CurveOperation2::Fillet,
                     previous_family,
                     policy,
@@ -11551,7 +11551,7 @@ fn arc_chamfer_cuts(
         return Ok(CornerCuts2 {
             first: Some(CornerCut2 {
                 parameter: Some(arc.corner_parameter(previous, operation, family, policy)?),
-                point: corner.clone().into(),
+                point: corner.clone(),
                 placement: CornerPlacement2::Corner,
             }),
             second: None,

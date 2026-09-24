@@ -5553,10 +5553,10 @@ impl RationalBezier2 {
         };
         let degree = self.degree();
         let other_base = if reversed { degree } else { 0 };
-        for index in 0..=degree {
+        for (index, control) in first_controls.iter().enumerate() {
             let other_index = if reversed { degree - index } else { index };
             match is_zero(
-                &first_controls[index].distance_squared(&second_controls[other_index]),
+                &control.distance_squared(&second_controls[other_index]),
                 policy,
             ) {
                 Some(true) => {}

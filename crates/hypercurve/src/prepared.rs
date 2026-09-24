@@ -502,10 +502,7 @@ impl<'a> RegionQuery2<'a> {
 }
 
 fn decided_segment_boxes(segments: &[crate::Segment2]) -> Vec<Option<Aabb2>> {
-    segments
-        .iter()
-        .map(|segment| decided_segment_aabb(segment))
-        .collect()
+    segments.iter().map(decided_segment_aabb).collect()
 }
 
 fn prepared_segments(segments: &[Segment2]) -> Vec<PreparedSegment2<'_>> {

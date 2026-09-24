@@ -387,16 +387,8 @@ pub(crate) fn intersect_contours(
     // the simple pair scan but skips pairs whose boxes are decidably disjoint.
     let a_box = decided_contour_aabb(a);
     let b_box = decided_contour_aabb(b);
-    let a_boxes: Vec<_> = a
-        .segments()
-        .iter()
-        .map(|segment| decided_segment_aabb(segment))
-        .collect();
-    let b_boxes: Vec<_> = b
-        .segments()
-        .iter()
-        .map(|segment| decided_segment_aabb(segment))
-        .collect();
+    let a_boxes: Vec<_> = a.segments().iter().map(decided_segment_aabb).collect();
+    let b_boxes: Vec<_> = b.segments().iter().map(decided_segment_aabb).collect();
 
     intersect_contours_with_cached_aabbs(
         a,
@@ -608,7 +600,7 @@ pub(crate) fn intersect_contour_self(
     let segment_boxes: Vec<_> = contour
         .segments()
         .iter()
-        .map(|segment| decided_segment_aabb(segment))
+        .map(decided_segment_aabb)
         .collect();
 
     intersect_contour_self_with_cached_aabbs(contour, &segment_boxes, policy)
@@ -1726,12 +1718,12 @@ mod tests {
         let first_boxes = first
             .segments()
             .iter()
-            .map(|segment| decided_segment_aabb(segment))
+            .map(decided_segment_aabb)
             .collect::<Vec<_>>();
         let second_boxes = second
             .segments()
             .iter()
-            .map(|segment| decided_segment_aabb(segment))
+            .map(decided_segment_aabb)
             .collect::<Vec<_>>();
         let exact_box_events = intersect_contours_with_cached_aabbs(
             &first,

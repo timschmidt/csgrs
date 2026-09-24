@@ -725,7 +725,7 @@ fn positive_reciprocal_sqrt_parameter(
 fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let third = q(1, 3);
-    let controls = vec![
+    let controls = [
         p(1, 0),
         Point2::new(Real::one() + &third, third.clone()),
         Point2::new(

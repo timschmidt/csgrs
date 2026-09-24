@@ -16331,12 +16331,11 @@ fn algebraic_point_retained_rational_curve_ray_winding(
     let incidence =
         algebraic_point_rational_curve_linear_equation(&fragment.curve, point, &side_x, &side_y)?;
 
-    if let BezierParameter2::Algebraic(retained) = point.retained_parameter() {
-        if bivariate_fiber_strict_sign_on_parameter_range(&incidence, retained, range, policy)?
+    if let BezierParameter2::Algebraic(retained) = point.retained_parameter()
+        && bivariate_fiber_strict_sign_on_parameter_range(&incidence, retained, range, policy)?
             .is_some()
-        {
-            return Ok(Classification::Decided(0));
-        }
+    {
+        return Ok(Classification::Decided(0));
     }
 
     let parameters =

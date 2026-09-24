@@ -2613,10 +2613,11 @@ fn curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches
     );
     assert!(approximate.value.is_complete());
     assert_eq!(approximate.value.contacts().len(), 1);
-    assert!(matches!(
-        (approximate.value.contacts()[0].point()).coordinates(),
-        Some(_)
-    ));
+    assert!(
+        (approximate.value.contacts()[0].point())
+            .coordinates()
+            .is_some()
+    );
 
     let strict = arc
         .intersect_curve(&line, &CurveContext::STRICT)

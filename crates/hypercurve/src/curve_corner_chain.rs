@@ -1062,7 +1062,7 @@ impl<'a> CurveCornerChain2<'a> {
             center,
             clockwise,
             retained_frame,
-            &radius,
+            radius,
             false,
             promoted_parallels[0],
             promoted_parallels[1],
@@ -1114,7 +1114,7 @@ impl<'a> CurveCornerChain2<'a> {
         for (fillet_half, circle) in circles.iter().enumerate() {
             let intersections = circle.certified_tangent_rational_intersections(
                 source,
-                &deferred.source.support(),
+                deferred.source.support(),
                 &deferred.source_radius,
                 &deferred.signed_center_radius,
                 policy,
@@ -1319,7 +1319,7 @@ impl<'a> CurveCornerChain2<'a> {
             }
             crate::curve::RetainedArcFilletContactCell2::Complement(index) => (
                 crate::curve::retained_arc_complement_projective_spans(
-                    &deferred.source.support(),
+                    deferred.source.support(),
                     CurveOperation2::Fillet,
                     CurveFamily2::CircularArc,
                     policy,
@@ -1600,7 +1600,7 @@ impl<'a> CurveCornerChain2<'a> {
                 return Ok(None);
             }
             spans = crate::curve::retained_arc_complement_projective_spans(
-                &deferred.source.support(),
+                deferred.source.support(),
                 CurveOperation2::Fillet,
                 CurveFamily2::CircularArc,
                 policy,

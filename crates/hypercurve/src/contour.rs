@@ -634,10 +634,7 @@ fn contour_box_misses_point(
 }
 
 fn decided_segment_boxes(segments: &[Segment2]) -> Vec<Option<Aabb2>> {
-    segments
-        .iter()
-        .map(|segment| decided_segment_aabb(segment))
-        .collect()
+    segments.iter().map(decided_segment_aabb).collect()
 }
 
 fn exact_dyadic_line_aabbs(segments: &[Segment2]) -> Option<ExactDyadicLineAabbs> {

@@ -5699,7 +5699,7 @@ mod conversion_tests {
                     (Real::zero(), RealSign::Zero),
                     (tiny.clone(), RealSign::Positive),
                 ] {
-                    let coefficients = vec![
+                    let coefficients = [
                         -Real::one() + shift,
                         Real::zero(),
                         Real::zero(),

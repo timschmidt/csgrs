@@ -490,7 +490,7 @@ fn rounded_algebraic_rectangle_oracle(distance: &Real, policy: &CurveContext) ->
                     CircularArc2::try_from_center(
                         start,
                         end,
-                        centers[((index + 1) / 2) % centers.len()].clone(),
+                        centers[index.div_ceil(2) % centers.len()].clone(),
                         false,
                     )
                     .unwrap(),
@@ -549,17 +549,16 @@ fn parabola_extension_contact(region: &CurveRegion2, policy: &CurveContext) -> O
                 && topology.result().contacts().is_empty()
                 && topology.result().overlaps().len() == 1
                 && topology.first().len() == 1
-            {
-                if furthest.as_ref().is_none_or(|previous| {
+                && furthest.as_ref().is_none_or(|previous| {
                     decided(
                         contact
                             .compare_coordinate(previous, hypercurve::Axis2::X, policy)
                             .unwrap(),
                     )
                     .is_gt()
-                }) {
-                    furthest = Some(contact);
-                }
+                })
+            {
+                furthest = Some(contact);
             }
         }
     }
@@ -1095,7 +1094,7 @@ fn repeated_region_offsets_compose_retained_exact_parallels_under_both_policies(
     assert_eq!(approximate_repeated.value, strict_direct.value);
     for curve in approximate_repeated.value.boundary_loops()[0].curves() {
         assert!(
-            is_analytic_parallel(&curve),
+            is_analytic_parallel(curve),
             "the composed non-PH quadratic parallel must stay analytic"
         );
     }
@@ -5112,12 +5111,10 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
         ]
         .into_iter()
         .find(|region| {
-            region.boundary_loops().iter().any(|boundary| {
-                boundary
-                    .curves()
-                    .iter()
-                    .any(|fragment| has_retained_rational_domain(fragment))
-            })
+            region
+                .boundary_loops()
+                .iter()
+                .any(|boundary| boundary.curves().iter().any(has_retained_rational_domain))
         })
         .expect("the general retained-parameter Boolean must publish a selected-fiber fragment");
         let transform = Similarity2::try_from_real_affine(
@@ -5133,12 +5130,12 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
             .transform_similarity(&transform, &policy)
             .expect("selected-fiber contacts must survive one retained similarity")
             .into_value();
-        assert!(transformed.boundary_loops().iter().any(|boundary| {
-            boundary
-                .curves()
+        assert!(
+            transformed
+                .boundary_loops()
                 .iter()
-                .any(|fragment| has_retained_rational_domain(fragment))
-        }));
+                .any(|boundary| { boundary.curves().iter().any(has_retained_rational_domain) })
+        );
         let projected = selected
             .project_to_finite_profiles(&FiniteProjectionOptions::try_new(1.0e-1).unwrap(), &policy)
             .expect("selected-fiber loops must cross the explicit finite-output boundary")
@@ -8188,7 +8185,7 @@ fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
         }
         let twice = double_wound_quadratic_cap();
         for outcome in [
-            CurveRegion2::try_from_boundary_paths(&[twice.clone()], &policy).unwrap(),
+            CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&twice), &policy).unwrap(),
             CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &[twice],
                 &[CurveRegionLoopRole::Material],
