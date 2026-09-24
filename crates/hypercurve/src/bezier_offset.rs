@@ -7619,6 +7619,8 @@ fn refined_represented_root(
     if refinement_steps == 0 || source.interval.exact_root.is_some() {
         return source.clone();
     }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record("hypercurve", "represented-root-bounds", "refine");
     let report = refine_isolated_univariate_polynomial_interval(
         &source.polynomial_coefficients,
         &source.interval,
@@ -56372,48 +56374,32 @@ impl BezierRecursiveQuadraticValue2 {
         refinement_steps: usize,
         coefficient_precision: Option<i32>,
     ) -> Option<RealInterval> {
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } => {
-                let sources = field
-                    .sources
-                    .iter()
-                    .zip(&field.source_real_witnesses)
-                    .map(|(source, witness)| {
-                        if witness.is_some() {
-                            source.clone()
-                        } else {
-                            refined_represented_root(source, refinement_steps)
-                        }
-                    })
-                    .collect::<Vec<_>>();
-                dense_two_positive_square_root_interval_with_coefficient_precision(
-                    expression,
-                    &field.first_speed_squared,
-                    &field.second_speed_squared,
-                    &sources,
-                    Some(&field.source_real_witnesses),
-                    coefficient_precision,
-                )
-            }
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => {
-                let retained = retained
-                    .interval_with_coefficient_precision(refinement_steps, coefficient_precision)?;
-                let radical = radical
-                    .interval_with_coefficient_precision(refinement_steps, coefficient_precision)?;
-                let root = field
-                    .radicand
-                    .interval_with_coefficient_precision(refinement_steps, coefficient_precision)?
-                    .nonnegative_square_root(coefficient_precision)?;
-                Some(retained.add(&radical.multiply(&root)?))
-            }
-        }
+        // Every component belongs to this same base tuple. Refine it once
+        // before replaying the shared tower, including all nested radicands.
+        // Preserve source-coordinate witnesses as point enclosures. Collapsing
+        // the entire expression to a scalar belongs to its separate replay
+        // path, after these inexpensive component bounds have had a chance.
+        let (base, _) = self.field().base_and_extension_path();
+        let sources = base
+            .sources
+            .iter()
+            .zip(&base.source_real_witnesses)
+            .map(|(source, witness)| {
+                if let Some(witness) = witness {
+                    let mut source = source.clone();
+                    source.interval = IsolatedRootInterval {
+                        lower: witness.clone(),
+                        upper: witness.clone(),
+                        exact_root: Some(witness.clone()),
+                        distinct_root_count: 1,
+                    };
+                    source
+                } else {
+                    refined_represented_root(source, refinement_steps)
+                }
+            })
+            .collect::<Vec<_>>();
+        self.interval_over_source_box_with_witnesses(&sources, coefficient_precision, false)
     }
 
     fn interval(&self, refinement_steps: usize) -> Option<RealInterval> {
@@ -134673,6 +134659,86 @@ mod conversion_tests {
             .status,
             hypersolve::AlgebraicRootValidationStatus::Valid,
         );
+    }
+
+    #[test]
+    fn recursive_bounds_refine_each_shared_source_once() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let selected = high_degree_quadratic_selected_fiber_parameter_for_test(
+            half.clone(),
+            &CurveContext::STRICT,
+        );
+        let source = certified_parameter_representation(
+            &selected.data.authority.data.retained_parameter,
+            &CurveContext::STRICT,
+        );
+        let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
+        let mut field =
+            BezierRecursiveQuadraticField2::base(vec![source.clone()], one.clone(), one).unwrap();
+        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            unreachable!();
+        };
+        assert!(base.source_real_witnesses[0].is_none());
+        let mut value = recursive_quadratic_rational_value(
+            base,
+            DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::zero(), Real::one()])
+                .unwrap(),
+        )
+        .unwrap();
+        // The independent scalar oracle knows alpha=(1/2)^(1/65). The field
+        // retains only its certified polynomial root. Every later value
+        // reuses its predecessor both directly and under a positive radical.
+        let mut expected = half.pow((Real::one() / Real::from(65)).unwrap()).unwrap();
+        for depth in 1..=4 {
+            let shift = Real::from(depth + 1);
+            let radicand = value.add(&field.constant(shift.clone()).unwrap()).unwrap();
+            let unit = field.constant(Real::one()).unwrap();
+            field = field.extension(radicand).unwrap();
+            value = field.element(value, unit).unwrap();
+            expected = &expected + (&expected + shift).sqrt().unwrap();
+            for steps in [4, 16, 64] {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let evaluate = || value.interval_with_coefficient_precision(steps, Some(-128));
+                #[cfg(feature = "dispatch-trace")]
+                let interval = hyperreal::dispatch_trace::with_recording(evaluate);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let interval = evaluate();
+                let interval = interval.expect("the positive tower must retain finite bounds");
+                #[cfg(feature = "dispatch-trace")]
+                assert_eq!(
+                    hyperreal::dispatch_trace::take_trace().path_count(
+                        "hypercurve",
+                        "represented-root-bounds",
+                        "refine",
+                    ),
+                    1,
+                    "depth={depth}, steps={steps}",
+                );
+                assert_eq!(
+                    compare_reals(&interval.lower, &expected, &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Less),
+                );
+                assert_eq!(
+                    compare_reals(&interval.upper, &expected, &CurveContext::STRICT),
+                    Some(std::cmp::Ordering::Greater),
+                );
+                // Each positive radical adds less than one to the derivative
+                // with respect to its argument. Four levels amplify the
+                // root width by less than 16; allow the certified square-root
+                // rounding as well, without relying on an internal box shape.
+                let maximum_width = Real::from(2_i8).powi_i64(5 - steps as i64).unwrap();
+                assert_eq!(
+                    compare_reals(
+                        &(interval.upper - interval.lower),
+                        &maximum_width,
+                        &CurveContext::STRICT,
+                    ),
+                    Some(std::cmp::Ordering::Less),
+                );
+                assert!(field.base_and_extension_path().0.sources == vec![source.clone()]);
+            }
+        }
     }
 
     #[test]
