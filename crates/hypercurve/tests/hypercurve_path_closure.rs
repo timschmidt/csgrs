@@ -53,7 +53,8 @@ fn boundary_admission_rejects_disconnected_spline_spans() {
             assert_same_point(&path.start(), &path.end(), &policy);
             for error in [
                 path.boundary_loop(&policy).unwrap_err(),
-                CurveRegion2::try_from_boundary_paths(&[path.clone()], &policy).unwrap_err(),
+                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+                    .unwrap_err(),
             ] {
                 assert!(matches!(
                     error,
@@ -666,6 +667,44 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
                         .unwrap();
                     assert_eq!(replay.certainty, CurveCertainty::Certified);
                     check(replay.value.intersection(), &policy);
+                    // Exercise every result of the shared arrangement, including
+                    // XOR's two filled sectors at an authored curve junction.
+                    // The first four samples cover all operand membership pairs;
+                    // the last checks ownership of the clipping boundary.
+                    use RegionPointLocation::{Boundary, Inside, Outside};
+                    for (point, expected) in [
+                        (
+                            Point2::new(q(1, 4), q(1, 4)),
+                            [Inside, Inside, Outside, Outside],
+                        ),
+                        (
+                            Point2::new(q(-1, 64), q(1, 2)),
+                            [Inside, Outside, Inside, Inside],
+                        ),
+                        (
+                            Point2::new(q(3, 2), q(1, 2)),
+                            [Inside, Outside, Outside, Inside],
+                        ),
+                        (Point2::new(q(-1, 2), q(1, 2)), [Outside; 4]),
+                        (
+                            Point2::new(Real::zero(), q(1, 2)),
+                            [Inside, Boundary, Boundary, Boundary],
+                        ),
+                    ] {
+                        for (region, expected) in [
+                            replay.value.union(),
+                            replay.value.intersection(),
+                            replay.value.difference(),
+                            replay.value.xor(),
+                        ]
+                        .into_iter()
+                        .zip(expected)
+                        {
+                            let location = region.classify_point(&point, &policy).unwrap();
+                            assert_eq!(location.certainty, CurveCertainty::Certified);
+                            assert_eq!(location.value, Classification::Decided(expected));
+                        }
+                    }
                 }
             }
         }

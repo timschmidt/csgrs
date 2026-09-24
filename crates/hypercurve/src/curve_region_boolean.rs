@@ -10333,6 +10333,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             &arrangement_directions,
             topology,
             &self.data.carriers,
+            &self.data.policy,
         );
         let primary = graph
             .traverse_retained_with_certified_successors(&certified_successors, &self.data.policy);
@@ -13461,6 +13462,7 @@ fn certified_boolean_successors(
     directions: &[BooleanArrangementFragmentDirection],
     topology: &CurveRegionBooleanTopology,
     carriers: &[RegionCarrier],
+    policy: &CurveContext,
 ) -> Vec<Option<usize>> {
     let starts_by_vertex = arrangement_starts_by_vertex(graph, None);
     let mut successors = certified_transverse_successors(
@@ -13479,6 +13481,36 @@ fn certified_boolean_successors(
         carriers,
         &starts_by_vertex,
     );
+    // A crossing at an authored subdivision can involve more than the two
+    // carriers named by one contact certificate. Reuse the exact retained
+    // tangent authority before asking traversal to reconstruct endpoint
+    // derivatives or a derived Boolean to rebuild this same arrangement.
+    let mut ends_by_vertex = HashMap::<usize, Vec<usize>>::new();
+    for (index, fragment) in graph.fragments().iter().enumerate() {
+        if let Some(vertex) = fragment.end_topology_vertex()
+            && starts_by_vertex
+                .get(&vertex)
+                .is_some_and(|outgoing| outgoing.len() > 1)
+        {
+            ends_by_vertex.entry(vertex).or_default().push(index);
+        }
+    }
+    for (vertex, incoming) in ends_by_vertex {
+        let Some(outgoing) = starts_by_vertex.get(&vertex) else {
+            continue;
+        };
+        if incoming.iter().any(|&edge| successors[edge].is_none()) {
+            policy.strict_predicate_pass(|| {
+                certify_curve_tangent_successors(
+                    &mut successors,
+                    &incoming,
+                    outgoing,
+                    graph,
+                    policy,
+                )
+            });
+        }
+    }
     successors
 }
 
@@ -18752,12 +18784,12 @@ mod certified_successor_tests {
             _ => {
                 let start = decided(
                     parallel
-                        .point_evidence_on_regular_range(&parallel_start, &ordered_range, &policy)
+                        .point_evidence_on_regular_range(parallel_start, &ordered_range, &policy)
                         .unwrap(),
                 );
                 let end = decided(
                     parallel
-                        .point_evidence_on_regular_range(&parallel_end, &ordered_range, &policy)
+                        .point_evidence_on_regular_range(parallel_end, &ordered_range, &policy)
                         .unwrap(),
                 );
                 let fragment = BezierSplitFragment2::SelectedFiber(
