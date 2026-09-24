@@ -18375,13 +18375,9 @@ impl BezierAlgebraicCuspSemicircle2 {
     }
 
     /// Signs one retained point's squared-distance residual against this
-    /// supporting circle without merging independent selected fields.
-    ///
-    /// Correlated derived points retain their exact quotient-ring identity as
-    /// the fast path. Every other carrier is enclosed together with the circle
-    /// center, and the interval for `|P-C|^2-r^2` is refined until its sign is
-    /// strict. An unresolved terminal interval is equality only under
-    /// APPROXIMATE_512; STRICT keeps it explicit.
+    /// supporting circle. Construction identities and short exact enclosure
+    /// checks precede replay in the least shared retained field, which can
+    /// prove incidence even when independent Cartesian bounds cannot.
     pub(crate) fn retained_point_incidence_sign(
         &self,
         point: &CurvePoint2,
@@ -18416,6 +18412,21 @@ impl BezierAlgebraicCuspSemicircle2 {
                 decided @ Classification::Decided(_) => return Ok(decided),
                 Classification::Uncertain(_) => {}
             }
+        }
+        let refined = self.retained_point_incidence_sign_by_refinement(point, policy, 4, false)?;
+        if matches!(refined, Classification::Decided(_)) {
+            return Ok(refined);
+        }
+        if let Classification::Decided(center) = self.center_point_evidence(policy)?
+            && let Classification::Decided(Some(sign)) =
+                recursive_projective_point_evidence_circle_residual_sign(
+                    point,
+                    &center,
+                    &(self.radial_distance() * self.radial_distance()),
+                    policy,
+                )?
+        {
+            return Ok(Classification::Decided(sign));
         }
         self.retained_point_incidence_sign_by_refinement(point, policy, 512, true)
     }
@@ -99493,6 +99504,34 @@ fn recursive_projective_incident_point_order(
     })))
 }
 
+/// Signs `|point-center|^2-radius_squared` in the least shared retained
+/// field. Squaring the common nonzero denominator preserves the affine sign;
+/// selected-root and radical relations remain available to prove exact zero.
+fn recursive_projective_point_evidence_circle_residual_sign(
+    point: &CurvePoint2,
+    center: &CurvePoint2,
+    radius_squared: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<RealSign>>> {
+    let points = match recursive_projective_evidence_points(&[point, center], policy)? {
+        Classification::Decided(Some(points)) => points,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let [point, center]: [BezierRecursiveQuadraticProjectivePoint2; 2] = points
+        .try_into()
+        .expect("a circle residual retains its point and center");
+    let Some(residual) = (|| {
+        let (dx, dy, denominator) = point.difference_numerators(&center)?;
+        dx.square()?
+            .add(&dy.square()?)?
+            .subtract(&denominator.square()?.scale(radius_squared)?)
+    })() else {
+        return Ok(Classification::Decided(None));
+    };
+    Ok(residual.sign(policy)?.map(Some))
+}
+
 /// Signs an oriented area directly in the least shared recursive quadratic
 /// tower carried by three retained points. No affine chord parameter axis is
 /// needed, so callers with an independent distinctness certificate can avoid
@@ -103967,20 +104006,6 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         }
     }
 
-    pub(crate) fn contains_point(
-        &self,
-        point: &Point2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
-        match self.forward_ray_winding_delta(point, &Real::one(), &Real::zero(), policy)? {
-            Classification::Decided(_) => Ok(Classification::Decided(false)),
-            Classification::Uncertain(UncertaintyReason::Boundary) => {
-                Ok(Classification::Decided(true))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
-    }
-
     /// Classifies exact incidence of any retained affine point on this finite
     /// selected-circle fragment. Circle and diameter-side predicates consume
     /// the point's native evidence; no Cartesian compositum is constructed.
@@ -104033,7 +104058,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         selected_circle_endpoint_chord_side(&start, &end, point, true, policy)
     }
 
-    pub(crate) fn contains_point_evidence(
+    /// Classifies represented and retained points through the same circle
+    /// incidence and finite endpoint-chord ownership predicates.
+    pub(crate) fn contains_point(
         &self,
         point: &CurvePoint2,
         policy: &CurveContext,
@@ -104074,7 +104101,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     /// incidence on this retained circle is exact, the strict interior chord
     /// side excludes both endpoint contacts without comparing independently
     /// represented angular parameters. Callers must retain the circle-contact
-    /// certificate; arbitrary point evidence must use `contains_point_evidence`.
+    /// certificate; arbitrary point evidence must use `contains_point`.
     pub(crate) fn certified_incident_point_evidence_is_strict_interior(
         &self,
         point: &CurvePoint2,
@@ -104491,7 +104518,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         direction_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<i32>>> {
-        match self.contains_point(origin, policy)? {
+        match self.contains_point(&CurvePoint2::from(origin.clone()), policy)? {
             Classification::Decided(true) => {}
             Classification::Decided(false) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => {
@@ -141265,7 +141292,7 @@ mod conversion_tests {
                         point(center_x + 1, 0),
                     ] {
                         assert_eq!(
-                            carrier.contains_point(&incident, &policy).unwrap(),
+                            carrier.contains_point(&incident.into(), &policy).unwrap(),
                             Classification::Decided(true),
                         );
                     }
@@ -141275,7 +141302,7 @@ mod conversion_tests {
                         point(center_x + 2, 0),
                     ] {
                         assert_eq!(
-                            carrier.contains_point(&excluded, &policy).unwrap(),
+                            carrier.contains_point(&excluded.into(), &policy).unwrap(),
                             Classification::Decided(false),
                         );
                     }
@@ -142699,7 +142726,7 @@ mod conversion_tests {
                 );
                 assert_eq!(
                     BezierAlgebraicCuspSemicircleFragment2::full(semicircle.clone(), &policy,)
-                        .contains_point_evidence(&contact.point, &policy)
+                        .contains_point(&contact.point, &policy)
                         .unwrap(),
                     Classification::Decided(true),
                 );
@@ -143821,7 +143848,7 @@ mod conversion_tests {
                     panic!("the forced general circle point must be decided");
                 };
                 assert_eq!(
-                    fragment.contains_point(&point, &policy).unwrap(),
+                    fragment.contains_point(&point.into(), &policy).unwrap(),
                     Classification::Decided(true),
                 );
             }
@@ -175030,19 +175057,19 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let fragment = BezierAlgebraicCuspSemicircleFragment2::full(circle, &policy);
             assert_eq!(
                 fragment
-                    .contains_point(&Point2::from_values(0, 0), &policy)
+                    .contains_point(&Point2::from_values(0, 0).into(), &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
             assert_eq!(
                 fragment
-                    .contains_point(&Point2::from_values(2, 0), &policy)
+                    .contains_point(&Point2::from_values(2, 0).into(), &policy)
                     .unwrap(),
                 Classification::Decided(false),
             );
             assert_eq!(
                 fragment
-                    .contains_point(&Point2::from_values(1, 0), &policy)
+                    .contains_point(&Point2::from_values(1, 0).into(), &policy)
                     .unwrap(),
                 Classification::Decided(false),
             );

@@ -16850,7 +16850,7 @@ fn retained_fragment_contains_point(
         }
         BezierSplitFragment2::AlgebraicChord(chord) => chord.contains_point(point, policy),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-            fragment.contains_point(point, policy)
+            fragment.contains_point(&CurvePoint2::from(point.clone()), policy)
         }
     }
 }
@@ -28043,7 +28043,9 @@ mod tests {
             );
             let query = Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::from(-1_i8));
             assert_eq!(
-                represented.contains_point(&query, &policy).unwrap(),
+                represented
+                    .contains_point(&CurvePoint2::from(query.clone()), &policy)
+                    .unwrap(),
                 Classification::Decided(true),
             );
             assert_eq!(
@@ -28091,7 +28093,7 @@ mod tests {
             );
             assert_eq!(
                 represented_complement
-                    .contains_point(&query, &policy)
+                    .contains_point(&CurvePoint2::from(query.clone()), &policy)
                     .unwrap(),
                 Classification::Decided(false),
             );
@@ -28670,17 +28672,101 @@ mod tests {
     }
 
     #[test]
-    fn algebraic_endpoint_images_reenter_shared_corner_carriers() {
-        let candidates = |solutions: CurveCornerSolutions2<CurveRegion2>| match solutions {
-            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-            CurveCornerSolutions2::Multiple(candidates) => candidates,
-            CurveCornerSolutions2::NoSolution(reason) => {
-                panic!("the retained endpoint corner lost its edit: {reason:?}")
-            }
-        };
+    fn independent_field_corner_edits_preserve_normalized_sets() {
+        let x_leg = q(1, 2).sqrt().unwrap();
+        let y_leg = q(1, 3).sqrt().unwrap();
+        let hypotenuse = q(5, 6).sqrt().unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let region = independent_field_algebraic_chord_region(&policy, reversed);
+                // Vertex one is A=(sqrt(1/2),0) in forward order, and
+                // B=(0,sqrt(1/3)) after reversal. Exchange axes so the
+                // independent construction below uses V=(a,0) in both cases.
+                let (a, b) = if reversed {
+                    (&y_leg, &x_leg)
+                } else {
+                    (&x_leg, &y_leg)
+                };
+                let point = |x, y| {
+                    if reversed {
+                        Point2::new(y, x)
+                    } else {
+                        Point2::new(x, y)
+                    }
+                };
+                let direction_x = (a / &hypotenuse).unwrap();
+                let direction_y = (b / &hypotenuse).unwrap();
+                let assert_extended_set =
+                    |solutions: &CurveCornerSolutions2<CurveRegion2>,
+                     operation: &str,
+                     setback: &Real,
+                     connector_sample: &Point2,
+                     added_interior: &Point2| {
+                        // The independent exterior contacts are V+L*e and V-L*d,
+                        // where e=(1,0) and d=(-a,b)/sqrt(a^2+b^2).
+                        let first_cut = point(a + setback, Real::zero());
+                        let second_cut =
+                            point(a + setback * &direction_x, -(setback * &direction_y));
+                        let mut found = false;
+                        for_each_corner_region(solutions, |edited| {
+                            assert!(edited.has_regularized_filled_left_topology(&policy));
+                            let assert_location = |sample: &Point2, expected, label| {
+                                let location = edited.classify_point(sample, &policy).unwrap();
+                                assert_eq!(location.certainty, CurveCertainty::Certified);
+                                assert_eq!(
+                                    location.value,
+                                    Classification::Decided(expected),
+                                    "{operation}: {label}, reversed={reversed}, policy={policy:?}",
+                                );
+                            };
+                            // Every candidate keeps these portions of the original
+                            // triangle, regardless of how its boundary is split.
+                            assert_location(
+                                &Point2::new(q(1, 8), q(1, 8)),
+                                RegionPointLocation::Inside,
+                                "original interior",
+                            );
+                            assert_location(&p(2, 2), RegionPointLocation::Outside, "exterior");
+                            assert_location(
+                                &Point2::new(q(1, 8), Real::zero()),
+                                RegionPointLocation::Boundary,
+                                "original x axis",
+                            );
+                            assert_location(
+                                &Point2::new(Real::zero(), q(1, 8)),
+                                RegionPointLocation::Boundary,
+                                "original y axis",
+                            );
+                            let has_cut = |cut: &Point2| {
+                                edited.boundary_loops().iter().any(|boundary| {
+                                    boundary.fragments().iter().any(|fragment| {
+                                        retained_fragment_has_exact_endpoint(fragment, cut)
+                                    })
+                                })
+                            };
+                            if !has_cut(&first_cut) || !has_cut(&second_cut) {
+                                return;
+                            }
+                            assert_location(&first_cut, RegionPointLocation::Boundary, "first cut");
+                            assert_location(
+                                &second_cut,
+                                RegionPointLocation::Boundary,
+                                "second cut",
+                            );
+                            assert_location(
+                                connector_sample,
+                                RegionPointLocation::Boundary,
+                                "connector",
+                            );
+                            assert_location(
+                                added_interior,
+                                RegionPointLocation::Inside,
+                                "added interior",
+                            );
+                            found = true;
+                        });
+                        assert!(found, "the exact exterior corner lobe was lost");
+                    };
                 let trim_chamfers = region
                     .chamfer_loop_vertex_by_setbacks(
                         0,
@@ -28701,59 +28787,51 @@ mod tests {
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
-                    .expect("the endpoint-image/chord extension chamfer must decide")
-                    .into_value();
+                    .expect("the endpoint-image/chord extension chamfer must decide");
+                assert_eq!(extended_chamfers.certainty, CurveCertainty::Certified);
                 assert!(
-                    extended_chamfers.candidate_count() > trim_chamfers.candidate_count(),
+                    extended_chamfers.value.candidate_count() > trim_chamfers.candidate_count(),
                     "the promoted endpoint carrier must retain its incident ray"
                 );
-                for candidate in candidates(extended_chamfers) {
-                    assert!(
-                        candidate.boundary_loops()[0]
-                            .fragments()
-                            .iter()
-                            .filter(|fragment| matches!(
-                                fragment,
-                                BezierSplitFragment2::AlgebraicChord(_)
-                            ))
-                            .count()
-                            >= 3,
-                        "the line-image endpoint and chamfer must stay on compact affine chords"
-                    );
-                }
+                // Midpoint of the two contacts, and centroid of their triangle
+                // with V, certify the new straight connector and filled lobe.
+                assert_extended_set(
+                    &extended_chamfers.value,
+                    "chamfer",
+                    &q(1, 10),
+                    &point(
+                        a + (Real::one() + &direction_x) * q(1, 20),
+                        -&direction_y * q(1, 20),
+                    ),
+                    &point(
+                        a + (Real::one() + &direction_x) * q(1, 30),
+                        -&direction_y * q(1, 30),
+                    ),
+                );
 
+                let radius = q(1, 100);
                 let fillets = region
                     .fillet_loop_vertex_by_radius(
                         0,
                         1,
-                        q(1, 100),
+                        radius.clone(),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
-                    .expect("the endpoint-image/chord fillet must decide")
-                    .into_value();
-                for candidate in candidates(fillets) {
-                    let fragments = candidate.boundary_loops()[0].fragments();
-                    assert!(
-                        fragments
-                            .iter()
-                            .filter(|fragment| matches!(
-                                fragment,
-                                BezierSplitFragment2::AlgebraicChord(_)
-                            ))
-                            .count()
-                            >= 2,
-                        "the line-image endpoint must stay on its affine fillet support"
-                    );
-                    assert!(fragments.iter().any(|fragment| matches!(
-                        fragment,
-                        BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                            | BezierSplitFragment2::Materialized {
-                                curve: BezierSubcurve2::RationalQuadratic(_),
-                                ..
-                            }
-                    )));
-                }
+                    .expect("the endpoint-image/chord fillet must decide");
+                assert_eq!(fillets.certainty, CurveCertainty::Certified);
+                // The exterior circle has center (a+L,-r), with
+                // L=r*(sqrt(a^2+b^2)+a)/b. Traversal requires its major arc,
+                // which contains the far axis point (a+L+r,-r). One quarter
+                // of the way from V to its center lies inside the new lobe.
+                let tangent_setback = (&radius * (&hypotenuse + a) / b).unwrap();
+                assert_extended_set(
+                    &fillets.value,
+                    "fillet",
+                    &tangent_setback,
+                    &point(a + &tangent_setback + &radius, -&radius),
+                    &point(a + &tangent_setback * q(1, 4), -&radius * q(1, 4)),
+                );
             }
         }
     }
@@ -30512,7 +30590,7 @@ mod tests {
                                 circle.clone(),
                                 &policy,
                             )
-                            .contains_point_evidence(&contact.point, &policy)
+                            .contains_point(&contact.point, &policy)
                             .unwrap(),
                             Classification::Decided(true),
                         );

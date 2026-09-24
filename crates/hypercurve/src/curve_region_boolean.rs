@@ -17149,7 +17149,7 @@ mod certified_successor_tests {
                 context.data.carriers[0]
                     .geometry
                     .circle()
-                    .contains_point_evidence(point, &policy)
+                    .contains_point(point, &policy)
                     .unwrap(),
                 Classification::Decided(true),
             );
