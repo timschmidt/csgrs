@@ -144,7 +144,7 @@ mod policy_tests {
     };
 
     #[test]
-    fn arithmetic_adapter_rejects_evidence_that_does_not_replay_strictly() {
+    fn arithmetic_adapter_replays_close_nonrational_bounds_strictly() {
         let epsilon = Real::new(
             Rational::from_bigint_fraction(BigInt::from(1_u8), BigUint::from(1_u8) << 1200)
                 .expect("positive dyadic epsilon"),
@@ -156,7 +156,7 @@ mod policy_tests {
             constraint_index: 0,
             symbol: SymbolId(0),
             interval_index: 0,
-            polynomial_coefficients: vec![-half, Real::zero(), Real::one()],
+            polynomial_coefficients: vec![-&half, Real::zero(), Real::one()],
             interval: IsolatedRootInterval {
                 lower,
                 upper,
@@ -169,31 +169,53 @@ mod policy_tests {
             },
         };
 
-        let strict = arithmetic_algebraic_representations_with_policy(
-            &root,
-            None,
-            AlgebraicRootArithmeticOp::Negate,
-            &CurveContext::STRICT,
-        );
-        assert_eq!(
-            strict.status,
-            AlgebraicRootArithmeticStatus::InvalidEvidence
-        );
-
-        let outcome = resolve_certified_operation(&CurveContext::APPROXIMATE_512, |policy| {
-            Ok::<_, ()>(arithmetic_algebraic_representations_with_policy(
-                &root,
-                None,
-                AlgebraicRootArithmeticOp::Negate,
-                policy,
-            ))
-        })
-        .expect("infallible operation");
-        assert_eq!(
-            outcome.value.status,
-            AlgebraicRootArithmeticStatus::InvalidEvidence
-        );
-        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        // Replay the nonrational bounds and point witness strictly even when
+        // their differences are smaller than the approximate budget resolves.
+        // A stored Valid label cannot certify reversed bounds or a false root.
+        let mut reversed = root.clone();
+        reversed.interval.lower = root.interval.upper.clone();
+        reversed.interval.upper = root.interval.lower.clone();
+        let mut false_witness = root.clone();
+        false_witness.interval.exact_root = Some(root.interval.upper.clone());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (input, valid) in [(&root, true), (&reversed, false), (&false_witness, false)] {
+                let outcome = resolve_certified_operation(&policy, |attempt| {
+                    Ok::<_, ()>(arithmetic_algebraic_representations_with_policy(
+                        input,
+                        None,
+                        AlgebraicRootArithmeticOp::Negate,
+                        attempt,
+                    ))
+                })
+                .expect("infallible operation");
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                if valid {
+                    assert_eq!(
+                        outcome.value.status,
+                        AlgebraicRootArithmeticStatus::ComputedRepresentation
+                    );
+                    let result = outcome
+                        .value
+                        .result_representation
+                        .expect("negation retains the selected negative root");
+                    assert!(result.polynomial_coefficients == root.polynomial_coefficients);
+                    assert!(result.interval.lower == -&root.interval.upper);
+                    assert!(result.interval.upper == -&root.interval.lower);
+                    assert_eq!(result.interval.distinct_root_count, 1);
+                    assert_eq!(
+                        result.validation.status,
+                        AlgebraicRootValidationStatus::Valid
+                    );
+                } else {
+                    assert_eq!(
+                        outcome.value.status,
+                        AlgebraicRootArithmeticStatus::InvalidEvidence
+                    );
+                    assert!(outcome.value.result_representation.is_none());
+                    assert!(outcome.value.exact_result.is_none());
+                }
+            }
+        }
     }
 
     #[test]

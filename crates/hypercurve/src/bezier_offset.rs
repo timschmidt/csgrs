@@ -146096,12 +146096,15 @@ mod conversion_tests {
             let transformed = fragment.transform_similarity(&to_origin).unwrap();
             let transformed_chamfer = chamfer_fragment.transform_similarity(&to_origin).unwrap();
             let (_, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
-            for transformed in [&transformed, &transformed_chamfer] {
-                let Classification::Decided(analytic_target) = analytic_overlap
+            for (chamfer, transformed) in [(false, &transformed), (true, &transformed_chamfer)] {
+                let analytic_target = match analytic_overlap
                     .other_parameter_for_cusp(transformed.end_parameter(), &policy)
                     .unwrap()
-                else {
-                    panic!("the transformed selected cut must invert on the analytic overlap");
+                {
+                    Classification::Decided(target) => target,
+                    Classification::Uncertain(reason) => panic!(
+                        "the transformed selected cut must invert on the analytic overlap: chamfer={chamfer}, policy={policy:?}, reason={reason:?}"
+                    ),
                 };
                 let Classification::Decided(analytic_round_trip) = analytic_overlap
                     .cusp_parameter_for_other(&analytic_target, &policy)
