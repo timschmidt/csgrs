@@ -21210,20 +21210,17 @@ mod tests {
         fragment: &BezierSplitFragment2,
         expected: &Point2,
     ) -> bool {
-        match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => {
-                curve.start() == expected || curve.end() == expected
-            }
-            BezierSplitFragment2::AlgebraicChord(chord) => {
-                chord.start().coordinates() == Some(expected)
-                    || chord.end().coordinates() == Some(expected)
-            }
-            BezierSplitFragment2::SelectedFiber(fragment) => {
-                fragment.start_point().coordinates() == Some(expected)
-                    || fragment.end_point().coordinates() == Some(expected)
-            }
-            _ => false,
-        }
+        let expected = CurvePoint2::from(expected.clone());
+        [true, false].into_iter().any(|start| {
+            let Ok(Classification::Decided(Some(point))) =
+                curve_fragment_endpoint_point(fragment, start, &CurveContext::STRICT)
+            else {
+                return false;
+            };
+            let equality = point.coincides_with(&expected, &CurveContext::STRICT);
+            equality.certainty == CurveCertainty::Certified
+                && equality.value == Classification::Decided(true)
+        })
     }
 
     fn retained_rational_fragment_has_algebraic_endpoint(fragment: &BezierSplitFragment2) -> bool {
@@ -21376,12 +21373,36 @@ mod tests {
                 for solutions in [&extended_chamfers, &extended_fillets] {
                     let mut found_both_extensions = false;
                     for_each_corner_region(solutions, |edited| {
-                        let fragments = edited.boundary_loops()[0].fragments();
-                        found_both_extensions |= fragments.iter().any(|fragment| {
-                            retained_fragment_has_exact_endpoint(fragment, &p(3, 0))
-                        }) && fragments.iter().any(|fragment| {
-                            retained_fragment_has_exact_endpoint(fragment, &p(2, -1))
-                        });
+                        assert!(edited.has_regularized_filled_left_topology(&policy));
+                        let has_endpoint = |point: &Point2| {
+                            edited.boundary_loops().iter().any(|boundary| {
+                                boundary.fragments().iter().any(|fragment| {
+                                    retained_fragment_has_exact_endpoint(fragment, point)
+                                })
+                            })
+                        };
+                        let both_extensions = has_endpoint(&p(3, 0)) && has_endpoint(&p(2, -1));
+                        found_both_extensions |= both_extensions;
+                        for (point, expected) in [
+                            (p(1, 1), RegionPointLocation::Inside),
+                            (p(5, 5), RegionPointLocation::Outside),
+                        ] {
+                            let location = edited.classify_point(&point, &policy).unwrap();
+                            assert_eq!(location.certainty, CurveCertainty::Certified);
+                            assert_eq!(location.value, Classification::Decided(expected));
+                        }
+                        if both_extensions {
+                            // Both exterior cuts enclose material below and to
+                            // the right of the old corner, possibly on a second
+                            // normalized loop touching the rectangle at (2,0).
+                            let exterior = Point2::new(q(17, 8), -q(1, 8));
+                            let location = edited.classify_point(&exterior, &policy).unwrap();
+                            assert_eq!(location.certainty, CurveCertainty::Certified);
+                            assert_eq!(
+                                location.value,
+                                Classification::Decided(RegionPointLocation::Inside)
+                            );
+                        }
                     });
                     assert!(
                         found_both_extensions,
