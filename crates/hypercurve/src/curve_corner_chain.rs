@@ -1720,7 +1720,7 @@ impl<'a> CurveCornerChain2<'a> {
                         let line_tangent = (unit_normal.1.clone(), -unit_normal.0.clone());
                         other_parallel
                             .vector_tangent_cross_and_dot_signs(
-                                other_parameter,
+                                &other_parameter.clone().into(),
                                 &line_tangent.0,
                                 &line_tangent.1,
                                 policy,
@@ -1752,7 +1752,7 @@ impl<'a> CurveCornerChain2<'a> {
                         }) {
                             other_parallel
                                 .vector_tangent_cross_and_dot_signs(
-                                    other_parameter,
+                                    &other_parameter.clone().into(),
                                     &tangent.0,
                                     &tangent.1,
                                     policy,

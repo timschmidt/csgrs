@@ -9052,8 +9052,12 @@ fn exact_algebraic_chord_retained_parallel_relation(
             .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
     });
     let relation = if let Some(tangent) = represented {
-        match parallel.vector_tangent_cross_and_dot_signs(parameter, &tangent.0, &tangent.1, policy)
-        {
+        match parallel.vector_tangent_cross_and_dot_signs(
+            &parameter.clone().into(),
+            &tangent.0,
+            &tangent.1,
+            policy,
+        ) {
             Ok(Classification::Decided((cross_sign, dot_sign))) => {
                 if cross {
                     cross_sign
@@ -9118,7 +9122,7 @@ fn exact_retained_parallel_tangent_cross_and_dot_vector(
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     }
     let (vector_cross_parallel, vector_dot_parallel) = match parallel
-        .vector_tangent_cross_and_dot_signs(parameter, &vector.0, &vector.1, policy)
+        .vector_tangent_cross_and_dot_signs(&parameter.clone().into(), &vector.0, &vector.1, policy)
     {
         Ok(Classification::Decided(signs)) => signs,
         Ok(Classification::Uncertain(reason)) => {

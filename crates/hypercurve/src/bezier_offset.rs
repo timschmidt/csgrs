@@ -31836,7 +31836,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let frame_relation = if let Some(target_tangent) = target_tangent.as_ref() {
                 frame.center_support.vector_tangent_cross_and_dot_signs(
-                    &frame.center_parameter,
+                    &frame.center_parameter.clone().into(),
                     &target_tangent.0,
                     &target_tangent.1,
                     policy,
@@ -88139,7 +88139,7 @@ impl BezierAlgebraicChord2 {
         if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent() {
             let source_sign = match parallel
                 .vector_source_tangent_cross_dot_linear_combination_sign(
-                    parameter,
+                    &parameter.clone().into(),
                     &tangent_x,
                     &tangent_y,
                     cross_scale,
@@ -101874,8 +101874,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 },
             );
             if let (Some(parallel), Some(parameter)) = source {
-                let relation = parallel
-                    .vector_tangent_cross_and_dot_signs(&parameter, &vector.0, &vector.1, policy)?;
+                let relation = parallel.vector_tangent_cross_and_dot_signs(
+                    &parameter.into(),
+                    &vector.0,
+                    &vector.1,
+                    policy,
+                )?;
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
@@ -101904,7 +101908,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             && contact.tangent_cross_sign == Some(RealSign::Zero)
         {
             match map.data.parallel.vector_tangent_cross_and_dot_signs(
-                &contact.parallel_parameter,
+                &contact.parallel_parameter.clone().into(),
                 &vector.0,
                 &vector.1,
                 policy,
@@ -103359,7 +103363,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             let represented_tangent = chord.certified_unit_tangent();
             let represented_parallel = match represented_tangent.as_ref() {
                 Some((x, y)) => policy.strict_predicate_pass(|| {
-                    parallel.vector_tangent_cross_and_dot_signs(source_parameter, x, y, policy)
+                    parallel.vector_tangent_cross_and_dot_signs(
+                        &source_parameter.clone().into(),
+                        x,
+                        y,
+                        policy,
+                    )
                 })?,
                 None => Classification::Uncertain(UncertaintyReason::Unsupported),
             };
@@ -111650,10 +111659,12 @@ impl BezierParallel2 {
     ///
     /// The source tangent numerator supplies both linear forms; the exact
     /// parallel/source derivative-scale certificate then applies the common
-    /// orientation factor. No normalized algebraic tangent is constructed.
+    /// orientation factor. Each polynomial reuses the parameter's native,
+    /// selected-fiber, or recursive authority without requiring a projected
+    /// Bezier parameter. No normalized algebraic tangent is constructed.
     pub(crate) fn vector_tangent_cross_and_dot_signs(
         &self,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         vector_x: &Real,
         vector_y: &Real,
         policy: &CurveContext,
@@ -111674,7 +111685,7 @@ impl BezierParallel2 {
     /// contact predicates on the complete retained range.
     pub(crate) fn vector_tangent_cross_and_dot_signs_on_regular_range(
         &self,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         vector_x: &Real,
         vector_y: &Real,
         range: &CurveParameterRange2,
@@ -111719,7 +111730,7 @@ impl BezierParallel2 {
 
     fn vector_tangent_cross_and_dot_signs_with_tangent_field(
         &self,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         vector_x: &Real,
         vector_y: &Real,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
@@ -111738,13 +111749,13 @@ impl BezierParallel2 {
             &polynomial_scale(tangent_x, vector_x),
             &polynomial_scale(tangent_y, vector_y),
         );
-        let source_cross = match signed_coefficients_at_parameter(&cross, parameter, policy)? {
+        let source_cross = match parameter.polynomial_sign(&cross, policy)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let source_dot = match signed_coefficients_at_parameter(&dot, parameter, policy)? {
+        let source_dot = match parameter.polynomial_sign(&dot, policy)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -111755,7 +111766,7 @@ impl BezierParallel2 {
             Some(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
-            None => match self.parallel_derivative_scale_sign(&parameter.clone().into(), policy)? {
+            None => match self.parallel_derivative_scale_sign(parameter, policy)? {
                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
                 Classification::Decided(RealSign::Zero) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -111780,7 +111791,7 @@ impl BezierParallel2 {
     /// this intentionally does not apply the parallel derivative scale.
     pub(crate) fn vector_source_tangent_cross_dot_linear_combination_sign(
         &self,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         vector_x: &Real,
         vector_y: &Real,
         cross_scale: &Real,
@@ -111790,12 +111801,11 @@ impl BezierParallel2 {
         let differential = self.differential()?;
         let coefficient_x = dot_scale * vector_x - cross_scale * vector_y;
         let coefficient_y = cross_scale * vector_x + dot_scale * vector_y;
-        signed_coefficients_at_parameter(
+        parameter.polynomial_sign(
             &polynomial_add(
                 &polynomial_scale(&differential.tangent_x, &coefficient_x),
                 &polynomial_scale(&differential.tangent_y, &coefficient_y),
             ),
-            parameter,
             policy,
         )
     }
@@ -116159,7 +116169,7 @@ impl BezierParallel2 {
             // consulting that exterior germ.
             let tangent_is_parallel = match self
                 .vector_tangent_cross_and_dot_signs_with_tangent_field(
-                    parameter,
+                    &parameter.clone().into(),
                     &tangent_direction_x,
                     &tangent_direction_y,
                     tangent_field,
@@ -133748,6 +133758,165 @@ mod conversion_tests {
                         );
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn vector_tangent_predicates_replay_general_parameter_authorities() {
+        use RealSign::{Negative, Positive, Zero};
+
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 1),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // alpha^65=1/2 and 4 beta^2=alpha select 0<beta<1/2.
+            // P'(beta)=(1,2beta), or (-1,-2(1-beta)) after reversal.
+            // These interval facts independently determine every sign below.
+            let selected =
+                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
+            let cold_parameter = CurveParameter2::from_selected_fiber(selected.clone());
+            assert_eq!(
+                source
+                    .parallel_left(Real::zero())
+                    .unwrap()
+                    .vector_tangent_cross_and_dot_signs(
+                        &cold_parameter,
+                        &Real::one(),
+                        &Real::one(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Decided((Negative, Positive)),
+            );
+            assert!(selected.data.representations.bezier.get().is_none());
+            let recursive = selected
+                .recursive_projective_parameter(&policy)
+                .unwrap()
+                .expect("the quadratic fiber retains its base field");
+            let parameters = [
+                cold_parameter,
+                CurveParameter2::from_recursive_projective(recursive),
+            ];
+            for reversed in [false, true] {
+                for distance in [-10_i8, 0, 10] {
+                    let parallel = source.parallel_left(Real::from(distance)).unwrap();
+                    let parallel = if reversed {
+                        parallel.reversed()
+                    } else {
+                        parallel
+                    };
+                    // On 0<t<1 the source curvature is at least 2/(5sqrt(5)).
+                    // Thus distance +10 reverses the derivative; -10 and 0 do not.
+                    let orient = |sign| match (distance > 0, sign) {
+                        (true, Positive) => Negative,
+                        (true, Negative) => Positive,
+                        (_, sign) => sign,
+                    };
+                    for parameter in &parameters {
+                        for (x, y, forward, backward) in [
+                            (1_i8, 0_i8, (Positive, Positive), (Negative, Negative)),
+                            (0, 1, (Negative, Positive), (Positive, Negative)),
+                            (1, 1, (Negative, Positive), (Negative, Negative)),
+                            (1, -1, (Positive, Positive), (Negative, Positive)),
+                            (-1, 0, (Negative, Negative), (Positive, Positive)),
+                            (0, 0, (Zero, Zero), (Zero, Zero)),
+                        ] {
+                            let (cross, dot) = if reversed { backward } else { forward };
+                            assert_eq!(
+                                parallel
+                                    .vector_tangent_cross_and_dot_signs(
+                                        parameter,
+                                        &Real::from(x),
+                                        &Real::from(y),
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                                Classification::Decided((orient(cross), orient(dot))),
+                                "vector=({x},{y}), reversed={reversed}, distance={distance}",
+                            );
+                        }
+                        for (cross_scale, dot_scale, forward, backward) in [
+                            (1_i8, 0_i8, Positive, Negative),
+                            (0, 1, Positive, Negative),
+                            (1, 1, Positive, Negative),
+                            (1, -1, Negative, Negative),
+                            (-1, 1, Positive, Positive),
+                            (0, 0, Zero, Zero),
+                        ] {
+                            assert_eq!(
+                                parallel
+                                    .vector_source_tangent_cross_dot_linear_combination_sign(
+                                        parameter,
+                                        &Real::one(),
+                                        &Real::zero(),
+                                        &Real::from(cross_scale),
+                                        &Real::from(dot_scale),
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                                Classification::Decided(if reversed { backward } else { forward }),
+                                "source relation must not include the parallel derivative scale",
+                            );
+                        }
+                    }
+                }
+            }
+            assert!(selected.data.representations.bezier.get().is_none());
+        }
+    }
+
+    #[test]
+    fn regularized_vector_tangent_owns_selected_stationary_endpoints() {
+        use RealSign::{Negative, Positive, Zero};
+
+        let source = CubicBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(0, 0),
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let seed = high_degree_quadratic_selected_fiber_parameter_for_test(half, &policy);
+            for reversed in [false, true] {
+                let endpoint = Real::from(if reversed { 1_i8 } else { 0_i8 });
+                let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                    BivariatePolynomial::new(vec![vec![-&endpoint, Real::one()]]),
+                    seed.data.authority.data.retained_parameter.clone(),
+                    &policy,
+                )
+                .parameter(IsolatedRootInterval {
+                    lower: &endpoint - Real::one(),
+                    upper: &endpoint + Real::one(),
+                    exact_root: Some(endpoint),
+                    distinct_root_count: 1,
+                });
+                let parameter = CurveParameter2::from_selected_fiber(selected.clone());
+                let parallel = source.parallel_left(Real::one()).unwrap();
+                let parallel = if reversed {
+                    parallel.reversed()
+                } else {
+                    parallel
+                };
+                // P(t)=(t^3,0) has zero derivative at t=0. Cancelling its
+                // stationary factor leaves the one-sided traversal tangent.
+                assert_eq!(
+                    parallel
+                        .vector_tangent_cross_and_dot_signs_on_regular_range(
+                            &parameter,
+                            &Real::zero(),
+                            &Real::one(),
+                            &CurveParameterRange2::unit(),
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided((if reversed { Positive } else { Negative }, Zero)),
+                );
+                assert!(selected.data.representations.bezier.get().is_none());
             }
         }
     }

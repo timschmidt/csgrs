@@ -7157,7 +7157,7 @@ fn fillet_offset_centers(
                 let retained_anchor_evidence = {
                     let (mut cross, mut dot) = match support
                         .vector_tangent_cross_and_dot_signs(
-                            &parameter,
+                            &parameter.clone().into(),
                             line_unit_x,
                             line_unit_y,
                             policy,

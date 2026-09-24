@@ -1723,21 +1723,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             carrier_traversal_end(&self.data.carriers[parallel_index])
         })
-        .as_bezier_parameter()
-        .and_then(BezierParameter2::scalar)
+        .scalar()
         .cloned() else {
             return Ok(None);
         };
         let tangent_relation = match regular_range {
             Some(range) => parallel.vector_tangent_cross_and_dot_signs_on_regular_range(
-                &BezierParameter2::Exact(parameter.clone()),
+                &parameter.clone().into(),
                 direction_x,
                 direction_y,
                 range,
                 &self.data.policy,
             ),
             None => parallel.vector_tangent_cross_and_dot_signs(
-                &BezierParameter2::Exact(parameter.clone()),
+                &parameter.clone().into(),
                 direction_x,
                 direction_y,
                 &self.data.policy,
@@ -3878,7 +3877,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let tangent_topology = if let Some(parallel_side_of_chord) = contact.tangent_side() {
                 let tangent_relation = parallel
                     .vector_tangent_cross_and_dot_signs_on_regular_range(
-                        contact.parameter(),
+                        &contact.parameter().clone().into(),
                         &direction_x,
                         &direction_y,
                         &regular_range,
