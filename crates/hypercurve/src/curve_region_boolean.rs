@@ -17142,7 +17142,7 @@ mod certified_successor_tests {
                 CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
             ));
             assert_eq!(
-                chord.contains_point_evidence(point, &policy).unwrap(),
+                chord.contains_point(point, &policy).unwrap(),
                 Classification::Decided(true),
             );
             assert_eq!(

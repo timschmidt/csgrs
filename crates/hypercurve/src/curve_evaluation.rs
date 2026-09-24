@@ -97,7 +97,7 @@ impl Curve2 {
                 }
                 if !decided(
                     chord
-                        .contains_point_evidence(local.point(), policy)
+                        .contains_point(local.point(), policy)
                         .map_err(|cause| evaluation_error(family, cause))?,
                     family,
                 )? {

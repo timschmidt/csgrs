@@ -75568,77 +75568,64 @@ impl BezierAlgebraicChord2 {
         })
     }
 
-    /// Classifies incidence of one represented affine point on this chord.
+    /// Classifies represented and retained points on this finite chord.
+    /// Exact-line, local-bound and native algebraic predicates are strict
+    /// accelerators; unresolved queries retain the common support-side and
+    /// monotone-parameter proof used by chord/chord intersection.
     pub(crate) fn contains_point(
-        &self,
-        point: &Point2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
-        if let Some(line) = self.exact_line() {
-            return Ok(line.contains_point(point, policy));
-        }
-        if self.has_composite_endpoint() {
-            if let Classification::Decided(bounds) =
-                self.conservative_local_bounds_refined(0, policy)?
-                && bounds.contains_point(point, &CurveContext::STRICT)
-                    == Classification::Decided(false)
-            {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "algebraic-chord-point-incidence",
-                    "strict-local-box-rejection",
-                );
-                return Ok(Classification::Decided(false));
-            }
-            let point_evidence = CurvePoint2::from(point.clone());
-            if self.certified_unit_tangent().is_some() {
-                match self.certified_tangent_side(&point_evidence, policy) {
-                    Classification::Decided(crate::classify::LineSide::On) => {
-                        return self
-                            .parameter_at_certified_point(point_evidence, policy)
-                            .map(|parameter| parameter.map(|parameter| parameter.is_some()));
-                    }
-                    Classification::Decided(
-                        crate::classify::LineSide::Left | crate::classify::LineSide::Right,
-                    ) => return Ok(Classification::Decided(false)),
-                    Classification::Uncertain(_) => {}
-                }
-            }
-            let support = match BezierAlgebraicChordSupportPredicate2::try_new(self, policy)? {
-                Classification::Decided(support) => support,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            return match support.oriented_side(&point_evidence, policy)? {
-                Classification::Decided(crate::classify::LineSide::On) => self
-                    .parameter_at_certified_point(point_evidence, policy)
-                    .map(|parameter| parameter.map(|parameter| parameter.is_some())),
-                Classification::Decided(
-                    crate::classify::LineSide::Left | crate::classify::LineSide::Right,
-                ) => Ok(Classification::Decided(false)),
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            };
-        }
-        let evaluator = match self.algebraic_ray_evaluator(policy)? {
-            Classification::Decided(evaluator) => evaluator,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        evaluator.contains_exact_point(point, policy)
-    }
-
-    /// Classifies exact incidence of retained point evidence on this finite
-    /// chord through the same support-side and monotone-parameter authority as
-    /// chord/chord intersection.
-    pub(crate) fn contains_point_evidence(
         &self,
         point: &CurvePoint2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         self.validate_policy(policy)?;
+        if let Some(represented) = point.coordinates() {
+            if let Some(line) = self.exact_line() {
+                if let decided @ Classification::Decided(_) =
+                    policy.strict_predicate_pass(|| line.contains_point(represented, policy))
+                {
+                    return Ok(decided);
+                }
+            } else if self.has_composite_endpoint() {
+                if let Classification::Decided(bounds) =
+                    self.conservative_local_bounds_refined(0, policy)?
+                    && bounds.contains_point(represented, &CurveContext::STRICT)
+                        == Classification::Decided(false)
+                {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-chord-point-incidence",
+                        "strict-local-box-rejection",
+                    );
+                    return Ok(Classification::Decided(false));
+                }
+                if self.certified_unit_tangent().is_some() {
+                    match policy
+                        .strict_predicate_pass(|| self.certified_tangent_side(point, policy))
+                    {
+                        Classification::Decided(crate::classify::LineSide::On) => {
+                            if let Classification::Decided(parameter) = policy
+                                .strict_predicate_pass(|| {
+                                    self.parameter_at_certified_point(point.clone(), policy)
+                                })?
+                            {
+                                return Ok(Classification::Decided(parameter.is_some()));
+                            }
+                        }
+                        Classification::Decided(
+                            crate::classify::LineSide::Left | crate::classify::LineSide::Right,
+                        ) => return Ok(Classification::Decided(false)),
+                        Classification::Uncertain(_) => {}
+                    }
+                }
+            } else if let Classification::Decided(evaluator) =
+                self.algebraic_ray_evaluator(policy)?
+                && let decided @ Classification::Decided(_) = policy
+                    .strict_predicate_pass(|| evaluator.contains_exact_point(represented, policy))?
+            {
+                return Ok(decided);
+            }
+        }
         let support = match BezierAlgebraicChordSupportPredicate2::try_new(self, policy)? {
             Classification::Decided(support) => support,
             Classification::Uncertain(reason) => {
@@ -75950,7 +75937,7 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<i32>>> {
         self.validate_policy(policy)?;
-        let incidence = self.contains_point(origin, policy)?;
+        let incidence = self.contains_point(&CurvePoint2::from(origin.clone()), policy)?;
         self.forward_ray_winding_delta_skipping_incident_origin_from_incidence(
             incidence,
             direction_x,
@@ -136905,10 +136892,43 @@ mod conversion_tests {
                 point.axis_coordinate_order_to_real(axis, &query, policy)
             });
         }
-        let value = Real::one() + opaque_zero;
+        let value = Real::one() + &opaque_zero;
         assert_chord_query_terminal_replay(|policy| {
             point.linear_order_to_real(&Real::one(), &Real::from(2_i8), &value, policy)
         });
+        let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+            Point2::from_values(0, 0).into(),
+            Point2::from_values(2, 0).into(),
+            &CurveContext::STRICT,
+        )
+        .unwrap() else {
+            panic!("the represented horizontal chord must be certified");
+        };
+        let query = CurvePoint2::from(Point2::new(Real::one(), opaque_zero));
+        for _ in 0..2 {
+            let classify = |policy: &CurveContext, force_strict| {
+                crate::policy::resolve_certified_value(policy, |attempt| {
+                    if force_strict {
+                        attempt.strict_predicate_pass(|| chord.contains_point(&query, attempt))
+                    } else {
+                        chord.contains_point(&query, attempt)
+                    }
+                    .unwrap()
+                })
+            };
+            let strict = classify(&CurveContext::STRICT, false);
+            assert_eq!(strict.certainty, CurveCertainty::Certified);
+            assert!(matches!(strict.value, Classification::Uncertain(_)));
+            let approximate = classify(&CurveContext::APPROXIMATE_512, false);
+            assert_eq!(approximate.value, Classification::Decided(true));
+            assert_eq!(
+                approximate.certainty,
+                CurveCertainty::Approximate512Consumed
+            );
+            let forced = classify(&CurveContext::APPROXIMATE_512, true);
+            assert_eq!(forced.certainty, CurveCertainty::Certified);
+            assert!(matches!(forced.value, Classification::Uncertain(_)));
+        }
     }
 
     #[test]
@@ -138572,10 +138592,34 @@ mod conversion_tests {
             ));
             assert_eq!(
                 chord
-                    .contains_point(&Point2::from_values(0, 0), &policy)
+                    .contains_point(&Point2::from_values(0, 0).into(), &policy)
                     .unwrap(),
                 Classification::Decided(false)
             );
+            // The same finite-segment predicate consumes either selected
+            // endpoint evidence or independently represented exact roots.
+            // The interior nonincident sample defeats a box-only predicate;
+            // the extrapolated point is collinear but outside the segment.
+            let a = half.clone().sqrt().unwrap();
+            let b = third.clone().sqrt().unwrap();
+            for query_chord in [chord.clone(), chord.reversed()] {
+                for (query, expected) in [
+                    (start.clone(), true),
+                    (end.clone(), true),
+                    (Point2::new(a.clone(), Real::zero()).into(), true),
+                    (Point2::new(Real::zero(), b.clone()).into(), true),
+                    (Point2::new(&a * &half, &b * &half).into(), true),
+                    (Point2::new(&a * &half, &b * &third).into(), false),
+                    (Point2::new(&a * Real::from(2_i8), -b.clone()).into(), false),
+                ] {
+                    let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
+                        query_chord.contains_point(&query, attempt)
+                    })
+                    .unwrap();
+                    assert_eq!(outcome.value, Classification::Decided(expected));
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                }
+            }
             let evaluator = match chord.algebraic_ray_evaluator(&policy).unwrap() {
                 Classification::Decided(evaluator) => evaluator,
                 Classification::Uncertain(reason) => {
@@ -142719,9 +142763,7 @@ mod conversion_tests {
                     CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
                 ));
                 assert_eq!(
-                    carrier
-                        .contains_point_evidence(&contact.point, &policy)
-                        .unwrap(),
+                    carrier.contains_point(&contact.point, &policy).unwrap(),
                     Classification::Decided(true),
                 );
                 assert_eq!(

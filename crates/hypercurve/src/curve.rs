@@ -9646,13 +9646,11 @@ fn point_on_fillet_offset(
                     })?,
             )
         }
-        FilletOffsetCarrier2::AlgebraicChord { support, .. } => decided(
-            support
-                .contains_point_evidence(point, policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                })?,
-        ),
+        FilletOffsetCarrier2::AlgebraicChord { support, .. } => {
+            decided(support.contains_point(point, policy).map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+            })?)
+        }
         FilletOffsetCarrier2::AlgebraicCusp { support, .. } => {
             decided(support.contains_point(point, policy).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)

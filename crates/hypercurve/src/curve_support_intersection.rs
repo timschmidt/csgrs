@@ -228,7 +228,7 @@ impl Pair<'_> {
                         .point_image(&self.policy.strict_counterpart())
                 {
                     let point = CurvePoint2::from(point);
-                    if decided(chord.contains_point_evidence(&point, self.policy), family)? {
+                    if decided(chord.contains_point(&point, self.policy), family)? {
                         let parameter = chord
                             .parameter_at_certified_support_point(point.clone(), self.policy)
                             .map_err(|cause| {

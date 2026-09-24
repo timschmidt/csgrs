@@ -16848,7 +16848,9 @@ fn retained_fragment_contains_point(
                     .contains_point(point, fragment.range(), policy)
             }
         }
-        BezierSplitFragment2::AlgebraicChord(chord) => chord.contains_point(point, policy),
+        BezierSplitFragment2::AlgebraicChord(chord) => {
+            chord.contains_point(&CurvePoint2::from(point.clone()), policy)
+        }
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             fragment.contains_point(&CurvePoint2::from(point.clone()), policy)
         }
@@ -30631,9 +30633,7 @@ mod tests {
                             Classification::Decided(_)
                         ));
                         assert_eq!(
-                            carrier
-                                .contains_point_evidence(&contact.point, &policy)
-                                .unwrap(),
+                            carrier.contains_point(&contact.point, &policy).unwrap(),
                             Classification::Decided(true),
                         );
                         assert_eq!(
