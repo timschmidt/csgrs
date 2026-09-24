@@ -175,6 +175,9 @@ impl Rational {
     /// division by two. It is equivalent to `(left + right) / 2`, but avoids
     /// materializing and reducing the intermediate sum.
     pub fn average_pair(left: &Self, right: &Self) -> Self {
+        // The restricted final GCD below requires coprime input parts.
+        let left = left.canonicalized_ref();
+        let right = right.canonicalized_ref();
         if left.sign == right.sign
             && left.numerator == right.numerator
             && left.denominator == right.denominator
@@ -1025,6 +1028,11 @@ impl Rational {
         if other.sign == NoSign {
             return self.clone();
         }
+        // The word and restricted-GCD kernels publish reduced results, so
+        // they must consume the cached canonical view of lazy ratios.
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return self.canonicalized_ref().add_ref(other.canonicalized_ref());
+        }
         if self.is_one() {
             if other.is_one() {
                 return Self::new(2);
@@ -1275,6 +1283,9 @@ impl Rational {
         if self.sign == NoSign {
             return -other;
         }
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return self.canonicalized_ref().subtract_ref(other.canonicalized_ref());
+        }
         if other.is_one() {
             return self.subtract_one();
         }
@@ -1349,6 +1360,9 @@ impl<T: AsRef<Rational>> Mul<T> for &Rational {
         let sign = self.sign * other.sign;
         if sign == NoSign {
             return Self::Output::zero();
+        }
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return self.canonicalized_ref() * other.canonicalized_ref();
         }
         if self.is_one() {
             return other.clone();
@@ -1568,6 +1582,9 @@ impl<T: AsRef<Rational>> Div<T> for &Rational {
         let sign = self.sign * other.sign;
         if sign == NoSign {
             return Self::Output::zero();
+        }
+        if self.is_internally_unreduced() || other.is_internally_unreduced() {
+            return self.canonicalized_ref() / other.canonicalized_ref();
         }
         if other.is_one() {
             return self.clone();

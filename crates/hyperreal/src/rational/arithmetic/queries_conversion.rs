@@ -219,6 +219,9 @@ impl Rational {
         if shift < 0 {
             return None;
         }
+        if self.is_internally_unreduced() {
+            return self.canonicalized_ref().divide_by_power_of_two(shift);
+        }
         if self.sign == NoSign || self.numerator.is_zero() {
             return Some(Self::zero());
         }

@@ -2183,18 +2183,25 @@ impl Real {
                 return Self::sum_refs(coeffs);
             }
             if coeffs.iter().all(|coeff| coeff.exact_rational_ref().is_some()) {
-                let mut value = last
-                    .exact_rational_ref()
-                    .expect("checked exact rational coefficients")
-                    .clone();
-                for coeff in rest.iter().rev() {
-                    let coeff = coeff
-                        .exact_rational_ref()
-                        .expect("checked exact rational coefficients");
-                    value = &value * x + coeff;
-                }
                 crate::trace_dispatch!("real", "polynomial", "eval-poly-exact-rational");
-                return Real::new(value);
+                // Short polynomials benefit from the scalar kernels' native
+                // arithmetic and retained products. Longer evaluations avoid
+                // reducing every intermediate fraction independently.
+                if coeffs.len() <= 5 {
+                    let mut value = last.exact_rational_ref().unwrap().clone();
+                    for coefficient in rest.iter().rev() {
+                        value = &value * x + coefficient.exact_rational_ref().unwrap();
+                    }
+                    return Real::new(value);
+                }
+                return Real::new(Rational::eval_polynomial(
+                    coeffs.iter().map(|coeff| {
+                        coeff
+                            .exact_rational_ref()
+                            .expect("checked exact rational coefficients")
+                    }),
+                    x,
+                ));
             }
 
             let mut power = Rational::one();

@@ -859,7 +859,9 @@ mod quadratic_tower_tests {
             .collect::<Vec<_>>();
         while layer.len() > 1 {
             layer = layer
-                .chunks_exact(2)
+                .as_chunks::<2>()
+                .0
+                .iter()
                 .map(|pair| opaque(Approximation::Add(pair[0].clone(), pair[1].clone())))
                 .collect();
         }
@@ -959,7 +961,9 @@ mod quadratic_tower_tests {
         let mut layer = vec![root.clone(); 2048];
         while layer.len() > 1 {
             layer = layer
-                .chunks_exact(2)
+                .as_chunks::<2>()
+                .0
+                .iter()
                 .map(|pair| Computable {
                     internal: Arc::new(Node::new(
                         Approximation::Add(pair[0].clone(), pair[1].clone()),

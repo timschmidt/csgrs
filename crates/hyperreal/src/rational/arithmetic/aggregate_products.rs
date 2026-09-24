@@ -1665,6 +1665,66 @@ impl Rational {
         })
     }
 
+    /// Evaluate constant-first coefficients without reducing each Horner step.
+    pub(crate) fn eval_polynomial<'a>(
+        coefficients: impl Iterator<Item = &'a Self>,
+        argument: &Self,
+    ) -> Self {
+        let coefficients = coefficients
+            .map(Self::canonicalized_ref)
+            .collect::<Vec<_>>();
+        let Some(degree) = coefficients.iter().rposition(|value| !value.is_zero()) else {
+            return Self::zero();
+        };
+        if degree == 0 || argument.is_zero() {
+            return coefficients[0].clone();
+        }
+        let coefficients = &coefficients[..=degree];
+        let common_denominator = Self::common_denominator(coefficients);
+        let integer_coefficient = |value: &Self| {
+            if value.is_zero() {
+                BigInt::ZERO
+            } else if value.denominator == common_denominator {
+                BigInt::from_biguint(value.sign, value.numerator.clone())
+            } else {
+                let scale = &common_denominator / &value.denominator;
+                BigInt::from_biguint(value.sign, &value.numerator * scale)
+            }
+        };
+        let argument = argument.canonicalized_ref();
+        let p = BigInt::from_biguint(argument.sign, argument.numerator.clone());
+        let q = BigInt::from_biguint(Plus, argument.denominator.clone());
+        let mut numerator = integer_coefficient(coefficients[degree]);
+        let mut denominator_power = BigInt::one();
+        for coefficient in coefficients[..degree].iter().rev() {
+            if numerator.is_zero() {
+                // A vanishing suffix has no remaining denominator dependence.
+                denominator_power = BigInt::one();
+                numerator = integer_coefficient(coefficient);
+                continue;
+            }
+            // The suffix value is numerator / (D * denominator_power).
+            // Multiplication by p/q and addition of C/D preserve that invariant.
+            numerator *= &p;
+            denominator_power *= &q;
+            if !coefficient.is_zero() {
+                numerator += integer_coefficient(coefficient) * &denominator_power;
+            }
+        }
+        crate::trace_dispatch!("rational", "polynomial", "homogeneous-integer-horner");
+        let (sign, numerator) = numerator.into_parts();
+        if sign == NoSign {
+            return Self::zero();
+        }
+        let denominator = common_denominator * denominator_power.into_parts().1;
+        if denominator.is_one() {
+            return Self::from_integer_magnitude(sign, numerator);
+        }
+        // Sign and zero queries need no GCD. Numeric consumers canonicalize
+        // this existing exact ratio representation once, on demand.
+        Self::from_parts_raw_unreduced(sign, numerator, denominator)
+    }
+
     fn common_denominator(values: &[&Self]) -> BigUint {
         debug_assert!(!values.is_empty());
         if values
