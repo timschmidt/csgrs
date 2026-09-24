@@ -146245,10 +146245,7 @@ mod conversion_tests {
             let [overlap] = overlaps.as_slice() else {
                 panic!("the independently encoded quarter must publish one overlap cell");
             };
-            assert!(matches!(
-                overlap.parameter_map,
-                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(_)
-            ));
+            assert_eq!(overlap.orientation(), RationalBezierOverlapOrientation2::Same);
             let Classification::Decided(cusp_cut) = overlap
                 .cusp_parameter_for_other(&region_parameter(algebraic_target.clone()), &policy)
                 .unwrap()
@@ -146821,10 +146818,10 @@ mod conversion_tests {
             let [shifted_analytic_overlap] = analytic_overlaps.as_slice() else {
                 panic!("the shifted analytic quarter must retain one monotone overlap");
             };
-            assert!(matches!(
-                shifted_analytic_overlap.parameter_map,
-                BezierAlgebraicCuspSemicircleMappedOverlapMap2::Rational(_)
-            ));
+            assert_eq!(
+                shifted_analytic_overlap.orientation(),
+                RationalBezierOverlapOrientation2::Same,
+            );
             let shifted_analytic_source_owners = Arc::strong_count(chamfer_authority);
             let shifted_analytic_inversion = shifted_analytic_overlap
                 .other_parameter_for_cusp(&chamfer_cut, &policy)
