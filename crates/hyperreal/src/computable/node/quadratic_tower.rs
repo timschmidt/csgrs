@@ -202,8 +202,26 @@ impl Tower {
         }
     }
 
-    fn add(self, other: Self) -> Option<Self> {
-        let radicand = self.match_radicand(&other)?;
+    fn add(mut self, mut other: Self) -> Option<Self> {
+        let mut inner = None;
+        let compatible = [&self.even, &self.odd, &other.even, &other.odd]
+            .into_iter()
+            .chain(self.radicand.iter())
+            .chain(other.radicand.iter())
+            .filter_map(|quad| quad.disc.as_ref())
+            .all(|disc| match inner {
+                Some(known) => known == disc,
+                None => {
+                    inner = Some(disc);
+                    true
+                }
+            });
+        let mut radicand = self.match_radicand(&other);
+        if radicand.is_none() || !compatible {
+            (self, other) = self.common_biquadratic_field(&other)?;
+            radicand = self.match_radicand(&other);
+        }
+        let radicand = radicand?;
         let even = self.even.add(other.even)?;
         let odd = self.odd.add(other.odd)?;
         Some(Self {
@@ -213,41 +231,124 @@ impl Tower {
         })
     }
 
-    fn mul(self, other: Self) -> Option<Self> {
-        let shared = (|| {
-            let radicand = self.match_radicand(&other)?;
-            let mut even = self.even.clone().mul(other.even.clone())?;
-            let odd = self
-                .even
-                .clone()
-                .mul(other.odd.clone())?
-                .add(self.odd.clone().mul(other.even.clone())?)?;
-            if !self.odd.is_zero() && !other.odd.is_zero() {
-                let radicand = radicand.as_ref()?;
-                even = even.add(
-                    self.odd
-                        .clone()
-                        .mul(other.odd.clone())?
-                        .mul(radicand.clone())?,
-                )?;
+    /// Expand only an unnested quadratic tower into rational square classes.
+    /// The existing representation then holds any two independent classes;
+    /// their product is a basis term, not a third independent extension.
+    fn biquadratic_terms(&self) -> Option<[Quad; 3]> {
+        let Some(radicand) = &self.radicand else {
+            return Some([self.even.clone(), Quad::zero(), Quad::zero()]);
+        };
+        if radicand.scale.sign() != Sign::NoSign {
+            return None;
+        }
+        admit_rational(&radicand.rational)?;
+        let rational_term = quad_from_square_root(&radicand.rational)?.scale(&self.odd.rational);
+        let radical_term = match &self.odd.disc {
+            Some(disc) => {
+                admit_rational(disc)?;
+                let square = &radicand.rational * disc;
+                admit_rational(&square)?;
+                quad_from_square_root(&square)?.scale(&self.odd.scale)
+            }
+            None => Quad::zero(),
+        };
+        Some([self.even.clone(), rational_term, radical_term])
+    }
+
+    fn common_biquadratic_field(&self, other: &Self) -> Option<(Self, Self)> {
+        let first = self.biquadratic_terms()?;
+        let second = other.biquadratic_terms()?;
+        let mut discs = first
+            .iter()
+            .chain(&second)
+            .filter_map(|term| term.disc.as_ref());
+        let inner = discs.next();
+        let outer = discs
+            .find(|disc| Some(*disc) != inner)
+            .cloned()
+            .unwrap_or_else(Rational::one);
+        let inverse_outer = outer.clone().inverse().ok()?;
+        let rebase = |terms: &[Quad; 3]| {
+            let mut even = Quad::zero();
+            let mut odd = Quad::zero();
+            for term in terms {
+                let Some(disc) = &term.disc else {
+                    even = even.add(term.clone())?;
+                    continue;
+                };
+                if Some(disc) == inner {
+                    even = even.add(term.clone())?;
+                    continue;
+                }
+                // sqrt(disc) = sqrt(disc/outer) * sqrt(outer), with
+                // principal positive roots. The quotient must belong to
+                // the chosen inner field; a third independent class declines.
+                let square = disc * &inverse_outer;
+                admit_rational(&square)?;
+                let coefficient = quad_from_square_root(&square)?;
+                if coefficient.disc.is_some() && coefficient.disc.as_ref() != inner {
+                    return None;
+                }
+                even = even.add(Quad::rational(term.rational.clone()))?;
+                odd = odd.add(coefficient.scale(&term.scale))?;
             }
             Some(Self {
                 even,
-                odd: odd.clone(),
-                radicand: if odd.is_zero() { None } else { radicand },
+                radicand: if odd.is_zero() {
+                    None
+                } else {
+                    Some(Quad::rational(outer.clone()))
+                },
+                odd,
             })
-        })();
-        shared.or_else(|| {
-            // Different outer radicals can have a product in the same small
-            // tower. Combine their squares before adjoining another root:
-            // sqrt(a) / sqrt(b) needs only sqrt(a/b), with its sign retained.
-            let square = self.pure_square()?.mul(other.pure_square()?)?;
-            let product = sqrt_quad(square)?;
-            Some(if self.sign()? == other.sign()? {
-                product
-            } else {
-                product.neg()
+        };
+        Some((rebase(&first)?, rebase(&second)?))
+    }
+
+    fn mul(self, other: Self) -> Option<Self> {
+        self.multiply_in_tower(&other)
+            // Keep an existing biquadratic product in its coefficient field.
+            // Squaring a mixed quadratic value and adjoining its square root
+            // would obscure the same finite basis behind a nested radical.
+            .or_else(|| {
+                let (left, right) = self.common_biquadratic_field(&other)?;
+                left.multiply_in_tower(&right)
             })
+            .or_else(|| {
+                // Different outer radicals can have a product in the same small
+                // tower. Combine their squares before adjoining another root:
+                // sqrt(a) / sqrt(b) needs only sqrt(a/b), with its sign retained.
+                let square = self.pure_square()?.mul(other.pure_square()?)?;
+                let product = sqrt_quad(square)?;
+                Some(if self.sign()? == other.sign()? {
+                    product
+                } else {
+                    product.neg()
+                })
+            })
+    }
+
+    fn multiply_in_tower(&self, other: &Self) -> Option<Self> {
+        let radicand = self.match_radicand(other)?;
+        let mut even = self.even.clone().mul(other.even.clone())?;
+        let odd = self
+            .even
+            .clone()
+            .mul(other.odd.clone())?
+            .add(self.odd.clone().mul(other.even.clone())?)?;
+        if !self.odd.is_zero() && !other.odd.is_zero() {
+            let radicand = radicand.as_ref()?;
+            even = even.add(
+                self.odd
+                    .clone()
+                    .mul(other.odd.clone())?
+                    .mul(radicand.clone())?,
+            )?;
+        }
+        Some(Self {
+            even,
+            odd: odd.clone(),
+            radicand: if odd.is_zero() { None } else { radicand },
         })
     }
 

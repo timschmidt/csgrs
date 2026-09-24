@@ -60,6 +60,45 @@ mod quadratic_tower_real_tests {
     use super::*;
 
     #[test]
+    fn biquadratic_bases_share_sums_products_and_inverses() {
+        for (a, b) in [(3, 7), (2, 5), (11, 13)] {
+            let x = Real::from(a).sqrt().unwrap();
+            let y = Real::from(b).sqrt().unwrap();
+            let xy = Real::from(a * b).sqrt().unwrap();
+            for (x, y) in [(&x, &y), (&y, &x)] {
+                let sum = x + y;
+                assert_eq!(sum.quadratic_tower_sign(), Some(RealSign::Positive));
+                let mixed = Real::one() + y;
+                let product = &mixed * x;
+                let cancellation = &product * x - (x * x) * &mixed;
+                assert_eq!(cancellation.quadratic_tower_sign(), Some(RealSign::Zero));
+                let expanded = Real::from(a + b) + Real::from(2) * &xy;
+                let difference = &sum * &sum - expanded;
+                assert_eq!(difference.quadratic_tower_sign(), Some(RealSign::Zero));
+                let full = Real::one() + x + y + &xy;
+                let factored = (Real::one() + x) * (Real::one() + y);
+                assert_eq!(
+                    (&full - &factored).quadratic_tower_sign(),
+                    Some(RealSign::Zero)
+                );
+                let reciprocal = (Real::one() / &full).unwrap();
+                let difference = reciprocal * factored - Real::one();
+                assert_eq!(difference.quadratic_tower_sign(), Some(RealSign::Zero));
+                for (delta, expected) in [
+                    (Real::one(), RealSign::Positive),
+                    (-Real::one(), RealSign::Negative),
+                ] {
+                    assert_eq!((&difference + delta).quadratic_tower_sign(), Some(expected));
+                }
+            }
+        }
+        let outside = Real::from(2).sqrt().unwrap()
+            + Real::from(3).sqrt().unwrap()
+            + Real::from(5).sqrt().unwrap();
+        assert_eq!(outside.quadratic_tower_sign(), None);
+    }
+
+    #[test]
     fn independently_normalized_chord_normals_replay_exactly() {
         let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
         for (a, b) in [(11, 13), (3, 7), (2, 5)] {
