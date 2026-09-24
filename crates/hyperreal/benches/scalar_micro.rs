@@ -3151,7 +3151,7 @@ fn bench_real_cotangent(c: &mut Criterion) {
                     value
                         .cot()
                         .unwrap()
-                        .certified_dyadic_interval(-256)
+                        .certified_rational_interval(-256)
                         .unwrap(),
                 )
             },
@@ -3164,7 +3164,7 @@ fn bench_real_cotangent(c: &mut Criterion) {
             |value| {
                 black_box(
                     cot_via_quotient(value)
-                        .certified_dyadic_interval(-256)
+                        .certified_rational_interval(-256)
                         .unwrap(),
                 )
             },
@@ -3177,7 +3177,7 @@ fn bench_real_cotangent(c: &mut Criterion) {
             |value| {
                 black_box(
                     cot_via_inverse_tangent(value)
-                        .certified_dyadic_interval(-256)
+                        .certified_rational_interval(-256)
                         .unwrap(),
                 )
             },

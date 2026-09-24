@@ -201,7 +201,9 @@ as a general-purpose special-function library.
 | Check an opposite structural scale | `is_structural_negation_of` |
 | Check a function domain | `domain_facts`, `reciprocal_domain`, `sqrt_domain`, `log_domain`, `asin_acos_domain`, `acosh_domain`, `atanh_domain` |
 | Refine a sign | `zero_status`, `refine_sign_until`, `certified_sign_until` |
-| Compare with bounded refinement | `certified_eq_until`, `certified_cmp_until`, `certified_dyadic_interval` |
+| Compare with bounded refinement | `certified_eq_until`, `certified_cmp_until` |
+| Enclose while retaining exact rational points | `certified_rational_interval` |
+| Enclose on a dyadic grid for interval arithmetic | `certified_dyadic_interval` |
 
 Higher layers should first use retained facts, then request bounded refinement
 only at a decision boundary. An unresolved certificate is meaningful; it must
