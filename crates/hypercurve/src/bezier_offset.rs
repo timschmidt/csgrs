@@ -61358,6 +61358,65 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
     }
 }
 
+impl BezierRecursiveQuadraticParallelExpression2 {
+    fn squared_magnitude_difference(
+        &self,
+        speed_squared: &[BezierRecursiveQuadraticValue2],
+    ) -> Option<Vec<BezierRecursiveQuadraticValue2>> {
+        let rational_squared =
+            recursive_quadratic_polynomial_multiply(&self.rational, &self.rational)?;
+        let radical_squared =
+            recursive_quadratic_polynomial_multiply(&self.radical, &self.radical)?;
+        let radical_speed =
+            recursive_quadratic_polynomial_multiply(&radical_squared, speed_squared)?;
+        recursive_quadratic_polynomial_combine(&rational_squared, &radical_speed, true)
+    }
+
+    /// Signs A+B*sqrt(S) through the retained parameter's polynomial
+    /// authority. Strict positive speed and component signs select the
+    /// authored sheet; a squared magnitude alone cannot certify cancellation.
+    fn sign_with_positive_speed(
+        &self,
+        speed_squared: &[BezierRecursiveQuadraticValue2],
+        policy: &CurveContext,
+        mut polynomial_sign: impl FnMut(
+            &[BezierRecursiveQuadraticValue2],
+        ) -> CurveResult<Classification<RealSign>>,
+    ) -> CurveResult<Classification<RealSign>> {
+        match policy.strict_predicate_pass(|| polynomial_sign(speed_squared))? {
+            Classification::Decided(RealSign::Positive) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Decided(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a recursive parallel target had negative speed squared".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let rational_sign = polynomial_sign(&self.rational)?;
+        let radical_sign = polynomial_sign(&self.radical)?;
+        if let (Classification::Decided(rational), Classification::Decided(radical)) =
+            (&rational_sign, &radical_sign)
+            && let Some(sign) = same_positive_root_sheet_signs(*rational, *radical)
+        {
+            return Ok(Classification::Decided(sign));
+        }
+        let Some(magnitude) = self.squared_magnitude_difference(speed_squared) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let magnitude_sign = polynomial_sign(&magnitude)?;
+        Ok(positive_root_sum_sign_from_components(
+            rational_sign,
+            radical_sign,
+            magnitude_sign,
+        ))
+    }
+}
+
 impl BezierRecursiveQuadraticParallelEvaluation2 {
     fn polynomial_value(
         &self,
@@ -61664,19 +61723,11 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         {
             return self.projected_polynomial(&self.incidence.rational);
         }
-        let rational_squared = recursive_quadratic_polynomial_multiply(
-            &self.incidence.rational,
-            &self.incidence.rational,
-        )?;
-        let radical_squared = recursive_quadratic_polynomial_multiply(
-            &self.incidence.radical,
-            &self.incidence.radical,
-        )?;
-        let radical_speed =
-            recursive_quadratic_polynomial_multiply(&radical_squared, &self.speed_squared)?;
-        let coefficients =
-            recursive_quadratic_polynomial_combine(&rational_squared, &radical_speed, true)?;
-        self.projected_polynomial(&coefficients)
+        self.projected_polynomial(
+            &self
+                .incidence
+                .squared_magnitude_difference(&self.speed_squared)?,
+        )
     }
 
     fn candidate_evaluation(
@@ -61709,22 +61760,6 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
             .ok_or_else(|| {
                 CurveError::Topology(
                     "a recursive chord/parallel expression exceeded its field budget".into(),
-                )
-            })?
-            .sign(policy)
-    }
-
-    fn expression_replay_sign(
-        &self,
-        expression: &BezierRecursiveQuadraticParallelExpression2,
-        evaluation: &BezierRecursiveQuadraticParallelEvaluation2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        evaluation
-            .expression_value(expression)
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive chord/parallel replay exceeded its field budget".into(),
                 )
             })?
             .sign(policy)
@@ -61857,74 +61892,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         let sign = |polynomial: &[BezierRecursiveQuadraticValue2]| {
             parameter.recursive_polynomial_sign_joined(polynomial, policy)
         };
-        let rational_sign = match sign(&self.incidence.rational)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let radical_sign = match sign(&self.incidence.radical)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let speed_sign = match sign(&self.speed_squared)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let incidence_sign = match (rational_sign, radical_sign, speed_sign) {
-            (_, _, RealSign::Negative) => {
-                return Err(CurveError::Topology(
-                    "a recursive chord/parallel target speed squared was negative".into(),
-                ));
-            }
-            (_, _, RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            (rational, RealSign::Zero, RealSign::Positive) => rational,
-            (RealSign::Zero, radical, RealSign::Positive) => radical,
-            (rational, radical, RealSign::Positive) if rational == radical => rational,
-            (rational, radical, RealSign::Positive) => {
-                let rational_squared = recursive_quadratic_polynomial_multiply(
-                    &self.incidence.rational,
-                    &self.incidence.rational,
-                );
-                let radical_squared = recursive_quadratic_polynomial_multiply(
-                    &self.incidence.radical,
-                    &self.incidence.radical,
-                );
-                let comparison = rational_squared.zip(radical_squared).and_then(
-                    |(rational_squared, radical_squared)| {
-                        recursive_quadratic_polynomial_multiply(
-                            &radical_squared,
-                            &self.speed_squared,
-                        )
-                        .and_then(|radical_speed| {
-                            recursive_quadratic_polynomial_combine(
-                                &rational_squared,
-                                &radical_speed,
-                                true,
-                            )
-                        })
-                    },
-                );
-                let Some(comparison) = comparison else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                match sign(&comparison)? {
-                    Classification::Decided(RealSign::Positive) => rational,
-                    Classification::Decided(RealSign::Negative) => radical,
-                    Classification::Decided(RealSign::Zero) => RealSign::Zero,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-        };
-        let weight_sign = match sign(&self.source_weight)? {
+        let weight_sign = match policy.strict_predicate_pass(|| sign(&self.source_weight))? {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -61933,10 +61901,10 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        Ok(Classification::Decided(product_sign(
-            incidence_sign,
-            weight_sign,
-        )))
+        Ok(self
+            .incidence
+            .sign_with_positive_speed(&self.speed_squared, policy, sign)?
+            .map(|incidence_sign| product_sign(incidence_sign, weight_sign)))
     }
 
     fn polynomial_value_at_real(
@@ -62210,7 +62178,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                         continue;
                     }
                 };
-                match self.expression_replay_sign(&self.incidence, &evaluation, strict)? {
+                match self.expression_sign(&self.incidence, &evaluation, strict)? {
                     Classification::Decided(RealSign::Zero) => {
                         if selected.is_some() {
                             return Err(CurveError::Topology(
@@ -62386,15 +62354,7 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         if self.unit_target_speed {
             recursive_quadratic_polynomial_combine(&expression.rational, &expression.radical, false)
         } else {
-            let rational_squared = recursive_quadratic_polynomial_multiply(
-                &expression.rational,
-                &expression.rational,
-            )?;
-            let radical_squared =
-                recursive_quadratic_polynomial_multiply(&expression.radical, &expression.radical)?;
-            let radical_speed =
-                recursive_quadratic_polynomial_multiply(&radical_squared, &self.speed_squared)?;
-            recursive_quadratic_polynomial_combine(&rational_squared, &radical_speed, true)
+            expression.squared_magnitude_difference(&self.speed_squared)
         }
     }
 
@@ -62650,51 +62610,9 @@ impl BezierRecursiveSelectedRadialParallelSystem2 {
         if let Some(parameter) = target_parameter.as_bezier_parameter() {
             return self.expression_sign_at_parameter(expression, parameter, policy);
         }
-        // Keep the positive speed procedural at a locally retained root.
-        // Component signs select its authored sheet; the squared difference
-        // compares magnitudes without adjoining or globally projecting it.
-        match policy.strict_predicate_pass(|| {
-            self.polynomial_sign_at_region_parameter(&self.speed_squared, target_parameter, policy)
-        })? {
-            Classification::Decided(RealSign::Positive) => {}
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Decided(RealSign::Negative) => {
-                return Err(CurveError::Topology(
-                    "a recursive parallel target had negative speed squared".into(),
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        let rational_sign = self.polynomial_sign_at_region_parameter(
-            &expression.rational,
-            target_parameter,
-            policy,
-        )?;
-        let radical_sign = self.polynomial_sign_at_region_parameter(
-            &expression.radical,
-            target_parameter,
-            policy,
-        )?;
-        if let (Classification::Decided(rational), Classification::Decided(radical)) =
-            (&rational_sign, &radical_sign)
-            && let Some(sign) = same_positive_root_sheet_signs(*rational, *radical)
-        {
-            return Ok(Classification::Decided(sign));
-        }
-        let Some(magnitude) = self.expression_polynomial(expression) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let magnitude_sign =
-            self.polynomial_sign_at_region_parameter(&magnitude, target_parameter, policy)?;
-        Ok(positive_root_sum_sign_from_components(
-            rational_sign,
-            radical_sign,
-            magnitude_sign,
-        ))
+        expression.sign_with_positive_speed(&self.speed_squared, policy, |polynomial| {
+            self.polynomial_sign_at_region_parameter(polynomial, target_parameter, policy)
+        })
     }
 
     fn polynomial_is_identically_zero(
@@ -77891,7 +77809,7 @@ impl BezierAlgebraicChord2 {
                 // authored-sheet replay is the final predicate, so an
                 // approximate caller may consume its terminal here after the
                 // retained exact sign authorities decline.
-                match system.expression_replay_sign(&system.incidence, &evaluation, policy)? {
+                match system.expression_sign(&system.incidence, &evaluation, policy)? {
                     Classification::Decided(RealSign::Zero) => {
                         #[cfg(feature = "dispatch-trace")]
                         hyperreal::dispatch_trace::record(
@@ -78005,7 +77923,7 @@ impl BezierAlgebraicChord2 {
                         policy,
                     )
                 } else {
-                    system.expression_replay_sign(&system.incidence, &evaluation, policy)
+                    system.expression_sign(&system.incidence, &evaluation, policy)
                 }
             }?;
             match replay {
@@ -93576,7 +93494,7 @@ impl BezierAnalyticParallelPoint2 {
                 Classification::Decided(None) | Classification::Uncertain(_) => return Ok(None),
             };
             let sign = match policy.strict_predicate_pass(|| {
-                system.expression_replay_sign(&system.incidence, &evaluation, policy)
+                system.expression_sign(&system.incidence, &evaluation, policy)
             })? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(_) => return Ok(None),
