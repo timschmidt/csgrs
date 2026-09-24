@@ -226,10 +226,10 @@ fn assert_same_real(left: &Real, right: &Real, context: &str) {
     }
 
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(-160)
+        .certified_rational_interval(-160)
         .unwrap_or_else(|| panic!("{context}: left value must be bounded"));
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(-160)
+        .certified_rational_interval(-160)
         .unwrap_or_else(|| panic!("{context}: right value must be bounded"));
     assert!(
         left_lower <= right_upper && right_lower <= left_upper,

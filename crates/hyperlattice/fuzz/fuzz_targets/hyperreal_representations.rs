@@ -4,8 +4,8 @@
 
 use arbitrary::Arbitrary;
 use hyperlattice::{
-    Complex, HomogeneousPoint3, Matrix3, Matrix4, Point2, Point3, ProjectivePlane3,
-    Vector2, Vector3, Vector4, dot2, intersect_three_planes, squared_distance2, wedge2,
+    Complex, HomogeneousPoint3, Matrix3, Matrix4, Point2, Point3, ProjectivePlane3, Vector2,
+    Vector3, Vector4, dot2, intersect_three_planes, squared_distance2, wedge2,
 };
 use hyperreal::{CertifiedRealEquality, Rational, Real, StructuralKind};
 use libfuzzer_sys::fuzz_target;
@@ -41,7 +41,7 @@ fuzz_target!(|input: Input| {
         let scalar_sum = left + right;
         let scalar_product = left * right;
         let _ = scalar_sum.detailed_facts();
-        let _ = scalar_product.certified_dyadic_interval(-96);
+        let _ = scalar_product.certified_rational_interval(-96);
 
         let complex_left = Complex::new(left.clone(), Real::one());
         let complex_right = Complex::new(right.clone(), offset.clone());
@@ -78,12 +78,7 @@ fuzz_target!(|input: Input| {
             assert_real_equal(&forward_cross[axis], &reverse_cross[axis]);
         }
 
-        let vector4 = Vector4::new([
-            left.clone(),
-            right.clone(),
-            offset.clone(),
-            Real::one(),
-        ]);
+        let vector4 = Vector4::new([left.clone(), right.clone(), offset.clone(), Real::one()]);
         assert_eq!(Matrix4::identity() * vector4.clone(), vector4);
 
         let point2 = Point2::new(left.clone(), right.clone());
@@ -101,21 +96,14 @@ fuzz_target!(|input: Input| {
         let _ = matrix3.determinant().detailed_facts();
 
         let point3 = Point3::new(left.clone(), right.clone(), offset.clone());
-        let translation = Matrix4::affine_translation([
-            right.clone(),
-            offset.clone(),
-            Real::one(),
-        ]);
+        let translation = Matrix4::affine_translation([right.clone(), offset.clone(), Real::one()]);
         let transformed = translation
             .transform_point3(&point3)
             .expect("affine translation has unit homogeneous weight");
-        let restored = Matrix4::affine_translation_inverse([
-            right.clone(),
-            offset.clone(),
-            Real::one(),
-        ])
-        .transform_point3(&transformed)
-        .expect("inverse affine translation has unit homogeneous weight");
+        let restored =
+            Matrix4::affine_translation_inverse([right.clone(), offset.clone(), Real::one()])
+                .transform_point3(&transformed)
+                .expect("inverse affine translation has unit homogeneous weight");
         assert_point3_equal(&restored, &point3);
 
         // Keep the representations in plane coefficients while an exact
@@ -138,12 +126,8 @@ fuzz_target!(|input: Input| {
             .expect("coordinate planes have unit homogeneous weight");
         assert_point3_equal(&affine, &point3);
 
-        let explicit_homogeneous = HomogeneousPoint3::new(
-            left.clone(),
-            right.clone(),
-            offset.clone(),
-            Real::one(),
-        );
+        let explicit_homogeneous =
+            HomogeneousPoint3::new(left.clone(), right.clone(), offset.clone(), Real::one());
         assert_point3_equal(
             &explicit_homogeneous
                 .to_affine_point()
@@ -255,9 +239,11 @@ fn opaque_graph_values(depth_seed: u8, opcode_seed: u8) -> Vec<Real> {
     }
 
     let values = vec![sine, cosine, identity_residual, recursive];
-    assert!(values.iter().all(|value| {
-        value.detailed_facts().symbolic.kind == StructuralKind::ComputableOpaque
-    }));
+    assert!(
+        values.iter().all(|value| {
+            value.detailed_facts().symbolic.kind == StructuralKind::ComputableOpaque
+        })
+    );
     values
 }
 
@@ -280,10 +266,10 @@ fn assert_real_equal(left: &Real, right: &Real) {
         return;
     }
     let [left_lower, left_upper] = left
-        .certified_dyadic_interval(-128)
+        .certified_rational_interval(-128)
         .expect("bounded left value");
     let [right_lower, right_upper] = right
-        .certified_dyadic_interval(-128)
+        .certified_rational_interval(-128)
         .expect("bounded right value");
     assert!(left_lower <= right_upper && right_lower <= left_upper);
 }

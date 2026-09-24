@@ -71,7 +71,7 @@ fn run_case(target: &str, seed: u64) {
                     .expect("positive fuzz radicand")
             };
             black_box(symbolic.detailed_facts());
-            black_box(symbolic.certified_dyadic_interval(-64));
+            black_box(symbolic.certified_rational_interval(-64));
         }
         unknown => panic!("unmapped fuzz target {unknown}"),
     }
