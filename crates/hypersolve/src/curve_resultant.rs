@@ -4,9 +4,10 @@
 //! rules. This module supplies the bounded exact algebraic handoff they need:
 //! two polynomial parametric curves in power basis are substituted into
 //! `x1(t) - x2(u)` and `y1(t) - y2(u)`, the second parameter is eliminated by
-//! Sylvester resultants, and the retained-parameter polynomial is reconstructed
-//! by exact interpolation. This follows the elimination view of Bezier clipping, while keeping
-//! the exact-computation boundary explicit: the resultant is candidate
+//! Sylvester resultants. Rational coefficients use a fraction-free polynomial
+//! determinant when its dimension permits; other cases use exact interpolation.
+//! This follows the elimination view of Bezier clipping while keeping the
+//! exact-computation boundary explicit: the resultant is candidate
 //! algebraic evidence, not an accepted topology event, until a downstream
 //! curve package replays it against retained geometry.
 
