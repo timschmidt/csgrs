@@ -522,7 +522,10 @@ pub fn validate_algebraic_root_representation(
 /// before the requested policy is used for ordering. It certifies order when
 /// exact point witnesses compare directly or when the effective isolating
 /// intervals are disjoint; a point witness supersedes its stored outer bounds.
-/// If intervals overlap, the report returns
+/// Nested singleton isolators of the same polynomial certify equality,
+/// independently of their source metadata. Positive-width intervals own
+/// `(lower, upper]`; a point at an excluded lower endpoint is a different root.
+/// Otherwise, overlapping intervals produce
 /// [`AlgebraicRootComparisonStatus::OverlappingIntervals`] instead of sampling
 /// a primitive approximation. This follows the exact construction/decision
 /// separation and the Collins-Loos isolating-interval model cited in the module
@@ -584,7 +587,11 @@ fn compare_admitted_algebraic_root_representations(
             Some("could not compare left upper endpoint to right lower endpoint".to_owned()),
         );
     };
-    if left_before_right == Ordering::Less {
+    if left_before_right == Ordering::Less
+        || (left_before_right == Ordering::Equal
+            && compare_algebraic_values(right_lower, right_upper, PredicatePolicy::STRICT)
+                == Some(Ordering::Less))
+    {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Compared,
             Some(Ordering::Less),
@@ -599,7 +606,11 @@ fn compare_admitted_algebraic_root_representations(
             Some("could not compare left lower endpoint to right upper endpoint".to_owned()),
         );
     };
-    if left_after_right == Ordering::Greater {
+    if left_after_right == Ordering::Greater
+        || (left_after_right == Ordering::Equal
+            && compare_algebraic_values(left_lower, left_upper, PredicatePolicy::STRICT)
+                == Some(Ordering::Less))
+    {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Compared,
             Some(Ordering::Greater),
@@ -617,6 +628,21 @@ fn compare_admitted_algebraic_root_representations(
         && compare_algebraic_values(right_lower, right_upper, PredicatePolicy::STRICT)
             == Some(Ordering::Equal)
         && compare_algebraic_values(left_lower, right_lower, policy) == Some(Ordering::Equal)
+    {
+        return algebraic_comparison_report(
+            AlgebraicRootComparisonStatus::Compared,
+            Some(Ordering::Equal),
+            None,
+        );
+    }
+
+    // Each admitted interval owns exactly one root of its polynomial. If
+    // those polynomials agree and one isolator contains the other, both
+    // witnesses select that same root. Overlap alone is insufficient: two
+    // non-nested isolators can select different conjugates.
+    if left.polynomial_coefficients == right.polynomial_coefficients
+        && (singleton_isolator_contains(left_lower, left_upper, right_lower, right_upper)
+            || singleton_isolator_contains(right_lower, right_upper, left_lower, left_upper))
     {
         return algebraic_comparison_report(
             AlgebraicRootComparisonStatus::Compared,
@@ -1147,7 +1173,11 @@ fn admitted_exact_point_is_represented_root(
     root: &AlgebraicRootRepresentation,
     policy: PredicatePolicy,
 ) -> Option<bool> {
-    if compare_algebraic_values(point, &root.interval.lower, policy)? == Ordering::Less
+    let lower_order = compare_algebraic_values(point, &root.interval.lower, policy)?;
+    if lower_order == Ordering::Less
+        || (lower_order == Ordering::Equal
+            && compare_algebraic_values(&root.interval.lower, &root.interval.upper, policy)?
+                == Ordering::Less)
         || compare_algebraic_values(point, &root.interval.upper, policy)? == Ordering::Greater
     {
         return Some(false);
@@ -3596,6 +3626,27 @@ fn same_represented_root(
         && left.interval == right.interval
 }
 
+/// Containment of admitted singleton isolators, using their effective bounds.
+/// A positive-width isolator excludes its lower endpoint; a degenerate one
+/// denotes an exact point. All containment predicates must be certified.
+fn singleton_isolator_contains(
+    outer_lower: &Real,
+    outer_upper: &Real,
+    inner_lower: &Real,
+    inner_upper: &Real,
+) -> bool {
+    let strict = PredicatePolicy::STRICT;
+    let lower = compare_algebraic_values(inner_lower, outer_lower, strict);
+    let upper = compare_algebraic_values(inner_upper, outer_upper, strict);
+    matches!(upper, Some(Ordering::Less | Ordering::Equal))
+        && (lower == Some(Ordering::Greater)
+            || (lower == Some(Ordering::Equal)
+                && (compare_algebraic_values(inner_lower, inner_upper, strict)
+                    == Some(Ordering::Less)
+                    || compare_algebraic_values(outer_lower, outer_upper, strict)
+                        == Some(Ordering::Equal))))
+}
+
 fn apply_refined_interval(
     root: &mut AlgebraicRootRepresentation,
     refinement: &IsolatedRootRefinementReport,
@@ -4061,6 +4112,167 @@ mod tests {
             .status,
             AlgebraicRootComparisonStatus::InvalidEvidence
         );
+    }
+
+    #[test]
+    fn algebraic_root_comparison_reuses_nested_singleton_evidence() {
+        for constant in [real(-2), -real(2).sqrt().unwrap()] {
+            let outer = AlgebraicRootRepresentation {
+                constraint_index: 0,
+                symbol: SymbolId(0),
+                interval_index: 0,
+                polynomial_coefficients: vec![constant, Real::zero(), Real::one()],
+                interval: IsolatedRootInterval {
+                    lower: Real::zero(),
+                    upper: real(2),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                },
+                validation: AlgebraicRootValidationReport::valid(),
+            };
+            for (lower, upper) in [
+                (real(1), ratio(3, 2)),
+                (Real::zero(), ratio(3, 2)),
+                (real(1), real(2)),
+                (Real::zero(), real(2)),
+            ] {
+                let inner = AlgebraicRootRepresentation {
+                    constraint_index: 7,
+                    symbol: SymbolId(3),
+                    interval_index: 2,
+                    interval: IsolatedRootInterval {
+                        lower,
+                        upper,
+                        ..outer.interval.clone()
+                    },
+                    ..outer.clone()
+                };
+                for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+                    for (left, right) in [(&outer, &inner), (&inner, &outer)] {
+                        let report = compare_algebraic_root_representations_with_refinement(
+                            left,
+                            right,
+                            AlgebraicRootRefinementComparisonConfig {
+                                policy,
+                                max_refinement_rounds: 0,
+                                steps_per_round: 1,
+                            },
+                        );
+                        assert_eq!(
+                            report.comparison.status,
+                            AlgebraicRootComparisonStatus::Compared
+                        );
+                        assert_eq!(report.comparison.ordering, Some(Ordering::Equal));
+                        assert_eq!(report.refinement_rounds, 0);
+                    }
+                }
+                let mut invalid = inner;
+                invalid.interval.distinct_root_count = 2;
+                assert_eq!(
+                    compare_algebraic_root_representations(
+                        &outer,
+                        &invalid,
+                        PredicatePolicy::STRICT
+                    )
+                    .status,
+                    AlgebraicRootComparisonStatus::InvalidEvidence,
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn algebraic_root_comparison_keeps_overlapping_conjugates_distinct() {
+        let negative = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-1), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(-2),
+                upper: ratio(1, 2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        let positive = AlgebraicRootRepresentation {
+            interval: IsolatedRootInterval {
+                lower: ratio(-1, 2),
+                upper: real(2),
+                ..negative.interval.clone()
+            },
+            ..negative.clone()
+        };
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for (left, right, expected) in [
+                (&negative, &positive, Ordering::Less),
+                (&positive, &negative, Ordering::Greater),
+            ] {
+                let direct = compare_algebraic_root_representations(left, right, policy);
+                assert_eq!(
+                    direct.status,
+                    AlgebraicRootComparisonStatus::OverlappingIntervals
+                );
+                assert_eq!(direct.ordering, None);
+                let refined = compare_algebraic_root_representations_with_refinement(
+                    left,
+                    right,
+                    AlgebraicRootRefinementComparisonConfig {
+                        policy,
+                        ..Default::default()
+                    },
+                );
+                assert_eq!(refined.comparison.ordering, Some(expected));
+            }
+        }
+    }
+
+    #[test]
+    fn algebraic_root_comparison_respects_owned_interval_endpoints() {
+        let positive = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: vec![real(-1), Real::zero(), Real::one()],
+            interval: IsolatedRootInterval {
+                lower: real(-1),
+                upper: real(1),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            validation: AlgebraicRootValidationReport::valid(),
+        };
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for (value, expected) in [(real(-1), Ordering::Less), (real(1), Ordering::Equal)] {
+                // Exercise the common-root proof independently of direct
+                // ordering: the excluded conjugate also satisfies P(x).
+                assert_eq!(
+                    admitted_exact_point_is_represented_root(&value, &positive, policy),
+                    Some(expected == Ordering::Equal),
+                );
+                for cached in [false, true] {
+                    let point = AlgebraicRootRepresentation {
+                        constraint_index: 1,
+                        interval: IsolatedRootInterval {
+                            lower: value.clone(),
+                            upper: value.clone(),
+                            exact_root: cached.then(|| value.clone()),
+                            distinct_root_count: 1,
+                        },
+                        ..positive.clone()
+                    };
+                    let comparison =
+                        compare_algebraic_root_representations(&point, &positive, policy);
+                    assert_eq!(comparison.status, AlgebraicRootComparisonStatus::Compared);
+                    assert_eq!(comparison.ordering, Some(expected));
+                    assert_eq!(
+                        compare_algebraic_root_representations(&positive, &point, policy).ordering,
+                        Some(expected.reverse()),
+                    );
+                }
+            }
+        }
     }
 
     #[test]
