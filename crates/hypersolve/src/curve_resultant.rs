@@ -753,9 +753,9 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
                     }
                 }
             };
-            second_samples.push(CurveIntersectionResultantSample {
+            second_samples.push(PolynomialSample {
                 parameter_value: second_value,
-                resultant,
+                value: resultant,
             });
         }
         let Some(interpolated) = interpolate_samples(&second_samples, config.min_precision) else {
@@ -774,15 +774,13 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
         let first_samples = second_axis_polynomials
             .iter()
             .enumerate()
-            .map(
-                |(sample_index, polynomial)| CurveIntersectionResultantSample {
-                    parameter_value: Real::from(sample_index as u64),
-                    resultant: polynomial
-                        .get(second_power)
-                        .cloned()
-                        .unwrap_or_else(Real::zero),
-                },
-            )
+            .map(|(sample_index, polynomial)| PolynomialSample {
+                parameter_value: Real::from(sample_index as u64),
+                value: polynomial
+                    .get(second_power)
+                    .cloned()
+                    .unwrap_or_else(Real::zero),
+            })
             .collect::<Vec<_>>();
         let Some(interpolated) = interpolate_samples(&first_samples, config.min_precision) else {
             return report(
@@ -1641,9 +1639,9 @@ fn interpolate_rectangular_tensor_grid(
             let samples = row
                 .iter()
                 .enumerate()
-                .map(|(second, value)| CurveIntersectionResultantSample {
+                .map(|(second, value)| PolynomialSample {
                     parameter_value: Real::from(second as u64),
-                    resultant: value.clone(),
+                    value: value.clone(),
                 })
                 .collect::<Vec<_>>();
             interpolate_samples(&samples, min_precision)
@@ -1654,9 +1652,9 @@ fn interpolate_rectangular_tensor_grid(
         let samples = second_polynomials
             .iter()
             .enumerate()
-            .map(|(first, polynomial)| CurveIntersectionResultantSample {
+            .map(|(first, polynomial)| PolynomialSample {
                 parameter_value: Real::from(first as u64),
-                resultant: polynomial
+                value: polynomial
                     .get(second_power)
                     .cloned()
                     .unwrap_or_else(Real::zero),
@@ -1699,9 +1697,9 @@ fn interpolate_rectangular_tensor_cube(
             let first_samples = trailing_polynomials
                 .iter()
                 .enumerate()
-                .map(|(first, polynomial)| CurveIntersectionResultantSample {
+                .map(|(first, polynomial)| PolynomialSample {
                     parameter_value: Real::from(first as u64),
-                    resultant: polynomial
+                    value: polynomial
                         .coefficients
                         .get(second_power)
                         .and_then(|row| row.get(third_power))
@@ -1738,13 +1736,10 @@ pub enum CurveIntersectionResultantStatus {
     InvalidHomogeneousWeight,
 }
 
-/// One exact sample used to reconstruct the retained-parameter resultant.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveIntersectionResultantSample {
-    /// Retained parameter value used for this sample.
-    pub parameter_value: Real,
-    /// Exact sampled resultant after eliminating the other parameter.
-    pub resultant: Real,
+/// Temporary exact values used only by polynomial interpolation.
+struct PolynomialSample {
+    parameter_value: Real,
+    value: Real,
 }
 
 /// Exact report for eliminating one parameter from two parametric curves.
@@ -1758,8 +1753,6 @@ pub struct CurveIntersectionResultantReport {
     pub eliminated_parameter: CurveResultantParameter,
     /// Conservative degree bound used to choose interpolation samples.
     pub degree_bound: usize,
-    /// Sampled exact resultants in retained-parameter order.
-    pub samples: Vec<CurveIntersectionResultantSample>,
     /// Resultant polynomial coefficients in ascending retained-parameter power
     /// order. Empty unless `status == Constructed`.
     pub resultant_coefficients: Vec<Real>,
@@ -1886,10 +1879,10 @@ pub struct BivariatePolynomialComponentReport {
 /// Eliminates one parameter from two exact bivariate polynomial equations.
 ///
 /// Both equations use [`BivariatePolynomial`]'s `(first, second)` coefficient
-/// order. The implementation certifies their bidegrees, evaluates exact
-/// univariate specializations, skips the finitely many specializations whose
-/// eliminated-variable degree drops, and reconstructs the resultant by exact
-/// interpolation. The returned polynomial is candidate evidence only; callers
+/// order. Rational systems of modest dimension use a fraction-free polynomial
+/// determinant. Other systems use exact interpolation, skipping the finitely
+/// many specializations whose eliminated-variable degree drops. Only the
+/// resulting polynomial is retained. It is candidate evidence only; callers
 /// must replay isolated roots against their original equations and geometric
 /// branch conditions.
 pub fn resultant_bivariate_polynomial_system(
@@ -1911,7 +1904,6 @@ pub fn resultant_bivariate_polynomial_system(
             eliminated_parameter,
             0,
             Vec::new(),
-            Vec::new(),
             None,
         );
     }
@@ -1929,10 +1921,6 @@ pub fn resultant_bivariate_polynomial_system(
             retained_parameter,
             eliminated_parameter,
             0,
-            vec![CurveIntersectionResultantSample {
-                parameter_value: Real::zero(),
-                resultant: Real::zero(),
-            }],
             vec![Real::zero()],
             None,
         );
@@ -1952,7 +1940,6 @@ pub fn resultant_bivariate_polynomial_system(
             eliminated_parameter,
             degree_bound,
             Vec::new(),
-            Vec::new(),
             None,
         );
     }
@@ -1964,9 +1951,8 @@ pub fn resultant_bivariate_polynomial_system(
     // other small systems retain sparse Sylvester rows. Fraction-free
     // polynomial elimination keeps intermediate degrees at minor size and
     // uses quadratic matrix storage instead of exponential subset state.
-    // Keep the sampled
-    // report contract by evaluating the constructed determinant at the same
-    // degree-preserving parameter schedule used by the generic path.
+    // Publish that polynomial directly: interpolation samples are temporary
+    // construction data, not additional elimination evidence.
     let sylvester_dimension = first_eliminated_degree + second_eliminated_degree;
     let rational_coefficients = bivariate_has_only_rational_coefficients(first_equation)
         && bivariate_has_only_rational_coefficients(second_equation);
@@ -1999,24 +1985,11 @@ pub fn resultant_bivariate_polynomial_system(
         else {
             return undecided_report(retained_parameter, eliminated_parameter);
         };
-        let Some(samples) = resultant_polynomial_samples(
-            first_equation,
-            second_equation,
-            retained_parameter,
-            first_eliminated_degree,
-            second_eliminated_degree,
-            degree_bound,
-            &resultant_coefficients,
-            config.min_precision,
-        ) else {
-            return undecided_report(retained_parameter, eliminated_parameter);
-        };
         return curve_resultant_report(
             CurveIntersectionResultantStatus::Constructed,
             retained_parameter,
             eliminated_parameter,
             degree_bound,
-            samples,
             resultant_coefficients,
             None,
         );
@@ -2071,15 +2044,14 @@ pub fn resultant_bivariate_polynomial_system(
                         retained_parameter,
                         eliminated_parameter,
                         degree_bound,
-                        samples,
                         Vec::new(),
                         Some(error),
                     );
                 }
             };
-        samples.push(CurveIntersectionResultantSample {
+        samples.push(PolynomialSample {
             parameter_value,
-            resultant,
+            value: resultant,
         });
     }
 
@@ -2089,7 +2061,6 @@ pub fn resultant_bivariate_polynomial_system(
             retained_parameter,
             eliminated_parameter,
             degree_bound,
-            samples,
             Vec::new(),
             None,
         );
@@ -2102,7 +2073,6 @@ pub fn resultant_bivariate_polynomial_system(
             retained_parameter,
             eliminated_parameter,
             degree_bound,
-            samples,
             Vec::new(),
             None,
         );
@@ -2112,7 +2082,6 @@ pub fn resultant_bivariate_polynomial_system(
         retained_parameter,
         eliminated_parameter,
         degree_bound,
-        samples,
         resultant_coefficients,
         None,
     )
@@ -2245,47 +2214,6 @@ fn determinant_polynomial_matrix(matrix: &[Vec<Real>], dimension: usize) -> Opti
             .map(|coefficient| Real::new(Rational::from_bigint(coefficient) * &determinant_scale))
             .collect(),
     )
-}
-
-#[allow(clippy::too_many_arguments)]
-fn resultant_polynomial_samples(
-    first: &BivariatePolynomial,
-    second: &BivariatePolynomial,
-    retained_parameter: CurveResultantParameter,
-    first_eliminated_degree: usize,
-    second_eliminated_degree: usize,
-    degree_bound: usize,
-    resultant: &[Real],
-    min_precision: i32,
-) -> Option<Vec<CurveIntersectionResultantSample>> {
-    let mut samples = Vec::with_capacity(degree_bound + 1);
-    let mut index = 0_usize;
-    while samples.len() <= degree_bound {
-        let parameter_value = Real::from(index as u64);
-        index += 1;
-        let first_sample =
-            evaluate_bivariate_at_retained_parameter(first, &parameter_value, retained_parameter);
-        let second_sample =
-            evaluate_bivariate_at_retained_parameter(second, &parameter_value, retained_parameter);
-        if certified_nonzero_degree(&first_sample, min_precision).ok()?
-            != Some(first_eliminated_degree)
-            || certified_nonzero_degree(&second_sample, min_precision).ok()?
-                != Some(second_eliminated_degree)
-        {
-            continue;
-        }
-        let value = resultant
-            .iter()
-            .rev()
-            .fold(Real::zero(), |value, coefficient| {
-                value * &parameter_value + coefficient
-            });
-        samples.push(CurveIntersectionResultantSample {
-            parameter_value,
-            resultant: value,
-        });
-    }
-    Some(samples)
 }
 
 /// Constructs rational lifts for the eliminated parameter of a bivariate system.
@@ -3404,10 +3332,9 @@ fn subtract_exact_polynomials(first: &[Real], second: &[Real]) -> Vec<Real> {
 /// and the returned polynomial is in the second curve's parameter. The degree
 /// bound is the classical bidegree resultant bound
 /// `deg_u(g)*deg_t(f) + deg_u(f)*deg_t(g)`, evaluated after certified trimming.
-/// The implementation samples that many plus one exact integer parameter
-/// values and interpolates with exact Lagrange basis polynomials. Sylvester's
-/// determinant resultant supplies elimination evidence; the exact-decision discipline requires
-/// downstream exact replay before topology accepts a candidate root.
+/// Polynomial determinant construction or exact interpolation supplies
+/// elimination evidence; downstream exact replay must still establish a
+/// candidate root's geometric validity.
 pub fn resultant_parametric_curve_intersection(
     first: &PolynomialParametricCurve2,
     second: &PolynomialParametricCurve2,
@@ -3424,7 +3351,6 @@ pub fn resultant_parametric_curve_intersection(
             retained_parameter,
             opposite_parameter(retained_parameter),
             0,
-            Vec::new(),
             Vec::new(),
             None,
         );
@@ -3462,7 +3388,6 @@ pub fn resultant_rational_parametric_curve_intersection(
             opposite_parameter(retained_parameter),
             0,
             Vec::new(),
-            Vec::new(),
             None,
         );
     }
@@ -3480,7 +3405,6 @@ pub fn resultant_rational_parametric_curve_intersection(
             retained_parameter,
             opposite_parameter(retained_parameter),
             0,
-            Vec::new(),
             Vec::new(),
             None,
         );
@@ -3509,7 +3433,6 @@ fn curve_resultant_report(
     retained_parameter: CurveResultantParameter,
     eliminated_parameter: CurveResultantParameter,
     degree_bound: usize,
-    samples: Vec<CurveIntersectionResultantSample>,
     resultant_coefficients: Vec<Real>,
     resultant_error: Option<UnivariateResultantError>,
 ) -> CurveIntersectionResultantReport {
@@ -3518,7 +3441,6 @@ fn curve_resultant_report(
         retained_parameter,
         eliminated_parameter,
         degree_bound,
-        samples,
         resultant_coefficients,
         resultant_error,
     }
@@ -3958,12 +3880,10 @@ fn interpolate_parameter_values(
     let samples = parameters
         .iter()
         .zip(values)
-        .map(
-            |(parameter_value, resultant)| CurveIntersectionResultantSample {
-                parameter_value: parameter_value.clone(),
-                resultant: resultant.clone(),
-            },
-        )
+        .map(|(parameter_value, resultant)| PolynomialSample {
+            parameter_value: parameter_value.clone(),
+            value: resultant.clone(),
+        })
         .collect::<Vec<_>>();
     let coefficients = interpolate_samples(&samples, min_precision)?;
     trim_trailing_zeroes(coefficients, min_precision).ok()
@@ -3978,7 +3898,6 @@ fn undecided_report(
         retained_parameter,
         eliminated_parameter,
         0,
-        Vec::new(),
         Vec::new(),
         None,
     )
@@ -4733,10 +4652,7 @@ fn eval_univariate(coefficients: &[Real], value: &Real) -> Real {
     result
 }
 
-fn interpolate_samples(
-    samples: &[CurveIntersectionResultantSample],
-    min_precision: i32,
-) -> Option<Vec<Real>> {
+fn interpolate_samples(samples: &[PolynomialSample], min_precision: i32) -> Option<Vec<Real>> {
     let mut result = vec![Real::zero(); samples.len()];
     for (sample_index, sample) in samples.iter().enumerate() {
         let mut basis = vec![Real::one()];
@@ -4748,7 +4664,7 @@ fn interpolate_samples(
             basis = multiply_by_linear_factor(basis, -other.parameter_value.clone());
             denominator *= sample.parameter_value.clone() - other.parameter_value.clone();
         }
-        let scale = (sample.resultant.clone() / denominator).ok()?;
+        let scale = (sample.value.clone() / denominator).ok()?;
         for (index, coefficient) in basis.into_iter().enumerate() {
             result[index] += coefficient * scale.clone();
         }
@@ -4951,7 +4867,6 @@ mod tests {
             report.resultant_coefficients,
             vec![real(-1), real(0), real(1)]
         );
-        assert_eq!(report.samples.len(), 3);
     }
 
     #[test]
@@ -6276,7 +6191,6 @@ mod tests {
 
         assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
         assert_eq!(report.resultant_coefficients, vec![real(0)]);
-        assert_eq!(report.samples.len(), 1);
     }
 
     #[test]
@@ -6358,7 +6272,54 @@ mod tests {
     }
 
     #[test]
-    fn rational_resultant_skips_specialized_degree_drop_samples() {
+    fn nonrational_resultant_preserves_specialized_degree_drop_identity() {
+        // F(t,u) = (t-1)u^2 + u, G(u) = u-sqrt(2). The generic
+        // quadratic/linear resultant is 2(t-1)+sqrt(2). At t=1 the
+        // lower-degree resultant has the opposite sign, so interpolating
+        // that specialization would produce the wrong polynomial.
+        let alpha = real(2).sqrt().unwrap();
+        let first = BivariatePolynomial::new(vec![
+            vec![real(0), real(1), real(-1)],
+            vec![real(0), real(0), real(1)],
+        ]);
+        let second = BivariatePolynomial::new(vec![vec![-alpha.clone(), real(1)]]);
+        for retained in [
+            CurveResultantParameter::First,
+            CurveResultantParameter::Second,
+        ] {
+            let (first, second, orientation) = match retained {
+                CurveResultantParameter::First => (first.clone(), second.clone(), real(1)),
+                CurveResultantParameter::Second => {
+                    (swap_bivariate(&first), swap_bivariate(&second), real(-1))
+                }
+            };
+            let report = resultant_bivariate_polynomial_system(
+                &first,
+                &second,
+                retained,
+                CurveIntersectionResultantConfig::default(),
+            );
+            assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+            assert_eq!(report.resultant_coefficients.len(), 2);
+            // Compare exact values, including the degree-drop point and
+            // points not used by reconstruction. This tests the public
+            // polynomial contract without exposing interpolation history.
+            for parameter in [-3, 0, 1, 2, 5].map(real) {
+                let expected = &orientation * (real(2) * (&parameter - real(1)) + &alpha);
+                let actual = eval_univariate(&report.resultant_coefficients, &parameter);
+                assert!(matches!(
+                    (actual - expected).certified_sign_until(-512),
+                    CertifiedRealSign::Known {
+                        sign: RealSign::Zero,
+                        ..
+                    }
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn rational_resultant_preserves_specialized_degree_drop_identity() {
         let first = RationalParametricCurve2::new(
             vec![real(5), real(51), real(-15), real(-18)],
             vec![real(6), real(12), real(-12)],
@@ -6391,14 +6352,6 @@ mod tests {
                 expected_coefficient * &report.resultant_coefficients[0]
             );
         }
-        assert_eq!(report.samples.len(), report.degree_bound + 1);
-        assert!(
-            report
-                .samples
-                .last()
-                .is_some_and(|sample| sample.parameter_value > real(report.degree_bound as i64)),
-            "a degree-drop sample must be replaced, not interpolated at lower Sylvester degree"
-        );
     }
 
     #[test]
