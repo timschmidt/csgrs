@@ -261,6 +261,32 @@ impl BezierParameterPolynomial {
         Real::eval_poly(&self.coefficients, parameter)
     }
 
+    /// Removes every factor at the supplied exact values. Callers retaining a
+    /// selected root must certify that these values are excluded from it.
+    /// Synthetic division preserves the certified nonzero leading coefficient.
+    pub(crate) fn without_roots_at(
+        mut self,
+        excluded: &[&Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let strict = policy.strict_counterpart();
+        for root in excluded {
+            loop {
+                match real_sign(&self.evaluate(root), &strict) {
+                    Some(RealSign::Zero) if self.degree() > 0 => {
+                        self.coefficients = divide_by_linear_root(&self.coefficients, root);
+                    }
+                    Some(RealSign::Positive | RealSign::Negative) => break,
+                    Some(RealSign::Zero) => {
+                        return Err(CurveError::InvalidBezierAlgebraicParameter);
+                    }
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                }
+            }
+        }
+        Ok(Classification::Decided(self))
+    }
+
     /// Reduces a power-basis expression modulo this defining polynomial.
     ///
     /// At any root of `self`, the returned remainder has exactly the same
@@ -972,6 +998,7 @@ impl BezierAlgebraicParameter2 {
         }))
     }
 
+    /// The caller certifies one distinct root and non-root interval endpoints.
     pub(crate) fn from_certified_singleton(
         polynomial: BezierParameterPolynomial,
         interval: BezierParameterInterval,
@@ -2064,7 +2091,7 @@ impl BezierParameter2 {
         // field are unchanged, and decreasing charts can then transport the
         // endpoint-free isolator without reversing an ownership convention.
         let strict = policy.strict_counterpart();
-        let mut coefficients = representation.polynomial_coefficients.clone();
+        let coefficients = representation.polynomial_coefficients.clone();
         match real_sign(
             &Real::eval_poly(&coefficients, &representation.interval.upper),
             &strict,
@@ -2080,22 +2107,15 @@ impl BezierParameter2 {
             Some(RealSign::Positive | RealSign::Negative) => {}
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
-        loop {
-            match real_sign(
-                &Real::eval_poly(&coefficients, &representation.interval.lower),
-                &strict,
-            ) {
-                Some(RealSign::Zero) if coefficients.len() > 1 => {
-                    coefficients =
-                        divide_by_linear_root(&coefficients, &representation.interval.lower);
-                }
-                Some(RealSign::Positive | RealSign::Negative) => break,
-                Some(RealSign::Zero) => return Err(CurveError::InvalidBezierAlgebraicParameter),
-                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-            }
-        }
         let polynomial =
             match BezierParameterPolynomial::try_new_power_basis(coefficients, &strict)? {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let polynomial =
+            match polynomial.without_roots_at(&[&representation.interval.lower], &strict)? {
                 Classification::Decided(polynomial) => polynomial,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
