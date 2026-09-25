@@ -5386,6 +5386,22 @@ impl RationalBezier2 {
                 Classification::Decided(envelope) => envelope,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
+            // Discovery bounds schedule algebra; they need no incidence with
+            // an authored endpoint. Keep irrational endpoint expressions out
+            // of fiber subdivision and Sturm boundary coefficients. Any pole
+            // admitted by this outward enclosure is clipped below against the
+            // original exact endpoints. Unavailable enclosures retain the
+            // existing exact path rather than restricting representability.
+            let outward = |value: &Real, side: usize| {
+                if value.exact_rational_ref().is_some() {
+                    return value.clone();
+                }
+                value
+                    .certified_dyadic_interval(-4)
+                    .map_or_else(|| value.clone(), |bounds| Real::new(bounds[side].clone()))
+            };
+            let lower = outward(lower, 0);
+            let upper = outward(upper, 1);
             let envelope = CurveParameterRange2::new_validated(
                 CurveParameter2::from(lower.clone()),
                 CurveParameter2::from(upper.clone()),
@@ -10429,6 +10445,118 @@ mod tests {
             curve.exact_linear_parameterization_line(),
             Some(LineSeg2::try_new(start, end).unwrap())
         );
+    }
+
+    #[test]
+    fn discovery_envelopes_keep_endpoint_expressions_out_of_fiber_bounds() {
+        let curve = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+            vec![Real::one(), Real::one()],
+        )
+        .unwrap();
+        let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
+        for (lower, upper) in [
+            (alpha.clone(), Real::pi()),
+            (&alpha - &tiny, &alpha + &tiny),
+        ] {
+            assert!(lower.exact_rational_ref().is_none());
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                for reversed in [false, true] {
+                    let (start, end) = if reversed {
+                        (upper.clone(), lower.clone())
+                    } else {
+                        (lower.clone(), upper.clone())
+                    };
+                    let range = CurveParameterRange2::new_validated(start.into(), end.into());
+                    let Classification::Decided(envelope) =
+                        curve.finite_discovery_envelope(&range, &policy).unwrap()
+                    else {
+                        panic!("a finite polynomial source has a discovery envelope");
+                    };
+                    let (left, right) = envelope.scalar_endpoints().unwrap();
+                    assert!(left.exact_rational_ref().is_some());
+                    assert!(right.exact_rational_ref().is_some());
+                    assert!(matches!(
+                        compare_reals(left, &lower, &CurveContext::STRICT),
+                        Some(Ordering::Less | Ordering::Equal)
+                    ));
+                    assert!(matches!(
+                        compare_reals(right, &upper, &CurveContext::STRICT),
+                        Some(Ordering::Greater | Ordering::Equal)
+                    ));
+                    assert_eq!(
+                        curve.denominator_sign(&envelope),
+                        Classification::Decided(RealSign::Positive)
+                    );
+                    // The discovery chart does not replace the authored
+                    // endpoints, including a gap much smaller than 2^-512.
+                    assert!(
+                        range
+                            .start()
+                            .scalar()
+                            .unwrap()
+                            .exact_rational_ref()
+                            .is_none()
+                    );
+                    assert!(range.end().scalar().unwrap().exact_rational_ref().is_none());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn rational_discovery_envelopes_clip_newly_enclosed_poles() {
+        // W(t)=2-t. Both endpoint weights are positive on the authored unit
+        // chart, while the queried exterior span begins just beyond its pole.
+        let curve = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
+            vec![Real::from(2_i8), Real::one()],
+        )
+        .unwrap();
+        let delta = Real::from(2_i8).sqrt().unwrap() * Real::from(2_i8).powi_i64(-600).unwrap();
+        let lower = Real::from(2_i8) + delta;
+        let upper = Real::from(3_i8);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let (start, end) = if reversed {
+                    (upper.clone(), lower.clone())
+                } else {
+                    (lower.clone(), upper.clone())
+                };
+                let range = CurveParameterRange2::new_validated(start.into(), end.into());
+                let Classification::Decided(envelope) =
+                    curve.finite_discovery_envelope(&range, &policy).unwrap()
+                else {
+                    panic!("an excluded pole cannot block the finite exterior span");
+                };
+                let (left, right) = envelope.scalar_endpoints().unwrap();
+                assert!(left.exact_rational_ref().is_some());
+                assert!(right.exact_rational_ref().is_some());
+                assert_eq!(
+                    compare_reals(left, &Real::from(2_i8), &CurveContext::STRICT),
+                    Some(Ordering::Greater)
+                );
+                assert!(matches!(
+                    compare_reals(left, &lower, &CurveContext::STRICT),
+                    Some(Ordering::Less | Ordering::Equal)
+                ));
+                assert_eq!(
+                    compare_reals(right, &upper, &CurveContext::STRICT),
+                    Some(Ordering::Equal)
+                );
+                assert_eq!(
+                    curve.denominator_sign(&envelope),
+                    Classification::Decided(RealSign::Negative)
+                );
+            }
+            let crossing =
+                CurveParameterRange2::new_validated(Real::one().into(), Real::from(3_i8).into());
+            assert!(matches!(
+                curve.finite_discovery_envelope(&crossing, &policy).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+        }
     }
 
     #[test]
