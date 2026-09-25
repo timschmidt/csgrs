@@ -28,7 +28,6 @@ use hypersolve::{
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
 };
 
-use crate::BezierParameterPolynomial;
 use crate::RationalBezierAlgebraicPointImage2;
 use crate::bezier::BezierParallelLineTangentContact2;
 use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
@@ -37,7 +36,7 @@ use crate::bezier_offset::BezierAlgebraicCuspSemicircleSimilarityCache2;
 use crate::bezier_offset::{
     BezierAlgebraicChordAxisDirection2, BezierAlgebraicFiberProjection2,
     algebraic_chord_point_linear_order_to_exact, algebraic_selected_correlated_predicate_sign,
-    algebraic_selected_fiber_parameters, bivariate_fiber_strict_sign_on_parameter_range,
+    bivariate_fiber_strict_sign_on_parameter_range, selected_fiber_parameters,
 };
 use crate::bezier_split::BezierSelectedFiberSource2;
 use crate::bezier_topology::exact_polynomial_line_contact_relation_from_direction;
@@ -15949,8 +15948,15 @@ fn retained_fragment_algebraic_ray_curve(
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
     };
+    // Native subdivision is an accelerator only inside its authored unit
+    // domain. Exterior intervals retain the source and their exact bounds.
     let (curve, retained_range) = if let Some(range) = retained_range {
-        if let Some((start, end)) = range.scalar_endpoints() {
+        if let Some((start, end)) = range.scalar_endpoints()
+            && policy.strict_predicate_pass(|| {
+                crate::classify::in_closed_unit_interval(start, policy) == Some(true)
+                    && crate::classify::in_closed_unit_interval(end, policy) == Some(true)
+            })
+        {
             let curve = match curve.subcurve_between_exact(start, end, policy)? {
                 Classification::Decided(curve) => curve,
                 Classification::Uncertain(reason) => {
@@ -16035,7 +16041,7 @@ fn algebraic_point_on_rational_curve(
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    let weight_sign = match algebraic_ray_curve_weight_sign(curve, policy) {
+    let weight_sign = match curve.denominator_sign(&CurveParameterRange2::unit()) {
         Classification::Decided(sign) => sign,
         Classification::Uncertain(_) => RealSign::Zero,
     };
@@ -16123,21 +16129,25 @@ fn algebraic_point_on_rational_fragment(
     let mut identically_zero_count = 0_usize;
     let mut last_reason = UncertaintyReason::Predicate;
     for (incidence, predicate) in [(&x, &y), (&y, &x)] {
-        let parameters =
-            match algebraic_ray_project_selected_fiber_parameters(incidence, point, policy)? {
-                Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
-                    parameters,
-                )) => parameters,
-                Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
-                    identically_zero_count += 1;
-                    continue;
-                }
-                Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => continue,
-                Classification::Uncertain(reason) => {
-                    last_reason = reason;
-                    continue;
-                }
-            };
+        let parameters = match selected_fiber_parameters(
+            incidence,
+            point.retained_parameter(),
+            range,
+            policy,
+        )? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
+                parameters
+            }
+            Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero) => {
+                identically_zero_count += 1;
+                continue;
+            }
+            Classification::Decided(BezierAlgebraicFiberProjection2::Degenerate) => continue,
+            Classification::Uncertain(reason) => {
+                last_reason = reason;
+                continue;
+            }
+        };
         for parameter in parameters {
             match retained_curve_region_parameter_contains(&parameter, range, policy)? {
                 Classification::Decided(true) => {}
@@ -16188,7 +16198,10 @@ fn algebraic_point_rational_curve_ray_winding(
             policy,
         );
     }
-    let weight_sign = match algebraic_ray_curve_weight_sign(&fragment.curve, policy) {
+    let weight_sign = match fragment
+        .curve
+        .denominator_sign(&CurveParameterRange2::unit())
+    {
         Classification::Decided(sign) => sign,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -16335,7 +16348,7 @@ fn algebraic_point_retained_rational_curve_ray_winding(
         .retained_range
         .as_ref()
         .expect("retained algebraic ray winding requires a retained range");
-    let weight_sign = match algebraic_ray_curve_weight_sign(&fragment.curve, policy) {
+    let weight_sign = match fragment.curve.denominator_sign(range) {
         Classification::Decided(sign) => sign,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -16354,7 +16367,7 @@ fn algebraic_point_retained_rational_curve_ray_winding(
     }
 
     let parameters =
-        match algebraic_ray_project_selected_fiber_parameters(&incidence, point, policy)? {
+        match selected_fiber_parameters(&incidence, point.retained_parameter(), range, policy)? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
                 parameters
             }
@@ -16469,63 +16482,6 @@ fn algebraic_point_retained_rational_curve_ray_winding(
     }))
 }
 
-fn algebraic_ray_project_selected_fiber_parameters(
-    incidence: &BivariatePolynomial,
-    point: &RationalBezierAlgebraicPointPredicate2<'_>,
-    policy: &CurveContext,
-) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-    let BezierParameter2::Exact(parameter) = point.retained_parameter() else {
-        let BezierParameter2::Algebraic(parameter) = point.retained_parameter() else {
-            unreachable!();
-        };
-        return algebraic_selected_fiber_parameters(
-            incidence,
-            parameter,
-            &crate::CurveParameterRange2::unit(),
-            policy,
-        );
-    };
-    let second_count = incidence
-        .coefficients
-        .iter()
-        .map(Vec::len)
-        .max()
-        .unwrap_or_default();
-    let mut coefficients = vec![Real::zero(); second_count];
-    let mut first_power = Real::one();
-    for row in &incidence.coefficients {
-        for (coefficient, target) in row.iter().zip(&mut coefficients) {
-            *target += coefficient * &first_power;
-        }
-        first_power *= parameter;
-    }
-    let mut all_zero = true;
-    for coefficient in &coefficients {
-        match real_sign(coefficient, policy) {
-            Some(RealSign::Zero) => {}
-            Some(RealSign::Positive | RealSign::Negative) => all_zero = false,
-            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
-        }
-    }
-    if all_zero {
-        return Ok(Classification::Decided(
-            BezierAlgebraicFiberProjection2::IdenticallyZero,
-        ));
-    }
-    let polynomial = match BezierParameterPolynomial::try_new_power_basis(coefficients, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    Ok(match polynomial.isolate_unit_interval_roots(policy)? {
-        Classification::Decided(parameters) => {
-            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters))
-        }
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    })
-}
-
 fn algebraic_ray_bivariate_second_derivative(
     polynomial: &BivariatePolynomial,
 ) -> BivariatePolynomial {
@@ -16557,26 +16513,6 @@ const fn multiply_algebraic_ray_signs(first: RealSign, second: RealSign) -> Real
             RealSign::Negative
         }
     }
-}
-
-fn algebraic_ray_curve_weight_sign(
-    curve: &RationalBezier2,
-    policy: &CurveContext,
-) -> Classification<RealSign> {
-    let Some(first) = real_sign(&curve.weights()[0], policy) else {
-        return Classification::Uncertain(UncertaintyReason::RealSign);
-    };
-    if first == RealSign::Zero {
-        return Classification::Uncertain(UncertaintyReason::Boundary);
-    }
-    for weight in &curve.weights()[1..] {
-        match real_sign(weight, policy) {
-            Some(sign) if sign == first => {}
-            Some(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
-        }
-    }
-    Classification::Decided(first)
 }
 
 fn algebraic_ray_control_sign_hull(
@@ -18512,6 +18448,83 @@ mod tests {
         let sine = Real::e().sin();
         let cosine = Real::e().cos();
         &sine * &sine + &cosine * &cosine - Real::one()
+    }
+
+    #[test]
+    fn algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation() {
+        fn decided<T>(value: Classification<T>) -> T {
+            match value {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => panic!("exact ray query: {reason:?}"),
+            }
+        }
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            policy.strict_predicate_pass(|| {
+                let root = |coefficients: &[i32], lower, upper| {
+                    let polynomial = decided(
+                        BezierParameterPolynomial::try_new_power_basis(
+                            coefficients.iter().copied().map(Real::from).collect(),
+                            &policy,
+                        )
+                        .unwrap(),
+                    );
+                    let interval = decided(
+                        BezierParameterInterval::try_new_ordered(lower, upper, &policy).unwrap(),
+                    );
+                    decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap())
+                };
+                // C(t)=(t/(2-t),t²/(2-t)). All authored control weights
+                // are positive, but its denominator is negative after t=2.
+                let curve = RationalBezier2::try_new(
+                    vec![p(0, 0), Point2::new(q(1, 3), Real::zero()), p(1, 1)],
+                    vec![Real::one(), q(3, 4), q(1, 2)],
+                ).unwrap();
+                let selected_end = root(&[-10, 0, 1], q(31, 10), q(16, 5));
+                let boundary = curve.point_at_algebraic_parameter(&selected_end, &policy).unwrap();
+                let boundary = decided(boundary.predicate_evaluator(&policy).unwrap());
+                for end in [
+                    BezierParameter2::Exact(q(16, 5)),
+                    BezierParameter2::Algebraic(selected_end.clone()),
+                ] {
+                    let range = CurveParameterRange2::new_validated(
+                        BezierParameter2::Exact(Real::from(3)).into(), end.into(),
+                    );
+                    assert_eq!(curve.denominator_sign(&range), Classification::Decided(RealSign::Negative));
+                    for reversed in [false, true] {
+                        let source = CurveSupport2::Bezier(BezierSubcurve2::Rational(curve.clone()))
+                            .restrict_certified(range.clone(), None, reversed, &policy).unwrap();
+                        let fragment = decided(retained_fragment_algebraic_ray_curve(&source, &policy).unwrap());
+                        assert_eq!(
+                            algebraic_point_on_rational_fragment(&fragment, &boundary, &policy).unwrap(),
+                            Classification::Decided(true),
+                            "incidence must retain the exterior selected endpoint"
+                        );
+                        // The rightward ray from (-4,-44/5) crosses once at
+                        // t=(22-2sqrt(11))/5, strictly between 3 and sqrt(10).
+                        // The linear owner refines to an Exact scalar; the
+                        // quadratic owner exercises selected-fiber replay.
+                        for equation in [&[-3, 4][..], &[-1, 0, 2][..]] {
+                            let parameter = root(equation, q(1, 2), Real::one());
+                            let point = RationalBezierAlgebraicPointImage2::from_retained_expression(
+                                parameter.clone(),
+                                crate::bezier_algebraic_image::parameter_representation(&parameter, &policy),
+                                vec![Real::from(-4)], vec![q(-44, 5)], vec![Real::one()],
+                                "exact constant query in a selected field",
+                            );
+                            let predicate = decided(point.predicate_evaluator(&policy).unwrap());
+                            assert_eq!(
+                                algebraic_point_rational_curve_ray_winding(
+                                    &fragment, &predicate, &Real::one(), &Real::zero(), &policy,
+                                ).unwrap(),
+                                Classification::Decided(if reversed { -1 } else { 1 }),
+                                "the retained span owns one crossing with its actual denominator sign"
+                            );
+                        }
+                    }
+                }
+            });
+        }
     }
 
     #[test]

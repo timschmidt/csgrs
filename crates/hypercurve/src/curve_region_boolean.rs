@@ -20424,9 +20424,18 @@ mod certified_successor_tests {
                 crate::BezierParameterInterval::try_new_ordered(q(7, 4), Real::from(2), &policy)
                     .unwrap(),
             );
-            let cut = BezierParameter2::Algebraic(decided(
+            let cut_root = decided(
                 BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
-            ));
+            );
+            let chord_midpoint = RationalBezierAlgebraicPointImage2::from_retained_expression(
+                cut_root.clone(),
+                crate::bezier_algebraic_image::parameter_representation(&cut_root, &policy),
+                vec![q(-1, 2), q(1, 2)],
+                vec![q(1, 2), -Real::one(), q(1, 2)],
+                vec![Real::one()],
+                "exact midpoint of the return chord",
+            );
+            let cut = BezierParameter2::Algebraic(cut_root);
             let source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                 Point2::from_values(-1, 1),
                 Point2::new(q(-1, 2), Real::zero()),
@@ -20489,6 +20498,25 @@ mod certified_successor_tests {
                     vec![if reversed { Right } else { Left }],
                 )
                 .unwrap();
+                // The interior-side ray from (a/2,a²/2) crosses B at
+                // x=a/sqrt(2), beyond the source's authored unit interval.
+                // This direct geometric seed must agree with face-sector
+                // propagation even before the boundary is regularized.
+                assert_eq!(
+                    policy
+                        .strict_predicate_pass(|| {
+                            raw.classify_algebraic_point_from_boundary_side_ray_with_windings(
+                                &chord_midpoint,
+                                Real::one(),
+                                Real::zero(),
+                                0,
+                                if reversed { 3 } else { 1 },
+                                &policy,
+                            )
+                        })
+                        .unwrap(),
+                    Classification::Decided((vec![if reversed { -1 } else { 1 }], Inside))
+                );
                 let normalized = raw.regularized_region(&policy).unwrap();
                 assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
                 let normalized = normalized.value;

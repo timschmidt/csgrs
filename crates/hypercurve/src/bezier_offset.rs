@@ -2449,9 +2449,9 @@ fn parallel_overlap_parameter_for_exact_cusp(
         ) => candidates,
         Classification::Decided(ResultantParameterProjection::Degenerate)
         | Classification::Uncertain(_) => {
-            match algebraic_selected_fiber_parameters(
+            match selected_fiber_parameters(
                 &incidence,
-                cusp_parameter,
+                &BezierParameter2::Algebraic(cusp_parameter.clone()),
                 &map_range,
                 policy,
             )? {
@@ -3765,19 +3765,7 @@ fn mapped_circle_tangent_parameter_candidates(
             // transported chamfer. Keep the direct resultant first for an
             // algebraic source: eager quotient-ring reduction can expand
             // those coefficients before the small projection is available.
-            let projection = match parameter {
-                BezierParameter2::Exact(_) => selected_parameter_fiber_parameters(
-                    &incidence,
-                    parameter,
-                    MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-                    MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
-                    range,
-                    policy,
-                )?,
-                BezierParameter2::Algebraic(parameter) => {
-                    algebraic_selected_fiber_parameters(&incidence, parameter, range, policy)?
-                }
-            };
+            let projection = selected_fiber_parameters(&incidence, parameter, range, policy)?;
             match projection {
                 Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(
                     parameters,
@@ -23618,9 +23606,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         )?
         .is_some();
         if !circle_is_rootless {
-            let projection = match algebraic_selected_fiber_parameters(
+            let projection = match selected_fiber_parameters(
                 &circle.rational,
-                self.cusp_parameter(),
+                &cusp_parameter,
                 retained_range,
                 policy,
             )? {
@@ -23760,9 +23748,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let projected = match algebraic_selected_fiber_parameters(
+        let projected = match selected_fiber_parameters(
             &half_incidence,
-            self.cusp_parameter(),
+            &cusp_parameter,
             retained_range,
             policy,
         )? {
@@ -40489,7 +40477,12 @@ impl BezierAlgebraicCuspSemicircle2 {
         // degree-multiplied projection cannot sign its `Real` coefficients,
         // the compact selected-fiber authority below remains exact.
         let projection = policy.strict_predicate_pass(|| {
-            algebraic_selected_fiber_parameters(&incidence, self.cusp_parameter(), range, policy)
+            selected_fiber_parameters(
+                &incidence,
+                &BezierParameter2::Algebraic(self.cusp_parameter().clone()),
+                range,
+                policy,
+            )
         })?;
         let candidates = match projection {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
@@ -85495,46 +85488,39 @@ fn algebraic_chord_strict_coordinate_between(
         }
         return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
     };
-    let compare = |predicate_policy| {
-        compare_algebraic_root_representations_with_refinement(
-            &first_representation,
-            &second_representation,
-            AlgebraicRootRefinementComparisonConfig {
-                policy: predicate_policy,
-                ..AlgebraicRootRefinementComparisonConfig::default()
-            },
-        )
-    };
-    let mut report = compare(hypersolve::PredicatePolicy::STRICT);
-    if report.comparison.status != AlgebraicRootComparisonStatus::Compared
-        && policy.permits_approximate_512()
-    {
-        let approximate = compare(hypersolve::PredicatePolicy::APPROXIMATE_512);
-        if approximate.comparison.status == AlgebraicRootComparisonStatus::Compared {
-            policy.observe_approximate_512();
-            report = approximate;
+    // Ordering need not separate the stored outer intervals: a point witness
+    // can supersede them, and touching half-open isolators already prove order.
+    // Reuse the constructive scalar query, which keeps those witnesses and
+    // refines until it can certify an actual interior coordinate.
+    policy.strict_predicate_pass(|| {
+        for representation in [&first_representation, &second_representation] {
+            if hypersolve::validate_algebraic_root_representation(
+                representation,
+                hypersolve::PredicatePolicy::STRICT,
+            )
+            .status
+                != hypersolve::AlgebraicRootValidationStatus::Valid
+            {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
         }
-    }
-    let Some(order) = (report.comparison.status == AlgebraicRootComparisonStatus::Compared)
-        .then_some(report.comparison.ordering)
-        .flatten()
-    else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
-    };
-    let (lower, upper) = match order {
-        std::cmp::Ordering::Less => (&report.refined_left, &report.refined_right),
-        std::cmp::Ordering::Greater => (&report.refined_right, &report.refined_left),
-        std::cmp::Ordering::Equal => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+        let (lower, upper) = if parameter_axis.coordinate_increases {
+            (&first_representation, &second_representation)
+        } else {
+            (&second_representation, &first_representation)
+        };
+        match (
+            BezierParameter2::from_algebraic_root_representation_unbounded(lower, policy)?,
+            BezierParameter2::from_algebraic_root_representation_unbounded(upper, policy)?,
+        ) {
+            (Classification::Decided(lower), Classification::Decided(upper)) => {
+                lower.strict_scalar_between(&upper, policy)
+            }
+            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                Ok(Classification::Uncertain(reason))
+            }
         }
-    };
-    if compare_reals(&lower.interval.upper, &upper.interval.lower, policy)
-        != Some(std::cmp::Ordering::Less)
-    {
-        return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
-    }
-    let midpoint = ((&lower.interval.upper + &upper.interval.lower) / Real::from(2_i8))?;
-    Ok(Classification::Decided(midpoint))
+    })
 }
 
 fn recursive_projective_endpoint_bounds_refined(
@@ -86204,9 +86190,9 @@ impl BezierParallelAlgebraicRay2 {
                         policy,
                     )
                 } else {
-                    algebraic_selected_fiber_parameters(
+                    selected_fiber_parameters(
                         &system.incidence,
-                        parameter,
+                        &BezierParameter2::Algebraic(parameter.clone()),
                         domain.finite,
                         policy,
                     )
@@ -105839,20 +105825,35 @@ fn selected_parameter_fiber_parameters(
     }
 }
 
-pub(crate) fn algebraic_selected_fiber_parameters(
+/// Projects onto the requested finite range while preserving the selected
+/// source fiber. Exact source scalars specialize directly; algebraic sources
+/// retain the direct-resultant-first schedule and its exact replay fallback.
+pub(crate) fn selected_fiber_parameters(
     incidence: &BivariatePolynomial,
-    cusp: &BezierAlgebraicParameter2,
+    parameter: &BezierParameter2,
     range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-    algebraic_selected_fiber_parameters_with_resultant_limit(
-        incidence,
-        cusp,
-        MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-        MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
-        range,
-        policy,
-    )
+    match parameter {
+        BezierParameter2::Exact(_) => selected_parameter_fiber_parameters(
+            incidence,
+            parameter,
+            MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+            MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+            range,
+            policy,
+        ),
+        BezierParameter2::Algebraic(parameter) => {
+            algebraic_selected_fiber_parameters_with_resultant_limit(
+                incidence,
+                parameter,
+                MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+                MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+                range,
+                policy,
+            )
+        }
+    }
 }
 
 fn algebraic_selected_fiber_parameters_with_incident_ray(
@@ -122542,9 +122543,9 @@ fn selected_rational_parameter_image(
             .collect(),
     );
     Ok(Some(
-        match algebraic_selected_fiber_parameters(
+        match selected_fiber_parameters(
             &incidence,
-            source,
+            &BezierParameter2::Algebraic(source.clone()),
             &crate::CurveParameterRange2::unit(),
             policy,
         )? {
