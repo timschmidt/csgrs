@@ -4374,6 +4374,17 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         self.data.root.exact_root.as_ref()
     }
 
+    /// Reuses an already proved native representation without projecting the
+    /// fiber. Bounded consumers may import this evidence even when constructing
+    /// a new global parameter would exceed their budget.
+    fn retained_bezier_parameter(&self) -> Option<BezierParameter2> {
+        self.data.representations.bezier.get().cloned().or_else(|| {
+            self.represented_value()
+                .cloned()
+                .map(BezierParameter2::Exact)
+        })
+    }
+
     /// Imports a linear or quadratic fiber root into its retained coefficient
     /// field. The original certified singleton selects the radical branch;
     /// neither the base root nor this scalar needs an independent global image.
@@ -4802,13 +4813,8 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
         self.validate_policy(policy)?;
-        if let Some(parameter) = self.data.representations.bezier.get() {
-            return Ok(Classification::Decided(parameter.clone()));
-        }
-        if let Some(value) = self.represented_value() {
-            return Ok(Classification::Decided(BezierParameter2::Exact(
-                value.clone(),
-            )));
+        if let Some(parameter) = self.retained_bezier_parameter() {
+            return Ok(Classification::Decided(parameter));
         }
         let range = CurveParameterRange2::new_validated(
             CurveParameter2::from(BezierParameter2::Exact(self.data.root.lower.clone())),
@@ -82966,25 +82972,25 @@ fn rational_point_evidence_at_region_parameter(
     parameter: &CurveParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurvePoint2>> {
-    if let Some(parameter) = parameter.as_bezier_parameter() {
+    if let Some(parameter @ BezierParameter2::Algebraic(_)) = parameter.as_bezier_parameter() {
         return rational_point_evidence_at_parameter(source, parameter, policy);
     }
+    // Even a represented parameter may be irrational. Keep the source map
+    // until a predicate has compared its coefficients with the other point;
+    // eager coordinate evaluation can hide exact cancellations with opaque
+    // Real coefficients in the rationalized parallel component.
     let parallel = source.parallel_left(Real::zero())?;
-    if let Some(parameter) = parameter.as_selected_fiber() {
-        return Ok(Classification::Decided(CurvePoint2::from(
-            BezierAnalyticParallelPoint2::new_selected_fiber(parallel, parameter.clone(), policy),
-        )));
-    }
-    if let Some(parameter) = parameter.as_recursive_projective() {
-        return Ok(Classification::Decided(CurvePoint2::from(
-            BezierAnalyticParallelPoint2::new_recursive_projective(
-                parallel,
-                parameter.clone(),
-                policy,
-            ),
-        )));
-    }
-    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+    Ok(
+        BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+            parallel,
+            parameter,
+            Real::zero(),
+            policy,
+        )
+        .map(CurvePoint2::from)
+        .map(Classification::Decided)
+        .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
+    )
 }
 
 fn sort_and_dedup_collinear_partition_boundaries(
@@ -95212,51 +95218,51 @@ impl BezierAnalyticParallelPoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticProjectivePoint2>>> {
-        if let BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) =
-            &self.data.parameter
-            && let Some(parameter) = parameter.recursive_projective_parameter(policy)?
-            && let Ok(Classification::Decided(Some(point))) =
-                self.recursive_projective_point_from_recursive_parameter(&parameter, policy)
-        {
-            return Ok(Classification::Decided(Some(point)));
-        }
-        if policy.has_bounded_exact_predicate_budget()
-            && match &self.data.parameter {
-                BezierAnalyticParallelPointParameter2::SelectedFiber(_) => true,
-                BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
-                    parameter.projective_scalar().is_none()
-                }
-                BezierAnalyticParallelPointParameter2::Bezier(_) => false,
-            }
-        {
-            // A local root remains a valid point without global coordinate
-            // publication. Speculative field imports must not promote it
-            // before a predicate can reuse its retained defining relation.
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        }
         let parameter = match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
-                match policy.strict_predicate_pass(|| {
-                    parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                parameter.validate_policy(policy)?;
+                // Keep the local field's correlations even when another query
+                // has also cached a higher-degree native projection.
+                if let Some(parameter) = parameter.recursive_projective_parameter(policy)?
+                    && let Ok(Classification::Decided(Some(point))) =
+                        self.recursive_projective_point_from_recursive_parameter(&parameter, policy)
+                {
+                    return Ok(Classification::Decided(Some(point)));
+                }
+                if let Some(parameter) = parameter.retained_bezier_parameter() {
+                    parameter
+                } else {
+                    if policy.has_bounded_exact_predicate_budget() {
+                        // New global projection is cold work. Reusing an
+                        // existing native or local-field proof above is not.
+                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                    }
+                    match parameter.promoted_bezier_parameter_complete(policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
                     }
                 }
             }
             BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
+                parameter.validate_policy(policy)?;
                 if parameter.projective_scalar().is_some() {
                     return self
                         .recursive_projective_point_from_recursive_parameter(parameter, policy);
                 }
-                match policy.strict_predicate_pass(|| {
-                    parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                if let Some(parameter) = parameter.data.projection.parameter.get() {
+                    parameter.clone()
+                } else {
+                    if policy.has_bounded_exact_predicate_budget() {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+                    }
+                    match parameter.promoted_bezier_parameter_complete(policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
                     }
                 }
             }
@@ -96656,38 +96662,17 @@ impl BezierAnalyticParallelPoint2 {
                 return Classification::Decided(true);
             }
         }
-        // Ordinary algebraic source parameters retain the same correlations
-        // as recursive parameters: the source coordinates and positive frame
-        // speed belong to one selected field. Replay that field before
-        // reconstructing independent Cartesian roots. Exact scalar parameters
-        // already have the cheaper direct-coordinate path; selected fibers
-        // keep their local authority until a predicate needs promotion.
-        let retains_algebraic_parameter = |point: &Self| {
-            matches!(
-                &point.data.parameter,
-                BezierAnalyticParallelPointParameter2::Bezier(BezierParameter2::Algebraic(_))
-                    | BezierAnalyticParallelPointParameter2::RecursiveProjective(_)
-            )
-        };
-        if retains_algebraic_parameter(self)
-            || matches!(
-                other,
-                CurvePoint2(CurvePointData2::AnalyticParallel(other))
-                    if retains_algebraic_parameter(other)
-            )
+        // A represented parameter still owns a source map whose coefficients
+        // may cancel before evaluation. All parameter forms reuse that map
+        // and its positive-speed frame in the shared field; independently
+        // materialized coordinates are only a later fallback.
+        let retained = CurvePoint2::from(self.clone());
+        if let Ok(Classification::Decided(Some(equal))) =
+            recursive_projective_point_evidence_equality(&retained, other, policy)
         {
-            let retained = CurvePoint2::from(self.clone());
-            if let Ok(Classification::Decided(Some(equal))) =
-                recursive_projective_point_evidence_equality(&retained, other, policy)
-            {
-                return Classification::Decided(equal);
-            }
+            return Classification::Decided(equal);
         }
-        retained_point_evidence_equality_by_refinement(
-            &CurvePoint2::from(self.clone()),
-            other,
-            policy,
-        )
+        retained_point_evidence_equality_by_refinement(&retained, other, policy)
     }
 }
 
@@ -134356,6 +134341,190 @@ mod conversion_tests {
                     Classification::Decided((if reversed { Positive } else { Negative }, Zero)),
                 );
                 assert!(selected.data.representations.bezier.get().is_none());
+            }
+        }
+    }
+
+    #[test]
+    fn bounded_point_import_preserves_a_cached_local_field() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // alpha^65=1/2 and 4*u²=alpha. A later query may also know the
+            // native global equation u^130=2^-131, but importing P(u)=(u,0)
+            // must preserve the smaller local field and its coordinate identity.
+            let selected =
+                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
+            let local = selected
+                .recursive_projective_parameter(&policy)
+                .unwrap()
+                .expect("the quadratic fiber has a local field");
+            let mut coefficients = vec![Real::zero(); 131];
+            coefficients[0] = -Real::from(2_i8).powi_i64(-131).unwrap();
+            coefficients[130] = Real::one();
+            let polynomial = match BezierParameterPolynomial::try_new_power_basis(
+                coefficients,
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(polynomial) => polynomial,
+                Classification::Uncertain(reason) => panic!("global equation: {reason:?}"),
+            };
+            let interval = match BezierParameterInterval::try_new(
+                Real::zero(),
+                half.clone(),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(reason) => panic!("global interval: {reason:?}"),
+            };
+            selected.retain_certified_parameter(BezierParameter2::Algebraic(
+                BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval),
+            ));
+            let point = BezierAnalyticParallelPoint2::new_selected_fiber(
+                parallel.clone(),
+                selected,
+                &policy,
+            );
+            let Classification::Decided(Some(point)) = policy
+                .bounded_exact_predicate_pass(|| point.recursive_projective_point(&policy))
+                .unwrap()
+            else {
+                panic!("the already retained local field must remain reusable");
+            };
+            let scalar = local
+                .projective_scalar()
+                .expect("a quadratic fiber retains its projective value");
+            let residual = point
+                .x
+                .multiply(&scalar.denominator)
+                .and_then(|x| {
+                    scalar
+                        .numerator
+                        .multiply(&point.denominator)
+                        .and_then(|expected| x.subtract(&expected))
+                })
+                .expect("the coordinate identity must not need another field import");
+            assert_eq!(
+                residual.sign(&CurveContext::STRICT).unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+            assert_eq!(
+                point.y.sign(&CurveContext::STRICT).unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+        }
+    }
+
+    #[test]
+    fn bounded_point_import_reuses_certified_native_fiber_parameters() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let expected_parameter = half.clone().sqrt().unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(Real::zero(), half.clone()),
+            Point2::from_values(2, 1),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let seed =
+                high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
+            let native = BezierAlgebraicParameter2::from_certified_singleton(
+                match BezierParameterPolynomial::try_new_power_basis(
+                    vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)],
+                    &policy,
+                )
+                .unwrap()
+                {
+                    Classification::Decided(polynomial) => polynomial,
+                    Classification::Uncertain(reason) => panic!("native polynomial: {reason:?}"),
+                },
+                match BezierParameterInterval::try_new_ordered(half.clone(), Real::one(), &policy)
+                    .unwrap()
+                {
+                    Classification::Decided(interval) => interval,
+                    Classification::Uncertain(reason) => panic!("native interval: {reason:?}"),
+                },
+            );
+            for representation in 0..3 {
+                for distance in [Real::zero(), half.clone()] {
+                    let selected = BezierAlgebraicSelectedFiberAuthority2::new(
+                        BivariatePolynomial::new(vec![vec![
+                            -half.clone(),
+                            Real::zero(),
+                            Real::one(),
+                        ]]),
+                        seed.data.authority.data.retained_parameter.clone(),
+                        &policy,
+                    )
+                    .parameter(IsolatedRootInterval {
+                        lower: half.clone(),
+                        upper: Real::one(),
+                        exact_root: (representation == 0).then(|| expected_parameter.clone()),
+                        distinct_root_count: 1,
+                    });
+                    if representation != 0 {
+                        selected.retain_certified_parameter(if representation == 1 {
+                            BezierParameter2::Exact(expected_parameter.clone())
+                        } else {
+                            BezierParameter2::Algebraic(native.clone())
+                        });
+                    }
+                    let parallel = source.parallel_left(distance).unwrap();
+                    let expected = match parallel.point_at(&expected_parameter, &policy).unwrap() {
+                        Classification::Decided(point) => point,
+                        Classification::Uncertain(reason) => panic!("expected point: {reason:?}"),
+                    };
+                    let point = BezierAnalyticParallelPoint2::new_selected_fiber(
+                        parallel,
+                        selected.clone(),
+                        &policy,
+                    );
+                    let Classification::Decided(Some(imported)) = policy
+                        .bounded_exact_predicate_pass(|| point.recursive_projective_point(&policy))
+                        .unwrap()
+                    else {
+                        panic!(
+                            "a certified native fiber parameter must import under a bounded budget"
+                        );
+                    };
+                    for (coordinate, expected) in
+                        [(&imported.x, expected.x()), (&imported.y, expected.y())]
+                    {
+                        assert_eq!(
+                            coordinate
+                                .subtract(&imported.denominator.scale(expected).unwrap())
+                                .unwrap()
+                                .sign(&CurveContext::STRICT)
+                                .unwrap(),
+                            Classification::Decided(RealSign::Zero),
+                        );
+                    }
+                    assert!(selected.data.representations.projective.get().is_none());
+                    assert_eq!(
+                        selected.data.representations.bezier.get().is_some(),
+                        representation != 0
+                    );
+                    let Classification::Decided(Some(replayed)) =
+                        point.clone().recursive_projective_point(&policy).unwrap()
+                    else {
+                        panic!("a cloned point must retain its certified recursive field");
+                    };
+                    assert!(
+                        imported
+                            .denominator
+                            .field()
+                            .same_field(&replayed.denominator.field())
+                    );
+                }
             }
         }
     }

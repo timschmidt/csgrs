@@ -19578,16 +19578,38 @@ mod certified_successor_tests {
                 opaque_overlap.overlap().orientation(),
                 RationalBezierOverlapOrientation2::Same,
             );
+            for (actual, expected) in [
+                (
+                    opaque_overlap.overlap().second_range().start(),
+                    three_quarters.clone(),
+                ),
+                (opaque_overlap.overlap().second_range().end(), Real::one()),
+            ] {
+                assert_eq!(
+                    actual
+                        .cmp_by_refinement(&CurveParameter2::from(expected), &policy)
+                        .unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal),
+                    "the opaque overlap must retain the complete incident source range",
+                );
+            }
             #[cfg(feature = "dispatch-trace")]
             {
+                // A learned scalar witness may settle the correlated projection
+                // before retained-field replay. It must still avoid reconstructing
+                // the two coordinates independently.
+                assert_eq!(
+                    opaque_trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-point-linear-order",
+                        "represented-cold-fallback",
+                    ),
+                    0
+                );
                 for (operation, path) in [
                     (
                         "analytic-parallel-regularized-tangent",
                         "constant-direction-rank",
-                    ),
-                    (
-                        "algebraic-chord-point-linear-order",
-                        "retained-field-projection",
                     ),
                     (
                         "algebraic-chord-collinear-range",
@@ -19610,73 +19632,82 @@ mod certified_successor_tests {
                 }
             }
 
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::reset();
-            let algebraic_range_start = BezierParameter2::Algebraic(normal_parameter.clone());
-            let work = || {
-                evaluate(
-                    algebraic_range_chord,
-                    opaque_parallel,
-                    CurveParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
-                        algebraic_range_start.clone(),
-                        BezierParameter2::Exact(Real::one()),
-                    )),
-                )
-            };
-            #[cfg(feature = "dispatch-trace")]
-            let (algebraic_component, algebraic_evidence) =
-                hyperreal::dispatch_trace::with_recording(work);
-            #[cfg(not(feature = "dispatch-trace"))]
-            let (algebraic_component, algebraic_evidence) = work();
-            #[cfg(feature = "dispatch-trace")]
-            let algebraic_trace = hyperreal::dispatch_trace::take_trace();
-            assert!(
-                algebraic_component.blockers.is_empty(),
-                "{algebraic_component:?}",
-            );
-            assert!(
-                algebraic_component.contacts.is_empty(),
-                "{algebraic_component:?}",
-            );
-            assert_eq!(
-                algebraic_component.overlaps.len(),
-                1,
-                "{algebraic_component:?}",
-            );
-            assert!(algebraic_evidence.is_complete(), "{algebraic_evidence:?}",);
-            let [algebraic_overlap] = algebraic_evidence.overlaps() else {
-                panic!(
-                    "the algebraic regular branch must publish one overlap: {algebraic_evidence:?}"
-                );
-            };
-            assert_eq!(
-                algebraic_overlap.overlap().orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
-            assert_eq!(
-                algebraic_overlap
-                    .overlap()
-                    .second_range()
-                    .start()
-                    .as_bezier_parameter(),
-                Some(&algebraic_range_start),
-            );
-            #[cfg(feature = "dispatch-trace")]
-            for (operation, path) in [
-                (
-                    "algebraic-chord-collinear-range",
-                    "certified-regular-line-range",
-                ),
-                (
-                    "algebraic-chord-pair",
-                    "certified-rational-support-collinear",
-                ),
-                ("algebraic-chord-pair", "collinear-overlap-complete"),
+            // The same exact range can arrive with retained root evidence or
+            // directly represented irrational endpoints. Internal probes must
+            // keep both forms in the collinear component authority.
+            for algebraic_range_start in [
+                BezierParameter2::Algebraic(normal_parameter.clone()),
+                BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap()),
             ] {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::reset();
+                let work = || {
+                    evaluate(
+                        algebraic_range_chord.clone(),
+                        opaque_parallel.clone(),
+                        CurveParameterRange2::from_bezier_range(
+                            BezierParameterRange2::new_validated(
+                                algebraic_range_start.clone(),
+                                BezierParameter2::Exact(Real::one()),
+                            ),
+                        ),
+                    )
+                };
+                #[cfg(feature = "dispatch-trace")]
+                let (algebraic_component, algebraic_evidence) =
+                    hyperreal::dispatch_trace::with_recording(work);
+                #[cfg(not(feature = "dispatch-trace"))]
+                let (algebraic_component, algebraic_evidence) = work();
+                #[cfg(feature = "dispatch-trace")]
+                let algebraic_trace = hyperreal::dispatch_trace::take_trace();
                 assert!(
-                    algebraic_trace.path_count("hypercurve", operation, path) > 0,
-                    "the algebraic range must traverse {operation}/{path}: {algebraic_trace:?}",
+                    algebraic_component.blockers.is_empty(),
+                    "{algebraic_component:?}",
                 );
+                assert!(
+                    algebraic_component.contacts.is_empty(),
+                    "{algebraic_component:?}",
+                );
+                assert_eq!(
+                    algebraic_component.overlaps.len(),
+                    1,
+                    "{algebraic_component:?}",
+                );
+                assert!(algebraic_evidence.is_complete(), "{algebraic_evidence:?}",);
+                let [algebraic_overlap] = algebraic_evidence.overlaps() else {
+                    panic!(
+                        "the algebraic regular branch must publish one overlap: {algebraic_evidence:?}"
+                    );
+                };
+                assert_eq!(
+                    algebraic_overlap.overlap().orientation(),
+                    RationalBezierOverlapOrientation2::Same,
+                );
+                assert_eq!(
+                    algebraic_overlap
+                        .overlap()
+                        .second_range()
+                        .start()
+                        .as_bezier_parameter(),
+                    Some(&algebraic_range_start),
+                );
+                #[cfg(feature = "dispatch-trace")]
+                for (operation, path) in [
+                    (
+                        "algebraic-chord-collinear-range",
+                        "certified-regular-line-range",
+                    ),
+                    (
+                        "algebraic-chord-pair",
+                        "certified-rational-support-collinear",
+                    ),
+                    ("algebraic-chord-pair", "collinear-overlap-complete"),
+                ] {
+                    assert!(
+                        algebraic_trace.path_count("hypercurve", operation, path) > 0,
+                        "the algebraic range must traverse {operation}/{path}: {algebraic_trace:?}",
+                    );
+                }
             }
             test_regularized_ph();
         }

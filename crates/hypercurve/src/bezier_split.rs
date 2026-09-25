@@ -28,6 +28,7 @@ use crate::bezier_offset::{
     BezierAlgebraicSelectedFiberParameter2, BezierRecursiveChordContactLocation2,
     BezierRecursiveProjectiveParameter2,
 };
+use crate::bezier_parameter::scalar_in_open_interval;
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     Axis2, BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2,
@@ -218,7 +219,7 @@ impl CurveParameter2 {
 
     /// Returns a stored chart scalar without reconstructing selected evidence.
     /// Absence of this view does not limit the parameter's exact meaning.
-    pub const fn scalar(&self) -> Option<&Real> {
+    pub fn scalar(&self) -> Option<&Real> {
         match &self.data {
             CurveParameterData2::Bezier(parameter) => parameter.scalar(),
             CurveParameterData2::SelectedFiber(_) | CurveParameterData2::RecursiveProjective(_) => {
@@ -571,7 +572,7 @@ impl CurveParameter2 {
                 "curve-region-parameter-interior",
                 "stored-envelope-separated",
             );
-            return Ok(Classification::Decided(Real::average_pair(
+            return Ok(Classification::Decided(scalar_in_open_interval(
                 first_upper,
                 second_lower,
             )));
@@ -627,7 +628,7 @@ impl CurveParameter2 {
                     if compare_reals(first_upper, second_lower, &CurveContext::STRICT)
                         == Some(Ordering::Less)
                     {
-                        return Ok(Classification::Decided(Real::average_pair(
+                        return Ok(Classification::Decided(scalar_in_open_interval(
                             first_upper,
                             second_lower,
                         )));

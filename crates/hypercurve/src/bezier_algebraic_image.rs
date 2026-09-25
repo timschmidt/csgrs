@@ -2445,7 +2445,15 @@ pub(crate) fn certified_parameter_representation(
     policy: &CurveContext,
 ) -> AlgebraicRootRepresentation {
     let interval = parameter.interval();
-    let exact_root = linear_parameter_witness(parameter, policy);
+    let exact_root = parameter.scalar().cloned().or_else(|| {
+        if parameter.polynomial().degree() != 1 {
+            return None;
+        }
+        match parameter.represented_exact_point(&policy.strict_counterpart()) {
+            Ok(Classification::Decided(root)) => root,
+            Ok(Classification::Uncertain(_)) | Err(_) => None,
+        }
+    });
     AlgebraicRootRepresentation {
         constraint_index: 0,
         symbol: SymbolId(0),
@@ -2470,22 +2478,6 @@ fn validate_parameter_representation(
 ) {
     representation.validation =
         validate_algebraic_root_representation(representation, policy.predicate_policy());
-}
-
-fn linear_parameter_witness(
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
-) -> Option<Real> {
-    let coefficients = parameter.polynomial().coefficients();
-    if coefficients.len() != 2 {
-        return None;
-    }
-    let root = (Real::zero() - coefficients[0].clone()) / coefficients[1].clone();
-    let root = root.ok()?;
-    let interval = parameter.interval();
-    let starts_after_root = compare_reals(interval.start(), &root, policy)? != Ordering::Greater;
-    let ends_before_root = compare_reals(&root, interval.end(), policy)? != Ordering::Greater;
-    (starts_after_root && ends_before_root).then_some(root)
 }
 
 fn quadratic_point_coefficients(curve: &QuadraticBezier2) -> CoordinatePolynomials {
