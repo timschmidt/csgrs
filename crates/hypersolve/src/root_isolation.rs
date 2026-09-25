@@ -76,7 +76,9 @@ pub struct IsolatedRootInterval {
 /// Rational inputs use the shared fraction-free primitive-integer kernel;
 /// exact nonrational coefficients retain exact field division. The internal
 /// polynomials stay opaque so callers share root-count evidence instead of
-/// rebuilding or interpreting remainder infrastructure.
+/// rebuilding or interpreting remainder infrastructure. At a common root of
+/// the chain, right-hand Taylor signs preserve `(lower, upper]` ownership even
+/// when the source polynomial has repeated factors.
 #[derive(Clone, Debug, PartialEq)]
 pub struct UnivariateSturmSequence {
     polynomials: Vec<Vec<Real>>,
@@ -873,16 +875,9 @@ pub fn refine_isolated_univariate_polynomial_interval(
             }
         }
     }
-    let Some(square_free) = square_free_part(trimmed.to_vec(), policy) else {
-        return root_refinement_report(
-            IsolatedRootRefinementStatus::Undecided,
-            interval.clone(),
-            None,
-            0,
-            Some("could not compute square-free polynomial part".to_owned()),
-        );
-    };
-    let Some(sturm) = UnivariateSturmSequence::new(&square_free, policy) else {
+    // One chain supplies both the distinct-root count and its terminal GCD.
+    // Do not build a separate GCD chain before preparing the counting chain.
+    let Some(sturm) = UnivariateSturmSequence::new(trimmed, policy) else {
         return root_refinement_report(
             IsolatedRootRefinementStatus::Undecided,
             interval.clone(),
@@ -948,8 +943,52 @@ pub fn refine_isolated_univariate_polynomial_interval(
     if upper_evaluation.polynomial_sign == Ordering::Equal {
         return exact_root_refinement_report(interval, interval.upper.clone(), 0);
     }
-    if lower_evaluation.polynomial_sign != Ordering::Equal
-        && lower_evaluation.polynomial_sign == upper_evaluation.polynomial_sign
+    let gcd = sturm.terminal_polynomial();
+    let square_free_storage = if gcd.len() > 1 {
+        let Some(square_free) =
+            polynomial_div_rem_trimmed(sturm.polynomials[0].clone(), gcd, policy).and_then(
+                |(quotient, remainder)| {
+                    trimmed_polynomial_is_zero(&remainder, policy)?.then_some(quotient)
+                },
+            )
+        else {
+            return root_refinement_report(
+                IsolatedRootRefinementStatus::Undecided,
+                interval.clone(),
+                None,
+                0,
+                Some("could not divide the retained Sturm GCD exactly".to_owned()),
+            );
+        };
+        Some(square_free)
+    } else {
+        None
+    };
+    let square_free = square_free_storage
+        .as_deref()
+        .unwrap_or(&sturm.polynomials[0]);
+    let endpoint_signs = if square_free_storage.is_some() {
+        sign_at(square_free, &interval.lower, policy).zip(sign_at(
+            square_free,
+            &interval.upper,
+            policy,
+        ))
+    } else {
+        Some((
+            lower_evaluation.polynomial_sign,
+            upper_evaluation.polynomial_sign,
+        ))
+    };
+    let Some((lower_sign, upper_sign)) = endpoint_signs else {
+        return root_refinement_report(
+            IsolatedRootRefinementStatus::Undecided,
+            interval.clone(),
+            None,
+            0,
+            Some("could not evaluate square-free refinement endpoint signs".to_owned()),
+        );
+    };
+    if upper_sign == Ordering::Equal || (lower_sign != Ordering::Equal && lower_sign == upper_sign)
     {
         return root_refinement_report(
             IsolatedRootRefinementStatus::Undecided,
@@ -960,12 +999,7 @@ pub fn refine_isolated_univariate_polynomial_interval(
         );
     }
 
-    refine_owned_one_root_interval(
-        &sturm.polynomials[0],
-        interval,
-        config,
-        upper_evaluation.polynomial_sign,
-    )
+    refine_owned_one_root_interval(square_free, interval, config, upper_sign)
 }
 
 // A square-free polynomial with exactly one root in `(lower, upper]` changes
@@ -2014,6 +2048,30 @@ fn evaluate_sturm_at(
         }
         previous = Some(sign);
     }
+    if previous.is_none() {
+        // Every chain member vanishes exactly when the point is a root of
+        // their common GCD. Merely omitting those zeros would report V=0 and
+        // lose later roots. Use V(point+): the sign of each polynomial just
+        // to the right is its first nonzero Taylor derivative's sign. This
+        // counts an upper endpoint and excludes a lower endpoint, independent
+        // of multiplicity. Ordinary points keep the allocation-free path.
+        for polynomial in &sturm.polynomials {
+            let mut jet = derivative(polynomial);
+            let sign = loop {
+                match sign_at(&jet, point, policy)? {
+                    Ordering::Equal if jet.len() > 1 => jet = derivative(&jet),
+                    Ordering::Equal => return None,
+                    sign => break sign,
+                }
+            };
+            if let Some(previous) = previous
+                && previous != sign
+            {
+                variations += 1;
+            }
+            previous = Some(sign);
+        }
+    }
     Some(SturmPointEvaluation {
         variations,
         polynomial_sign: polynomial_sign?,
@@ -2828,10 +2886,12 @@ impl CertifiedPolynomialDivisor {
         if remainder.len() <= divisor_degree {
             return;
         }
-        if let Some(mut reduced) = crate::integer_interpolation::rational_polynomial_remainder_modulo(
-            remainder,
-            &self.coefficients,
-        ) {
+        if let Some(mut reduced) =
+            crate::integer_interpolation::rational_polynomial_remainder_modulo(
+                remainder,
+                &self.coefficients,
+            )
+        {
             reduced.resize(divisor_degree, Real::zero());
             *remainder = reduced;
             return;
@@ -3390,6 +3450,55 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    #[test]
+    fn sturm_counts_repeated_roots_at_owned_partition_boundaries() {
+        let alpha = real(2).sqrt().unwrap();
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for scale in [real(1), real(-3), alpha.clone(), -alpha.clone()] {
+                for (coefficients, gcd) in [
+                    (vec![1, 0, -2, 0, 1], vec![-1, 0, 1]), // (x²-1)²
+                    (vec![-1, -2, 0, 2, 1], vec![1, 2, 1]), // (x+1)³(x-1)
+                ] {
+                    let polynomial = coefficients
+                        .into_iter()
+                        .map(|coefficient| real(coefficient) * &scale)
+                        .collect::<Vec<_>>();
+                    let sturm = UnivariateSturmSequence::new(&polynomial, policy).unwrap();
+                    for lower in -2..=1 {
+                        for upper in lower + 1..=2 {
+                            let expected = [-1, 1]
+                                .into_iter()
+                                .filter(|root| lower < *root && *root <= upper)
+                                .count();
+                            assert_eq!(
+                                sturm.count_distinct_roots(&real(lower), &real(upper), policy),
+                                Some(expected),
+                                "distinct roots in ({lower},{upper}] must own repeated endpoints",
+                            );
+                        }
+                    }
+                    // Root counting must not erase the original GCD evidence
+                    // used by callers to recognize repeated factors.
+                    let terminal = sturm.terminal_polynomial();
+                    assert_eq!(terminal.len(), gcd.len());
+                    for (coefficient, expected) in terminal.iter().zip(gcd) {
+                        let residual = coefficient - real(expected) * terminal.last().unwrap();
+                        assert_eq!(
+                            compare_reals(&residual, &real(0), policy).value(),
+                            Some(Ordering::Equal)
+                        );
+                    }
+                    for root in [-1, 1] {
+                        assert_eq!(
+                            sturm.classify_point(&real(root), policy),
+                            Some(UnivariateSturmPoint::Root)
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]
