@@ -12,7 +12,10 @@ use hyperreal::{CertifiedRealSign, Rational, Real, RealSign, ZeroKnowledge};
 use num::Integer;
 use num::{BigInt, One, Zero};
 
-use crate::bareiss::{BareissDeterminantReport, BareissError, determinant_bareiss};
+use crate::bareiss::{
+    BareissDeterminantReport, BareissError, determinant_bareiss,
+    determinant_integer_polynomial_matrix,
+};
 use crate::integer_interpolation::primitive_integer_polynomial;
 use crate::policy_division::strict_exact_zero_for_storage;
 
@@ -348,10 +351,9 @@ pub(crate) fn quotient_ring_fiber_resultant_polynomial(
     max_source_degree: usize,
 ) -> Option<Vec<Real>> {
     let degree = source.len().checked_sub(1)?;
-    // The subset determinant is exponential only in the selected root's
-    // defining degree. Keep that dimension deliberately small; larger fields
-    // must use interval/local-field specialization rather than risking an
-    // allocation cliff.
+    // Keep the selected algebraic degree within the caller's work budget.
+    // Rational fields share fraction-free integer polynomial elimination;
+    // arbitrary exact coefficients retain the division-free subset fallback.
     if degree == 0 || degree > max_source_degree || fiber_coefficients.is_empty() {
         return None;
     }
@@ -400,7 +402,7 @@ pub(crate) fn quotient_ring_fiber_resultant_polynomial(
             entry[fiber_power] = coefficient;
         }
     }
-    let mut polynomial = determinant_polynomial_matrix(&polynomial_entries, degree)?;
+    let mut polynomial = determinant_integer_polynomial_matrix(&polynomial_entries, degree)?;
     while polynomial.len() > 1 && polynomial.last().is_some_and(BigInt::is_zero) {
         polynomial.pop();
     }
@@ -514,113 +516,21 @@ fn determinant_polynomial_matrix_real(
     partials.pop()?.or_else(|| Some(vec![Real::zero()]))
 }
 
-fn determinant_polynomial_matrix(entries: &[Vec<BigInt>], dimension: usize) -> Option<Vec<BigInt>> {
-    if entries.len() != dimension.checked_mul(dimension)? {
-        return None;
-    }
-    let state_count = 1usize.checked_shl(u32::try_from(dimension).ok()?)?;
-    let mut partials = vec![None; state_count];
-    partials[0] = Some(vec![BigInt::one()]);
-    for mask in 0..state_count {
-        let row = usize::try_from(mask.count_ones()).ok()?;
-        if row == dimension {
-            continue;
-        }
-        let Some(partial) = partials[mask].take() else {
-            continue;
-        };
-        for column in 0..dimension {
-            let column_bit = 1usize.checked_shl(u32::try_from(column).ok()?)?;
-            if mask & column_bit != 0 {
-                continue;
-            }
-            let entry = &entries[row * dimension + column];
-            if entry.iter().all(BigInt::is_zero) {
-                continue;
-            }
-            let sign_is_negative = (mask >> (column + 1)).count_ones() % 2 != 0;
-            let next_mask = mask | column_bit;
-            let next_length = partial.len().checked_add(entry.len())?.checked_sub(1)?;
-            let next = partials[next_mask].get_or_insert_with(|| vec![BigInt::zero(); next_length]);
-            if next.len() < next_length {
-                next.resize(next_length, BigInt::zero());
-            }
-            for (left_power, left) in partial.iter().enumerate() {
-                if left.is_zero() {
-                    continue;
-                }
-                for (right_power, right) in entry.iter().enumerate() {
-                    if right.is_zero() {
-                        continue;
-                    }
-                    let term = left * right;
-                    if sign_is_negative {
-                        next[left_power + right_power] -= term;
-                    } else {
-                        next[left_power + right_power] += term;
-                    }
-                }
-            }
-        }
-    }
-    partials.pop()?.or_else(|| Some(vec![BigInt::zero()]))
-}
-
 fn determinant_linear_polynomial_matrix(
     constants: &[BigInt],
     negative_linear_coefficients: &[BigInt],
     dimension: usize,
 ) -> Option<Vec<BigInt>> {
-    let matrix_entries = dimension.checked_mul(dimension)?;
-    if constants.len() != matrix_entries || negative_linear_coefficients.len() != matrix_entries {
+    let entries = dimension.checked_mul(dimension)?;
+    if constants.len() != entries || negative_linear_coefficients.len() != entries {
         return None;
     }
-    let state_count = 1usize.checked_shl(u32::try_from(dimension).ok()?)?;
-    let mut partials = vec![None; state_count];
-    partials[0] = Some(vec![BigInt::one()]);
-    for mask in 0..state_count {
-        let row = usize::try_from(mask.count_ones()).ok()?;
-        if row == dimension {
-            continue;
-        }
-        // Every predecessor is `mask` with one bit removed and is therefore
-        // numerically smaller. By the time this state is visited, its
-        // polynomial is complete and will never be read again, so move it out
-        // instead of cloning every exact coefficient.
-        let Some(partial) = partials[mask].take() else {
-            continue;
-        };
-        for column in 0..dimension {
-            let column_bit = 1usize.checked_shl(u32::try_from(column).ok()?)?;
-            if mask & column_bit != 0 {
-                continue;
-            }
-            let entry_index = row * dimension + column;
-            let sign_is_negative = (mask >> (column + 1)).count_ones() % 2 != 0;
-            let next_mask = mask | column_bit;
-            let next =
-                partials[next_mask].get_or_insert_with(|| vec![BigInt::zero(); partial.len() + 1]);
-            for (power, coefficient) in partial.iter().enumerate() {
-                if !constants[entry_index].is_zero() {
-                    let term = coefficient * &constants[entry_index];
-                    if sign_is_negative {
-                        next[power] -= term;
-                    } else {
-                        next[power] += term;
-                    }
-                }
-                if !negative_linear_coefficients[entry_index].is_zero() {
-                    let term = coefficient * &negative_linear_coefficients[entry_index];
-                    if sign_is_negative {
-                        next[power + 1] += term;
-                    } else {
-                        next[power + 1] -= term;
-                    }
-                }
-            }
-        }
-    }
-    partials.pop()?
+    let matrix = constants
+        .iter()
+        .zip(negative_linear_coefficients)
+        .map(|(constant, linear)| vec![constant.clone(), -linear])
+        .collect::<Vec<_>>();
+    determinant_integer_polynomial_matrix(&matrix, dimension)
 }
 
 #[cfg(test)]

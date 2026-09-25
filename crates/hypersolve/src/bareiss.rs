@@ -11,8 +11,11 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use hyperlimit::{Certainty as PredicateCertainty, PredicateOutcome, PredicatePolicy, Sign};
 use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
+use num::{BigInt, One, Zero};
 
-use crate::integer_interpolation::primitive_integer_polynomial;
+use crate::integer_interpolation::{
+    integer_polynomial_exact_quotient, primitive_integer_polynomial,
+};
 use crate::residual_replay::{
     DenseResidualReplayReport, SparseResidualReplayError, SparseResidualReplayReport,
     SparseResidualTerm, replay_assembled_sparse_rows, replay_dense_linear_residuals,
@@ -1477,6 +1480,106 @@ fn map_dense_replay_error(error: crate::residual_replay::DenseResidualReplayErro
             BareissError::UnknownResidual
         }
     }
+}
+
+/// Exact determinant over Z[t], with quadratic matrix storage. Bareiss
+/// division is exact in the polynomial ring; every quotient is checked before
+/// publication. Row swaps preserve the determinant's authored sign.
+pub(crate) fn determinant_integer_polynomial_matrix(
+    entries: &[Vec<BigInt>],
+    dimension: usize,
+) -> Option<Vec<BigInt>> {
+    fn trim(polynomial: &mut Vec<BigInt>) {
+        while polynomial.last().is_some_and(BigInt::is_zero) {
+            polynomial.pop();
+        }
+    }
+    fn cross_difference(
+        a: &[BigInt],
+        b: &[BigInt],
+        c: &[BigInt],
+        d: &[BigInt],
+    ) -> Option<Vec<BigInt>> {
+        let length = |first: &[BigInt], second: &[BigInt]| {
+            if first.is_empty() || second.is_empty() {
+                Some(0)
+            } else {
+                first.len().checked_add(second.len())?.checked_sub(1)
+            }
+        };
+        let mut result = vec![BigInt::zero(); length(a, b)?.max(length(c, d)?)];
+        for (left, right, subtract) in [(a, b, false), (c, d, true)] {
+            for (i, first) in left
+                .iter()
+                .enumerate()
+                .filter(|(_, value)| !value.is_zero())
+            {
+                for (j, second) in right
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, value)| !value.is_zero())
+                {
+                    let product = first * second;
+                    if subtract {
+                        result[i + j] -= product;
+                    } else {
+                        result[i + j] += product;
+                    }
+                }
+            }
+        }
+        trim(&mut result);
+        Some(result)
+    }
+
+    if entries.len() != dimension.checked_mul(dimension)? {
+        return None;
+    }
+    if dimension == 0 {
+        return Some(vec![BigInt::one()]);
+    }
+    let mut matrix = entries.to_vec();
+    matrix.iter_mut().for_each(trim);
+    let mut previous_pivot = vec![BigInt::one()];
+    let mut negate = false;
+    for pivot in 0..dimension - 1 {
+        let row = (pivot..dimension)
+            .filter(|row| !matrix[row * dimension + pivot].is_empty())
+            .min_by_key(|row| matrix[row * dimension + pivot].len());
+        let Some(row) = row else {
+            return Some(vec![BigInt::zero()]);
+        };
+        if row != pivot {
+            for column in 0..dimension {
+                matrix.swap(pivot * dimension + column, row * dimension + column);
+            }
+            negate = !negate;
+        }
+        let pivot_value = matrix[pivot * dimension + pivot].clone();
+        for row in pivot + 1..dimension {
+            for column in pivot + 1..dimension {
+                let numerator = cross_difference(
+                    &pivot_value,
+                    &matrix[row * dimension + column],
+                    &matrix[row * dimension + pivot],
+                    &matrix[pivot * dimension + column],
+                )?;
+                let mut quotient = integer_polynomial_exact_quotient(&numerator, &previous_pivot)?;
+                trim(&mut quotient);
+                matrix[row * dimension + column] = quotient;
+            }
+            matrix[row * dimension + pivot].clear();
+        }
+        previous_pivot = pivot_value;
+    }
+    let mut result = matrix.pop()?;
+    if negate {
+        result.iter_mut().for_each(|value| *value = -value.clone());
+    }
+    if result.is_empty() {
+        result.push(BigInt::zero());
+    }
+    Some(result)
 }
 
 #[cfg(test)]

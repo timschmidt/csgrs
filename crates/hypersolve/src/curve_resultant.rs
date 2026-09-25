@@ -10,9 +10,9 @@
 //! algebraic evidence, not an accepted topology event, until a downstream
 //! curve package replays it against retained geometry.
 
-use hyperreal::{CertifiedRealSign, Real, RealSign};
+use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
 
-use crate::bareiss::{BareissError, determinant_bareiss};
+use crate::bareiss::{BareissError, determinant_bareiss, determinant_integer_polynomial_matrix};
 use crate::curve_substitution::RationalParametricCurve2;
 use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::resultant::{
@@ -2213,61 +2213,38 @@ fn determinant_polynomial_matrix(matrix: &[Vec<Real>], dimension: usize) -> Opti
     if dimension == 0 {
         return Some(vec![Real::one()]);
     }
-    let mut matrix = matrix.to_vec();
-    matrix.iter_mut().for_each(trim_exact_polynomial_in_place);
-    let mut previous_pivot = vec![Real::one()];
-    let mut negate = false;
-    for pivot in 0..dimension - 1 {
-        let pivot_row = (pivot..dimension)
-            .filter(|row| !exact_polynomial_is_zero(&matrix[row * dimension + pivot]))
-            .min_by_key(|row| matrix[row * dimension + pivot].len());
-        let Some(pivot_row) = pivot_row else {
+    // Clear each rational row's content once. Intermediate polynomial
+    // products and exact Bareiss quotients then contain integers only; one
+    // final scale restores the actual determinant, not just its zero set.
+    let mut integers = Vec::with_capacity(matrix.len());
+    let mut determinant_scale = Rational::one();
+    for row in matrix.chunks(dimension) {
+        let coefficients = row
+            .iter()
+            .flatten()
+            .map(Real::exact_rational_ref)
+            .collect::<Option<Vec<_>>>()?;
+        let normalized = Rational::primitive_bigint_ratio(&coefficients);
+        let Some((source, target)) = coefficients
+            .iter()
+            .zip(&normalized)
+            .find(|(source, _)| !source.is_zero())
+        else {
             return Some(vec![Real::zero()]);
         };
-        if pivot_row != pivot {
-            for column in 0..dimension {
-                matrix.swap(pivot * dimension + column, pivot_row * dimension + column);
-            }
-            negate = !negate;
+        determinant_scale *= *source / Rational::from_bigint(target.clone());
+        let mut normalized = normalized.into_iter();
+        for entry in row {
+            integers.push(normalized.by_ref().take(entry.len()).collect());
         }
-        let pivot_value = matrix[pivot * dimension + pivot].clone();
-        for row in pivot + 1..dimension {
-            for column in pivot + 1..dimension {
-                let numerator = subtract_exact_polynomials(
-                    &multiply_exact_polynomials(&pivot_value, &matrix[row * dimension + column]),
-                    &multiply_exact_polynomials(
-                        &matrix[row * dimension + pivot],
-                        &matrix[pivot * dimension + column],
-                    ),
-                );
-                // Sylvester's determinant identity makes this an exact
-                // polynomial quotient, including through row permutations.
-                // Checking its remainder preserves the general fallback if
-                // an arithmetic precondition cannot be certified.
-                matrix[row * dimension + column] =
-                    divide_polynomial_exact(numerator, &previous_pivot)?;
-            }
-            matrix[row * dimension + pivot] = vec![Real::zero()];
-        }
-        previous_pivot = pivot_value;
+        debug_assert!(normalized.next().is_none());
     }
-    let mut determinant = matrix.pop()?;
-    if negate {
-        determinant
-            .iter_mut()
-            .for_each(|value| *value = -value.clone());
-    }
-    trim_exact_polynomial_in_place(&mut determinant);
-    Some(determinant)
-}
-
-fn trim_exact_polynomial_in_place(polynomial: &mut Vec<Real>) {
-    while polynomial.len() > 1 && polynomial.last().is_some_and(exact_real_is_zero) {
-        polynomial.pop();
-    }
-    if polynomial.is_empty() {
-        polynomial.push(Real::zero());
-    }
+    Some(
+        determinant_integer_polynomial_matrix(&integers, dimension)?
+            .into_iter()
+            .map(|coefficient| Real::new(Rational::from_bigint(coefficient) * &determinant_scale))
+            .collect(),
+    )
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -7009,6 +6986,46 @@ mod tests {
     }
 
     #[test]
+    fn polynomial_determinant_restores_wide_rational_row_scales() {
+        let matrix = vec![
+            vec![],
+            vec![real(1), real(1)],
+            vec![real(2)],
+            vec![real(0), real(1)],
+            vec![real(3)],
+            vec![],
+            vec![real(2)],
+            vec![],
+            vec![real(0), real(1)],
+        ];
+        let wide = real(2).powi_i64(1024).unwrap() + real(17);
+        let scales = [
+            (&wide / real(3)).unwrap(),
+            (real(-7) / real(31)).unwrap(),
+            (real(11) / (real(5) * &wide)).unwrap(),
+        ];
+        let determinant_scale = scales
+            .iter()
+            .fold(Real::one(), |value, scale| value * scale);
+        let scaled = matrix
+            .iter()
+            .enumerate()
+            .map(|(index, entry)| {
+                entry
+                    .iter()
+                    .map(|value| value * &scales[index / 3])
+                    .collect()
+            })
+            .collect::<Vec<_>>();
+        let expected = [-12, 0, -1, -1]
+            .into_iter()
+            .map(|value| real(value) * &determinant_scale)
+            .collect::<Vec<_>>();
+        assert_eq!(determinant_polynomial_matrix(&scaled, 3), Some(expected));
+        assert!(determinant_polynomial_matrix(&[vec![Real::pi()]], 1).is_none());
+    }
+
+    #[test]
     fn axis_saturation_preserves_rootful_fibers_and_closed_boundaries() {
         let expected = [
             BivariatePolynomial::new(vec![vec![real(1), real(1)]]),
@@ -7096,8 +7113,10 @@ mod tests {
         fn generated_polynomial_determinant_matches_scalar_permutation_expansion(
             coefficients in prop::collection::vec(-3_i8..=3, 48),
         ) {
-            let matrix = coefficients.chunks(3)
-                .map(|entry| entry.iter().map(|value| real(i64::from(*value))).collect())
+            let matrix = coefficients.chunks(3).enumerate()
+                .map(|(index, entry)| entry.iter().enumerate().map(|(power, value)| {
+                    (real(i64::from(*value)) / real(2 + ((index + power) % 5) as i64)).unwrap()
+                }).collect())
                 .collect::<Vec<Vec<Real>>>();
             let determinant = determinant_polynomial_matrix(&matrix, 4)
                 .expect("a rational polynomial matrix admits exact fraction-free elimination");

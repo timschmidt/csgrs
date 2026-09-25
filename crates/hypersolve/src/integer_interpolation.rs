@@ -646,7 +646,7 @@ fn rational_reconstruction(
     Some((remainder, denominator))
 }
 
-fn integer_polynomial_exact_quotient(
+pub(crate) fn integer_polynomial_exact_quotient(
     dividend: &[BigInt],
     divisor: &[BigInt],
 ) -> Option<Vec<BigInt>> {
