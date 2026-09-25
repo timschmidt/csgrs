@@ -20,8 +20,8 @@ pub trait OrderedFieldPolynomialContext<C> {
     /// Caller-owned arithmetic or predicate error.
     type Error;
 
-    /// Additive identity in this coefficient field.
-    fn zero(&mut self) -> Result<C, Self::Error>;
+    /// Embeds a represented exact real in this coefficient field.
+    fn constant(&mut self, value: &Real) -> Result<C, Self::Error>;
 
     /// Exact field addition.
     fn add(&mut self, left: &C, right: &C) -> Result<C, Self::Error>;
@@ -130,7 +130,7 @@ fn polynomial_sign_at_if_separated<C: Clone, F: OrderedFieldPolynomialContext<C>
     field: &mut F,
 ) -> Result<Option<Ordering>, F::Error> {
     let Some((leading, remaining)) = polynomial.split_last() else {
-        let zero = field.zero()?;
+        let zero = field.constant(&Real::zero())?;
         return field.sign_if_separated(&zero);
     };
     let mut value = leading.clone();
@@ -147,9 +147,11 @@ fn polynomial_sign_at_if_separated<C: Clone, F: OrderedFieldPolynomialContext<C>
 /// not constructed or signed. A caller using the quotient as a deflation must
 /// already own a root certificate, which may come from geometric incidence
 /// rather than another evaluation of the polynomial. No division is required.
+/// The root belongs to the same field as the coefficients; no separate real
+/// representation, normalization or root reconstruction is needed.
 pub fn ordered_field_polynomial_linear_quotient<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     polynomial: &[C],
-    root: &Real,
+    root: &C,
     field: &mut F,
 ) -> Result<Vec<C>, F::Error> {
     let degree = polynomial.len().saturating_sub(1);
@@ -159,7 +161,7 @@ pub fn ordered_field_polynomial_linear_quotient<C: Clone, F: OrderedFieldPolynom
     let mut quotient = Vec::with_capacity(degree);
     quotient.push(polynomial[degree].clone());
     for coefficient in polynomial[1..degree].iter().rev() {
-        let product = field.scale(
+        let product = field.multiply(
             quotient.last().expect("the quotient has a leading term"),
             root,
         )?;
@@ -232,9 +234,14 @@ fn deflate_at_represented_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     field: &mut F,
 ) -> Result<(Vec<C>, bool), F::Error> {
     let mut had_root = false;
+    let mut embedded_root = None;
     while polynomial.len() > 1
         && polynomial_sign_at_if_separated(&polynomial, root, field)? == Some(Ordering::Equal)
     {
+        let root = match &embedded_root {
+            Some(root) => root,
+            None => embedded_root.insert(field.constant(root)?),
+        };
         polynomial = ordered_field_polynomial_linear_quotient(&polynomial, root, field)?;
         trim_polynomial(&mut polynomial, field)?;
         had_root = true;
@@ -388,7 +395,7 @@ where
         ));
     }
     if polynomial.is_empty() {
-        polynomial.push(field.zero()?);
+        polynomial.push(field.constant(&Real::zero())?);
     }
     trim_polynomial(&mut polynomial, field)?;
     if polynomial.len() == 1 {
@@ -660,8 +667,8 @@ mod tests {
     impl OrderedFieldPolynomialContext<Real> for RealContext {
         type Error = ();
 
-        fn zero(&mut self) -> Result<Real, Self::Error> {
-            Ok(Real::zero())
+        fn constant(&mut self, value: &Real) -> Result<Real, Self::Error> {
+            Ok(value.clone())
         }
 
         fn add(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
@@ -787,17 +794,17 @@ mod tests {
         struct ArithmeticOnly;
         impl OrderedFieldPolynomialContext<Real> for ArithmeticOnly {
             type Error = ();
-            fn zero(&mut self) -> Result<Real, ()> {
+            fn constant(&mut self, _: &Real) -> Result<Real, ()> {
                 panic!("synthetic division does not reconstruct the zero remainder")
             }
             fn add(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
                 Ok(left + right)
             }
-            fn multiply(&mut self, _: &Real, _: &Real) -> Result<Real, ()> {
-                panic!("linear deflation only needs scaling by the retained root")
+            fn multiply(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
+                Ok(left * right)
             }
-            fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, ()> {
-                Ok(value * scale)
+            fn scale(&mut self, _: &Real, _: &Real) -> Result<Real, ()> {
+                panic!("the root is already represented in the coefficient field")
             }
             fn normalize_positive_scale(&mut self, _: &mut [Real]) {
                 panic!("linear division must preserve actual coefficient values")
@@ -853,6 +860,70 @@ mod tests {
     }
 
     #[test]
+    fn linear_quotient_retains_a_root_in_its_coefficient_field() {
+        // a + b*theta with theta^2 = 2. Neither branch of theta is ever
+        // materialized as a Real; the quotient must use the retained field.
+        #[derive(Clone)]
+        struct Quadratic([Real; 2]);
+        struct QuadraticField;
+        impl OrderedFieldPolynomialContext<Quadratic> for QuadraticField {
+            type Error = ();
+
+            fn constant(&mut self, _: &Real) -> Result<Quadratic, ()> {
+                panic!("the root already belongs to the coefficient field")
+            }
+            fn add(&mut self, left: &Quadratic, right: &Quadratic) -> Result<Quadratic, ()> {
+                Ok(Quadratic([
+                    &left.0[0] + &right.0[0],
+                    &left.0[1] + &right.0[1],
+                ]))
+            }
+            fn multiply(&mut self, left: &Quadratic, right: &Quadratic) -> Result<Quadratic, ()> {
+                Ok(Quadratic([
+                    &left.0[0] * &right.0[0] + Real::from(2) * &left.0[1] * &right.0[1],
+                    &left.0[0] * &right.0[1] + &left.0[1] * &right.0[0],
+                ]))
+            }
+            fn scale(&mut self, _: &Quadratic, _: &Real) -> Result<Quadratic, ()> {
+                panic!("no scalar representation of theta is available")
+            }
+            fn normalize_positive_scale(&mut self, _: &mut [Quadratic]) {
+                panic!("division preserves coefficient values, not just their signs")
+            }
+            fn sign(&mut self, _: &Quadratic) -> Result<Ordering, ()> {
+                panic!("the quotient does not re-prove incidence")
+            }
+            fn sign_if_separated(&mut self, _: &Quadratic) -> Result<Option<Ordering>, ()> {
+                panic!("the quotient does not re-prove incidence")
+            }
+        }
+        for branch in [-1, 1] {
+            for remainder in [0, 11] {
+                // Independently authored (x-branch*theta)*Q(x)+remainder,
+                // where Q=(1+theta)+(-2+theta)x+(3-theta)x^2.
+                let polynomial = [
+                    [remainder - 2 * branch, -branch],
+                    [1 - 2 * branch, 1 + 2 * branch],
+                    [-2 + 2 * branch, 1 - 3 * branch],
+                    [3, -1],
+                ]
+                .map(|pair| Quadratic(pair.map(Real::from)));
+                let root = Quadratic([Real::zero(), Real::from(branch)]);
+                let quotient = ordered_field_polynomial_linear_quotient(
+                    &polynomial,
+                    &root,
+                    &mut QuadraticField,
+                )
+                .unwrap();
+                assert_eq!(quotient.len(), 3);
+                for (actual, expected) in quotient.iter().zip([[1, 1], [-2, 1], [3, -1]]) {
+                    assert_eq!(actual.0, expected.map(Real::from));
+                }
+            }
+        }
+    }
+
+    #[test]
     fn midpoint_tableau_matches_authored_polynomial_on_both_children() {
         for degree in 0..=9 {
             let polynomial: Vec<_> = (0..=degree)
@@ -897,9 +968,9 @@ mod tests {
     impl OrderedFieldPolynomialContext<DepthTracked> for DepthTrackingContext {
         type Error = ();
 
-        fn zero(&mut self) -> Result<DepthTracked, Self::Error> {
+        fn constant(&mut self, value: &Real) -> Result<DepthTracked, Self::Error> {
             Ok(DepthTracked {
-                value: Real::zero(),
+                value: value.clone(),
                 depth: 0,
             })
         }

@@ -64,7 +64,7 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
     let Some(product_len) = (first.len() - 1).checked_add(predicate.len() - 1) else {
         return Ok(None);
     };
-    let mut second = vec![field.zero()?; product_len];
+    let mut second = vec![field.constant(&Real::zero())?; product_len];
     for (power, coefficient) in first.iter().enumerate().skip(1) {
         let derivative = field.scale(coefficient, &Real::from(power as u128))?;
         for (other_power, other) in predicate.iter().enumerate() {
@@ -223,8 +223,8 @@ mod tests {
     impl OrderedFieldPolynomialContext<Real> for RealContext {
         type Error = ();
 
-        fn zero(&mut self) -> Result<Real, Self::Error> {
-            Ok(Real::zero())
+        fn constant(&mut self, value: &Real) -> Result<Real, Self::Error> {
+            Ok(value.clone())
         }
 
         fn add(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
@@ -317,8 +317,8 @@ mod tests {
         impl OrderedFieldPolynomialContext<Real> for BoundedField {
             type Error = &'static str;
 
-            fn zero(&mut self) -> Result<Real, Self::Error> {
-                Ok(Real::zero())
+            fn constant(&mut self, value: &Real) -> Result<Real, Self::Error> {
+                self.retain(value.clone())
             }
             fn add(&mut self, left: &Real, right: &Real) -> Result<Real, Self::Error> {
                 self.retain(left + right)

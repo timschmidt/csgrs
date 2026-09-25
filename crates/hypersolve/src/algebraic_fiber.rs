@@ -965,8 +965,8 @@ fn isolate_local_polynomial_roots_bernstein(
     impl OrderedFieldPolynomialContext<LocalFieldElement> for Context<'_> {
         type Error = LocalFieldError;
 
-        fn zero(&mut self) -> Result<LocalFieldElement, Self::Error> {
-            Ok(LocalFieldElement::zero())
+        fn constant(&mut self, value: &Real) -> Result<LocalFieldElement, Self::Error> {
+            LocalFieldElement::from_polynomial(vec![value.clone()], self.field)
         }
 
         fn add(
