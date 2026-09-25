@@ -359,7 +359,7 @@ struct TransitionContactCandidate {
     second_carrier: usize,
     /// Both contact parameters lie strictly inside their individual carrier
     /// domains. Only these contacts can seed per-carrier Boolean locations;
-    /// endpoint contacts instead borrow the neighboring authored branches in
+    /// endpoint contacts instead require the actual incident branch order in
     /// the regularization face kernel.
     interior_on_both_carriers: bool,
     certified_transverse: bool,
@@ -465,6 +465,68 @@ fn record_regularized_vertex_sectors(
     pairs: &[(usize, usize)],
 ) {
     vertex_sector_links.extend(pairs.iter().map(|&(first, second)| (vertex, first, second)));
+}
+
+/// Orders the actual rays at an authored corner. A support's crossing or
+/// tangency certificate does not describe a different carrier joined to it.
+/// Co-directed rays need higher-order contact evidence and decline this path.
+fn regularized_incident_ray_sectors(
+    incident: &[(usize, usize, bool)],
+    topology: &CurveRegionSplitTopology,
+    edge_offsets: &[usize],
+    policy: &CurveContext,
+) -> Option<Vec<(usize, usize)>> {
+    use crate::bezier_region::CurveTangent2;
+
+    policy.strict_predicate_pass(|| {
+        let reference = CurveTangent2::RepresentedDirection((Real::one(), Real::zero()));
+        let mut rays: Vec<(CurveTangent2, usize, usize)> = Vec::with_capacity(incident.len());
+        for &(carrier, split, outgoing) in incident {
+            let fragment = &topology.split_fragments[carrier][split].fragment;
+            let reversed;
+            let ray = if outgoing {
+                fragment
+            } else {
+                reversed = fragment.reversed().ok()?;
+                &reversed
+            };
+            let Classification::Decided(tangent) =
+                CurveTangent2::at_boundary_endpoint(ray, true, policy).ok()?
+            else {
+                return None;
+            };
+            let mut position = rays.len();
+            for (index, (other, _, _)) in rays.iter().enumerate() {
+                match reference.compare_filled_left_turn(&tangent, other, policy) {
+                    Classification::Decided(Ordering::Less) => {
+                        position = index;
+                        break;
+                    }
+                    Classification::Decided(Ordering::Greater) => {}
+                    Classification::Decided(Ordering::Equal) | Classification::Uncertain(_) => {
+                        return None;
+                    }
+                }
+            }
+            let edge = edge_offsets[carrier] + split;
+            let left = 2 * edge;
+            let right = left + 1;
+            let (left, right) = if outgoing {
+                (left, right)
+            } else {
+                (right, left)
+            };
+            rays.insert(position, (tangent, left, right));
+        }
+        // The turn comparator orders clockwise. The sector between adjacent
+        // rays is right of the first and left of the second, including the
+        // wraparound sector. Publish only a completely certified ordering.
+        Some(
+            (0..rays.len())
+                .map(|index| (rays[index].2, rays[(index + 1) % rays.len()].1))
+                .collect(),
+        )
+    })
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -7160,6 +7222,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
         // An authored continuation with no transverse event preserves both
         // local face sectors exactly.
         for (vertex, incident) in incidents.iter().enumerate() {
+            // Several pair contacts can share one vertex. No single pair's
+            // continuation theorem then owns the complete cyclic order.
+            if incident.len() > 2
+                && !topology.contact_candidates.contains_key(&vertex)
+                && let Some(sectors) = regularized_incident_ray_sectors(
+                    incident,
+                    topology,
+                    &edge_offsets,
+                    &self.data.policy,
+                )
+            {
+                record_regularized_vertex_sectors(&mut vertex_sector_links, vertex, &sectors);
+                winding_sector_links.extend_from_slice(&sectors);
+                transverse_winding_sector_links.extend(sectors);
+            }
             if incident.len() != 2
                 || topology
                     .transverse_vertices
@@ -7246,9 +7323,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             Ok(relation)
         };
 
-        // Exact crossing and tangent certificates fix every local face sector
-        // without materializing the contact coordinate. A contact at an
-        // authored carrier endpoint borrows the adjacent carrier branch.
+        // Interior crossing and tangent certificates fix the local face
+        // sectors without materializing the contact coordinate. At authored
+        // corners, order the actual branches before linking their faces.
         for (&vertex, contact) in &topology.contact_candidates {
             let Some(incident) = incidents.get(vertex) else {
                 continue;
@@ -7291,54 +7368,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     branches[slot] = None;
                 }
             }
-            for [incoming_slot, outgoing_slot] in [[0, 1], [2, 3]] {
-                match (branches[incoming_slot], branches[outgoing_slot]) {
-                    (Some(incoming), None) => {
-                        let incoming_source = edge_sources[incoming];
-                        let candidates = incident.iter().filter_map(
-                            |&(carrier_index, split_index, is_start)| {
-                                if !is_start
-                                    || !authored_successor(
-                                        incoming_source,
-                                        (carrier_index, split_index),
-                                    )
-                                {
-                                    return None;
-                                }
-                                Some(edge_index(carrier_index, split_index))
-                            },
-                        );
-                        let mut candidates = candidates.fuse();
-                        if let Some(candidate) = candidates.next()
-                            && candidates.next().is_none()
-                        {
-                            branches[outgoing_slot] = Some(candidate);
-                        }
-                    }
-                    (None, Some(outgoing)) => {
-                        let outgoing_source = edge_sources[outgoing];
-                        let candidates = incident.iter().filter_map(
-                            |&(carrier_index, split_index, is_start)| {
-                                if is_start
-                                    || !authored_successor(
-                                        (carrier_index, split_index),
-                                        outgoing_source,
-                                    )
-                                {
-                                    return None;
-                                }
-                                Some(edge_index(carrier_index, split_index))
-                            },
-                        );
-                        let mut candidates = candidates.fuse();
-                        if let Some(candidate) = candidates.next()
-                            && candidates.next().is_none()
-                        {
-                            branches[incoming_slot] = Some(candidate);
-                        }
-                    }
-                    (Some(_), Some(_)) | (None, None) => {}
+            if incident.len() != 4 || branches.iter().any(Option::is_none) {
+                if let Some(sectors) = regularized_incident_ray_sectors(
+                    incident,
+                    topology,
+                    &edge_offsets,
+                    &self.data.policy,
+                ) {
+                    record_regularized_vertex_sectors(&mut vertex_sector_links, vertex, &sectors);
+                    winding_sector_links.extend_from_slice(&sectors);
+                    transverse_winding_sector_links.extend(sectors);
                 }
+                continue;
             }
             let [
                 Some(first_in),
@@ -20354,6 +20395,126 @@ mod certified_successor_tests {
                             );
                         }
                     }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn regularization_orders_all_branches_at_a_pinched_algebraic_corner() {
+        use crate::CurveBoundaryInteriorSide2::{Left, Right};
+        use crate::RegionPointLocation::{Boundary, Inside, Outside};
+
+        let q = |numerator: i32, denominator: i32| {
+            (Real::from(numerator) / Real::from(denominator)).unwrap()
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // B(t)=(t-1,(t-1)^2) continues past the origin to t=1+a,
+            // where a^2+a^4=1. The return chord and vertical edge meet
+            // the interior of B at the same vertex. Its four rays belong
+            // to three carriers, so no single pair owns their cyclic order.
+            let polynomial = decided(
+                crate::BezierParameterPolynomial::try_new_power_basis(
+                    [1, -6, 7, -4, 1].into_iter().map(Real::from).collect(),
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval = decided(
+                crate::BezierParameterInterval::try_new_ordered(q(7, 4), Real::from(2), &policy)
+                    .unwrap(),
+            );
+            let cut = BezierParameter2::Algebraic(decided(
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+            ));
+            let source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                Point2::from_values(-1, 1),
+                Point2::new(q(-1, 2), Real::zero()),
+                Point2::from_values(0, 0),
+            ));
+            let cut_point = exact_contact_point_evidence(
+                &RationalBezier2::try_from_subcurve(&source).unwrap(),
+                &cut,
+                &policy,
+            )
+            .unwrap()
+            .expect("the selected polynomial endpoint is exactly representable");
+            let extended = CurveSupport2::Bezier(source)
+                .restrict_certified(
+                    CurveParameterRange2::new_validated(
+                        BezierParameter2::Exact(Real::zero()).into(),
+                        cut.into(),
+                    ),
+                    Some([Point2::from_values(-1, 1).into(), cut_point.clone()]),
+                    false,
+                    &policy,
+                )
+                .unwrap();
+            let chord = BezierSplitFragment2::AlgebraicChord(decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    cut_point,
+                    Point2::from_values(0, 0).into(),
+                    &policy,
+                )
+                .unwrap(),
+            ));
+            let line = |start, end| BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
+                    LineSeg2::try_new(start, end).unwrap(),
+                )),
+            };
+            let fragments = vec![
+                extended,
+                chord,
+                line(Point2::from_values(0, 0), Point2::from_values(0, 3)),
+                line(Point2::from_values(0, 3), Point2::from_values(-3, 3)),
+                line(Point2::from_values(-3, 3), Point2::from_values(-1, 1)),
+            ];
+            for reversed in [false, true] {
+                let fragments = if reversed {
+                    fragments
+                        .iter()
+                        .rev()
+                        .map(|edge| edge.reversed().unwrap())
+                        .collect()
+                } else {
+                    fragments.clone()
+                };
+                let raw = CurveRegion2::try_new_with_loop_topology(
+                    vec![CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap()],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![if reversed { Right } else { Left }],
+                )
+                .unwrap();
+                let normalized = raw.regularized_region(&policy).unwrap();
+                assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
+                let normalized = normalized.value;
+                for (point, expected) in [
+                    (Point2::new(q(-1, 2), Real::one()), Inside),
+                    (Point2::new(q(1, 2), q(3, 10)), Inside),
+                    (Point2::new(q(1, 2), q(1, 4)), Boundary),
+                    (Point2::new(q(1, 2), q(1, 2)), Outside),
+                    (Point2::from_values(0, 0), Boundary),
+                ] {
+                    let actual = normalized.classify_point(&point, &policy).unwrap();
+                    assert_eq!(actual.certainty, crate::CurveCertainty::Certified);
+                    assert_eq!(actual.value, Classification::Decided(expected));
+                }
+                let repeated = normalized.boolean_regions(&normalized, &policy).unwrap();
+                assert_eq!(repeated.certainty, crate::CurveCertainty::Certified);
+                assert!(repeated.value.difference().is_empty());
+                assert!(repeated.value.xor().is_empty());
+                for result in [repeated.value.union(), repeated.value.intersection()] {
+                    assert_eq!(
+                        result
+                            .classify_point(&Point2::new(q(1, 2), q(3, 10)), &policy)
+                            .unwrap()
+                            .value,
+                        Classification::Decided(Inside)
+                    );
                 }
             }
         }
