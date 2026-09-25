@@ -5323,7 +5323,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     self.authored_supporting_circle_endpoint(cusp_index, curve_index, |_, _| true)
                     && cusp
                         .semicircle()
-                        .has_certified_concentric_source_tangency(&rational, &self.data.policy)
+                        .certifies_unique_rational_circle_contact(
+                            &rational,
+                            self.data.carriers[sibling_index]
+                                .geometry
+                                .circle()
+                                .certified_tangent_endpoint(sibling_at_start),
+                            &self.data.policy,
+                        )
                         .map_err(|cause| self.invalid(curve_index, cause))?
                 {
                     // Distinct tangent supporting circles share exactly one
@@ -16721,6 +16728,65 @@ mod certified_successor_tests {
             vec![crate::CurveBoundaryInteriorSide2::Left],
         )
         .expect("valid selected-field region")
+    }
+
+    #[test]
+    fn rational_circle_contact_certificate_keeps_coincident_supports_in_general_replay() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // The selected circle has center (0,0) and radius one. Its center
+            // comes from a line, so there is no concentric-parent certificate.
+            let circle = decided(
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    QuadraticBezier2::new(
+                        Point2::from_values(-1, 0),
+                        Point2::from_values(0, 0),
+                        Point2::from_values(1, 0),
+                    )
+                    .parallel_left(Real::zero())
+                    .unwrap(),
+                    BezierParameter2::Exact(half.clone()).into(),
+                    Real::one(),
+                    true,
+                    &policy,
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            let quarter = |points| {
+                RationalBezier2::try_new(points, vec![Real::one(), Real::one(), Real::from(2)])
+                    .unwrap()
+            };
+            // This radius-two circle is tangent at (1,0). Radius inequality
+            // alone is insufficient: the caller must own the tangency proof.
+            let tangent = quarter(vec![
+                Point2::from_values(1, 0),
+                Point2::from_values(1, 2),
+                Point2::from_values(3, 2),
+            ]);
+            assert!(
+                circle
+                    .certifies_unique_rational_circle_contact(&tangent, true, &policy)
+                    .unwrap()
+            );
+            assert!(
+                !circle
+                    .certifies_unique_rational_circle_contact(&tangent, false, &policy)
+                    .unwrap()
+            );
+            // Coincident circles have parallel tangents at every common
+            // point. Their overlap must not become a singleton contact.
+            let coincident = quarter(vec![
+                Point2::from_values(1, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(0, 1),
+            ]);
+            assert!(
+                !circle
+                    .certifies_unique_rational_circle_contact(&coincident, true, &policy)
+                    .unwrap()
+            );
+        }
     }
 
     #[test]

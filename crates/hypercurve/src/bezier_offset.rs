@@ -37283,18 +37283,17 @@ impl BezierAlgebraicCuspSemicircle2 {
         })())
     }
 
-    /// The selected center lies on its retained parent circle. When the target
-    /// has that parent's center, the parent radius is an exact center-distance
-    /// certificate. The circle discriminant then uses only the three radii;
-    /// it need not rediscover a double root in expanded coordinate expressions.
-    pub(crate) fn has_certified_concentric_source_tangency(
+    /// Proves that the supporting circles have only one common point.
+    /// A retained tangency at their shared boundary endpoint suffices when
+    /// unequal radii prove distinct supports. Otherwise a concentric parent
+    /// may certify the center distance and the circle discriminant directly.
+    /// Neither proof needs to rediscover a double root in expanded coordinates.
+    pub(crate) fn certifies_unique_rational_circle_contact(
         &self,
         other: &RationalBezier2,
+        certified_endpoint_tangency: bool,
         policy: &CurveContext,
     ) -> CurveResult<bool> {
-        let Some(frame) = self.data.frame.selected_radial() else {
-            return Ok(false);
-        };
         // A proper quadratic circle chart visits each finite point at most
         // once. Higher-degree parameterizations can revisit a tangent point
         // away from their shared boundary endpoint and need full pair replay.
@@ -37308,6 +37307,19 @@ impl BezierAlgebraicCuspSemicircle2 {
             crate::arc_bezier::rational_bezier_circular_arc(other, policy)
         })?
         else {
+            return Ok(false);
+        };
+        if certified_endpoint_tangency {
+            let radius_difference =
+                self.radial_distance() * self.radial_distance() - target.radius_squared();
+            if matches!(
+                policy.strict_predicate_pass(|| real_sign(&radius_difference, policy)),
+                Some(RealSign::Positive | RealSign::Negative)
+            ) {
+                return Ok(true);
+            }
+        }
+        let Some(frame) = self.data.frame.selected_radial() else {
             return Ok(false);
         };
         let parent = frame.center_parameter.semicircle_carrier();
