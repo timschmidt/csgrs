@@ -4629,6 +4629,14 @@ enum FilletParallelSource2<'a> {
 }
 
 impl FilletParallelSource2<'_> {
+    const fn is_reversed(self) -> bool {
+        match self {
+            Self::Direct(_) => false,
+            Self::Retained(source) => source.is_reversed(),
+            Self::Selected(source) => source.is_reversed(),
+        }
+    }
+
     const fn retained(&self) -> Option<&crate::BezierParallelFragment2> {
         match self {
             Self::Direct(_) => None,
@@ -4921,21 +4929,18 @@ enum PreparedFilletCarrier2<'a> {
         source: ExactCornerArc2,
         radius: Real,
     },
-    Bezier {
-        source: ExactCornerBezier2<'a>,
-    },
     AlgebraicCusp {
         source: &'a crate::BezierAlgebraicCuspSemicircleFragment2,
     },
     AlgebraicChord {
         source: &'a crate::BezierAlgebraicChord2,
     },
-    AnalyticParallel {
-        source: &'a crate::BezierParallelFragment2,
-    },
-    SelectedFiber {
-        source: &'a crate::bezier_split::BezierSelectedFiberFragment2,
+    Parallel {
+        source: FilletParallelSource2<'a>,
         parallel: BezierParallel2,
+        /// Possible traversal directions relative to the increasing source
+        /// parameter. Each selected contact certifies its actual direction.
+        directions: [Option<RealSign>; 2],
     },
 }
 
@@ -4943,6 +4948,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
     fn new(
         carrier: ExactCornerCarrier2<'a>,
         family: CurveFamily2,
+        domain: FilletContactDomain2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         match carrier {
@@ -4995,12 +5001,36 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 )?;
                 Ok(Self::Arc { source, radius })
             }
-            ExactCornerCarrier2::Bezier(source) => Ok(Self::Bezier {
-                source: ExactCornerBezier2::Direct(source),
-            }),
-            ExactCornerCarrier2::NativeBezierSpan(fragment) => Ok(Self::Bezier {
-                source: ExactCornerBezier2::NativeSpan(fragment),
-            }),
+            ExactCornerCarrier2::Bezier(source) => {
+                let source = ExactCornerBezier2::Direct(source);
+                let parallel = exact_corner_bezier_parallel(
+                    source,
+                    Real::zero(),
+                    CurveOperation2::Fillet,
+                    family,
+                )?;
+                Ok(Self::parallel(
+                    FilletParallelSource2::Direct(source),
+                    parallel,
+                    domain,
+                    policy,
+                ))
+            }
+            ExactCornerCarrier2::NativeBezierSpan(fragment) => {
+                let source = ExactCornerBezier2::NativeSpan(fragment);
+                let parallel = exact_corner_bezier_parallel(
+                    source,
+                    Real::zero(),
+                    CurveOperation2::Fillet,
+                    family,
+                )?;
+                Ok(Self::parallel(
+                    FilletParallelSource2::Direct(source),
+                    parallel,
+                    domain,
+                    policy,
+                ))
+            }
             ExactCornerCarrier2::AlgebraicCusp(source) => Ok(Self::AlgebraicCusp { source }),
             ExactCornerCarrier2::AlgebraicChord(source) => {
                 let canonical_axis_support = if let Some(direction) =
@@ -5049,21 +5079,148 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     unit_y,
                 })
             }
-            ExactCornerCarrier2::AnalyticParallel(source) => Ok(Self::AnalyticParallel { source }),
-            ExactCornerCarrier2::SelectedFiber(source) => Ok(Self::SelectedFiber {
-                source,
-                parallel: source.parallel_carrier(),
-            }),
+            ExactCornerCarrier2::AnalyticParallel(source) => Ok(Self::parallel(
+                FilletParallelSource2::Retained(source),
+                source.parallel().clone(),
+                domain,
+                policy,
+            )),
+            ExactCornerCarrier2::SelectedFiber(source) => Ok(Self::parallel(
+                FilletParallelSource2::Selected(source),
+                source.parallel_carrier(),
+                domain,
+                policy,
+            )),
         }
     }
 
-    fn offset<'b>(
+    fn parallel(
+        source: FilletParallelSource2<'a>,
+        parallel: BezierParallel2,
+        domain: FilletContactDomain2,
+        policy: &CurveContext,
+    ) -> Self {
+        let mut directions = [Some(RealSign::Positive), Some(RealSign::Negative)];
+        if parallel.distance() == &Real::zero() || parallel.has_exact_affine_line_parameterization()
+        {
+            directions[1] = None;
+        } else if domain.mode() == CurveCornerMode2::TrimOnly {
+            // A single normal sheet is an optional scheduling certificate.
+            // Otherwise both d+r and d-r remain available and every contact
+            // replays its own orientation. Extension rays may cross old cusps.
+            let constant = policy.bounded_exact_predicate_pass(
+                || -> crate::CurveResult<Classification<Option<RealSign>>> {
+                    let analysis = match parallel
+                        .singularity_analysis(&source.curve_parameter_range(), policy)?
+                    {
+                        Classification::Decided(analysis) => analysis,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let ranges = match analysis.regular_subranges(policy)? {
+                        Classification::Decided(ranges) => ranges,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    let mut common = None;
+                    for range in ranges {
+                        let parameter = match range.strict_interior_scalar(policy)? {
+                            Classification::Decided(parameter) => parameter,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        let sign = match parallel
+                            .parallel_derivative_scale_sign(&parameter.into(), policy)?
+                        {
+                            Classification::Decided(RealSign::Zero) => {
+                                return Ok(Classification::Decided(None));
+                            }
+                            Classification::Decided(sign) => sign,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        };
+                        if common.is_some_and(|previous| previous != sign) {
+                            return Ok(Classification::Decided(None));
+                        }
+                        common = Some(sign);
+                    }
+                    Ok(Classification::Decided(common))
+                },
+            );
+            if let Ok(Classification::Decided(Some(sign))) = constant {
+                directions = [Some(sign), None];
+            }
+        }
+        if source.is_reversed() {
+            directions = directions.map(|sign| sign.map(reverse_fillet_sign));
+        }
+        Self::Parallel {
+            source,
+            parallel,
+            directions,
+        }
+    }
+
+    fn accepts_offset_contact(
+        &self,
+        offset: &FilletOffsetCarrier2<'_, '_>,
+        parameter: Option<&CurveParameter2>,
+        signed_distance: &Real,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        let Self::Parallel {
+            source, parallel, ..
+        } = self
+        else {
+            return Ok(true);
+        };
+        let FilletOffsetCarrier2::Parallel { support, .. } = offset else {
+            unreachable!("a prepared parallel produces parallel center supports")
+        };
+        let parameter = parameter.expect("a parallel center retains its source parameter");
+        let sign = match parallel
+            .parallel_derivative_scale_sign(parameter, policy)
+            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+        {
+            Classification::Decided(RealSign::Zero) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    crate::UncertaintyReason::Boundary,
+                ));
+            }
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    reason,
+                ));
+            }
+        };
+        let distance = if (sign == RealSign::Positive) != source.is_reversed() {
+            parallel.distance() + signed_distance
+        } else {
+            parallel.distance() - signed_distance
+        };
+        // Both alternatives were constructed from these same scalar operands.
+        // This selects their construction identity; it does not reconstruct a
+        // field or infer geometric inequality from unrelated Real expressions.
+        Ok(support.distance() == &distance)
+    }
+
+    fn offsets<'b>(
         &'b self,
         signed_distance: &Real,
         family: CurveFamily2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<FilletOffsetCarrier2<'a, 'b>> {
-        match self {
+    ) -> ExactCurveResult<[Option<FilletOffsetCarrier2<'a, 'b>>; 2]> {
+        let offset = match self {
             Self::Line {
                 source,
                 chord_support,
@@ -5118,15 +5275,6 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     )),
                 }
             }
-            Self::Bezier { source } => Ok(FilletOffsetCarrier2::Parallel {
-                source: FilletParallelSource2::Direct(*source),
-                support: exact_corner_bezier_parallel(
-                    *source,
-                    signed_distance.clone(),
-                    CurveOperation2::Fillet,
-                    family,
-                )?,
-            }),
             Self::AlgebraicCusp { source } => {
                 let support =
                     match source
@@ -5151,7 +5299,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
                                     ));
                                 }
                             };
-                            return Ok(FilletOffsetCarrier2::Point { point });
+                            return Ok([Some(FilletOffsetCarrier2::Point { point }), None]);
                         }
                         Classification::Uncertain(reason) => {
                             return Err(ExactCurveError::blocked(
@@ -5176,60 +5324,27 @@ impl<'a> PreparedFilletCarrier2<'a> {
                     finite_source_domain: true,
                 })
             }
-            Self::AnalyticParallel { source } => {
-                let source_scale = match source
-                    .parallel()
-                    .regular_fragment_derivative_scale_sign(source.range(), policy)
-                    .map_err(|cause| {
-                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
-                    })? {
-                    Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
-                        sign
-                    }
-                    Classification::Decided(RealSign::Zero) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            family,
-                            crate::UncertaintyReason::Boundary,
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Err(ExactCurveError::blocked(
-                            CurveOperation2::Fillet,
-                            family,
-                            reason,
-                        ));
-                    }
-                };
-                let traversal_agrees_with_source =
-                    (source_scale == RealSign::Positive) != source.is_reversed();
-                let distance = if traversal_agrees_with_source {
-                    source.parallel().distance() + signed_distance
-                } else {
-                    source.parallel().distance() - signed_distance
-                };
-                Ok(FilletOffsetCarrier2::Parallel {
-                    source: FilletParallelSource2::Retained(source),
-                    support: source.parallel().with_distance(distance),
-                })
+            Self::Parallel {
+                source,
+                parallel,
+                directions,
+            } => {
+                return Ok(directions.map(|direction| {
+                    direction.map(|direction| {
+                        let distance = if direction == RealSign::Positive {
+                            parallel.distance() + signed_distance
+                        } else {
+                            parallel.distance() - signed_distance
+                        };
+                        FilletOffsetCarrier2::Parallel {
+                            source: *source,
+                            support: parallel.with_distance(distance),
+                        }
+                    })
+                }));
             }
-            Self::SelectedFiber { source, parallel } => {
-                let source_scale = selected_fiber_regular_fragment_derivative_scale_sign(
-                    parallel, source, family, policy,
-                )?;
-                let traversal_agrees_with_source =
-                    (source_scale == RealSign::Positive) != source.is_reversed();
-                let distance = if traversal_agrees_with_source {
-                    parallel.distance() + signed_distance
-                } else {
-                    parallel.distance() - signed_distance
-                };
-                Ok(FilletOffsetCarrier2::Parallel {
-                    source: FilletParallelSource2::Selected(source),
-                    support: parallel.with_distance(distance),
-                })
-            }
-        }
+        }?;
+        Ok([Some(offset), None])
     }
 }
 
@@ -5660,8 +5775,8 @@ fn solve_carrier_fillet_corner(
     next_family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
-    let previous = PreparedFilletCarrier2::new(previous, previous_family, policy)?;
-    let next = PreparedFilletCarrier2::new(next, next_family, policy)?;
+    let previous = PreparedFilletCarrier2::new(previous, previous_family, domains[0], policy)?;
+    let next = PreparedFilletCarrier2::new(next, next_family, domains[1], policy)?;
     let mut candidates = CornerSolutionAccumulator::Empty;
     let mut saw_outside_domain = false;
     let mut saw_degenerate = false;
@@ -5674,308 +5789,339 @@ fn solve_carrier_fillet_corner(
         } else {
             radius.clone()
         };
-        let previous_offset = previous.offset(&signed_distance, previous_family, policy)?;
-        let next_offset = next.offset(&signed_distance, next_family, policy)?;
-        let centers = fillet_offset_centers(
-            &previous_offset,
-            &next_offset,
-            domains,
-            previous_family,
-            next_family,
-            policy,
-        )?;
-        saw_outside_domain |= centers.outside_domain;
-        if centers.coincident {
-            saw_degenerate = true;
-            continue;
-        }
-        for center in centers.iter() {
-            let deferred_arc_is_previous = center
-                .retained_anchor_evidence
-                .as_ref()
-                .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
-                .map(|deferred| deferred.arc_is_previous);
-            let Some(previous_cut) = fillet_cut_from_center(
-                &previous_offset,
-                &center.point,
-                center.parameter(true),
-                deferred_arc_is_previous == Some(true),
-                true,
-                retain_selected_circle_endpoints,
-                domains[0],
-                previous_family,
-                policy,
-            )?
-            else {
-                saw_outside_domain = true;
-                continue;
-            };
-            let Some(next_cut) = fillet_cut_from_center(
-                &next_offset,
-                &center.point,
-                center.parameter(false),
-                deferred_arc_is_previous == Some(false),
-                false,
-                retain_selected_circle_endpoints,
-                domains[1],
-                next_family,
-                policy,
-            )?
-            else {
-                saw_outside_domain = true;
-                continue;
-            };
-            let cut_point_relation = if center
-                .retained_anchor_evidence
-                .as_ref()
-                .and_then(|evidence| evidence.cross)
-                .is_some_and(|cross| matches!(cross, RealSign::Positive | RealSign::Negative))
-            {
-                // Two contacts on one nonzero-radius circle cannot occupy the
-                // same point with nonparallel tangents: both tangents would be
-                // perpendicular to the same radial vector. The pair replay's
-                // exact nonzero tangent cross is therefore also a constant-
-                // time distinct-cut certificate and avoids constructing a
-                // potentially high-degree Cartesian compositum solely for
-                // this degeneracy test.
-                Classification::Decided(false)
-            } else if center.point.coordinates().is_none()
-                && center
-                    .retained_anchor_evidence
-                    .as_ref()
-                    .is_some_and(|evidence| evidence.deferred_arc_contact.is_some())
-            {
-                // One circular cut is only a transient marker until the
-                // retained fillet circle is intersected with the authored arc.
-                // Its marker stores the center, so it cannot participate in
-                // the ordinary two-contact degeneracy predicate.
-                Classification::Decided(false)
-            } else {
-                previous_cut.point.same_point(&next_cut.point, policy)
-            };
-            match cut_point_relation {
-                Classification::Decided(true) => saw_degenerate = true,
-                Classification::Decided(false) => {
-                    let previous_is_cusp =
-                        matches!(previous_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
-                    let next_is_cusp =
-                        matches!(next_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
-                    let previous_chord_anchors_on_next_arc = matches!(
-                        (&previous_offset, &next_offset),
-                        (
-                            FilletOffsetCarrier2::AlgebraicChord { .. },
-                            FilletOffsetCarrier2::Arc { .. }
-                        )
-                    );
-                    let cusp_and_line = matches!(
-                        (&previous_offset, &next_offset),
-                        (
-                            FilletOffsetCarrier2::AlgebraicCusp { .. },
-                            FilletOffsetCarrier2::Line { .. }
-                        )
-                    ) || matches!(
-                        (&previous_offset, &next_offset),
-                        (
-                            FilletOffsetCarrier2::Line { .. },
-                            FilletOffsetCarrier2::AlgebraicCusp { .. }
-                        )
-                    );
-                    let line_precedes_chord = matches!(
-                        (&previous_offset, &next_offset),
-                        (
-                            FilletOffsetCarrier2::Line { .. },
-                            FilletOffsetCarrier2::AlgebraicChord { .. }
-                        )
-                    );
-                    let (first, first_is_previous, first_family, second, second_family) =
-                        if cusp_and_line {
-                            // The line is transiently lowered to a chord for
-                            // center incidence. Keep the selected circle as
-                            // the reconstruction anchor so its mapped radial
-                            // field remains authoritative.
-                            if previous_is_cusp {
-                                (
-                                    &previous_offset,
-                                    true,
-                                    previous_family,
-                                    &next_offset,
-                                    next_family,
-                                )
-                            } else {
-                                (
-                                    &next_offset,
-                                    false,
-                                    next_family,
-                                    &previous_offset,
-                                    previous_family,
-                                )
-                            }
-                        } else if (previous_is_cusp && !next_is_cusp)
-                            || previous_chord_anchors_on_next_arc
-                            || line_precedes_chord
-                        {
-                            (
-                                &next_offset,
-                                false,
-                                next_family,
-                                &previous_offset,
-                                previous_family,
-                            )
-                        } else {
-                            (
-                                &previous_offset,
-                                true,
-                                previous_family,
-                                &next_offset,
-                                next_family,
-                            )
-                        };
-                    let deferred_arc_frame = center
+        let previous_offsets = previous.offsets(&signed_distance, previous_family, policy)?;
+        let next_offsets = next.offsets(&signed_distance, next_family, policy)?;
+        for previous_offset in previous_offsets.iter().flatten() {
+            for next_offset in next_offsets.iter().flatten() {
+                let centers = fillet_offset_centers(
+                    previous_offset,
+                    next_offset,
+                    domains,
+                    previous_family,
+                    next_family,
+                    policy,
+                )?;
+                saw_outside_domain |= centers.outside_domain;
+                if centers.coincident {
+                    saw_degenerate = true;
+                    continue;
+                }
+                for center in centers.iter() {
+                    if !previous.accepts_offset_contact(
+                        previous_offset,
+                        center.parameter(true),
+                        &signed_distance,
+                        previous_family,
+                        policy,
+                    )? || !next.accepts_offset_contact(
+                        next_offset,
+                        center.parameter(false),
+                        &signed_distance,
+                        next_family,
+                        policy,
+                    )? {
+                        continue;
+                    }
+                    let deferred_arc_is_previous = center
                         .retained_anchor_evidence
                         .as_ref()
                         .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
-                        .map(|deferred| {
-                            (deferred.arc_is_previous, deferred.contact_seed.is_some())
-                        });
-                    let prefer_parallel_frame = center
+                        .map(|deferred| deferred.arc_is_previous);
+                    let Some(previous_cut) = fillet_cut_from_center(
+                        previous_offset,
+                        &center.point,
+                        center.parameter(true),
+                        deferred_arc_is_previous == Some(true),
+                        true,
+                        retain_selected_circle_endpoints,
+                        domains[0],
+                        previous_family,
+                        policy,
+                    )?
+                    else {
+                        saw_outside_domain = true;
+                        continue;
+                    };
+                    let Some(next_cut) = fillet_cut_from_center(
+                        next_offset,
+                        &center.point,
+                        center.parameter(false),
+                        deferred_arc_is_previous == Some(false),
+                        false,
+                        retain_selected_circle_endpoints,
+                        domains[1],
+                        next_family,
+                        policy,
+                    )?
+                    else {
+                        saw_outside_domain = true;
+                        continue;
+                    };
+                    let cut_point_relation = if center
                         .retained_anchor_evidence
                         .as_ref()
-                        .is_some_and(|evidence| {
-                            evidence.center_parallel.is_some()
-                                || evidence.source_direction.is_some()
-                        });
-                    let force_chord_normal = matches!(
-                        (&previous_offset, &next_offset),
-                        (
-                            FilletOffsetCarrier2::AlgebraicChord { .. },
-                            FilletOffsetCarrier2::Line { .. }
-                        ) | (
-                            FilletOffsetCarrier2::Line { .. },
-                            FilletOffsetCarrier2::AlgebraicChord { .. }
-                        )
-                    );
-                    #[cfg(feature = "dispatch-trace")]
+                        .and_then(|evidence| evidence.cross)
+                        .is_some_and(|cross| {
+                            matches!(cross, RealSign::Positive | RealSign::Negative)
+                        }) {
+                        // Two contacts on one nonzero-radius circle cannot occupy the
+                        // same point with nonparallel tangents: both tangents would be
+                        // perpendicular to the same radial vector. The pair replay's
+                        // exact nonzero tangent cross is therefore also a constant-
+                        // time distinct-cut certificate and avoids constructing a
+                        // potentially high-degree Cartesian compositum solely for
+                        // this degeneracy test.
+                        Classification::Decided(false)
+                    } else if center.point.coordinates().is_none()
+                        && center
+                            .retained_anchor_evidence
+                            .as_ref()
+                            .is_some_and(|evidence| evidence.deferred_arc_contact.is_some())
                     {
-                        let carrier_kind = |carrier: &FilletOffsetCarrier2<'_, '_>| match carrier {
-                            FilletOffsetCarrier2::Line {
-                                source: FilletLinearSource2::Native { .. },
-                                ..
-                            } => "line-native",
-                            FilletOffsetCarrier2::Line {
-                                source: FilletLinearSource2::AlgebraicChord(_),
-                                ..
-                            } => "line-chord",
-                            FilletOffsetCarrier2::Arc { .. } => "arc",
-                            FilletOffsetCarrier2::Point { .. } => "point",
-                            FilletOffsetCarrier2::Parallel { .. } => "parallel",
-                            FilletOffsetCarrier2::AlgebraicCusp { .. } => "algebraic-cusp",
-                            FilletOffsetCarrier2::AlgebraicChord { .. } => "algebraic-chord",
-                        };
-                        hyperreal::dispatch_trace::record(
-                            "hypercurve",
-                            "curve-region-fillet-previous-carrier",
-                            carrier_kind(&previous_offset),
-                        );
-                        hyperreal::dispatch_trace::record(
-                            "hypercurve",
-                            "curve-region-fillet-next-carrier",
-                            carrier_kind(&next_offset),
-                        );
-                        hyperreal::dispatch_trace::record(
-                            "hypercurve",
-                            "curve-region-fillet-force-chord-normal",
-                            if force_chord_normal { "yes" } else { "no" },
-                        );
-                    }
-                    let first_frame = first.retained_fillet_frame(
-                        first_is_previous,
-                        center.parameter(first_is_previous),
-                        center.retained_anchor_evidence.clone(),
-                        force_chord_normal,
-                        first_family,
-                        policy,
-                    )?;
-                    let frame_is_preferred = |frame: &RetainedFilletFrame2| {
-                        if let Some((arc_is_previous, contact_is_preselected)) = deferred_arc_frame
-                        {
-                            return (frame.anchor_is_previous == arc_is_previous)
-                                == contact_is_preselected;
-                        }
-                        if force_chord_normal {
-                            return matches!(
-                                &frame.radial_frame,
-                                RetainedFilletRadialFrame2::ChordNormal { .. }
-                            );
-                        }
-                        if matches!(
-                            &frame.radial_frame,
-                            RetainedFilletRadialFrame2::ChordNormal { .. }
-                        ) {
-                            return prefer_parallel_frame
-                                && frame
-                                    .anchor_evidence
-                                    .as_ref()
-                                    .and_then(|evidence| evidence.center_parallel.as_ref())
-                                    .and_then(|center| center.parameter.as_ref())
-                                    .is_some_and(CurveParameter2::is_retained_scalar);
-                        }
-                        matches!(
-                            &frame.radial_frame,
-                            RetainedFilletRadialFrame2::ParallelNormal { .. }
-                        ) == prefer_parallel_frame
-                    };
-                    let retained_frame = if first_frame.as_ref().is_some_and(frame_is_preferred) {
-                        first_frame
+                        // One circular cut is only a transient marker until the
+                        // retained fillet circle is intersected with the authored arc.
+                        // Its marker stores the center, so it cannot participate in
+                        // the ordinary two-contact degeneracy predicate.
+                        Classification::Decided(false)
                     } else {
-                        let second_frame = second.retained_fillet_frame(
-                            !first_is_previous,
-                            center.parameter(!first_is_previous),
-                            center.retained_anchor_evidence.clone(),
-                            force_chord_normal,
-                            second_family,
-                            policy,
-                        )?;
-                        if second_frame.as_ref().is_some_and(frame_is_preferred) {
-                            second_frame
-                        } else {
-                            first_frame.or(second_frame)
-                        }
+                        previous_cut.point.same_point(&next_cut.point, policy)
                     };
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "curve-region-fillet-retained-frame",
-                        match retained_frame.as_ref().map(|frame| &frame.radial_frame) {
-                            Some(RetainedFilletRadialFrame2::RepresentedUnitNormal(_)) => {
-                                "represented-unit-normal"
+                    match cut_point_relation {
+                        Classification::Decided(true) => saw_degenerate = true,
+                        Classification::Decided(false) => {
+                            let previous_is_cusp = matches!(
+                                previous_offset,
+                                FilletOffsetCarrier2::AlgebraicCusp { .. }
+                            );
+                            let next_is_cusp =
+                                matches!(next_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
+                            let previous_chord_anchors_on_next_arc = matches!(
+                                (previous_offset, next_offset),
+                                (
+                                    FilletOffsetCarrier2::AlgebraicChord { .. },
+                                    FilletOffsetCarrier2::Arc { .. }
+                                )
+                            );
+                            let cusp_and_line = matches!(
+                                (previous_offset, next_offset),
+                                (
+                                    FilletOffsetCarrier2::AlgebraicCusp { .. },
+                                    FilletOffsetCarrier2::Line { .. }
+                                )
+                            ) || matches!(
+                                (previous_offset, next_offset),
+                                (
+                                    FilletOffsetCarrier2::Line { .. },
+                                    FilletOffsetCarrier2::AlgebraicCusp { .. }
+                                )
+                            );
+                            let line_precedes_chord = matches!(
+                                (previous_offset, next_offset),
+                                (
+                                    FilletOffsetCarrier2::Line { .. },
+                                    FilletOffsetCarrier2::AlgebraicChord { .. }
+                                )
+                            );
+                            let (first, first_is_previous, first_family, second, second_family) =
+                                if cusp_and_line {
+                                    // The line is transiently lowered to a chord for
+                                    // center incidence. Keep the selected circle as
+                                    // the reconstruction anchor so its mapped radial
+                                    // field remains authoritative.
+                                    if previous_is_cusp {
+                                        (
+                                            previous_offset,
+                                            true,
+                                            previous_family,
+                                            next_offset,
+                                            next_family,
+                                        )
+                                    } else {
+                                        (
+                                            next_offset,
+                                            false,
+                                            next_family,
+                                            previous_offset,
+                                            previous_family,
+                                        )
+                                    }
+                                } else if (previous_is_cusp && !next_is_cusp)
+                                    || previous_chord_anchors_on_next_arc
+                                    || line_precedes_chord
+                                {
+                                    (
+                                        next_offset,
+                                        false,
+                                        next_family,
+                                        previous_offset,
+                                        previous_family,
+                                    )
+                                } else {
+                                    (
+                                        previous_offset,
+                                        true,
+                                        previous_family,
+                                        next_offset,
+                                        next_family,
+                                    )
+                                };
+                            let deferred_arc_frame = center
+                                .retained_anchor_evidence
+                                .as_ref()
+                                .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
+                                .map(|deferred| {
+                                    (deferred.arc_is_previous, deferred.contact_seed.is_some())
+                                });
+                            let prefer_parallel_frame = center
+                                .retained_anchor_evidence
+                                .as_ref()
+                                .is_some_and(|evidence| {
+                                    evidence.center_parallel.is_some()
+                                        || evidence.source_direction.is_some()
+                                });
+                            let force_chord_normal = matches!(
+                                (previous_offset, next_offset),
+                                (
+                                    FilletOffsetCarrier2::AlgebraicChord { .. },
+                                    FilletOffsetCarrier2::Line { .. }
+                                ) | (
+                                    FilletOffsetCarrier2::Line { .. },
+                                    FilletOffsetCarrier2::AlgebraicChord { .. }
+                                )
+                            );
+                            #[cfg(feature = "dispatch-trace")]
+                            {
+                                let carrier_kind =
+                                    |carrier: &FilletOffsetCarrier2<'_, '_>| match carrier {
+                                        FilletOffsetCarrier2::Line {
+                                            source: FilletLinearSource2::Native { .. },
+                                            ..
+                                        } => "line-native",
+                                        FilletOffsetCarrier2::Line {
+                                            source: FilletLinearSource2::AlgebraicChord(_),
+                                            ..
+                                        } => "line-chord",
+                                        FilletOffsetCarrier2::Arc { .. } => "arc",
+                                        FilletOffsetCarrier2::Point { .. } => "point",
+                                        FilletOffsetCarrier2::Parallel { .. } => "parallel",
+                                        FilletOffsetCarrier2::AlgebraicCusp { .. } => {
+                                            "algebraic-cusp"
+                                        }
+                                        FilletOffsetCarrier2::AlgebraicChord { .. } => {
+                                            "algebraic-chord"
+                                        }
+                                    };
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "curve-region-fillet-previous-carrier",
+                                    carrier_kind(previous_offset),
+                                );
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "curve-region-fillet-next-carrier",
+                                    carrier_kind(next_offset),
+                                );
+                                hyperreal::dispatch_trace::record(
+                                    "hypercurve",
+                                    "curve-region-fillet-force-chord-normal",
+                                    if force_chord_normal { "yes" } else { "no" },
+                                );
                             }
-                            Some(RetainedFilletRadialFrame2::ChordNormal { .. }) => "chord-normal",
-                            Some(RetainedFilletRadialFrame2::ConcentricArc { .. }) => {
-                                "concentric-arc"
-                            }
-                            Some(RetainedFilletRadialFrame2::SelectedConcentric { .. }) => {
-                                "selected-concentric"
-                            }
-                            Some(RetainedFilletRadialFrame2::ParallelNormal { .. }) => {
-                                "parallel-normal"
-                            }
-                            None => "none",
-                        },
-                    );
-                    candidates.push(FilletCorner2 {
-                        previous: previous_cut,
-                        next: next_cut,
-                        center: center.point.clone(),
-                        clockwise,
-                        retained_frame,
-                    });
-                }
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        previous_family,
-                        reason,
-                    ));
+                            let first_frame = first.retained_fillet_frame(
+                                first_is_previous,
+                                center.parameter(first_is_previous),
+                                center.retained_anchor_evidence.clone(),
+                                force_chord_normal,
+                                first_family,
+                                policy,
+                            )?;
+                            let frame_is_preferred = |frame: &RetainedFilletFrame2| {
+                                if let Some((arc_is_previous, contact_is_preselected)) =
+                                    deferred_arc_frame
+                                {
+                                    return (frame.anchor_is_previous == arc_is_previous)
+                                        == contact_is_preselected;
+                                }
+                                if force_chord_normal {
+                                    return matches!(
+                                        &frame.radial_frame,
+                                        RetainedFilletRadialFrame2::ChordNormal { .. }
+                                    );
+                                }
+                                if matches!(
+                                    &frame.radial_frame,
+                                    RetainedFilletRadialFrame2::ChordNormal { .. }
+                                ) {
+                                    return prefer_parallel_frame
+                                        && frame
+                                            .anchor_evidence
+                                            .as_ref()
+                                            .and_then(|evidence| evidence.center_parallel.as_ref())
+                                            .and_then(|center| center.parameter.as_ref())
+                                            .is_some_and(CurveParameter2::is_retained_scalar);
+                                }
+                                matches!(
+                                    &frame.radial_frame,
+                                    RetainedFilletRadialFrame2::ParallelNormal { .. }
+                                ) == prefer_parallel_frame
+                            };
+                            let retained_frame =
+                                if first_frame.as_ref().is_some_and(frame_is_preferred) {
+                                    first_frame
+                                } else {
+                                    let second_frame = second.retained_fillet_frame(
+                                        !first_is_previous,
+                                        center.parameter(!first_is_previous),
+                                        center.retained_anchor_evidence.clone(),
+                                        force_chord_normal,
+                                        second_family,
+                                        policy,
+                                    )?;
+                                    if second_frame.as_ref().is_some_and(frame_is_preferred) {
+                                        second_frame
+                                    } else {
+                                        first_frame.or(second_frame)
+                                    }
+                                };
+                            #[cfg(feature = "dispatch-trace")]
+                            hyperreal::dispatch_trace::record(
+                                "hypercurve",
+                                "curve-region-fillet-retained-frame",
+                                match retained_frame.as_ref().map(|frame| &frame.radial_frame) {
+                                    Some(RetainedFilletRadialFrame2::RepresentedUnitNormal(_)) => {
+                                        "represented-unit-normal"
+                                    }
+                                    Some(RetainedFilletRadialFrame2::ChordNormal { .. }) => {
+                                        "chord-normal"
+                                    }
+                                    Some(RetainedFilletRadialFrame2::ConcentricArc { .. }) => {
+                                        "concentric-arc"
+                                    }
+                                    Some(RetainedFilletRadialFrame2::SelectedConcentric {
+                                        ..
+                                    }) => "selected-concentric",
+                                    Some(RetainedFilletRadialFrame2::ParallelNormal { .. }) => {
+                                        "parallel-normal"
+                                    }
+                                    None => "none",
+                                },
+                            );
+                            candidates.push(FilletCorner2 {
+                                previous: previous_cut,
+                                next: next_cut,
+                                center: center.point.clone(),
+                                clockwise,
+                                retained_frame,
+                            });
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                previous_family,
+                                reason,
+                            ));
+                        }
+                    }
                 }
             }
         }
@@ -6274,48 +6420,6 @@ fn retained_fillet_arc_cusp_overlap_is_positive(
         }
     }
     Ok(false)
-}
-
-fn selected_fiber_regular_fragment_derivative_scale_sign(
-    parallel: &BezierParallel2,
-    source: &crate::bezier_split::BezierSelectedFiberFragment2,
-    family: CurveFamily2,
-    policy: &CurveContext,
-) -> ExactCurveResult<RealSign> {
-    if parallel.has_exact_affine_line_parameterization() {
-        return Ok(RealSign::Positive);
-    }
-    let parameter = match source
-        .range()
-        .start()
-        .strict_scalar_between_ordered(source.range().end(), policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(parameter) => BezierParameter2::Exact(parameter),
-        Classification::Uncertain(reason) => {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            ));
-        }
-    };
-    match parallel
-        .parallel_derivative_scale_sign(&parameter.clone().into(), policy)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-    {
-        Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
-        Classification::Decided(RealSign::Zero) => Err(ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            family,
-            crate::UncertaintyReason::Boundary,
-        )),
-        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-            CurveOperation2::Fillet,
-            family,
-            reason,
-        )),
-    }
 }
 
 fn retained_selected_fillet_overlap_is_positive(
@@ -12505,6 +12609,223 @@ mod tests {
     use super::*;
 
     #[test]
+    fn selected_parallel_fillet_keeps_contacts_beyond_interior_cusps() {
+        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+        // P(u)=(x,x^2), x=(12u-6)/5, with left offset 1. Its
+        // midpoint traverses against P, but u=7/9 (x=2/3) agrees with P.
+        let source = QuadraticBezier2::new(
+            Point2::new(q(-6, 5), q(36, 25)),
+            Point2::new(Real::zero(), q(-36, 25)),
+            Point2::new(q(6, 5), q(36, 25)),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let start = Point2::new(q(-18, 65), q(593, 325));
+        let end = Point2::new(q(18, 65), q(593, 325));
+        let line =
+            LineSeg2::try_new(end.clone(), end.translated(Real::zero(), Real::one())).unwrap();
+        let selected = crate::bezier_split::BezierSelectedFiberFragment2::new(
+            crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(source),
+            CurveParameterRange2::unit(),
+            start.into(),
+            end.into(),
+        );
+        // The tangent at x=2/3 is (3,4)/5. A circle of radius 80/39
+        // centered at (-346/195,1331/585) is tangent there and to the
+        // upward line through the source endpoint. Both contacts are strict
+        // trims: u=7/9 and v=1318/2925. All design values are rational.
+        let center = CurvePoint2::from(Point2::new(q(-346, 195), q(1331, 585)));
+        let source_parameter = CurveParameter2::from(q(7, 9));
+        let line_parameter = q(1318, 2925);
+        let radius = q(80, 39);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let reversed_selected = selected.reversed();
+                let reversed_line = line.reversed();
+                let (previous, next, previous_family, next_family) = if reversed {
+                    (
+                        ExactCornerCarrier2::Line(&reversed_line),
+                        ExactCornerCarrier2::SelectedFiber(&reversed_selected),
+                        CurveFamily2::Line,
+                        CurveFamily2::AnalyticParallel,
+                    )
+                } else {
+                    (
+                        ExactCornerCarrier2::SelectedFiber(&selected),
+                        ExactCornerCarrier2::Line(&line),
+                        CurveFamily2::AnalyticParallel,
+                        CurveFamily2::Line,
+                    )
+                };
+                let solutions = solve_carrier_fillet_corner(
+                    previous,
+                    next,
+                    &radius,
+                    true,
+                    [FilletContactDomain2::AuthoredCurve(CurveCornerMode2::TrimOnly); 2],
+                    previous_family,
+                    next_family,
+                    &policy,
+                )
+                .unwrap();
+                let candidates = match solutions {
+                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                    CurveCornerSolutions2::Multiple(candidates) => candidates,
+                    CurveCornerSolutions2::NoSolution(_) => Vec::new(),
+                };
+                let expected_line = CurveParameter2::from(if reversed {
+                    Real::one() - &line_parameter
+                } else {
+                    line_parameter.clone()
+                });
+                let candidate = candidates.iter().find(|candidate| {
+                    let (source_cut, line_cut) = if reversed {
+                        (&candidate.next, &candidate.previous)
+                    } else {
+                        (&candidate.previous, &candidate.next)
+                    };
+                    source_cut.parameter.as_ref().is_some_and(|parameter| {
+                        parameter.same_value(&source_parameter, &policy).unwrap()
+                            == Classification::Decided(true)
+                    }) && line_cut.parameter.as_ref().is_some_and(|parameter| {
+                        parameter.same_value(&expected_line, &policy).unwrap()
+                            == Classification::Decided(true)
+                    })
+                });
+                let candidate = candidate
+                    .expect("the exact tangent circle on the outer source branch must be retained");
+                assert_eq!(candidate.clockwise, reversed);
+                assert_eq!(
+                    candidate.center.same_point(&center, &policy),
+                    Classification::Decided(true)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn parallel_fillet_extension_keeps_contacts_across_source_cusps() {
+        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::new(q(-6, 5), q(36, 25)),
+            Point2::new(Real::zero(), q(-36, 25)),
+            Point2::new(q(6, 5), q(36, 25)),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        // The finite source x-range [0,3/8] has negative derivative scale.
+        // Extending to x=2/3 crosses its cusp and reaches positive scale.
+        let start = Point2::from_values(0, 1);
+        let end = Point2::new(q(-9, 40), q(301, 320));
+        let range = BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(q(1, 2)),
+            BezierParameter2::Exact(q(21, 32)),
+        );
+        let selected = crate::bezier_split::BezierSelectedFiberFragment2::new(
+            crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(source.clone()),
+            CurveParameterRange2::from_bezier_range(range.clone()),
+            start.into(),
+            end.clone().into(),
+        );
+        let line =
+            LineSeg2::try_new(end.clone(), end.translated(Real::zero(), -Real::one())).unwrap();
+        // Radius 11/216, center (-47/270,43/40), contacts u=7/9 and
+        // v=-43/320. Both contacts extend their respective authored curves.
+        let center = CurvePoint2::from(Point2::new(q(-47, 270), q(43, 40)));
+        let source_parameter = CurveParameter2::from(q(7, 9));
+        let line_parameter = q(-43, 320);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(retained) =
+                crate::BezierParallelFragment2::try_new(source.clone(), range.clone(), &policy)
+                    .unwrap()
+            else {
+                panic!("the finite source fragment is regular and cusp-free")
+            };
+            for is_selected in [false, true] {
+                for reversed in [false, true] {
+                    let reversed_selected = selected.reversed();
+                    let reversed_retained = retained.reversed();
+                    let reversed_line = line.reversed();
+                    for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                        let carrier = match (is_selected, reversed) {
+                            (false, false) => ExactCornerCarrier2::AnalyticParallel(&retained),
+                            (false, true) => {
+                                ExactCornerCarrier2::AnalyticParallel(&reversed_retained)
+                            }
+                            (true, false) => ExactCornerCarrier2::SelectedFiber(&selected),
+                            (true, true) => ExactCornerCarrier2::SelectedFiber(&reversed_selected),
+                        };
+                        let (previous, next, previous_family, next_family) = if reversed {
+                            (
+                                ExactCornerCarrier2::Line(&reversed_line),
+                                carrier,
+                                CurveFamily2::Line,
+                                CurveFamily2::AnalyticParallel,
+                            )
+                        } else {
+                            (
+                                carrier,
+                                ExactCornerCarrier2::Line(&line),
+                                CurveFamily2::AnalyticParallel,
+                                CurveFamily2::Line,
+                            )
+                        };
+                        let solutions = solve_carrier_fillet_corner(
+                            previous,
+                            next,
+                            &q(11, 216),
+                            true,
+                            [FilletContactDomain2::AuthoredCurve(mode); 2],
+                            previous_family,
+                            next_family,
+                            &policy,
+                        )
+                        .unwrap();
+                        let candidates = match solutions {
+                            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
+                            CurveCornerSolutions2::Multiple(candidates) => candidates,
+                            CurveCornerSolutions2::NoSolution(_) => Vec::new(),
+                        };
+                        let expected_line = CurveParameter2::from(if reversed {
+                            Real::one() - &line_parameter
+                        } else {
+                            line_parameter.clone()
+                        });
+                        let candidate = candidates.iter().find(|candidate| {
+                            let (source_cut, line_cut) = if reversed {
+                                (&candidate.next, &candidate.previous)
+                            } else {
+                                (&candidate.previous, &candidate.next)
+                            };
+                            source_cut.parameter.as_ref().is_some_and(|parameter| {
+                                parameter.same_value(&source_parameter, &policy).unwrap()
+                                    == Classification::Decided(true)
+                            }) && line_cut.parameter.as_ref().is_some_and(|parameter| {
+                                parameter.same_value(&expected_line, &policy).unwrap()
+                                    == Classification::Decided(true)
+                            })
+                        });
+                        assert_eq!(
+                            candidate.is_some(),
+                            mode == CurveCornerMode2::TrimOrExtend,
+                            "a cusp changes orientation, not the authorized extension domain"
+                        );
+                        if let Some(candidate) = candidate {
+                            assert_eq!(candidate.clockwise, reversed);
+                            assert_eq!(candidate.previous.placement, CornerPlacement2::Extension);
+                            assert_eq!(candidate.next.placement, CornerPlacement2::Extension);
+                            assert_eq!(
+                                candidate.center.same_point(&center, &policy),
+                                Classification::Decided(true)
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn fillet_center_contacts_keep_source_orientation_across_support_cusps() {
         let p = Point2::from_values;
         let half = (Real::one() / Real::from(2)).unwrap();
@@ -12516,10 +12837,16 @@ mod tests {
             let prepared = PreparedFilletCarrier2::new(
                 ExactCornerCarrier2::Line(&line),
                 CurveFamily2::Line,
+                FilletContactDomain2::AuthoredCurve(CurveCornerMode2::TrimOnly),
                 &policy,
             )
             .unwrap();
-            let previous = prepared.offset(&half, CurveFamily2::Line, &policy).unwrap();
+            let [Some(previous), None] = prepared
+                .offsets(&half, CurveFamily2::Line, &policy)
+                .unwrap()
+            else {
+                panic!("a line has one oriented center support");
+            };
             let parallel = curve.parallel_left(Real::zero()).unwrap();
             let Classification::Decided(retained) = crate::BezierParallelFragment2::try_new(
                 parallel.clone(),
