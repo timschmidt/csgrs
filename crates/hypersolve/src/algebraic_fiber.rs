@@ -3812,6 +3812,22 @@ impl LocalAlgebraicField {
         {
             sign = Some(self.sign_reduced_polynomial(polynomial)?);
         }
+        // Subdividing the fiber cannot resolve uncertainty from a fixed
+        // enclosure of its retained parameter. Advance that enclosure too,
+        // sharing the refinement with every subsequent coefficient query.
+        // This remains a bounded speculative step: repeated roots and
+        // unresolved exact identities retain the complete algebraic fallback.
+        if sign.is_none() && self.root.exact_point_witness().is_none() {
+            match self.refine_root() {
+                Ok(()) => {
+                    let evaluation =
+                        evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
+                    sign = local_evaluation_sign(&evaluation)?;
+                }
+                Err(LocalFieldError::Undecided) => {}
+                Err(error) => return Err(error),
+            }
+        }
         if let Some(sign) = sign {
             self.signed_polynomials.push((polynomial.to_vec(), sign));
         }
@@ -6994,6 +7010,63 @@ mod tests {
     }
 
     #[test]
+    fn selected_fiber_refines_nonrational_coefficients_before_subdividing_clusters() {
+        let square = Real::one() + real(2).sqrt().unwrap();
+        let alpha = square.clone().sqrt().unwrap();
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for delta in [rational(1, 1024), Real::zero()] {
+                let root = represented_root(
+                    vec![-square.clone(), Real::zero(), Real::one()],
+                    Real::one(),
+                    real(2),
+                    policy,
+                );
+                // (y-alpha)^2-delta^2 has two nearby simple roots, or one
+                // repeated root. Narrowing y alone cannot sharpen the
+                // independent coefficient enclosure alpha in (1,2).
+                let polynomial = BivariatePolynomial::new(vec![
+                    vec![-(&delta * &delta), Real::zero(), Real::one()],
+                    vec![Real::zero(), real(-2)],
+                    vec![Real::one()],
+                ]);
+                let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+                    &polynomial,
+                    CurveResultantParameter::First,
+                    &root,
+                    &Real::one(),
+                    &real(2),
+                    AlgebraicFiberRootIsolationConfig::default(),
+                    policy,
+                );
+                assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
+                assert_ne!(report.certainty, Certainty::Approximate);
+                assert!(report.retained_refinement_steps > 0);
+                let expected = if delta.definitely_zero() {
+                    assert!(report.sturm_sequence_length > 0);
+                    vec![alpha.clone()]
+                } else {
+                    assert_eq!(report.sturm_sequence_length, 0);
+                    vec![&alpha - &delta, &alpha + &delta]
+                };
+                assert_eq!(report.intervals.len(), expected.len());
+                for (interval, value) in report.intervals.iter().zip(expected) {
+                    assert_eq!(interval.distinct_root_count, 1);
+                    assert_eq!(
+                        compare_reals(&interval.lower, &value, PredicatePolicy::STRICT).value(),
+                        Some(Ordering::Less)
+                    );
+                    assert!(matches!(
+                        compare_reals(&value, &interval.upper, PredicatePolicy::STRICT).value(),
+                        Some(Ordering::Less | Ordering::Equal)
+                    ));
+                }
+                assert_eq!(root.interval.lower, Real::one());
+                assert_eq!(root.interval.upper, real(2));
+            }
+        }
+    }
+
+    #[test]
     fn selected_fiber_accepts_exact_real_base_coefficients() {
         // Retain alpha=sqrt(pi) without flattening it into a primitive
         // approximation. Both the defining modulus and an independent fiber
@@ -7037,6 +7110,8 @@ mod tests {
             );
             assert_eq!(report.status, AlgebraicFiberRootIsolationStatus::Isolated);
             assert_eq!(report.intervals.len(), 1);
+            assert_eq!(report.sturm_sequence_length, 0);
+            assert!(report.retained_refinement_steps > 0);
         }
     }
 }
