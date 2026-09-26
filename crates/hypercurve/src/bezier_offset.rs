@@ -114592,42 +114592,58 @@ impl BezierParallel2 {
             &polynomial_multiply(&weight, &normal_projection),
             &(Real::from(2_u8) * self.distance()),
         );
-        let mut squared = polynomial_subtract(
-            &polynomial_multiply(&polynomial_multiply(&radial, &radial), &speed_squared),
-            &polynomial_multiply(&normal, &normal),
-        );
+        // A zero offset is the source itself. Its unsquared radial equation
+        // already owns every circle contact and its oriented derivative;
+        // squaring would double roots and discard transverse sign evidence.
+        let zero_distance = self.distance().zero_status() == ZeroKnowledge::Zero;
+        let radial_derivative = zero_distance.then(|| polynomial_derivative(&radial));
+        let mut eliminant = if zero_distance {
+            radial.clone()
+        } else {
+            polynomial_subtract(
+                &polynomial_multiply(&polynomial_multiply(&radial, &radial), &speed_squared),
+                &polynomial_multiply(&normal, &normal),
+            )
+        };
         let mut certified_parameters: Vec<(&Real, u8)> =
             Vec::with_capacity(certified_tangent_parameters.len());
         for (parameter, multiplicity) in certified_tangent_parameters {
             if *multiplicity == 0 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
+            // Speed is nonzero on this domain, so a certified multiplicity
+            // m in radial^2 * speed^2 gives ceil(m/2) in the radial equation.
+            let multiplicity = if zero_distance {
+                multiplicity.div_ceil(2)
+            } else {
+                *multiplicity
+            };
             if let Some(index) = certified_parameters
                 .iter()
                 .position(|(retained, _)| *retained == parameter)
             {
                 let previous_multiplicity = certified_parameters[index].1;
-                if previous_multiplicity >= *multiplicity {
+                if previous_multiplicity >= multiplicity {
                     continue;
                 }
-                for _ in previous_multiplicity..*multiplicity {
-                    if squared.len() < 2 {
+                for _ in previous_multiplicity..multiplicity {
+                    if eliminant.len() < 2 {
                         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                     }
-                    squared = divide_by_linear_root(&squared, parameter);
+                    eliminant = divide_by_linear_root(&eliminant, parameter);
                 }
-                certified_parameters[index].1 = *multiplicity;
+                certified_parameters[index].1 = multiplicity;
                 continue;
             }
-            for _ in 0..*multiplicity {
-                if squared.len() < 2 {
+            for _ in 0..multiplicity {
+                if eliminant.len() < 2 {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
-                squared = divide_by_linear_root(&squared, parameter);
+                eliminant = divide_by_linear_root(&eliminant, parameter);
             }
-            certified_parameters.push((parameter, *multiplicity));
+            certified_parameters.push((parameter, multiplicity));
         }
-        let candidate_polynomial = match polynomial_from_coefficients(squared, policy)? {
+        let candidate_polynomial = match polynomial_from_coefficients(eliminant, policy)? {
             Classification::Decided(Some(polynomial)) => polynomial,
             Classification::Decided(None) => {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -114662,10 +114678,15 @@ impl BezierParallel2 {
                 (RealSign::Zero, RealSign::Zero)
                 | (RealSign::Positive, RealSign::Negative)
                 | (RealSign::Negative, RealSign::Positive) => {
-                    let radial_crossing_sign = if matches!(
-                        simple_root,
-                        Classification::Decided(true)
-                    ) && radial_sign != RealSign::Zero
+                    let radial_crossing_sign = if let Some(derivative) = &radial_derivative {
+                        // At incidence, d(|P-C|^2-R^2)/dt = radial'/weight^2.
+                        // The denominator is positive even for a negative gauge.
+                        match signed_coefficients_at_parameter(derivative, &candidate, policy)? {
+                            Classification::Decided(sign) => Some(sign),
+                            Classification::Uncertain(_) => None,
+                        }
+                    } else if matches!(simple_root, Classification::Decided(true))
+                        && radial_sign != RealSign::Zero
                     {
                         let derivative_sign = match signed_coefficients_at_parameter(
                             &candidate_derivative,
@@ -114755,7 +114776,7 @@ impl BezierParallel2 {
                         // contact order. If a residual factor remains at the
                         // same parameter, it is still the certified tangent,
                         // never a transverse root of the quotient.
-                        *existing = (candidate.clone(), None);
+                        *existing = (candidate.clone(), Some(RealSign::Zero));
                         insert_at = usize::MAX;
                         break;
                     }
@@ -114766,7 +114787,7 @@ impl BezierParallel2 {
                 }
             }
             if insert_at != usize::MAX {
-                retained.insert(insert_at, (candidate, None));
+                retained.insert(insert_at, (candidate, Some(RealSign::Zero)));
             }
         }
         Ok(Classification::Decided(retained))
@@ -115242,25 +115263,7 @@ impl BezierParallel2 {
     /// Radical elimination requires a nonzero divisor at every queried root.
     /// Otherwise a certified rational parallel can supply the coordinates
     /// directly, without cancelling an exceptional incidence fiber.
-    pub(crate) fn circle_rational_quadratic_parameter_maps<'a>(
-        &self,
-        center: &Point2,
-        radius_squared: &Real,
-        conic: &RationalQuadraticBezier2,
-        parameters: impl IntoIterator<Item = &'a BezierParameter2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Option<[(Vec<Real>, Vec<Real>); 2]>> {
-        self.circle_rational_quadratic_parameter_maps_with_tangent_field(
-            center,
-            radius_squared,
-            conic,
-            None,
-            parameters,
-            policy,
-        )
-    }
-
-    fn circle_rational_quadratic_parameter_maps_with_tangent_field<'a>(
+    fn circle_rational_quadratic_parameter_maps<'a>(
         &self,
         center: &Point2,
         radius_squared: &Real,
@@ -119322,15 +119325,14 @@ impl BezierParallel2 {
             return Ok(no_fast_path());
         };
         let canonical_conic = canonical_span.curve().clone();
-        let Some(parameter_map_coefficients) = self
-            .circle_rational_quadratic_parameter_maps_with_tangent_field(
-                support.center(),
-                support.radius_squared_ref(),
-                &canonical_conic,
-                tangent_field,
-                parameters.iter().map(|(parameter, _)| parameter),
-                policy,
-            )?
+        let Some(parameter_map_coefficients) = self.circle_rational_quadratic_parameter_maps(
+            support.center(),
+            support.radius_squared_ref(),
+            &canonical_conic,
+            tangent_field,
+            parameters.iter().map(|(parameter, _)| parameter),
+            policy,
+        )?
         else {
             return Ok(no_fast_path());
         };
@@ -167729,60 +167731,68 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
 
     #[test]
     fn certified_circle_tangent_remains_nontransverse_after_residual_deflation() {
-        let source = QuadraticBezier2::from_line_segment(
-            LineSeg2::try_new(
-                Point2::new(Real::zero(), Real::zero()),
-                Point2::new(Real::one(), Real::zero()),
-            )
-            .unwrap(),
-        );
-        let parallel = source.parallel_left(Real::one()).unwrap();
-        let zero = Real::zero();
-        let incidence = parallel
-            .circle_incidence(
-                &Point2::new(Real::zero(), Real::zero()),
-                &Real::one(),
-                &CurveParameterRange2::unit(),
-                &[(zero.clone(), 3)],
-                &CurveContext::STRICT,
-            )
-            .unwrap();
-        let Classification::Decided(contacts) = incidence else {
-            panic!("the certified line/circle tangent must be decided");
-        };
-        let [(parameter, radial_crossing_sign)] = contacts.as_slice() else {
-            panic!("the tangent circle must have one retained contact");
-        };
-        assert_eq!(parameter.scalar(), Some(&zero));
-        assert!(radial_crossing_sign.is_none());
+        for distance in [0_i8, 1] {
+            let source = QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(
+                    Point2::from_values(0, 1 - distance),
+                    Point2::from_values(1, 1 - distance),
+                )
+                .unwrap(),
+            );
+            let parallel = source.parallel_left(Real::from(distance)).unwrap();
+            let zero = Real::zero();
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                for multiplicity in [2, 3, 4] {
+                    let incidence = parallel
+                        .circle_incidence(
+                            &Point2::new(Real::zero(), Real::zero()),
+                            &Real::one(),
+                            &CurveParameterRange2::unit(),
+                            &[(zero.clone(), multiplicity)],
+                            &policy,
+                        )
+                        .unwrap();
+                    let Classification::Decided(contacts) = incidence else {
+                        panic!("the certified line/circle tangent must be decided");
+                    };
+                    let [(parameter, radial_crossing_sign)] = contacts.as_slice() else {
+                        panic!("the tangent circle must have one retained contact");
+                    };
+                    assert_eq!(parameter.scalar(), Some(&zero));
+                    assert_eq!(*radial_crossing_sign, Some(RealSign::Zero));
+                }
+            }
+        }
     }
 
     #[test]
     fn circle_incidence_retains_oriented_transverse_signs() {
-        let source = QuadraticBezier2::from_line_segment(
-            LineSeg2::try_new(
-                Point2::new(Real::from(-2_i8), Real::from(-1_i8)),
-                Point2::new(Real::from(2_i8), Real::from(-1_i8)),
-            )
-            .unwrap(),
-        );
-        let parallel = source.parallel_left(Real::one()).unwrap();
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let incidence = parallel
-                .circle_incidence(
-                    &Point2::new(Real::zero(), Real::zero()),
-                    &Real::one(),
-                    &CurveParameterRange2::unit(),
-                    &[],
-                    &policy,
+        for distance in [-1_i8, 0, 1] {
+            let source = QuadraticBezier2::from_line_segment(
+                LineSeg2::try_new(
+                    Point2::from_values(-2, -distance),
+                    Point2::from_values(2, -distance),
                 )
-                .unwrap();
-            let Classification::Decided(contacts) = incidence else {
-                panic!("the two transverse line/circle contacts must be decided");
-            };
-            assert_eq!(contacts.len(), 2);
-            assert_eq!(contacts[0].1, Some(RealSign::Negative));
-            assert_eq!(contacts[1].1, Some(RealSign::Positive));
+                .unwrap(),
+            );
+            let parallel = source.parallel_left(Real::from(distance)).unwrap();
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let incidence = parallel
+                    .circle_incidence(
+                        &Point2::new(Real::zero(), Real::zero()),
+                        &Real::one(),
+                        &CurveParameterRange2::unit(),
+                        &[],
+                        &policy,
+                    )
+                    .unwrap();
+                let Classification::Decided(contacts) = incidence else {
+                    panic!("the two transverse line/circle contacts must be decided");
+                };
+                assert_eq!(contacts.len(), 2);
+                assert_eq!(contacts[0].1, Some(RealSign::Negative));
+                assert_eq!(contacts[1].1, Some(RealSign::Positive));
+            }
         }
     }
 

@@ -32,8 +32,7 @@ use crate::curve_intersection::{
 use crate::events::{MIN_AABB_SWEEP_PAIR_COUNT, visit_aabb_pair_candidates};
 use crate::policy::resolve_certified_operation;
 use crate::rational_bezier_general::{
-    RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
-    exact_contact_point_evidence,
+    RationalBezierOverlapParameterCorrespondence2, exact_contact_point_evidence,
 };
 use crate::{
     Aabb2, ArcArcIntersection, Axis2, BezierArrangementFragment2, BezierArrangementGraph2,
@@ -2110,52 +2109,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Classification::Uncertain(_) => {}
             }
         }
-        if let BezierSubcurve2::RationalQuadratic(conic) = curve
-            && let Some(mut parameter_maps) = parallel
-                .circle_rational_quadratic_parameter_maps(
-                    arc.center(),
-                    arc.radius_squared_ref(),
-                    conic,
-                    parameters.iter().map(|(parameter, _)| parameter),
-                    &self.data.policy,
-                )
-                .map_err(|cause| self.invalid(0, cause))?
-        {
-            for (map_index, (numerator, denominator)) in parameter_maps.iter_mut().enumerate() {
-                let anchor = if map_index == 0 {
-                    conic.start()
-                } else {
-                    conic.end()
-                };
-                if let Some(contact) = certified_tangent_contacts
-                    .iter()
-                    .find(|contact| contact.point == *anchor)
-                {
-                    // Both homogeneous line coordinates in an inverse conic
-                    // chart vanish at its certified anchor contact. Remove
-                    // that common source-parameter factor by construction
-                    // before elimination instead of replaying nested radicals.
-                    if numerator.len() < 2 || denominator.len() < 2 {
-                        return Ok(Classification::Decided(None));
-                    }
-                    *numerator = crate::bezier_parameter::divide_by_linear_root(
-                        numerator,
-                        &contact.parameter,
-                    );
-                    *denominator = crate::bezier_parameter::divide_by_linear_root(
-                        denominator,
-                        &contact.parameter,
-                    );
-                }
-            }
-            let mut parameter_maps = parameter_maps
-                .into_iter()
-                .map(|(numerator, denominator)| {
-                    RationalParameterImageMap2::new(numerator, denominator, &self.data.policy)
-                })
-                .collect::<Vec<_>>();
-            let rational = RationalBezier2::try_from_subcurve(curve)
-                .map_err(|cause| self.invalid(0, cause))?;
+        let rational =
+            RationalBezier2::try_from_subcurve(curve).map_err(|cause| self.invalid(0, cause))?;
+        if matches!(
+            rational
+                .quadratic_homogeneous_controls(&self.data.policy)
+                .map_err(|cause| self.invalid(0, cause))?,
+            Classification::Decided(Some(_))
+        ) {
             let mut contacts = Vec::with_capacity(parameters.len());
             for (parallel_parameter, radial_crossing_sign) in &parameters {
                 let certified_contact = parallel_parameter.scalar().and_then(|parameter| {
@@ -2169,9 +2130,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let point = parallel
                         .point_at(exact, &self.data.policy)
                         .map_err(|cause| self.invalid(0, cause))?;
-                    // This is only a cheap finite-arc rejection. An
-                    // undecided represented point must continue through the
-                    // exact rational parameter image below.
+                    // A finite-arc rejection is optional. Unresolved scalar
+                    // coordinates retain the selected point's exact field.
                     if let Classification::Decided(point) = point
                         && arc.contains_point(&point, &self.data.policy)
                             == Classification::Decided(false)
@@ -2179,52 +2139,48 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         continue;
                     }
                 }
+                let point = certified_contact.map_or_else(
+                    || {
+                        CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new(
+                            parallel.clone(),
+                            parallel_parameter.clone(),
+                            &self.data.policy,
+                        ))
+                    },
+                    |contact| CurvePoint2::from(contact.point.clone()),
+                );
                 let other_parameter = if let Some(contact) = certified_contact
-                    && contact.point == *conic.start()
+                    && contact.point == *rational.start()
                 {
-                    Some(BezierParameter2::Exact(Real::zero()))
+                    CurveParameter2::from(Real::zero())
                 } else if let Some(contact) = certified_contact
-                    && contact.point == *conic.end()
+                    && contact.point == *rational.end()
                 {
-                    Some(BezierParameter2::Exact(Real::one()))
-                } else if certified_contact.is_some() {
-                    // Join-level tangent certificates are retained by every
-                    // minor span. A certified join endpoint that is not this
-                    // span's endpoint is outside this span by construction.
-                    continue;
+                    CurveParameter2::from(Real::one())
                 } else {
-                    let mut mapped = None;
-                    let mut uncertain = None;
-                    for parameter_map in &mut parameter_maps {
-                        match parameter_map
-                            .image(parallel_parameter)
-                            .map_err(|cause| self.invalid(0, cause))?
-                        {
-                            Classification::Decided(Some(parameter)) => {
-                                mapped = Some(parameter);
-                                break;
-                            }
-                            Classification::Decided(None) => {}
-                            Classification::Uncertain(reason) => uncertain = Some(reason),
+                    // Circle incidence already proves that this point lies on
+                    // the conic. Its homogeneous inverse stays in the retained
+                    // point field and decides the original closed unit chart;
+                    // no independent image polynomial is needed for the cut.
+                    match crate::bezier_offset::quadratic_conic_parameter_at_incident_point(
+                        &point,
+                        &rational,
+                        &self.data.policy,
+                    )
+                    .map_err(|cause| self.invalid(0, cause))?
+                    {
+                        Classification::Decided(Some(parameter)) => parameter,
+                        Classification::Decided(None) => continue,
+                        Classification::Uncertain(_) => {
+                            return Ok(Classification::Decided(None));
                         }
                     }
-                    if mapped.is_none()
-                        && let Some(reason) = uncertain
-                    {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                    mapped
                 };
-                let Some(other_parameter) = other_parameter else {
-                    continue;
-                };
-                let point =
-                    exact_contact_point_evidence(&rational, &other_parameter, &self.data.policy)
-                        .map_err(|cause| self.invalid(0, cause))?;
+                let parallel_parameter = CurveParameter2::from(parallel_parameter.clone());
                 let (first_parameter, second_parameter) = if parallel_is_first {
-                    (parallel_parameter.clone(), other_parameter)
+                    (parallel_parameter, other_parameter)
                 } else {
-                    (other_parameter, parallel_parameter.clone())
+                    (other_parameter, parallel_parameter)
                 };
                 let tangent_cross_sign = radial_crossing_sign.map(|sign| {
                     if arc.is_clockwise() ^ !parallel_is_first {
@@ -2237,10 +2193,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         sign
                     }
                 });
-                contacts.push(RegionPairContactEvidence::direct_bezier(
+                contacts.push(RegionPairContactEvidence::direct(
                     first_parameter,
                     second_parameter,
-                    point,
+                    Some(point),
                     matches!(
                         tangent_cross_sign,
                         Some(RealSign::Positive | RealSign::Negative)
@@ -2261,8 +2217,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     .iter()
                     .find(|contact| contact.parameter == *parameter)
             }) {
-                if contact.point == *arc.start() || contact.point == *arc.end() {
-                    retained_parameters.push(parameter);
+                match arc.contains_point(&contact.point, &self.data.policy) {
+                    Classification::Decided(true) => retained_parameters.push(parameter),
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
                 }
                 continue;
             }
@@ -18752,6 +18712,248 @@ mod certified_successor_tests {
             assert!(disjoint.contacts.is_empty(), "{disjoint:?}");
             assert!(disjoint.overlaps.is_empty(), "{disjoint:?}");
             assert!(disjoint.blockers.is_empty(), "{disjoint:?}");
+        }
+    }
+
+    #[test]
+    fn parallel_arc_contacts_retain_conic_parameters_across_elevation_and_reversal() {
+        // The inner parallel of (2t,t^2) starts inside the unit circle and
+        // crosses its first quadrant once, with both coordinates increasing.
+        // Its intersection parameter requires a selected algebraic root.
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(2, 1),
+        )
+        .parallel_left((Real::one() / Real::from(4_i8)).unwrap())
+        .unwrap();
+        let arc = crate::CircularArc2::try_from_center(
+            Point2::from_values(1, 0),
+            Point2::from_values(0, 1),
+            Point2::from_values(0, 0),
+            false,
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let empty = CurveRegion2::empty();
+            let context = CurveRegionBooleanContext::try_new_unary(&empty, &policy).unwrap();
+            let conic = arc
+                .rational_bezier_decomposition(&policy)
+                .unwrap()
+                .into_value()
+                .spans()[0]
+                .curve()
+                .clone();
+            // Reverse the retained chart itself: a fresh decomposition of
+            // the reversed arc chooses different rational endpoint weights.
+            let reversed = decided(
+                RationalBezier2::from(conic.clone())
+                    .reversed()
+                    .materialized_quadratic_representative(&policy)
+                    .unwrap(),
+            )
+            .unwrap();
+            let conics = [conic, reversed];
+            let mut reference: Option<(CurveParameter2, CurveParameter2, CurvePoint2)> = None;
+            for (reversed, parallel_is_first, cross) in [
+                (false, true, RealSign::Positive),
+                (false, false, RealSign::Negative),
+                (true, true, RealSign::Negative),
+                (true, false, RealSign::Positive),
+            ] {
+                let conic = conics[usize::from(reversed)].clone();
+                let elevated = RationalBezier2::from(conic.clone())
+                    .elevated_to_degree(4)
+                    .unwrap();
+                for curve in [
+                    BezierSubcurve2::RationalQuadratic(conic),
+                    BezierSubcurve2::Rational(elevated),
+                ] {
+                    let Classification::Decided(Some(result)) = context
+                        .parallel_arc_pair_result(&parallel, &curve, parallel_is_first)
+                        .unwrap()
+                    else {
+                        panic!("the exact conic contact must retain its local parameter");
+                    };
+                    assert!(result.overlaps.is_empty());
+                    assert!(result.blockers.is_empty());
+                    let [contact] = result.contacts.as_slice() else {
+                        panic!("the monotone parallel crosses the quarter circle once");
+                    };
+                    assert!(contact.certified_transverse);
+                    assert_eq!(contact.tangent_cross_sign, Some(cross));
+                    let (source, target) = if parallel_is_first {
+                        (&contact.first_parameter, &contact.second_parameter)
+                    } else {
+                        (&contact.second_parameter, &contact.first_parameter)
+                    };
+                    assert!(source.scalar().is_none());
+                    assert!(
+                        target.as_bezier_parameter().is_none(),
+                        "the conic cut must keep the original point field without global projection"
+                    );
+                    for parameter in [source, target] {
+                        for (boundary, order) in [
+                            (Real::zero(), Ordering::Greater),
+                            (Real::one(), Ordering::Less),
+                        ] {
+                            assert_eq!(
+                                parameter
+                                    .cmp_by_refinement(&boundary.into(), &policy)
+                                    .unwrap(),
+                                Classification::Decided(order)
+                            );
+                        }
+                    }
+                    let point = contact
+                        .point
+                        .as_ref()
+                        .expect("the selected point is retained");
+                    if let Some((original_source, original_target, original_point)) = &reference {
+                        assert_eq!(
+                            source.cmp_by_refinement(original_source, &policy).unwrap(),
+                            Classification::Decided(Ordering::Equal)
+                        );
+                        let expected_target = if reversed {
+                            original_target.unit_complement().unwrap()
+                        } else {
+                            original_target.clone()
+                        };
+                        assert_eq!(
+                            target.cmp_by_refinement(&expected_target, &policy).unwrap(),
+                            Classification::Decided(Ordering::Equal),
+                            "reversed={reversed}, parallel_is_first={parallel_is_first}"
+                        );
+                        assert_eq!(
+                            point.same_point(original_point, &policy),
+                            Classification::Decided(true)
+                        );
+                    } else {
+                        reference = Some((source.clone(), target.clone(), point.clone()));
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn extended_conic_retains_certified_tangency_in_its_interior() {
+        // x = 4t-2, y = -1+x^2+x^4 touches the unit circle at (0,-1)
+        // and crosses it twice above the x axis. The latter contacts keep
+        // this query on the selected-root path even though the touch is exact.
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(-2, 19),
+                Point2::from_values(-1, -17),
+                Point2::new(
+                    Real::zero(),
+                    (Real::from(41_i8) / Real::from(3_i8)).unwrap(),
+                ),
+                Point2::from_values(1, -17),
+                Point2::from_values(2, 19),
+            ],
+            vec![Real::one(); 5],
+        )
+        .unwrap();
+        let parallel = BezierParallel2::from_source(
+            crate::BezierParallelSource2::Rational(source),
+            Real::zero(),
+        );
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let point = Point2::from_values(0, -1);
+        let center = Point2::from_values(0, 0);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let incidence = decided(
+                parallel
+                    .circle_incidence(
+                        &center,
+                        &Real::one(),
+                        &CurveParameterRange2::unit(),
+                        &[(half.clone(), 2)],
+                        &policy,
+                    )
+                    .unwrap(),
+            );
+            assert_eq!(incidence.len(), 3);
+            assert!(
+                incidence
+                    .iter()
+                    .any(|(parameter, _)| parameter.scalar().is_none())
+            );
+            let base = crate::CircularArc2::try_from_center(
+                point.clone(),
+                Point2::from_values(1, 0),
+                center.clone(),
+                false,
+            )
+            .unwrap()
+            .rational_bezier_decomposition(&policy)
+            .unwrap()
+            .into_value()
+            .spans()[0]
+                .curve()
+                .clone();
+            let circle = Arc::new(crate::rational_bezier::RationalQuadraticCircle2 {
+                center: center.clone(),
+                radius_squared: Real::one(),
+                tangent_contacts: Some(Arc::from([
+                    crate::rational_bezier::RationalQuadraticCircleTangentContact2::Parallel(
+                        crate::rational_bezier::RationalQuadraticParallelCircleContact2 {
+                            parallel: parallel.clone(),
+                            parameter: half.clone(),
+                            point: point.clone(),
+                            eliminant_root_multiplicity: 2,
+                        },
+                    ),
+                ])),
+            });
+            let curve = RationalBezier2::from(base.clone().with_retained_conic_provenance(
+                base.retained_implicit_quadratic_conic().cloned(),
+                Some(circle),
+            ));
+            // The old start is now the interior parameter 1/3. The support
+            // certificate survives extension, but cannot decide span ownership.
+            let extended = decided(
+                curve
+                    .subcurve_between_affine_exact(&(-half.clone()), &Real::one(), &policy)
+                    .unwrap(),
+            );
+            assert!(extended.retained_circular_conic().is_some());
+            let empty = CurveRegion2::empty();
+            let context = CurveRegionBooleanContext::try_new_unary(&empty, &policy).unwrap();
+            let result = decided(
+                context
+                    .parallel_arc_pair_result(&parallel, &BezierSubcurve2::Rational(extended), true)
+                    .unwrap(),
+            )
+            .expect("the extended quadratic chart must decide its finite contacts");
+            assert!(result.overlaps.is_empty());
+            assert!(result.blockers.is_empty());
+            let [contact] = result.contacts.as_slice() else {
+                panic!("only the interior tangency belongs to the extended conic");
+            };
+            assert!(!contact.certified_transverse);
+            assert_eq!(contact.tangent_cross_sign, Some(RealSign::Zero));
+            for (actual, expected) in [
+                (&contact.first_parameter, half.clone()),
+                (
+                    &contact.second_parameter,
+                    (Real::one() / Real::from(3_i8)).unwrap(),
+                ),
+            ] {
+                assert_eq!(
+                    actual.cmp_by_refinement(&expected.into(), &policy).unwrap(),
+                    Classification::Decided(Ordering::Equal)
+                );
+            }
+            assert_eq!(
+                contact
+                    .point
+                    .as_ref()
+                    .unwrap()
+                    .same_point(&point.clone().into(), &policy),
+                Classification::Decided(true)
+            );
         }
     }
 

@@ -59,11 +59,11 @@ pub(crate) struct RationalQuadraticCircle2 {
 }
 
 /// Construction evidence for a tangent contact between a circular join and
-/// an analytic parallel at one endpoint of that join. The corresponding
-/// circle-incidence eliminant has the represented parameter as a root of
-/// multiplicity at least two. Every minor conic span in the join retains the
-/// certificate: the contact is on that span exactly when its point is one of
-/// the span endpoints.
+/// an analytic parallel, initially at one endpoint of that join. The
+/// corresponding circle-incidence eliminant has the represented parameter
+/// as a root of multiplicity at least two. The certificate belongs to the
+/// supporting circle and survives restriction and extension. Each current
+/// conic chart must independently decide whether it contains the contact.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct RationalQuadraticParallelCircleContact2 {
     pub(crate) parallel: crate::BezierParallel2,
