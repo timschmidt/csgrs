@@ -309,6 +309,77 @@ pub(crate) enum CurveOverlapCorrespondence2 {
 }
 
 impl CurveOverlapCorrespondence2 {
+    /// Transports one exact parameter through the retained correspondence.
+    /// Both curve intersection and family selection use this same authority.
+    pub(crate) fn map_parameter(
+        &self,
+        parameter: &CurveParameter2,
+        forward: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
+        match self {
+            Self::Rational { source, swapped } => {
+                if forward != *swapped {
+                    source.source.map_first_to_second_region_parameter(
+                        parameter,
+                        &source.first_range,
+                        &source.second_range,
+                        policy,
+                    )
+                } else {
+                    source.source.map_second_to_first_region_parameter(
+                        parameter,
+                        &source.first_range,
+                        &source.second_range,
+                        policy,
+                    )
+                }
+            }
+            Self::ParameterComponent { source, swapped } => source.map_curve_parameter(
+                if forward != *swapped {
+                    hypersolve::CurveResultantParameter::First
+                } else {
+                    hypersolve::CurveResultantParameter::Second
+                },
+                parameter,
+                policy,
+            ),
+            Self::Circle { source, swapped } => {
+                source.map_parameter(parameter, forward != *swapped, policy)
+            }
+            Self::ChordRational {
+                source,
+                chord_first,
+            } => {
+                if forward == *chord_first {
+                    source.source_parameter_at_chord_parameter(
+                        parameter
+                            .as_algebraic_chord()
+                            .ok_or(CurveError::InvalidCurveParameter)?,
+                        policy,
+                    )
+                } else {
+                    Ok(source
+                        .chord_parameter_at_source_parameter(parameter, policy)?
+                        .map(|parameter| parameter.map(CurveParameter2::from_algebraic_chord)))
+                }
+            }
+            Self::Chords { first, second, .. } => {
+                let target = if forward { second } else { first };
+                let parameter = parameter
+                    .as_algebraic_chord()
+                    .ok_or(CurveError::InvalidCurveParameter)?;
+                target
+                    .parameter_at_certified_support_point(parameter.point().clone(), policy)
+                    .map(|parameter| {
+                        Classification::Decided(Some(CurveParameter2::from_algebraic_chord(
+                            parameter,
+                        )))
+                    })
+            }
+        }
+    }
+
     /// The native line or shared-lineage kernel has certified an affine map.
     fn affine(first: &ParamRange, second: &ParamRange) -> Self {
         Self::Rational {

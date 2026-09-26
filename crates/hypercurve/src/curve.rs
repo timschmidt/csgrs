@@ -5703,6 +5703,7 @@ struct FilletCenters2 {
     first: Option<FilletCenterWitness2>,
     second: Option<FilletCenterWitness2>,
     overflow: Vec<FilletCenterWitness2>,
+    components: Vec<crate::bezier_offset::CurveParameterComponent2>,
     coincident: bool,
     outside_domain: bool,
 }
@@ -5789,9 +5790,8 @@ fn solve_carrier_fillet_corner(
                     policy,
                 )?;
                 saw_outside_domain |= centers.outside_domain;
-                if centers.coincident {
+                if centers.coincident || !centers.components.is_empty() {
                     saw_degenerate = true;
-                    continue;
                 }
                 for center in centers.iter() {
                     if !previous.accepts_offset_contact(
@@ -6888,7 +6888,7 @@ fn fillet_offset_centers(
             };
             let previous_curve_range = previous_source.curve_parameter_range();
             let next_curve_range = next_source.curve_parameter_range();
-            let (intersections, positive_dimensional_centers) = {
+            let (intersections, components) = {
                 let expand = |range: &CurveParameterRange2,
                               incident: &crate::bezier_offset::BezierParallelIncidentDomain2,
                               family| {
@@ -6928,7 +6928,7 @@ fn fillet_offset_centers(
                 let incident = match (if identical_contact_curves {
                     previous.self_intersections_in_domain(
                         parameter_domains,
-                        crate::bezier_offset::ParameterComponentQuery2::Existence(
+                        crate::bezier_offset::ParameterComponentQuery2::AllComponents(
                             normal_constraints,
                         ),
                         policy,
@@ -6937,7 +6937,7 @@ fn fillet_offset_centers(
                     previous.parallel_intersections_in_domain(
                         next,
                         parameter_domains,
-                        crate::bezier_offset::ParameterComponentQuery2::Existence(
+                        crate::bezier_offset::ParameterComponentQuery2::AllComponents(
                             normal_constraints,
                         ),
                         policy,
@@ -6964,11 +6964,38 @@ fn fillet_offset_centers(
                     crate::UncertaintyReason::Predicate,
                 ));
             }
-            centers.coincident |= positive_dimensional_centers;
+            centers.components.extend(components);
             if intersections.contacts().is_empty() {
                 return Ok(centers);
             }
-            for contact in intersections.contacts() {
+            'contacts: for contact in intersections.contacts() {
+                // Closed component boundaries belong to the retained family.
+                // Keep only genuinely isolated contacts in the finite list.
+                for component in &centers.components {
+                    match component
+                        .contains_pair(
+                            contact.first_parameter(),
+                            contact.second_parameter(),
+                            policy,
+                        )
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Fillet,
+                                previous_family,
+                                cause,
+                            )
+                        })? {
+                        Classification::Decided(true) => continue 'contacts,
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                previous_family,
+                                reason,
+                            ));
+                        }
+                    }
+                }
                 let point = analytic_parallel_point_evidence(
                     previous,
                     &contact.first_parameter().clone(),
@@ -12753,9 +12780,26 @@ mod tests {
                 )
                 .expect("the exact common center support must classify");
                 assert!(
-                    centers.coincident,
+                    !centers.components.is_empty(),
                     "different original offsets have a noncollapsed diagonal center family"
                 );
+                assert!(centers.components.iter().any(|component| {
+                    component
+                        .contains_pair(&parameter, &parameter, &policy)
+                        .unwrap()
+                        == Classification::Decided(true)
+                }));
+                for outside in [Real::zero(), Real::one()] {
+                    let outside = CurveParameter2::from(outside);
+                    for component in &centers.components {
+                        assert_eq!(
+                            component
+                                .contains_pair(&outside, &outside, &policy)
+                                .unwrap(),
+                            Classification::Decided(false)
+                        );
+                    }
+                }
             }
         }
     }
@@ -13985,7 +14029,15 @@ mod tests {
                 &policy,
             )
             .expect("a selected positive-dimensional center component must clip locally");
-            assert!(centers.coincident);
+            assert!(!centers.components.is_empty());
+            for parameter in [range.start(), range.end()] {
+                assert!(centers.components.iter().any(|component| {
+                    component
+                        .contains_pair(parameter, parameter, &policy)
+                        .unwrap()
+                        == Classification::Decided(true)
+                }));
+            }
             assert!(centers.iter().next().is_none());
         }
     }

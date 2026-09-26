@@ -1500,10 +1500,6 @@ impl Pair<'_> {
         overlap: &crate::RationalBezierIntersectionOverlap2,
         correspondence: CurveOverlapCorrespondence2,
         swapped: bool,
-        mut map: impl FnMut(
-            &CurveParameter2,
-            bool,
-        ) -> CurveResult<Classification<Option<CurveParameter2>>>,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
         let family = self.first.support.family();
@@ -1550,7 +1546,11 @@ impl Pair<'_> {
                 if !contains(original, parameter, span.support.family(), self.policy)? {
                     continue;
                 }
-                let Some(mapped) = decided(map(parameter, lower_forward), family)? else {
+                let Some(mapped) = decided(
+                    correspondence.map_parameter(parameter, forward, self.policy),
+                    family,
+                )?
+                else {
                     continue;
                 };
                 if !contains(&other.range, &mapped, other.support.family(), self.policy)? {
@@ -1598,17 +1598,6 @@ impl Pair<'_> {
                     swapped,
                 },
                 swapped,
-                |parameter, forward| {
-                    source.map_curve_parameter(
-                        if forward {
-                            hypersolve::CurveResultantParameter::First
-                        } else {
-                            hypersolve::CurveResultantParameter::Second
-                        },
-                        parameter,
-                        self.policy,
-                    )
-                },
                 result,
             )?;
         }
@@ -1639,23 +1628,6 @@ impl Pair<'_> {
                 swapped,
             },
             swapped,
-            |parameter, forward| {
-                if forward {
-                    source.source.map_first_to_second_region_parameter(
-                        parameter,
-                        &source.first_range,
-                        &source.second_range,
-                        self.policy,
-                    )
-                } else {
-                    source.source.map_second_to_first_region_parameter(
-                        parameter,
-                        &source.first_range,
-                        &source.second_range,
-                        self.policy,
-                    )
-                }
-            },
             result,
         )
     }
@@ -1946,7 +1918,7 @@ impl Pair<'_> {
         second: &crate::BezierParallel2,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
-        let (evidence, positive_dimensional) = decided(
+        let (evidence, components) = decided(
             first.parallel_intersections_in_domain(
                 second,
                 [self.first, self.second]
@@ -1957,7 +1929,7 @@ impl Pair<'_> {
             self.first.support.family(),
         )?
         .into_parts();
-        debug_assert!(!positive_dimensional, "finite pairs retain every component");
+        debug_assert!(components.is_empty(), "finite pairs retain every component");
         self.parallel_evidence(first, second, &evidence, result)
     }
 
@@ -1987,7 +1959,7 @@ impl Pair<'_> {
                 return self.parallel_evidence(source, source, &evidence, result);
             }
         }
-        let (evidence, positive_dimensional) = decided(
+        let (evidence, components) = decided(
             source.self_intersections_in_domain(
                 [crate::bezier_split::CurveParameterDomain2::new(&self.first.range, None); 2],
                 crate::bezier_offset::ParameterComponentQuery2::RetainFinite,
@@ -1997,7 +1969,7 @@ impl Pair<'_> {
         )?
         .into_parts();
         debug_assert!(
-            !positive_dimensional,
+            components.is_empty(),
             "finite self queries retain their components"
         );
         self.parallel_evidence(source, source, &evidence, result)
