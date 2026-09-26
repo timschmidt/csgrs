@@ -302,7 +302,9 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
 ///
 /// Low-degree roots come directly from the coefficients, independent of the
 /// isolating interval's width. For higher degrees, approximation only proposes
-/// a rational factor; exact division and STRICT interval validation prove it.
+/// a rational linear or quadratic factor; exact division and STRICT interval
+/// validation prove it. Quadratic proposals use both zero and the polynomial
+/// root mean as their center, retaining translated factors without expansion.
 /// A validated genuinely rational witness retains its monic linear equation
 /// so later quotient reduction can eliminate that selected source entirely.
 pub fn compact_algebraic_root_low_degree_witness(
@@ -350,22 +352,55 @@ pub fn compact_algebraic_root_low_degree_witness(
         return None;
     }
     let midpoint = lower / 2.0 + upper / 2.0;
-    let square = midpoint * midpoint;
-    for denominator in 1_i64..=64 {
-        let numerator = (square * denominator as f64).round();
-        if !numerator.is_finite() || numerator < 0.0 || numerator > i64::MAX as f64 {
+    // The mean of the polynomial's roots is a cheap second origin. This
+    // makes the existing pure-quadratic proposal work for translated even
+    // eliminants too, without enumerating arbitrary pairs of coefficients.
+    // A proposal never supplies evidence: exact division and selected-root
+    // validation below still prove the factor and its owned branch.
+    let mut centers = vec![Real::zero()];
+    let degree = root.polynomial_coefficients.len() - 1;
+    let leading = &root.polynomial_coefficients[degree];
+    let next = &root.polynomial_coefficients[degree - 1];
+    if leading.exact_rational_ref().is_some()
+        && next.exact_rational_ref().is_some()
+        && let Ok(center) = -next / (Real::from(degree as u128) * leading)
+        && center
+            .exact_rational_ref()
+            .is_some_and(|value| !value.is_zero())
+    {
+        centers.push(center);
+    }
+    for center in centers {
+        let Some(center_approximation) = center.to_f64_lossy().filter(|value| value.is_finite())
+        else {
             continue;
-        }
-        let rational = hyperreal::Rational::fraction(numerator as i64, denominator as u64).ok()?;
-        let factor = vec![-Real::new(rational), Real::zero(), Real::one()];
-        if !exact_polynomial_divides(&root.polynomial_coefficients, &factor) {
-            continue;
-        }
-        let positive = (-factor[0].clone()).sqrt().ok()?;
-        if let Some(compact) =
-            compact_selected_root_from_candidates(root, &factor, [-positive.clone(), positive])
-        {
-            return Some(compact);
+        };
+        let displaced = midpoint - center_approximation;
+        let square = displaced * displaced;
+        for denominator in 1_i64..=64 {
+            let numerator = (square * denominator as f64).round();
+            if !numerator.is_finite() || numerator < 0.0 || numerator > i64::MAX as f64 {
+                continue;
+            }
+            let rational =
+                hyperreal::Rational::fraction(numerator as i64, denominator as u64).ok()?;
+            let radius_squared = Real::new(rational);
+            let factor = vec![
+                &center * &center - &radius_squared,
+                Real::from(-2) * &center,
+                Real::one(),
+            ];
+            if !exact_polynomial_divides(&root.polynomial_coefficients, &factor) {
+                continue;
+            }
+            let radius = radius_squared.sqrt().ok()?;
+            if let Some(compact) = compact_selected_root_from_candidates(
+                root,
+                &factor,
+                [&center - &radius, &center + radius],
+            ) {
+                return Some(compact);
+            }
         }
     }
     None
@@ -1353,6 +1388,82 @@ mod tests {
         let mut nonfactor = root;
         nonfactor.polynomial_coefficients[0] = real(4);
         assert!(compact_algebraic_root_low_degree_witness(&nonfactor).is_none());
+    }
+
+    #[test]
+    fn translated_quadratic_compaction_preserves_selected_factor_and_ownership() {
+        let q = |n, d| (real(n) / real(d)).unwrap();
+        // Four different quadratic factors share a translated center. The
+        // original degree-eight eliminant must not follow the selected root
+        // into every later tensor product.
+        for center in [q(1, 2), q(-7, 3)] {
+            let factor = |radius_squared: &Real| {
+                vec![
+                    &center * &center - radius_squared,
+                    real(-2) * &center,
+                    Real::one(),
+                ]
+            };
+            let mut polynomial = vec![Real::one()];
+            for radius_squared in [q(3, 16), q(5, 16), q(7, 16), q(11, 16)] {
+                let next = factor(&radius_squared);
+                let mut product = vec![Real::zero(); polynomial.len() + next.len() - 1];
+                for (i, a) in polynomial.iter().enumerate() {
+                    for (j, b) in next.iter().enumerate() {
+                        product[i + j] += a * b;
+                    }
+                }
+                polynomial = product;
+            }
+            for branch in [-1, 1] {
+                let (lo, hi) = if branch < 0 {
+                    (q(-7, 16), q(-3, 8))
+                } else {
+                    (q(3, 8), q(7, 16))
+                };
+                let mut root = AlgebraicRootRepresentation {
+                    constraint_index: 7,
+                    symbol: SymbolId(12),
+                    interval_index: usize::from(branch > 0),
+                    polynomial_coefficients: polynomial.clone(),
+                    interval: IsolatedRootInterval {
+                        lower: &center + lo,
+                        upper: &center + hi,
+                        exact_root: None,
+                        distinct_root_count: 1,
+                    },
+                    validation: AlgebraicRootValidationReport {
+                        status: AlgebraicRootValidationStatus::Valid,
+                        message: None,
+                    },
+                };
+                let compact = compact_algebraic_root_low_degree_witness(&root)
+                    .expect("the translated factor must be recovered with exact evidence");
+                assert_eq!(compact.polynomial_coefficients, factor(&q(3, 16)));
+                let witness = &center + real(branch) * q(3, 16).sqrt().unwrap();
+                assert_eq!(compact.exact_point_witness(), Some(&witness));
+                assert_eq!(compact.constraint_index, root.constraint_index);
+                assert_eq!(compact.symbol, root.symbol);
+                assert_eq!(compact.interval_index, root.interval_index);
+                assert_eq!(
+                    validate_algebraic_root_representation(&compact, PredicatePolicy::STRICT)
+                        .status,
+                    AlgebraicRootValidationStatus::Valid,
+                );
+                let mut perturbed = root.clone();
+                perturbed.polynomial_coefficients[0] += q(1, 1_048_576);
+                assert_eq!(
+                    validate_algebraic_root_representation(&perturbed, PredicatePolicy::STRICT)
+                        .status,
+                    AlgebraicRootValidationStatus::Valid,
+                );
+                assert!(compact_algebraic_root_low_degree_witness(&perturbed).is_none());
+                // The same root is not owned when it is only the excluded
+                // lower endpoint of a non-singleton isolator.
+                root.interval.lower = witness;
+                assert!(compact_algebraic_root_low_degree_witness(&root).is_none());
+            }
+        }
     }
 
     fn sum_relation(count: usize, constant: Real) -> DenseTensorPolynomial {
