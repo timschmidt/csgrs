@@ -12,7 +12,6 @@ use crate::bezier_offset::{
     BezierAlgebraicChordParallelIntersections2, BezierAlgebraicChordParameter2,
     BezierAlgebraicChordRationalIntersections2, BezierAlgebraicChordRationalOverlap2,
     BezierAlgebraicCuspSemicircleRetainedChordContact2,
-    BezierAlgebraicCuspSemicircleRetainedChordIntersections2,
     BezierAlgebraicCuspSemicircleRetainedParallelContact2,
     BezierAlgebraicCuspSemicircleSelectedFiberContact2,
     BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2, BezierParallelRationalComponent2,
@@ -2106,26 +2105,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             parameters.push((parameter, crossing));
         }
-        if parameters
-            .iter()
-            .all(|(parameter, _)| parameter.scalar().is_some())
-        {
-            match self.parallel_exact_parameter_pair_result(
-                parallel,
-                curve,
-                parameters
-                    .iter()
-                    .map(|(parameter, _)| parameter.clone())
-                    .collect(),
-                parallel_is_first,
-            )? {
-                Classification::Decided(Some(result)) => {
-                    return Ok(Classification::Decided(Some(result)));
-                }
-                Classification::Decided(None) => {}
-                Classification::Uncertain(_) => {}
-            }
-        }
+        // The incidence result already owns radial crossing evidence, including
+        // tangency. Use the same conic inverse for represented and selected
+        // parameters instead of rebuilding scalar point/tangent intersections.
         let rational =
             RationalBezier2::try_from_subcurve(curve).map_err(|cause| self.invalid(0, cause))?;
         if matches!(
@@ -2150,8 +2132,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     // A finite-arc rejection is optional. Unresolved scalar
                     // coordinates retain the selected point's exact field.
                     if let Classification::Decided(point) = point
-                        && arc.contains_sweep_point(&point, &self.data.policy)
-                            == Classification::Decided(false)
+                        && self.data.policy.bounded_exact_predicate_pass(|| {
+                            arc.contains_sweep_point(&point, &self.data.policy)
+                        }) == Classification::Decided(false)
                     {
                         continue;
                     }
@@ -2333,7 +2316,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 };
                 let cross = parallel_derivative.dx() * other_derivative.dy()
                     - parallel_derivative.dy() * other_derivative.dx();
-                let parallel_cross_other = real_sign(&cross, &self.data.policy);
+                // This is an optional transverse hint. An unresolved exact
+                // zero already means no hint; consuming an approximate zero
+                // would unnecessarily weaken all later retained contacts.
+                let parallel_cross_other = self
+                    .data
+                    .policy
+                    .bounded_exact_predicate_pass(|| real_sign(&cross, &self.data.policy));
                 let tangent_cross_sign = parallel_cross_other.and_then(|sign| match sign {
                     RealSign::Positive | RealSign::Negative => Some(if parallel_is_first {
                         sign
@@ -4684,12 +4673,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             });
                         }
                     };
-                    let BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(
-                        mut contacts,
-                    ) = intersections
-                    else {
+                    let mut contacts = intersections;
+                    if contacts.is_empty() {
                         return Ok(RegionPairResult::empty());
-                    };
+                    }
                     if let Some(chord_at_start) = certified_chord_endpoint_incidence {
                         // Boundary-loop seeding already owns this exact
                         // adjacent vertex. The circle/chord solve was still
@@ -6005,6 +5992,39 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut transition_candidates = Vec::<Option<TransitionContactCandidate>>::new();
         let mut reclassification_vertices = Vec::<bool>::new();
         seed_loop_topology_vertices(&self.data.carriers, &mut events, &mut next_topology_vertex);
+        for (carrier_index, carrier) in self.data.carriers.iter().enumerate() {
+            let CurveSupport2::Parallel(parallel) = &carrier.geometry else {
+                continue;
+            };
+            if real_sign(parallel.distance(), &self.data.policy) == Some(RealSign::Zero) {
+                continue;
+            }
+            let analysis = match parallel
+                .singularity_analysis(&carrier.range(), &self.data.policy)
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(analysis) => analysis,
+                Classification::Uncertain(reason) => {
+                    return Err(self.blocked(carrier_index, reason));
+                }
+            };
+            for cusp in analysis.parallel_cusps() {
+                let parameter = CurveParameter2::from(cusp.clone());
+                if parameter_location_in_carrier(&parameter, carrier, &self.data.policy)?
+                    != CarrierParameterLocation::Interior
+                {
+                    continue;
+                }
+                // A cusp is a branch boundary even when no other carrier
+                // meets it. Later normal offsets and fillet center loci need
+                // one derivative orientation on each open arrangement edge.
+                events[carrier_index].push(CarrierEvent {
+                    parameter,
+                    topology_vertex: Some(next_topology_vertex),
+                });
+                next_topology_vertex += 1;
+            }
+        }
         contact_vertex_counts.resize(next_topology_vertex, 0);
         transition_candidates.resize(next_topology_vertex, None);
         reclassification_vertices.resize(next_topology_vertex, false);
@@ -17409,9 +17429,8 @@ mod certified_successor_tests {
                 &policy,
             );
             let contacts = |circle: &BezierAlgebraicCuspSemicircle2| -> [CurveParameter2; 2] {
-                let Classification::Decided(
-                    BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
-                ) = circle.chord_intersections(&chord, &policy).unwrap()
+                let Classification::Decided(contacts) =
+                    circle.chord_intersections(&chord, &policy).unwrap()
                 else {
                     panic!("both independent circle contacts must be retained");
                 };
@@ -18786,6 +18805,82 @@ mod certified_successor_tests {
                             })
                         );
                     }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn represented_parallel_arc_tangencies_retain_certified_crossing_evidence() {
+        let parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let arc = crate::CircularArc2::try_from_center(
+            Point2::from_values(0, 1),
+            Point2::from_values(1, 2),
+            Point2::from_values(0, 2),
+            false,
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let curve = RationalBezier2::from(
+                arc.rational_bezier_decomposition(&policy)
+                    .unwrap()
+                    .into_value()
+                    .spans()[0]
+                    .curve()
+                    .clone(),
+            );
+            for reversed in [false, true] {
+                for parallel_is_first in [false, true] {
+                    let curve = BezierSubcurve2::Rational(if reversed {
+                        curve.reversed()
+                    } else {
+                        curve.clone()
+                    });
+                    let outcome = crate::policy::resolve_certified_value(&policy, |policy| {
+                        let empty = CurveRegion2::empty();
+                        let context =
+                            CurveRegionBooleanContext::try_new_unary(&empty, policy).unwrap();
+                        decided(
+                            context
+                                .parallel_arc_pair_result(
+                                    &parallel,
+                                    &CurveParameterRange2::unit(),
+                                    &curve,
+                                    parallel_is_first,
+                                )
+                                .unwrap(),
+                        )
+                        .expect("the represented tangent contact is exact")
+                    });
+                    assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+                    assert!(outcome.value.overlaps.is_empty());
+                    assert!(outcome.value.blockers.is_empty());
+                    let [contact] = outcome.value.contacts.as_slice() else {
+                        panic!("the horizontal parallel touches this circle once");
+                    };
+                    assert!(!contact.certified_transverse);
+                    assert_eq!(contact.tangent_cross_sign, Some(RealSign::Zero));
+                    let (source, circle) = if parallel_is_first {
+                        (&contact.first_parameter, &contact.second_parameter)
+                    } else {
+                        (&contact.second_parameter, &contact.first_parameter)
+                    };
+                    assert_eq!(
+                        source
+                            .cmp_by_refinement(&Real::zero().into(), &policy)
+                            .unwrap(),
+                        Classification::Decided(Ordering::Equal)
+                    );
+                    assert_eq!(
+                        circle
+                            .cmp_by_refinement(&Real::from(u8::from(reversed)).into(), &policy)
+                            .unwrap(),
+                        Classification::Decided(Ordering::Equal)
+                    );
                 }
             }
         }
@@ -22281,6 +22376,99 @@ mod certified_successor_tests {
                     contact.first_parameter() == expected.0
                         && contact.second_parameter() == expected.1
                 }));
+            }
+        }
+    }
+
+    #[test]
+    fn selected_parallel_arrangement_splits_interior_cusps() {
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(-1, 1),
+            Point2::from_values(0, -1),
+            Point2::from_values(1, 1),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let range = CurveParameterRange2::unit();
+            let analysis = decided(parallel.singularity_analysis(&range, &policy).unwrap());
+            assert!(analysis.source_is_regular());
+            assert_eq!(analysis.parallel_cusps().len(), 2);
+            let points = [Real::zero(), Real::one()].map(|parameter| {
+                CurvePoint2::from(decided(parallel.point_at(&parameter, &policy).unwrap()))
+            });
+            let fragment = CurveSupport2::Parallel(parallel.clone())
+                .restrict_certified(range, Some(points.clone()), false, &policy)
+                .unwrap();
+            let chord = BezierSplitFragment2::AlgebraicChord(decided(
+                crate::BezierAlgebraicChord2::try_new(
+                    points[1].clone(),
+                    points[0].clone(),
+                    &policy,
+                )
+                .unwrap(),
+            ));
+            for reversed in [false, true] {
+                let mut fragments = vec![fragment.clone(), chord.clone()];
+                if reversed {
+                    fragments = fragments
+                        .into_iter()
+                        .rev()
+                        .map(|fragment| fragment.reversed().unwrap())
+                        .collect();
+                }
+                let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap();
+                let region = CurveRegion2::try_new_with_loop_topology(
+                    vec![boundary],
+                    vec![CurveRegionLoopRole::Material],
+                    vec![FillRule::NonZero],
+                    vec![if reversed {
+                        crate::CurveBoundaryInteriorSide2::Right
+                    } else {
+                        crate::CurveBoundaryInteriorSide2::Left
+                    }],
+                )
+                .unwrap();
+                let context = CurveRegionBooleanContext::try_new_unary(&region, &policy).unwrap();
+                let topology = context.build_split_topology().unwrap();
+                let mut cusp_endpoint_visits = 0;
+                for piece in topology.split_fragments.iter().flatten() {
+                    let CurveSupport2::Parallel(source) =
+                        CurveSupport2::from_fragment(&piece.fragment)
+                    else {
+                        continue;
+                    };
+                    let range = piece.fragment.curve_region_parameter_range();
+                    let analysis = decided(source.singularity_analysis(&range, &policy).unwrap());
+                    for cusp in analysis.parallel_cusps() {
+                        let cusp = CurveParameter2::from(cusp.clone());
+                        assert!(
+                            [range.start(), range.end()].into_iter().any(|endpoint| {
+                                cusp.same_value(endpoint, &policy).unwrap()
+                                    == Classification::Decided(true)
+                            }),
+                            "an arrangement edge must not hide an interior offset cusp"
+                        );
+                        cusp_endpoint_visits += 1;
+                    }
+                }
+                assert_eq!(
+                    cusp_endpoint_visits, 4,
+                    "both cusp branches retain their endpoint evidence"
+                );
+                let normalized = region.regularized_region(&policy).unwrap();
+                assert_eq!(normalized.certainty, crate::CurveCertainty::Certified);
+                assert!(!normalized.value.is_empty());
+                let expanded = normalized
+                    .value
+                    .offset(
+                        (Real::one() / Real::from(64)).unwrap(),
+                        &crate::OffsetCornerStyle2::Round,
+                        &policy,
+                    )
+                    .unwrap();
+                assert_eq!(expanded.certainty, crate::CurveCertainty::Certified);
+                assert!(!expanded.value.is_empty());
             }
         }
     }

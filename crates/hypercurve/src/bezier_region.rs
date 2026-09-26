@@ -44,9 +44,9 @@ use crate::classify::LineSide;
 use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::curve::RetainedFilletRadialFrame2;
 use crate::curve::{
-    CornerPlacement2, CornerReplacement2, CornerTrimCut2, RetainedFilletFrame2,
-    compact_optional_corner_solutions, exact_corner_carrier, solve_exact_chamfer_corner,
-    solve_exact_fillet_corner, try_map_corner_solutions, validate_corner_design_value,
+    CornerPlacement2, CornerTrimCut2, RetainedFilletFrame2, compact_optional_corner_solutions,
+    exact_corner_carrier, solve_exact_chamfer_corner, solve_exact_fillet_corner,
+    try_map_corner_solutions, validate_corner_design_value,
 };
 use crate::curve_support::CurveSupport2;
 use crate::policy::{
@@ -2661,7 +2661,7 @@ fn retained_corner_fragment_extension(
     fragment: &BezierSplitFragment2,
     parameter: CurveParameter2,
     cut_point: &CurvePoint2,
-    replacement: Option<&CornerReplacement2>,
+    replacement: Option<&BezierSplitFragment2>,
     keep_before_cut: bool,
     operation: CurveOperation2,
     policy: &CurveContext,
@@ -2681,18 +2681,8 @@ fn retained_corner_fragment_extension(
         );
     }
     if let Some(replacement) = replacement {
-        let curve = match replacement {
-            CornerReplacement2::Curve(curve) => curve,
-            CornerReplacement2::AnalyticParallel { fragment, .. } => {
-                return Ok(vec![BezierSplitFragment2::AnalyticParallel(
-                    fragment.clone(),
-                )]);
-            }
-            CornerReplacement2::SelectedFiber { fragment, .. } => {
-                return Ok(vec![BezierSplitFragment2::SelectedFiber(
-                    fragment.as_ref().clone(),
-                )]);
-            }
+        let BezierSplitFragment2::Materialized { curve, .. } = replacement else {
+            return Ok(vec![replacement.clone()]);
         };
         let parameter = parameter.as_bezier_parameter().cloned().ok_or_else(|| {
             ExactCurveError::blocked(
@@ -3272,7 +3262,7 @@ fn retained_corner_fragment_trim(
 /// Complementary cells extend the retained source; authored cells stand alone.
 fn retained_circular_cut_fragments(
     extension_source: Option<&[BezierSplitFragment2]>,
-    spans: &[RationalQuadraticBezier2],
+    spans: &[RationalBezier2],
     span_index: usize,
     parameter: &CurveParameter2,
     point: &CurvePoint2,
@@ -3283,7 +3273,7 @@ fn retained_circular_cut_fragments(
     let materialized_span = |index: usize| BezierSplitFragment2::Materialized {
         start: BezierParameter2::Exact(Real::zero()),
         end: BezierParameter2::Exact(Real::one()),
-        curve: BezierSubcurve2::RationalQuadratic(spans[index].clone()),
+        curve: BezierSubcurve2::Rational(spans[index].clone()),
     };
     let partial = match (keep_before_cut, endpoint) {
         (true, Some(BezierEndpoint::End)) | (false, Some(BezierEndpoint::Start)) => {
@@ -3308,7 +3298,7 @@ fn retained_circular_cut_fragments(
             };
             Some(BezierSplitFragment2::SelectedFiber(
                 crate::bezier_split::BezierSelectedFiberFragment2::new(
-                    BezierSelectedFiberSource2::Rational(RationalBezier2::from(span.clone())),
+                    BezierSelectedFiberSource2::Rational(span.clone()),
                     CurveParameterRange2::new_validated(start, end),
                     start_point,
                     end_point,
@@ -3353,10 +3343,8 @@ fn canonicalize_retained_corner_materialization(
 /// Retains the single source interval between two cuts on one closed carrier.
 /// The next cut is the interval's traversal start and the previous cut is its
 /// traversal end. Interior analytic cuts preserve their global parameter
-/// authority. Exterior cuts on native and analytic carriers are both mapped
-/// onto one finite pole-free envelope before this function runs, so the second
-/// cut is never mistaken for a parameter of an independently reparameterized
-/// subcurve.
+/// authority. Exterior cuts retain one certified pole-free source interval,
+/// so both point witnesses and every later query keep the same parameter chart.
 fn retained_corner_fragment_between_cuts(
     fragment: &BezierSplitFragment2,
     previous_cut: &CornerTrimCut2,
@@ -3365,8 +3353,8 @@ fn retained_corner_fragment_between_cuts(
     policy: &CurveContext,
 ) -> ExactCurveResult<BezierSplitFragment2> {
     match (
-        previous_cut.replacement.as_ref(),
-        next_cut.replacement.as_ref(),
+        previous_cut.replacement.as_deref(),
+        next_cut.replacement.as_deref(),
     ) {
         (Some(previous), Some(next)) if previous != next => {
             return Err(curve_region_edit_error(
@@ -3376,15 +3364,10 @@ fn retained_corner_fragment_between_cuts(
                 ),
             ));
         }
-        (Some(CornerReplacement2::SelectedFiber { fragment, .. }), _)
-        | (_, Some(CornerReplacement2::SelectedFiber { fragment, .. })) => {
-            return Ok(BezierSplitFragment2::SelectedFiber(
-                fragment.as_ref().clone(),
-            ));
-        }
-        (Some(CornerReplacement2::AnalyticParallel { fragment, .. }), _)
-        | (_, Some(CornerReplacement2::AnalyticParallel { fragment, .. })) => {
-            return Ok(BezierSplitFragment2::AnalyticParallel(fragment.clone()));
+        (Some(replacement), _) | (_, Some(replacement))
+            if !matches!(replacement, BezierSplitFragment2::Materialized { .. }) =>
+        {
+            return Ok(replacement.clone());
         }
         _ => {}
     }
@@ -3473,7 +3456,7 @@ fn retained_corner_fragment_between_cuts(
         return Err(curve_region_edit_error(
             operation,
             CurveError::Topology(
-                "a selected exterior interval reached reconstruction without its canonical finite envelope"
+                "a selected exterior interval reached reconstruction without its certified source range"
                     .into(),
             ),
         ));
@@ -3689,107 +3672,25 @@ fn retained_corner_fragment_between_cuts(
         .map_err(|cause| curve_region_edit_error(operation, cause))
 }
 
-#[derive(Clone, Copy)]
-enum RetainedCornerExtensionCarrier2<'a> {
-    Curve(&'a BezierSubcurve2),
-    AnalyticParallel(&'a crate::BezierParallelFragment2),
-    SelectedFiber(&'a crate::bezier_split::BezierSelectedFiberFragment2),
-}
-
-enum RetainedCornerEnvelope2 {
-    Curve(BezierSubcurve2),
-    AnalyticParallel(BezierParallel2),
-}
-
-impl RetainedCornerExtensionCarrier2<'_> {
-    fn is_reversed(self) -> bool {
-        match self {
-            Self::Curve(_) => false,
-            Self::AnalyticParallel(fragment) => fragment.is_reversed(),
-            Self::SelectedFiber(fragment) => fragment.is_reversed(),
-        }
-    }
-
-    fn replacement_between(
-        self,
-        lower: &Real,
-        upper: &Real,
-        operation: CurveOperation2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<RetainedCornerEnvelope2>> {
-        match self {
-            Self::Curve(curve) => curve
-                .subcurve_between_affine_exact(lower, upper, policy)
-                .map(|replacement| replacement.map(RetainedCornerEnvelope2::Curve))
-                .map_err(|cause| curve_region_edit_error(operation, cause)),
-            Self::AnalyticParallel(fragment) => fragment
-                .parallel()
-                .subcurve_between_affine_exact(lower, upper, policy)
-                .map(|replacement| replacement.map(RetainedCornerEnvelope2::AnalyticParallel))
-                .map_err(|cause| curve_region_edit_error(operation, cause)),
-            Self::SelectedFiber(fragment) => fragment
-                .parallel_carrier()
-                .subcurve_between_affine_exact(lower, upper, policy)
-                .map(|replacement| replacement.map(RetainedCornerEnvelope2::AnalyticParallel))
-                .map_err(|cause| curve_region_edit_error(operation, cause)),
-        }
-    }
-
-    fn retained_endpoint(self, previous: bool) -> CurveParameter2 {
-        match self {
-            Self::Curve(_) => CurveParameter2::from(BezierParameter2::Exact(if previous {
-                Real::zero()
-            } else {
-                Real::one()
-            })),
-            Self::AnalyticParallel(fragment) => {
-                let range = fragment.range();
-                CurveParameter2::from(if previous != fragment.is_reversed() {
-                    range.start().clone()
-                } else {
-                    range.end().clone()
-                })
-            }
-            Self::SelectedFiber(fragment) => {
-                let range = fragment.range();
-                if previous != fragment.is_reversed() {
-                    range.start().clone()
-                } else {
-                    range.end().clone()
-                }
-            }
-        }
-    }
-}
-
-fn canonicalize_retained_extension_on_finite_envelope(
-    carrier: RetainedCornerExtensionCarrier2<'_>,
+/// Keeps both cuts, their point witnesses and their original support chart.
+/// The finite envelope certifies source finiteness; it never becomes a new
+/// geometric carrier or a restriction on the exact cut representation.
+fn retain_corner_extension_interval(
+    fragment: &BezierSplitFragment2,
     previous_cut: &mut CornerTrimCut2,
     next_cut: &mut CornerTrimCut2,
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<()> {
-    let mut previous_parameter = previous_cut.parameter.clone();
-    let mut next_parameter = next_cut.parameter.clone();
-    if previous_parameter.finite_envelope_bounds().is_none()
-        || next_parameter.finite_envelope_bounds().is_none()
-    {
-        return Err(ExactCurveError::blocked(
-            operation,
-            CurveFamily2::RationalBezier,
-            UncertaintyReason::Unsupported,
-        ));
-    }
-    let reversed = carrier.is_reversed();
+    let reversed = fragment.source_is_reversed();
+    let (lower, upper) = if reversed {
+        (&*previous_cut, &*next_cut)
+    } else {
+        (&*next_cut, &*previous_cut)
+    };
     let order = retained_corner_decision(
         policy
-            .strict_predicate_pass(|| {
-                if reversed {
-                    previous_parameter.cmp_by_refinement(&next_parameter, policy)
-                } else {
-                    next_parameter.cmp_by_refinement(&previous_parameter, policy)
-                }
-            })
+            .strict_predicate_pass(|| lower.parameter.cmp_by_refinement(&upper.parameter, policy))
             .map_err(|cause| curve_region_edit_error(operation, cause))?,
         operation,
     )?;
@@ -3801,261 +3702,37 @@ fn canonicalize_retained_extension_on_finite_envelope(
             ),
         ));
     }
-
-    let (replacement, lower, upper) = loop {
-        let (lower_parameter, upper_parameter) = if reversed {
-            (&previous_parameter, &next_parameter)
-        } else {
-            (&next_parameter, &previous_parameter)
-        };
-        let lower = lower_parameter
-            .finite_envelope_bounds()
-            .expect("finite corner parameters expose isolating bounds")
-            .0
-            .clone();
-        let upper = upper_parameter
-            .finite_envelope_bounds()
-            .expect("finite corner parameters expose isolating bounds")
-            .1
-            .clone();
-        if compare_reals(&lower, &upper, &CurveContext::STRICT) != Some(std::cmp::Ordering::Less) {
+    let range =
+        CurveParameterRange2::new_validated(lower.parameter.clone(), upper.parameter.clone());
+    let support = CurveSupport2::from_fragment(fragment);
+    let source = match &support {
+        CurveSupport2::Bezier(curve) => RationalBezier2::try_from_subcurve(curve),
+        CurveSupport2::Parallel(parallel) => parallel.source().to_rational_bezier(),
+        CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
             return Err(ExactCurveError::blocked(
                 operation,
-                CurveFamily2::RationalBezier,
-                UncertaintyReason::Ordering,
-            ));
-        }
-        match policy.strict_predicate_pass(|| {
-            carrier.replacement_between(&lower, &upper, operation, policy)
-        })? {
-            Classification::Decided(replacement) => break (replacement, lower, upper),
-            Classification::Uncertain(UncertaintyReason::Boundary) => {
-                let refined_previous = retained_corner_decision(
-                    policy
-                        .strict_predicate_pass(|| {
-                            previous_parameter.refined_for_finite_envelope(1, policy)
-                        })
-                        .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                    operation,
-                )?;
-                let refined_next = retained_corner_decision(
-                    policy
-                        .strict_predicate_pass(|| {
-                            next_parameter.refined_for_finite_envelope(1, policy)
-                        })
-                        .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                    operation,
-                )?;
-                if refined_previous == previous_parameter && refined_next == next_parameter {
-                    return Err(ExactCurveError::blocked(
-                        operation,
-                        CurveFamily2::RationalBezier,
-                        UncertaintyReason::Boundary,
-                    ));
-                }
-                previous_parameter = refined_previous;
-                next_parameter = refined_next;
-            }
-            Classification::Uncertain(reason) => {
-                return Err(ExactCurveError::blocked(
-                    operation,
-                    CurveFamily2::RationalBezier,
-                    reason,
-                ));
-            }
-        }
-    };
-    let span = &upper - &lower;
-    let source_scale = span.clone();
-    let source_offset = lower.clone();
-    let scale = (Real::one() / &span)
-        .map_err(|cause| curve_region_edit_error(operation, CurveError::from(cause)))?;
-    let offset = ((-lower) / span)
-        .map_err(|cause| curve_region_edit_error(operation, CurveError::from(cause)))?;
-    let replacement_rational = match &replacement {
-        RetainedCornerEnvelope2::Curve(curve) => Some(
-            RationalBezier2::try_from_subcurve(curve)
-                .map_err(|cause| curve_region_edit_error(operation, cause))?,
-        ),
-        RetainedCornerEnvelope2::AnalyticParallel(_) => None,
-    };
-    for (cut, parameter, exact_endpoint) in [
-        (
-            &mut *previous_cut,
-            previous_parameter,
-            if reversed { Real::zero() } else { Real::one() },
-        ),
-        (
-            &mut *next_cut,
-            next_parameter,
-            if reversed { Real::one() } else { Real::zero() },
-        ),
-    ] {
-        // An exact source parameter is itself one of the two finite-envelope
-        // bounds.  Preserve that construction fact as a literal endpoint;
-        // symbolic affine arithmetic need not normalize the equal expression
-        // to zero or one, and reconstruction relies on this endpoint invariant.
-        let mapped = if parameter
-            .as_bezier_parameter()
-            .is_some_and(|parameter| parameter.scalar().is_some())
-        {
-            CurveParameter2::from(BezierParameter2::Exact(exact_endpoint))
-        } else {
-            retained_corner_decision(
-                policy
-                    .strict_predicate_pass(|| {
-                        parameter.affine_image_unbounded(&scale, &offset, policy)
-                    })
-                    .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                operation,
-            )?
-        };
-        let point_at_bezier_parameter =
-            |parameter: &BezierParameter2| -> ExactCurveResult<CurvePoint2> {
-                Ok(match (&replacement, replacement_rational.as_ref()) {
-                    (RetainedCornerEnvelope2::AnalyticParallel(parallel), None) => {
-                        retained_corner_decision(
-                            policy
-                                .strict_predicate_pass(|| {
-                                    exact_parallel_point_evidence(parallel, parameter, policy)
-                                })
-                                .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                            operation,
-                        )?
-                    }
-                    (RetainedCornerEnvelope2::Curve(_), Some(rational)) => policy
-                        .strict_predicate_pass(|| {
-                            crate::rational_bezier_general::exact_contact_point_evidence(
-                                rational, parameter, policy,
-                            )
-                        })
-                        .map_err(|cause| curve_region_edit_error(operation, cause))?
-                        .ok_or_else(|| {
-                            ExactCurveError::blocked(
-                                operation,
-                                CurveFamily2::RationalBezier,
-                                UncertaintyReason::Unsupported,
-                            )
-                        })?,
-                    _ => unreachable!("the replacement point evaluator matches its carrier"),
-                })
-            };
-        let retained_parameter_parallel = || match (&replacement, replacement_rational.as_ref()) {
-            (RetainedCornerEnvelope2::AnalyticParallel(parallel), None) => parallel.clone(),
-            (RetainedCornerEnvelope2::Curve(_), Some(rational)) => BezierParallel2::from_source(
-                BezierParallelSource2::Rational(rational.clone()),
-                Real::zero(),
-            ),
-            _ => unreachable!("the replacement point evaluator matches its carrier"),
-        };
-        cut.point = if let Some(parameter) = mapped.as_bezier_parameter() {
-            point_at_bezier_parameter(parameter)?
-        } else if let Some(parameter) = mapped.as_selected_fiber() {
-            CurvePoint2::from(crate::BezierAnalyticParallelPoint2::new_selected_fiber(
-                retained_parameter_parallel(),
-                parameter.clone(),
-                policy,
-            ))
-        } else if let Some(parameter) = mapped.as_recursive_projective() {
-            CurvePoint2::from(
-                crate::BezierAnalyticParallelPoint2::new_recursive_projective(
-                    retained_parameter_parallel(),
-                    parameter.clone(),
-                    policy,
-                ),
-            )
-        } else if mapped.is_retained_scalar() {
-            let parameter = retained_corner_decision(
-                policy
-                    .strict_predicate_pass(|| mapped.promoted_bezier_parameter_complete(policy))
-                    .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                operation,
-            )?;
-            point_at_bezier_parameter(&parameter)?
-        } else {
-            return Err(ExactCurveError::blocked(
-                operation,
-                CurveFamily2::RationalBezier,
+                support.family(),
                 UncertaintyReason::Unsupported,
             ));
-        };
-        cut.parameter = mapped;
+        }
     }
-    let replacement =
-        if previous_cut.parameter.is_retained_scalar() || next_cut.parameter.is_retained_scalar() {
-            let (start_parameter, end_parameter, start_point, end_point) = if reversed {
-                (
-                    previous_cut.parameter.clone(),
-                    next_cut.parameter.clone(),
-                    previous_cut.point.clone(),
-                    next_cut.point.clone(),
-                )
-            } else {
-                (
-                    next_cut.parameter.clone(),
-                    previous_cut.parameter.clone(),
-                    next_cut.point.clone(),
-                    previous_cut.point.clone(),
-                )
-            };
-            let source = match &replacement {
-                RetainedCornerEnvelope2::Curve(_) => BezierSelectedFiberSource2::Rational(
-                    replacement_rational
-                        .as_ref()
-                        .expect("a curve envelope has a rational carrier")
-                        .clone(),
-                ),
-                RetainedCornerEnvelope2::AnalyticParallel(parallel) => {
-                    BezierSelectedFiberSource2::AnalyticParallel(parallel.clone())
-                }
-            };
-            let mut fragment = crate::bezier_split::BezierSelectedFiberFragment2::new(
-                source,
-                CurveParameterRange2::new_validated(start_parameter, end_parameter),
-                start_point,
-                end_point,
-            );
-            if reversed {
-                fragment = fragment.reversed();
-            }
-            CornerReplacement2::SelectedFiber {
-                fragment: Arc::new(fragment),
-                source_scale,
-                source_offset,
-            }
-        } else {
-            match replacement {
-                RetainedCornerEnvelope2::Curve(curve) => CornerReplacement2::Curve(curve),
-                RetainedCornerEnvelope2::AnalyticParallel(parallel) => {
-                    let previous = previous_cut
-                        .parameter
-                        .as_bezier_parameter()
-                        .cloned()
-                        .expect("the canonical previous cut is a Bezier parameter");
-                    let next = next_cut
-                        .parameter
-                        .as_bezier_parameter()
-                        .cloned()
-                        .expect("the canonical next cut is a Bezier parameter");
-                    CornerReplacement2::AnalyticParallel {
-                        fragment: retained_corner_decision(
-                            policy
-                                .strict_predicate_pass(|| {
-                                    crate::BezierParallelFragment2::try_new(
-                                        parallel,
-                                        BezierParameterRange2::new_validated(next, previous),
-                                        policy,
-                                    )
-                                })
-                                .map_err(|cause| curve_region_edit_error(operation, cause))?,
-                            operation,
-                        )?,
-                        source_scale,
-                        source_offset,
-                    }
-                }
-            }
-        };
+    .map_err(|cause| curve_region_edit_error(operation, cause))?;
+    retained_corner_decision(
+        source
+            .finite_discovery_envelope(&range, policy)
+            .map_err(|cause| curve_region_edit_error(operation, cause))?,
+        operation,
+    )?;
+    let replacement = Arc::new(
+        support
+            .restrict_certified(
+                range,
+                Some([lower.point.clone(), upper.point.clone()]),
+                reversed,
+                policy,
+            )
+            .map_err(|cause| curve_region_edit_error(operation, cause))?,
+    );
     previous_cut.replacement = Some(replacement.clone());
     next_cut.replacement = Some(replacement);
     Ok(())
@@ -7896,19 +7573,12 @@ fn append_exact_round_join(
                         (chord, endpoint)
                     };
                     let contacts = match semicircle.chord_intersections(&endpoint_chord, policy)? {
-                        Classification::Decided(
-                            crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(
-                                contacts,
-                            ),
-                        ) => contacts,
-                        Classification::Decided(
-                            crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
-                        ) => {
+                        Classification::Decided(contacts) if contacts.is_empty() => {
                             return Err(CurveError::Topology(
-                                "an authored round-join endpoint missed its selected circle"
-                                    .into(),
+                                "an authored round-join endpoint missed its selected circle".into(),
                             ));
                         }
+                        Classification::Decided(contacts) => contacts,
                         Classification::Uncertain(reason) => {
                             return Ok(Classification::Uncertain(reason));
                         }
@@ -7987,6 +7657,33 @@ fn append_exact_round_join(
             ));
             return Ok(Classification::Decided(()));
         }
+    }
+    if matches!(
+        sweep_kind,
+        crate::arc_bezier::ArcSweepKind::Minor | crate::arc_bezier::ArcSweepKind::Semicircle
+    ) && let Some((previous_tangent, next_tangent)) = previous
+        .end_tangent
+        .as_ref()
+        .zip(next.start_tangent.as_ref())
+        && let (Some(previous_support), Some(next_support)) = (
+            exact_offset_retained_tangent_support(previous_tangent, &previous.offset_end, policy),
+            exact_offset_retained_tangent_support(next_tangent, &next.offset_start, policy),
+        )
+    {
+        let anchor = match previous_support? {
+            Classification::Decided(support) => support,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let companion = match next_support? {
+            Classification::Decided(support) => support,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        // Both supports retain their oriented endpoint directions. The common
+        // chord-normal frame also covers parallel cusp joins whose exact
+        // endpoints remain procedural, without a separate circular carrier.
+        return append_selected_chord_pair_round_join(
+            fragments, previous, next, distance, clockwise, sweep_kind, &anchor, &companion, policy,
+        );
     }
     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
 }
@@ -12148,12 +11845,11 @@ impl CurveRegion2 {
     /// compact algebraic chord instead of falling through to historical
     /// contour machinery. `TrimOrExtend` keeps retained straight and direct
     /// polynomial, rational Bezier, or analytic-parallel endpoints in that same
-    /// affine support authority. Algebraic contacts are reparameterized onto
-    /// one exact finite envelope before reconstruction, so all downstream
-    /// topology remains in the ordinary unit domain. Rational envelopes are
-    /// narrowed as necessary to stay inside the incident endpoint's first
-    /// projective pole; analytic replacements replay the ordinary source-
-    /// singularity and parallel-cusp validation on their mapped range.
+    /// support authority, with selected contacts in its original parameter
+    /// chart. Finite envelopes certify admissibility without replacing those
+    /// parameters. Rational extensions stay inside the incident endpoint's
+    /// first projective pole; analytic replacements certify source regularity
+    /// and the absence of parallel cusps on the actual replacement range.
     pub fn chamfer_loop_vertex_by_setbacks(
         &self,
         loop_index: usize,
@@ -19976,30 +19672,37 @@ mod tests {
                 )
                 .unwrap_or_else(|error| {
                     panic!(
-                        "resource-blocked selected cuts must cross the native chart exactly: policy={policy:?}, error={error:?}"
+                        "resource-blocked selected cuts must extend their authored range exactly: policy={policy:?}, error={error:?}"
                     )
                 });
             assert_eq!(projective.certainty, CurveCertainty::Certified);
             let authored_source = BezierSelectedFiberSource2::AnalyticParallel(parallel);
-            let mut retained_projective_envelope = false;
+            let mut retained_exterior_source = false;
             for_each_corner_region(&projective.value, |edited| {
-                retained_projective_envelope |=
-                    edited.boundary_loops()[0]
-                        .fragments()
+                retained_exterior_source |=
+                    edited.boundary_loops()
                         .iter()
+                        .flat_map(CurveRegionBoundaryLoop2::fragments)
                         .any(|fragment| {
                             matches!(
                                 fragment,
                                 BezierSplitFragment2::SelectedFiber(fragment)
-                                    if fragment.source() != &authored_source
+                                    if fragment.source() == &authored_source
                                         && (fragment.range().start().is_retained_scalar()
                                             || fragment.range().end().is_retained_scalar())
+                                        && (matches!(
+                                            fragment.range().start().cmp_by_refinement(&CurveParameter2::from_selected_fiber(start.clone()), &policy).unwrap(),
+                                            Classification::Decided(std::cmp::Ordering::Less)
+                                        ) || matches!(
+                                            fragment.range().end().cmp_by_refinement(&CurveParameter2::from_selected_fiber(end.clone()), &policy).unwrap(),
+                                            Classification::Decided(std::cmp::Ordering::Greater)
+                                        ))
                             )
                         });
             });
             assert!(
-                retained_projective_envelope,
-                "an exterior selected cut must publish its reparameterized exact carrier"
+                retained_exterior_source,
+                "an exterior selected cut must retain its original support and exact source range"
             );
         }
     }
@@ -20248,14 +19951,14 @@ mod tests {
                 } else {
                     (cut(&end_extension), cut(&start_extension))
                 };
-                CurveCornerChain2::canonicalize_retained_single_fragment_extension_cuts(
+                CurveCornerChain2::retain_single_fragment_extension_cuts(
                     &fragment,
                     &mut previous_cut,
                     &mut next_cut,
                     CurveOperation2::Chamfer,
                     &policy,
                 )
-                .expect("native selected cuts must not require a finite envelope");
+                .expect("native selected cuts must keep their source chart");
                 assert!(previous_cut.parameter.is_retained_scalar());
                 assert!(next_cut.parameter.is_retained_scalar());
                 let retained = retained_corner_fragment_between_cuts(
@@ -20382,7 +20085,7 @@ mod tests {
                 } else {
                     (cut(&end_extension), cut(&start_extension))
                 };
-                CurveCornerChain2::canonicalize_retained_single_fragment_extension_cuts(
+                CurveCornerChain2::retain_single_fragment_extension_cuts(
                     &fragment,
                     &mut previous_cut,
                     &mut next_cut,
@@ -20392,58 +20095,41 @@ mod tests {
                 .expect("selected cuts beyond the native chart need no global projection");
                 let replacement = previous_cut
                     .replacement
-                    .as_ref()
-                    .expect("an exterior interval must publish one finite envelope");
-                assert_eq!(next_cut.replacement.as_ref(), Some(replacement));
-                let CornerReplacement2::SelectedFiber {
-                    fragment: replacement_fragment,
-                    source_scale,
-                    source_offset,
-                } = replacement
-                else {
-                    panic!("selected envelope boundaries must retain their local fibers")
+                    .as_deref()
+                    .expect("an exterior interval must retain one finite source range");
+                assert!(next_cut.replacement.as_deref() == Some(replacement));
+                let BezierSplitFragment2::SelectedFiber(replacement_fragment) = replacement else {
+                    panic!("selected source boundaries must retain their local fibers")
                 };
                 assert_eq!(replacement_fragment.is_reversed(), reversed);
+                assert!(
+                    replacement_fragment
+                        .start_point()
+                        .shares_storage(&next_cut.point)
+                );
+                assert!(
+                    replacement_fragment
+                        .end_point()
+                        .shares_storage(&previous_cut.point)
+                );
                 for parameter in [
                     replacement_fragment.range().start(),
                     replacement_fragment.range().end(),
                 ] {
                     let selected = parameter
                         .as_selected_fiber()
-                        .expect("the mapped resource-blocked cut must remain selected");
+                        .expect("the resource-blocked cut must remain selected");
                     assert!(matches!(
                         selected.promoted_bezier_parameter(&policy).unwrap(),
                         Classification::Uncertain(_)
                     ));
                 }
-                for (mapped, original) in [
-                    (
-                        replacement_fragment
-                            .range()
-                            .start()
-                            .as_selected_fiber()
-                            .unwrap(),
-                        &start_extension,
-                    ),
-                    (
-                        replacement_fragment
-                            .range()
-                            .end()
-                            .as_selected_fiber()
-                            .unwrap(),
-                        &end_extension,
-                    ),
+                assert!(replacement_fragment.parallel_carrier() == parallel);
+                for (retained, original) in [
+                    (replacement_fragment.range().start(), &start_extension),
+                    (replacement_fragment.range().end(), &end_extension),
                 ] {
-                    let Classification::Decided(restored) = mapped
-                        .affine_image_unbounded(source_scale, source_offset, &policy)
-                        .unwrap()
-                    else {
-                        panic!("the exact source chart must invert")
-                    };
-                    assert_eq!(
-                        restored.cmp_by_refinement(original, &policy).unwrap(),
-                        Classification::Decided(std::cmp::Ordering::Equal),
-                    );
+                    assert!(retained == &CurveParameter2::from_selected_fiber(original.clone()));
                 }
                 let retained = retained_corner_fragment_between_cuts(
                     &fragment,
@@ -20456,7 +20142,7 @@ mod tests {
                 let BezierSplitFragment2::SelectedFiber(retained) = retained else {
                     panic!("the projective replacement must remain a selected fragment")
                 };
-                assert_eq!(&retained, replacement_fragment.as_ref());
+                assert!(retained == *replacement_fragment);
 
                 for previous in [false, true] {
                     let exterior = match (previous, reversed) {
@@ -20464,7 +20150,7 @@ mod tests {
                         (true, true) | (false, false) => &start_extension,
                     };
                     let mut one_cut = cut(exterior);
-                    CurveCornerChain2::canonicalize_retained_corner_cut(
+                    CurveCornerChain2::retain_corner_cut(
                         &fragment,
                         &mut one_cut,
                         previous,
@@ -20473,14 +20159,14 @@ mod tests {
                     )
                     .expect("one exterior selected cut must retain a finite envelope");
                     assert!(matches!(
-                        one_cut.replacement.as_ref(),
-                        Some(CornerReplacement2::SelectedFiber { .. })
+                        one_cut.replacement.as_deref(),
+                        Some(BezierSplitFragment2::SelectedFiber(_))
                     ));
                     let rebuilt = retained_corner_fragment_extension(
                         &fragment,
                         one_cut.parameter.clone(),
                         &one_cut.point,
-                        one_cut.replacement.as_ref(),
+                        one_cut.replacement.as_deref(),
                         previous,
                         CurveOperation2::Chamfer,
                         &policy,
@@ -20490,6 +20176,16 @@ mod tests {
                         panic!("one projective extension must remain a selected fragment")
                     };
                     assert_eq!(rebuilt.is_reversed(), reversed);
+                    let BezierSplitFragment2::SelectedFiber(original) = &fragment else {
+                        unreachable!()
+                    };
+                    if previous {
+                        assert!(rebuilt.start_point().shares_storage(original.start_point()));
+                        assert!(rebuilt.end_point().shares_storage(&one_cut.point));
+                    } else {
+                        assert!(rebuilt.start_point().shares_storage(&one_cut.point));
+                        assert!(rebuilt.end_point().shares_storage(original.end_point()));
+                    }
                 }
             }
         }
@@ -21259,10 +20955,20 @@ mod tests {
 
     #[test]
     fn retained_polynomial_chamfer_extends_exact_and_algebraic_incident_roots() {
+        use RegionPointLocation::{Boundary, Inside, Outside};
+
         let sqrt_two = Real::from(2_i8).sqrt().unwrap();
+        let added_material = Point2::new(q(1, 2), q(3, 10));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let region = retained_nonlinear_extension_region(reversed, &policy);
+                assert_eq!(
+                    region
+                        .classify_point(&added_material, &policy)
+                        .unwrap()
+                        .value,
+                    Classification::Decided(Outside)
+                );
                 let corner = if reversed { 3 } else { 1 };
                 let setbacks = |setback| {
                     if reversed {
@@ -21304,6 +21010,7 @@ mod tests {
                     let extended = extended.into_value();
                     assert!(extended.candidate_count() > trim.candidate_count());
                     let mut found_extension = false;
+                    let mut found_added_material = false;
                     for_each_corner_region(&extended, |edited| {
                         assert!(matches!(
                             edited
@@ -21312,23 +21019,46 @@ mod tests {
                                 .into_value(),
                             Classification::Decided(_)
                         ));
-                        found_extension |=
-                            edited.boundary_loops()[0]
-                                .fragments()
-                                .iter()
-                                .any(|fragment| match &exact_endpoint {
-                                    Some(endpoint) => {
-                                        retained_fragment_has_exact_endpoint(fragment, endpoint)
-                                    }
-                                    None => {
-                                        retained_rational_fragment_has_algebraic_endpoint(fragment)
-                                    }
-                                });
+                        found_extension |= edited
+                            .boundary_loops()
+                            .iter()
+                            .flat_map(CurveRegionBoundaryLoop2::fragments)
+                            .any(|fragment| match &exact_endpoint {
+                                Some(endpoint) => {
+                                    retained_fragment_has_exact_endpoint(fragment, endpoint)
+                                }
+                                None => retained_rational_fragment_has_algebraic_endpoint(fragment),
+                            });
+                        if exact_endpoint.is_none()
+                            && edited
+                                .classify_point(&added_material, &policy)
+                                .unwrap()
+                                .value
+                                == Classification::Decided(Inside)
+                        {
+                            found_added_material = true;
+                            // For setback one, the added lobe lies between
+                            // y=x^2 and y=a*x, a=sqrt((sqrt(5)-1)/2). It only
+                            // touches the original material at the corner.
+                            for (point, location) in [
+                                (Point2::new(q(-1, 2), Real::one()), Inside),
+                                (Point2::new(q(1, 2), q(1, 4)), Boundary),
+                                (Point2::new(q(1, 2), q(1, 2)), Outside),
+                                (p(0, 0), Boundary),
+                            ] {
+                                assert_eq!(
+                                    edited.classify_point(&point, &policy).unwrap().value,
+                                    Classification::Decided(location),
+                                    "the extended corner must preserve the intended filled sectors"
+                                );
+                            }
+                        }
                     });
                     assert!(
                         found_extension,
                         "an edited candidate must retain the exterior nonlinear carrier"
                     );
+                    assert!(exact_endpoint.is_some() || found_added_material);
                 }
             }
         }
@@ -21390,18 +21120,16 @@ mod tests {
                                 .into_value(),
                             Classification::Decided(_)
                         ));
-                        found_extension |=
-                            edited.boundary_loops()[0]
-                                .fragments()
-                                .iter()
-                                .any(|fragment| match &exact_endpoint {
-                                    Some(endpoint) => {
-                                        retained_fragment_has_exact_endpoint(fragment, endpoint)
-                                    }
-                                    None => {
-                                        retained_rational_fragment_has_algebraic_endpoint(fragment)
-                                    }
-                                });
+                        found_extension |= edited
+                            .boundary_loops()
+                            .iter()
+                            .flat_map(CurveRegionBoundaryLoop2::fragments)
+                            .any(|fragment| match &exact_endpoint {
+                                Some(endpoint) => {
+                                    retained_fragment_has_exact_endpoint(fragment, endpoint)
+                                }
+                                None => retained_rational_fragment_has_algebraic_endpoint(fragment),
+                            });
                     });
                     assert!(
                         found_extension,
@@ -21689,12 +21417,11 @@ mod tests {
                             [selected.range().start(), selected.range().end()]
                                 .into_iter()
                                 .all(corner_parameter_needs_retained_source);
-                        let source = Curve2::from(
-                            selected
-                                .rational_curve()
-                                .expect("the exact cubic envelope")
-                                .clone(),
-                        );
+                        let source = selected
+                            .rational_curve()
+                            .expect("the retained cubic source")
+                            .parallel_left(Real::zero())
+                            .unwrap();
                         // The range stays ordered in the source chart, while
                         // endpoint evidence follows the fragment's traversal.
                         let (start, end) = if selected.is_reversed() {
@@ -21705,9 +21432,14 @@ mod tests {
                         for (parameter, point) in
                             [(start, selected.start_point()), (end, selected.end_point())]
                         {
-                            let replay = source.point_at(parameter, &policy).unwrap();
-                            let equality = replay.value.coincides_with(point, &policy);
-                            assert_eq!(replay.certainty, CurveCertainty::Certified);
+                            // Evaluate the support independently of its stored endpoints.
+                            // The exact source parameter may lie outside [0, 1].
+                            let replay = CurvePoint2::from(
+                                crate::BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                                    source.clone(), parameter, Real::zero(), &policy,
+                                ).expect("a cubic source accepts each retained scalar")
+                            );
+                            let equality = replay.coincides_with(point, &policy);
                             assert_eq!(equality.certainty, CurveCertainty::Certified);
                             assert_eq!(
                                 equality.value,
@@ -21720,7 +21452,7 @@ mod tests {
                 });
                 assert!(
                     retained_algebraic_interval,
-                    "one common envelope must retain its two algebraic cuts"
+                    "one source range must retain its two algebraic cuts"
                 );
             }
         }
@@ -21759,6 +21491,9 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(extended.value.candidate_count() > trimmed.candidate_count());
+                let original_support =
+                    CurveSupport2::from_fragment(&region.boundary_loops()[0].fragments()[0]);
+                let unit = CurveParameterRange2::unit();
                 let mut found_extension = false;
                 for_each_corner_region(&extended.value, |edited| {
                     found_extension |=
@@ -21766,10 +21501,38 @@ mod tests {
                             .fragments()
                             .iter()
                             .any(|fragment| {
-                                matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
+                                let same_support = match (
+                                    CurveSupport2::from_fragment(fragment),
+                                    &original_support,
+                                ) {
+                                    (
+                                        CurveSupport2::Bezier(retained),
+                                        CurveSupport2::Bezier(original),
+                                    ) => &retained == original,
+                                    (
+                                        CurveSupport2::Parallel(retained),
+                                        CurveSupport2::Parallel(original),
+                                    ) => &retained == original,
+                                    _ => false,
+                                };
+                                same_support
+                                    && matches!(
+                                        crate::bezier_split::CurveParameterDomain2::new(
+                                            &unit, None
+                                        )
+                                        .contains_finite_range(
+                                            &fragment.curve_region_parameter_range(),
+                                            &policy
+                                        )
+                                        .unwrap(),
+                                        Classification::Decided(false),
+                                    )
                             });
                 });
-                assert!(found_extension, "the extended analytic range was lost");
+                assert!(
+                    found_extension,
+                    "the exterior interval must retain its original support"
+                );
             }
         }
     }
@@ -21849,9 +21612,9 @@ mod tests {
                     trace.path_count(
                         "hypercurve",
                         "curve-region-retained-chamfer",
-                        "precanonical-chord-authority",
+                        "certified-cut-chord",
                     ) > 0,
-                    "the finite envelope must retain the pre-canonical chord certificate: {trace:?}",
+                    "the finite envelope must retain the original cut-chord certificate: {trace:?}",
                 );
             }
         }
@@ -22224,6 +21987,9 @@ mod tests {
                             )
                         });
                     assert_eq!(extended.certainty, CurveCertainty::Certified);
+                    let original_support =
+                        CurveSupport2::from_fragment(&region.boundary_loops()[0].fragments()[0]);
+                    let unit = CurveParameterRange2::unit();
                     let mut found_extension = false;
                     for_each_corner_region(&extended.value, |edited| {
                         found_extension |=
@@ -22231,10 +21997,38 @@ mod tests {
                                 .fragments()
                                 .iter()
                                 .any(|fragment| {
-                                    matches!(fragment, BezierSplitFragment2::AnalyticParallel(_))
+                                    let same_support = match (
+                                        CurveSupport2::from_fragment(fragment),
+                                        &original_support,
+                                    ) {
+                                        (
+                                            CurveSupport2::Bezier(retained),
+                                            CurveSupport2::Bezier(original),
+                                        ) => &retained == original,
+                                        (
+                                            CurveSupport2::Parallel(retained),
+                                            CurveSupport2::Parallel(original),
+                                        ) => &retained == original,
+                                        _ => false,
+                                    };
+                                    same_support
+                                        && matches!(
+                                            crate::bezier_split::CurveParameterDomain2::new(
+                                                &unit, None
+                                            )
+                                            .contains_finite_range(
+                                                &fragment.curve_region_parameter_range(),
+                                                &policy
+                                            )
+                                            .unwrap(),
+                                            Classification::Decided(false),
+                                        )
                                 });
                     });
-                    assert!(found_extension, "the extended analytic interval was lost");
+                    assert!(
+                        found_extension,
+                        "the exterior interval must retain its original support"
+                    );
                 }
             }
         }
@@ -29054,9 +28848,9 @@ mod tests {
                     trace.path_count(
                         "hypercurve",
                         "curve-region-retained-chamfer",
-                        "selected-envelope-corner-witness",
+                        "certified-cut-chord",
                     ) > 0,
-                    "the selected envelope chamfer must retain its correlated source field: {trace:?}",
+                    "the chamfer must reuse its original correlated cut evidence: {trace:?}",
                 );
                 for_each_corner_region(&extended.value, |edited| {
                     assert!(
@@ -30740,14 +30534,10 @@ mod tests {
                     #[cfg(feature = "dispatch-trace")]
                     let trace = hyperreal::dispatch_trace::take_trace();
                     let contacts = match intersections.unwrap() {
-                        Classification::Decided(
-                            crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(
-                                contacts,
-                            ),
-                        ) => contacts,
-                        Classification::Decided(
-                            crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
-                        ) => panic!("the selected-side chord must cross the chord-normal circle"),
+                        Classification::Decided(contacts) if contacts.is_empty() => {
+                            panic!("the selected-side chord must cross the chord-normal circle")
+                        }
+                        Classification::Decided(contacts) => contacts,
                         result => panic!(
                             "the chord-normal circle must meet its algebraic chord: {result:?}"
                         ),

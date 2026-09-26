@@ -754,7 +754,6 @@ impl Pair<'_> {
         circle_first: bool,
         result: &mut Evidence,
     ) -> ExactCurveResult<()> {
-        use crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2 as Intersections;
         let intersections = match circle
             .certified_chord_endpoint_contact(chord, self.policy)
             .map_err(|cause| {
@@ -764,24 +763,22 @@ impl Pair<'_> {
                     cause,
                 )
             })? {
-            Classification::Decided(Some(contact)) => Intersections::Contacts(vec![contact]),
+            Classification::Decided(Some(contact)) => vec![contact],
             Classification::Decided(None) | Classification::Uncertain(_) => decided(
                 circle.semicircle().chord_intersections(chord, self.policy),
                 crate::CurveFamily2::CircularArc,
             )?,
         };
-        if let Intersections::Contacts(contacts) = intersections {
-            for contact in contacts {
-                self.circle_contact(
-                    circle,
-                    contact.cusp_parameter,
-                    CurveParameter2::from_algebraic_chord(contact.chord_parameter),
-                    Some(contact.point),
-                    Some(contact.tangent_cross_sign),
-                    circle_first,
-                    result,
-                )?;
-            }
+        for contact in intersections {
+            self.circle_contact(
+                circle,
+                contact.cusp_parameter,
+                CurveParameter2::from_algebraic_chord(contact.chord_parameter),
+                Some(contact.point),
+                Some(contact.tangent_cross_sign),
+                circle_first,
+                result,
+            )?;
         }
         Ok(())
     }

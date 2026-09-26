@@ -3075,86 +3075,21 @@ impl CornerCut2 {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) enum CornerReplacement2 {
-    Curve(BezierSubcurve2),
-    AnalyticParallel {
-        fragment: crate::BezierParallelFragment2,
-        /// Maps the replacement parameter back to the authored source:
-        /// `source = scale * replacement + offset`.
-        source_scale: Real,
-        source_offset: Real,
-    },
-    /// A finite rational envelope whose exact cut boundaries remain selected
-    /// in local fibers. The replacement fragment owns the reparameterized
-    /// carrier and both endpoint point witnesses, so reconstruction never
-    /// needs the degree-multiplied global parameter projections.
-    SelectedFiber {
-        fragment: Arc<crate::bezier_split::BezierSelectedFiberFragment2>,
-        /// Maps the replacement parameter back to the authored source:
-        /// `source = scale * replacement + offset`.
-        source_scale: Real,
-        source_offset: Real,
-    },
-}
-
-impl CornerReplacement2 {
-    pub(crate) const fn as_curve(&self) -> Option<&BezierSubcurve2> {
-        match self {
-            Self::Curve(curve) => Some(curve),
-            Self::AnalyticParallel { .. } | Self::SelectedFiber { .. } => None,
-        }
-    }
-
-    pub(crate) const fn as_parallel_fragment(&self) -> Option<&crate::BezierParallelFragment2> {
-        match self {
-            Self::AnalyticParallel { fragment, .. } => Some(fragment),
-            Self::Curve(_) | Self::SelectedFiber { .. } => None,
-        }
-    }
-
-    pub(crate) fn parallel_source_parameter_map(&self) -> Option<(&Real, &Real)> {
-        match self {
-            Self::AnalyticParallel {
-                source_scale,
-                source_offset,
-                ..
-            } => Some((source_scale, source_offset)),
-            Self::SelectedFiber {
-                source_scale,
-                source_offset,
-                ..
-            } => Some((source_scale, source_offset)),
-            Self::Curve(_) => None,
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 pub(crate) struct CornerTrimCut2 {
     pub(crate) parameter: CurveParameter2,
     pub(crate) point: CurvePoint2,
     pub(crate) placement: CornerPlacement2,
-    pub(crate) replacement: Option<CornerReplacement2>,
+    /// The exact replacement span, in the same chart as this cut.
+    pub(crate) replacement: Option<Arc<crate::BezierSplitFragment2>>,
 }
 
 impl CornerTrimCut2 {
     pub(crate) fn replacement_curve(&self) -> Option<&BezierSubcurve2> {
-        self.replacement
-            .as_ref()
-            .and_then(CornerReplacement2::as_curve)
-    }
-
-    pub(crate) fn replacement_parallel_fragment(&self) -> Option<&crate::BezierParallelFragment2> {
-        self.replacement
-            .as_ref()
-            .and_then(CornerReplacement2::as_parallel_fragment)
-    }
-
-    pub(crate) fn replacement_parallel_source_parameter_map(&self) -> Option<(&Real, &Real)> {
-        self.replacement
-            .as_ref()
-            .and_then(CornerReplacement2::parallel_source_parameter_map)
+        match self.replacement.as_deref()? {
+            crate::BezierSplitFragment2::Materialized { curve, .. } => Some(curve),
+            _ => None,
+        }
     }
 }
 
@@ -8849,16 +8784,10 @@ fn fillet_offset_centers(
                     finite_source_domain && chord_mode != CurveCornerMode2::TrimOrExtend,
                     policy,
                 );
-            let base_contacts = match intersections
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
-                })? {
-                Classification::Decided(
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
-                ) => Vec::new(),
-                Classification::Decided(
-                    crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
-                ) => contacts,
+            let base_contacts = match intersections.map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
+            })? {
+                Classification::Decided(contacts) => contacts,
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
@@ -8878,12 +8807,7 @@ fn fillet_offset_centers(
                     .map_err(|cause| {
                         ExactCurveError::invalid(CurveOperation2::Fillet, cusp_family, cause)
                     })? {
-                    Classification::Decided(
-                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
-                    ) => Vec::new(),
-                    Classification::Decided(
-                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
-                    ) => contacts,
+                    Classification::Decided(contacts) => contacts,
                     Classification::Uncertain(reason) => {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Fillet,
@@ -9203,12 +9127,7 @@ fn fillet_offset_centers(
                     ExactCurveError::invalid(CurveOperation2::Fillet, chord_family, cause)
                 })?;
                 let circle_contacts = match intersections {
-                    Classification::Decided(
-                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::NoContacts,
-                    ) => Vec::new(),
-                    Classification::Decided(
-                        crate::bezier_offset::BezierAlgebraicCuspSemicircleRetainedChordIntersections2::Contacts(contacts),
-                    ) => contacts,
+                    Classification::Decided(contacts) => contacts,
                     Classification::Uncertain(reason) => {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Fillet,
