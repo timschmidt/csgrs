@@ -321,13 +321,24 @@ fn midpoint_subdivide<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     let mut right = Vec::with_capacity(work.len());
     left.push(work[0].clone());
     right.push(work[degree].clone());
+    let mut scale = Real::one();
     for level in 1..=degree {
+        // Unhalved sums are 2^level times the de Casteljau row. Scale
+        // only its two emitted boundaries, sharing the final midpoint.
+        // This preserves the actual coefficients with 2*degree-1 field
+        // scalings instead of degree*(degree+1)/2, and shortens lazy sums.
         for index in 0..=degree - level {
-            let sum = field.add(&work[index], &work[index + 1])?;
-            work[index] = field.scale(&sum, &half)?;
+            work[index] = field.add(&work[index], &work[index + 1])?;
         }
-        left.push(work[0].clone());
-        right.push(work[degree - level].clone());
+        scale = &scale * &half;
+        let first = field.scale(&work[0], &scale)?;
+        let last = if level == degree {
+            first.clone()
+        } else {
+            field.scale(&work[degree - level], &scale)?
+        };
+        left.push(first);
+        right.push(last);
     }
     right.reverse();
     Ok((left, right))
@@ -963,6 +974,7 @@ mod tests {
     #[derive(Default)]
     struct DepthTrackingContext {
         max_depth: usize,
+        scale_calls: usize,
     }
 
     impl OrderedFieldPolynomialContext<DepthTracked> for DepthTrackingContext {
@@ -1006,6 +1018,7 @@ mod tests {
             value: &DepthTracked,
             scale: &Real,
         ) -> Result<DepthTracked, Self::Error> {
+            self.scale_calls += 1;
             let depth = value.depth + 1;
             self.max_depth = self.max_depth.max(depth);
             Ok(DepthTracked {
@@ -1034,6 +1047,50 @@ mod tests {
             value: &DepthTracked,
         ) -> Result<Option<Ordering>, Self::Error> {
             self.sign(value).map(Some)
+        }
+    }
+
+    #[test]
+    fn midpoint_subdivision_preserves_coefficients_with_linear_field_scaling() {
+        for degree in [0_usize, 1, 2, 7, 16] {
+            let polynomial = (0..=degree)
+                .map(|power| Real::from((power % 5) as i8 - 2))
+                .collect::<Vec<_>>();
+            // An independent affine power-to-Bernstein conversion gives
+            // the exact child coefficients, including their magnitudes.
+            let parent = power_to_bernstein_on_interval(
+                &polynomial,
+                &Real::from(-2_i8),
+                &Real::from(4_i8),
+                &mut RealContext,
+            )
+            .unwrap()
+            .unwrap();
+            let controls = parent
+                .into_iter()
+                .map(|value| DepthTracked { value, depth: 0 })
+                .collect();
+            let mut field = DepthTrackingContext::default();
+            let (left, right) = midpoint_subdivide(controls, &mut field).unwrap();
+            assert_eq!(field.scale_calls, (2 * degree).saturating_sub(1));
+            assert!(field.max_depth <= degree + 1);
+            for (child, lower, upper) in [(left, -2_i8, 1_i8), (right, 1, 4)] {
+                let expected = power_to_bernstein_on_interval(
+                    &polynomial,
+                    &Real::from(lower),
+                    &Real::from(upper),
+                    &mut RealContext,
+                )
+                .unwrap()
+                .unwrap();
+                assert_eq!(
+                    child
+                        .into_iter()
+                        .map(|value| value.value)
+                        .collect::<Vec<_>>(),
+                    expected
+                );
+            }
         }
     }
 
