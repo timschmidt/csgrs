@@ -333,8 +333,12 @@ fn selected_open_fillets_accept_a_subsequent_chamfer() {
             .fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
             .unwrap();
         assert_eq!(filleted.certainty, CurveCertainty::Certified);
-        let CurveCornerSolutions2::Unique(filleted) = filleted.value else {
-            panic!("the incident line/parabola has one selected fillet")
+        let filleted = {
+            let solutions = filleted.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         assert_open_path(&filleted, &start, &end, &policy);
         assert!(filleted.curves().iter().any(|curve| {
@@ -383,8 +387,12 @@ fn selected_spline_fillets_preserve_knot_charts_and_other_spans() {
                     .fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
                     .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                let CurveCornerSolutions2::Unique(edited) = outcome.value else {
-                    panic!("the incident spline span has one selected fillet")
+                let edited = {
+                    let solutions = outcome.value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (mut candidates, _) = solutions.into_parts();
+                    assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                    candidates.pop().unwrap()
                 };
                 let (start, end) = if reversed {
                     (p(3, 3), p(-4, 0))
@@ -470,12 +478,15 @@ fn check_major_arc_fillet(clockwise: bool) {
                 .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
                 .unwrap();
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
-            let candidates = match outcome.value {
-                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                CurveCornerSolutions2::Multiple(candidates) => candidates,
-                CurveCornerSolutions2::NoSolution(reason) => {
-                    panic!("the major-arc fillet was lost: {reason:?}")
-                }
+            let candidates = {
+                let solutions = outcome.value;
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (candidates, _) = solutions.into_parts();
+                assert!(
+                    !candidates.is_empty(),
+                    "expected at least one isolated fillet"
+                );
+                candidates
             };
             // The counterclockwise support is tangent at the parabola's
             // exact extension parameter 6/5. The opposite source orientation
@@ -627,31 +638,37 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
             let clipped = results.value.intersection();
             check(clipped, &policy);
             for fillet in [false, true] {
-                let solutions = if fillet {
-                    clipped.fillet_loop_vertex_by_radius(
-                        0,
-                        1,
-                        q(1, 8),
-                        CurveCornerMode2::TrimOnly,
-                        &policy,
-                    )
+                let regions = if fillet {
+                    let outcome = clipped
+                        .fillet_loop_vertex_by_radius(
+                            0,
+                            1,
+                            q(1, 8),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap();
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    assert!(outcome.value.families().is_empty());
+                    outcome.value.into_parts().0
                 } else {
-                    clipped.chamfer_loop_vertex_by_setbacks(
-                        0,
-                        1,
-                        q(1, 8),
-                        q(1, 8),
-                        CurveCornerMode2::TrimOnly,
-                        &policy,
-                    )
-                }
-                .unwrap();
-                assert_eq!(solutions.certainty, CurveCertainty::Certified);
-                let regions = match solutions.value {
-                    CurveCornerSolutions2::Unique(region) => vec![region],
-                    CurveCornerSolutions2::Multiple(regions) => regions,
-                    CurveCornerSolutions2::NoSolution(reason) => {
-                        panic!("the clipped corner must admit an edit: {reason:?}")
+                    let outcome = clipped
+                        .chamfer_loop_vertex_by_setbacks(
+                            0,
+                            1,
+                            q(1, 8),
+                            q(1, 8),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap();
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    match outcome.value {
+                        CurveCornerSolutions2::Unique(region) => vec![region],
+                        CurveCornerSolutions2::Multiple(regions) => regions,
+                        CurveCornerSolutions2::NoSolution(reason) => {
+                            panic!("no chamfer: {reason:?}")
+                        }
                     }
                 };
                 assert!(!regions.is_empty());
@@ -1057,11 +1074,16 @@ mod finite_selected_point_domains {
                 ) {
                     Ok(CurveOutcome {
                         certainty: CurveCertainty::Certified,
-                        value: CurveCornerSolutions2::Unique(path),
-                    }) => path,
+                        value,
+                    }) if value.families().is_empty() && value.isolated_solutions().len() == 1 => {
+                        value.into_parts().0.pop().unwrap()
+                    }
                     other => {
                         failures += 1;
-                        println!("fillet: {other:?}");
+                        println!(
+                            "fillet did not return one certified isolated edit; error={}",
+                            other.is_err()
+                        );
                         continue;
                     }
                 };

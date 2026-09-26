@@ -1731,12 +1731,20 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
         ])
         .unwrap();
-        let hypercurve::CurveCornerSolutions2::Unique(path) = path
-            .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)
-            .unwrap()
-            .into_value()
-        else {
-            panic!("unique retained fillet")
+        let path = {
+            let solutions = path
+                .fillet_vertex_by_radius(
+                    1,
+                    q(1, 4),
+                    hypercurve::CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         let circle = &path.curves()[1];
         assert!(circle.geometry().is_none());
@@ -1792,12 +1800,20 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
         ])
         .unwrap();
-        let hypercurve::CurveCornerSolutions2::Unique(path) = path
-            .fillet_vertex_by_radius(1, q(1, 4), hypercurve::CurveCornerMode2::TrimOnly, &policy)
-            .unwrap()
-            .into_value()
-        else {
-            panic!("unique retained fillet")
+        let path = {
+            let solutions = path
+                .fillet_vertex_by_radius(
+                    1,
+                    q(1, 4),
+                    hypercurve::CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         let circle = &path.curves()[1];
         let parabola = Curve2::from(QuadraticBezier2::new(
@@ -3516,7 +3532,7 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
 
 #[test]
 fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
-    use hypercurve::{CurveCornerMode2, CurveCornerSolutions2};
+    use hypercurve::CurveCornerMode2;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let source = CurvePath2::try_new(vec![
             LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
@@ -3527,8 +3543,12 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
             .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
             .unwrap();
         assert_eq!(fillet.certainty, CurveCertainty::Certified);
-        let CurveCornerSolutions2::Unique(path) = fillet.value else {
-            panic!("unique exact fillet")
+        let path = {
+            let solutions = fillet.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         let circle = &path.curves()[1];
         assert_eq!(circle.family(), CurveFamily2::CircularArc);
@@ -3606,7 +3626,7 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
 
 #[test]
 fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
-    use hypercurve::{CurveCornerMode2, CurveCornerSolutions2};
+    use hypercurve::CurveCornerMode2;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
             LineSeg2::try_new(p(-4, 0), p(0, 0)).unwrap().into(),
@@ -3617,8 +3637,12 @@ fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
             .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
             .unwrap();
         assert_eq!(result.certainty, CurveCertainty::Certified);
-        let CurveCornerSolutions2::Unique(path) = result.value else {
-            panic!("unique fillet")
+        let path = {
+            let solutions = result.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         for index in [0, 2] {
             for (reversed, other_reversed) in
@@ -3706,11 +3730,15 @@ mod finite_selected_circle_domains {
             QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
         ])
         .unwrap();
-        let CurveCornerSolutions2::Unique(path) = certified(
-            path.fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, policy)
-                .unwrap(),
-        ) else {
-            panic!("unique retained fillet")
+        let path = {
+            let solutions = certified(
+                path.fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, policy)
+                    .unwrap(),
+            );
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         let circle = path.curves()[1].clone();
         println!(

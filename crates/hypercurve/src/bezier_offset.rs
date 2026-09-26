@@ -184710,8 +184710,14 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     )
                 });
             assert_eq!(fillet.certainty, CurveCertainty::Certified);
-            assert_eq!(fillet.value.candidate_count(), 3);
-            assert!(matches!(fillet.value, CurveCornerSolutions2::Multiple(_)));
+            assert_eq!(
+                {
+                    assert!(fillet.value.families().is_empty());
+                    fillet.value.isolated_solutions().len()
+                },
+                3
+            );
+            assert!(fillet.value.families().is_empty());
 
             let chamfer = transverse_region
                 .chamfer_loop_vertex_by_setbacks(

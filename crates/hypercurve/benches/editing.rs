@@ -268,7 +268,7 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(filleted) = black_box(&path)
+            let solutions = black_box(&path)
                 .fillet_vertex_by_radius(
                     1,
                     design_value.clone(),
@@ -276,9 +276,10 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
                     &policy,
                 )
                 .expect("design-parameter fillet benchmark must remain exact")
-                .into_value()
-            else {
-                panic!("line design-parameter fillet benchmark must be unique");
+                .into_value();
+            assert!(solutions.families().is_empty());
+            let [filleted] = solutions.isolated_solutions() else {
+                panic!("expected one isolated fillet");
             };
             curves += black_box(filleted).curves().len();
         }
@@ -401,12 +402,13 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(filleted) = black_box(&line_arc_path)
+            let solutions = black_box(&line_arc_path)
                 .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
                 .expect("line-arc design fillet must remain exact")
-                .into_value()
-            else {
-                panic!("line-arc design fillet must remain unique");
+                .into_value();
+            assert!(solutions.families().is_empty());
+            let [filleted] = solutions.isolated_solutions() else {
+                panic!("expected one isolated fillet");
             };
             curves += black_box(filleted).curves().len();
         }
@@ -428,12 +430,13 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut curves = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(filleted) = black_box(&arc_arc_path)
+            let solutions = black_box(&arc_arc_path)
                 .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
                 .expect("arc-arc design fillet must remain exact")
-                .into_value()
-            else {
-                panic!("arc-arc design fillet must remain unique");
+                .into_value();
+            assert!(solutions.families().is_empty());
+            let [filleted] = solutions.isolated_solutions() else {
+                panic!("expected one isolated fillet");
             };
             curves += black_box(filleted).curves().len();
         }
@@ -459,7 +462,7 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut loops = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(filleted) = black_box(&line_arc_region)
+            let solutions = black_box(&line_arc_region)
                 .fillet_loop_vertex_by_radius(
                     0,
                     1,
@@ -468,9 +471,10 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
                     &policy,
                 )
                 .expect("line-arc region design fillet must remain exact")
-                .into_value()
-            else {
-                panic!("line-arc region design fillet must remain unique");
+                .into_value();
+            assert!(solutions.families().is_empty());
+            let [filleted] = solutions.isolated_solutions() else {
+                panic!("expected one isolated fillet");
             };
             loops += black_box(filleted).boundary_loops().len();
         }
@@ -496,7 +500,7 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut loops = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(filleted) = black_box(&arc_arc_region)
+            let solutions = black_box(&arc_arc_region)
                 .fillet_loop_vertex_by_radius(
                     0,
                     1,
@@ -505,9 +509,10 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
                     &policy,
                 )
                 .expect("arc-arc region design fillet must remain exact")
-                .into_value()
-            else {
-                panic!("arc-arc region design fillet must remain unique");
+                .into_value();
+            assert!(solutions.families().is_empty());
+            let [filleted] = solutions.isolated_solutions() else {
+                panic!("expected one isolated fillet");
             };
             loops += black_box(filleted).boundary_loops().len();
         }
@@ -555,12 +560,13 @@ fn bench_retained_circle_fillet_lane(name: &str, path: &CurvePath2, iterations: 
     let started = Instant::now();
     let mut curves = 0_usize;
     for _ in 0..iterations {
-        let CurveCornerSolutions2::Unique(filleted) = black_box(path)
+        let solutions = black_box(path)
             .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
             .expect("retained circular fillet must remain exact")
-            .into_value()
-        else {
-            panic!("retained circular fillet must remain unique");
+            .into_value();
+        assert!(solutions.families().is_empty());
+        let [filleted] = solutions.isolated_solutions() else {
+            panic!("expected one isolated fillet");
         };
         curves += black_box(filleted).curves().len();
     }
@@ -679,7 +685,8 @@ fn bench_represented_bezier_fillet_lane(
             .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
             .expect("represented Bezier fillet must remain exact")
             .into_value();
-        candidates += black_box(solutions).candidate_count();
+        assert!(solutions.families().is_empty());
+        candidates += black_box(solutions.isolated_solutions()).len();
     }
     assert_ne!(candidates, 0);
     let elapsed = started.elapsed();
@@ -1368,7 +1375,8 @@ fn bench_represented_bezier_region_corner_lanes(
                 .fillet_loop_vertex_by_radius(0, 1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
                 .expect("represented Bezier region fillet must remain exact")
                 .into_value();
-            candidates += black_box(solutions).candidate_count();
+            assert!(solutions.families().is_empty());
+            candidates += black_box(solutions.isolated_solutions()).len();
         }
         assert_ne!(candidates, 0);
         let elapsed = started.elapsed();
@@ -2011,12 +2019,13 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let started = Instant::now();
         let mut filleted_loops = 0_usize;
         for _ in 0..iterations {
-            let CurveCornerSolutions2::Unique(filleted) = black_box(&region)
+            let solutions = black_box(&region)
                 .fillet_loop_vertex_by_radius(0, 1, s(1), CurveCornerMode2::TrimOnly, &policy)
                 .expect("benchmark design-parameter fillet must remain exact")
-                .into_value()
-            else {
-                panic!("CurveRegion2 design-parameter fillet benchmark must be unique");
+                .into_value();
+            assert!(solutions.families().is_empty());
+            let [filleted] = solutions.isolated_solutions() else {
+                panic!("expected one isolated fillet");
             };
             filleted_loops += black_box(filleted).boundary_loops().len();
         }
@@ -2073,16 +2082,12 @@ fn bench_higher_order_curve_edits(iterations: u32) {
             .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
             .expect("higher-order region fillet must remain exact")
             .into_value();
-        region_fillet_loops += match black_box(filleted) {
-            CurveCornerSolutions2::Unique(filleted) => filleted.boundary_loops().len(),
-            CurveCornerSolutions2::Multiple(filleted) => filleted
-                .iter()
-                .map(|candidate| candidate.boundary_loops().len())
-                .sum(),
-            CurveCornerSolutions2::NoSolution(reason) => {
-                panic!("higher-order region fillet lost every solution: {reason:?}")
-            }
-        };
+        assert!(filleted.families().is_empty());
+        assert!(!filleted.isolated_solutions().is_empty());
+        region_fillet_loops += black_box(filleted.isolated_solutions())
+            .iter()
+            .map(|candidate| candidate.boundary_loops().len())
+            .sum::<usize>();
     }
     let elapsed = started.elapsed();
     println!(

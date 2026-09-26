@@ -16,6 +16,12 @@ use curve_corner_reconstruction::corner_has_native_reconstruction;
 #[path = "curve_corner_domain.rs"]
 mod curve_corner_domain;
 
+#[path = "curve_fillet.rs"]
+mod curve_fillet;
+pub(crate) use curve_fillet::FilletCornerFamily2;
+pub use curve_fillet::{CurveFilletSolutions2, CurvePathFilletFamily2};
+use curve_fillet::{FilletCornerSelection2, fillet_corner_from_center};
+
 use crate::CurvePointData2;
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -108,8 +114,7 @@ pub enum CurveCornerNoSolution2 {
 
 /// Complete exact solutions for one corner-edit request.
 ///
-/// Candidate order is deterministic. Fillets order the left-side center before
-/// the right-side center. Chamfers order trim/trim, trim/extension,
+/// Candidate order is deterministic. Chamfers order trim/trim, trim/extension,
 /// extension/trim, then extension/extension whenever those candidates exist.
 #[derive(Clone, Debug, PartialEq)]
 pub enum CurveCornerSolutions2<T> {
@@ -1948,8 +1953,9 @@ impl CurvePath2 {
     /// Lines, circular arcs and retained exact line/circle images preserve
     /// their direct support kernels. General Bezier pairs use certified
     /// analytic-parallel incidence and retain selected contact evidence for
-    /// subsequent operations. Positive-dimensional center/contact families
-    /// do not produce an arbitrary isolated fillet.
+    /// subsequent operations. The result distinguishes isolated edits from
+    /// retained contact families. Select a family by supplying exact contacts
+    /// in its returned source charts; selection reuses the retained evidence.
     ///
     /// `TrimOrExtend` additionally extends each incident boundary chart;
     /// other charts keep their finite domains. Bezier extensions search the
@@ -1965,7 +1971,7 @@ impl CurvePath2 {
         radius: Real,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
+    ) -> ExactCurveResult<CurveOutcome<CurveFilletSolutions2<Self, CurvePathFilletFamily2>>> {
         resolve_certified_operation(policy, |attempt| {
             self.fillet_vertex_by_radius_raw(vertex_index, radius, mode, attempt)
         })
@@ -1977,7 +1983,7 @@ impl CurvePath2 {
         radius: Real,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+    ) -> ExactCurveResult<CurveFilletSolutions2<Self, CurvePathFilletFamily2>> {
         let (previous_index, next_index) =
             self.corner_curve_indices(vertex_index, CurveOperation2::Fillet, policy)?;
         let previous = &self.data.curves[previous_index];
@@ -1989,7 +1995,7 @@ impl CurvePath2 {
             policy,
         )?;
         if radius_sign == RealSign::Zero {
-            return Ok(CurveCornerSolutions2::NoSolution(
+            return Ok(CurveFilletSolutions2::empty(
                 CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
@@ -2025,37 +2031,22 @@ impl CurvePath2 {
             next.family(),
             policy,
         )?;
-        let solutions = try_map_corner_solutions(solutions, |mut solution| {
-            solution.previous.map_source_parameter(
-                previous_source.source_chart(),
-                CurveOperation2::Fillet,
-                previous.family(),
-                policy,
-            )?;
-            solution.next.map_source_parameter(
-                next_source.source_chart(),
-                CurveOperation2::Fillet,
-                next.family(),
-                policy,
-            )?;
-            self.publish_fillet_corner(
-                vertex_index,
-                previous_index,
-                next_index,
-                solution,
-                &radius,
-                [
-                    previous_retained_arc.as_deref(),
-                    next_retained_arc.as_deref(),
-                ],
-                [
-                    previous_source.promoted_parallel(),
-                    next_source.promoted_parallel(),
-                ],
-                policy,
-            )
-        })?;
-        Ok(compact_optional_corner_solutions(solutions))
+        let placement = curve_fillet::PathFilletPlacement2::new(
+            self,
+            vertex_index,
+            [previous_index, next_index],
+            [previous_source.source_chart(), next_source.source_chart()],
+            [None, None],
+            [previous_retained_arc, next_retained_arc],
+            [
+                previous_source.promoted_parallel(),
+                next_source.promoted_parallel(),
+            ],
+            [None, None],
+        );
+        let solutions =
+            solutions.try_map_isolated(|solution| placement.publish(solution, &radius, policy))?;
+        Ok(placement.bind(solutions))
     }
 
     fn corner_curve_indices(
@@ -4488,10 +4479,10 @@ pub(crate) fn solve_exact_fillet_corner(
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
+) -> ExactCurveResult<CurveFilletSolutions2<FilletCorner2, FilletCornerFamily2>> {
     match radius_sign {
         RealSign::Zero => {
-            return Ok(CurveCornerSolutions2::NoSolution(
+            return Ok(CurveFilletSolutions2::empty(
                 CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
@@ -4507,7 +4498,8 @@ pub(crate) fn solve_exact_fillet_corner(
             previous_family,
             next_family,
             policy,
-        );
+        )
+        .map(|isolated| CurveFilletSolutions2::from_isolated(isolated, Vec::new()));
     }
     solve_carrier_fillet_corner(
         previous,
@@ -4773,17 +4765,15 @@ impl FilletParallelSource2<'_> {
         parameter: &CurveParameter2,
         family: CurveFamily2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<bool> {
+    ) -> ExactCurveResult<Option<bool>> {
         let derivative_scale = |parallel: &BezierParallel2| match parallel
             .parallel_derivative_scale_sign(parameter, policy)
             .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
         {
-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => Ok(sign),
-            Classification::Decided(RealSign::Zero) => Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                crate::UncertaintyReason::Boundary,
-            )),
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
+                Ok(Some(sign))
+            }
+            Classification::Decided(RealSign::Zero) => Ok(None),
             Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
                 family,
@@ -4791,14 +4781,19 @@ impl FilletParallelSource2<'_> {
             )),
         };
         let (source_scale, reversed) = match self {
-            Self::Direct(_) => (RealSign::Positive, false),
+            Self::Direct(_) => (Some(RealSign::Positive), false),
             Self::Retained(source) => (derivative_scale(source.parallel())?, source.is_reversed()),
             Self::Selected(source) => (
                 derivative_scale(&source.parallel_carrier())?,
                 source.is_reversed(),
             ),
         };
-        Ok((source_scale != derivative_scale(support)?) != reversed)
+        // Tangent signs from the center locus are reusable only when both
+        // derivatives are nonzero. A center-locus cusp is not a singularity
+        // of the contact curve, and does not invalidate the tangent circle.
+        Ok(source_scale
+            .zip(derivative_scale(support)?)
+            .map(|(source, center)| (source != center) != reversed))
     }
 
     fn parallel_distance(&self) -> Real {
@@ -5744,10 +5739,11 @@ fn solve_carrier_fillet_corner(
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
+) -> ExactCurveResult<CurveFilletSolutions2<FilletCorner2, FilletCornerFamily2>> {
     let previous = PreparedFilletCarrier2::new(previous, previous_family, domains[0], policy)?;
     let next = PreparedFilletCarrier2::new(next, next_family, domains[1], policy)?;
     let mut candidates = CornerSolutionAccumulator::Empty;
+    let mut families = Vec::new();
     let mut saw_outside_domain = false;
     let mut saw_degenerate = false;
 
@@ -5780,7 +5776,7 @@ fn solve_carrier_fillet_corner(
                     [Some(first), Some(second)] => Some([first, second]),
                     _ => None,
                 };
-                let centers = fillet_offset_centers(
+                let mut centers = fillet_offset_centers(
                     previous_offset,
                     next_offset,
                     domains,
@@ -5790,9 +5786,19 @@ fn solve_carrier_fillet_corner(
                     policy,
                 )?;
                 saw_outside_domain |= centers.outside_domain;
-                if centers.coincident || !centers.components.is_empty() {
+                if centers.coincident {
                     saw_degenerate = true;
                 }
+                families.extend(FilletCornerFamily2::retain(
+                    std::mem::take(&mut centers.components),
+                    [previous_offset, next_offset],
+                    radius,
+                    clockwise,
+                    retain_selected_circle_endpoints,
+                    domains,
+                    [previous_family, next_family],
+                    policy,
+                )?);
                 for center in centers.iter() {
                     if !previous.accepts_offset_contact(
                         previous_offset,
@@ -5809,305 +5815,20 @@ fn solve_carrier_fillet_corner(
                     )? {
                         continue;
                     }
-                    let deferred_arc_is_previous = center
-                        .retained_anchor_evidence
-                        .as_ref()
-                        .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
-                        .map(|deferred| deferred.arc_is_previous);
-                    let Some(previous_cut) = fillet_cut_from_center(
+                    match fillet_corner_from_center(
                         previous_offset,
-                        &center.point,
-                        center.parameter(true),
-                        deferred_arc_is_previous == Some(true),
-                        true,
-                        retain_selected_circle_endpoints,
-                        domains[0],
-                        previous_family,
-                        policy,
-                    )?
-                    else {
-                        saw_outside_domain = true;
-                        continue;
-                    };
-                    let Some(next_cut) = fillet_cut_from_center(
                         next_offset,
-                        &center.point,
-                        center.parameter(false),
-                        deferred_arc_is_previous == Some(false),
-                        false,
+                        center,
+                        clockwise,
                         retain_selected_circle_endpoints,
-                        domains[1],
+                        domains,
+                        previous_family,
                         next_family,
                         policy,
-                    )?
-                    else {
-                        saw_outside_domain = true;
-                        continue;
-                    };
-                    let cut_point_relation = if center
-                        .retained_anchor_evidence
-                        .as_ref()
-                        .and_then(|evidence| evidence.cross)
-                        .is_some_and(|cross| {
-                            matches!(cross, RealSign::Positive | RealSign::Negative)
-                        }) {
-                        // Two contacts on one nonzero-radius circle cannot occupy the
-                        // same point with nonparallel tangents: both tangents would be
-                        // perpendicular to the same radial vector. The pair replay's
-                        // exact nonzero tangent cross is therefore also a constant-
-                        // time distinct-cut certificate and avoids constructing a
-                        // potentially high-degree Cartesian compositum solely for
-                        // this degeneracy test.
-                        Classification::Decided(false)
-                    } else if center.point.coordinates().is_none()
-                        && center
-                            .retained_anchor_evidence
-                            .as_ref()
-                            .is_some_and(|evidence| evidence.deferred_arc_contact.is_some())
-                    {
-                        // One circular cut is only a transient marker until the
-                        // retained fillet circle is intersected with the authored arc.
-                        // Its marker stores the center, so it cannot participate in
-                        // the ordinary two-contact degeneracy predicate.
-                        Classification::Decided(false)
-                    } else {
-                        previous_cut.point.same_point(&next_cut.point, policy)
-                    };
-                    match cut_point_relation {
-                        Classification::Decided(true) => saw_degenerate = true,
-                        Classification::Decided(false) => {
-                            let previous_is_cusp = matches!(
-                                previous_offset,
-                                FilletOffsetCarrier2::AlgebraicCusp { .. }
-                            );
-                            let next_is_cusp =
-                                matches!(next_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
-                            let previous_chord_anchors_on_next_arc = matches!(
-                                (previous_offset, next_offset),
-                                (
-                                    FilletOffsetCarrier2::AlgebraicChord { .. },
-                                    FilletOffsetCarrier2::Arc { .. }
-                                )
-                            );
-                            let cusp_and_line = matches!(
-                                (previous_offset, next_offset),
-                                (
-                                    FilletOffsetCarrier2::AlgebraicCusp { .. },
-                                    FilletOffsetCarrier2::Line { .. }
-                                )
-                            ) || matches!(
-                                (previous_offset, next_offset),
-                                (
-                                    FilletOffsetCarrier2::Line { .. },
-                                    FilletOffsetCarrier2::AlgebraicCusp { .. }
-                                )
-                            );
-                            let line_precedes_chord = matches!(
-                                (previous_offset, next_offset),
-                                (
-                                    FilletOffsetCarrier2::Line { .. },
-                                    FilletOffsetCarrier2::AlgebraicChord { .. }
-                                )
-                            );
-                            let (first, first_is_previous, first_family, second, second_family) =
-                                if cusp_and_line {
-                                    // The line is transiently lowered to a chord for
-                                    // center incidence. Keep the selected circle as
-                                    // the reconstruction anchor so its mapped radial
-                                    // field remains authoritative.
-                                    if previous_is_cusp {
-                                        (
-                                            previous_offset,
-                                            true,
-                                            previous_family,
-                                            next_offset,
-                                            next_family,
-                                        )
-                                    } else {
-                                        (
-                                            next_offset,
-                                            false,
-                                            next_family,
-                                            previous_offset,
-                                            previous_family,
-                                        )
-                                    }
-                                } else if (previous_is_cusp && !next_is_cusp)
-                                    || previous_chord_anchors_on_next_arc
-                                    || line_precedes_chord
-                                {
-                                    (
-                                        next_offset,
-                                        false,
-                                        next_family,
-                                        previous_offset,
-                                        previous_family,
-                                    )
-                                } else {
-                                    (
-                                        previous_offset,
-                                        true,
-                                        previous_family,
-                                        next_offset,
-                                        next_family,
-                                    )
-                                };
-                            let deferred_arc_frame = center
-                                .retained_anchor_evidence
-                                .as_ref()
-                                .and_then(|evidence| evidence.deferred_arc_contact.as_ref())
-                                .map(|deferred| {
-                                    (deferred.arc_is_previous, deferred.contact_seed.is_some())
-                                });
-                            let prefer_parallel_frame = center
-                                .retained_anchor_evidence
-                                .as_ref()
-                                .is_some_and(|evidence| {
-                                    evidence.center_parallel.is_some()
-                                        || evidence.source_direction.is_some()
-                                });
-                            let force_chord_normal = matches!(
-                                (previous_offset, next_offset),
-                                (
-                                    FilletOffsetCarrier2::AlgebraicChord { .. },
-                                    FilletOffsetCarrier2::Line { .. }
-                                ) | (
-                                    FilletOffsetCarrier2::Line { .. },
-                                    FilletOffsetCarrier2::AlgebraicChord { .. }
-                                )
-                            );
-                            #[cfg(feature = "dispatch-trace")]
-                            {
-                                let carrier_kind =
-                                    |carrier: &FilletOffsetCarrier2<'_, '_>| match carrier {
-                                        FilletOffsetCarrier2::Line {
-                                            source: FilletLinearSource2::Native { .. },
-                                            ..
-                                        } => "line-native",
-                                        FilletOffsetCarrier2::Line {
-                                            source: FilletLinearSource2::AlgebraicChord(_),
-                                            ..
-                                        } => "line-chord",
-                                        FilletOffsetCarrier2::Arc { .. } => "arc",
-                                        FilletOffsetCarrier2::Point { .. } => "point",
-                                        FilletOffsetCarrier2::Parallel { .. } => "parallel",
-                                        FilletOffsetCarrier2::AlgebraicCusp { .. } => {
-                                            "algebraic-cusp"
-                                        }
-                                        FilletOffsetCarrier2::AlgebraicChord { .. } => {
-                                            "algebraic-chord"
-                                        }
-                                    };
-                                hyperreal::dispatch_trace::record(
-                                    "hypercurve",
-                                    "curve-region-fillet-previous-carrier",
-                                    carrier_kind(previous_offset),
-                                );
-                                hyperreal::dispatch_trace::record(
-                                    "hypercurve",
-                                    "curve-region-fillet-next-carrier",
-                                    carrier_kind(next_offset),
-                                );
-                                hyperreal::dispatch_trace::record(
-                                    "hypercurve",
-                                    "curve-region-fillet-force-chord-normal",
-                                    if force_chord_normal { "yes" } else { "no" },
-                                );
-                            }
-                            let first_frame = first.retained_fillet_frame(
-                                first_is_previous,
-                                center.parameter(first_is_previous),
-                                center.retained_anchor_evidence.clone(),
-                                force_chord_normal,
-                                first_family,
-                                policy,
-                            )?;
-                            let frame_is_preferred = |frame: &RetainedFilletFrame2| {
-                                if let Some((arc_is_previous, contact_is_preselected)) =
-                                    deferred_arc_frame
-                                {
-                                    return (frame.anchor_is_previous == arc_is_previous)
-                                        == contact_is_preselected;
-                                }
-                                if force_chord_normal {
-                                    return matches!(
-                                        &frame.radial_frame,
-                                        RetainedFilletRadialFrame2::ChordNormal { .. }
-                                    );
-                                }
-                                if matches!(
-                                    &frame.radial_frame,
-                                    RetainedFilletRadialFrame2::ChordNormal { .. }
-                                ) {
-                                    return prefer_parallel_frame
-                                        && frame
-                                            .anchor_evidence
-                                            .as_ref()
-                                            .and_then(|evidence| evidence.center_parallel.as_ref())
-                                            .and_then(|center| center.parameter.as_ref())
-                                            .is_some_and(CurveParameter2::is_retained_scalar);
-                                }
-                                matches!(
-                                    &frame.radial_frame,
-                                    RetainedFilletRadialFrame2::ParallelNormal { .. }
-                                ) == prefer_parallel_frame
-                            };
-                            let retained_frame =
-                                if first_frame.as_ref().is_some_and(frame_is_preferred) {
-                                    first_frame
-                                } else {
-                                    let second_frame = second.retained_fillet_frame(
-                                        !first_is_previous,
-                                        center.parameter(!first_is_previous),
-                                        center.retained_anchor_evidence.clone(),
-                                        force_chord_normal,
-                                        second_family,
-                                        policy,
-                                    )?;
-                                    if second_frame.as_ref().is_some_and(frame_is_preferred) {
-                                        second_frame
-                                    } else {
-                                        first_frame.or(second_frame)
-                                    }
-                                };
-                            #[cfg(feature = "dispatch-trace")]
-                            hyperreal::dispatch_trace::record(
-                                "hypercurve",
-                                "curve-region-fillet-retained-frame",
-                                match retained_frame.as_ref().map(|frame| &frame.radial_frame) {
-                                    Some(RetainedFilletRadialFrame2::RepresentedUnitNormal(_)) => {
-                                        "represented-unit-normal"
-                                    }
-                                    Some(RetainedFilletRadialFrame2::ChordNormal { .. }) => {
-                                        "chord-normal"
-                                    }
-                                    Some(RetainedFilletRadialFrame2::ConcentricArc { .. }) => {
-                                        "concentric-arc"
-                                    }
-                                    Some(RetainedFilletRadialFrame2::SelectedConcentric {
-                                        ..
-                                    }) => "selected-concentric",
-                                    Some(RetainedFilletRadialFrame2::ParallelNormal { .. }) => {
-                                        "parallel-normal"
-                                    }
-                                    None => "none",
-                                },
-                            );
-                            candidates.push(FilletCorner2 {
-                                previous: previous_cut,
-                                next: next_cut,
-                                center: center.point.clone(),
-                                clockwise,
-                                retained_frame,
-                            });
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Err(ExactCurveError::blocked(
-                                CurveOperation2::Fillet,
-                                previous_family,
-                                reason,
-                            ));
-                        }
+                    )? {
+                        FilletCornerSelection2::Selected(candidate) => candidates.push(candidate),
+                        FilletCornerSelection2::Outside => saw_outside_domain = true,
+                        FilletCornerSelection2::Degenerate => saw_degenerate = true,
                     }
                 }
             }
@@ -6124,7 +5845,10 @@ fn solve_carrier_fillet_corner(
     } else {
         CurveCornerNoSolution2::NoTangentCircle
     };
-    Ok(candidates.finish(empty_reason))
+    Ok(CurveFilletSolutions2::from_isolated(
+        candidates.finish(empty_reason),
+        families,
+    ))
 }
 
 fn retained_fillet_cusp_fragment_range(
@@ -6509,7 +6233,7 @@ fn retain_cusp_parallel_fillet_contact(
         analytic_family,
         policy,
     )?;
-    if analytic_support_reverses_source {
+    if analytic_support_reverses_source == Some(true) {
         cross = reverse_fillet_sign(cross);
         dot = reverse_fillet_sign(dot);
     }
@@ -6530,16 +6254,18 @@ fn retain_cusp_parallel_fillet_contact(
         // The retained frame is the analytic carrier, so store analytic x
         // cusp rather than the direct kernel's cusp x analytic relation.
         retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
-            cross: Some(reverse_fillet_sign(cross)),
-            dot: Some(dot),
+            cross: analytic_support_reverses_source.map(|_| reverse_fillet_sign(cross)),
+            dot: analytic_support_reverses_source.map(|_| dot),
             center_parallel: Some(RetainedFilletCenterParallel2 {
                 support: analytic_support.clone(),
                 parameter: Some(analytic_parameter),
             }),
-            source_direction: Some(if analytic_support_reverses_source {
-                RealSign::Negative
-            } else {
-                RealSign::Positive
+            source_direction: analytic_support_reverses_source.map(|reversed| {
+                if reversed {
+                    RealSign::Negative
+                } else {
+                    RealSign::Positive
+                }
             }),
             canonical_anchor_curve: None,
             deferred_arc_contact: None,
@@ -7024,31 +6750,36 @@ fn fillet_offset_centers(
                 )? {
                     continue;
                 }
-                let reverse_tangent_relation = previous_source.support_reverses_source_at(
-                    previous,
-                    previous_parameter,
-                    previous_family,
-                    policy,
-                )? != next_source.support_reverses_source_at(
-                    next,
-                    next_parameter,
-                    next_family,
-                    policy,
-                )?;
+                let reverse_tangent_relation = previous_source
+                    .support_reverses_source_at(
+                        previous,
+                        previous_parameter,
+                        previous_family,
+                        policy,
+                    )?
+                    .zip(next_source.support_reverses_source_at(
+                        next,
+                        next_parameter,
+                        next_family,
+                        policy,
+                    )?)
+                    .map(|(previous, next)| previous != next);
                 let orient = |sign| {
-                    if reverse_tangent_relation {
-                        reverse_fillet_sign(sign)
-                    } else {
-                        sign
-                    }
+                    reverse_tangent_relation.map(|reverse| {
+                        if reverse {
+                            reverse_fillet_sign(sign)
+                        } else {
+                            sign
+                        }
+                    })
                 };
                 centers.push(FilletCenterWitness2 {
                     point,
                     previous_parameter: Some(previous_parameter.clone()),
                     next_parameter: Some(next_parameter.clone()),
                     retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
-                        cross: contact.tangent_cross_sign().map(orient),
-                        dot: contact.tangent_dot_sign().map(orient),
+                        cross: contact.tangent_cross_sign().and_then(orient),
+                        dot: contact.tangent_dot_sign().and_then(orient),
                         center_parallel: None,
                         source_direction: None,
                         canonical_anchor_curve: None,
@@ -7272,20 +7003,22 @@ fn fillet_offset_centers(
                         parallel_family,
                         policy,
                     )?;
-                    if support_reverses_source {
+                    if support_reverses_source == Some(true) {
                         cross = reverse_fillet_sign(cross);
                         dot = reverse_fillet_sign(dot);
                     }
                     Some(RetainedFilletAnchorEvidence2 {
                         // The selected analytic circle frame is the anchor;
                         // the predicate above reports line x analytic.
-                        cross: Some(reverse_fillet_sign(cross)),
-                        dot: Some(dot),
+                        cross: support_reverses_source.map(|_| reverse_fillet_sign(cross)),
+                        dot: support_reverses_source.map(|_| dot),
                         center_parallel: None,
-                        source_direction: Some(if support_reverses_source {
-                            RealSign::Negative
-                        } else {
-                            RealSign::Positive
+                        source_direction: support_reverses_source.map(|reversed| {
+                            if reversed {
+                                RealSign::Negative
+                            } else {
+                                RealSign::Positive
+                            }
                         }),
                         canonical_anchor_curve: None,
                         deferred_arc_contact: None,
@@ -7592,7 +7325,7 @@ fn fillet_offset_centers(
                             let analytic_support_reverses_source = parallel_source.support_reverses_source_at(
                                 analytic_support, &contact.parallel_parameter.clone().into(), analytic_family, policy,
                             )?;
-                            if analytic_support_reverses_source {
+                            if analytic_support_reverses_source == Some(true) {
                                 cross = reverse_fillet_sign(cross);
                                 dot = reverse_fillet_sign(dot);
                             }
@@ -7642,19 +7375,13 @@ fn fillet_offset_centers(
                                 next_parameter,
                                 retained_anchor_evidence: Some(
                                     RetainedFilletAnchorEvidence2 {
-                                        cross: Some(reverse_fillet_sign(cross)),
-                                        dot: Some(dot),
+                                        cross: analytic_support_reverses_source.map(|_| reverse_fillet_sign(cross)),
+                                        dot: analytic_support_reverses_source.map(|_| dot),
                                         center_parallel: Some(RetainedFilletCenterParallel2 {
                                             support: analytic_support.clone(),
                                             parameter: Some(analytic_parameter),
                                         }),
-                                        source_direction: Some(
-                                            if analytic_support_reverses_source {
-                                                RealSign::Negative
-                                            } else {
-                                                RealSign::Positive
-                                            },
-                                        ),
+                                        source_direction: analytic_support_reverses_source.map(|reversed| if reversed { RealSign::Negative } else { RealSign::Positive }),
                                         canonical_anchor_curve: None,
                                         deferred_arc_contact: None,
                                     },
@@ -9430,7 +9157,7 @@ fn fillet_offset_centers(
                     analytic_family,
                     policy,
                 )?;
-                if analytic_support_reverses_source {
+                if analytic_support_reverses_source == Some(true) {
                     cross = reverse_fillet_sign(cross);
                     dot = reverse_fillet_sign(dot);
                 }
@@ -9447,13 +9174,15 @@ fn fillet_offset_centers(
                     retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
                         // The retained circle frame is analytic, while the
                         // intersection kernel reports chord x analytic.
-                        cross: Some(reverse_fillet_sign(cross)),
-                        dot: Some(dot),
+                        cross: analytic_support_reverses_source.map(|_| reverse_fillet_sign(cross)),
+                        dot: analytic_support_reverses_source.map(|_| dot),
                         center_parallel: None,
-                        source_direction: Some(if analytic_support_reverses_source {
-                            RealSign::Negative
-                        } else {
-                            RealSign::Positive
+                        source_direction: analytic_support_reverses_source.map(|reversed| {
+                            if reversed {
+                                RealSign::Negative
+                            } else {
+                                RealSign::Positive
+                            }
                         }),
                         canonical_anchor_curve: None,
                         deferred_arc_contact: None,
@@ -12864,10 +12593,11 @@ mod tests {
                     &policy,
                 )
                 .unwrap();
-                let candidates = match solutions {
-                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                    CurveCornerSolutions2::Multiple(candidates) => candidates,
-                    CurveCornerSolutions2::NoSolution(_) => Vec::new(),
+                let candidates = {
+                    let solutions = solutions;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (candidates, _) = solutions.into_parts();
+                    candidates
                 };
                 let expected_line = CurveParameter2::from(if reversed {
                     Real::one() - &line_parameter
@@ -12977,10 +12707,11 @@ mod tests {
                             &policy,
                         )
                         .unwrap();
-                        let candidates = match solutions {
-                            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                            CurveCornerSolutions2::Multiple(candidates) => candidates,
-                            CurveCornerSolutions2::NoSolution(_) => Vec::new(),
+                        let candidates = {
+                            let solutions = solutions;
+                            assert!(solutions.families().is_empty(), "expected isolated fillets");
+                            let (candidates, _) = solutions.into_parts();
+                            candidates
                         };
                         let expected_line = CurveParameter2::from(if reversed {
                             Real::one() - &line_parameter
@@ -13220,7 +12951,10 @@ mod tests {
                 )
                 .unwrap();
                 assert_eq!(
-                    solutions.candidate_count(),
+                    {
+                        assert!(solutions.families().is_empty());
+                        solutions.isolated_solutions().len()
+                    },
                     count,
                     "previous={previous_mode:?}, next={next_mode:?}, policy={policy:?}"
                 );
@@ -13412,16 +13146,13 @@ mod tests {
                     &policy,
                 )
                 .unwrap();
-                let cuts = match solutions {
-                    CurveCornerSolutions2::Unique(solution) => vec![solution.next],
-                    CurveCornerSolutions2::Multiple(solutions) => solutions
-                        .into_iter()
-                        .map(|solution| solution.next)
-                        .collect(),
-                    CurveCornerSolutions2::NoSolution(reason) => {
-                        panic!("the spline corner has a fillet: {reason:?}")
-                    }
-                };
+                assert!(solutions.families().is_empty());
+                let (solutions, _) = solutions.into_parts();
+                assert!(!solutions.is_empty());
+                let cuts: Vec<_> = solutions
+                    .into_iter()
+                    .map(|solution| solution.next)
+                    .collect();
                 for cut in &cuts {
                     assert_spline_cut_replays_in_authored_chart(&curve, cut, &policy);
                 }
@@ -13702,8 +13433,21 @@ mod tests {
                     .expect("the native arc/chord trim solve must complete");
                 let extended = solve(CurveCornerMode2::TrimOrExtend)
                     .expect("the native arc/chord extension solve must complete");
-                assert!(trim.candidate_count() > 0);
-                assert!(extended.candidate_count() > trim.candidate_count());
+                assert!(
+                    {
+                        assert!(trim.families().is_empty());
+                        trim.isolated_solutions().len()
+                    } > 0
+                );
+                assert!(
+                    {
+                        assert!(extended.families().is_empty());
+                        extended.isolated_solutions().len()
+                    } > {
+                        assert!(trim.families().is_empty());
+                        trim.isolated_solutions().len()
+                    }
+                );
                 let retains_recursive_parameter = |corner: &FilletCorner2| {
                     corner
                         .retained_frame
@@ -13713,12 +13457,12 @@ mod tests {
                         .and_then(|deferred| deferred.contact_seed.as_ref())
                         .is_some_and(|seed| seed.parameter.as_recursive_projective().is_some())
                 };
-                assert!(match &extended {
-                    CurveCornerSolutions2::Unique(corner) => retains_recursive_parameter(corner),
-                    CurveCornerSolutions2::Multiple(corners) => {
-                        corners.iter().any(retains_recursive_parameter)
-                    }
-                    CurveCornerSolutions2::NoSolution(_) => false,
+                assert!({
+                    assert!(extended.families().is_empty());
+                    extended
+                        .isolated_solutions()
+                        .iter()
+                        .any(retains_recursive_parameter)
                 });
             }
         }
@@ -14281,10 +14025,21 @@ mod tests {
                 let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
                 let retained_extension = solve(true, CurveCornerMode2::TrimOrExtend);
                 assert_eq!(
-                    retained_extension.candidate_count(),
-                    direct_extension.candidate_count()
+                    {
+                        assert!(retained_extension.families().is_empty());
+                        retained_extension.isolated_solutions().len()
+                    },
+                    {
+                        assert!(direct_extension.families().is_empty());
+                        direct_extension.isolated_solutions().len()
+                    }
                 );
-                assert!(direct_extension.candidate_count() > 0);
+                assert!(
+                    {
+                        assert!(direct_extension.families().is_empty());
+                        direct_extension.isolated_solutions().len()
+                    } > 0
+                );
             }
         }
     }
@@ -14383,10 +14138,21 @@ mod tests {
                 let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
                 let retained_extension = solve(true, CurveCornerMode2::TrimOrExtend);
                 assert_eq!(
-                    direct_extension.candidate_count(),
-                    retained_extension.candidate_count()
+                    {
+                        assert!(direct_extension.families().is_empty());
+                        direct_extension.isolated_solutions().len()
+                    },
+                    {
+                        assert!(retained_extension.families().is_empty());
+                        retained_extension.isolated_solutions().len()
+                    }
                 );
-                assert!(direct_extension.candidate_count() > 0);
+                assert!(
+                    {
+                        assert!(direct_extension.families().is_empty());
+                        direct_extension.isolated_solutions().len()
+                    } > 0
+                );
             }
         }
     }
@@ -14490,13 +14256,36 @@ mod tests {
                 let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
                 let native_trim = solve(true, CurveCornerMode2::TrimOnly);
                 let native_extension = solve(true, CurveCornerMode2::TrimOrExtend);
-                assert_eq!(native_trim.candidate_count(), direct_trim.candidate_count());
                 assert_eq!(
-                    native_extension.candidate_count(),
-                    direct_extension.candidate_count(),
+                    {
+                        assert!(native_trim.families().is_empty());
+                        native_trim.isolated_solutions().len()
+                    },
+                    {
+                        assert!(direct_trim.families().is_empty());
+                        direct_trim.isolated_solutions().len()
+                    }
+                );
+                assert_eq!(
+                    {
+                        assert!(native_extension.families().is_empty());
+                        native_extension.isolated_solutions().len()
+                    },
+                    {
+                        assert!(direct_extension.families().is_empty());
+                        direct_extension.isolated_solutions().len()
+                    },
                     "the native fast path must enumerate both selected-circle charts",
                 );
-                assert!(native_extension.candidate_count() > native_trim.candidate_count());
+                assert!(
+                    {
+                        assert!(native_extension.families().is_empty());
+                        native_extension.isolated_solutions().len()
+                    } > {
+                        assert!(native_trim.families().is_empty());
+                        native_trim.isolated_solutions().len()
+                    }
+                );
             }
         }
     }

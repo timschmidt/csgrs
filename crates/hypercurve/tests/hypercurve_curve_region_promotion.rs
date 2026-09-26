@@ -1238,12 +1238,15 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
         hypercurve::CurvePoint2::from(p(4, 1).clone())
     );
 
-    let CurveCornerSolutions2::Unique(fillet) = source
-        .fillet_loop_vertex_by_radius(0, 1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
-        .unwrap()
-        .into_value()
-    else {
-        panic!("a square vertex must have one trim-only fillet");
+    let fillet = {
+        let solutions = source
+            .fillet_loop_vertex_by_radius(0, 1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+            .unwrap()
+            .into_value();
+        assert!(solutions.families().is_empty(), "expected isolated fillets");
+        let (mut candidates, _) = solutions.into_parts();
+        assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+        candidates.pop().unwrap()
     };
     assert_eq!(
         decided(fillet.loop_roles(&policy).unwrap()),
@@ -1260,12 +1263,21 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
     assert_eq!(arc.radius_squared(), Real::one());
     assert!(!arc.is_clockwise());
 
-    let CurveCornerSolutions2::Multiple(extended) = source
-        .fillet_loop_vertex_by_radius(0, 1, Real::one(), CurveCornerMode2::TrimOrExtend, &policy)
-        .unwrap()
-        .into_value()
-    else {
-        panic!("the region must preserve both exact trim-or-extend candidates");
+    let extended = {
+        let solutions = source
+            .fillet_loop_vertex_by_radius(
+                0,
+                1,
+                Real::one(),
+                CurveCornerMode2::TrimOrExtend,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        assert!(solutions.families().is_empty(), "expected isolated fillets");
+        let (candidates, _) = solutions.into_parts();
+        assert!(candidates.len() > 1, "expected multiple isolated fillets");
+        candidates
     };
     assert_eq!(extended.len(), 2);
 
@@ -1321,11 +1333,12 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
         CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
     );
     assert_eq!(
-        source
+        (source
             .fillet_loop_vertex_by_radius(0, 1, Real::zero(), CurveCornerMode2::TrimOnly, &policy,)
             .unwrap()
-            .into_value(),
-        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+            .into_value())
+        .no_solution_reason(),
+        Some(CurveCornerNoSolution2::ZeroDesignValue)
     );
 }
 
@@ -1473,12 +1486,22 @@ fn unified_region_native_fillet_retains_certified_arc_contacts() {
         let source = certified(
             CurveRegion2::try_from_native_material_contours(vec![curved.clone()], &policy).unwrap(),
         );
-        let CurveCornerSolutions2::Unique(filleted) = certified(
-            source
-                .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
-                .unwrap(),
-        ) else {
-            panic!("the native line/arc vertex must have one exact fillet");
+        let filleted = {
+            let solutions = certified(
+                source
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        1,
+                        q(1, 2),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .unwrap(),
+            );
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         let expected = expected_line_circle_fillet();
         assert_corner_region_survives_boundary_paths(
@@ -1575,12 +1598,21 @@ fn unified_region_corners_preserve_circular_geometry_across_representations() {
                 &policy,
             );
 
-            let CurveCornerSolutions2::Unique(filleted) = source
-                .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
-                .map(certified)
-                .unwrap()
-            else {
-                panic!("the retained circular region corner must have one fillet");
+            let filleted = {
+                let solutions = source
+                    .fillet_loop_vertex_by_radius(
+                        0,
+                        1,
+                        q(1, 2),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
+                    .map(certified)
+                    .unwrap();
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (mut candidates, _) = solutions.into_parts();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
             };
             assert_corner_region_survives_boundary_paths(
                 &filleted,
@@ -1768,12 +1800,15 @@ fn unified_region_corners_use_represented_bezier_incidence() {
         let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
             .unwrap()
             .into_value();
-        let CurveCornerSolutions2::Unique(filleted) = source
-            .fillet_loop_vertex_by_radius(0, 1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
-            .unwrap()
-            .into_value()
-        else {
-            panic!("the represented line/Bezier region corner must have one fillet");
+        let filleted = {
+            let solutions = source
+                .fillet_loop_vertex_by_radius(0, 1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
+                .unwrap()
+                .into_value();
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         let fillet_paths = decided(filleted.boundary_paths(&policy).unwrap());
         assert_eq!(fillet_paths[0].curves().len(), 5);
@@ -2349,15 +2384,8 @@ fn unified_region_corners_use_canonical_spline_bezier_spans() {
                         .into_value()
                         == Classification::Decided(true)
             };
-            match &fillets {
-                CurveCornerSolutions2::Unique(candidate) => assert!(has_expected(candidate)),
-                CurveCornerSolutions2::Multiple(candidates) => {
-                    assert!(candidates.iter().any(has_expected));
-                }
-                CurveCornerSolutions2::NoSolution(reason) => {
-                    panic!("the {family:?} region span lost its exact fillet: {reason:?}")
-                }
-            }
+            assert!(fillets.families().is_empty());
+            assert!(fillets.isolated_solutions().iter().any(has_expected));
         }
     }
 }
@@ -2396,8 +2424,8 @@ fn unified_region_corner_solver_obeys_terminal_policy_once() {
         CurveCertainty::Approximate512Consumed
     );
     assert_eq!(
-        approximate.value,
-        CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::ZeroDesignValue)
+        (approximate.value).no_solution_reason(),
+        Some(CurveCornerNoSolution2::ZeroDesignValue)
     );
 }
 
@@ -3952,8 +3980,12 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
                 .fillet_loop_vertex_by_radius(0, 0, q(1, 8), CurveCornerMode2::TrimOnly, &policy)
                 .expect("the exact-chord loop seam must retain fillet semantics");
             assert_eq!(seam.certainty, CurveCertainty::Certified);
-            let CurveCornerSolutions2::Unique(seam) = seam.value else {
-                panic!("the exact-chord seam fillet must be unique");
+            let seam = {
+                let solutions = seam.value;
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (mut candidates, _) = solutions.into_parts();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
             };
             assert_eq!(
                 certified(
@@ -3976,8 +4008,12 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
             )
             .expect("canonical exact chords must reuse the authoritative fillet solver");
         assert_eq!(first.certainty, CurveCertainty::Certified);
-        let CurveCornerSolutions2::Unique(first) = first.value else {
-            panic!("a convex exact-chord corner must have one in-domain fillet");
+        let first = {
+            let solutions = first.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         let fragments = first.boundary_loops()[0].curves();
         assert_eq!(fragments.len(), 5);
@@ -4015,8 +4051,12 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
             )
             .expect("a later canonical chord corner must remain filletable");
         assert_eq!(second.certainty, CurveCertainty::Certified);
-        let CurveCornerSolutions2::Unique(second) = second.value else {
-            panic!("the repeated exact-chord fillet must remain unique");
+        let second = {
+            let solutions = second.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         assert_eq!(
             certified(
@@ -4128,8 +4168,12 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
                 )
                 .expect("selected-endpoint support chords must share the linear fillet kernel");
             assert_eq!(result.certainty, CurveCertainty::Certified);
-            let CurveCornerSolutions2::Unique(filleted) = result.value else {
-                panic!("the selected-endpoint right angle must have one exact fillet");
+            let filleted = {
+                let solutions = result.value;
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (mut candidates, _) = solutions.into_parts();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
             };
             let fragments = filleted.boundary_loops()[0].curves();
             assert_eq!(fragments.len(), 4);
@@ -4249,8 +4293,12 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
                 )
                 .expect("a represented-support chord must reuse line/circle incidence");
             assert_eq!(result.certainty, CurveCertainty::Certified);
-            let CurveCornerSolutions2::Unique(filleted) = result.value else {
-                panic!("the retained chord/circular corner must have one exact fillet");
+            let filleted = {
+                let solutions = result.value;
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (mut candidates, _) = solutions.into_parts();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
             };
             assert_eq!(
                 certified(
@@ -4301,14 +4349,16 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
             .expect("the line/parabola corner remains explicit")
     }
 
-    fn candidates(solutions: CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {
-        match solutions {
-            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-            CurveCornerSolutions2::Multiple(candidates) => candidates,
-            CurveCornerSolutions2::NoSolution(reason) => {
-                panic!("the incident cell must contain a fillet: {reason:?}")
-            }
-        }
+    fn candidates(
+        solutions: hypercurve::CurveFilletSolutions2<
+            CurveRegion2,
+            hypercurve::CurveRegionFilletFamily2,
+        >,
+    ) -> Vec<CurveRegion2> {
+        assert!(solutions.families().is_empty());
+        let (candidates, _) = solutions.into_parts();
+        assert!(!candidates.is_empty());
+        candidates
     }
 
     let exact_line_end = Point2::new(Real::one() + q(38280, 91901), Real::one() + q(83549, 91901));
@@ -4462,14 +4512,16 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
             .expect("the arc/parabola corner remains explicit")
     }
 
-    fn candidates(solutions: CurveCornerSolutions2<CurveRegion2>) -> Vec<CurveRegion2> {
-        match solutions {
-            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-            CurveCornerSolutions2::Multiple(candidates) => candidates,
-            CurveCornerSolutions2::NoSolution(reason) => {
-                panic!("the incident arc/parabola cells must contain a fillet: {reason:?}")
-            }
-        }
+    fn candidates(
+        solutions: hypercurve::CurveFilletSolutions2<
+            CurveRegion2,
+            hypercurve::CurveRegionFilletFamily2,
+        >,
+    ) -> Vec<CurveRegion2> {
+        assert!(solutions.families().is_empty());
+        let (candidates, _) = solutions.into_parts();
+        assert!(!candidates.is_empty());
+        candidates
     }
 
     let exact_cut = Point2::new(q(6, 5), q(36, 25));
@@ -4650,14 +4702,15 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
                 )
                 .expect("a represented-support chord must reuse line/Bezier incidence");
             assert_eq!(result.certainty, CurveCertainty::Certified);
-            let candidates = match result.value {
-                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                CurveCornerSolutions2::Multiple(candidates) => candidates,
-                CurveCornerSolutions2::NoSolution(reason) => {
-                    panic!(
-                        "the retained chord/quadratic corner lost its exact fillet: policy={policy:?}, reverse={reverse}, reason={reason:?}"
-                    )
-                }
+            let candidates = {
+                let solutions = result.value;
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (candidates, _) = solutions.into_parts();
+                assert!(
+                    !candidates.is_empty(),
+                    "expected at least one isolated fillet"
+                );
+                candidates
             };
             let filleted = candidates
                 .into_iter()
@@ -4759,15 +4812,17 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
                 CurveCertainty::Certified,
                 "policy={policy:?}, corner={corner}"
             );
-            let candidate_count = result.value.candidate_count();
+            let candidate_count = {
+                assert!(result.value.families().is_empty());
+                result.value.isolated_solutions().len()
+            };
             let no_solution_reason = result.value.no_solution_reason();
-            match result.value {
-                CurveCornerSolutions2::Unique(region) => {
-                    filleted.push((corner, region));
-                }
-                CurveCornerSolutions2::NoSolution(_) | CurveCornerSolutions2::Multiple(_) => {
-                    outcomes.push((corner, candidate_count, no_solution_reason));
-                }
+            assert!(result.value.families().is_empty());
+            let (mut candidates, _) = result.value.into_parts();
+            if candidates.len() == 1 {
+                filleted.push((corner, candidates.pop().unwrap()));
+            } else {
+                outcomes.push((corner, candidate_count, no_solution_reason));
             }
         }
         assert_eq!(
@@ -4877,24 +4932,32 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
                         )
                     });
         assert_eq!(result.certainty, CurveCertainty::Certified);
-        if result.value.candidate_count() != candidates_per_corner {
+        if {
+            assert!(result.value.families().is_empty());
+            result.value.isolated_solutions().len()
+        } != candidates_per_corner
+        {
             outcomes.push((
                 corner,
-                result.value.candidate_count(),
+                {
+                    assert!(result.value.families().is_empty());
+                    result.value.isolated_solutions().len()
+                },
                 result.value.no_solution_reason(),
             ));
             continue;
         }
-        match result.value {
-            CurveCornerSolutions2::Unique(candidate) => filleted.push((corner, 0, candidate)),
-            CurveCornerSolutions2::Multiple(candidates) => filleted.extend(
-                candidates
-                    .into_iter()
-                    .enumerate()
-                    .map(|(candidate, region)| (corner, candidate, region)),
-            ),
-            CurveCornerSolutions2::NoSolution(reason) => outcomes.push((corner, 0, Some(reason))),
+        assert!(result.value.families().is_empty());
+        if let Some(reason) = result.value.no_solution_reason() {
+            outcomes.push((corner, 0, Some(reason)));
         }
+        let (candidates, _) = result.value.into_parts();
+        filleted.extend(
+            candidates
+                .into_iter()
+                .enumerate()
+                .map(|(candidate, region)| (corner, candidate, region)),
+        );
     }
     assert_eq!(
         filleted.len(),
@@ -4923,7 +4986,12 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
                 )
             });
         assert_eq!(replay.certainty, CurveCertainty::Certified);
-        assert_eq!(replay.value.union().boundary_loops().len(), 2);
+        // An incident extension can regularize into multiple loops. The
+        // disjoint square adds one boundary without discarding any of them.
+        assert_eq!(
+            replay.value.union().boundary_loops().len(),
+            filleted.boundary_loops().len() + disjoint.boundary_loops().len(),
+        );
         assert!(replay.value.intersection().is_empty());
 
         let filleted_kinds = filleted.boundary_loops()[0]
@@ -5014,8 +5082,12 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
         let result = source
             .fillet_loop_vertex_by_radius(0, 1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
             .expect("a regular non-PH Bezier pair must retain its exact fillet");
-        let CurveCornerSolutions2::Unique(filleted) = result.into_value() else {
-            panic!("the convex non-PH Bezier corner must have one fillet");
+        let filleted = {
+            let solutions = result.into_value();
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         assert_eq!(
             filleted.boundary_loops()[0]
@@ -5181,7 +5253,12 @@ fn exact_high_degree_elevations_reenter_the_quadratic_corner_kernel() {
             .fillet_loop_vertex_by_radius(0, 1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
             .expect("a structural elevation must reuse the quadratic fillet kernel");
         assert_eq!(filleted.certainty, CurveCertainty::Certified);
-        assert!(filleted.value.candidate_count() > 0);
+        assert!(
+            {
+                assert!(filleted.value.families().is_empty());
+                filleted.value.isolated_solutions().len()
+            } > 0
+        );
     }
 }
 
@@ -5226,12 +5303,15 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                 )
                 .expect("the algebraic Bezier-pair incident cells must remain retained");
             assert_eq!(result.certainty, CurveCertainty::Certified);
-            let candidates = match result.into_value() {
-                CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                CurveCornerSolutions2::Multiple(candidates) => candidates,
-                CurveCornerSolutions2::NoSolution(reason) => {
-                    panic!("the projective algebraic fillet was lost: {reason:?}")
-                }
+            let candidates = {
+                let solutions = result.into_value();
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (candidates, _) = solutions.into_parts();
+                assert!(
+                    !candidates.is_empty(),
+                    "expected at least one isolated fillet"
+                );
+                candidates
             };
             let has_projective_selected_circle = |candidate: &&CurveRegion2| {
                 let curves = candidate
@@ -5347,8 +5427,8 @@ fn analytic_parallel_miter_tangent_legs_have_no_nondegenerate_fillet() {
                     .expect("a certified tangent miter junction must be classified exactly");
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    result.value,
-                    CurveCornerSolutions2::NoSolution(CurveCornerNoSolution2::NoTangentCircle)
+                    (result.value).no_solution_reason(),
+                    Some(CurveCornerNoSolution2::NoTangentCircle)
                 );
             }
         };
@@ -5401,7 +5481,7 @@ fn analytic_parallel_rejected_miters_remain_transverse_fillet_candidates() {
                 )
                 .expect("a rejected miter bevel must remain exactly filletable");
             assert!(
-                matches!(result.value, CurveCornerSolutions2::Unique(_)),
+                result.value.families().is_empty() && result.value.isolated_solutions().len() == 1,
                 "policy={policy:?}, corner={corner}, result={result:?}"
             );
         }
@@ -7863,18 +7943,21 @@ fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
     else {
         panic!("the higher-order corner must have one trim-only chamfer");
     };
-    let CurveCornerSolutions2::Multiple(filleted) = region
-        .fillet_loop_vertex_by_radius(
-            loop_index,
-            corner,
-            q(1, 2),
-            CurveCornerMode2::TrimOnly,
-            &policy,
-        )
-        .unwrap()
-        .into_value()
-    else {
-        panic!("the higher-order corner must retain every trim-only fillet");
+    let filleted = {
+        let solutions = region
+            .fillet_loop_vertex_by_radius(
+                loop_index,
+                corner,
+                q(1, 2),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        assert!(solutions.families().is_empty(), "expected isolated fillets");
+        let (candidates, _) = solutions.into_parts();
+        assert!(candidates.len() > 1, "expected multiple isolated fillets");
+        candidates
     };
 
     assert_eq!(chamfered.boundary_loops()[loop_index].len(), 3);
@@ -8230,27 +8313,38 @@ fn region_corner_edits_publish_normalized_hole_openings() {
             .unwrap()
             .into_value();
             let (loop_index, vertex) = boundary_vertex_at(&source, &p(0, 0), &policy);
-            let outcome = if fillet {
-                source.fillet_loop_vertex_by_radius(
-                    loop_index,
-                    vertex,
-                    Real::from(5),
-                    CurveCornerMode2::TrimOnly,
-                    &policy,
-                )
+            let region = if fillet {
+                let solutions = certified(
+                    source
+                        .fillet_loop_vertex_by_radius(
+                            loop_index,
+                            vertex,
+                            Real::from(5),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap(),
+                );
+                assert!(solutions.families().is_empty());
+                let (mut candidates, _) = solutions.into_parts();
+                assert_eq!(candidates.len(), 1);
+                candidates.pop().unwrap()
             } else {
-                source.chamfer_loop_vertex_by_setbacks(
-                    loop_index,
-                    vertex,
-                    Real::from(5),
-                    Real::from(5),
-                    CurveCornerMode2::TrimOnly,
-                    &policy,
-                )
-            }
-            .unwrap();
-            let CurveCornerSolutions2::Unique(region) = certified(outcome) else {
-                panic!("the square corner has one in-domain cut");
+                let CurveCornerSolutions2::Unique(region) = certified(
+                    source
+                        .chamfer_loop_vertex_by_setbacks(
+                            loop_index,
+                            vertex,
+                            Real::from(5),
+                            Real::from(5),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap(),
+                ) else {
+                    panic!("one in-domain chamfer");
+                };
+                region
             };
             assert_eq!(region.len(), 1, "the corner cut opens the hole");
             assert!(decided(region.filled_side_is_left(&policy).unwrap())[0]);

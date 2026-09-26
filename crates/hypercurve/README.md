@@ -273,9 +273,12 @@ exact signatures.
 - `CurvePath2::{try_new, reversed, transform_similarity,
   chamfer_vertex_by_setbacks, fillet_vertex_by_radius, bounds, classify_point,
   native_bezier_fragments, bezier_boundary_loop}` is the sole connected-curve
-  corner-edit authority and handles general connected curves. Corner edits
-  enumerate exact solutions from design setbacks or radius; callers do not
-  supply a preselected trim/contact answer.
+  corner-edit authority and handles general connected curves. Chamfers
+  enumerate exact solutions from design setbacks. Fillets return
+  `CurveFilletSolutions2`, separating isolated edits from retained contact
+  families. A path or region family selects exact contact parameters in its
+  `contact_curves()` charts and reuses the retained evidence to publish the
+  edit; it never chooses an arbitrary representative for a continuous family.
 - `Contour2::{try_new, try_new_with_fill_rule, from_bulge_vertices,
   signed_area, winding_number, classify_point, point_on_boundary,
   intersect_contour, intersect_self, split_at_intersections,

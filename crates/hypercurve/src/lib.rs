@@ -131,8 +131,9 @@ pub use bezier_region::{
     BezierBoundaryLoop2, CurveBoundaryInteriorSide2, CurveRegion2, CurveRegionArrangement2,
     CurveRegionArrangementStage2, CurveRegionBoundaryLoop2,
     CurveRegionCertifiedSegmentationEvidence2, CurveRegionCertifiedSegmentationResult2,
-    CurveRegionFragmentSource2, CurveRegionLoopRole, CurveRegionNativeContourView2,
-    CurveRegionNestingRoleEvidence2, CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
+    CurveRegionFilletFamily2, CurveRegionFragmentSource2, CurveRegionLoopRole,
+    CurveRegionNativeContourView2, CurveRegionNestingRoleEvidence2, CurveRegionProfile2,
+    CurveRegionSegmentationLoopEvidence2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
@@ -180,8 +181,8 @@ pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{Contour2, ContourPointLocation, FillRule};
 pub use curve::{
     Curve2, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveDerivative2,
-    CurveFamily2, CurveGeometry2, CurveParameterSide2, CurvePath2, CurveSpanRange2,
-    NativeBezierFragment2,
+    CurveFamily2, CurveFilletSolutions2, CurveGeometry2, CurveParameterSide2, CurvePath2,
+    CurvePathFilletFamily2, CurveSpanRange2, NativeBezierFragment2,
 };
 pub use curve_intersection::{
     CurveIntersectionCandidates2, CurveIntersectionContact2, CurveIntersectionOverlap2,

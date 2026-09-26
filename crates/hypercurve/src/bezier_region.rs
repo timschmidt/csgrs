@@ -63,13 +63,67 @@ use crate::{
     BezierParallelSource2, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
     BezierSubcurve2, BooleanOp, CircularArc2, Classification, Contour2, ContourPointLocation,
     CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2,
-    CurveError, CurveFamily2, CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2,
-    CurveOutcome, CurveParameter2, CurveParameterRange2, CurveParameterSide2, CurvePath2,
-    CurvePathIntersectionContact2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult,
-    FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionPointLocation,
-    RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
+    CurveError, CurveFamily2, CurveFilletSolutions2, CurveGeometry2,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameter2,
+    CurveParameterRange2, CurveParameterSide2, CurvePath2, CurvePathIntersectionContact2,
+    CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, OffsetCap,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
+    RationalQuadraticBezier2, RegionPointLocation, RetainedTopologyStatus, Segment2,
+    SegmentKindCounts, UncertaintyReason,
 };
+
+/// One continuous fillet family bound to an immutable normalized region.
+///
+/// Selection uses the retained contact charts, reconstructs the edited loop,
+/// and regularizes it using the source region's fill semantics.
+#[derive(Clone, Debug)]
+pub struct CurveRegionFilletFamily2 {
+    source: CurveRegion2,
+    loop_index: usize,
+    chain: curve_corner_chain::CurveChainFilletFamily2,
+}
+
+impl CurveRegionFilletFamily2 {
+    /// Returns the previous and next contact curves and their exact charts.
+    pub fn contact_curves(&self) -> &[Curve2; 2] {
+        self.chain.native.contact_curves()
+    }
+
+    /// Returns the requested exact radius.
+    pub fn radius(&self) -> &Real {
+        self.chain.native.radius()
+    }
+
+    /// Returns the orientation of the inserted circular arc.
+    pub fn is_clockwise(&self) -> bool {
+        self.chain.native.clockwise()
+    }
+
+    /// Selects contacts in [`Self::contact_curves`] and publishes a regularized region.
+    ///
+    /// Returns `None` for an excluded pair or degenerate edit. Permitted
+    /// extension parameters use those same charts beyond their finite domains.
+    pub fn select(
+        &self,
+        previous: &CurveParameter2,
+        next: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Option<CurveRegion2>>> {
+        resolve_certified_operation(policy, |attempt| {
+            let Some(fragments) = self.chain.select(previous, next, attempt)? else {
+                return Ok(None);
+            };
+            self.source
+                .with_corner_chain_replaced(
+                    self.loop_index,
+                    fragments,
+                    CurveOperation2::Fillet,
+                    attempt,
+                )
+                .map(Some)
+        })
+    }
+}
 
 /// A closed native Bezier/conic boundary loop.
 #[derive(Clone, Debug, PartialEq)]
@@ -11914,7 +11968,7 @@ impl CurveRegion2 {
         radius: Real,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
+    ) -> ExactCurveResult<CurveOutcome<CurveFilletSolutions2<Self, CurveRegionFilletFamily2>>> {
         resolve_certified_operation(policy, |attempt| {
             self.fillet_loop_vertex_by_radius_raw(loop_index, vertex_index, radius, mode, attempt)
         })
@@ -11927,15 +11981,21 @@ impl CurveRegion2 {
         radius: Real,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+    ) -> ExactCurveResult<CurveFilletSolutions2<Self, CurveRegionFilletFamily2>> {
         let boundary = self.data.boundary_loops.get(loop_index).ok_or_else(|| {
             curve_region_edit_error(CurveOperation2::Fillet, CurveError::InvalidCurveRange)
         })?;
         let chain = CurveCornerChain2::new(boundary.fragments(), true);
         let solutions = chain.fillet_vertex_by_radius(vertex_index, radius, mode, policy)?;
-        try_map_corner_solutions(solutions, |fragments| {
+        let solutions = solutions.try_map_isolated(|fragments| {
             self.with_corner_chain_replaced(loop_index, fragments, CurveOperation2::Fillet, policy)
-        })
+                .map(Some)
+        })?;
+        Ok(solutions.map_families(|chain| CurveRegionFilletFamily2 {
+            source: self.clone(),
+            loop_index,
+            chain,
+        }))
     }
 
     fn with_corner_chain_replaced(
@@ -19485,8 +19545,21 @@ mod tests {
             };
             let trim = solve(CurveCornerMode2::TrimOnly);
             let extended = solve(CurveCornerMode2::TrimOrExtend);
-            assert!(trim.candidate_count() > 0);
-            assert!(extended.candidate_count() > trim.candidate_count());
+            assert!(
+                {
+                    assert!(trim.families().is_empty());
+                    trim.isolated_solutions().len()
+                } > 0
+            );
+            assert!(
+                {
+                    assert!(extended.families().is_empty());
+                    extended.isolated_solutions().len()
+                } > {
+                    assert!(trim.families().is_empty());
+                    trim.isolated_solutions().len()
+                }
+            );
         }
     }
 
@@ -19653,7 +19726,7 @@ mod tests {
             assert!(chamfers.value.candidate_count() > 0);
             assert!(extended.value.candidate_count() > chamfers.value.candidate_count());
             let mut retained_local_boundary = false;
-            for_each_corner_region(&chamfers.value, |edited| {
+            for_each_corner_region(corner_regions(&chamfers.value), |edited| {
                 retained_local_boundary |= edited.boundary_loops()[0]
                     .fragments()
                     .iter()
@@ -19678,7 +19751,7 @@ mod tests {
             assert_eq!(projective.certainty, CurveCertainty::Certified);
             let authored_source = BezierSelectedFiberSource2::AnalyticParallel(parallel);
             let mut retained_exterior_source = false;
-            for_each_corner_region(&projective.value, |edited| {
+            for_each_corner_region(corner_regions(&projective.value), |edited| {
                 retained_exterior_source |=
                     edited.boundary_loops()
                         .iter()
@@ -19808,7 +19881,7 @@ mod tests {
             assert_eq!(chamfers.certainty, CurveCertainty::Certified);
             assert!(chamfers.value.candidate_count() > 0);
             let mut retained_local_cut = false;
-            for_each_corner_region(&chamfers.value, |edited| {
+            for_each_corner_region(corner_regions(&chamfers.value), |edited| {
                 assert!(edited.has_regularized_filled_left_topology(&policy));
                 // The closing chord crosses the source again, so exact
                 // regularization can place the chamfer on a later loop.
@@ -20289,8 +20362,13 @@ mod tests {
                     )
                 });
             assert_eq!(fillets.certainty, CurveCertainty::Certified);
-            assert!(fillets.value.candidate_count() > 0);
-            for_each_corner_region(&fillets.value, |edited| {
+            assert!(
+                {
+                    assert!(fillets.value.families().is_empty());
+                    fillets.value.isolated_solutions().len()
+                } > 0
+            );
+            for_each_corner_region(fillet_regions(&fillets.value), |edited| {
                 assert!(
                     edited.boundary_loops()[0]
                         .fragments()
@@ -20433,7 +20511,12 @@ mod tests {
                     )
                 });
             assert_eq!(fillets.certainty, CurveCertainty::Certified);
-            assert!(fillets.value.candidate_count() > 0);
+            assert!(
+                {
+                    assert!(fillets.value.families().is_empty());
+                    fillets.value.isolated_solutions().len()
+                } > 0
+            );
             let extended_fillets = region
                 .fillet_loop_vertex_by_radius(
                     0,
@@ -20449,11 +20532,17 @@ mod tests {
                 });
             assert_eq!(extended_fillets.certainty, CurveCertainty::Certified);
             assert!(
-                extended_fillets.value.candidate_count() > fillets.value.candidate_count(),
+                {
+                    assert!(extended_fillets.value.families().is_empty());
+                    extended_fillets.value.isolated_solutions().len()
+                } > {
+                    assert!(fillets.value.families().is_empty());
+                    fillets.value.isolated_solutions().len()
+                },
                 "the selected incident chart must contribute exterior fillet candidates"
             );
             let mut retained_local_boundary = false;
-            for_each_corner_region(&fillets.value, |edited| {
+            for_each_corner_region(fillet_regions(&fillets.value), |edited| {
                 retained_local_boundary |= edited.boundary_loops()[0]
                     .fragments()
                     .iter()
@@ -20778,25 +20867,33 @@ mod tests {
                 })
     }
 
-    fn for_each_corner_region(
-        solutions: &CurveCornerSolutions2<CurveRegion2>,
-        mut visit: impl FnMut(&CurveRegion2),
-    ) {
+    fn corner_regions(solutions: &CurveCornerSolutions2<CurveRegion2>) -> &[CurveRegion2] {
         match solutions {
-            CurveCornerSolutions2::NoSolution(reason) => {
-                panic!("an exact corner edit unexpectedly had no solution: {reason:?}")
-            }
-            CurveCornerSolutions2::Unique(region) => visit(region),
-            CurveCornerSolutions2::Multiple(regions) => {
-                for region in regions {
-                    visit(region);
-                }
-            }
+            CurveCornerSolutions2::NoSolution(reason) => panic!("no exact corner edit: {reason:?}"),
+            CurveCornerSolutions2::Unique(region) => std::slice::from_ref(region),
+            CurveCornerSolutions2::Multiple(regions) => regions,
         }
     }
 
+    fn fillet_regions(
+        solutions: &CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>,
+    ) -> &[CurveRegion2] {
+        assert!(solutions.families().is_empty(), "expected isolated fillets");
+        assert!(
+            !solutions.isolated_solutions().is_empty(),
+            "no isolated fillets: {:?}",
+            solutions.no_solution_reason()
+        );
+        solutions.isolated_solutions()
+    }
+
+    fn for_each_corner_region(solutions: &[CurveRegion2], visit: impl FnMut(&CurveRegion2)) {
+        assert!(!solutions.is_empty());
+        solutions.iter().for_each(visit);
+    }
+
     fn assert_one_fragment_edit_shape(
-        solutions: &CurveCornerSolutions2<CurveRegion2>,
+        solutions: &[CurveRegion2],
         selected_fragment_count: usize,
         minimum_inserted_fragment_count: usize,
     ) {
@@ -20843,7 +20940,7 @@ mod tests {
                     "the authored seam has an admissible chamfer: policy={policy:?}, reversed={reversed}, result={:?}",
                     result.value
                 );
-                assert_one_fragment_edit_shape(&result.value, 1, 1);
+                assert_one_fragment_edit_shape(corner_regions(&result.value), 1, 1);
             }
         }
     }
@@ -20906,11 +21003,20 @@ mod tests {
                 assert_eq!(extended_fillets.certainty, CurveCertainty::Certified);
                 let extended_fillets = extended_fillets.into_value();
                 assert!(
-                    extended_fillets.candidate_count() > trim_fillets.candidate_count(),
+                    {
+                        assert!(extended_fillets.families().is_empty());
+                        extended_fillets.isolated_solutions().len()
+                    } > {
+                        assert!(trim_fillets.families().is_empty());
+                        trim_fillets.isolated_solutions().len()
+                    },
                     "extension must publish the exterior-ray fillet branch"
                 );
 
-                for solutions in [&extended_chamfers, &extended_fillets] {
+                for solutions in [
+                    corner_regions(&extended_chamfers),
+                    fillet_regions(&extended_fillets),
+                ] {
                     let mut found_both_extensions = false;
                     for_each_corner_region(solutions, |edited| {
                         assert!(edited.has_regularized_filled_left_topology(&policy));
@@ -21011,7 +21117,7 @@ mod tests {
                     assert!(extended.candidate_count() > trim.candidate_count());
                     let mut found_extension = false;
                     let mut found_added_material = false;
-                    for_each_corner_region(&extended, |edited| {
+                    for_each_corner_region(corner_regions(&extended), |edited| {
                         assert!(matches!(
                             edited
                                 .classify_point(&p(10, 10), &policy)
@@ -21112,7 +21218,7 @@ mod tests {
                     let extended = extended.into_value();
                     assert!(extended.candidate_count() > trim.candidate_count());
                     let mut found_extension = false;
-                    for_each_corner_region(&extended, |edited| {
+                    for_each_corner_region(corner_regions(&extended), |edited| {
                         assert!(matches!(
                             edited
                                 .classify_point(&p(20, 20), &policy)
@@ -21225,7 +21331,7 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 for selected in [false, true] {
-                    let assert_extended_set = |solutions: &CurveCornerSolutions2<CurveRegion2>,
+                    let assert_extended_set = |solutions: &[CurveRegion2],
                                                operation: &str,
                                                samples: &[(
                         &str,
@@ -21292,7 +21398,11 @@ mod tests {
                             )
                         });
                     assert_eq!(chamfers.certainty, CurveCertainty::Certified);
-                    assert_extended_set(&chamfers.value, "chamfer", &chamfer_samples);
+                    assert_extended_set(
+                        corner_regions(&chamfers.value),
+                        "chamfer",
+                        &chamfer_samples,
+                    );
 
                     let fillets = region
                         .fillet_loop_vertex_by_radius(
@@ -21308,7 +21418,11 @@ mod tests {
                             )
                         });
                     assert_eq!(fillets.certainty, CurveCertainty::Certified);
-                    assert_extended_set(&fillets.value, "exact fillet", &exact_fillet_samples);
+                    assert_extended_set(
+                        fillet_regions(&fillets.value),
+                        "exact fillet",
+                        &exact_fillet_samples,
+                    );
 
                     let algebraic = retained_analytic_parabola_extension_region(
                         selected,
@@ -21330,7 +21444,7 @@ mod tests {
                     });
                     assert_eq!(algebraic.certainty, CurveCertainty::Certified);
                     assert_extended_set(
-                        &algebraic.value,
+                        fillet_regions(&algebraic.value),
                         "algebraic fillet",
                         &algebraic_fillet_samples,
                     );
@@ -21360,7 +21474,7 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                for_each_corner_region(&result.value, |edited| {
+                for_each_corner_region(corner_regions(&result.value), |edited| {
                     assert_eq!(
                         edited.boundary_loops()[0].fragments().len(),
                         2,
@@ -21408,7 +21522,7 @@ mod tests {
                     "the incident rays must add projective chamfer candidates"
                 );
                 let mut retained_algebraic_interval = false;
-                for_each_corner_region(&extended.value, |edited| {
+                for_each_corner_region(corner_regions(&extended.value), |edited| {
                     for fragment in edited.boundary_loops()[0].fragments() {
                         let BezierSplitFragment2::SelectedFiber(selected) = fragment else {
                             continue;
@@ -21495,7 +21609,7 @@ mod tests {
                     CurveSupport2::from_fragment(&region.boundary_loops()[0].fragments()[0]);
                 let unit = CurveParameterRange2::unit();
                 let mut found_extension = false;
-                for_each_corner_region(&extended.value, |edited| {
+                for_each_corner_region(corner_regions(&extended.value), |edited| {
                     found_extension |=
                         edited.boundary_loops()[0]
                             .fragments()
@@ -21645,8 +21759,8 @@ mod tests {
                             )
                         });
                     assert_eq!(result.certainty, CurveCertainty::Certified);
-                    assert_one_fragment_edit_shape(&result.value, 1, 1);
-                    for_each_corner_region(&result.value, |edited| {
+                    assert_one_fragment_edit_shape(corner_regions(&result.value), 1, 1);
+                    for_each_corner_region(corner_regions(&result.value), |edited| {
                         assert_eq!(
                             edited.boundary_loops()[0].fragments().len(),
                             2,
@@ -21679,12 +21793,15 @@ mod tests {
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert!(
-                    result.value.candidate_count() > 0,
+                    {
+                        assert!(result.value.families().is_empty());
+                        result.value.isolated_solutions().len()
+                    } > 0,
                     "the authored seam has an admissible fillet: policy={policy:?}, reversed={reversed}, result={:?}",
                     result.value
                 );
-                assert_one_fragment_edit_shape(&result.value, 1, 1);
-                for_each_corner_region(&result.value, |edited| {
+                assert_one_fragment_edit_shape(fillet_regions(&result.value), 1, 1);
+                for_each_corner_region(fillet_regions(&result.value), |edited| {
                     assert!(
                         edited.boundary_loops()[0]
                             .fragments()
@@ -21762,8 +21879,13 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                assert!(result.value.candidate_count() > 0);
-                assert_one_fragment_edit_shape(&result.value, 1, 1);
+                assert!(
+                    {
+                        assert!(result.value.families().is_empty());
+                        result.value.isolated_solutions().len()
+                    } > 0
+                );
+                assert_one_fragment_edit_shape(fillet_regions(&result.value), 1, 1);
             }
         }
     }
@@ -21846,7 +21968,7 @@ mod tests {
                         )
                     });
                 assert_eq!(fillets.certainty, CurveCertainty::Certified);
-                let assert_extended_set = |solutions: &CurveCornerSolutions2<CurveRegion2>| {
+                let assert_extended_set = |solutions: &[CurveRegion2]| {
                     let mut found = false;
                     for_each_corner_region(solutions, |edited| {
                         assert!(edited.has_regularized_filled_left_topology(&policy));
@@ -21888,7 +22010,7 @@ mod tests {
                     });
                     assert!(found, "the exact extended source lobes were lost");
                 };
-                assert_extended_set(&fillets.value);
+                assert_extended_set(fillet_regions(&fillets.value));
 
                 let chamfers = region
                     .chamfer_loop_vertex_by_setbacks(
@@ -21905,7 +22027,7 @@ mod tests {
                         )
                     });
                 assert_eq!(chamfers.certainty, CurveCertainty::Certified);
-                assert_extended_set(&chamfers.value);
+                assert_extended_set(corner_regions(&chamfers.value));
             }
         }
     }
@@ -21991,7 +22113,7 @@ mod tests {
                         CurveSupport2::from_fragment(&region.boundary_loops()[0].fragments()[0]);
                     let unit = CurveParameterRange2::unit();
                     let mut found_extension = false;
-                    for_each_corner_region(&extended.value, |edited| {
+                    for_each_corner_region(fillet_regions(&extended.value), |edited| {
                         found_extension |=
                             edited.boundary_loops()[0]
                                 .fragments()
@@ -22118,10 +22240,12 @@ mod tests {
                             )
                         });
                     assert_eq!(result.certainty, CurveCertainty::Certified);
-                    let CurveCornerSolutions2::Unique(filleted) = result.value else {
-                        panic!(
-                            "the unified parallel pair must have one fillet: policy={policy:?}, previous_retained={previous_retained}, next_retained={next_retained}, reversed={reversed}"
-                        );
+                    let filleted = {
+                        let solutions = result.value;
+                        assert!(solutions.families().is_empty(), "expected isolated fillets");
+                        let (mut candidates, _) = solutions.into_parts();
+                        assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                        candidates.pop().unwrap()
                     };
                     assert_eq!(
                         filleted
@@ -22615,8 +22739,12 @@ mod tests {
         let baseline = source
             .fillet_loop_vertex_by_radius(0, 1, q(1, 10), CurveCornerMode2::TrimOnly, policy)
             .expect("the unsplit selected-circle/line fillet is exact");
-        let CurveCornerSolutions2::Unique(baseline) = baseline.value else {
-            panic!("the unsplit selected-circle/line corner has one exact fillet")
+        let baseline = {
+            let solutions = baseline.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         let retained_source = baseline
             .boundary_loops()
@@ -23077,7 +23205,7 @@ mod tests {
                 .unwrap();
             assert_eq!(candidates.certainty, CurveCertainty::Certified);
             let mut split_walks = 0;
-            for_each_corner_region(&candidates.value, |authored| {
+            for_each_corner_region(corner_regions(&candidates.value), |authored| {
                 let normalized = authored.regularized_region(&policy).unwrap();
                 assert_eq!(normalized.certainty, CurveCertainty::Certified);
                 if normalized.value.boundary_loops().len() == 2 {
@@ -23123,10 +23251,12 @@ mod tests {
                             )
                         });
                     assert_eq!(result.certainty, CurveCertainty::Certified);
-                    let CurveCornerSolutions2::Unique(filleted) = result.value else {
-                        panic!(
-                            "the mixed circular corner must have one retained fillet: policy={policy:?}, scale={homogeneous_scale}, reversed={reversed}"
-                        );
+                    let filleted = {
+                        let solutions = result.value;
+                        assert!(solutions.families().is_empty(), "expected isolated fillets");
+                        let (mut candidates, _) = solutions.into_parts();
+                        assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                        candidates.pop().unwrap()
                     };
                     assert_eq!(
                         filleted.boundary_loops()[0]
@@ -23179,7 +23309,12 @@ mod tests {
                                 )
                             });
                         assert_eq!(result.certainty, CurveCertainty::Certified);
-                        assert!(result.value.candidate_count() > 0);
+                        assert!(
+                            {
+                                assert!(result.value.families().is_empty());
+                                result.value.isolated_solutions().len()
+                            } > 0
+                        );
                     }
                 }
             }
@@ -23268,7 +23403,7 @@ mod tests {
                             );
                             let mut retained_rational_extension = false;
                             let mut candidate_index = 0;
-                            for_each_corner_region(&extended.value, |chamfered| {
+                            for_each_corner_region(corner_regions(&extended.value), |chamfered| {
                                 if !major {
                                     assert_eq!(
                                         chamfered
@@ -23576,7 +23711,7 @@ mod tests {
                     });
                 assert_eq!(filleted.certainty, CurveCertainty::Certified);
                 let mut found_expected_fillet = false;
-                for_each_corner_region(&filleted.value, |candidate| {
+                for_each_corner_region(fillet_regions(&filleted.value), |candidate| {
                     found_expected_fillet |= has_endpoint(candidate, &arc_cut)
                         && has_endpoint(candidate, &line_fillet_cut);
                     assert_eq!(
@@ -23616,10 +23751,8 @@ mod tests {
                 });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    result.value,
-                    CurveCornerSolutions2::NoSolution(
-                        crate::CurveCornerNoSolution2::DegenerateCandidate,
-                    )
+                    (result.value).no_solution_reason(),
+                    Some(crate::CurveCornerNoSolution2::DegenerateCandidate,)
                 );
             }
         }
@@ -23650,10 +23783,8 @@ mod tests {
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    result.value,
-                    CurveCornerSolutions2::NoSolution(
-                        crate::CurveCornerNoSolution2::NoTangentCircle,
-                    )
+                    (result.value).no_solution_reason(),
+                    Some(crate::CurveCornerNoSolution2::NoTangentCircle,)
                 );
             }
         }
@@ -23684,10 +23815,8 @@ mod tests {
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    result.value,
-                    CurveCornerSolutions2::NoSolution(
-                        crate::CurveCornerNoSolution2::DegenerateCandidate,
-                    )
+                    (result.value).no_solution_reason(),
+                    Some(crate::CurveCornerNoSolution2::DegenerateCandidate,)
                 );
             }
         }
@@ -23730,10 +23859,8 @@ mod tests {
                         "policy={policy:?}, reversed={reversed}, neighbor={name}"
                     );
                     assert_eq!(
-                        result.value,
-                        CurveCornerSolutions2::NoSolution(
-                            crate::CurveCornerNoSolution2::NoTangentCircle,
-                        ),
+                        (result.value).no_solution_reason(),
+                        Some(crate::CurveCornerNoSolution2::NoTangentCircle,),
                         "policy={policy:?}, reversed={reversed}, neighbor={name}"
                     );
                 }
@@ -23827,10 +23954,8 @@ mod tests {
                         });
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     assert_eq!(
-                        result.value,
-                        CurveCornerSolutions2::NoSolution(
-                            crate::CurveCornerNoSolution2::NoTangentCircle
-                        )
+                        (result.value).no_solution_reason(),
+                        Some(crate::CurveCornerNoSolution2::NoTangentCircle)
                     );
                 }
             }
@@ -23875,10 +24000,8 @@ mod tests {
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    result.value,
-                    CurveCornerSolutions2::NoSolution(
-                        crate::CurveCornerNoSolution2::DegenerateCandidate,
-                    )
+                    (result.value).no_solution_reason(),
+                    Some(crate::CurveCornerNoSolution2::DegenerateCandidate,)
                 );
             }
         }
@@ -24025,7 +24148,7 @@ mod tests {
                 });
             assert_eq!(result.certainty, CurveCertainty::Certified);
             let mut retained_recursive_cut = false;
-            for_each_corner_region(&result.value, |filleted| {
+            for_each_corner_region(fillet_regions(&result.value), |filleted| {
                 retained_recursive_cut |=
                     filleted.boundary_loops()[0]
                         .fragments()
@@ -24099,10 +24222,16 @@ mod tests {
                             });
                         assert_eq!(extended.certainty, CurveCertainty::Certified);
                         assert!(
-                            extended.value.candidate_count() > trim.value.candidate_count(),
+                            {
+                                assert!(extended.value.families().is_empty());
+                                extended.value.isolated_solutions().len()
+                            } > {
+                                assert!(trim.value.families().is_empty());
+                                trim.value.isolated_solutions().len()
+                            },
                             "both full circular supports must contribute exterior centers"
                         );
-                        for_each_corner_region(&extended.value, |filleted| {
+                        for_each_corner_region(fillet_regions(&extended.value), |filleted| {
                             assert!(
                                 filleted.boundary_loops()[0].fragments().iter().any(
                                     |fragment| matches!(
@@ -24168,12 +24297,23 @@ mod tests {
                 assert_eq!(promoted_extension.certainty, CurveCertainty::Certified);
                 assert_eq!(retained_extension.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    promoted_extension.value.candidate_count(),
-                    retained_extension.value.candidate_count(),
+                    {
+                        assert!(promoted_extension.value.families().is_empty());
+                        promoted_extension.value.isolated_solutions().len()
+                    },
+                    {
+                        assert!(retained_extension.value.families().is_empty());
+                        retained_extension.value.isolated_solutions().len()
+                    },
                     "the represented fast path must enumerate both circle charts and both affine rays",
                 );
-                assert!(promoted_extension.value.candidate_count() > 1);
-                for_each_corner_region(&promoted_extension.value, |filleted| {
+                assert!(
+                    {
+                        assert!(promoted_extension.value.families().is_empty());
+                        promoted_extension.value.isolated_solutions().len()
+                    } > 1
+                );
+                for_each_corner_region(fillet_regions(&promoted_extension.value), |filleted| {
                     assert!(filleted.boundary_loops()[0].fragments().iter().any(
                         |fragment| matches!(
                             fragment,
@@ -24237,16 +24377,13 @@ mod tests {
                         })
                     };
                     assert!(
-                        match &result.value {
-                            CurveCornerSolutions2::Unique(filleted) => consumes_seam(filleted),
-                            CurveCornerSolutions2::Multiple(filleted) => {
-                                filleted.iter().any(consumes_seam)
-                            }
-                            CurveCornerSolutions2::NoSolution(_) => false,
+                        {
+                            assert!(result.value.families().is_empty());
+                            result.value.isolated_solutions().iter().any(consumes_seam)
                         },
                         "at least one exact mixed-family candidate must consume the selected-circle seam"
                     );
-                    for_each_corner_region(&result.value, |filleted| {
+                    for_each_corner_region(fillet_regions(&result.value), |filleted| {
                         assert_eq!(
                             filleted
                                 .classify_point(&p(0, 0), &policy)
@@ -24334,7 +24471,7 @@ mod tests {
                             },
                             "the exact chamfer must consume the selected-circle seam"
                         );
-                        for_each_corner_region(&result.value, |chamfered| {
+                        for_each_corner_region(corner_regions(&result.value), |chamfered| {
                             assert_eq!(
                                 chamfered
                                     .classify_point(&p(0, 0), &policy)
@@ -24421,16 +24558,17 @@ mod tests {
                         == 1
                 };
                 assert!(
-                    match &result.value {
-                        CurveCornerSolutions2::Unique(filleted) => owns_seam_endpoint(filleted),
-                        CurveCornerSolutions2::Multiple(filleted) => {
-                            filleted.iter().any(owns_seam_endpoint)
-                        }
-                        CurveCornerSolutions2::NoSolution(_) => false,
+                    {
+                        assert!(result.value.families().is_empty());
+                        result
+                            .value
+                            .isolated_solutions()
+                            .iter()
+                            .any(owns_seam_endpoint)
                     },
                     "one retained-side fragment must own the exact seam endpoint"
                 );
-                for_each_corner_region(&result.value, |filleted| {
+                for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     assert_eq!(
                         filleted
                             .classify_point(&p(0, 0), &policy)
@@ -24512,18 +24650,17 @@ mod tests {
                             == 1
                     };
                     assert!(
-                        match &result.value {
-                            CurveCornerSolutions2::Unique(filleted) => {
-                                owns_one_run_fragment(filleted)
-                            }
-                            CurveCornerSolutions2::Multiple(filleted) => {
-                                filleted.iter().any(owns_one_run_fragment)
-                            }
-                            CurveCornerSolutions2::NoSolution(_) => false,
+                        {
+                            assert!(result.value.families().is_empty());
+                            result
+                                .value
+                                .isolated_solutions()
+                                .iter()
+                                .any(owns_one_run_fragment)
                         },
                         "one independently framed run fragment must own the exact {cut_location} cut"
                     );
-                    for_each_corner_region(&result.value, |filleted| {
+                    for_each_corner_region(fillet_regions(&result.value), |filleted| {
                         assert_eq!(
                             filleted
                                 .classify_point(&p(0, 0), &policy)
@@ -24561,10 +24698,12 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                let CurveCornerSolutions2::Unique(filleted) = result.value else {
-                    panic!(
-                        "the selected-circle pair must have one retained fillet: policy={policy:?}, reversed={reversed}"
-                    );
+                let filleted = {
+                    let solutions = result.value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (mut candidates, _) = solutions.into_parts();
+                    assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                    candidates.pop().unwrap()
                 };
                 assert_eq!(
                     filleted.boundary_loops()[0]
@@ -24631,10 +24770,16 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(
-                    extended.value.candidate_count() > trim.value.candidate_count(),
+                    {
+                        assert!(extended.value.families().is_empty());
+                        extended.value.isolated_solutions().len()
+                    } > {
+                        assert!(trim.value.families().is_empty());
+                        trim.value.isolated_solutions().len()
+                    },
                     "full circular supports must retain an exterior center"
                 );
-                for_each_corner_region(&extended.value, |filleted| {
+                for_each_corner_region(fillet_regions(&extended.value), |filleted| {
                     assert!(filleted.has_regularized_filled_left_topology(&policy));
                     assert!(
                         filleted
@@ -24840,10 +24985,16 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(
-                    extended.value.candidate_count() > trim.value.candidate_count(),
+                    {
+                        assert!(extended.value.families().is_empty());
+                        extended.value.isolated_solutions().len()
+                    } > {
+                        assert!(trim.value.families().is_empty());
+                        trim.value.isolated_solutions().len()
+                    },
                     "both full selected supports must contribute exterior centers"
                 );
-                for_each_corner_region(&extended.value, |filleted| {
+                for_each_corner_region(fillet_regions(&extended.value), |filleted| {
                     assert!(filleted.has_regularized_filled_left_topology(&policy));
                     let selected_circles = filleted
                         .boundary_loops()
@@ -24888,12 +25039,13 @@ mod tests {
                 )
             });
         assert_eq!(result.certainty, CurveCertainty::Certified);
-        let CurveCornerSolutions2::Unique(filleted) = result.value else {
-            panic!(
-                "the independent selected-circle pair must have one fillet: policy={policy:?}, reversed={reversed}"
-            );
-        };
-        filleted
+        {
+            let solutions = result.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
+        }
     }
 
     #[test]
@@ -25050,10 +25202,8 @@ mod tests {
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    result.value,
-                    CurveCornerSolutions2::NoSolution(
-                        crate::CurveCornerNoSolution2::DegenerateCandidate,
-                    )
+                    (result.value).no_solution_reason(),
+                    Some(crate::CurveCornerNoSolution2::DegenerateCandidate,)
                 );
             }
         }
@@ -25117,10 +25267,8 @@ mod tests {
                         "the noncollapsed {name} result must not consume the approximate terminal: policy={policy:?}, reversed={reversed}"
                     );
                     assert_eq!(
-                        result.value,
-                        CurveCornerSolutions2::NoSolution(
-                            crate::CurveCornerNoSolution2::OutsideTrimDomain,
-                        ),
+                        (result.value).no_solution_reason(),
+                        Some(crate::CurveCornerNoSolution2::OutsideTrimDomain,),
                         "the noncollapsed {name} contact lies outside its trim domain: policy={policy:?}, reversed={reversed}"
                     );
                 }
@@ -25776,12 +25924,15 @@ mod tests {
             )
             .expect("the recursive selected-radial/line corner must fillet exactly");
         assert_eq!(result.certainty, CurveCertainty::Certified);
-        let candidates = match result.value {
-            CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-            CurveCornerSolutions2::Multiple(candidates) => candidates,
-            CurveCornerSolutions2::NoSolution(reason) => {
-                panic!("the recursive selected-radial/line fillet was lost: {reason:?}")
-            }
+        let candidates = {
+            let solutions = result.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (candidates, _) = solutions.into_parts();
+            assert!(
+                !candidates.is_empty(),
+                "expected at least one isolated fillet"
+            );
+            candidates
         };
         let candidate = candidates
             .into_iter()
@@ -26067,7 +26218,7 @@ mod tests {
                 "the recursive chamfer must certify its trim domain by endpoint chord distance: {chamfer_trace:?}",
             );
             assert_eq!(chamfer.certainty, CurveCertainty::Certified);
-            for_each_corner_region(&chamfer.value, |chamfered| {
+            for_each_corner_region(corner_regions(&chamfer.value), |chamfered| {
                 let replay = chamfered
                     .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
                     .expect("the fourth-generation chamfer re-enters the Boolean kernel");
@@ -26367,7 +26518,12 @@ mod tests {
                     )
                 });
                 assert_eq!(nested_fillet.certainty, CurveCertainty::Certified);
-                assert!(nested_fillet.value.candidate_count() > 0);
+                assert!(
+                    {
+                        assert!(nested_fillet.value.families().is_empty());
+                        nested_fillet.value.isolated_solutions().len()
+                    } > 0
+                );
                 #[cfg(feature = "dispatch-trace")]
                 assert!(
                     nested_fillet_trace.path_count(
@@ -26735,7 +26891,7 @@ mod tests {
                         )
                     });
                 assert_eq!(chamfer.certainty, CurveCertainty::Certified);
-                for_each_corner_region(&chamfer.value, |chamfered| {
+                for_each_corner_region(corner_regions(&chamfer.value), |chamfered| {
                     assert!(
                         chamfered
                             .boundary_loops()
@@ -26810,7 +26966,7 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                for_each_corner_region(&result.value, |filleted| {
+                for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     let fragments = filleted
                         .boundary_loops()
                         .iter()
@@ -26907,8 +27063,13 @@ mod tests {
                     )
                     .expect("the pair-radial/analytic corner must fillet exactly");
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                assert!(result.value.candidate_count() > 0);
-                for_each_corner_region(&result.value, |filleted| {
+                assert!(
+                    {
+                        assert!(result.value.families().is_empty());
+                        result.value.isolated_solutions().len()
+                    } > 0
+                );
+                for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     let replay = filleted
                         .boolean_regions(
                             &selected_fillet_disjoint_square(&CurveContext::STRICT),
@@ -27058,8 +27219,13 @@ mod tests {
                     )
                     .expect("the pair-radial/algebraic-chord corner must fillet exactly");
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                assert!(result.value.candidate_count() > 0);
-                for_each_corner_region(&result.value, |filleted| {
+                assert!(
+                    {
+                        assert!(result.value.families().is_empty());
+                        result.value.isolated_solutions().len()
+                    } > 0
+                );
+                for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     let replay = filleted
                         .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
                         .expect(
@@ -27152,7 +27318,10 @@ mod tests {
                     .expect("the translated pair-native circle corner must fillet exactly");
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert!(
-                    result.value.candidate_count() > 0,
+                    {
+                        assert!(result.value.families().is_empty());
+                        result.value.isolated_solutions().len()
+                    } > 0,
                     "the crossing pair-native circles must fillet across their smooth chart seam: {:?}",
                     result.value
                 );
@@ -27172,16 +27341,17 @@ mod tests {
                     retained < source_fragments.len() - 2
                 };
                 assert!(
-                    match &result.value {
-                        CurveCornerSolutions2::Unique(filleted) => consumes_smooth_seam(filleted),
-                        CurveCornerSolutions2::Multiple(filleted) => {
-                            filleted.iter().any(consumes_smooth_seam)
-                        }
-                        CurveCornerSolutions2::NoSolution(_) => false,
+                    {
+                        assert!(result.value.families().is_empty());
+                        result
+                            .value
+                            .isolated_solutions()
+                            .iter()
+                            .any(consumes_smooth_seam)
                     },
                     "at least one exact candidate must consume more than the two incident fragments"
                 );
-                for_each_corner_region(&result.value, |filleted| {
+                for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     let replay = filleted
                         .boolean_regions(
                             &selected_fillet_disjoint_square(&CurveContext::STRICT),
@@ -27242,10 +27412,12 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                let CurveCornerSolutions2::Unique(filleted) = result.value else {
-                    panic!(
-                        "the selected-circle/analytic corner must have one retained fillet: policy={policy:?}, reversed={reversed}"
-                    );
+                let filleted = {
+                    let solutions = result.value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (mut candidates, _) = solutions.into_parts();
+                    assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                    candidates.pop().unwrap()
                 };
                 assert_eq!(
                     filleted.boundary_loops()[0]
@@ -27419,10 +27591,16 @@ mod tests {
                         });
                     assert_eq!(extended.certainty, CurveCertainty::Certified);
                     assert!(
-                        extended.value.candidate_count() > trim.value.candidate_count(),
+                        {
+                            assert!(extended.value.families().is_empty());
+                            extended.value.isolated_solutions().len()
+                        } > {
+                            assert!(trim.value.families().is_empty());
+                            trim.value.isolated_solutions().len()
+                        },
                         "the full circle and analytic incident ray must add exterior centers"
                     );
-                    for_each_corner_region(&extended.value, |filleted| {
+                    for_each_corner_region(fillet_regions(&extended.value), |filleted| {
                         assert!(filleted.boundary_loops().iter().any(|boundary| {
                             boundary.fragments().iter().any(|fragment| {
                                 matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
@@ -27497,10 +27675,12 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                let CurveCornerSolutions2::Unique(filleted) = result.value else {
-                    panic!(
-                        "the selected-circle/direct-Bezier corner must have one retained fillet: policy={policy:?}, reversed={reversed}"
-                    );
+                let filleted = {
+                    let solutions = result.value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (mut candidates, _) = solutions.into_parts();
+                    assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                    candidates.pop().unwrap()
                 };
                 assert_eq!(
                     filleted.boundary_loops()[0]
@@ -28583,7 +28763,7 @@ mod tests {
                 let direction_x = (a / &hypotenuse).unwrap();
                 let direction_y = (b / &hypotenuse).unwrap();
                 let assert_extended_set =
-                    |solutions: &CurveCornerSolutions2<CurveRegion2>,
+                    |solutions: &[CurveRegion2],
                      operation: &str,
                      setback: &Real,
                      connector_sample: &Point2,
@@ -28682,7 +28862,7 @@ mod tests {
                 // Midpoint of the two contacts, and centroid of their triangle
                 // with V, certify the new straight connector and filled lobe.
                 assert_extended_set(
-                    &extended_chamfers.value,
+                    corner_regions(&extended_chamfers.value),
                     "chamfer",
                     &q(1, 10),
                     &point(
@@ -28712,7 +28892,7 @@ mod tests {
                 // of the way from V to its center lies inside the new lobe.
                 let tangent_setback = (&radius * (&hypotenuse + a) / b).unwrap();
                 assert_extended_set(
-                    &fillets.value,
+                    fillet_regions(&fillets.value),
                     "fillet",
                     &tangent_setback,
                     &point(a + &tangent_setback + &radius, -&radius),
@@ -28852,7 +29032,7 @@ mod tests {
                     ) > 0,
                     "the chamfer must reuse its original correlated cut evidence: {trace:?}",
                 );
-                for_each_corner_region(&extended.value, |edited| {
+                for_each_corner_region(corner_regions(&extended.value), |edited| {
                     assert!(
                         edited.boundary_loops()[0]
                             .fragments()
@@ -28915,9 +29095,17 @@ mod tests {
                         )
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
-                assert!(extended.value.candidate_count() > trim.candidate_count());
+                assert!(
+                    {
+                        assert!(extended.value.families().is_empty());
+                        extended.value.isolated_solutions().len()
+                    } > {
+                        assert!(trim.families().is_empty());
+                        trim.isolated_solutions().len()
+                    }
+                );
                 let mut found_exterior_lobe = false;
-                for_each_corner_region(&extended.value, |edited| {
+                for_each_corner_region(fillet_regions(&extended.value), |edited| {
                     assert!(edited.has_regularized_filled_left_topology(&policy));
                     let fragments = edited
                         .boundary_loops()
@@ -30123,8 +30311,13 @@ mod tests {
                         )
                     });
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                assert!(outcome.value.candidate_count() > 0);
-                for_each_corner_region(&outcome.value, |filleted| {
+                assert!(
+                    {
+                        assert!(outcome.value.families().is_empty());
+                        outcome.value.isolated_solutions().len()
+                    } > 0
+                );
+                for_each_corner_region(fillet_regions(&outcome.value), |filleted| {
                     let fragments = filleted.boundary_loops()[0].fragments();
                     let mut chord_adjacencies = 0;
                     for (index, fragment) in fragments.iter().enumerate() {
@@ -30211,12 +30404,18 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(
-                    extended.value.candidate_count() > trim.value.candidate_count(),
+                    {
+                        assert!(extended.value.families().is_empty());
+                        extended.value.isolated_solutions().len()
+                    } > {
+                        assert!(trim.value.families().is_empty());
+                        trim.value.isolated_solutions().len()
+                    },
                     "extension must publish the supporting-line contact: policy={policy:?}, reversed={reversed}, trim={:?}, extended={:?}",
                     trim.value,
                     extended.value,
                 );
-                for_each_corner_region(&extended.value, |filleted| {
+                for_each_corner_region(fillet_regions(&extended.value), |filleted| {
                     assert!(filleted.has_regularized_filled_left_topology(&policy));
                     let mut retained_incident_tangencies = [false; 2];
                     let mut chord_adjacencies = 0;
@@ -30317,7 +30516,7 @@ mod tests {
                 )
                 .expect("the independent chord pair has exact extended fillets");
             let mut exercised = 0;
-            for_each_corner_region(&extended.value, |filleted| {
+            for_each_corner_region(fillet_regions(&extended.value), |filleted| {
                 assert!(filleted.has_regularized_filled_left_topology(&policy));
                 let Some(circle) = filleted
                     .boundary_loops()
@@ -30430,7 +30629,7 @@ mod tests {
                 .expect("the independent chord pair has exact extended fillets");
             let mut exercised = 0;
             let mut crossings = 0;
-            for_each_corner_region(&extended.value, |filleted| {
+            for_each_corner_region(fillet_regions(&extended.value), |filleted| {
                 assert!(filleted.has_regularized_filled_left_topology(&policy));
                 let Some(circle) = filleted
                     .boundary_loops()
@@ -30639,20 +30838,28 @@ mod tests {
                             });
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert!(
-                            outcome.value.candidate_count() > 0,
+                            {
+                                assert!(outcome.value.families().is_empty());
+                                outcome.value.isolated_solutions().len()
+                            } > 0,
                             "policy={policy:?}, reversed={reversed}, radius={radius:?}, mode={mode:?}, outcome={:?}",
                             outcome.value,
                         );
                         if mode == CurveCornerMode2::TrimOnly {
-                            trim_count = Some(outcome.value.candidate_count());
+                            trim_count = Some({
+                                assert!(outcome.value.families().is_empty());
+                                outcome.value.isolated_solutions().len()
+                            });
                         } else {
                             assert!(
-                                outcome.value.candidate_count()
-                                    >= trim_count.expect("the trim result runs first"),
+                                {
+                                    assert!(outcome.value.families().is_empty());
+                                    outcome.value.isolated_solutions().len()
+                                } >= trim_count.expect("the trim result runs first"),
                                 "extension cannot discard a finite-support candidate"
                             );
                         }
-                        for_each_corner_region(&outcome.value, |filleted| {
+                        for_each_corner_region(fillet_regions(&outcome.value), |filleted| {
                             assert!(filleted.has_regularized_filled_left_topology(&policy));
                             let mut fillet_spans = 0;
                             let mut chord_adjacencies = 0;
@@ -30814,8 +31021,13 @@ mod tests {
                     )
                     .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                assert!(outcome.value.candidate_count() > 0);
-                for_each_corner_region(&outcome.value, |candidate| {
+                assert!(
+                    {
+                        assert!(outcome.value.families().is_empty());
+                        outcome.value.isolated_solutions().len()
+                    } > 0
+                );
+                for_each_corner_region(fillet_regions(&outcome.value), |candidate| {
                     let normalized = candidate.regularized_region_raw(&policy).expect(
                         "retained corner contacts must replay without a new coordinate field",
                     );
@@ -30854,17 +31066,27 @@ mod tests {
                             )
                         });
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                    assert!(outcome.value.candidate_count() > 0);
+                    assert!(
+                        {
+                            assert!(outcome.value.families().is_empty());
+                            outcome.value.isolated_solutions().len()
+                        } > 0
+                    );
                     if mode == CurveCornerMode2::TrimOnly {
-                        trim_count = Some(outcome.value.candidate_count());
+                        trim_count = Some({
+                            assert!(outcome.value.families().is_empty());
+                            outcome.value.isolated_solutions().len()
+                        });
                     } else {
                         assert!(
-                            outcome.value.candidate_count()
-                                > trim_count.expect("the trim result runs first"),
+                            {
+                                assert!(outcome.value.families().is_empty());
+                                outcome.value.isolated_solutions().len()
+                            } > trim_count.expect("the trim result runs first"),
                             "extension must retain an exterior rational-arc/chord-support branch"
                         );
                     }
-                    for_each_corner_region(&outcome.value, |filleted| {
+                    for_each_corner_region(fillet_regions(&outcome.value), |filleted| {
                         assert!(filleted.has_regularized_filled_left_topology(&policy));
                         let mut chord_adjacencies = 0;
                         let mut retained_tangent_relations = 0;
@@ -30945,7 +31167,10 @@ mod tests {
                             });
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert!(
-                            outcome.value.candidate_count() > 0,
+                            {
+                                assert!(outcome.value.families().is_empty());
+                                outcome.value.isolated_solutions().len()
+                            } > 0,
                             "policy={policy:?}, reversed={reversed}, elevated={elevated}, mode={mode:?}, outcome={:?}",
                             outcome.value,
                         );
@@ -30980,21 +31205,29 @@ mod tests {
                         });
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert!(
-                        outcome.value.candidate_count() > 0,
+                        {
+                            assert!(outcome.value.families().is_empty());
+                            outcome.value.isolated_solutions().len()
+                        } > 0,
                         "policy={policy:?}, reversed={reversed}, mode={mode:?}, outcome={:?}",
                         outcome.value
                     );
                     if mode == CurveCornerMode2::TrimOnly {
-                        trim_count = Some(outcome.value.candidate_count());
+                        trim_count = Some({
+                            assert!(outcome.value.families().is_empty());
+                            outcome.value.isolated_solutions().len()
+                        });
                     } else {
                         assert!(
-                            outcome.value.candidate_count()
-                                > trim_count.expect("the trim result runs first"),
+                            {
+                                assert!(outcome.value.families().is_empty());
+                                outcome.value.isolated_solutions().len()
+                            } > trim_count.expect("the trim result runs first"),
                             "extension must retain the complementary selected-circle branch"
                         );
                     }
                     let mut retained_fillet_spans = 0;
-                    for_each_corner_region(&outcome.value, |filleted| {
+                    for_each_corner_region(fillet_regions(&outcome.value), |filleted| {
                         assert!(filleted.has_regularized_filled_left_topology(&policy));
                         // Extension can split the walk into separate material
                         // loops, or regularization can consume the fillet.
@@ -31085,10 +31318,8 @@ mod tests {
                     });
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    outcome.value,
-                    CurveCornerSolutions2::NoSolution(
-                        crate::CurveCornerNoSolution2::NoTangentCircle,
-                    )
+                    (outcome.value).no_solution_reason(),
+                    Some(crate::CurveCornerNoSolution2::NoTangentCircle,)
                 );
             }
         }
@@ -31315,20 +31546,28 @@ mod tests {
                         });
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert!(
-                        outcome.value.candidate_count() > 0,
+                        {
+                            assert!(outcome.value.families().is_empty());
+                            outcome.value.isolated_solutions().len()
+                        } > 0,
                         "policy={policy:?}, reversed={reversed}, mode={mode:?}, outcome={:?}",
                         outcome.value
                     );
                     if mode == CurveCornerMode2::TrimOnly {
-                        trim_count = Some(outcome.value.candidate_count());
+                        trim_count = Some({
+                            assert!(outcome.value.families().is_empty());
+                            outcome.value.isolated_solutions().len()
+                        });
                     } else {
                         assert!(
-                            outcome.value.candidate_count()
-                                > trim_count.expect("the trim result runs first"),
+                            {
+                                assert!(outcome.value.families().is_empty());
+                                outcome.value.isolated_solutions().len()
+                            } > trim_count.expect("the trim result runs first"),
                             "extension must retain the second infinite-support fillet branch"
                         );
                     }
-                    for_each_corner_region(&outcome.value, |filleted| {
+                    for_each_corner_region(fillet_regions(&outcome.value), |filleted| {
                         assert!(filleted.has_regularized_filled_left_topology(&policy));
                         let mut chord_adjacencies = 0;
                         let mut retained_tangent_relations = 0;
@@ -31405,17 +31644,27 @@ mod tests {
                             )
                         });
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                    assert!(outcome.value.candidate_count() > 0);
+                    assert!(
+                        {
+                            assert!(outcome.value.families().is_empty());
+                            outcome.value.isolated_solutions().len()
+                        } > 0
+                    );
                     if mode == CurveCornerMode2::TrimOnly {
-                        trim_count = Some(outcome.value.candidate_count());
+                        trim_count = Some({
+                            assert!(outcome.value.families().is_empty());
+                            outcome.value.isolated_solutions().len()
+                        });
                     } else {
                         assert!(
-                            outcome.value.candidate_count()
-                                > trim_count.expect("the trim result runs first"),
+                            {
+                                assert!(outcome.value.families().is_empty());
+                                outcome.value.isolated_solutions().len()
+                            } > trim_count.expect("the trim result runs first"),
                             "extension must retain an exterior analytic-support fillet branch"
                         );
                     }
-                    for_each_corner_region(&outcome.value, |filleted| {
+                    for_each_corner_region(fillet_regions(&outcome.value), |filleted| {
                         assert!(filleted.has_regularized_filled_left_topology(&policy));
                         assert!(
                             filleted
@@ -33370,8 +33619,12 @@ mod single_loop_corner_publication_tests {
                 )
                 .unwrap();
             assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
-            let crate::CurveCornerSolutions2::Multiple(candidates) = outcome.value else {
-                panic!("both finite cap contacts must survive");
+            let candidates = {
+                let solutions = outcome.value;
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (candidates, _) = solutions.into_parts();
+                assert!(candidates.len() > 1, "expected multiple isolated fillets");
+                candidates
             };
             assert_eq!(candidates.len(), 2);
             for candidate in candidates {

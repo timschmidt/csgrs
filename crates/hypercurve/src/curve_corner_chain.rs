@@ -10,6 +10,140 @@ pub(crate) struct CurveCornerChain2<'a> {
     closed: bool,
 }
 
+#[derive(Debug)]
+struct CurveChainFilletPlacement2<'a> {
+    fragments: std::borrow::Cow<'a, [BezierSplitFragment2]>,
+    closed: bool,
+    indices: [usize; 2],
+    solve_indices: [usize; 2],
+    has_smooth_run: bool,
+    previous_family: CurveFamily2,
+    arcs: [Option<std::sync::Arc<crate::curve::RetainedRationalCornerArc2>>; 2],
+    promoted: [Option<std::borrow::Cow<'a, crate::BezierParallelFragment2>>; 2],
+}
+
+impl CurveChainFilletPlacement2<'_> {
+    fn into_owned(self) -> CurveChainFilletPlacement2<'static> {
+        CurveChainFilletPlacement2 {
+            fragments: std::borrow::Cow::Owned(self.fragments.into_owned()),
+            closed: self.closed,
+            indices: self.indices,
+            solve_indices: self.solve_indices,
+            has_smooth_run: self.has_smooth_run,
+            previous_family: self.previous_family,
+            arcs: self.arcs,
+            promoted: self
+                .promoted
+                .map(|source| source.map(|source| std::borrow::Cow::Owned(source.into_owned()))),
+        }
+    }
+
+    fn publish(
+        &self,
+        solution: crate::curve::FilletCorner2,
+        radius: &Real,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>> {
+        let chain = CurveCornerChain2::new(&self.fragments, self.closed);
+        let [previous_index, next_index] = self.indices;
+        let [previous_solve_index, next_solve_index] = self.solve_indices;
+        let has_smooth_run = self.has_smooth_run;
+        let previous_family = self.previous_family;
+        let [previous_retained_arc, next_retained_arc] = &self.arcs;
+        let (mut previous_cut, mut next_cut, center, clockwise, retained_frame) =
+            solution.into_retained_cut_evidence().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    previous_family,
+                    UncertaintyReason::Unsupported,
+                )
+            })?;
+        let mut previous_cut_index = previous_index;
+        let mut next_cut_index = next_index;
+        if has_smooth_run {
+            let Some(index) = rebind_retained_cusp_run_cut(
+                &chain,
+                previous_index,
+                previous_solve_index,
+                true,
+                false,
+                &mut previous_cut,
+                CurveOperation2::Fillet,
+                policy,
+            )?
+            else {
+                return Ok(None);
+            };
+            previous_cut_index = index;
+            let Some(index) = rebind_retained_cusp_run_cut(
+                &chain,
+                next_index,
+                next_solve_index,
+                false,
+                false,
+                &mut next_cut,
+                CurveOperation2::Fillet,
+                policy,
+            )?
+            else {
+                return Ok(None);
+            };
+            next_cut_index = index;
+            if previous_cut_index == next_cut_index {
+                return Ok(None);
+            }
+        }
+        chain.reconstruct_fillet(
+            previous_cut_index,
+            next_cut_index,
+            previous_cut,
+            next_cut,
+            center,
+            clockwise,
+            retained_frame,
+            radius,
+            [
+                previous_retained_arc.as_deref(),
+                next_retained_arc.as_deref(),
+            ],
+            [
+                (previous_cut_index == previous_index)
+                    .then(|| self.promoted[0].as_deref())
+                    .flatten(),
+                (next_cut_index == next_index)
+                    .then(|| self.promoted[1].as_deref())
+                    .flatten(),
+            ],
+            [
+                previous_cut_index..previous_cut_index + 1,
+                next_cut_index..next_cut_index + 1,
+            ],
+            policy,
+        )
+    }
+}
+
+#[derive(Clone, Debug)]
+pub(super) struct CurveChainFilletFamily2 {
+    placement: std::sync::Arc<CurveChainFilletPlacement2<'static>>,
+    pub(super) native: crate::curve::FilletCornerFamily2,
+}
+
+impl CurveChainFilletFamily2 {
+    pub(super) fn select(
+        &self,
+        previous: &CurveParameter2,
+        next: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>> {
+        let Some(solution) = self.native.select(previous, next, policy)? else {
+            return Ok(None);
+        };
+        self.placement
+            .publish(solution, self.native.radius(), policy)
+    }
+}
+
 impl<'a> CurveCornerChain2<'a> {
     /// Borrows a nonempty chain whose joins the caller has already certified.
     pub(crate) fn new(fragments: &'a [BezierSplitFragment2], closed: bool) -> Self {
@@ -762,7 +896,8 @@ impl<'a> CurveCornerChain2<'a> {
         radius: Real,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveCornerSolutions2<Vec<BezierSplitFragment2>>> {
+    ) -> ExactCurveResult<CurveFilletSolutions2<Vec<BezierSplitFragment2>, CurveChainFilletFamily2>>
+    {
         let fragment_count = self.fragments().len();
         if vertex_index >= fragment_count || (vertex_index == 0 && !self.closed) {
             return Err(curve_region_edit_error(
@@ -814,7 +949,7 @@ impl<'a> CurveCornerChain2<'a> {
             policy,
         )?;
         if radius_sign == RealSign::Zero {
-            return Ok(CurveCornerSolutions2::NoSolution(
+            return Ok(CurveFilletSolutions2::empty(
                 crate::CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
@@ -841,79 +976,30 @@ impl<'a> CurveCornerChain2<'a> {
             next_family,
             policy,
         )?;
-        let solutions = try_map_corner_solutions(solutions, |solution| {
-            let (mut previous_cut, mut next_cut, center, clockwise, retained_frame) =
-                solution.into_retained_cut_evidence().ok_or_else(|| {
-                    ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        previous_family,
-                        UncertaintyReason::Unsupported,
-                    )
-                })?;
-            let mut previous_cut_index = previous_index;
-            let mut next_cut_index = next_index;
-            if has_smooth_run {
-                let Some(index) = rebind_retained_cusp_run_cut(
-                    self,
-                    previous_index,
-                    previous_solve_index,
-                    true,
-                    false,
-                    &mut previous_cut,
-                    CurveOperation2::Fillet,
-                    policy,
-                )?
-                else {
-                    return Ok(None);
-                };
-                previous_cut_index = index;
-                let Some(index) = rebind_retained_cusp_run_cut(
-                    self,
-                    next_index,
-                    next_solve_index,
-                    false,
-                    false,
-                    &mut next_cut,
-                    CurveOperation2::Fillet,
-                    policy,
-                )?
-                else {
-                    return Ok(None);
-                };
-                next_cut_index = index;
-                if previous_cut_index == next_cut_index {
-                    return Ok(None);
-                }
-            }
-            self.reconstruct_fillet(
-                previous_cut_index,
-                next_cut_index,
-                previous_cut,
-                next_cut,
-                center,
-                clockwise,
-                retained_frame,
-                &radius,
-                [
-                    previous_retained_arc.as_deref(),
-                    next_retained_arc.as_deref(),
-                ],
-                [
-                    (previous_cut_index == previous_index)
-                        .then(|| previous_source.promoted_parallel())
-                        .flatten(),
-                    (next_cut_index == next_index)
-                        .then(|| next_source.promoted_parallel())
-                        .flatten(),
-                ],
-                [
-                    previous_cut_index..previous_cut_index + 1,
-                    next_cut_index..next_cut_index + 1,
-                ],
-                policy,
-            )
-        })?;
-        Ok(compact_optional_corner_solutions(solutions))
+        let placement = CurveChainFilletPlacement2 {
+            fragments: std::borrow::Cow::Borrowed(self.fragments()),
+            closed: self.closed,
+            indices: [previous_index, next_index],
+            solve_indices: [previous_solve_index, next_solve_index],
+            has_smooth_run,
+            previous_family,
+            arcs: [previous_retained_arc, next_retained_arc],
+            promoted: [
+                previous_source.promoted_parallel(),
+                next_source.promoted_parallel(),
+            ]
+            .map(|source| source.map(std::borrow::Cow::Borrowed)),
+        };
+        let solutions =
+            solutions.try_map_isolated(|solution| placement.publish(solution, &radius, policy))?;
+        let shared =
+            (!solutions.families.is_empty()).then(|| std::sync::Arc::new(placement.into_owned()));
+        Ok(solutions.map_families(|native| CurveChainFilletFamily2 {
+            placement: std::sync::Arc::clone(
+                shared.as_ref().expect("family reconstruction context"),
+            ),
+            native,
+        }))
     }
 
     /// Reconstructs already solved cuts over their complete source domains.
@@ -3682,8 +3768,12 @@ mod tests {
             })
             .unwrap();
             assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
-            let CurveCornerSolutions2::Unique(filleted) = outcome.value else {
-                panic!("the open right-angle fillet has one exact solution")
+            let filleted = {
+                let solutions = outcome.value;
+                assert!(solutions.families().is_empty(), "expected isolated fillets");
+                let (mut candidates, _) = solutions.into_parts();
+                assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                candidates.pop().unwrap()
             };
             assert_endpoints(&filleted, &start, &end, &policy);
             for pair in filleted.windows(2) {
@@ -3733,12 +3823,15 @@ mod tests {
                     .fillet_vertex_by_radius(1, q(2, 5), CurveCornerMode2::TrimOrExtend, &policy)
                     .unwrap();
                 assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
-                let candidates = match outcome.value {
-                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                    CurveCornerSolutions2::Multiple(candidates) => candidates,
-                    CurveCornerSolutions2::NoSolution(reason) => {
-                        panic!("exact extended fillet: {reason:?}")
-                    }
+                let candidates = {
+                    let solutions = outcome.value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (candidates, _) = solutions.into_parts();
+                    assert!(
+                        !candidates.is_empty(),
+                        "expected at least one isolated fillet"
+                    );
+                    candidates
                 };
                 let mut checked = 0;
                 for candidate in candidates {
@@ -3823,12 +3916,15 @@ mod tests {
                     )
                     .unwrap();
                 assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
-                let candidates = match outcome.value {
-                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                    CurveCornerSolutions2::Multiple(candidates) => candidates,
-                    CurveCornerSolutions2::NoSolution(reason) => {
-                        panic!("exact extended fillet: {reason:?}")
-                    }
+                let candidates = {
+                    let solutions = outcome.value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (candidates, _) = solutions.into_parts();
+                    assert!(
+                        !candidates.is_empty(),
+                        "expected at least one isolated fillet"
+                    );
+                    candidates
                 };
                 for candidate in candidates {
                     // At original companion parameter -1/4 the point is

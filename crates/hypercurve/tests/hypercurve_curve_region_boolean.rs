@@ -478,9 +478,7 @@ fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
 
 #[test]
 fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
-    use hypercurve::{
-        BezierAlgebraicChord2, BezierSubcurve2, CurveCornerMode2, CurveCornerSolutions2,
-    };
+    use hypercurve::{BezierAlgebraicChord2, BezierSubcurve2, CurveCornerMode2};
     let ratio = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
@@ -493,8 +491,12 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
             .fillet_vertex_by_radius(1, ratio(1, 4), CurveCornerMode2::TrimOnly, &policy)
             .unwrap();
         assert_eq!(fillet.certainty, CurveCertainty::Certified);
-        let CurveCornerSolutions2::Unique(path) = fillet.value else {
-            panic!("one exact trimmed fillet");
+        let path = {
+            let solutions = fillet.value;
+            assert!(solutions.families().is_empty(), "expected isolated fillets");
+            let (mut candidates, _) = solutions.into_parts();
+            assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+            candidates.pop().unwrap()
         };
         for shift in [0, 1, -2] {
             // Q(t) = (-(t-shift)^2, t-shift), retained on [shift, shift+1].

@@ -38,12 +38,13 @@ pub(super) fn parameter_order(
 /// Closed authored sweeps on one incident circular support. A chord's side
 /// selects either the minor or major directed sweep without inverse parameter
 /// reconstruction. The original selected endpoints remain its exact authority.
-struct AuthoredCircularDomain2 {
+#[derive(Debug)]
+pub(super) struct AuthoredCircularDomain2 {
     sweeps: Vec<(crate::BezierAlgebraicChord2, LineSide)>,
 }
 
 impl AuthoredCircularDomain2 {
-    fn new(
+    pub(super) fn new(
         authored: &Curve2,
         incident: &CircularArc2,
         operation: CurveOperation2,
@@ -107,7 +108,7 @@ impl AuthoredCircularDomain2 {
     /// The corner solve has already certified incidence on this circle.
     /// Closed finite ownership also excludes extensions at authored endpoints,
     /// even though those endpoints are not themselves admissible trim cuts.
-    fn contains_incident_point(
+    pub(super) fn contains_incident_point(
         &self,
         point: &CurvePoint2,
         operation: CurveOperation2,
@@ -466,9 +467,25 @@ impl Curve2 {
 struct FilletSourceChart2<'a> {
     curve: Cow<'a, Curve2>,
     source_map: Option<(Real, Real)>,
+    circular_domain: OnceLock<Arc<PolicyEvaluationCache<AuthoredCircularDomain2>>>,
 }
 
 impl FilletSourceChart2<'_> {
+    fn circular_domain_cache(
+        &self,
+        circular: bool,
+        mode: CurveCornerMode2,
+    ) -> Option<Arc<PolicyEvaluationCache<AuthoredCircularDomain2>>> {
+        (circular && self.source_map.is_some() && mode == CurveCornerMode2::TrimOrExtend).then(
+            || {
+                Arc::clone(
+                    self.circular_domain
+                        .get_or_init(|| Arc::new(PolicyEvaluationCache::new())),
+                )
+            },
+        )
+    }
+
     fn prepare(
         &self,
         previous: bool,
@@ -487,44 +504,6 @@ impl FilletSourceChart2<'_> {
             FilletContactDomain2::AuthoredCurve(mode)
         }
     }
-
-    fn place_cut(
-        &self,
-        authored: &Curve2,
-        preparation: &crate::bezier_region::CornerCarrierPreparation2<'_>,
-        cut: &mut CornerCut2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<bool> {
-        let operation = CurveOperation2::Fillet;
-        cut.map_source_parameter(
-            preparation.source_chart(),
-            operation,
-            authored.family(),
-            policy,
-        )?;
-        let Some((scale, offset)) = &self.source_map else {
-            return Ok(true);
-        };
-        cut.map_source_parameter(Some((scale, offset)), operation, authored.family(), policy)?;
-        if cut.placement == CornerPlacement2::Extension {
-            return Ok(true);
-        }
-        let parameter = cut
-            .parameter
-            .as_ref()
-            .expect("a finite chart retains its source parameter");
-        let range = authored.parameter_domain();
-        Ok(parameter_order(
-            parameter,
-            range.start(),
-            operation,
-            authored.family(),
-            policy,
-        )?
-        .is_gt()
-            && parameter_order(parameter, range.end(), operation, authored.family(), policy)?
-                .is_lt())
-    }
 }
 
 impl Curve2 {
@@ -540,6 +519,7 @@ impl Curve2 {
                     .map(|span| FilletSourceChart2 {
                         curve: Cow::Owned(Curve2::from_retained_fragment(span.fragment.clone())),
                         source_map: Some((span.source_scale.clone(), span.source_offset.clone())),
+                        circular_domain: OnceLock::new(),
                     })
                     .collect());
             }
@@ -556,6 +536,7 @@ impl Curve2 {
                         FilletSourceChart2 {
                             curve: Cow::Owned(span.clone().into_curve()),
                             source_map: Some((end - start, start.clone())),
+                            circular_domain: OnceLock::new(),
                         }
                     })
                     .collect());
@@ -564,6 +545,7 @@ impl Curve2 {
         Ok(vec![FilletSourceChart2 {
             curve: Cow::Borrowed(self),
             source_map: None,
+            circular_domain: OnceLock::new(),
         }])
     }
 }
@@ -581,7 +563,7 @@ impl CurvePath2 {
         radius: &Real,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<CurveCornerSolutions2<Self>>> {
+    ) -> ExactCurveResult<Option<CurveFilletSolutions2<Self, CurvePathFilletFamily2>>> {
         let operation = CurveOperation2::Fillet;
         let previous = &self.data.curves[previous_index];
         let next = &self.data.curves[next_index];
@@ -609,8 +591,7 @@ impl CurvePath2 {
             .map(|chart| chart.prepare(false, policy))
             .collect::<ExactCurveResult<Vec<_>>>()?;
         let mut candidates = [Vec::new(), Vec::new()];
-        let mut previous_circle_domain = None;
-        let mut next_circle_domain = None;
+        let mut families = Vec::new();
         for (previous_chart_index, (previous_chart, previous_source)) in
             previous_charts.iter().zip(&previous_sources).enumerate()
         {
@@ -651,84 +632,45 @@ impl CurvePath2 {
                     next.family(),
                     policy,
                 )?;
-                try_map_corner_solutions(solutions, |mut solution| {
-                    if !previous_chart.place_cut(
-                        previous,
-                        previous_source,
-                        &mut solution.previous,
-                        policy,
-                    )? || !next_chart.place_cut(next, next_source, &mut solution.next, policy)?
-                    {
-                        return Ok(());
-                    }
-                    for (chart, authored, cut, circle, cached) in [
-                        (
-                            previous_chart,
-                            previous,
-                            &solution.previous,
-                            previous_arc.as_deref(),
-                            &mut previous_circle_domain,
-                        ),
-                        (
-                            next_chart,
-                            next,
-                            &solution.next,
-                            next_arc.as_deref(),
-                            &mut next_circle_domain,
-                        ),
-                    ] {
-                        if chart.source_map.is_some()
-                            && cut.placement == CornerPlacement2::Extension
-                            && let Some(circle) = circle
-                        {
-                            if cached.is_none() {
-                                *cached = Some(AuthoredCircularDomain2::new(
-                                    authored,
-                                    circle.support(),
-                                    operation,
-                                    policy,
-                                )?);
-                            }
-                            if cached
-                                .as_ref()
-                                .expect("authored circle domain")
-                                .contains_incident_point(
-                                    &cut.point,
-                                    operation,
-                                    authored.family(),
-                                    policy,
-                                )?
-                            {
-                                return Ok(());
-                            }
-                        }
-                    }
+                // A chart owns one circular support. Share its authored-sweep
+                // decision across all opposite charts and later family selections.
+                let circular_domains = [
+                    previous_chart.circular_domain_cache(previous_arc.is_some(), domains[0].mode()),
+                    next_chart.circular_domain_cache(next_arc.is_some(), domains[1].mode()),
+                ];
+                let placement = curve_fillet::PathFilletPlacement2::new(
+                    self,
+                    vertex_index,
+                    [previous_index, next_index],
+                    [previous_source.source_chart(), next_source.source_chart()],
+                    [
+                        previous_chart.source_map.as_ref(),
+                        next_chart.source_map.as_ref(),
+                    ],
+                    [previous_arc, next_arc],
+                    [
+                        previous_source.promoted_parallel(),
+                        next_source.promoted_parallel(),
+                    ],
+                    circular_domains,
+                );
+                let solutions = solutions.try_map_isolated(|solution| {
                     let clockwise = solution.clockwise;
-                    if let Some(path) = self.publish_fillet_corner(
-                        vertex_index,
-                        previous_index,
-                        next_index,
-                        solution,
-                        radius,
-                        [previous_arc.as_deref(), next_arc.as_deref()],
-                        [
-                            previous_source.promoted_parallel(),
-                            next_source.promoted_parallel(),
-                        ],
-                        policy,
-                    )? {
+                    if let Some(path) = placement.publish(solution, radius, policy)? {
                         candidates[usize::from(clockwise)].push(path);
                     }
-                    Ok(())
+                    Ok(None::<()>)
                 })?;
+                families.extend(placement.bind(solutions).families);
             }
         }
         let mut solutions = CornerSolutionAccumulator::Empty;
         for candidate in candidates.into_iter().flatten() {
             solutions.push(candidate);
         }
-        Ok(Some(
+        Ok(Some(CurveFilletSolutions2::from_isolated(
             solutions.finish(CurveCornerNoSolution2::OutsideTrimDomain),
-        ))
+            families,
+        )))
     }
 }

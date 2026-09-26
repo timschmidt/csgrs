@@ -265,12 +265,15 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
                     .unwrap_or_else(|error| {
                         panic!("retained rational-arc/analytic fillet must decide: {error:?}")
                     });
-                let candidates = match solved.value {
-                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                    CurveCornerSolutions2::Multiple(candidates) => candidates,
-                    CurveCornerSolutions2::NoSolution(reason) => {
-                        panic!("retained rational-arc/analytic fillet has no solution: {reason:?}")
-                    }
+                let candidates = {
+                    let solutions = solved.value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (candidates, _) = solutions.into_parts();
+                    assert!(
+                        !candidates.is_empty(),
+                        "expected at least one isolated fillet"
+                    );
+                    candidates
                 };
                 assert!(!candidates.is_empty());
                 for candidate in candidates {
@@ -296,10 +299,12 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
 #[test]
 fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
     let radius = (Real::one() / Real::from(4_i8)).unwrap();
-    let count = |solutions: CurveCornerSolutions2<CurveRegion2>| match solutions {
-        CurveCornerSolutions2::Unique(_) => 1,
-        CurveCornerSolutions2::Multiple(candidates) => candidates.len(),
-        CurveCornerSolutions2::NoSolution(_) => 0,
+    let count = |solutions: hypercurve::CurveFilletSolutions2<
+        CurveRegion2,
+        hypercurve::CurveRegionFilletFamily2,
+    >| {
+        assert!(solutions.families().is_empty());
+        solutions.isolated_solutions().len()
     };
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for unit_end_weights in [false, true] {
@@ -524,12 +529,15 @@ fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
                     .unwrap_or_else(|error| {
                         panic!("past-center arc fillet must decide: {error:?}")
                     });
-                let candidates = match solved.value {
-                    CurveCornerSolutions2::Unique(candidate) => vec![candidate],
-                    CurveCornerSolutions2::Multiple(candidates) => candidates,
-                    CurveCornerSolutions2::NoSolution(reason) => {
-                        panic!("past-center arc fillet has no solution: {reason:?}")
-                    }
+                let candidates = {
+                    let solutions = solved.value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (candidates, _) = solutions.into_parts();
+                    assert!(
+                        !candidates.is_empty(),
+                        "expected at least one isolated fillet"
+                    );
+                    candidates
                 };
                 assert!(candidates.iter().all(|candidate| {
                     candidate.boundary_loops()[0]

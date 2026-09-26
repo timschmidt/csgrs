@@ -2873,17 +2873,20 @@ mod circle_dispatch_tests {
                     QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)).into(),
                 ])
                 .unwrap();
-                let crate::CurveCornerSolutions2::Unique(path) = path
-                    .fillet_vertex_by_radius(
-                        1,
-                        scale * q(1, 4),
-                        crate::CurveCornerMode2::TrimOnly,
-                        &policy,
-                    )
-                    .unwrap()
-                    .value
-                else {
-                    panic!("unique fillet")
+                let path = {
+                    let solutions = path
+                        .fillet_vertex_by_radius(
+                            1,
+                            scale * q(1, 4),
+                            crate::CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
+                        .unwrap()
+                        .value;
+                    assert!(solutions.families().is_empty(), "expected isolated fillets");
+                    let (mut candidates, _) = solutions.into_parts();
+                    assert_eq!(candidates.len(), 1, "expected one isolated fillet");
+                    candidates.pop().unwrap()
                 };
                 let circle = &path.curves()[1];
                 let line = Curve2::from_retained_fragment(BezierSplitFragment2::RetainedBezier {

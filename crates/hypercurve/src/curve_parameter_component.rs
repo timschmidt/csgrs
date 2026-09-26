@@ -375,6 +375,10 @@ impl CurveParameterComponent2 {
         self
     }
 
+    pub(crate) fn point_image(&self) -> Option<&CurvePoint2> {
+        self.point_image.as_ref()
+    }
+
     pub(super) fn swapped(mut self) -> Self {
         self.swapped = !self.swapped;
         self
