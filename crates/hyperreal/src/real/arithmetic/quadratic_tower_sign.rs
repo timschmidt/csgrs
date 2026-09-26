@@ -1,4 +1,43 @@
 impl Real {
+    /// Rebuild this value from its bounded exact quadratic-tower reduction.
+    ///
+    /// Values in `Q(sqrt(d))(sqrt(a + b sqrt(d)))` can accumulate a large
+    /// arithmetic graph while their reduced coefficients remain small. This
+    /// returns an equal, shallow `Real`, including a rational payload when the
+    /// radicals cancel. Principal-root branches and the outer rational scale
+    /// are preserved; no numerical approximation is used.
+    ///
+    /// `None` means the bounded reduction did not cover this expression. It
+    /// does not limit the original exact value or its subsequent operations.
+    pub fn compact_quadratic_tower(&self) -> Option<Self> {
+        if self.exact_rational_ref().is_some() {
+            return Some(self.clone());
+        }
+        let [even, odd, radicand] = self.computable_ref().quadratic_tower_parts()?;
+        let odd_is_zero = odd[0].is_zero() && odd[1].is_zero();
+        let quadratic = |[constant, scale, square]: [Rational; 3]| -> Option<Self> {
+            let constant = Self::new(constant);
+            if scale.is_zero() {
+                Some(constant)
+            } else {
+                Some(constant + Self::new(scale) * Self::new(square).sqrt().ok()?)
+            }
+        };
+        let mut compact = quadratic(even)?;
+        if !odd_is_zero {
+            let radicand = quadratic(radicand)?;
+            // Retain its algebraic sign before the public square-root domain
+            // check, so reconstruction cannot start scalar refinement.
+            radicand.quadratic_tower_sign()?;
+            compact += quadratic(odd)? * radicand.sqrt().ok()?;
+        }
+        compact *= Self::new(self.rational.clone());
+        if let Some(signal) = self.abort_signal() {
+            compact.abort(signal.clone());
+        }
+        Some(compact)
+    }
+
     fn tower_computable(&self) -> Computable {
         if let Some(rational) = self.exact_rational() {
             return Computable::rational(rational);
@@ -67,6 +106,55 @@ impl Real {
 #[cfg(test)]
 mod quadratic_tower_real_tests {
     use super::*;
+
+    #[test]
+    fn compact_towers_preserve_nested_roots_after_repeated_arithmetic() {
+        let inner = Real::from(5).sqrt().unwrap();
+        let outer = (Real::from(3) + &inner).sqrt().unwrap();
+        let expected = Real::one() + &inner + (Real::from(2) - &inner) * &outer;
+        let divisor = &outer + Real::one();
+        let mut value = expected.clone();
+        for _ in 0..8 {
+            value = (((&value + Real::one()) * &divisor - &divisor) / &divisor).unwrap();
+        }
+        for scale in [
+            Rational::fraction(7, 13).unwrap(),
+            Rational::fraction(-7, 13).unwrap(),
+        ] {
+            let scaled = &value * Real::new(scale.clone());
+            let compact = scaled.compact_quadratic_tower().unwrap();
+            assert!(compact.exact_rational_ref().is_none());
+            assert_eq!(
+                (&compact - &expected * Real::new(scale)).quadratic_tower_sign(),
+                Some(RealSign::Zero),
+            );
+            let again = compact.compact_quadratic_tower().unwrap();
+            assert_eq!(
+                (again - compact).quadratic_tower_sign(),
+                Some(RealSign::Zero),
+            );
+        }
+    }
+
+    #[test]
+    fn compact_towers_promote_proven_rationals_and_leave_other_fields_available() {
+        let a = Real::from(3).sqrt().unwrap();
+        let b = Real::from(7).sqrt().unwrap();
+        let sum = &a + &b;
+        let rational = &sum * &sum - Real::from(2) * Real::from(21).sqrt().unwrap();
+        let compact = rational.compact_quadratic_tower().unwrap();
+        assert_eq!(compact.exact_rational_ref(), Some(&Rational::new(10)));
+        let zero = rational - Real::from(10);
+        assert_eq!(
+            zero.compact_quadratic_tower().unwrap().exact_rational_ref(),
+            Some(&Rational::zero()),
+        );
+
+        let outside = a + b + Real::from(2).sqrt().unwrap();
+        assert!(outside.compact_quadratic_tower().is_none());
+        assert_eq!(outside.immediate_sign(), Some(RealSign::Positive));
+        assert!(Real::pi().compact_quadratic_tower().is_none());
+    }
 
     #[test]
     fn scaled_tower_sign_retains_the_shared_payload_proof() {
