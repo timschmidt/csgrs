@@ -3064,7 +3064,7 @@ fn refine_algebraic_sign_change(
         return None;
     }
     for _ in 0..max_refinement_steps {
-        let midpoint = Real::average_pair(&start, &end);
+        let midpoint = scalar_in_open_interval(&start, &end);
         let midpoint_sign = real_sign(&polynomial.evaluate(&midpoint), policy)?;
         if midpoint_sign == RealSign::Zero {
             return Some(BezierParameter2::Exact(midpoint));
@@ -3132,7 +3132,11 @@ impl<'a> RefinedParameter<'a> {
         else {
             return Ok(Classification::Decided(false));
         };
-        let midpoint = Real::average_pair(interval.start(), interval.end());
+        // An isolator may have algebraic or transcendental bounds. Its
+        // subdivision point has no incidence obligation to either bound;
+        // keep those expressions out of the Sturm evaluations whenever a
+        // certified rational probe is available.
+        let midpoint = scalar_in_open_interval(interval.start(), interval.end());
         if sturm_sequence.is_none() {
             // A represented midpoint can be certified without constructing
             // a chain, including when non-rational coefficient division is
@@ -7118,6 +7122,67 @@ mod conversion_tests {
                     .unwrap(),
                     Classification::Decided(RealSign::Zero)
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn root_refinement_does_not_embed_irrational_isolator_bounds() {
+        // Both the sign-change path and repeated-root Sturm path select
+        // sqrt(1/2). Their bounds deliberately come from unrelated exact
+        // scalar expressions, not just rational input coordinates.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for defining in [polynomial(&[-1, 0, 2]), polynomial(&[1, 0, -4, 0, 4])] {
+                for (lower, upper) in [
+                    (
+                        (Real::pi() / Real::from(8_i8)).unwrap(),
+                        rational(3, 4).sqrt().unwrap(),
+                    ),
+                    (
+                        rational(3, 8).sqrt().unwrap(),
+                        (Real::pi() / Real::from(4_i8)).unwrap(),
+                    ),
+                ] {
+                    let interval = decided(
+                        BezierParameterInterval::try_new(lower, upper, &policy).unwrap(),
+                        "ordered irrational root bounds",
+                    );
+                    let selected = decided(
+                        BezierAlgebraicParameter2::try_isolate(defining.clone(), interval, &policy)
+                            .unwrap(),
+                        "one positive square root",
+                    );
+                    let parameter = BezierParameter2::Algebraic(selected.clone());
+                    let mut refinement = BezierParameterRefinement2::new(&parameter, &policy);
+                    for steps in [8, 32, 128] {
+                        let BezierParameter2::Algebraic(refined) = refinement.refine_to(steps)
+                        else {
+                            panic!("an irrational root retains its original algebraic owner");
+                        };
+                        assert!(Arc::ptr_eq(&refined.data.shared, &selected.data.shared));
+                        assert_eq!(refined.polynomial(), selected.polynomial());
+                        let interval = refined.interval();
+                        assert!(interval.start().exact_rational_ref().is_some());
+                        assert!(interval.end().exact_rational_ref().is_some());
+                        // Independent signs of 2t²-1 prove the selected
+                        // positive root is still strictly inside its bounds.
+                        assert_eq!(
+                            real_sign(
+                                &(Real::from(2_i8) * interval.start() * interval.start()
+                                    - Real::one()),
+                                &policy
+                            ),
+                            Some(RealSign::Negative)
+                        );
+                        assert_eq!(
+                            real_sign(
+                                &(Real::from(2_i8) * interval.end() * interval.end() - Real::one()),
+                                &policy
+                            ),
+                            Some(RealSign::Positive)
+                        );
+                    }
+                }
             }
         }
     }
