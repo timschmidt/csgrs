@@ -56,6 +56,15 @@ impl DenseTensorPolynomial {
         &self.coefficients
     }
 
+    /// Compacts exact coefficient expressions without changing their values.
+    ///
+    /// This reuses the owned storage and preserves the validated shape. Values
+    /// outside the available exact normal forms keep their original payloads.
+    pub fn compact_coefficients(mut self) -> Self {
+        self.coefficients = compact_exact_coefficients(self.coefficients);
+        self
+    }
+
     /// Moves the validated shape and coefficient storage into an internal
     /// consumer without cloning either dense vector.
     pub(crate) fn into_parts(self) -> (Vec<usize>, Vec<Real>) {
@@ -245,9 +254,9 @@ impl DenseTensorPolynomial {
 
     /// Evaluates one tensor axis at an exact value and removes that axis.
     ///
-    /// Callers use this only after independently validating the selected
-    /// value. Horner evaluation preserves every remaining tensor axis and
-    /// avoids taking a resultant over a source that is already known exactly.
+    /// Horner evaluation preserves every remaining tensor axis. Selected-root
+    /// callers independently validate the value before using this operation
+    /// to avoid a resultant over a source that is already known exactly.
     pub(crate) fn substitute_axis_value(&self, axis: usize, value: &Real) -> Option<Self> {
         let axis_dimension = *self.dimensions.get(axis)?;
         let stride = checked_coefficient_count(&self.dimensions[axis + 1..])?;
@@ -922,6 +931,23 @@ fn normalized_constraint(constraint: &[Real], min_precision: i32) -> Result<Opti
             .map(|coefficient| coefficient * &reciprocal)
             .collect(),
     ))
+}
+
+pub(crate) fn compact_exact_coefficients(mut coefficients: Vec<Real>) -> Vec<Real> {
+    for coefficient in &mut coefficients {
+        // A rational-class Real has no arithmetic DAG to collapse. Preserve
+        // its storage directly; Rational operations already consult the lazy
+        // canonical-coordinate cache when numeric normalization is required.
+        if coefficient.exact_rational_ref().is_some() {
+            continue;
+        }
+        if let Some(compact) = coefficient.compact_quadratic_tower() {
+            *coefficient = compact;
+        } else if let Some(rational) = coefficient.exact_rational_normal_form() {
+            *coefficient = Real::new(rational);
+        }
+    }
+    coefficients
 }
 
 fn checked_coefficient_count(dimensions: &[usize]) -> Option<usize> {

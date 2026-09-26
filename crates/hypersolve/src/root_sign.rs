@@ -9,6 +9,7 @@ use std::cmp::Ordering;
 use hyperlimit::{PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
+use crate::algebraic::AlgebraicRootRepresentation;
 use crate::integer_interpolation::primitive_integer_signed_remainder_sequence;
 use crate::ordered_field_roots::{
     OrderedFieldPolynomialContext, ordered_field_polynomial_sign_remainder, trim_polynomial,
@@ -16,6 +17,48 @@ use crate::ordered_field_roots::{
 use crate::root_isolation::{
     IsolatedRootInterval, polynomial_div_rem, polynomial_has_one_distinct_root_in_open_interval,
 };
+use crate::tensor_resultant::{DenseTensorPolynomial, compact_exact_coefficients};
+
+/// Signs a tensor polynomial at a caller-certified tuple of exact roots.
+///
+/// Stored exact point witnesses are substituted without imposing a rational
+/// payload requirement. If at most one selected root remains, its original
+/// equation and isolator supply the Sturm-Tarski proof. A fully evaluated
+/// tensor uses a STRICT scalar sign. More unresolved axes or unavailable exact
+/// decisions return `None`; callers retain the original tuple for other proofs.
+/// No defining equation, selected root, or interval is replaced in the caller.
+pub fn sign_at_selected_tuple(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<Ordering> {
+    if polynomial.dimensions().len() != sources.len() {
+        return None;
+    }
+    let mut selected = None;
+    for source in sources {
+        if !source.is_valid() || source.interval.distinct_root_count != 1 {
+            return None;
+        }
+        if source.exact_point_witness().is_none() && selected.replace(source).is_some() {
+            return None;
+        }
+    }
+    let mut polynomial = polynomial.clone();
+    for (axis, source) in sources.iter().enumerate().rev() {
+        if let Some(value) = source.exact_point_witness() {
+            polynomial = polynomial.substitute_axis_value(axis, value)?;
+        }
+    }
+    let (_, coefficients) = polynomial.compact_coefficients().into_parts();
+    match selected {
+        Some(source) => sign_at_selected_root(
+            &compact_exact_coefficients(source.polynomial_coefficients.clone()),
+            &coefficients,
+            &source.interval,
+        ),
+        None => sign(&coefficients[0]),
+    }
+}
 
 /// Signs a polynomial at a caller-certified singleton over an exact ordered field.
 ///
@@ -268,6 +311,83 @@ fn variations(chain: &[Vec<Real>], point: &Real) -> Option<usize> {
 mod tests {
     use super::*;
     use proptest::prelude::*;
+
+    fn selected_cubic_root() -> AlgebraicRootRepresentation {
+        AlgebraicRootRepresentation {
+            constraint_index: 23,
+            symbol: crate::SymbolId(29),
+            interval_index: 0,
+            polynomial_coefficients: vec![
+                Real::from(-1),
+                Real::zero(),
+                Real::zero(),
+                Real::from(2),
+            ],
+            interval: IsolatedRootInterval {
+                lower: (Real::from(3) / Real::from(4)).unwrap(),
+                upper: Real::one(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            validation: crate::AlgebraicRootValidationReport {
+                status: crate::AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        }
+    }
+
+    #[test]
+    fn tuple_signs_bind_arbitrary_exact_points_in_either_axis() {
+        let source = selected_cubic_root();
+        assert_eq!(
+            crate::validate_algebraic_root_representation(&source, PredicatePolicy::STRICT).status,
+            crate::AlgebraicRootValidationStatus::Valid,
+        );
+        for known_axis in 0..2 {
+            for (scale, expected) in [(1, Ordering::Greater), (-1, Ordering::Less)] {
+                let point = Real::from(scale) * Real::from(2).sqrt().unwrap();
+                assert!(point.exact_rational_ref().is_none());
+                let mut sources = vec![source.clone(); 2];
+                sources[known_axis] = AlgebraicRootRepresentation::from_exact_value(&point);
+                // Q(k,x)=(k^2-2)x^2+kx-1, x=cbrt(1/2).
+                // x>3/4 and sqrt(2)>4/3 prove the positive case.
+                let mut coefficients = vec![Real::zero(); 9];
+                coefficients[0] = -Real::one();
+                coefficients[4] = Real::one();
+                coefficients[8] = Real::one();
+                coefficients[if known_axis == 0 { 2 } else { 6 }] = Real::from(-2);
+                let polynomial = DenseTensorPolynomial::try_new(vec![3, 3], coefficients).unwrap();
+                assert_eq!(
+                    sign_at_selected_tuple(&polynomial, &sources),
+                    Some(expected)
+                );
+            }
+        }
+        let known = AlgebraicRootRepresentation::from_exact_value(&Real::from(2).sqrt().unwrap());
+        let difference = DenseTensorPolynomial::try_new(
+            vec![2, 2],
+            vec![Real::zero(), -Real::one(), Real::one(), Real::zero()],
+        )
+        .unwrap();
+        assert_eq!(
+            sign_at_selected_tuple(&difference, &[known.clone(), known]),
+            Some(Ordering::Equal),
+        );
+    }
+
+    #[test]
+    fn tuple_signs_decline_unresolved_axes_and_invalid_evidence() {
+        let source = selected_cubic_root();
+        let polynomial = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
+        assert_eq!(sign_at_selected_tuple(&polynomial, &[]), None);
+        assert_eq!(
+            sign_at_selected_tuple(&polynomial, &[source.clone(), source.clone()]),
+            None,
+        );
+        let mut point = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
+        point.interval.distinct_root_count = 2;
+        assert_eq!(sign_at_selected_tuple(&polynomial, &[source, point]), None);
+    }
 
     struct RealContext;
 

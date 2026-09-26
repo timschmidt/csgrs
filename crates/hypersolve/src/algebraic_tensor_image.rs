@@ -32,7 +32,7 @@ use crate::root_isolation::{
 };
 use crate::tensor_resultant::{
     DenseTensorPolynomial, TensorConstraintResultantReport, TensorConstraintResultantStatus,
-    resultant_tensor_polynomial_univariate_constraint,
+    compact_exact_coefficients, resultant_tensor_polynomial_univariate_constraint,
 };
 
 /// Status for constructing one correlated tensor image.
@@ -967,23 +967,6 @@ fn exact_bounded_denominator_root_in_interval(
 // Compact between eliminations, before their arithmetic history reaches the
 // square-free/GCD and Sturm kernels. This is an optional exact reduction, not a
 // restriction of the polynomial's coefficient field.
-fn compact_exact_coefficients(mut coefficients: Vec<Real>) -> Vec<Real> {
-    for coefficient in &mut coefficients {
-        // A rational-class Real has no arithmetic DAG to collapse. Preserve
-        // its storage directly; Rational operations already consult the lazy
-        // canonical-coordinate cache when numeric normalization is required.
-        if coefficient.exact_rational_ref().is_some() {
-            continue;
-        }
-        if let Some(compact) = coefficient.compact_quadratic_tower() {
-            *coefficient = compact;
-        } else if let Some(rational) = coefficient.exact_rational_normal_form() {
-            *coefficient = Real::new(rational);
-        }
-    }
-    coefficients
-}
-
 fn normalize_tensor_relation(polynomial: DenseTensorPolynomial) -> DenseTensorPolynomial {
     let (dimensions, coefficients) = polynomial.into_parts();
     let coefficients = compact_exact_coefficients(coefficients);
