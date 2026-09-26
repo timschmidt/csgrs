@@ -16226,8 +16226,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             || map.chord_normal_projective_system().is_some()
     }
 
-    /// Builds a circle in the exact orthonormal frame selected by one regular
-    /// analytic parallel point.
+    /// Builds a circle in the exact orthonormal frame of a regular source
+    /// point. The center's parallel locus may have a cusp at that parameter.
     ///
     /// The center is `center_support(center_parameter)`.  Its source unit left
     /// normal supplies the parameter-zero radial direction; the signed radius
@@ -16254,15 +16254,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         {
             return Ok(Classification::Uncertain(reason));
         }
-        match center_support.parallel_derivative_scale_sign(&center_parameter, policy)? {
-            Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
+        // The radial frame uses the source unit normal, not the derivative
+        // of the center locus. Its finiteness and positive speed are already
+        // certified above, including when the parallel derivative vanishes.
         Ok(Classification::Decided(Some(Self {
             data: Arc::new(BezierAlgebraicCuspSemicircleData2 {
                 parallel_system_cache: Mutex::default(),
@@ -175908,6 +175902,141 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     }
                 }
             }
+        }
+    }
+
+    #[test]
+    fn selected_parallel_normal_circle_accepts_a_center_locus_cusp() {
+        let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
+        // P(t)=(t,t^2) has a regular source normal at t=0, while its
+        // left parallel at distance 1/2 has zero derivative there.
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(1, 2), Real::zero()),
+            Point2::from_values(1, 1),
+        );
+        let center_support = source.parallel_left(q(1, 2)).unwrap();
+        let parameter = CurveParameter2::from(BezierParameter2::Exact(Real::zero()));
+        assert_eq!(
+            center_support
+                .parallel_derivative_scale_sign(&parameter, &CurveContext::STRICT)
+                .unwrap(),
+            Classification::Decided(RealSign::Zero),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for clockwise in [false, true] {
+                for signed_radius in [q(1, 8), q(-1, 8)] {
+                    let Classification::Decided(Some(circle)) =
+                        BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                            center_support.clone(),
+                            parameter.clone(),
+                            signed_radius.clone(),
+                            clockwise,
+                            &policy,
+                        )
+                        .unwrap()
+                    else {
+                        panic!("a center-locus cusp retains a regular source frame");
+                    };
+                    let assert_point = |actual: Classification<CurvePoint2>, x: Real, y: Real| {
+                        let Classification::Decided(actual) = actual else {
+                            panic!("the cusp-centered circle point must remain exact");
+                        };
+                        assert_eq!(
+                            actual.same_point(
+                                &CurvePoint2::from(Point2::new(x, y)),
+                                &CurveContext::STRICT
+                            ),
+                            Classification::Decided(true)
+                        );
+                    };
+                    let midpoint_x = if clockwise {
+                        signed_radius.clone()
+                    } else {
+                        -signed_radius.clone()
+                    };
+                    assert_point(
+                        circle.center_point_evidence(&CurveContext::STRICT).unwrap(),
+                        Real::zero(),
+                        q(1, 2),
+                    );
+                    assert_point(
+                        circle.start_point_evidence(&CurveContext::STRICT).unwrap(),
+                        Real::zero(),
+                        q(1, 2) + &signed_radius,
+                    );
+                    assert_point(
+                        circle
+                            .point_evidence_at(&q(1, 2), &CurveContext::STRICT)
+                            .unwrap(),
+                        midpoint_x.clone(),
+                        q(1, 2),
+                    );
+                    assert_point(
+                        circle.end_point_evidence(&CurveContext::STRICT).unwrap(),
+                        Real::zero(),
+                        q(1, 2) - &signed_radius,
+                    );
+                    assert_point(
+                        circle
+                            .reversed()
+                            .point_evidence_at(&q(1, 2), &CurveContext::STRICT)
+                            .unwrap(),
+                        midpoint_x.clone(),
+                        q(1, 2),
+                    );
+                    assert_point(
+                        circle
+                            .complementary_half()
+                            .point_evidence_at(&q(1, 2), &CurveContext::STRICT)
+                            .unwrap(),
+                        -midpoint_x,
+                        q(1, 2),
+                    );
+                    let Classification::Decided(Some(offset)) = circle
+                        .offset_left(&q(1, 32), &CurveContext::STRICT)
+                        .unwrap()
+                    else {
+                        panic!("the selected circle keeps its frame through concentric offsets");
+                    };
+                    let expected_radius = q(if clockwise { 5 } else { 3 }, 32);
+                    let expected_radius =
+                        if signed_radius.immediate_sign() == Some(RealSign::Negative) {
+                            -expected_radius
+                        } else {
+                            expected_radius
+                        };
+                    assert_point(
+                        offset.start_point_evidence(&CurveContext::STRICT).unwrap(),
+                        Real::zero(),
+                        q(1, 2) + expected_radius,
+                    );
+                    assert_eq!(
+                        circle.data.frame.parallel_normal().unwrap().policy,
+                        CurveContext::STRICT
+                    );
+                }
+            }
+            // An undefined source normal remains excluded. Zero center-locus
+            // speed and zero source speed are different geometric premises.
+            let stationary_source = QuadraticBezier2::new(
+                Point2::from_values(0, 0),
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 1),
+            )
+            .parallel_left(q(1, 2))
+            .unwrap();
+            assert!(matches!(
+                BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                    stationary_source,
+                    parameter.clone(),
+                    q(1, 8),
+                    false,
+                    &policy,
+                )
+                .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary),
+            ));
         }
     }
 
