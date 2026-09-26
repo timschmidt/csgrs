@@ -174,33 +174,23 @@ impl<'a> PreparedCircularArc2<'a> {
                     return Classification::Uncertain(UncertaintyReason::Predicate);
                 }
             };
-            if sweep_kind == crate::arc_bezier::ArcSweepKind::FullCircle {
-                return Classification::Decided(true);
-            }
             let query = predicate_point(point);
-            let start_side = classify_oriented_line(
-                &self.predicate_center,
-                &self.predicate_start,
-                &self.center_start_orientation,
-                &query,
-                policy,
-            );
-            let end_side = classify_oriented_line(
-                &self.predicate_center,
-                &self.predicate_end,
-                &self.center_end_orientation,
-                &query,
-                policy,
-            );
-            let (Classification::Decided(start_side), Classification::Decided(end_side)) =
-                (start_side, end_side)
-            else {
-                return Classification::Uncertain(UncertaintyReason::Predicate);
-            };
-
             return self
                 .arc
-                .contains_classified_sweep_sides(start_side, end_side, sweep_kind);
+                .classify_sweep_sides(sweep_kind, policy, |at_start| {
+                    let (endpoint, orientation) = if at_start {
+                        (&self.predicate_start, &self.center_start_orientation)
+                    } else {
+                        (&self.predicate_end, &self.center_end_orientation)
+                    };
+                    classify_oriented_line(
+                        &self.predicate_center,
+                        endpoint,
+                        orientation,
+                        &query,
+                        policy,
+                    )
+                });
         }
 
         self.arc.contains_sweep_point(point, policy)

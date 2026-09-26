@@ -723,19 +723,10 @@ impl CircularArc2 {
             }
             Err(_) => return Classification::Uncertain(crate::UncertaintyReason::Predicate),
         };
-        if sweep_kind == crate::arc_bezier::ArcSweepKind::FullCircle {
-            return Classification::Decided(true);
-        }
-
-        let start_side = classify_oriented_line(self.center(), self.start(), point, policy);
-        let end_side = classify_oriented_line(self.center(), self.end(), point, policy);
-        let (Classification::Decided(start_side), Classification::Decided(end_side)) =
-            (start_side, end_side)
-        else {
-            return Classification::Uncertain(crate::UncertaintyReason::Predicate);
-        };
-
-        self.contains_classified_sweep_sides(start_side, end_side, sweep_kind)
+        self.classify_sweep_sides(sweep_kind, policy, |at_start| {
+            let endpoint = if at_start { self.start() } else { self.end() };
+            classify_oriented_line(self.center(), endpoint, point, policy)
+        })
     }
 
     pub(crate) fn strict_sweep_point_location(
@@ -762,27 +753,50 @@ impl CircularArc2 {
             })
     }
 
-    pub(crate) fn contains_classified_sweep_sides(
+    /// Combines radial half-plane predicates without requiring an irrelevant
+    /// boundary sign. A minor sweep is an intersection; a major sweep is a
+    /// union. Try both bounded exact predicates before refining either one.
+    pub(crate) fn classify_sweep_sides(
         &self,
-        start_side: LineSide,
-        end_side: LineSide,
         sweep_kind: crate::arc_bezier::ArcSweepKind,
+        policy: &CurveContext,
+        mut classify: impl FnMut(bool) -> Classification<LineSide>,
     ) -> Classification<bool> {
-        let start_contains = if self.is_clockwise() {
-            matches!(start_side, LineSide::Right | LineSide::On)
-        } else {
-            matches!(start_side, LineSide::Left | LineSide::On)
-        };
-        let end_contains = if self.is_clockwise() {
-            matches!(end_side, LineSide::Left | LineSide::On)
-        } else {
-            matches!(end_side, LineSide::Right | LineSide::On)
-        };
-        Classification::Decided(if sweep_kind == crate::arc_bezier::ArcSweepKind::Major {
-            start_contains || end_contains
-        } else {
-            start_contains && end_contains
-        })
+        if sweep_kind == crate::arc_bezier::ArcSweepKind::FullCircle {
+            return Classification::Decided(true);
+        }
+        let decisive = sweep_kind == crate::arc_bezier::ArcSweepKind::Major;
+        let mut sides = [Classification::Uncertain(crate::UncertaintyReason::Predicate); 2];
+        for bounded in [true, false] {
+            for (index, at_start) in [true, false].into_iter().enumerate() {
+                if sides[index].is_uncertain() {
+                    let side = if bounded {
+                        policy.bounded_exact_predicate_pass(|| classify(at_start))
+                    } else {
+                        classify(at_start)
+                    };
+                    let inside_side = if at_start != self.is_clockwise() {
+                        LineSide::Left
+                    } else {
+                        LineSide::Right
+                    };
+                    sides[index] = side.map(|side| side == LineSide::On || side == inside_side);
+                }
+                if sides[index] == Classification::Decided(decisive) {
+                    return Classification::Decided(decisive);
+                }
+            }
+            if sides.iter().all(Classification::is_decided) {
+                return Classification::Decided(!decisive);
+            }
+            if policy.has_bounded_exact_predicate_budget() {
+                break;
+            }
+        }
+        sides
+            .into_iter()
+            .find(Classification::is_uncertain)
+            .expect("the sweep still needs one unresolved half-plane")
     }
 
     /// Classifies whether a point lies on this finite circular arc.
@@ -1651,6 +1665,47 @@ mod policy_cache_tests {
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn sweep_membership_uses_a_decisive_half_plane() {
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        let opposite = Point2::new(Real::from(-1), unresolved_zero.clone());
+        let boundary = Point2::new(Real::one(), unresolved_zero);
+        assert!(
+            classify_oriented_line(&point(0, 0), &point(1, 0), &opposite, &CurveContext::STRICT,)
+                .is_uncertain()
+        );
+        for major in [false, true] {
+            let arc = CircularArc2::try_from_center(point(1, 0), point(0, 1), point(0, 0), major)
+                .unwrap();
+            for arc in [arc.clone(), arc.reversed()] {
+                let prepared = crate::prepared::PreparedCircularArc2::from_circular_arc(&arc);
+                for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                    policy.strict_predicate_pass(|| {
+                        // The opposite radial ray is excluded by the minor
+                        // sweep's other side and included by the major sweep.
+                        // Reversal swaps which side carries the unknown sign.
+                        for result in [
+                            arc.contains_sweep_point(&opposite, &policy),
+                            prepared.contains_sweep_point(&opposite, &policy),
+                        ] {
+                            assert_eq!(result, Classification::Decided(major));
+                        }
+                        // At the positive ray the unresolved side is essential;
+                        // the same optimization must preserve that uncertainty.
+                        assert!(arc.contains_sweep_point(&boundary, &policy).is_uncertain());
+                        assert!(
+                            prepared
+                                .contains_sweep_point(&boundary, &policy)
+                                .is_uncertain()
+                        );
+                    });
+                }
+            }
+        }
     }
 
     #[test]

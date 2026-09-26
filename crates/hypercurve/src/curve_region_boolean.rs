@@ -2089,7 +2089,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let parameters = incidence;
+        let mut parameters = Vec::with_capacity(incidence.len());
+        for (parameter, crossing) in incidence {
+            if let Some(contact) = parameter.scalar().and_then(|parameter| {
+                certified_tangent_contacts
+                    .iter()
+                    .find(|contact| contact.parameter == *parameter)
+            }) && self.data.policy.bounded_exact_predicate_pass(|| {
+                arc.contains_sweep_point(&contact.point, &self.data.policy)
+            }) == Classification::Decided(false)
+            {
+                // Circle incidence is already certified. A finite-sweep
+                // exclusion needs neither another radius proof nor a conic
+                // inverse at its possible affine infinity.
+                continue;
+            }
+            parameters.push((parameter, crossing));
+        }
         if parameters
             .iter()
             .all(|(parameter, _)| parameter.scalar().is_some())
@@ -2134,7 +2150,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     // A finite-arc rejection is optional. Unresolved scalar
                     // coordinates retain the selected point's exact field.
                     if let Classification::Decided(point) = point
-                        && arc.contains_point(&point, &self.data.policy)
+                        && arc.contains_sweep_point(&point, &self.data.policy)
                             == Classification::Decided(false)
                     {
                         continue;

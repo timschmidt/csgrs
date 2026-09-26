@@ -63856,69 +63856,39 @@ pub(crate) fn quadratic_conic_parameter_at_incident_point(
             .add(&point.y.scale(&linear[1])?)?
             .add(&point.denominator.scale(&linear[2])?)
     };
-    let (Some(first), Some(middle), Some(last)) = (
-        coordinate(&dual[0]),
-        coordinate(&dual[1]),
-        coordinate(&dual[2]),
+    // On the incident conic the dual coordinates are proportional to
+    // ((1-u)^2, 2u(1-u), u^2). Thus (b + 2c) / (2(a + b + c))
+    // recovers every finite u, including both endpoints. The two separate
+    // ratios b/(2a+b) and 2c/(b+2c) introduce avoidable endpoint base points
+    // and require deciding a vanishing denominator before changing charts.
+    // Combine the linear forms before importing them into the point field.
+    let two = Real::from(2_i8);
+    let numerator_linear = std::array::from_fn(|axis| &dual[1][axis] + &two * &dual[2][axis]);
+    let denominator_linear =
+        std::array::from_fn(|axis| &two * (&dual[0][axis] + &dual[1][axis] + &dual[2][axis]));
+    let (Some(numerator), Some(denominator)) = (
+        coordinate(&numerator_linear),
+        coordinate(&denominator_linear),
     ) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let two = Real::from(2_i8);
-    let first_denominator = first
-        .scale(&two)
-        .and_then(|value| value.add(&middle))
-        .ok_or_else(|| {
-            CurveError::Topology(
-                "a retained conic inverse exceeded its coefficient-field budget".into(),
-            )
-        })?;
     let strict = policy.strict_counterpart();
-    let (numerator, denominator) = match first_denominator.sign(&strict)? {
-        Classification::Decided(RealSign::Positive) => (middle, first_denominator),
+    let (numerator, denominator) = match denominator.sign(&strict)? {
+        Classification::Decided(RealSign::Positive) => (numerator, denominator),
         Classification::Decided(RealSign::Negative) => (
-            middle.scale(&Real::from(-1_i8)).ok_or_else(|| {
+            numerator.scale(&Real::from(-1_i8)).ok_or_else(|| {
                 CurveError::Topology(
                     "a retained conic inverse exceeded its coefficient-field budget".into(),
                 )
             })?,
-            first_denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
+            denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
                 CurveError::Topology(
                     "a retained conic inverse exceeded its coefficient-field budget".into(),
                 )
             })?,
         ),
         Classification::Decided(RealSign::Zero) => {
-            let numerator = last.scale(&two).ok_or_else(|| {
-                CurveError::Topology(
-                    "a retained conic inverse exceeded its coefficient-field budget".into(),
-                )
-            })?;
-            let denominator = middle.add(&numerator).ok_or_else(|| {
-                CurveError::Topology(
-                    "a retained conic inverse exceeded its coefficient-field budget".into(),
-                )
-            })?;
-            match denominator.sign(&strict)? {
-                Classification::Decided(RealSign::Positive) => (numerator, denominator),
-                Classification::Decided(RealSign::Negative) => (
-                    numerator.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                        CurveError::Topology(
-                            "a retained conic inverse exceeded its coefficient-field budget".into(),
-                        )
-                    })?,
-                    denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                        CurveError::Topology(
-                            "a retained conic inverse exceeded its coefficient-field budget".into(),
-                        )
-                    })?,
-                ),
-                Classification::Decided(RealSign::Zero) => {
-                    return Ok(Classification::Decided(None));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            return Ok(Classification::Decided(None));
         }
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
