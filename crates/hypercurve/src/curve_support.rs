@@ -453,7 +453,7 @@ impl CurveSupport2 {
         match self {
             Self::Bezier(curve) => curve.has_certified_injective_image(policy),
             Self::Parallel(parallel) => {
-                parallel.regular_fragment_has_certified_injective_axis(range, policy)
+                parallel.range_has_certified_injective_axis(range, policy)
                     || matches!(
                         parallel.exact_rational_parallel_component(policy),
                         Ok(Classification::Decided(Some(curve)))
@@ -602,6 +602,58 @@ mod tests {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn parallel_injectivity_requires_regularity_on_the_requested_range() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        // P(u)=(2u-1,(2u-1)^2) has a strictly increasing x coordinate.
+        // Its distance-one left parallel visits (0,5/4) at the two
+        // distinct parameters (2-sqrt(3))/4 and (2+sqrt(3))/4.
+        let source = QuadraticBezier2::new(
+            Point2::from_values(-1, 1),
+            Point2::from_values(0, -1),
+            Point2::from_values(1, 1),
+        );
+        let root = Real::from(3).sqrt().unwrap();
+        let parameters = [
+            ((Real::from(2) - &root) / Real::from(4)).unwrap(),
+            ((Real::from(2) + root) / Real::from(4)).unwrap(),
+        ];
+        let expected = CurvePoint2::from(Point2::new(Real::zero(), q(5, 4)));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed in [false, true] {
+                let parallel = source.parallel_left(Real::one()).unwrap();
+                let parallel = if reversed {
+                    parallel.reversed()
+                } else {
+                    parallel
+                };
+                for parameter in &parameters {
+                    let point = decided(parallel.point_at(parameter, &policy).unwrap());
+                    assert_eq!(
+                        CurvePoint2::from(point).same_point(&expected, &policy),
+                        Classification::Decided(true),
+                    );
+                }
+                let support = CurveSupport2::Parallel(parallel);
+                assert!(
+                    !support.has_certified_injective_image(&CurveParameterRange2::unit(), &policy)
+                );
+                // Both exterior branches and the oppositely oriented middle
+                // branch remain injective on their actual cusp-free ranges.
+                for (lower, upper) in [(q(0, 1), q(1, 8)), (q(3, 8), q(5, 8)), (q(7, 8), q(1, 1))] {
+                    let range = CurveParameterRange2::new_validated(lower.into(), upper.into());
+                    assert!(support.has_certified_injective_image(&range, &policy));
+                }
+            }
+            for distance in [Real::zero(), -Real::one()] {
+                let support = CurveSupport2::Parallel(source.parallel_left(distance).unwrap());
+                assert!(
+                    support.has_certified_injective_image(&CurveParameterRange2::unit(), &policy)
+                );
             }
         }
     }

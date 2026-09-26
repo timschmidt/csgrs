@@ -5759,11 +5759,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
 
         for axis in [Axis2::X, Axis2::Y] {
-            if !first_parallel.regular_fragment_has_certified_injective_axis_on(
+            if !first_parallel.range_has_certified_injective_axis_on(
                 axis,
                 &first.range(),
                 &self.data.policy,
-            ) || !second_parallel.regular_fragment_has_certified_injective_axis_on(
+            ) || !second_parallel.range_has_certified_injective_axis_on(
                 axis,
                 &second.range(),
                 &self.data.policy,
@@ -5869,11 +5869,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
 
         for axis in [Axis2::X, Axis2::Y] {
-            if !first_parallel.regular_fragment_has_certified_injective_axis_on(
+            if !first_parallel.range_has_certified_injective_axis_on(
                 axis,
                 &first.range(),
                 &self.data.policy,
-            ) || !second_parallel.regular_fragment_has_certified_injective_axis_on(
+            ) || !second_parallel.range_has_certified_injective_axis_on(
                 axis,
                 &second.range(),
                 &self.data.policy,
@@ -14879,17 +14879,7 @@ fn contacts_decided_distinct_from_carriers(
                 existing.parameters[existing_slot].clone(),
                 parameters[current_slot].clone(),
             );
-            // This optional exclusion must not promote independent scalar
-            // fields or consume approximation before exact point replay.
-            if policy.bounded_exact_predicate_pass(|| {
-                existing_parallel
-                    .regular_fragment_has_certified_injective_axis(&joining_range, policy)
-                    && matches!(
-                        existing_parallel.singularity_analysis(&joining_range, policy),
-                        Ok(Classification::Decided(analysis))
-                            if analysis.source_is_regular() && analysis.parallel_is_cusp_free()
-                    )
-            }) {
+            if existing_parallel.range_has_certified_injective_axis(&joining_range, policy) {
                 return Ok(true);
             }
         }

@@ -59958,6 +59958,27 @@ impl BezierRecursiveProjectiveParameter2 {
         if let Some(value) = other.scalar() {
             return self.order_to_real(value, policy);
         }
+        if let Some(scalar) = self.projective_scalar() {
+            let field = scalar.denominator.field();
+            if let Some(root) = field.retained_parameter_value(&other.clone().into(), policy)?
+                && let Some(difference) = scalar
+                    .denominator
+                    .multiply(&root)
+                    .and_then(|product| scalar.numerator.subtract(&product))
+                && let Classification::Decided(sign) =
+                    policy.strict_predicate_pass(|| difference.sign(policy))?
+            {
+                // The positive projective denominator preserves order. This
+                // native root is already a generator of the formula's field;
+                // compare there before refining equal enclosures or projecting
+                // a new scalar that would discard their shared identity.
+                return Ok(Classification::Decided(match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                }));
+            }
+        }
         if self
             .coefficient_root_embedding(&bezier_parameter_root_representation(other), policy)?
             .is_some()
@@ -111628,42 +111649,67 @@ impl BezierParallel2 {
         }
     }
 
-    /// Certifies an injective coordinate for a regular cusp-free fragment's range.
+    /// Certifies an injective coordinate on the requested finite range.
     ///
     /// A regular parallel derivative is the source derivative multiplied by
-    /// one continuous scalar.  [`BezierParallelFragment2`](crate::BezierParallelFragment2)
-    /// excludes source singularities and interior parallel cusps, so that
-    /// scalar has one sign in the open fragment.  An injective source
-    /// coordinate therefore remains monotone (possibly with reversed
-    /// orientation) on such a fragment. The native source certificate covers
-    /// only the unit chart. A range joining separate fragments additionally
-    /// needs a regularity proof across every intervening parameter.
-    pub(crate) fn regular_fragment_has_certified_injective_axis(
+    /// one continuous scalar. Excluding source singularities and interior
+    /// parallel cusps proves that scalar has one sign in the open range.
+    /// The caller may ask about a larger range than a previously certified
+    /// fragment, so regularity is proved here rather than inferred from the
+    /// carrier's history. The native source coordinate certificate covers
+    /// only the unit chart. Unresolved proofs leave complete incidence live.
+    pub(crate) fn range_has_certified_injective_axis(
         &self,
         range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> bool {
         [Axis2::X, Axis2::Y]
             .into_iter()
-            .any(|axis| self.regular_fragment_has_certified_injective_axis_on(axis, range, policy))
+            .any(|axis| self.range_has_certified_injective_axis_on(axis, range, policy))
     }
 
-    pub(crate) fn regular_fragment_has_certified_injective_axis_on(
+    pub(crate) fn range_has_certified_injective_axis_on(
         &self,
         axis: Axis2,
         range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> bool {
-        if !matches!(
-            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)
-                .contains_finite_range(range, &policy.strict_counterpart()),
-            Ok(Classification::Decided(true))
-        ) {
-            return false;
-        }
-        self.source()
-            .to_rational_bezier()
-            .is_ok_and(|source| source.has_certified_injective_axis_on(axis, policy))
+        policy.bounded_exact_predicate_pass(|| {
+            if !matches!(
+                CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)
+                    .contains_finite_range(range, &policy.strict_counterpart()),
+                Ok(Classification::Decided(true))
+            ) {
+                return false;
+            }
+            let strict = policy.strict_counterpart();
+            if !self
+                .source()
+                .to_rational_bezier()
+                .is_ok_and(|source| source.has_certified_injective_axis_on(axis, &strict))
+            {
+                return false;
+            }
+            if real_sign(self.distance(), &strict) == Some(RealSign::Zero) {
+                return true;
+            }
+            let Ok(Classification::Decided(analysis)) = self.singularity_analysis(range, &strict)
+            else {
+                return false;
+            };
+            analysis.source_is_regular()
+                && analysis.parallel_cusps().iter().all(|cusp| {
+                    // An endpoint cusp does not change monotonicity on the
+                    // open interval. Interior cusps require the general path.
+                    let parameter = CurveParameter2::from(cusp.clone());
+                    [range.start(), range.end()].into_iter().any(|endpoint| {
+                        matches!(
+                            parameter.cmp_by_refinement(endpoint, &strict),
+                            Ok(Classification::Decided(std::cmp::Ordering::Equal))
+                        )
+                    })
+                })
+        })
     }
 
     /// Returns the orientation of this parallel's derivative relative to its
@@ -133556,6 +133602,91 @@ mod conversion_tests {
     }
 
     #[test]
+    fn formula_roots_compare_in_their_existing_native_coefficient_field() {
+        let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let native = |coefficients: Vec<Real>, lower, upper| {
+                let Classification::Decided(polynomial) =
+                    BezierParameterPolynomial::try_new_power_basis(coefficients, &policy).unwrap()
+                else {
+                    panic!("the cubic has rational coefficients")
+                };
+                let Classification::Decided(interval) =
+                    BezierParameterInterval::try_new(lower, upper, &policy).unwrap()
+                else {
+                    panic!("the selected cubic root has a rational bracket")
+                };
+                let Classification::Decided(parameter) =
+                    BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap()
+                else {
+                    panic!("the cubic has one root in its selected bracket")
+                };
+                BezierParameter2::Algebraic(parameter)
+            };
+            let lower = native(
+                vec![(-1).into(), 0.into(), 0.into(), 4.into()],
+                q(6, 10),
+                q(65, 100),
+            );
+            let upper = native(
+                vec![(-1).into(), (-2).into(), 0.into(), 8.into()],
+                q(65, 100),
+                q(7, 10),
+            );
+            let one = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
+            let field = BezierRecursiveQuadraticField2::base(
+                [&lower, &upper]
+                    .map(bezier_parameter_root_representation)
+                    .into(),
+                one.clone(),
+                one,
+            )
+            .unwrap();
+            let roots = [&lower, &upper].map(|parameter| {
+                field
+                    .retained_parameter_value(&parameter.clone().into(), &policy)
+                    .unwrap()
+                    .expect("both roots are existing coefficient generators")
+            });
+            // Independently selected cubics are the two roots of this quadratic.
+            // Its formula introduces sqrt((upper-lower)^2); the selected sheet
+            // must recover the original roots without projecting them anew.
+            let coefficients = [
+                roots[0].multiply(&roots[1]).unwrap(),
+                roots[0]
+                    .add(&roots[1])
+                    .unwrap()
+                    .scale(&-Real::one())
+                    .unwrap(),
+                field.constant(Real::one()).unwrap(),
+            ];
+            let formulas = recursive_quadratic_polynomial_projective_roots(
+                &field,
+                &coefficients,
+                None,
+                &policy,
+            )
+            .unwrap()
+            .expect("the quadratic has two ordered exact roots");
+            assert_eq!(formulas.len(), 2);
+            for (index, formula) in formulas.into_iter().enumerate() {
+                let Classification::Decided(parameter) =
+                    BezierRecursiveProjectiveParameter2::new(formula, &policy).unwrap()
+                else {
+                    panic!("each exact root has finite bounds")
+                };
+                for (other_index, native) in [&lower, &upper].into_iter().enumerate() {
+                    assert_eq!(
+                        parameter.cmp_bezier_parameter(native, &policy).unwrap(),
+                        Classification::Decided(index.cmp(&other_index)),
+                    );
+                    assert!(parameter.data.projection.parameter.get().is_none());
+                }
+            }
+        }
+    }
+
+    #[test]
     fn chord_parallel_monotonicity_rejects_opposed_endpoint_signs() {
         let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
         // P(t)=(t,t²), D=(1,1): cross(D,P'(t))=2t-1.
@@ -138643,11 +138774,11 @@ mod conversion_tests {
         let exterior =
             CurveParameterRange2::new_validated(Real::from(-2).into(), Real::from(3).into());
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            assert!(parallel.regular_fragment_has_certified_injective_axis(
-                &CurveParameterRange2::unit(),
-                &policy,
-            ));
-            assert!(!parallel.regular_fragment_has_certified_injective_axis(&exterior, &policy));
+            assert!(
+                parallel
+                    .range_has_certified_injective_axis(&CurveParameterRange2::unit(), &policy,)
+            );
+            assert!(!parallel.range_has_certified_injective_axis(&exterior, &policy));
             let first = parallel.point_at(&Real::from(-1), &policy).unwrap();
             let second = parallel.point_at(&Real::one(), &policy).unwrap();
             assert_eq!(first, Classification::Decided(Point2::from_values(0, 0)));
