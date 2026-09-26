@@ -111551,6 +111551,69 @@ impl BezierParallelSingularityAnalysis2 {
         &self.parallel_cusps
     }
 
+    /// Partitions this exact range into cells with regular interiors. Singular
+    /// endpoints stay in their original authority; consumers choose the
+    /// appropriate one-sided frame. Both root inventories are already ordered.
+    pub(crate) fn regular_subranges(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Vec<CurveParameterRange2>>> {
+        let mut sources = self.source_singularities.iter().peekable();
+        let mut cusps = self.parallel_cusps.iter().peekable();
+        let mut start = self.range.start().clone();
+        let mut ranges = Vec::with_capacity(sources.len() + cusps.len() + 1);
+        loop {
+            let boundary = match (sources.peek(), cusps.peek()) {
+                (Some(source), Some(cusp)) => match source.cmp_by_refinement(cusp, policy)? {
+                    Classification::Decided(std::cmp::Ordering::Less) => sources.next(),
+                    Classification::Decided(std::cmp::Ordering::Greater) => cusps.next(),
+                    Classification::Decided(std::cmp::Ordering::Equal) => {
+                        cusps.next();
+                        sources.next()
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+                (Some(_), None) => sources.next(),
+                (None, Some(_)) => cusps.next(),
+                (None, None) => break,
+            };
+            let boundary = CurveParameter2::from(boundary.unwrap().clone());
+            match boundary.cmp_by_refinement(&start, policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => continue,
+                Classification::Decided(std::cmp::Ordering::Greater) => {}
+                Classification::Decided(std::cmp::Ordering::Less) => {
+                    return Err(CurveError::Topology(
+                        "parallel singularities are not ordered inside their range".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            match boundary.cmp_by_refinement(self.range.end(), policy)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => break,
+                Classification::Decided(std::cmp::Ordering::Less) => {}
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    return Err(CurveError::Topology(
+                        "parallel singularity lies outside its range".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+            ranges.push(CurveParameterRange2::new_validated(start, boundary.clone()));
+            start = boundary;
+        }
+        ranges.push(CurveParameterRange2::new_validated(
+            start,
+            self.range.end().clone(),
+        ));
+        Ok(Classification::Decided(ranges))
+    }
+
     /// Returns whether the source normal is defined over the requested closed range.
     pub fn source_is_regular(&self) -> bool {
         self.source_singularities.is_empty()
