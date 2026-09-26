@@ -84765,6 +84765,89 @@ fn represented_chord_unit_direction(
     direction: BezierAlgebraicChordUnitDisplacement2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
+    chord.validate_policy(policy)?;
+    if let Some((x, y)) = chord.certified_unit_tangent() {
+        let components = match direction {
+            BezierAlgebraicChordUnitDisplacement2::Tangent => [x, y],
+            BezierAlgebraicChordUnitDisplacement2::LeftNormal => [-y, x],
+        };
+        return Ok(Classification::Decided(components.map(|value| {
+            AlgebraicRootRepresentation::from_exact_value(&value)
+        })));
+    }
+    let (support, reversed) = chord.smallest_incidence_support();
+    if let (
+        CurvePoint2(CurvePointData2::AnalyticParallel(start)),
+        CurvePoint2(CurvePointData2::AnalyticParallel(end)),
+    ) = (support.start(), support.end())
+        && let Classification::Decided(Some(line)) = start.recursive_tangent_line_to(end, policy)?
+    {
+        // The oriented line owns (-dy, dx) up to a positive scale. Its
+        // shared source point, normal displacement, and translation have
+        // already cancelled. Normalize in that field before publishing any
+        // coordinate roots; projecting the two endpoints first duplicates
+        // their source and speed fields merely to subtract them again.
+        let normalized = (|| -> CurveResult<Option<[AlgebraicRootRepresentation; 2]>> {
+            let Some(speed_squared) = line.x.square().and_then(|x| x.add(&line.y.square()?)) else {
+                return Ok(None);
+            };
+            if speed_squared.sign_with_nonzero_certificate()?
+                != Classification::Decided(RealSign::Positive)
+            {
+                return Ok(None);
+            }
+            let parent = speed_squared.field();
+            let (field, speed) =
+                if let Some(speed) = parent.retained_positive_square_root(&speed_squared) {
+                    (parent, speed)
+                } else {
+                    let Some(field) = parent.extension(speed_squared) else {
+                        return Ok(None);
+                    };
+                    let Some(speed) = parent
+                        .constant(Real::zero())
+                        .and_then(|zero| field.element(zero, parent.constant(Real::one())?))
+                    else {
+                        return Ok(None);
+                    };
+                    (field, speed)
+                };
+            let orientation = Real::from(if reversed { -1_i8 } else { 1_i8 });
+            let components = match direction {
+                BezierAlgebraicChordUnitDisplacement2::Tangent => {
+                    [line.y.scale(&orientation), line.x.scale(&(-orientation))]
+                }
+                BezierAlgebraicChordUnitDisplacement2::LeftNormal => {
+                    [line.x.scale(&orientation), line.y.scale(&orientation)]
+                }
+            };
+            let [Some(x), Some(y)] =
+                components.map(|component| component.and_then(|value| field.lift(&value)))
+            else {
+                return Ok(None);
+            };
+            let mut represented = Vec::with_capacity(2);
+            for numerator in [x, y] {
+                match (BezierRecursiveQuadraticProjectiveScalar2 {
+                    numerator,
+                    denominator: speed.clone(),
+                })
+                .represented_value(policy)?
+                {
+                    Classification::Decided(value) => represented.push(value),
+                    Classification::Uncertain(_) => return Ok(None),
+                }
+            }
+            Ok(Some(
+                represented
+                    .try_into()
+                    .expect("a unit direction has two coordinates"),
+            ))
+        })()?;
+        if let Some(direction) = normalized {
+            return Ok(Classification::Decided(direction));
+        }
+    }
     let ([dx, dy], speed) = match represented_chord_support_direction_speed(chord, policy)? {
         Classification::Decided(direction_speed) => direction_speed,
         Classification::Uncertain(reason) => {
@@ -172464,6 +172547,78 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 direct_parallel_pair_branch(&first, &wrong_normal_direction, &policy),
                 Classification::Decided(false)
             );
+        }
+    }
+
+    #[test]
+    fn analytic_tangent_unit_direction_cancels_shared_point_fields() {
+        let parameter = algebraic_parameter(vec![Real::from(-1), Real::zero(), Real::from(2)]);
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+            Point2::from_values(2, 2),
+        );
+        let speed = Real::from(3).sqrt().unwrap();
+        let expected = [
+            (Real::one() / &speed).unwrap(),
+            (Real::from(2).sqrt().unwrap() / speed).unwrap(),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for distance in [Real::zero(), Real::from(5).sqrt().unwrap()] {
+                let parallel = source.parallel_left(distance).unwrap();
+                let points = [-2, 3].map(|distance| {
+                    let mut point = BezierAnalyticParallelPoint2::new_with_tangent_distance(
+                        parallel.clone(),
+                        parameter.clone(),
+                        Real::from(distance),
+                        &policy,
+                    );
+                    let data = Arc::get_mut(&mut point.data).expect("the new point is unshared");
+                    data.translation_x = Real::from(7).sqrt().unwrap();
+                    data.translation_y = Real::from(-11);
+                    CurvePoint2::from(point)
+                });
+                let Classification::Decided(chord) =
+                    BezierAlgebraicChord2::try_new(points[0].clone(), points[1].clone(), &policy)
+                        .unwrap()
+                else {
+                    panic!("a nonzero tangent displacement must construct");
+                };
+                for reversed in [false, true] {
+                    let chord = if reversed {
+                        chord.reversed()
+                    } else {
+                        chord.clone()
+                    };
+                    for direction in [
+                        BezierAlgebraicChordUnitDisplacement2::Tangent,
+                        BezierAlgebraicChordUnitDisplacement2::LeftNormal,
+                    ] {
+                        let Classification::Decided(actual) =
+                            represented_chord_unit_direction(&chord, direction, &policy).unwrap()
+                        else {
+                            panic!("the retained tangent must have an exact unit direction");
+                        };
+                        let expected = match direction {
+                            BezierAlgebraicChordUnitDisplacement2::Tangent => expected.clone(),
+                            BezierAlgebraicChordUnitDisplacement2::LeftNormal => {
+                                [-expected[1].clone(), expected[0].clone()]
+                            }
+                        };
+                        for (actual, expected) in actual.iter().zip(expected) {
+                            let expected = if reversed { -expected } else { expected };
+                            assert_eq!(
+                                compare_algebraic_representations_with_policy(
+                                    actual,
+                                    &AlgebraicRootRepresentation::from_exact_value(&expected),
+                                    &policy,
+                                ),
+                                Some(std::cmp::Ordering::Equal)
+                            );
+                        }
+                    }
+                }
+            }
         }
     }
 
