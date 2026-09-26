@@ -7791,10 +7791,7 @@ fn selected_dense_last_axis_projection(
         ) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let Some(reduced) = dense_canonicalize_proven_rational_coefficients(reduced) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        projection = reduced;
+        projection = reduced.compact_coefficients();
         // Quotient-ring reduction preserves the constraint's nominal axis
         // width even when every positive-power coefficient cancels. Certify
         // and remove such an axis before constructing a resultant; recursive
@@ -69713,29 +69710,8 @@ fn try_clone_dense_tensor(polynomial: &DenseTensorPolynomial) -> Option<DenseTen
     DenseTensorPolynomial::try_new(dimensions, coefficients)
 }
 
-fn dense_canonicalize_proven_rational_coefficients(
-    polynomial: DenseTensorPolynomial,
-) -> Option<DenseTensorPolynomial> {
-    let dimensions = polynomial.dimensions().to_vec();
-    let coefficients = polynomial
-        .coefficients()
-        .iter()
-        .cloned()
-        .map(|coefficient| {
-            coefficient
-                .exact_rational_normal_form()
-                .map(Real::new)
-                .unwrap_or(coefficient)
-        })
-        .collect();
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
-}
-
-/// Collapses selected tensor axes whose algebraic carriers are exactly affine
-/// related. This keeps one source of truth for root correlation before
-/// quotient reduction or image projection, and can turn a large authored
-/// `(a-b)` factor into structural zero without constructing either redundant
-/// field axis.
+/// Collapses affine-related selected tensor axes before quotient reduction
+/// or image projection, preserving their root correlation.
 fn dense_substitute_affinely_related_sources(
     mut polynomial: DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
@@ -69879,7 +69855,7 @@ fn dense_polynomial_tuple_sign_owned(
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let Some(polynomial) = dense_reduce_selected_tuple_relations(polynomial, &sources)
-        .and_then(dense_canonicalize_proven_rational_coefficients)
+        .map(DenseTensorPolynomial::compact_coefficients)
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
@@ -69894,6 +69870,18 @@ fn dense_polynomial_tuple_sign_owned(
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
+    }
+    // Point substitution is a proof attempt, not a replacement for the
+    // retained equations. An undecided scalar/field query falls through to
+    // the original selected tuple and its image replay.
+    if sources.len() > 1
+        && let Some(sign) = hypersolve::sign_at_selected_tuple(&polynomial, &sources)
+    {
+        return Ok(Classification::Decided(match sign {
+            std::cmp::Ordering::Less => RealSign::Negative,
+            std::cmp::Ordering::Equal => RealSign::Zero,
+            std::cmp::Ordering::Greater => RealSign::Positive,
+        }));
     }
     if let [source] = sources.as_slice() {
         let result =
@@ -162327,6 +162315,53 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 ));
             }
         }
+    }
+
+    #[test]
+    fn dense_tuple_sign_binds_exact_points_and_preserves_the_selected_root() {
+        let mut source = bezier_parameter_root_representation(&algebraic_parameter(vec![
+            -(Real::one() / Real::from(2)).unwrap(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]));
+        source.constraint_index = 23;
+        source.symbol = hypersolve::SymbolId(29);
+        assert!(source.exact_point_witness().is_none());
+        for known_axis in 0..2 {
+            for (scale, expected) in [(1, RealSign::Positive), (-1, RealSign::Negative)] {
+                let point = Real::from(scale) * Real::from(2).sqrt().unwrap();
+                assert!(point.exact_rational_ref().is_none());
+                let mut sources = vec![source.clone(); 2];
+                sources[known_axis] = AlgebraicRootRepresentation::from_exact_value(&point);
+                // Q(k,x)=(k^2-2)x^2+kx-1, with x=cbrt(1/2).
+                // For k=+sqrt(2), x>3/4 and k>4/3 prove Q>0;
+                // for k=-sqrt(2), Q<0. No approximate oracle is needed.
+                let mut coefficients = vec![Real::zero(); 9];
+                coefficients[0] = -Real::one();
+                coefficients[4] = Real::one();
+                coefficients[8] = Real::one();
+                coefficients[if known_axis == 0 { 2 } else { 6 }] = Real::from(-2);
+                let polynomial = DenseTensorPolynomial::try_new(vec![3, 3], coefficients).unwrap();
+                for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                    assert_eq!(
+                        dense_polynomial_tuple_sign(&polynomial, &sources, &policy).unwrap(),
+                        Classification::Decided(expected),
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn dense_tuple_point_sources_keep_their_algebraic_relations() {
+        let point = Real::from(2).sqrt().unwrap();
+        let sources = [AlgebraicRootRepresentation::from_exact_value(&point)];
+        let polynomial = dense_test_polynomial(&[-2, 0, 1]);
+        assert_eq!(
+            dense_polynomial_tuple_sign(&polynomial, &sources, &CurveContext::STRICT).unwrap(),
+            Classification::Decided(RealSign::Zero),
+        );
     }
 
     #[test]
