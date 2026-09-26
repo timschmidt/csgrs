@@ -6455,28 +6455,96 @@ enum BezierRecursiveQuadraticField2 {
 struct BezierRecursiveQuadraticBaseFieldData2 {
     sources: Vec<AlgebraicRootRepresentation>,
     source_real_witnesses: Vec<Option<Real>>,
+    source_refinement: OnceLock<Mutex<BezierRecursiveQuadraticSourceRefinement2>>,
     first_speed_squared: DenseTensorPolynomial,
     second_speed_squared: DenseTensorPolynomial,
 }
 
+struct BezierRecursiveQuadraticSourceRefinement2 {
+    parameters: Vec<Option<BezierParameterRefinement2<'static>>>,
+}
+
+impl std::fmt::Debug for BezierRecursiveQuadraticSourceRefinement2 {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("BezierRecursiveQuadraticSourceRefinement2")
+            .field("axes", &self.parameters.len())
+            .finish_non_exhaustive()
+    }
+}
+
 impl BezierRecursiveQuadraticBaseFieldData2 {
     fn source_box(&self, refinement_steps: usize) -> Vec<AlgebraicRootRepresentation> {
+        if self.sources.is_empty() {
+            return Vec::new();
+        }
+        // Every value and radical over this field refers to the same selected
+        // tuple. Keep certified refinement at that owner, rather than creating
+        // fresh parameters and repeating their bisections for each value.
+        let cache = if refinement_steps == 0 {
+            self.source_refinement.get()
+        } else {
+            Some(self.source_refinement.get_or_init(|| {
+                Mutex::new(BezierRecursiveQuadraticSourceRefinement2 {
+                    parameters: (0..self.sources.len()).map(|_| None).collect(),
+                })
+            }))
+        };
+        let mut cache = cache.map(|cache| cache.lock().unwrap());
         self.sources
             .iter()
             .zip(&self.source_real_witnesses)
-            .map(|(source, witness)| {
+            .enumerate()
+            .map(|(axis, (source, witness))| {
+                let mut source = source.clone();
                 if let Some(witness) = witness {
-                    let mut source = source.clone();
                     source.interval = IsolatedRootInterval {
                         lower: witness.clone(),
                         upper: witness.clone(),
                         exact_root: Some(witness.clone()),
                         distinct_root_count: 1,
                     };
-                    source
-                } else {
-                    refined_represented_root(source, refinement_steps)
+                } else if let Some(cache) = cache.as_mut() {
+                    let parameter = &mut cache.parameters[axis];
+                    // An unavailable import is not a permanent negative cache.
+                    // Later requests may have gained an exact scalar witness.
+                    if refinement_steps != 0
+                        && parameter.is_none()
+                        && let Ok(Classification::Decided(selected)) =
+                            BezierParameter2::from_algebraic_root_representation_unbounded(
+                                &source,
+                                &CurveContext::STRICT,
+                            )
+                    {
+                        *parameter = Some(BezierParameterRefinement2::new(
+                            &selected,
+                            &CurveContext::STRICT,
+                        ));
+                    }
+                    if let Some(parameter) = parameter {
+                        let refined = parameter.refine_to(refinement_steps);
+                        // Refinement changes only the bracket. Preserve the
+                        // defining polynomial, symbol, ordinal and validation
+                        // authority, including when a midpoint becomes exact.
+                        source.interval = match refined {
+                            BezierParameter2::Exact(value) => IsolatedRootInterval {
+                                lower: value.clone(),
+                                upper: value.clone(),
+                                exact_root: Some(value.clone()),
+                                distinct_root_count: 1,
+                            },
+                            BezierParameter2::Algebraic(value) => IsolatedRootInterval {
+                                lower: value.interval().start().clone(),
+                                upper: value.interval().end().clone(),
+                                exact_root: None,
+                                distinct_root_count: 1,
+                            },
+                        };
+                    } else {
+                        source = refined_represented_root(&source, refinement_steps);
+                    }
                 }
+                source
             })
             .collect()
     }
@@ -55119,6 +55187,7 @@ impl BezierRecursiveQuadraticField2 {
                 Self::Base(Arc::new(BezierRecursiveQuadraticBaseFieldData2 {
                     sources,
                     source_real_witnesses,
+                    source_refinement: OnceLock::new(),
                     first_speed_squared,
                     second_speed_squared,
                 }))
@@ -56360,30 +56429,20 @@ impl BezierRecursiveQuadraticValue2 {
         &self,
         refinement_range: std::ops::RangeInclusive<usize>,
     ) -> Option<RealSign> {
-        // Most coefficients separate in the original box. Only a query that
-        // needs narrower bounds prepares source parameters, once for all its
-        // subsequent requests. Preserve each selected source's refinement and
-        // Sturm evidence instead of restarting at every precision.
-        if refinement_range.contains(&0)
-            && let Some(sign) = self
-                .interval_with_coefficient_precision(0, Some(-64))
+        for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+            if !refinement_range.contains(&refinement_steps) {
+                continue;
+            }
+            let coefficient_bits = refinement_steps.max(64) as i32;
+            if let Some(sign) = self
+                .interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))
                 .as_ref()
                 .and_then(dense_strict_interval_sign)
-        {
-            return Some(sign);
+            {
+                return Some(sign);
+            }
         }
-        let minimum_steps = (*refinement_range.start()).max(1);
-        if minimum_steps > *refinement_range.end() {
-            return None;
-        }
-        let (base, _) = self.field().base_and_extension_path();
-        self.sign_over_progressively_refined_source_box(
-            &base.source_box(0),
-            minimum_steps..=*refinement_range.end(),
-            false,
-        )
-        .ok()
-        .flatten()
+        None
     }
 
     /// Replays Hypersolve-certified selected-axis witnesses in canonical
@@ -56975,7 +57034,7 @@ impl BezierRecursiveQuadraticValue2 {
                 expression,
                 &field.first_speed_squared,
                 &field.second_speed_squared,
-                &field.sources,
+                &field.source_box(0),
                 policy,
             )?
         {
@@ -56994,7 +57053,7 @@ impl BezierRecursiveQuadraticValue2 {
                 expression,
                 &field.first_speed_squared,
                 &field.second_speed_squared,
-                &field.sources,
+                &field.source_box(0),
                 policy,
             ),
             BezierRecursiveQuadraticValueData2::Extension {
@@ -136928,10 +136987,10 @@ mod conversion_tests {
                 assert_eq!(
                     hyperreal::dispatch_trace::take_trace().path_count(
                         "hypercurve",
-                        "represented-root-bounds",
-                        "refine",
+                        "bezier-parameter-refinement",
+                        "advance",
                     ),
-                    1,
+                    u64::from(depth == 1),
                     "depth={depth}, steps={steps}",
                 );
                 assert_eq!(
@@ -136958,6 +137017,67 @@ mod conversion_tests {
                 assert!(field.base_and_extension_path().0.sources == vec![source.clone()]);
             }
         }
+        let (base, _) = field.base_and_extension_path();
+        let refined = base.source_box(0);
+        assert_eq!(refined, base.source_box(16));
+        assert_eq!(refined, base.source_box(64));
+        assert_eq!(
+            refined[0].polynomial_coefficients,
+            source.polynomial_coefficients,
+        );
+        assert_eq!(refined[0].symbol, source.symbol);
+        assert_eq!(refined[0].constraint_index, source.constraint_index);
+        assert_eq!(refined[0].interval_index, source.interval_index);
+        assert_eq!(
+            hypersolve::validate_algebraic_root_representation(
+                &refined[0],
+                hypersolve::PredicatePolicy::STRICT,
+            )
+            .status,
+            hypersolve::AlgebraicRootValidationStatus::Valid,
+        );
+    }
+
+    #[test]
+    fn recursive_source_refinement_keeps_its_equation_after_an_exact_midpoint() {
+        let policy = CurveContext::STRICT;
+        // This rational root lies beyond the compact witness proposal's
+        // denominator range. Bisection discovers it in the native isolator.
+        let expected = (Real::from(65_i8) / Real::from(128_i16)).unwrap();
+        let selected = high_degree_quadratic_selected_fiber_parameter_for_test(
+            expected.clone().powi_i64(65).unwrap(),
+            &policy,
+        );
+        let source = certified_parameter_representation(
+            &selected.data.authority.data.retained_parameter,
+            &policy,
+        );
+        let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
+        let field =
+            BezierRecursiveQuadraticField2::base(vec![source.clone()], one.clone(), one).unwrap();
+        let (base, _) = field.base_and_extension_path();
+        assert!(base.source_real_witnesses[0].is_none());
+        let refined = base.source_box(7);
+        assert_eq!(refined[0].interval.exact_root, Some(expected));
+        assert_eq!(refined[0].polynomial_coefficients.len(), 66);
+        assert_eq!(
+            refined[0].polynomial_coefficients,
+            source.polynomial_coefficients,
+        );
+        assert_eq!(refined[0].constraint_index, source.constraint_index);
+        assert_eq!(refined[0].symbol, source.symbol);
+        assert_eq!(refined[0].interval_index, source.interval_index);
+        assert_eq!(refined, base.source_box(0));
+        assert_eq!(refined, base.source_box(32));
+        assert_eq!(base.sources, vec![source]);
+        assert_eq!(
+            hypersolve::validate_algebraic_root_representation(
+                &refined[0],
+                hypersolve::PredicatePolicy::STRICT,
+            )
+            .status,
+            hypersolve::AlgebraicRootValidationStatus::Valid,
+        );
     }
 
     #[test]

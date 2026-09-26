@@ -184,7 +184,8 @@ pub enum BezierParameter2 {
 ///
 /// Each target is interpreted relative to the original parameter. Reusing the
 /// preceding bracket avoids replaying already-certified bisections when a
-/// caller progressively asks for 2, 4, then 8 refinement steps.
+/// caller progressively asks for 2, 4, then 8 refinement steps. A smaller
+/// later request reuses the available bracket without doing more work.
 pub(crate) struct BezierParameterRefinement2<'a> {
     parameter: BezierParameter2,
     completed_steps: usize,
@@ -2543,9 +2544,14 @@ impl<'a> BezierParameterRefinement2<'a> {
     }
 
     pub(crate) fn refine_to(&mut self, target_steps: usize) -> &BezierParameter2 {
-        debug_assert!(target_steps >= self.completed_steps);
         let additional_steps = target_steps.saturating_sub(self.completed_steps);
         if additional_steps != 0 {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "bezier-parameter-refinement",
+                "advance",
+            );
             let refined = self
                 .parameter
                 .clone()
@@ -6135,6 +6141,9 @@ mod conversion_tests {
         let _ = progressive.refine_to(2);
         let _ = progressive.refine_to(4);
         assert_eq!(progressive.refine_to(8), &direct);
+        for steps in [0, 2, 8] {
+            assert_eq!(progressive.refine_to(steps), &direct);
+        }
     }
 
     #[test]
