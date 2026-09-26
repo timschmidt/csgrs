@@ -117539,7 +117539,7 @@ impl BezierParallel2 {
                         .map(|range| CurveParameterDomain2::new(range, None)),
                     false,
                     false,
-                    ParameterComponentQuery2::Existence,
+                    ParameterComponentQuery2::Existence(None),
                     policy,
                 )
             {
@@ -117653,19 +117653,22 @@ impl BezierParallel2 {
         &self,
         other: &Self,
         domains: [CurveParameterDomain2<'_>; 2],
-        query: ParameterComponentQuery2,
+        query: ParameterComponentQuery2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
+        let query = query.without_identity_constraints(policy);
         // The complete unit spans can reuse their rational and cached finite
         // kernels. A restricted or exterior interval needs domain projection
         // and component clipping before a correspondence can be admitted.
-        if domains.iter().all(|domain| {
-            domain.extension.is_none() && domain.finite == &CurveParameterRange2::unit()
-        }) {
+        if !matches!(query, ParameterComponentQuery2::Existence(Some(_)))
+            && domains.iter().all(|domain| {
+                domain.extension.is_none() && domain.finite == &CurveParameterRange2::unit()
+            })
+        {
             return Ok(self
                 .parallel_intersections(other, policy)?
                 .map(|intersections| {
-                    if query == ParameterComponentQuery2::Existence
+                    if matches!(query, ParameterComponentQuery2::Existence(_))
                         && intersections.is_complete()
                         && (!intersections.overlaps().is_empty()
                             || !intersections.parameter_components().is_empty())
@@ -117676,7 +117679,7 @@ impl BezierParallel2 {
                     }
                 }));
         }
-        if query == ParameterComponentQuery2::RetainFinite {
+        if matches!(query, ParameterComponentQuery2::RetainFinite) {
             debug_assert!(domains.iter().all(|domain| domain.extension.is_none()));
             // Pointwise source normals are undefined at a source cusp. A zero
             // only at an endpoint still has one regular branch frame. An open
@@ -117872,6 +117875,7 @@ impl BezierParallel2 {
                     let selection = match select_parameter_component_in_domain(
                         &support,
                         &ParameterComponentSelector2::ParallelPair {
+                            normal_constraints: None,
                             system: &system,
                             parameter_filter: None,
                         },
@@ -117886,7 +117890,7 @@ impl BezierParallel2 {
                         }
                     };
                     if selection.positive_dimensional
-                        && query == ParameterComponentQuery2::Existence
+                        && matches!(query, ParameterComponentQuery2::Existence(_))
                     {
                         return Ok(Classification::Decided(
                             BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
@@ -117960,9 +117964,27 @@ impl BezierParallel2 {
         domains: [CurveParameterDomain2<'_>; 2],
         swapped: bool,
         off_diagonal: bool,
-        query: ParameterComponentQuery2,
+        query: ParameterComponentQuery2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
+        // This kernel puts the rational operand second. The supplied
+        // constraints still refer to the caller's first and second axes.
+        let reordered_constraints = match query {
+            ParameterComponentQuery2::Existence(Some(constraints)) if swapped => Some([
+                constraints[1].parallel.derivative_scale_constraint(
+                    CurveResultantParameter::First,
+                    constraints[1].expected,
+                ),
+                constraints[0].parallel.derivative_scale_constraint(
+                    CurveResultantParameter::Second,
+                    constraints[0].expected,
+                ),
+            ]),
+            _ => None,
+        };
+        let query = reordered_constraints.as_ref().map_or(query, |constraints| {
+            ParameterComponentQuery2::Existence(Some(constraints))
+        });
         let other = zero.source().to_rational_bezier()?;
         let source = self.source_power_basis()?;
         let other_power = other.homogeneous_power_basis()?;
@@ -118034,7 +118056,7 @@ impl BezierParallel2 {
         let mut retained_contacts = Vec::new();
         let mut component_overlaps = Vec::new();
         if let Some(support) = constraint.component_support {
-            if query == ParameterComponentQuery2::RetainFinite && !off_diagonal {
+            if matches!(query, ParameterComponentQuery2::RetainFinite) && !off_diagonal {
                 match self.replay_constant_parameter_components(
                     &other,
                     domains.map(|domain| domain.finite),
@@ -118055,7 +118077,7 @@ impl BezierParallel2 {
             }
             let selection = match select_parameter_component_in_domain(
                 &support,
-                &ParameterComponentSelector2::Positive(&branch),
+                &ParameterComponentSelector2::Positive(&branch, None),
                 domains,
                 query,
                 policy,
@@ -118064,7 +118086,9 @@ impl BezierParallel2 {
                 Classification::Decided(selection) => selection,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            if selection.positive_dimensional && query == ParameterComponentQuery2::Existence {
+            if selection.positive_dimensional
+                && matches!(query, ParameterComponentQuery2::Existence(_))
+            {
                 return Ok(Classification::Decided(
                     BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
                 ));
@@ -118143,9 +118167,10 @@ impl BezierParallel2 {
     pub(crate) fn self_intersections_in_domain(
         &self,
         domains: [CurveParameterDomain2<'_>; 2],
-        query: ParameterComponentQuery2,
+        query: ParameterComponentQuery2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
+        let query = query.without_identity_constraints(policy);
         let strict = policy.strict_counterpart();
         let distance_sign = match real_sign(self.distance(), &strict) {
             Some(sign) => sign,
@@ -118219,6 +118244,7 @@ impl BezierParallel2 {
                 let selection = match select_parameter_component_in_domain(
                     &support,
                     &ParameterComponentSelector2::ParallelPair {
+                        normal_constraints: None,
                         system: &system,
                         parameter_filter: Some(&off_diagonal),
                     },
@@ -118232,7 +118258,9 @@ impl BezierParallel2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                if selection.positive_dimensional && query == ParameterComponentQuery2::Existence {
+                if selection.positive_dimensional
+                    && matches!(query, ParameterComponentQuery2::Existence(_))
+                {
                     return Ok(Classification::Decided(
                         BezierParallelPairDomainIntersectionSet2::positive_dimensional(),
                     ));
@@ -119194,32 +119222,74 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match parameter.polynomial_sign(&signed_curvature, policy)? {
-            Classification::Decided(RealSign::Positive | RealSign::Zero) => {
-                Ok(Classification::Decided(RealSign::Positive))
-            }
-            Classification::Decided(RealSign::Negative) => {
+        parallel_derivative_scale_from_curvature_sign(
+            parameter.polynomial_sign(&signed_curvature, policy)?,
+            || {
                 let squared_difference = polynomial_subtract(
                     &polynomial_multiply(&signed_curvature, &signed_curvature),
                     &polynomial_power(&speed_squared, 3),
                 );
-                Ok(
-                    match parameter.polynomial_sign(&squared_difference, policy)? {
-                        Classification::Decided(RealSign::Positive) => {
-                            Classification::Decided(RealSign::Negative)
-                        }
-                        Classification::Decided(RealSign::Negative) => {
-                            Classification::Decided(RealSign::Positive)
-                        }
-                        Classification::Decided(RealSign::Zero) => {
-                            Classification::Decided(RealSign::Zero)
-                        }
-                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                    },
-                )
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                parameter.polynomial_sign(&squared_difference, policy)
+            },
+        )
+    }
+
+    pub(crate) fn derivative_scale_constraint(
+        &self,
+        axis: CurveResultantParameter,
+        expected: RealSign,
+    ) -> BezierParallelDerivativeConstraint2 {
+        debug_assert_ne!(expected, RealSign::Zero);
+        BezierParallelDerivativeConstraint2 {
+            parallel: self.clone(),
+            axis,
+            expected,
+            polynomials: OnceLock::new(),
         }
+    }
+
+    fn derivative_scale_polynomials(
+        &self,
+        axis: CurveResultantParameter,
+        expected: RealSign,
+    ) -> CurveResult<BezierParallelDerivativePolynomials2> {
+        debug_assert_ne!(expected, RealSign::Zero);
+        // The identity offset has scale +1 even at a stationary source
+        // parameter, matching the scalar derivative predicate.
+        if self.distance().zero_status() == hyperreal::ZeroKnowledge::Zero {
+            return Ok(BezierParallelDerivativePolynomials2 {
+                offset_distance: self.distance().clone(),
+                speed_squared: BivariatePolynomial::new(vec![vec![Real::one()]]),
+                signed_curvature: BivariatePolynomial::new(vec![vec![Real::zero()]]),
+                cusp_norm: BivariatePolynomial::new(vec![vec![-Real::one()]]),
+                expected,
+            });
+        }
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let speed = parallel_speed_squared_polynomial(differential);
+        let curvature =
+            parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
+        let norm = polynomial_subtract(
+            &polynomial_multiply(&curvature, &curvature),
+            &polynomial_power(&speed, 3),
+        );
+        let lift = |coefficients: Vec<Real>| match axis {
+            CurveResultantParameter::First => BivariatePolynomial::new(
+                coefficients
+                    .into_iter()
+                    .map(|coefficient| vec![coefficient])
+                    .collect(),
+            ),
+            CurveResultantParameter::Second => BivariatePolynomial::new(vec![coefficients]),
+        };
+        Ok(BezierParallelDerivativePolynomials2 {
+            offset_distance: self.distance().clone(),
+            speed_squared: lift(speed),
+            signed_curvature: lift(curvature),
+            cusp_norm: lift(norm),
+            expected,
+        })
     }
 
     #[cfg(test)]
@@ -123033,6 +123103,23 @@ fn polynomial_derivative(coefficients: &[Real]) -> Vec<Real> {
         .collect()
 }
 
+/// On a regular source, sign(1-d*kappa) is sign(S^(3/2)+K).
+/// K>=0 needs no squared equation; K<0 reverses sign(K^2-S^3).
+fn parallel_derivative_scale_from_curvature_sign(
+    curvature: Classification<RealSign>,
+    norm_sign: impl FnOnce() -> CurveResult<Classification<RealSign>>,
+) -> CurveResult<Classification<RealSign>> {
+    match curvature {
+        Classification::Decided(RealSign::Positive | RealSign::Zero) => {
+            Ok(Classification::Decided(RealSign::Positive))
+        }
+        Classification::Decided(RealSign::Negative) => {
+            Ok(norm_sign()?.map(|sign| product_sign(sign, RealSign::Negative)))
+        }
+        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+    }
+}
+
 fn parallel_speed_squared_polynomial(differential: &BezierParallelDifferential2) -> Vec<Real> {
     polynomial_add(
         &polynomial_multiply(&differential.tangent_x, &differential.tangent_x),
@@ -123723,20 +123810,34 @@ struct ParameterComponentSystem2 {
 /// small selector lets both systems reuse the same rational-map and implicit
 /// cylindrical decomposition without flattening either predicate to samples.
 enum ParameterComponentSelector2<'a> {
-    Positive(&'a BivariatePolynomial),
+    Positive(
+        &'a BivariatePolynomial,
+        Option<&'a [BezierParallelDerivativePolynomials2; 2]>,
+    ),
     ParallelPair {
         system: &'a BezierParallelPairEquationSystem2,
         parameter_filter: Option<&'a BivariatePolynomial>,
+        normal_constraints: Option<&'a [BezierParallelDerivativePolynomials2; 2]>,
     },
 }
 
 impl ParameterComponentSelector2<'_> {
-    fn boundary_polynomials(&self) -> Vec<BivariatePolynomial> {
+    fn normal_constraints(&self) -> Option<&[BezierParallelDerivativePolynomials2; 2]> {
         match self {
-            Self::Positive(branch) => vec![(*branch).clone()],
+            Self::Positive(_, constraints) => *constraints,
+            Self::ParallelPair {
+                normal_constraints, ..
+            } => *normal_constraints,
+        }
+    }
+
+    fn boundary_polynomials(&self) -> Vec<BivariatePolynomial> {
+        let mut boundaries = match self {
+            Self::Positive(branch, _) => vec![(*branch).clone()],
             Self::ParallelPair {
                 system,
                 parameter_filter,
+                ..
             } => {
                 let mut boundaries = vec![
                     system.weight_product.clone(),
@@ -123752,7 +123853,16 @@ impl ParameterComponentSelector2<'_> {
                 }
                 boundaries
             }
+        };
+        if let Some(constraints) = self.normal_constraints() {
+            boundaries.extend(
+                constraints
+                    .iter()
+                    .flat_map(|constraint| constraint.boundary_polynomials())
+                    .cloned(),
+            );
         }
+        boundaries
     }
 
     fn selected_at(
@@ -123766,8 +123876,16 @@ impl ParameterComponentSelector2<'_> {
             CurveResultantParameter::First => (retained, lifted),
             CurveResultantParameter::Second => (lifted, retained),
         };
+        if let Some(constraints) = self.normal_constraints() {
+            for constraint in constraints {
+                match constraint.selected_at(first, second, policy)? {
+                    Classification::Decided(true) => {}
+                    other => return Ok(other),
+                }
+            }
+        }
         match self {
-            Self::Positive(branch) => Ok(
+            Self::Positive(branch, _) => Ok(
                 match signed_bivariate_at_parameter_pair(branch, first, second, policy)? {
                     Classification::Decided(RealSign::Positive) => Classification::Decided(true),
                     Classification::Decided(RealSign::Negative | RealSign::Zero) => {
@@ -123779,6 +123897,7 @@ impl ParameterComponentSelector2<'_> {
             Self::ParallelPair {
                 system,
                 parameter_filter,
+                ..
             } => {
                 if let Some(filter) = parameter_filter {
                     match signed_bivariate_at_parameter_pair(filter, first, second, policy)? {
@@ -125240,7 +125359,7 @@ fn parameter_component_system(
 ) -> CurveResult<Classification<Option<ParameterComponentSystem2>>> {
     parameter_component_system_with_selector(
         equations,
-        &ParameterComponentSelector2::Positive(branch),
+        &ParameterComponentSelector2::Positive(branch, None),
         policy,
         config,
     )
@@ -125442,7 +125561,7 @@ fn certify_regular_implicit_parameter_component_with_selector(
     config: CurveIntersectionResultantConfig,
 ) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
     match selector {
-        ParameterComponentSelector2::Positive(branch) => {
+        ParameterComponentSelector2::Positive(branch, None) => {
             certify_regular_implicit_parameter_component(
                 component,
                 branch,
@@ -125451,7 +125570,8 @@ fn certify_regular_implicit_parameter_component_with_selector(
                 config,
             )
         }
-        ParameterComponentSelector2::ParallelPair { .. } => {
+        ParameterComponentSelector2::Positive(_, Some(_))
+        | ParameterComponentSelector2::ParallelPair { .. } => {
             certify_parallel_pair_implicit_parameter_component(
                 component,
                 selector,
@@ -125857,7 +125977,7 @@ fn certify_implicit_parameter_component_once(
 ) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
     certify_implicit_parameter_component_once_with_selector(
         component,
-        &ParameterComponentSelector2::Positive(branch),
+        &ParameterComponentSelector2::Positive(branch, None),
         retained_parameter,
         policy,
         config,
@@ -127711,7 +127831,7 @@ fn certify_rational_parameter_component_map(
 ) -> CurveResult<Classification<Option<ParameterComponentEvidence2>>> {
     certify_rational_parameter_component_map_with_selector(
         equations,
-        &ParameterComponentSelector2::Positive(branch),
+        &ParameterComponentSelector2::Positive(branch, None),
         retained_parameter,
         map,
         policy,
@@ -129704,6 +129824,7 @@ fn project_parallel_pair_without_components(
                     match parameter_component_system_with_selector(
                         &radical_equations,
                         &ParameterComponentSelector2::ParallelPair {
+                            normal_constraints: None,
                             system,
                             parameter_filter: unordered_self_pair.then_some(
                                 &BivariatePolynomial::new(vec![
@@ -130197,12 +130318,111 @@ fn transform_parallel_pair_system_for_component_chart<'a>(
     }))
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ParameterComponentQuery2 {
-    /// Corner solving needs only an existence certificate, including on rays.
-    Existence,
+#[derive(Clone, Copy)]
+pub(crate) enum ParameterComponentQuery2<'a> {
+    /// A component must satisfy the original contact curves' normal sheets,
+    /// when supplied, throughout its retained finite or incident chart.
+    Existence(Option<&'a [BezierParallelDerivativeConstraint2; 2]>),
     /// Finite intersections retain every correspondence and residual contact.
     RetainFinite,
+}
+
+impl<'a> ParameterComponentQuery2<'a> {
+    fn without_identity_constraints(self, policy: &CurveContext) -> Self {
+        match self {
+            Self::Existence(Some(constraints))
+                if constraints.iter().all(|constraint| {
+                    constraint.expected == RealSign::Positive
+                        && real_sign(constraint.parallel.distance(), policy) == Some(RealSign::Zero)
+                }) =>
+            {
+                Self::Existence(None)
+            }
+            _ => self,
+        }
+    }
+}
+
+/// Polynomial sign evidence for the orientation of one original parallel.
+/// The center support's own derivative does not select the fillet normal.
+pub(crate) struct BezierParallelDerivativeConstraint2 {
+    parallel: BezierParallel2,
+    axis: CurveResultantParameter,
+    expected: RealSign,
+    polynomials: OnceLock<CurveResult<BezierParallelDerivativePolynomials2>>,
+}
+
+impl BezierParallelDerivativeConstraint2 {
+    fn polynomials(&self) -> CurveResult<&BezierParallelDerivativePolynomials2> {
+        match self.polynomials.get_or_init(|| {
+            self.parallel
+                .derivative_scale_polynomials(self.axis, self.expected)
+        }) {
+            Ok(polynomials) => Ok(polynomials),
+            Err(error) => Err(error.clone()),
+        }
+    }
+}
+
+struct BezierParallelDerivativePolynomials2 {
+    offset_distance: Real,
+    speed_squared: BivariatePolynomial,
+    signed_curvature: BivariatePolynomial,
+    cusp_norm: BivariatePolynomial,
+    expected: RealSign,
+}
+
+impl BezierParallelDerivativePolynomials2 {
+    fn boundary_polynomials(&self) -> [&BivariatePolynomial; 3] {
+        [&self.speed_squared, &self.signed_curvature, &self.cusp_norm]
+    }
+
+    fn selected_at(
+        &self,
+        first: &BezierParameter2,
+        second: &BezierParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if real_sign(&self.offset_distance, policy) == Some(RealSign::Zero) {
+            return Ok(Classification::Decided(self.expected == RealSign::Positive));
+        }
+        let sign =
+            |polynomial| signed_bivariate_at_parameter_pair(polynomial, first, second, policy);
+        match sign(&self.speed_squared)? {
+            Classification::Decided(RealSign::Positive) => {}
+            Classification::Decided(RealSign::Zero) => return Ok(Classification::Decided(false)),
+            Classification::Decided(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "parallel source speed squared was certified negative".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        Ok(
+            parallel_derivative_scale_from_curvature_sign(sign(&self.signed_curvature)?, || {
+                sign(&self.cusp_norm)
+            })?
+            .map(|scale| scale == self.expected),
+        )
+    }
+
+    fn in_charts(
+        &self,
+        first: ParameterComponentChart2<'_>,
+        second: ParameterComponentChart2<'_>,
+    ) -> Option<Self> {
+        let transform = |polynomial| {
+            transform_parameter_component_chart_polynomial(polynomial, first, second)
+                .map(Cow::into_owned)
+        };
+        Some(Self {
+            offset_distance: self.offset_distance.clone(),
+            speed_squared: transform(&self.speed_squared)?,
+            signed_curvature: transform(&self.signed_curvature)?,
+            cusp_norm: transform(&self.cusp_norm)?,
+            expected: self.expected,
+        })
+    }
 }
 
 struct ParameterComponentSelection2 {
@@ -130405,12 +130625,12 @@ fn select_parameter_component_in_domain(
     support: &BivariatePolynomial,
     selector: &ParameterComponentSelector2<'_>,
     domains: [CurveParameterDomain2<'_>; 2],
-    query: ParameterComponentQuery2,
+    query: ParameterComponentQuery2<'_>,
     policy: &CurveContext,
     config: CurveIntersectionResultantConfig,
 ) -> CurveResult<Classification<ParameterComponentSelection2>> {
     debug_assert!(
-        query == ParameterComponentQuery2::Existence
+        matches!(query, ParameterComponentQuery2::Existence(_))
             || domains.iter().all(|domain| domain.extension.is_none())
     );
     let mut component_overlaps = Vec::new();
@@ -130460,11 +130680,31 @@ fn select_parameter_component_in_domain(
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
             };
+            let normal_constraints = match query {
+                ParameterComponentQuery2::Existence(Some(constraints)) => {
+                    Some([constraints[0].polynomials()?, constraints[1].polynomials()?])
+                }
+                ParameterComponentQuery2::Existence(None)
+                | ParameterComponentQuery2::RetainFinite => selector
+                    .normal_constraints()
+                    .map(|constraints| constraints.each_ref()),
+            };
+            let chart_constraints = if let Some(constraints) = normal_constraints {
+                let Some(first) = constraints[0].in_charts(first_chart, second_chart) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                };
+                let Some(second) = constraints[1].in_charts(first_chart, second_chart) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
+                };
+                Some([first, second])
+            } else {
+                None
+            };
             let chart_branch;
             let chart_system;
             let chart_filter;
             let selector = match selector {
-                ParameterComponentSelector2::Positive(branch) => {
+                ParameterComponentSelector2::Positive(branch, _) => {
                     chart_branch = match transform_parameter_component_chart_polynomial(
                         branch,
                         first_chart,
@@ -130473,9 +130713,10 @@ fn select_parameter_component_in_domain(
                         Some(branch) => branch,
                         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
                     };
-                    ParameterComponentSelector2::Positive(&chart_branch)
+                    ParameterComponentSelector2::Positive(&chart_branch, chart_constraints.as_ref())
                 }
                 ParameterComponentSelector2::ParallelPair {
+                    normal_constraints: _,
                     system,
                     parameter_filter,
                 } => {
@@ -130501,6 +130742,7 @@ fn select_parameter_component_in_domain(
                         None => None,
                     };
                     ParameterComponentSelector2::ParallelPair {
+                        normal_constraints: chart_constraints.as_ref(),
                         system: &chart_system,
                         parameter_filter: chart_filter.as_deref(),
                     }
@@ -130534,7 +130776,7 @@ fn select_parameter_component_in_domain(
                             // Full finite rational queries remove constant
                             // images first and exclude poles in the selector.
                             // An axis component here has no bijective map.
-                            if query == ParameterComponentQuery2::RetainFinite {
+                            if matches!(query, ParameterComponentQuery2::RetainFinite) {
                                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                             }
                             return Ok(Classification::Decided(ParameterComponentSelection2 {
@@ -130598,7 +130840,7 @@ fn select_parameter_component_in_domain(
             for overlap in component.component_overlaps.iter() {
                 match overlap.has_positive_overlap(first_range, second_range, policy)? {
                     Classification::Decided(true) => {
-                        if query == ParameterComponentQuery2::Existence {
+                        if matches!(query, ParameterComponentQuery2::Existence(_)) {
                             return Ok(Classification::Decided(ParameterComponentSelection2 {
                                 positive_dimensional: true,
                                 component_overlaps,
@@ -130731,7 +130973,7 @@ fn project_parallel_pair_without_components_in_domain(
     second: &BezierParallel2,
     source_overlap: &Classification<CertifiedParallelSourceOverlap2>,
     domains: [CurveParameterDomain2<'_>; 2],
-    query: ParameterComponentQuery2,
+    query: ParameterComponentQuery2<'_>,
     parameter_filter: Option<&BivariatePolynomial>,
     policy: &CurveContext,
 ) -> CurveResult<Option<BezierParallelPairDomainProjection2>> {
@@ -130819,6 +131061,7 @@ fn project_parallel_pair_without_components_in_domain(
             let selection = match select_parameter_component_in_domain(
                 &component_support,
                 &ParameterComponentSelector2::ParallelPair {
+                    normal_constraints: None,
                     system,
                     parameter_filter,
                 },
@@ -130830,7 +131073,9 @@ fn project_parallel_pair_without_components_in_domain(
                 Classification::Decided(selection) => selection,
                 Classification::Uncertain(_) => return Ok(None),
             };
-            if selection.positive_dimensional && query == ParameterComponentQuery2::Existence {
+            if selection.positive_dimensional
+                && matches!(query, ParameterComponentQuery2::Existence(_))
+            {
                 return Ok(Some(
                     BezierParallelPairDomainProjection2::PositiveDimensional,
                 ));
@@ -134117,6 +134362,184 @@ pub(crate) use conversion_tests::recursively_line_contact_radial_half;
 
 #[cfg(test)]
 mod conversion_tests {
+    #[test]
+    fn domain_component_normal_constraints_follow_swapped_operands() {
+        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+        // The two center traces share a line with s = 2t. Independent
+        // original-normal predicates distinguish their parameter axes.
+        let first = QuadraticBezier2::new(
+            Point2::from_values(0, 1),
+            Point2::new(q(1, 2), Real::one()),
+            Point2::from_values(1, 1),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let second = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(1, 4), Real::zero()),
+            Point2::new(q(1, 2), Real::zero()),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(3, 16), Real::zero()),
+            Point2::new(q(3, 8), q(9, 64)),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let originals = [
+            source.with_distance(q(41, 64)),
+            source.with_distance(q(5, 8)),
+        ];
+        let ranges = [q(5, 9), q(10, 9)].map(|middle| {
+            CurveParameterRange2::new_validated(
+                CurveParameter2::from(&middle - q(1, 10_000)),
+                CurveParameter2::from(&middle + q(1, 10_000)),
+            )
+        });
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for swapped in [false, true] {
+                let order = if swapped { [1, 0] } else { [0, 1] };
+                let axes = [
+                    CurveResultantParameter::First,
+                    CurveResultantParameter::Second,
+                ];
+                let signs = [RealSign::Negative, RealSign::Positive];
+                let constraints = std::array::from_fn(|axis| {
+                    originals[order[axis]]
+                        .derivative_scale_constraint(axes[axis], signs[order[axis]])
+                });
+                let supports = [&first, &second];
+                let Classification::Decided(result) = supports[order[0]]
+                    .parallel_intersections_in_domain(
+                        supports[order[1]],
+                        order.map(|index| CurveParameterDomain2::new(&ranges[index], None)),
+                        ParameterComponentQuery2::Existence(Some(&constraints)),
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("normal constraints must retain their original parameter axes");
+                };
+                assert!(result.into_parts().1);
+            }
+        }
+    }
+
+    #[test]
+    fn original_parallel_normal_constraints_clip_finite_and_incident_components() {
+        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(3, 16), Real::zero()),
+            Point2::new(q(3, 8), q(9, 64)),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let sqrt_two = Real::from(2_i8).sqrt().unwrap();
+        let sqrt_three = Real::from(3_i8).sqrt().unwrap();
+        let sum = &sqrt_two + &sqrt_three;
+        let radical_zero =
+            &sum * &sum - (Real::from(5_i8) + Real::from(2_i8) * Real::from(6_i8).sqrt().unwrap());
+        for distance in [Real::zero(), radical_zero] {
+            let stationary_identity = QuadraticBezier2::new(
+                Point2::from_values(0, 0),
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 0),
+            )
+            .parallel_left(distance)
+            .unwrap();
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                assert_eq!(
+                    real_sign(stationary_identity.distance(), &policy),
+                    Some(RealSign::Zero)
+                );
+                for expected in [RealSign::Positive, RealSign::Negative] {
+                    let constraint = stationary_identity
+                        .derivative_scale_constraint(CurveResultantParameter::First, expected);
+                    assert_eq!(
+                        constraint
+                            .polynomials()
+                            .unwrap()
+                            .selected_at(
+                                &BezierParameter2::Exact(Real::zero()),
+                                &BezierParameter2::Exact(Real::zero()),
+                                &policy,
+                            )
+                            .unwrap(),
+                        Classification::Decided(expected == RealSign::Positive),
+                    );
+                }
+            }
+        }
+        let constraints = [
+            source
+                .with_distance(q(41, 64))
+                .derivative_scale_constraint(CurveResultantParameter::First, RealSign::Negative),
+            source
+                .with_distance(q(5, 8))
+                .derivative_scale_constraint(CurveResultantParameter::Second, RealSign::Positive),
+        ];
+        let diagonal =
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![-Real::one()]]);
+        let positive = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let allowed = CurveParameterRange2::new_validated(
+            CurveParameter2::from(q(5, 9) - q(1, 10_000)),
+            CurveParameter2::from(q(5, 9) + q(1, 10_000)),
+        );
+        let excluded = CurveParameterRange2::new_validated(Real::zero().into(), q(1, 4).into());
+        let unit = CurveParameterRange2::unit();
+        let zero = Real::zero();
+        let quarter = q(1, 4);
+        let ray = |direction| BezierParameterRay2 {
+            anchor: if direction == BezierParameterRayDirection2::Increasing {
+                &quarter
+            } else {
+                &zero
+            },
+            direction,
+            barrier: None,
+        };
+        let finite = |range| CurveParameterDomain2::new(range, None);
+        let exterior = |direction| CurveParameterDomain2::new(&excluded, Some(ray(direction)));
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (domains, expected) in [
+                ([finite(&allowed), finite(&allowed)], true),
+                ([finite(&excluded), finite(&excluded)], false),
+                ([finite(&unit), finite(&unit)], true),
+                (
+                    [exterior(BezierParameterRayDirection2::Increasing); 2],
+                    true,
+                ),
+                (
+                    [
+                        exterior(BezierParameterRayDirection2::Decreasing),
+                        exterior(BezierParameterRayDirection2::Increasing),
+                    ],
+                    false,
+                ),
+            ] {
+                let Classification::Decided(selection) = select_parameter_component_in_domain(
+                    &diagonal,
+                    &ParameterComponentSelector2::Positive(&positive, None),
+                    domains,
+                    ParameterComponentQuery2::Existence(Some(&constraints)),
+                    &policy,
+                    config,
+                )
+                .unwrap() else {
+                    panic!("the rational normal-sheet component must classify");
+                };
+                assert_eq!(selection.positive_dimensional, expected);
+            }
+        }
+    }
+
     use super::*;
     use crate::rational_bezier::RationalQuadraticCircle2;
     use crate::{
@@ -172114,7 +172537,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                             extend_second.then(|| second_domain.parameter_ray()),
                                         ),
                                     ],
-                                    ParameterComponentQuery2::Existence,
+                                    ParameterComponentQuery2::Existence(None),
                                     &policy,
                                 )
                                 .unwrap()
@@ -172174,7 +172597,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     extend_second.then(|| second_domain.parameter_ray()),
                                 ),
                             ],
-                            ParameterComponentQuery2::Existence,
+                            ParameterComponentQuery2::Existence(None),
                             &policy,
                         )
                         .unwrap()
@@ -172261,7 +172684,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             ranges
                                 .each_ref()
                                 .map(|range| CurveParameterDomain2::new(range, None)),
-                            ParameterComponentQuery2::Existence,
+                            ParameterComponentQuery2::Existence(None),
                             &policy,
                         )
                         .unwrap()
@@ -172312,7 +172735,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                         extend_second.then(|| domains[1].parameter_ray()),
                                     ),
                                 ],
-                                ParameterComponentQuery2::Existence,
+                                ParameterComponentQuery2::Existence(None),
                                 &policy,
                             )
                             .unwrap()
@@ -172432,7 +172855,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             ),
                         ),
                     ],
-                    ParameterComponentQuery2::Existence,
+                    ParameterComponentQuery2::Existence(None),
                     &policy,
                 )
                 .unwrap()
@@ -172630,7 +173053,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                         CurveParameterDomain2::new(&first_range, None),
                                         CurveParameterDomain2::new(&second_range, None),
                                     ],
-                                    ParameterComponentQuery2::Existence,
+                                    ParameterComponentQuery2::Existence(None),
                                     &policy,
                                 )
                             })
@@ -172712,7 +173135,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     CurveParameterDomain2::new(&first_range, None),
                                     CurveParameterDomain2::new(&second_range, None),
                                 ],
-                                ParameterComponentQuery2::Existence,
+                                ParameterComponentQuery2::Existence(None),
                                 &policy,
                             )
                         })
@@ -172754,7 +173177,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         CurveParameterDomain2::new(&first_range, None),
                         CurveParameterDomain2::new(&second_range, None),
                     ],
-                    ParameterComponentQuery2::Existence,
+                    ParameterComponentQuery2::Existence(None),
                     &policy,
                 )
                 .unwrap()
@@ -172828,7 +173251,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             first.parallel_intersections_in_domain(
                                 second,
                                 domains,
-                                ParameterComponentQuery2::Existence,
+                                ParameterComponentQuery2::Existence(None),
                                 &policy,
                             )
                         })
@@ -172915,7 +173338,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     ranges
                                         .each_ref()
                                         .map(|range| CurveParameterDomain2::new(range, None)),
-                                    ParameterComponentQuery2::Existence,
+                                    ParameterComponentQuery2::Existence(None),
                                     &policy,
                                 )
                             })
@@ -173037,7 +173460,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             ranges
                                 .each_ref()
                                 .map(|range| CurveParameterDomain2::new(range, None)),
-                            ParameterComponentQuery2::Existence,
+                            ParameterComponentQuery2::Existence(None),
                             &policy,
                         )
                     })
@@ -173250,7 +173673,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 .strict_predicate_pass(|| {
                                     parallel.self_intersections_in_domain(
                                         axes.map(|axis| domains[axis]),
-                                        ParameterComponentQuery2::Existence,
+                                        ParameterComponentQuery2::Existence(None),
                                         &policy,
                                     )
                                 })
@@ -173333,7 +173756,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         ranges
                             .each_ref()
                             .map(|range| CurveParameterDomain2::new(range, None)),
-                        ParameterComponentQuery2::Existence,
+                        ParameterComponentQuery2::Existence(None),
                         &policy,
                     )
                 })
@@ -173394,7 +173817,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 ranges
                                     .each_ref()
                                     .map(|range| CurveParameterDomain2::new(range, None)),
-                                ParameterComponentQuery2::Existence,
+                                ParameterComponentQuery2::Existence(None),
                                 &policy,
                             )
                         })
@@ -173442,7 +173865,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             .strict_predicate_pass(|| {
                                 parallel.self_intersections_in_domain(
                                     domains,
-                                    ParameterComponentQuery2::Existence,
+                                    ParameterComponentQuery2::Existence(None),
                                     &policy,
                                 )
                             })
@@ -173554,7 +173977,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     first.parallel_intersections_in_domain(
                                         second,
                                         domains,
-                                        ParameterComponentQuery2::Existence,
+                                        ParameterComponentQuery2::Existence(None),
                                         &policy,
                                     )
                                 })
@@ -173674,7 +174097,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 CurveParameterDomain2::new(&first_range, None),
                                 CurveParameterDomain2::new(&cutter_range, None),
                             ],
-                            ParameterComponentQuery2::Existence,
+                            ParameterComponentQuery2::Existence(None),
                             &policy,
                         )
                     })
@@ -173766,7 +174189,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             ranges
                                 .each_ref()
                                 .map(|range| CurveParameterDomain2::new(range, None)),
-                            ParameterComponentQuery2::Existence,
+                            ParameterComponentQuery2::Existence(None),
                             &policy,
                         )
                     })
@@ -173862,7 +174285,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 CurveParameterDomain2::new(&first_range, None),
                                 CurveParameterDomain2::new(&cutter_range, None),
                             ],
-                            ParameterComponentQuery2::Existence,
+                            ParameterComponentQuery2::Existence(None),
                             &policy,
                         )
                     })
@@ -185251,6 +185674,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     parameter_component_system_with_selector(
                         &[identity.clone(), identity.clone()],
                         &ParameterComponentSelector2::ParallelPair {
+                            normal_constraints: None,
                             system: &system,
                             parameter_filter: None,
                         },
@@ -185317,6 +185741,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 parameter_component_system_with_selector(
                     &[complement.clone(), complement.clone()],
                     &ParameterComponentSelector2::ParallelPair {
+                        normal_constraints: None,
                         system: &system,
                         parameter_filter: Some(&BivariatePolynomial::new(vec![
                             vec![Real::zero(), Real::one()],
@@ -185401,6 +185826,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         certify_regular_implicit_parameter_component_with_selector(
                             &component,
                             &ParameterComponentSelector2::ParallelPair {
+                                normal_constraints: None,
                                 system: &system,
                                 parameter_filter: None,
                             },
@@ -185513,6 +185939,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             select_parameter_component_in_domain(
                                 &support,
                                 &ParameterComponentSelector2::ParallelPair {
+                                    normal_constraints: None,
                                     system: &system,
                                     parameter_filter: None,
                                 },
@@ -185526,7 +185953,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                         extensions[1],
                                     ),
                                 ],
-                                ParameterComponentQuery2::Existence,
+                                ParameterComponentQuery2::Existence(None),
                                 &policy,
                                 config,
                             )
@@ -185639,6 +186066,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let Classification::Decided(selection) = select_parameter_component_in_domain(
                         &component,
                         &ParameterComponentSelector2::ParallelPair {
+                            normal_constraints: None,
                             system: &system,
                             parameter_filter: None,
                         },
@@ -185652,7 +186080,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 extensions[1],
                             ),
                         ],
-                        ParameterComponentQuery2::Existence,
+                        ParameterComponentQuery2::Existence(None),
                         &policy,
                         config,
                     )
@@ -185772,11 +186200,12 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 select_parameter_component_in_domain(
                                     &component,
                                     &ParameterComponentSelector2::ParallelPair {
+                                        normal_constraints: None,
                                         system: &system,
                                         parameter_filter: None,
                                     },
                                     domains,
-                                    ParameterComponentQuery2::Existence,
+                                    ParameterComponentQuery2::Existence(None),
                                     &policy,
                                     config,
                                 )
@@ -185818,11 +186247,12 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 select_parameter_component_in_domain(
                                     &overlapping,
                                     &ParameterComponentSelector2::ParallelPair {
+                                        normal_constraints: None,
                                         system: &positive_component_selector_system(&overlapping),
                                         parameter_filter: None,
                                     },
                                     domains,
-                                    ParameterComponentQuery2::Existence,
+                                    ParameterComponentQuery2::Existence(None),
                                     &policy,
                                     config,
                                 )
@@ -185875,11 +186305,12 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let Classification::Decided(selection) = select_parameter_component_in_domain(
                     &support,
                     &ParameterComponentSelector2::ParallelPair {
+                        normal_constraints: None,
                         system: &system,
                         parameter_filter: None,
                     },
                     [CurveParameterDomain2::new(&finite, None); 2],
-                    ParameterComponentQuery2::Existence,
+                    ParameterComponentQuery2::Existence(None),
                     &policy,
                     config,
                 )
@@ -185905,11 +186336,12 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let Classification::Decided(selection) = select_parameter_component_in_domain(
                         &axis,
                         &ParameterComponentSelector2::ParallelPair {
+                            normal_constraints: None,
                             system: &positive_component_selector_system(&axis),
                             parameter_filter: None,
                         },
                         [CurveParameterDomain2::new(&finite, None); 2],
-                        ParameterComponentQuery2::Existence,
+                        ParameterComponentQuery2::Existence(None),
                         &policy,
                         config,
                     )
@@ -185931,6 +186363,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let Classification::Decided(selection) = select_parameter_component_in_domain(
                         &support,
                         &ParameterComponentSelector2::ParallelPair {
+                            normal_constraints: None,
                             system: &system,
                             parameter_filter: None,
                         },
@@ -185945,7 +186378,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             ),
                             CurveParameterDomain2::new(&finite, None),
                         ],
-                        ParameterComponentQuery2::Existence,
+                        ParameterComponentQuery2::Existence(None),
                         &policy,
                         config,
                     )
@@ -186000,11 +186433,12 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let Classification::Decided(selection) = select_parameter_component_in_domain(
                         &support,
                         &ParameterComponentSelector2::ParallelPair {
+                            normal_constraints: None,
                             system,
                             parameter_filter: None,
                         },
                         [CurveParameterDomain2::new(&range, None); 2],
-                        ParameterComponentQuery2::Existence,
+                        ParameterComponentQuery2::Existence(None),
                         &policy,
                         config,
                     )
@@ -186055,6 +186489,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let selected = select_parameter_component_in_domain(
                 &support_before_barriers,
                 &ParameterComponentSelector2::ParallelPair {
+                    normal_constraints: None,
                     system: &system,
                     parameter_filter: None,
                 },
@@ -186076,7 +186511,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
-                ParameterComponentQuery2::Existence,
+                ParameterComponentQuery2::Existence(None),
                 &policy,
                 config,
             )
@@ -186088,6 +186523,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let excluded = select_parameter_component_in_domain(
                 &support_beyond_barriers,
                 &ParameterComponentSelector2::ParallelPair {
+                    normal_constraints: None,
                     system: &system,
                     parameter_filter: None,
                 },
@@ -186109,7 +186545,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
-                ParameterComponentQuery2::Existence,
+                ParameterComponentQuery2::Existence(None),
                 &policy,
                 config,
             )
@@ -186134,6 +186570,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 let axis_selection = select_parameter_component_in_domain(
                     &axis_support,
                     &ParameterComponentSelector2::ParallelPair {
+                        normal_constraints: None,
                         system: &axis_system,
                         parameter_filter: None,
                     },
@@ -186155,7 +186592,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             }),
                         ),
                     ],
-                    ParameterComponentQuery2::Existence,
+                    ParameterComponentQuery2::Existence(None),
                     &policy,
                     config,
                 )
@@ -186257,6 +186694,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 select_parameter_component_in_domain(
                                     &support,
                                     &ParameterComponentSelector2::ParallelPair {
+                                        normal_constraints: None,
                                         system: &system,
                                         parameter_filter: None,
                                     },
@@ -186270,7 +186708,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                             extend_second.then_some(ray),
                                         ),
                                     ],
-                                    ParameterComponentQuery2::Existence,
+                                    ParameterComponentQuery2::Existence(None),
                                     &policy,
                                     config,
                                 )
@@ -186374,6 +186812,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let Classification::Decided(selection) = select_parameter_component_in_domain(
                 &support,
                 &ParameterComponentSelector2::ParallelPair {
+                    normal_constraints: None,
                     system: &system,
                     parameter_filter: None,
                 },
@@ -186395,7 +186834,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
-                ParameterComponentQuery2::Existence,
+                ParameterComponentQuery2::Existence(None),
                 &policy,
                 config,
             )
@@ -186566,7 +187005,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
-                ParameterComponentQuery2::Existence,
+                ParameterComponentQuery2::Existence(None),
                 None,
                 &policy,
             )
@@ -186609,7 +187048,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
-                ParameterComponentQuery2::Existence,
+                ParameterComponentQuery2::Existence(None),
                 None,
                 &policy,
             )
@@ -186658,7 +187097,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             }),
                         ),
                     ],
-                    ParameterComponentQuery2::Existence,
+                    ParameterComponentQuery2::Existence(None),
                     None,
                     &policy,
                 )
@@ -186735,7 +187174,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         }),
                     ),
                 ],
-                ParameterComponentQuery2::Existence,
+                ParameterComponentQuery2::Existence(None),
                 None,
                 &policy,
             )
@@ -186773,7 +187212,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             ),
                         ),
                     ],
-                    ParameterComponentQuery2::Existence,
+                    ParameterComponentQuery2::Existence(None),
                     &policy,
                 )
                 .unwrap()
