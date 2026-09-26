@@ -13,7 +13,9 @@ use crate::integer_interpolation::primitive_integer_signed_remainder_sequence;
 use crate::ordered_field_roots::{
     OrderedFieldPolynomialContext, ordered_field_polynomial_sign_remainder, trim_polynomial,
 };
-use crate::root_isolation::{IsolatedRootInterval, polynomial_div_rem};
+use crate::root_isolation::{
+    IsolatedRootInterval, polynomial_div_rem, polynomial_has_one_distinct_root_in_open_interval,
+};
 
 /// Signs a polynomial at a caller-certified singleton over an exact ordered field.
 ///
@@ -130,6 +132,8 @@ fn field_polynomial_sign<C: Clone, F: OrderedFieldPolynomialContext<C>>(
 /// remains explicit; callers can evaluate an exact point directly.
 /// Every coefficient decision here is STRICT, including the general-Real
 /// fallback when the primitive integer chain does not apply.
+/// If the supplied isolator is too narrow for an endpoint decision, a wider
+/// dyadic bracket is used only after proving that it owns the same singleton.
 pub fn sign_at_selected_root(
     defining: &[Real],
     predicate: &[Real],
@@ -159,9 +163,56 @@ pub fn sign_at_selected_root(
     }
     let chain = primitive_integer_signed_remainder_sequence(defining, &product)
         .or_else(|| field_signed_sequence(defining.to_vec(), product))?;
-    let lower = variations(&chain, &interval.lower)?;
-    let upper = variations(&chain, &interval.upper)?;
-    query_sign_from_variations(lower, upper)
+    chain_sign(&chain, &interval.lower, &interval.upper)
+        .or_else(|| sign_with_coarser_singleton(defining, &chain, interval))
+}
+
+fn chain_sign(chain: &[Vec<Real>], lower: &Real, upper: &Real) -> Option<Ordering> {
+    query_sign_from_variations(variations(chain, lower)?, variations(chain, upper)?)
+}
+
+/// A tighter isolator can move a remainder-chain endpoint arbitrarily close
+/// to one of its zeros. Reuse the completed chain on a certified enclosing
+/// singleton instead of rebuilding it or refining the source still further.
+fn sign_with_coarser_singleton(
+    defining: &[Real],
+    chain: &[Vec<Real>],
+    interval: &IsolatedRootInterval,
+) -> Option<Ordering> {
+    let mut previous = (interval.lower.clone(), interval.upper.clone());
+    for precision in [-256, -128, -64, -32, 0] {
+        let lower = Real::new(interval.lower.certified_dyadic_interval(precision)?[0].clone());
+        let upper = Real::new(interval.upper.certified_dyadic_interval(precision)?[1].clone());
+        if previous == (lower.clone(), upper.clone()) {
+            continue;
+        }
+        previous = (lower.clone(), upper.clone());
+        if !matches!(
+            sign(&Real::eval_poly(defining, &lower)),
+            Some(Ordering::Less | Ordering::Greater)
+        ) || !matches!(
+            sign(&Real::eval_poly(defining, &upper)),
+            Some(Ordering::Less | Ordering::Greater)
+        ) {
+            continue;
+        }
+        // Outward dyadic rounding encloses the original owned root. A fresh
+        // exact count excludes every additional root, including endpoints;
+        // otherwise a Tarski sum could be mistaken for that root's sign.
+        if polynomial_has_one_distinct_root_in_open_interval(
+            defining,
+            &lower,
+            &upper,
+            PredicatePolicy::STRICT,
+        ) != Some(true)
+        {
+            continue;
+        }
+        if let Some(sign) = chain_sign(chain, &lower, &upper) {
+            return Some(sign);
+        }
+    }
+    None
 }
 
 fn query_sign_from_variations(lower: usize, upper: usize) -> Option<Ordering> {
@@ -374,6 +425,67 @@ mod tests {
                 assert_eq!(actual, Ok(expected), "peak bits: {}", field.maximum_bits);
             }
         }
+    }
+
+    #[test]
+    fn narrow_nested_root_isolators_reuse_a_certified_coarser_bracket() {
+        let alpha = Real::one() + Real::from(2).sqrt().unwrap();
+        let root = alpha.clone().sqrt().unwrap();
+        let bounds = root.certified_dyadic_interval(-4500).unwrap();
+        let interval = IsolatedRootInterval {
+            lower: Real::new(bounds[0].clone()),
+            upper: Real::new(bounds[1].clone()),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        // P=t(t^2-alpha). Its positive root r satisfies r^2=alpha.
+        // A remainder in this query's chain is proportional to t-r, so
+        // excessively fine endpoint evaluation loses its cheap sign proof.
+        let defining = [Real::zero(), -alpha.clone(), Real::zero(), Real::one()];
+        let predicate = [
+            Real::from(2) * &alpha,
+            &alpha * &root,
+            &alpha - Real::from(3),
+        ];
+        // Q(r)=alpha(2 alpha-1)>0; reversing Q must reverse the exact result.
+        for (scale, expected) in [(1, Ordering::Greater), (-1, Ordering::Less)] {
+            let predicate = predicate.each_ref().map(|value| value * Real::from(scale));
+            assert_eq!(
+                sign_at_selected_root(&defining, &predicate, &interval),
+                Some(expected),
+            );
+        }
+    }
+
+    #[test]
+    fn coarser_brackets_must_not_admit_a_foreign_root() {
+        let delta = Real::from(2).powi_i64(-300).unwrap();
+        let epsilon = Real::from(2).powi_i64(-600).unwrap();
+        let defining = [Real::zero(), -delta.clone(), Real::one()];
+        // Q=t-delta/2 is negative at the selected root zero and positive at
+        // the nearby root delta. Counting both would incorrectly yield zero.
+        let product = [
+            (&delta * &delta / Real::from(2)).unwrap(),
+            -Real::from(2) * &delta,
+            Real::from(2),
+        ];
+        let chain = primitive_integer_signed_remainder_sequence(&defining, &product).unwrap();
+        let interval = IsolatedRootInterval {
+            lower: -epsilon.clone(),
+            upper: epsilon,
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        assert_eq!(
+            chain_sign(&chain, &interval.lower, &interval.upper),
+            Some(Ordering::Less),
+        );
+        let wide = Real::from(2).powi_i64(-256).unwrap();
+        assert_eq!(chain_sign(&chain, &(-&wide), &wide), Some(Ordering::Equal));
+        assert_eq!(
+            sign_with_coarser_singleton(&defining, &chain, &interval),
+            None
+        );
     }
 
     #[test]
