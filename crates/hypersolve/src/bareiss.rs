@@ -14,7 +14,7 @@ use hyperreal::{CertifiedRealSign, Rational, Real, RealSign};
 use num::{BigInt, One, Zero};
 
 use crate::integer_interpolation::{
-    integer_polynomial_exact_quotient, primitive_integer_polynomial,
+    integer_polynomial_exact_quotient, integer_polynomial_product, primitive_integer_polynomial,
 };
 use crate::residual_replay::{
     DenseResidualReplayReport, SparseResidualReplayError, SparseResidualReplayReport,
@@ -1500,33 +1500,11 @@ pub(crate) fn determinant_integer_polynomial_matrix(
         c: &[BigInt],
         d: &[BigInt],
     ) -> Option<Vec<BigInt>> {
-        let length = |first: &[BigInt], second: &[BigInt]| {
-            if first.is_empty() || second.is_empty() {
-                Some(0)
-            } else {
-                first.len().checked_add(second.len())?.checked_sub(1)
-            }
-        };
-        let mut result = vec![BigInt::zero(); length(a, b)?.max(length(c, d)?)];
-        for (left, right, subtract) in [(a, b, false), (c, d, true)] {
-            for (i, first) in left
-                .iter()
-                .enumerate()
-                .filter(|(_, value)| !value.is_zero())
-            {
-                for (j, second) in right
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, value)| !value.is_zero())
-                {
-                    let product = first * second;
-                    if subtract {
-                        result[i + j] -= product;
-                    } else {
-                        result[i + j] += product;
-                    }
-                }
-            }
+        let mut result = integer_polynomial_product(a, b)?;
+        let subtrahend = integer_polynomial_product(c, d)?;
+        result.resize(result.len().max(subtrahend.len()), BigInt::zero());
+        for (value, subtract) in result.iter_mut().zip(subtrahend) {
+            *value -= subtract;
         }
         trim(&mut result);
         Some(result)

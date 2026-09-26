@@ -646,6 +646,68 @@ fn rational_reconstruction(
     Some((remainder, denominator))
 }
 
+/// Multiplies integer polynomials without changing their coefficient scale.
+/// Dense products use balanced base-2^k digits. The radix strictly exceeds
+/// twice the largest possible convolution coefficient, so signed decoding
+/// recovers every coefficient exactly, including cancellation and carries.
+pub(crate) fn integer_polynomial_product(
+    first: &[BigInt],
+    second: &[BigInt],
+) -> Option<Vec<BigInt>> {
+    if first.is_empty() || second.is_empty() {
+        return Some(Vec::new());
+    }
+    let length = first.len().checked_add(second.len())?.checked_sub(1)?;
+    let nonzero =
+        |polynomial: &[BigInt]| polynomial.iter().filter(|value| !value.is_zero()).count();
+    let first_nonzero = nonzero(first);
+    let second_nonzero = nonzero(second);
+    let terms = first_nonzero.min(second_nonzero);
+    if terms < 8 || first_nonzero.saturating_mul(second_nonzero) < 1024 {
+        let mut product = vec![BigInt::zero(); length];
+        for (i, a) in first.iter().enumerate().filter(|(_, a)| !a.is_zero()) {
+            for (j, b) in second.iter().enumerate().filter(|(_, b)| !b.is_zero()) {
+                product[i + j] += a * b;
+            }
+        }
+        return Some(product);
+    }
+    let first_bits = first.iter().map(BigInt::bits).max()?;
+    let second_bits = second.iter().map(BigInt::bits).max()?;
+    let term_bits = u64::from(usize::BITS - (terms - 1).leading_zeros());
+    let digit_bits = usize::try_from(
+        first_bits
+            .checked_add(second_bits)?
+            .checked_add(term_bits)?
+            .checked_add(1)?,
+    )
+    .ok()?;
+    let encode = |polynomial: &[BigInt]| {
+        polynomial
+            .iter()
+            .rev()
+            .fold(BigInt::zero(), |value, coefficient| {
+                (value << digit_bits) + coefficient
+            })
+    };
+    let radix = BigInt::one() << digit_bits;
+    let half = &radix >> 1_usize;
+    let mask = &radix - BigInt::one();
+    let mut encoded = encode(first) * encode(second);
+    let mut product = Vec::with_capacity(length);
+    for _ in 0..length {
+        let mut coefficient = &encoded & &mask;
+        encoded >>= digit_bits;
+        if coefficient >= half {
+            coefficient -= &radix;
+            encoded += 1_u8;
+        }
+        product.push(coefficient);
+    }
+    debug_assert!(encoded.is_zero());
+    Some(product)
+}
+
 pub(crate) fn integer_polynomial_exact_quotient(
     dividend: &[BigInt],
     divisor: &[BigInt],
@@ -1106,6 +1168,9 @@ mod tests {
     }
 
     fn multiply_integer_polynomials(left: &[BigInt], right: &[BigInt]) -> Vec<BigInt> {
+        if left.is_empty() || right.is_empty() {
+            return Vec::new();
+        }
         let mut product = vec![BigInt::zero(); left.len() + right.len() - 1];
         for (left_index, left_coefficient) in left.iter().enumerate() {
             for (right_index, right_coefficient) in right.iter().enumerate() {
@@ -1115,7 +1180,71 @@ mod tests {
         product
     }
 
+    #[test]
+    fn packed_integer_products_preserve_signed_coefficients_and_zero_slots() {
+        for (left_len, right_len) in [(0, 0), (0, 17), (1, 33), (7, 101), (32, 32), (65, 71)] {
+            for bits in [1_usize, 63, 257, 1024] {
+                let wide = (BigInt::one() << bits) - 1_u8;
+                for signs in 0..4 {
+                    let coefficients = |length: usize, alternate: bool| {
+                        (0..length)
+                            .map(|index| {
+                                let value = &wide + BigInt::from(index % 5);
+                                if alternate && index.is_multiple_of(2) {
+                                    value
+                                } else {
+                                    -value
+                                }
+                            })
+                            .collect::<Vec<_>>()
+                    };
+                    let mut left = coefficients(left_len, signs & 1 != 0);
+                    let mut right = coefficients(right_len, signs & 2 != 0);
+                    for sparse in [false, true] {
+                        if sparse {
+                            for polynomial in [&mut left, &mut right] {
+                                for coefficient in polynomial.iter_mut().step_by(3) {
+                                    *coefficient = BigInt::zero();
+                                }
+                                if let Some(last) = polynomial.last_mut() {
+                                    *last = BigInt::zero();
+                                }
+                            }
+                        }
+                        assert_eq!(
+                            integer_polynomial_product(&left, &right),
+                            Some(multiply_integer_polynomials(&left, &right)),
+                            "lengths=({left_len},{right_len}), bits={bits}, signs={signs}, sparse={sparse}",
+                        );
+                    }
+                }
+            }
+        }
+        let ones = vec![BigInt::one(); 64];
+        let alternating = (0..64)
+            .map(|i| BigInt::from(1 - 2 * (i % 2)))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            integer_polynomial_product(&ones, &alternating),
+            Some(multiply_integer_polynomials(&ones, &alternating)),
+        );
+    }
+
     proptest! {
+        #[test]
+        fn generated_integer_products_match_independent_convolution(
+            left in prop::collection::vec(-100_i64..=100, 1..=80),
+            right in prop::collection::vec(-100_i64..=100, 1..=80),
+            shift in 0_usize..=160,
+        ) {
+            let left = left.into_iter().map(|value| BigInt::from(value) << shift).collect::<Vec<_>>();
+            let right = right.into_iter().map(BigInt::from).collect::<Vec<_>>();
+            prop_assert_eq!(
+                integer_polynomial_product(&left, &right),
+                Some(multiply_integer_polynomials(&left, &right)),
+            );
+        }
+
         #[test]
         fn generated_exact_quotient_preserves_independent_rational_scales(
             divisor in prop::collection::vec(-9_i64..=9, 1..=8),

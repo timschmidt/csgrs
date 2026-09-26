@@ -5129,6 +5129,71 @@ mod tests {
     }
 
     #[test]
+    fn dense_resultant_preserves_signed_scale_and_repeated_factors() {
+        // Res_u(u^n-A(t), u^n-A(t)+Q(t)) = Q(t)^n. Choosing a
+        // dense Q=(t-2)^32 exercises packed determinant arithmetic; the
+        // binomial theorem independently supplies all output coefficients.
+        let binomial_power = |degree: usize| {
+            let mut choose = num::BigInt::from(1_u8);
+            (0..=degree)
+                .map(|power| {
+                    if power > 0 {
+                        choose = choose.clone() * (degree + 1 - power) / power;
+                    }
+                    Real::from(Rational::from_bigint(
+                        &choose * num::BigInt::from(-2_i8).pow((degree - power) as u32),
+                    ))
+                })
+                .collect::<Vec<_>>()
+        };
+        let first_scale = (real(2) / real(3)).unwrap();
+        let second_scale = (real(-3) / real(5)).unwrap();
+        for degree in 1..=3 {
+            let mut first = vec![vec![Real::zero(); degree + 1]; 34];
+            first[0][degree] = first_scale.clone();
+            first[33][0] = -first_scale.clone();
+            let mut second = vec![vec![Real::zero(); degree + 1]; 34];
+            second[0][degree] = second_scale.clone();
+            second[33][0] = -second_scale.clone();
+            for (power, coefficient) in binomial_power(32).into_iter().enumerate() {
+                second[power][0] = coefficient * &second_scale;
+            }
+            let scale =
+                (0..degree).fold(Real::one(), |value, _| value * &first_scale * &second_scale);
+            let expected = binomial_power(32 * degree)
+                .into_iter()
+                .map(|coefficient| coefficient * &scale)
+                .collect::<Vec<_>>();
+            let first = BivariatePolynomial::new(first);
+            let second = BivariatePolynomial::new(second);
+            for (first, second, retained_parameter) in [
+                (
+                    first.clone(),
+                    second.clone(),
+                    CurveResultantParameter::First,
+                ),
+                (
+                    swap_bivariate(&first),
+                    swap_bivariate(&second),
+                    CurveResultantParameter::Second,
+                ),
+            ] {
+                let report = resultant_bivariate_polynomial_system(
+                    &first,
+                    &second,
+                    retained_parameter,
+                    CurveIntersectionResultantConfig {
+                        max_resultant_degree: 66 * degree,
+                        ..CurveIntersectionResultantConfig::default()
+                    },
+                );
+                assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+                assert_eq!(report.resultant_coefficients, expected);
+            }
+        }
+    }
+
+    #[test]
     fn equal_degree_bezout_matches_sylvester_through_degree_five() {
         for degree in 1..=5 {
             let coefficients = |salt: usize| {
