@@ -11915,7 +11915,30 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 };
                 return source.coincident_parametric_source();
             }
-            _ => return Ok(None),
+            _ => {
+                // Join and tangent-contact maps already retain their exact
+                // point. If it is an untranslated, undisplaced analytic
+                // source evaluation, preserve that source identity across
+                // the angular map instead of comparing two scalar images.
+                let Some(CurvePoint2(CurvePointData2::AnalyticParallel(point))) =
+                    self.retained_point_evidence()
+                else {
+                    return Ok(None);
+                };
+                if !CurveContext::STRICT.accepts_retained_policy(point.data.policy)
+                    || point.data.frame_tangent.is_some()
+                    || point.data.tangent_distance.zero_status() != ZeroKnowledge::Zero
+                    || point.data.translation_x.zero_status() != ZeroKnowledge::Zero
+                    || point.data.translation_y.zero_status() != ZeroKnowledge::Zero
+                {
+                    return Ok(None);
+                }
+                (
+                    point.data.parallel.source().to_rational_bezier()?,
+                    point.data.parallel.distance().clone(),
+                    point.data.parameter.curve_parameter(),
+                )
+            }
         }))
     }
 
@@ -14211,6 +14234,18 @@ enum BezierAnalyticParallelPointParameter2 {
 }
 
 impl BezierAnalyticParallelPointParameter2 {
+    fn curve_parameter(&self) -> CurveParameter2 {
+        match self {
+            Self::Bezier(parameter) => parameter.clone().into(),
+            Self::SelectedFiber(parameter) => {
+                CurveParameter2::from_selected_fiber(parameter.clone())
+            }
+            Self::RecursiveProjective(parameter) => {
+                CurveParameter2::from_recursive_projective(parameter.clone())
+            }
+        }
+    }
+
     fn matches_region_parameter(&self, parameter: &CurveParameter2) -> bool {
         match self {
             Self::Bezier(retained) => parameter
@@ -71928,7 +71963,9 @@ impl BezierAlgebraicChord2 {
                 "a retained analytic tangent had zero traversal direction".into(),
             ));
         }
-        let parameter = if let Some(parameter) = parameter.as_selected_fiber() {
+        let parameter = if let Some(parameter) = parameter.as_bezier_parameter() {
+            BezierAnalyticParallelPointParameter2::Bezier(parameter.clone())
+        } else if let Some(parameter) = parameter.as_selected_fiber() {
             parameter.validate_policy(policy)?;
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter.clone())
         } else if let Some(parameter) = parameter.as_recursive_projective() {
@@ -71936,7 +71973,7 @@ impl BezierAlgebraicChord2 {
             BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter.clone())
         } else {
             return Err(CurveError::Topology(
-                "a retained analytic tangent lost its compact parameter".into(),
+                "an analytic tangent requires a scalar source parameter".into(),
             ));
         };
         let differential = parallel.differential()?;
@@ -71949,8 +71986,8 @@ impl BezierAlgebraicChord2 {
             BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
                 parameter.polynomial_sign(coefficients, policy)
             }
-            BezierAnalyticParallelPointParameter2::Bezier(_) => {
-                unreachable!("the retained tangent constructor rejects ordinary parameters")
+            BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
+                signed_coefficients_at_parameter(coefficients, parameter, policy)
             }
         };
         let orient = |sign| {
@@ -142723,6 +142760,106 @@ mod conversion_tests {
                 );
                 assert_eq!(transformed.radial_distance(), &Real::from(radius));
                 assert_eq!(transformed.is_clockwise(), clockwise);
+            }
+        }
+    }
+
+    #[test]
+    fn chord_normal_and_parallel_contacts_share_native_point_identity() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+            Point2::from_values(1, 1),
+        );
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let radius = (Real::one() / Real::from(4_i8)).unwrap();
+            let native =
+                || algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)]);
+            let parameter = native();
+            let center_support = source.parallel_left(Real::zero()).unwrap();
+            let parallel = source.parallel_left(radius.clone()).unwrap();
+            let center = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
+                center_support.clone(),
+                parameter.clone(),
+                &policy,
+            ));
+            let point = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
+                parallel.clone(),
+                parameter.clone(),
+                &policy,
+            ));
+            let Classification::Decided(anchor) = BezierAlgebraicChord2::try_new(
+                Point2::from_values(0, 0).into(),
+                Point2::from_values(1, 0).into(),
+                &policy,
+            )
+            .unwrap() else {
+                panic!("the horizontal anchor is regular");
+            };
+            let Classification::Decided(Some(circle)) =
+                BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+                    center,
+                    anchor.clone(),
+                    radius.clone(),
+                    false,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the join circle retains its analytic center");
+            };
+            let Classification::Decided(chord) =
+                BezierAlgebraicChord2::from_certified_retained_parallel_oriented_unit_tangent(
+                    center_support,
+                    &parameter.into(),
+                    RealSign::Positive,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the regular source supplies its tangent");
+            };
+            // P'(u)=(1,2u) points into the first quadrant. Its left normal
+            // lies in the interior of the CCW half beginning at (0,r).
+            let Classification::Decided(join) = circle
+                .certified_chord_normal_contact_parameter(
+                    BezierSelectedChordNormalAnchor2::RetainedChord(anchor),
+                    chord,
+                    point,
+                    radius,
+                    true,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the exact normal endpoint is interior");
+            };
+            // The independent source root selects the same point. The CCW
+            // circle tangent opposes the positive derivative of this parallel.
+            let Classification::Decided(contact) = circle
+                .certified_selected_parallel_contact_parameter(
+                    parallel,
+                    native().into(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                    RealSign::Positive,
+                    RealSign::Zero,
+                    RealSign::Negative,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the independently retained contact is interior");
+            };
+            for (first, second) in [(&join, &contact), (&contact, &join)] {
+                assert!(
+                    first
+                        .shares_parametric_source_point(second, &policy)
+                        .unwrap()
+                );
+                assert_eq!(
+                    first.cmp_by_refinement(second, &policy).unwrap(),
+                    Classification::Decided(std::cmp::Ordering::Equal)
+                );
             }
         }
     }

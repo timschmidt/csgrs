@@ -2026,6 +2026,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn parallel_arc_pair_result(
         &self,
         parallel: &BezierParallel2,
+        range: &CurveParameterRange2,
         curve: &BezierSubcurve2,
         parallel_is_first: bool,
     ) -> ExactCurveResult<Classification<Option<RegionPairResult>>> {
@@ -2077,7 +2078,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .circle_incidence(
                 arc.center(),
                 arc.radius_squared_ref(),
-                &crate::CurveParameterRange2::unit(),
+                range,
                 &certified_tangent_parameters,
                 &self.data.policy,
             )
@@ -4258,25 +4259,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         first.geometry.bezier(),
                     )
                 };
-                // Source-cusp branches retain one-sided endpoint point
-                // evidence and must enter the range-aware common kernel before
-                // the older circle shortcut, whose authored hodograph is
-                // undefined at that endpoint. Ordinary carriers keep that cheap
-                // interaction fast path. The line kernel is range-aware for
-                // every retained subcarrier: a regular sibling of a cusp branch
-                // need not itself own a selected endpoint, while its unsplit
-                // authored source still has the singular hodograph.
-                if parallel_carrier.selected_fiber_endpoint_points.is_none() {
-                    let arc = self.parallel_arc_pair_result(parallel, curve, *parallel_is_first)?;
-                    match arc {
-                        Classification::Decided(Some(result)) => return Ok(result),
-                        Classification::Decided(None) | Classification::Uncertain(_) => {}
-                    }
-                }
                 let regular_range = CurveParameterRange2::new_validated(
                     parallel_carrier.start.clone(),
                     parallel_carrier.end.clone(),
                 );
+                // Circle incidence proves source regularity on this range.
+                // Retained endpoint storage is not a singularity certificate:
+                // ordinary selected cuts use the same conic inverse, while
+                // source-cusp limits continue through the regularized kernel.
+                match self.parallel_arc_pair_result(
+                    parallel,
+                    &regular_range,
+                    curve,
+                    *parallel_is_first,
+                )? {
+                    Classification::Decided(Some(result)) => return Ok(result),
+                    Classification::Decided(None) | Classification::Uncertain(_) => {}
+                }
                 let line = self.parallel_line_pair_result(
                     pair,
                     parallel,
@@ -18706,6 +18705,77 @@ mod certified_successor_tests {
     }
 
     #[test]
+    fn parallel_arc_contacts_use_the_requested_exterior_range() {
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let parallel = QuadraticBezier2::from_line_segment(
+            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
+        )
+        .parallel_left(quarter.clone())
+        .unwrap();
+        let arc = crate::CircularArc2::try_from_center(
+            Point2::new(Real::from(3), quarter.clone()),
+            Point2::new(Real::from(2), Real::one() + &quarter),
+            Point2::new(Real::from(2), quarter),
+            false,
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let empty = CurveRegion2::empty();
+            let context = CurveRegionBooleanContext::try_new_unary(&empty, &policy).unwrap();
+            let curve = RationalBezier2::from(
+                arc.rational_bezier_decomposition(&policy)
+                    .unwrap()
+                    .into_value()
+                    .spans()[0]
+                    .curve()
+                    .clone(),
+            );
+            for reversed in [false, true] {
+                let curve = BezierSubcurve2::Rational(if reversed {
+                    curve.reversed()
+                } else {
+                    curve.clone()
+                });
+                for (start, end, expected_count) in [(0, 1, 0), (2, 4, 1), (4, 5, 0)] {
+                    let range = CurveParameterRange2::new_validated(
+                        Real::from(start).into(),
+                        Real::from(end).into(),
+                    );
+                    let result = decided(
+                        context
+                            .parallel_arc_pair_result(&parallel, &range, &curve, true)
+                            .unwrap(),
+                    )
+                    .expect("the finite circle incidence must decide");
+                    assert!(result.blockers.is_empty());
+                    assert!(result.overlaps.is_empty());
+                    assert_eq!(result.contacts.len(), expected_count);
+                    if let Some(contact) = result.contacts.first() {
+                        for (actual, expected) in [
+                            (&contact.first_parameter, Real::from(3)),
+                            (&contact.second_parameter, Real::from(u8::from(reversed))),
+                        ] {
+                            assert_eq!(
+                                actual.cmp_by_refinement(&expected.into(), &policy).unwrap(),
+                                Classification::Decided(Ordering::Equal)
+                            );
+                        }
+                        assert!(contact.certified_transverse);
+                        assert_eq!(
+                            contact.tangent_cross_sign,
+                            Some(if reversed {
+                                RealSign::Negative
+                            } else {
+                                RealSign::Positive
+                            })
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn parallel_arc_contacts_retain_conic_parameters_across_elevation_and_reversal() {
         // The inner parallel of (2t,t^2) starts inside the unit circle and
         // crosses its first quadrant once, with both coordinates increasing.
@@ -18760,7 +18830,12 @@ mod certified_successor_tests {
                     BezierSubcurve2::Rational(elevated),
                 ] {
                     let Classification::Decided(Some(result)) = context
-                        .parallel_arc_pair_result(&parallel, &curve, parallel_is_first)
+                        .parallel_arc_pair_result(
+                            &parallel,
+                            &CurveParameterRange2::unit(),
+                            &curve,
+                            parallel_is_first,
+                        )
                         .unwrap()
                     else {
                         panic!("the exact conic contact must retain its local parameter");
@@ -18913,7 +18988,12 @@ mod certified_successor_tests {
             let context = CurveRegionBooleanContext::try_new_unary(&empty, &policy).unwrap();
             let result = decided(
                 context
-                    .parallel_arc_pair_result(&parallel, &BezierSubcurve2::Rational(extended), true)
+                    .parallel_arc_pair_result(
+                        &parallel,
+                        &CurveParameterRange2::unit(),
+                        &BezierSubcurve2::Rational(extended),
+                        true,
+                    )
                     .unwrap(),
             )
             .expect("the extended quadratic chart must decide its finite contacts");
