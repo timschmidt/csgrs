@@ -180,7 +180,7 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
             source.polynomial_coefficients.clone(),
             PredicatePolicy::STRICT,
         )
-        .map(canonicalize_proven_rational_coefficients) else {
+        .map(compact_exact_coefficients) else {
             return projection_report(AlgebraicFiberProjectionStatus::UnsupportedCoefficient);
         };
         constraints.push(constraint);
@@ -291,8 +291,7 @@ pub fn project_selected_tensor_fiber_via_tagged_norm(
         max_source_degree,
     );
     if projection.status == AlgebraicFiberProjectionStatus::Constructed {
-        projection.coefficients =
-            canonicalize_proven_rational_coefficients(projection.coefficients);
+        projection.coefficients = compact_exact_coefficients(projection.coefficients);
     }
     projection
 }
@@ -626,7 +625,7 @@ pub fn represent_algebraic_tensor_image(
                 "a tensor-image source constraint could not be square-freed exactly",
             );
         };
-        constraints.push(canonicalize_proven_rational_coefficients(constraint));
+        constraints.push(compact_exact_coefficients(constraint));
     }
     // Keep every selected source axis canonical from the outset. Repeating
     // this reduction for every still-live source after each resultant avoids
@@ -737,11 +736,10 @@ pub fn represent_algebraic_tensor_image(
         );
     };
     // Resultant interpolation can retain a large arithmetic DAG even when a
-    // coefficient is exactly rational. Collapse only values whose bounded
-    // symbolic normal form proves that fact before Sturm replay; non-rational
-    // canonical `Real` coefficient fields remain untouched.
-    let polynomial_coefficients =
-        canonicalize_proven_rational_coefficients(polynomial_coefficients);
+    // coefficient belongs to a small exact field. Rebuild proven bounded
+    // normal forms before Sturm replay; every other exact coefficient keeps
+    // its original representation and complete predicate fallback.
+    let polynomial_coefficients = compact_exact_coefficients(polynomial_coefficients);
     if polynomial_coefficients.len() <= 1 {
         return report(
             AlgebraicTensorImageStatus::ImageSquareFreeFailed,
@@ -966,7 +964,10 @@ fn exact_bounded_denominator_root_in_interval(
     None
 }
 
-fn canonicalize_proven_rational_coefficients(mut coefficients: Vec<Real>) -> Vec<Real> {
+// Compact between eliminations, before their arithmetic history reaches the
+// square-free/GCD and Sturm kernels. This is an optional exact reduction, not a
+// restriction of the polynomial's coefficient field.
+fn compact_exact_coefficients(mut coefficients: Vec<Real>) -> Vec<Real> {
     for coefficient in &mut coefficients {
         // A rational-class Real has no arithmetic DAG to collapse. Preserve
         // its storage directly; Rational operations already consult the lazy
@@ -974,7 +975,9 @@ fn canonicalize_proven_rational_coefficients(mut coefficients: Vec<Real>) -> Vec
         if coefficient.exact_rational_ref().is_some() {
             continue;
         }
-        if let Some(rational) = coefficient.exact_rational_normal_form() {
+        if let Some(compact) = coefficient.compact_quadratic_tower() {
+            *coefficient = compact;
+        } else if let Some(rational) = coefficient.exact_rational_normal_form() {
             *coefficient = Real::new(rational);
         }
     }
@@ -983,7 +986,7 @@ fn canonicalize_proven_rational_coefficients(mut coefficients: Vec<Real>) -> Vec
 
 fn normalize_tensor_relation(polynomial: DenseTensorPolynomial) -> DenseTensorPolynomial {
     let (dimensions, coefficients) = polynomial.into_parts();
-    let coefficients = canonicalize_proven_rational_coefficients(coefficients);
+    let coefficients = compact_exact_coefficients(coefficients);
     // These tensors describe zero sets. Clear one common rational scale
     // before the next norm can raise that irrelevant content to another power.
     let normalized = crate::integer_interpolation::primitive_integer_polynomial(&coefficients);
@@ -1496,6 +1499,63 @@ mod tests {
             coefficients[flat_index(&dimensions, &exponents)] = coefficient;
         }
         DenseTensorPolynomial::try_new(dimensions, coefficients).unwrap()
+    }
+
+    #[test]
+    fn tensor_images_replay_nonrational_coefficients_after_repeated_arithmetic() {
+        let sqrt_five = real(5).sqrt().unwrap();
+        let sqrt_seven = real(7).sqrt().unwrap();
+        let mut shift = sqrt_seven.clone();
+        let divisor = &sqrt_five + Real::one();
+        for _ in 0..8 {
+            shift = (((&shift + Real::one()) * &divisor - &divisor) / &divisor).unwrap();
+        }
+        let source = AlgebraicRootRepresentation {
+            constraint_index: 23,
+            symbol: SymbolId(29),
+            interval_index: 0,
+            polynomial_coefficients: vec![-sqrt_five.clone(), real(0), real(0), real(1)],
+            interval: IsolatedRootInterval {
+                lower: real(1),
+                upper: real(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        let relation = sum_relation(1, shift);
+        let interval = IsolatedRootInterval {
+            lower: real(3),
+            upper: real(4),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let report = represent_algebraic_tensor_image(&relation, &[source], &interval);
+        assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
+        let represented = report.representation.unwrap();
+        // (y - sqrt(7))^3 - sqrt(5), retaining its selected real root.
+        let expected = [
+            -real(7) * &sqrt_seven - sqrt_five,
+            real(21),
+            -real(3) * sqrt_seven,
+            Real::one(),
+        ];
+        assert_eq!(represented.polynomial_coefficients.len(), expected.len());
+        for (actual, expected) in represented.polynomial_coefficients.iter().zip(expected) {
+            assert_eq!(
+                (actual - expected).quadratic_tower_sign(),
+                Some(hyperreal::RealSign::Zero),
+            );
+        }
+        assert_eq!(
+            validate_algebraic_root_representation(&represented, PredicatePolicy::STRICT).status,
+            AlgebraicRootValidationStatus::Valid,
+        );
+        assert_eq!(represented.constraint_index, 23);
+        assert_eq!(represented.symbol, SymbolId(29));
     }
 
     #[test]
