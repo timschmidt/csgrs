@@ -787,6 +787,29 @@ fn tower_annihilator(tower: &Tower) -> Option<Vec<Rational>> {
 }
 
 impl Computable {
+    pub(crate) fn quadratic_tower_parts(&self) -> Option<[[Rational; 3]; 3]> {
+        let tower = tower_from_computable(self)?;
+        if !tower.has_bounded_coefficients() {
+            return None;
+        }
+        // Reuse the same exact reduction for compaction, signs and subsequent
+        // arithmetic. The rows describe even + odd * sqrt(radicand), each as
+        // a + b * sqrt(d); they do not expose another public scalar carrier.
+        self.internal.cache.store_quadratic_tower(tower.clone());
+        let parts = |quad: Quad| {
+            [
+                quad.rational,
+                quad.scale,
+                quad.disc.unwrap_or_else(Rational::zero),
+            ]
+        };
+        Some([
+            parts(tower.even),
+            parts(tower.odd),
+            parts(tower.radicand.unwrap_or_else(Quad::zero)),
+        ])
+    }
+
     pub(crate) fn quadratic_tower_sign(&self) -> Option<RealSign> {
         let tower = tower_from_computable(self)?;
         let sign = tower.sign()?;
