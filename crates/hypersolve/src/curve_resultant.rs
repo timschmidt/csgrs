@@ -71,6 +71,78 @@ impl BivariatePolynomial {
     pub const fn new(coefficients: Vec<Vec<Real>>) -> Self {
         Self { coefficients }
     }
+
+    /// Substitutes independent affine maps into both parameter axes.
+    ///
+    /// Returns `P(first_scale*x + first_offset, second_scale*y + second_offset)`
+    /// with the original coefficient magnitudes. Negative and zero scales,
+    /// ragged rows, and arbitrary exact `Real` coefficients are supported;
+    /// this arithmetic operation needs no degree or sign decisions.
+    ///
+    /// Two univariate Horner passes avoid constructing an outer-product grid
+    /// for every monomial. For an m-by-n grid this takes O(m*n*(m+n)) scalar
+    /// operations and O(m*n) temporary storage.
+    pub fn substitute_affine(
+        &self,
+        first_scale: &Real,
+        first_offset: &Real,
+        second_scale: &Real,
+        second_offset: &Real,
+    ) -> Self {
+        let rows = self
+            .coefficients
+            .iter()
+            .map(|row| polynomial_affine_substitution(row, second_scale, second_offset))
+            .collect::<Vec<_>>();
+        let width = rows.iter().map(Vec::len).max().unwrap_or(0);
+        let mut coefficients = vec![vec![Real::zero(); width]; rows.len()];
+        let columns = (0..width).map(|second_power| {
+            rows.iter()
+                .map(|row| row.get(second_power).cloned().unwrap_or_else(Real::zero))
+                .collect::<Vec<_>>()
+        });
+        for (second_power, column) in columns.enumerate() {
+            for (first_power, value) in
+                polynomial_affine_substitution(&column, first_scale, first_offset)
+                    .into_iter()
+                    .enumerate()
+            {
+                coefficients[first_power][second_power] = value;
+            }
+        }
+        for row in &mut coefficients {
+            while row.last().is_some_and(Real::definitely_zero) {
+                row.pop();
+            }
+        }
+        while coefficients.last().is_some_and(Vec::is_empty) {
+            coefficients.pop();
+        }
+        Self::new(coefficients)
+    }
+}
+
+fn polynomial_affine_substitution(coefficients: &[Real], scale: &Real, offset: &Real) -> Vec<Real> {
+    let Some(leading) = coefficients.last() else {
+        return Vec::new();
+    };
+    if scale.definitely_zero() {
+        return vec![Real::eval_poly(coefficients, offset)];
+    }
+    if scale.definitely_one() && offset.definitely_zero() {
+        return coefficients.to_vec();
+    }
+    let mut result = Vec::with_capacity(coefficients.len());
+    result.push(leading.clone());
+    for coefficient in coefficients[..coefficients.len() - 1].iter().rev() {
+        let length = result.len();
+        result.push(&result[length - 1] * scale);
+        for index in (1..length).rev() {
+            result[index] = Real::mul_add(&result[index], offset, &(&result[index - 1] * scale));
+        }
+        result[0] = Real::mul_add(&result[0], offset, coefficient);
+    }
+    result
 }
 
 /// Exact polynomial in three parameters.
@@ -4690,6 +4762,96 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    #[test]
+    fn bivariate_affine_substitution_preserves_ragged_exact_polynomials() {
+        let evaluate = |polynomial: &BivariatePolynomial, x: &Real, y: &Real| {
+            let rows = polynomial
+                .coefficients
+                .iter()
+                .map(|row| Real::eval_poly(row, y))
+                .collect::<Vec<_>>();
+            Real::eval_poly(&rows, x)
+        };
+        let polynomials = [
+            BivariatePolynomial::new(vec![]),
+            BivariatePolynomial::new(vec![vec![], vec![real(0)], vec![]]),
+            BivariatePolynomial::new(vec![vec![real(7)]]),
+            BivariatePolynomial::new(vec![
+                vec![real(2), real(-3), real(5), real(0)],
+                vec![],
+                vec![real(-7)],
+                vec![real(11), real(13)],
+                vec![],
+            ]),
+        ];
+        for polynomial in polynomials {
+            for [a, b, c, d] in [
+                [1, 0, 1, 0],
+                [-2, 3, 4, -5],
+                [0, 3, -1, 2],
+                [2, -3, 0, 4],
+                [0, 2, 0, -1],
+            ] {
+                let [a, b, c, d] = [a, b, c, d].map(real);
+                let transformed = polynomial.substitute_affine(&a, &b, &c, &d);
+                // A complete interpolation grid independently determines this
+                // bounded-degree polynomial, including reversed/exterior maps.
+                for x in -2..=3 {
+                    for y in -2..=2 {
+                        let x = (real(x) / real(3)).unwrap();
+                        let y = (real(y) / real(5)).unwrap();
+                        let expected = evaluate(&polynomial, &(&a * &x + &b), &(&c * &y + &d));
+                        assert_eq!(evaluate(&transformed, &x, &y), expected);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn bivariate_affine_substitution_retains_general_exact_coefficients_and_maps() {
+        let root = real(2).sqrt().unwrap();
+        let pi = Real::pi();
+        // P(x,y) = sqrt(2) + pi*x + x*y + sqrt(2)*y^2.
+        let polynomial = BivariatePolynomial::new(vec![
+            vec![root.clone(), real(0), root.clone()],
+            vec![pi.clone(), real(1)],
+        ]);
+        let transformed = polynomial.substitute_affine(&root, &pi, &real(-2), &root);
+        assert!(
+            transformed
+                .coefficients
+                .iter()
+                .flatten()
+                .any(|value| value.exact_rational_ref().is_none())
+        );
+        for x in -1..=1 {
+            for y in -1..=1 {
+                let x = real(x);
+                let y = real(y);
+                let source_x = &root * &x + &pi;
+                let source_y = real(-2) * &y + &root;
+                let expected =
+                    &root + &pi * &source_x + &source_x * &source_y + &root * &source_y * &source_y;
+                let actual = Real::eval_poly(
+                    &transformed
+                        .coefficients
+                        .iter()
+                        .map(|row| Real::eval_poly(row, &y))
+                        .collect::<Vec<_>>(),
+                    &x,
+                );
+                assert!(matches!(
+                    (actual - expected).certified_sign_until(-512),
+                    CertifiedRealSign::Known {
+                        sign: RealSign::Zero,
+                        ..
+                    }
+                ));
+            }
+        }
     }
 
     fn reported_rational_component(
