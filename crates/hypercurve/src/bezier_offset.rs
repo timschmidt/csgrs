@@ -24,6 +24,7 @@ pub(crate) use parameter_component::{CurveParameterComponent2, CurveParameterCom
 
 use crate::CurvePointData2;
 use std::borrow::Cow;
+use std::ops::ControlFlow;
 use std::sync::{Arc, Mutex, OnceLock, Weak};
 
 use crate::bezier_algebraic_image::{
@@ -86628,15 +86629,15 @@ impl BezierParallelAlgebraicRay2 {
             .contains_finite_parameter(&parameter.clone().into(), policy)
     }
 
-    fn contains_point_from_systems(
+    fn visit_point_parameters_from_systems(
         &self,
-        authority: &BezierParallelAlgebraicRaySystem2,
-        other: &BezierParallelAlgebraicRaySystem2,
+        [authority, other]: [&BezierParallelAlgebraicRaySystem2; 2],
         point: &RationalBezierAlgebraicPointPredicate2<'_>,
         incident: Option<&BezierParallelIncidentDomain2>,
         domain: CurveParameterDomain2<'_>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<bool>>> {
+        visitor: &mut impl FnMut(Option<&CurveParameter2>) -> ControlFlow<()>,
+    ) -> CurveResult<Classification<Option<ControlFlow<()>>>> {
         let parameters = match Self::projected_parameters(authority, point, domain, policy)? {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
                 parameters
@@ -86681,7 +86682,10 @@ impl BezierParallelAlgebraicRay2 {
             }
             match self.expression_sign_at_candidate(authority, other, point, &parameter, policy)? {
                 Classification::Decided(RealSign::Zero) => {
-                    return Ok(Classification::Decided(Some(true)));
+                    let parameter = CurveParameter2::from(parameter);
+                    if let stop @ ControlFlow::Break(()) = visitor(Some(&parameter)) {
+                        return Ok(Classification::Decided(Some(stop)));
+                    }
                 }
                 Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
                 Classification::Uncertain(reason) => {
@@ -86689,7 +86693,7 @@ impl BezierParallelAlgebraicRay2 {
                 }
             }
         }
-        Ok(Classification::Decided(Some(false)))
+        Ok(Classification::Decided(Some(ControlFlow::Continue(()))))
     }
 
     pub(crate) fn contains_point(
@@ -86698,6 +86702,18 @@ impl BezierParallelAlgebraicRay2 {
         incident: Option<&BezierParallelIncidentDomain2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
+        Ok(self
+            .visit_point_parameters(point, incident, policy, &mut |_| ControlFlow::Break(()))?
+            .map(|flow| flow.is_break()))
+    }
+
+    fn visit_point_parameters(
+        &self,
+        point: &RationalBezierAlgebraicPointPredicate2<'_>,
+        incident: Option<&BezierParallelIncidentDomain2>,
+        policy: &CurveContext,
+        visitor: &mut impl FnMut(Option<&CurveParameter2>) -> ControlFlow<()>,
+    ) -> CurveResult<Classification<ControlFlow<()>>> {
         let expanded = match incident
             .map(|incident| incident.expanded_range(&self.range, policy))
             .transpose()?
@@ -86716,17 +86732,31 @@ impl BezierParallelAlgebraicRay2 {
         let one = Real::one();
         let x = self.system(point, &one, &zero)?;
         let y = self.system(point, &zero, &one)?;
-        match self.contains_point_from_systems(&x, &y, point, incident, domain, policy)? {
-            Classification::Decided(Some(contains)) => {
-                return Ok(Classification::Decided(contains));
+        match self.visit_point_parameters_from_systems(
+            [&x, &y],
+            point,
+            incident,
+            domain,
+            policy,
+            visitor,
+        )? {
+            Classification::Decided(Some(flow)) => {
+                return Ok(Classification::Decided(flow));
             }
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        match self.contains_point_from_systems(&y, &x, point, incident, domain, policy)? {
-            Classification::Decided(Some(contains)) => Ok(Classification::Decided(contains)),
+        match self.visit_point_parameters_from_systems(
+            [&y, &x],
+            point,
+            incident,
+            domain,
+            policy,
+            visitor,
+        )? {
+            Classification::Decided(Some(flow)) => Ok(Classification::Decided(flow)),
             Classification::Decided(None) => {
                 Ok(Classification::Uncertain(UncertaintyReason::Boundary))
             }
@@ -97775,20 +97805,27 @@ impl BezierAlgebraicChordPairPoint2 {
     /// test. If one projection is positive-dimensional, the other retained
     /// line is nonparallel by construction and remains an independent exact
     /// authority.
-    fn incidence_on_parallel(
+    fn visit_incidence_on_parallel(
         &self,
         parallel: &BezierParallel2,
         range: &CurveParameterRange2,
         incident: Option<&BezierParallelIncidentDomain2>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
+        visitor: &mut impl FnMut(Option<&CurveParameter2>) -> ControlFlow<()>,
+    ) -> CurveResult<Classification<ControlFlow<()>>> {
         if !self.accepts_policy(policy) {
             return Err(CurveError::Topology(
                 "correlated chord point entered parallel incidence under a different policy".into(),
             ));
         }
         if let Classification::Decided(Some(point)) = self.exact_represented_point(policy)? {
-            return parallel.contains_point_evidence(&point.into(), range, incident, policy);
+            return parallel.visit_point_incidence_evidence(
+                &point.into(),
+                range,
+                incident,
+                policy,
+                visitor,
+            );
         }
 
         let expanded = match incident
@@ -97819,7 +97856,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 match support.oriented_support_side(&query, policy)? {
                     Classification::Decided(
                         crate::classify::LineSide::Left | crate::classify::LineSide::Right,
-                    ) => return Ok(Classification::Decided(false)),
+                    ) => return Ok(Classification::Decided(ControlFlow::Continue(()))),
                     Classification::Decided(crate::classify::LineSide::On) => {
                         if let Classification::Decided(parameter) =
                             affine_line_parameter_at_incident_point(&line, &query, policy)?
@@ -97837,8 +97874,12 @@ impl BezierAlgebraicChordPairPoint2 {
                                         result => Ok(result),
                                     },
                                 )?;
-                            if let Classification::Decided(_) = contains {
-                                return Ok(contains);
+                            if let Classification::Decided(contains) = contains {
+                                return Ok(Classification::Decided(if contains {
+                                    visitor(Some(&parameter))
+                                } else {
+                                    ControlFlow::Continue(())
+                                }));
                             }
                         }
                     }
@@ -97888,7 +97929,13 @@ impl BezierAlgebraicChordPairPoint2 {
                 };
                 for contact in contacts {
                     match query.same_point(contact.point(), policy) {
-                        Classification::Decided(true) => return Ok(Classification::Decided(true)),
+                        Classification::Decided(true) => {
+                            if let stop @ ControlFlow::Break(()) =
+                                visitor(Some(contact.parallel_parameter()))
+                            {
+                                return Ok(Classification::Decided(stop));
+                            }
+                        }
                         Classification::Decided(false) => {}
                         Classification::Uncertain(reason) => {
                             contact_uncertainty.get_or_insert(reason);
@@ -97897,7 +97944,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 }
             }
             if contact_uncertainty.is_none() {
-                return Ok(Classification::Decided(false));
+                return Ok(Classification::Decided(ControlFlow::Continue(())));
             }
             uncertainty = uncertainty.or(contact_uncertainty);
         }
@@ -113141,13 +113188,37 @@ impl BezierParallel2 {
         incident: Option<&BezierParallelIncidentDomain2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
+        Ok(self
+            .visit_point_incidence_evidence(point, range, incident, policy, &mut |_| {
+                ControlFlow::Break(())
+            })?
+            .map(|flow| flow.is_break()))
+    }
+
+    /// Visits borrowed exact point-incidence evidence without rebuilding or
+    /// copying retained root handles. A collecting caller clones its witnesses.
+    /// `Some(parameter)` is a certified isolated contact; `None` denotes the
+    /// entire queried domain. `Break` stops at the first requested witness.
+    ///
+    /// A continuing visitor may see a parameter again when independent proof
+    /// routes overlap. Only `Decided(Continue(()))` proves a complete visit;
+    /// uncertainty leaves certified witnesses but does not prove exhaustiveness.
+    pub(crate) fn visit_point_incidence_evidence(
+        &self,
+        point: &CurvePoint2,
+        range: &CurveParameterRange2,
+        incident: Option<&BezierParallelIncidentDomain2>,
+        policy: &CurveContext,
+        visitor: &mut impl FnMut(Option<&CurveParameter2>) -> ControlFlow<()>,
+    ) -> CurveResult<Classification<ControlFlow<()>>> {
         let CurvePoint2(CurvePointData2::Algebraic(point)) = point else {
             return match point {
                 CurvePoint2(CurvePointData2::Endpoint(endpoint)) => {
                     match endpoint.resolve(policy)? {
-                        Classification::Decided(Some(point)) => {
-                            self.contains_point_evidence(&point, range, incident, policy)
-                        }
+                        Classification::Decided(Some(point)) => self
+                            .visit_point_incidence_evidence(
+                                &point, range, incident, policy, visitor,
+                            ),
                         Classification::Decided(None) => {
                             Ok(Classification::Uncertain(UncertaintyReason::RealSign))
                         }
@@ -113175,18 +113246,26 @@ impl BezierParallel2 {
                     )
                     .map(|result| {
                         result.map(|incidence| match incidence {
-                            BezierParallelIncidence2::EntireCurve => true,
+                            BezierParallelIncidence2::EntireCurve => visitor(None),
                             BezierParallelIncidence2::Parameters(parameters) => {
-                                !parameters.is_empty()
+                                for parameter in parameters {
+                                    let parameter = CurveParameter2::from(parameter);
+                                    if let stop @ ControlFlow::Break(()) = visitor(Some(&parameter))
+                                    {
+                                        return stop;
+                                    }
+                                }
+                                ControlFlow::Continue(())
                             }
                         })
                     })
                 }
                 CurvePoint2(CurvePointData2::AnalyticParallel(point)) => {
                     return match point.predicate_point_evidence(policy)? {
-                        Classification::Decided(Some(point)) => {
-                            self.contains_point_evidence(&point, range, incident, policy)
-                        }
+                        Classification::Decided(Some(point)) => self
+                            .visit_point_incidence_evidence(
+                                &point, range, incident, policy, visitor,
+                            ),
                         Classification::Decided(None) => {
                             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                         }
@@ -113195,9 +113274,10 @@ impl BezierParallel2 {
                 }
                 CurvePoint2(CurvePointData2::Similarity(point)) => {
                     return match point.predicate_point_evidence(policy)? {
-                        Classification::Decided(Some(point)) => {
-                            self.contains_point_evidence(&point, range, incident, policy)
-                        }
+                        Classification::Decided(Some(point)) => self
+                            .visit_point_incidence_evidence(
+                                &point, range, incident, policy, visitor,
+                            ),
                         Classification::Decided(None) => {
                             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                         }
@@ -113205,7 +113285,7 @@ impl BezierParallel2 {
                     };
                 }
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(point)) => {
-                    point.incidence_on_parallel(self, range, incident, policy)
+                    point.visit_incidence_on_parallel(self, range, incident, policy, visitor)
                 }
                 CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
                 | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
@@ -113248,7 +113328,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        ray.contains_point(&point, incident, policy)
+        ray.visit_point_parameters(&point, incident, policy, visitor)
     }
 
     fn source_circle_polynomial(
@@ -161378,6 +161458,238 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     .unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary)
             ));
+        }
+    }
+
+    #[test]
+    fn retained_point_incidence_visits_all_preimages_and_can_stop_at_one() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(4, 0),
+            Point2::from_values(2, 0),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        // P(s)=((s-2)^2,0), C=(sqrt(1/2),0). Both contacts are
+        // selected quartic roots. The negative point has the same squared
+        // projection candidates, but none satisfy its unsquared incidence.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(alpha) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!()
+            };
+            for sign in [-1, 1] {
+                let query: CurvePoint2 =
+                    RationalBezierAlgebraicPointImage2::from_retained_expression(
+                        alpha.clone(),
+                        parameter_representation(&alpha, &policy),
+                        vec![Real::zero(), Real::from(sign)],
+                        vec![Real::zero()],
+                        vec![Real::one()],
+                        "complete retained point incidence",
+                    )
+                    .into();
+                for reversed in [false, true] {
+                    let range = if reversed {
+                        CurveParameterRange2::new_validated(
+                            Real::from(3).into(),
+                            Real::one().into(),
+                        )
+                    } else {
+                        CurveParameterRange2::new_validated(
+                            Real::one().into(),
+                            Real::from(3).into(),
+                        )
+                    };
+                    let mut contacts = Vec::new();
+                    assert_eq!(
+                        parallel
+                            .visit_point_incidence_evidence(
+                                &query,
+                                &range,
+                                None,
+                                &policy,
+                                &mut |parameter| {
+                                    contacts.push(
+                                        parameter
+                                            .expect("the point has isolated preimages")
+                                            .clone(),
+                                    );
+                                    ControlFlow::Continue(())
+                                },
+                            )
+                            .unwrap(),
+                        Classification::Decided(ControlFlow::Continue(()))
+                    );
+                    assert_eq!(contacts.len(), if sign > 0 { 2 } else { 0 });
+                    let mut sides = [0, 0];
+                    for parameter in &contacts {
+                        assert_eq!(
+                            parameter
+                                .polynomial_sign(
+                                    &[
+                                        Real::from(16) - &half,
+                                        Real::from(-32),
+                                        Real::from(24),
+                                        Real::from(-8),
+                                        Real::one(),
+                                    ],
+                                    &policy
+                                )
+                                .unwrap(),
+                            Classification::Decided(RealSign::Zero)
+                        );
+                        let side = parameter
+                            .cmp_by_refinement(&Real::from(2).into(), &policy)
+                            .unwrap();
+                        match side {
+                            Classification::Decided(std::cmp::Ordering::Less) => sides[0] += 1,
+                            Classification::Decided(std::cmp::Ordering::Greater) => sides[1] += 1,
+                            _ => panic!("the source stationary point is not a contact"),
+                        }
+                    }
+                    assert_eq!(sides, if sign > 0 { [1, 1] } else { [0, 0] });
+                    let mut visits = 0;
+                    let stopped = parallel
+                        .visit_point_incidence_evidence(&query, &range, None, &policy, &mut |_| {
+                            visits += 1;
+                            ControlFlow::Break(())
+                        })
+                        .unwrap();
+                    assert_eq!(visits, usize::from(sign > 0));
+                    assert_eq!(
+                        stopped,
+                        Classification::Decided(if sign > 0 {
+                            ControlFlow::Break(())
+                        } else {
+                            ControlFlow::Continue(())
+                        })
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn point_incidence_visits_a_collapsed_circle_as_a_complete_domain() {
+        let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+        let source = RationalQuadraticBezier2::try_unit_end_weights(
+            center.translated(Real::one(), Real::zero()),
+            center.translated(Real::one(), Real::one()),
+            center.translated(Real::zero(), Real::one()),
+            (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap(),
+        )
+        .unwrap();
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for matches in [false, true] {
+                let point: CurvePoint2 = if matches {
+                    center.clone()
+                } else {
+                    center.translated(Real::one(), Real::zero())
+                }
+                .into();
+                let mut visits = 0;
+                assert_eq!(
+                    parallel
+                        .visit_point_incidence_evidence(
+                            &point,
+                            &CurveParameterRange2::unit(),
+                            None,
+                            &policy,
+                            &mut |parameter| {
+                                assert!(
+                                    parameter.is_none(),
+                                    "the collapsed image has no isolated contact"
+                                );
+                                visits += 1;
+                                ControlFlow::Continue(())
+                            },
+                        )
+                        .unwrap(),
+                    Classification::Decided(ControlFlow::Continue(()))
+                );
+                assert_eq!(visits, usize::from(matches));
+                assert_eq!(
+                    parallel
+                        .contains_point_evidence(
+                            &point,
+                            &CurveParameterRange2::unit(),
+                            None,
+                            &policy,
+                        )
+                        .unwrap(),
+                    Classification::Decided(matches)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn correlated_point_incidence_retains_exterior_contact_parameters() {
+        let parallel = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(2, 4),
+                Point2::new((Real::one() / Real::from(2)).unwrap(), Real::from(-2)),
+                Point2::from_values(-1, 1),
+            ],
+            vec![Real::one(), -Real::one(), Real::one()],
+        )
+        .unwrap()
+        .parallel_left(Real::zero())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let circle = dense_chord_normal_unit_semicircle(&policy);
+            let Classification::Decided(
+                query @ CurvePoint2(CurvePointData2::AlgebraicChordPair(_)),
+            ) = circle.center_point_evidence(&policy).unwrap()
+            else {
+                panic!("the query keeps independent selected endpoint fields")
+            };
+            let anchor = (Real::from(9) / Real::from(4)).unwrap();
+            let range =
+                CurveParameterRange2::new_validated(anchor.clone().into(), Real::from(3).into());
+            let Classification::Decided(incident) = parallel
+                .incident_domain_from_parameter(
+                    &anchor.into(),
+                    BezierParameterRayDirection2::Decreasing,
+                    &policy,
+                )
+                .unwrap()
+            else {
+                panic!("the exterior ray retains its first pole")
+            };
+            for extension in [None, Some(&incident)] {
+                let mut contacts = Vec::new();
+                assert_eq!(
+                    parallel
+                        .visit_point_incidence_evidence(
+                            &query,
+                            &range,
+                            extension,
+                            &policy,
+                            &mut |parameter| {
+                                contacts.push(
+                                    parameter.expect("one isolated exterior preimage").clone(),
+                                );
+                                ControlFlow::Continue(())
+                            },
+                        )
+                        .unwrap(),
+                    Classification::Decided(ControlFlow::Continue(()))
+                );
+                assert_eq!(!contacts.is_empty(), extension.is_some());
+                for parameter in &contacts {
+                    assert_eq!(
+                        parameter
+                            .polynomial_sign(&[Real::from(-2), Real::one()], &policy)
+                            .unwrap(),
+                        Classification::Decided(RealSign::Zero)
+                    );
+                }
+            }
         }
     }
 
