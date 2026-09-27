@@ -133836,6 +133836,9 @@ fn bivariate_multiply_first_parameter(
     polynomial: &BivariatePolynomial,
     factor: &[Real],
 ) -> BivariatePolynomial {
+    if factor.is_empty() || polynomial.coefficients.iter().all(Vec::is_empty) {
+        return BivariatePolynomial::new(Vec::new());
+    }
     let first_count = polynomial.coefficients.len() + factor.len() - 1;
     let second_count = polynomial
         .coefficients
@@ -133860,6 +133863,9 @@ fn bivariate_multiply(
 ) -> BivariatePolynomial {
     let first_second_count = first.coefficients.iter().map(Vec::len).max().unwrap_or(0);
     let second_second_count = second.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    if first_second_count == 0 || second_second_count == 0 {
+        return BivariatePolynomial::new(Vec::new());
+    }
     let mut coefficients = vec![
         vec![Real::zero(); first_second_count + second_second_count - 1];
         first.coefficients.len() + second.coefficients.len() - 1
@@ -133881,13 +133887,16 @@ fn try_bivariate_multiply(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
 ) -> Option<BivariatePolynomial> {
+    let first_second_count = first.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    let second_second_count = second.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    if first_second_count == 0 || second_second_count == 0 {
+        return Some(BivariatePolynomial::new(Vec::new()));
+    }
     let first_count = first
         .coefficients
         .len()
         .checked_add(second.coefficients.len())?
         .checked_sub(1)?;
-    let first_second_count = first.coefficients.iter().map(Vec::len).max().unwrap_or(0);
-    let second_second_count = second.coefficients.iter().map(Vec::len).max().unwrap_or(0);
     let second_count = first_second_count
         .checked_add(second_second_count)?
         .checked_sub(1)?;
@@ -134934,6 +134943,41 @@ pub(crate) use conversion_tests::recursively_line_contact_radial_half;
 
 #[cfg(test)]
 mod conversion_tests {
+    #[test]
+    fn bivariate_products_accept_empty_zero_coefficients() {
+        let nonzero = BivariatePolynomial::new(vec![
+            vec![Real::from(2), Real::from(-3)],
+            vec![],
+            vec![Real::one()],
+        ]);
+        let zeros = [vec![], vec![vec![]], vec![vec![], vec![]]].map(BivariatePolynomial::new);
+        for zero in &zeros {
+            for other in zeros.iter().chain([&nonzero]) {
+                for (first, second) in [(zero, other), (other, zero)] {
+                    assert!(bivariate_multiply(first, second).coefficients.is_empty());
+                    assert!(
+                        try_bivariate_multiply(first, second)
+                            .expect("zero products need no coefficient allocation")
+                            .coefficients
+                            .is_empty()
+                    );
+                }
+            }
+            for factor in [&[][..], &[Real::from(-1), Real::from(2)][..]] {
+                assert!(
+                    bivariate_multiply_first_parameter(zero, factor)
+                        .coefficients
+                        .is_empty()
+                );
+            }
+        }
+        assert!(
+            bivariate_multiply_first_parameter(&nonzero, &[])
+                .coefficients
+                .is_empty()
+        );
+    }
+
     #[test]
     fn domain_component_normal_constraints_follow_swapped_operands() {
         let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();

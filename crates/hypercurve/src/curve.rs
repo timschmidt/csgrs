@@ -5961,58 +5961,22 @@ fn solve_carrier_fillet_corner(
                 )?;
                 saw_outside_domain |= centers.outside_domain;
                 if centers.coincident {
-                    let mixed = match (previous_offset, next_offset) {
+                    if matches!(
+                        (previous_offset, next_offset),
                         (
-                            FilletOffsetCarrier2::Line { source, .. },
-                            FilletOffsetCarrier2::Parallel {
-                                source: parallel, ..
-                            },
-                        ) => Some((source, *parallel, true)),
-                        (
-                            FilletOffsetCarrier2::Parallel {
-                                source: parallel, ..
-                            },
-                            FilletOffsetCarrier2::Line { source, .. },
-                        ) => Some((source, *parallel, false)),
-                        _ => None,
-                    };
-                    if let Some((source, parallel, line_is_previous)) = mixed {
-                        let FilletLinearSource2::Native {
-                            source,
-                            parameterization,
-                            ..
-                        } = source
-                        else {
-                            return Err(ExactCurveError::blocked(
-                                CurveOperation2::Fillet,
-                                previous_family,
-                                crate::UncertaintyReason::Unsupported,
-                            ));
-                        };
-                        // Coincidence needs the complete source-parameter
-                        // correspondence, including nonlinear line images and
-                        // collapsed parallel centers. Re-enter the shared
-                        // parametric kernel once; both sides are then parallel
-                        // carriers and the native isolated fast path is retained.
-                        let line = parameterization.map_or_else(
-                            || Curve2::from(QuadraticBezier2::from_line_segment((*source).clone())),
-                            |curve| Curve2::from(curve.clone()),
-                        );
-                        let linear = ExactCornerCarrier2::Bezier(&line);
-                        let parallel = parallel.corner_carrier();
-                        let (previous, next) = if line_is_previous {
-                            (linear, parallel)
-                        } else {
-                            (parallel, linear)
-                        };
-                        return solve_carrier_fillet_corner(
-                            previous,
-                            next,
+                            FilletOffsetCarrier2::Line { .. },
+                            FilletOffsetCarrier2::Parallel { .. }
+                        ) | (
+                            FilletOffsetCarrier2::Parallel { .. },
+                            FilletOffsetCarrier2::Line { .. }
+                        )
+                    ) {
+                        return curve_fillet::replay_coincident_linear_parallel_fillet(
+                            [&previous, &next],
                             radius,
                             retain_selected_circle_endpoints,
                             domains,
-                            previous_family,
-                            next_family,
+                            [previous_family, next_family],
                             constraints,
                             policy,
                         );

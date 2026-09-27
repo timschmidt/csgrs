@@ -597,6 +597,175 @@ pub(super) fn constrained_coincident_circular_fillet(
     Ok(candidates.finish(CurveCornerNoSolution2::OutsideTrimDomain))
 }
 
+/// Replays a mixed coincident support through the shared parameter kernel.
+/// A retained chord contributes an affine solve chart with its exact original
+/// endpoints; the nonlinear companion keeps every source parameter and sheet.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn replay_coincident_linear_parallel_fillet(
+    prepared: [&PreparedFilletCarrier2<'_>; 2],
+    radius: &Real,
+    retain_selected_circle_endpoints: bool,
+    domains: [FilletContactDomain2; 2],
+    families: [CurveFamily2; 2],
+    binding: Option<&FilletConstraintBinding2<'_>>,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
+    let (linear, parallel, axis) = match prepared {
+        [
+            linear @ PreparedFilletCarrier2::Line { .. },
+            PreparedFilletCarrier2::Parallel { source, .. },
+        ] => (linear, *source, 0),
+        [
+            PreparedFilletCarrier2::Parallel { source, .. },
+            linear @ PreparedFilletCarrier2::Line { .. },
+        ] => (linear, *source, 1),
+        _ => unreachable!("a mixed coincident support retains its line and parallel sources"),
+    };
+    let PreparedFilletCarrier2::Line {
+        source,
+        chord_support,
+        ..
+    } = linear
+    else {
+        unreachable!()
+    };
+    let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Fillet, families[axis], cause);
+    let blocked =
+        |reason| ExactCurveError::blocked(CurveOperation2::Fillet, families[axis], reason);
+    let line = match source {
+        FilletLinearSource2::Native {
+            source,
+            parameterization,
+            ..
+        } => parameterization.map_or_else(
+            || Curve2::from(QuadraticBezier2::from_line_segment((*source).clone())),
+            |curve| Curve2::from(curve.clone()),
+        ),
+        FilletLinearSource2::AlgebraicChord(chord) => {
+            let support = chord_support
+                .as_ref()
+                .expect("a represented chord support is prepared once");
+            let parameter =
+                |point| match crate::bezier_offset::affine_line_parameter_at_incident_point(
+                    support, point, policy,
+                )
+                .map_err(invalid)?
+                {
+                    Classification::Decided(parameter) => Ok(parameter),
+                    Classification::Uncertain(reason) => Err(blocked(reason)),
+                };
+            let reversed = match chord
+                .tangent_dot_vector_sign(&support.delta(), policy)
+                .map_err(invalid)?
+            {
+                Classification::Decided(RealSign::Positive) => false,
+                Classification::Decided(RealSign::Negative) => true,
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(invalid(CurveError::Topology(
+                        "a chord and its affine support had orthogonal directions".into(),
+                    )));
+                }
+                Classification::Uncertain(reason) => return Err(blocked(reason)),
+            };
+            let [start, end] = if reversed {
+                [chord.end(), chord.start()]
+            } else {
+                [chord.start(), chord.end()]
+            };
+            let curve = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+                QuadraticBezier2::from_line_segment(support.clone()),
+            ))
+            .map_err(invalid)?;
+            let chart = crate::bezier_split::BezierSelectedFiberFragment2::new(
+                crate::bezier_split::BezierSelectedFiberSource2::Rational(curve),
+                CurveParameterRange2::new_validated(parameter(start)?, parameter(end)?),
+                start.clone(),
+                end.clone(),
+            );
+            Curve2::from_retained_fragment(crate::BezierSplitFragment2::SelectedFiber(
+                if reversed { chart.reversed() } else { chart },
+            ))
+        }
+    };
+    // Chord locations name points on an injective affine source. Transport a
+    // requested location through that point, leaving the companion's possibly
+    // noninjective parameter constraint unchanged.
+    let mut request = source
+        .algebraic_chord()
+        .and(binding)
+        .map(|binding| binding.request.clone());
+    if let Some(request) = &mut request
+        && let Some(CurveFilletContact2::Parameter(parameter)) = &request.contacts[axis]
+    {
+        request.contacts[axis] = Some(CurveFilletContact2::Point(
+            binding
+                .expect("a transported request retains its binding")
+                .parameter_point(axis, parameter, policy)?,
+        ));
+    }
+    let transported =
+        request
+            .as_ref()
+            .zip(binding)
+            .map(|(request, binding)| FilletConstraintBinding2 {
+                request,
+                sources: binding.sources,
+                maps: binding.maps,
+                charts: binding.charts,
+            });
+    let linear = match line.retained_fragment() {
+        Some(crate::BezierSplitFragment2::SelectedFiber(chart)) => {
+            ExactCornerCarrier2::SelectedFiber(chart)
+        }
+        _ => ExactCornerCarrier2::Bezier(&line),
+    };
+    let parallel = parallel.corner_carrier();
+    let [previous, next] = if axis == 0 {
+        [linear, parallel]
+    } else {
+        [parallel, linear]
+    };
+    let solutions = solve_carrier_fillet_corner(
+        previous,
+        next,
+        radius,
+        retain_selected_circle_endpoints,
+        domains,
+        families[0],
+        families[1],
+        transported.as_ref().or(binding),
+        policy,
+    )?;
+    let Some(chord) = source.algebraic_chord() else {
+        return Ok(solutions);
+    };
+    let empty_reason = solutions
+        .no_solution_reason()
+        .unwrap_or(CurveCornerNoSolution2::UnsatisfiedConstraints);
+    let mut candidates = CornerSolutionAccumulator::Empty;
+    for mut corner in solutions.into_solutions() {
+        let cut = if axis == 0 {
+            &mut corner.previous
+        } else {
+            &mut corner.next
+        };
+        // The affine chart certified this exact location and domain. Publish
+        // the original chord's monotone location instead of its solve scalar.
+        cut.parameter = Some(CurveParameter2::from_algebraic_chord(
+            chord
+                .parameter_at_certified_support_point(cut.point.clone(), policy)
+                .map_err(invalid)?,
+        ));
+        if let Some(binding) = binding
+            && !binding.matches(&corner, policy)?
+        {
+            continue;
+        }
+        candidates.push(corner);
+    }
+    Ok(candidates.finish(empty_reason))
+}
+
 /// Resolves coincident linear center supports without selecting a representative.
 /// Equal source directions collapse every inserted arc. Opposed directions give
 /// semicircles, subject to the exact source domains and supplied constraints.
@@ -2690,101 +2859,157 @@ mod tests {
 
     #[test]
     fn nonlinear_linear_fillet_components_retain_unique_contacts_and_tangents() {
-        let p = Point2::from_values;
-        let spline = Curve2::try_nurbs(
-            2,
-            vec![p(0, 0), p(0, 1), p(0, 2), p(-1, 2), p(-3, 2)],
-            vec![Real::one(); 5],
-            [0, 0, 0, 1, 1, 2, 2, 2]
-                .into_iter()
-                .map(Real::from)
-                .collect(),
-            &CurveContext::STRICT,
-        )
-        .unwrap()
-        .value;
-        let source = CurvePath2::try_new(vec![
-            LineSeg2::try_new(p(-3, 0), p(0, 0)).unwrap().into(),
-            spline,
-        ])
-        .unwrap();
-        let witness = CurvePath2::try_new(vec![
-            LineSeg2::try_new(p(-3, 0), p(-2, 0)).unwrap().into(),
-            CircularArc2::try_from_center(p(-2, 0), p(-2, 2), p(-2, 1), false)
-                .unwrap()
-                .into(),
-            LineSeg2::try_new(p(-2, 2), p(-3, 2)).unwrap().into(),
-        ])
-        .unwrap();
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            for reversed in [false, true] {
-                let path = if reversed {
-                    source.reversed(&policy).unwrap().value
+        for rotated in [false, true] {
+            let p = |x: i64, y: i64| {
+                if rotated {
+                    Point2::new(q(3 * x - 4 * y, 5), q(4 * x + 3 * y, 5))
                 } else {
-                    source.clone()
-                };
-                let spline_axis = usize::from(!reversed);
-                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                    assert!(matches!(
-                        path.fillet_vertex(1, &CurveFillet2::new(Real::one()), mode, &policy),
-                        Err(ExactCurveError::Invalid {
-                            cause: CurveError::FilletConstraintRequired,
-                            ..
-                        })
-                    ));
-                    for selection in 0..3 {
-                        let mut request = CurveFillet2::new(Real::one());
-                        match selection {
-                            0 => request.center = Some(p(-2, 1).into()),
-                            1 => {
-                                request.contacts[spline_axis] =
-                                    Some(CurveFilletContact2::Point(p(-2, 2).into()))
-                            }
-                            _ => {
-                                // On the second span x(u)=-2u-u². Keep its
-                                // authored knot coordinate, including reversal.
-                                let parameter = Real::from(3).sqrt().unwrap();
-                                request.contacts[spline_axis] =
-                                    Some(CurveFilletContact2::Parameter(
-                                        (if reversed {
-                                            Real::from(2) - parameter
-                                        } else {
-                                            parameter
-                                        })
-                                        .into(),
-                                    ));
+                    Point2::from_values(x, y)
+                }
+            };
+            let spline = Curve2::try_nurbs(
+                2,
+                vec![p(0, 0), p(0, 1), p(0, 2), p(-1, 2), p(-3, 2)],
+                vec![Real::one(); 5],
+                [0, 0, 0, 1, 1, 2, 2, 2]
+                    .into_iter()
+                    .map(Real::from)
+                    .collect(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .value;
+            let witness = CurvePath2::try_new(vec![
+                LineSeg2::try_new(p(-3, 0), p(-2, 0)).unwrap().into(),
+                CircularArc2::try_from_center(p(-2, 0), p(-2, 2), p(-2, 1), false)
+                    .unwrap()
+                    .into(),
+                LineSeg2::try_new(p(-2, 2), p(-3, 2)).unwrap().into(),
+            ])
+            .unwrap();
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let line = LineSeg2::try_new(p(-3, 0), p(0, 0)).unwrap();
+                let chord = algebraic_chord_from_line_support(
+                    &line,
+                    CurveOperation2::Fillet,
+                    CurveFamily2::Line,
+                    &policy,
+                )
+                .unwrap();
+                let retained = chord
+                    .parallel_left_retained(Real::one(), &policy)
+                    .unwrap()
+                    .parallel_left_retained(-Real::one(), &policy)
+                    .unwrap();
+                assert!(retained.start().coordinates().is_none());
+                assert!(retained.end().coordinates().is_none());
+                for (representation, first) in [
+                    Curve2::from(line),
+                    Curve2::from(chord),
+                    Curve2::from(retained),
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    let source = CurvePath2::try_new(vec![first, spline.clone()]).unwrap();
+                    for reversed in [false, true] {
+                        let path = if reversed {
+                            source.reversed(&policy).unwrap().value
+                        } else {
+                            source.clone()
+                        };
+                        let spline_axis = usize::from(!reversed);
+                        for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                            assert!(matches!(
+                                path.fillet_vertex(
+                                    1,
+                                    &CurveFillet2::new(Real::one()),
+                                    mode,
+                                    &policy
+                                ),
+                                Err(ExactCurveError::Invalid {
+                                    cause: CurveError::FilletConstraintRequired,
+                                    ..
+                                })
+                            ));
+                            for selection in 0..5 {
+                                let mut request = CurveFillet2::new(Real::one());
+                                match selection {
+                                    0 => request.center = Some(p(-2, 1).into()),
+                                    1 => {
+                                        request.contacts[spline_axis] =
+                                            Some(CurveFilletContact2::Point(p(-2, 2).into()))
+                                    }
+                                    2 => {
+                                        // On the second span x(u)=-2u-u². Keep its
+                                        // authored knot coordinate, including reversal.
+                                        let parameter = Real::from(3).sqrt().unwrap();
+                                        request.contacts[spline_axis] =
+                                            Some(CurveFilletContact2::Parameter(
+                                                (if reversed {
+                                                    Real::from(2) - parameter
+                                                } else {
+                                                    parameter
+                                                })
+                                                .into(),
+                                            ));
+                                    }
+                                    3 => {
+                                        request.contacts[1 - spline_axis] =
+                                            Some(CurveFilletContact2::Point(p(-2, 0).into()))
+                                    }
+                                    _ => {
+                                        let parameter = match path.curves()[1 - spline_axis]
+                                            .retained_fragment()
+                                        {
+                                            Some(crate::BezierSplitFragment2::AlgebraicChord(
+                                                chord,
+                                            )) => CurveParameter2::from_algebraic_chord(
+                                                chord
+                                                    .parameter_at_certified_support_point(
+                                                        p(-2, 0).into(),
+                                                        &policy,
+                                                    )
+                                                    .unwrap(),
+                                            ),
+                                            _ => (if reversed { q(2, 3) } else { q(1, 3) }).into(),
+                                        };
+                                        request.contacts[1 - spline_axis] =
+                                            Some(CurveFilletContact2::Parameter(parameter));
+                                    }
+                                }
+                                let selected = path.fillet_vertex(1, &request, mode, &policy)
+                            .unwrap_or_else(|error| panic!("nonlinear line fillet: {error}; rotated={rotated}, representation={representation}, reversed={reversed}, mode={mode:?}, selection={selection}"));
+                                assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
+                                assert_eq!(
+                                    selected.value.candidate_count(),
+                                    1,
+                                    "rotated={rotated}, representation={representation}, reversed={reversed}, mode={mode:?}, selection={selection}"
+                                );
+                                let edited = &selected.value.solutions()[0];
+                                same(&edited.start(), &path.start(), &policy);
+                                same(&edited.end(), &path.end(), &policy);
+                                let contacts = [p(-2, 0).into(), p(-2, 2).into()];
+                                same(
+                                    &edited.curves().first().unwrap().end(),
+                                    &contacts[usize::from(reversed)],
+                                    &policy,
+                                );
+                                same(
+                                    &edited.curves().last().unwrap().start(),
+                                    &contacts[spline_axis],
+                                    &policy,
+                                );
+                                for pair in edited.curves().windows(2) {
+                                    same(&pair[0].end(), &pair[1].start(), &policy);
+                                }
+                                let difference = closed_region(edited, &policy)
+                                    .boolean_regions(&closed_region(&witness, &policy), &policy)
+                                    .unwrap();
+                                assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
+                                assert!(difference.value.xor().is_empty());
                             }
                         }
-                        let selected = path.fillet_vertex(1, &request, mode, &policy)
-                            .unwrap_or_else(|error| panic!("nonlinear line fillet: {error}; reversed={reversed}, mode={mode:?}, selection={selection}"));
-                        assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
-                        assert_eq!(
-                            selected.value.candidate_count(),
-                            1,
-                            "reversed={reversed}, mode={mode:?}, selection={selection}"
-                        );
-                        let edited = &selected.value.solutions()[0];
-                        same(&edited.start(), &path.start(), &policy);
-                        same(&edited.end(), &path.end(), &policy);
-                        let contacts = [p(-2, 0).into(), p(-2, 2).into()];
-                        same(
-                            &edited.curves().first().unwrap().end(),
-                            &contacts[usize::from(reversed)],
-                            &policy,
-                        );
-                        same(
-                            &edited.curves().last().unwrap().start(),
-                            &contacts[spline_axis],
-                            &policy,
-                        );
-                        for pair in edited.curves().windows(2) {
-                            same(&pair[0].end(), &pair[1].start(), &policy);
-                        }
-                        let difference = closed_region(edited, &policy)
-                            .boolean_regions(&closed_region(&witness, &policy), &policy)
-                            .unwrap();
-                        assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
-                        assert!(difference.value.xor().is_empty());
                     }
                 }
             }
