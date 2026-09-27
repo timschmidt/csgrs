@@ -304,6 +304,15 @@ pub(crate) struct CurveParameterComponent2 {
     point_image: Option<CurvePoint2>,
 }
 
+/// A constrained component is empty, a selected pair, or still has a free axis.
+/// The last case is an input requirement, never evidence of no solution.
+#[derive(Clone, Debug)]
+pub(crate) enum CurveParameterComponentSelection2 {
+    Empty,
+    Selected([CurveParameter2; 2]),
+    NeedsConstraint,
+}
+
 #[derive(Clone, Debug)]
 enum ComponentParameterLocus2 {
     Correspondence {
@@ -390,70 +399,202 @@ impl CurveParameterComponent2 {
         second: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let (first, second) = if self.swapped {
-            (second, first)
-        } else {
-            (first, second)
-        };
+        Ok(self
+            .constrain([Some(first), Some(second)], policy)?
+            .map(|selection| match selection {
+                CurveParameterComponentSelection2::Empty => false,
+                CurveParameterComponentSelection2::Selected(_) => true,
+                CurveParameterComponentSelection2::NeedsConstraint => {
+                    unreachable!("two specified parameters determine a pair")
+                }
+            }))
+    }
+
+    /// Selects a pair using zero, one or two exact source-chart constraints.
+    /// A correspondence determines its opposite contact without reconstructing
+    /// a Cartesian point. A product must have every free axis constrained.
+    pub(crate) fn constrain(
+        &self,
+        mut constraints: [Option<&CurveParameter2>; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveParameterComponentSelection2>> {
+        use CurveParameterComponentSelection2::{Empty, NeedsConstraint, Selected};
+        if self.swapped {
+            constraints.swap(0, 1);
+        }
         let mut local = [None, None];
-        for (axis, parameter) in [first, second].into_iter().enumerate() {
+        for (axis, constraint) in constraints.iter().enumerate() {
+            let Some(parameter) = constraint else {
+                continue;
+            };
             let parameter = match self.charts[axis].local_parameter(parameter, policy)? {
                 Classification::Decided(Some(parameter)) => parameter,
-                Classification::Decided(None) => return Ok(Classification::Decided(false)),
+                Classification::Decided(None) => return Ok(Classification::Decided(Empty)),
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
             match self.intervals[axis].contains(&parameter, policy)? {
                 Classification::Decided(true) => local[axis] = Some(parameter),
-                other => return Ok(other),
+                Classification::Decided(false) => return Ok(Classification::Decided(Empty)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        let [first, second] =
-            local.map(|parameter| parameter.expect("both component parameters are owned"));
         match &self.locus {
             ComponentParameterLocus2::Correspondence {
                 source,
                 range,
                 inclusion,
             } => {
-                match CurveParameterDomain2::new(range, None)
-                    .contains_finite_parameter(&first, policy)?
-                {
-                    Classification::Decided(true) => {}
-                    other => return Ok(other),
-                }
-                for (boundary, included) in
-                    [(range.start(), inclusion[0]), (range.end(), inclusion[1])]
-                {
-                    if !included {
-                        match first.same_value(boundary, policy)? {
-                            Classification::Decided(true) => {
-                                return Ok(Classification::Decided(false));
+                let axis = if local[0].is_some() {
+                    0
+                } else if local[1].is_some() {
+                    1
+                } else {
+                    return Ok(Classification::Decided(NeedsConstraint));
+                };
+                let contains_first =
+                    |first: &CurveParameter2| -> CurveResult<Classification<bool>> {
+                        match CurveParameterDomain2::new(range, None)
+                            .contains_finite_parameter(first, policy)?
+                        {
+                            Classification::Decided(true) => (),
+                            other => return Ok(other),
+                        }
+                        for (boundary, included) in
+                            [(range.start(), inclusion[0]), (range.end(), inclusion[1])]
+                        {
+                            if !included {
+                                match first.same_value(boundary, policy)? {
+                                    Classification::Decided(true) => {
+                                        return Ok(Classification::Decided(false));
+                                    }
+                                    Classification::Decided(false) => (),
+                                    Classification::Uncertain(reason) => {
+                                        return Ok(Classification::Uncertain(reason));
+                                    }
+                                }
                             }
-                            Classification::Decided(false) => {}
+                        }
+                        Ok(Classification::Decided(true))
+                    };
+                // Exclude a first-axis constraint before asking the algebraic
+                // correspondence to transport it outside its certified range.
+                if let Some(first) = &local[0] {
+                    match contains_first(first)? {
+                        Classification::Decided(true) => (),
+                        Classification::Decided(false) => {
+                            return Ok(Classification::Decided(Empty));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                let mapped = match source.map_parameter(
+                    local[axis].as_ref().expect("a constrained contact"),
+                    axis == 0,
+                    policy,
+                )? {
+                    Classification::Decided(Some(mapped)) => mapped,
+                    Classification::Decided(None) => return Ok(Classification::Decided(Empty)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if let Some(other) = &local[1 - axis] {
+                    match mapped.same_value(other, policy)? {
+                        Classification::Decided(true) => (),
+                        Classification::Decided(false) => {
+                            return Ok(Classification::Decided(Empty));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                } else {
+                    local[1 - axis] = Some(mapped);
+                }
+                let first = local[0]
+                    .as_ref()
+                    .expect("a correspondence determines both contacts");
+                match if axis == 0 {
+                    Classification::Decided(true)
+                } else {
+                    contains_first(first)?
+                } {
+                    Classification::Decided(true) => (),
+                    Classification::Decided(false) => return Ok(Classification::Decided(Empty)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            ComponentParameterLocus2::Product(fixed) => {
+                for (parameter, fixed) in local.iter_mut().zip(fixed) {
+                    if let Some(fixed) = fixed {
+                        if let Some(parameter) = parameter {
+                            match parameter.same_value(fixed, policy)? {
+                                Classification::Decided(true) => (),
+                                Classification::Decided(false) => {
+                                    return Ok(Classification::Decided(Empty));
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            }
+                        } else {
+                            *parameter = Some(fixed.clone());
+                        }
+                    }
+                }
+                if local.iter().any(Option::is_none) {
+                    return Ok(Classification::Decided(NeedsConstraint));
+                }
+            }
+        }
+        let local = local.map(|parameter| parameter.expect("every contact is determined"));
+        let mut selected = [None, None];
+        for (axis, parameter) in local.iter().enumerate() {
+            match self.intervals[axis].contains(parameter, policy)? {
+                Classification::Decided(true) => (),
+                Classification::Decided(false) => return Ok(Classification::Decided(Empty)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+            selected[axis] = Some(if let Some(original) = constraints[axis] {
+                original.clone()
+            } else {
+                let chart = &self.charts[axis];
+                match ComponentParameterChart2::image(
+                    parameter,
+                    &chart.numerator,
+                    &chart.denominator,
+                    policy,
+                )? {
+                    Classification::Decided(Some(parameter)) => {
+                        // Recheck chart ownership after forward transport. A
+                        // computed contact cannot claim a finite owner's point
+                        // through an overlapping incident chart.
+                        match chart.local_parameter(&parameter, policy)? {
+                            Classification::Decided(Some(_)) => parameter,
+                            Classification::Decided(None) => {
+                                return Ok(Classification::Decided(Empty));
+                            }
                             Classification::Uncertain(reason) => {
                                 return Ok(Classification::Uncertain(reason));
                             }
                         }
                     }
-                }
-                match source.map_parameter(&first, true, policy)? {
-                    Classification::Decided(Some(mapped)) => mapped.same_value(&second, policy),
-                    Classification::Decided(None) => Ok(Classification::Decided(false)),
-                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-                }
-            }
-            ComponentParameterLocus2::Product(fixed) => {
-                for (parameter, fixed) in [first, second].iter().zip(fixed) {
-                    if let Some(fixed) = fixed {
-                        match parameter.same_value(fixed, policy)? {
-                            Classification::Decided(true) => {}
-                            other => return Ok(other),
-                        }
+                    Classification::Decided(None) => return Ok(Classification::Decided(Empty)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
                 }
-                Ok(Classification::Decided(true))
-            }
+            });
         }
+        let mut selected = selected.map(|parameter| parameter.expect("both source contacts"));
+        if self.swapped {
+            selected.swap(0, 1);
+        }
+        Ok(Classification::Decided(Selected(selected)))
     }
 }
 
@@ -719,6 +860,254 @@ mod tests {
                 &q(2, 3).into(),
                 &policy
             )));
+        }
+    }
+    #[test]
+    fn contact_constraints_distinguish_free_axes_from_empty_components() {
+        use CurveParameterComponentSelection2::{Empty, NeedsConstraint, Selected};
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let interval = ComponentParameterInterval2 {
+                range: CurveParameterRange2::unit(),
+                inclusion: [true, false],
+            };
+            let chart = ComponentParameterChart2 {
+                numerator: [Real::from(2), Real::from(3)],
+                denominator: [Real::one(), Real::zero()],
+                interval: interval.clone(),
+                finite_owner: None,
+            };
+            let charts = Arc::new([chart.clone(), chart]);
+            let fixed = CurveParameter2::from(q(1, 2));
+            let free = CurveParameter2::from(Real::from(2).sqrt().unwrap() + Real::from(2));
+            let fixed_source = CurveParameter2::from(q(7, 2));
+            for swapped in [false, true] {
+                let mut component = CurveParameterComponent2::product(
+                    [Some(fixed.clone()), None],
+                    charts.clone(),
+                    [interval.clone(), interval.clone()],
+                );
+                if swapped {
+                    component = component.swapped();
+                }
+                fn inputs(
+                    mut pair: [Option<&CurveParameter2>; 2],
+                    swapped: bool,
+                ) -> [Option<&CurveParameter2>; 2] {
+                    if swapped {
+                        pair.swap(0, 1);
+                    }
+                    pair
+                }
+                assert!(matches!(
+                    decided(component.constrain([None, None], &policy)),
+                    NeedsConstraint
+                ));
+                assert!(matches!(
+                    decided(
+                        component.constrain(inputs([Some(&fixed_source), None], swapped), &policy)
+                    ),
+                    NeedsConstraint
+                ));
+                let Selected(pair) =
+                    decided(component.constrain(inputs([None, Some(&free)], swapped), &policy))
+                else {
+                    panic!("the remaining free axis was constrained");
+                };
+                assert_eq!(pair[usize::from(!swapped)], free);
+                assert!(decided(
+                    pair[usize::from(swapped)].same_value(&fixed_source, &policy)
+                ));
+                assert!(decided(
+                    component.contains_pair(&pair[0], &pair[1], &policy)
+                ));
+                assert!(matches!(
+                    decided(component.constrain(inputs([Some(&free), None], swapped), &policy)),
+                    Empty
+                ));
+                let excluded = CurveParameter2::from(Real::from(5));
+                assert!(matches!(
+                    decided(component.constrain(inputs([None, Some(&excluded)], swapped), &policy)),
+                    Empty
+                ));
+            }
+            let product = CurveParameterComponent2::product(
+                [None, None],
+                charts,
+                [interval.clone(), interval],
+            );
+            assert!(matches!(
+                decided(product.constrain([Some(&free), None], &policy)),
+                NeedsConstraint
+            ));
+            assert!(matches!(
+                decided(product.constrain([Some(&free), Some(&fixed_source)], &policy)),
+                Selected(_)
+            ));
+        }
+    }
+
+    #[test]
+    fn one_contact_replays_correspondence_through_both_source_charts() {
+        use CurveParameterComponentSelection2::{Empty, NeedsConstraint, Selected};
+        let equation =
+            BivariatePolynomial::new(vec![vec![Real::zero(), -Real::one()], vec![Real::one()]]);
+        let positive = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selection = decided(select_parameter_component_in_domain(
+                &equation,
+                &ParameterComponentSelector2::Positive(&positive, None),
+                [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+                ParameterComponentQuery2::AllComponents(None),
+                &policy,
+                config,
+            ));
+            assert_eq!(selection.components.len(), 1);
+            let mut component = selection.components.into_iter().next().unwrap();
+            let interval = ComponentParameterInterval2 {
+                range: CurveParameterRange2::unit(),
+                inclusion: [false, false],
+            };
+            component.charts = Arc::new([
+                ComponentParameterChart2 {
+                    numerator: [Real::from(2), Real::from(3)],
+                    denominator: [Real::one(), Real::zero()],
+                    interval: interval.clone(),
+                    finite_owner: None,
+                },
+                ComponentParameterChart2 {
+                    numerator: [Real::from(5), Real::from(-2)],
+                    denominator: [Real::one(), Real::zero()],
+                    interval: interval.clone(),
+                    finite_owner: None,
+                },
+            ]);
+            component.intervals = [interval.clone(), interval.clone()];
+            let local = Real::from(2).sqrt().unwrap() / Real::from(2);
+            let local = local.unwrap();
+            let first = CurveParameter2::from(Real::from(2) + Real::from(3) * &local);
+            let second = CurveParameter2::from(Real::from(5) - Real::from(2) * &local);
+            for swapped in [false, true] {
+                let component = if swapped {
+                    component.clone().swapped()
+                } else {
+                    component.clone()
+                };
+                let expected = if swapped {
+                    [&second, &first]
+                } else {
+                    [&first, &second]
+                };
+                assert!(matches!(
+                    decided(component.constrain([None, None], &policy)),
+                    NeedsConstraint
+                ));
+                for axis in 0..2 {
+                    let mut constraints = [None, None];
+                    constraints[axis] = Some(expected[axis]);
+                    let Selected(pair) = decided(component.constrain(constraints, &policy)) else {
+                        panic!("one contact determines the corresponding contact");
+                    };
+                    assert_eq!(&pair[axis], expected[axis]);
+                    assert!(decided(
+                        pair[1 - axis].same_value(expected[1 - axis], &policy)
+                    ));
+                    assert!(decided(
+                        component.contains_pair(&pair[0], &pair[1], &policy)
+                    ));
+                }
+                let wrong = CurveParameter2::from(Real::from(4));
+                assert!(matches!(
+                    decided(component.constrain([Some(expected[0]), Some(&wrong)], &policy)),
+                    Empty
+                ));
+                let endpoint = CurveParameter2::from(Real::from(5));
+                assert!(matches!(
+                    decided(component.constrain([Some(&endpoint), None], &policy)),
+                    Empty
+                ));
+            }
+            // A reversed correspondence range keeps inclusion attached to
+            // its stored endpoints, independently of the chart orientation.
+            let mut reversed_range = component.clone();
+            for chart in Arc::make_mut(&mut reversed_range.charts) {
+                chart.interval.inclusion = [true, true];
+            }
+            for interval in &mut reversed_range.intervals {
+                interval.inclusion = [true, true];
+            }
+            let ComponentParameterLocus2::Correspondence {
+                range, inclusion, ..
+            } = &mut reversed_range.locus
+            else {
+                panic!("retained diagonal correspondence");
+            };
+            *range = CurveParameterRange2::new_validated(Real::one().into(), Real::zero().into());
+            *inclusion = [true, false];
+            let included = CurveParameter2::from(Real::from(5));
+            let excluded = CurveParameter2::from(Real::from(2));
+            assert!(matches!(
+                decided(reversed_range.constrain([Some(&included), None], &policy)),
+                Selected(_)
+            ));
+            assert!(matches!(
+                decided(reversed_range.constrain([Some(&excluded), None], &policy)),
+                Empty
+            ));
+            let included_other = CurveParameter2::from(Real::from(3));
+            let excluded_other = CurveParameter2::from(Real::from(5));
+            assert!(matches!(
+                decided(reversed_range.constrain([None, Some(&included_other)], &policy)),
+                Selected(_)
+            ));
+            assert!(matches!(
+                decided(reversed_range.constrain([None, Some(&excluded_other)], &policy)),
+                Empty
+            ));
+            // Forward transport onto a compact incident chart must still
+            // subtract that chart's finite owner. Here u maps to u/(1-u),
+            // whose points [2,4] belong to a separate finite source chart.
+            component.charts = Arc::new([
+                ComponentParameterChart2 {
+                    numerator: [Real::zero(), Real::one()],
+                    denominator: [Real::one(), Real::zero()],
+                    interval: interval.clone(),
+                    finite_owner: None,
+                },
+                ComponentParameterChart2 {
+                    numerator: [Real::zero(), Real::one()],
+                    denominator: [Real::one(), -Real::one()],
+                    interval: interval.clone(),
+                    finite_owner: Some((
+                        CurveParameterRange2::new_validated(
+                            Real::from(2).into(),
+                            Real::from(4).into(),
+                        ),
+                        BezierParameterRayDirection2::Increasing,
+                    )),
+                },
+            ]);
+            for (local, expected) in [
+                (q(1, 2), Some(Real::one())),
+                (q(2, 3), None),
+                (q(3, 4), None),
+                (q(4, 5), None),
+                (q(9, 10), Some(Real::from(9))),
+            ] {
+                let parameter = CurveParameter2::from(local);
+                let result = decided(component.constrain([Some(&parameter), None], &policy));
+                match (result, expected) {
+                    (Selected(pair), Some(expected)) => {
+                        assert_eq!(pair[0], parameter);
+                        assert!(decided(pair[1].same_value(&expected.into(), &policy)));
+                    }
+                    (Empty, None) => (),
+                    _ => panic!("transported contact violated finite chart ownership"),
+                }
+            }
         }
     }
 }

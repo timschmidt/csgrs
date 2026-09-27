@@ -229,14 +229,23 @@ impl FilletCornerFamily2 {
         if data.policy.selects_approximate_512() {
             policy.observe_approximate_512();
         }
-        match self
+        let selected = match self
             .component
-            .contains_pair(previous, next, policy)
+            .constrain([Some(previous), Some(next)], policy)
             .map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, data.families[0], cause)
             })? {
-            Classification::Decided(true) => (),
-            Classification::Decided(false) => return Ok(None),
+            Classification::Decided(
+                crate::bezier_offset::CurveParameterComponentSelection2::Selected(pair),
+            ) => pair,
+            Classification::Decided(
+                crate::bezier_offset::CurveParameterComponentSelection2::Empty,
+            ) => return Ok(None),
+            Classification::Decided(
+                crate::bezier_offset::CurveParameterComponentSelection2::NeedsConstraint,
+            ) => {
+                unreachable!("both fillet contacts were constrained")
+            }
             Classification::Uncertain(reason) => {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Fillet,
@@ -244,7 +253,8 @@ impl FilletCornerFamily2 {
                     reason,
                 ));
             }
-        }
+        };
+        let [previous, next] = &selected;
         let point = match self.component.point_image() {
             Some(point) => point.clone(),
             None => analytic_parallel_point_evidence(

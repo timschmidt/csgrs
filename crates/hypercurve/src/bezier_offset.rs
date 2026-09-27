@@ -16,11 +16,11 @@
 
 #[path = "curve_parameter_component.rs"]
 mod parameter_component;
-pub(crate) use parameter_component::CurveParameterComponent2;
 use parameter_component::{
     ComponentParameterChart2, ComponentParameterInterval2, retain_component_charts,
     retain_finite_parallel_components,
 };
+pub(crate) use parameter_component::{CurveParameterComponent2, CurveParameterComponentSelection2};
 
 use crate::CurvePointData2;
 use std::borrow::Cow;
