@@ -37740,6 +37740,26 @@ impl BezierAlgebraicCuspSemicircle2 {
             Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
                 candidates
             }
+            Classification::Decided(BezierAlgebraicFiberProjection2::IdenticallyZero)
+                if !tangent_candidates =>
+            {
+                // A represented center parameter can make the entire target
+                // circle incident, just as a selected algebraic parameter can.
+                // Its exact frame removes the squared source-speed equation,
+                // including a possibly vanishing conjugate factor, and reuses
+                // the common finite-contact/overlap replay authority.
+                let Some(frame) = self.exact_point_component_frame(policy)? else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                return self.represented_rational_intersections_internal(
+                    other,
+                    range,
+                    retain_parameter_map,
+                    Some(frame),
+                    "exact-parallel-normal-component",
+                    policy,
+                );
+            }
             Classification::Decided(
                 BezierAlgebraicFiberProjection2::IdenticallyZero
                 | BezierAlgebraicFiberProjection2::Degenerate,
