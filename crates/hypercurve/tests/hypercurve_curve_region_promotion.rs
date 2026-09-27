@@ -4959,9 +4959,12 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
         "both analytic-parallel endpoint orientations must fillet in {mode:?}: {outcomes:?}; fragments={fragment_kinds:?}"
     );
     for (corner, candidate, filleted) in filleted {
-        let fillet_circle_count = filleted.boundary_loops()[0]
-            .curves()
+        // An incident extension can regularize into several loops. The
+        // inserted circle's chart ownership is independent of loop order.
+        let fillet_circle_count = filleted
+            .boundary_loops()
             .iter()
+            .flat_map(|boundary| boundary.curves())
             .filter(|fragment| fragment.family() == CurveFamily2::CircularArc)
             .count();
         assert!(
