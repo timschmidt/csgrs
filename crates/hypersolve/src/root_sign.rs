@@ -2,7 +2,7 @@
 //!
 //! For endpoint-free (a,b), Var(SRemS(P,P'Q);a,b) is the sum of signs of Q
 //! at P's distinct roots. A certified singleton therefore gives one sign.
-//! See Li et al., https://doi.org/10.1007/s10817-017-9424-6, Theorem 1.
+//! See Li et al., <https://doi.org/10.1007/s10817-017-9424-6>, Theorem 1.
 
 use std::cmp::Ordering;
 
@@ -185,12 +185,21 @@ pub fn sign_at_selected_root(
     if defining.len() < 2
         || interval.distinct_root_count != 1
         || sign(&(&interval.upper - &interval.lower))? != Ordering::Greater
-        || sign(&Real::eval_poly(defining, &interval.lower))? == Ordering::Equal
-        || sign(&Real::eval_poly(defining, &interval.upper))? == Ordering::Equal
     {
         return None;
     }
-    if predicate.is_empty() {
+    let endpoint_signs = [
+        sign(&Real::eval_poly(defining, &interval.lower)),
+        sign(&Real::eval_poly(defining, &interval.upper)),
+    ];
+    if endpoint_signs.contains(&Some(Ordering::Equal)) {
+        return None;
+    }
+    // Unknown endpoint signs do not invalidate the retained singleton. Build
+    // its query chain once and let a certified enclosing bracket replay it;
+    // an early `?` here would make further root refinement lose decisions.
+    let endpoints_decided = endpoint_signs.iter().all(Option::is_some);
+    if predicate.is_empty() && endpoints_decided {
         return Some(Ordering::Equal);
     }
     let product_len = defining
@@ -206,8 +215,12 @@ pub fn sign_at_selected_root(
     }
     let chain = primitive_integer_signed_remainder_sequence(defining, &product)
         .or_else(|| field_signed_sequence(defining.to_vec(), product))?;
-    chain_sign(&chain, &interval.lower, &interval.upper)
-        .or_else(|| sign_with_coarser_singleton(defining, &chain, interval))
+    let selected_sign = if endpoints_decided {
+        chain_sign(&chain, &interval.lower, &interval.upper)
+    } else {
+        None
+    };
+    selected_sign.or_else(|| sign_with_coarser_singleton(defining, &chain, interval))
 }
 
 fn chain_sign(chain: &[Vec<Real>], lower: &Real, upper: &Real) -> Option<Ordering> {
@@ -574,6 +587,49 @@ mod tests {
                 sign_at_selected_root(&defining, &predicate, &interval),
                 Some(expected),
             );
+        }
+    }
+
+    #[test]
+    fn narrow_isolators_replay_before_initial_endpoint_signs_are_available() {
+        for (root, threshold) in [
+            (Real::pi(), Real::from(3)),
+            (
+                (Real::one() / Real::from(3)).unwrap().exp().unwrap(),
+                Real::one(),
+            ),
+        ] {
+            for precision in [-600, -1200] {
+                let [lower, upper] = root.certified_dyadic_interval(precision).unwrap();
+                let interval = IsolatedRootInterval {
+                    lower: Real::new(lower),
+                    upper: Real::new(upper),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                };
+                // Each linear equation owns this same exact root, even when
+                // its initial endpoint differences cannot be signed. The
+                // query is positive at that root under either defining gauge.
+                for gauge in [Real::from(3), Real::from(-7)] {
+                    let defining = [-&root * &gauge, gauge];
+                    for (scale, expected) in [(1, Ordering::Greater), (-1, Ordering::Less)] {
+                        let scale = Real::from(scale);
+                        let query = [-&threshold * &scale, scale];
+                        assert_eq!(
+                            sign_at_selected_root(&defining, &query, &interval),
+                            Some(expected),
+                        );
+                    }
+                    assert_eq!(
+                        sign_at_selected_root(&defining, &defining, &interval),
+                        Some(Ordering::Equal),
+                    );
+                    assert_eq!(
+                        sign_at_selected_root(&defining, &[], &interval),
+                        Some(Ordering::Equal),
+                    );
+                }
+            }
         }
     }
 
