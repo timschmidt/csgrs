@@ -45,10 +45,6 @@ impl Quad {
     }
 
     fn add(self, other: Self) -> Option<Self> {
-        admit_rational(&self.rational)?;
-        admit_rational(&self.scale)?;
-        admit_rational(&other.rational)?;
-        admit_rational(&other.scale)?;
         let disc = self.same_disc(&other)?;
         let mut sum = Self {
             rational: &self.rational + &other.rational,
@@ -70,20 +66,13 @@ impl Quad {
     }
 
     fn mul(self, other: Self) -> Option<Self> {
-        admit_rational(&self.rational)?;
-        admit_rational(&self.scale)?;
-        admit_rational(&other.rational)?;
-        admit_rational(&other.scale)?;
         let disc = self.same_disc(&other)?;
         let cross = &self.rational * &other.scale + &self.scale * &other.rational;
-        admit_rational(&cross)?;
         let mut rational = &self.rational * &other.rational;
         if self.scale.sign() != Sign::NoSign && other.scale.sign() != Sign::NoSign {
             let disc = disc.as_ref()?;
-            admit_rational(disc)?;
             rational = rational + &self.scale * &other.scale * disc;
         }
-        admit_rational(&rational)?;
         let mut product = Self {
             rational,
             scale: cross,
@@ -111,8 +100,6 @@ impl Quad {
     }
 
     fn inverse(self) -> Option<Self> {
-        admit_rational(&self.rational)?;
-        admit_rational(&self.scale)?;
         if self.is_zero() {
             return None;
         }
@@ -132,8 +119,6 @@ impl Quad {
     }
 
     fn sign(&self) -> Option<RealSign> {
-        admit_rational(&self.rational)?;
-        admit_rational(&self.scale)?;
         if self.scale.sign() == Sign::NoSign {
             return Some(rational_sign(&self.rational));
         }
@@ -159,18 +144,6 @@ impl Quad {
 }
 
 impl Tower {
-    fn has_bounded_coefficients(&self) -> bool {
-        [&self.even, &self.odd]
-            .into_iter()
-            .chain(self.radicand.iter())
-            .all(|quad| {
-                [&quad.rational, &quad.scale]
-                    .into_iter()
-                    .chain(quad.disc.iter())
-                    .all(|coefficient| admit_rational(coefficient).is_some())
-            })
-    }
-
     fn quad(even: Quad) -> Self {
         Self {
             even,
@@ -261,13 +234,10 @@ impl Tower {
         if radicand.scale.sign() != Sign::NoSign {
             return None;
         }
-        admit_rational(&radicand.rational)?;
         let rational_term = quad_from_square_root(&radicand.rational)?.scale(&self.odd.rational);
         let radical_term = match &self.odd.disc {
             Some(disc) => {
-                admit_rational(disc)?;
                 let square = &radicand.rational * disc;
-                admit_rational(&square)?;
                 quad_from_square_root(&square)?.scale(&self.odd.scale)
             }
             None => Quad::zero(),
@@ -304,7 +274,6 @@ impl Tower {
                 // principal positive roots. The quotient must belong to
                 // the chosen inner field; a third independent class declines.
                 let square = disc * &inverse_outer;
-                admit_rational(&square)?;
                 let coefficient = quad_from_square_root(&square)?;
                 if coefficient.disc.is_some() && coefficient.disc.as_ref() != inner {
                     return None;
@@ -448,17 +417,10 @@ fn quad_eq(left: &Quad, right: &Quad) -> bool {
     left.rational == right.rational && left.scale == right.scale && left.disc == right.disc
 }
 
-const TOWER_RATIONAL_BIT_LIMIT: u64 = 8_192;
-
-fn admit_rational(value: &Rational) -> Option<()> {
-    if value.numerator().bits() <= TOWER_RATIONAL_BIT_LIMIT
-        && value.denominator().bits() <= TOWER_RATIONAL_BIT_LIMIT
-    {
-        Some(())
-    } else {
-        None
-    }
-}
+// Explicit binary shifts can encode enormous allocations in one node.
+// This fast path declines those expansions; ordinary field coefficients and
+// their retained reductions have no size gate.
+const TOWER_SHIFT_ALLOCATION_BITS: u64 = 8_192;
 
 fn rational_sign(value: &Rational) -> RealSign {
     match value.sign() {
@@ -583,9 +545,9 @@ fn shifted_coefficient(value: &Rational, shift: i32) -> Option<Rational> {
         let cancel = bits.min(numerator.trailing_zeros()?);
         (cancel, 0, 0, bits - cancel)
     };
-    if (numerator.bits() - shrink_n).checked_add(grow_n)? > TOWER_RATIONAL_BIT_LIMIT
-        || (denominator.bits() - shrink_d).checked_add(grow_d)? > TOWER_RATIONAL_BIT_LIMIT
-    {
+    // Only the new expansion is bounded. An already represented wide
+    // coefficient remains eligible for cancellation and ordinary small shifts.
+    if grow_n > TOWER_SHIFT_ALLOCATION_BITS || grow_d > TOWER_SHIFT_ALLOCATION_BITS {
         return None;
     }
     let numerator =
@@ -598,7 +560,9 @@ fn shifted_coefficient(value: &Rational, shift: i32) -> Option<Rational> {
 fn tower_from_computable(value: &Computable) -> Option<Tower> {
     // Traverse the immutable DAG in postorder. Work is proportional to distinct
     // nodes, with no recursive descent or arbitrary expression-width cutoff.
-    // Algebraic dimension and coefficient-size guards still bound reductions.
+    // Field compatibility controls arithmetic. Successful reductions remain
+    // reusable regardless of coefficient size; only explicit binary shifts
+    // have a preallocation guard.
     let key = |value: &Computable| Arc::as_ptr(&value.internal);
     let mut memo = std::collections::HashMap::<*const Node, Tower>::new();
     let mut pending = vec![(value, false)];
@@ -613,7 +577,6 @@ fn tower_from_computable(value: &Computable) -> Option<Tower> {
                 continue;
             }
             if let Some(rational) = current.exact_rational() {
-                admit_rational(&rational)?;
                 memo.insert(current_key, Tower::rational(rational));
                 continue;
             }
@@ -681,7 +644,7 @@ fn tower_from_computable(value: &Computable) -> Option<Tower> {
         if Arc::strong_count(&current.internal) > 1
             && !matches!(current.internal.approximation, Approximation::Constant(_))
         {
-            current.internal.cache.store_quadratic_tower(tower.clone());
+            current.internal.cache.store_quadratic_tower(&tower);
         }
         memo.insert(current_key, tower);
     }
@@ -699,8 +662,6 @@ impl Tower {
 }
 
 fn quad_rational_parts(quad: &Quad) -> Option<(Rational, Rational, Option<Rational>)> {
-    admit_rational(&quad.rational)?;
-    admit_rational(&quad.scale)?;
     if quad.scale.sign() == Sign::NoSign {
         return Some((quad.rational.clone(), Rational::zero(), None));
     }
@@ -736,7 +697,6 @@ fn positive_rational_branch(tower: &Tower) -> Option<Rational> {
     if !one_real_outer_square_root(tower.radicand.as_ref()?) {
         return None;
     }
-    admit_rational(&tower.even.rational)?;
     Some(tower.even.rational.clone())
 }
 
@@ -827,13 +787,10 @@ impl Computable {
 
     pub(crate) fn quadratic_tower_parts(&self) -> Option<[[Rational; 3]; 3]> {
         let tower = tower_from_computable(self)?;
-        if !tower.has_bounded_coefficients() {
-            return None;
-        }
         // Reuse the same exact reduction for compaction, signs and subsequent
         // arithmetic. The rows describe even + odd * sqrt(radicand), each as
         // a + b * sqrt(d); they do not expose another public scalar carrier.
-        self.internal.cache.store_quadratic_tower(tower.clone());
+        self.internal.cache.store_quadratic_tower(&tower);
         let parts = |quad: Quad| {
             [
                 quad.rational,
@@ -854,7 +811,7 @@ impl Computable {
         // Retain the successful proof at the queried root. Later arithmetic
         // can reuse its finite basis without replaying its construction DAG.
         // Failed reductions remain retryable.
-        self.internal.cache.store_quadratic_tower(tower);
+        self.internal.cache.store_quadratic_tower(&tower);
         self.internal
             .facts
             .replace_exact_sign(ExactSignCache::Valid(private_sign(sign)));
@@ -1121,6 +1078,65 @@ mod quadratic_tower_tests {
                         <= BigInt::from(2)
                 );
             }
+        }
+    }
+
+    #[test]
+    fn exact_tower_replay_retains_wide_cancellation_proofs() {
+        let opaque = |approximation| Computable {
+            internal: Arc::new(Node::new(
+                approximation,
+                BoundCache::Invalid,
+                ExactSignCache::Unknown,
+            )),
+            signal: None,
+        };
+        let large = Rational::from_bigint((BigInt::one() << 5000) + BigInt::from(3));
+        let root = Computable::one().add(sqrt2()).sqrt();
+        let scaled = opaque(Approximation::Multiply(
+            Computable::rational(large.clone()),
+            Computable::one().add(root.clone()),
+        ));
+        let square = opaque(Approximation::Square(scaled));
+        // (1 + sqrt(1 + sqrt(2)))^2 = 2 + sqrt(2) + 2 sqrt(1 + sqrt(2)).
+        let expected = opaque(Approximation::Multiply(
+            Computable::rational(&large * &large),
+            Computable::rational(Rational::new(2))
+                .add(sqrt2())
+                .add(root.multiply_rational(Rational::new(2))),
+        ));
+        let difference = opaque(Approximation::Add(
+            square.clone(),
+            opaque(Approximation::Negate(expected.clone())),
+        ));
+        assert_eq!(difference.quadratic_tower_sign(), Some(RealSign::Zero));
+        assert!(difference.cached().is_none());
+        assert!(difference.internal.cache.quadratic_tower().is_some());
+        assert!(square.internal.cache.quadratic_tower().is_some());
+        assert!(square.quadratic_tower_parts().is_some());
+        assert!(square.quadratic_tower_annihilating_polynomial().is_some());
+        assert!(expected.internal.cache.quadratic_tower().is_some());
+        // A small binary shift must not discard an already retained wide value.
+        for shift in [-1, 1] {
+            let shifted = opaque(Approximation::Offset(square.clone(), shift));
+            assert_eq!(shifted.quadratic_tower_sign(), Some(RealSign::Positive));
+            assert!(shifted.internal.cache.quadratic_tower().is_some());
+            assert!(shifted.cached().is_none());
+        }
+        let epsilon = Rational::from_bigint(BigInt::one() << 600)
+            .inverse()
+            .unwrap();
+        for (delta, sign) in [
+            (epsilon.clone(), RealSign::Positive),
+            (-epsilon, RealSign::Negative),
+        ] {
+            assert_eq!(
+                difference
+                    .clone()
+                    .add(Computable::rational(delta))
+                    .quadratic_tower_sign(),
+                Some(sign),
+            );
         }
     }
 
