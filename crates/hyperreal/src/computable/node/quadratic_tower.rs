@@ -787,6 +787,44 @@ fn tower_annihilator(tower: &Tower) -> Option<Vec<Rational>> {
 }
 
 impl Computable {
+    /// Reuse an already proved exact reduction when evaluating this node.
+    /// This does not discover a tower or change the original expression: a
+    /// missing reduction leaves the ordinary approximation kernel in charge.
+    fn cached_quadratic_tower_approximation(
+        &self,
+        signal: &Option<Signal>,
+        precision: Precision,
+    ) -> Option<BigInt> {
+        fn quadratic(value: Quad) -> Option<Computable> {
+            let rational = Computable::rational(value.rational);
+            if value.scale.sign() == Sign::NoSign {
+                Some(rational)
+            } else {
+                Some(
+                    rational.add(
+                        Computable::rational(value.disc?)
+                            .sqrt()
+                            .multiply_rational(value.scale),
+                    ),
+                )
+            }
+        }
+        let tower = self.internal.cache.quadratic_tower()?;
+        let even = quadratic(tower.even)?;
+        let reduced = if tower.odd.is_zero() {
+            even
+        } else {
+            even.add(quadratic(tower.odd)?.multiply(quadratic(tower.radicand?)?.sqrt()))
+        };
+        // A canonical shared constant or already compact node may reconstruct
+        // itself. Its normal approximation kernel remains the terminal path.
+        if Arc::ptr_eq(&self.internal, &reduced.internal) {
+            return None;
+        }
+        crate::trace_dispatch!("computable", "approx", "cached-quadratic-tower");
+        Some(reduced.approx_signal(signal, precision))
+    }
+
     pub(crate) fn quadratic_tower_parts(&self) -> Option<[[Rational; 3]; 3]> {
         let tower = tower_from_computable(self)?;
         if !tower.has_bounded_coefficients() {
@@ -1003,6 +1041,87 @@ mod quadratic_tower_tests {
         assert_eq!(sum.quadratic_tower_sign(), Some(RealSign::Positive));
         let difference = sum.add(root.multiply_rational(Rational::new(2048)).negate());
         assert_eq!(difference.quadratic_tower_sign(), Some(RealSign::Zero));
+    }
+
+    #[test]
+    fn approximation_reuses_a_retained_tower_without_evaluating_its_history() {
+        let opaque = |approximation| Computable {
+            internal: Arc::new(Node::new(
+                approximation,
+                BoundCache::Invalid,
+                ExactSignCache::Unknown,
+            )),
+            signal: None,
+        };
+        let mut chain = vec![sqrt2()];
+        for _ in 0..2048 {
+            chain.push(opaque(Approximation::Multiply(
+                chain.last().unwrap().clone(),
+                Computable::one(),
+            )));
+        }
+        let value = chain.last().unwrap();
+        assert_eq!(value.quadratic_tower_sign(), Some(RealSign::Positive));
+        for precision in [-32, -96, -48] {
+            let approximation = value.approx(precision);
+            let lower = &approximation - BigInt::one();
+            let upper = &approximation + BigInt::one();
+            let square = BigInt::from(2) << (-2 * precision) as usize;
+            assert!(&lower * &lower <= square);
+            assert!(&upper * &upper >= square);
+            assert!(
+                chain[1..chain.len() - 1]
+                    .iter()
+                    .all(|node| node.cached().is_none())
+            );
+        }
+        // The same evidence is useful below an unreduced general expression,
+        // not only when the caller asks for the retained root directly.
+        let parent = opaque(Approximation::Multiply(value.clone(), Computable::pi()));
+        let expected = sqrt2().multiply(Computable::pi());
+        assert!((parent.approx(-160) - expected.approx(-160)).abs() <= BigInt::from(2));
+        assert!(
+            chain[1..chain.len() - 1]
+                .iter()
+                .all(|node| node.cached().is_none())
+        );
+        drop(parent);
+        while chain.pop().is_some() {}
+    }
+
+    #[test]
+    fn retained_tower_approximation_preserves_nested_radicals_and_signed_coefficients() {
+        let expression = || {
+            let root = sqrt2();
+            let nested = Computable::one()
+                .add(root.clone().multiply_rational(Rational::new(2)))
+                .sqrt();
+            Computable::rational(Rational::new(3))
+                .add(root.clone().multiply_rational(Rational::new(-2)))
+                .add(
+                    root.add(Computable::rational(Rational::new(-5)))
+                        .multiply(nested),
+                )
+        };
+        for inverse in [false, true] {
+            let original = expression();
+            let retained = expression();
+            let (original, retained) = if inverse {
+                (original.inverse(), retained.inverse())
+            } else {
+                (original, retained)
+            };
+            assert_eq!(retained.quadratic_tower_sign(), Some(RealSign::Negative));
+            assert!(retained.cached().is_none());
+            for precision in [-16, -64, -128, -32] {
+                // Both independent evaluations must enclose the same exact
+                // value within one unit at the requested binary scale.
+                assert!(
+                    (retained.approx(precision) - original.approx(precision)).abs()
+                        <= BigInt::from(2)
+                );
+            }
+        }
     }
 
     #[test]

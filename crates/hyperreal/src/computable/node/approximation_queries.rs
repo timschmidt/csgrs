@@ -121,6 +121,12 @@ impl Computable {
         if uses_node_cache && let Some(cached) = self.internal.cached_at_precision(p) {
             return cached;
         }
+        if uses_node_cache
+            && let Some(result) = self.cached_quadratic_tower_approximation(signal, p)
+        {
+            self.store_cache_value(signal, p, result.clone());
+            return result;
+        }
 
         if !matches!(
             &self.internal.approximation,
@@ -145,6 +151,12 @@ impl Computable {
                 Frame::Eval(node, prec) => {
                     if let Some(cached) = node.cached_at_precision(prec) {
                         values.push(cached);
+                        continue;
+                    }
+
+                    if let Some(result) = node.cached_quadratic_tower_approximation(signal, prec) {
+                        node.store_cache_value(signal, prec, result.clone());
+                        values.push(result);
                         continue;
                     }
 
@@ -219,9 +231,7 @@ impl Computable {
 
         let mut sign = match cached_sign {
             ExactSignCache::Valid(sign) => Some(public_sign(sign)),
-            ExactSignCache::Invalid | ExactSignCache::Unknown => {
-                self.exact_sign().map(public_sign)
-            }
+            ExactSignCache::Invalid | ExactSignCache::Unknown => self.exact_sign().map(public_sign),
         };
         #[cfg(feature = "dispatch-trace")]
         if sign.is_some() {
@@ -335,7 +345,9 @@ impl Computable {
             && appr.abs() > BigInt::one()
         {
             let sign = appr.sign();
-            self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
+            self.internal
+                .facts
+                .replace_exact_sign(ExactSignCache::Valid(sign));
             crate::trace_dispatch!("computable", "sign_until", "approximation-cache-sign");
             return Some(public_sign(sign));
         }
@@ -369,7 +381,9 @@ impl Computable {
             );
             if appr.abs() > BigInt::one() {
                 let sign = appr.sign();
-                self.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
+                self.internal
+                    .facts
+                    .replace_exact_sign(ExactSignCache::Valid(sign));
                 #[cfg(feature = "dispatch-trace")]
                 crate::dispatch_trace::record_sign_refinement_precision(
                     "sign_until_decision_precision",
@@ -405,11 +419,7 @@ impl Computable {
                     self.internal
                         .facts
                         .replace_exact_sign(ExactSignCache::Valid(Sign::NoSign));
-                    crate::trace_dispatch!(
-                        "computable",
-                        "sign_until",
-                        "algebraic-separation-zero"
-                    );
+                    crate::trace_dispatch!("computable", "sign_until", "algebraic-separation-zero");
                     return Some(RealSign::Zero);
                 }
             }
@@ -517,11 +527,7 @@ impl Computable {
 
     /// Try to compare two computable values without refining past
     /// `min_precision`.
-    pub fn try_compare_to_until(
-        &self,
-        other: &Self,
-        min_precision: Precision,
-    ) -> Option<Ordering> {
+    pub fn try_compare_to_until(&self, other: &Self, min_precision: Precision) -> Option<Ordering> {
         if Self::internal_structural_eq(self, other) {
             return Some(Ordering::Equal);
         }
