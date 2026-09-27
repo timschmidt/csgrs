@@ -55600,6 +55600,27 @@ impl BezierRecursiveQuadraticField2 {
         BezierRecursiveQuadraticValue2::from_extension(field.clone(), retained, radical)
     }
 
+    /// Imports only an existing selected axis, preserving this field's
+    /// original axes and radical tower, including duplicate source axes.
+    fn retained_root_value(
+        &self,
+        source: &AlgebraicRootRepresentation,
+    ) -> Option<BezierRecursiveQuadraticValue2> {
+        let base = self.base_and_extension_path().0;
+        let (_, source_axes, target_axes) =
+            recursive_quadratic_source_union(&base.sources, std::slice::from_ref(source));
+        let axis = source_axes
+            .iter()
+            .position(|axis| *axis == target_axes[0])?;
+        DenseTensorPolynomial::from_axis_polynomial(
+            base.sources.len(),
+            axis,
+            &[Real::zero(), Real::one()],
+        )
+        .and_then(|polynomial| recursive_quadratic_rational_value(&base, polynomial))
+        .and_then(|value| self.lift(&value))
+    }
+
     /// Reuses a parameter already represented in this field. This optional
     /// import never adjoins a generator, rebases coefficients or projects a
     /// selected root into a new scalar representation.
@@ -55615,21 +55636,7 @@ impl BezierRecursiveQuadraticField2 {
         let retained = selected.and_then(|selected| selected.retained_bezier_parameter());
         if let Some(native) = parameter.as_bezier_parameter().or(retained.as_ref()) {
             if matches!(native, BezierParameter2::Algebraic(_)) {
-                let source = bezier_parameter_root_representation(native);
-                let base = self.base_and_extension_path().0;
-                let (_, source_axes, target_axes) =
-                    recursive_quadratic_source_union(&base.sources, &[source]);
-                // A base may contain duplicate sources. Membership requires
-                // an original axis, not merely an unchanged union length.
-                if let Some(axis) = source_axes.iter().position(|axis| *axis == target_axes[0]) {
-                    return Ok(DenseTensorPolynomial::from_axis_polynomial(
-                        base.sources.len(),
-                        axis,
-                        &[Real::zero(), Real::one()],
-                    )
-                    .and_then(|polynomial| recursive_quadratic_rational_value(&base, polynomial))
-                    .and_then(|value| self.lift(&value)));
-                }
+                return Ok(self.retained_root_value(&bezier_parameter_root_representation(native)));
             }
             return Ok(native
                 .scalar()
@@ -58208,6 +58215,19 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         Some(value)
     }
 
+    fn value_at_field_element(
+        &self,
+        coefficients: &[BezierRecursiveQuadraticValue2],
+        parameter: &BezierRecursiveQuadraticValue2,
+    ) -> Option<BezierRecursiveQuadraticValue2> {
+        coefficients
+            .iter()
+            .rev()
+            .try_fold(self.field.constant(Real::zero())?, |value, coefficient| {
+                value.multiply(parameter)?.add(coefficient)
+            })
+    }
+
     fn sign_at_real(
         &self,
         coefficients: &[BezierRecursiveQuadraticValue2],
@@ -58482,12 +58502,13 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                 for source in &base.sources {
                     let sign = policy.bounded_exact_predicate_pass(
                         || -> CurveResult<Option<RealSign>> {
-                            let Some(embedding) =
-                                parameter.coefficient_root_embedding(source, policy)?
+                            let Some((root, std::cmp::Ordering::Equal)) =
+                                parameter.coefficient_root_order(source, policy)?
                             else {
                                 return Ok(None);
                             };
-                            let Some(value) = embedding.polynomial_value(coefficients) else {
+                            let Some(value) = self.value_at_field_element(coefficients, &root)
+                            else {
                                 return Ok(None);
                             };
                             Ok(match value.sign(&policy.strict_counterpart())? {
@@ -59859,13 +59880,16 @@ impl BezierRecursiveProjectiveParameter2 {
         policy.strict_predicate_pass(|| first.cmp_by_refinement(&second, policy))
     }
 
-    /// Embeds this singleton root as an existing coefficient-field root.
-    /// A declined certificate is not evidence that the values differ.
-    fn coefficient_root_embedding(
+    /// Orders this singleton against an existing coefficient-field root.
+    /// Exact endpoint comparisons can separate them even when their stored
+    /// bounds overlap. Within the interval, the defining polynomial has one
+    /// simple root, so its sign at the generator decides order and equality.
+    /// A declined certificate makes no claim about either value.
+    fn coefficient_root_order(
         &self,
         source: &AlgebraicRootRepresentation,
         policy: &CurveContext,
-    ) -> CurveResult<Option<BezierRecursiveQuadraticTargetEmbedding2>> {
+    ) -> CurveResult<Option<(BezierRecursiveQuadraticValue2, std::cmp::Ordering)>> {
         self.validate_policy(policy)?;
         let Some(authority) = self.polynomial_authority() else {
             return Ok(None);
@@ -59873,37 +59897,58 @@ impl BezierRecursiveProjectiveParameter2 {
         if !source.is_valid() {
             return Ok(None);
         }
-        let base = authority.field.base_and_extension_path().0;
-        let (sources, _, _) =
-            recursive_quadratic_source_union(&base.sources, std::slice::from_ref(source));
-        if sources.len() != base.sources.len() {
+        let Some(root) = authority.field.retained_root_value(source) else {
             return Ok(None);
-        }
+        };
         let strict = policy.strict_counterpart();
-        if represented_order_to_real(source, &self.data.lower, &strict)
-            != Classification::Decided(std::cmp::Ordering::Greater)
-            || represented_order_to_real(source, &self.data.upper, &strict)
-                != Classification::Decided(std::cmp::Ordering::Less)
-        {
-            return Ok(None);
-        }
-        let Some(embedding) = recursive_quadratic_target_embedding(&authority.field, &base, source)
-        else {
+        let lower_order = represented_order_to_real(source, &self.data.lower, &strict);
+        let upper_order = represented_order_to_real(source, &self.data.upper, &strict);
+        let order = if lower_order == Classification::Decided(std::cmp::Ordering::Less) {
+            std::cmp::Ordering::Greater
+        } else if upper_order == Classification::Decided(std::cmp::Ordering::Greater) {
+            std::cmp::Ordering::Less
+        } else if matches!(
+            lower_order,
+            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
+        ) && matches!(
+            upper_order,
+            Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) {
+            let Some(value) = authority.value_at_field_element(&authority.coefficients, &root)
+            else {
+                return Ok(None);
+            };
+            let Classification::Decided(sign) = value.sign(&strict)? else {
+                return Ok(None);
+            };
+            if sign == RealSign::Zero {
+                std::cmp::Ordering::Equal
+            } else {
+                let Classification::Decided(lower_sign) =
+                    self.polynomial_endpoint_sign(0, &strict)?
+                else {
+                    return Ok(None);
+                };
+                if sign == lower_sign {
+                    std::cmp::Ordering::Greater
+                } else {
+                    std::cmp::Ordering::Less
+                }
+            }
+        } else {
             return Ok(None);
         };
-        let Some(value) = embedding.polynomial_value(&authority.coefficients) else {
-            return Ok(None);
-        };
-        if value.sign(&strict)? != Classification::Decided(RealSign::Zero) {
-            return Ok(None);
-        }
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
             "recursive-parameter-comparison",
-            "retained-generator-identity",
+            if order == std::cmp::Ordering::Equal {
+                "retained-generator-identity"
+            } else {
+                "retained-generator-order"
+            },
         );
-        Ok(Some(embedding))
+        Ok(Some((root, order)))
     }
 
     pub(crate) fn cmp_bezier_parameter(
@@ -59936,11 +59981,10 @@ impl BezierRecursiveProjectiveParameter2 {
                 }));
             }
         }
-        if self
-            .coefficient_root_embedding(&bezier_parameter_root_representation(other), policy)?
-            .is_some()
+        if let Some((_, order)) =
+            self.coefficient_root_order(&bezier_parameter_root_representation(other), policy)?
         {
-            return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+            return Ok(Classification::Decided(order));
         }
         let BezierParameter2::Algebraic(selection) = other else {
             unreachable!("represented native parameters returned above")
@@ -136381,6 +136425,124 @@ mod conversion_tests {
                         .strict_interior_scalar(&policy),
                     Err(CurveError::InvalidBezierRange)
                 ));
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_local_root_orders_against_close_coefficient_generators() {
+        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let native = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
+        let source = bezier_parameter_root_representation(&native);
+        let one = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
+        let base =
+            BezierRecursiveQuadraticField2::base(vec![source.clone(), source], one.clone(), one)
+                .unwrap();
+        let field = base
+            .extension(base.constant(Real::from(3_i8)).unwrap())
+            .unwrap();
+        let BezierRecursiveQuadraticField2::Base(base_data) = &base else {
+            unreachable!("the fixture begins with a dense base");
+        };
+        // Use the second copy of the generator in the polynomial; importing
+        // its native parameter selects the first. Their exact identity must
+        // survive without rebuilding or merging the coefficient field.
+        let alpha = field
+            .lift(
+                &recursive_quadratic_rational_value(
+                    base_data,
+                    DenseTensorPolynomial::from_axis_polynomial(2, 1, &[Real::zero(), Real::one()])
+                        .unwrap(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        let tiny = Real::from(2_i8).powi_i64(-80).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for gauge in [Real::one(), Real::from(-7_i8)] {
+                let eighth = (Real::one() / Real::from(8_i8)).unwrap();
+                for (shift, expected, inside) in [
+                    (-tiny.clone(), std::cmp::Ordering::Less, true),
+                    (Real::zero(), std::cmp::Ordering::Equal, true),
+                    (tiny.clone(), std::cmp::Ordering::Greater, true),
+                    (-eighth.clone(), std::cmp::Ordering::Less, false),
+                    (eighth, std::cmp::Ordering::Greater, false),
+                ] {
+                    // The local root alpha + shift shares its broad isolator
+                    // with alpha. Its defining linear relation can order the
+                    // two directly even when ordinary bounds cannot separate.
+                    let constant = alpha
+                        .add(&field.constant(shift).unwrap())
+                        .unwrap()
+                        .scale(&-gauge.clone())
+                        .unwrap();
+                    let polynomial = vec![constant, field.constant(gauge.clone()).unwrap()];
+                    let roots = recursive_quadratic_polynomial_local_parameters(
+                        &field,
+                        &polynomial,
+                        [&Real::zero(), &Real::one()],
+                        &policy,
+                    )
+                    .unwrap()
+                    .expect("the shifted generator remains a simple local root");
+                    let [root] = roots.as_slice() else {
+                        panic!("the linear relation has exactly one root");
+                    };
+                    let selected = root.as_recursive_projective().unwrap();
+                    let lower_order = represented_order_to_real(
+                        &bezier_parameter_root_representation(&native),
+                        &selected.data.lower,
+                        &CurveContext::STRICT,
+                    );
+                    let upper_order = represented_order_to_real(
+                        &bezier_parameter_root_representation(&native),
+                        &selected.data.upper,
+                        &CurveContext::STRICT,
+                    );
+                    assert_eq!(
+                        lower_order == Classification::Decided(std::cmp::Ordering::Greater)
+                            && upper_order == Classification::Decided(std::cmp::Ordering::Less),
+                        inside,
+                    );
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::reset();
+                    let compare = || {
+                        crate::policy::resolve_certified_value(&policy, |attempt| {
+                            root.cmp_by_refinement(&native.clone().into(), attempt)
+                        })
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    let result = hyperreal::dispatch_trace::with_recording(compare);
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    let result = compare();
+                    assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+                    assert_eq!(result.value.unwrap(), Classification::Decided(expected));
+                    assert!(selected.data.projection.parameter.get().is_none());
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        let trace = hyperreal::dispatch_trace::take_trace();
+                        assert!(
+                            trace.path_count(
+                                "hypercurve",
+                                "recursive-parameter-comparison",
+                                if expected == std::cmp::Ordering::Equal {
+                                    "retained-generator-identity"
+                                } else {
+                                    "retained-generator-order"
+                                },
+                            ) > 0
+                        );
+                        assert_eq!(
+                            trace.path_count(
+                                "hypercurve",
+                                "recursive-polynomial-sign",
+                                "retained-field-remainder",
+                            ),
+                            0,
+                            "a generator comparison needs no polynomial reduction"
+                        );
+                    }
+                }
             }
         }
     }
