@@ -116229,18 +116229,19 @@ impl BezierParallel2 {
     /// Scaling a line direction does not change incidence. Retained line and
     /// chord carriers already own an exact unit tangent, and reusing it avoids
     /// carrying a large endpoint-difference scale through the Sturm sequence.
-    /// A supplied range must have a certified regular interior; its source
+    /// The finite range always owns root enumeration and regularity checks.
+    /// Regularizing its source requires a certified regular interior; that
     /// orientation owns the normal sheet at stationary boundary contacts.
     pub(crate) fn supporting_line_incidence_with_direction(
         &self,
         line: &LineSeg2,
-        direction_x: &Real,
-        direction_y: &Real,
+        direction: (&Real, &Real),
         certified_tangencies: &[Real],
-        regular_range: Option<&CurveParameterRange2>,
+        range: &CurveParameterRange2,
+        regularize_source: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIncidence2>> {
-        let tangent_field = if let Some(range) = regular_range {
+        let tangent_field = if regularize_source {
             match self.source_oriented_regularized_tangent_field(range, policy)? {
                 Classification::Decided(field) => field,
                 Classification::Uncertain(reason) => {
@@ -116252,13 +116253,13 @@ impl BezierParallel2 {
         };
         self.supporting_line_incidence_with_certified_contacts(
             line,
-            Some((direction_x, direction_y)),
+            Some(direction),
             &[],
             certified_tangencies,
             false,
             None,
             tangent_field.as_deref(),
-            regular_range,
+            Some(range),
             policy,
         )
     }

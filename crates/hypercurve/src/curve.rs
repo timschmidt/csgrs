@@ -7131,22 +7131,26 @@ fn fillet_offset_centers(
                 |cause| ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause);
             let blocked =
                 |reason| ExactCurveError::blocked(CurveOperation2::Fillet, parallel_family, reason);
-            let source_parallel = support.with_distance(source.parallel_distance());
+            let source_parallel = OnceLock::new();
+            let source_parallel = || {
+                source_parallel.get_or_init(|| support.with_distance(source.parallel_distance()))
+            };
+            let finite_range = source.curve_parameter_range();
             let mut parameters = Vec::new();
             let incidence = support
                 .supporting_line_incidence_with_direction(
                     line,
-                    line_unit_x,
-                    line_unit_y,
+                    (line_unit_x, line_unit_y),
                     certified_tangencies,
-                    None,
+                    &finite_range,
+                    false,
                     policy,
                 )
                 .map_err(invalid)?;
             let ranges =
                 if incidence == Classification::Uncertain(crate::UncertaintyReason::Boundary) {
-                    let analysis = match source_parallel
-                        .singularity_analysis(&source.curve_parameter_range(), policy)
+                    let analysis = match source_parallel()
+                        .singularity_analysis(&finite_range, policy)
                         .map_err(invalid)?
                     {
                         Classification::Decided(analysis) => analysis,
@@ -7168,10 +7172,10 @@ fn fillet_offset_centers(
                     let incidence = support
                         .supporting_line_incidence_with_direction(
                             line,
-                            line_unit_x,
-                            line_unit_y,
+                            (line_unit_x, line_unit_y),
                             certified_tangencies,
-                            Some(&range),
+                            &range,
+                            true,
                             policy,
                         )
                         .map_err(invalid)?;
@@ -7312,7 +7316,7 @@ fn fillet_offset_centers(
                         Classification::Decided(parameter) => parameter,
                         Classification::Uncertain(reason) => return Err(blocked(reason)),
                     };
-                    let derivative_scale = match source_parallel
+                    let derivative_scale = match source_parallel()
                         .parallel_derivative_scale_sign(&interior.into(), policy)
                         .map_err(invalid)?
                     {
@@ -7353,7 +7357,7 @@ fn fillet_offset_centers(
                         Some(CurveParameter2::from(parameter))
                     };
                 let retained_anchor_evidence = if let Some(range) = &regular_range {
-                    let (mut cross, mut dot) = match source_parallel
+                    let (mut cross, mut dot) = match source_parallel()
                         .vector_tangent_cross_and_dot_signs_on_regular_range(
                             &parameter.clone().into(),
                             line_unit_x,
