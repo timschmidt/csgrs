@@ -2142,7 +2142,7 @@ pub(crate) fn polynomial_gcd(
     left = trim_polynomial(left, policy)?;
     right = trim_polynomial(right, policy)?;
     if let Some(gcd) = primitive_integer_polynomial_gcd(&left, &right) {
-        return gcd_monic_normalize(gcd, policy);
+        return monic_normalize(gcd, policy);
     }
     loop {
         let right_is_zero = trimmed_polynomial_is_zero(&right, policy)?;
@@ -2153,7 +2153,7 @@ pub(crate) fn polynomial_gcd(
         left = right;
         right = remainder;
     }
-    gcd_monic_normalize(left, policy)
+    monic_normalize(left, policy)
 }
 
 pub(crate) fn polynomials_share_one_root_in_interval(
@@ -2769,7 +2769,7 @@ pub fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Optio
     {
         let derivative = trim_polynomial(derivative, policy)?;
         if let Some(gcd) = primitive_integer_polynomial_gcd(&polynomial, &derivative) {
-            gcd_monic_normalize(gcd, policy)?
+            monic_normalize(gcd, policy)?
         } else {
             polynomial_gcd(polynomial.clone(), derivative, policy)?
         }
@@ -2994,9 +2994,10 @@ fn trimmed_polynomial_is_zero(polynomial: &[Real], policy: PredicatePolicy) -> O
     Some(compare_reals(coefficient, &Real::zero(), policy).value()? == Ordering::Equal)
 }
 
-/// Monic-normalizes a GCD whose producing integer or Euclidean kernel has
-/// already returned canonical coefficient storage.
-fn gcd_monic_normalize(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+/// Monic-normalizes a polynomial whose producing kernel has already
+/// returned canonical coefficient storage. The root set is preserved;
+/// callers needing the polynomial's sign must restore its leading sign.
+pub(crate) fn monic_normalize(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     if polynomial.len() == 1 {
         return Some(if trimmed_polynomial_is_zero(&polynomial, policy)? {
             vec![Real::zero()]

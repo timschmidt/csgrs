@@ -3,14 +3,14 @@ use super::*;
 #[test]
 fn monic_normalization_keeps_scalar_and_failed_reciprocal_boundaries() {
     let policy = PredicatePolicy::STRICT;
-    assert!(gcd_monic_normalize(Vec::new(), policy).is_none());
+    assert!(monic_normalize(Vec::new(), policy).is_none());
     assert_eq!(
-        gcd_monic_normalize(vec![Real::zero()], policy),
+        monic_normalize(vec![Real::zero()], policy),
         Some(vec![Real::zero()])
     );
     for value in [Real::one(), Real::from(-7), Real::from(2).ln().unwrap()] {
         assert_eq!(
-            gcd_monic_normalize(vec![value], policy),
+            monic_normalize(vec![value], policy),
             Some(vec![Real::one()])
         );
     }
@@ -19,11 +19,11 @@ fn monic_normalization_keeps_scalar_and_failed_reciprocal_boundaries() {
         compare_reals(&unresolved, &Real::zero(), policy).value(),
         None
     );
-    assert!(gcd_monic_normalize(vec![unresolved.clone()], policy).is_none());
+    assert!(monic_normalize(vec![unresolved.clone()], policy).is_none());
     // Noncanonical inputs are outside the helper's caller contract, but must
     // still not turn a failed leading reciprocal into a literal unit.
     for leading in [Real::zero(), unresolved] {
-        assert!(gcd_monic_normalize(vec![Real::one(), leading], policy).is_none());
+        assert!(monic_normalize(vec![Real::one(), leading], policy).is_none());
     }
 }
 
@@ -52,7 +52,7 @@ fn monic_normalization_preserves_lower_coefficients_and_certified_unit() {
                 .collect();
             let expected: Vec<_> = coefficients.iter().map(|c| c * &inverse).collect();
             coefficients.push(leading.clone());
-            let normalized = gcd_monic_normalize(coefficients, policy).unwrap();
+            let normalized = monic_normalize(coefficients, policy).unwrap();
             assert_eq!(normalized.len(), degree + 1);
             assert_eq!(&normalized[..degree], expected.as_slice());
             assert_eq!(
