@@ -1,13 +1,13 @@
 impl Real {
-    /// Rebuild this value from its bounded exact quadratic-tower reduction.
+    /// Rebuild this value from its exact quadratic-tower reduction.
     ///
     /// Values in `Q(sqrt(d))(sqrt(a + b sqrt(d)))` can accumulate a large
-    /// arithmetic graph while their reduced coefficients remain small. This
+    /// arithmetic graph while their reduced field basis remains fixed. This
     /// returns an equal, shallow `Real`, including a rational payload when the
     /// radicals cancel. Principal-root branches and the outer rational scale
     /// are preserved; no numerical approximation is used.
     ///
-    /// `None` means the bounded reduction did not cover this expression. It
+    /// `None` means this reduction did not cover the expression. It
     /// does not limit the original exact value or its subsequent operations.
     pub fn compact_quadratic_tower(&self) -> Option<Self> {
         if self.exact_rational_ref().is_some() {
@@ -80,7 +80,7 @@ impl Real {
     /// Rational polynomial satisfied by a value in the quadratic tower.
     ///
     /// Coefficients run from low degree to high. `None` means the value is
-    /// outside the tower or its integers exceed the reduction bound.
+    /// outside the supported tower reduction.
     pub fn quadratic_tower_annihilating_polynomial(&self) -> Option<Vec<Rational>> {
         self.tower_computable()
             .quadratic_tower_annihilating_polynomial()

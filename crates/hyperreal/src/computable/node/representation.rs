@@ -258,16 +258,13 @@ impl EvaluationCache {
         guard.quadratic_tower.as_deref().cloned()
     }
 
-    fn store_quadratic_tower(&self, tower: Tower) {
-        if !tower.has_bounded_coefficients() {
-            return;
-        }
+    fn store_quadratic_tower(&self, tower: &Tower) {
         let mut guard = self
             .cell_or_init()
             .write()
             .unwrap_or_else(|error| error.into_inner());
         if guard.quadratic_tower.is_none() {
-            guard.quadratic_tower = Some(Box::new(tower));
+            guard.quadratic_tower = Some(Box::new(tower.clone()));
         }
     }
 }
