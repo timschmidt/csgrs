@@ -9713,6 +9713,17 @@ fn point_on_fillet_offset(
             })?)
         }
         FilletOffsetCarrier2::AlgebraicCusp { support, .. } => {
+            if domain.mode() == CurveCornerMode2::TrimOrExtend {
+                return decided(
+                    support
+                        .semicircle()
+                        .retained_point_incidence_sign(point, policy)
+                        .map(|sign| sign.map(|sign| sign == RealSign::Zero))
+                        .map_err(|cause| {
+                            ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                        })?,
+                );
+            }
             decided(support.contains_point(point, policy).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
             })?)

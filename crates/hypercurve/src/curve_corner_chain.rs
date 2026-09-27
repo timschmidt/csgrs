@@ -2928,6 +2928,110 @@ impl<'a> CurveCornerChain2<'a> {
         )
     }
 
+    /// Clips the existing two half charts of a certified fillet circle. Reuse
+    /// contact parameters when their source shares the chart; unrelated exact
+    /// contact evidence enters through the same certified circle inverse.
+    fn selected_circle_arc_fragments(
+        circle: &crate::bezier_offset::BezierAlgebraicCuspSemicircle2,
+        contacts: [(&BezierSplitFragment2, &CornerTrimCut2); 2],
+        clockwise: bool,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        use crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2 as Parameter;
+        let invalid = |cause| curve_region_edit_error(CurveOperation2::Fillet, cause);
+        let blocked = |reason| {
+            ExactCurveError::blocked(CurveOperation2::Fillet, CurveFamily2::CircularArc, reason)
+        };
+        let parameter = |(fragment, cut): (&BezierSplitFragment2, &CornerTrimCut2)| {
+            if let BezierSplitFragment2::AlgebraicCuspSemicircle(source) = fragment
+                && let Some(parameter) = cut.parameter.as_algebraic_cusp()
+                && let Classification::Decided(Some(complementary)) =
+                    policy.strict_predicate_pass(|| {
+                        circle.shared_frame_chart_relation(source.semicircle(), policy)
+                    })
+            {
+                return Ok((
+                    complementary ^ cut.parameter.is_algebraic_cusp_complement(),
+                    parameter.clone(),
+                ));
+            }
+            let parameter = match circle
+                .parameter_at_certified_incident_point(&cut.point, policy)
+                .map_err(invalid)?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Err(blocked(reason)),
+            };
+            Ok((
+                parameter.is_algebraic_cusp_complement(),
+                parameter
+                    .as_algebraic_cusp()
+                    .expect("a circle inverse retains its half-chart parameter")
+                    .clone(),
+            ))
+        };
+        let reversed = clockwise != circle.is_clockwise();
+        let [start, end] = if reversed {
+            [parameter(contacts[1])?, parameter(contacts[0])?]
+        } else {
+            [parameter(contacts[0])?, parameter(contacts[1])?]
+        };
+        let mut fragments = Vec::with_capacity(3);
+        let mut push = |complementary, start: Parameter, end: Parameter| {
+            match start.cmp_by_refinement(&end, policy).map_err(invalid)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => return Ok(()),
+                Classification::Decided(std::cmp::Ordering::Less) => (),
+                Classification::Decided(std::cmp::Ordering::Greater) => {
+                    return Err(invalid(CurveError::InvalidBezierRange));
+                }
+                Classification::Uncertain(reason) => return Err(blocked(reason)),
+            }
+            fragments.push(
+                crate::BezierAlgebraicCuspSemicircleFragment2::from_certified_range(
+                    if complementary {
+                        circle.complementary_half()
+                    } else {
+                        circle.clone()
+                    },
+                    start,
+                    end,
+                    false,
+                    policy,
+                )
+                .with_certified_tangent_endpoints(),
+            );
+            Ok(())
+        };
+        let same_half_forward = start.0 == end.0
+            && match start.1.cmp_by_refinement(&end.1, policy).map_err(invalid)? {
+                Classification::Decided(order) => order == std::cmp::Ordering::Less,
+                Classification::Uncertain(reason) => return Err(blocked(reason)),
+            };
+        if same_half_forward {
+            push(start.0, start.1, end.1)?;
+        } else {
+            push(start.0, start.1, Parameter::Exact(Real::one()))?;
+            if start.0 == end.0 {
+                push(
+                    !start.0,
+                    Parameter::Exact(Real::zero()),
+                    Parameter::Exact(Real::one()),
+                )?;
+            }
+            push(end.0, Parameter::Exact(Real::zero()), end.1)?;
+        }
+        if reversed {
+            fragments.reverse();
+            for fragment in &mut fragments {
+                *fragment = fragment.reversed();
+            }
+        }
+        Ok(fragments
+            .into_iter()
+            .map(BezierSplitFragment2::AlgebraicCuspSemicircle)
+            .collect())
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn retained_fillet_fragments(
         previous_fragments: &[BezierSplitFragment2],
@@ -3093,6 +3197,35 @@ impl<'a> CurveCornerChain2<'a> {
                 None,
             );
             return Self::materialized_corner_arc_fragments(&arc, CurveOperation2::Fillet, policy);
+        }
+
+        if retained_frame.is_none() {
+            for fragment in [previous_fragment, next_fragment] {
+                let BezierSplitFragment2::AlgebraicCuspSemicircle(source) = fragment else {
+                    continue;
+                };
+                let circle = source.semicircle();
+                let matches_circle = policy.strict_predicate_pass(|| {
+                    if crate::classify::compare_reals(&circle.radial_distance().abs(), radius, policy)
+                        != Some(std::cmp::Ordering::Equal)
+                    {
+                        return Ok(false);
+                    }
+                    Ok(matches!(circle.center_point_evidence(policy)?, Classification::Decided(source_center)
+                        if source_center.same_point(&center, policy) == Classification::Decided(true)))
+                }).map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?;
+                if matches_circle {
+                    // A collapsed concentric offset already supplies the
+                    // requested circle. Keep its selected center and frame
+                    // rather than manufacturing a normal from zero radius.
+                    return Self::selected_circle_arc_fragments(
+                        circle,
+                        [(previous_fragment, previous_cut), (next_fragment, next_cut)],
+                        clockwise,
+                        policy,
+                    );
+                }
+            }
         }
 
         if retained_frame.is_none()
