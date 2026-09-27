@@ -108103,22 +108103,17 @@ fn algebraic_selected_fiber_root_predicate_sign(
         if policy.has_bounded_exact_predicate_budget() {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
-        // Immediate Bernstein signs are only an optional fact lookup. A
-        // radical coefficient may never acquire such a fact as the parameter
-        // box shrinks. Full replay also evaluates certified Real intervals,
-        // so a separated nonzero value can finish without further root work.
-        if let Some(enclosure) = RealInterval::evaluate_bivariate_power_basis(
-            predicate,
-            &RealInterval {
-                lower: retained_refined.interval().start().clone(),
-                upper: retained_refined.interval().end().clone(),
-            },
-            &RealInterval {
-                lower: latest.lower.clone(),
-                upper: latest.upper.clone(),
-            },
-        )
-        .and_then(|interval| interval.strict_nonzero_sign())
+        // Full replay may certify signs that have no immediate scalar fact.
+        // Reuse the restricted polynomial: its exact affine substitution
+        // retains cancellations within this box that direct Horner bounds
+        // on the original coordinates can lose before common-root replay.
+        let unit = RealInterval {
+            lower: Real::zero(),
+            upper: Real::one(),
+        };
+        if let Some(enclosure) =
+            RealInterval::evaluate_bivariate_power_basis(&restricted, &unit, &unit)
+                .and_then(|interval| interval.strict_nonzero_sign())
         {
             return Ok(Classification::Decided(enclosure));
         }
