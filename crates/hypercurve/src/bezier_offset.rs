@@ -111286,85 +111286,6 @@ fn structural_parallel_overlap(
     Ok(None)
 }
 
-fn structural_parallel_overlap_intersects_ranges(
-    overlap: &RationalBezierIntersectionOverlap2,
-    first: &BezierParallel2,
-    second: &BezierParallel2,
-    first_range: &CurveParameterRange2,
-    second_range: &CurveParameterRange2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<bool>> {
-    let reverse = |parameter: &CurveParameter2| {
-        parameter.affine_image_unbounded(&Real::from(-1_i8), &Real::one(), policy)
-    };
-    let reversed_second;
-    let second_in_first_parameter = match overlap.orientation() {
-        RationalBezierOverlapOrientation2::Same => second_range,
-        RationalBezierOverlapOrientation2::Reversed => {
-            let start = match reverse(second_range.end())? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let end = match reverse(second_range.start())? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            reversed_second = CurveParameterRange2::new_validated(start, end);
-            &reversed_second
-        }
-    };
-    let [first_low, first_high] = match first_range.ordered_endpoints(policy)? {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let [second_low, second_high] = match second_in_first_parameter.ordered_endpoints(policy)? {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    // Overlapping interiors use the same regular source sheet. A shared
-    // endpoint can instead separate opposite one-sided normals at a source
-    // cusp; retain the diagonal there only after replaying both limit points.
-    for (low, high) in [(first_low, second_high), (second_low, first_high)] {
-        match low.cmp_by_refinement(high, policy)? {
-            Classification::Decided(std::cmp::Ordering::Greater) => {
-                return Ok(Classification::Decided(false));
-            }
-            Classification::Decided(std::cmp::Ordering::Equal) => {
-                let second_parameter = match overlap.orientation() {
-                    RationalBezierOverlapOrientation2::Same => low.clone(),
-                    RationalBezierOverlapOrientation2::Reversed => match reverse(low)? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    },
-                };
-                let first_point =
-                    match first.point_evidence_on_regular_range(low, first_range, policy)? {
-                        Classification::Decided(point) => point,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                let second_point = match second.point_evidence_on_regular_range(
-                    &second_parameter,
-                    second_range,
-                    policy,
-                )? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                return Ok(first_point.same_point(&second_point, &policy.strict_counterpart()));
-            }
-            Classification::Decided(std::cmp::Ordering::Less) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-    }
-    Ok(Classification::Decided(true))
-}
-
 enum CertifiedParallelSourceOverlapKind2 {
     None,
     Selected(RationalBezierIntersectionOverlap2),
@@ -117927,7 +117848,7 @@ impl BezierParallel2 {
             ));
         };
         let projection =
-            match project_parallel_pair_intersection_system(&system, self, other, None, policy)? {
+            match project_unit_parallel_pair_intersection_system(&system, self, other, policy)? {
                 Classification::Decided(projection) => projection,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -118029,7 +117950,12 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        if first_frame.is_none() && second_frame.is_none() {
+        // Unit-span bounds and root enumeration are valid only for the
+        // queried unit spans. Retained and extended ranges own their own
+        // projection, even when neither source needs a cancelled frame.
+        let unit = CurveParameterRange2::unit();
+        let unit_domain = first_range == &unit && second_range == &unit;
+        if unit_domain && first_frame.is_none() && second_frame.is_none() {
             return self.parallel_intersections_without_regular_frame(other, policy);
         }
         let Some(system) = (match parallel_pair_equation_system_with_tangent_fields(
@@ -118037,7 +117963,7 @@ impl BezierParallel2 {
             other,
             first_frame.as_deref(),
             second_frame.as_deref(),
-            true,
+            unit_domain,
             policy,
         )? {
             Classification::Decided(system) => system,
@@ -118049,18 +117975,29 @@ impl BezierParallel2 {
                 BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
             ));
         };
-        let projection = match project_parallel_pair_intersection_system(
-            &system,
-            self,
-            other,
-            Some([first_range, second_range]),
-            policy,
-        )? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        if !unit_domain {
+            return Ok(self
+                .parallel_intersections_from_system_in_domain(
+                    other,
+                    system,
+                    [first_range, second_range]
+                        .map(|range| CurveParameterDomain2::new(range, None)),
+                    ParameterComponentQuery2::RetainFinite,
+                    Some([first_range, second_range]),
+                    policy,
+                )?
+                .map(|result| {
+                    debug_assert!(result.components.is_empty());
+                    result.intersections
+                }));
+        }
+        let projection =
+            match project_unit_parallel_pair_intersection_system(&system, self, other, policy)? {
+                Classification::Decided(projection) => projection,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         self.replay_parallel_pair_projection_with_ranges(
             other,
             &system,
@@ -118278,6 +118215,24 @@ impl BezierParallel2 {
                 ),
             ));
         };
+        self.parallel_intersections_from_system_in_domain(
+            other, system, domains, query, None, policy,
+        )
+    }
+
+    /// Shares finite/incident projection and component replay with retained
+    /// regular frames. Equations keep their original source parameters;
+    /// every residual projection and selected family uses the same domains.
+    #[allow(clippy::too_many_arguments)]
+    fn parallel_intersections_from_system_in_domain(
+        &self,
+        other: &Self,
+        system: BezierParallelPairEquationSystem2,
+        domains: [CurveParameterDomain2<'_>; 2],
+        query: ParameterComponentQuery2<'_>,
+        regular_ranges: Option<[&CurveParameterRange2; 2]>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         let candidates = match project_parallel_intersection_system(
             &system.first_equation,
             &system.second_equation,
@@ -118409,11 +118364,12 @@ impl BezierParallel2 {
                 prepend_parallel_pair_projection(&mut projection, source_projection);
             }
         }
-        let result = self.replay_parallel_pair_projection(
+        let result = self.replay_parallel_pair_projection_with_ranges(
             other,
             &system,
             projection,
             BezierParallelPairParameterSelection2::All,
+            regular_ranges,
             policy,
         )?;
         let result = match result {
@@ -131860,11 +131816,10 @@ fn project_parallel_pair_without_components_in_domain(
     }))
 }
 
-fn project_parallel_pair_intersection_system(
+fn project_unit_parallel_pair_intersection_system(
     system: &BezierParallelPairEquationSystem2,
     first: &BezierParallel2,
     second: &BezierParallel2,
-    retained_ranges: Option<[&CurveParameterRange2; 2]>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelPairProjection2>> {
     let may_component =
@@ -131881,34 +131836,10 @@ fn project_parallel_pair_intersection_system(
         .transpose()?
         .flatten();
     let mut source_overlap = if let Some(overlap) = structural_overlap {
-        let selected = match retained_ranges {
-            Some([first_range, second_range]) => {
-                match structural_parallel_overlap_intersects_ranges(
-                    &overlap,
-                    first,
-                    second,
-                    first_range,
-                    second_range,
-                    policy,
-                )? {
-                    Classification::Decided(selected) => selected,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            None => true,
-        };
         Some(Classification::Decided(
-            CertifiedParallelSourceOverlap2::without_contacts(if selected {
-                CertifiedParallelSourceOverlapKind2::Selected(overlap)
-            } else {
-                // The source diagonal remains a squared-equation factor,
-                // but the retained ranges are disjoint or select different
-                // one-sided normal limits. Saturate it without publishing
-                // a geometric overlap.
-                CertifiedParallelSourceOverlapKind2::Excluded
-            }),
+            CertifiedParallelSourceOverlap2::without_contacts(
+                CertifiedParallelSourceOverlapKind2::Selected(overlap),
+            ),
         ))
     } else {
         may_component
@@ -138965,12 +138896,11 @@ mod conversion_tests {
                 )
                 .unwrap();
             let Classification::Decided(result) = result else {
-                panic!("the retained cusp/quarter-circle intersection must decide: {result:?}");
+                panic!("the retained cusp/quarter-circle intersection must decide");
             };
             assert!(
                 result.is_complete(),
-                "the retained cusp/quarter-circle intersection must complete: {:?}",
-                result.incomplete_candidates()
+                "the retained cusp/quarter-circle intersection must complete"
             );
             assert!(!result.contacts().is_empty());
 
@@ -139067,7 +138997,10 @@ mod conversion_tests {
             let (domain, retained_components) = domain.into_parts();
             let positive_dimensional = !retained_components.is_empty();
             assert!(!positive_dimensional);
-            assert!(domain.is_complete(), "{domain:?}");
+            assert!(
+                domain.is_complete(),
+                "finite domain evidence was incomplete or inconsistent"
+            );
             assert_eq!(domain.contacts().len(), regular.contacts().len());
             assert!(
                 domain.contacts().iter().any(|contact| {
@@ -139090,7 +139023,7 @@ mod conversion_tests {
                             &policy,
                         ) == Ok(Classification::Decided(true))
                 }),
-                "{domain:?}"
+                "finite domain evidence was incomplete or inconsistent"
             );
             let limit = match parallel
                 .source_cusp_limit_point_and_tangent_support(
@@ -139178,8 +139111,14 @@ mod conversion_tests {
                     panic!("opposite source sheets remained uncertain: {reason:?}")
                 }
             };
-            assert!(result.is_complete(), "{result:?}");
-            assert!(result.overlaps().is_empty(), "{result:?}");
+            assert!(
+                result.is_complete(),
+                "regular pair evidence was incomplete or inconsistent"
+            );
+            assert!(
+                result.overlaps().is_empty(),
+                "regular pair evidence was incomplete or inconsistent"
+            );
             assert!(
                 result.contacts().iter().any(|contact| {
                     overlap_parameter_is_in_range(contact.first_parameter(), &before, true, &policy)
@@ -139191,7 +139130,7 @@ mod conversion_tests {
                             &policy,
                         ) == Ok(Classification::Decided(true))
                 }),
-                "{result:?}"
+                "regular pair evidence was incomplete or inconsistent"
             );
         }
     }
@@ -174352,9 +174291,20 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     panic!("selected overlap residual replay: {reason:?}")
                 }
             };
-            assert!(result.is_complete(), "{result:?}");
-            assert_eq!(result.overlaps().len(), 1, "{result:?}");
-            assert_eq!(result.contacts().len(), 2, "{result:?}");
+            assert!(
+                result.is_complete(),
+                "regular pair evidence was incomplete or inconsistent"
+            );
+            assert_eq!(
+                result.overlaps().len(),
+                1,
+                "regular pair evidence was incomplete or inconsistent"
+            );
+            assert_eq!(
+                result.contacts().len(),
+                2,
+                "regular pair evidence was incomplete or inconsistent"
+            );
         }
     }
 
@@ -190078,7 +190028,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 panic!("the coincident parallel lines must reach their exact pair system");
             };
             let Classification::Decided(projection) =
-                project_parallel_pair_intersection_system(&system, &first, &second, None, &policy)
+                project_unit_parallel_pair_intersection_system(&system, &first, &second, &policy)
                     .unwrap()
             else {
                 panic!("the non-source radical component was not projected");
@@ -193830,6 +193780,158 @@ mod regular_parallel_contact_tests {
                     Classification::Decided(true)
                 );
             }
+        }
+    }
+    #[test]
+    fn exterior_regular_pair_keeps_contacts_outside_ancestral_bounds() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for stationary_chart in [false, true] {
+                let points = if stationary_chart {
+                    vec![
+                        p(0, 0),
+                        p(0, 0),
+                        Point2::new(q(1, 6), Real::zero()),
+                        Point2::new(q(1, 2), Real::zero()),
+                        p(1, 1),
+                    ]
+                } else {
+                    vec![p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 1)]
+                };
+                let weights = vec![Real::one(); points.len()];
+                let other = points
+                    .iter()
+                    .map(|point| {
+                        Point2::new(Real::from(13) - point.y(), Real::from(21) + point.x())
+                    })
+                    .collect();
+                let distance = Real::from(65).sqrt().unwrap();
+                let first = RationalBezier2::try_new(points, weights.clone())
+                    .unwrap()
+                    .parallel_left(distance.clone())
+                    .unwrap();
+                let second = RationalBezier2::try_new(other, weights)
+                    .unwrap()
+                    .parallel_left(distance)
+                    .unwrap();
+                let range = if stationary_chart {
+                    CurveParameterRange2::new_validated(q(3, 2).into(), q(5, 2).into())
+                } else {
+                    CurveParameterRange2::new_validated(Real::from(3).into(), Real::from(5).into())
+                };
+                let value = Real::from(if stationary_chart { 2 } else { 4 });
+                let parameter: CurveParameter2 = value.clone().into();
+                let center: CurvePoint2 = Point2::from_values(-4, 17).into();
+                // Q(4)=B(2)=(4,16) for Q(t)=(t,t²), B(u)=Q(u²).
+                // Its normal times sqrt(65) is (-8,1).
+                // The second source is R90(B)+(13,21), so both parallels
+                // pass through (-4,17). Their authored unit-span offset boxes
+                // are disjoint: 1+sqrt(65) < 21-sqrt(65).
+                for parallel in [&first, &second] {
+                    let point = decided(
+                        parallel
+                            .point_evidence_on_regular_range(&parameter, &range, &policy)
+                            .unwrap(),
+                    );
+                    assert_eq!(
+                        point.same_point(&center, &policy),
+                        Classification::Decided(true)
+                    );
+                }
+                let result = decided(
+                    first
+                        .parallel_intersections_on_regular_ranges(&second, &range, &range, &policy)
+                        .unwrap(),
+                );
+                assert!(result.is_complete());
+                let mut found = false;
+                for contact in result.contacts() {
+                    found |= contact
+                        .first_parameter()
+                        .polynomial_sign(&[-value.clone(), Real::one()], &policy)
+                        .unwrap()
+                        == Classification::Decided(RealSign::Zero)
+                        && contact
+                            .second_parameter()
+                            .polynomial_sign(&[-value.clone(), Real::one()], &policy)
+                            .unwrap()
+                            == Classification::Decided(RealSign::Zero);
+                }
+                assert!(
+                    found,
+                    "the independently known exterior contact was omitted"
+                );
+            }
+        }
+    }
+    #[test]
+    fn general_regular_pair_replays_unequal_contact_scale_changes() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let points = vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(0, 0),
+                Point2::new(q(1, 6), Real::zero()),
+                Point2::new(q(1, 2), Real::zero()),
+                Point2::from_values(1, 1),
+            ];
+            let other = points
+                .iter()
+                .map(|point| Point2::new(q(-51, 64) - point.y(), q(-3, 64) + point.x()))
+                .collect();
+            let first = RationalBezier2::try_new(points, vec![Real::one(); 5])
+                .unwrap()
+                .parallel_left(q(15, 16))
+                .unwrap();
+            let second = RationalBezier2::try_new(other, vec![Real::one(); 5])
+                .unwrap()
+                .parallel_left(q(-15, 16))
+                .unwrap();
+            let range = CurveParameterRange2::unit();
+            let parameter: CurveParameter2 = q(3, 8).sqrt().unwrap().into();
+            let center: CurvePoint2 = Point2::new(q(-3, 16), q(57, 64)).into();
+            // The first scale is 1/25 at the contact, but negative at the
+            // range midpoint. The second scale is 49/25 at the contact
+            // and positive everywhere. Neither carrier has a rational
+            // parallel image; the general pair replay must keep this crossing.
+            for parallel in [&first, &second] {
+                let point = decided(
+                    parallel
+                        .point_evidence_on_regular_range(&parameter, &range, &policy)
+                        .unwrap(),
+                );
+                assert_eq!(
+                    point.same_point(&center, &policy),
+                    Classification::Decided(true)
+                );
+            }
+            let result = decided(
+                first
+                    .parallel_intersections_on_regular_ranges(&second, &range, &range, &policy)
+                    .unwrap(),
+            );
+            assert!(result.is_complete());
+            let mut found = false;
+            for contact in result.contacts() {
+                if [contact.first_parameter(), contact.second_parameter()]
+                    .into_iter()
+                    .all(|parameter| {
+                        parameter
+                            .polynomial_sign(
+                                &[Real::from(-3), Real::zero(), Real::from(8)],
+                                &policy,
+                            )
+                            .unwrap()
+                            == Classification::Decided(RealSign::Zero)
+                    })
+                {
+                    found = true;
+                    assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Positive));
+                    assert_eq!(contact.tangent_dot_sign(), Some(RealSign::Zero));
+                }
+            }
+            assert!(
+                found,
+                "the independently known general pair contact was omitted"
+            );
         }
     }
 }
