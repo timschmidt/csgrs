@@ -3280,6 +3280,19 @@ impl<T> CornerSolutionAccumulator<T> {
             Self::Multiple(candidates) => CurveCornerSolutions2::Multiple(candidates),
         }
     }
+
+    fn append(&mut self, solutions: CurveCornerSolutions2<T>) -> Option<CurveCornerNoSolution2> {
+        match solutions {
+            CurveCornerSolutions2::NoSolution(reason) => return Some(reason),
+            CurveCornerSolutions2::Unique(candidate) => self.push(candidate),
+            CurveCornerSolutions2::Multiple(candidates) => {
+                for candidate in candidates {
+                    self.push(candidate);
+                }
+            }
+        }
+        None
+    }
 }
 
 #[derive(Default)]
@@ -4543,6 +4556,7 @@ pub(crate) fn solve_exact_fillet_corner(
 enum FilletLinearSource2<'a> {
     Native {
         source: &'a LineSeg2,
+        parameterization: Option<&'a QuadraticBezier2>,
         parallel_tangent_contacts: &'a [crate::bezier::BezierParallelLineTangentContact2],
     },
     AlgebraicChord(&'a crate::BezierAlgebraicChord2),
@@ -4581,7 +4595,18 @@ enum FilletParallelSource2<'a> {
     Selected(&'a crate::bezier_split::BezierSelectedFiberFragment2),
 }
 
-impl FilletParallelSource2<'_> {
+impl<'a> FilletParallelSource2<'a> {
+    fn corner_carrier(self) -> ExactCornerCarrier2<'a> {
+        match self {
+            Self::Direct(ExactCornerBezier2::Direct(source)) => ExactCornerCarrier2::Bezier(source),
+            Self::Direct(ExactCornerBezier2::NativeSpan(source)) => {
+                ExactCornerCarrier2::NativeBezierSpan(source)
+            }
+            Self::Retained(source) => ExactCornerCarrier2::AnalyticParallel(source),
+            Self::Selected(source) => ExactCornerCarrier2::SelectedFiber(source),
+        }
+    }
+
     const fn is_reversed(self) -> bool {
         match self {
             Self::Direct(_) => false,
@@ -4915,6 +4940,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 Ok(Self::Line {
                     source: FilletLinearSource2::Native {
                         source,
+                        parameterization: None,
                         parallel_tangent_contacts: &[],
                     },
                     chord_support: None,
@@ -4932,6 +4958,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 Ok(Self::Line {
                     source: FilletLinearSource2::Native {
                         source,
+                        parameterization: Some(curve),
                         parallel_tangent_contacts: curve.retained_parallel_line_tangent_contacts(),
                     },
                     chord_support: None,
@@ -5894,21 +5921,15 @@ fn solve_carrier_fillet_corner(
                         constraints,
                         policy,
                     )?;
-                    match solutions {
-                        CurveCornerSolutions2::NoSolution(reason) => match reason {
-                            CurveCornerNoSolution2::DegenerateCandidate => saw_degenerate = true,
-                            CurveCornerNoSolution2::OutsideTrimDomain => saw_outside_domain = true,
-                            CurveCornerNoSolution2::UnsatisfiedConstraints => {
-                                saw_unsatisfied = true
-                            }
-                            _ => (),
-                        },
-                        CurveCornerSolutions2::Unique(corner) => candidates.push(corner),
-                        CurveCornerSolutions2::Multiple(corners) => {
-                            for corner in corners {
-                                candidates.push(corner);
-                            }
+                    match candidates.append(solutions) {
+                        Some(CurveCornerNoSolution2::DegenerateCandidate) => saw_degenerate = true,
+                        Some(CurveCornerNoSolution2::OutsideTrimDomain) => {
+                            saw_outside_domain = true
                         }
+                        Some(CurveCornerNoSolution2::UnsatisfiedConstraints) => {
+                            saw_unsatisfied = true
+                        }
+                        _ => (),
                     }
                     continue;
                 }
@@ -5940,7 +5961,94 @@ fn solve_carrier_fillet_corner(
                 )?;
                 saw_outside_domain |= centers.outside_domain;
                 if centers.coincident {
-                    saw_degenerate = true;
+                    let mixed = match (previous_offset, next_offset) {
+                        (
+                            FilletOffsetCarrier2::Line { source, .. },
+                            FilletOffsetCarrier2::Parallel {
+                                source: parallel, ..
+                            },
+                        ) => Some((source, *parallel, true)),
+                        (
+                            FilletOffsetCarrier2::Parallel {
+                                source: parallel, ..
+                            },
+                            FilletOffsetCarrier2::Line { source, .. },
+                        ) => Some((source, *parallel, false)),
+                        _ => None,
+                    };
+                    if let Some((source, parallel, line_is_previous)) = mixed {
+                        let FilletLinearSource2::Native {
+                            source,
+                            parameterization,
+                            ..
+                        } = source
+                        else {
+                            return Err(ExactCurveError::blocked(
+                                CurveOperation2::Fillet,
+                                previous_family,
+                                crate::UncertaintyReason::Unsupported,
+                            ));
+                        };
+                        // Coincidence needs the complete source-parameter
+                        // correspondence, including nonlinear line images and
+                        // collapsed parallel centers. Re-enter the shared
+                        // parametric kernel once; both sides are then parallel
+                        // carriers and the native isolated fast path is retained.
+                        let line = parameterization.map_or_else(
+                            || Curve2::from(QuadraticBezier2::from_line_segment((*source).clone())),
+                            |curve| Curve2::from(curve.clone()),
+                        );
+                        let linear = ExactCornerCarrier2::Bezier(&line);
+                        let parallel = parallel.corner_carrier();
+                        let (previous, next) = if line_is_previous {
+                            (linear, parallel)
+                        } else {
+                            (parallel, linear)
+                        };
+                        return solve_carrier_fillet_corner(
+                            previous,
+                            next,
+                            radius,
+                            retain_selected_circle_endpoints,
+                            domains,
+                            previous_family,
+                            next_family,
+                            constraints,
+                            policy,
+                        );
+                    }
+                    if [previous_offset, next_offset].iter().all(|offset| {
+                        matches!(
+                            offset,
+                            FilletOffsetCarrier2::Line { .. }
+                                | FilletOffsetCarrier2::AlgebraicChord { .. }
+                        )
+                    }) {
+                        let solutions = curve_fillet::constrained_coincident_linear_fillet(
+                            [previous_offset, next_offset],
+                            &signed_distance,
+                            clockwise,
+                            retain_selected_circle_endpoints,
+                            domains,
+                            [previous_family, next_family],
+                            constraints,
+                            policy,
+                        )?;
+                        match candidates.append(solutions) {
+                            Some(CurveCornerNoSolution2::DegenerateCandidate) => {
+                                saw_degenerate = true
+                            }
+                            Some(CurveCornerNoSolution2::OutsideTrimDomain) => {
+                                saw_outside_domain = true
+                            }
+                            Some(CurveCornerNoSolution2::UnsatisfiedConstraints) => {
+                                saw_unsatisfied = true
+                            }
+                            _ => (),
+                        }
+                    } else {
+                        saw_degenerate = true;
+                    }
                 }
                 for center in centers.iter() {
                     if !previous.accepts_offset_contact(
@@ -9455,7 +9563,17 @@ fn fillet_offset_centers(
                 ExactCurveError::invalid(CurveOperation2::Fillet, previous_family, cause)
             })? {
                 Classification::Decided(Some(point)) => point,
-                Classification::Decided(None) => return Ok(centers),
+                Classification::Decided(None) => {
+                    centers.coincident = point_on_fillet_offset(
+                        &next_support.start().clone().into(),
+                        previous,
+                        true,
+                        domains[0],
+                        previous_family,
+                        policy,
+                    )?;
+                    return Ok(centers);
+                }
                 Classification::Uncertain(reason) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
