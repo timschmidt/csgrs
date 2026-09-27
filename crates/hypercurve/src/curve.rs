@@ -1975,7 +1975,9 @@ impl CurvePath2 {
     /// analytic-parallel incidence and retain selected contact evidence for
     /// subsequent operations. A radius leaving a continuous family requires
     /// additional exact center or contact constraints in [`CurveFillet2`].
-    /// Contact parameters use the incident input curves' charts.
+    /// Contact parameters use the incident input curves' charts. Stationary
+    /// contacts retain the one-sided tangent of the source that survives the
+    /// cut; a vanishing authored derivative does not discard that contact.
     ///
     /// `TrimOrExtend` additionally extends each incident boundary chart;
     /// other charts keep their finite domains. Bezier extensions search the
@@ -5755,7 +5757,16 @@ impl FilletOffsetCarrier2<'_, '_> {
     }
 }
 
+/// A contact on a stationary source owns the regular side that survives the
+/// cut. Its unit tangent chord retains that side without reconstructing a
+/// vanishing hodograph; the scale orients the original offset's traversal.
+struct FilletSourceFrame2 {
+    tangent: crate::BezierAlgebraicChord2,
+    derivative_scale: RealSign,
+}
+
 struct FilletCenterWitness2 {
+    source_frames: [Option<FilletSourceFrame2>; 2],
     point: CurvePoint2,
     previous_parameter: Option<CurveParameter2>,
     next_parameter: Option<CurveParameter2>,
@@ -6041,19 +6052,29 @@ fn solve_carrier_fillet_corner(
                     }
                 }
                 for center in centers.iter() {
-                    if !previous.accepts_offset_contact(
-                        previous_offset,
-                        center.parameter(true),
-                        &signed_distance,
-                        previous_family,
-                        policy,
-                    )? || !next.accepts_offset_contact(
-                        next_offset,
-                        center.parameter(false),
-                        &signed_distance,
-                        next_family,
-                        policy,
-                    )? {
+                    let accepts = |prepared: &PreparedFilletCarrier2<'_>,
+                                   offset: &FilletOffsetCarrier2<'_, '_>,
+                                   axis: usize,
+                                   family| {
+                        if let Some(frame) = &center.source_frames[axis] {
+                            Ok(prepared.accepts_offset_direction(
+                                offset,
+                                frame.derivative_scale,
+                                &signed_distance,
+                            ))
+                        } else {
+                            prepared.accepts_offset_contact(
+                                offset,
+                                center.parameter(axis == 0),
+                                &signed_distance,
+                                family,
+                                policy,
+                            )
+                        }
+                    };
+                    if !accepts(&previous, previous_offset, 0, previous_family)?
+                        || !accepts(&next, next_offset, 1, next_family)?
+                    {
                         continue;
                     }
                     match fillet_corner_from_center(
@@ -6508,6 +6529,7 @@ fn retain_cusp_parallel_fillet_contact(
         (Some(analytic_parameter.clone()), Some(cusp_parameter))
     };
     centers.push(FilletCenterWitness2 {
+        source_frames: [None, None],
         point,
         previous_parameter,
         next_parameter,
@@ -6600,6 +6622,7 @@ fn fillet_offset_centers(
                     (None, parameter)
                 };
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point: point.into(),
                     previous_parameter,
                     next_parameter,
@@ -6653,6 +6676,7 @@ fn fillet_offset_centers(
             crate::CircleCircleRelation::Disjoint => {}
             crate::CircleCircleRelation::Tangent { point } => {
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point: point.into(),
                     previous_parameter: None,
                     next_parameter: None,
@@ -6664,12 +6688,14 @@ fn fillet_offset_centers(
                 second_point,
             } => {
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point: first_point.into(),
                     previous_parameter: None,
                     next_parameter: None,
                     retained_anchor_evidence: None,
                 });
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point: second_point.into(),
                     previous_parameter: None,
                     next_parameter: None,
@@ -6822,6 +6848,7 @@ fn fillet_offset_centers(
                         });
                 let bezier_parameter = CurveParameter2::from(parameter);
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point,
                     previous_parameter: bezier_is_previous.then(|| bezier_parameter.clone()),
                     next_parameter: (!bezier_is_previous).then_some(bezier_parameter),
@@ -7013,6 +7040,7 @@ fn fillet_offset_centers(
                     })
                 };
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point,
                     previous_parameter: Some(previous_parameter.clone()),
                     next_parameter: Some(next_parameter.clone()),
@@ -7099,32 +7127,99 @@ fn fillet_offset_centers(
             } else {
                 None
             };
-            let mut parameters = match support
+            let invalid =
+                |cause| ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause);
+            let blocked =
+                |reason| ExactCurveError::blocked(CurveOperation2::Fillet, parallel_family, reason);
+            let source_parallel = support.with_distance(source.parallel_distance());
+            let mut parameters = Vec::new();
+            let incidence = support
                 .supporting_line_incidence_with_direction(
                     line,
                     line_unit_x,
                     line_unit_y,
                     certified_tangencies,
+                    None,
                     policy,
                 )
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
-                })? {
-                Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
-                    centers.coincident = Some(FilletCenterCoincidence2::Support);
-                    Vec::new()
+                .map_err(invalid)?;
+            let ranges =
+                if incidence == Classification::Uncertain(crate::UncertaintyReason::Boundary) {
+                    let analysis = match source_parallel
+                        .singularity_analysis(&source.curve_parameter_range(), policy)
+                        .map_err(invalid)?
+                    {
+                        Classification::Decided(analysis) => analysis,
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    };
+                    if analysis.source_is_regular() {
+                        return Err(blocked(crate::UncertaintyReason::Boundary));
+                    }
+                    Some(match analysis.regular_subranges(policy).map_err(invalid)? {
+                        Classification::Decided(ranges) => ranges,
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    })
+                } else {
+                    None
+                };
+            if let Some(ranges) = ranges {
+                let retains_lower_side = parallel_is_previous != source.is_reversed();
+                for range in ranges {
+                    let incidence = support
+                        .supporting_line_incidence_with_direction(
+                            line,
+                            line_unit_x,
+                            line_unit_y,
+                            certified_tangencies,
+                            Some(&range),
+                            policy,
+                        )
+                        .map_err(invalid)?;
+                    match incidence {
+                        Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
+                            centers.coincident = Some(FilletCenterCoincidence2::Support);
+                        }
+                        Classification::Decided(crate::BezierParallelIncidence2::Parameters(
+                            contacts,
+                        )) => {
+                            for parameter in contacts {
+                                // A stationary seam belongs to the regular cell
+                                // retained by the cut. Opposite normal sheets
+                                // must neither be merged nor both published.
+                                let excluded = if retains_lower_side {
+                                    range.start()
+                                } else {
+                                    range.end()
+                                };
+                                match CurveParameter2::from(parameter.clone())
+                                    .cmp_by_refinement(excluded, policy)
+                                    .map_err(invalid)?
+                                {
+                                    Classification::Decided(order) if order.is_eq() => continue,
+                                    Classification::Decided(_) => {}
+                                    Classification::Uncertain(reason) => {
+                                        return Err(blocked(reason));
+                                    }
+                                }
+                                parameters.push((parameter, Some(range.clone())));
+                            }
+                        }
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    }
                 }
-                Classification::Decided(crate::BezierParallelIncidence2::Parameters(
-                    parameters,
-                )) => parameters,
-                Classification::Uncertain(reason) => {
-                    return Err(ExactCurveError::blocked(
-                        CurveOperation2::Fillet,
-                        parallel_family,
-                        reason,
-                    ));
+            } else {
+                match incidence {
+                    Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
+                        centers.coincident = Some(FilletCenterCoincidence2::Support);
+                    }
+                    Classification::Decided(crate::BezierParallelIncidence2::Parameters(
+                        contacts,
+                    )) => {
+                        parameters.extend(contacts.into_iter().map(|parameter| (parameter, None)));
+                    }
+                    Classification::Uncertain(reason) => return Err(blocked(reason)),
                 }
-            };
+            }
             if let Some(domain) = incident_domain.as_ref() {
                 match support
                     .supporting_line_incidence_on_incident_ray_with_direction(
@@ -7142,7 +7237,9 @@ fn fillet_offset_centers(
                     }
                     Classification::Decided(crate::BezierParallelIncidence2::Parameters(
                         exterior,
-                    )) => parameters.extend(exterior),
+                    )) => {
+                        parameters.extend(exterior.into_iter().map(|parameter| (parameter, None)))
+                    }
                     Classification::Uncertain(reason) => {
                         return Err(ExactCurveError::blocked(
                             CurveOperation2::Fillet,
@@ -7152,7 +7249,7 @@ fn fillet_offset_centers(
                     }
                 }
             }
-            for parameter in parameters {
+            for (parameter, regular_range) in parameters {
                 if !source.parameter_is_admissible(
                     &parameter.clone().into(),
                     parallel_is_previous,
@@ -7167,7 +7264,8 @@ fn fillet_offset_centers(
                 // Recover the line cut from that evidence in either mode;
                 // rebuilding its scalar image can force an unnecessary
                 // resultant over nonrational source coefficients.
-                let procedural_affine_contact = parameter.scalar().is_none();
+                let procedural_affine_contact =
+                    parameter.scalar().is_none() || regular_range.is_some();
                 let line_parameter = if procedural_affine_contact {
                     None
                 } else {
@@ -7196,13 +7294,55 @@ fn fillet_offset_centers(
                 // independent Cartesian algebraic image here would force
                 // later circle/chord replay to prove equality across two
                 // avoidable coordinate constructions.
-                let point = analytic_parallel_point_evidence(
-                    support,
-                    &parameter.clone().into(),
-                    CurveOperation2::Fillet,
-                    parallel_family,
-                    policy,
-                )?;
+                let (point, source_frame) = if let Some(range) = &regular_range {
+                    let (point, tangent) = match support
+                        .source_cusp_limit_point_and_tangent_support(
+                            support,
+                            &parameter,
+                            range,
+                            RealSign::Positive,
+                            policy,
+                        )
+                        .map_err(invalid)?
+                    {
+                        Classification::Decided(frame) => frame,
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    };
+                    let interior = match range.strict_interior_scalar(policy).map_err(invalid)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    };
+                    let derivative_scale = match source_parallel
+                        .parallel_derivative_scale_sign(&interior.into(), policy)
+                        .map_err(invalid)?
+                    {
+                        Classification::Decided(
+                            sign @ (RealSign::Positive | RealSign::Negative),
+                        ) => sign,
+                        Classification::Decided(RealSign::Zero) => {
+                            return Err(blocked(crate::UncertaintyReason::Boundary));
+                        }
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    };
+                    (
+                        point,
+                        Some(FilletSourceFrame2 {
+                            tangent,
+                            derivative_scale,
+                        }),
+                    )
+                } else {
+                    (
+                        analytic_parallel_point_evidence(
+                            support,
+                            &parameter.clone().into(),
+                            CurveOperation2::Fillet,
+                            parallel_family,
+                            policy,
+                        )?,
+                        None,
+                    )
+                };
                 let line_parameter =
                     if line_source.algebraic_chord().is_some() || procedural_affine_contact {
                         None
@@ -7212,7 +7352,38 @@ fn fillet_offset_centers(
                         };
                         Some(CurveParameter2::from(parameter))
                     };
-                let retained_anchor_evidence = {
+                let retained_anchor_evidence = if let Some(range) = &regular_range {
+                    let (mut cross, mut dot) = match source_parallel
+                        .vector_tangent_cross_and_dot_signs_on_regular_range(
+                            &parameter.clone().into(),
+                            line_unit_x,
+                            line_unit_y,
+                            range,
+                            policy,
+                        )
+                        .map_err(invalid)?
+                    {
+                        Classification::Decided(signs) => signs,
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    };
+                    if source.is_reversed() {
+                        cross = reverse_fillet_sign(cross);
+                        dot = reverse_fillet_sign(dot);
+                    }
+                    let direction = source_frame.as_ref().unwrap().derivative_scale;
+                    Some(RetainedFilletAnchorEvidence2 {
+                        cross: Some(reverse_fillet_sign(cross)),
+                        dot: Some(dot),
+                        center_parallel: None,
+                        source_direction: Some(if source.is_reversed() {
+                            reverse_fillet_sign(direction)
+                        } else {
+                            direction
+                        }),
+                        canonical_anchor_curve: None,
+                        deferred_arc_contact: None,
+                    })
+                } else {
                     let (mut cross, mut dot) = match support
                         .vector_tangent_cross_and_dot_signs(
                             &parameter.clone().into(),
@@ -7269,7 +7440,13 @@ fn fillet_offset_centers(
                 } else {
                     (parallel_parameter, line_parameter)
                 };
+                let source_frames = if line_is_previous {
+                    [None, source_frame]
+                } else {
+                    [source_frame, None]
+                };
                 centers.push(FilletCenterWitness2 {
+                    source_frames,
                     point,
                     previous_parameter,
                     next_parameter,
@@ -7609,6 +7786,7 @@ fn fillet_offset_centers(
                                 (Some(analytic_parameter.clone()), Some(cusp_parameter))
                             };
                             centers.push(FilletCenterWitness2 {
+                                source_frames: [None, None],
                                 point,
                                 previous_parameter,
                                 next_parameter,
@@ -8130,6 +8308,7 @@ fn fillet_offset_centers(
                             (Some(cusp_parameter), None)
                         };
                         centers.push(FilletCenterWitness2 {
+                            source_frames: [None, None],
                             point,
                             previous_parameter,
                             next_parameter,
@@ -8373,6 +8552,7 @@ fn fillet_offset_centers(
                     CurveParameter2::from_algebraic_cusp(next_parameter)
                 };
                 Ok(Some(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point,
                     previous_parameter: Some(previous_parameter),
                     next_parameter: Some(next_parameter),
@@ -8713,6 +8893,7 @@ fn fillet_offset_centers(
             };
             if let Some((point, tangent_cross, tangent_dot)) = common_corner_center {
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point,
                     previous_parameter: None,
                     next_parameter: None,
@@ -8772,6 +8953,7 @@ fn fillet_offset_centers(
                 }
             };
             centers.push(FilletCenterWitness2 {
+                source_frames: [None, None],
                 point,
                 previous_parameter: None,
                 next_parameter: None,
@@ -8951,6 +9133,7 @@ fn fillet_offset_centers(
                     (Some(cusp_parameter), Some(chord_parameter))
                 };
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point: contact.point,
                     previous_parameter,
                     next_parameter,
@@ -9078,6 +9261,7 @@ fn fillet_offset_centers(
                 })?;
                 let mut push = |point: Point2| {
                     centers.push(FilletCenterWitness2 {
+                        source_frames: [None, None],
                         point: point.into(),
                         previous_parameter: None,
                         next_parameter: None,
@@ -9276,6 +9460,7 @@ fn fillet_offset_centers(
                     (None, Some(chord_parameter))
                 };
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point: contact.point,
                     previous_parameter,
                     next_parameter,
@@ -9446,6 +9631,7 @@ fn fillet_offset_centers(
                     (Some(analytic_parameter), None)
                 };
                 centers.push(FilletCenterWitness2 {
+                    source_frames: [None, None],
                     point: contact.point().clone(),
                     previous_parameter,
                     next_parameter,
@@ -9555,6 +9741,7 @@ fn fillet_offset_centers(
                 }
             };
             centers.push(FilletCenterWitness2 {
+                source_frames: [None, None],
                 point,
                 previous_parameter: None,
                 next_parameter: None,
@@ -9628,6 +9815,7 @@ fn fillet_offset_centers(
                     .transpose()
             };
             centers.push(FilletCenterWitness2 {
+                source_frames: [None, None],
                 previous_parameter: retained_parameter(
                     previous_source,
                     previous_support,
@@ -9769,6 +9957,7 @@ fn fillet_cut_from_center(
     offset: &FilletOffsetCarrier2<'_, '_>,
     center: &CurvePoint2,
     retained_parameter: Option<&CurveParameter2>,
+    source_frame: Option<&FilletSourceFrame2>,
     deferred_arc_contact: bool,
     previous: bool,
     retain_selected_circle_endpoints: bool,
@@ -9987,6 +10176,32 @@ fn fillet_cut_from_center(
             else {
                 return Ok(None);
             };
+            if let Some(frame) = source_frame {
+                let point = frame
+                    .tangent
+                    .normal_displaced_point_evidence(
+                        center.clone(),
+                        source.parallel_distance() - support.distance(),
+                        policy,
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(CurveOperation2::Fillet, family, cause)
+                    })?;
+                let parameter = match source {
+                    FilletParallelSource2::Direct(source) => source.curve_parameter(
+                        &parameter,
+                        CurveOperation2::Fillet,
+                        family,
+                        policy,
+                    )?,
+                    _ => parameter,
+                };
+                return Ok(Some(CornerCut2 {
+                    point,
+                    parameter: Some(parameter),
+                    placement,
+                }));
+            }
             let (point, parameter) = match source {
                 FilletParallelSource2::Direct(source) => (
                     curve_region_parallel_point_evidence(

@@ -113782,9 +113782,9 @@ impl BezierParallel2 {
         Ok(Classification::Decided(retained))
     }
 
-    /// Returns the first source pole or source-speed zero on one open endpoint
-    /// ray. Before this barrier the analytic parallel remains on the same
-    /// finite regular cell as the authored Bezier span.
+    /// Returns the first source pole or source-speed zero on one endpoint ray.
+    /// A stationary anchor is already a speed barrier and owns an empty
+    /// extension. Otherwise the open ray stops before its first barrier.
     pub(crate) fn incident_ray_regular_barrier(
         &self,
         anchor: &Real,
@@ -116229,14 +116229,27 @@ impl BezierParallel2 {
     /// Scaling a line direction does not change incidence. Retained line and
     /// chord carriers already own an exact unit tangent, and reusing it avoids
     /// carrying a large endpoint-difference scale through the Sturm sequence.
+    /// A supplied range must have a certified regular interior; its source
+    /// orientation owns the normal sheet at stationary boundary contacts.
     pub(crate) fn supporting_line_incidence_with_direction(
         &self,
         line: &LineSeg2,
         direction_x: &Real,
         direction_y: &Real,
         certified_tangencies: &[Real],
+        regular_range: Option<&CurveParameterRange2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIncidence2>> {
+        let tangent_field = if let Some(range) = regular_range {
+            match self.source_oriented_regularized_tangent_field(range, policy)? {
+                Classification::Decided(field) => field,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        } else {
+            None
+        };
         self.supporting_line_incidence_with_certified_contacts(
             line,
             Some((direction_x, direction_y)),
@@ -116244,8 +116257,8 @@ impl BezierParallel2 {
             certified_tangencies,
             false,
             None,
-            None,
-            None,
+            tangent_field.as_deref(),
+            regular_range,
             policy,
         )
     }
@@ -116269,6 +116282,11 @@ impl BezierParallel2 {
     ) -> CurveResult<Classification<BezierParallelIncidence2>> {
         let anchor = incident.anchor();
         let direction = incident.direction();
+        if incident.barrier() == Some(&BezierParameter2::Exact(anchor.clone())) {
+            return Ok(Classification::Decided(
+                BezierParallelIncidence2::Parameters(Vec::new()),
+            ));
+        }
         match real_sign(self.distance(), policy) {
             Some(RealSign::Positive | RealSign::Negative) => {}
             Some(RealSign::Zero) => {
@@ -134551,7 +134569,12 @@ fn regular_incident_ray_barrier_from_polynomials(
     match real_sign(&speed.evaluate(anchor), policy) {
         Some(RealSign::Positive) => {}
         Some(RealSign::Zero) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            // An authored stationary endpoint already is the first speed
+            // barrier. Its extension is empty; contacts in the finite source
+            // domain remain available with their own one-sided frames.
+            return Ok(Classification::Decided(Some(BezierParameter2::Exact(
+                anchor.clone(),
+            ))));
         }
         Some(RealSign::Negative) => {
             return Err(CurveError::Topology(

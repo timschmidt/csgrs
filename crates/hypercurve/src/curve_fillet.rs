@@ -319,6 +319,7 @@ fn constrained_coincident_fillet_at_center(
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
     let center = FilletCenterWitness2 {
+        source_frames: [None, None],
         point,
         previous_parameter: None,
         next_parameter: None,
@@ -1155,6 +1156,7 @@ pub(super) fn constrained_collapsed_fillet(
                 offset,
                 center,
                 None,
+                None,
                 false,
                 axis == 0,
                 retain_selected_circle_endpoints,
@@ -1182,6 +1184,7 @@ pub(super) fn constrained_collapsed_fillet(
                     offset,
                     center,
                     Some(&parameter),
+                    None,
                     false,
                     axis == 0,
                     retain_selected_circle_endpoints,
@@ -1282,6 +1285,7 @@ pub(super) fn constrained_collapsed_fillet(
                         offsets[axis],
                         center,
                         Some(&parameter),
+                        None,
                         false,
                         axis == 0,
                         retain_selected_circle_endpoints,
@@ -1339,6 +1343,7 @@ pub(super) fn constrained_collapsed_fillet(
     for previous in previous.solutions() {
         for next in next.solutions() {
             let witness = FilletCenterWitness2 {
+                source_frames: [None, None],
                 point: center.clone(),
                 previous_parameter: previous.center_parameter.clone(),
                 next_parameter: next.center_parameter.clone(),
@@ -1711,6 +1716,7 @@ impl FilletComponentReplay2<'_, '_> {
             )?,
         };
         let center = FilletCenterWitness2 {
+            source_frames: [None, None],
             point,
             previous_parameter: Some(previous.clone()),
             next_parameter: Some(next.clone()),
@@ -2000,6 +2006,7 @@ pub(super) fn fillet_corner_from_center(
         previous_offset,
         &center.point,
         center.parameter(true),
+        center.source_frames[0].as_ref(),
         deferred_arc_is_previous == Some(true),
         true,
         retain_selected_circle_endpoints,
@@ -2014,6 +2021,7 @@ pub(super) fn fillet_corner_from_center(
         next_offset,
         &center.point,
         center.parameter(false),
+        center.source_frames[1].as_ref(),
         deferred_arc_is_previous == Some(false),
         false,
         retain_selected_circle_endpoints,
@@ -2076,6 +2084,32 @@ fn fillet_corner_from_cuts(
     match cut_point_relation {
         Classification::Decided(true) => Ok(FilletCornerSelection2::Degenerate),
         Classification::Decided(false) => {
+            if let Some((axis, source_frame)) = center
+                .source_frames
+                .iter()
+                .enumerate()
+                .find_map(|(axis, frame)| frame.as_ref().map(|frame| (axis, frame)))
+            {
+                let FilletOffsetCarrier2::Parallel { source, support } = offsets[axis] else {
+                    unreachable!("a retained source frame belongs to a parallel contact");
+                };
+                return Ok(FilletCornerSelection2::Selected(FilletCorner2 {
+                    previous: previous_cut,
+                    next: next_cut,
+                    center: center.point.clone(),
+                    clockwise,
+                    retained_frame: Some(RetainedFilletFrame2 {
+                        anchor_is_previous: axis == 0,
+                        radial_frame: RetainedFilletRadialFrame2::ChordNormal {
+                            anchor: source_frame.tangent.clone(),
+                            policy: *policy,
+                        },
+                        radial_distance: source.parallel_distance() - support.distance(),
+                        anchor_evidence: center.retained_anchor_evidence.clone(),
+                    }),
+                }));
+            }
+
             let previous_is_cusp =
                 matches!(previous_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
             let next_is_cusp = matches!(next_offset, FilletOffsetCarrier2::AlgebraicCusp { .. });
