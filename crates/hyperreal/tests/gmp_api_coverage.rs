@@ -95,6 +95,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "near_integer",
     // Exact selected radical-field certificates and branch reconstruction;
     // GMP/MPFR has no matching algebraic identity or selected-root proof API.
+    "compact_quadratic_tower",
     "quadratic_tower_annihilating_polynomial",
     "quadratic_tower_positive_rational_branch",
     "quadratic_tower_sign",
