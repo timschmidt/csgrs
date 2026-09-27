@@ -139,23 +139,92 @@ impl CornerSourceFragments2 {
             });
         }
 
-        // Native circle contacts already carry exact Cartesian incidence and
-        // full-sweep placement. Keep that authority when the other side needs
-        // selected reconstruction; choosing an endpoint chart first would
-        // discard valid contacts on a major sweep or its extension.
-        let arc_side;
         let mut cut = cut;
-        let source =
-            if !defer_arc && matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
-                arc_side = materialize_corner_cut(curve, &cut, previous, operation, policy)?;
+        let native = curve.native_bezier_fragments_for_operation(policy, operation)?;
+        let mut native_arc_cut = None;
+        let defer_native_arc =
+            defer_arc && matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)));
+        if !defer_native_arc && let Some(CurveGeometry2::CircularArc(arc)) = curve.geometry() {
+            if cut.placement == CornerPlacement2::Extension {
+                let (start, end) = if previous {
+                    (arc.start().clone().into(), cut.point.clone())
+                } else {
+                    (cut.point.clone(), arc.end().clone().into())
+                };
+                let fragments = CurveCornerChain2::incident_circle_arc_fragments(
+                    arc, start, end, operation, policy,
+                )?;
+                let cut_index = if previous { fragments.len() - 1 } else { 0 };
                 cut.placement = CornerPlacement2::Corner;
                 cut.parameter = Some(if previous { Real::one() } else { Real::zero() }.into());
-                &arc_side
-            } else {
-                curve
-            };
-        let native = source.native_bezier_fragments_for_operation(policy, operation)?;
-        let mut cut_index = if previous {
+                return Ok(Self {
+                    fragments,
+                    cut_index,
+                    cut: cut
+                        .into_retained_evidence()
+                        .expect("a circular extension keeps its endpoint"),
+                });
+            }
+            if cut.placement == CornerPlacement2::Trim {
+                // Native sweep contacts need the actual rational source
+                // parameter only when entering retained reconstruction. Keep
+                // the complete source here, including two cuts on one circle.
+                for (index, fragment) in native.iter().enumerate() {
+                    let rational =
+                        RationalBezier2::try_from_subcurve(fragment.curve()).map_err(|cause| {
+                            ExactCurveError::invalid(operation, curve.family(), cause)
+                        })?;
+                    let Some(parameter) = RetainedRationalCornerArc2::parameter_at_incident_point(
+                        &rational,
+                        &cut.point,
+                        operation,
+                        curve.family(),
+                        policy,
+                    )?
+                    else {
+                        continue;
+                    };
+                    let lower = parameter_order(
+                        &parameter,
+                        &Real::zero().into(),
+                        operation,
+                        curve.family(),
+                        policy,
+                    )?;
+                    let upper = parameter_order(
+                        &parameter,
+                        &Real::one().into(),
+                        operation,
+                        curve.family(),
+                        policy,
+                    )?;
+                    if lower.is_lt()
+                        || upper.is_gt()
+                        || (previous && lower.is_eq() && index > 0)
+                        || (!previous && upper.is_eq() && index + 1 < native.len())
+                    {
+                        continue;
+                    }
+                    native_arc_cut = Some((index, parameter));
+                    break;
+                }
+                if native_arc_cut.is_none() {
+                    return Err(ExactCurveError::blocked(
+                        operation,
+                        curve.family(),
+                        crate::UncertaintyReason::Predicate,
+                    ));
+                }
+            }
+        }
+        let arc_parameter_is_local = native_arc_cut.is_some();
+        let mut cut_index = if let Some((index, parameter)) = native_arc_cut {
+            // Keep the selected inverse in its original chart. Mapping to a
+            // global parameter and back would repeat the same chart search
+            // and grow the exact expression without adding any information.
+            cut.parameter = Some(parameter);
+            Some(index)
+        } else if previous {
             native.len().checked_sub(1)
         } else {
             (!native.is_empty()).then_some(0)
@@ -176,7 +245,8 @@ impl CornerSourceFragments2 {
         })?;
         if native.len() > 1
             && cut.placement == CornerPlacement2::Trim
-            && !matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)))
+            && !defer_native_arc
+            && !arc_parameter_is_local
         {
             let mut selected = None;
             for (index, fragment) in native.iter().enumerate() {
@@ -213,9 +283,9 @@ impl CornerSourceFragments2 {
                 )
             })?;
         }
-        if !matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
+        if !defer_native_arc {
             let (start, end) = native[cut_index].parameter_range();
-            if start != &Real::zero() || end != &Real::one() {
+            if !arc_parameter_is_local && (start != &Real::zero() || end != &Real::one()) {
                 cut.parameter = local_parameter(
                     &cut.parameter,
                     &(end - start),

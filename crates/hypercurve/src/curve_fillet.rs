@@ -572,24 +572,15 @@ pub(super) fn constrained_collapsed_fillet(
                         families[axis],
                         policy,
                     )?,
-                    ExactCornerArc2::Native(_) => {
-                        let point = point.coordinates().ok_or_else(|| {
-                            ExactCurveError::blocked(
-                                CurveOperation2::Fillet,
-                                families[axis],
-                                crate::UncertaintyReason::Unsupported,
-                            )
-                        })?;
-                        arc_fillet_cut_from_incident_point(
-                            source,
-                            point.clone(),
-                            false,
-                            axis == 0,
-                            domains[axis],
-                            families[axis],
-                            policy,
-                        )?
-                    }
+                    ExactCornerArc2::Native(_) => arc_fillet_cut_from_incident_point(
+                        source,
+                        point,
+                        false,
+                        axis == 0,
+                        domains[axis],
+                        families[axis],
+                        policy,
+                    )?,
                 }
             }
             offset @ (FilletOffsetCarrier2::Line { .. }
@@ -2322,6 +2313,180 @@ mod tests {
                     .unwrap();
                 assert_eq!(reversed_normal.certainty, crate::CurveCertainty::Certified);
                 assert!(reversed_normal.value.solutions().is_empty());
+            }
+        }
+    }
+
+    #[test]
+    fn native_circle_fillet_retains_selected_contacts_through_reconstruction() {
+        let p = Point2::from_values;
+        let arc = |start, end| {
+            Curve2::from(CircularArc2::try_from_center(start, end, p(0, 0), false).unwrap())
+        };
+        let quarter_path =
+            || CurvePath2::try_new(vec![arc(p(1, 0), p(0, 1)), arc(p(0, 1), p(-1, 0))]).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let contact = |denominator: i64, turns: usize| {
+                let Classification::Decided(polynomial) =
+                    crate::BezierParameterPolynomial::try_new_power_basis(
+                        vec![-Real::one(), Real::zero(), Real::from(denominator)],
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("selected circle contact polynomial")
+                };
+                let Classification::Decided(roots) =
+                    polynomial.isolate_unit_interval_roots(&policy).unwrap()
+                else {
+                    panic!("selected circle contact root")
+                };
+                assert_eq!(roots.len(), 1);
+                let rotate = |mut point: Point2| {
+                    for _ in 0..turns {
+                        point = Point2::new(-point.y(), point.x().clone());
+                    }
+                    point
+                };
+                let source: Curve2 = RationalBezier2::try_new(
+                    [p(1, 0), p(1, 1), p(0, 1)]
+                        .into_iter()
+                        .map(rotate)
+                        .collect(),
+                    vec![Real::one(), Real::one(), Real::from(2)],
+                )
+                .unwrap()
+                .into();
+                let point = source
+                    .point_at(&roots[0].clone().into(), &policy)
+                    .unwrap()
+                    .value;
+                assert!(point.coordinates().is_none());
+                // An independently represented point is used only for the
+                // expected set, never to supply the retained contact request.
+                let expected = rotate(Point2::new(
+                    q(denominator - 1, denominator + 1),
+                    Real::from(denominator).sqrt().unwrap() * q(2, denominator + 1),
+                ));
+                same(&point, &expected.clone().into(), &policy);
+                (point, expected)
+            };
+            for shape in 0..6 {
+                let source = match shape {
+                    0 | 3 => quarter_path(),
+                    1 => CurvePath2::try_new(vec![arc(p(1, 0), p(0, -1)), arc(p(0, -1), p(1, 0))])
+                        .unwrap(),
+                    _ => CurvePath2::try_new(vec![arc(p(1, 0), p(1, 0))]).unwrap(),
+                };
+                let turns = match shape {
+                    0 => [0, 1],
+                    1 => [2, 3],
+                    2 => [3, 0],
+                    3 => [2, 1],
+                    _ => [0, 3],
+                };
+                let [first, second] = [contact(2, turns[0]), contact(3, turns[1])];
+                let witness = if shape == 3 {
+                    CurvePath2::try_new(vec![
+                        arc(p(1, 0), first.1.clone()),
+                        arc(first.1.clone(), second.1.clone()),
+                        arc(second.1.clone(), p(-1, 0)),
+                    ])
+                    .unwrap()
+                } else {
+                    source.clone()
+                };
+                for reversed in [false, true] {
+                    let path = if reversed {
+                        source.reversed(&policy).unwrap().value
+                    } else {
+                        source.clone()
+                    };
+                    let mut contacts = if shape == 5 {
+                        [first.1.clone().into(), second.1.clone().into()]
+                    } else {
+                        [first.0.clone(), second.0.clone()]
+                    };
+                    if reversed {
+                        contacts.reverse();
+                    }
+                    let mut request = CurveFillet2::new(Real::one());
+                    request.contacts = contacts
+                        .clone()
+                        .map(|point| Some(CurveFilletContact2::Point(point)));
+                    for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                        let result = path
+                            .fillet_vertex(usize::from(matches!(shape, 0 | 1 | 3)), &request, mode, &policy)
+                            .unwrap_or_else(|error| {
+                                panic!("circle shape={shape}, reversed={reversed}, mode={mode:?}: {error}")
+                            });
+                        assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+                        if shape >= 4 || (shape == 3 && mode == CurveCornerMode2::TrimOnly) {
+                            assert!(
+                                result.value.solutions().is_empty(),
+                                "excluded circle cuts: shape={shape}, reversed={reversed}, mode={mode:?}"
+                            );
+                            continue;
+                        }
+                        assert_eq!(result.value.candidate_count(), 1);
+                        let edited = &result.value.solutions()[0];
+                        for pair in edited.curves().windows(2) {
+                            same(&pair[0].end(), &pair[1].start(), &policy);
+                        }
+                        for contact in &contacts {
+                            assert!(edited.curves().iter().any(|curve| {
+                                curve.start().same_point(contact, &policy)
+                                    == Classification::Decided(true)
+                            }));
+                        }
+                        assert_eq!(
+                            edited.reversed(&CurveContext::STRICT).unwrap().certainty,
+                            crate::CurveCertainty::Certified
+                        );
+                        let region = |path: &CurvePath2, label| {
+                            let mut curves = path.curves().to_vec();
+                            match path.start().same_point(&path.end(), &policy) {
+                                Classification::Decided(true) => (),
+                                Classification::Decided(false) => {
+                                    let Classification::Decided(closing) =
+                                        crate::BezierAlgebraicChord2::try_new(
+                                            path.end(),
+                                            path.start(),
+                                            &policy,
+                                        )
+                                        .unwrap()
+                                    else {
+                                        panic!("exact closing chord")
+                                    };
+                                    curves.push(Curve2::from_retained_fragment(
+                                        crate::BezierSplitFragment2::AlgebraicChord(closing),
+                                    ));
+                                }
+                                Classification::Uncertain(reason) => panic!("closure: {reason:?}"),
+                            }
+                            let outcome = crate::CurveRegion2::try_from_boundary_paths(
+                                &[CurvePath2::try_new(curves).unwrap()],
+                                &policy,
+                            )
+                            .unwrap();
+                            assert_eq!(
+                                outcome.certainty,
+                                crate::CurveCertainty::Certified,
+                                "normalization={label}, policy={policy:?}, shape={shape}, reversed={reversed}, mode={mode:?}"
+                            );
+                            outcome.value
+                        };
+                        let difference = region(edited, "edited")
+                            .boolean_regions(&region(&witness, "witness"), &policy)
+                            .unwrap();
+                        assert_eq!(
+                            difference.certainty,
+                            crate::CurveCertainty::Certified,
+                            "Boolean policy={policy:?}, shape={shape}, reversed={reversed}, mode={mode:?}"
+                        );
+                        assert!(difference.value.xor().is_empty());
+                    }
+                }
             }
         }
     }

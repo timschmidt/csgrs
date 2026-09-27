@@ -242,51 +242,59 @@ impl RationalBezierIntersectionOverlap2 {
 
 impl RationalBezierOverlapParameterCorrespondence2 {
     fn new(first: &RationalBezier2, second: &RationalBezier2, policy: &CurveContext) -> Self {
-        let mut unresolved = None;
-        if first.degree() == second.degree() {
-            for reversed in [false, true] {
-                match first.endpoint_parameter_relation(second, reversed, policy) {
-                    Classification::Decided(Some(
-                        RationalBezierEndpointParameterRelation2::Affine,
-                    )) => {
-                        return if reversed {
-                            Self::UnitComplement
-                        } else {
-                            Self::Identity
-                        };
+        // A compact correspondence is optional. Recognizing one must not
+        // weaken an already certified overlap or same-point relation; the
+        // general inverse retains both carriers when this proof is unavailable.
+        policy.strict_predicate_pass(|| {
+            let mut unresolved = None;
+            if first.degree() == second.degree() {
+                for reversed in [false, true] {
+                    match first.endpoint_parameter_relation(second, reversed, policy) {
+                        Classification::Decided(Some(
+                            RationalBezierEndpointParameterRelation2::Affine,
+                        )) => {
+                            return if reversed {
+                                Self::UnitComplement
+                            } else {
+                                Self::Identity
+                            };
+                        }
+                        Classification::Decided(Some(
+                            RationalBezierEndpointParameterRelation2::Projective(
+                                second_to_first_scale,
+                            ),
+                        )) => {
+                            return Self::EndpointProjective {
+                                second_to_first_scale,
+                                reversed,
+                            };
+                        }
+                        Classification::Decided(None) => {}
+                        Classification::Uncertain(reason) => unresolved = Some(reason),
                     }
-                    Classification::Decided(Some(
-                        RationalBezierEndpointParameterRelation2::Projective(second_to_first_scale),
-                    )) => {
-                        return Self::EndpointProjective {
-                            second_to_first_scale,
-                            reversed,
-                        };
+                }
+            } else {
+                for reversed in [false, true] {
+                    match first.same_projective_control_net_degree_aligned(second, reversed, policy)
+                    {
+                        Classification::Decided(true) => {
+                            return if reversed {
+                                Self::UnitComplement
+                            } else {
+                                Self::Identity
+                            };
+                        }
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => unresolved = Some(reason),
                     }
-                    Classification::Decided(None) => {}
-                    Classification::Uncertain(reason) => unresolved = Some(reason),
                 }
             }
-        } else {
-            for reversed in [false, true] {
-                match first.same_projective_control_net_degree_aligned(second, reversed, policy) {
-                    Classification::Decided(true) => {
-                        return if reversed {
-                            Self::UnitComplement
-                        } else {
-                            Self::Identity
-                        };
-                    }
-                    Classification::Decided(false) => {}
-                    Classification::Uncertain(reason) => unresolved = Some(reason),
-                }
+            Self::General {
+                first: first.clone(),
+                second: second.clone(),
+                unresolved,
             }
-        }
-        Self::General {
-            first: first.clone(),
-            second: second.clone(),
-            unresolved,
-        }
+        })
     }
 
     /// Maps one parameter between two rational carriers that are known by the
@@ -351,43 +359,47 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         overlap: &RationalBezierIntersectionOverlap2,
         policy: &CurveContext,
     ) -> Self {
-        let fallback = Self::new(first, second, policy);
-        if !matches!(fallback, Self::General { .. }) {
-            return fallback;
-        }
-        let (Some(first_start), Some(first_end)) = (
-            overlap.first_range().start().scalar(),
-            overlap.first_range().end().scalar(),
-        ) else {
-            return fallback;
-        };
-        let reversed = overlap.orientation() == RationalBezierOverlapOrientation2::Reversed;
-        let (second_start, second_end) = if reversed {
-            (
-                overlap.second_range().end().scalar(),
-                overlap.second_range().start().scalar(),
-            )
-        } else {
-            (
-                overlap.second_range().start().scalar(),
-                overlap.second_range().end().scalar(),
-            )
-        };
-        let (Some(second_start), Some(second_end)) = (second_start, second_end) else {
-            return fallback;
-        };
-        let first_subcurve =
-            match first.subcurve_between_affine_exact(first_start, first_end, policy) {
-                Ok(Classification::Decided(curve)) => curve,
-                Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
+        policy.strict_predicate_pass(|| {
+            let fallback = Self::new(first, second, policy);
+            if !matches!(fallback, Self::General { .. }) {
+                return fallback;
+            }
+            let (Some(first_start), Some(first_end)) = (
+                overlap.first_range().start().scalar(),
+                overlap.first_range().end().scalar(),
+            ) else {
+                return fallback;
             };
-        let second_subcurve =
-            match second.subcurve_between_affine_exact(second_start, second_end, policy) {
-                Ok(Classification::Decided(curve)) => curve,
-                Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
+            let reversed = overlap.orientation() == RationalBezierOverlapOrientation2::Reversed;
+            let (second_start, second_end) = if reversed {
+                (
+                    overlap.second_range().end().scalar(),
+                    overlap.second_range().start().scalar(),
+                )
+            } else {
+                (
+                    overlap.second_range().start().scalar(),
+                    overlap.second_range().end().scalar(),
+                )
             };
-        let second_to_first_scale =
-            match first_subcurve.endpoint_parameter_relation(&second_subcurve, reversed, policy) {
+            let (Some(second_start), Some(second_end)) = (second_start, second_end) else {
+                return fallback;
+            };
+            let first_subcurve =
+                match first.subcurve_between_affine_exact(first_start, first_end, policy) {
+                    Ok(Classification::Decided(curve)) => curve,
+                    Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
+                };
+            let second_subcurve =
+                match second.subcurve_between_affine_exact(second_start, second_end, policy) {
+                    Ok(Classification::Decided(curve)) => curve,
+                    Ok(Classification::Uncertain(_)) | Err(_) => return fallback,
+                };
+            let second_to_first_scale = match first_subcurve.endpoint_parameter_relation(
+                &second_subcurve,
+                reversed,
+                policy,
+            ) {
                 Classification::Decided(Some(RationalBezierEndpointParameterRelation2::Affine)) => {
                     Real::one()
                 }
@@ -396,10 +408,11 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                 )) => scale,
                 Classification::Decided(None) | Classification::Uncertain(_) => return fallback,
             };
-        Self::RangeProjective {
-            second_to_first_scale,
-            reversed,
-        }
+            Self::RangeProjective {
+                second_to_first_scale,
+                reversed,
+            }
+        })
     }
 
     pub(crate) fn map_first_to_second(

@@ -682,6 +682,129 @@ impl<'a> CurveCornerChain2<'a> {
             .collect())
     }
 
+    /// Publishes the directed sweep between two certified incident points.
+    /// The circle stays in four rational charts; each selected endpoint keeps
+    /// its own exact point and inverse parameter instead of a Cartesian image.
+    pub(crate) fn incident_circle_arc_fragments(
+        support: &CircularArc2,
+        start: CurvePoint2,
+        end: CurvePoint2,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
+        use crate::bezier_split::BezierSelectedFiberFragment2;
+        let family = CurveFamily2::CircularArc;
+        if let (Some(start), Some(end)) = (start.coordinates(), end.coordinates()) {
+            let arc = CircularArc2::new_with_certified_radius(
+                start.clone(),
+                end.clone(),
+                support.center().clone(),
+                support.radius_squared(),
+                support.is_clockwise(),
+                None,
+            );
+            return Self::materialized_corner_arc_fragments(&arc, operation, policy);
+        }
+        let circle = CircularArc2::new_with_certified_radius(
+            support.start().clone(),
+            support.start().clone(),
+            support.center().clone(),
+            support.radius_squared(),
+            support.is_clockwise(),
+            None,
+        );
+        let decomposition = retained_corner_decision(
+            circle
+                .rational_bezier_decomposition_with_policy(policy)
+                .map_err(|error| error.with_operation(operation))?,
+            operation,
+        )?;
+        let charts = decomposition
+            .spans()
+            .iter()
+            .map(|span| RationalBezier2::from(span.curve().clone()))
+            .collect::<Vec<_>>();
+        let zero: CurveParameter2 = Real::zero().into();
+        let one: CurveParameter2 = Real::one().into();
+        let compare = |first: &CurveParameter2, second: &CurveParameter2| {
+            retained_corner_decision(
+                first
+                    .cmp_by_refinement(second, policy)
+                    .map_err(|cause| curve_region_edit_error(operation, cause))?,
+                operation,
+            )
+        };
+        let locate = |point: &CurvePoint2| {
+            for (index, chart) in charts.iter().enumerate() {
+                if let Some(parameter) =
+                    crate::curve::RetainedRationalCornerArc2::parameter_at_incident_point(
+                        chart, point, operation, family, policy,
+                    )?
+                    && !compare(&parameter, &zero)?.is_lt()
+                    && compare(&parameter, &one)?.is_lt()
+                {
+                    return Ok((index, parameter));
+                }
+            }
+            Err(ExactCurveError::blocked(
+                operation,
+                family,
+                UncertaintyReason::Predicate,
+            ))
+        };
+        // Half-open chart ownership gives each circular seam one parameter.
+        // An equal pair represents a full turn, as for a native circular arc.
+        let (start_index, start_parameter) = locate(&start)?;
+        let (end_index, end_parameter) = locate(&end)?;
+        let mut fragments = Vec::with_capacity(charts.len() + 1);
+        for step in 0..=charts.len() {
+            let index = (start_index + step) % charts.len();
+            let chart = &charts[index];
+            let first = if step == 0 { &start_parameter } else { &zero };
+            let finishes =
+                index == end_index && (step > 0 || compare(first, &end_parameter)?.is_lt());
+            let last = if finishes { &end_parameter } else { &one };
+            if compare(first, last)?.is_lt() {
+                let first_point = if step == 0 {
+                    start.clone()
+                } else {
+                    chart.start().clone().into()
+                };
+                let last_point = if finishes {
+                    end.clone()
+                } else {
+                    chart.end().clone().into()
+                };
+                fragments.push(BezierSplitFragment2::SelectedFiber(
+                    BezierSelectedFiberFragment2::new(
+                        BezierSelectedFiberSource2::Rational(chart.clone()),
+                        CurveParameterRange2::new_validated(first.clone(), last.clone()),
+                        first_point,
+                        last_point,
+                    ),
+                ));
+            } else if finishes {
+                // The last contact is this chart's start, already retained by
+                // the preceding chart as its end. Preserve the supplied point.
+                if let Some(BezierSplitFragment2::SelectedFiber(previous)) = fragments.last_mut() {
+                    *previous = BezierSelectedFiberFragment2::new(
+                        previous.source().clone(),
+                        previous.range().clone(),
+                        previous.start_point().clone(),
+                        end.clone(),
+                    );
+                }
+            }
+            if finishes {
+                return Ok(fragments);
+            }
+        }
+        Err(curve_region_edit_error(
+            operation,
+            CurveError::Topology("an incident circular sweep exceeded one complete turn".into()),
+        ))
+    }
+
     #[allow(clippy::too_many_arguments)]
     fn rebuild_retained_corner(
         &self,
@@ -2900,7 +3023,7 @@ impl<'a> CurveCornerChain2<'a> {
             }
             let Some(cut) = crate::curve::arc_fillet_cut_from_incident_point(
                 &deferred.source,
-                arc_contact.clone(),
+                arc_contact.clone().into(),
                 true,
                 deferred.arc_is_previous,
                 deferred.domain,
@@ -2970,6 +3093,30 @@ impl<'a> CurveCornerChain2<'a> {
                 None,
             );
             return Self::materialized_corner_arc_fragments(&arc, CurveOperation2::Fillet, policy);
+        }
+
+        if retained_frame.is_none()
+            && let Some(center) = represented_center.as_ref()
+        {
+            // A fixed represented center already names the exact circle.
+            // Selected contacts need only its rational charts, not a newly
+            // reconstructed normal frame or independent Cartesian images.
+            let seam = Point2::new(center.x() + radius, center.y().clone());
+            let support = CircularArc2::new_with_certified_radius(
+                seam.clone(),
+                seam,
+                center.clone(),
+                radius * radius,
+                clockwise,
+                None,
+            );
+            return Self::incident_circle_arc_fragments(
+                &support,
+                previous_cut.point.clone(),
+                next_cut.point.clone(),
+                CurveOperation2::Fillet,
+                policy,
+            );
         }
 
         {

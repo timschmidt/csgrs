@@ -753,6 +753,55 @@ impl CircularArc2 {
             })
     }
 
+    /// Classifies a point whose incidence on this circle is already certified.
+    /// The endpoint chord selects the directed sweep without reconstructing
+    /// Cartesian coordinates or an inverse angular parameter.
+    pub(crate) fn strict_incident_point_evidence_location(
+        &self,
+        point: &crate::CurvePoint2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<ArcSweepPointLocation2>> {
+        if let Some(point) = point.coordinates() {
+            return Ok(self.strict_sweep_point_location(point, policy));
+        }
+        match points_equal(self.start(), self.end(), policy) {
+            Some(true) => {
+                return Ok(point
+                    .same_point(&self.start().clone().into(), policy)
+                    .map(|same| {
+                        if same {
+                            ArcSweepPointLocation2::Endpoint
+                        } else {
+                            ArcSweepPointLocation2::Interior
+                        }
+                    }));
+            }
+            Some(false) => (),
+            None => {
+                return Ok(Classification::Uncertain(
+                    crate::UncertaintyReason::RealSign,
+                ));
+            }
+        }
+        let chord = match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+            self.start().clone().into(),
+            self.end().clone().into(),
+            policy,
+        )? {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(chord.oriented_support_side(point, policy)?.map(|side| {
+            if side == LineSide::On {
+                ArcSweepPointLocation2::Endpoint
+            } else if (side == LineSide::Left) == self.is_clockwise() {
+                ArcSweepPointLocation2::Interior
+            } else {
+                ArcSweepPointLocation2::Outside
+            }
+        }))
+    }
+
     /// Combines radial half-plane predicates without requiring an irrelevant
     /// boundary sign. A minor sweep is an intersection; a major sweep is a
     /// union. Try both bounded exact predicates before refining either one.

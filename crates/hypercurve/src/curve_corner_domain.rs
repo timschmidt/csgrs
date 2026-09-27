@@ -169,13 +169,57 @@ impl Curve2 {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
-        if (self.source_range().is_none()
+        if previous.placement == CornerPlacement2::Extension
+            || next.placement == CornerPlacement2::Extension
+        {
+            return Ok(true);
+        }
+        if let Some(CurveGeometry2::CircularArc(arc)) = self.geometry() {
+            // This predicate is called for one closed authored curve, so a
+            // native arc is a full circle. Its surviving next-to-previous
+            // sweep must exclude the original seam. The contact chord proves
+            // this ordering directly, including independently selected points.
+            if previous.placement == CornerPlacement2::Corner
+                || next.placement == CornerPlacement2::Corner
+            {
+                return Ok(true);
+            }
+            if decided(
+                next.point.same_point(&previous.point, policy),
+                operation,
+                self.family(),
+            )? {
+                return Ok(false);
+            }
+            let chord = decided(
+                crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                    next.point.clone(),
+                    previous.point.clone(),
+                    policy,
+                )
+                .map_err(|cause| ExactCurveError::invalid(operation, self.family(), cause))?,
+                operation,
+                self.family(),
+            )?;
+            let side = decided(
+                chord
+                    .oriented_support_side(&arc.start().clone().into(), policy)
+                    .map_err(|cause| ExactCurveError::invalid(operation, self.family(), cause))?,
+                operation,
+                self.family(),
+            )?;
+            return Ok(side
+                == if arc.is_clockwise() {
+                    LineSide::Right
+                } else {
+                    LineSide::Left
+                });
+        }
+        if self.source_range().is_none()
             && !matches!(
                 self.geometry(),
                 Some(CurveGeometry2::PolynomialBSpline(_) | CurveGeometry2::Nurbs(_))
-            ))
-            || previous.placement == CornerPlacement2::Extension
-            || next.placement == CornerPlacement2::Extension
+            )
         {
             return Ok(true);
         }

@@ -9902,54 +9902,15 @@ fn fillet_cut_from_center(
                         ));
                     }
                 };
-                if let ExactCornerArc2::RetainedRational(arc) = source {
-                    return arc.cut_at_incident_point(
-                        point,
-                        previous,
-                        mode,
-                        matches!(domain, FilletContactDomain2::SourceChart(_)),
-                        CurveOperation2::Fillet,
-                        family,
-                        policy,
-                    );
-                }
-                if retained_parameter.is_none() {
-                    // Keep the actual radial contact even while its source
-                    // chart and placement await deferred replay. A center
-                    // used as a point placeholder could become materializable
-                    // later and falsely certify an off-circle fillet endpoint.
-                    return Ok(Some(CornerCut2 {
-                        point,
-                        parameter: Some(source.corner_parameter(
-                            previous,
-                            CurveOperation2::Fillet,
-                            family,
-                            policy,
-                        )?),
-                        placement: CornerPlacement2::Corner,
-                    }));
-                }
-                {
-                    let parameter = retained_parameter
-                        .expect("a retained arc offset intersection keeps its parameter")
-                        .clone();
-                    let Some(placement) = curve_region_corner_parameter_placement(
-                        &parameter,
-                        previous,
-                        mode,
-                        CurveOperation2::Fillet,
-                        family,
-                        policy,
-                    )?
-                    else {
-                        return Ok(None);
-                    };
-                    return Ok(Some(CornerCut2 {
-                        point,
-                        parameter: Some(parameter),
-                        placement,
-                    }));
-                }
+                return arc_fillet_cut_from_incident_point(
+                    source,
+                    point,
+                    deferred_arc_contact,
+                    previous,
+                    domain,
+                    family,
+                    policy,
+                );
             };
             let scale = (*source_radius / signed_radius).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Fillet, family, cause.into())
@@ -9962,7 +9923,7 @@ fn fillet_cut_from_center(
                 .translated(&radial.0 * &scale, &radial.1 * scale);
             arc_fillet_cut_from_incident_point(
                 source,
-                point,
+                point.into(),
                 deferred_arc_contact,
                 previous,
                 domain,
@@ -11826,7 +11787,7 @@ fn arc_corner_cut_from_incident_point(
 
 pub(crate) fn arc_fillet_cut_from_incident_point(
     arc: &ExactCornerArc2,
-    point: Point2,
+    point: CurvePoint2,
     deferred_arc_contact: bool,
     previous: bool,
     domain: FilletContactDomain2,
@@ -11835,7 +11796,7 @@ pub(crate) fn arc_fillet_cut_from_incident_point(
 ) -> ExactCurveResult<Option<CornerCut2>> {
     if let ExactCornerArc2::RetainedRational(arc) = arc {
         return arc.cut_at_incident_point(
-            point.into(),
+            point,
             previous,
             domain.mode(),
             matches!(domain, FilletContactDomain2::SourceChart(_)),
@@ -11848,7 +11809,10 @@ pub(crate) fn arc_fillet_cut_from_incident_point(
 
     let mode = domain.mode();
     let support = arc.support();
-    match support.strict_sweep_point_location(&point, policy) {
+    match support
+        .strict_incident_point_evidence_location(&point, policy)
+        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+    {
         Classification::Decided(ArcSweepPointLocation2::Interior) => {
             let parameter = if deferred_arc_contact {
                 Some(arc.corner_parameter(previous, CurveOperation2::Fillet, family, policy)?)
@@ -11857,7 +11821,7 @@ pub(crate) fn arc_fillet_cut_from_incident_point(
             };
             Ok(Some(CornerCut2 {
                 parameter,
-                point: point.into(),
+                point,
                 placement: CornerPlacement2::Trim,
             }))
         }
@@ -11865,17 +11829,23 @@ pub(crate) fn arc_fillet_cut_from_incident_point(
             if matches!(domain, FilletContactDomain2::AuthoredCurve(_)) {
                 return Ok(None);
             }
-            let parameter: CurveParameter2 = if point == *support.start() {
-                Real::zero()
-            } else {
-                Real::one()
-            }
-            .into();
+            let at_start = match point.same_point(&support.start().clone().into(), policy) {
+                Classification::Decided(at_start) => at_start,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        family,
+                        reason,
+                    ));
+                }
+            };
+            let parameter: CurveParameter2 =
+                if at_start { Real::zero() } else { Real::one() }.into();
             let corner = arc.corner_parameter(previous, CurveOperation2::Fillet, family, policy)?;
             let placement =
                 domain.with_boundary_contact(None, &parameter, || corner, family, policy)?;
             Ok(placement.map(|placement| CornerCut2 {
-                point: point.into(),
+                point,
                 parameter: Some(parameter),
                 placement,
             }))
@@ -11883,30 +11853,19 @@ pub(crate) fn arc_fillet_cut_from_incident_point(
         Classification::Decided(ArcSweepPointLocation2::Outside)
             if mode == CurveCornerMode2::TrimOrExtend =>
         {
-            if arc_extension_contains_corner(
-                support,
-                &point,
-                previous,
-                CurveOperation2::Fillet,
-                family,
-                policy,
-            )? {
-                Ok(Some(CornerCut2 {
-                    // Retained CurveRegion reconstruction replaces this
-                    // endpoint marker from exact circular-contact evidence.
-                    // Native CurvePath materialization uses `point` directly.
-                    parameter: Some(arc.corner_parameter(
-                        previous,
-                        CurveOperation2::Fillet,
-                        family,
-                        policy,
-                    )?),
-                    point: point.into(),
-                    placement: CornerPlacement2::Extension,
-                }))
-            } else {
-                Ok(None)
-            }
+            // On-circle points outside the closed authored sweep lie in its
+            // incident circular complement. Both authored endpoints were
+            // excluded above, so no additional angular reconstruction is needed.
+            Ok(Some(CornerCut2 {
+                parameter: Some(arc.corner_parameter(
+                    previous,
+                    CurveOperation2::Fillet,
+                    family,
+                    policy,
+                )?),
+                point,
+                placement: CornerPlacement2::Extension,
+            }))
         }
         Classification::Decided(ArcSweepPointLocation2::Outside) => Ok(None),
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
