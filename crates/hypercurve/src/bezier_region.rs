@@ -3928,21 +3928,32 @@ impl CurveTangent2 {
         policy: &CurveContext,
     ) -> Classification<std::cmp::Ordering> {
         let half = |candidate| match curve_tangent_cross_sign(self, candidate, policy) {
-            Classification::Decided(RealSign::Positive) => Classification::Decided(0_u8),
-            Classification::Decided(RealSign::Negative) => Classification::Decided(1),
+            Classification::Decided(RealSign::Positive) => Classification::Decided((0_u8, false)),
+            Classification::Decided(RealSign::Negative) => Classification::Decided((1, false)),
             Classification::Decided(RealSign::Zero) => {
-                curve_tangents_are_opposite(self, candidate, policy).map(u8::from)
+                curve_tangents_are_opposite(self, candidate, policy)
+                    .map(|opposite| (u8::from(opposite), true))
             }
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         };
-        let (first_half, second_half) = match (half(first), half(second)) {
-            (Classification::Decided(first), Classification::Decided(second)) => (first, second),
-            (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
-                return Classification::Uncertain(reason);
-            }
-        };
+        let ((first_half, first_collinear), (second_half, second_collinear)) =
+            match (half(first), half(second)) {
+                (Classification::Decided(first), Classification::Decided(second)) => {
+                    (first, second)
+                }
+                (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
+                    return Classification::Uncertain(reason);
+                }
+            };
         if first_half != second_half {
             return Classification::Decided(first_half.cmp(&second_half));
+        }
+        // In either half, a ray parallel to the reference is the last in
+        // clockwise order. Reuse that certified relation instead of joining
+        // the two candidate fields to rediscover their determinant sign.
+        // Two such rays in the same half have the same direction.
+        if first_collinear || second_collinear {
+            return Classification::Decided(first_collinear.cmp(&second_collinear));
         }
         curve_tangent_cross_sign(first, second, policy).map(|sign| match sign {
             RealSign::Positive => std::cmp::Ordering::Greater,

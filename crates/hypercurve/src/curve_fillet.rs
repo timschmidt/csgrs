@@ -597,12 +597,82 @@ pub(super) fn constrained_coincident_circular_fillet(
     Ok(candidates.finish(CurveCornerNoSolution2::OutsideTrimDomain))
 }
 
+/// Recovers a represented solve chart from a certified coincidence sample.
+/// The chord keeps its independent endpoint fields and all domain ownership.
+pub(super) fn coincident_linear_source_chart(
+    source: &crate::BezierAlgebraicChord2,
+    parallel: &crate::BezierParallel2,
+    sample: &Real,
+    signed_distance: &Real,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<LineSeg2> {
+    let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause);
+    let blocked = |reason| ExactCurveError::blocked(CurveOperation2::Fillet, family, reason);
+    let point = match parallel.point_at(sample, policy).map_err(invalid)? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => return Err(blocked(reason)),
+    };
+    let derivative = match parallel.derivative_at(sample, policy).map_err(invalid)? {
+        Classification::Decided(derivative) => derivative,
+        Classification::Uncertain(reason) => return Err(blocked(reason)),
+    };
+    let mut tangent = (derivative.dx().clone(), derivative.dy().clone());
+    if crate::classify::real_sign(&(&tangent.0 * &tangent.0 + &tangent.1 * &tangent.1), policy)
+        == Some(RealSign::Zero)
+    {
+        // A collapsed parallel contributes a point, not an affine line chart.
+        return Err(blocked(crate::UncertaintyReason::Boundary));
+    }
+    let (mut unit_x, mut unit_y, _) = line_unit_direction(
+        &tangent.0,
+        &tangent.1,
+        CurveOperation2::Fillet,
+        family,
+        policy,
+    )?;
+    match source
+        .tangent_dot_vector_sign(&tangent, policy)
+        .map_err(invalid)?
+    {
+        Classification::Decided(RealSign::Positive) => (),
+        Classification::Decided(RealSign::Negative) => {
+            unit_x = -unit_x;
+            unit_y = -unit_y;
+            tangent.0 = -tangent.0;
+            tangent.1 = -tangent.1;
+        }
+        Classification::Decided(RealSign::Zero) => {
+            return Err(invalid(CurveError::Topology(
+                "a coincident parallel had a transverse source tangent".into(),
+            )));
+        }
+        Classification::Uncertain(reason) => return Err(blocked(reason)),
+    }
+    let start = point.translated(signed_distance * &unit_y, -(signed_distance * &unit_x));
+    // Preserve the companion's derivative scale in the solve chart. Only the
+    // normal displacement needs a unit vector; spreading its radical into the
+    // parameter equations can destroy a compact source correspondence.
+    let line = LineSeg2::new_unchecked(start.clone(), start.translated(tangent.0, tangent.1));
+    match policy
+        .strict_predicate_pass(|| source.has_non_collinear_support_with_exact_line(&line, policy))
+        .map_err(invalid)?
+    {
+        Classification::Decided(false) => Ok(line),
+        Classification::Decided(true) => Err(invalid(CurveError::Topology(
+            "a coincident parallel sample did not recover its original chord support".into(),
+        ))),
+        Classification::Uncertain(reason) => Err(blocked(reason)),
+    }
+}
+
 /// Replays a mixed coincident support through the shared parameter kernel.
 /// A retained chord contributes an affine solve chart with its exact original
 /// endpoints; the nonlinear companion keeps every source parameter and sheet.
 #[allow(clippy::too_many_arguments)]
 pub(super) fn replay_coincident_linear_parallel_fillet(
     prepared: [&PreparedFilletCarrier2<'_>; 2],
+    linear_support: Option<&LineSeg2>,
     radius: &Real,
     retain_selected_circle_endpoints: bool,
     domains: [FilletContactDomain2; 2],
@@ -612,27 +682,32 @@ pub(super) fn replay_coincident_linear_parallel_fillet(
 ) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
     let (linear, parallel, axis) = match prepared {
         [
-            linear @ PreparedFilletCarrier2::Line { .. },
+            linear @ (PreparedFilletCarrier2::Line { .. }
+            | PreparedFilletCarrier2::AlgebraicChord { .. }),
             PreparedFilletCarrier2::Parallel { source, .. },
         ] => (linear, *source, 0),
         [
             PreparedFilletCarrier2::Parallel { source, .. },
-            linear @ PreparedFilletCarrier2::Line { .. },
+            linear @ (PreparedFilletCarrier2::Line { .. }
+            | PreparedFilletCarrier2::AlgebraicChord { .. }),
         ] => (linear, *source, 1),
         _ => unreachable!("a mixed coincident support retains its line and parallel sources"),
     };
-    let PreparedFilletCarrier2::Line {
-        source,
-        chord_support,
-        ..
-    } = linear
-    else {
-        unreachable!()
+    let (source, chord_support) = match linear {
+        PreparedFilletCarrier2::Line {
+            source,
+            chord_support,
+            ..
+        } => (*source, chord_support.as_ref()),
+        PreparedFilletCarrier2::AlgebraicChord { source } => {
+            (FilletLinearSource2::AlgebraicChord(source), linear_support)
+        }
+        _ => unreachable!(),
     };
     let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Fillet, families[axis], cause);
     let blocked =
         |reason| ExactCurveError::blocked(CurveOperation2::Fillet, families[axis], reason);
-    let line = match source {
+    let line = match &source {
         FilletLinearSource2::Native {
             source,
             parameterization,
@@ -642,9 +717,7 @@ pub(super) fn replay_coincident_linear_parallel_fillet(
             |curve| Curve2::from(curve.clone()),
         ),
         FilletLinearSource2::AlgebraicChord(chord) => {
-            let support = chord_support
-                .as_ref()
-                .expect("a represented chord support is prepared once");
+            let support = chord_support.expect("a represented chord support is prepared once");
             let parameter =
                 |point| match crate::bezier_offset::affine_line_parameter_at_incident_point(
                     support, point, policy,

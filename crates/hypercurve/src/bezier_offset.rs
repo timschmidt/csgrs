@@ -13320,7 +13320,9 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                         BezierAlgebraicChordParallelIntersections2::Contacts(contacts),
                     ) => contacts,
                     Classification::Decided(
-                        BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                        BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent {
+                            ..
+                        }
                         | BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
                     ) => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -14526,8 +14528,12 @@ pub(crate) struct BezierAlgebraicChordRetainedParallelContact2 {
 pub(crate) enum BezierAlgebraicChordParallelIntersections2 {
     Contacts(Vec<BezierAlgebraicChordParallelContact2>),
     /// The analytic carrier follows the chord's complete supporting line on
-    /// the selected regular parameter cell. No isolated corner center exists.
-    CoincidentSupportComponent,
+    /// the selected regular parameter cell. Retain the exact sheet-selection
+    /// sample so consumers can recover its affine support without rebuilding
+    /// the chord's independent endpoint fields.
+    CoincidentSupportComponent {
+        sample: Real,
+    },
     DegenerateProjection,
 }
 
@@ -78433,7 +78439,7 @@ impl BezierAlgebraicChord2 {
                             "coincident-support",
                         );
                         return Ok(Classification::Decided(
-                            BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent,
+                            BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent { sample },
                         ));
                     }
                     Classification::Decided(Some(false)) => {
@@ -79213,10 +79219,20 @@ impl BezierAlgebraicChord2 {
                 finite.extend(exterior);
                 BezierAlgebraicChordParallelIntersections2::Contacts(finite)
             }
-            (BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent, _)
-            | (_, BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent) => {
-                BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
-            }
+            (
+                component
+                @ BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent {
+                    ..
+                },
+                _,
+            )
+            | (
+                _,
+                component
+                @ BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent {
+                    ..
+                },
+            ) => component,
             _ => BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
         }))
     }
@@ -88800,9 +88816,9 @@ impl BezierAlgebraicChord2 {
     /// Signs one exact linear form of this chord's traversal tangent.
     ///
     /// Ordinary algebraic endpoint images use their retained polynomial
-    /// predicates first, including exact zero. Composite endpoint carriers
-    /// retain the bounded-refinement path, with APPROXIMATE_512 as the sole
-    /// terminal equality policy.
+    /// predicates first, including exact zero. Unresolved forms reuse the
+    /// oriented support's recursive field before interval refinement reaches
+    /// the APPROXIMATE_512 terminal equality policy.
     fn tangent_linear_form_sign(
         &self,
         coefficient_x: &Real,
@@ -88846,86 +88862,89 @@ impl BezierAlgebraicChord2 {
             );
             return sign;
         }
-        let exact_endpoint_sign = match (start_point, end_point) {
-            (
-                CurvePoint2(CurvePointData2::Exact(start)),
-                CurvePoint2(CurvePointData2::Exact(end)),
-            ) => real_sign(
-                &(coefficient_x * (end.x() - start.x()) + coefficient_y * (end.y() - start.y())),
-                policy,
-            )
-            .map(Classification::Decided),
-            (
-                CurvePoint2(CurvePointData2::Algebraic(start)),
-                CurvePoint2(CurvePointData2::Algebraic(end)),
-            ) => {
-                let start = match start.predicate_evaluator(policy)? {
-                    Classification::Decided(start) => start,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let end = match end.predicate_evaluator(policy)? {
-                    Classification::Decided(end) => end,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                Some(signed_algebraic_point_linear_difference(
-                    &end,
-                    &start,
-                    coefficient_x,
-                    coefficient_y,
+        let exact_endpoint_sign = policy.strict_predicate_pass(|| -> CurveResult<_> {
+            Ok(match (start_point, end_point) {
+                (
+                    CurvePoint2(CurvePointData2::Exact(start)),
+                    CurvePoint2(CurvePointData2::Exact(end)),
+                ) => real_sign(
+                    &(coefficient_x * (end.x() - start.x())
+                        + coefficient_y * (end.y() - start.y())),
                     policy,
-                )?)
-            }
-            (
-                CurvePoint2(CurvePointData2::Exact(start)),
-                CurvePoint2(CurvePointData2::Algebraic(end)),
-            ) => {
-                let end = match end.predicate_evaluator(policy)? {
-                    Classification::Decided(end) => end,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                Some(
-                    end.homogeneous_linear_difference_sign(
-                        start.x(),
-                        start.y(),
+                )
+                .map(Classification::Decided),
+                (
+                    CurvePoint2(CurvePointData2::Algebraic(start)),
+                    CurvePoint2(CurvePointData2::Algebraic(end)),
+                ) => {
+                    let start = match start.predicate_evaluator(policy)? {
+                        Classification::Decided(start) => start,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    };
+                    let end = match end.predicate_evaluator(policy)? {
+                        Classification::Decided(end) => end,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    };
+                    Some(signed_algebraic_point_linear_difference(
+                        &end,
+                        &start,
+                        coefficient_x,
+                        coefficient_y,
+                        policy,
+                    )?)
+                }
+                (
+                    CurvePoint2(CurvePointData2::Exact(start)),
+                    CurvePoint2(CurvePointData2::Algebraic(end)),
+                ) => {
+                    let end = match end.predicate_evaluator(policy)? {
+                        Classification::Decided(end) => end,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    };
+                    Some(
+                        end.homogeneous_linear_difference_sign(
+                            start.x(),
+                            start.y(),
+                            &Real::one(),
+                            coefficient_x,
+                            coefficient_y,
+                            RealSign::Positive,
+                            policy,
+                        )?
+                        .map(|sign| product_sign(sign, RealSign::Negative)),
+                    )
+                }
+                (
+                    CurvePoint2(CurvePointData2::Algebraic(start)),
+                    CurvePoint2(CurvePointData2::Exact(end)),
+                ) => {
+                    let start = match start.predicate_evaluator(policy)? {
+                        Classification::Decided(start) => start,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    };
+                    Some(start.homogeneous_linear_difference_sign(
+                        end.x(),
+                        end.y(),
                         &Real::one(),
                         coefficient_x,
                         coefficient_y,
                         RealSign::Positive,
                         policy,
-                    )?
-                    .map(|sign| product_sign(sign, RealSign::Negative)),
-                )
-            }
-            (
-                CurvePoint2(CurvePointData2::Algebraic(start)),
-                CurvePoint2(CurvePointData2::Exact(end)),
-            ) => {
-                let start = match start.predicate_evaluator(policy)? {
-                    Classification::Decided(start) => start,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                Some(start.homogeneous_linear_difference_sign(
-                    end.x(),
-                    end.y(),
-                    &Real::one(),
-                    coefficient_x,
-                    coefficient_y,
-                    RealSign::Positive,
-                    policy,
-                )?)
-            }
-            _ => None,
-        };
-        if let Some(sign) = exact_endpoint_sign {
-            return Ok(sign);
+                    )?)
+                }
+                _ => None,
+            })
+        })?;
+        if let Some(Classification::Decided(sign)) = exact_endpoint_sign {
+            return Ok(Classification::Decided(sign));
         }
         let mut terminal_refined = false;
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
@@ -88971,6 +88990,30 @@ impl BezierAlgebraicChord2 {
                     == Some(std::cmp::Ordering::Equal)
             {
                 return Ok(Classification::Decided(RealSign::Zero));
+            }
+        }
+        // Preserve every native interval decision before adjoining fields.
+        // Unresolved forms, including correlated zeros with arbitrary exact
+        // coefficients, reuse the existing projective direction authority
+        // before an approximate terminal. Procedural offsets contribute their
+        // original direction, without a cancelled normal.
+        if let Classification::Decided(Some(frame)) = policy.strict_predicate_pass(|| {
+            support.recursive_projective_endpoints_with_direction(policy)
+        })? {
+            let [start, end] = frame.direction_endpoints;
+            let value = (|| {
+                let (x, y, _) = end.difference_numerators(&start)?;
+                x.scale(coefficient_x)?.add(&y.scale(coefficient_y)?)
+            })();
+            if let Some(value) = value
+                && let Classification::Decided(sign) =
+                    policy.strict_predicate_pass(|| value.sign(policy))?
+            {
+                return Ok(Classification::Decided(if reversed {
+                    product_sign(sign, RealSign::Negative)
+                } else {
+                    sign
+                }));
             }
         }
         if terminal_refined && policy.permits_approximate_512() {
@@ -93790,10 +93833,31 @@ impl BezierAlgebraicChordParallelPoint2 {
                 return Classification::Decided(order);
             }
         }
-        retained_bounds_axis_order_to_real(
-            |refinement_steps| self.conservative_bounds_refined(refinement_steps, policy),
+        // Preserve the inexpensive native separation path before constructing
+        // a shared field. Suppress the approximate terminal here so unresolved
+        // comparisons still reach the complete retained predicate below.
+        let bounded = policy.strict_predicate_pass(|| {
+            retained_bounds_axis_order_to_real(
+                |steps| self.conservative_bounds_refined(steps, policy),
+                axis,
+                value,
+                policy,
+            )
+        });
+        if bounded.is_decided() {
+            return bounded;
+        }
+        // Oblique displacements also retain their exact source and positive
+        // normal sheet. Independent bounds cannot prove a shared endpoint;
+        // reuse the common coordinate predicate and its projective replay.
+        let target = match axis {
+            Axis2::X => Point2::new(value.clone(), Real::zero()),
+            Axis2::Y => Point2::new(Real::zero(), value.clone()),
+        };
+        algebraic_chord_point_coordinate_order_fallback(
+            &CurvePoint2::from(self.clone()),
+            &CurvePoint2::from(target),
             axis,
-            value,
             policy,
         )
     }
@@ -118200,6 +118264,25 @@ impl BezierParallel2 {
                 );
             }
         }
+        if !matches!(query, ParameterComponentQuery2::RetainFinite) {
+            // Component queries use the same domain-certified PH images as
+            // self-intersections. Keep the original parameter charts and
+            // normal constraints while avoiding unnecessary radical equations.
+            // Each image must certify one speed sheet over its entire domain,
+            // including any requested incident extension.
+            let strict = policy.strict_counterpart();
+            if let Classification::Decided(Some([first])) =
+                self.rational_parallel_components_in_domains([domains[0]], &strict)?
+                && let Classification::Decided(Some([second])) =
+                    other.rational_parallel_components_in_domains([domains[1]], &strict)?
+            {
+                let first = first.parallel_left(Real::zero())?;
+                let second = second.parallel_left(Real::zero())?;
+                return first.zero_distance_pair_intersections_in_domain(
+                    &second, domains, false, false, query, policy,
+                );
+            }
+        }
         let Some(system) = (match parallel_pair_equation_system(self, other, false, policy)? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
@@ -121250,8 +121333,8 @@ impl BezierParallel2 {
         }
     }
 
-    /// Selects rational parallel images on exact finite/ray domains. Both
-    /// callers share one PH proof and construct its opposite sheet only once.
+    /// Selects rational parallel images on exact finite/ray domains. Callers
+    /// share one PH proof and construct its opposite sheet only once.
     /// A zero displacement remains its source without requiring a normal.
     fn rational_parallel_components_in_domains<const N: usize>(
         &self,
@@ -134331,7 +134414,9 @@ fn retained_incident_ray_regular_anchor_from_polynomials(
         {
             continue;
         }
-        let interval = match BezierParameterInterval::try_new(
+        // The endpoint may belong to an exterior affine chart. Regularity
+        // has already certified this entire bridge; only its ordering matters.
+        let interval = match BezierParameterInterval::try_new_ordered(
             lower.clone(),
             upper.clone(),
             &CurveContext::STRICT,
@@ -134959,6 +135044,417 @@ pub(crate) use conversion_tests::recursively_line_contact_radial_half;
 #[cfg(test)]
 mod conversion_tests {
     #[test]
+    fn independent_oblique_chords_support_constrained_fillet_families() {
+        use crate::{Curve2, CurveFillet2, CurveFilletContact2, CurvePath2};
+
+        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+        let a = q(1, 2).sqrt().unwrap();
+        let b = Real::from(3) * q(1, 6).sqrt().unwrap();
+        // Rotate and scale the rational U-shaped fixture. The first line
+        // runs from (a,0) to (0,b), with a²+b²=2; its two retained endpoints
+        // deliberately belong to independent selected fields.
+        let p = |x: i64, y: i64| {
+            Point2::new(
+                -&a * q(x, 3) - &b * q(y, 3),
+                &b + &b * q(x, 3) - &a * q(y, 3),
+            )
+        };
+        let radius = &a * q(2, 3);
+        let witness = CurvePath2::try_new(vec![
+            LineSeg2::try_new(p(-3, 0), p(-2, 0)).unwrap().into(),
+            CircularArc2::try_from_center(p(-2, 0), p(-2, 2), p(-2, 1), false)
+                .unwrap()
+                .into(),
+            LineSeg2::try_new(p(-2, 2), p(-3, 2)).unwrap().into(),
+        ])
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let closed_region = |path: &CurvePath2| {
+                let mut curves = path.curves().to_vec();
+                let Classification::Decided(closing) =
+                    BezierAlgebraicChord2::try_new(path.end(), path.start(), &policy).unwrap()
+                else {
+                    panic!("the independent oblique fillet path must close exactly");
+                };
+                curves.push(closing.into());
+                CurveRegion2::try_from_boundary_paths(
+                    &[CurvePath2::try_new(curves).unwrap()],
+                    &policy,
+                )
+                .unwrap()
+                .value
+            };
+            let expected = closed_region(&witness);
+            let offset_distance = &radius * q(1, 100);
+            let expected_offset = expected
+                .offset(offset_distance.clone(), &OffsetCornerStyle2::Bevel, &policy)
+                .unwrap();
+            assert_eq!(expected_offset.certainty, CurveCertainty::Certified);
+            let chord = dense_chord_normal_chord(
+                2,
+                vec![Real::zero(), Real::one()],
+                vec![Real::zero()],
+                6,
+                vec![Real::zero()],
+                vec![Real::zero(), Real::from(3)],
+                &policy,
+                "independent oblique fillet source",
+            );
+            assert!(chord.exact_line().is_none());
+            assert!(chord.strict_provenance_support_line(&policy).is_none());
+            let spline = Curve2::try_nurbs(
+                2,
+                vec![p(0, 0), p(0, 1), p(0, 2), p(-1, 2), p(-3, 2)],
+                vec![Real::one(); 5],
+                [0, 0, 0, 1, 1, 2, 2, 2]
+                    .into_iter()
+                    .map(Real::from)
+                    .collect(),
+                &policy,
+            )
+            .unwrap()
+            .value;
+            for (retained, first) in [
+                (
+                    false,
+                    Curve2::from(LineSeg2::try_new(p(-3, 0), p(0, 0)).unwrap()),
+                ),
+                (true, Curve2::from(chord)),
+            ] {
+                let source = CurvePath2::try_new(vec![first, spline.clone()]).unwrap();
+                for reversed in [false, true] {
+                    let path = if reversed {
+                        source.reversed(&policy).unwrap().value
+                    } else {
+                        source.clone()
+                    };
+                    let spline_axis = usize::from(!reversed);
+                    for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                        match path.fillet_vertex(
+                            1,
+                            &CurveFillet2::new(radius.clone()),
+                            mode,
+                            &policy,
+                        ) {
+                            Err(crate::ExactCurveError::Invalid {
+                                cause: CurveError::FilletConstraintRequired,
+                                ..
+                            }) => (),
+                            Err(error) => panic!(
+                                "oblique radius-only family: {error}; retained={retained}, reversed={reversed}, mode={mode:?}"
+                            ),
+                            Ok(_) => panic!("a continuous oblique family requires a constraint"),
+                        }
+                        for selection in 0..5 {
+                            let mut request = CurveFillet2::new(radius.clone());
+                            match selection {
+                                0 => request.center = Some(p(-2, 1).into()),
+                                1 => {
+                                    request.contacts[spline_axis] =
+                                        Some(CurveFilletContact2::Point(p(-2, 2).into()))
+                                }
+                                2 => {
+                                    let parameter = Real::from(3).sqrt().unwrap();
+                                    request.contacts[spline_axis] =
+                                        Some(CurveFilletContact2::Parameter(
+                                            (if reversed {
+                                                Real::from(2) - parameter
+                                            } else {
+                                                parameter
+                                            })
+                                            .into(),
+                                        ));
+                                }
+                                3 => {
+                                    request.contacts[1 - spline_axis] =
+                                        Some(CurveFilletContact2::Point(p(-2, 0).into()))
+                                }
+                                _ => {
+                                    let parameter =
+                                        match path.curves()[1 - spline_axis].retained_fragment() {
+                                            Some(BezierSplitFragment2::AlgebraicChord(chord)) => {
+                                                CurveParameter2::from_algebraic_chord(
+                                                    chord
+                                                        .parameter_at_certified_support_point(
+                                                            p(-2, 0).into(),
+                                                            &policy,
+                                                        )
+                                                        .unwrap(),
+                                                )
+                                            }
+                                            _ => (if reversed { q(2, 3) } else { q(1, 3) }).into(),
+                                        };
+                                    request.contacts[1 - spline_axis] =
+                                        Some(CurveFilletContact2::Parameter(parameter));
+                                }
+                            }
+                            let selected = path.fillet_vertex(1, &request, mode, &policy)
+                                .unwrap_or_else(|error| panic!(
+                                    "oblique constrained fillet: {error}; retained={retained}, reversed={reversed}, mode={mode:?}, selection={selection}"
+                                ));
+                            assert_eq!(selected.certainty, CurveCertainty::Certified);
+                            assert_eq!(selected.value.candidate_count(), 1);
+                            let edited = &selected.value.solutions()[0];
+                            let contacts: [CurvePoint2; 2] = [p(-2, 0).into(), p(-2, 2).into()];
+                            for (actual, expected) in [
+                                (edited.start(), path.start()),
+                                (edited.end(), path.end()),
+                                (
+                                    edited.curves().first().unwrap().end(),
+                                    contacts[usize::from(reversed)].clone(),
+                                ),
+                                (
+                                    edited.curves().last().unwrap().start(),
+                                    contacts[spline_axis].clone(),
+                                ),
+                            ] {
+                                assert_eq!(
+                                    actual.same_point(&expected, &policy),
+                                    Classification::Decided(true)
+                                );
+                            }
+                            for pair in edited.curves().windows(2) {
+                                assert_eq!(
+                                    pair[0].end().same_point(&pair[1].start(), &policy),
+                                    Classification::Decided(true)
+                                );
+                            }
+                            let region = closed_region(edited);
+                            let difference = region.boolean_regions(&expected, &policy)
+                                .unwrap_or_else(|error| panic!(
+                                    "oblique fillet Boolean: {error}; retained={retained}, reversed={reversed}, mode={mode:?}, selection={selection}"
+                                ));
+                            assert_eq!(difference.certainty, CurveCertainty::Certified);
+                            assert!(difference.value.xor().is_empty());
+                            if selection == 0 {
+                                let offset = region.offset(offset_distance.clone(), &OffsetCornerStyle2::Bevel, &policy)
+                                    .unwrap_or_else(|error| panic!(
+                                        "oblique fillet offset: {error}; retained={retained}, reversed={reversed}, mode={mode:?}"
+                                    ));
+                                assert_eq!(offset.certainty, CurveCertainty::Certified);
+                                let difference = offset
+                                    .value
+                                    .boolean_regions(&expected_offset.value, &policy)
+                                    .unwrap_or_else(|error| panic!(
+                                        "oblique fillet offset Boolean: {error}; retained={retained}, reversed={reversed}, mode={mode:?}"
+                                    ));
+                                assert_eq!(difference.certainty, CurveCertainty::Certified);
+                                assert!(difference.value.xor().is_empty());
+                                assert!(!offset.value.is_empty());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_incident_domains_admit_exterior_affine_endpoints() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let parallel = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
+            vec![-Real::one(), Real::one()],
+        )
+        .unwrap()
+        .parallel_left(Real::one())
+        .unwrap();
+        let line = LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let (selected, _, alpha) = selected_fiber_quartile_parameters(&policy);
+            let point = dense_chord_normal_point(
+                2,
+                vec![Real::zero(), half.clone()],
+                vec![Real::zero()],
+                &policy,
+                "exterior incident endpoint field",
+            );
+            let Classification::Decided(recursive) =
+                affine_line_parameter_at_incident_point(&line, &point, &policy).unwrap()
+            else {
+                panic!("the independent selected point must retain its affine parameter");
+            };
+            assert!(recursive.as_recursive_projective().is_some());
+            for base in [CurveParameter2::from_selected_fiber(selected), recursive] {
+                for shift in [-2, 2] {
+                    let Classification::Decided(endpoint) = base
+                        .affine_image_unbounded(&Real::one(), &Real::from(shift), &policy)
+                        .unwrap()
+                    else {
+                        panic!("the retained endpoint must translate exactly");
+                    };
+                    let exact = Real::from(shift) + &alpha * &half;
+                    for direction in [
+                        BezierParameterRayDirection2::Decreasing,
+                        BezierParameterRayDirection2::Increasing,
+                    ] {
+                        let result = crate::policy::resolve_certified_value(&policy, |attempt| {
+                            parallel.incident_domain_from_parameter(&endpoint, direction, attempt)
+                        });
+                        assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+                        let Classification::Decided(incident) = result.value.unwrap() else {
+                            panic!("the exterior endpoint must retain its regular incident domain");
+                        };
+                        assert!(incident.endpoint() == &endpoint);
+                        assert!(incident.bridge().is_some());
+                        let toward_pole =
+                            (shift > 0) == (direction == BezierParameterRayDirection2::Decreasing);
+                        assert_eq!(incident.barrier().is_some(), toward_pole);
+                        if let Some(barrier) = incident.barrier() {
+                            assert_eq!(
+                                barrier
+                                    .cmp_by_refinement(
+                                        &BezierParameter2::Exact(half.clone()),
+                                        &policy
+                                    )
+                                    .unwrap(),
+                                Classification::Decided(std::cmp::Ordering::Equal),
+                            );
+                        }
+                        for candidate in [-4, -2, -1, 0, 1, 2, 3, 4]
+                            .map(Real::from)
+                            .into_iter()
+                            .chain([half.clone()])
+                        {
+                            let expected_order =
+                                if direction == BezierParameterRayDirection2::Increasing {
+                                    std::cmp::Ordering::Greater
+                                } else {
+                                    std::cmp::Ordering::Less
+                                };
+                            let expected = compare_reals(&candidate, &exact, &policy)
+                                == Some(expected_order)
+                                && (!toward_pole
+                                    || compare_reals(&candidate, &half, &policy)
+                                        == Some(expected_order.reverse()));
+                            assert_eq!(
+                                incident
+                                    .contains_extension_parameter(&candidate.into(), &policy)
+                                    .unwrap(),
+                                Classification::Decided(expected),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn independent_oblique_offset_coordinates_replay_exact_equalities_and_separation() {
+        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+        let a = q(1, 2).sqrt().unwrap();
+        let b = Real::from(3) * q(1, 6).sqrt().unwrap();
+        let tiny = (0..10).fold(q(1, 2), |value, _| &value * &value);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let chord = dense_chord_normal_chord(
+                2,
+                vec![Real::zero(), Real::one()],
+                vec![Real::zero()],
+                6,
+                vec![Real::zero()],
+                vec![Real::zero(), Real::from(3)],
+                &policy,
+                "independent oblique offset coordinate fields",
+            );
+            let endpoints = [
+                Point2::new(a.clone(), Real::zero()),
+                Point2::new(Real::zero(), b.clone()),
+            ];
+            for reversed in [false, true] {
+                let source = if reversed {
+                    chord.reversed()
+                } else {
+                    chord.clone()
+                };
+                let sign = Real::from(if reversed { -1 } else { 1 });
+                let shift_x = -(&sign * Real::from(3).sqrt().unwrap() * q(1, 8));
+                let shift_y = -(&sign * q(1, 8));
+                let offset = source.parallel_left_retained(q(1, 4), &policy).unwrap();
+                for (index, point) in [offset.start(), offset.end()].into_iter().enumerate() {
+                    let expected = endpoints[if reversed { 1 - index } else { index }]
+                        .translated(shift_x.clone(), shift_y.clone());
+                    for (axis, coordinate) in [(Axis2::X, expected.x()), (Axis2::Y, expected.y())] {
+                        for (target, expected) in [
+                            (coordinate.clone(), std::cmp::Ordering::Equal),
+                            (coordinate + &tiny, std::cmp::Ordering::Less),
+                            (coordinate - &tiny, std::cmp::Ordering::Greater),
+                        ] {
+                            // Exact endpoint equality and separation below the
+                            // approximate terminal must both reuse the retained
+                            // normal sheet and independent source fields.
+                            let result =
+                                crate::policy::resolve_certified_value(&policy, |attempt| {
+                                    BezierAlgebraicChord2::point_axis_order_to_real(
+                                        point, axis, &target, attempt,
+                                    )
+                                });
+                            assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+                            assert_eq!(result.value.unwrap(), Classification::Decided(expected));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn independent_chord_linear_forms_replay_exact_coefficient_relations() {
+        let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+        let a = q(1, 2).sqrt().unwrap();
+        let b = Real::from(3) * q(1, 6).sqrt().unwrap();
+        let tiny = (0..10).fold(q(1, 2), |value, _| &value * &value);
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let chord = dense_chord_normal_chord(
+                2,
+                vec![Real::zero(), Real::one()],
+                vec![Real::zero()],
+                6,
+                vec![Real::zero()],
+                vec![Real::zero(), Real::from(3)],
+                &policy,
+                "independent chord direction fields",
+            );
+            let clipped = chord
+                .chord_between_certified_ordered_support_points(
+                    chord.start().clone(),
+                    Point2::new(&a * q(1, 2), &b * q(1, 2)).into(),
+                    &policy,
+                )
+                .unwrap();
+            let parallel = clipped.parallel_left_retained(q(1, 4), &policy).unwrap();
+            for source in [chord, clipped, parallel] {
+                assert!(source.certified_unit_tangent().is_none());
+                for reversed in [false, true] {
+                    let chord = if reversed {
+                        source.reversed()
+                    } else {
+                        source.clone()
+                    };
+                    for (x, y, expected) in [
+                        (b.clone(), a.clone(), RealSign::Zero),
+                        (Real::from(3).sqrt().unwrap(), Real::one(), RealSign::Zero),
+                        (b.clone(), &a + &tiny, RealSign::Positive),
+                        (b.clone(), &a - &tiny, RealSign::Negative),
+                    ] {
+                        // The two exact zeros use different coefficient fields.
+                        // Perturbations below 2^-512 must retain their nonzero
+                        // signs, including after trimming, offset and reversal.
+                        assert_eq!(
+                            chord.tangent_linear_form_sign(&x, &y, &policy).unwrap(),
+                            Classification::Decided(if reversed {
+                                product_sign(expected, RealSign::Negative)
+                            } else {
+                                expected
+                            }),
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn repeated_point_similarities_keep_one_original_selected_field() {
         let affine = |entries: [i8; 6]| {
             let [a, b, d, e, tx, ty] = entries.map(Real::from);
@@ -135123,13 +135619,16 @@ mod conversion_tests {
         let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
         // The two center traces share a line with s = 2t. Independent
         // original-normal predicates distinguish their parameter axes.
-        let first = QuadraticBezier2::new(
-            Point2::from_values(0, 1),
-            Point2::new(q(1, 2), Real::one()),
-            Point2::from_values(1, 1),
-        )
-        .parallel_left(Real::zero())
-        .unwrap();
+        let firsts = [0, 1].map(|distance| {
+            let y = Real::from(1 - distance);
+            QuadraticBezier2::new(
+                Point2::new(Real::zero(), y.clone()),
+                Point2::new(q(1, 2), y.clone()),
+                Point2::new(Real::one(), y),
+            )
+            .parallel_left(Real::from(distance))
+            .unwrap()
+        });
         let second = QuadraticBezier2::new(
             Point2::from_values(0, 0),
             Point2::new(q(1, 4), Real::zero()),
@@ -135154,31 +135653,56 @@ mod conversion_tests {
                 CurveParameter2::from(&middle + q(1, 10_000)),
             )
         });
-        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            for swapped in [false, true] {
-                let order = if swapped { [1, 0] } else { [0, 1] };
-                let axes = [
-                    CurveResultantParameter::First,
-                    CurveResultantParameter::Second,
-                ];
-                let signs = [RealSign::Negative, RealSign::Positive];
-                let constraints = std::array::from_fn(|axis| {
-                    originals[order[axis]]
-                        .derivative_scale_constraint(axes[axis], signs[order[axis]])
-                });
-                let supports = [&first, &second];
-                let Classification::Decided(result) = supports[order[0]]
-                    .parallel_intersections_in_domain(
-                        supports[order[1]],
-                        order.map(|index| CurveParameterDomain2::new(&ranges[index], None)),
-                        ParameterComponentQuery2::FirstComponent(Some(&constraints)),
-                        &policy,
-                    )
-                    .unwrap()
-                else {
-                    panic!("normal constraints must retain their original parameter axes");
-                };
-                assert!(!result.into_parts().1.is_empty());
+        for first in &firsts {
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                for swapped in [false, true] {
+                    let order = if swapped { [1, 0] } else { [0, 1] };
+                    let axes = [
+                        CurveResultantParameter::First,
+                        CurveResultantParameter::Second,
+                    ];
+                    for allowed in [false, true] {
+                        let signs = if allowed {
+                            [RealSign::Negative, RealSign::Positive]
+                        } else {
+                            [RealSign::Positive, RealSign::Negative]
+                        };
+                        let constraints = std::array::from_fn(|axis| {
+                            originals[order[axis]]
+                                .derivative_scale_constraint(axes[axis], signs[order[axis]])
+                        });
+                        let supports = [first, &second];
+                        // Both nonzero center traces have exact rational images.
+                        // Reusing those images must preserve the original normals'
+                        // distinct parameter axes and reject the opposite sheets.
+                        for query in [
+                            ParameterComponentQuery2::FirstComponent(Some(&constraints)),
+                            ParameterComponentQuery2::AllComponents(Some(&constraints)),
+                        ] {
+                            let Classification::Decided(result) = supports[order[0]]
+                                .parallel_intersections_in_domain(
+                                    supports[order[1]],
+                                    order.map(|index| {
+                                        CurveParameterDomain2::new(&ranges[index], None)
+                                    }),
+                                    query,
+                                    &policy,
+                                )
+                                .unwrap()
+                            else {
+                                panic!(
+                                    "normal constraints must retain their original parameter axes"
+                                );
+                            };
+                            let (intersections, components) = result.into_parts();
+                            assert!(intersections.is_complete());
+                            assert_eq!(!components.is_empty(), allowed);
+                            if !allowed {
+                                assert!(intersections.is_empty());
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -171248,7 +171772,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     .parallel_intersections(&parallel, &policy)
                     .unwrap(),
                 Classification::Decided(
-                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent { .. }
                 )
             ));
             let incident = incident_domain(
@@ -171262,7 +171786,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     .parallel_intersections_with_incident_ray(&parallel, &incident, &policy)
                     .unwrap(),
                 Classification::Decided(
-                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                    BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent { .. }
                 )
             ));
         }
@@ -172001,7 +172525,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 matches!(
                     parallel_intersections,
                     Classification::Decided(
-                        BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
+                        BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent { .. }
                     ),
                 ),
                 "the rank-one coincident support must decide: {parallel_intersections:?}"

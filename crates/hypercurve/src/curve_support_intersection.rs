@@ -2103,7 +2103,7 @@ impl Pair<'_> {
                     )?;
                 }
             }
-            Intersections::CoincidentSupportComponent => {
+            Intersections::CoincidentSupportComponent { .. } => {
                 self.blocker(result, CurveIntersectionPairBlockerKind2::SharedComponent)
             }
             Intersections::DegenerateProjection => self.blocker(

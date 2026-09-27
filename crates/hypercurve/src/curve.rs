@@ -5806,13 +5806,20 @@ impl FilletCenterWitness2 {
     }
 }
 
+enum FilletCenterCoincidence2 {
+    Support,
+    /// A represented chart of the original retained chord's support. Its
+    /// original endpoint fields continue to own finite-domain admission.
+    LinearSource(LineSeg2),
+}
+
 #[derive(Default)]
 struct FilletCenters2 {
     first: Option<FilletCenterWitness2>,
     second: Option<FilletCenterWitness2>,
     overflow: Vec<FilletCenterWitness2>,
     components: Vec<crate::bezier_offset::CurveParameterComponent2>,
-    coincident: bool,
+    coincident: Option<FilletCenterCoincidence2>,
     outside_domain: bool,
 }
 
@@ -5960,19 +5967,25 @@ fn solve_carrier_fillet_corner(
                     policy,
                 )?;
                 saw_outside_domain |= centers.outside_domain;
-                if centers.coincident {
+                if let Some(coincidence) = &centers.coincident {
                     if matches!(
                         (previous_offset, next_offset),
                         (
-                            FilletOffsetCarrier2::Line { .. },
+                            FilletOffsetCarrier2::Line { .. }
+                                | FilletOffsetCarrier2::AlgebraicChord { .. },
                             FilletOffsetCarrier2::Parallel { .. }
                         ) | (
                             FilletOffsetCarrier2::Parallel { .. },
                             FilletOffsetCarrier2::Line { .. }
+                                | FilletOffsetCarrier2::AlgebraicChord { .. }
                         )
                     ) {
                         return curve_fillet::replay_coincident_linear_parallel_fillet(
                             [&previous, &next],
+                            match coincidence {
+                                FilletCenterCoincidence2::LinearSource(line) => Some(line),
+                                FilletCenterCoincidence2::Support => None,
+                            },
                             radius,
                             retain_selected_circle_endpoints,
                             domains,
@@ -6663,7 +6676,9 @@ fn fillet_offset_centers(
                     retained_anchor_evidence: None,
                 });
             }
-            crate::CircleCircleRelation::Coincident => centers.coincident = true,
+            crate::CircleCircleRelation::Coincident => {
+                centers.coincident = Some(FilletCenterCoincidence2::Support)
+            }
             crate::CircleCircleRelation::Uncertain { reason } => {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Fillet,
@@ -7096,7 +7111,7 @@ fn fillet_offset_centers(
                     ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
                 })? {
                 Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
-                    centers.coincident = true;
+                    centers.coincident = Some(FilletCenterCoincidence2::Support);
                     Vec::new()
                 }
                 Classification::Decided(crate::BezierParallelIncidence2::Parameters(
@@ -7123,7 +7138,7 @@ fn fillet_offset_centers(
                         ExactCurveError::invalid(CurveOperation2::Fillet, parallel_family, cause)
                     })? {
                     Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
-                        centers.coincident = true;
+                        centers.coincident = Some(FilletCenterCoincidence2::Support);
                     }
                     Classification::Decided(crate::BezierParallelIncidence2::Parameters(
                         exterior,
@@ -7416,7 +7431,7 @@ fn fillet_offset_centers(
                                 cusp_family,
                                 policy,
                             )? {
-                                centers.coincident = true;
+                                centers.coincident = Some(FilletCenterCoincidence2::Support);
                                 break;
                             }
                         }
@@ -7643,14 +7658,14 @@ fn fillet_offset_centers(
                                 false
                             };
                             if overlaps_authored || overlaps_incident {
-                                centers.coincident = true;
+                                centers.coincident = Some(FilletCenterCoincidence2::Support);
                                 break;
                             }
                         }
                     }
 
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::CoincidentCircleComponent => {
-                        centers.coincident = true;
+                        centers.coincident = Some(FilletCenterCoincidence2::Support);
                     }
                     crate::bezier_offset::BezierAlgebraicCuspSemicircleParallelIntersections2::DegenerateProjection => {
                         return Err(ExactCurveError::blocked(
@@ -8042,7 +8057,7 @@ fn fillet_offset_centers(
                             }
                         }
                         crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(_) => {
-                            centers.coincident = previous_mode == CurveCornerMode2::TrimOrExtend
+                            centers.coincident = (previous_mode == CurveCornerMode2::TrimOrExtend
                                 || next_mode == CurveCornerMode2::TrimOrExtend
                                 || retained_fillet_arc_cusp_overlap_is_positive(
                                     &offset_support,
@@ -8050,7 +8065,7 @@ fn fillet_offset_centers(
                                     arc_family,
                                     cusp_family,
                                     policy,
-                                )?;
+                                )?).then_some(FilletCenterCoincidence2::Support);
                             return Ok(centers);
                         }
                     }
@@ -8571,16 +8586,16 @@ fn fillet_offset_centers(
                         }
                         crate::bezier_offset::BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap) => {
                             if previous_mode == CurveCornerMode2::TrimOrExtend || next_mode == CurveCornerMode2::TrimOrExtend {
-                                centers.coincident = true;
+                                centers.coincident = Some(FilletCenterCoincidence2::Support);
                                 return Ok(centers);
                             }
-                            centers.coincident = retained_fillet_cusp_pair_overlap_is_positive(
+                            centers.coincident = (retained_fillet_cusp_pair_overlap_is_positive(
                                 previous_source,
                                 next_source,
                                 &overlap,
                                 previous_family,
                                 policy,
-                            )?;
+                            )?).then_some(FilletCenterCoincidence2::Support);
                         }
                     }
                 }
@@ -8728,7 +8743,8 @@ fn fillet_offset_centers(
                         ));
                     }
                 };
-                centers.coincident = side == crate::classify::LineSide::On;
+                centers.coincident = (side == crate::classify::LineSide::On)
+                    .then_some(FilletCenterCoincidence2::Support);
                 return Ok(centers);
             }
             let point = match previous_support
@@ -9287,24 +9303,54 @@ fn fillet_offset_centers(
         }
         (FilletOffsetCarrier2::AlgebraicChord { .. }, FilletOffsetCarrier2::Parallel { .. })
         | (FilletOffsetCarrier2::Parallel { .. }, FilletOffsetCarrier2::AlgebraicChord { .. }) => {
-            let (chord_support, parallel_source, analytic_support, chord_is_previous) =
-                match (previous, next) {
-                    (
-                        FilletOffsetCarrier2::AlgebraicChord { support, .. },
-                        FilletOffsetCarrier2::Parallel {
-                            source,
-                            support: analytic,
-                        },
-                    ) => (support, source, analytic, true),
-                    (
-                        FilletOffsetCarrier2::Parallel {
-                            source,
-                            support: analytic,
-                        },
-                        FilletOffsetCarrier2::AlgebraicChord { support, .. },
-                    ) => (support, source, analytic, false),
-                    _ => unreachable!(),
-                };
+            let (
+                chord_source,
+                chord_support,
+                chord_distance,
+                parallel_source,
+                analytic_support,
+                chord_is_previous,
+            ) = match (previous, next) {
+                (
+                    FilletOffsetCarrier2::AlgebraicChord {
+                        source: chord_source,
+                        support,
+                        signed_distance,
+                        ..
+                    },
+                    FilletOffsetCarrier2::Parallel {
+                        source,
+                        support: analytic,
+                    },
+                ) => (
+                    *chord_source,
+                    support,
+                    signed_distance,
+                    source,
+                    analytic,
+                    true,
+                ),
+                (
+                    FilletOffsetCarrier2::Parallel {
+                        source,
+                        support: analytic,
+                    },
+                    FilletOffsetCarrier2::AlgebraicChord {
+                        source: chord_source,
+                        support,
+                        signed_distance,
+                        ..
+                    },
+                ) => (
+                    *chord_source,
+                    support,
+                    signed_distance,
+                    source,
+                    analytic,
+                    false,
+                ),
+                _ => unreachable!(),
+            };
             let chord_family = if chord_is_previous {
                 previous_family
             } else {
@@ -9345,8 +9391,16 @@ fn fillet_offset_centers(
                     ),
                 ) => contacts,
                 Classification::Decided(
-                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent
-                    | crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
+                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::CoincidentSupportComponent { sample },
+                ) => {
+                    let source_line = curve_fillet::coincident_linear_source_chart(
+                        chord_source, analytic_support, &sample, chord_distance, chord_family, policy,
+                    )?;
+                    centers.coincident = Some(FilletCenterCoincidence2::LinearSource(source_line));
+                    return Ok(centers);
+                }
+                Classification::Decided(
+                    crate::bezier_offset::BezierAlgebraicChordParallelIntersections2::DegenerateProjection,
                 ) => {
                     return Err(ExactCurveError::blocked(
                         CurveOperation2::Fillet,
@@ -9472,7 +9526,8 @@ fn fillet_offset_centers(
                         ));
                     }
                 };
-                centers.coincident = side == crate::classify::LineSide::On;
+                centers.coincident = (side == crate::classify::LineSide::On)
+                    .then_some(FilletCenterCoincidence2::Support);
                 return Ok(centers);
             }
             let point = match line_chord
@@ -9541,14 +9596,15 @@ fn fillet_offset_centers(
             })? {
                 Classification::Decided(Some(point)) => point,
                 Classification::Decided(None) => {
-                    centers.coincident = point_on_fillet_offset(
+                    centers.coincident = (point_on_fillet_offset(
                         &next_support.start().clone().into(),
                         previous,
                         true,
                         domains[0],
                         previous_family,
                         policy,
-                    )?;
+                    )?)
+                    .then_some(FilletCenterCoincidence2::Support);
                     return Ok(centers);
                 }
                 Classification::Uncertain(reason) => {
@@ -13230,7 +13286,7 @@ mod tests {
                         } else {
                             next_mode
                         } == CurveCornerMode2::TrimOrExtend;
-                        assert!(!centers.coincident);
+                        assert!(centers.coincident.is_none());
                         assert_eq!(
                             centers.iter().count(),
                             usize::from(expected),
@@ -14639,7 +14695,7 @@ mod tests {
                 &policy,
             )
             .expect("the endpoint-only circle pair must solve exactly");
-            assert!(!centers.coincident);
+            assert!(centers.coincident.is_none());
             let mut retained = centers.iter();
             let center = retained
                 .next()
