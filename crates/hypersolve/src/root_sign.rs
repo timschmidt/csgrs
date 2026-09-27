@@ -1,4 +1,4 @@
-//! Exact signs on a certified singleton through the Sturm-Tarski theorem.
+//! Exact signs on a certified singleton from enclosures and Sturm-Tarski replay.
 //!
 //! For endpoint-free (a,b), Var(SRemS(P,P'Q);a,b) is the sum of signs of Q
 //! at P's distinct roots. A certified singleton therefore gives one sign.
@@ -173,6 +173,10 @@ fn field_polynomial_sign<C: Clone, F: OrderedFieldPolynomialContext<C>>(
 /// need to be isolated. `None` means this exact sign query did not decide.
 /// Endpoint roots and exact point intervals decline so endpoint ownership
 /// remains explicit; callers can evaluate an exact point directly.
+/// A certified dyadic interval filter contracts an enclosure of the owned
+/// root over general Real coefficients; rational inputs retain the primitive
+/// integer chain. The filter's bounded work never restricts
+/// exact replay; inseparable and repeated-root queries retain the chain.
 /// Every coefficient decision here is STRICT, including the general-Real
 /// fallback when the primitive integer chain does not apply.
 /// If the supplied isolator is too narrow for an endpoint decision, a wider
@@ -202,6 +206,18 @@ pub fn sign_at_selected_root(
     if predicate.is_empty() && endpoints_decided {
         return Some(Ordering::Equal);
     }
+    // Primitive integer remainder chains are already cheap for rational
+    // coefficients, especially exact-zero queries. Preserve that fast path;
+    // a general Real field can avoid costly inverses through an enclosure.
+    if endpoints_decided
+        && defining
+            .iter()
+            .chain(predicate)
+            .any(|coefficient| coefficient.exact_rational_ref().is_none())
+        && let Some(result) = sign_on_refined_singleton(defining, predicate, interval)
+    {
+        return Some(result);
+    }
     let product_len = defining
         .len()
         .checked_add(predicate.len())?
@@ -221,6 +237,112 @@ pub fn sign_at_selected_root(
         None
     };
     selected_sign.or_else(|| sign_with_coarser_singleton(defining, &chain, interval))
+}
+
+/// Every box contains the caller's selected root. Interval Newton intersects
+/// that box with m - P(m)/P'(box); the mean value theorem preserves ownership.
+/// Outward dyadic rounding bounds denominator growth without changing P or
+/// replacing the caller's root certificate. Failure only declines this filter.
+fn sign_on_refined_singleton(
+    defining: &[Real],
+    predicate: &[Real],
+    interval: &IsolatedRootInterval,
+) -> Option<Ordering> {
+    use hyperreal::Rational;
+
+    fn enclose(values: &[Real], precision: i32) -> Option<Vec<[Rational; 2]>> {
+        values
+            .iter()
+            .map(|value| value.certified_dyadic_interval(precision))
+            .collect()
+    }
+
+    fn evaluate(polynomial: &[[Rational; 2]], point: &[Rational; 2]) -> [Rational; 2] {
+        let mut value = [Rational::zero(), Rational::zero()];
+        for [lower, upper] in polynomial.iter().rev() {
+            let (lo, hi) = crate::interval::rational_interval_product(
+                &value[0], &value[1], &point[0], &point[1],
+            );
+            value = [lo + lower, hi + upper];
+        }
+        value
+    }
+
+    fn separated([lower, upper]: &[Rational; 2]) -> Option<Ordering> {
+        if lower.is_positive() {
+            Some(Ordering::Greater)
+        } else if upper.is_negative() {
+            Some(Ordering::Less)
+        } else if lower.is_zero() && upper.is_zero() {
+            Some(Ordering::Equal)
+        } else {
+            None
+        }
+    }
+
+    let mut retained: Option<[Rational; 2]> = None;
+    // A bounded proof filter; inseparable values still use the exact chain.
+    for precision in [-64, -128, -256, -512, -1024, -2048] {
+        let mut bounds = [
+            interval.lower.certified_dyadic_interval(precision)?[0].clone(),
+            interval.upper.certified_dyadic_interval(precision)?[1].clone(),
+        ];
+        if let Some(previous) = retained.take() {
+            if previous[0] > bounds[0] {
+                bounds[0] = previous[0].clone();
+            }
+            if previous[1] < bounds[1] {
+                bounds[1] = previous[1].clone();
+            }
+        }
+        if bounds[0] > bounds[1] {
+            return None;
+        }
+        let query = enclose(predicate, precision)?;
+        if let Some(ordering) = separated(&evaluate(&query, &bounds)) {
+            return Some(ordering);
+        }
+        let polynomial = enclose(defining, precision)?;
+        let derivative = polynomial
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(power, [lo, hi])| {
+                let power = Rational::new(i64::try_from(power).ok()?);
+                Some([lo * &power, hi * &power])
+            })
+            .collect::<Option<Vec<_>>>()?;
+        for _ in 0..2 {
+            let slope = evaluate(&derivative, &bounds);
+            if !slope[0].is_positive() && !slope[1].is_negative() {
+                return None;
+            }
+            let midpoint = (&bounds[0] + &bounds[1]) * Rational::fraction(1, 2).ok()?;
+            let residual = evaluate(&polynomial, &[midpoint.clone(), midpoint.clone()]);
+            let (lo, hi) = crate::interval::rational_interval_product(
+                &residual[0],
+                &residual[1],
+                &slope[1].clone().inverse().ok()?,
+                &slope[0].clone().inverse().ok()?,
+            );
+            let lower = Real::new(&midpoint - hi).certified_dyadic_interval(precision)?[0].clone();
+            let upper = Real::new(&midpoint - lo).certified_dyadic_interval(precision)?[1].clone();
+            if lower > bounds[0] {
+                bounds[0] = lower;
+            }
+            if upper < bounds[1] {
+                bounds[1] = upper;
+            }
+            if bounds[0] > bounds[1] {
+                return None;
+            }
+        }
+        if let Some(ordering) = separated(&evaluate(&query, &bounds)) {
+            return Some(ordering);
+        }
+        retained = Some(bounds);
+    }
+    None
 }
 
 fn chain_sign(chain: &[Vec<Real>], lower: &Real, upper: &Real) -> Option<Ordering> {
@@ -342,6 +464,109 @@ fn variations(chain: &[Vec<Real>], point: &Real) -> Option<usize> {
 mod tests {
     use super::*;
     use proptest::prelude::*;
+
+    #[test]
+    fn certified_newton_signs_overcome_large_field_cancellation() {
+        let inner = Real::from(5).sqrt().unwrap();
+        let unit = &inner + (Real::from(50) - Real::from(20) * &inner).sqrt().unwrap();
+        let wide = Real::from(2).powi_i64(256).unwrap();
+        let tiny = Real::from(2).powi_i64(-600).unwrap();
+        let outer = Real::from(2).sqrt().unwrap();
+        assert!(outer.exact_rational_ref().is_none());
+        for root_sign in [-1, 1] {
+            let interval = if root_sign < 0 {
+                IsolatedRootInterval {
+                    lower: -&outer,
+                    upper: -Real::one(),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                }
+            } else {
+                IsolatedRootInterval {
+                    lower: Real::one(),
+                    upper: outer.clone(),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                }
+            };
+            for orientation in [-1, 1] {
+                // P = +/- unit * (x^3 -/+ 2) selects either real cube root.
+                // Q = 2^256 P + 2^-600 x has the selected root's sign.
+                // The nonrational endpoint is an enclosure, not a payload
+                // reconstruction request; the original field and root stay owned.
+                let defining = [-2 * root_sign, 0, 0, 1]
+                    .map(|coefficient| Real::from(coefficient * orientation) * &unit);
+                let mut predicate = defining.each_ref().map(|value| value * &wide);
+                predicate[1] += &tiny;
+                let expected = Some(root_sign.cmp(&0));
+                assert_eq!(
+                    sign_on_refined_singleton(&defining, &predicate, &interval),
+                    expected
+                );
+                assert_eq!(
+                    sign_at_selected_root(&defining, &predicate, &interval),
+                    expected
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn newton_uncertainty_retains_zero_and_repeated_root_proofs() {
+        let interval = IsolatedRootInterval {
+            lower: Real::one(),
+            upper: Real::from(2),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let query = [-2, 0, 1].map(Real::from);
+        for defining in [query.to_vec(), [4, 0, -4, 0, 1].map(Real::from).to_vec()] {
+            assert_eq!(
+                sign_on_refined_singleton(&defining, &query, &interval),
+                None
+            );
+            assert_eq!(
+                sign_at_selected_root(&defining, &query, &interval),
+                Some(Ordering::Equal)
+            );
+        }
+        let repeated = [4, 0, -4, 0, 1].map(Real::from);
+        let positive = [-1, 1].map(Real::from);
+        assert_eq!(
+            sign_on_refined_singleton(&repeated, &positive, &interval),
+            None
+        );
+        assert_eq!(
+            sign_at_selected_root(&repeated, &positive, &interval),
+            Some(Ordering::Greater)
+        );
+    }
+
+    #[test]
+    fn dyadic_filter_budget_does_not_limit_exact_query_precision() {
+        let unit = Real::from(5).sqrt().unwrap();
+        let defining = [-2, 0, 0, 1].map(|coefficient| Real::from(coefficient) * &unit);
+        let interval = IsolatedRootInterval {
+            lower: Real::one(),
+            upper: Real::from(2),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        for orientation in [-1, 1] {
+            let predicate = [
+                Real::zero(),
+                Real::from(orientation) * Real::from(2).powi_i64(-4096).unwrap(),
+            ];
+            assert_eq!(
+                sign_on_refined_singleton(&defining, &predicate, &interval),
+                None
+            );
+            assert_eq!(
+                sign_at_selected_root(&defining, &predicate, &interval),
+                Some(orientation.cmp(&0))
+            );
+        }
+    }
 
     #[test]
     fn nonrational_query_quotients_preserve_tiny_signs_on_repeated_conjugates() {
@@ -548,6 +773,9 @@ mod tests {
                 distinct_root_count: 1,
             };
             let predicate = predicate.into_iter().map(Real::from).collect::<Vec<_>>();
+            if let Some(filtered) = sign_on_refined_singleton(&defining, &predicate, &interval) {
+                prop_assert_eq!(Some(filtered), sign(&Real::eval_poly(&predicate, &selected)));
+            }
             prop_assert_eq!(
                 sign_at_selected_root(&defining, &predicate, &interval),
                 sign(&Real::eval_poly(&predicate, &selected)),
