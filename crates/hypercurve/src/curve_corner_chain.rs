@@ -925,17 +925,6 @@ impl<'a> CurveCornerChain2<'a> {
         } else {
             mode
         };
-        let solutions = solve_exact_fillet_corner(
-            previous_carrier,
-            next_carrier,
-            radius,
-            radius_sign,
-            solve_mode,
-            has_smooth_run,
-            previous_family,
-            next_family,
-            policy,
-        )?;
         let placement = CurveChainFilletPlacement2 {
             fragments: self.fragments(),
             closed: self.closed,
@@ -949,23 +938,37 @@ impl<'a> CurveCornerChain2<'a> {
                 next_source.promoted_parallel(),
             ],
         };
-        let solutions = if request.has_constraints() {
-            let sources = [previous_index, next_index]
-                .map(|index| Curve2::from_retained_fragment(self.fragments()[index].clone()));
-            solutions.resolve(
-                &crate::curve::FilletConstraintBinding2 {
-                    request,
-                    sources: sources.each_ref(),
-                    maps: [None, None],
-                    charts: std::array::from_fn(|axis| {
-                        crate::curve::FilletContactChart2::for_curve(
-                            &sources[axis],
-                            placement.arcs[axis].is_some(),
-                        )
-                    }),
-                },
-                policy,
-            )?
+        let sources = request.has_constraints().then(|| {
+            [previous_index, next_index]
+                .map(|index| Curve2::from_retained_fragment(self.fragments()[index].clone()))
+        });
+        let binding = sources
+            .as_ref()
+            .map(|sources| crate::curve::FilletConstraintBinding2 {
+                request,
+                sources: sources.each_ref(),
+                maps: [None, None],
+                charts: std::array::from_fn(|axis| {
+                    crate::curve::FilletContactChart2::for_curve(
+                        &sources[axis],
+                        placement.arcs[axis].is_some(),
+                    )
+                }),
+            });
+        let solutions = solve_exact_fillet_corner(
+            previous_carrier,
+            next_carrier,
+            radius,
+            radius_sign,
+            solve_mode,
+            has_smooth_run,
+            previous_family,
+            next_family,
+            binding.as_ref(),
+            policy,
+        )?;
+        let solutions = if let Some(binding) = &binding {
+            solutions.resolve(binding, policy)?
         } else {
             solutions.require_finite()?
         };

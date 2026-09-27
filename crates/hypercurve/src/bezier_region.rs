@@ -19475,6 +19475,7 @@ mod tests {
                     false,
                     CurveFamily2::RationalBezier,
                     CurveFamily2::Line,
+                    None,
                     &policy,
                 )
                 .unwrap_or_else(|error| {
@@ -25032,7 +25033,7 @@ mod tests {
     }
 
     #[test]
-    fn collapsed_pair_radial_fillet_retains_its_recursive_center() {
+    fn collapsed_pair_radial_fillet_rejects_the_excluded_contact() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
                 let filleted = independent_pair_native_fillet(&policy, reversed);
@@ -25051,9 +25052,12 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
+                // The collapsed source leaves a free contact, but the other
+                // offset meets this center only outside its strict trim domain.
+                // That exclusion does not prove that the inserted arc collapses.
                 assert_eq!(
                     (result.value).no_solution_reason(),
-                    Some(crate::CurveCornerNoSolution2::DegenerateCandidate,)
+                    Some(crate::CurveCornerNoSolution2::OutsideTrimDomain,)
                 );
             }
         }

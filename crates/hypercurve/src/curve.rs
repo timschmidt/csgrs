@@ -2042,17 +2042,6 @@ impl CurvePath2 {
         let next_carrier = next_source.exact_carrier(false, CurveOperation2::Fillet, policy)?;
         let previous_retained_arc = previous_carrier.retained_rational_arc().cloned();
         let next_retained_arc = next_carrier.retained_rational_arc().cloned();
-        let solutions = solve_exact_fillet_corner(
-            previous_carrier,
-            next_carrier,
-            radius,
-            radius_sign,
-            mode,
-            false,
-            previous.family(),
-            next.family(),
-            policy,
-        )?;
         let placement = curve_fillet::PathFilletPlacement2::new(
             self,
             vertex_index,
@@ -2066,7 +2055,20 @@ impl CurvePath2 {
             ],
             [None, None],
         );
-        let solutions = solutions.resolve(&placement.constraints(request), policy)?;
+        let binding = placement.constraints(request);
+        let solutions = solve_exact_fillet_corner(
+            previous_carrier,
+            next_carrier,
+            radius,
+            radius_sign,
+            mode,
+            false,
+            previous.family(),
+            next.family(),
+            Some(&binding),
+            policy,
+        )?;
+        let solutions = solutions.resolve(&binding, policy)?;
         Ok(compact_optional_corner_solutions(try_map_corner_solutions(
             solutions,
             |solution| placement.publish(solution, radius, policy),
@@ -4502,6 +4504,7 @@ pub(crate) fn solve_exact_fillet_corner<'a>(
     retain_selected_circle_endpoints: bool,
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
+    constraints: Option<&FilletConstraintBinding2<'_>>,
     policy: &CurveContext,
 ) -> ExactCurveResult<FilletCandidates2<'a>> {
     match radius_sign {
@@ -4533,6 +4536,7 @@ pub(crate) fn solve_exact_fillet_corner<'a>(
         [FilletContactDomain2::AuthoredCurve(mode); 2],
         previous_family,
         next_family,
+        constraints,
         policy,
     )
 }
@@ -5247,6 +5251,7 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 };
                 match crate::classify::real_sign(&signed_radius, policy) {
                     Some(RealSign::Zero) => Ok(FilletOffsetCarrier2::Point {
+                        source: self,
                         point: CurvePoint2::from(support.center().clone()),
                     }),
                     Some(RealSign::Positive | RealSign::Negative) => {
@@ -5287,7 +5292,13 @@ impl<'a> PreparedFilletCarrier2<'a> {
                                     ));
                                 }
                             };
-                            return Ok([Some(FilletOffsetCarrier2::Point { point }), None]);
+                            return Ok([
+                                Some(FilletOffsetCarrier2::Point {
+                                    source: self,
+                                    point,
+                                }),
+                                None,
+                            ]);
                         }
                         Classification::Uncertain(reason) => {
                             return Err(ExactCurveError::blocked(
@@ -5351,6 +5362,7 @@ enum FilletOffsetCarrier2<'a, 'b> {
     },
     Point {
         point: CurvePoint2,
+        source: &'b PreparedFilletCarrier2<'a>,
     },
     Parallel {
         source: FilletParallelSource2<'a>,
@@ -5762,6 +5774,7 @@ fn solve_carrier_fillet_corner<'a>(
     domains: [FilletContactDomain2; 2],
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
+    constraints: Option<&FilletConstraintBinding2<'_>>,
     policy: &CurveContext,
 ) -> ExactCurveResult<FilletCandidates2<'a>> {
     let previous = PreparedFilletCarrier2::new(previous, previous_family, domains[0], policy)?;
@@ -5770,6 +5783,7 @@ fn solve_carrier_fillet_corner<'a>(
     let mut families = Vec::new();
     let mut saw_outside_domain = false;
     let mut saw_degenerate = false;
+    let mut saw_unsatisfied = false;
 
     // Positive signed distance is the common left offset and therefore gives
     // a counterclockwise fillet. Preserve that documented candidate order.
@@ -5783,6 +5797,36 @@ fn solve_carrier_fillet_corner<'a>(
         let next_offsets = next.offsets(&signed_distance, next_family, policy)?;
         for previous_offset in previous_offsets.iter().flatten() {
             for next_offset in next_offsets.iter().flatten() {
+                if matches!(previous_offset, FilletOffsetCarrier2::Point { .. })
+                    || matches!(next_offset, FilletOffsetCarrier2::Point { .. })
+                {
+                    let solutions = curve_fillet::constrained_collapsed_fillet(
+                        [previous_offset, next_offset],
+                        clockwise,
+                        retain_selected_circle_endpoints,
+                        domains,
+                        [previous_family, next_family],
+                        constraints,
+                        policy,
+                    )?;
+                    match solutions {
+                        CurveCornerSolutions2::NoSolution(reason) => match reason {
+                            CurveCornerNoSolution2::DegenerateCandidate => saw_degenerate = true,
+                            CurveCornerNoSolution2::OutsideTrimDomain => saw_outside_domain = true,
+                            CurveCornerNoSolution2::UnsatisfiedConstraints => {
+                                saw_unsatisfied = true
+                            }
+                            _ => (),
+                        },
+                        CurveCornerSolutions2::Unique(corner) => candidates.push(corner),
+                        CurveCornerSolutions2::Multiple(corners) => {
+                            for corner in corners {
+                                candidates.push(corner);
+                            }
+                        }
+                    }
+                    continue;
+                }
                 let normal_constraints = match [
                     previous.component_normal_constraint(
                         previous_offset,
@@ -5860,7 +5904,9 @@ fn solve_carrier_fillet_corner<'a>(
     // An in-domain candidate that collapses is more specific than unrelated
     // support intersections outside the authored trims. In particular, it
     // must not be relabeled as an extendable trim-domain miss.
-    let empty_reason = if saw_degenerate {
+    let empty_reason = if saw_unsatisfied {
+        CurveCornerNoSolution2::UnsatisfiedConstraints
+    } else if saw_degenerate {
         CurveCornerNoSolution2::DegenerateCandidate
     } else if saw_outside_domain {
         CurveCornerNoSolution2::OutsideTrimDomain
@@ -6310,30 +6356,7 @@ fn fillet_offset_centers(
     let mut centers = FilletCenters2::default();
     match (previous, next) {
         (FilletOffsetCarrier2::Point { .. }, _) | (_, FilletOffsetCarrier2::Point { .. }) => {
-            let (point, other) = match (previous, next) {
-                (FilletOffsetCarrier2::Point { point }, other) => (point, other),
-                (other, FilletOffsetCarrier2::Point { point }) => (point, other),
-                _ => unreachable!(),
-            };
-            let other_family = if matches!(previous, FilletOffsetCarrier2::Point { .. }) {
-                next_family
-            } else {
-                previous_family
-            };
-            let other_is_previous = !matches!(previous, FilletOffsetCarrier2::Point { .. });
-            if point_on_fillet_offset(
-                point,
-                other,
-                other_is_previous,
-                domains[usize::from(!other_is_previous)],
-                other_family,
-                policy,
-            )? {
-                // The center is isolated, but tangency on the collapsed source
-                // offset is not. Do not manufacture one contact from a
-                // continuum of equally valid source-circle contacts.
-                centers.coincident = true;
-            }
+            unreachable!("collapsed offsets resolve from their source contact constraints")
         }
         (FilletOffsetCarrier2::Line { .. }, FilletOffsetCarrier2::Arc { .. })
         | (FilletOffsetCarrier2::Arc { .. }, FilletOffsetCarrier2::Line { .. }) => {
@@ -9391,7 +9414,9 @@ fn point_on_fillet_offset(
         )),
     };
     match support {
-        FilletOffsetCarrier2::Point { point: other } => decided(point.same_point(other, policy)),
+        FilletOffsetCarrier2::Point { point: other, .. } => {
+            decided(point.same_point(other, policy))
+        }
         FilletOffsetCarrier2::Arc {
             source,
             signed_radius,
@@ -12612,6 +12637,7 @@ mod tests {
                     [FilletContactDomain2::AuthoredCurve(CurveCornerMode2::TrimOnly); 2],
                     previous_family,
                     next_family,
+                    None,
                     &policy,
                 )
                 .unwrap();
@@ -12726,6 +12752,7 @@ mod tests {
                             [FilletContactDomain2::AuthoredCurve(mode); 2],
                             previous_family,
                             next_family,
+                            None,
                             &policy,
                         )
                         .unwrap();
@@ -12969,6 +12996,7 @@ mod tests {
                     ],
                     CurveFamily2::Line,
                     CurveFamily2::CircularArc,
+                    None,
                     &policy,
                 )
                 .unwrap();
@@ -13165,6 +13193,7 @@ mod tests {
                     false,
                     line.family(),
                     curve.family(),
+                    None,
                     &policy,
                 )
                 .unwrap();
@@ -13437,6 +13466,7 @@ mod tests {
                             false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::CircularArc,
+                            None,
                             &policy,
                         )
                     } else {
@@ -13449,6 +13479,7 @@ mod tests {
                             false,
                             CurveFamily2::CircularArc,
                             CurveFamily2::RationalBezier,
+                            None,
                             &policy,
                         )
                     }
@@ -14006,6 +14037,7 @@ mod tests {
                             false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::QuadraticBezier,
+                            None,
                             &policy,
                         ),
                         (false, true) => solve_exact_fillet_corner(
@@ -14017,6 +14049,7 @@ mod tests {
                             false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::QuadraticBezier,
+                            None,
                             &policy,
                         ),
                         (true, false) => solve_exact_fillet_corner(
@@ -14028,6 +14061,7 @@ mod tests {
                             false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::QuadraticBezier,
+                            None,
                             &policy,
                         ),
                         (true, true) => solve_exact_fillet_corner(
@@ -14039,6 +14073,7 @@ mod tests {
                             false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::QuadraticBezier,
+                            None,
                             &policy,
                         ),
                     }
@@ -14121,6 +14156,7 @@ mod tests {
                             false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::QuadraticBezier,
+                            None,
                             &policy,
                         ),
                         (false, true) => solve_exact_fillet_corner(
@@ -14132,6 +14168,7 @@ mod tests {
                             false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::RationalBezier,
+                            None,
                             &policy,
                         ),
                         (true, false) => solve_exact_fillet_corner(
@@ -14143,6 +14180,7 @@ mod tests {
                             false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::QuadraticBezier,
+                            None,
                             &policy,
                         ),
                         (true, true) => solve_exact_fillet_corner(
@@ -14154,6 +14192,7 @@ mod tests {
                             false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::RationalBezier,
+                            None,
                             &policy,
                         ),
                     }
@@ -14235,6 +14274,7 @@ mod tests {
                             false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::Line,
+                            None,
                             &policy,
                         ),
                         (true, true) => solve_exact_fillet_corner(
@@ -14246,6 +14286,7 @@ mod tests {
                             false,
                             CurveFamily2::Line,
                             CurveFamily2::RationalBezier,
+                            None,
                             &policy,
                         ),
                         (false, false) => solve_exact_fillet_corner(
@@ -14257,6 +14298,7 @@ mod tests {
                             false,
                             CurveFamily2::RationalBezier,
                             CurveFamily2::QuadraticBezier,
+                            None,
                             &policy,
                         ),
                         (false, true) => solve_exact_fillet_corner(
@@ -14268,6 +14310,7 @@ mod tests {
                             false,
                             CurveFamily2::QuadraticBezier,
                             CurveFamily2::RationalBezier,
+                            None,
                             &policy,
                         ),
                     }

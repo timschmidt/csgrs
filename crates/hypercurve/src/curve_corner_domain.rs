@@ -622,16 +622,6 @@ impl CurvePath2 {
                 ];
                 // These charts need not meet at the authored vertex. The
                 // connected-line shortcut therefore does not apply here.
-                let solutions = solve_carrier_fillet_corner(
-                    previous_carrier,
-                    next_carrier,
-                    radius,
-                    false,
-                    domains,
-                    previous.family(),
-                    next.family(),
-                    policy,
-                )?;
                 // A chart owns one circular support. Share its authored-sweep
                 // decision across all opposite charts during constrained selection.
                 let circular_domains = [
@@ -654,10 +644,19 @@ impl CurvePath2 {
                     ],
                     circular_domains,
                 );
-                for solution in solutions
-                    .resolve(&placement.constraints(request), policy)?
-                    .into_solutions()
-                {
+                let binding = placement.constraints(request);
+                let solutions = solve_carrier_fillet_corner(
+                    previous_carrier,
+                    next_carrier,
+                    radius,
+                    false,
+                    domains,
+                    previous.family(),
+                    next.family(),
+                    Some(&binding),
+                    policy,
+                )?;
+                for solution in solutions.resolve(&binding, policy)?.into_solutions() {
                     let clockwise = solution.clockwise;
                     if let Some(path) = placement.publish(solution, radius, policy)? {
                         candidates[usize::from(clockwise)].push(path);
