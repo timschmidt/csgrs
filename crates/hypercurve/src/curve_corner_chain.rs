@@ -967,11 +967,6 @@ impl<'a> CurveCornerChain2<'a> {
             binding.as_ref(),
             policy,
         )?;
-        let solutions = if let Some(binding) = &binding {
-            solutions.resolve(binding, policy)?
-        } else {
-            solutions.require_finite()?
-        };
         Ok(crate::curve::compact_optional_corner_solutions(
             try_map_corner_solutions(solutions, |solution| {
                 placement.publish(solution, radius, policy)

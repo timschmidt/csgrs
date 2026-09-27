@@ -18,9 +18,8 @@ mod curve_corner_domain;
 
 #[path = "curve_fillet.rs"]
 mod curve_fillet;
-use curve_fillet::FilletCornerFamily2;
 pub use curve_fillet::{CurveFillet2, CurveFilletContact2};
-pub(crate) use curve_fillet::{FilletCandidates2, FilletConstraintBinding2, FilletContactChart2};
+pub(crate) use curve_fillet::{FilletConstraintBinding2, FilletContactChart2};
 use curve_fillet::{FilletCornerSelection2, fillet_corner_from_center};
 
 use crate::CurvePointData2;
@@ -2068,7 +2067,6 @@ impl CurvePath2 {
             Some(&binding),
             policy,
         )?;
-        let solutions = solutions.resolve(&binding, policy)?;
         Ok(compact_optional_corner_solutions(try_map_corner_solutions(
             solutions,
             |solution| placement.publish(solution, radius, policy),
@@ -4495,9 +4493,9 @@ fn combine_chamfer_cuts(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn solve_exact_fillet_corner<'a>(
-    previous: ExactCornerCarrier2<'a>,
-    next: ExactCornerCarrier2<'a>,
+pub(crate) fn solve_exact_fillet_corner(
+    previous: ExactCornerCarrier2<'_>,
+    next: ExactCornerCarrier2<'_>,
     radius: &Real,
     radius_sign: RealSign,
     mode: CurveCornerMode2,
@@ -4506,10 +4504,10 @@ pub(crate) fn solve_exact_fillet_corner<'a>(
     next_family: CurveFamily2,
     constraints: Option<&FilletConstraintBinding2<'_>>,
     policy: &CurveContext,
-) -> ExactCurveResult<FilletCandidates2<'a>> {
+) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
     match radius_sign {
         RealSign::Zero => {
-            return Ok(FilletCandidates2::empty(
+            return Ok(CurveCornerSolutions2::NoSolution(
                 CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
@@ -4524,9 +4522,9 @@ pub(crate) fn solve_exact_fillet_corner<'a>(
             mode,
             previous_family,
             next_family,
+            constraints,
             policy,
-        )
-        .map(|isolated| FilletCandidates2::from_isolated(isolated, Vec::new()));
+        );
     }
     solve_carrier_fillet_corner(
         previous,
@@ -5818,9 +5816,9 @@ impl FilletCenters2 {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn solve_carrier_fillet_corner<'a>(
-    previous: ExactCornerCarrier2<'a>,
-    next: ExactCornerCarrier2<'a>,
+fn solve_carrier_fillet_corner(
+    previous: ExactCornerCarrier2<'_>,
+    next: ExactCornerCarrier2<'_>,
     radius: &Real,
     retain_selected_circle_endpoints: bool,
     domains: [FilletContactDomain2; 2],
@@ -5828,11 +5826,10 @@ fn solve_carrier_fillet_corner<'a>(
     next_family: CurveFamily2,
     constraints: Option<&FilletConstraintBinding2<'_>>,
     policy: &CurveContext,
-) -> ExactCurveResult<FilletCandidates2<'a>> {
+) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
     let previous = PreparedFilletCarrier2::new(previous, previous_family, domains[0], policy)?;
     let next = PreparedFilletCarrier2::new(next, next_family, domains[1], policy)?;
     let mut candidates = CornerSolutionAccumulator::Empty;
-    let mut families = Vec::new();
     let mut saw_outside_domain = false;
     let mut saw_degenerate = false;
     let mut saw_unsatisfied = false;
@@ -5932,7 +5929,7 @@ fn solve_carrier_fillet_corner<'a>(
                     [Some(first), Some(second)] => Some([first, second]),
                     _ => None,
                 };
-                let mut centers = fillet_offset_centers(
+                let centers = fillet_offset_centers(
                     previous_offset,
                     next_offset,
                     domains,
@@ -5945,14 +5942,6 @@ fn solve_carrier_fillet_corner<'a>(
                 if centers.coincident {
                     saw_degenerate = true;
                 }
-                families.extend(FilletCornerFamily2::retain(
-                    std::mem::take(&mut centers.components),
-                    [previous_offset, next_offset],
-                    clockwise,
-                    retain_selected_circle_endpoints,
-                    domains,
-                    [previous_family, next_family],
-                )?);
                 for center in centers.iter() {
                     if !previous.accepts_offset_contact(
                         previous_offset,
@@ -5980,11 +5969,31 @@ fn solve_carrier_fillet_corner<'a>(
                         next_family,
                         policy,
                     )? {
-                        FilletCornerSelection2::Selected(candidate) => candidates.push(candidate),
+                        FilletCornerSelection2::Selected(candidate) => {
+                            if let Some(binding) = constraints
+                                && !binding.matches(&candidate, policy)?
+                            {
+                                saw_unsatisfied = true;
+                                continue;
+                            }
+                            candidates.push(candidate);
+                        }
                         FilletCornerSelection2::Outside => saw_outside_domain = true,
                         FilletCornerSelection2::Degenerate => saw_degenerate = true,
                     }
                 }
+                curve_fillet::FilletComponentReplay2::solve(
+                    &centers.components,
+                    [previous_offset, next_offset],
+                    clockwise,
+                    retain_selected_circle_endpoints,
+                    domains,
+                    [previous_family, next_family],
+                    constraints,
+                    &mut candidates,
+                    policy,
+                )?;
+                saw_unsatisfied |= !centers.components.is_empty();
             }
         }
     }
@@ -6001,10 +6010,7 @@ fn solve_carrier_fillet_corner<'a>(
     } else {
         CurveCornerNoSolution2::NoTangentCircle
     };
-    Ok(FilletCandidates2::from_isolated(
-        candidates.finish(empty_reason),
-        families,
-    ))
+    Ok(candidates.finish(empty_reason))
 }
 
 fn retained_fillet_cusp_fragment_range(
@@ -10431,6 +10437,7 @@ fn solve_line_fillet_corner(
     mode: CurveCornerMode2,
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
+    constraints: Option<&FilletConstraintBinding2<'_>>,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
     let previous_delta = previous.delta();
@@ -10472,6 +10479,7 @@ fn solve_line_fillet_corner(
         })?;
 
     let mut candidates = CornerSolutionAccumulator::Empty;
+    let mut saw_unsatisfied = false;
     // For connected incoming/outgoing lines, only the offset side matching the
     // turn can have both contacts in the open trim domains. Extension mode must
     // retain both exact carrier solutions.
@@ -10532,21 +10540,30 @@ fn solve_line_fillet_corner(
         );
         match crate::classify::is_zero(&previous_point.distance_squared(&next_point), policy) {
             Some(true) => continue,
-            Some(false) => candidates.push(FilletCorner2 {
-                previous: CornerCut2 {
-                    parameter: exact_corner_parameter(previous_parameter),
-                    point: previous_point.into(),
-                    placement: previous_placement,
-                },
-                next: CornerCut2 {
-                    parameter: exact_corner_parameter(next_parameter),
-                    point: next_point.into(),
-                    placement: next_placement,
-                },
-                center: center.into(),
-                clockwise,
-                retained_frame: None,
-            }),
+            Some(false) => {
+                let candidate = FilletCorner2 {
+                    previous: CornerCut2 {
+                        parameter: exact_corner_parameter(previous_parameter),
+                        point: previous_point.into(),
+                        placement: previous_placement,
+                    },
+                    next: CornerCut2 {
+                        parameter: exact_corner_parameter(next_parameter),
+                        point: next_point.into(),
+                        placement: next_placement,
+                    },
+                    center: center.into(),
+                    clockwise,
+                    retained_frame: None,
+                };
+                if let Some(binding) = constraints
+                    && !binding.matches(&candidate, policy)?
+                {
+                    saw_unsatisfied = true;
+                    continue;
+                }
+                candidates.push(candidate);
+            }
             None => {
                 return Err(ExactCurveError::blocked(
                     CurveOperation2::Fillet,
@@ -10556,7 +10573,11 @@ fn solve_line_fillet_corner(
             }
         }
     }
-    Ok(candidates.finish(CurveCornerNoSolution2::OutsideTrimDomain))
+    Ok(candidates.finish(if saw_unsatisfied {
+        CurveCornerNoSolution2::UnsatisfiedConstraints
+    } else {
+        CurveCornerNoSolution2::OutsideTrimDomain
+    }))
 }
 
 fn line_unit_direction(
@@ -12729,12 +12750,7 @@ mod tests {
                     &policy,
                 )
                 .unwrap();
-                let candidates = {
-                    let solutions = solutions;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
-                    candidates
-                };
+                let candidates = solutions.into_solutions();
                 let expected_line = CurveParameter2::from(if reversed {
                     Real::one() - &line_parameter
                 } else {
@@ -12844,12 +12860,7 @@ mod tests {
                             &policy,
                         )
                         .unwrap();
-                        let candidates = {
-                            let solutions = solutions;
-                            assert!(solutions.families().is_empty(), "expected isolated fillets");
-                            let (candidates, _) = solutions.into_parts();
-                            candidates
-                        };
+                        let candidates = solutions.into_solutions();
                         let expected_line = CurveParameter2::from(if reversed {
                             Real::one() - &line_parameter
                         } else {
@@ -13089,10 +13100,7 @@ mod tests {
                 )
                 .unwrap();
                 assert_eq!(
-                    {
-                        assert!(solutions.families().is_empty());
-                        solutions.solutions().len()
-                    },
+                    solutions.solutions().len(),
                     count,
                     "previous={previous_mode:?}, next={next_mode:?}, policy={policy:?}"
                 );
@@ -13285,8 +13293,7 @@ mod tests {
                     &policy,
                 )
                 .unwrap();
-                assert!(solutions.families().is_empty());
-                let (solutions, _) = solutions.into_parts();
+                let solutions = solutions.into_solutions();
                 assert!(!solutions.is_empty());
                 let cuts: Vec<_> = solutions
                     .into_iter()
@@ -13576,21 +13583,8 @@ mod tests {
                     .expect("the native arc/chord trim solve must complete");
                 let extended = solve(CurveCornerMode2::TrimOrExtend)
                     .expect("the native arc/chord extension solve must complete");
-                assert!(
-                    {
-                        assert!(trim.families().is_empty());
-                        trim.solutions().len()
-                    } > 0
-                );
-                assert!(
-                    {
-                        assert!(extended.families().is_empty());
-                        extended.solutions().len()
-                    } > {
-                        assert!(trim.families().is_empty());
-                        trim.solutions().len()
-                    }
-                );
+                assert!(!trim.solutions().is_empty());
+                assert!(extended.solutions().len() > trim.solutions().len());
                 let retains_recursive_parameter = |corner: &FilletCorner2| {
                     corner
                         .retained_frame
@@ -13600,10 +13594,7 @@ mod tests {
                         .and_then(|deferred| deferred.contact_seed.as_ref())
                         .is_some_and(|seed| seed.parameter.as_recursive_projective().is_some())
                 };
-                assert!({
-                    assert!(extended.families().is_empty());
-                    extended.solutions().iter().any(retains_recursive_parameter)
-                });
+                assert!(extended.solutions().iter().any(retains_recursive_parameter));
             }
         }
     }
@@ -14170,21 +14161,10 @@ mod tests {
                 let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
                 let retained_extension = solve(true, CurveCornerMode2::TrimOrExtend);
                 assert_eq!(
-                    {
-                        assert!(retained_extension.families().is_empty());
-                        retained_extension.solutions().len()
-                    },
-                    {
-                        assert!(direct_extension.families().is_empty());
-                        direct_extension.solutions().len()
-                    }
+                    retained_extension.solutions().len(),
+                    direct_extension.solutions().len()
                 );
-                assert!(
-                    {
-                        assert!(direct_extension.families().is_empty());
-                        direct_extension.solutions().len()
-                    } > 0
-                );
+                assert!(!direct_extension.solutions().is_empty());
             }
         }
     }
@@ -14289,21 +14269,10 @@ mod tests {
                 let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
                 let retained_extension = solve(true, CurveCornerMode2::TrimOrExtend);
                 assert_eq!(
-                    {
-                        assert!(direct_extension.families().is_empty());
-                        direct_extension.solutions().len()
-                    },
-                    {
-                        assert!(retained_extension.families().is_empty());
-                        retained_extension.solutions().len()
-                    }
+                    direct_extension.solutions().len(),
+                    retained_extension.solutions().len()
                 );
-                assert!(
-                    {
-                        assert!(direct_extension.families().is_empty());
-                        direct_extension.solutions().len()
-                    } > 0
-                );
+                assert!(!direct_extension.solutions().is_empty());
             }
         }
     }
@@ -14412,36 +14381,13 @@ mod tests {
                 let direct_extension = solve(false, CurveCornerMode2::TrimOrExtend);
                 let native_trim = solve(true, CurveCornerMode2::TrimOnly);
                 let native_extension = solve(true, CurveCornerMode2::TrimOrExtend);
+                assert_eq!(native_trim.solutions().len(), direct_trim.solutions().len());
                 assert_eq!(
-                    {
-                        assert!(native_trim.families().is_empty());
-                        native_trim.solutions().len()
-                    },
-                    {
-                        assert!(direct_trim.families().is_empty());
-                        direct_trim.solutions().len()
-                    }
-                );
-                assert_eq!(
-                    {
-                        assert!(native_extension.families().is_empty());
-                        native_extension.solutions().len()
-                    },
-                    {
-                        assert!(direct_extension.families().is_empty());
-                        direct_extension.solutions().len()
-                    },
+                    native_extension.solutions().len(),
+                    direct_extension.solutions().len(),
                     "the native fast path must enumerate both selected-circle charts",
                 );
-                assert!(
-                    {
-                        assert!(native_extension.families().is_empty());
-                        native_extension.solutions().len()
-                    } > {
-                        assert!(native_trim.families().is_empty());
-                        native_trim.solutions().len()
-                    }
-                );
+                assert!(native_extension.solutions().len() > native_trim.solutions().len());
             }
         }
     }

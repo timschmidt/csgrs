@@ -43,95 +43,6 @@ impl CurveFillet2 {
     }
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct FilletCandidates2<'a> {
-    isolated: CurveCornerSolutions2<FilletCorner2>,
-    families: Vec<FilletCornerFamily2<'a>>,
-}
-
-impl<'a> FilletCandidates2<'a> {
-    pub(super) fn empty(reason: CurveCornerNoSolution2) -> Self {
-        Self::from_isolated(CurveCornerSolutions2::NoSolution(reason), Vec::new())
-    }
-
-    pub(super) fn from_isolated(
-        isolated: CurveCornerSolutions2<FilletCorner2>,
-        families: Vec<FilletCornerFamily2<'a>>,
-    ) -> Self {
-        Self { isolated, families }
-    }
-
-    pub(crate) fn require_finite(self) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
-        if let Some(family) = self.families.first() {
-            return Err(constraint_required(family.families[0]));
-        }
-        Ok(self.isolated)
-    }
-
-    pub(crate) fn resolve(
-        self,
-        binding: &FilletConstraintBinding2<'_>,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
-        if !binding.request.has_constraints() {
-            return self.require_finite();
-        }
-        let empty = if self.families.is_empty() {
-            self.isolated
-                .no_solution_reason()
-                .unwrap_or(CurveCornerNoSolution2::UnsatisfiedConstraints)
-        } else {
-            CurveCornerNoSolution2::UnsatisfiedConstraints
-        };
-        let mut candidates = CornerSolutionAccumulator::Empty;
-        for corner in self.isolated.into_solutions() {
-            if binding.matches(&corner, policy)? {
-                candidates.push(corner);
-            }
-        }
-        for family in self.families {
-            let mut prepared = None;
-            for component in &family.components {
-                if let (Some(requested), Some(image)) =
-                    (&binding.request.center, component.point_image())
-                    && !fillet_point_matches(requested, image, family.families[0], policy)?
-                {
-                    continue;
-                }
-                if prepared.is_none() {
-                    prepared = Some(family.contact_constraints(binding, policy)?);
-                }
-                let constraints = prepared
-                    .as_ref()
-                    .expect("constraints for this center support");
-                for first in constraints[0].alternatives() {
-                    for second in constraints[1].alternatives() {
-                        if let Some(corner) = family.select(component, [first, second], policy)?
-                            && binding.matches(&corner, policy)?
-                        {
-                            candidates.push(corner);
-                        }
-                    }
-                }
-            }
-        }
-        Ok(candidates.finish(empty))
-    }
-
-    #[cfg(test)]
-    pub(crate) fn solutions(&self) -> &[FilletCorner2] {
-        self.isolated.solutions()
-    }
-    #[cfg(test)]
-    pub(crate) fn families(&self) -> &[FilletCornerFamily2<'a>] {
-        &self.families
-    }
-    #[cfg(test)]
-    pub(crate) fn into_parts(self) -> (Vec<FilletCorner2>, Vec<FilletCornerFamily2<'a>>) {
-        (self.isolated.into_solutions(), self.families)
-    }
-}
-
 fn constraint_required(family: CurveFamily2) -> ExactCurveError {
     ExactCurveError::invalid(
         CurveOperation2::Fillet,
@@ -329,7 +240,11 @@ impl FilletConstraintBinding2<'_> {
         })
     }
 
-    fn matches(&self, corner: &FilletCorner2, policy: &CurveContext) -> ExactCurveResult<bool> {
+    pub(super) fn matches(
+        &self,
+        corner: &FilletCorner2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
         let family = self.sources[0].family();
         if let Some(center) = &self.request.center
             && !fillet_point_matches(&corner.center, center, family, policy)?
@@ -795,56 +710,84 @@ impl FilletContactSelection2 {
     }
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct FilletCornerFamily2<'a> {
-    components: Vec<crate::bezier_offset::CurveParameterComponent2>,
-    sources: [FilletParallelSource2<'a>; 2],
-    centers: [BezierParallel2; 2],
+/// Replays component constraints while the prepared offsets remain borrowed.
+/// No family result or copied center support escapes the carrier solver.
+pub(super) struct FilletComponentReplay2<'a, 'b> {
+    offsets: [&'b FilletOffsetCarrier2<'a, 'b>; 2],
     clockwise: bool,
     retain_selected_circle_endpoints: bool,
     domains: [FilletContactDomain2; 2],
     families: [CurveFamily2; 2],
 }
 
-impl<'a> FilletCornerFamily2<'a> {
-    pub(super) fn retain(
-        components: Vec<crate::bezier_offset::CurveParameterComponent2>,
-        offsets: [&FilletOffsetCarrier2<'a, '_>; 2],
+impl FilletComponentReplay2<'_, '_> {
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn solve(
+        components: &[crate::bezier_offset::CurveParameterComponent2],
+        offsets: [&FilletOffsetCarrier2<'_, '_>; 2],
         clockwise: bool,
         retain_selected_circle_endpoints: bool,
         domains: [FilletContactDomain2; 2],
         families: [CurveFamily2; 2],
-    ) -> ExactCurveResult<Option<Self>> {
+        binding: Option<&FilletConstraintBinding2<'_>>,
+        candidates: &mut CornerSolutionAccumulator<FilletCorner2>,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<()> {
         if components.is_empty() {
-            return Ok(None);
+            return Ok(());
         }
-        let [
-            FilletOffsetCarrier2::Parallel {
-                source: first,
-                support: first_center,
-            },
-            FilletOffsetCarrier2::Parallel {
-                source: second,
-                support: second_center,
-            },
-        ] = offsets
-        else {
+        if !offsets
+            .iter()
+            .all(|offset| matches!(offset, FilletOffsetCarrier2::Parallel { .. }))
+        {
             return Err(ExactCurveError::blocked(
                 CurveOperation2::Fillet,
                 families[0],
                 crate::UncertaintyReason::Unsupported,
             ));
-        };
-        let sources = [*first, *second];
-        Ok(Some(Self {
-            components,
-            sources,
-            centers: [first_center.clone(), second_center.clone()],
+        }
+        let binding = binding
+            .filter(|binding| binding.request.has_constraints())
+            .ok_or_else(|| constraint_required(families[0]))?;
+        let replay = FilletComponentReplay2 {
+            offsets,
             clockwise,
             retain_selected_circle_endpoints,
             domains,
             families,
-        }))
+        };
+        let mut prepared = None;
+        for component in components {
+            if let (Some(requested), Some(image)) =
+                (&binding.request.center, component.point_image())
+                && !fillet_point_matches(requested, image, families[0], policy)?
+            {
+                continue;
+            }
+            if prepared.is_none() {
+                prepared = Some(replay.contact_constraints(binding, policy)?);
+            }
+            let constraints = prepared
+                .as_ref()
+                .expect("constraints for this center support");
+            for first in constraints[0].alternatives() {
+                for second in constraints[1].alternatives() {
+                    if let Some(corner) = replay.select(component, [first, second], policy)?
+                        && binding.matches(&corner, policy)?
+                    {
+                        candidates.push(corner);
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn parallel(&self, axis: usize) -> (FilletParallelSource2<'_>, &BezierParallel2) {
+        let FilletOffsetCarrier2::Parallel { source, support } = self.offsets[axis] else {
+            unreachable!("parameter components retain parallel center supports")
+        };
+        (*source, support)
     }
 
     fn contact_constraints(
@@ -855,10 +798,11 @@ impl<'a> FilletCornerFamily2<'a> {
         let data = self;
         let mut constraints = [FilletContactSelection2::Any, FilletContactSelection2::Any];
         for (axis, constraint) in constraints.iter_mut().enumerate() {
+            let (source, support) = data.parallel(axis);
             *constraint = binding.parallel_contact_parameters(
                 axis,
-                data.sources[axis],
-                &data.centers[axis],
+                source,
+                support,
                 data.domains[axis],
                 data.families[axis],
                 policy,
@@ -870,26 +814,25 @@ impl<'a> FilletCornerFamily2<'a> {
             // A correspondence transports one selected contact to the other.
             // A constant center leaves both contact axes free and still needs
             // contact constraints; it cannot select an arbitrary representative.
-            constraints[0] = self.point_constraints(0, &data.centers[0], center, policy)?;
+            constraints[0] = self.center_parameters(0, center, policy)?;
             if matches!(constraints[0], FilletContactSelection2::Any) {
-                constraints[1] = self.point_constraints(1, &data.centers[1], center, policy)?;
+                constraints[1] = self.center_parameters(1, center, policy)?;
             }
         }
         Ok(constraints)
     }
 
-    fn point_constraints(
+    fn center_parameters(
         &self,
         axis: usize,
-        support: &BezierParallel2,
         point: &CurvePoint2,
         policy: &CurveContext,
     ) -> ExactCurveResult<FilletContactSelection2> {
         let data = self;
         let family = data.families[axis];
-        let source = data.sources[axis];
+        let (source, support) = data.parallel(axis);
         let incident = (data.domains[axis].mode() == CurveCornerMode2::TrimOrExtend)
-            .then(|| source.incident_domain(&data.centers[axis], axis == 0, family, policy))
+            .then(|| source.incident_domain(support, axis == 0, family, policy))
             .transpose()?;
         fillet_point_parameters(
             support,
@@ -934,7 +877,7 @@ impl<'a> FilletCornerFamily2<'a> {
         let point = match component.point_image() {
             Some(point) => point.clone(),
             None => analytic_parallel_point_evidence(
-                &data.centers[0],
+                data.parallel(0).1,
                 previous,
                 CurveOperation2::Fillet,
                 data.families[0],
@@ -947,14 +890,10 @@ impl<'a> FilletCornerFamily2<'a> {
             next_parameter: Some(next.clone()),
             retained_anchor_evidence: None,
         };
-        let offsets: [_; 2] = std::array::from_fn(|axis| FilletOffsetCarrier2::Parallel {
-            source: data.sources[axis],
-            support: data.centers[axis].clone(),
-        });
         Ok(
             match fillet_corner_from_center(
-                &offsets[0],
-                &offsets[1],
+                data.offsets[0],
+                data.offsets[1],
                 &center,
                 data.clockwise,
                 data.retain_selected_circle_endpoints,
@@ -1575,8 +1514,6 @@ mod tests {
                 Some(&binding),
                 &policy,
             )
-            .unwrap()
-            .resolve(&binding, &policy)
             .unwrap();
             assert!(result.solutions().is_empty());
         }

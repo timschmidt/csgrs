@@ -656,7 +656,7 @@ impl CurvePath2 {
                     Some(&binding),
                     policy,
                 )?;
-                for solution in solutions.resolve(&binding, policy)?.into_solutions() {
+                for solution in solutions.into_solutions() {
                     let clockwise = solution.clockwise;
                     if let Some(path) = placement.publish(solution, radius, policy)? {
                         candidates[usize::from(clockwise)].push(path);
