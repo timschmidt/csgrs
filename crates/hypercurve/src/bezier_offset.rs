@@ -14268,6 +14268,8 @@ pub(crate) struct BezierAnalyticParallelPoint2 {
 /// two adjacent selected-fiber fragments that shared one algebraic contact
 /// before transformation still share that contact afterward; no independent
 /// coordinate reconstruction or primitive-element field is introduced.
+/// Compatible transforms compose at construction, so repeated transport keeps
+/// one view of the original field rather than a history of similarity layers.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct BezierSimilarityPoint2 {
     data: Arc<BezierSimilarityPointData2>,
@@ -97301,7 +97303,20 @@ impl BezierAnalyticParallelPoint2 {
 }
 
 impl BezierSimilarityPoint2 {
-    pub(crate) fn new(source: CurvePoint2, transform: Similarity2, policy: &CurveContext) -> Self {
+    pub(crate) fn new(
+        mut source: CurvePoint2,
+        mut transform: Similarity2,
+        policy: &CurveContext,
+    ) -> Self {
+        while let CurvePoint2(CurvePointData2::Similarity(image)) = &source {
+            // Keep incompatible construction evidence visible to predicates;
+            // composing its matrix must not erase a retained policy barrier.
+            if !policy.accepts_retained_policy(image.data.policy) {
+                break;
+            }
+            transform = image.data.transform.then(&transform);
+            source = image.data.source.clone();
+        }
         Self {
             data: Arc::new(BezierSimilarityPointData2 {
                 source,
@@ -134943,6 +134958,131 @@ pub(crate) use conversion_tests::recursively_line_contact_radial_half;
 
 #[cfg(test)]
 mod conversion_tests {
+    #[test]
+    fn repeated_point_similarities_keep_one_original_selected_field() {
+        let affine = |entries: [i8; 6]| {
+            let [a, b, d, e, tx, ty] = entries.map(Real::from);
+            Similarity2::try_from_real_affine(a, b, d, e, tx, ty).unwrap()
+        };
+        let translation = affine([1, 0, 0, 1, 3, -2]);
+        let reflection = affine([0, 2, 2, 0, 0, 0]);
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let inverse = Similarity2::try_from_real_affine(
+            Real::zero(),
+            half.clone(),
+            half,
+            Real::zero(),
+            Real::from(-3),
+            Real::from(2),
+        )
+        .unwrap();
+        let expected_maps = [
+            translation.clone(),
+            affine([0, 2, 2, 0, -4, 6]),
+            affine([1, 0, 0, 1, 0, 0]),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let point = |x: Vec<Real>, y: Vec<Real>| {
+                dense_chord_normal_point(2, x, y, &policy, "similarity cycle witness")
+            };
+            let source = point(vec![Real::zero(), Real::one()], vec![Real::one()]);
+            let expected_points = [
+                point(vec![Real::from(3), Real::one()], vec![Real::from(-1)]),
+                point(vec![Real::from(-2)], vec![Real::from(6), Real::from(2)]),
+                point(vec![Real::zero(), Real::one()], vec![Real::one()]),
+            ];
+            let mut current = source.clone();
+            // T, R, and (R T)^-1 form an exact cycle. Intermediate images
+            // distinguish the noncommuting order and reverse orientation.
+            for cycle in 0..64 {
+                for (phase, transform) in [&translation, &reflection, &inverse]
+                    .into_iter()
+                    .enumerate()
+                {
+                    let image = BezierSimilarityPoint2::new(current, transform.clone(), &policy);
+                    assert!(
+                        image.data.source.shares_storage(&source),
+                        "compatible transforms must retain one shared selected field"
+                    );
+                    assert!(image.data.transform == expected_maps[phase]);
+                    if cycle == 0 || cycle == 63 {
+                        let Classification::Decided(Some(evidence)) =
+                            image.predicate_point_evidence(&policy).unwrap()
+                        else {
+                            panic!("the original selected field must replay every image");
+                        };
+                        assert_eq!(
+                            evidence.same_point(&expected_points[phase], &policy),
+                            Classification::Decided(true)
+                        );
+                    }
+                    current = CurvePoint2::from(image);
+                    assert!(current.coordinates().is_none());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn point_similarity_composition_preserves_retained_policy_barriers() {
+        let translation = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::one(),
+            Real::zero(),
+        )
+        .unwrap();
+        let source = dense_chord_normal_point(
+            2,
+            vec![Real::zero(), Real::one()],
+            vec![Real::one()],
+            &CurveContext::STRICT,
+            "similarity policy witness",
+        );
+        let approximate = CurvePoint2::from(BezierSimilarityPoint2::new(
+            source.clone(),
+            translation.clone(),
+            &CurveContext::APPROXIMATE_512,
+        ));
+        let strict = BezierSimilarityPoint2::new(
+            approximate.clone(),
+            translation.clone(),
+            &CurveContext::STRICT,
+        );
+        assert!(strict.data.source.shares_storage(&approximate));
+        assert!(
+            strict
+                .predicate_point_evidence(&CurveContext::STRICT)
+                .is_err()
+        );
+        assert!(matches!(
+            strict.conservative_bounds_refined(0, &CurveContext::STRICT),
+            Classification::Uncertain(_)
+        ));
+
+        let permitted = BezierSimilarityPoint2::new(
+            CurvePoint2::from(strict),
+            translation,
+            &CurveContext::APPROXIMATE_512,
+        );
+        assert!(permitted.data.source.shares_storage(&source));
+        assert!(matches!(
+            permitted.predicate_point_evidence(&CurveContext::APPROXIMATE_512),
+            Ok(Classification::Decided(Some(_)))
+        ));
+        assert!(
+            permitted
+                .predicate_point_evidence(&CurveContext::STRICT)
+                .is_err()
+        );
+        assert!(matches!(
+            permitted.conservative_bounds_refined(0, &CurveContext::STRICT),
+            Classification::Uncertain(_)
+        ));
+    }
+
     #[test]
     fn bivariate_products_accept_empty_zero_coefficients() {
         let nonzero = BivariatePolynomial::new(vec![
