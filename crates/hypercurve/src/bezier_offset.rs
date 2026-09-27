@@ -185293,10 +185293,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             }
             let setback = (Real::one() / Real::from(100_i8)).unwrap();
             let fillet = transverse_region
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     1,
-                    setback.clone(),
+                    &crate::CurveFillet2::new(setback.clone()),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
@@ -185306,14 +185306,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     )
                 });
             assert_eq!(fillet.certainty, CurveCertainty::Certified);
-            assert_eq!(
-                {
-                    assert!(fillet.value.families().is_empty());
-                    fillet.value.isolated_solutions().len()
-                },
-                3
-            );
-            assert!(fillet.value.families().is_empty());
+            assert_eq!({ fillet.value.solutions().len() }, 3);
 
             let chamfer = transverse_region
                 .chamfer_loop_vertex_by_setbacks(

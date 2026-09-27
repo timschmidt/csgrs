@@ -63,67 +63,13 @@ use crate::{
     BezierParallelSource2, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
     BezierSubcurve2, BooleanOp, CircularArc2, Classification, Contour2, ContourPointLocation,
     CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2,
-    CurveError, CurveFamily2, CurveFilletSolutions2, CurveGeometry2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameter2,
-    CurveParameterRange2, CurveParameterSide2, CurvePath2, CurvePathIntersectionContact2,
-    CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, OffsetCap,
-    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierPointIncidence2,
-    RationalQuadraticBezier2, RegionPointLocation, RetainedTopologyStatus, Segment2,
-    SegmentKindCounts, UncertaintyReason,
+    CurveError, CurveFamily2, CurveFillet2, CurveGeometry2, CurveIntersectionPairBlockerKind2,
+    CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2, CurveParameterSide2,
+    CurvePath2, CurvePathIntersectionContact2, CurvePoint2, CurveResult, ExactCurveError,
+    ExactCurveResult, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionPointLocation,
+    RetainedTopologyStatus, Segment2, SegmentKindCounts, UncertaintyReason,
 };
-
-/// One continuous fillet family bound to an immutable normalized region.
-///
-/// Selection uses the retained contact charts, reconstructs the edited loop,
-/// and regularizes it using the source region's fill semantics.
-#[derive(Clone, Debug)]
-pub struct CurveRegionFilletFamily2 {
-    source: CurveRegion2,
-    loop_index: usize,
-    chain: curve_corner_chain::CurveChainFilletFamily2,
-}
-
-impl CurveRegionFilletFamily2 {
-    /// Returns the previous and next contact curves and their exact charts.
-    pub fn contact_curves(&self) -> &[Curve2; 2] {
-        self.chain.native.contact_curves()
-    }
-
-    /// Returns the requested exact radius.
-    pub fn radius(&self) -> &Real {
-        self.chain.native.radius()
-    }
-
-    /// Returns the orientation of the inserted circular arc.
-    pub fn is_clockwise(&self) -> bool {
-        self.chain.native.clockwise()
-    }
-
-    /// Selects contacts in [`Self::contact_curves`] and publishes a regularized region.
-    ///
-    /// Returns `None` for an excluded pair or degenerate edit. Permitted
-    /// extension parameters use those same charts beyond their finite domains.
-    pub fn select(
-        &self,
-        previous: &CurveParameter2,
-        next: &CurveParameter2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Option<CurveRegion2>>> {
-        resolve_certified_operation(policy, |attempt| {
-            let Some(fragments) = self.chain.select(previous, next, attempt)? else {
-                return Ok(None);
-            };
-            self.source
-                .with_corner_chain_replaced(
-                    self.loop_index,
-                    fragments,
-                    CurveOperation2::Fillet,
-                    attempt,
-                )
-                .map(Some)
-        })
-    }
-}
 
 /// A closed native Bezier/conic boundary loop.
 #[derive(Clone, Debug, PartialEq)]
@@ -11961,41 +11907,35 @@ impl CurveRegion2 {
     /// support exact exterior-ray fillet contacts. Direct Bezier incident
     /// cells are partitioned at projective and regularity barriers, and retain
     /// exact or algebraic cuts without endpoint materialization.
-    pub fn fillet_loop_vertex_by_radius(
+    pub fn fillet_loop_vertex(
         &self,
         loop_index: usize,
         vertex_index: usize,
-        radius: Real,
+        request: &CurveFillet2,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveFilletSolutions2<Self, CurveRegionFilletFamily2>>> {
+    ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.fillet_loop_vertex_by_radius_raw(loop_index, vertex_index, radius, mode, attempt)
+            self.fillet_loop_vertex_raw(loop_index, vertex_index, request, mode, attempt)
         })
     }
 
-    fn fillet_loop_vertex_by_radius_raw(
+    fn fillet_loop_vertex_raw(
         &self,
         loop_index: usize,
         vertex_index: usize,
-        radius: Real,
+        request: &CurveFillet2,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveFilletSolutions2<Self, CurveRegionFilletFamily2>> {
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
         let boundary = self.data.boundary_loops.get(loop_index).ok_or_else(|| {
             curve_region_edit_error(CurveOperation2::Fillet, CurveError::InvalidCurveRange)
         })?;
         let chain = CurveCornerChain2::new(boundary.fragments(), true);
-        let solutions = chain.fillet_vertex_by_radius(vertex_index, radius, mode, policy)?;
-        let solutions = solutions.try_map_isolated(|fragments| {
+        let solutions = chain.fillet_vertex(vertex_index, request, mode, policy)?;
+        try_map_corner_solutions(solutions, |fragments| {
             self.with_corner_chain_replaced(loop_index, fragments, CurveOperation2::Fillet, policy)
-                .map(Some)
-        })?;
-        Ok(solutions.map_families(|chain| CurveRegionFilletFamily2 {
-            source: self.clone(),
-            loop_index,
-            chain,
-        }))
+        })
     }
 
     fn with_corner_chain_replaced(
@@ -19545,21 +19485,8 @@ mod tests {
             };
             let trim = solve(CurveCornerMode2::TrimOnly);
             let extended = solve(CurveCornerMode2::TrimOrExtend);
-            assert!(
-                {
-                    assert!(trim.families().is_empty());
-                    trim.isolated_solutions().len()
-                } > 0
-            );
-            assert!(
-                {
-                    assert!(extended.families().is_empty());
-                    extended.isolated_solutions().len()
-                } > {
-                    assert!(trim.families().is_empty());
-                    trim.isolated_solutions().len()
-                }
-            );
+            assert!({ trim.solutions().len() } > 0);
+            assert!({ extended.solutions().len() } > { trim.solutions().len() });
         }
     }
 
@@ -20349,10 +20276,10 @@ mod tests {
             )
             .unwrap();
             let fillets = region
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     1,
-                    radius.clone(),
+                    &crate::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
@@ -20362,12 +20289,7 @@ mod tests {
                     )
                 });
             assert_eq!(fillets.certainty, CurveCertainty::Certified);
-            assert!(
-                {
-                    assert!(fillets.value.families().is_empty());
-                    fillets.value.isolated_solutions().len()
-                } > 0
-            );
+            assert!(!fillets.value.solutions().is_empty());
             for_each_corner_region(fillet_regions(&fillets.value), |edited| {
                 assert!(
                     edited.boundary_loops()[0]
@@ -20498,10 +20420,10 @@ mod tests {
             assert_eq!(chamfers.certainty, CurveCertainty::Certified);
             assert!(chamfers.value.candidate_count() > 0);
             let fillets = region
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     1,
-                    radius.clone(),
+                    &crate::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
@@ -20511,17 +20433,12 @@ mod tests {
                     )
                 });
             assert_eq!(fillets.certainty, CurveCertainty::Certified);
-            assert!(
-                {
-                    assert!(fillets.value.families().is_empty());
-                    fillets.value.isolated_solutions().len()
-                } > 0
-            );
+            assert!(!fillets.value.solutions().is_empty());
             let extended_fillets = region
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     1,
-                    radius.clone(),
+                    &crate::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOrExtend,
                     &policy,
                 )
@@ -20532,13 +20449,7 @@ mod tests {
                 });
             assert_eq!(extended_fillets.certainty, CurveCertainty::Certified);
             assert!(
-                {
-                    assert!(extended_fillets.value.families().is_empty());
-                    extended_fillets.value.isolated_solutions().len()
-                } > {
-                    assert!(fillets.value.families().is_empty());
-                    fillets.value.isolated_solutions().len()
-                },
+                extended_fillets.value.solutions().len() > fillets.value.solutions().len(),
                 "the selected incident chart must contribute exterior fillet candidates"
             );
             let mut retained_local_boundary = false;
@@ -20875,16 +20786,13 @@ mod tests {
         }
     }
 
-    fn fillet_regions(
-        solutions: &CurveFilletSolutions2<CurveRegion2, CurveRegionFilletFamily2>,
-    ) -> &[CurveRegion2] {
-        assert!(solutions.families().is_empty(), "expected isolated fillets");
+    fn fillet_regions(solutions: &CurveCornerSolutions2<CurveRegion2>) -> &[CurveRegion2] {
         assert!(
-            !solutions.isolated_solutions().is_empty(),
+            !solutions.solutions().is_empty(),
             "no isolated fillets: {:?}",
             solutions.no_solution_reason()
         );
-        solutions.isolated_solutions()
+        solutions.solutions()
     }
 
     fn for_each_corner_region(solutions: &[CurveRegion2], visit: impl FnMut(&CurveRegion2)) {
@@ -20981,10 +20889,10 @@ mod tests {
                 );
 
                 let trim_fillets = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -20992,10 +20900,10 @@ mod tests {
                 assert_eq!(trim_fillets.certainty, CurveCertainty::Certified);
                 let trim_fillets = trim_fillets.into_value();
                 let extended_fillets = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -21003,13 +20911,7 @@ mod tests {
                 assert_eq!(extended_fillets.certainty, CurveCertainty::Certified);
                 let extended_fillets = extended_fillets.into_value();
                 assert!(
-                    {
-                        assert!(extended_fillets.families().is_empty());
-                        extended_fillets.isolated_solutions().len()
-                    } > {
-                        assert!(trim_fillets.families().is_empty());
-                        trim_fillets.isolated_solutions().len()
-                    },
+                    { extended_fillets.solutions().len() } > { trim_fillets.solutions().len() },
                     "extension must publish the exterior-ray fillet branch"
                 );
 
@@ -21405,10 +21307,10 @@ mod tests {
                     );
 
                     let fillets = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             corner,
-                            q(299, 125),
+                            &crate::CurveFillet2::new(q(299, 125)),
                             CurveCornerMode2::TrimOrExtend,
                             &policy,
                         )
@@ -21430,10 +21332,10 @@ mod tests {
                         algebraic_line_end.clone(),
                         &policy,
                     )
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        q(1, 2),
+                        &crate::CurveFillet2::new(q(1, 2)),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -21779,10 +21681,10 @@ mod tests {
             for reversed in [false, true] {
                 let region = one_fragment_selected_corner_region(reversed, &policy);
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         0,
-                        radius.clone(),
+                        &crate::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -21793,10 +21695,7 @@ mod tests {
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert!(
-                    {
-                        assert!(result.value.families().is_empty());
-                        result.value.isolated_solutions().len()
-                    } > 0,
+                    !result.value.solutions().is_empty(),
                     "the authored seam has an admissible fillet: policy={policy:?}, reversed={reversed}, result={:?}",
                     result.value
                 );
@@ -21866,10 +21765,10 @@ mod tests {
                 )
                 .expect("the selected PH loop has authored topology");
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         0,
-                        radius.clone(),
+                        &crate::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -21879,12 +21778,7 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                assert!(
-                    {
-                        assert!(result.value.families().is_empty());
-                        result.value.isolated_solutions().len()
-                    } > 0
-                );
+                assert!(!result.value.solutions().is_empty());
                 assert_one_fragment_edit_shape(fillet_regions(&result.value), 1, 1);
             }
         }
@@ -21955,10 +21849,10 @@ mod tests {
                 )
                 .expect("the one-fragment PH loop has authored topology");
                 let fillets = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         0,
-                        radius.clone(),
+                        &crate::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -22096,10 +21990,10 @@ mod tests {
                     )
                     .unwrap();
                     let extended = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             0,
-                            radius.clone(),
+                            &crate::CurveFillet2::new(radius.clone()),
                             CurveCornerMode2::TrimOrExtend,
                             &policy,
                         )
@@ -22227,10 +22121,10 @@ mod tests {
                     );
                     let corner = if reversed { 2 } else { 1 };
                     let result = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             corner,
-                            Real::one(),
+                            &crate::CurveFillet2::new(Real::one()),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
@@ -22242,8 +22136,7 @@ mod tests {
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     let filleted = {
                         let solutions = result.value;
-                        assert!(solutions.families().is_empty(), "expected isolated fillets");
-                        let (mut candidates, _) = solutions.into_parts();
+                        let mut candidates = solutions.into_solutions();
                         assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                         candidates.pop().unwrap()
                     };
@@ -22737,12 +22630,17 @@ mod tests {
             panic!("the endpoint fixture starts on its selected circle")
         };
         let baseline = source
-            .fillet_loop_vertex_by_radius(0, 1, q(1, 10), CurveCornerMode2::TrimOnly, policy)
+            .fillet_loop_vertex(
+                0,
+                1,
+                &crate::CurveFillet2::new(q(1, 10)),
+                CurveCornerMode2::TrimOnly,
+                policy,
+            )
             .expect("the unsplit selected-circle/line fillet is exact");
         let baseline = {
             let solutions = baseline.value;
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         };
@@ -23238,10 +23136,10 @@ mod tests {
                     );
                     let corner = selected_circle_rational_arc_corner(&region);
                     let result = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             corner,
-                            (Real::one() / Real::from(10_i8)).unwrap(),
+                            &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
@@ -23253,8 +23151,7 @@ mod tests {
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     let filleted = {
                         let solutions = result.value;
-                        assert!(solutions.families().is_empty(), "expected isolated fillets");
-                        let (mut candidates, _) = solutions.into_parts();
+                        let mut candidates = solutions.into_solutions();
                         assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                         candidates.pop().unwrap()
                     };
@@ -23302,19 +23199,14 @@ mod tests {
                     let corner = selected_circle_rational_arc_corner(&region);
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let result = region
-                            .fillet_loop_vertex_by_radius(0, corner, q(1, 10), mode, &policy)
+                            .fillet_loop_vertex(0, corner, &crate::CurveFillet2::new(q(1, 10)), mode, &policy)
                             .unwrap_or_else(|error| {
                                 panic!(
                                     "the selected-circle/major-conic fillet must complete: policy={policy:?}, elevated={elevated}, reversed={reversed}, mode={mode:?}, error={error:?}"
                                 )
                             });
                         assert_eq!(result.certainty, CurveCertainty::Certified);
-                        assert!(
-                            {
-                                assert!(result.value.families().is_empty());
-                                result.value.isolated_solutions().len()
-                            } > 0
-                        );
+                        assert!(!result.value.solutions().is_empty());
                     }
                 }
             }
@@ -23697,10 +23589,10 @@ mod tests {
                 );
 
                 let filleted = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        fillet_radius.clone(),
+                        &crate::CurveFillet2::new(fillet_radius.clone()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -23737,10 +23629,10 @@ mod tests {
                 let region = selected_circle_collapsed_arc_offset_region(&policy, reversed);
                 let corner = selected_circle_rational_arc_corner(&region);
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -23769,10 +23661,10 @@ mod tests {
                 );
                 let corner = selected_circle_rational_arc_corner(&region);
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -23801,10 +23693,10 @@ mod tests {
                 );
                 let corner = selected_circle_rational_arc_corner(&region);
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -23841,10 +23733,10 @@ mod tests {
                     let region = selected_circle_neighbor_region(&policy, neighbor, reversed);
                     let corner = if reversed { 2 } else { 1 };
                     let result = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             corner,
-                            Real::one(),
+                            &crate::CurveFillet2::new(Real::one()),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
@@ -23940,10 +23832,10 @@ mod tests {
                         _ => unreachable!(),
                     }
                     let result = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             if reversed { 2 } else { 1 },
-                            circle.radial_distance().abs(),
+                            &crate::CurveFillet2::new(circle.radial_distance().abs()),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
@@ -23986,10 +23878,10 @@ mod tests {
                     })
                     .expect("the retained circle/parallel corner is present");
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -24126,10 +24018,10 @@ mod tests {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let fillet_work = || {
-                region.fillet_loop_vertex_by_radius(
+                region.fillet_loop_vertex(
                     0,
                     1,
-                    half.clone(),
+                    &crate::CurveFillet2::new(half.clone()),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
@@ -24199,19 +24091,19 @@ mod tests {
                         let region = selected_circle_neighbor_region(&policy, neighbor, reversed);
                         let corner = selected_circle_rational_arc_corner(&region);
                         let trim = region
-                            .fillet_loop_vertex_by_radius(
+                            .fillet_loop_vertex(
                                 0,
                                 corner,
-                                q(1, 10),
+                                &crate::CurveFillet2::new(q(1, 10)),
                                 CurveCornerMode2::TrimOnly,
                                 &policy,
                             )
                             .expect("the finite mixed circular corner remains supported");
                         let extended = region
-                            .fillet_loop_vertex_by_radius(
+                            .fillet_loop_vertex(
                                 0,
                                 corner,
-                                q(1, 10),
+                                &crate::CurveFillet2::new(q(1, 10)),
                                 CurveCornerMode2::TrimOrExtend,
                                 &policy,
                             )
@@ -24222,13 +24114,7 @@ mod tests {
                             });
                         assert_eq!(extended.certainty, CurveCertainty::Certified);
                         assert!(
-                            {
-                                assert!(extended.value.families().is_empty());
-                                extended.value.isolated_solutions().len()
-                            } > {
-                                assert!(trim.value.families().is_empty());
-                                trim.value.isolated_solutions().len()
-                            },
+                            extended.value.solutions().len() > trim.value.solutions().len(),
                             "both full circular supports must contribute exterior centers"
                         );
                         for_each_corner_region(fillet_regions(&extended.value), |filleted| {
@@ -24289,7 +24175,13 @@ mod tests {
                 let corner = if reversed { 2 } else { 1 };
                 let solve = |region: &CurveRegion2, mode| {
                     region
-                        .fillet_loop_vertex_by_radius(0, corner, q(1, 10), mode, &policy)
+                        .fillet_loop_vertex(
+                            0,
+                            corner,
+                            &crate::CurveFillet2::new(q(1, 10)),
+                            mode,
+                            &policy,
+                        )
                         .expect("the selected-circle/line support must extend exactly")
                 };
                 let promoted_extension = solve(&promoted_line, CurveCornerMode2::TrimOrExtend);
@@ -24297,22 +24189,11 @@ mod tests {
                 assert_eq!(promoted_extension.certainty, CurveCertainty::Certified);
                 assert_eq!(retained_extension.certainty, CurveCertainty::Certified);
                 assert_eq!(
-                    {
-                        assert!(promoted_extension.value.families().is_empty());
-                        promoted_extension.value.isolated_solutions().len()
-                    },
-                    {
-                        assert!(retained_extension.value.families().is_empty());
-                        retained_extension.value.isolated_solutions().len()
-                    },
+                    promoted_extension.value.solutions().len(),
+                    retained_extension.value.solutions().len(),
                     "the represented fast path must enumerate both circle charts and both affine rays",
                 );
-                assert!(
-                    {
-                        assert!(promoted_extension.value.families().is_empty());
-                        promoted_extension.value.isolated_solutions().len()
-                    } > 1
-                );
+                assert!(promoted_extension.value.solutions().len() > 1);
                 for_each_corner_region(fillet_regions(&promoted_extension.value), |filleted| {
                     assert!(filleted.boundary_loops()[0].fragments().iter().any(
                         |fragment| matches!(
@@ -24355,10 +24236,10 @@ mod tests {
                         .collect::<Vec<_>>();
                     assert_eq!(source_circle_fragments.len(), 2);
                     let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         2,
-                        q(1, 10),
+                        &crate::CurveFillet2::new(q(1, 10)),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -24377,10 +24258,7 @@ mod tests {
                         })
                     };
                     assert!(
-                        {
-                            assert!(result.value.families().is_empty());
-                            result.value.isolated_solutions().iter().any(consumes_seam)
-                        },
+                        { result.value.solutions().iter().any(consumes_seam) },
                         "at least one exact mixed-family candidate must consume the selected-circle seam"
                     );
                     for_each_corner_region(fillet_regions(&result.value), |filleted| {
@@ -24528,10 +24406,10 @@ mod tests {
                     .collect::<Vec<_>>();
                 assert_eq!(source_circle_fragments.len(), 2);
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         2,
-                        q(1, 10),
+                        &crate::CurveFillet2::new(q(1, 10)),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -24558,14 +24436,7 @@ mod tests {
                         == 1
                 };
                 assert!(
-                    {
-                        assert!(result.value.families().is_empty());
-                        result
-                            .value
-                            .isolated_solutions()
-                            .iter()
-                            .any(owns_seam_endpoint)
-                    },
+                    { result.value.solutions().iter().any(owns_seam_endpoint) },
                     "one retained-side fragment must own the exact seam endpoint"
                 );
                 for_each_corner_region(fillet_regions(&result.value), |filleted| {
@@ -24621,10 +24492,10 @@ mod tests {
                         .collect::<Vec<_>>();
                     assert_eq!(source_circle_fragments.len(), 2);
                     let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         2,
-                        q(1, 10),
+                        &crate::CurveFillet2::new(q(1, 10)),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -24650,14 +24521,7 @@ mod tests {
                             == 1
                     };
                     assert!(
-                        {
-                            assert!(result.value.families().is_empty());
-                            result
-                                .value
-                                .isolated_solutions()
-                                .iter()
-                                .any(owns_one_run_fragment)
-                        },
+                        { result.value.solutions().iter().any(owns_one_run_fragment) },
                         "one independently framed run fragment must own the exact {cut_location} cut"
                     );
                     for_each_corner_region(fillet_regions(&result.value), |filleted| {
@@ -24685,10 +24549,10 @@ mod tests {
                 );
                 let corner = selected_circle_pair_corner(&region);
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        (Real::one() / Real::from(10_i8)).unwrap(),
+                        &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -24700,8 +24564,7 @@ mod tests {
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 let filleted = {
                     let solutions = result.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (mut candidates, _) = solutions.into_parts();
+                    let mut candidates = solutions.into_solutions();
                     assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                     candidates.pop().unwrap()
                 };
@@ -24747,19 +24610,19 @@ mod tests {
                 );
                 let corner = selected_circle_pair_corner(&region);
                 let trim = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        q(1, 10),
+                        &crate::CurveFillet2::new(q(1, 10)),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
                     .expect("the finite selected-circle pair remains supported");
                 let extended = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        q(1, 10),
+                        &crate::CurveFillet2::new(q(1, 10)),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -24770,13 +24633,7 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(
-                    {
-                        assert!(extended.value.families().is_empty());
-                        extended.value.isolated_solutions().len()
-                    } > {
-                        assert!(trim.value.families().is_empty());
-                        trim.value.isolated_solutions().len()
-                    },
+                    extended.value.solutions().len() > trim.value.solutions().len(),
                     "full circular supports must retain an exterior center"
                 );
                 for_each_corner_region(fillet_regions(&extended.value), |filleted| {
@@ -24962,19 +24819,19 @@ mod tests {
                 let region = independent_selected_circle_pair_region(&policy, reversed);
                 let corner = selected_circle_pair_corner(&region);
                 let trim = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        q(1, 10),
+                        &crate::CurveFillet2::new(q(1, 10)),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
                     .expect("the finite independent selected-circle pair remains supported");
                 let extended = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        q(1, 10),
+                        &crate::CurveFillet2::new(q(1, 10)),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -24985,13 +24842,7 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(
-                    {
-                        assert!(extended.value.families().is_empty());
-                        extended.value.isolated_solutions().len()
-                    } > {
-                        assert!(trim.value.families().is_empty());
-                        trim.value.isolated_solutions().len()
-                    },
+                    extended.value.solutions().len() > trim.value.solutions().len(),
                     "both full selected supports must contribute exterior centers"
                 );
                 for_each_corner_region(fillet_regions(&extended.value), |filleted| {
@@ -25026,10 +24877,10 @@ mod tests {
         let region = independent_selected_circle_pair_region(policy, reversed);
         let corner = selected_circle_pair_corner(&region);
         let result = region
-            .fillet_loop_vertex_by_radius(
+            .fillet_loop_vertex(
                 0,
                 corner,
-                q(1, 10),
+                &crate::CurveFillet2::new(q(1, 10)),
                 CurveCornerMode2::TrimOnly,
                 policy,
             )
@@ -25041,8 +24892,7 @@ mod tests {
         assert_eq!(result.certainty, CurveCertainty::Certified);
         {
             let solutions = result.value;
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         }
@@ -25188,10 +25038,10 @@ mod tests {
                 let filleted = independent_pair_native_fillet(&policy, reversed);
                 let (corner, radius) = pair_radial_corner(&filleted);
                 let result = filleted
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        radius,
+                        &crate::CurveFillet2::new(radius),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -25249,10 +25099,10 @@ mod tests {
                     let (corner, parent_radius) = pair_radial_corner(&region);
                     let radius = (parent_radius / Real::from(2_i8)).unwrap();
                     let result = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             corner,
-                            radius,
+                            &crate::CurveFillet2::new(radius),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
@@ -25915,10 +25765,10 @@ mod tests {
         let (loop_index, corner) = selected_radial_linear_corner(&clipped, source_radius);
         let radius = (source_radius / Real::from(100_i16)).unwrap();
         let result = clipped
-            .fillet_loop_vertex_by_radius(
+            .fillet_loop_vertex(
                 loop_index,
                 corner,
-                radius.clone(),
+                &crate::CurveFillet2::new(radius.clone()),
                 CurveCornerMode2::TrimOnly,
                 policy,
             )
@@ -25926,8 +25776,7 @@ mod tests {
         assert_eq!(result.certainty, CurveCertainty::Certified);
         let candidates = {
             let solutions = result.value;
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (candidates, _) = solutions.into_parts();
+            let candidates = solutions.into_solutions();
             assert!(
                 !candidates.is_empty(),
                 "expected at least one isolated fillet"
@@ -26498,10 +26347,10 @@ mod tests {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::reset();
                 let nested_fillet_work = || {
-                    candidate.fillet_loop_vertex_by_radius(
+                    candidate.fillet_loop_vertex(
                         nested_loop,
                         nested_corner,
-                        nested_fillet_radius,
+                        &crate::CurveFillet2::new(nested_fillet_radius),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -26518,12 +26367,7 @@ mod tests {
                     )
                 });
                 assert_eq!(nested_fillet.certainty, CurveCertainty::Certified);
-                assert!(
-                    {
-                        assert!(nested_fillet.value.families().is_empty());
-                        nested_fillet.value.isolated_solutions().len()
-                    } > 0
-                );
+                assert!(!nested_fillet.value.solutions().is_empty());
                 #[cfg(feature = "dispatch-trace")]
                 assert!(
                     nested_fillet_trace.path_count(
@@ -26953,10 +26797,10 @@ mod tests {
                     "the offset must retain its pair-native circular authority"
                 );
                 let result = clipped
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         loop_index,
                         corner,
-                        radius,
+                        &crate::CurveFillet2::new(radius),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -27054,21 +26898,18 @@ mod tests {
                 .expect("the clipped region retains a pair-radial/analytic corner");
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
                 let result = clipped
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         loop_index,
                         corner,
-                        (parent_radius.clone() / Real::from(100_i16)).unwrap(),
+                        &crate::CurveFillet2::new(
+                            (parent_radius.clone() / Real::from(100_i16)).unwrap(),
+                        ),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
                     .expect("the pair-radial/analytic corner must fillet exactly");
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                assert!(
-                    {
-                        assert!(result.value.families().is_empty());
-                        result.value.isolated_solutions().len()
-                    } > 0
-                );
+                assert!(!result.value.solutions().is_empty());
                 for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     let replay = filleted
                         .boolean_regions(
@@ -27210,21 +27051,18 @@ mod tests {
                 .expect("the clipped region retains a pair-radial/algebraic-chord corner");
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
                 let result = clipped
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         loop_index,
                         corner,
-                        (parent_radius.clone() / Real::from(100_i16)).unwrap(),
+                        &crate::CurveFillet2::new(
+                            (parent_radius.clone() / Real::from(100_i16)).unwrap(),
+                        ),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
                     .expect("the pair-radial/algebraic-chord corner must fillet exactly");
                 assert_eq!(result.certainty, CurveCertainty::Certified);
-                assert!(
-                    {
-                        assert!(result.value.families().is_empty());
-                        result.value.isolated_solutions().len()
-                    } > 0
-                );
+                assert!(!result.value.solutions().is_empty());
                 for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     let replay = filleted
                         .boolean_regions(&selected_fillet_disjoint_square(&policy), &policy)
@@ -27308,20 +27146,17 @@ mod tests {
                     .into_value();
                 let (loop_index, corner) = pair_radial_crossing_corner(&lens, &policy);
                 let result = lens
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         loop_index,
                         corner,
-                        (radius / Real::from(10_i8)).unwrap(),
+                        &crate::CurveFillet2::new((radius / Real::from(10_i8)).unwrap()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
                     .expect("the translated pair-native circle corner must fillet exactly");
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 assert!(
-                    {
-                        assert!(result.value.families().is_empty());
-                        result.value.isolated_solutions().len()
-                    } > 0,
+                    !result.value.solutions().is_empty(),
                     "the crossing pair-native circles must fillet across their smooth chart seam: {:?}",
                     result.value
                 );
@@ -27341,14 +27176,7 @@ mod tests {
                     retained < source_fragments.len() - 2
                 };
                 assert!(
-                    {
-                        assert!(result.value.families().is_empty());
-                        result
-                            .value
-                            .isolated_solutions()
-                            .iter()
-                            .any(consumes_smooth_seam)
-                    },
+                    { result.value.solutions().iter().any(consumes_smooth_seam) },
                     "at least one exact candidate must consume more than the two incident fragments"
                 );
                 for_each_corner_region(fillet_regions(&result.value), |filleted| {
@@ -27399,10 +27227,10 @@ mod tests {
                     })
                     .expect("the fixture retains its selected-circle/analytic corner");
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        (Real::one() / Real::from(10_i8)).unwrap(),
+                        &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -27414,8 +27242,7 @@ mod tests {
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 let filleted = {
                     let solutions = result.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (mut candidates, _) = solutions.into_parts();
+                    let mut candidates = solutions.into_solutions();
                     assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                     candidates.pop().unwrap()
                 };
@@ -27568,19 +27395,19 @@ mod tests {
                         })
                         .expect("the fixture retains its selected-circle/analytic corner");
                     let trim = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             corner,
-                            q(1, 10),
+                            &crate::CurveFillet2::new(q(1, 10)),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
                         .expect("the finite selected-circle/analytic corner remains supported");
                     let extended = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             corner,
-                            q(1, 10),
+                            &crate::CurveFillet2::new(q(1, 10)),
                             CurveCornerMode2::TrimOrExtend,
                             &policy,
                         )
@@ -27591,13 +27418,7 @@ mod tests {
                         });
                     assert_eq!(extended.certainty, CurveCertainty::Certified);
                     assert!(
-                        {
-                            assert!(extended.value.families().is_empty());
-                            extended.value.isolated_solutions().len()
-                        } > {
-                            assert!(trim.value.families().is_empty());
-                            trim.value.isolated_solutions().len()
-                        },
+                        extended.value.solutions().len() > trim.value.solutions().len(),
                         "the full circle and analytic incident ray must add exterior centers"
                     );
                     for_each_corner_region(fillet_regions(&extended.value), |filleted| {
@@ -27662,10 +27483,10 @@ mod tests {
                     )
                 ));
                 let result = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        (Real::one() / Real::from(10_i8)).unwrap(),
+                        &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -27677,8 +27498,7 @@ mod tests {
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 let filleted = {
                     let solutions = result.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (mut candidates, _) = solutions.into_parts();
+                    let mut candidates = solutions.into_solutions();
                     assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                     candidates.pop().unwrap()
                 };
@@ -28877,10 +28697,10 @@ mod tests {
 
                 let radius = q(1, 100);
                 let fillets = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         1,
-                        radius.clone(),
+                        &crate::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -29059,10 +28879,10 @@ mod tests {
                 let region = nonlinear_algebraic_endpoint_region(&policy, reversed);
                 let corner = if reversed { 2 } else { 1 };
                 let trim_work = || {
-                    region.fillet_loop_vertex_by_radius(
+                    region.fillet_loop_vertex(
                         0,
                         corner,
-                        radius.clone(),
+                        &crate::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -29082,10 +28902,10 @@ mod tests {
                     })
                     .into_value();
                 let extended = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        radius.clone(),
+                        &crate::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -29095,15 +28915,7 @@ mod tests {
                         )
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
-                assert!(
-                    {
-                        assert!(extended.value.families().is_empty());
-                        extended.value.isolated_solutions().len()
-                    } > {
-                        assert!(trim.families().is_empty());
-                        trim.isolated_solutions().len()
-                    }
-                );
+                assert!(extended.value.solutions().len() > { trim.solutions().len() });
                 let mut found_exterior_lobe = false;
                 for_each_corner_region(fillet_regions(&extended.value), |edited| {
                     assert!(edited.has_regularized_filled_left_topology(&policy));
@@ -30298,10 +30110,10 @@ mod tests {
             for reversed in [false, true] {
                 let region = nonrepresented_cardinal_chord_pair_corner_region(&policy, reversed);
                 let outcome = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         if reversed { 2 } else { 1 },
-                        radius.clone(),
+                        &crate::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -30311,12 +30123,7 @@ mod tests {
                         )
                     });
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                assert!(
-                    {
-                        assert!(outcome.value.families().is_empty());
-                        outcome.value.isolated_solutions().len()
-                    } > 0
-                );
+                assert!(!outcome.value.solutions().is_empty());
                 for_each_corner_region(fillet_regions(&outcome.value), |filleted| {
                     let fragments = filleted.boundary_loops()[0].fragments();
                     let mut chord_adjacencies = 0;
@@ -30376,10 +30183,10 @@ mod tests {
                     chord.retained_support()
                 });
                 let trim = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -30390,10 +30197,10 @@ mod tests {
                     });
                 assert_eq!(trim.certainty, CurveCertainty::Certified);
                 let extended = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -30404,13 +30211,7 @@ mod tests {
                     });
                 assert_eq!(extended.certainty, CurveCertainty::Certified);
                 assert!(
-                    {
-                        assert!(extended.value.families().is_empty());
-                        extended.value.isolated_solutions().len()
-                    } > {
-                        assert!(trim.value.families().is_empty());
-                        trim.value.isolated_solutions().len()
-                    },
+                    extended.value.solutions().len() > trim.value.solutions().len(),
                     "extension must publish the supporting-line contact: policy={policy:?}, reversed={reversed}, trim={:?}, extended={:?}",
                     trim.value,
                     extended.value,
@@ -30507,10 +30308,10 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let region = independent_oblique_chord_pair_corner_region(&policy, false);
             let extended = region
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     1,
-                    Real::one(),
+                    &crate::CurveFillet2::new(Real::one()),
                     CurveCornerMode2::TrimOrExtend,
                     &policy,
                 )
@@ -30619,10 +30420,10 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let region = independent_oblique_chord_pair_corner_region(&policy, false);
             let extended = region
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     1,
-                    Real::one(),
+                    &crate::CurveFillet2::new(Real::one()),
                     CurveCornerMode2::TrimOrExtend,
                     &policy,
                 )
@@ -30824,10 +30625,10 @@ mod tests {
                     let mut trim_count = None;
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let outcome = region
-                            .fillet_loop_vertex_by_radius(
+                            .fillet_loop_vertex(
                                 0,
                                 if reversed { 2 } else { 1 },
-                                radius.clone(),
+                                &crate::CurveFillet2::new(radius.clone()),
                                 mode,
                                 &policy,
                             )
@@ -30838,24 +30639,16 @@ mod tests {
                             });
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert!(
-                            {
-                                assert!(outcome.value.families().is_empty());
-                                outcome.value.isolated_solutions().len()
-                            } > 0,
+                            !outcome.value.solutions().is_empty(),
                             "policy={policy:?}, reversed={reversed}, radius={radius:?}, mode={mode:?}, outcome={:?}",
                             outcome.value,
                         );
                         if mode == CurveCornerMode2::TrimOnly {
-                            trim_count = Some({
-                                assert!(outcome.value.families().is_empty());
-                                outcome.value.isolated_solutions().len()
-                            });
+                            trim_count = Some(outcome.value.solutions().len());
                         } else {
                             assert!(
-                                {
-                                    assert!(outcome.value.families().is_empty());
-                                    outcome.value.isolated_solutions().len()
-                                } >= trim_count.expect("the trim result runs first"),
+                                outcome.value.solutions().len()
+                                    >= trim_count.expect("the trim result runs first"),
                                 "extension cannot discard a finite-support candidate"
                             );
                         }
@@ -31012,21 +30805,16 @@ mod tests {
             ];
             for (source, corner, radius) in cases {
                 let outcome = source
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         corner,
-                        radius,
+                        &crate::CurveFillet2::new(radius),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
                     .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                assert!(
-                    {
-                        assert!(outcome.value.families().is_empty());
-                        outcome.value.isolated_solutions().len()
-                    } > 0
-                );
+                assert!(!outcome.value.solutions().is_empty());
                 for_each_corner_region(fillet_regions(&outcome.value), |candidate| {
                     let normalized = candidate.regularized_region_raw(&policy).expect(
                         "retained corner contacts must replay without a new coordinate field",
@@ -31053,10 +30841,10 @@ mod tests {
                 let mut trim_count = None;
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let outcome = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             if reversed { 1 } else { 2 },
-                            radius.clone(),
+                            &crate::CurveFillet2::new(radius.clone()),
                             mode,
                             &policy,
                         )
@@ -31066,23 +30854,13 @@ mod tests {
                             )
                         });
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                    assert!(
-                        {
-                            assert!(outcome.value.families().is_empty());
-                            outcome.value.isolated_solutions().len()
-                        } > 0
-                    );
+                    assert!(!outcome.value.solutions().is_empty());
                     if mode == CurveCornerMode2::TrimOnly {
-                        trim_count = Some({
-                            assert!(outcome.value.families().is_empty());
-                            outcome.value.isolated_solutions().len()
-                        });
+                        trim_count = Some(outcome.value.solutions().len());
                     } else {
                         assert!(
-                            {
-                                assert!(outcome.value.families().is_empty());
-                                outcome.value.isolated_solutions().len()
-                            } > trim_count.expect("the trim result runs first"),
+                            outcome.value.solutions().len()
+                                > trim_count.expect("the trim result runs first"),
                             "extension must retain an exterior rational-arc/chord-support branch"
                         );
                     }
@@ -31153,10 +30931,10 @@ mod tests {
                     );
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let outcome = region
-                            .fillet_loop_vertex_by_radius(
+                            .fillet_loop_vertex(
                                 0,
                                 if reversed { 1 } else { 2 },
-                                radius.clone(),
+                                &crate::CurveFillet2::new(radius.clone()),
                                 mode,
                                 &policy,
                             )
@@ -31167,10 +30945,7 @@ mod tests {
                             });
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert!(
-                            {
-                                assert!(outcome.value.families().is_empty());
-                                outcome.value.isolated_solutions().len()
-                            } > 0,
+                            !outcome.value.solutions().is_empty(),
                             "policy={policy:?}, reversed={reversed}, elevated={elevated}, mode={mode:?}, outcome={:?}",
                             outcome.value,
                         );
@@ -31191,10 +30966,10 @@ mod tests {
                 let mut trim_count = None;
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let outcome = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             if reversed { 2 } else { 1 },
-                            radius.clone(),
+                            &crate::CurveFillet2::new(radius.clone()),
                             mode,
                             &policy,
                         )
@@ -31205,24 +30980,16 @@ mod tests {
                         });
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert!(
-                        {
-                            assert!(outcome.value.families().is_empty());
-                            outcome.value.isolated_solutions().len()
-                        } > 0,
+                        !outcome.value.solutions().is_empty(),
                         "policy={policy:?}, reversed={reversed}, mode={mode:?}, outcome={:?}",
                         outcome.value
                     );
                     if mode == CurveCornerMode2::TrimOnly {
-                        trim_count = Some({
-                            assert!(outcome.value.families().is_empty());
-                            outcome.value.isolated_solutions().len()
-                        });
+                        trim_count = Some(outcome.value.solutions().len());
                     } else {
                         assert!(
-                            {
-                                assert!(outcome.value.families().is_empty());
-                                outcome.value.isolated_solutions().len()
-                            } > trim_count.expect("the trim result runs first"),
+                            outcome.value.solutions().len()
+                                > trim_count.expect("the trim result runs first"),
                             "extension must retain the complementary selected-circle branch"
                         );
                     }
@@ -31304,10 +31071,10 @@ mod tests {
             for reversed in [false, true] {
                 let region = nonrepresented_chord_selected_circle_corner_region(&policy, reversed);
                 let outcome = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         if reversed { 2 } else { 1 },
-                        Real::one(),
+                        &crate::CurveFillet2::new(Real::one()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -31532,10 +31299,10 @@ mod tests {
                 let mut trim_count = None;
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let outcome = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             vertex,
-                            radius.clone(),
+                            &crate::CurveFillet2::new(radius.clone()),
                             mode,
                             &policy,
                         )
@@ -31546,24 +31313,16 @@ mod tests {
                         });
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
                     assert!(
-                        {
-                            assert!(outcome.value.families().is_empty());
-                            outcome.value.isolated_solutions().len()
-                        } > 0,
+                        !outcome.value.solutions().is_empty(),
                         "policy={policy:?}, reversed={reversed}, mode={mode:?}, outcome={:?}",
                         outcome.value
                     );
                     if mode == CurveCornerMode2::TrimOnly {
-                        trim_count = Some({
-                            assert!(outcome.value.families().is_empty());
-                            outcome.value.isolated_solutions().len()
-                        });
+                        trim_count = Some(outcome.value.solutions().len());
                     } else {
                         assert!(
-                            {
-                                assert!(outcome.value.families().is_empty());
-                                outcome.value.isolated_solutions().len()
-                            } > trim_count.expect("the trim result runs first"),
+                            outcome.value.solutions().len()
+                                > trim_count.expect("the trim result runs first"),
                             "extension must retain the second infinite-support fillet branch"
                         );
                     }
@@ -31631,10 +31390,10 @@ mod tests {
                 let mut trim_count = None;
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let outcome = region
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             vertex,
-                            radius.clone(),
+                            &crate::CurveFillet2::new(radius.clone()),
                             mode,
                             &policy,
                         )
@@ -31644,23 +31403,13 @@ mod tests {
                             )
                         });
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                    assert!(
-                        {
-                            assert!(outcome.value.families().is_empty());
-                            outcome.value.isolated_solutions().len()
-                        } > 0
-                    );
+                    assert!(!outcome.value.solutions().is_empty());
                     if mode == CurveCornerMode2::TrimOnly {
-                        trim_count = Some({
-                            assert!(outcome.value.families().is_empty());
-                            outcome.value.isolated_solutions().len()
-                        });
+                        trim_count = Some(outcome.value.solutions().len());
                     } else {
                         assert!(
-                            {
-                                assert!(outcome.value.families().is_empty());
-                                outcome.value.isolated_solutions().len()
-                            } > trim_count.expect("the trim result runs first"),
+                            outcome.value.solutions().len()
+                                > trim_count.expect("the trim result runs first"),
                             "extension must retain an exterior analytic-support fillet branch"
                         );
                     }
@@ -33610,10 +33359,10 @@ mod single_loop_corner_publication_tests {
                 .position(|curve| curve.start().coordinates() == Some(&p(4, 0)))
                 .unwrap();
             let outcome = source
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     corner,
-                    (Real::one() / Real::from(2)).unwrap(),
+                    &crate::CurveFillet2::new((Real::one() / Real::from(2)).unwrap()),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
@@ -33621,8 +33370,7 @@ mod single_loop_corner_publication_tests {
             assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
             let candidates = {
                 let solutions = outcome.value;
-                assert!(solutions.families().is_empty(), "expected isolated fillets");
-                let (candidates, _) = solutions.into_parts();
+                let candidates = solutions.into_solutions();
                 assert!(candidates.len() > 1, "expected multiple isolated fillets");
                 candidates
             };

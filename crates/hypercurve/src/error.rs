@@ -252,6 +252,8 @@ pub enum CurveError {
     InvalidOffsetOptions,
     /// Exact fillet or chamfer design options are outside their defined domain.
     InvalidCornerOptions,
+    /// The fillet request leaves a continuous family of admissible contacts.
+    FilletConstraintRequired,
     /// Finite projection options contain non-finite or unsupported values.
     InvalidFiniteProjectionOptions,
     /// Edge-preview tolerances are negative or non-finite.
@@ -348,6 +350,10 @@ impl fmt::Display for CurveError {
                 write!(f, "Bezier parallel verification options are invalid")
             }
             Self::InvalidOffsetOptions => write!(f, "region offset options are invalid"),
+            Self::FilletConstraintRequired => write!(
+                f,
+                "fillet requires an additional exact center or contact constraint"
+            ),
             Self::InvalidCornerOptions => write!(f, "corner edit options are invalid"),
             Self::InvalidFiniteProjectionOptions => {
                 write!(f, "finite projection options are invalid")

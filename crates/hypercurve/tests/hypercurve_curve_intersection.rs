@@ -1733,16 +1733,15 @@ fn selected_circle_tangency_reuses_retained_normal_evidence() {
         .unwrap();
         let path = {
             let solutions = path
-                .fillet_vertex_by_radius(
+                .fillet_vertex(
                     1,
-                    q(1, 4),
+                    &hypercurve::CurveFillet2::new(q(1, 4)),
                     hypercurve::CurveCornerMode2::TrimOnly,
                     &policy,
                 )
                 .unwrap()
                 .into_value();
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         };
@@ -1802,16 +1801,15 @@ fn selected_circle_crossings_replay_the_retained_rational_source() {
         .unwrap();
         let path = {
             let solutions = path
-                .fillet_vertex_by_radius(
+                .fillet_vertex(
                     1,
-                    q(1, 4),
+                    &hypercurve::CurveFillet2::new(q(1, 4)),
                     hypercurve::CurveCornerMode2::TrimOnly,
                     &policy,
                 )
                 .unwrap()
                 .into_value();
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         };
@@ -3540,13 +3538,17 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
         ])
         .unwrap();
         let fillet = source
-            .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+            .fillet_vertex(
+                1,
+                &hypercurve::CurveFillet2::new(q(1, 4)),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .unwrap();
         assert_eq!(fillet.certainty, CurveCertainty::Certified);
         let path = {
             let solutions = fillet.value;
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         };
@@ -3634,13 +3636,17 @@ fn generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors() {
         ])
         .unwrap();
         let result = path
-            .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+            .fillet_vertex(
+                1,
+                &hypercurve::CurveFillet2::new(q(1, 4)),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .unwrap();
         assert_eq!(result.certainty, CurveCertainty::Certified);
         let path = {
             let solutions = result.value;
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         };
@@ -3732,11 +3738,15 @@ mod finite_selected_circle_domains {
         .unwrap();
         let path = {
             let solutions = certified(
-                path.fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, policy)
-                    .unwrap(),
+                path.fillet_vertex(
+                    1,
+                    &hypercurve::CurveFillet2::new(q(1, 4)),
+                    CurveCornerMode2::TrimOnly,
+                    policy,
+                )
+                .unwrap(),
             );
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         };

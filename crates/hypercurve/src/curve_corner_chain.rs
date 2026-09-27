@@ -12,39 +12,24 @@ pub(crate) struct CurveCornerChain2<'a> {
 
 #[derive(Debug)]
 struct CurveChainFilletPlacement2<'a> {
-    fragments: std::borrow::Cow<'a, [BezierSplitFragment2]>,
+    fragments: &'a [BezierSplitFragment2],
     closed: bool,
     indices: [usize; 2],
     solve_indices: [usize; 2],
     has_smooth_run: bool,
     previous_family: CurveFamily2,
     arcs: [Option<std::sync::Arc<crate::curve::RetainedRationalCornerArc2>>; 2],
-    promoted: [Option<std::borrow::Cow<'a, crate::BezierParallelFragment2>>; 2],
+    promoted: [Option<&'a crate::BezierParallelFragment2>; 2],
 }
 
 impl CurveChainFilletPlacement2<'_> {
-    fn into_owned(self) -> CurveChainFilletPlacement2<'static> {
-        CurveChainFilletPlacement2 {
-            fragments: std::borrow::Cow::Owned(self.fragments.into_owned()),
-            closed: self.closed,
-            indices: self.indices,
-            solve_indices: self.solve_indices,
-            has_smooth_run: self.has_smooth_run,
-            previous_family: self.previous_family,
-            arcs: self.arcs,
-            promoted: self
-                .promoted
-                .map(|source| source.map(|source| std::borrow::Cow::Owned(source.into_owned()))),
-        }
-    }
-
     fn publish(
         &self,
         solution: crate::curve::FilletCorner2,
         radius: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>> {
-        let chain = CurveCornerChain2::new(&self.fragments, self.closed);
+        let chain = CurveCornerChain2::new(self.fragments, self.closed);
         let [previous_index, next_index] = self.indices;
         let [previous_solve_index, next_solve_index] = self.solve_indices;
         let has_smooth_run = self.has_smooth_run;
@@ -108,10 +93,10 @@ impl CurveChainFilletPlacement2<'_> {
             ],
             [
                 (previous_cut_index == previous_index)
-                    .then(|| self.promoted[0].as_deref())
+                    .then(|| self.promoted[0])
                     .flatten(),
                 (next_cut_index == next_index)
-                    .then(|| self.promoted[1].as_deref())
+                    .then(|| self.promoted[1])
                     .flatten(),
             ],
             [
@@ -120,27 +105,6 @@ impl CurveChainFilletPlacement2<'_> {
             ],
             policy,
         )
-    }
-}
-
-#[derive(Clone, Debug)]
-pub(super) struct CurveChainFilletFamily2 {
-    placement: std::sync::Arc<CurveChainFilletPlacement2<'static>>,
-    pub(super) native: crate::curve::FilletCornerFamily2,
-}
-
-impl CurveChainFilletFamily2 {
-    pub(super) fn select(
-        &self,
-        previous: &CurveParameter2,
-        next: &CurveParameter2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<Option<Vec<BezierSplitFragment2>>> {
-        let Some(solution) = self.native.select(previous, next, policy)? else {
-            return Ok(None);
-        };
-        self.placement
-            .publish(solution, self.native.radius(), policy)
     }
 }
 
@@ -890,14 +854,14 @@ impl<'a> CurveCornerChain2<'a> {
         Ok(fragments)
     }
 
-    pub(super) fn fillet_vertex_by_radius(
+    pub(super) fn fillet_vertex(
         &self,
         vertex_index: usize,
-        radius: Real,
+        request: &CurveFillet2,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveFilletSolutions2<Vec<BezierSplitFragment2>, CurveChainFilletFamily2>>
-    {
+    ) -> ExactCurveResult<CurveCornerSolutions2<Vec<BezierSplitFragment2>>> {
+        let radius = &request.radius;
         let fragment_count = self.fragments().len();
         if vertex_index >= fragment_count || (vertex_index == 0 && !self.closed) {
             return Err(curve_region_edit_error(
@@ -942,14 +906,10 @@ impl<'a> CurveCornerChain2<'a> {
         let mut next_source = CornerCarrierPreparation2::admit(next_solve_fragment);
         let previous_family = previous_source.family();
         let next_family = next_source.family();
-        let radius_sign = validate_corner_design_value(
-            &radius,
-            CurveOperation2::Fillet,
-            previous_family,
-            policy,
-        )?;
+        let radius_sign =
+            validate_corner_design_value(radius, CurveOperation2::Fillet, previous_family, policy)?;
         if radius_sign == RealSign::Zero {
-            return Ok(CurveFilletSolutions2::empty(
+            return Ok(CurveCornerSolutions2::NoSolution(
                 crate::CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
@@ -968,7 +928,7 @@ impl<'a> CurveCornerChain2<'a> {
         let solutions = solve_exact_fillet_corner(
             previous_carrier,
             next_carrier,
-            &radius,
+            radius,
             radius_sign,
             solve_mode,
             has_smooth_run,
@@ -977,7 +937,7 @@ impl<'a> CurveCornerChain2<'a> {
             policy,
         )?;
         let placement = CurveChainFilletPlacement2 {
-            fragments: std::borrow::Cow::Borrowed(self.fragments()),
+            fragments: self.fragments(),
             closed: self.closed,
             indices: [previous_index, next_index],
             solve_indices: [previous_solve_index, next_solve_index],
@@ -987,19 +947,33 @@ impl<'a> CurveCornerChain2<'a> {
             promoted: [
                 previous_source.promoted_parallel(),
                 next_source.promoted_parallel(),
-            ]
-            .map(|source| source.map(std::borrow::Cow::Borrowed)),
+            ],
         };
-        let solutions =
-            solutions.try_map_isolated(|solution| placement.publish(solution, &radius, policy))?;
-        let shared =
-            (!solutions.families.is_empty()).then(|| std::sync::Arc::new(placement.into_owned()));
-        Ok(solutions.map_families(|native| CurveChainFilletFamily2 {
-            placement: std::sync::Arc::clone(
-                shared.as_ref().expect("family reconstruction context"),
-            ),
-            native,
-        }))
+        let solutions = if request.has_constraints() {
+            let sources = [previous_index, next_index]
+                .map(|index| Curve2::from_retained_fragment(self.fragments()[index].clone()));
+            solutions.resolve(
+                &crate::curve::FilletConstraintBinding2 {
+                    request,
+                    sources: sources.each_ref(),
+                    maps: [None, None],
+                    charts: std::array::from_fn(|axis| {
+                        crate::curve::FilletContactChart2::for_curve(
+                            &sources[axis],
+                            placement.arcs[axis].is_some(),
+                        )
+                    }),
+                },
+                policy,
+            )?
+        } else {
+            solutions.require_finite()?
+        };
+        Ok(crate::curve::compact_optional_corner_solutions(
+            try_map_corner_solutions(solutions, |solution| {
+                placement.publish(solution, radius, policy)
+            })?,
+        ))
     }
 
     /// Reconstructs already solved cuts over their complete source domains.
@@ -3759,9 +3733,9 @@ mod tests {
         ];
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let outcome = resolve_certified_operation(&policy, |attempt| {
-                CurveCornerChain2::new(&source, false).fillet_vertex_by_radius(
+                CurveCornerChain2::new(&source, false).fillet_vertex(
                     1,
-                    Real::one(),
+                    &crate::CurveFillet2::new(Real::one()),
                     CurveCornerMode2::TrimOnly,
                     attempt,
                 )
@@ -3770,8 +3744,7 @@ mod tests {
             assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
             let filleted = {
                 let solutions = outcome.value;
-                assert!(solutions.families().is_empty(), "expected isolated fillets");
-                let (mut candidates, _) = solutions.into_parts();
+                let mut candidates = solutions.into_solutions();
                 assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                 candidates.pop().unwrap()
             };
@@ -3820,13 +3793,17 @@ mod tests {
                     source
                 };
                 let outcome = source
-                    .fillet_vertex_by_radius(1, q(2, 5), CurveCornerMode2::TrimOrExtend, &policy)
+                    .fillet_vertex(
+                        1,
+                        &crate::CurveFillet2::new(q(2, 5)),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
                     .unwrap();
                 assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
                 let candidates = {
                     let solutions = outcome.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
+                    let candidates = solutions.into_solutions();
                     assert!(
                         !candidates.is_empty(),
                         "expected at least one isolated fillet"
@@ -3907,10 +3884,10 @@ mod tests {
                     .unwrap()
                     .into_value();
                 let outcome = region
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         if reversed { 2 } else { 1 },
-                        q(2, 5),
+                        &crate::CurveFillet2::new(q(2, 5)),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -3918,8 +3895,7 @@ mod tests {
                 assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
                 let candidates = {
                     let solutions = outcome.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
+                    let candidates = solutions.into_solutions();
                     assert!(
                         !candidates.is_empty(),
                         "expected at least one isolated fillet"

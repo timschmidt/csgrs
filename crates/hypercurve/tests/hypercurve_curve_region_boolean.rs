@@ -488,13 +488,17 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
         ])
         .unwrap();
         let fillet = path
-            .fillet_vertex_by_radius(1, ratio(1, 4), CurveCornerMode2::TrimOnly, &policy)
+            .fillet_vertex(
+                1,
+                &hypercurve::CurveFillet2::new(ratio(1, 4)),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .unwrap();
         assert_eq!(fillet.certainty, CurveCertainty::Certified);
         let path = {
             let solutions = fillet.value;
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         };

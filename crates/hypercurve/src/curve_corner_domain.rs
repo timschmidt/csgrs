@@ -560,10 +560,11 @@ impl CurvePath2 {
         vertex_index: usize,
         previous_index: usize,
         next_index: usize,
-        radius: &Real,
+        request: &CurveFillet2,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<CurveFilletSolutions2<Self, CurvePathFilletFamily2>>> {
+    ) -> ExactCurveResult<Option<CurveCornerSolutions2<Self>>> {
+        let radius = &request.radius;
         let operation = CurveOperation2::Fillet;
         let previous = &self.data.curves[previous_index];
         let next = &self.data.curves[next_index];
@@ -591,7 +592,6 @@ impl CurvePath2 {
             .map(|chart| chart.prepare(false, policy))
             .collect::<ExactCurveResult<Vec<_>>>()?;
         let mut candidates = [Vec::new(), Vec::new()];
-        let mut families = Vec::new();
         for (previous_chart_index, (previous_chart, previous_source)) in
             previous_charts.iter().zip(&previous_sources).enumerate()
         {
@@ -633,7 +633,7 @@ impl CurvePath2 {
                     policy,
                 )?;
                 // A chart owns one circular support. Share its authored-sweep
-                // decision across all opposite charts and later family selections.
+                // decision across all opposite charts during constrained selection.
                 let circular_domains = [
                     previous_chart.circular_domain_cache(previous_arc.is_some(), domains[0].mode()),
                     next_chart.circular_domain_cache(next_arc.is_some(), domains[1].mode()),
@@ -654,23 +654,23 @@ impl CurvePath2 {
                     ],
                     circular_domains,
                 );
-                let solutions = solutions.try_map_isolated(|solution| {
+                for solution in solutions
+                    .resolve(&placement.constraints(request), policy)?
+                    .into_solutions()
+                {
                     let clockwise = solution.clockwise;
                     if let Some(path) = placement.publish(solution, radius, policy)? {
                         candidates[usize::from(clockwise)].push(path);
                     }
-                    Ok(None::<()>)
-                })?;
-                families.extend(placement.bind(solutions).families);
+                }
             }
         }
         let mut solutions = CornerSolutionAccumulator::Empty;
         for candidate in candidates.into_iter().flatten() {
             solutions.push(candidate);
         }
-        Ok(Some(CurveFilletSolutions2::from_isolated(
+        Ok(Some(
             solutions.finish(CurveCornerNoSolution2::OutsideTrimDomain),
-            families,
-        )))
+        ))
     }
 }

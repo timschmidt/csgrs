@@ -269,16 +269,15 @@ fn bench_line_curve_corner_solvers(iterations: u32) {
         let mut curves = 0_usize;
         for _ in 0..iterations {
             let solutions = black_box(&path)
-                .fillet_vertex_by_radius(
+                .fillet_vertex(
                     1,
-                    design_value.clone(),
+                    &hypercurve::CurveFillet2::new(design_value.clone()),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
                 .expect("design-parameter fillet benchmark must remain exact")
                 .into_value();
-            assert!(solutions.families().is_empty());
-            let [filleted] = solutions.isolated_solutions() else {
+            let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
             curves += black_box(filleted).curves().len();
@@ -403,11 +402,15 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let mut curves = 0_usize;
         for _ in 0..iterations {
             let solutions = black_box(&line_arc_path)
-                .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
+                .fillet_vertex(
+                    1,
+                    &hypercurve::CurveFillet2::new(radius.clone()),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
                 .expect("line-arc design fillet must remain exact")
                 .into_value();
-            assert!(solutions.families().is_empty());
-            let [filleted] = solutions.isolated_solutions() else {
+            let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
             curves += black_box(filleted).curves().len();
@@ -431,11 +434,15 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let mut curves = 0_usize;
         for _ in 0..iterations {
             let solutions = black_box(&arc_arc_path)
-                .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
+                .fillet_vertex(
+                    1,
+                    &hypercurve::CurveFillet2::new(radius.clone()),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
                 .expect("arc-arc design fillet must remain exact")
                 .into_value();
-            assert!(solutions.families().is_empty());
-            let [filleted] = solutions.isolated_solutions() else {
+            let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
             curves += black_box(filleted).curves().len();
@@ -463,17 +470,16 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let mut loops = 0_usize;
         for _ in 0..iterations {
             let solutions = black_box(&line_arc_region)
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     1,
-                    radius.clone(),
+                    &hypercurve::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
                 .expect("line-arc region design fillet must remain exact")
                 .into_value();
-            assert!(solutions.families().is_empty());
-            let [filleted] = solutions.isolated_solutions() else {
+            let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
             loops += black_box(filleted).boundary_loops().len();
@@ -501,17 +507,16 @@ fn bench_native_arc_fillet_solvers(iterations: u32) -> CurveResult<()> {
         let mut loops = 0_usize;
         for _ in 0..iterations {
             let solutions = black_box(&arc_arc_region)
-                .fillet_loop_vertex_by_radius(
+                .fillet_loop_vertex(
                     0,
                     1,
-                    radius.clone(),
+                    &hypercurve::CurveFillet2::new(radius.clone()),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
                 .expect("arc-arc region design fillet must remain exact")
                 .into_value();
-            assert!(solutions.families().is_empty());
-            let [filleted] = solutions.isolated_solutions() else {
+            let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
             loops += black_box(filleted).boundary_loops().len();
@@ -561,11 +566,15 @@ fn bench_retained_circle_fillet_lane(name: &str, path: &CurvePath2, iterations: 
     let mut curves = 0_usize;
     for _ in 0..iterations {
         let solutions = black_box(path)
-            .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
+            .fillet_vertex(
+                1,
+                &hypercurve::CurveFillet2::new(radius.clone()),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .expect("retained circular fillet must remain exact")
             .into_value();
-        assert!(solutions.families().is_empty());
-        let [filleted] = solutions.isolated_solutions() else {
+        let [filleted] = solutions.solutions() else {
             panic!("expected one isolated fillet");
         };
         curves += black_box(filleted).curves().len();
@@ -682,11 +691,15 @@ fn bench_represented_bezier_fillet_lane(
     let mut candidates = 0_usize;
     for _ in 0..iterations {
         let solutions = black_box(path)
-            .fillet_vertex_by_radius(1, radius.clone(), CurveCornerMode2::TrimOnly, &policy)
+            .fillet_vertex(
+                1,
+                &hypercurve::CurveFillet2::new(radius.clone()),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .expect("represented Bezier fillet must remain exact")
             .into_value();
-        assert!(solutions.families().is_empty());
-        candidates += black_box(solutions.isolated_solutions()).len();
+        candidates += black_box(solutions.solutions()).len();
     }
     assert_ne!(candidates, 0);
     let elapsed = started.elapsed();
@@ -1372,11 +1385,16 @@ fn bench_represented_bezier_region_corner_lanes(
         let mut candidates = 0_usize;
         for _ in 0..iterations {
             let solutions = black_box(region)
-                .fillet_loop_vertex_by_radius(0, 1, q(15, 4), CurveCornerMode2::TrimOnly, &policy)
+                .fillet_loop_vertex(
+                    0,
+                    1,
+                    &hypercurve::CurveFillet2::new(q(15, 4)),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
                 .expect("represented Bezier region fillet must remain exact")
                 .into_value();
-            assert!(solutions.families().is_empty());
-            candidates += black_box(solutions.isolated_solutions()).len();
+            candidates += black_box(solutions.solutions()).len();
         }
         assert_ne!(candidates, 0);
         let elapsed = started.elapsed();
@@ -2020,11 +2038,16 @@ fn bench_curve_region_mutations(iterations: u32) -> CurveResult<()> {
         let mut filleted_loops = 0_usize;
         for _ in 0..iterations {
             let solutions = black_box(&region)
-                .fillet_loop_vertex_by_radius(0, 1, s(1), CurveCornerMode2::TrimOnly, &policy)
+                .fillet_loop_vertex(
+                    0,
+                    1,
+                    &hypercurve::CurveFillet2::new(s(1)),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                )
                 .expect("benchmark design-parameter fillet must remain exact")
                 .into_value();
-            assert!(solutions.families().is_empty());
-            let [filleted] = solutions.isolated_solutions() else {
+            let [filleted] = solutions.solutions() else {
                 panic!("expected one isolated fillet");
             };
             filleted_loops += black_box(filleted).boundary_loops().len();
@@ -2079,12 +2102,17 @@ fn bench_higher_order_curve_edits(iterations: u32) {
     let mut region_fillet_loops = 0_usize;
     for _ in 0..iterations {
         let filleted = region
-            .fillet_loop_vertex_by_radius(0, 1, q(1, 2), CurveCornerMode2::TrimOnly, &policy)
+            .fillet_loop_vertex(
+                0,
+                1,
+                &hypercurve::CurveFillet2::new(q(1, 2)),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .expect("higher-order region fillet must remain exact")
             .into_value();
-        assert!(filleted.families().is_empty());
-        assert!(!filleted.isolated_solutions().is_empty());
-        region_fillet_loops += black_box(filleted.isolated_solutions())
+        assert!(!filleted.solutions().is_empty());
+        region_fillet_loops += black_box(filleted.solutions())
             .iter()
             .map(|candidate| candidate.boundary_loops().len())
             .sum::<usize>();

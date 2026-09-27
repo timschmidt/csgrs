@@ -2875,16 +2875,15 @@ mod circle_dispatch_tests {
                 .unwrap();
                 let path = {
                     let solutions = path
-                        .fillet_vertex_by_radius(
+                        .fillet_vertex(
                             1,
-                            scale * q(1, 4),
+                            &crate::CurveFillet2::new(scale * q(1, 4)),
                             crate::CurveCornerMode2::TrimOnly,
                             &policy,
                         )
                         .unwrap()
                         .value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (mut candidates, _) = solutions.into_parts();
+                    let mut candidates = solutions.into_solutions();
                     assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                     candidates.pop().unwrap()
                 };

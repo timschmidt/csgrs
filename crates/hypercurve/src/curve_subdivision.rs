@@ -1347,15 +1347,19 @@ mod tests {
                     )
                     .unwrap();
                 let fillet = path
-                    .fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex(
+                        1,
+                        &crate::CurveFillet2::new(Real::one()),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
                     .unwrap();
                 assert_eq!(chamfer.certainty, CurveCertainty::Certified);
                 assert_eq!(fillet.certainty, CurveCertainty::Certified);
                 let CurveCornerSolutions2::Unique(chamfer) = chamfer.value else {
                     panic!("one exact chamfer");
                 };
-                assert!(fillet.value.families().is_empty());
-                let (fillets, _) = fillet.value.into_parts();
+                let fillets = fillet.value.into_solutions();
                 assert_eq!(fillets.len(), 1);
                 for (operation, edited) in std::iter::once(chamfer).chain(fillets).enumerate() {
                     assert_same(&edited.start(), &path.start(), &policy);
@@ -1781,16 +1785,12 @@ mod tests {
                             path.clone()
                         };
                         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-                            let result = path.fillet_vertex_by_radius(1, q(1, 4), mode, &policy)
+                            let result = path.fillet_vertex(1, &crate::CurveFillet2::new(q(1, 4)), mode, &policy)
                         .unwrap_or_else(|error| panic!("selected={selected}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"));
                             assert_eq!(result.certainty, CurveCertainty::Certified);
                             let candidates = {
                                 let solutions = result.value;
-                                assert!(
-                                    solutions.families().is_empty(),
-                                    "expected isolated fillets"
-                                );
-                                let (candidates, _) = solutions.into_parts();
+                                let candidates = solutions.into_solutions();
                                 assert!(
                                     !candidates.is_empty(),
                                     "expected at least one isolated fillet"
@@ -1919,13 +1919,12 @@ mod tests {
                     };
                     for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                         let result = path
-                            .fillet_vertex_by_radius(1, q(12, 25), mode, &policy)
+                            .fillet_vertex(1, &crate::CurveFillet2::new(q(12, 25)), mode, &policy)
                             .unwrap_or_else(|error| panic!("family={family:?}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"));
                         assert_eq!(result.certainty, CurveCertainty::Certified);
                         let candidates = {
                             let solutions = result.value;
-                            assert!(solutions.families().is_empty(), "expected isolated fillets");
-                            let (candidates, _) = solutions.into_parts();
+                            let candidates = solutions.into_solutions();
                             assert!(
                                 !candidates.is_empty(),
                                 "expected at least one isolated fillet"
@@ -2015,7 +2014,7 @@ mod tests {
                 };
                 for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
                     let result = path
-                    .fillet_vertex_by_radius(1, q(12, 25), mode, policy)
+                    .fillet_vertex(1, &crate::CurveFillet2::new(q(12, 25)), mode, policy)
                     .unwrap_or_else(|error| {
                         panic!(
                             "clockwise={clockwise}, reversed={reversed}, mode={mode:?}, policy={policy:?}: {error:?}"
@@ -2024,8 +2023,7 @@ mod tests {
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     let candidates = {
                         let solutions = result.value;
-                        assert!(solutions.families().is_empty(), "expected isolated fillets");
-                        let (candidates, _) = solutions.into_parts();
+                        let candidates = solutions.into_solutions();
                         assert!(
                             !candidates.is_empty(),
                             "expected at least one isolated fillet"
@@ -2204,7 +2202,12 @@ mod tests {
                         path.clone()
                     };
                     let result = path
-                        .fillet_vertex_by_radius(1, q(5, 8), CurveCornerMode2::TrimOnly, &policy)
+                        .fillet_vertex(
+                            1,
+                            &crate::CurveFillet2::new(q(5, 8)),
+                            CurveCornerMode2::TrimOnly,
+                            &policy,
+                        )
                         .unwrap_or_else(|error| {
                             panic!(
                                 "shift={shift:?}, reversed={reversed}, policy={policy:?}: {error:?}"
@@ -2213,8 +2216,7 @@ mod tests {
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     let candidate = {
                         let solutions = result.value;
-                        assert!(solutions.families().is_empty(), "expected isolated fillets");
-                        let (mut candidates, _) = solutions.into_parts();
+                        let mut candidates = solutions.into_solutions();
                         assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                         candidates.pop().unwrap()
                     };
@@ -2345,13 +2347,17 @@ mod tests {
                 // strictly outside the actual selected interval. It belongs
                 // to the circular extension even though the parent owns it.
                 let result = path
-                    .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
+                    .fillet_vertex(
+                        1,
+                        &crate::CurveFillet2::new(q(1, 2)),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
                     .unwrap();
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 let candidates = {
                     let solutions = result.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
+                    let candidates = solutions.into_solutions();
                     assert!(candidates.len() > 1, "expected multiple isolated fillets");
                     candidates
                 };
@@ -2534,15 +2540,19 @@ mod tests {
                     path.clone()
                 };
                 let result = path
-                    .fillet_vertex_by_radius(1, q(12, 25), CurveCornerMode2::TrimOrExtend, &policy)
+                    .fillet_vertex(
+                        1,
+                        &crate::CurveFillet2::new(q(12, 25)),
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    )
                     .unwrap_or_else(|error| {
                         panic!("reversed={reversed}, policy={policy:?}: {error:?}")
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
                 let candidates = {
                     let solutions = result.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
+                    let candidates = solutions.into_solutions();
                     assert!(
                         !candidates.is_empty(),
                         "expected at least one isolated fillet"
@@ -2658,16 +2668,12 @@ mod tests {
                             } else {
                                 path.clone()
                             };
-                            let outcome = path.fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+                            let outcome = path.fillet_vertex(1, &crate::CurveFillet2::new(Real::one()), CurveCornerMode2::TrimOnly, &policy)
                                 .unwrap_or_else(|error| panic!("rational={rational}, selected={selected}, sharp={sharp_knot}, reversed={reversed}, policy={policy:?}: {error:?}"));
                             assert_eq!(outcome.certainty, CurveCertainty::Certified);
                             let candidates = {
                                 let solutions = outcome.value;
-                                assert!(
-                                    solutions.families().is_empty(),
-                                    "expected isolated fillets"
-                                );
-                                let (candidates, _) = solutions.into_parts();
+                                let candidates = solutions.into_solutions();
                                 assert!(
                                     !candidates.is_empty(),
                                     "expected at least one isolated fillet"
@@ -2745,9 +2751,9 @@ mod tests {
                         path.clone()
                     };
                     let result = path
-                        .fillet_vertex_by_radius(
+                        .fillet_vertex(
                             0,
-                            Real::one(),
+                            &crate::CurveFillet2::new(Real::one()),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
@@ -2755,8 +2761,7 @@ mod tests {
                     assert_eq!(result.certainty, CurveCertainty::Certified);
                     let candidates = {
                         let solutions = result.value;
-                        assert!(solutions.families().is_empty(), "expected isolated fillets");
-                        let (candidates, _) = solutions.into_parts();
+                        let candidates = solutions.into_solutions();
                         assert!(candidates.len() > 1, "expected multiple isolated fillets");
                         candidates
                     };
@@ -2810,13 +2815,17 @@ mod tests {
                     path.clone()
                 };
                 let outcome = path
-                    .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex(
+                        1,
+                        &crate::CurveFillet2::new(q(1, 4)),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
                     .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 let candidates = {
                     let solutions = outcome.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
+                    let candidates = solutions.into_solutions();
                     assert!(candidates.len() > 1, "expected multiple isolated fillets");
                     candidates
                 };
@@ -2871,13 +2880,17 @@ mod tests {
                     path.clone()
                 };
                 let outcome = path
-                    .fillet_vertex_by_radius(1, q(1, 4), CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex(
+                        1,
+                        &crate::CurveFillet2::new(q(1, 4)),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
                     .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 let candidates = {
                     let solutions = outcome.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
+                    let candidates = solutions.into_solutions();
                     assert!(candidates.len() > 1, "expected multiple isolated fillets");
                     candidates
                 };

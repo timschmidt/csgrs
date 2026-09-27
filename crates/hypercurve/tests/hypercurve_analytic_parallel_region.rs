@@ -255,10 +255,10 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
                 let (source, vertex_index) =
                     analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
                 let solved = source
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         vertex_index,
-                        (Real::one() / Real::from(4_i8)).unwrap(),
+                        &hypercurve::CurveFillet2::new((Real::one() / Real::from(4_i8)).unwrap()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -267,8 +267,7 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
                     });
                 let candidates = {
                     let solutions = solved.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
+                    let candidates = solutions.into_solutions();
                     assert!(
                         !candidates.is_empty(),
                         "expected at least one isolated fillet"
@@ -299,13 +298,8 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
 #[test]
 fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
     let radius = (Real::one() / Real::from(4_i8)).unwrap();
-    let count = |solutions: hypercurve::CurveFilletSolutions2<
-        CurveRegion2,
-        hypercurve::CurveRegionFilletFamily2,
-    >| {
-        assert!(solutions.families().is_empty());
-        solutions.isolated_solutions().len()
-    };
+    let count =
+        |solutions: hypercurve::CurveCornerSolutions2<CurveRegion2>| solutions.solutions().len();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for unit_end_weights in [false, true] {
             for reversed in [false, true] {
@@ -313,10 +307,10 @@ fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
                     analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
                 let trim_count = count(
                     source
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             vertex_index,
-                            radius.clone(),
+                            &hypercurve::CurveFillet2::new(radius.clone()),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
@@ -326,10 +320,10 @@ fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
                         .value,
                 );
                 let extended = source
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         vertex_index,
-                        radius.clone(),
+                        &hypercurve::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOrExtend,
                         &policy,
                     )
@@ -519,10 +513,10 @@ fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
                 let (source, vertex_index) =
                     analytic_rational_arc_corner_region(unit_end_weights, reversed, &policy);
                 let solved = source
-                    .fillet_loop_vertex_by_radius(
+                    .fillet_loop_vertex(
                         0,
                         vertex_index,
-                        radius.clone(),
+                        &hypercurve::CurveFillet2::new(radius.clone()),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -531,8 +525,7 @@ fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
                     });
                 let candidates = {
                     let solutions = solved.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (candidates, _) = solutions.into_parts();
+                    let candidates = solutions.into_solutions();
                     assert!(
                         !candidates.is_empty(),
                         "expected at least one isolated fillet"

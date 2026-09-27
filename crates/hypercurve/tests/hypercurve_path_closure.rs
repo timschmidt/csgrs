@@ -330,13 +330,17 @@ fn selected_open_fillets_accept_a_subsequent_chamfer() {
         ])
         .unwrap();
         let filleted = path
-            .fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+            .fillet_vertex(
+                1,
+                &hypercurve::CurveFillet2::new(Real::one()),
+                CurveCornerMode2::TrimOnly,
+                &policy,
+            )
             .unwrap();
         assert_eq!(filleted.certainty, CurveCertainty::Certified);
         let filleted = {
             let solutions = filleted.value;
-            assert!(solutions.families().is_empty(), "expected isolated fillets");
-            let (mut candidates, _) = solutions.into_parts();
+            let mut candidates = solutions.into_solutions();
             assert_eq!(candidates.len(), 1, "expected one isolated fillet");
             candidates.pop().unwrap()
         };
@@ -384,13 +388,17 @@ fn selected_spline_fillets_preserve_knot_charts_and_other_spans() {
                     path.clone()
                 };
                 let outcome = path
-                    .fillet_vertex_by_radius(1, Real::one(), CurveCornerMode2::TrimOnly, &policy)
+                    .fillet_vertex(
+                        1,
+                        &hypercurve::CurveFillet2::new(Real::one()),
+                        CurveCornerMode2::TrimOnly,
+                        &policy,
+                    )
                     .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 let edited = {
                     let solutions = outcome.value;
-                    assert!(solutions.families().is_empty(), "expected isolated fillets");
-                    let (mut candidates, _) = solutions.into_parts();
+                    let mut candidates = solutions.into_solutions();
                     assert_eq!(candidates.len(), 1, "expected one isolated fillet");
                     candidates.pop().unwrap()
                 };
@@ -475,13 +483,17 @@ fn check_major_arc_fillet(clockwise: bool) {
                 })
                 .collect::<Vec<_>>();
             let outcome = path
-                .fillet_vertex_by_radius(1, q(1, 2), CurveCornerMode2::TrimOrExtend, &policy)
+                .fillet_vertex(
+                    1,
+                    &hypercurve::CurveFillet2::new(q(1, 2)),
+                    CurveCornerMode2::TrimOrExtend,
+                    &policy,
+                )
                 .unwrap();
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             let candidates = {
                 let solutions = outcome.value;
-                assert!(solutions.families().is_empty(), "expected isolated fillets");
-                let (candidates, _) = solutions.into_parts();
+                let candidates = solutions.into_solutions();
                 assert!(
                     !candidates.is_empty(),
                     "expected at least one isolated fillet"
@@ -640,17 +652,16 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
             for fillet in [false, true] {
                 let regions = if fillet {
                     let outcome = clipped
-                        .fillet_loop_vertex_by_radius(
+                        .fillet_loop_vertex(
                             0,
                             1,
-                            q(1, 8),
+                            &hypercurve::CurveFillet2::new(q(1, 8)),
                             CurveCornerMode2::TrimOnly,
                             &policy,
                         )
                         .unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                    assert!(outcome.value.families().is_empty());
-                    outcome.value.into_parts().0
+                    outcome.value.into_solutions()
                 } else {
                     let outcome = clipped
                         .chamfer_loop_vertex_by_setbacks(
@@ -1066,18 +1077,16 @@ mod finite_selected_point_domains {
                     original.clone()
                 };
                 println!("begin chart={chart} reversed={reversed} policy={policy:?}");
-                let edited = match path.fillet_vertex_by_radius(
+                let edited = match path.fillet_vertex(
                     1,
-                    q(1, 32),
+                    &hypercurve::CurveFillet2::new(q(1, 32)),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 ) {
                     Ok(CurveOutcome {
                         certainty: CurveCertainty::Certified,
                         value,
-                    }) if value.families().is_empty() && value.isolated_solutions().len() == 1 => {
-                        value.into_parts().0.pop().unwrap()
-                    }
+                    }) if value.solutions().len() == 1 => value.into_solutions().pop().unwrap(),
                     other => {
                         failures += 1;
                         println!(

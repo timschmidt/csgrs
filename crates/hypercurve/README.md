@@ -271,14 +271,15 @@ exact signatures.
   trim_between_points}` edits connected line/arc strings without owning corner
   construction semantics.
 - `CurvePath2::{try_new, reversed, transform_similarity,
-  chamfer_vertex_by_setbacks, fillet_vertex_by_radius, bounds, classify_point,
+  chamfer_vertex_by_setbacks, fillet_vertex, bounds, classify_point,
   native_bezier_fragments, bezier_boundary_loop}` is the sole connected-curve
   corner-edit authority and handles general connected curves. Chamfers
-  enumerate exact solutions from design setbacks. Fillets return
-  `CurveFilletSolutions2`, separating isolated edits from retained contact
-  families. A path or region family selects exact contact parameters in its
-  `contact_curves()` charts and reuses the retained evidence to publish the
-  edit; it never chooses an arbitrary representative for a continuous family.
+  enumerate exact solutions from design setbacks. Fillets take `CurveFillet2`
+  with an exact radius and optional center or contact constraints. Contact
+  parameters use the incident input curve's chart; contact points retain every
+  matching source location. Both edits return finite `CurveCornerSolutions2`.
+  A continuous fillet family requires an additional exact constraint and returns
+  `CurveError::FilletConstraintRequired`; it never publishes an arbitrary sample.
 - `Contour2::{try_new, try_new_with_fill_rule, from_bulge_vertices,
   signed_area, winding_number, classify_point, point_on_boundary,
   intersect_contour, intersect_self, split_at_intersections,

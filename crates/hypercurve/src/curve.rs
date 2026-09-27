@@ -18,8 +18,9 @@ mod curve_corner_domain;
 
 #[path = "curve_fillet.rs"]
 mod curve_fillet;
-pub(crate) use curve_fillet::FilletCornerFamily2;
-pub use curve_fillet::{CurveFilletSolutions2, CurvePathFilletFamily2};
+use curve_fillet::FilletCornerFamily2;
+pub use curve_fillet::{CurveFillet2, CurveFilletContact2};
+pub(crate) use curve_fillet::{FilletCandidates2, FilletConstraintBinding2, FilletContactChart2};
 use curve_fillet::{FilletCornerSelection2, fillet_corner_from_center};
 
 use crate::CurvePointData2;
@@ -108,6 +109,8 @@ pub enum CurveCornerNoSolution2 {
     NoTangentCircle,
     /// Every exact candidate lies outside the permitted trim domains.
     OutsideTrimDomain,
+    /// No admissible candidate satisfies all supplied exact constraints.
+    UnsatisfiedConstraints,
     /// Every candidate collapses the inserted corner carrier.
     DegenerateCandidate,
 }
@@ -127,6 +130,24 @@ pub enum CurveCornerSolutions2<T> {
 }
 
 impl<T> CurveCornerSolutions2<T> {
+    /// Borrows the finite exact candidates in deterministic order.
+    pub fn solutions(&self) -> &[T] {
+        match self {
+            Self::NoSolution(_) => &[],
+            Self::Unique(candidate) => std::slice::from_ref(candidate),
+            Self::Multiple(candidates) => candidates,
+        }
+    }
+
+    /// Takes the finite exact candidates in deterministic order.
+    pub fn into_solutions(self) -> Vec<T> {
+        match self {
+            Self::NoSolution(_) => Vec::new(),
+            Self::Unique(candidate) => vec![candidate],
+            Self::Multiple(candidates) => candidates,
+        }
+    }
+
     /// Returns the number of exact candidates.
     pub fn candidate_count(&self) -> usize {
         match self {
@@ -1953,9 +1974,9 @@ impl CurvePath2 {
     /// Lines, circular arcs and retained exact line/circle images preserve
     /// their direct support kernels. General Bezier pairs use certified
     /// analytic-parallel incidence and retain selected contact evidence for
-    /// subsequent operations. The result distinguishes isolated edits from
-    /// retained contact families. Select a family by supplying exact contacts
-    /// in its returned source charts; selection reuses the retained evidence.
+    /// subsequent operations. A radius leaving a continuous family requires
+    /// additional exact center or contact constraints in [`CurveFillet2`].
+    /// Contact parameters use the incident input curves' charts.
     ///
     /// `TrimOrExtend` additionally extends each incident boundary chart;
     /// other charts keep their finite domains. Bezier extensions search the
@@ -1965,37 +1986,38 @@ impl CurvePath2 {
     /// their full projective continuation even with a noncircular partner.
     /// A selected incident restriction whose carrier does not retain that
     /// circular support still uses its analytic incident domain.
-    pub fn fillet_vertex_by_radius(
+    pub fn fillet_vertex(
         &self,
         vertex_index: usize,
-        radius: Real,
+        request: &CurveFillet2,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveFilletSolutions2<Self, CurvePathFilletFamily2>>> {
+    ) -> ExactCurveResult<CurveOutcome<CurveCornerSolutions2<Self>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.fillet_vertex_by_radius_raw(vertex_index, radius, mode, attempt)
+            self.fillet_vertex_raw(vertex_index, request, mode, attempt)
         })
     }
 
-    pub(crate) fn fillet_vertex_by_radius_raw(
+    pub(crate) fn fillet_vertex_raw(
         &self,
         vertex_index: usize,
-        radius: Real,
+        request: &CurveFillet2,
         mode: CurveCornerMode2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveFilletSolutions2<Self, CurvePathFilletFamily2>> {
+    ) -> ExactCurveResult<CurveCornerSolutions2<Self>> {
+        let radius = &request.radius;
         let (previous_index, next_index) =
             self.corner_curve_indices(vertex_index, CurveOperation2::Fillet, policy)?;
         let previous = &self.data.curves[previous_index];
         let next = &self.data.curves[next_index];
         let radius_sign = validate_corner_design_value(
-            &radius,
+            radius,
             CurveOperation2::Fillet,
             previous.family(),
             policy,
         )?;
         if radius_sign == RealSign::Zero {
-            return Ok(CurveFilletSolutions2::empty(
+            return Ok(CurveCornerSolutions2::NoSolution(
                 CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
@@ -2003,7 +2025,7 @@ impl CurvePath2 {
             vertex_index,
             previous_index,
             next_index,
-            &radius,
+            request,
             mode,
             policy,
         )? {
@@ -2023,7 +2045,7 @@ impl CurvePath2 {
         let solutions = solve_exact_fillet_corner(
             previous_carrier,
             next_carrier,
-            &radius,
+            radius,
             radius_sign,
             mode,
             false,
@@ -2044,9 +2066,11 @@ impl CurvePath2 {
             ],
             [None, None],
         );
-        let solutions =
-            solutions.try_map_isolated(|solution| placement.publish(solution, &radius, policy))?;
-        Ok(placement.bind(solutions))
+        let solutions = solutions.resolve(&placement.constraints(request), policy)?;
+        Ok(compact_optional_corner_solutions(try_map_corner_solutions(
+            solutions,
+            |solution| placement.publish(solution, radius, policy),
+        )?))
     }
 
     fn corner_curve_indices(
@@ -3322,7 +3346,7 @@ pub(crate) enum ExactCornerCarrier2<'a> {
     AlgebraicCusp(&'a crate::BezierAlgebraicCuspSemicircleFragment2),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum ExactCornerBezier2<'a> {
     Direct(&'a Curve2),
     NativeSpan(&'a NativeBezierFragment2),
@@ -4469,9 +4493,9 @@ fn combine_chamfer_cuts(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub(crate) fn solve_exact_fillet_corner(
-    previous: ExactCornerCarrier2<'_>,
-    next: ExactCornerCarrier2<'_>,
+pub(crate) fn solve_exact_fillet_corner<'a>(
+    previous: ExactCornerCarrier2<'a>,
+    next: ExactCornerCarrier2<'a>,
     radius: &Real,
     radius_sign: RealSign,
     mode: CurveCornerMode2,
@@ -4479,10 +4503,10 @@ pub(crate) fn solve_exact_fillet_corner(
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<CurveFilletSolutions2<FilletCorner2, FilletCornerFamily2>> {
+) -> ExactCurveResult<FilletCandidates2<'a>> {
     match radius_sign {
         RealSign::Zero => {
-            return Ok(CurveFilletSolutions2::empty(
+            return Ok(FilletCandidates2::empty(
                 CurveCornerNoSolution2::ZeroDesignValue,
             ));
         }
@@ -4499,7 +4523,7 @@ pub(crate) fn solve_exact_fillet_corner(
             next_family,
             policy,
         )
-        .map(|isolated| CurveFilletSolutions2::from_isolated(isolated, Vec::new()));
+        .map(|isolated| FilletCandidates2::from_isolated(isolated, Vec::new()));
     }
     solve_carrier_fillet_corner(
         previous,
@@ -4548,7 +4572,7 @@ impl FilletLinearSource2<'_> {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum FilletParallelSource2<'a> {
     Direct(ExactCornerBezier2<'a>),
     Retained(&'a crate::BezierParallelFragment2),
@@ -5730,16 +5754,16 @@ impl FilletCenters2 {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn solve_carrier_fillet_corner(
-    previous: ExactCornerCarrier2<'_>,
-    next: ExactCornerCarrier2<'_>,
+fn solve_carrier_fillet_corner<'a>(
+    previous: ExactCornerCarrier2<'a>,
+    next: ExactCornerCarrier2<'a>,
     radius: &Real,
     retain_selected_circle_endpoints: bool,
     domains: [FilletContactDomain2; 2],
     previous_family: CurveFamily2,
     next_family: CurveFamily2,
     policy: &CurveContext,
-) -> ExactCurveResult<CurveFilletSolutions2<FilletCorner2, FilletCornerFamily2>> {
+) -> ExactCurveResult<FilletCandidates2<'a>> {
     let previous = PreparedFilletCarrier2::new(previous, previous_family, domains[0], policy)?;
     let next = PreparedFilletCarrier2::new(next, next_family, domains[1], policy)?;
     let mut candidates = CornerSolutionAccumulator::Empty;
@@ -5792,12 +5816,10 @@ fn solve_carrier_fillet_corner(
                 families.extend(FilletCornerFamily2::retain(
                     std::mem::take(&mut centers.components),
                     [previous_offset, next_offset],
-                    radius,
                     clockwise,
                     retain_selected_circle_endpoints,
                     domains,
                     [previous_family, next_family],
-                    policy,
                 )?);
                 for center in centers.iter() {
                     if !previous.accepts_offset_contact(
@@ -5845,7 +5867,7 @@ fn solve_carrier_fillet_corner(
     } else {
         CurveCornerNoSolution2::NoTangentCircle
     };
-    Ok(CurveFilletSolutions2::from_isolated(
+    Ok(FilletCandidates2::from_isolated(
         candidates.finish(empty_reason),
         families,
     ))
@@ -12953,7 +12975,7 @@ mod tests {
                 assert_eq!(
                     {
                         assert!(solutions.families().is_empty());
-                        solutions.isolated_solutions().len()
+                        solutions.solutions().len()
                     },
                     count,
                     "previous={previous_mode:?}, next={next_mode:?}, policy={policy:?}"
@@ -13402,11 +13424,13 @@ mod tests {
             assert!(closing.certified_unit_tangent().is_none());
 
             for reversed in [false, true] {
+                let constraint_reversed_closing = closing.reversed();
+                let constraint_reversed_arc = arc.reversed();
                 let solve = |mode| {
                     if reversed {
                         solve_exact_fillet_corner(
-                            ExactCornerCarrier2::AlgebraicChord(&closing.reversed()),
-                            ExactCornerCarrier2::Arc(&arc.reversed()),
+                            ExactCornerCarrier2::AlgebraicChord(&constraint_reversed_closing),
+                            ExactCornerCarrier2::Arc(&constraint_reversed_arc),
                             &radius,
                             RealSign::Positive,
                             mode,
@@ -13436,16 +13460,16 @@ mod tests {
                 assert!(
                     {
                         assert!(trim.families().is_empty());
-                        trim.isolated_solutions().len()
+                        trim.solutions().len()
                     } > 0
                 );
                 assert!(
                     {
                         assert!(extended.families().is_empty());
-                        extended.isolated_solutions().len()
+                        extended.solutions().len()
                     } > {
                         assert!(trim.families().is_empty());
-                        trim.isolated_solutions().len()
+                        trim.solutions().len()
                     }
                 );
                 let retains_recursive_parameter = |corner: &FilletCorner2| {
@@ -13459,10 +13483,7 @@ mod tests {
                 };
                 assert!({
                     assert!(extended.families().is_empty());
-                    extended
-                        .isolated_solutions()
-                        .iter()
-                        .any(retains_recursive_parameter)
+                    extended.solutions().iter().any(retains_recursive_parameter)
                 });
             }
         }
@@ -13973,6 +13994,7 @@ mod tests {
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
+                let constraint_reversed_retained = retained.reversed();
                 let solve = |retained_source: bool, mode| {
                     match (retained_source, reversed) {
                         (false, false) => solve_exact_fillet_corner(
@@ -14010,7 +14032,7 @@ mod tests {
                         ),
                         (true, true) => solve_exact_fillet_corner(
                             ExactCornerCarrier2::Bezier(&reversed_second_curve),
-                            ExactCornerCarrier2::AnalyticParallel(&retained.reversed()),
+                            ExactCornerCarrier2::AnalyticParallel(&constraint_reversed_retained),
                             &radius,
                             RealSign::Positive,
                             mode,
@@ -14027,17 +14049,17 @@ mod tests {
                 assert_eq!(
                     {
                         assert!(retained_extension.families().is_empty());
-                        retained_extension.isolated_solutions().len()
+                        retained_extension.solutions().len()
                     },
                     {
                         assert!(direct_extension.families().is_empty());
-                        direct_extension.isolated_solutions().len()
+                        direct_extension.solutions().len()
                     }
                 );
                 assert!(
                     {
                         assert!(direct_extension.families().is_empty());
-                        direct_extension.isolated_solutions().len()
+                        direct_extension.solutions().len()
                     } > 0
                 );
             }
@@ -14086,6 +14108,8 @@ mod tests {
                 }
             };
             for reversed in [false, true] {
+                let constraint_reversed_fragment = fragment.reversed();
+                let constraint_reversed_retained = retained.reversed();
                 let solve = |retained_source: bool, mode| {
                     match (retained_source, reversed) {
                         (false, false) => solve_exact_fillet_corner(
@@ -14101,7 +14125,7 @@ mod tests {
                         ),
                         (false, true) => solve_exact_fillet_corner(
                             ExactCornerCarrier2::Bezier(&reversed_direct),
-                            ExactCornerCarrier2::AlgebraicCusp(&fragment.reversed()),
+                            ExactCornerCarrier2::AlgebraicCusp(&constraint_reversed_fragment),
                             &radius,
                             RealSign::Positive,
                             mode,
@@ -14122,8 +14146,8 @@ mod tests {
                             &policy,
                         ),
                         (true, true) => solve_exact_fillet_corner(
-                            ExactCornerCarrier2::AnalyticParallel(&retained.reversed()),
-                            ExactCornerCarrier2::AlgebraicCusp(&fragment.reversed()),
+                            ExactCornerCarrier2::AnalyticParallel(&constraint_reversed_retained),
+                            ExactCornerCarrier2::AlgebraicCusp(&constraint_reversed_fragment),
                             &radius,
                             RealSign::Positive,
                             mode,
@@ -14140,17 +14164,17 @@ mod tests {
                 assert_eq!(
                     {
                         assert!(direct_extension.families().is_empty());
-                        direct_extension.isolated_solutions().len()
+                        direct_extension.solutions().len()
                     },
                     {
                         assert!(retained_extension.families().is_empty());
-                        retained_extension.isolated_solutions().len()
+                        retained_extension.solutions().len()
                     }
                 );
                 assert!(
                     {
                         assert!(direct_extension.families().is_empty());
-                        direct_extension.isolated_solutions().len()
+                        direct_extension.solutions().len()
                     } > 0
                 );
             }
@@ -14199,6 +14223,7 @@ mod tests {
                 }
             };
             for reversed in [false, true] {
+                let constraint_reversed_fragment = fragment.reversed();
                 let solve = |native: bool, mode| {
                     match (native, reversed) {
                         (true, false) => solve_exact_fillet_corner(
@@ -14214,7 +14239,7 @@ mod tests {
                         ),
                         (true, true) => solve_exact_fillet_corner(
                             ExactCornerCarrier2::Line(&reversed_line),
-                            ExactCornerCarrier2::AlgebraicCusp(&fragment.reversed()),
+                            ExactCornerCarrier2::AlgebraicCusp(&constraint_reversed_fragment),
                             &radius,
                             RealSign::Positive,
                             mode,
@@ -14236,7 +14261,7 @@ mod tests {
                         ),
                         (false, true) => solve_exact_fillet_corner(
                             ExactCornerCarrier2::Bezier(&reversed_direct),
-                            ExactCornerCarrier2::AlgebraicCusp(&fragment.reversed()),
+                            ExactCornerCarrier2::AlgebraicCusp(&constraint_reversed_fragment),
                             &radius,
                             RealSign::Positive,
                             mode,
@@ -14259,31 +14284,31 @@ mod tests {
                 assert_eq!(
                     {
                         assert!(native_trim.families().is_empty());
-                        native_trim.isolated_solutions().len()
+                        native_trim.solutions().len()
                     },
                     {
                         assert!(direct_trim.families().is_empty());
-                        direct_trim.isolated_solutions().len()
+                        direct_trim.solutions().len()
                     }
                 );
                 assert_eq!(
                     {
                         assert!(native_extension.families().is_empty());
-                        native_extension.isolated_solutions().len()
+                        native_extension.solutions().len()
                     },
                     {
                         assert!(direct_extension.families().is_empty());
-                        direct_extension.isolated_solutions().len()
+                        direct_extension.solutions().len()
                     },
                     "the native fast path must enumerate both selected-circle charts",
                 );
                 assert!(
                     {
                         assert!(native_extension.families().is_empty());
-                        native_extension.isolated_solutions().len()
+                        native_extension.solutions().len()
                     } > {
                         assert!(native_trim.families().is_empty());
-                        native_trim.isolated_solutions().len()
+                        native_trim.solutions().len()
                     }
                 );
             }
