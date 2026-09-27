@@ -1185,8 +1185,16 @@ impl<'a> CurveCornerChain2<'a> {
         }
         let mut candidate_valid = true;
         let inserted = Self::retained_fillet_fragments(
-            &self.fragments()[source_domains[0].clone()],
-            &self.fragments()[source_domains[1].clone()],
+            [
+                (
+                    &self.fragments()[source_domains[0].clone()],
+                    previous_index - source_domains[0].start,
+                ),
+                (
+                    &self.fragments()[source_domains[1].clone()],
+                    next_index - source_domains[1].start,
+                ),
+            ],
             &mut previous_cut,
             &mut next_cut,
             center,
@@ -3034,8 +3042,7 @@ impl<'a> CurveCornerChain2<'a> {
 
     #[allow(clippy::too_many_arguments)]
     fn retained_fillet_fragments(
-        previous_fragments: &[BezierSplitFragment2],
-        next_fragments: &[BezierSplitFragment2],
+        sources: [(&[BezierSplitFragment2], usize); 2],
         previous_cut: &mut CornerTrimCut2,
         next_cut: &mut CornerTrimCut2,
         center: CurvePoint2,
@@ -3050,10 +3057,15 @@ impl<'a> CurveCornerChain2<'a> {
         candidate_valid: &mut bool,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<BezierSplitFragment2>> {
-        let previous_fragment = previous_fragments
-            .last()
-            .expect("a nonempty previous source");
-        let next_fragment = next_fragments.first().expect("a nonempty next source");
+        let [
+            (previous_fragments, previous_index),
+            (next_fragments, next_index),
+        ] = sources;
+        // A cut may lie beyond other charts of the authored source. Keep
+        // the solved chart with its local parameter; the complete source
+        // domain is retained separately for circular extension ownership.
+        let previous_fragment = &previous_fragments[previous_index];
+        let next_fragment = &next_fragments[next_index];
         // Prefer the ordinary exact-Real arc authority whenever every retained
         // point already has a STRICT standalone witness.  This is not an
         // approximation or a field flattening: algebraic images enter only

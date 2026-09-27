@@ -307,6 +307,296 @@ impl FilletConstraintBinding2<'_> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
+fn constrained_coincident_fillet_at_center(
+    offsets: [&FilletOffsetCarrier2<'_, '_>; 2],
+    point: CurvePoint2,
+    clockwise: bool,
+    retain_selected_circle_endpoints: bool,
+    domains: [FilletContactDomain2; 2],
+    families: [CurveFamily2; 2],
+    binding: Option<&FilletConstraintBinding2<'_>>,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
+    let center = FilletCenterWitness2 {
+        point,
+        previous_parameter: None,
+        next_parameter: None,
+        // Both family resolvers have certified opposed source tangents.
+        // Preserve that semicircle proof for reconstruction instead of
+        // asking a general parameter map to rediscover it from the points.
+        retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+            cross: Some(RealSign::Zero),
+            dot: Some(RealSign::Negative),
+            center_parallel: None,
+            source_direction: None,
+            canonical_anchor_curve: None,
+            deferred_arc_contact: None,
+        }),
+    };
+    let empty = |reason| Ok(CurveCornerSolutions2::NoSolution(reason));
+    match fillet_corner_from_center(
+        offsets[0],
+        offsets[1],
+        &center,
+        clockwise,
+        retain_selected_circle_endpoints,
+        domains,
+        families[0],
+        families[1],
+        policy,
+    )? {
+        FilletCornerSelection2::Selected(corner) => {
+            if let Some(binding) = binding
+                && !binding.matches(&corner, policy)?
+            {
+                return empty(CurveCornerNoSolution2::UnsatisfiedConstraints);
+            }
+            Ok(CurveCornerSolutions2::Unique(corner))
+        }
+        FilletCornerSelection2::Outside => empty(CurveCornerNoSolution2::OutsideTrimDomain),
+        FilletCornerSelection2::Degenerate => empty(CurveCornerNoSolution2::DegenerateCandidate),
+    }
+}
+
+/// Coincident noncollapsed circles retain a radial contact correspondence.
+/// A supplied center or contact fixes it; otherwise only domain intersection
+/// and degeneracy are decided, without publishing a representative fillet.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn constrained_coincident_circular_fillet(
+    offsets: [&FilletOffsetCarrier2<'_, '_>; 2],
+    clockwise: bool,
+    retain_selected_circle_endpoints: bool,
+    domains: [FilletContactDomain2; 2],
+    families: [CurveFamily2; 2],
+    binding: Option<&FilletConstraintBinding2<'_>>,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
+    use crate::segment::ArcSweepPointLocation2;
+    let arc = |axis: usize| match offsets[axis] {
+        FilletOffsetCarrier2::Arc {
+            source,
+            source_radius,
+            signed_radius,
+        } => (*source, *source_radius, signed_radius),
+        _ => unreachable!("coincident circular fillets retain both source arcs"),
+    };
+    let arcs = [arc(0), arc(1)];
+    let empty = |reason| Ok(CurveCornerSolutions2::NoSolution(reason));
+    let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Fillet, families[0], cause);
+    let blocked = |reason| ExactCurveError::blocked(CurveOperation2::Fillet, families[0], reason);
+    // Contact_i = origin + (source_radius_i / signed_radius_i) * (center-origin).
+    // The common center support is nonzero. Equal radial factors therefore
+    // identify the same contact everywhere, and only those families collapse.
+    match crate::classify::is_zero(&(arcs[0].1 * arcs[1].2 - arcs[1].1 * arcs[0].2), policy) {
+        Some(true) => return empty(CurveCornerNoSolution2::DegenerateCandidate),
+        Some(false) => (),
+        None => return Err(blocked(crate::UncertaintyReason::RealSign)),
+    }
+    let mut center = binding.and_then(|binding| binding.request.center.clone());
+    if center.is_none()
+        && let Some(binding) = binding
+    {
+        for (axis, contact) in binding.request.contacts.iter().enumerate() {
+            let Some(contact) = contact else { continue };
+            let point = match contact {
+                CurveFilletContact2::Point(point) => point.clone(),
+                CurveFilletContact2::Parameter(parameter) => {
+                    binding.parameter_point(axis, parameter, policy)?
+                }
+            };
+            let (source, source_radius, signed_radius) = arcs[axis];
+            match crate::bezier_offset::retained_point_circle_incidence_sign(
+                &point,
+                source.support().center(),
+                source.support().radius_squared_ref(),
+                policy,
+            )
+            .map_err(invalid)?
+            {
+                Classification::Decided(RealSign::Zero) => (),
+                Classification::Decided(_) => {
+                    return empty(CurveCornerNoSolution2::UnsatisfiedConstraints);
+                }
+                Classification::Uncertain(reason) => return Err(blocked(reason)),
+            }
+            let scale = (signed_radius / source_radius).map_err(|cause| invalid(cause.into()))?;
+            center = Some(
+                match crate::BezierAlgebraicChord2::scaled_about_point_endpoint(
+                    &point,
+                    source.support().center(),
+                    &scale,
+                    policy,
+                )
+                .map_err(invalid)?
+                {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => return Err(blocked(reason)),
+                },
+            );
+            break;
+        }
+    }
+    if let Some(center) = center {
+        if binding.is_some_and(|binding| binding.request.center.is_some())
+            && !point_on_fillet_offset(&center, offsets[0], true, domains[0], families[0], policy)?
+        {
+            return empty(CurveCornerNoSolution2::UnsatisfiedConstraints);
+        }
+        return constrained_coincident_fillet_at_center(
+            offsets,
+            center,
+            clockwise,
+            retain_selected_circle_endpoints,
+            domains,
+            families,
+            binding,
+            policy,
+        );
+    }
+    // Circular extension supplies the full center circle apart from excluded
+    // endpoints. Intersecting it with a nonzero authored arc leaves a family.
+    if domains
+        .iter()
+        .any(|domain| domain.mode() == CurveCornerMode2::TrimOrExtend)
+    {
+        return Err(constraint_required(families[0]));
+    }
+    let center_scales = [
+        (arcs[0].2 / arcs[0].1).map_err(|cause| invalid(cause.into()))?,
+        (arcs[1].2 / arcs[1].1).map_err(|cause| invalid(cause.into()))?,
+    ];
+    let source_scales = [
+        (arcs[0].1 / arcs[0].2).map_err(|cause| invalid(cause.into()))?,
+        (arcs[1].1 / arcs[1].2).map_err(|cause| invalid(cause.into()))?,
+    ];
+    let radial_image = |axis: usize, point: &CurvePoint2, scale: &Real| {
+        match crate::BezierAlgebraicChord2::scaled_about_point_endpoint(
+            point,
+            arcs[axis].0.support().center(),
+            scale,
+            policy,
+        )
+        .map_err(invalid)?
+        {
+            Classification::Decided(point) => Ok(point),
+            Classification::Uncertain(reason) => Err(blocked(reason)),
+        }
+    };
+    let location = |axis: usize, center: &CurvePoint2| {
+        let point = radial_image(axis, center, &source_scales[axis])?;
+        match arcs[axis].0 {
+            ExactCornerArc2::Native(source) => match source
+                .strict_incident_point_evidence_location(&point, policy)
+                .map_err(invalid)?
+            {
+                Classification::Decided(location) => Ok(location),
+                Classification::Uncertain(reason) => Err(blocked(reason)),
+            },
+            ExactCornerArc2::RetainedRational(source) => {
+                let Some(parameter) = RetainedRationalCornerArc2::parameter_at_incident_point(
+                    source
+                        .fragment
+                        .rational_curve()
+                        .expect("a rational circular chart"),
+                    &point,
+                    CurveOperation2::Fillet,
+                    families[axis],
+                    policy,
+                )?
+                else {
+                    return Ok(ArcSweepPointLocation2::Outside);
+                };
+                let compare = |boundary| {
+                    curve_corner_domain::parameter_order(
+                        &parameter,
+                        boundary,
+                        CurveOperation2::Fillet,
+                        families[axis],
+                        policy,
+                    )
+                };
+                let start = compare(source.fragment.range().start())?;
+                let end = compare(source.fragment.range().end())?;
+                Ok(if start.is_lt() || end.is_gt() {
+                    ArcSweepPointLocation2::Outside
+                } else if start.is_eq() || end.is_eq() {
+                    ArcSweepPointLocation2::Endpoint
+                } else {
+                    ArcSweepPointLocation2::Interior
+                })
+            }
+        }
+    };
+    let mut endpoints: Vec<CurvePoint2> = Vec::new();
+    for axis in 0..2 {
+        // A rational chart's supporting arc can be wider than its surviving
+        // interval. Map the actual endpoints and classify in that interval,
+        // rather than inferring a family from the untrimmed parent sweep.
+        let boundaries = match arcs[axis].0 {
+            ExactCornerArc2::Native(source) => {
+                [source.start().clone().into(), source.end().clone().into()]
+            }
+            ExactCornerArc2::RetainedRational(source) => [
+                source.fragment.start_point().clone(),
+                source.fragment.end_point().clone(),
+            ],
+        };
+        for point in &boundaries {
+            let center = radial_image(axis, point, &center_scales[axis])?;
+            match location(1 - axis, &center)? {
+                ArcSweepPointLocation2::Interior => return Err(constraint_required(families[0])),
+                ArcSweepPointLocation2::Outside => continue,
+                ArcSweepPointLocation2::Endpoint => (),
+            }
+            let mut duplicate = false;
+            for known in &endpoints {
+                if fillet_point_matches(known, &center, families[0], policy)? {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if !duplicate {
+                endpoints.push(center);
+            }
+        }
+    }
+    if endpoints.is_empty() {
+        return empty(CurveCornerNoSolution2::OutsideTrimDomain);
+    }
+    // With no endpoint strictly inside the other sweep, an open overlap can
+    // only have coincident boundaries (including full circles). One certified
+    // interior point distinguishes identical sweeps from complementary sweeps.
+    // It is a domain witness only, never a selected center returned to callers.
+    let interior = match match arcs[0].0 {
+        ExactCornerArc2::Native(source) => source.representative_point(policy),
+        ExactCornerArc2::RetainedRational(source) => source.fragment.representative_point(policy),
+    }
+    .map_err(invalid)?
+    {
+        Classification::Decided(point) => point.into(),
+        Classification::Uncertain(reason) => return Err(blocked(reason)),
+    };
+    let interior = radial_image(0, &interior, &center_scales[0])?;
+    if location(1, &interior)? != ArcSweepPointLocation2::Outside {
+        return Err(constraint_required(families[0]));
+    }
+    let mut candidates = CornerSolutionAccumulator::Empty;
+    for center in endpoints {
+        candidates.append(constrained_coincident_fillet_at_center(
+            offsets,
+            center,
+            clockwise,
+            retain_selected_circle_endpoints,
+            domains,
+            families,
+            binding,
+            policy,
+        )?);
+    }
+    Ok(candidates.finish(CurveCornerNoSolution2::OutsideTrimDomain))
+}
+
 /// Resolves coincident linear center supports without selecting a representative.
 /// Equal source directions collapse every inserted arc. Opposed directions give
 /// semicircles, subject to the exact source domains and supplied constraints.
@@ -402,36 +692,16 @@ pub(super) fn constrained_coincident_linear_fillet(
                 return empty(CurveCornerNoSolution2::UnsatisfiedConstraints);
             }
         }
-        let center = FilletCenterWitness2 {
-            point: center,
-            previous_parameter: None,
-            next_parameter: None,
-            retained_anchor_evidence: None,
-        };
-        return match fillet_corner_from_center(
-            offsets[0],
-            offsets[1],
-            &center,
+        return constrained_coincident_fillet_at_center(
+            offsets,
+            center,
             clockwise,
             retain_selected_circle_endpoints,
             domains,
-            families[0],
-            families[1],
+            families,
+            binding,
             policy,
-        )? {
-            FilletCornerSelection2::Selected(corner) => {
-                if let Some(binding) = binding
-                    && !binding.matches(&corner, policy)?
-                {
-                    return empty(CurveCornerNoSolution2::UnsatisfiedConstraints);
-                }
-                Ok(CurveCornerSolutions2::Unique(corner))
-            }
-            FilletCornerSelection2::Outside => empty(CurveCornerNoSolution2::OutsideTrimDomain),
-            FilletCornerSelection2::Degenerate => {
-                empty(CurveCornerNoSolution2::DegenerateCandidate)
-            }
-        };
+        );
     }
 
     // In the previous line's increasing coordinate, both remote endpoints
@@ -1734,6 +2004,455 @@ mod tests {
         assert_eq!(result.value, Classification::Decided(true));
     }
 
+    fn closed_region(path: &CurvePath2, policy: &CurveContext) -> crate::CurveRegion2 {
+        let mut curves = path.curves().to_vec();
+        let Classification::Decided(closing) =
+            crate::BezierAlgebraicChord2::try_new(path.end(), path.start(), policy).unwrap()
+        else {
+            panic!("exact closing chord")
+        };
+        curves.push(Curve2::from_retained_fragment(
+            crate::BezierSplitFragment2::AlgebraicChord(closing),
+        ));
+        crate::CurveRegion2::try_from_boundary_paths(
+            &[CurvePath2::try_new(curves).unwrap()],
+            policy,
+        )
+        .unwrap()
+        .value
+    }
+
+    #[test]
+    fn coincident_circular_fillet_constraints_complete_the_authored_chart_solutions() {
+        let p = Point2::from_values;
+        for past_center in [false, true] {
+            let clockwise = !past_center;
+            let remote = if past_center { p(-2, 0) } else { p(0, -2) };
+            let control = if past_center {
+                vec![
+                    p(1, 0),
+                    Point2::new(q(1, 2), Real::one()),
+                    p(0, 2),
+                    p(-2, 2),
+                    remote.clone(),
+                ]
+            } else {
+                vec![
+                    p(1, 0),
+                    Point2::new(q(3, 2), Real::zero()),
+                    p(2, 0),
+                    p(2, -2),
+                    remote.clone(),
+                ]
+            };
+            let spline = Curve2::try_nurbs(
+                2,
+                control,
+                vec![
+                    Real::one(),
+                    Real::one(),
+                    Real::one(),
+                    q(1, 2).sqrt().unwrap(),
+                    Real::one(),
+                ],
+                [0, 0, 0, 1, 1, 2, 2, 2]
+                    .into_iter()
+                    .map(Real::from)
+                    .collect(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+            .value;
+            let source = CurvePath2::try_new(vec![
+                CircularArc2::try_from_center(p(0, -1), p(1, 0), p(0, 0), false)
+                    .unwrap()
+                    .into(),
+                spline,
+            ])
+            .unwrap();
+            let inner = Point2::new(q(3, 5), q(-4, 5));
+            let outer = if past_center {
+                Point2::new(q(-6, 5), q(8, 5))
+            } else {
+                Point2::new(q(6, 5), q(-8, 5))
+            };
+            let center = if past_center {
+                Point2::new(q(-3, 10), q(2, 5))
+            } else {
+                Point2::new(q(9, 10), q(-6, 5))
+            };
+            // Independent nonzero fillet in a continuum, including the sheet
+            // where the inner arc's offset passes through its source center.
+            let witness = CurvePath2::try_new(vec![
+                CircularArc2::try_from_center(p(0, -1), inner.clone(), p(0, 0), false)
+                    .unwrap()
+                    .into(),
+                CircularArc2::try_from_center(
+                    inner.clone(),
+                    outer.clone(),
+                    center.clone(),
+                    clockwise,
+                )
+                .unwrap()
+                .into(),
+                CircularArc2::try_from_center(outer.clone(), remote.clone(), p(0, 0), clockwise)
+                    .unwrap()
+                    .into(),
+            ])
+            .unwrap();
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let retained = |point: &Point2| {
+                    let Classification::Decided(chord) = crate::BezierAlgebraicChord2::try_new(
+                        point.clone().into(),
+                        inner.clone().into(),
+                        &policy,
+                    )
+                    .unwrap() else {
+                        panic!("exact contact chord")
+                    };
+                    let chord = chord
+                        .parallel_left_retained(Real::one(), &policy)
+                        .unwrap()
+                        .parallel_left_retained(-Real::one(), &policy)
+                        .unwrap();
+                    assert!(chord.start().coordinates().is_none());
+                    chord.start().clone()
+                };
+                let retained_outer = retained(&outer);
+                let retained_center = retained(&center);
+                for reversed in [false, true] {
+                    let path = if reversed {
+                        source.reversed(&policy).unwrap().value
+                    } else {
+                        source.clone()
+                    };
+                    let spline_axis = usize::from(!reversed);
+                    for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                        let mut request =
+                            CurveFillet2::new(if past_center { q(3, 2) } else { q(1, 2) });
+                        match path.fillet_vertex(1, &request, mode, &policy) {
+                            Err(ExactCurveError::Invalid {
+                                cause: CurveError::FilletConstraintRequired,
+                                ..
+                            }) => (),
+                            Err(error) => panic!("unexpected circular family error: {error}"),
+                            Ok(outcome) => panic!(
+                                "circular family omitted: count={}, reason={:?}",
+                                outcome.value.candidate_count(),
+                                outcome.value.no_solution_reason()
+                            ),
+                        }
+                        for constraint in 0..6 {
+                            request.center =
+                                (constraint == 0 || constraint == 2).then(|| center.clone().into());
+                            if constraint == 5 {
+                                request.center = Some(retained_center.clone());
+                            }
+                            request.contacts = [None, None];
+                            if constraint == 4 {
+                                request.contacts[spline_axis] =
+                                    Some(CurveFilletContact2::Point(retained_outer.clone()));
+                            }
+                            if constraint == 1 || constraint == 2 {
+                                request.contacts[spline_axis] =
+                                    Some(CurveFilletContact2::Point(outer.clone().into()));
+                            }
+                            let contacts: [CurvePoint2; 2] = if constraint == 3 {
+                                request.contacts[spline_axis] =
+                                    Some(CurveFilletContact2::Parameter(
+                                        (if reversed { q(1, 2) } else { q(3, 2) }).into(),
+                                    ));
+                                let unit = q(1, 2).sqrt().unwrap();
+                                let outer_x = Real::from(if past_center { -2 } else { 2 }) * &unit;
+                                [
+                                    Point2::new(unit.clone(), -unit).into(),
+                                    Point2::new(outer_x.clone(), -outer_x).into(),
+                                ]
+                            } else {
+                                [inner.clone().into(), outer.clone().into()]
+                            };
+                            let selected = path.fillet_vertex(1, &request, mode, &policy).unwrap_or_else(|error| panic!("circular constraint failed: constraint={constraint}, reversed={reversed}, mode={mode:?}, past_center={past_center}, error={error}"));
+                            assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
+                            assert_eq!(
+                                selected.value.candidate_count(),
+                                1,
+                                "constraint={constraint}, reversed={reversed}, mode={mode:?}, past_center={past_center}"
+                            );
+                            let edited = &selected.value.solutions()[0];
+                            same(&edited.start(), &path.start(), &policy);
+                            same(&edited.end(), &path.end(), &policy);
+                            same(
+                                &edited.curves().first().unwrap().end(),
+                                &contacts[usize::from(reversed)],
+                                &policy,
+                            );
+                            same(
+                                &edited.curves().last().unwrap().start(),
+                                &contacts[spline_axis],
+                                &policy,
+                            );
+                            for pair in edited.curves().windows(2) {
+                                same(&pair[0].end(), &pair[1].start(), &policy);
+                            }
+                            if matches!(constraint, 0 | 4 | 5)
+                                && !reversed
+                                && mode == CurveCornerMode2::TrimOnly
+                            {
+                                let region = closed_region(edited, &policy);
+                                let difference = region
+                                    .boolean_regions(&closed_region(&witness, &policy), &policy)
+                                    .unwrap();
+                                assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
+                                assert!(difference.value.xor().is_empty());
+                                let offset = region
+                                    .offset(q(1, 100), &crate::OffsetCornerStyle2::Bevel, &policy)
+                                    .unwrap();
+                                assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
+                                let outside =
+                                    offset.value.classify_point(&p(10, 10), &policy).unwrap();
+                                assert_eq!(outside.certainty, crate::CurveCertainty::Certified);
+                                assert_eq!(
+                                    outside.value,
+                                    Classification::Decided(crate::RegionPointLocation::Outside)
+                                );
+                            }
+                        }
+                        request.contacts = [None, None];
+                        request.center = Some(p(0, 0).into());
+                        assert!(
+                            path.fillet_vertex(1, &request, mode, &policy)
+                                .unwrap()
+                                .value
+                                .solutions()
+                                .is_empty()
+                        );
+                        request.center = None;
+                        request.contacts[spline_axis] =
+                            Some(CurveFilletContact2::Point(remote.clone().into()));
+                        assert!(
+                            path.fillet_vertex(1, &request, mode, &policy)
+                                .unwrap()
+                                .value
+                                .solutions()
+                                .is_empty()
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn coincident_circular_fillet_domains_distinguish_families_and_isolated_contacts() {
+        let p = Point2::from_values;
+        let arc = |start, end, clockwise| {
+            CircularArc2::try_from_center(start, end, p(0, 0), clockwise).unwrap()
+        };
+        // Disjoint quarters, complementary halves, coincident full circles,
+        // two-component major-arc overlap, and an isolated incident contact
+        // after crossing the inner circle's center.
+        let fixtures = [
+            (
+                arc(p(0, -1), p(1, 0), false),
+                arc(p(-2, 0), p(0, 2), true),
+                false,
+                false,
+            ),
+            (
+                arc(p(-1, 0), p(1, 0), false),
+                arc(p(-2, 0), p(2, 0), true),
+                false,
+                false,
+            ),
+            (
+                arc(p(1, 0), p(1, 0), false),
+                arc(p(2, 0), p(2, 0), true),
+                true,
+                false,
+            ),
+            (
+                arc(p(1, 0), p(0, -1), false),
+                arc(p(0, 2), p(-2, 0), true),
+                true,
+                false,
+            ),
+            (
+                arc(p(0, -1), p(1, 0), false),
+                arc(p(-2, 0), p(0, -2), false),
+                false,
+                true,
+            ),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (index, (previous, next, overlap, isolated)) in fixtures.iter().enumerate() {
+                for reversed in [false, true] {
+                    let arcs = if reversed {
+                        [next.reversed(), previous.reversed()]
+                    } else {
+                        [previous.clone(), next.clone()]
+                    };
+                    for chart in [false, true] {
+                        for extend_axis in [None, Some(0), Some(1)] {
+                            let domains = [0, 1].map(|axis| {
+                                let mode = if extend_axis == Some(axis) {
+                                    CurveCornerMode2::TrimOrExtend
+                                } else {
+                                    CurveCornerMode2::TrimOnly
+                                };
+                                if chart {
+                                    FilletContactDomain2::SourceChart(mode)
+                                } else {
+                                    FilletContactDomain2::AuthoredCurve(mode)
+                                }
+                            });
+                            let radius = if *isolated { q(3, 2) } else { q(1, 2) };
+                            let outcome = solve_carrier_fillet_corner(
+                                ExactCornerCarrier2::Arc(&arcs[0]),
+                                ExactCornerCarrier2::Arc(&arcs[1]),
+                                &radius,
+                                false,
+                                domains,
+                                CurveFamily2::CircularArc,
+                                CurveFamily2::CircularArc,
+                                None,
+                                &policy,
+                            );
+                            if *overlap || extend_axis.is_some() {
+                                assert!(
+                                    matches!(
+                                        outcome,
+                                        Err(ExactCurveError::Invalid {
+                                            cause: CurveError::FilletConstraintRequired,
+                                            ..
+                                        })
+                                    ),
+                                    "expected family: fixture={index}, chart={chart}, reversed={reversed}, extend_axis={extend_axis:?}"
+                                );
+                            } else {
+                                let solutions = outcome.unwrap();
+                                assert_eq!(
+                                    solutions.candidate_count(),
+                                    usize::from(*isolated && chart),
+                                    "fixture={index}, chart={chart}, reversed={reversed}"
+                                );
+                                for corner in solutions.solutions() {
+                                    same(
+                                        &corner.center,
+                                        &Point2::new(q(-1, 2), Real::zero()).into(),
+                                        &policy,
+                                    );
+                                    same(
+                                        &corner.previous.point,
+                                        &arcs[0].end().clone().into(),
+                                        &policy,
+                                    );
+                                    same(
+                                        &corner.next.point,
+                                        &arcs[1].start().clone().into(),
+                                        &policy,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn coincident_circular_fillet_families_use_the_surviving_rational_intervals() {
+        let p = Point2::from_values;
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for upper in [q(1, 4), q(1, 2), q(3, 4), q(1, 8).sqrt().unwrap()] {
+                let sources = [
+                    vec![p(1, 0), p(1, 1), p(0, 1)],
+                    vec![p(0, 2), p(2, 2), p(2, 0)],
+                ]
+                .map(|controls| {
+                    let curve = RationalBezier2::try_new(
+                        controls,
+                        vec![Real::one(), q(1, 2).sqrt().unwrap(), Real::one()],
+                    )
+                    .unwrap();
+                    let Classification::Decided(start) =
+                        curve.point_at_classified(&Real::zero(), &policy)
+                    else {
+                        panic!("exact chart start")
+                    };
+                    let Classification::Decided(end) = curve.point_at_classified(&upper, &policy)
+                    else {
+                        panic!("exact chart end")
+                    };
+                    crate::bezier_split::BezierSelectedFiberFragment2::new(
+                        crate::bezier_split::BezierSelectedFiberSource2::Rational(curve),
+                        CurveParameterRange2::new_validated(
+                            Real::zero().into(),
+                            upper.clone().into(),
+                        ),
+                        start.into(),
+                        end.into(),
+                    )
+                });
+                let open_overlap = upper == q(3, 4);
+                for reversed in [false, true] {
+                    let sources = if reversed {
+                        [sources[1].reversed(), sources[0].reversed()]
+                    } else {
+                        sources.clone()
+                    };
+                    let carriers = sources.each_ref().map(|source| {
+                        RetainedRationalCornerArc2::from_selected(
+                            source,
+                            CurveOperation2::Fillet,
+                            &policy,
+                        )
+                        .unwrap()
+                        .unwrap()
+                    });
+                    for chart in [false, true] {
+                        for extend_axis in [None, Some(0), Some(1)] {
+                            let domains = [0, 1].map(|axis| {
+                                let mode = if extend_axis == Some(axis) {
+                                    CurveCornerMode2::TrimOrExtend
+                                } else {
+                                    CurveCornerMode2::TrimOnly
+                                };
+                                if chart {
+                                    FilletContactDomain2::SourceChart(mode)
+                                } else {
+                                    FilletContactDomain2::AuthoredCurve(mode)
+                                }
+                            });
+                            let outcome = solve_carrier_fillet_corner(
+                                ExactCornerCarrier2::RetainedRationalArc(carriers[0].clone()),
+                                ExactCornerCarrier2::RetainedRationalArc(carriers[1].clone()),
+                                &q(1, 2),
+                                false,
+                                domains,
+                                CurveFamily2::CircularArc,
+                                CurveFamily2::CircularArc,
+                                None,
+                                &policy,
+                            );
+                            if open_overlap || extend_axis.is_some() {
+                                assert!(matches!(
+                                    outcome,
+                                    Err(ExactCurveError::Invalid {
+                                        cause: CurveError::FilletConstraintRequired,
+                                        ..
+                                    })
+                                ));
+                            } else {
+                                assert_eq!(outcome.unwrap().candidate_count(), 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     #[test]
     fn coincident_line_fillet_constraints_complete_the_authored_chart_solutions() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -1838,30 +2557,8 @@ mod tests {
                                 edited.reversed(&CurveContext::STRICT).unwrap().certainty,
                                 crate::CurveCertainty::Certified
                             );
-                            let region = |path: &CurvePath2| {
-                                let mut curves = path.curves().to_vec();
-                                let Classification::Decided(closing) =
-                                    crate::BezierAlgebraicChord2::try_new(
-                                        path.end(),
-                                        path.start(),
-                                        &policy,
-                                    )
-                                    .unwrap()
-                                else {
-                                    panic!("exact closing chord")
-                                };
-                                curves.push(Curve2::from_retained_fragment(
-                                    crate::BezierSplitFragment2::AlgebraicChord(closing),
-                                ));
-                                crate::CurveRegion2::try_from_boundary_paths(
-                                    &[CurvePath2::try_new(curves).unwrap()],
-                                    &policy,
-                                )
-                                .unwrap()
-                                .value
-                            };
-                            let difference = region(edited)
-                                .boolean_regions(&region(&witness), &policy)
+                            let difference = closed_region(edited, &policy)
+                                .boolean_regions(&closed_region(&witness, &policy), &policy)
                                 .unwrap();
                             assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
                             assert!(difference.value.xor().is_empty());

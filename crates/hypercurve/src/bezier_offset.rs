@@ -16534,6 +16534,9 @@ impl BezierAlgebraicCuspSemicircle2 {
     ///
     /// - center: `(X * normal_denominator, Y * normal_denominator)`;
     /// - normal: `(X - center_x * W, Y - center_y * W)`.
+    ///
+    /// Other retained point forms reuse the general chord-normal frame with
+    /// an exact similarity of the certified radial as its tangent direction.
     pub(crate) fn from_retained_center_and_certified_concentric_normal(
         center: &CurvePoint2,
         support_center: &Point2,
@@ -16579,7 +16582,42 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         }
         let CurvePoint2(CurvePointData2::Algebraic(center)) = center else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            // The certified radial has length |normal_denominator|. Its
+            // clockwise rotation divided by that signed denominator has
+            // unit left normal (center-support_center)/normal_denominator.
+            // Reuse the general chord frame for independently retained point
+            // fields instead of requiring a single-field coordinate image.
+            let inverse = (Real::one() / &normal_denominator)?;
+            let transform = Similarity2::try_from_real_affine(
+                Real::zero(),
+                inverse.clone(),
+                -&inverse,
+                Real::zero(),
+                -support_center.y() * &inverse,
+                support_center.x() * inverse,
+            )?;
+            let tangent = CurvePoint2::from(BezierSimilarityPoint2::new(
+                center.clone(),
+                transform,
+                policy,
+            ));
+            let anchor = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                Point2::from_values(0, 0).into(),
+                tangent,
+                policy,
+            )? {
+                Classification::Decided(anchor) => anchor,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            return Self::from_retained_center_and_chord_normal(
+                center.clone(),
+                anchor,
+                radial_distance,
+                clockwise,
+                policy,
+            );
         };
         let parameter = match algebraic_chord_image_parameter(center, policy)? {
             Classification::Decided(parameter) => parameter,

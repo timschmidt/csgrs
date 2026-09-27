@@ -6017,14 +6017,14 @@ fn solve_carrier_fillet_corner(
                             policy,
                         );
                     }
-                    if [previous_offset, next_offset].iter().all(|offset| {
+                    let solutions = if [previous_offset, next_offset].iter().all(|offset| {
                         matches!(
                             offset,
                             FilletOffsetCarrier2::Line { .. }
                                 | FilletOffsetCarrier2::AlgebraicChord { .. }
                         )
                     }) {
-                        let solutions = curve_fillet::constrained_coincident_linear_fillet(
+                        curve_fillet::constrained_coincident_linear_fillet(
                             [previous_offset, next_offset],
                             &signed_distance,
                             clockwise,
@@ -6033,21 +6033,34 @@ fn solve_carrier_fillet_corner(
                             [previous_family, next_family],
                             constraints,
                             policy,
-                        )?;
-                        match candidates.append(solutions) {
-                            Some(CurveCornerNoSolution2::DegenerateCandidate) => {
-                                saw_degenerate = true
-                            }
-                            Some(CurveCornerNoSolution2::OutsideTrimDomain) => {
-                                saw_outside_domain = true
-                            }
-                            Some(CurveCornerNoSolution2::UnsatisfiedConstraints) => {
-                                saw_unsatisfied = true
-                            }
-                            _ => (),
-                        }
+                        )?
+                    } else if [previous_offset, next_offset]
+                        .iter()
+                        .all(|offset| matches!(offset, FilletOffsetCarrier2::Arc { .. }))
+                    {
+                        curve_fillet::constrained_coincident_circular_fillet(
+                            [previous_offset, next_offset],
+                            clockwise,
+                            retain_selected_circle_endpoints,
+                            domains,
+                            [previous_family, next_family],
+                            constraints,
+                            policy,
+                        )?
                     } else {
-                        saw_degenerate = true;
+                        CurveCornerSolutions2::NoSolution(
+                            CurveCornerNoSolution2::DegenerateCandidate,
+                        )
+                    };
+                    match candidates.append(solutions) {
+                        Some(CurveCornerNoSolution2::DegenerateCandidate) => saw_degenerate = true,
+                        Some(CurveCornerNoSolution2::OutsideTrimDomain) => {
+                            saw_outside_domain = true
+                        }
+                        Some(CurveCornerNoSolution2::UnsatisfiedConstraints) => {
+                            saw_unsatisfied = true
+                        }
+                        _ => (),
                     }
                 }
                 for center in centers.iter() {
