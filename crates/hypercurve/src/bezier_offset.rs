@@ -113052,17 +113052,7 @@ impl BezierParallel2 {
         }
 
         let differential = self.differential()?;
-        match polynomial_is_nonzero_on_parameter_range(
-            &parallel_speed_squared_polynomial(differential),
-            domain.finite,
-            policy,
-        )? {
-            Classification::Decided(true) => {}
-            Classification::Decided(false) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
+        let speed_squared = parallel_speed_squared_polynomial(differential);
         let orthogonality = polynomial_add(
             &polynomial_multiply(&delta_x, &differential.tangent_x),
             &polynomial_multiply(&delta_y, &differential.tangent_y),
@@ -113107,6 +113097,22 @@ impl BezierParallel2 {
 
         match incidence {
             BezierParallelIncidence2::EntireCurve => {
+                // A complete matching domain needs a normal everywhere.
+                // Isolated contacts below only need their own regular frame;
+                // unrelated stationary source parameters cannot exclude them.
+                match polynomial_is_nonzero_on_parameter_range(
+                    &speed_squared,
+                    domain.finite,
+                    policy,
+                )? {
+                    Classification::Decided(true) => (),
+                    Classification::Decided(false) => {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
                 match polynomial_roots_in_parameter_domain(&branch, domain, policy)? {
                     Classification::Decided(roots) if roots.is_empty() => {}
                     Classification::Decided(_) => {
@@ -113136,6 +113142,22 @@ impl BezierParallel2 {
             BezierParallelIncidence2::Parameters(candidates) => {
                 let mut retained = Vec::with_capacity(candidates.len());
                 for candidate in candidates {
+                    match signed_coefficients_at_parameter(&speed_squared, &candidate, policy)? {
+                        Classification::Decided(RealSign::Positive) => (),
+                        Classification::Decided(RealSign::Zero) => {
+                            // A one-sided normal can survive a stationary
+                            // source parameter. Its absence needs more proof.
+                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        }
+                        Classification::Decided(RealSign::Negative) => {
+                            return Err(CurveError::Topology(
+                                "a parallel source had negative squared speed".into(),
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
                     match signed_coefficients_at_parameter(
                         branch.coefficients(),
                         &candidate,
@@ -161569,6 +161591,71 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     );
                 }
             }
+        }
+    }
+
+    #[test]
+    fn point_incidence_checks_regular_frames_at_each_isolated_contact() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(1, 0),
+            Point2::from_values(-1, 0),
+            Point2::from_values(1, 0),
+        );
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (height, expected) in [(1, Real::from(3) * &quarter), (-1, quarter.clone())] {
+                let Classification::Decided(BezierParallelIncidence2::Parameters(parameters)) =
+                    parallel
+                        .point_incidence(
+                            &Point2::new(quarter.clone(), Real::from(height)),
+                            &CurveParameterRange2::unit(),
+                            &policy,
+                        )
+                        .unwrap()
+                else {
+                    panic!("an unrelated stationary parameter must not block a regular contact");
+                };
+                assert_eq!(parameters.len(), 1);
+                assert_eq!(
+                    CurveParameter2::from(parameters[0].clone())
+                        .same_value(&expected.into(), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
+                );
+            }
+            // At t=1/2 the source normal is undefined, but its right-hand
+            // limit reaches (0,1). Absence requires one-sided frame evidence.
+            assert!(matches!(
+                parallel
+                    .point_incidence(
+                        &Point2::from_values(0, 1),
+                        &CurveParameterRange2::unit(),
+                        &policy,
+                    )
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+            // Zero displacement is the original curve value and needs no normal.
+            let Classification::Decided(BezierParallelIncidence2::Parameters(stationary)) =
+                parallel
+                    .with_distance(Real::zero())
+                    .point_incidence(
+                        &Point2::from_values(0, 0),
+                        &CurveParameterRange2::unit(),
+                        &policy,
+                    )
+                    .unwrap()
+            else {
+                panic!("the stationary source value still exists");
+            };
+            assert_eq!(stationary.len(), 1);
+            assert_eq!(
+                CurveParameter2::from(stationary[0].clone())
+                    .same_value(&(Real::from(2) * &quarter).into(), &policy)
+                    .unwrap(),
+                Classification::Decided(true)
+            );
         }
     }
 

@@ -5165,14 +5165,8 @@ impl<'a> PreparedFilletCarrier2<'a> {
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
-        let Self::Parallel {
-            source, parallel, ..
-        } = self
-        else {
+        let Self::Parallel { parallel, .. } = self else {
             return Ok(true);
-        };
-        let FilletOffsetCarrier2::Parallel { support, .. } = offset else {
-            unreachable!("a prepared parallel produces parallel center supports")
         };
         let parameter = parameter.expect("a parallel center retains its source parameter");
         let sign = match parallel
@@ -5195,7 +5189,25 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 ));
             }
         };
-        let distance = if (sign == RealSign::Positive) != source.is_reversed() {
+        Ok(self.accepts_offset_direction(offset, sign, signed_distance))
+    }
+
+    fn accepts_offset_direction(
+        &self,
+        offset: &FilletOffsetCarrier2<'_, '_>,
+        source_sign: RealSign,
+        signed_distance: &Real,
+    ) -> bool {
+        let Self::Parallel {
+            source, parallel, ..
+        } = self
+        else {
+            return true;
+        };
+        let FilletOffsetCarrier2::Parallel { support, .. } = offset else {
+            unreachable!("a prepared parallel produces parallel center supports")
+        };
+        let distance = if (source_sign == RealSign::Positive) != source.is_reversed() {
             parallel.distance() + signed_distance
         } else {
             parallel.distance() - signed_distance
@@ -5203,7 +5215,47 @@ impl<'a> PreparedFilletCarrier2<'a> {
         // Both alternatives were constructed from these same scalar operands.
         // This selects their construction identity; it does not reconstruct a
         // field or infer geometric inequality from unrelated Real expressions.
-        Ok(support.distance() == &distance)
+        support.distance() == &distance
+    }
+
+    /// The caller has certified that the entire center support is one point.
+    /// On each regular source cell, 1 - d_center * curvature = 0, so the
+    /// original parallel scale has the sign of (d_center-d_source)*d_center.
+    /// This validates its normal branch without choosing a contact sample.
+    fn accepts_collapsed_offset(
+        &self,
+        offset: &FilletOffsetCarrier2<'_, '_>,
+        signed_distance: &Real,
+        family: CurveFamily2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        let Self::Parallel { parallel, .. } = self else {
+            return Ok(true);
+        };
+        let FilletOffsetCarrier2::Parallel { support, .. } = offset else {
+            unreachable!("a collapsed parallel center retains its support")
+        };
+        let scale_sign = match crate::classify::real_sign(
+            &((support.distance() - parallel.distance()) * support.distance()),
+            policy,
+        ) {
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Some(RealSign::Zero) => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    crate::UncertaintyReason::Boundary,
+                ));
+            }
+            None => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    crate::UncertaintyReason::RealSign,
+                ));
+            }
+        };
+        Ok(self.accepts_offset_direction(offset, scale_sign, signed_distance))
     }
 
     fn offsets<'b>(
@@ -5796,13 +5848,49 @@ fn solve_carrier_fillet_corner<'a>(
         let previous_offsets = previous.offsets(&signed_distance, previous_family, policy)?;
         let next_offsets = next.offsets(&signed_distance, next_family, policy)?;
         for previous_offset in previous_offsets.iter().flatten() {
-            for next_offset in next_offsets.iter().flatten() {
+            'offset_pair: for next_offset in next_offsets.iter().flatten() {
+                if let Some(center) =
+                    constraints.and_then(|binding| binding.request.center.as_ref())
+                {
+                    for (axis, (offset, family)) in [
+                        (previous_offset, previous_family),
+                        (next_offset, next_family),
+                    ]
+                    .into_iter()
+                    .enumerate()
+                    {
+                        if matches!(
+                            offset,
+                            FilletOffsetCarrier2::Line { .. }
+                                | FilletOffsetCarrier2::Arc { .. }
+                                | FilletOffsetCarrier2::Point { .. }
+                        ) && matches!(
+                            policy.strict_predicate_pass(|| point_on_fillet_offset(
+                                center,
+                                offset,
+                                axis == 0,
+                                domains[axis],
+                                family,
+                                policy
+                            )),
+                            Ok(false)
+                        ) {
+                            // A certified center constraint can exclude a
+                            // native support before unrelated elimination.
+                            // An unavailable proof leaves the general solve.
+                            saw_unsatisfied = true;
+                            continue 'offset_pair;
+                        }
+                    }
+                }
                 if matches!(previous_offset, FilletOffsetCarrier2::Point { .. })
                     || matches!(next_offset, FilletOffsetCarrier2::Point { .. })
                 {
                     let solutions = curve_fillet::constrained_collapsed_fillet(
+                        [&previous, &next],
                         [previous_offset, next_offset],
                         clockwise,
+                        &signed_distance,
                         retain_selected_circle_endpoints,
                         domains,
                         [previous_family, next_family],
