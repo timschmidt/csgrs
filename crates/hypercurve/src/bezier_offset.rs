@@ -112856,8 +112856,8 @@ impl BezierParallel2 {
     /// A retained source fragment can end at a stationary parameter.  Its
     /// authored hodograph then vanishes even though cancelling the exact
     /// common factor leaves a finite one-sided parallel tangent.  Reuse that
-    /// source-oriented regularized field, and the parallel/source derivative
-    /// scale certified at an interior point, for endpoint and algebraic
+    /// source-oriented regularized field and replay the parallel/source derivative
+    /// scale at the contact or its owned one-sided limit, for endpoint and algebraic
     /// contact predicates on the complete retained range.
     pub(crate) fn vector_tangent_cross_and_dot_signs_on_regular_range(
         &self,
@@ -112881,24 +112881,22 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let Some(tangent_field) = tangent_field else {
-            return self.vector_tangent_cross_and_dot_signs(parameter, vector_x, vector_y, policy);
+        let derivative_scale_sign = match self
+            .parallel_derivative_scale_sign_on_regular_range(parameter, range, &strict)?
+        {
+            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         };
-        let derivative_scale_sign =
-            match self.parallel_derivative_scale_sign_at_exact(&interior, &strict)? {
-                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-                Classification::Decided(RealSign::Zero) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
         self.vector_tangent_cross_and_dot_signs_with_tangent_field(
             parameter,
             vector_x,
             vector_y,
-            Some(&tangent_field),
+            tangent_field.as_deref(),
             Some(derivative_scale_sign),
             policy,
         )
@@ -118034,35 +118032,6 @@ impl BezierParallel2 {
         if first_frame.is_none() && second_frame.is_none() {
             return self.parallel_intersections_without_regular_frame(other, policy);
         }
-        let branch_scale = |parallel: &BezierParallel2,
-                            range: &CurveParameterRange2|
-         -> CurveResult<Classification<RealSign>> {
-            let interior = match range.strict_interior_scalar(&strict)? {
-                Classification::Decided(interior) => interior,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            match parallel.parallel_derivative_scale_sign_at_exact(&interior, &strict)? {
-                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
-                    Ok(Classification::Decided(sign))
-                }
-                Classification::Decided(RealSign::Zero) => {
-                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
-                }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
-        };
-        let first_scale = match branch_scale(self, first_range)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second_scale = match branch_scale(other, second_range)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
         let Some(system) = (match parallel_pair_equation_system_with_tangent_fields(
             self,
             other,
@@ -118092,12 +118061,12 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        self.replay_parallel_pair_projection_with_scale_signs(
+        self.replay_parallel_pair_projection_with_ranges(
             other,
             &system,
             projection,
             BezierParallelPairParameterSelection2::All,
-            Some([first_scale, second_scale]),
+            Some([first_range, second_range]),
             policy,
         )
     }
@@ -118646,7 +118615,6 @@ impl BezierParallel2 {
             off_diagonal,
             None,
             None,
-            None,
             |parameter| {
                 Ok(Some(CurvePoint2::from(BezierAnalyticParallelPoint2::new(
                     zero.clone(),
@@ -118975,27 +118943,27 @@ impl BezierParallel2 {
         selection: BezierParallelPairParameterSelection2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
-        self.replay_parallel_pair_projection_with_scale_signs(
+        self.replay_parallel_pair_projection_with_ranges(
             other, system, projection, selection, None, policy,
         )
     }
 
-    fn replay_parallel_pair_projection_with_scale_signs(
+    fn replay_parallel_pair_projection_with_ranges(
         &self,
         other: &Self,
         system: &BezierParallelPairEquationSystem2,
         mut projection: BezierParallelPairProjection2,
         selection: BezierParallelPairParameterSelection2,
-        regular_branch_scale_signs: Option<[RealSign; 2]>,
+        regular_ranges: Option<[&CurveParameterRange2; 2]>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
         if let Some(radical_component_projection) = projection.radical_component_projection.take() {
-            let radical_component = match self.replay_parallel_pair_projection_with_scale_signs(
+            let radical_component = match self.replay_parallel_pair_projection_with_ranges(
                 other,
                 system,
                 *radical_component_projection,
                 selection,
-                regular_branch_scale_signs,
+                regular_ranges,
                 policy,
             )? {
                 Classification::Decided(intersections) => intersections,
@@ -119003,12 +118971,12 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let residual = match self.replay_parallel_pair_projection_with_scale_signs(
+            let residual = match self.replay_parallel_pair_projection_with_ranges(
                 other,
                 system,
                 projection,
                 selection,
-                regular_branch_scale_signs,
+                regular_ranges,
                 policy,
             )? {
                 Classification::Decided(intersections) => intersections,
@@ -119083,8 +119051,12 @@ impl BezierParallel2 {
         let mut incomplete = projection_incomplete;
         let derivative_scale_sign =
             |parallel: &BezierParallel2, parameter: &BezierParameter2, index: usize| {
-                if let Some(signs) = regular_branch_scale_signs {
-                    Ok(Classification::Decided(signs[index]))
+                if let Some(ranges) = regular_ranges {
+                    parallel.parallel_derivative_scale_sign_on_regular_range(
+                        &parameter.clone().into(),
+                        ranges[index],
+                        policy,
+                    )
                 } else {
                     parallel.parallel_derivative_scale_sign(&parameter.clone().into(), policy)
                 }
@@ -119565,6 +119537,73 @@ impl BezierParallel2 {
             return self.parallel_derivative_scale_sign_at_exact(parameter, policy);
         }
         self.parallel_derivative_scale_sign_from_polynomials(parameter, policy)
+    }
+
+    /// Replays orientation at the contact, using the owned one-sided limit
+    /// only when the derivative vanishes at a retained range endpoint.
+    ///
+    /// A regular source frame can span cusps of its parallel. Its interior
+    /// sample therefore cannot certify the parallel's orientation at every
+    /// contact. At a stationary endpoint the first nonzero Taylor coefficient
+    /// of each curvature predicate supplies the exact local sign; no new
+    /// scalar image or root isolation is needed.
+    fn parallel_derivative_scale_sign_on_regular_range(
+        &self,
+        parameter: &CurveParameter2,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let scale = self.parallel_derivative_scale_sign(parameter, policy)?;
+        if scale != Classification::Decided(RealSign::Zero) {
+            return Ok(scale);
+        }
+        let strict = policy.strict_counterpart();
+        let [lower, upper] = match range.ordered_endpoints(&strict)? {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let increasing = match parameter.cmp_by_refinement(lower, &strict)? {
+            Classification::Decided(std::cmp::Ordering::Equal) => true,
+            Classification::Decided(_) => match parameter.cmp_by_refinement(upper, &strict)? {
+                Classification::Decided(std::cmp::Ordering::Equal) => false,
+                Classification::Decided(_) => return Ok(scale),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            },
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let side_sign = |coefficients: &[Real]| -> CurveResult<Classification<RealSign>> {
+            let mut derivative = Cow::Borrowed(coefficients);
+            let mut reverse = false;
+            while !derivative.is_empty() {
+                match parameter.polynomial_sign(&derivative, &strict)? {
+                    Classification::Decided(RealSign::Zero) => {}
+                    Classification::Decided(sign) => {
+                        return Ok(Classification::Decided(if reverse {
+                            product_sign(sign, RealSign::Negative)
+                        } else {
+                            sign
+                        }));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                derivative = Cow::Owned(polynomial_derivative(&derivative));
+                reverse ^= !increasing;
+            }
+            Ok(Classification::Decided(RealSign::Zero))
+        };
+        let source = self.source_power_basis()?;
+        let differential = self.differential()?;
+        let curvature =
+            parallel_signed_curvature_polynomial(differential, source.weight, self.distance());
+        parallel_derivative_scale_from_curvature_sign(side_sign(&curvature)?, || {
+            let speed = parallel_speed_squared_polynomial(differential);
+            side_sign(&polynomial_subtract(
+                &polynomial_multiply(&curvature, &curvature),
+                &polynomial_power(&speed, 3),
+            ))
+        })
     }
 
     /// On a connected pole-free, regular, cusp-free range, the continuous
@@ -120367,7 +120406,6 @@ impl BezierParallel2 {
         &self,
         other: &RationalBezier2,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
-        derivative_scale_sign: Option<RealSign>,
         retained_parallel_range: Option<&CurveParameterRange2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParallelIntersectionSet2>>> {
@@ -120377,7 +120415,6 @@ impl BezierParallel2 {
             match self.rational_quadratic_circle_intersections_fast_path_with_tangent_field(
                 other,
                 tangent_field,
-                derivative_scale_sign,
                 retained_parallel_range,
                 &strict_policy,
             )? {
@@ -120625,6 +120662,17 @@ impl BezierParallel2 {
                         return Ok(no_fast_path());
                     }
                 };
+            let derivative_scale_sign = match retained_parallel_range {
+                Some(range) => match self.parallel_derivative_scale_sign_on_regular_range(
+                    &parallel_parameter.clone().into(),
+                    range,
+                    policy,
+                )? {
+                    Classification::Decided(sign) => Some(sign),
+                    Classification::Uncertain(_) => None,
+                },
+                None => None,
+            };
             let tangent_cross_sign = match replay {
                 Some(replay) => self
                     .apply_parallel_derivative_scale_to_tangent_sign_with_override(
@@ -120724,7 +120772,7 @@ impl BezierParallel2 {
         other: &RationalBezier2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
-        self.intersections_with_tangent_field(other, None, None, None, policy)
+        self.intersections_with_tangent_field(other, None, None, policy)
     }
 
     /// Intersects one retained regular source branch with a rational Bezier.
@@ -120734,7 +120782,7 @@ impl BezierParallel2 {
     /// range and its exact one-sided limit at a source cusp.  Projection,
     /// component extraction, selected-branch replay, and contact evidence all
     /// remain in the ordinary parallel/rational authority; only its tangent
-    /// frame and constant derivative-orientation certificate are replaced.
+    /// frame and contact derivative-orientation replay use the retained branch.
     /// The caller clips the returned full-parameter evidence to `range`.
     pub(crate) fn intersections_on_regular_range(
         &self,
@@ -120760,23 +120808,13 @@ impl BezierParallel2 {
         let Some(frame) = frame else {
             return self.intersections(other, policy);
         };
-        let scale = match self.parallel_derivative_scale_sign_at_exact(&interior, policy)? {
-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
-            Classification::Decided(RealSign::Zero) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        self.intersections_with_tangent_field(other, Some(&frame), Some(scale), Some(range), policy)
+        self.intersections_with_tangent_field(other, Some(&frame), Some(range), policy)
     }
 
     fn intersections_with_tangent_field(
         &self,
         other: &RationalBezier2,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
-        derivative_scale_sign: Option<RealSign>,
         retained_parallel_range: Option<&CurveParameterRange2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
@@ -120818,7 +120856,6 @@ impl BezierParallel2 {
         match self.rational_quadratic_circle_intersections_fast_path_with_tangent_field(
             other,
             tangent_field,
-            derivative_scale_sign,
             retained_parallel_range,
             policy,
         )? {
@@ -120845,7 +120882,6 @@ impl BezierParallel2 {
             candidate_system,
             false,
             tangent_field,
-            derivative_scale_sign,
             retained_parallel_range,
             |parameter| {
                 crate::rational_bezier_general::exact_contact_point_evidence(
@@ -120863,7 +120899,6 @@ impl BezierParallel2 {
         candidate_system: BezierParallelIntersectionCandidateSystem2,
         off_diagonal: bool,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
-        derivative_scale_sign: Option<RealSign>,
         retained_parallel_range: Option<&CurveParameterRange2>,
         mut point_evidence: impl FnMut(&BezierParameter2) -> CurveResult<Option<CurvePoint2>>,
         policy: &CurveContext,
@@ -121064,6 +121099,17 @@ impl BezierParallel2 {
                     incomplete = true;
                     continue;
                 };
+                let derivative_scale_sign = match retained_parallel_range {
+                    Some(range) => match self.parallel_derivative_scale_sign_on_regular_range(
+                        &parallel_parameter.clone().into(),
+                        range,
+                        policy,
+                    )? {
+                        Classification::Decided(sign) => Some(sign),
+                        Classification::Uncertain(_) => None,
+                    },
+                    None => None,
+                };
                 let tangent_cross_sign = self
                     .apply_parallel_derivative_scale_to_tangent_sign_with_override(
                         signed_bivariate_for_replay_or_parameter_box(
@@ -121139,6 +121185,17 @@ impl BezierParallel2 {
             let Some(point) = point_evidence(&pair.other_parameter)? else {
                 incomplete = true;
                 continue;
+            };
+            let derivative_scale_sign = match retained_parallel_range {
+                Some(range) => match self.parallel_derivative_scale_sign_on_regular_range(
+                    &pair.parallel_parameter.clone().into(),
+                    range,
+                    policy,
+                )? {
+                    Classification::Decided(sign) => Some(sign),
+                    Classification::Uncertain(_) => None,
+                },
+                None => None,
             };
             let tangent_cross_sign = self
                 .apply_parallel_derivative_scale_to_tangent_sign_with_override(
@@ -193509,6 +193566,269 @@ mod parallel_normal_source_angle_tests {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod regular_parallel_contact_tests {
+    use super::*;
+    fn q(n: i64, d: i64) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+    fn p(x: i64, y: i64) -> Point2 {
+        Point2::from_values(x, y)
+    }
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("regular-cell query blocked: {reason:?}"),
+        }
+    }
+    #[test]
+    fn stationary_endpoint_line_chart_reuses_regular_pair_incidence() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let radius = q(15, 16);
+            let first = QuadraticBezier2::new(p(0, -2), p(0, -1), p(0, 0))
+                .parallel_left(-radius.clone())
+                .unwrap();
+            let second = RationalBezier2::try_new(
+                vec![
+                    p(0, 0),
+                    p(0, 0),
+                    Point2::new(q(1, 6), Real::zero()),
+                    Point2::new(q(1, 2), Real::zero()),
+                    p(1, 1),
+                ],
+                vec![Real::one(); 5],
+            )
+            .unwrap()
+            .parallel_left(-radius)
+            .unwrap();
+            let unit = CurveParameterRange2::unit();
+            let result = decided(
+                first
+                    .parallel_intersections_on_regular_ranges(&second, &unit, &unit, &policy)
+                    .unwrap(),
+            );
+            assert!(result.is_complete());
+            assert!(result.overlaps().is_empty());
+            assert_eq!(result.contacts().len(), 1);
+            let contact = &result.contacts()[0];
+            assert_eq!(
+                contact
+                    .first_parameter()
+                    .polynomial_sign(&[Real::from(-89), Real::from(128)], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+            assert_eq!(
+                contact
+                    .second_parameter()
+                    .polynomial_sign(&[Real::from(-3), Real::zero(), Real::from(8)], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+        }
+    }
+    #[test]
+    fn interior_source_cusp_reuses_owned_left_cell() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let first = CubicBezier2::new(
+                p(1, -1),
+                Point2::new(q(-1, 3), Real::one()),
+                Point2::new(q(-1, 3), -Real::one()),
+                p(1, 1),
+            )
+            .parallel_left(Real::one())
+            .unwrap();
+            let second =
+                QuadraticBezier2::new(p(1, 1), Point2::new(-Real::one(), q(-1, 2)), p(-3, -2))
+                    .parallel_left(Real::one())
+                    .unwrap();
+            // On t in [-1/4,0), curvature is greater than one: its
+            // reciprocal squared is at most 73^3 / (36*256^2) < 1.
+            // Both this center locus and its source therefore have regular
+            // interiors on u in [3/8,1/2], with owned one-sided cusp limits.
+            let left = CurveParameterRange2::new_validated(q(3, 8).into(), q(1, 2).into());
+            let result = decided(
+                first
+                    .parallel_intersections_on_regular_ranges(
+                        &second,
+                        &left,
+                        &CurveParameterRange2::unit(),
+                        &policy,
+                    )
+                    .unwrap(),
+            );
+            assert!(result.is_complete());
+            assert!(result.overlaps().is_empty());
+            assert_eq!(result.contacts().len(), 1);
+            let contact = &result.contacts()[0];
+            assert_eq!(
+                contact
+                    .first_parameter()
+                    .polynomial_sign(&[-Real::one(), Real::from(2)], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+            assert_eq!(
+                contact
+                    .second_parameter()
+                    .polynomial_sign(&[Real::from(-2), Real::from(5)], &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+            let center = decided(
+                first
+                    .point_evidence_on_regular_range(contact.first_parameter(), &left, &policy)
+                    .unwrap(),
+            );
+            assert_eq!(
+                center.same_point(&p(0, -1).into(), &policy),
+                Classification::Decided(true)
+            );
+        }
+    }
+    #[test]
+    fn regular_source_frame_keeps_contact_scale_across_a_center_cusp() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let x = q(-3, 16);
+            let first = QuadraticBezier2::new(
+                Point2::new(x.clone(), Real::from(-2)),
+                Point2::new(x.clone(), Real::zero()),
+                Point2::new(x, Real::from(2)),
+            )
+            .parallel_left(Real::zero())
+            .unwrap();
+            let second = RationalBezier2::try_new(
+                vec![
+                    p(0, 0),
+                    p(0, 0),
+                    Point2::new(q(1, 6), Real::zero()),
+                    Point2::new(q(1, 2), Real::zero()),
+                    p(1, 1),
+                ],
+                vec![Real::one(); 5],
+            )
+            .unwrap()
+            .parallel_left(q(15, 16))
+            .unwrap();
+            // At u=sqrt(3/8), the source is (3/8,9/64), its unit
+            // normal is (-3/5,4/5), and the offset is (-3/16,57/64).
+            // The center/source derivative scale is 1/25 > 0 there.
+            // At the unit range midpoint u=1/2 it is 1-3/sqrt(5) < 0.
+            let unit = CurveParameterRange2::unit();
+            let result = decided(
+                first
+                    .parallel_intersections_on_regular_ranges(&second, &unit, &unit, &policy)
+                    .unwrap(),
+            );
+            assert!(result.is_complete());
+            let mut found = false;
+            for contact in result.contacts() {
+                if contact
+                    .second_parameter()
+                    .polynomial_sign(&[Real::from(-3), Real::zero(), Real::from(8)], &policy)
+                    .unwrap()
+                    == Classification::Decided(RealSign::Zero)
+                {
+                    found = true;
+                    assert_eq!(
+                        contact
+                            .first_parameter()
+                            .polynomial_sign(&[Real::from(-185), Real::from(256)], &policy)
+                            .unwrap(),
+                        Classification::Decided(RealSign::Zero)
+                    );
+                    assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Negative));
+                    assert_eq!(contact.tangent_dot_sign(), Some(RealSign::Positive));
+                }
+            }
+            assert!(found, "the independently known contact was not enumerated");
+        }
+    }
+
+    #[test]
+    fn owned_endpoint_tangents_replay_both_sides_of_stationary_parameters() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // Q(t)=(t,t²) has curvature 128/125 at t=3/8. Its left
+            // parallel of radius 125/128 therefore has a cusp there,
+            // with negative orientation before it and positive after it.
+            let parallel =
+                QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), Real::zero()), p(1, 1))
+                    .parallel_left(q(125, 128))
+                    .unwrap();
+            let cusp: CurveParameter2 = q(3, 8).into();
+            let left = CurveParameterRange2::new_validated(Real::zero().into(), cusp.clone());
+            let right = CurveParameterRange2::new_validated(cusp.clone(), Real::one().into());
+            for (range, expected) in [(&left, RealSign::Negative), (&right, RealSign::Positive)] {
+                assert_eq!(
+                    parallel
+                        .vector_tangent_cross_and_dot_signs_on_regular_range(
+                            &cusp,
+                            &Real::one(),
+                            &Real::zero(),
+                            range,
+                            &policy
+                        )
+                        .unwrap(),
+                    Classification::Decided((expected, expected))
+                );
+            }
+            assert_eq!(
+                parallel
+                    .vector_tangent_cross_and_dot_signs_on_regular_range(
+                        &cusp,
+                        &Real::one(),
+                        &Real::zero(),
+                        &CurveParameterRange2::unit(),
+                        &policy
+                    )
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            );
+
+            // B(u)=(u²,u⁴) approaches Q(0) in opposite source directions
+            // from the two sides. For d=15/16, 1-d*kappa tends to 23/8
+            // on the left and -7/8 on the right. The cancelled hodograph
+            // and local curvature predicates must keep both normal sheets.
+            let stationary = RationalBezier2::try_new(
+                vec![
+                    p(0, 0),
+                    p(0, 0),
+                    Point2::new(q(1, 6), Real::zero()),
+                    Point2::new(q(1, 2), Real::zero()),
+                    p(1, 1),
+                ],
+                vec![Real::one(); 5],
+            )
+            .unwrap()
+            .parallel_left(q(15, 16))
+            .unwrap();
+            let cusp: CurveParameter2 = Real::zero().into();
+            let left = CurveParameterRange2::new_validated((-Real::one()).into(), cusp.clone());
+            let right = CurveParameterRange2::unit();
+            for (range, expected, y) in [
+                (&left, RealSign::Positive, q(-15, 16)),
+                (&right, RealSign::Negative, q(15, 16)),
+            ] {
+                assert_eq!(
+                    stationary
+                        .parallel_derivative_scale_sign_on_regular_range(&cusp, range, &policy)
+                        .unwrap(),
+                    Classification::Decided(expected)
+                );
+                let point = decided(
+                    stationary
+                        .point_evidence_on_regular_range(&cusp, range, &policy)
+                        .unwrap(),
+                );
+                assert_eq!(
+                    point.same_point(&Point2::new(Real::zero(), y).into(), &policy),
+                    Classification::Decided(true)
+                );
             }
         }
     }
