@@ -225,6 +225,24 @@ pub(crate) struct BezierParameterRay2<'a> {
     pub(crate) barrier: Option<&'a BezierParameter2>,
 }
 
+impl BezierParameterRay2<'_> {
+    /// The open extension is empty when its excluded barrier is at or behind
+    /// the anchor. Compare exact values, retaining an algebraic barrier's
+    /// root authority rather than constructing a compact zero-length range.
+    pub(crate) fn is_empty(&self, policy: &CurveContext) -> CurveResult<Classification<bool>> {
+        let Some(barrier) = self.barrier else {
+            return Ok(Classification::Decided(false));
+        };
+        let strict = policy.strict_counterpart();
+        Ok(barrier
+            .cmp_by_refinement(&BezierParameter2::Exact(self.anchor.clone()), &strict)?
+            .map(|order| match self.direction {
+                BezierParameterRayDirection2::Increasing => !order.is_gt(),
+                BezierParameterRayDirection2::Decreasing => !order.is_lt(),
+            }))
+    }
+}
+
 impl BezierParameterPolynomial {
     /// Constructs a nonzero power-basis polynomial.
     pub fn try_new_power_basis(
