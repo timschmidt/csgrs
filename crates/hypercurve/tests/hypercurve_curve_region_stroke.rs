@@ -25,7 +25,7 @@ fn line(start_x: i32, start_y: i32, end_x: i32, end_y: i32) -> Curve2 {
 
 fn location(region: &CurveRegion2, point: Point2) -> RegionPointLocation {
     match region
-        .classify_point(&point, &CurveContext::STRICT)
+        .classify_point(&point.clone().into(), &CurveContext::STRICT)
         .unwrap()
         .value
     {

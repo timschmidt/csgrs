@@ -60,7 +60,7 @@ fn region(material: Vec<Contour2>, holes: Vec<Contour2>) -> CurveRegion2 {
 
 fn classify(region: &CurveRegion2, point: &crate::Point2) -> Classification<RegionPointLocation> {
     region
-        .classify_point(point, &policy())
+        .classify_point(&point.clone().into(), &policy())
         .unwrap()
         .into_value()
 }
@@ -668,7 +668,7 @@ fn strict_and_approximate_512_share_the_unified_policy_terminal() {
     for context in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
             region
-                .classify_point(&p(1, 1), &context)
+                .classify_point(&p(1, 1).into(), &context)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Inside)
@@ -868,8 +868,11 @@ fn batched_classifier_and_structural_facts_use_the_unified_surface() {
     );
 
     let points = [p(1, 1), p(3, 3), p(5, 5), p(11, 1), p(100, 100), p(2, 5)];
+    let queries = points
+        .each_ref()
+        .map(|point| crate::CurvePoint2::from(point.clone()));
     let batched = region
-        .classify_points(&points, &policy())
+        .classify_points(&queries, &policy())
         .unwrap()
         .into_value();
     assert_eq!(

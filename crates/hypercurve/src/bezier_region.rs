@@ -12971,44 +12971,73 @@ impl CurveRegion2 {
         Ok(LineArcRegion2::new(material, holes))
     }
 
-    /// Classifies a point against the exact retained region.
+    /// Classifies an exact point against the retained region.
     ///
-    /// Native polynomial and rational boundary fragments use certified ray
-    /// incidence directly. Exact line-image algebraic carriers are lowered once
-    /// to a clone-shared native line region. Nonlinear algebraic carriers with
-    /// retained source curves filter exact source-curve incidence to their
-    /// represented parameter ranges. A non-line carrier without source-curve
-    /// provenance remains explicit `Unsupported` uncertainty.
+    /// Scalar coordinates and selected algebraic fields keep their specialized
+    /// predicates. Generated points reuse their retained evidence and the same
+    /// boundary ownership as Boolean operations, without materializing coordinates.
     pub fn classify_point(
         &self,
-        point: &Point2,
+        point: &CurvePoint2,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<RegionPointLocation>>> {
-        resolve_certified_operation(policy, |attempt| self.classify_point_raw(point, attempt))
+        resolve_certified_operation(policy, |attempt| {
+            self.classify_curve_point_raw(point, attempt, &mut None)
+        })
     }
 
     /// Classifies a batch of exact points against the unified region.
     ///
-    /// Native line/arc topology builds its query indexes once. Retained curved
-    /// topology reuses the same authoritative scalar classifier for every
-    /// point, preserving explicit uncertainty and the operation-wide policy
-    /// terminal.
+    /// Native query indexes and generated-point boundary preparation are shared
+    /// within the batch. Input order, selected evidence and the operation-wide
+    /// policy terminal are preserved, including in mixed-representation batches.
     pub fn classify_points(
         &self,
-        points: &[Point2],
+        points: &[CurvePoint2],
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Vec<Classification<RegionPointLocation>>>> {
         resolve_certified_operation(policy, |attempt| {
-            if self.has_regularized_filled_left_topology(attempt)
+            let native = if self.has_regularized_filled_left_topology(attempt)
                 && let Classification::Decided(native) = self.native_line_arc_region(attempt)?
             {
-                return Ok(native.classify_points(points, attempt));
-            }
+                Some(crate::prepared::RegionQuery2::from_region_view(
+                    &native.as_view(),
+                    attempt,
+                ))
+            } else {
+                None
+            };
+            let mut prepared = None;
             points
                 .iter()
-                .map(|point| self.classify_point_raw(point, attempt))
+                .map(|point| {
+                    if let (Some(native), Some(coordinates)) = (&native, point.coordinates())
+                        && let decided @ Classification::Decided(_) =
+                            native.classify_point(coordinates, attempt)
+                    {
+                        return Ok(decided);
+                    }
+                    self.classify_curve_point_raw(point, attempt, &mut prepared)
+                })
                 .collect()
         })
+    }
+
+    fn classify_curve_point_raw<'a>(
+        &'a self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+        prepared: &mut Option<crate::curve_region_boolean::CurveRegionBooleanContext<'a>>,
+    ) -> CurveResult<Classification<RegionPointLocation>> {
+        match point {
+            CurvePoint2(CurvePointData2::Exact(point)) => self.classify_point_raw(point, policy),
+            CurvePoint2(CurvePointData2::Algebraic(point)) => {
+                self.classify_algebraic_point_raw(point, policy)
+            }
+            _ => crate::curve_region_boolean::classify_retained_point_evidence_against_region_by_probe(
+                self, point.clone(), policy, prepared,
+            ),
+        }
     }
 
     /// Returns native line/arc structural facts when that exact specialization exists.
@@ -13027,21 +13056,6 @@ impl CurveRegion2 {
                 }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             })
-        })
-    }
-
-    /// Classifies an exact algebraic point against the retained region.
-    ///
-    /// The point remains in its defining local algebraic field. Boundary
-    /// incidence and ray winding therefore consume the same `STRICT` or
-    /// `APPROXIMATE_512` predicate policy as the rest of the curve kernel.
-    pub fn classify_algebraic_point(
-        &self,
-        point: &RationalBezierAlgebraicPointImage2,
-        policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<RegionPointLocation>>> {
-        resolve_certified_operation(policy, |attempt| {
-            self.classify_algebraic_point_raw(point, attempt)
         })
     }
 
@@ -14934,7 +14948,7 @@ fn retained_loop_sample_point_evidence(
     Ok(Classification::Uncertain(last_reason))
 }
 
-fn classify_point_evidence_against_retained_loop(
+pub(crate) fn classify_point_evidence_against_retained_loop(
     region: &CurveRegion2,
     loop_index: usize,
     point: &CurvePoint2,
@@ -19862,7 +19876,9 @@ mod tests {
                     ),
                     (p(1, 1), RegionPointLocation::Outside),
                 ] {
-                    let location = edited.classify_point(&point, &policy).unwrap();
+                    let location = edited
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap();
                     assert_eq!(location.certainty, CurveCertainty::Certified);
                     assert_eq!(location.value, Classification::Decided(expected));
                 }
@@ -20951,7 +20967,9 @@ mod tests {
                             (p(1, 1), RegionPointLocation::Inside),
                             (p(5, 5), RegionPointLocation::Outside),
                         ] {
-                            let location = edited.classify_point(&point, &policy).unwrap();
+                            let location = edited
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
                             assert_eq!(location.value, Classification::Decided(expected));
                         }
@@ -20960,7 +20978,9 @@ mod tests {
                             // the right of the old corner, possibly on a second
                             // normalized loop touching the rectangle at (2,0).
                             let exterior = Point2::new(q(17, 8), -q(1, 8));
-                            let location = edited.classify_point(&exterior, &policy).unwrap();
+                            let location = edited
+                                .classify_point(&exterior.clone().into(), &policy)
+                                .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
                             assert_eq!(
                                 location.value,
@@ -20988,7 +21008,7 @@ mod tests {
                 let region = retained_nonlinear_extension_region(reversed, &policy);
                 assert_eq!(
                     region
-                        .classify_point(&added_material, &policy)
+                        .classify_point(&added_material.clone().into(), &policy)
                         .unwrap()
                         .value,
                     Classification::Decided(Outside)
@@ -21038,7 +21058,7 @@ mod tests {
                     for_each_corner_region(corner_regions(&extended), |edited| {
                         assert!(matches!(
                             edited
-                                .classify_point(&p(10, 10), &policy)
+                                .classify_point(&p(10, 10).into(), &policy)
                                 .expect("the canonicalized extension remains classifiable")
                                 .into_value(),
                             Classification::Decided(_)
@@ -21055,7 +21075,7 @@ mod tests {
                             });
                         if exact_endpoint.is_none()
                             && edited
-                                .classify_point(&added_material, &policy)
+                                .classify_point(&added_material.clone().into(), &policy)
                                 .unwrap()
                                 .value
                                 == Classification::Decided(Inside)
@@ -21071,7 +21091,10 @@ mod tests {
                                 (p(0, 0), Boundary),
                             ] {
                                 assert_eq!(
-                                    edited.classify_point(&point, &policy).unwrap().value,
+                                    edited
+                                        .classify_point(&point.clone().into(), &policy)
+                                        .unwrap()
+                                        .value,
                                     Classification::Decided(location),
                                     "the extended corner must preserve the intended filled sectors"
                                 );
@@ -21139,7 +21162,7 @@ mod tests {
                     for_each_corner_region(corner_regions(&extended), |edited| {
                         assert!(matches!(
                             edited
-                                .classify_point(&p(20, 20), &policy)
+                                .classify_point(&p(20, 20).into(), &policy)
                                 .expect("the pole-free rational extension remains classifiable")
                                 .into_value(),
                             Classification::Decided(_)
@@ -21264,7 +21287,7 @@ mod tests {
                                     .iter()
                                     .chain(&common_samples)
                                     .map(|(label, point, _)| {
-                                        let location = edited.classify_point(point, &policy).unwrap();
+                                        let location = edited.classify_point(&point.clone().into(), &policy).unwrap();
                                         assert_eq!(
                                             location.certainty,
                                             CurveCertainty::Certified,
@@ -21893,7 +21916,9 @@ mod tests {
                             return;
                         }
                         for (index, point) in boundary_samples.iter().enumerate() {
-                            let location = edited.classify_point(point, &policy).unwrap();
+                            let location = edited
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
                             assert_eq!(
                                 location.value,
@@ -21912,7 +21937,9 @@ mod tests {
                             ),
                             (p(1, 1), RegionPointLocation::Outside),
                         ] {
-                            let location = edited.classify_point(&point, &policy).unwrap();
+                            let location = edited
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
                             assert_eq!(location.value, Classification::Decided(expected));
                         }
@@ -22158,7 +22185,7 @@ mod tests {
                     };
                     assert_eq!(
                         filleted
-                            .classify_point(&p(3, 1), &policy)
+                            .classify_point(&p(3, 1).into(), &policy)
                             .expect("the unified parallel-pair fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -23078,13 +23105,17 @@ mod tests {
         );
         assert!(result.intersection().is_empty());
         for point in [p(0, 0), p(-1, 0), p(1, 0), p(0, 1), p(-10, -10)] {
-            let Classification::Decided(expected) =
-                source.classify_point(&point, policy).unwrap().value
+            let Classification::Decided(expected) = source
+                .classify_point(&point.clone().into(), policy)
+                .unwrap()
+                .value
             else {
                 panic!("the authored region must classify the independent replay probe");
             };
             for region in [result.union(), result.difference(), result.xor()] {
-                let outcome = region.classify_point(&point, policy).unwrap();
+                let outcome = region
+                    .classify_point(&point.clone().into(), policy)
+                    .unwrap();
                 assert_eq!(outcome.certainty, CurveCertainty::Certified);
                 assert_eq!(outcome.value, Classification::Decided(expected));
             }
@@ -23092,7 +23123,7 @@ mod tests {
         assert_eq!(
             result
                 .union()
-                .classify_point(&p(5, 5), policy)
+                .classify_point(&p(5, 5).into(), policy)
                 .unwrap()
                 .value,
             Classification::Decided(RegionPointLocation::Inside)
@@ -23126,9 +23157,15 @@ mod tests {
                     split_walks += 1;
                 }
                 for point in [p(0, 0), p(-1, 0), p(1, 0), p(0, 1), p(-10, -10)] {
-                    let expected = authored.classify_point(&point, &policy).unwrap().value;
+                    let expected = authored
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                        .value;
                     assert!(matches!(expected, Classification::Decided(_)));
-                    let actual = normalized.value.classify_point(&point, &policy).unwrap();
+                    let actual = normalized
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap();
                     assert_eq!(actual.certainty, CurveCertainty::Certified);
                     assert_eq!(actual.value, expected);
                 }
@@ -23184,7 +23221,7 @@ mod tests {
                     );
                     assert_eq!(
                         filleted
-                            .classify_point(&p(0, 0), &policy)
+                            .classify_point(&p(0, 0).into(), &policy)
                             .expect("the retained fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -23315,7 +23352,7 @@ mod tests {
                                 if !major {
                                     assert_eq!(
                                         chamfered
-                                            .classify_point(&p(0, 0), &policy)
+                                            .classify_point(&p(0, 0).into(), &policy)
                                             .expect(
                                                 "the extended mixed chamfer remains classifiable",
                                             )
@@ -23368,7 +23405,7 @@ mod tests {
                                         for probe in [p(5, 4), p(6, 5), p(5, 6), p(4, 5)] {
                                             assert_eq!(
                                                 chamfered
-                                                    .classify_point(&probe, &policy)
+                                                    .classify_point(&probe.clone().into(), &policy)
                                                     .expect("the distant Boolean probe is finite")
                                                     .into_value(),
                                                 Classification::Decided(
@@ -23598,7 +23635,7 @@ mod tests {
                 );
                 assert_eq!(
                     edited
-                        .classify_point(&Point2::new(q(1, 10), q(1, 10)), &policy)
+                        .classify_point(&Point2::new(q(1, 10), q(1, 10)).into(), &policy)
                         .expect("the rebuilt nonlinear-circle chamfer remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
@@ -23624,7 +23661,7 @@ mod tests {
                         && has_endpoint(candidate, &line_fillet_cut);
                     assert_eq!(
                         candidate
-                            .classify_point(&Point2::new(q(1, 10), q(1, 10)), &policy)
+                            .classify_point(&Point2::new(q(1, 10), q(1, 10)).into(), &policy)
                             .expect("the rebuilt nonlinear-circle fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -24145,7 +24182,7 @@ mod tests {
                             );
                             assert_eq!(
                                 filleted
-                                    .classify_point(&p(0, 0), &policy)
+                                    .classify_point(&p(0, 0).into(), &policy)
                                     .expect("the extended circular fillet remains classifiable")
                                     .into_value(),
                                 Classification::Decided(RegionPointLocation::Inside),
@@ -24280,7 +24317,7 @@ mod tests {
                     for_each_corner_region(fillet_regions(&result.value), |filleted| {
                         assert_eq!(
                             filleted
-                                .classify_point(&p(0, 0), &policy)
+                                .classify_point(&p(0, 0).into(), &policy)
                                 .expect("the one-sided smooth-run fillet remains classifiable")
                                 .into_value(),
                             Classification::Decided(RegionPointLocation::Inside),
@@ -24368,7 +24405,7 @@ mod tests {
                         for_each_corner_region(corner_regions(&result.value), |chamfered| {
                             assert_eq!(
                                 chamfered
-                                    .classify_point(&p(0, 0), &policy)
+                                    .classify_point(&p(0, 0).into(), &policy)
                                     .expect("the smooth-run chamfer remains classifiable")
                                     .into_value(),
                                 Classification::Decided(RegionPointLocation::Inside),
@@ -24458,7 +24495,7 @@ mod tests {
                 for_each_corner_region(fillet_regions(&result.value), |filleted| {
                     assert_eq!(
                         filleted
-                            .classify_point(&p(0, 0), &policy)
+                            .classify_point(&p(0, 0).into(), &policy)
                             .expect("the seam-endpoint fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -24543,7 +24580,7 @@ mod tests {
                     for_each_corner_region(fillet_regions(&result.value), |filleted| {
                         assert_eq!(
                             filleted
-                                .classify_point(&p(0, 0), &policy)
+                                .classify_point(&p(0, 0).into(), &policy)
                                 .expect("the independently reframed fillet remains classifiable")
                                 .into_value(),
                             Classification::Decided(RegionPointLocation::Inside),
@@ -24598,7 +24635,7 @@ mod tests {
                 );
                 assert_eq!(
                     filleted
-                        .classify_point(&p(0, 0), &policy)
+                        .classify_point(&p(0, 0).into(), &policy)
                         .expect("the selected-circle pair fillet remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
@@ -27278,14 +27315,14 @@ mod tests {
                 );
                 assert_eq!(
                     filleted
-                        .classify_point(&p(0, 0), &policy)
+                        .classify_point(&p(0, 0).into(), &policy)
                         .expect("the selected-circle/analytic fillet remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Inside),
                 );
                 assert_eq!(
                     filleted
-                        .classify_point(&p(-1, 0), &policy)
+                        .classify_point(&p(-1, 0).into(), &policy)
                         .expect("the selected-circle/analytic exterior remains classifiable")
                         .into_value(),
                     Classification::Decided(RegionPointLocation::Outside),
@@ -27448,7 +27485,7 @@ mod tests {
                         }));
                         assert_eq!(
                             filleted
-                                .classify_point(&p(0, 0), &policy)
+                                .classify_point(&p(0, 0).into(), &policy)
                                 .expect("the extended analytic fillet remains classifiable")
                                 .into_value(),
                             Classification::Decided(RegionPointLocation::Inside),
@@ -27541,7 +27578,7 @@ mod tests {
                 if policy == CurveContext::STRICT && !reversed {
                     assert_eq!(
                         filleted
-                            .classify_point(&p(0, 0), &policy)
+                            .classify_point(&p(0, 0).into(), &policy)
                             .expect("the retained direct-Bezier fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -28332,13 +28369,16 @@ mod tests {
                 ] {
                     assert_eq!(
                         region
-                            .classify_algebraic_point(&image, &policy)
+                            .classify_point(&image.clone().into(), &policy)
                             .unwrap()
                             .into_value(),
                         Classification::Decided(expected)
                     );
                     assert_eq!(
-                        region.classify_point(&exact, &policy).unwrap().into_value(),
+                        region
+                            .classify_point(&exact.clone().into(), &policy)
+                            .unwrap()
+                            .into_value(),
                         Classification::Decided(expected)
                     );
                 }
@@ -28616,7 +28656,9 @@ mod tests {
                         for_each_corner_region(solutions, |edited| {
                             assert!(edited.has_regularized_filled_left_topology(&policy));
                             let assert_location = |sample: &Point2, expected, label| {
-                                let location = edited.classify_point(sample, &policy).unwrap();
+                                let location = edited
+                                    .classify_point(&sample.clone().into(), &policy)
+                                    .unwrap();
                                 assert_eq!(location.certainty, CurveCertainty::Certified);
                                 assert_eq!(
                                     location.value,
@@ -29023,7 +29065,9 @@ mod tests {
                         edited.boundary_loops().len(),
                     );
                     let classify = |point: Point2| {
-                        let outcome = edited.classify_point(&point, &policy).unwrap();
+                        let outcome = edited
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap();
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         outcome.into_value()
                     };
@@ -29087,7 +29131,7 @@ mod tests {
                 assert_eq!(
                     offset
                         .value
-                        .classify_point(&p(2, 2), &policy)
+                        .classify_point(&p(2, 2).into(), &policy)
                         .unwrap()
                         .value,
                     Classification::Decided(RegionPointLocation::Outside),
@@ -29108,21 +29152,21 @@ mod tests {
             let tenth = (Real::one() / Real::from(10_i8)).unwrap();
             assert_eq!(
                 region
-                    .classify_point(&Point2::new(tenth.clone(), tenth), &policy)
+                    .classify_point(&Point2::new(tenth.clone(), tenth).into(), &policy)
                     .unwrap()
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside)
             );
             assert_eq!(
                 region
-                    .classify_point(&p(1, 1), &policy)
+                    .classify_point(&p(1, 1).into(), &policy)
                     .unwrap()
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Outside)
             );
             assert_eq!(
                 region
-                    .classify_point(&p(0, 0), &policy)
+                    .classify_point(&p(0, 0).into(), &policy)
                     .unwrap()
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Boundary)
@@ -30294,7 +30338,7 @@ mod tests {
                     );
                     assert_eq!(
                         filleted
-                            .classify_point(&p(10, 10), &policy)
+                            .classify_point(&p(10, 10).into(), &policy)
                             .expect("the chord-normal fillet remains classifiable")
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Outside),
@@ -30312,7 +30356,7 @@ mod tests {
                         replay
                             .value
                             .union()
-                            .classify_point(&p(5, 5), &policy)
+                            .classify_point(&p(5, 5).into(), &policy)
                             .unwrap()
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -31073,7 +31117,9 @@ mod tests {
                             (&interior, RegionPointLocation::Inside),
                             (&p(4, 4), RegionPointLocation::Outside),
                         ] {
-                            let location = filleted.classify_point(point, &policy).unwrap();
+                            let location = filleted
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
                             assert_eq!(location.value, Classification::Decided(expected));
                         }
@@ -32682,7 +32728,7 @@ mod tests {
                 normalized
                     .value
                     .classify_point(
-                        &Point2::new(Real::one(), (Real::one() / Real::from(2)).unwrap()),
+                        &Point2::new(Real::one(), (Real::one() / Real::from(2)).unwrap()).into(),
                         &CurveContext::STRICT,
                     )
                     .unwrap()
@@ -33239,19 +33285,19 @@ mod tests {
         let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
         assert_eq!(
             region
-                .classify_point(&point, &policy)
+                .classify_point(&point.clone().into(), &policy)
                 .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Inside))
         );
         assert_eq!(
             region
-                .classify_point(&p(1, 1), &policy)
+                .classify_point(&p(1, 1).into(), &policy)
                 .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Boundary))
         );
         assert_eq!(
             region
-                .classify_point(&p(1, 2), &policy)
+                .classify_point(&p(1, 2).into(), &policy)
                 .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
@@ -33330,13 +33376,13 @@ mod tests {
         .into_value();
         assert_eq!(
             region
-                .classify_point(&p(-2, 0), &policy)
+                .classify_point(&p(-2, 0).into(), &policy)
                 .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Inside))
         );
         assert_eq!(
             region
-                .classify_point(&p(2, 0), &policy)
+                .classify_point(&p(2, 0).into(), &policy)
                 .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Outside))
         );
@@ -33554,6 +33600,7 @@ mod retained_point_classification_tests {
                         .unwrap()
                         .value;
                 assert_eq!(region.boundary_loops().len(), 1);
+                let mut expected_region = Vec::new();
                 for (point_index, ((x, y), point)) in coordinates.iter().zip(&images).enumerate() {
                     let expected = if *x < low || *x > high || *y < low || *y > high {
                         ContourPointLocation::Outside
@@ -33562,6 +33609,15 @@ mod retained_point_classification_tests {
                     } else {
                         ContourPointLocation::Inside
                     };
+                    let location = match expected {
+                        ContourPointLocation::Inside => RegionPointLocation::Inside,
+                        ContourPointLocation::Outside => RegionPointLocation::Outside,
+                        ContourPointLocation::Boundary => RegionPointLocation::Boundary,
+                    };
+                    expected_region.push(Classification::Decided(location));
+                    let public = region.classify_point(point, &policy).unwrap();
+                    assert_eq!(public.certainty, CurveCertainty::Certified);
+                    assert_eq!(public.value, Classification::Decided(location));
                     let actual =
                         classify_point_evidence_against_retained_loop(&region, 0, point, &policy);
                     if !matches!(actual, Ok(Classification::Decided(location)) if location == expected)
@@ -33575,6 +33631,24 @@ mod retained_point_classification_tests {
                     }
                     checked += 1;
                 }
+                let batch = region.classify_points(&images, &policy).unwrap();
+                assert_eq!(batch.certainty, CurveCertainty::Certified);
+                assert_eq!(batch.value, expected_region);
+                let mixed: Vec<_> = coordinates
+                    .iter()
+                    .zip(&images)
+                    .enumerate()
+                    .map(|(index, ((x, y), point))| {
+                        if index % 2 == 0 {
+                            Point2::from_values(*x, *y).into()
+                        } else {
+                            point.clone()
+                        }
+                    })
+                    .collect();
+                let mixed = region.classify_points(&mixed, &policy).unwrap();
+                assert_eq!(mixed.certainty, CurveCertainty::Certified);
+                assert_eq!(mixed.value, expected_region);
             }
         }
         eprintln!(
@@ -33602,5 +33676,157 @@ mod retained_point_classification_tests {
     #[test]
     fn lazy_endpoint_points_classify_on_exact_rectangle_oracles() {
         check(3);
+    }
+
+    fn rectangle_path(low: i32, high: i32) -> CurvePath2 {
+        let vertices = [(low, low), (high, low), (high, high), (low, high)]
+            .map(|(x, y)| Point2::from_values(x, y));
+        CurvePath2::try_new(
+            (0..4)
+                .map(|i| {
+                    LineSeg2::try_new(vertices[i].clone(), vertices[(i + 1) % 4].clone())
+                        .unwrap()
+                        .into()
+                })
+                .collect(),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn public_point_queries_preserve_nested_islands_holes_and_empty_regions() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                &[
+                    rectangle_path(0, 10),
+                    rectangle_path(2, 8),
+                    rectangle_path(4, 6),
+                ],
+                &[
+                    CurveRegionLoopRole::Material,
+                    CurveRegionLoopRole::Hole,
+                    CurveRegionLoopRole::Material,
+                ],
+                &[FillRule::NonZero; 3],
+                &policy,
+            )
+            .unwrap()
+            .value;
+            assert_eq!(region.boundary_loops().len(), 3);
+            for kind in 0..4 {
+                let cases = [
+                    ((-1, -1), RegionPointLocation::Outside),
+                    ((1, 1), RegionPointLocation::Inside),
+                    ((3, 3), RegionPointLocation::Outside),
+                    ((5, 5), RegionPointLocation::Inside),
+                    ((0, 5), RegionPointLocation::Boundary),
+                    ((2, 5), RegionPointLocation::Boundary),
+                    ((4, 5), RegionPointLocation::Boundary),
+                ];
+                let points: Vec<_> = cases
+                    .iter()
+                    .map(|((x, y), _)| image(&Point2::from_values(*x, *y), kind, &policy))
+                    .collect();
+                let expected: Vec<_> = cases
+                    .iter()
+                    .map(|(_, location)| Classification::Decided(*location))
+                    .collect();
+                let batch = region.classify_points(&points, &policy).unwrap();
+                assert_eq!(batch.certainty, CurveCertainty::Certified);
+                assert_eq!(batch.value, expected);
+                for (point, expected) in points.iter().zip(&expected) {
+                    let result = region.classify_point(point, &policy).unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(&result.value, expected);
+                }
+                let empty = CurveRegion2::empty()
+                    .classify_points(&points, &policy)
+                    .unwrap();
+                assert_eq!(empty.certainty, CurveCertainty::Certified);
+                assert!(
+                    empty
+                        .value
+                        .iter()
+                        .all(|v| *v == Classification::Decided(RegionPointLocation::Outside))
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn generated_point_queries_preserve_the_boundary_of_a_retraced_path() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let line =
+                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap();
+            let path =
+                CurvePath2::try_new(vec![line.clone().into(), line.reversed().into()]).unwrap();
+            let filled =
+                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
+                    .unwrap();
+            assert_eq!(filled.certainty, CurveCertainty::Certified);
+            assert!(filled.value.is_empty());
+            for kind in 0..4 {
+                for (coordinates, expected) in [
+                    ((1, 0), ContourPointLocation::Boundary),
+                    ((0, 0), ContourPointLocation::Boundary),
+                    ((1, 1), ContourPointLocation::Outside),
+                ] {
+                    let point = image(
+                        &Point2::from_values(coordinates.0, coordinates.1),
+                        kind,
+                        &policy,
+                    );
+                    let result = path.classify_point(&point, &policy).unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert_eq!(result.value, Classification::Decided(expected));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn generated_point_queries_reenter_an_exact_parabolic_offset() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // The cap is x^2 <= y <= 1, -1 <= x <= 1. Its outward
+            // quarter-unit offset meets the y axis at -1/4 and 5/4.
+            let lower = QuadraticBezier2::new(
+                Point2::from_values(-1, 1),
+                Point2::from_values(0, -1),
+                Point2::from_values(1, 1),
+            );
+            let top =
+                LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(-1, 1)).unwrap();
+            let path = CurvePath2::try_new(vec![lower.into(), top.into()]).unwrap();
+            let cap = CurveRegion2::try_from_boundary_paths(&[path], &policy)
+                .unwrap()
+                .value;
+            let offset = cap
+                .offset(q(1, 4), &OffsetCornerStyle2::Round, &policy)
+                .unwrap();
+            assert_eq!(offset.certainty, CurveCertainty::Certified);
+            let cases = [
+                (q(-1, 1), RegionPointLocation::Outside),
+                (q(-1, 4), RegionPointLocation::Boundary),
+                (q(1, 2), RegionPointLocation::Inside),
+                (q(5, 4), RegionPointLocation::Boundary),
+                (q(2, 1), RegionPointLocation::Outside),
+            ];
+            let points: Vec<_> = cases
+                .iter()
+                .map(|(y, _)| displaced_point(&Point2::new(Real::zero(), y.clone()), &policy))
+                .collect();
+            let expected: Vec<_> = cases
+                .iter()
+                .map(|(_, location)| Classification::Decided(*location))
+                .collect();
+            let batch = offset.value.classify_points(&points, &policy).unwrap();
+            assert_eq!(batch.certainty, CurveCertainty::Certified);
+            assert_eq!(batch.value, expected);
+            for (point, expected) in points.iter().zip(expected) {
+                let result = offset.value.classify_point(point, &policy).unwrap();
+                assert_eq!(result.certainty, CurveCertainty::Certified);
+                assert_eq!(result.value, expected);
+            }
+        }
     }
 }

@@ -134,7 +134,7 @@ fn bench_large_arcs() {
     );
 
     let region = large_arc_region(arc_count);
-    let query = Point2::new(r(1), q(1, 2));
+    let query = hypercurve::CurvePoint2::from(Point2::new(r(1), q(1, 2)));
     let warm_location = region.classify_point(&query, &policy).unwrap();
     let started = Instant::now();
     let mut containment_checksum = 0_usize;

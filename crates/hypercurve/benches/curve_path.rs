@@ -146,7 +146,7 @@ fn main() {
         elapsed / boundary_build_iterations
     );
 
-    let query = p(1, 1);
+    let query = hypercurve::CurvePoint2::from(p(1, 1));
     let classification_iterations = 50_000_u32;
     let started = Instant::now();
     let mut classification_checksum = 0_usize;

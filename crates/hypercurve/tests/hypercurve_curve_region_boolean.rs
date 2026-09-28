@@ -146,7 +146,7 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                         (1, RegionPointLocation::Outside),
                     ] {
                         let location = region
-                            .classify_point(&Point2::new(ratio(n, 8), ratio(1, 2)), &policy)
+                            .classify_point(&Point2::new(ratio(n, 8), ratio(1, 2)).into(), &policy)
                             .unwrap();
                         assert_eq!(location.certainty, CurveCertainty::Certified);
                         assert_eq!(
@@ -230,7 +230,9 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
                 (inside, RegionPointLocation::Inside),
                 (point(1, 1), RegionPointLocation::Outside),
             ] {
-                let location = region.classify_point(&sample, &policy).unwrap();
+                let location = region
+                    .classify_point(&sample.clone().into(), &policy)
+                    .unwrap();
                 assert_eq!(location.certainty, CurveCertainty::Certified);
                 assert_eq!(location.value, Classification::Decided(expected));
             }
@@ -735,7 +737,7 @@ fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegio
 fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
     assert_eq!(
         region
-            .classify_point(&point, &CurveContext::STRICT)
+            .classify_point(&point.clone().into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         Classification::Decided(expected)
@@ -950,7 +952,7 @@ fn regularized_affine_contacts_discard_lower_dimensional_intersections() {
                 for sample in [point(1, 1), second_interior.clone()] {
                     assert_eq!(
                         result
-                            .classify_point(&sample, &policy)
+                            .classify_point(&sample.clone().into(), &policy)
                             .unwrap()
                             .into_value(),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -1101,11 +1103,11 @@ fn circular_conic_batch_reuses_one_authoritative_topology() {
                 );
                 assert_eq!(
                     shared
-                        .classify_point(&sample, &policy)
+                        .classify_point(&sample.clone().into(), &policy)
                         .unwrap()
                         .into_value(),
                     independent
-                        .classify_point(&sample, &policy)
+                        .classify_point(&sample.clone().into(), &policy)
                         .unwrap()
                         .into_value(),
                     "shared and native circle results differ at ({x_numerator}/2, {y_numerator}/2)",
@@ -1158,11 +1160,11 @@ fn mixed_line_circular_conic_batch_reuses_one_authoritative_topology() {
                 );
                 assert_eq!(
                     shared
-                        .classify_point(&sample, &policy)
+                        .classify_point(&sample.clone().into(), &policy)
                         .unwrap()
                         .into_value(),
                     independent
-                        .classify_point(&sample, &policy)
+                        .classify_point(&sample.clone().into(), &policy)
                         .unwrap()
                         .into_value(),
                     "shared and native capsule results differ at ({x_numerator}/2, {y_numerator}/2)",
@@ -1302,11 +1304,11 @@ fn mixed_line_circular_conic_degeneracy_matrix_matches_native_results() {
                     let sample = point(x, y);
                     assert_eq!(
                         shared
-                            .classify_point(&sample, &policy)
+                            .classify_point(&sample.clone().into(), &policy)
                             .unwrap()
                             .into_value(),
                         independent
-                            .classify_point(&sample, &policy)
+                            .classify_point(&sample.clone().into(), &policy)
                             .unwrap()
                             .into_value(),
                         "mixed case {case_index}, operation {operation_index} differs at ({x}, {y})",
@@ -1362,7 +1364,7 @@ fn mixed_line_circular_conic_batch_obeys_the_approximate_512_terminal() {
     ] {
         assert_eq!(
             region
-                .classify_point(&sample, &CurveContext::APPROXIMATE_512)
+                .classify_point(&sample.clone().into(), &CurveContext::APPROXIMATE_512)
                 .unwrap()
                 .into_value(),
             Classification::Decided(expected),
@@ -1718,13 +1720,13 @@ fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
     let point = Point2::new(query_x, (Real::one() / Real::from(2_u8)).unwrap());
 
     let strict = region
-        .classify_point(&point, &CurveContext::STRICT)
+        .classify_point(&point.clone().into(), &CurveContext::STRICT)
         .expect("strict point classification must preserve uncertainty as data");
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert!(matches!(strict.value, Classification::Uncertain(_)));
 
     let approximate = region
-        .classify_point(&point, &CurveContext::APPROXIMATE_512)
+        .classify_point(&point.clone().into(), &CurveContext::APPROXIMATE_512)
         .expect("the authorized 512-bit terminal should identify the symbolic boundary");
     assert_eq!(
         approximate.certainty,
@@ -2149,7 +2151,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
             assert_eq!(
                 results
                     .union()
-                    .classify_point(sample, &policy)
+                    .classify_point(&sample.clone().into(), &policy)
                     .unwrap()
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside)
@@ -2158,7 +2160,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         assert_eq!(
             results
                 .intersection()
-                .classify_point(&narrow_sample, &policy)
+                .classify_point(&narrow_sample.clone().into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Inside)
@@ -2166,7 +2168,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         assert_eq!(
             results
                 .intersection()
-                .classify_point(&wide_only_sample, &policy)
+                .classify_point(&wide_only_sample.clone().into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
@@ -2174,7 +2176,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         assert_eq!(
             results
                 .xor()
-                .classify_point(&narrow_sample, &policy)
+                .classify_point(&narrow_sample.clone().into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
@@ -2182,7 +2184,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         assert_eq!(
             results
                 .xor()
-                .classify_point(&wide_only_sample, &policy)
+                .classify_point(&wide_only_sample.clone().into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Inside)

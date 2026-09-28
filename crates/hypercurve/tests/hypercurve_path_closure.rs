@@ -303,7 +303,9 @@ fn selected_path_chamfers_close_through_all_region_booleans() {
                     .into_iter()
                     .zip(expected)
                 {
-                    let location = region.classify_point(&query, &policy).unwrap();
+                    let location = region
+                        .classify_point(&query.clone().into(), &policy)
+                        .unwrap();
                     assert_eq!(location.certainty, CurveCertainty::Certified);
                     assert_eq!(
                         location.value,
@@ -532,7 +534,10 @@ fn check_major_arc_fillet(clockwise: bool) {
                     untouched
                         .iter()
                         .all(|point| {
-                            let location = closed.value.classify_point(point, &policy).unwrap();
+                            let location = closed
+                                .value
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
 
                             location.value
@@ -568,7 +573,9 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
             (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
             (Point2::new(q(-1, 2), q(1, 2)), RegionPointLocation::Outside),
         ] {
-            let result = region.classify_point(&point, policy).unwrap();
+            let result = region
+                .classify_point(&point.clone().into(), policy)
+                .unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             assert_eq!(result.value, Classification::Decided(expected));
         }
@@ -728,7 +735,9 @@ fn homogeneous_boundary_closes_through_boolean_corners_and_offset() {
                         .into_iter()
                         .zip(expected)
                         {
-                            let location = region.classify_point(&point, &policy).unwrap();
+                            let location = region
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap();
                             assert_eq!(location.certainty, CurveCertainty::Certified);
                             assert_eq!(location.value, Classification::Decided(expected));
                         }

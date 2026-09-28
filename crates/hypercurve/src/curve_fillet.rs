@@ -3100,8 +3100,10 @@ mod tests {
                                     .offset(q(1, 100), &crate::OffsetCornerStyle2::Bevel, &policy)
                                     .unwrap();
                                 assert_eq!(offset.certainty, crate::CurveCertainty::Certified);
-                                let outside =
-                                    offset.value.classify_point(&p(10, 10), &policy).unwrap();
+                                let outside = offset
+                                    .value
+                                    .classify_point(&p(10, 10).into(), &policy)
+                                    .unwrap();
                                 assert_eq!(outside.certainty, crate::CurveCertainty::Certified);
                                 assert_eq!(
                                     outside.value,

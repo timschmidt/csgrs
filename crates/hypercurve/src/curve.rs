@@ -2188,10 +2188,38 @@ impl CurvePath2 {
     /// the `APPROXIMATE_512` terminal.
     pub fn classify_point(
         &self,
-        point: &Point2,
+        point: &CurvePoint2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<ContourPointLocation>>> {
-        resolve_certified_operation(policy, |attempt| self.classify_point_raw(point, attempt))
+        resolve_certified_operation(policy, |attempt| {
+            if let Some(coordinates) = point.coordinates() {
+                return self.classify_point_raw(coordinates, attempt);
+            }
+            // A path retains its trace, including zero-area retracing. Use its
+            // raw loop and parity semantics; region regularization could erase it.
+            let raw = match crate::CurveRegion2::try_from_boundary_paths_raw(
+                std::slice::from_ref(self),
+                attempt,
+            ) {
+                Ok(raw) => raw,
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    return Ok(Classification::Uncertain(blocker.reason()));
+                }
+                Err(error) => {
+                    return Err(remap_operation(error, CurveOperation2::Classification));
+                }
+            };
+            crate::bezier_region::classify_point_evidence_against_retained_loop(
+                &raw, 0, point, attempt,
+            )
+            .map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Classification,
+                    self.curves()[0].family(),
+                    cause,
+                )
+            })
+        })
     }
 
     pub(crate) fn classify_point_raw(
@@ -14916,31 +14944,41 @@ mod tests {
             crate::CurveCertainty::Approximate512Consumed
         );
 
-        let approximate = path
-            .classify_point(
-                &Point2::new(Real::one(), Real::one()),
-                &CurveContext::APPROXIMATE_512,
-            )
-            .expect("the terminal policy must classify through the retained boundary");
-        assert_eq!(
-            approximate.certainty,
-            crate::CurveCertainty::Approximate512Consumed
+        let coordinates = Point2::from_values(1, 1);
+        let endpoint = CurvePoint2::from_endpoint(
+            std::sync::Arc::new(crate::BezierSplitFragment2::Materialized {
+                start: crate::BezierParameter2::Exact(Real::zero()),
+                end: crate::BezierParameter2::Exact(Real::one()),
+                curve: crate::BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                    coordinates.clone(),
+                    Point2::from_values(2, 1),
+                    Point2::from_values(3, 1),
+                )),
+            }),
+            true,
         );
-        assert_eq!(
-            approximate.value,
-            Classification::Decided(ContourPointLocation::Inside)
-        );
+        assert!(endpoint.coordinates().is_none());
+        for point in [coordinates.into(), endpoint] {
+            let approximate = path
+                .classify_point(&point, &CurveContext::APPROXIMATE_512)
+                .expect("the terminal policy must classify through the retained boundary");
+            assert_eq!(
+                approximate.certainty,
+                crate::CurveCertainty::Approximate512Consumed
+            );
+            assert_eq!(
+                approximate.value,
+                Classification::Decided(ContourPointLocation::Inside)
+            );
 
-        let strict = path
-            .classify_point(
-                &Point2::new(Real::one(), Real::one()),
-                &CurveContext::STRICT,
-            )
-            .expect("strict classification preserves uncertainty as query evidence");
-        assert_eq!(strict.certainty, crate::CurveCertainty::Certified);
-        assert_eq!(
-            strict.value,
-            Classification::Uncertain(crate::UncertaintyReason::RealSign)
-        );
+            let strict = path
+                .classify_point(&point, &CurveContext::STRICT)
+                .expect("strict classification preserves uncertainty as query evidence");
+            assert_eq!(strict.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(
+                strict.value,
+                Classification::Uncertain(crate::UncertaintyReason::RealSign)
+            );
+        }
     }
 }

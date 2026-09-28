@@ -4203,7 +4203,9 @@ mod tests {
                         (1, RegionPointLocation::Outside),
                     ] {
                         let point = Point2::new(q(279, 260) + q(shift, 10400), q(5501, 5200));
-                        let classification = candidate.classify_point(&point, &policy).unwrap();
+                        let classification = candidate
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap();
                         assert_eq!(classification.certainty, crate::CurveCertainty::Certified);
                         assert_eq!(
                             classification.value,

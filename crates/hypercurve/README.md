@@ -35,6 +35,13 @@ This README describes crate version `0.3.1`.
 `CurveRegion2` is the sole public filled-region carrier. Native line/arc
 specializations remain private fast paths inside the unified kernel.
 
+Region and closed-path point queries accept `CurvePoint2`, preserving selected
+roots and generated contact evidence. Convert authored coordinates with
+`Point2::into()`; `coordinates()` is an optional stored-coordinate view. Region
+batches accept `&[CurvePoint2]` and share query preparation across scalar and
+generated points. Closed paths retain their trace and even-odd interior; filled
+regions classify their regularized boundary, including holes and nested islands.
+
 ## Install
 
 ```toml
@@ -77,7 +84,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let contour = Contour2::try_new(boundary)?;
     let region =
         CurveRegion2::try_from_native_material_contours(vec![contour], &policy)?.into_value();
-    let location = region.classify_point(&p(1, 1), &policy)?.into_value();
+    let location = region.classify_point(&p(1, 1).into(), &policy)?.into_value();
     assert!(matches!(location, Classification::Decided(_)));
     Ok(())
 }

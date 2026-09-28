@@ -3360,7 +3360,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
         assert!(region.has_algebraic_fragments());
         assert_eq!(
             region
-                .classify_point(&p(0, 1), &CurveContext::STRICT)
+                .classify_point(&p(0, 1).into(), &CurveContext::STRICT)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Inside),
@@ -3368,7 +3368,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
         );
         assert_eq!(
             region
-                .classify_point(&p(0, 3), &CurveContext::STRICT)
+                .classify_point(&p(0, 3).into(), &CurveContext::STRICT)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside),
@@ -3376,7 +3376,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
         );
         assert_eq!(
             region
-                .classify_point(&p(0, 0), &CurveContext::STRICT)
+                .classify_point(&p(0, 0).into(), &CurveContext::STRICT)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Boundary),
@@ -3402,7 +3402,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
         ] {
             assert_eq!(
                 transformed
-                    .classify_point(&point, &CurveContext::STRICT)
+                    .classify_point(&point.clone().into(), &CurveContext::STRICT)
                     .unwrap()
                     .into_value(),
                 Classification::Decided(expected),

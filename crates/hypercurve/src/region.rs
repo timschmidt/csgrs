@@ -70,15 +70,6 @@ impl LineArcRegion2 {
         self.as_view().classify_point(point, policy)
     }
 
-    /// Classifies a batch of points while building exact query indexes once.
-    pub fn classify_points(
-        &self,
-        points: &[Point2],
-        policy: &CurveContext,
-    ) -> Vec<Classification<RegionPointLocation>> {
-        self.as_view().classify_points(points, policy)
-    }
-
     /// Returns conservative structural facts for this region immediately.
     pub fn structural_facts(&self) -> crate::RegionFacts {
         self.as_view().structural_facts()
@@ -144,22 +135,6 @@ impl<'a> RegionView2<'a> {
         } else {
             RegionPointLocation::Outside
         })
-    }
-
-    /// Classifies a batch of points through one immediate exact region pass.
-    ///
-    /// Region, contour, segment, winding, and predicate indexes are temporary
-    /// implementation details shared by every point in this call.
-    pub fn classify_points(
-        &self,
-        points: &[Point2],
-        policy: &CurveContext,
-    ) -> Vec<Classification<RegionPointLocation>> {
-        let index = crate::prepared::RegionQuery2::from_region_view(self, policy);
-        points
-            .iter()
-            .map(|point| index.classify_point(point, policy))
-            .collect()
     }
 
     /// Returns conservative structural facts for this borrowed region immediately.

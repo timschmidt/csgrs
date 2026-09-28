@@ -419,7 +419,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         CurveRegion2::try_from_arrangement_traversal(&graph, &retained_traversal, &policy)
             .expect("regularized arrangement region")
             .into_value();
-    let classified_point = p(2, 0);
+    let classified_point = hypercurve::CurvePoint2::from(p(2, 0));
     decided(
         classified_region
             .classify_point(&classified_point, &policy)?
@@ -516,7 +516,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let algebraic_path = CurvePath2::try_new(vec![head, tail, lower.into()])?;
     let algebraic_region =
         CurveRegion2::try_from_boundary_paths(&[algebraic_path], &policy)?.into_value();
-    let algebraic_region_query = p(2, 0);
+    let algebraic_region_query = hypercurve::CurvePoint2::from(p(2, 0));
     decided(
         algebraic_region
             .classify_point(&algebraic_region_query, &policy)?

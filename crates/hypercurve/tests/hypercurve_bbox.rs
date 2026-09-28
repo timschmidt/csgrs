@@ -171,7 +171,7 @@ fn region_aabb_ignores_holes_outside_material() {
     for point in [p(20, 4), p(22, 4)] {
         assert_eq!(
             region
-                .classify_point(&point, &policy())
+                .classify_point(&point.clone().into(), &policy())
                 .unwrap()
                 .into_value(),
             Classification::Decided(hypercurve::RegionPointLocation::Outside)

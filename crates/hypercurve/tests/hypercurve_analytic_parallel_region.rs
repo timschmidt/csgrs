@@ -124,7 +124,10 @@ fn boundary_curves_reenter_boolean_without_native_conversion() {
     assert!(batch.value.intersection().is_empty());
     assert_eq!(batch.value.union().boundary_loops().len(), 2);
     assert_eq!(
-        replay.classify_point(&point(2, 2), &policy).unwrap().value,
+        replay
+            .classify_point(&point(2, 2).into(), &policy)
+            .unwrap()
+            .value,
         Classification::Decided(RegionPointLocation::Inside)
     );
 }
@@ -634,7 +637,11 @@ fn check_policy(policy: CurveContext) {
         (point(5, 2), RegionPointLocation::Outside),
         (point(0, 2), RegionPointLocation::Boundary),
     ] {
-        match region.classify_point(&point, &policy).unwrap().value {
+        match region
+            .classify_point(&point.clone().into(), &policy)
+            .unwrap()
+            .value
+        {
             Classification::Decided(location) => assert_eq!(location, expected),
             Classification::Uncertain(reason) => {
                 panic!("unexpected analytic-region point uncertainty: {reason:?}")
@@ -699,7 +706,11 @@ fn check_policy(policy: CurveContext) {
         (point(1, 2), RegionPointLocation::Outside),
         (point(2, 2), RegionPointLocation::Boundary),
     ] {
-        match intersection.classify_point(&point, &policy).unwrap().value {
+        match intersection
+            .classify_point(&point.clone().into(), &policy)
+            .unwrap()
+            .value
+        {
             Classification::Decided(location) => assert_eq!(location, expected),
             Classification::Uncertain(reason) => {
                 panic!("unexpected analytic Boolean point uncertainty: {reason:?}")
@@ -725,7 +736,11 @@ fn check_policy(policy: CurveContext) {
         (point(0, 1), RegionPointLocation::Outside),
         (point(1, 1), RegionPointLocation::Boundary),
     ] {
-        match clipped.classify_point(&point, &policy).unwrap().value {
+        match clipped
+            .classify_point(&point.clone().into(), &policy)
+            .unwrap()
+            .value
+        {
             Classification::Decided(location) => assert_eq!(location, expected),
             Classification::Uncertain(reason) => {
                 panic!("unexpected curved-parallel Boolean point uncertainty: {reason:?}")
@@ -937,7 +952,10 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
                 (point(6, 0), RegionPointLocation::Outside),
             ] {
                 assert_eq!(
-                    region.classify_point(&sample, &policy).unwrap().value,
+                    region
+                        .classify_point(&sample.clone().into(), &policy)
+                        .unwrap()
+                        .value,
                     Classification::Decided(expected)
                 );
             }
@@ -956,7 +974,11 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
                 (point(7, 0), RegionPointLocation::Outside),
             ] {
                 assert_eq!(
-                    union.value.classify_point(&sample, &policy).unwrap().value,
+                    union
+                        .value
+                        .classify_point(&sample.clone().into(), &policy)
+                        .unwrap()
+                        .value,
                     Classification::Decided(expected)
                 );
             }
@@ -1082,7 +1104,10 @@ fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
                 (point(6, 0), RegionPointLocation::Outside),
             ] {
                 assert_eq!(
-                    second.classify_point(&sample, &policy).unwrap().value,
+                    second
+                        .classify_point(&sample.clone().into(), &policy)
+                        .unwrap()
+                        .value,
                     Classification::Decided(expected)
                 );
             }
@@ -1241,7 +1266,10 @@ fn general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry() {
             (point(2, 3), RegionPointLocation::Outside),
             (point(-2, 0), RegionPointLocation::Outside),
         ] {
-            let located = clipped.value.classify_point(&query, &policy).unwrap();
+            let located = clipped
+                .value
+                .classify_point(&query.clone().into(), &policy)
+                .unwrap();
             assert_eq!(located.certainty, CurveCertainty::Certified);
             assert_eq!(located.value, Classification::Decided(expected));
         }

@@ -3685,7 +3685,10 @@ fn stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation() {
                     hypercurve::RegionPointLocation::Boundary,
                 ),
             ] {
-                let location = restored.value.classify_point(&point, &policy).unwrap();
+                let location = restored
+                    .value
+                    .classify_point(&point.clone().into(), &policy)
+                    .unwrap();
                 assert_eq!(location.certainty, hypercurve::CurveCertainty::Certified);
                 assert_eq!(location.value, Classification::Decided(expected));
             }
@@ -3778,7 +3781,9 @@ fn stationary_ph_inward_offsets_preserve_sets_through_boundary_paths() {
                         hypercurve::RegionPointLocation::Boundary,
                     ),
                 ] {
-                    let location = region.classify_point(&point, &policy).unwrap();
+                    let location = region
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap();
                     assert_eq!(location.certainty, hypercurve::CurveCertainty::Certified);
                     assert_eq!(location.value, Classification::Decided(expected));
                 }

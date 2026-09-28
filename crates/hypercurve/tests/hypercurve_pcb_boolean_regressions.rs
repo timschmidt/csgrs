@@ -107,7 +107,7 @@ fn assert_exact_containment_difference_is_empty(cover_count: usize, subject_coun
     for point in [point(0, 0), point(100, 0)] {
         assert_eq!(
             cover
-                .classify_point(&point, &CurveContext::STRICT)
+                .classify_point(&point.clone().into(), &CurveContext::STRICT)
                 .expect("cover point classification must decide")
                 .into_value(),
             Classification::Decided(hypercurve::RegionPointLocation::Inside),

@@ -385,7 +385,11 @@ fn resolved_linear_overlap_traversal_materializes_unified_region() {
         (p(5, 1), RegionPointLocation::Outside),
     ] {
         assert_eq!(
-            decided(retained.classify_point(&point, &policy()).unwrap()),
+            decided(
+                retained
+                    .classify_point(&point.clone().into(), &policy())
+                    .unwrap()
+            ),
             location
         );
     }
@@ -511,7 +515,11 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
         (p(5, 1), RegionPointLocation::Outside),
     ] {
         assert_eq!(
-            decided(retained.classify_point(&point, &policy()).unwrap()),
+            decided(
+                retained
+                    .classify_point(&point.clone().into(), &policy())
+                    .unwrap()
+            ),
             location
         );
     }
@@ -588,7 +596,11 @@ fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies()
             (p(4, 3), RegionPointLocation::Boundary),
         ] {
             assert_eq!(
-                decided(retained.classify_point(&point, &policy).unwrap()),
+                decided(
+                    retained
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 expected
             );
         }
@@ -806,35 +818,35 @@ fn retained_exact_algebraic_endpoint_line_images_assign_roles() {
         );
         assert_eq!(
             retained
-                .classify_point(&p(1, 1), &policy)
+                .classify_point(&p(1, 1).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
             retained
-                .classify_point(&p(3, 3), &policy)
+                .classify_point(&p(3, 3).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
         );
         assert_eq!(
             retained
-                .classify_point(&p(2, 3), &policy)
+                .classify_point(&p(2, 3).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Boundary)
         );
         assert_eq!(
             retained
-                .classify_point(&p(7, 3), &policy)
+                .classify_point(&p(7, 3).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
         );
         assert_eq!(
             clone
-                .classify_point(&p(3, 3), &policy)
+                .classify_point(&p(3, 3).into(), &policy)
                 .unwrap()
                 .into_value(),
             Classification::Decided(RegionPointLocation::Outside)
@@ -867,35 +879,35 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
     assert!(region.has_algebraic_fragments());
     assert_eq!(
         region
-            .classify_point(&p(0, 0), &policy)
+            .classify_point(&p(0, 0).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
         region
-            .classify_point(&p(0, 2), &policy)
+            .classify_point(&p(0, 2).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
         region
-            .classify_point(&p(2, 0), &policy)
+            .classify_point(&p(2, 0).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
         region
-            .classify_point(&p(0, 1), &policy)
+            .classify_point(&p(0, 1).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Boundary)
     );
     assert_eq!(
         clone
-            .classify_point(&p(0, 0), &policy)
+            .classify_point(&p(0, 0).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
@@ -1272,7 +1284,11 @@ fn arrangement_admission_regularizes_crossings_and_canceled_seams() {
             );
             for (point, expected) in samples {
                 assert_eq!(
-                    decided(region.classify_point(&point, &policy).unwrap()),
+                    decided(
+                        region
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
                     expected
                 );
             }
@@ -1324,7 +1340,11 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
             (p(0, 2), RegionPointLocation::Outside),
         ] {
             assert_eq!(
-                decided(region.classify_point(&point, &policy).unwrap()),
+                decided(
+                    region
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 expected
             );
         }
@@ -1415,8 +1435,11 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
             let owners = components
                 .iter()
                 .filter(|component| {
-                    decided(component.classify_point(&point, &policy).unwrap())
-                        == RegionPointLocation::Inside
+                    decided(
+                        component
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap(),
+                    ) == RegionPointLocation::Inside
                 })
                 .collect::<Vec<_>>();
             assert_eq!(owners.len(), 1);
@@ -1446,7 +1469,11 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
         for point in [p(3, 8), p(8, 8), p(18, 18)] {
             for component in &components {
                 assert_eq!(
-                    decided(component.classify_point(&point, &policy).unwrap()),
+                    decided(
+                        component
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
                     RegionPointLocation::Outside
                 );
             }
@@ -1497,14 +1524,18 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
         .into_value();
         assert_eq!(authored.len(), 1);
         assert_eq!(
-            decided(authored.classify_point(&p(2, 4), &policy).unwrap()),
+            decided(authored.classify_point(&p(2, 4).into(), &policy).unwrap()),
             RegionPointLocation::Inside
         );
         let components = authored.material_components(&policy).unwrap().into_value();
         assert_eq!(components.len(), 1);
         assert_eq!(components[0].len(), 1);
         assert_eq!(
-            decided(components[0].classify_point(&p(2, 4), &policy).unwrap()),
+            decided(
+                components[0]
+                    .classify_point(&p(2, 4).into(), &policy)
+                    .unwrap()
+            ),
             RegionPointLocation::Inside
         );
     }

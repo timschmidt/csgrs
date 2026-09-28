@@ -772,7 +772,7 @@ fn correlated_chord_pair_endpoints_survive_transform_and_offset() {
             certified(
                 transformed
                     .value
-                    .classify_point(&Point2::new(q(5, 2), q(-5, 2)), &policy)
+                    .classify_point(&Point2::new(q(5, 2), q(-5, 2)).into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Inside),
@@ -951,7 +951,11 @@ fn unified_native_constructor_regularizes_zero_signed_area_self_crossing() {
     );
     for point in [p(2, 1), p(2, 3)] {
         assert_eq!(
-            decided(region.classify_point(&point, &policy).unwrap()),
+            decided(
+                region
+                    .classify_point(&point.clone().into(), &policy)
+                    .unwrap()
+            ),
             RegionPointLocation::Inside
         );
     }
@@ -984,14 +988,14 @@ fn unified_region_offsets_quadratic_boundary_through_exact_parallel_arrangement(
     assert!(exact.has_algebraic_fragments());
     assert_eq!(
         exact
-            .classify_point(&p(0, 0), &policy)
+            .classify_point(&p(0, 0).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
         exact
-            .classify_point(&p(0, 5), &policy)
+            .classify_point(&p(0, 5).into(), &policy)
             .unwrap()
             .into_value(),
         Classification::Decided(RegionPointLocation::Outside)
@@ -1133,7 +1137,7 @@ fn unified_region_offsets_general_rational_boundary_identically_under_both_polic
         certified(
             strict
                 .value
-                .classify_point(&p(0, 0), &CurveContext::STRICT)
+                .classify_point(&p(0, 0).into(), &CurveContext::STRICT)
                 .unwrap()
         ),
         Classification::Decided(RegionPointLocation::Inside)
@@ -1142,7 +1146,7 @@ fn unified_region_offsets_general_rational_boundary_identically_under_both_polic
         certified(
             strict
                 .value
-                .classify_point(&p(0, 5), &CurveContext::STRICT)
+                .classify_point(&p(0, 5).into(), &CurveContext::STRICT)
                 .unwrap()
         ),
         Classification::Decided(RegionPointLocation::Outside)
@@ -1193,11 +1197,11 @@ fn unified_region_offset_corner_styles_have_exact_area_and_miter_fallback() {
         Some(Real::from(36))
     );
     assert_eq!(
-        certified(miter.classify_point(&p(-1, -1), &policy).unwrap()),
+        certified(miter.classify_point(&p(-1, -1).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Boundary)
     );
     assert_eq!(
-        certified(round.classify_point(&p(-1, -1), &policy).unwrap()),
+        certified(round.classify_point(&p(-1, -1).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -1311,7 +1315,7 @@ fn unified_region_reuses_design_parameter_corner_solvers() {
         Some(Real::from(16))
     );
     assert_eq!(
-        decided(one_sided.classify_point(&p(4, 1), &policy).unwrap()),
+        decided(one_sided.classify_point(&p(4, 1).into(), &policy).unwrap()),
         RegionPointLocation::Boundary
     );
     assert!(
@@ -1399,7 +1403,11 @@ fn assert_corner_region_survives_boundary_paths(
     for (label, actual) in [("generated", region), ("restored", &restored)] {
         for (point, location) in probes {
             assert_eq!(
-                certified(actual.classify_point(point, policy).unwrap()),
+                certified(
+                    actual
+                        .classify_point(&point.clone().into(), policy)
+                        .unwrap()
+                ),
                 Classification::Decided(*location),
                 "{label} corner region at {point:?}",
             );
@@ -1707,7 +1715,7 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
                     assert_eq!(
                         certified(
                             candidate
-                                .classify_point(&Point2::new(q(-1, 1), q(1, 2)), &policy)
+                                .classify_point(&Point2::new(q(-1, 1), q(1, 2)).into(), &policy)
                                 .unwrap()
                         ),
                         Classification::Decided(RegionPointLocation::Inside),
@@ -2097,11 +2105,11 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
                 vec![CurveRegionLoopRole::Material]
             );
             assert_eq!(
-                certified(third.classify_point(&p(-2, 1), &policy).unwrap()),
+                certified(third.classify_point(&p(-2, 1).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Inside)
             );
             assert_eq!(
-                certified(third.classify_point(&p(0, 0), &policy).unwrap()),
+                certified(third.classify_point(&p(0, 0).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Outside)
             );
 
@@ -2282,7 +2290,11 @@ fn one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver() {
                 .any(|fragment| fragment.family() == CurveFamily2::Line)
         );
         assert_eq!(
-            certified(regularized.classify_point(&p(-2, 1), &policy).unwrap()),
+            certified(
+                regularized
+                    .classify_point(&p(-2, 1).into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(RegionPointLocation::Inside)
         );
     }
@@ -2521,7 +2533,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         assert_eq!(
             certified(
                 expanded
-                    .classify_point(&Point2::new(-q(1, 20), q(1, 2)), &policy)
+                    .classify_point(&Point2::new(-q(1, 20), q(1, 2)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Inside)
@@ -2529,7 +2541,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         assert_eq!(
             certified(
                 expanded
-                    .classify_point(&Point2::new(-q(1, 5), q(1, 2)), &policy)
+                    .classify_point(&Point2::new(-q(1, 5), q(1, 2)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Outside)
@@ -2537,7 +2549,10 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
         assert_eq!(
             certified(
                 expanded
-                    .classify_point(&Point2::new(Real::zero(), -distance.clone()), &policy)
+                    .classify_point(
+                        &Point2::new(Real::zero(), -distance.clone()).into(),
+                        &policy
+                    )
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Boundary)
@@ -2551,7 +2566,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
             certified(
                 repeated
                     .value
-                    .classify_point(&Point2::new(-q(3, 20), q(1, 2)), &policy)
+                    .classify_point(&Point2::new(-q(3, 20), q(1, 2)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Inside)
@@ -2565,7 +2580,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
             certified(
                 contracted
                     .value
-                    .classify_point(&Point2::new(q(1, 20), q(1, 2)), &policy)
+                    .classify_point(&Point2::new(q(1, 20), q(1, 2)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Outside)
@@ -2574,7 +2589,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
             certified(
                 contracted
                     .value
-                    .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                    .classify_point(&Point2::new(q(1, 2), q(1, 2)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Inside)
@@ -2598,7 +2613,7 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
             certified(
                 limited_miter
                     .value
-                    .classify_point(&Point2::new(-q(9, 100), -q(9, 100)), &policy)
+                    .classify_point(&Point2::new(-q(9, 100), -q(9, 100)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Outside)
@@ -2664,7 +2679,12 @@ fn axis_aligned_algebraic_chords_reenter_exact_region_offsets() {
             ),
         ] {
             assert_eq!(
-                certified(rounded.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    rounded
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected)
             );
         }
@@ -2694,7 +2714,7 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             certified(
                 expanded
                     .value
-                    .classify_point(&Point2::new(Real::zero(), -q(3, 20)), &policy)
+                    .classify_point(&Point2::new(Real::zero(), -q(3, 20)).into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Boundary),
@@ -2713,7 +2733,7 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             certified(
                 expanded_again
                     .value
-                    .classify_point(&Point2::new(q(1, 4), -q(4, 25)), &policy)
+                    .classify_point(&Point2::new(q(1, 4), -q(4, 25)).into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Boundary),
@@ -2752,7 +2772,7 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             certified(
                 contracted
                     .value
-                    .classify_point(&Point2::new(Real::zero(), -q(1, 20)), &policy)
+                    .classify_point(&Point2::new(Real::zero(), -q(1, 20)).into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Boundary),
@@ -2844,7 +2864,7 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
         assert_eq!(
             certified(
                 collapsed_round
-                    .classify_point(&Point2::new(q(1, 4), Real::zero()), &policy)
+                    .classify_point(&Point2::new(q(1, 4), Real::zero()).into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Boundary),
@@ -2863,7 +2883,12 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             (Point2::new(q(1, 4), q(1, 4)), RegionPointLocation::Inside),
         ] {
             assert_eq!(
-                certified(past_collapse.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    past_collapse
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected),
             );
         }
@@ -3106,7 +3131,12 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
             (Point2::new(q(3, 2), q(15, 4)), RegionPointLocation::Outside),
         ] {
             assert_eq!(
-                certified(transformed.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    transformed
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected),
             );
         }
@@ -3127,7 +3157,7 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
             certified(
                 transformed_round
                     .value
-                    .classify_point(&transformed_boundary, &policy)
+                    .classify_point(&transformed_boundary.clone().into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Boundary),
@@ -3151,7 +3181,7 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
             certified(
                 rotated_round
                     .value
-                    .classify_point(&transformed_boundary, &policy)
+                    .classify_point(&transformed_boundary.clone().into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Boundary),
@@ -3234,7 +3264,7 @@ fn translated_algebraic_round_regions_boolean_through_cusp_chord_contacts() {
                 batch
                     .value
                     .union()
-                    .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                    .classify_point(&Point2::new(q(1, 2), q(1, 2)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Inside),
@@ -3698,7 +3728,7 @@ fn one_chord_orders_contacts_from_two_selected_round_corners() {
                     batch
                         .value
                         .intersection()
-                        .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                        .classify_point(&Point2::new(q(1, 2), q(1, 2)).into(), &policy)
                         .unwrap(),
                 ),
                 Classification::Decided(RegionPointLocation::Inside),
@@ -3834,7 +3864,11 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
                 ),
             ] {
                 assert_eq!(
-                    certified(repeated.classify_point(&point, &policy).unwrap()),
+                    certified(
+                        repeated
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
                     Classification::Decided(expected),
                 );
             }
@@ -3929,7 +3963,7 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
             assert_eq!(cut.boundary_loops()[0].len(), seam_curve_count + 1);
             assert_eq!(
                 decided(
-                    cut.classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                    cut.classify_point(&Point2::new(q(1, 2), q(1, 2)).into(), &policy)
                         .unwrap()
                 ),
                 RegionPointLocation::Inside,
@@ -4012,7 +4046,7 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
             };
             assert_eq!(
                 certified(
-                    seam.classify_point(&Point2::new(Real::from(2), Real::from(2)), &policy)
+                    seam.classify_point(&Point2::new(Real::from(2), Real::from(2)).into(), &policy)
                         .unwrap(),
                 ),
                 Classification::Decided(RegionPointLocation::Inside),
@@ -4082,7 +4116,7 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
         assert_eq!(
             certified(
                 second
-                    .classify_point(&Point2::new(Real::from(2), Real::from(2)), &policy)
+                    .classify_point(&Point2::new(Real::from(2), Real::from(2)).into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Inside),
@@ -4090,7 +4124,7 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
         assert_eq!(
             certified(
                 second
-                    .classify_point(&Point2::new(Real::from(-1), Real::from(-1)), &policy)
+                    .classify_point(&Point2::new(Real::from(-1), Real::from(-1)).into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Outside),
@@ -4210,11 +4244,11 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
                     .any(|fragment| is_native(fragment, CurveFamily2::RationalQuadraticBezier))
             );
             assert_eq!(
-                certified(filleted.classify_point(&p(-2, 1), &policy).unwrap()),
+                certified(filleted.classify_point(&p(-2, 1).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Inside),
             );
             assert_eq!(
-                certified(filleted.classify_point(&p(1, 1), &policy).unwrap()),
+                certified(filleted.classify_point(&p(1, 1).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Outside),
             );
         }
@@ -4322,13 +4356,13 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
             assert_eq!(
                 certified(
                     filleted
-                        .classify_point(&Point2::new(-Real::one(), q(1, 2)), &policy)
+                        .classify_point(&Point2::new(-Real::one(), q(1, 2)).into(), &policy)
                         .unwrap()
                 ),
                 Classification::Decided(RegionPointLocation::Inside),
             );
             assert_eq!(
-                certified(filleted.classify_point(&p(2, 0), &policy).unwrap()),
+                certified(filleted.classify_point(&p(2, 0).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Outside),
             );
         }
@@ -4418,7 +4452,7 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                 .expect("the represented exterior parabola cut must be retained");
             assert_eq!(
                 exact
-                    .classify_point(&p(-1, -1), &policy)
+                    .classify_point(&p(-1, -1).into(), &policy)
                     .expect("the exact exterior fillet remains classifiable")
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside),
@@ -4430,7 +4464,7 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                 .expect("the irrational exterior parabola cut must remain exact");
             assert_eq!(
                 algebraic
-                    .classify_point(&p(-1, -1), &policy)
+                    .classify_point(&p(-1, -1).into(), &policy)
                     .expect("the algebraic exterior fillet remains classifiable")
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside),
@@ -4574,7 +4608,7 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
             let inside = Point2::new(q(1, 4), q(3, 2));
             let location = |candidate: &CurveRegion2| {
                 candidate
-                    .classify_point(&inside, &policy)
+                    .classify_point(&inside.clone().into(), &policy)
                     .expect("the algebraic arc/parabola fillet remains classifiable")
                     .into_value()
             };
@@ -4728,11 +4762,11 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
                 })
                 .expect("one exact candidate must publish the circular fillet span");
             assert_eq!(
-                certified(filleted.classify_point(&p(-3, 1), &policy).unwrap()),
+                certified(filleted.classify_point(&p(-3, 1).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Inside),
             );
             assert_eq!(
-                certified(filleted.classify_point(&p(2, 1), &policy).unwrap()),
+                certified(filleted.classify_point(&p(2, 1).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Outside),
             );
         }
@@ -4844,7 +4878,7 @@ fn selected_circle_support_chord_corners_retain_algebraic_fillet_centers() {
             assert_eq!(
                 certified(
                     filleted
-                        .classify_point(&Point2::new(q(1, 2), q(1, 2)), &policy)
+                        .classify_point(&Point2::new(q(1, 2), q(1, 2)).into(), &policy)
                         .unwrap(),
                 ),
                 Classification::Decided(RegionPointLocation::Inside),
@@ -4972,7 +5006,7 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
             "one fillet may occupy one or both selected-circle half charts: policy={policy:?}, mode={mode:?}, corner={corner}, candidate={candidate}"
         );
         assert_eq!(
-            certified(filleted.classify_point(&p(10, 10), &policy).unwrap()),
+            certified(filleted.classify_point(&p(10, 10).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Outside),
         );
         let replay = filleted
@@ -5020,7 +5054,12 @@ fn assert_analytic_parallel_support_corners_retain_algebraic_fillet_centers_and_
             "retained analytic fillet re-offset certainty: policy={policy:?}, mode={mode:?}, corner={corner}, candidate={candidate}",
         );
         assert_eq!(
-            certified(reoffset.value.classify_point(&p(10, 10), &policy).unwrap()),
+            certified(
+                reoffset
+                    .value
+                    .classify_point(&p(10, 10).into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(RegionPointLocation::Outside),
         );
     }
@@ -5100,11 +5139,11 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
             1,
         );
         assert_eq!(
-            certified(filleted.classify_point(&p(0, 1), &policy).unwrap()),
+            certified(filleted.classify_point(&p(0, 1).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside),
         );
         assert_eq!(
-            certified(filleted.classify_point(&p(0, 0), &policy).unwrap()),
+            certified(filleted.classify_point(&p(0, 0).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Outside),
         );
         let distant =
@@ -5344,7 +5383,7 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                 .find(has_projective_selected_circle)
                 .expect("both projective algebraic cuts and the selected circle must be retained");
             assert_eq!(
-                certified(filleted.classify_point(&p(10, 10), &policy).unwrap()),
+                certified(filleted.classify_point(&p(10, 10).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Outside),
             );
             let distant =
@@ -5375,7 +5414,11 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                 let expected = Classification::Decided(expected);
                 for region in [filleted, replay.union()] {
                     assert_eq!(
-                        certified(region.classify_point(&point, &policy).unwrap()),
+                        certified(
+                            region
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap()
+                        ),
                         expected,
                         "policy={policy:?}, reversed={reversed}"
                     );
@@ -5385,7 +5428,7 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
                 certified(
                     replay
                         .union()
-                        .classify_point(&Point2::new(q(17, 2), q(17, 2)), &policy)
+                        .classify_point(&Point2::new(q(17, 2), q(17, 2)).into(), &policy)
                         .unwrap()
                 ),
                 Classification::Decided(RegionPointLocation::Inside),
@@ -5575,7 +5618,11 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
             ),
         ] {
             assert_eq!(
-                certified(mapped_reentry.classify_point(&point, &policy).unwrap()),
+                certified(
+                    mapped_reentry
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected),
             );
         }
@@ -5802,7 +5849,12 @@ fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
             (p(7, 0), RegionPointLocation::Outside),
         ] {
             assert_eq!(
-                certified(transformed.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    transformed
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected),
             );
         }
@@ -5844,7 +5896,7 @@ fn algebraic_chords_survive_nonsingular_exact_affine_transforms() {
                 rounded
                     .value
                     .classify_point(
-                        &Point2::new(Real::from(6), Real::from(-1) - &distance),
+                        &Point2::new(Real::from(6), Real::from(-1) - &distance).into(),
                         &policy,
                     )
                     .unwrap(),
@@ -5867,7 +5919,7 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
             certified(
                 expanded
                     .value
-                    .classify_point(&Point2::new(q(47, 100), q(3, 4)), &policy)
+                    .classify_point(&Point2::new(q(47, 100), q(3, 4)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Inside)
@@ -5876,7 +5928,7 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
             certified(
                 expanded
                     .value
-                    .classify_point(&Point2::new(q(2, 5), q(4, 5)), &policy)
+                    .classify_point(&Point2::new(q(2, 5), q(4, 5)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Outside)
@@ -5928,8 +5980,13 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
                     "hypercurve",
                     "recursive-projective-axis-order",
                     "interval-separated",
-                ) > 0,
-                "strictly separated recursive projective coordinates must avoid exact cross-product expansion: {contract_kernel_trace:?}",
+                ) > 0
+                    || contract_trace.path_count(
+                        "hypercurve",
+                        "algebraic-chord-point-axis-order",
+                        "interval-separated",
+                    ) > 0,
+                "retained coordinates must use certified bounds before recursive expansion: {contract_kernel_trace:?}",
             );
             assert_eq!(
                 contract_trace.path_count(
@@ -5955,7 +6012,7 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
             certified(
                 contracted
                     .value
-                    .classify_point(&Point2::new(q(3, 5), q(3, 4)), &policy)
+                    .classify_point(&Point2::new(q(3, 5), q(3, 4)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Inside)
@@ -5964,7 +6021,7 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
             certified(
                 contracted
                     .value
-                    .classify_point(&Point2::new(q(13, 25), q(3, 4)), &policy)
+                    .classify_point(&Point2::new(q(13, 25), q(3, 4)).into(), &policy)
                     .unwrap()
             ),
             Classification::Decided(RegionPointLocation::Outside)
@@ -5988,7 +6045,12 @@ fn nonconvex_algebraic_chord_expansion_is_exact_and_local_collapse_is_explicit()
             ),
         ] {
             assert_eq!(
-                certified(post_collapse.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    post_collapse
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected)
             );
         }
@@ -6087,7 +6149,12 @@ fn algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
                 (p(6, 2), RegionPointLocation::Outside),
             ] {
                 assert_eq!(
-                    certified(split.value.classify_point(&point, &policy).unwrap()),
+                    certified(
+                        split
+                            .value
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
                     Classification::Decided(expected)
                 );
             }
@@ -6132,7 +6199,12 @@ fn algebraic_chord_non_miter_erosions_split_a_collapsed_neck_exactly() {
                     (p(6, 2), RegionPointLocation::Outside),
                 ] {
                     assert_eq!(
-                        certified(split.value.classify_point(&point, &policy).unwrap()),
+                        certified(
+                            split
+                                .value
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap()
+                        ),
                         Classification::Decided(expected),
                         "{policy:?} {fill_rule:?} reverse={reverse} radius={radius:?} {corner_style:?} at {point:?}",
                     );
@@ -6220,7 +6292,12 @@ fn rotated_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
         ] {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let classify = || split.value.classify_point(&point, &policy).unwrap();
+            let classify = || {
+                split
+                    .value
+                    .classify_point(&point.clone().into(), &policy)
+                    .unwrap()
+            };
             #[cfg(feature = "dispatch-trace")]
             let point_outcome = hyperreal::dispatch_trace::with_recording(classify);
             #[cfg(not(feature = "dispatch-trace"))]
@@ -6303,7 +6380,12 @@ fn sheared_algebraic_chord_erosion_splits_a_collapsed_neck_exactly() {
             (transform_point(p(6, 2)), RegionPointLocation::Outside),
         ] {
             assert_eq!(
-                certified(split.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    split
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected)
             );
         }
@@ -6385,7 +6467,12 @@ fn algebraic_chord_expansion_merges_coupled_material_loops_exactly() {
             ),
         ] {
             assert_eq!(
-                certified(merged.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    merged
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected)
             );
         }
@@ -6405,11 +6492,11 @@ fn algebraic_chord_material_hole_contact_and_hole_collapse_are_exact() {
     ] {
         let source = algebraic_material_hole_rectangle(&policy, fill_rule, reverse);
         assert_eq!(
-            certified(source.classify_point(&p(2, 2), &policy).unwrap()),
+            certified(source.classify_point(&p(2, 2).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside),
         );
         assert_eq!(
-            certified(source.classify_point(&p(7, 2), &policy).unwrap()),
+            certified(source.classify_point(&p(7, 2).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Outside),
         );
 
@@ -6451,7 +6538,12 @@ fn algebraic_chord_material_hole_contact_and_hole_collapse_are_exact() {
             ),
         ] {
             assert_eq!(
-                certified(contacted.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    contacted
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected),
             );
         }
@@ -6479,7 +6571,7 @@ fn algebraic_chord_material_hole_contact_and_hole_collapse_are_exact() {
             certified(
                 hole_collapsed
                     .value
-                    .classify_point(&p(7, 2), &policy)
+                    .classify_point(&p(7, 2).into(), &policy)
                     .unwrap(),
             ),
             Classification::Decided(RegionPointLocation::Inside),
@@ -6567,7 +6659,7 @@ fn unified_region_offset_regularizes_overlapping_expanded_voids() {
     assert_eq!(native.material_contours().len(), 1);
     assert_eq!(native.hole_contours().len(), 1);
     assert_eq!(
-        certified(offset.classify_point(&p(8, 6), &policy).unwrap()),
+        certified(offset.classify_point(&p(8, 6).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -6588,15 +6680,15 @@ fn unified_region_expansion_regularizes_a_closed_concavity() {
     assert_eq!(native.material_contours().len(), 1);
     assert!(native.hole_contours().is_empty());
     assert_eq!(
-        certified(offset.classify_point(&p(5, 8), &policy).unwrap()),
+        certified(offset.classify_point(&p(5, 8).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        certified(offset.classify_point(&p(-2, -2), &policy).unwrap()),
+        certified(offset.classify_point(&p(-2, -2).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        certified(offset.classify_point(&p(14, 5), &policy).unwrap()),
+        certified(offset.classify_point(&p(14, 5).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -6614,11 +6706,11 @@ fn unified_region_contracts_nonconvex_material_before_its_medial_collapse() {
         .into_value();
 
     assert_eq!(
-        certified(eroded.classify_point(&p(1, 1), &policy).unwrap()),
+        certified(eroded.classify_point(&p(1, 1).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Boundary)
     );
     assert_eq!(
-        certified(eroded.classify_point(&p(5, 5), &policy).unwrap()),
+        certified(eroded.classify_point(&p(5, 5).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -6637,7 +6729,7 @@ fn unified_region_discards_nonconvex_material_after_wavefront_collapse() {
 
     assert!(eroded.is_empty());
     assert_eq!(
-        certified(eroded.classify_point(&p(5, 1), &policy).unwrap()),
+        certified(eroded.classify_point(&p(5, 1).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -6659,12 +6751,16 @@ fn unified_region_nonconvex_erosion_splits_at_a_collapsed_neck() {
     assert!(native.hole_contours().is_empty());
     for point in [p(2, 2), p(10, 2)] {
         assert_eq!(
-            certified(eroded.classify_point(&point, &policy).unwrap()),
+            certified(
+                eroded
+                    .classify_point(&point.clone().into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(RegionPointLocation::Inside)
         );
     }
     assert_eq!(
-        certified(eroded.classify_point(&p(6, 2), &policy).unwrap()),
+        certified(eroded.classify_point(&p(6, 2).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
 }
@@ -6734,14 +6830,20 @@ fn unified_region_non_miter_erosions_split_after_neck_collapse() {
             assert_eq!(eroded.certainty, CurveCertainty::Certified);
             assert_eq!(eroded.value.boundary_loops().len(), 2);
             for point in [p(2, 2), p(10, 2)] {
-                let location = eroded.value.classify_point(&point, &policy).unwrap();
+                let location = eroded
+                    .value
+                    .classify_point(&point.clone().into(), &policy)
+                    .unwrap();
                 assert_eq!(location.certainty, CurveCertainty::Certified);
                 assert_eq!(
                     location.value,
                     Classification::Decided(RegionPointLocation::Inside)
                 );
             }
-            let location = eroded.value.classify_point(&p(6, 2), &policy).unwrap();
+            let location = eroded
+                .value
+                .classify_point(&p(6, 2).into(), &policy)
+                .unwrap();
             assert_eq!(location.certainty, CurveCertainty::Certified);
             assert_eq!(
                 location.value,
@@ -6770,12 +6872,22 @@ fn unified_region_nonorthogonal_erosion_splits_through_the_exact_wavefront() {
         assert!(native.hole_contours().is_empty());
         for point in [p(6, 2), p(22, 2)] {
             assert_eq!(
-                certified(eroded.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    eroded
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(RegionPointLocation::Inside)
             );
         }
         assert_eq!(
-            certified(eroded.value.classify_point(&p(14, 2), &policy).unwrap()),
+            certified(
+                eroded
+                    .value
+                    .classify_point(&p(14, 2).into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(RegionPointLocation::Outside)
         );
     }
@@ -6800,12 +6912,22 @@ fn unified_region_exact_neck_event_uses_post_event_topology() {
         assert!(native.hole_contours().is_empty());
         for point in [p(6, 2), p(22, 2)] {
             assert_eq!(
-                certified(eroded.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    eroded
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(RegionPointLocation::Inside)
             );
         }
         assert_eq!(
-            certified(eroded.value.classify_point(&p(14, 2), &policy).unwrap()),
+            certified(
+                eroded
+                    .value
+                    .classify_point(&p(14, 2).into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(RegionPointLocation::Outside)
         );
     }
@@ -6860,7 +6982,7 @@ fn unified_region_convex_erosion_handles_orientation_and_redundant_edges() {
         assert_eq!(bounds.max_x(), &Real::from(3));
         assert_eq!(bounds.max_y(), &Real::from(3));
         assert_eq!(
-            certified(eroded.classify_point(&p(2, 2), &policy).unwrap()),
+            certified(eroded.classify_point(&p(2, 2).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
     }
@@ -6951,7 +7073,7 @@ fn unified_region_positive_offset_removes_exactly_collapsed_convex_hole() {
         .into_value();
     assert_eq!(decided(expanded.loop_roles(&policy).unwrap()).len(), 1);
     assert_eq!(
-        certified(expanded.classify_point(&p(10, 10), &policy).unwrap()),
+        certified(expanded.classify_point(&p(10, 10).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
 }
@@ -6987,7 +7109,12 @@ fn unified_region_erosion_splits_when_a_hole_reaches_the_material_boundary() {
             (p(8, 2), RegionPointLocation::Boundary),
         ] {
             assert_eq!(
-                certified(split.value.classify_point(&point, &policy).unwrap()),
+                certified(
+                    split
+                        .value
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 Classification::Decided(expected),
             );
         }
@@ -7035,7 +7162,10 @@ fn unified_curved_erosion_opens_a_hole_through_the_material_boundary() {
             (p(2, 0), RegionPointLocation::Outside),
             (p(4, 0), RegionPointLocation::Outside),
         ] {
-            let location = opened.value.classify_point(&point, &policy).unwrap();
+            let location = opened
+                .value
+                .classify_point(&point.clone().into(), &policy)
+                .unwrap();
             if policy == CurveContext::STRICT {
                 assert_eq!(location.certainty, CurveCertainty::Certified);
             }
@@ -7080,7 +7210,10 @@ fn unified_curved_erosion_retains_the_exact_hole_boundary_contact() {
                 RegionPointLocation::Boundary,
             ),
         ] {
-            let location = tangent.value.classify_point(&point, &policy).unwrap();
+            let location = tangent
+                .value
+                .classify_point(&point.clone().into(), &policy)
+                .unwrap();
             assert_eq!(location.value, Classification::Decided(expected));
         }
     }
@@ -7127,7 +7260,10 @@ fn unified_curved_erosion_composes_merging_holes_and_material_crossings() {
                 RegionPointLocation::Boundary,
             ),
         ] {
-            let location = split.value.classify_point(&point, &policy).unwrap();
+            let location = split
+                .value
+                .classify_point(&point.clone().into(), &policy)
+                .unwrap();
             if policy == CurveContext::STRICT {
                 assert_eq!(location.certainty, CurveCertainty::Certified);
             }
@@ -7172,7 +7308,10 @@ fn unified_curved_erosion_resolves_simultaneous_hole_and_material_tangencies() {
             (p(-4, 0), RegionPointLocation::Boundary),
             (p(4, 0), RegionPointLocation::Boundary),
         ] {
-            let location = split.value.classify_point(&point, &policy).unwrap();
+            let location = split
+                .value
+                .classify_point(&point.clone().into(), &policy)
+                .unwrap();
             if policy == CurveContext::STRICT {
                 assert_eq!(location.certainty, CurveCertainty::Certified);
             }
@@ -7217,7 +7356,10 @@ fn unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse() {
                 RegionPointLocation::Boundary,
             ),
         ] {
-            let location = split.value.classify_point(&point, &policy).unwrap();
+            let location = split
+                .value
+                .classify_point(&point.clone().into(), &policy)
+                .unwrap();
             if policy == CurveContext::STRICT {
                 assert_eq!(location.certainty, CurveCertainty::Certified);
             }
@@ -7253,15 +7395,15 @@ fn native_self_crossing_walk_regularizes_with_both_fill_rules() {
         assert_eq!(native.material_contours().len(), 2);
         assert!(native.hole_contours().is_empty());
         assert_eq!(
-            certified(region.classify_point(&p(2, 3), &policy).unwrap()),
+            certified(region.classify_point(&p(2, 3).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
-            certified(region.classify_point(&p(2, 1), &policy).unwrap()),
+            certified(region.classify_point(&p(2, 1).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
-            certified(region.classify_point(&p(0, 2), &policy).unwrap()),
+            certified(region.classify_point(&p(0, 2).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Outside)
         );
         assert_eq!(
@@ -7293,7 +7435,11 @@ fn authoritative_curve_region_arrangement_regularizes_self_crossing_walks() {
                 (p(0, 2), RegionPointLocation::Outside),
             ] {
                 assert_eq!(
-                    certified(region.classify_point(&point, &policy).unwrap()),
+                    certified(
+                        region
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
                     Classification::Decided(expected)
                 );
             }
@@ -7320,11 +7466,11 @@ fn authoritative_curve_region_regularizes_polynomial_and_rational_self_crossings
             let region = raw.regularized_region(&policy).unwrap().into_value();
             assert_eq!(region.boundary_loops().len(), 2);
             assert_eq!(
-                certified(region.classify_point(&p(2, 1), &policy).unwrap()),
+                certified(region.classify_point(&p(2, 1).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Inside)
             );
             assert_eq!(
-                certified(region.classify_point(&p(-8, -8), &policy).unwrap()),
+                certified(region.classify_point(&p(-8, -8).into(), &policy).unwrap()),
                 Classification::Decided(RegionPointLocation::Outside)
             );
         }
@@ -7406,7 +7552,7 @@ fn authoritative_curve_region_arrangement_regularizes_signed_loop_composition() 
             Some(Real::from(24))
         );
         assert_eq!(
-            certified(union.classify_point(&p(3, 2), &policy).unwrap()),
+            certified(union.classify_point(&p(3, 2).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
 
@@ -7443,7 +7589,7 @@ fn authoritative_curve_region_arrangement_regularizes_nonlinear_winding() {
         };
         let nonzero = regularize(FillRule::NonZero);
         assert_eq!(
-            certified(nonzero.classify_point(&p(0, 2), &policy).unwrap()),
+            certified(nonzero.classify_point(&p(0, 2).into(), &policy).unwrap()),
             Classification::Decided(RegionPointLocation::Inside)
         );
         assert_eq!(
@@ -7483,7 +7629,11 @@ fn crossing_authored_loops_publish_the_regularized_even_odd_set() {
             (p(3, 4), RegionPointLocation::Outside),
         ] {
             assert_eq!(
-                decided(region.classify_point(&point, &policy).unwrap()),
+                decided(
+                    region
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap()
+                ),
                 expected
             );
         }
@@ -7519,12 +7669,16 @@ fn region_promotion_retains_explicit_roles_and_line_fast_path() {
         (p(5, 5), RegionPointLocation::Inside),
     ] {
         assert_eq!(
-            certified(promoted.classify_point(&point, &policy).unwrap()),
+            certified(
+                promoted
+                    .classify_point(&point.clone().into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(expected)
         );
     }
     assert_eq!(
-        certified(promoted.classify_point(&p(5, 5), &policy).unwrap()),
+        certified(promoted.classify_point(&p(5, 5).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside),
         "nested explicit material must not be reinterpreted as an even-odd hole"
     );
@@ -7564,7 +7718,11 @@ fn transformed_promotion_retains_explicit_roles_without_the_source_fast_path() {
         vec![CurveRegionLoopRole::Material]
     );
     assert_eq!(
-        certified(transformed.classify_point(&p(15, 11), &policy).unwrap()),
+        certified(
+            transformed
+                .classify_point(&p(15, 11).into(), &policy)
+                .unwrap()
+        ),
         Classification::Decided(RegionPointLocation::Inside),
         "a transformed nested material island must retain its explicit role"
     );
@@ -7605,11 +7763,11 @@ fn similarity_rotation_preserves_unified_region_semantics_and_fast_path() {
         Classification::Decided(_)
     ));
     assert_eq!(
-        certified(rotated.classify_point(&p(15, 4), &policy).unwrap()),
+        certified(rotated.classify_point(&p(15, 4).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        certified(rotated.classify_point(&p(15, 8), &policy).unwrap()),
+        certified(rotated.classify_point(&p(15, 8).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
@@ -7673,7 +7831,11 @@ fn affine_line_fast_path_preserves_nonzero_and_even_odd_fill_rules() {
             usize::from(fill_rule == FillRule::NonZero)
         );
         assert_eq!(
-            certified(transformed.classify_point(&p(10, 5), &policy).unwrap()),
+            certified(
+                transformed
+                    .classify_point(&p(10, 5).into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(expected)
         );
         assert!(matches!(
@@ -7705,7 +7867,7 @@ fn authored_loop_semantics_drive_nonzero_and_even_odd_classification() {
             usize::from(fill_rule == FillRule::NonZero)
         );
         assert_eq!(
-            certified(region.classify_point(&p(5, 5), &policy).unwrap()),
+            certified(region.classify_point(&p(5, 5).into(), &policy).unwrap()),
             Classification::Decided(expected)
         );
         assert_eq!(
@@ -7740,7 +7902,11 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
             .unwrap()
             .into_value();
         assert_eq!(
-            certified(zero_offset.classify_point(&p(0, 2), &policy).unwrap()),
+            certified(
+                zero_offset
+                    .classify_point(&p(0, 2).into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(expected),
             "zero offset preserves the exact filled set",
         );
@@ -7751,7 +7917,7 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
         );
 
         assert_eq!(
-            certified(region.classify_point(&p(0, 2), &policy).unwrap()),
+            certified(region.classify_point(&p(0, 2).into(), &policy).unwrap()),
             Classification::Decided(expected)
         );
         let expected_depth = i32::from(expected == RegionPointLocation::Inside);
@@ -7780,7 +7946,11 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
             .unwrap()
             .into_value();
         assert_eq!(
-            certified(transformed.classify_point(&p(2, 2), &policy).unwrap()),
+            certified(
+                transformed
+                    .classify_point(&p(2, 2).into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(expected)
         );
     }
@@ -7906,7 +8076,7 @@ fn authored_nested_material_roles_certify_filled_sides_directly() {
         &[true]
     );
     assert_eq!(
-        certified(region.classify_point(&p(2, 5), &policy).unwrap()),
+        certified(region.classify_point(&p(2, 5).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert!(matches!(
@@ -7973,7 +8143,7 @@ fn unified_region_chamfer_and_fillet_edit_higher_order_loops() {
     );
     for edited in std::iter::once(&chamfered).chain(filleted.iter()) {
         assert_eq!(
-            decided(edited.classify_point(&p(1, -1), &policy).unwrap()),
+            decided(edited.classify_point(&p(1, -1).into(), &policy).unwrap()),
             RegionPointLocation::Inside
         );
         assert_eq!(
@@ -8038,16 +8208,16 @@ fn unified_region_offset_expands_material_and_contracts_holes() {
         .into_value();
 
     assert_eq!(
-        certified(offset.classify_point(&p(0, 5), &policy).unwrap()),
+        certified(offset.classify_point(&p(0, 5).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        certified(offset.classify_point(&p(3, 5), &policy).unwrap()),
+        certified(offset.classify_point(&p(3, 5).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Inside),
         "positive region offset must contract a hole"
     );
     assert_eq!(
-        certified(offset.classify_point(&p(5, 5), &policy).unwrap()),
+        certified(offset.classify_point(&p(5, 5).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
     assert_eq!(
@@ -8076,7 +8246,7 @@ fn region_promotion_retains_hole_role_for_projection() {
         &[true, true]
     );
     assert_eq!(
-        certified(promoted.classify_point(&p(5, 5), &policy).unwrap()),
+        certified(promoted.classify_point(&p(5, 5).into(), &policy).unwrap()),
         Classification::Decided(RegionPointLocation::Outside)
     );
     let exact_profiles = decided(promoted.boundary_profiles(&policy).unwrap());
@@ -8164,7 +8334,11 @@ fn selected_boundary_paths_retain_domains_through_repeated_region_roundtrips() {
         (p(-1, 0), RegionPointLocation::Boundary),
     ] {
         assert_eq!(
-            certified(region.classify_point(&query, &policy).unwrap()),
+            certified(
+                region
+                    .classify_point(&query.clone().into(), &policy)
+                    .unwrap()
+            ),
             Classification::Decided(expected)
         );
     }
@@ -8259,7 +8433,11 @@ fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
                 for (point, expected) in &samples {
                     for value in [&region, &replay.value] {
                         assert_eq!(
-                            certified(value.classify_point(point, &policy).unwrap()),
+                            certified(
+                                value
+                                    .classify_point(&point.clone().into(), &policy)
+                                    .unwrap()
+                            ),
                             Classification::Decided(*expected),
                             "{name}"
                         );
@@ -8282,7 +8460,12 @@ fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
             assert!(outcome.value.is_empty());
             for point in [p(0, 4), p(0, 2)] {
                 assert_eq!(
-                    certified(outcome.value.classify_point(&point, &policy).unwrap()),
+                    certified(
+                        outcome
+                            .value
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
                     Classification::Decided(RegionPointLocation::Outside)
                 );
             }
@@ -8384,7 +8567,11 @@ fn region_corner_edits_publish_normalized_hole_openings() {
             }
             for (point, expected) in samples {
                 assert_eq!(
-                    decided(region.classify_point(&point, &policy).unwrap()),
+                    decided(
+                        region
+                            .classify_point(&point.clone().into(), &policy)
+                            .unwrap()
+                    ),
                     expected
                 );
             }

@@ -139,7 +139,7 @@ fn region_facts_preserve_all_line_exact_grid_shape() {
 
     assert_eq!(
         region
-            .classify_point(&p(1, 1), &policy())
+            .classify_point(&p(1, 1).into(), &policy())
             .unwrap()
             .into_value(),
         Classification::Decided(hypercurve::RegionPointLocation::Inside)

@@ -1301,7 +1301,7 @@ mod tests {
             let point = representative_point(&fragment);
             assert!(matches!(
                 region
-                    .classify_point(&point, &CurveContext::STRICT)
+                    .classify_point(&point.clone().into(), &CurveContext::STRICT)
                     .unwrap()
                     .into_value(),
                 Classification::Decided(RegionPointLocation::Inside)

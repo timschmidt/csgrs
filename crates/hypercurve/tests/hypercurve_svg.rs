@@ -620,7 +620,7 @@ fn document_import_applies_fill_rule_before_normalizing_repeated_traversal() {
         assert_eq!(geometry.region().is_empty(), fill_rule == "evenodd");
         let result = geometry
             .region()
-            .classify_point(&point(2, 2), &CurveContext::STRICT)
+            .classify_point(&point(2, 2).into(), &CurveContext::STRICT)
             .unwrap();
         assert_eq!(result.certainty, hypercurve::CurveCertainty::Certified);
         assert_eq!(result.value, Classification::Decided(expected));

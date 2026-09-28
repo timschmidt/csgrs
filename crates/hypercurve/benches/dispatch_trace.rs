@@ -176,7 +176,7 @@ fn main() {
     });
 
     trace("region_containment", || {
-        first.classify_point(&p(1, 1), &policy)
+        first.classify_point(&p(1, 1).into(), &policy)
     });
 
     #[cfg(feature = "triangulation")]

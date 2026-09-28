@@ -91,7 +91,7 @@ fn bench_batched_contour_bbox_miss(iterations: u32) -> CurveResult<()> {
 
 fn bench_sparse_region_outside(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
-    let point = p(5_000, 5_000);
+    let point = hypercurve::CurvePoint2::from(p(5_000, 5_000));
     let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut outside_count = 0_usize;
@@ -117,11 +117,11 @@ fn bench_batched_sparse_region(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
     let points = (0..64)
         .map(|index| {
-            if index % 2 == 0 {
+            hypercurve::CurvePoint2::from(if index % 2 == 0 {
                 p(5_000, 5_000)
             } else {
                 p(612, 2)
-            }
+            })
         })
         .collect::<Vec<_>>();
     let policy = CurveContext::STRICT;
@@ -152,7 +152,7 @@ fn bench_batched_sparse_region(iterations: u32) -> CurveResult<()> {
 
 fn bench_sparse_region_single_hit(iterations: u32) -> CurveResult<()> {
     let region = sparse_region(120);
-    let point = p(612, 2);
+    let point = hypercurve::CurvePoint2::from(p(612, 2));
     let policy = CurveContext::STRICT;
     let started = Instant::now();
     let mut inside_count = 0_usize;

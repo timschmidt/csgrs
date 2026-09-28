@@ -3440,7 +3440,9 @@ mod tests {
                 .into_iter()
                 .zip(expected)
                 {
-                    let actual = region.classify_point(&query, &policy).unwrap();
+                    let actual = region
+                        .classify_point(&query.clone().into(), &policy)
+                        .unwrap();
                     assert_eq!(actual.certainty, CurveCertainty::Certified);
                     assert_eq!(
                         actual.value,
@@ -3478,7 +3480,7 @@ mod tests {
                 let actual = final_result
                     .value
                     .intersection()
-                    .classify_point(&query, &policy)
+                    .classify_point(&query.clone().into(), &policy)
                     .unwrap();
                 assert_eq!(actual.certainty, CurveCertainty::Certified);
                 assert_eq!(actual.value, Classification::Decided(expected));

@@ -53,7 +53,7 @@ fn region_from_rings(materials: &[&[(f64, f64)]], holes: &[&[(f64, f64)]]) -> HR
 
 fn location(region: &HRegion, point: HPoint) -> Classification<RegionPointLocation> {
     region
-        .classify_point(&point, &policy())
+        .classify_point(&point.clone().into(), &policy())
         .unwrap()
         .into_value()
 }
@@ -151,7 +151,7 @@ fn assert_boolean_samples_match_geo(
     for &(x, y) in samples {
         let expected_inside = expected.contains(&Point::new(x, y));
         let actual = result
-            .classify_point(&p(x, y), &policy())
+            .classify_point(&p(x, y).into(), &policy())
             .unwrap()
             .into_value();
         assert_eq!(

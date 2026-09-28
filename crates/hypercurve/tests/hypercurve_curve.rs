@@ -288,19 +288,19 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
     );
     assert_eq!(
         region
-            .classify_point(&p(8, -1), &CurveContext::STRICT)
+            .classify_point(&p(8, -1).into(), &CurveContext::STRICT)
             .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
     assert_eq!(
         clone
-            .classify_point(&p(8, -4), &CurveContext::STRICT)
+            .classify_point(&p(8, -4).into(), &CurveContext::STRICT)
             .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Outside))
     );
     assert_eq!(
         clone
-            .classify_point(&p(0, 0), &CurveContext::STRICT)
+            .classify_point(&p(0, 0).into(), &CurveContext::STRICT)
             .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Boundary))
     );
@@ -321,13 +321,13 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
     let bounded_clone = bounded.clone();
     assert_eq!(
         bounded
-            .classify_point(&p(1, 1), &CurveContext::STRICT)
+            .classify_point(&p(1, 1).into(), &CurveContext::STRICT)
             .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
     assert_eq!(
         bounded_clone
-            .classify_point(&p(1, 1), &CurveContext::STRICT)
+            .classify_point(&p(1, 1).into(), &CurveContext::STRICT)
             .map(|outcome| outcome.into_value()),
         Ok(Classification::Decided(RegionPointLocation::Inside))
     );
@@ -362,7 +362,7 @@ fn curve_path_boundary_and_classification_report_terminal_closure() {
     ));
 
     let approximate = path
-        .classify_point(&p(1, 1), &CurveContext::APPROXIMATE_512)
+        .classify_point(&p(1, 1).into(), &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must classify through the retained boundary");
     assert_eq!(
         approximate.certainty,
@@ -374,7 +374,7 @@ fn curve_path_boundary_and_classification_report_terminal_closure() {
     );
 
     let strict = path
-        .classify_point(&p(1, 1), &CurveContext::STRICT)
+        .classify_point(&p(1, 1).into(), &CurveContext::STRICT)
         .expect("strict classification returns explicit uncertainty");
     assert_eq!(strict.certainty, CurveCertainty::Certified);
     assert_eq!(
@@ -383,7 +383,7 @@ fn curve_path_boundary_and_classification_report_terminal_closure() {
     );
 
     let repeated = path
-        .classify_point(&p(1, 1), &CurveContext::APPROXIMATE_512)
+        .classify_point(&p(1, 1).into(), &CurveContext::APPROXIMATE_512)
         .expect("cached terminal evidence must remain observable");
     assert_eq!(repeated.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(repeated.value, approximate.value);

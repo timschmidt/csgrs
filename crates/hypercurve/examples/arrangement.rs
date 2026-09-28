@@ -36,7 +36,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     assert!(result.status().is_native_exact());
     assert_eq!(result.source_segment_count(), 4);
     assert!(matches!(
-        region.classify_point(&p(2, 2), &policy)?.into_value(),
+        region
+            .classify_point(&p(2, 2).into(), &policy)?
+            .into_value(),
         Classification::Decided(RegionPointLocation::Inside)
     ));
 

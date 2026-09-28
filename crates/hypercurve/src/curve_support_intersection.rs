@@ -4287,7 +4287,11 @@ mod analytic_dispatch_tests {
                     (p(1, 1), crate::RegionPointLocation::Boundary),
                 ] {
                     assert_eq!(
-                        certified(region.classify_point(&point, &policy).unwrap()),
+                        certified(
+                            region
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap()
+                        ),
                         Classification::Decided(expected)
                     );
                 }

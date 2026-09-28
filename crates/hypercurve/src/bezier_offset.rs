@@ -153388,7 +153388,11 @@ mod conversion_tests {
                         ),
                     ] {
                         assert_eq!(
-                            offset.value.classify_point(&point, &policy).unwrap().value,
+                            offset
+                                .value
+                                .classify_point(&point.clone().into(), &policy)
+                                .unwrap()
+                                .value,
                             Classification::Decided(expected),
                         );
                     }
@@ -156239,7 +156243,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     expanded
                         .value
                         .classify_point(
-                            &Point2::new(Real::zero(), -(Real::one() + &half)),
+                            &Point2::new(Real::zero(), -(Real::one() + &half)).into(),
                             &policy,
                         )
                         .unwrap()
@@ -156304,7 +156308,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 assert_eq!(
                     transformed_expanded
                         .value
-                        .classify_point(&Point2::new(Real::from(8_i8), Real::from(-3_i8)), &policy,)
+                        .classify_point(
+                            &Point2::new(Real::from(8_i8), Real::from(-3_i8)).into(),
+                            &policy,
+                        )
                         .unwrap()
                         .into_value(),
                     Classification::Decided(crate::RegionPointLocation::Boundary),
@@ -158782,19 +158789,19 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             );
             assert_eq!(
                 region
-                    .classify_point(&inside, &policy)
+                    .classify_point(&inside.clone().into(), &policy)
                     .map(crate::CurveOutcome::into_value),
                 Ok(Classification::Decided(crate::RegionPointLocation::Inside)),
             );
             assert_eq!(
                 region
-                    .classify_point(&outside, &policy)
+                    .classify_point(&outside.clone().into(), &policy)
                     .map(crate::CurveOutcome::into_value),
                 Ok(Classification::Decided(crate::RegionPointLocation::Outside)),
             );
             assert_eq!(
                 region
-                    .classify_point(&boundary_point, &policy)
+                    .classify_point(&boundary_point.clone().into(), &policy)
                     .map(crate::CurveOutcome::into_value),
                 Ok(Classification::Decided(
                     crate::RegionPointLocation::Boundary
@@ -158894,7 +158901,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 .into_value();
             assert_eq!(
                 regularized
-                    .classify_point(&inside, &policy)
+                    .classify_point(&inside.clone().into(), &policy)
                     .map(crate::CurveOutcome::into_value),
                 Ok(Classification::Decided(crate::RegionPointLocation::Inside)),
             );
@@ -183078,12 +183085,12 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     assert_eq!(
                         split_offset
                             .value
-                            .classify_point(&point, &policy)
+                            .classify_point(&point.clone().into(), &policy)
                             .unwrap()
                             .value,
                         unsplit_offset
                             .value
-                            .classify_point(&point, &policy)
+                            .classify_point(&point.clone().into(), &policy)
                             .unwrap()
                             .value,
                     );
@@ -185981,12 +185988,12 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     assert_eq!(
                         selected_offset
                             .value
-                            .classify_point(&point, &policy)
+                            .classify_point(&point.clone().into(), &policy)
                             .unwrap()
                             .value,
                         reference_offset
                             .value
-                            .classify_point(&point, &policy)
+                            .classify_point(&point.clone().into(), &policy)
                             .unwrap()
                             .value,
                     );

@@ -90,7 +90,7 @@ fn assert_cap_round_offset(cap: &CurveRegion2) {
     ] {
         let location = offset
             .value
-            .classify_point(&sample, &CurveContext::STRICT)
+            .classify_point(&sample.clone().into(), &CurveContext::STRICT)
             .unwrap();
         assert_eq!(location.certainty, CurveCertainty::Certified);
         assert_eq!(location.value, Classification::Decided(expected));
@@ -194,7 +194,10 @@ fn identical_and_empty_booleans_regularize_authored_winding() {
                     Classification::Decided(Some(Real::from(if nonempty { 10 } else { 0 }))),
                 );
                 assert_eq!(
-                    result.classify_point(&point(2, 1), &policy).unwrap().value,
+                    result
+                        .classify_point(&point(2, 1).into(), &policy)
+                        .unwrap()
+                        .value,
                     Classification::Decided(if nonempty {
                         RegionPointLocation::Inside
                     } else {
@@ -248,7 +251,7 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
     );
     assert_eq!(
         region
-            .classify_point(&source_witness, &CurveContext::STRICT)
+            .classify_point(&source_witness.clone().into(), &CurveContext::STRICT)
             .unwrap()
             .value,
         Classification::Decided(RegionPointLocation::Boundary),
@@ -284,7 +287,7 @@ fn curved_offset_regularizes_interior_folds_despite_convex_endpoint_turns() {
         assert_eq!(
             offset
                 .value
-                .classify_point(&sample, &CurveContext::STRICT)
+                .classify_point(&sample.clone().into(), &CurveContext::STRICT)
                 .unwrap()
                 .value,
             Classification::Decided(RegionPointLocation::Inside),
@@ -355,7 +358,10 @@ fn authored_rational_boolean_operands_do_not_require_signed_area() {
                 };
                 for result in [result, &single.value] {
                     assert_eq!(
-                        result.classify_point(sample, &policy).unwrap().value,
+                        result
+                            .classify_point(&sample.clone().into(), &policy)
+                            .unwrap()
+                            .value,
                         Classification::Decided(expected),
                         "{operation:?}, sample {sample:?}",
                     );

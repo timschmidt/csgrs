@@ -1374,6 +1374,39 @@ pub(crate) fn classify_retained_point_evidence_against_loop_by_probe(
     }))
 }
 
+/// Classifies an exact point against the published filled boundary. A batch
+/// retains successful boundary preparation within its current policy attempt.
+pub(crate) fn classify_retained_point_evidence_against_region_by_probe<'a>(
+    region: &'a CurveRegion2,
+    point: CurvePoint2,
+    policy: &CurveContext,
+    prepared: &mut Option<CurveRegionBooleanContext<'a>>,
+) -> CurveResult<Classification<RegionPointLocation>> {
+    if prepared.is_none() {
+        let context = match CurveRegionBooleanContext::try_new_curve_boundary(&[], region, policy) {
+            Ok(context) => context,
+            Err(ExactCurveError::Blocked(blocker)) => {
+                return Ok(Classification::Uncertain(blocker.reason()));
+            }
+            Err(ExactCurveError::Invalid { cause, .. }) => return Err(cause),
+        };
+        *prepared = Some(context);
+    }
+    let context = prepared
+        .as_ref()
+        .expect("successful point query preparation");
+    match context.classify_retained_point_off_boundary_by_probe(
+        0,
+        point,
+        CurveRegionBooleanOperand2::Second,
+        RetainedPointProbeClassification::FilledRegion,
+    ) {
+        Ok(classification) => Ok(classification),
+        Err(ExactCurveError::Blocked(blocker)) => Ok(Classification::Uncertain(blocker.reason())),
+        Err(ExactCurveError::Invalid { cause, .. }) => Err(cause),
+    }
+}
+
 impl<'a> CurveRegionBooleanContext<'a> {
     fn try_new_retained_loop(
         region: &'a CurveRegion2,
@@ -11176,20 +11209,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
             CurveRegionBooleanOperand2::First => self.data.first,
             CurveRegionBooleanOperand2::Second => self.data.second,
         };
-        let boundary_carriers = self
-            .data
-            .carriers
-            .iter()
-            .filter(|carrier| carrier.operand == boundary_operand)
-            .cloned()
-            .collect::<Vec<_>>();
+        // Every context stores the first operand's carriers before the second.
+        // Borrow that existing partition so repeated queries also reuse its
+        // retained bounds and injectivity facts.
+        let boundary_carriers = match boundary_operand {
+            CurveRegionBooleanOperand2::First => {
+                &self.data.carriers[..self.data.first_carrier_count]
+            }
+            CurveRegionBooleanOperand2::Second => {
+                &self.data.carriers[self.data.first_carrier_count..]
+            }
+        };
         if boundary_carriers.is_empty() {
             return Ok(Classification::Decided(RegionPointLocation::Outside));
         }
 
         let mut last_reason = UncertaintyReason::Unsupported;
-        let outer_bounds = match retained_probe_outer_bounds(&boundary_carriers, &self.data.policy)
-        {
+        let outer_bounds = match retained_probe_outer_bounds(boundary_carriers, &self.data.policy) {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -11223,7 +11259,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let evidence = match self.intersect_algebraic_probe_carriers(
                 probe,
                 boundary_region,
-                &boundary_carriers,
+                boundary_carriers,
                 None,
             ) {
                 Ok(evidence) => evidence,
@@ -20820,7 +20856,11 @@ mod certified_successor_tests {
                                 (p(0, 0), RegionPointLocation::Boundary),
                             ] {
                                 assert_eq!(
-                                    certified(region.classify_point(&point, &policy).unwrap()),
+                                    certified(
+                                        region
+                                            .classify_point(&point.clone().into(), &policy)
+                                            .unwrap()
+                                    ),
                                     Classification::Decided(location)
                                 );
                             }
@@ -20864,7 +20904,10 @@ mod certified_successor_tests {
                                             assert_eq!(
                                                 certified(
                                                     region
-                                                        .classify_point(&sample, &policy)
+                                                        .classify_point(
+                                                            &sample.clone().into(),
+                                                            &policy
+                                                        )
                                                         .unwrap()
                                                 ),
                                                 Classification::Decided(expected),
@@ -21013,7 +21056,9 @@ mod certified_successor_tests {
                     (Point2::new(q(1, 2), q(1, 2)), Outside),
                     (Point2::from_values(0, 0), Boundary),
                 ] {
-                    let actual = normalized.classify_point(&point, &policy).unwrap();
+                    let actual = normalized
+                        .classify_point(&point.clone().into(), &policy)
+                        .unwrap();
                     assert_eq!(actual.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(actual.value, Classification::Decided(expected));
                 }
@@ -21024,7 +21069,7 @@ mod certified_successor_tests {
                 for result in [repeated.value.union(), repeated.value.intersection()] {
                     assert_eq!(
                         result
-                            .classify_point(&Point2::new(q(1, 2), q(3, 10)), &policy)
+                            .classify_point(&Point2::new(q(1, 2), q(3, 10)).into(), &policy)
                             .unwrap()
                             .value,
                         Classification::Decided(Inside)
@@ -21828,7 +21873,7 @@ mod certified_successor_tests {
             .unwrap()
             .into_value();
             let parabola_classification = parabola_region
-                .classify_algebraic_point(&parabola_boundary, &policy)
+                .classify_point(&parabola_boundary.clone().into(), &policy)
                 .unwrap();
             assert_eq!(
                 parabola_classification.certainty,
@@ -22983,11 +23028,11 @@ mod certified_successor_tests {
                     );
                     assert_eq!(
                         fast_region
-                            .classify_point(&point, &policy)
+                            .classify_point(&point.clone().into(), &policy)
                             .unwrap()
                             .into_value(),
                         general_region
-                            .classify_point(&point, &policy)
+                            .classify_point(&point.clone().into(), &policy)
                             .unwrap()
                             .into_value(),
                         "forced-general {operation:?} differs at {point:?}"

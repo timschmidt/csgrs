@@ -55,7 +55,7 @@ fn region(materials: &[Rect], holes: &[Rect]) -> HRegion {
 
 fn inside(region: &HRegion, x: f64, y: f64) -> bool {
     match region
-        .classify_point(&p(x, y), &policy())
+        .classify_point(&p(x, y).into(), &policy())
         .unwrap()
         .into_value()
     {
