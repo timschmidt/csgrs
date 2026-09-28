@@ -1,8 +1,7 @@
 use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2,
     BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
-    BezierAlgebraicTangentVector2, BezierAlgebraicTangentVectorEvidence,
-    BezierAlgebraicTangentVectorStatus, BezierParameterInterval, BezierParameterPolynomial,
+    BezierAlgebraicTangentVector2, BezierParameterInterval, BezierParameterPolynomial,
     BezierTangentTurnOrdering2, Classification, CurveContext, Point2, QuadraticBezier2,
     RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
     compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
@@ -89,10 +88,7 @@ fn tangent_vector_at(
             .tangent_at_algebraic_parameter(parameter, &policy())
             .unwrap(),
     );
-    let BezierAlgebraicTangentVectorEvidence { status, vector, .. } =
-        BezierAlgebraicTangentVector2::from_image(&tangent);
-    assert_eq!(status, BezierAlgebraicTangentVectorStatus::Extracted);
-    vector.unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent).expect("represented tangent coordinates")
 }
 
 fn rising() -> QuadraticBezier2 {
@@ -111,20 +107,14 @@ fn rational_endpoint_vectors(
         .unwrap(),
     );
     let tangent = BezierAlgebraicTangentVector2::from_image(decided(image.tangent().unwrap()));
-    assert_eq!(
-        tangent.status,
-        BezierAlgebraicTangentVectorStatus::Extracted
-    );
+    let tangent = tangent.expect("represented first derivative coordinates");
     let second_derivative = BezierAlgebraicTangentVector2::from_image(
         image
             .second_derivative()
             .expect("rational conic endpoint should retain second derivative evidence"),
     );
-    assert_eq!(
-        second_derivative.status,
-        BezierAlgebraicTangentVectorStatus::Extracted
-    );
-    (tangent.vector.unwrap(), second_derivative.vector.unwrap())
+    let second_derivative = second_derivative.expect("represented second derivative coordinates");
+    (tangent, second_derivative)
 }
 
 fn horizontal() -> QuadraticBezier2 {

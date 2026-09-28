@@ -1583,7 +1583,6 @@ fn retained_algebraic_tangent(
     tangent: &RationalBezierAlgebraicTangentImage2,
 ) -> Option<RetainedTangentVector> {
     BezierAlgebraicTangentVector2::from_image(tangent)
-        .vector
         .map(Box::new)
         .map(RetainedTangentVector::Algebraic)
 }

@@ -14,9 +14,7 @@
 use std::cmp::Ordering;
 
 use crate::classify::compare_reals;
-use crate::{
-    BezierAlgebraicImageStatus, Classification, CurveContext, RationalBezierAlgebraicTangentImage2,
-};
+use crate::{Classification, CurveContext, RationalBezierAlgebraicTangentImage2};
 use hyperreal::{Real, RealSign};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
@@ -39,37 +37,15 @@ impl BezierAlgebraicTangentVector2 {
         Self { dx, dy }
     }
 
-    /// Extracts a represented vector from a transformed endpoint tangent image.
-    pub fn from_image(
-        image: &RationalBezierAlgebraicTangentImage2,
-    ) -> BezierAlgebraicTangentVectorEvidence {
-        if image.status() != BezierAlgebraicImageStatus::Transformed {
-            return BezierAlgebraicTangentVectorEvidence {
-                status: BezierAlgebraicTangentVectorStatus::ImageNotTransformed,
-                vector: None,
-                message: Some("endpoint tangent image was not transformed".to_owned()),
-            };
-        }
-
-        let dx = image
-            .dx()
-            .and_then(|coordinate| coordinate.representation());
-        let dy = image
-            .dy()
-            .and_then(|coordinate| coordinate.representation());
-        let (Some(dx), Some(dy)) = (dx, dy) else {
-            return BezierAlgebraicTangentVectorEvidence {
-                status: BezierAlgebraicTangentVectorStatus::MissingCoordinateImage,
-                vector: None,
-                message: Some("endpoint tangent image omitted a represented coordinate".to_owned()),
-            };
-        };
-
-        BezierAlgebraicTangentVectorEvidence {
-            status: BezierAlgebraicTangentVectorStatus::Extracted,
-            vector: Some(Self::new(dx.clone(), dy.clone())),
-            message: None,
-        }
+    /// Extracts coordinate roots already materialized by this exact tangent image.
+    ///
+    /// Returns `None` when the image retains its source expression instead.
+    /// This does not request coordinate projection or discard that exact expression.
+    pub fn from_image(image: &RationalBezierAlgebraicTangentImage2) -> Option<Self> {
+        Some(Self::new(
+            image.dx()?.representation()?.clone(),
+            image.dy()?.representation()?.clone(),
+        ))
     }
 
     /// Returns the represented x derivative coordinate.
@@ -81,28 +57,6 @@ impl BezierAlgebraicTangentVector2 {
     pub const fn dy(&self) -> &AlgebraicRootRepresentation {
         &self.dy
     }
-}
-
-/// Status for extracting represented tangent coordinates from an image.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum BezierAlgebraicTangentVectorStatus {
-    /// Both derivative coordinates were represented.
-    Extracted,
-    /// The tangent image did not finish exact construction.
-    ImageNotTransformed,
-    /// The image status was transformed but a coordinate representation was absent.
-    MissingCoordinateImage,
-}
-
-/// Extraction evidence for a represented tangent vector.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicTangentVectorEvidence {
-    /// Extraction status.
-    pub status: BezierAlgebraicTangentVectorStatus,
-    /// Represented tangent vector when extraction succeeds.
-    pub vector: Option<BezierAlgebraicTangentVector2>,
-    /// Compact diagnostic for failed extraction.
-    pub message: Option<String>,
 }
 
 /// Certified turn ordering for two candidate tangents around a base tangent.
@@ -233,7 +187,7 @@ pub(crate) fn algebraic_endpoint_tangent_cross_sign(
 ) -> Classification<RealSign> {
     let first = BezierAlgebraicTangentVector2::from_image(first);
     let second = BezierAlgebraicTangentVector2::from_image(second);
-    let (Some(first), Some(second)) = (first.vector, second.vector) else {
+    let (Some(first), Some(second)) = (first, second) else {
         return Classification::Uncertain(crate::UncertaintyReason::Boundary);
     };
     let cross = cross_sign(&first, &second, policy, false);
