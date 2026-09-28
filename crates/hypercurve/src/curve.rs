@@ -6956,6 +6956,20 @@ fn fillet_offset_centers(
                 source_parallel.get_or_init(|| support.with_distance(source.parallel_distance()))
             };
             let finite_range = source.curve_parameter_range();
+            // The open ray starts at a represented chart anchor. Include the
+            // certified bridge from the actual endpoint in the finite query;
+            // the source domain still owns the final trim/extension decision.
+            let finite_range = if let Some(incident) = &incident_domain {
+                match incident
+                    .expanded_range(&finite_range, policy)
+                    .map_err(invalid)?
+                {
+                    Classification::Decided(range) => range,
+                    Classification::Uncertain(reason) => return Err(blocked(reason)),
+                }
+            } else {
+                finite_range
+            };
             let mut parameters = Vec::new();
             let incidence = support
                 .supporting_line_incidence_with_direction(
