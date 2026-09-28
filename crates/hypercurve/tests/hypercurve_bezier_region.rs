@@ -105,8 +105,10 @@ fn algebraic_sqrt_eighth_parameter() -> BezierAlgebraicParameter2 {
 }
 
 fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
-    BezierAlgebraicEndpointImage2::quadratic(curve, &algebraic_midpoint_parameter(), &policy())
-        .unwrap()
+    decided(
+        BezierAlgebraicEndpointImage2::quadratic(curve, &algebraic_midpoint_parameter(), &policy())
+            .unwrap(),
+    )
 }
 
 fn algebraic_endpoint_line(start: Point2, end: Point2) -> Curve2 {

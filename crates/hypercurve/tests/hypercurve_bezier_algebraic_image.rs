@@ -53,17 +53,25 @@ fn quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence() {
     let curve = QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2));
     let parameter = sqrt_half_parameter();
 
-    let point = curve
-        .point_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    let point = decided(
+        curve
+            .point_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
     let tangent = curve
         .tangent_at_algebraic_parameter(&parameter, &policy())
         .unwrap();
 
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
-    assert_eq!(point.x().unwrap().coefficients(), &[r(0), r(0), r(1)]);
+    assert_eq!(
+        point.x().unwrap().numerator_coefficients(),
+        &[r(0), r(0), r(1)]
+    );
     assert!(point.x().unwrap().representation().unwrap().is_valid());
-    assert_eq!(point.y().unwrap().coefficients(), &[r(0), r(2), r(0)]);
+    assert_eq!(
+        point.y().unwrap().numerator_coefficients(),
+        &[r(0), r(2), r(0)]
+    );
     assert!(
         point
             .y()
@@ -93,16 +101,24 @@ fn cubic_point_and_tangent_images_use_power_basis_resultants() {
     let curve = CubicBezier2::new(p(0, 0), p(0, 1), p(0, 2), p(1, 3));
     let parameter = sqrt_half_parameter();
 
-    let point = curve
-        .point_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    let point = decided(
+        curve
+            .point_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
     let tangent = curve
         .tangent_at_algebraic_parameter(&parameter, &policy())
         .unwrap();
 
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
-    assert_eq!(point.x().unwrap().coefficients(), &[r(0), r(0), r(0), r(1)]);
-    assert_eq!(point.y().unwrap().coefficients(), &[r(0), r(3), r(0), r(0)]);
+    assert_eq!(
+        point.x().unwrap().numerator_coefficients(),
+        &[r(0), r(0), r(0), r(1)]
+    );
+    assert_eq!(
+        point.y().unwrap().numerator_coefficients(),
+        &[r(0), r(3), r(0), r(0)]
+    );
     assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
     assert_eq!(tangent.dx().unwrap().coefficients(), &[r(0), r(0), r(3)]);
     assert!(tangent.dx().unwrap().representation().unwrap().is_valid());
@@ -119,13 +135,15 @@ fn nonmonotone_coordinate_image_is_certified_without_sampling() {
     let parameter = sqrt_half_parameter();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let point = curve
-            .point_at_algebraic_parameter(&parameter, &policy)
-            .unwrap();
+        let point = decided(
+            curve
+                .point_at_algebraic_parameter(&parameter, &policy)
+                .unwrap(),
+        );
 
         assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
         let x = point.x().unwrap();
-        assert_eq!(x.coefficients(), &[q(9, 16), q(-3, 2), r(1)]);
+        assert_eq!(x.numerator_coefficients(), &[q(9, 16), q(-3, 2), r(1)]);
         assert!(x.representation().unwrap().is_valid());
         assert_eq!(
             x.compare_to_real(&Real::zero(), &policy),
@@ -135,7 +153,10 @@ fn nonmonotone_coordinate_image_is_certified_without_sampling() {
             x.compare_to_real(&q(1, 16), &policy),
             Classification::Decided(std::cmp::Ordering::Less)
         );
-        assert_eq!(point.y().unwrap().coefficients(), &[r(0), r(2), r(0)]);
+        assert_eq!(
+            point.y().unwrap().numerator_coefficients(),
+            &[r(0), r(2), r(0)]
+        );
         assert!(point.message().is_none());
     }
 }
@@ -485,7 +506,7 @@ proptest! {
             interval(q(2, 5), q(3, 5)),
         );
 
-        let point = curve.point_at_algebraic_parameter(&parameter, &policy()).unwrap();
+        let point = decided(curve.point_at_algebraic_parameter(&parameter, &policy()).unwrap());
         let tangent = curve.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap();
         let exact_point = curve.point_at(q(1, 2));
 
@@ -541,5 +562,79 @@ proptest! {
             Some(exact_point.y())
         );
         prop_assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
+    }
+}
+
+#[test]
+fn polynomial_point_images_share_exact_replay_across_coefficient_domains() {
+    use hypercurve::{BezierAlgebraicEndpointImage2, CurveCertainty, CurvePoint2};
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let root = sqrt_half_parameter();
+        let sqrt_two = Real::from(2).sqrt().unwrap();
+        for coefficient in [sqrt_two.clone(), Real::pi()] {
+            let quadratic =
+                QuadraticBezier2::new(p(0, 0), p(0, 1), Point2::new(coefficient.clone(), r(2)));
+            let cubic = CubicBezier2::new(
+                p(0, 0),
+                p(0, 1),
+                p(0, 2),
+                Point2::new(coefficient.clone(), r(3)),
+            );
+            let quadratic_endpoint = decided(
+                BezierAlgebraicEndpointImage2::quadratic(&quadratic, &root, &policy).unwrap(),
+            );
+            let cubic_endpoint =
+                decided(BezierAlgebraicEndpointImage2::cubic(&cubic, &root, &policy).unwrap());
+            for (image, endpoint, expected) in [
+                (
+                    decided(
+                        quadratic
+                            .point_at_algebraic_parameter(&root, &policy)
+                            .unwrap(),
+                    ),
+                    &quadratic_endpoint,
+                    Point2::new(&coefficient * q(1, 2), sqrt_two.clone()),
+                ),
+                (
+                    decided(cubic.point_at_algebraic_parameter(&root, &policy).unwrap()),
+                    &cubic_endpoint,
+                    Point2::new(&coefficient * &sqrt_two * q(1, 4), &sqrt_two * q(3, 2)),
+                ),
+            ] {
+                for point in [image, decided(endpoint.point().unwrap()).clone()] {
+                    let outcome = CurvePoint2::from(point)
+                        .coincides_with(&CurvePoint2::from(expected.clone()), &policy);
+                    assert_eq!(outcome.certainty, CurveCertainty::Certified);
+                    assert_eq!(outcome.value, Classification::Decided(true));
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn polynomial_point_images_retain_nonrational_source_roots() {
+    use hypercurve::{Axis2, CurveCertainty, CurvePoint2};
+    use std::cmp::Ordering;
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let root = isolate(
+            polynomial(vec![-Real::pi(), r(0), r(4)]),
+            interval(q(3, 4), r(1)),
+        );
+        let curve = QuadraticBezier2::new(p(0, 0), p(0, 1), Point2::new(Real::pi(), r(2)));
+        let image = decided(curve.point_at_algebraic_parameter(&root, &policy).unwrap());
+        let point = CurvePoint2::from(image);
+        for (axis, coordinate, expected) in [
+            (Axis2::X, Real::pi() * Real::pi() * q(1, 4), Ordering::Equal),
+            (Axis2::Y, r(1), Ordering::Greater),
+            (Axis2::Y, r(2), Ordering::Less),
+        ] {
+            let reference = CurvePoint2::from(Point2::new(coordinate.clone(), coordinate));
+            let outcome = point.compare_coordinate(&reference, axis, &policy).unwrap();
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            assert_eq!(outcome.value, Classification::Decided(expected));
+        }
     }
 }

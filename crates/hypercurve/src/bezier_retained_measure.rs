@@ -26,9 +26,9 @@ use hypersolve::AlgebraicRootRepresentation;
 
 use crate::classify::compare_reals;
 use crate::{
-    Aabb2, Axis2, BezierEndpointPointImage2, BezierParameter2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CurveContext, CurveOutcome, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveResult, Point2, UncertaintyReason,
+    Aabb2, Axis2, BezierParameter2, BezierSplitFragment2, BezierSubcurve2, Classification,
+    CurveContext, CurveOutcome, CurveRegion2, CurveRegionBoundaryLoop2, CurveResult, Point2,
+    RationalBezierAlgebraicPointImage2, UncertaintyReason,
 };
 
 impl CurveRegion2 {
@@ -774,25 +774,14 @@ fn native_endpoint_interval(point: &Point2) -> EndpointInterval {
     }
 }
 
-fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<EndpointInterval> {
-    match point {
-        BezierEndpointPointImage2::Polynomial(point) => Some(EndpointInterval {
-            x: polynomial_coordinate_interval(
-                point.x()?,
-                point.parameter().polynomial_coefficients.as_slice(),
-            )?,
-            y: polynomial_coordinate_interval(
-                point.y()?,
-                point.parameter().polynomial_coefficients.as_slice(),
-            )?,
-            kind: BezierRetainedEnvelopeSourceKind::Algebraic,
-        }),
-        BezierEndpointPointImage2::Rational(point) => Some(EndpointInterval {
-            x: represented_coordinate_interval(point.x()?.representation()?),
-            y: represented_coordinate_interval(point.y()?.representation()?),
-            kind: BezierRetainedEnvelopeSourceKind::Algebraic,
-        }),
-    }
+fn algebraic_endpoint_interval(
+    point: &RationalBezierAlgebraicPointImage2,
+) -> Option<EndpointInterval> {
+    Some(EndpointInterval {
+        x: algebraic_coordinate_interval(point.x()?, &point.parameter().polynomial_coefficients)?,
+        y: algebraic_coordinate_interval(point.y()?, &point.parameter().polynomial_coefficients)?,
+        kind: BezierRetainedEnvelopeSourceKind::Algebraic,
+    })
 }
 
 /// Returns the tightest interval currently available for a polynomial
@@ -805,12 +794,15 @@ fn algebraic_endpoint_interval(point: &BezierEndpointPointImage2) -> Option<Endp
 /// polynomial for `alpha`; the construction stays symbolic in the sense of the exactness model
 /// and avoids widening to the parameter isolating interval.  Otherwise
 /// the represented-root isolating interval remains the conservative evidence.
-fn polynomial_coordinate_interval(
-    coordinate: &crate::BezierAlgebraicCoordinateImage,
+fn algebraic_coordinate_interval(
+    coordinate: &crate::BezierAlgebraicRationalCoordinateImage,
     parameter_polynomial: &[Real],
 ) -> Option<CoordinateInterval> {
-    if let Some(exact) =
-        polynomial_image_constant_remainder(coordinate.coefficients(), parameter_polynomial)
+    if coordinate.denominator_coefficients() == [Real::one()]
+        && let Some(exact) = polynomial_image_constant_remainder(
+            coordinate.numerator_coefficients(),
+            parameter_polynomial,
+        )
     {
         return Some(CoordinateInterval {
             lower: exact.clone(),

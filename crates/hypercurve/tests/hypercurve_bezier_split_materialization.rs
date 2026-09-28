@@ -1,6 +1,5 @@
 use hypercurve::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierEndpointPointImage2,
-    BezierEndpointTangentImage2,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, BezierEndpointTangentImage2,
 };
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
@@ -117,16 +116,10 @@ fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2
         .as_ref()
         .expect("algebraic boundary should retain an endpoint image");
     assert!(image.is_exact());
-    match decided(image.point().unwrap()) {
-        BezierEndpointPointImage2::Polynomial(point) => {
-            assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
-            assert!(point.x().and_then(|x| x.representation()).is_some());
-            assert!(point.y().and_then(|y| y.representation()).is_some());
-        }
-        BezierEndpointPointImage2::Rational(_) => {
-            panic!("expected polynomial point image")
-        }
-    }
+    let point = decided(image.point().unwrap());
+    assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
+    assert!(point.x().and_then(|x| x.representation()).is_some());
+    assert!(point.y().and_then(|y| y.representation()).is_some());
     match image.tangent() {
         BezierEndpointTangentImage2::Polynomial(tangent) => {
             assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
@@ -144,14 +137,10 @@ fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>)
         .as_ref()
         .expect("algebraic boundary should retain a rational endpoint image");
     assert!(image.is_exact());
-    match decided(image.point().unwrap()) {
-        BezierEndpointPointImage2::Rational(point) => {
-            assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
-            assert!(point.x().and_then(|x| x.representation()).is_some());
-            assert!(point.y().and_then(|y| y.representation()).is_some());
-        }
-        BezierEndpointPointImage2::Polynomial(_) => panic!("expected rational point image"),
-    }
+    let point = decided(image.point().unwrap());
+    assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
+    assert!(point.x().and_then(|x| x.representation()).is_some());
+    assert!(point.y().and_then(|y| y.representation()).is_some());
     match image.tangent() {
         BezierEndpointTangentImage2::Rational(tangent) => {
             assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
@@ -427,8 +416,9 @@ fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence(
         BezierParameter2::Algebraic(parameter) => parameter,
         BezierParameter2::Exact(_) => panic!("expected algebraic parameter"),
     };
-    let wrong_parameter_image =
-        BezierAlgebraicEndpointImage2::quadratic(&curve, &wrong_parameter, &policy()).unwrap();
+    let wrong_parameter_image = decided(
+        BezierAlgebraicEndpointImage2::quadratic(&curve, &wrong_parameter, &policy()).unwrap(),
+    );
     assert_topology_error(BezierSplitMaterialization2::new(vec![
         BezierSplitFragment2::RetainedBezier {
             reversed: false,

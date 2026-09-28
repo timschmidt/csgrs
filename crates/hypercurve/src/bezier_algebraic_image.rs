@@ -576,43 +576,6 @@ impl BezierAlgebraicCoordinateImage {
     }
 }
 
-/// Exact algebraic image of a Bezier point.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicPointImage2 {
-    status: BezierAlgebraicImageStatus,
-    parameter: AlgebraicRootRepresentation,
-    x: Option<BezierAlgebraicCoordinateImage>,
-    y: Option<BezierAlgebraicCoordinateImage>,
-    message: Option<String>,
-}
-
-impl BezierAlgebraicPointImage2 {
-    /// Returns the final construction status.
-    pub const fn status(&self) -> BezierAlgebraicImageStatus {
-        self.status
-    }
-
-    /// Returns the represented Bezier parameter used as the source root.
-    pub const fn parameter(&self) -> &AlgebraicRootRepresentation {
-        &self.parameter
-    }
-
-    /// Returns the x coordinate image when construction reached it.
-    pub const fn x(&self) -> Option<&BezierAlgebraicCoordinateImage> {
-        self.x.as_ref()
-    }
-
-    /// Returns the y coordinate image when construction reached it.
-    pub const fn y(&self) -> Option<&BezierAlgebraicCoordinateImage> {
-        self.y.as_ref()
-    }
-
-    /// Returns a compact diagnostic message for failed construction.
-    pub fn message(&self) -> Option<&str> {
-        self.message.as_deref()
-    }
-}
-
 /// Exact algebraic image of a Bezier derivative vector.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierAlgebraicTangentImage2 {
@@ -623,7 +586,7 @@ pub struct BezierAlgebraicTangentImage2 {
     message: Option<String>,
 }
 
-/// Exact affine point of a rational Bezier at one selected algebraic parameter.
+/// Exact affine point of a polynomial or rational Bezier at one selected algebraic parameter.
 #[derive(Clone, Debug)]
 pub struct RationalBezierAlgebraicPointImage2 {
     data: Arc<RationalBezierAlgebraicPointImageData>,
@@ -1783,14 +1746,14 @@ impl QuadraticBezier2 {
     ///
     /// The returned x/y coordinates are `hypersolve` represented roots for the
     /// exact coordinate polynomials
-    /// `P0 + 2(P1-P0)t + (P0-2P1+P2)t^2`.  This is intentionally evidence
-    /// bearing: unsupported polynomial-image evidence remains visible instead
-    /// of becoming a rounded point.
+    /// `P0 + 2(P1-P0)t + (P0-2P1+P2)t^2`. Polynomial and rational
+    /// curves share the same exact point carrier; a unit denominator preserves
+    /// arbitrary exact coefficients when coordinate projection is unavailable.
     pub fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<BezierAlgebraicPointImage2> {
+    ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
         point_image(parameter, quadratic_point_coefficients(self), policy)
     }
 
@@ -1838,7 +1801,7 @@ impl CubicBezier2 {
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<BezierAlgebraicPointImage2> {
+    ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
         point_image(parameter, cubic_point_coefficients(self), policy)
     }
 
@@ -2000,47 +1963,20 @@ impl RationalQuadraticBezier2 {
         Ok(images)
     }
 }
-
 fn point_image(
     parameter: &BezierAlgebraicParameter2,
     coefficients: CoordinatePolynomials,
     policy: &CurveContext,
-) -> CurveResult<BezierAlgebraicPointImage2> {
-    let parameter_root = parameter_representation(parameter, policy);
-    if !parameter_root.is_valid() {
-        return Ok(BezierAlgebraicPointImage2 {
-            status: BezierAlgebraicImageStatus::InvalidParameterEvidence,
-            parameter: parameter_root,
-            x: None,
-            y: None,
-            message: Some("Bezier algebraic parameter evidence did not validate".to_owned()),
-        });
-    }
-    let Some(x) = coordinate_image(&parameter_root, coefficients.x, policy) else {
-        return Ok(BezierAlgebraicPointImage2 {
-            status: BezierAlgebraicImageStatus::XImageFailed,
-            parameter: parameter_root,
-            x: None,
-            y: None,
-            message: Some("x coordinate polynomial image failed".to_owned()),
-        });
-    };
-    let Some(y) = coordinate_image(&parameter_root, coefficients.y, policy) else {
-        return Ok(BezierAlgebraicPointImage2 {
-            status: BezierAlgebraicImageStatus::YImageFailed,
-            parameter: parameter_root,
-            x: Some(x),
-            y: None,
-            message: Some("y coordinate polynomial image failed".to_owned()),
-        });
-    };
-    Ok(BezierAlgebraicPointImage2 {
-        status: BezierAlgebraicImageStatus::Transformed,
-        parameter: parameter_root,
-        x: Some(x),
-        y: Some(y),
-        message: None,
-    })
+) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
+    rational_point_image(
+        parameter,
+        RationalCoordinatePolynomials {
+            x_numerator: coefficients.x,
+            y_numerator: coefficients.y,
+            denominator: vec![Real::one()],
+        },
+        policy,
+    )
 }
 
 fn rational_point_image(

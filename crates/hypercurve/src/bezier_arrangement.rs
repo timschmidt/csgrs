@@ -28,10 +28,10 @@ use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
-    BezierEndpointPointImage2, BezierEndpointTangentImage2, BezierParameter2,
-    BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSplitMaterialization2,
-    BezierSubcurve2, BezierTangentTurnOrdering2, Classification, CurveContext, CurveError,
-    CurveResult, Point2, UncertaintyReason, ZeroKnowledge,
+    BezierEndpointTangentImage2, BezierParameter2, BezierRetainedOverlapEvidence2,
+    BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2,
+    Classification, CurveContext, CurveError, CurveResult, Point2,
+    RationalBezierAlgebraicPointImage2, UncertaintyReason, ZeroKnowledge,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
 };
 use hyperreal::{Rational, Real, RealSign};
@@ -1566,17 +1566,11 @@ fn retained_algebraic_derivative_source(
     })
 }
 
-fn retained_algebraic_point_key(point: &BezierEndpointPointImage2) -> Option<RetainedEndpointKey> {
-    let (x, y) = match point {
-        BezierEndpointPointImage2::Polynomial(point) => (
-            point.x()?.representation()?.clone(),
-            point.y()?.representation()?.clone(),
-        ),
-        BezierEndpointPointImage2::Rational(point) => (
-            point.x()?.representation()?.clone(),
-            point.y()?.representation()?.clone(),
-        ),
-    };
+fn retained_algebraic_point_key(
+    point: &RationalBezierAlgebraicPointImage2,
+) -> Option<RetainedEndpointKey> {
+    let x = point.x()?.representation()?.clone();
+    let y = point.y()?.representation()?.clone();
     Some(RetainedEndpointKey::Algebraic {
         x: Box::new(x),
         y: Box::new(y),
@@ -1897,7 +1891,9 @@ mod endpoint_adjacency_tests {
         );
         let lazy =
             BezierAlgebraicEndpointImage2::cubic_first_order(&curve, &parameter, &policy).unwrap();
-        let eager = BezierAlgebraicEndpointImage2::cubic(&curve, &parameter, &policy).unwrap();
+        let eager = crate::tests::decided(
+            BezierAlgebraicEndpointImage2::cubic(&curve, &parameter, &policy).unwrap(),
+        );
 
         assert!(lazy.is_lazy_first_order());
         assert!(lazy.second_derivative().is_none());

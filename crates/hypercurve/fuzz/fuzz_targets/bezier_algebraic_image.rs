@@ -83,9 +83,13 @@ fuzz_target!(|data: &[u8]| {
         Err(_) => return,
     };
 
-    let point = curve
+    let point = match curve
         .point_at_algebraic_parameter(&parameter, &policy)
-        .expect("valid algebraic parameter should produce a evidence");
+        .expect("valid algebraic parameter should produce point evidence")
+    {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => panic!("finite polynomial point blocked: {reason:?}"),
+    };
     let tangent = curve
         .tangent_at_algebraic_parameter(&parameter, &policy)
         .expect("valid algebraic parameter should produce a tangent evidence");
@@ -99,7 +103,7 @@ fuzz_target!(|data: &[u8]| {
         assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
         assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
         let x = point.x().unwrap();
-        assert_eq!(x.coefficients(), &[q(9, 16), q(-3, 2), r(1)]);
+        assert_eq!(x.numerator_coefficients(), &[q(9, 16), q(-3, 2), r(1)]);
         for (bound, ordering) in [
             (Real::zero(), std::cmp::Ordering::Greater),
             (q(1, 16), std::cmp::Ordering::Less),

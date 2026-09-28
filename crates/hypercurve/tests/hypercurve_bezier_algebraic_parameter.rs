@@ -703,7 +703,7 @@ mod finite_parameter_interval_contract {
                 ));
                 // The unrestricted polynomial image of P(t)=(t,t²) is
                 // (±sqrt(2),2); the authored segment still owns [0,1].
-                let image = source.point_at_algebraic_parameter(&root, &policy).unwrap();
+                let image = decided(source.point_at_algebraic_parameter(&root, &policy).unwrap());
                 assert_eq!(image.status(), BezierAlgebraicImageStatus::Transformed);
                 assert_eq!(
                     image.x().unwrap().compare_to_real(&value, &policy),

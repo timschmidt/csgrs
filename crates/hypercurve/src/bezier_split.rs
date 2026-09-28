@@ -2292,10 +2292,7 @@ impl QuadraticBezier2 {
                     self.subcurve_between_exact(start, end, policy)?,
                 )))
             },
-            |parameter| {
-                BezierAlgebraicEndpointImage2::quadratic(self, parameter, policy)
-                    .map(Classification::Decided)
-            },
+            |parameter| BezierAlgebraicEndpointImage2::quadratic(self, parameter, policy),
             BezierSubcurve2::Quadratic(self.clone()),
         )
     }
@@ -2418,10 +2415,7 @@ impl CubicBezier2 {
                     self.subcurve_between_exact(start, end, policy)?,
                 )))
             },
-            |parameter| {
-                BezierAlgebraicEndpointImage2::cubic(self, parameter, policy)
-                    .map(Classification::Decided)
-            },
+            |parameter| BezierAlgebraicEndpointImage2::cubic(self, parameter, policy),
             BezierSubcurve2::Cubic(self.clone()),
         )
     }

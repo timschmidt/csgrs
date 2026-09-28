@@ -14,40 +14,11 @@
 use std::{sync::Arc, sync::OnceLock};
 
 use crate::{
-    BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicPointImage2,
-    BezierAlgebraicTangentImage2, BezierSubcurve2, Classification, CubicBezier2, CurveContext,
-    CurveResult, QuadraticBezier2, RationalBezierAlgebraicPointImage2,
-    RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2,
+    BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicTangentImage2,
+    BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveResult, QuadraticBezier2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    RationalQuadraticBezier2,
 };
-
-/// Exact point image retained at an algebraic split endpoint.
-#[allow(clippy::large_enum_variant)]
-#[derive(Clone, Debug, PartialEq)]
-pub enum BezierEndpointPointImage2 {
-    /// Polynomial quadratic/cubic Bezier coordinate images.
-    Polynomial(BezierAlgebraicPointImage2),
-    /// Rational Bezier affine coordinate images of any degree.
-    Rational(RationalBezierAlgebraicPointImage2),
-}
-
-impl BezierEndpointPointImage2 {
-    /// Returns the construction status for the retained point image.
-    pub fn status(&self) -> BezierAlgebraicImageStatus {
-        match self {
-            Self::Polynomial(image) => image.status(),
-            Self::Rational(image) => image.status(),
-        }
-    }
-
-    /// Returns true when both coordinates retain exact replayable evidence.
-    pub fn is_exact(&self) -> bool {
-        matches!(
-            self.status(),
-            BezierAlgebraicImageStatus::Transformed
-                | BezierAlgebraicImageStatus::RetainedRationalExpression
-        )
-    }
-}
 
 /// Exact tangent image retained at an algebraic split endpoint.
 #[allow(clippy::large_enum_variant)]
@@ -88,7 +59,7 @@ pub struct BezierAlgebraicEndpointImage2 {
 enum BezierAlgebraicEndpointImageData {
     Materialized {
         parameter: BezierAlgebraicParameter2,
-        point: BezierEndpointPointImage2,
+        point: RationalBezierAlgebraicPointImage2,
         tangent: BezierEndpointTangentImage2,
         second_derivative: Option<Box<BezierEndpointTangentImage2>>,
         third_derivative: Option<Box<BezierEndpointTangentImage2>>,
@@ -97,7 +68,7 @@ enum BezierAlgebraicEndpointImageData {
         parameter: BezierAlgebraicParameter2,
         curve: Box<BezierSubcurve2>,
         policy: CurveContext,
-        point: OnceLock<BezierEndpointPointImage2>,
+        point: OnceLock<RationalBezierAlgebraicPointImage2>,
         tangent: OnceLock<CurveResult<BezierEndpointTangentImage2>>,
     },
 }
@@ -121,12 +92,8 @@ impl BezierAlgebraicEndpointImage2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match source_curve {
-            BezierSubcurve2::Quadratic(curve) => {
-                Self::quadratic(curve, parameter, policy).map(Classification::Decided)
-            }
-            BezierSubcurve2::Cubic(curve) => {
-                Self::cubic(curve, parameter, policy).map(Classification::Decided)
-            }
+            BezierSubcurve2::Quadratic(curve) => Self::quadratic(curve, parameter, policy),
+            BezierSubcurve2::Cubic(curve) => Self::cubic(curve, parameter, policy),
             BezierSubcurve2::RationalQuadratic(curve) => {
                 Self::rational_quadratic(curve, parameter, policy)
             }
@@ -165,13 +132,15 @@ impl BezierAlgebraicEndpointImage2 {
         curve: &QuadraticBezier2,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        Ok(Self {
+    ) -> CurveResult<Classification<Self>> {
+        let point = match curve.point_at_algebraic_parameter(parameter, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
-                point: BezierEndpointPointImage2::Polynomial(
-                    curve.point_at_algebraic_parameter(parameter, policy)?,
-                ),
+                point,
                 tangent: BezierEndpointTangentImage2::Polynomial(
                     curve.tangent_at_algebraic_parameter(parameter, policy)?,
                 ),
@@ -180,7 +149,7 @@ impl BezierAlgebraicEndpointImage2 {
                 ))),
                 third_derivative: None,
             }),
-        })
+        }))
     }
 
     /// Constructs endpoint evidence for a polynomial cubic Bezier.
@@ -188,13 +157,15 @@ impl BezierAlgebraicEndpointImage2 {
         curve: &CubicBezier2,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        Ok(Self {
+    ) -> CurveResult<Classification<Self>> {
+        let point = match curve.point_at_algebraic_parameter(parameter, policy)? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
-                point: BezierEndpointPointImage2::Polynomial(
-                    curve.point_at_algebraic_parameter(parameter, policy)?,
-                ),
+                point,
                 tangent: BezierEndpointTangentImage2::Polynomial(
                     curve.tangent_at_algebraic_parameter(parameter, policy)?,
                 ),
@@ -205,7 +176,7 @@ impl BezierAlgebraicEndpointImage2 {
                     curve.third_derivative_at_algebraic_parameter(parameter, policy)?,
                 ))),
             }),
-        })
+        }))
     }
 
     /// Constructs endpoint evidence for a rational quadratic Bezier/conic.
@@ -229,7 +200,7 @@ impl BezierAlgebraicEndpointImage2 {
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
-                point: BezierEndpointPointImage2::Rational(point),
+                point,
                 tangent: BezierEndpointTangentImage2::Rational(tangent),
                 second_derivative,
                 third_derivative,
@@ -274,7 +245,7 @@ impl BezierAlgebraicEndpointImage2 {
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
-                point: BezierEndpointPointImage2::Rational(point),
+                point,
                 tangent: BezierEndpointTangentImage2::Rational(tangent),
                 second_derivative,
                 third_derivative,
@@ -368,7 +339,7 @@ impl BezierAlgebraicEndpointImage2 {
     /// Returns true when both point and tangent retain exact replayable evidence.
     pub fn is_exact(&self) -> bool {
         self.point()
-            .is_ok_and(|point| matches!(point, Classification::Decided(point) if point.is_exact()))
+            .is_ok_and(|point| matches!(point, Classification::Decided(_)))
             && self.try_tangent().is_ok_and(|tangent| tangent.is_exact())
     }
 
@@ -397,7 +368,7 @@ impl BezierAlgebraicEndpointImage2 {
 
     /// Returns a certified affine endpoint image, or the construction blocker.
     /// Lazy rational sources must prove a finite point before exposing one.
-    pub fn point(&self) -> CurveResult<Classification<&BezierEndpointPointImage2>> {
+    pub fn point(&self) -> CurveResult<Classification<&RationalBezierAlgebraicPointImage2>> {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized { point, .. } => {
                 Ok(Classification::Decided(point))
@@ -413,22 +384,18 @@ impl BezierAlgebraicEndpointImage2 {
                     return Ok(Classification::Decided(image));
                 }
                 let image = match curve.as_ref() {
-                    BezierSubcurve2::Quadratic(curve) => curve
-                        .point_at_algebraic_parameter(parameter, policy)
-                        .map(|image| {
-                            Classification::Decided(BezierEndpointPointImage2::Polynomial(image))
-                        }),
-                    BezierSubcurve2::Cubic(curve) => curve
-                        .point_at_algebraic_parameter(parameter, policy)
-                        .map(|image| {
-                            Classification::Decided(BezierEndpointPointImage2::Polynomial(image))
-                        }),
-                    BezierSubcurve2::RationalQuadratic(curve) => curve
-                        .point_at_algebraic_parameter(parameter, policy)
-                        .map(|image| image.map(BezierEndpointPointImage2::Rational)),
-                    BezierSubcurve2::Rational(curve) => curve
-                        .point_at_algebraic_parameter(parameter, policy)
-                        .map(|image| image.map(BezierEndpointPointImage2::Rational)),
+                    BezierSubcurve2::Quadratic(curve) => {
+                        curve.point_at_algebraic_parameter(parameter, policy)
+                    }
+                    BezierSubcurve2::Cubic(curve) => {
+                        curve.point_at_algebraic_parameter(parameter, policy)
+                    }
+                    BezierSubcurve2::RationalQuadratic(curve) => {
+                        curve.point_at_algebraic_parameter(parameter, policy)
+                    }
+                    BezierSubcurve2::Rational(curve) => {
+                        curve.point_at_algebraic_parameter(parameter, policy)
+                    }
                 }?;
                 Ok(image.map(|image| {
                     // Selected-root refinement can make a later request

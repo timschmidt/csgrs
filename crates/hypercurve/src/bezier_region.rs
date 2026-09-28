@@ -28,7 +28,6 @@ use hypersolve::{
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
 };
 
-use crate::RationalBezierAlgebraicPointImage2;
 use crate::bezier::BezierParallelLineTangentContact2;
 use crate::bezier_algebraic_image::RationalBezierAlgebraicPointPredicate2;
 use crate::bezier_moment::RationalQuadraticAreaIntegralCache;
@@ -57,18 +56,18 @@ use crate::region::LineArcRegion2;
 use crate::region_nesting::assemble_unordered_segment_rings;
 use crate::{
     Aabb2, BezierAlgebraicEndpointImage2, BezierAreaMoments2, BezierArrangementGraph2,
-    BezierArrangementTraversal2, BezierEndpoint, BezierEndpointPointImage2,
-    BezierFlatteningOptions, BezierLineContact, BezierLineContactKind, BezierLineContactRelation,
-    BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallel2,
-    BezierParallelSource2, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
-    BezierSubcurve2, BooleanOp, CircularArc2, Classification, Contour2, ContourPointLocation,
-    CubicBezier2, Curve2, CurveCertainty, CurveContext, CurveCornerMode2, CurveCornerSolutions2,
-    CurveError, CurveFamily2, CurveFillet2, CurveGeometry2, CurveIntersectionPairBlockerKind2,
-    CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2, CurveParameterSide2,
-    CurvePath2, CurvePathIntersectionContact2, CurvePoint2, CurveResult, ExactCurveError,
-    ExactCurveResult, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalBezierPointIncidence2, RationalQuadraticBezier2, RegionPointLocation,
-    Segment2, UncertaintyReason,
+    BezierArrangementTraversal2, BezierEndpoint, BezierFlatteningOptions, BezierLineContact,
+    BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
+    BezierLineImageFitRelation, BezierParallel2, BezierParallelSource2, BezierParameter2,
+    BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp, CircularArc2,
+    Classification, Contour2, ContourPointLocation, CubicBezier2, Curve2, CurveCertainty,
+    CurveContext, CurveCornerMode2, CurveCornerSolutions2, CurveError, CurveFamily2, CurveFillet2,
+    CurveGeometry2, CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome,
+    CurveParameter2, CurveParameterRange2, CurveParameterSide2, CurvePath2,
+    CurvePathIntersectionContact2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult,
+    FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierAlgebraicPointImage2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
+    RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 /// A closed native Bezier/conic boundary loop.
@@ -14102,19 +14101,10 @@ fn retained_line_endpoint_point(
 }
 
 fn exact_point_from_image(
-    point: &BezierEndpointPointImage2,
+    point: &RationalBezierAlgebraicPointImage2,
     resolution_policy: Option<&CurveContext>,
 ) -> Option<Point2> {
-    match point {
-        BezierEndpointPointImage2::Polynomial(point) => Some(Point2::new(
-            point.x()?.representation()?.exact_point_witness()?.clone(),
-            point.y()?.representation()?.exact_point_witness()?.clone(),
-        )),
-        BezierEndpointPointImage2::Rational(point) => {
-            let policy = resolution_policy.unwrap_or(&CurveContext::STRICT);
-            point.exact_point(policy)
-        }
-    }
+    point.exact_point(resolution_policy.unwrap_or(&CurveContext::STRICT))
 }
 
 fn retained_loop_to_native(
@@ -17108,36 +17098,20 @@ fn algebraic_contact_order_along_ray(
         },
         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
     };
-    let ordering = match curve {
-        BezierSubcurve2::Quadratic(curve) => Ok(polynomial_image_coordinate_order(
-            &curve.point_at_algebraic_parameter(parameter, policy)?,
-            use_x,
-            origin_coordinate,
-            policy,
-        )),
-        BezierSubcurve2::Cubic(curve) => Ok(polynomial_image_coordinate_order(
-            &curve.point_at_algebraic_parameter(parameter, policy)?,
-            use_x,
-            origin_coordinate,
-            policy,
-        )),
+    let image = match curve {
+        BezierSubcurve2::Quadratic(curve) => curve.point_at_algebraic_parameter(parameter, policy),
+        BezierSubcurve2::Cubic(curve) => curve.point_at_algebraic_parameter(parameter, policy),
         BezierSubcurve2::RationalQuadratic(curve) => {
-            match curve.point_at_algebraic_parameter(parameter, policy)? {
-                Classification::Decided(image) => {
-                    rational_image_coordinate_order(&image, use_x, origin_coordinate, policy)
-                }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
+            curve.point_at_algebraic_parameter(parameter, policy)
         }
-        BezierSubcurve2::Rational(curve) => {
-            match curve.point_at_algebraic_parameter(parameter, policy)? {
-                Classification::Decided(image) => {
-                    rational_image_coordinate_order(&image, use_x, origin_coordinate, policy)
-                }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
-        }
+        BezierSubcurve2::Rational(curve) => curve.point_at_algebraic_parameter(parameter, policy),
     }?;
+    let ordering = match image {
+        Classification::Decided(image) => {
+            image.coordinate_order_to_real(use_x, origin_coordinate, policy)?
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     Ok(ordering.map(|ordering| {
         if direction_sign == RealSign::Negative {
             ordering.reverse()
@@ -17145,28 +17119,6 @@ fn algebraic_contact_order_along_ray(
             ordering
         }
     }))
-}
-
-fn polynomial_image_coordinate_order(
-    image: &crate::BezierAlgebraicPointImage2,
-    use_x: bool,
-    origin: &Real,
-    policy: &CurveContext,
-) -> Classification<std::cmp::Ordering> {
-    let coordinate = if use_x { image.x() } else { image.y() };
-    coordinate.map_or(
-        Classification::Uncertain(UncertaintyReason::Unsupported),
-        |coordinate| coordinate.compare_to_real(origin, policy),
-    )
-}
-
-fn rational_image_coordinate_order(
-    image: &crate::RationalBezierAlgebraicPointImage2,
-    use_x: bool,
-    origin: &Real,
-    policy: &CurveContext,
-) -> CurveResult<Classification<std::cmp::Ordering>> {
-    image.coordinate_order_to_real(use_x, origin, policy)
 }
 
 struct BezierRay2 {

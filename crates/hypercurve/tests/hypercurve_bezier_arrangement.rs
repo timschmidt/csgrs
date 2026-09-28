@@ -315,14 +315,14 @@ fn algebraic_endpoint_image(
     curve: &QuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
 ) -> BezierAlgebraicEndpointImage2 {
-    BezierAlgebraicEndpointImage2::quadratic(curve, parameter, &policy()).unwrap()
+    decided(BezierAlgebraicEndpointImage2::quadratic(curve, parameter, &policy()).unwrap())
 }
 
 fn algebraic_cubic_endpoint_image(
     curve: &CubicBezier2,
     parameter: &BezierAlgebraicParameter2,
 ) -> BezierAlgebraicEndpointImage2 {
-    BezierAlgebraicEndpointImage2::cubic(curve, parameter, &policy()).unwrap()
+    decided(BezierAlgebraicEndpointImage2::cubic(curve, parameter, &policy()).unwrap())
 }
 
 fn algebraic_rational_endpoint_image(

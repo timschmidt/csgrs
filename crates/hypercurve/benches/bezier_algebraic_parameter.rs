@@ -245,7 +245,7 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut transformed = 0_usize;
     for _ in 0..iterations {
-        let point = curve.point_at_algebraic_parameter(&midpoint, &policy)?;
+        let point = decided(curve.point_at_algebraic_parameter(&midpoint, &policy)?);
         let tangent = curve.tangent_at_algebraic_parameter(&midpoint, &policy)?;
         transformed += black_box(point.x().is_some() as usize + tangent.dx().is_some() as usize);
     }
