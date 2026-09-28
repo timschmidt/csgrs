@@ -83,8 +83,11 @@ fn quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence() {
     );
 
     assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
-    assert_eq!(tangent.dx().unwrap().coefficients(), &[r(0), r(2)]);
-    assert_eq!(tangent.dy().unwrap().coefficients(), &[r(2), r(0)]);
+    assert_eq!(
+        tangent.dx().unwrap().numerator_coefficients(),
+        &[r(0), r(2)]
+    );
+    assert_eq!(tangent.dy().unwrap().numerator_coefficients(), &[r(2)]);
     assert_eq!(
         tangent
             .dy()
@@ -120,9 +123,9 @@ fn cubic_point_and_tangent_images_use_power_basis_resultants() {
         &[r(0), r(3), r(0), r(0)]
     );
     assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
-    assert_eq!(tangent.dx().unwrap().coefficients(), &[r(0), r(0), r(3)]);
+    assert_eq!(tangent.dx().unwrap().numerator_coefficients(), &[q(3, 2)]);
     assert!(tangent.dx().unwrap().representation().unwrap().is_valid());
-    assert_eq!(tangent.dy().unwrap().coefficients(), &[r(3), r(0), r(0)]);
+    assert_eq!(tangent.dy().unwrap().numerator_coefficients(), &[r(3)]);
 }
 
 #[test]
@@ -635,6 +638,89 @@ fn polynomial_point_images_retain_nonrational_source_roots() {
             let outcome = point.compare_coordinate(&reference, axis, &policy).unwrap();
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             assert_eq!(outcome.value, Classification::Decided(expected));
+        }
+    }
+}
+
+#[test]
+fn polynomial_endpoint_derivatives_replay_exact_values_in_the_shared_carrier() {
+    use hypercurve::BezierAlgebraicEndpointImage2;
+    use std::cmp::Ordering;
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let root = sqrt_half_parameter();
+        let sqrt_two = r(2).sqrt().unwrap();
+        for coefficient in [sqrt_two.clone(), Real::pi()] {
+            let quadratic =
+                QuadraticBezier2::new(p(0, 0), p(0, 1), Point2::new(coefficient.clone(), r(2)));
+            let cubic = CubicBezier2::new(
+                p(0, 0),
+                p(0, 1),
+                p(0, 2),
+                Point2::new(coefficient.clone(), r(3)),
+            );
+            let quadratic_endpoint = decided(
+                BezierAlgebraicEndpointImage2::quadratic(&quadratic, &root, &policy).unwrap(),
+            );
+            let cubic_endpoint =
+                decided(BezierAlgebraicEndpointImage2::cubic(&cubic, &root, &policy).unwrap());
+            assert!(quadratic_endpoint.is_exact());
+            assert!(cubic_endpoint.is_exact());
+            assert!(quadratic_endpoint.third_derivative().is_none());
+            for (direct, retained, dx, dy) in [
+                (
+                    quadratic
+                        .tangent_at_algebraic_parameter(&root, &policy)
+                        .unwrap(),
+                    quadratic_endpoint.tangent(),
+                    &coefficient * &sqrt_two,
+                    r(2),
+                ),
+                (
+                    quadratic
+                        .second_derivative_at_algebraic_parameter(&root, &policy)
+                        .unwrap(),
+                    quadratic_endpoint.second_derivative().unwrap(),
+                    &coefficient * r(2),
+                    r(0),
+                ),
+                (
+                    cubic
+                        .tangent_at_algebraic_parameter(&root, &policy)
+                        .unwrap(),
+                    cubic_endpoint.tangent(),
+                    &coefficient * q(3, 2),
+                    r(3),
+                ),
+                (
+                    cubic
+                        .second_derivative_at_algebraic_parameter(&root, &policy)
+                        .unwrap(),
+                    cubic_endpoint.second_derivative().unwrap(),
+                    &coefficient * &sqrt_two * r(3),
+                    r(0),
+                ),
+                (
+                    cubic
+                        .third_derivative_at_algebraic_parameter(&root, &policy)
+                        .unwrap(),
+                    cubic_endpoint.third_derivative().unwrap(),
+                    &coefficient * r(6),
+                    r(0),
+                ),
+            ] {
+                for image in [&direct, retained] {
+                    assert_eq!(image.status(), BezierAlgebraicImageStatus::Transformed);
+                    for (actual, expected) in
+                        [(image.dx().unwrap(), &dx), (image.dy().unwrap(), &dy)]
+                    {
+                        assert_eq!(
+                            actual.compare_to_real(expected, &policy),
+                            Classification::Decided(Ordering::Equal)
+                        );
+                    }
+                }
+            }
         }
     }
 }

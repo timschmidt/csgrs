@@ -2,9 +2,9 @@ use hypercurve::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2,
     BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
     BezierAlgebraicTangentVector2, BezierAlgebraicTangentVectorEvidence,
-    BezierAlgebraicTangentVectorStatus, BezierEndpointTangentImage2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierTangentTurnOrdering2, Classification, CurveContext, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
+    BezierAlgebraicTangentVectorStatus, BezierParameterInterval, BezierParameterPolynomial,
+    BezierTangentTurnOrdering2, Classification, CurveContext, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
     compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 
@@ -88,9 +88,7 @@ fn tangent_vector_at(
         .tangent_at_algebraic_parameter(parameter, &policy())
         .unwrap();
     let BezierAlgebraicTangentVectorEvidence { status, vector, .. } =
-        BezierAlgebraicTangentVector2::from_endpoint_image(
-            &BezierEndpointTangentImage2::Polynomial(tangent),
-        );
+        BezierAlgebraicTangentVector2::from_image(&tangent);
     assert_eq!(status, BezierAlgebraicTangentVectorStatus::Extracted);
     vector.unwrap()
 }
@@ -110,12 +108,12 @@ fn rational_endpoint_vectors(
         )
         .unwrap(),
     );
-    let tangent = BezierAlgebraicTangentVector2::from_endpoint_image(image.tangent());
+    let tangent = BezierAlgebraicTangentVector2::from_image(image.tangent());
     assert_eq!(
         tangent.status,
         BezierAlgebraicTangentVectorStatus::Extracted
     );
-    let second_derivative = BezierAlgebraicTangentVector2::from_endpoint_image(
+    let second_derivative = BezierAlgebraicTangentVector2::from_image(
         image
             .second_derivative()
             .expect("rational conic endpoint should retain second derivative evidence"),

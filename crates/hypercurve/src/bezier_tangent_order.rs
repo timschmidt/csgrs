@@ -15,7 +15,7 @@ use std::cmp::Ordering;
 
 use crate::classify::compare_reals;
 use crate::{
-    BezierAlgebraicImageStatus, BezierEndpointTangentImage2, Classification, CurveContext,
+    BezierAlgebraicImageStatus, Classification, CurveContext, RationalBezierAlgebraicTangentImage2,
 };
 use hyperreal::{Real, RealSign};
 use hypersolve::{
@@ -40,8 +40,8 @@ impl BezierAlgebraicTangentVector2 {
     }
 
     /// Extracts a represented vector from a transformed endpoint tangent image.
-    pub fn from_endpoint_image(
-        image: &BezierEndpointTangentImage2,
+    pub fn from_image(
+        image: &RationalBezierAlgebraicTangentImage2,
     ) -> BezierAlgebraicTangentVectorEvidence {
         if image.status() != BezierAlgebraicImageStatus::Transformed {
             return BezierAlgebraicTangentVectorEvidence {
@@ -51,26 +51,12 @@ impl BezierAlgebraicTangentVector2 {
             };
         }
 
-        let (dx, dy) = match image {
-            BezierEndpointTangentImage2::Polynomial(image) => {
-                let dx = image
-                    .dx()
-                    .and_then(|coordinate| coordinate.representation());
-                let dy = image
-                    .dy()
-                    .and_then(|coordinate| coordinate.representation());
-                (dx, dy)
-            }
-            BezierEndpointTangentImage2::Rational(image) => {
-                let dx = image
-                    .dx()
-                    .and_then(|coordinate| coordinate.representation());
-                let dy = image
-                    .dy()
-                    .and_then(|coordinate| coordinate.representation());
-                (dx, dy)
-            }
-        };
+        let dx = image
+            .dx()
+            .and_then(|coordinate| coordinate.representation());
+        let dy = image
+            .dy()
+            .and_then(|coordinate| coordinate.representation());
         let (Some(dx), Some(dy)) = (dx, dy) else {
             return BezierAlgebraicTangentVectorEvidence {
                 status: BezierAlgebraicTangentVectorStatus::MissingCoordinateImage,
@@ -241,12 +227,12 @@ pub(crate) fn compare_algebraic_tangent_filled_left_face_sign_only(
 }
 
 pub(crate) fn algebraic_endpoint_tangent_cross_sign(
-    first: &BezierEndpointTangentImage2,
-    second: &BezierEndpointTangentImage2,
+    first: &RationalBezierAlgebraicTangentImage2,
+    second: &RationalBezierAlgebraicTangentImage2,
     policy: &CurveContext,
 ) -> Classification<RealSign> {
-    let first = BezierAlgebraicTangentVector2::from_endpoint_image(first);
-    let second = BezierAlgebraicTangentVector2::from_endpoint_image(second);
+    let first = BezierAlgebraicTangentVector2::from_image(first);
+    let second = BezierAlgebraicTangentVector2::from_image(second);
     let (Some(first), Some(second)) = (first.vector, second.vector) else {
         return Classification::Uncertain(crate::UncertaintyReason::Boundary);
     };

@@ -85,8 +85,7 @@ pub use arc_bezier::{CircularArcBezierDecomposition2, CircularArcBezierSpan2};
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
 pub use bezier_algebraic_image::{
-    BezierAlgebraicCoordinateImage, BezierAlgebraicImageStatus,
-    BezierAlgebraicRationalCoordinateImage, BezierAlgebraicTangentImage2,
+    BezierAlgebraicImageStatus, BezierAlgebraicRationalCoordinateImage,
     RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
 };
 pub use bezier_arrangement::{
@@ -150,7 +149,7 @@ pub use bezier_split::{
     BezierParallelFragment2, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
     CurveParameter2, CurveParameterRange2,
 };
-pub use bezier_split_endpoint::{BezierAlgebraicEndpointImage2, BezierEndpointTangentImage2};
+pub use bezier_split_endpoint::BezierAlgebraicEndpointImage2;
 pub use bezier_tangent_order::{
     BezierAlgebraicSameTangentOrderEvidence, BezierAlgebraicSameTangentOrderStatus,
     BezierAlgebraicScalarSignEvidence, BezierAlgebraicTangentOrderEvidence,

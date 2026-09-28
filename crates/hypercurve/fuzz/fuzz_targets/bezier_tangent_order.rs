@@ -2,10 +2,9 @@
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
-    BezierEndpointTangentImage2, BezierParameterInterval, BezierParameterPolynomial,
-    Classification, CurveContext, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
-    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
-    compare_algebraic_tangent_turn_from_base,
+    BezierParameterInterval, BezierParameterPolynomial, Classification, CurveContext, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
+    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -25,10 +24,7 @@ fn vector_from_curve(
     let tangent = curve
         .tangent_at_algebraic_parameter(parameter, policy)
         .ok()?;
-    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(
-        tangent,
-    ))
-    .vector
+    BezierAlgebraicTangentVector2::from_image(&tangent).vector
 }
 
 fn second_vector_from_curve(
@@ -39,10 +35,7 @@ fn second_vector_from_curve(
     let tangent = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
         .ok()?;
-    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(
-        tangent,
-    ))
-    .vector
+    BezierAlgebraicTangentVector2::from_image(&tangent).vector
 }
 
 fn second_vector_from_rational_curve(
@@ -53,10 +46,7 @@ fn second_vector_from_rational_curve(
     let tangent = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
         .ok()?;
-    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(
-        tangent,
-    ))
-    .vector
+    BezierAlgebraicTangentVector2::from_image(&tangent).vector
 }
 
 fuzz_target!(|data: &[u8]| {

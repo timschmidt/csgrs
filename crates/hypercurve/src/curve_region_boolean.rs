@@ -35,16 +35,16 @@ use crate::rational_bezier_general::{
 };
 use crate::{
     Aabb2, ArcArcIntersection, Axis2, BezierArrangementFragment2, BezierArrangementGraph2,
-    BezierEndpoint, BezierEndpointTangentImage2, BezierLineContactRelation,
-    BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParallel2, BezierParameter2,
-    BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification,
-    ContourPointLocation, Curve2, CurveContext, CurveError, CurveFamily2,
-    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveOverlapOrientation2,
-    CurveParameter2, CurveParameterRange2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
-    CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, LineSide, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionOverlap2, RationalBezierPointIncidence2, Real,
-    RealSign, RegionPointLocation, Segment2, UncertaintyReason,
+    BezierEndpoint, BezierLineContactRelation, BezierLineCrossingDirection,
+    BezierLineImageFitRelation, BezierParallel2, BezierParameter2, BezierParameterRange2,
+    BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification, ContourPointLocation, Curve2,
+    CurveContext, CurveError, CurveFamily2, CurveIntersectionContact2, CurveIntersectionOverlap2,
+    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2, CurveOperation2,
+    CurveOutcome, CurveOverlapOrientation2, CurveParameter2, CurveParameterRange2, CurvePoint2,
+    CurveRegion2, CurveRegionLoopRole, CurveResult, ExactCurveError, ExactCurveResult, FillRule,
+    LineSeg2, LineSide, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicTangentImage2,
+    RationalBezierIntersectionOverlap2, RationalBezierPointIncidence2, Real, RealSign,
+    RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 /// Region operand that owns one retained Boolean carrier.
@@ -14548,7 +14548,7 @@ fn propagate_boolean_locations_from_seed(
 fn algebraic_endpoint_tangent_at_vertex(
     fragments: &[SplitCarrierFragment],
     vertex: usize,
-) -> Option<&BezierEndpointTangentImage2> {
+) -> Option<&RationalBezierAlgebraicTangentImage2> {
     fragments.iter().find_map(|split| {
         let BezierSplitFragment2::RetainedBezier {
             reversed,

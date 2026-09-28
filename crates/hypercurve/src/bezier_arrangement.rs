@@ -28,10 +28,10 @@ use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
-    BezierEndpointTangentImage2, BezierParameter2, BezierRetainedOverlapEvidence2,
-    BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2,
-    Classification, CurveContext, CurveError, CurveResult, Point2,
-    RationalBezierAlgebraicPointImage2, UncertaintyReason, ZeroKnowledge,
+    BezierParameter2, BezierRetainedOverlapEvidence2, BezierSplitFragment2,
+    BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2, Classification,
+    CurveContext, CurveError, CurveResult, Point2, RationalBezierAlgebraicPointImage2,
+    RationalBezierAlgebraicTangentImage2, UncertaintyReason, ZeroKnowledge,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
 };
 use hyperreal::{Rational, Real, RealSign};
@@ -1578,9 +1578,9 @@ fn retained_algebraic_point_key(
 }
 
 fn retained_algebraic_tangent(
-    tangent: &BezierEndpointTangentImage2,
+    tangent: &RationalBezierAlgebraicTangentImage2,
 ) -> Option<RetainedTangentVector> {
-    BezierAlgebraicTangentVector2::from_endpoint_image(tangent)
+    BezierAlgebraicTangentVector2::from_image(tangent)
         .vector
         .map(Box::new)
         .map(RetainedTangentVector::Algebraic)
@@ -2642,8 +2642,7 @@ fn retained_algebraic_derivative(
                 .second_derivative_at_algebraic_parameter(&source.parameter, policy)
                 .map(Some),
             _ => Ok(None),
-        }
-        .map(|derivative| derivative.map(BezierEndpointTangentImage2::Polynomial)),
+        },
         BezierSubcurve2::Cubic(curve) => match order {
             1 => curve
                 .tangent_at_algebraic_parameter(&source.parameter, policy)
@@ -2655,24 +2654,13 @@ fn retained_algebraic_derivative(
                 .third_derivative_at_algebraic_parameter(&source.parameter, policy)
                 .map(Some),
             _ => Ok(None),
-        }
-        .map(|derivative| derivative.map(BezierEndpointTangentImage2::Polynomial)),
+        },
         BezierSubcurve2::RationalQuadratic(curve) => curve
             .derivatives_at_algebraic_parameter(&source.parameter, order, policy)
-            .map(|derivatives| {
-                derivatives
-                    .into_iter()
-                    .nth(order - 1)
-                    .map(BezierEndpointTangentImage2::Rational)
-            }),
+            .map(|derivatives| derivatives.into_iter().nth(order - 1)),
         BezierSubcurve2::Rational(curve) => curve
             .derivatives_at_algebraic_parameter(&source.parameter, order, policy)
-            .map(|derivatives| {
-                derivatives
-                    .into_iter()
-                    .nth(order - 1)
-                    .map(BezierEndpointTangentImage2::Rational)
-            }),
+            .map(|derivatives| derivatives.into_iter().nth(order - 1)),
     };
     let mut derivative = match derivative {
         Ok(derivative) => derivative.as_ref().and_then(retained_algebraic_tangent),

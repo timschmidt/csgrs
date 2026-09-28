@@ -2,11 +2,10 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierAlgebraicTangentVector2, BezierEndpointTangentImage2,
-    BezierParameterInterval, BezierParameterPolynomial, Classification, CurveContext, CurveResult,
-    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
-    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
-    compare_algebraic_tangent_turn_from_base,
+    BezierAlgebraicParameter2, BezierAlgebraicTangentVector2, BezierParameterInterval,
+    BezierParameterPolynomial, Classification, CurveContext, CurveResult, Point2, QuadraticBezier2,
+    RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
+    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 
 fn r(value: i32) -> Real {
@@ -36,11 +35,9 @@ fn vector(
     let tangent = curve
         .tangent_at_algebraic_parameter(parameter, policy)
         .unwrap();
-    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(
-        tangent,
-    ))
-    .vector
-    .unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent)
+        .vector
+        .unwrap()
 }
 
 fn second_vector(
@@ -51,11 +48,9 @@ fn second_vector(
     let tangent = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
         .unwrap();
-    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Polynomial(
-        tangent,
-    ))
-    .vector
-    .unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent)
+        .vector
+        .unwrap()
 }
 
 fn rational_vector(
@@ -66,11 +61,9 @@ fn rational_vector(
     let tangent = curve
         .tangent_at_algebraic_parameter(parameter, policy)
         .unwrap();
-    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(
-        tangent,
-    ))
-    .vector
-    .unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent)
+        .vector
+        .unwrap()
 }
 
 fn rational_second_vector(
@@ -81,11 +74,9 @@ fn rational_second_vector(
     let tangent = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
         .unwrap();
-    BezierAlgebraicTangentVector2::from_endpoint_image(&BezierEndpointTangentImage2::Rational(
-        tangent,
-    ))
-    .vector
-    .unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent)
+        .vector
+        .unwrap()
 }
 
 fn main() -> CurveResult<()> {

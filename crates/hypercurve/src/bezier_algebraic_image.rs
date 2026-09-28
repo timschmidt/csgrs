@@ -14,7 +14,6 @@
 use hyperreal::{Real, RealSign};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
-    AlgebraicRootPolynomialImageReport, AlgebraicRootPolynomialImageStatus,
     AlgebraicRootRationalImageReport, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
     AlgebraicRootValidationStatus, IsolatedRootInterval, SymbolId,
     arithmetic_algebraic_root_representations,
@@ -24,9 +23,8 @@ use hypersolve::{
     compare_algebraic_root_representations_by_difference,
 };
 use hypersolve::{
-    AlgebraicRootRationalImageStatus, transform_algebraic_root_polynomial_image,
-    transform_algebraic_root_rational_image, transform_algebraic_root_rational_images,
-    validate_algebraic_root_representation,
+    AlgebraicRootRationalImageStatus, transform_algebraic_root_rational_image,
+    transform_algebraic_root_rational_images, validate_algebraic_root_representation,
 };
 
 use crate::bezier_parameter::{quadratic_bernstein_to_power, signed_coefficients_at_parameter};
@@ -59,13 +57,6 @@ pub enum BezierAlgebraicImageStatus {
     /// source, were retained without forcing coordinate representations into
     /// the rational-coefficient algebraic-number package.
     RetainedRationalExpression,
-}
-
-/// One exact coordinate image of a Bezier expression at an algebraic parameter.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicCoordinateImage {
-    coefficients: Vec<Real>,
-    evidence: AlgebraicRootPolynomialImageReport,
 }
 
 /// One exact rational-function coordinate image at an algebraic parameter.
@@ -111,23 +102,6 @@ impl BezierAlgebraicRationalCoordinateImage {
     }
 }
 
-impl BezierAlgebraicCoordinateImage {
-    /// Compares this exact algebraic coordinate with a represented real value.
-    ///
-    /// The retained polynomial-image representation is refined only as far as
-    /// needed to certify order, without materializing a primitive float.
-    pub fn compare_to_real(
-        &self,
-        value: &Real,
-        policy: &CurveContext,
-    ) -> crate::Classification<Ordering> {
-        let Some(representation) = self.representation() else {
-            return crate::Classification::Uncertain(crate::UncertaintyReason::Unsupported);
-        };
-        compare_root_representation_to_real(representation, value, policy)
-    }
-}
-
 #[cfg(test)]
 mod policy_tests {
     use hyperreal::{Rational, Real};
@@ -138,7 +112,7 @@ mod policy_tests {
     };
     use num::{BigInt, BigUint};
 
-    use super::{arithmetic_algebraic_representations_with_policy, coordinate_image};
+    use super::arithmetic_algebraic_representations_with_policy;
     use crate::{
         Classification, CurveCertainty, CurveContext, policy::resolve_certified_operation,
     };
@@ -229,7 +203,7 @@ mod policy_tests {
         high_degree[0] = -Real::from(1_u64 << 32);
         high_degree[64] = Real::one();
         for (coefficients, parameter, expected) in [
-            (vec![], Real::pi(), Real::zero()),
+            (vec![Real::zero()], Real::pi(), Real::zero()),
             (vec![Real::pi()], root_two.clone(), Real::pi()),
             (vec![Real::pi(), Real::e()], Real::zero(), Real::pi()),
             (
@@ -246,15 +220,26 @@ mod policy_tests {
             (high_degree, root_two, Real::zero()),
         ] {
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-                let image = coordinate_image(
+                let image = hypersolve::transform_algebraic_root_rational_image(
                     &AlgebraicRootRepresentation::from_exact_value(&parameter),
-                    coefficients.clone(),
-                    &policy,
-                )
-                .expect("a stored exact point admits its polynomial image");
-                assert_eq!(image.coefficients, coefficients);
+                    &coefficients,
+                    &[Real::one()],
+                    policy.predicate_policy(),
+                );
                 assert_eq!(
-                    image.compare_to_real(&expected, &policy),
+                    image.status,
+                    hypersolve::AlgebraicRootRationalImageStatus::Transformed
+                );
+                assert_eq!(image.numerator_coefficients, coefficients);
+                assert_eq!(
+                    super::compare_root_representation_to_real(
+                        image
+                            .representation
+                            .as_ref()
+                            .expect("an exact image retains its root"),
+                        &expected,
+                        &policy,
+                    ),
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
             }
@@ -561,29 +546,6 @@ pub(crate) fn algebraic_arithmetic_succeeded(status: &AlgebraicRootArithmeticSta
             | AlgebraicRootArithmeticStatus::ComputedExactRealWitness
             | AlgebraicRootArithmeticStatus::ComputedRepresentation
     )
-}
-
-impl BezierAlgebraicCoordinateImage {
-    /// Returns the coordinate polynomial in ascending powers of the source
-    /// Bezier parameter.
-    pub fn coefficients(&self) -> &[Real] {
-        &self.coefficients
-    }
-
-    /// Returns the represented coordinate when the image was constructed.
-    pub fn representation(&self) -> Option<&AlgebraicRootRepresentation> {
-        self.evidence.representation.as_ref()
-    }
-}
-
-/// Exact algebraic image of a Bezier derivative vector.
-#[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicTangentImage2 {
-    status: BezierAlgebraicImageStatus,
-    parameter: AlgebraicRootRepresentation,
-    dx: Option<BezierAlgebraicCoordinateImage>,
-    dy: Option<BezierAlgebraicCoordinateImage>,
-    message: Option<String>,
 }
 
 /// Exact affine point of a polynomial or rational Bezier at one selected algebraic parameter.
@@ -1537,7 +1499,7 @@ impl RationalBezierAlgebraicPointPredicate2<'_> {
     }
 }
 
-/// Exact algebraic image of a rational Bezier derivative vector.
+/// Exact algebraic image of a polynomial or rational Bezier derivative vector.
 #[derive(Clone, Debug)]
 pub struct RationalBezierAlgebraicTangentImage2 {
     data: Arc<RationalBezierAlgebraicTangentImageData>,
@@ -1714,33 +1676,6 @@ impl RationalBezierAlgebraicTangentImage2 {
     }
 }
 
-impl BezierAlgebraicTangentImage2 {
-    /// Returns the final construction status.
-    pub const fn status(&self) -> BezierAlgebraicImageStatus {
-        self.status
-    }
-
-    /// Returns the represented Bezier parameter used as the source root.
-    pub const fn parameter(&self) -> &AlgebraicRootRepresentation {
-        &self.parameter
-    }
-
-    /// Returns the derivative x component image when construction reached it.
-    pub const fn dx(&self) -> Option<&BezierAlgebraicCoordinateImage> {
-        self.dx.as_ref()
-    }
-
-    /// Returns the derivative y component image when construction reached it.
-    pub const fn dy(&self) -> Option<&BezierAlgebraicCoordinateImage> {
-        self.dy.as_ref()
-    }
-
-    /// Returns a compact diagnostic message for failed construction.
-    pub fn message(&self) -> Option<&str> {
-        self.message.as_deref()
-    }
-}
-
 impl QuadraticBezier2 {
     /// Evaluates this quadratic at an isolated algebraic parameter.
     ///
@@ -1766,7 +1701,7 @@ impl QuadraticBezier2 {
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<BezierAlgebraicTangentImage2> {
+    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         tangent_image(parameter, quadratic_tangent_coefficients(self), policy)
     }
 
@@ -1781,7 +1716,7 @@ impl QuadraticBezier2 {
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<BezierAlgebraicTangentImage2> {
+    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
             derivative_polynomials(quadratic_tangent_coefficients(self)),
@@ -1811,7 +1746,7 @@ impl CubicBezier2 {
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<BezierAlgebraicTangentImage2> {
+    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         tangent_image(parameter, cubic_tangent_coefficients(self), policy)
     }
 
@@ -1826,7 +1761,7 @@ impl CubicBezier2 {
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<BezierAlgebraicTangentImage2> {
+    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
             derivative_polynomials(cubic_tangent_coefficients(self)),
@@ -1844,7 +1779,7 @@ impl CubicBezier2 {
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<BezierAlgebraicTangentImage2> {
+    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
         tangent_image(
             parameter,
             derivative_polynomials(derivative_polynomials(cubic_tangent_coefficients(self))),
@@ -2131,42 +2066,14 @@ fn tangent_image(
     parameter: &BezierAlgebraicParameter2,
     coefficients: CoordinatePolynomials,
     policy: &CurveContext,
-) -> CurveResult<BezierAlgebraicTangentImage2> {
-    let parameter_root = parameter_representation(parameter, policy);
-    if !parameter_root.is_valid() {
-        return Ok(BezierAlgebraicTangentImage2 {
-            status: BezierAlgebraicImageStatus::InvalidParameterEvidence,
-            parameter: parameter_root,
-            dx: None,
-            dy: None,
-            message: Some("Bezier algebraic parameter evidence did not validate".to_owned()),
-        });
-    }
-    let Some(dx) = coordinate_image(&parameter_root, coefficients.x, policy) else {
-        return Ok(BezierAlgebraicTangentImage2 {
-            status: BezierAlgebraicImageStatus::XImageFailed,
-            parameter: parameter_root,
-            dx: None,
-            dy: None,
-            message: Some("dx coordinate polynomial image failed".to_owned()),
-        });
-    };
-    let Some(dy) = coordinate_image(&parameter_root, coefficients.y, policy) else {
-        return Ok(BezierAlgebraicTangentImage2 {
-            status: BezierAlgebraicImageStatus::YImageFailed,
-            parameter: parameter_root,
-            dx: Some(dx),
-            dy: None,
-            message: Some("dy coordinate polynomial image failed".to_owned()),
-        });
-    };
-    Ok(BezierAlgebraicTangentImage2 {
-        status: BezierAlgebraicImageStatus::Transformed,
-        parameter: parameter_root,
-        dx: Some(dx),
-        dy: Some(dy),
-        message: None,
-    })
+) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
+    rational_tangent_image_from_power_basis(
+        parameter,
+        coefficients.x,
+        coefficients.y,
+        vec![Real::one()],
+        policy,
+    )
 }
 
 fn rational_tangent_image(
@@ -2250,39 +2157,6 @@ pub(crate) fn rational_tangent_image_from_power_basis(
     )
 }
 
-fn coordinate_image(
-    parameter: &AlgebraicRootRepresentation,
-    coefficients: Vec<Real>,
-    policy: &CurveContext,
-) -> Option<BezierAlgebraicCoordinateImage> {
-    if let Some(parameter_value) = parameter.exact_point_witness() {
-        let value = Real::eval_poly(&coefficients, parameter_value);
-        let representation = AlgebraicRootRepresentation::from_exact_value(&value);
-        return Some(BezierAlgebraicCoordinateImage {
-            evidence: AlgebraicRootPolynomialImageReport {
-                status: AlgebraicRootPolynomialImageStatus::Transformed,
-                image_coefficients: coefficients.clone(),
-                representation: Some(representation),
-                message: None,
-            },
-            coefficients,
-        });
-    }
-    if coefficients.len() == 1 {
-        let representation = AlgebraicRootRepresentation::from_exact_value(&coefficients[0]);
-        return Some(BezierAlgebraicCoordinateImage {
-            evidence: AlgebraicRootPolynomialImageReport {
-                status: AlgebraicRootPolynomialImageStatus::Transformed,
-                image_coefficients: coefficients.clone(),
-                representation: Some(representation),
-                message: None,
-            },
-            coefficients,
-        });
-    }
-    coordinate_image_from_replay(parameter, coefficients, policy)
-}
-
 enum RationalCoordinateImagePair {
     Transformed {
         first: BezierAlgebraicRationalCoordinateImage,
@@ -2362,24 +2236,6 @@ fn rational_coordinate_image_pair(
             reason,
         }),
     }
-}
-
-fn coordinate_image_from_replay(
-    parameter: &AlgebraicRootRepresentation,
-    coefficients: Vec<Real>,
-    policy: &CurveContext,
-) -> Option<BezierAlgebraicCoordinateImage> {
-    let evidence = transform_algebraic_root_polynomial_image(
-        parameter,
-        &coefficients,
-        policy.predicate_policy(),
-    );
-    (evidence.status == AlgebraicRootPolynomialImageStatus::Transformed).then_some(
-        BezierAlgebraicCoordinateImage {
-            coefficients,
-            evidence,
-        },
-    )
 }
 
 pub(crate) fn parameter_representation(

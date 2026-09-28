@@ -14,40 +14,10 @@
 use std::{sync::Arc, sync::OnceLock};
 
 use crate::{
-    BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierAlgebraicTangentImage2,
-    BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveResult, QuadraticBezier2,
-    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
-    RationalQuadraticBezier2,
+    BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierSubcurve2, Classification,
+    CubicBezier2, CurveContext, CurveResult, QuadraticBezier2, RationalBezierAlgebraicPointImage2,
+    RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2,
 };
-
-/// Exact tangent image retained at an algebraic split endpoint.
-#[allow(clippy::large_enum_variant)]
-#[derive(Clone, Debug, PartialEq)]
-pub enum BezierEndpointTangentImage2 {
-    /// Polynomial quadratic/cubic Bezier derivative coordinate images.
-    Polynomial(BezierAlgebraicTangentImage2),
-    /// Rational Bezier affine derivative coordinate images of any degree.
-    Rational(RationalBezierAlgebraicTangentImage2),
-}
-
-impl BezierEndpointTangentImage2 {
-    /// Returns the construction status for the retained tangent image.
-    pub fn status(&self) -> BezierAlgebraicImageStatus {
-        match self {
-            Self::Polynomial(image) => image.status(),
-            Self::Rational(image) => image.status(),
-        }
-    }
-
-    /// Returns true when both tangent coordinates retain exact replayable evidence.
-    pub fn is_exact(&self) -> bool {
-        matches!(
-            self.status(),
-            BezierAlgebraicImageStatus::Transformed
-                | BezierAlgebraicImageStatus::RetainedRationalExpression
-        )
-    }
-}
 
 /// Exact point and tangent images for one algebraic split endpoint.
 #[derive(Clone, Debug)]
@@ -60,16 +30,16 @@ enum BezierAlgebraicEndpointImageData {
     Materialized {
         parameter: BezierAlgebraicParameter2,
         point: RationalBezierAlgebraicPointImage2,
-        tangent: BezierEndpointTangentImage2,
-        second_derivative: Option<Box<BezierEndpointTangentImage2>>,
-        third_derivative: Option<Box<BezierEndpointTangentImage2>>,
+        tangent: RationalBezierAlgebraicTangentImage2,
+        second_derivative: Option<RationalBezierAlgebraicTangentImage2>,
+        third_derivative: Option<RationalBezierAlgebraicTangentImage2>,
     },
     LazyFirstOrder {
         parameter: BezierAlgebraicParameter2,
         curve: Box<BezierSubcurve2>,
         policy: CurveContext,
         point: OnceLock<RationalBezierAlgebraicPointImage2>,
-        tangent: OnceLock<CurveResult<BezierEndpointTangentImage2>>,
+        tangent: OnceLock<CurveResult<RationalBezierAlgebraicTangentImage2>>,
     },
 }
 
@@ -141,12 +111,10 @@ impl BezierAlgebraicEndpointImage2 {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
                 point,
-                tangent: BezierEndpointTangentImage2::Polynomial(
-                    curve.tangent_at_algebraic_parameter(parameter, policy)?,
-                ),
-                second_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(
+                tangent: curve.tangent_at_algebraic_parameter(parameter, policy)?,
+                second_derivative: Some(
                     curve.second_derivative_at_algebraic_parameter(parameter, policy)?,
-                ))),
+                ),
                 third_derivative: None,
             }),
         }))
@@ -166,15 +134,13 @@ impl BezierAlgebraicEndpointImage2 {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
                 point,
-                tangent: BezierEndpointTangentImage2::Polynomial(
-                    curve.tangent_at_algebraic_parameter(parameter, policy)?,
-                ),
-                second_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(
+                tangent: curve.tangent_at_algebraic_parameter(parameter, policy)?,
+                second_derivative: Some(
                     curve.second_derivative_at_algebraic_parameter(parameter, policy)?,
-                ))),
-                third_derivative: Some(Box::new(BezierEndpointTangentImage2::Polynomial(
+                ),
+                third_derivative: Some(
                     curve.third_derivative_at_algebraic_parameter(parameter, policy)?,
-                ))),
+                ),
             }),
         }))
     }
@@ -201,7 +167,7 @@ impl BezierAlgebraicEndpointImage2 {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
                 point,
-                tangent: BezierEndpointTangentImage2::Rational(tangent),
+                tangent,
                 second_derivative,
                 third_derivative,
             }),
@@ -246,7 +212,7 @@ impl BezierAlgebraicEndpointImage2 {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
                 point,
-                tangent: BezierEndpointTangentImage2::Rational(tangent),
+                tangent,
                 second_derivative,
                 third_derivative,
             }),
@@ -310,28 +276,28 @@ impl BezierAlgebraicEndpointImage2 {
     }
 
     /// Returns the exact tangent image at the endpoint.
-    pub fn tangent(&self) -> &BezierEndpointTangentImage2 {
+    pub fn tangent(&self) -> &RationalBezierAlgebraicTangentImage2 {
         self.try_tangent()
             .expect("certified private split endpoint tangent image must remain constructible")
     }
 
     /// Returns exact second-derivative endpoint evidence when the source curve
     /// family can currently construct it.
-    pub fn second_derivative(&self) -> Option<&BezierEndpointTangentImage2> {
+    pub fn second_derivative(&self) -> Option<&RationalBezierAlgebraicTangentImage2> {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized {
                 second_derivative, ..
-            } => second_derivative.as_deref(),
+            } => second_derivative.as_ref(),
             BezierAlgebraicEndpointImageData::LazyFirstOrder { .. } => None,
         }
     }
 
     /// Returns exact third-derivative endpoint evidence when retained.
-    pub fn third_derivative(&self) -> Option<&BezierEndpointTangentImage2> {
+    pub fn third_derivative(&self) -> Option<&RationalBezierAlgebraicTangentImage2> {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized {
                 third_derivative, ..
-            } => third_derivative.as_deref(),
+            } => third_derivative.as_ref(),
             BezierAlgebraicEndpointImageData::LazyFirstOrder { .. } => None,
         }
     }
@@ -340,7 +306,13 @@ impl BezierAlgebraicEndpointImage2 {
     pub fn is_exact(&self) -> bool {
         self.point()
             .is_ok_and(|point| matches!(point, Classification::Decided(_)))
-            && self.try_tangent().is_ok_and(|tangent| tangent.is_exact())
+            && self.try_tangent().is_ok_and(|tangent| {
+                matches!(
+                    tangent.status(),
+                    BezierAlgebraicImageStatus::Transformed
+                        | BezierAlgebraicImageStatus::RetainedRationalExpression
+                )
+            })
     }
 
     pub(crate) fn matches_required_source_evidence(&self, expected: &Self) -> bool {
@@ -409,7 +381,7 @@ impl BezierAlgebraicEndpointImage2 {
         }
     }
 
-    pub(crate) fn try_tangent(&self) -> CurveResult<&BezierEndpointTangentImage2> {
+    pub(crate) fn try_tangent(&self) -> CurveResult<&RationalBezierAlgebraicTangentImage2> {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized { tangent, .. } => Ok(tangent),
             BezierAlgebraicEndpointImageData::LazyFirstOrder {
@@ -422,14 +394,10 @@ impl BezierAlgebraicEndpointImage2 {
                 .get_or_init(|| {
                     let tangent = match curve.as_ref() {
                         BezierSubcurve2::Quadratic(curve) => {
-                            return curve
-                                .tangent_at_algebraic_parameter(parameter, policy)
-                                .map(BezierEndpointTangentImage2::Polynomial);
+                            return curve.tangent_at_algebraic_parameter(parameter, policy);
                         }
                         BezierSubcurve2::Cubic(curve) => {
-                            return curve
-                                .tangent_at_algebraic_parameter(parameter, policy)
-                                .map(BezierEndpointTangentImage2::Polynomial);
+                            return curve.tangent_at_algebraic_parameter(parameter, policy);
                         }
                         BezierSubcurve2::RationalQuadratic(curve) => {
                             curve.derivatives_at_algebraic_parameter(parameter, 1, policy)
@@ -440,7 +408,7 @@ impl BezierAlgebraicEndpointImage2 {
                     }?
                     .pop()
                     .expect("one requested rational derivative image");
-                    Ok(BezierEndpointTangentImage2::Rational(tangent))
+                    Ok(tangent)
                 })
                 .as_ref()
                 .map_err(Clone::clone),
@@ -450,9 +418,8 @@ impl BezierAlgebraicEndpointImage2 {
 
 fn transformed_rational_derivative(
     derivative: RationalBezierAlgebraicTangentImage2,
-) -> Option<Box<BezierEndpointTangentImage2>> {
-    (derivative.status() == BezierAlgebraicImageStatus::Transformed)
-        .then(|| Box::new(BezierEndpointTangentImage2::Rational(derivative)))
+) -> Option<RationalBezierAlgebraicTangentImage2> {
+    (derivative.status() == BezierAlgebraicImageStatus::Transformed).then_some(derivative)
 }
 
 #[cfg(test)]
