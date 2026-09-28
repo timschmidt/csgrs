@@ -228,6 +228,47 @@ pub fn ordered_field_polynomial_sign_remainder<C: Clone, F: OrderedFieldPolynomi
     Ok(Some(remainder))
 }
 
+/// Returns a greatest common divisor in the caller's exact coefficient field.
+///
+/// Coefficients are in ascending power order. The result is defined up to a
+/// nonzero field factor; it is not made monic. An empty vector denotes the
+/// zero polynomial (both inputs vanished), and a unit denotes relatively
+/// prime inputs. Exact degree decisions and the shared division-free remainder
+/// preserve common roots and multiplicities without reconstructing field
+/// elements as independent real scalars.
+pub fn ordered_field_polynomial_gcd<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    left: &[C],
+    right: &[C],
+    field: &mut F,
+) -> Result<Vec<C>, F::Error> {
+    let trim = |polynomial: &mut Vec<C>, field: &mut F| -> Result<(), F::Error> {
+        trim_polynomial(polynomial, field)?;
+        if polynomial.len() == 1 && field.sign(&polynomial[0])? == Ordering::Equal {
+            polynomial.clear();
+        }
+        field.normalize_positive_scale(polynomial);
+        Ok(())
+    };
+    let mut left = left.to_vec();
+    let mut right = right.to_vec();
+    trim(&mut left, field)?;
+    trim(&mut right, field)?;
+    while !right.is_empty() {
+        if right.len() == 1 {
+            return Ok(vec![field.constant(&Real::one())?]);
+        }
+        let mut remainder = ordered_field_polynomial_sign_remainder(&left, &right, field)?
+            .expect("the divisor has a certified nonzero leading coefficient");
+        trim(&mut remainder, field)?;
+        left = right;
+        right = remainder;
+    }
+    if left.len() == 1 {
+        left[0] = field.constant(&Real::one())?;
+    }
+    Ok(left)
+}
+
 fn deflate_at_represented_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     mut polynomial: Vec<C>,
     root: &Real,
@@ -713,6 +754,102 @@ mod tests {
 
     fn fraction(numerator: i64, denominator: i64) -> Real {
         (Real::from(numerator) / Real::from(denominator)).expect("nonzero integer denominator")
+    }
+
+    #[test]
+    fn gcd_keeps_zero_and_coprime_equations_distinct() {
+        let polynomial = [-2, 1, 1, 0, 0].map(Real::from);
+        for zero in [vec![], vec![Real::zero()], vec![Real::zero(); 4]] {
+            assert!(
+                ordered_field_polynomial_gcd(&zero, &zero, &mut RealContext)
+                    .unwrap()
+                    .is_empty()
+            );
+            for (left, right) in [(&polynomial[..], &zero[..]), (&zero[..], &polynomial[..])] {
+                let gcd = ordered_field_polynomial_gcd(left, right, &mut RealContext).unwrap();
+                assert_eq!(gcd, polynomial[..3]);
+            }
+        }
+        for other in [[7, 0], [0, 1]] {
+            assert_eq!(
+                ordered_field_polynomial_gcd(&polynomial, &other.map(Real::from), &mut RealContext)
+                    .unwrap(),
+                vec![Real::one()],
+            );
+        }
+    }
+
+    #[test]
+    fn gcd_preserves_repeated_roots_in_the_selected_coefficient_field() {
+        // a+b*theta, theta>0 and theta^2=2. No standalone Real theta exists.
+        #[derive(Clone)]
+        struct Quadratic([Real; 2]);
+        struct Field;
+        impl OrderedFieldPolynomialContext<Quadratic> for Field {
+            type Error = ();
+            fn constant(&mut self, value: &Real) -> Result<Quadratic, ()> {
+                Ok(Quadratic([value.clone(), Real::zero()]))
+            }
+            fn add(&mut self, a: &Quadratic, b: &Quadratic) -> Result<Quadratic, ()> {
+                Ok(Quadratic([&a.0[0] + &b.0[0], &a.0[1] + &b.0[1]]))
+            }
+            fn multiply(&mut self, a: &Quadratic, b: &Quadratic) -> Result<Quadratic, ()> {
+                Ok(Quadratic([
+                    &a.0[0] * &b.0[0] + Real::from(2) * &a.0[1] * &b.0[1],
+                    &a.0[0] * &b.0[1] + &a.0[1] * &b.0[0],
+                ]))
+            }
+            fn scale(&mut self, value: &Quadratic, scale: &Real) -> Result<Quadratic, ()> {
+                Ok(Quadratic([&value.0[0] * scale, &value.0[1] * scale]))
+            }
+            fn normalize_positive_scale(&mut self, _: &mut [Quadratic]) {}
+            fn sign(&mut self, value: &Quadratic) -> Result<Ordering, ()> {
+                let a = value.0[0].partial_cmp(&Real::zero()).ok_or(())?;
+                let b = value.0[1].partial_cmp(&Real::zero()).ok_or(())?;
+                if b == Ordering::Equal {
+                    return Ok(a);
+                }
+                if a == Ordering::Equal || a == b {
+                    return Ok(b);
+                }
+                let norm = &value.0[0] * &value.0[0] - Real::from(2) * &value.0[1] * &value.0[1];
+                let sign = norm.partial_cmp(&Real::zero()).ok_or(())?;
+                Ok(if a == Ordering::Less {
+                    sign.reverse()
+                } else {
+                    sign
+                })
+            }
+            fn sign_if_separated(&mut self, value: &Quadratic) -> Result<Option<Ordering>, ()> {
+                self.sign(value).map(Some)
+            }
+        }
+        for branch in [-1, 1] {
+            // Independently expanded (x-branch*theta)^2*(x+1) and
+            // (x-branch*theta)^2*(x-3), with distinct nonmonic gauges.
+            let first = [[2, 0], [2, -2 * branch], [1, -2 * branch], [1, 0]];
+            let second = [[-6, 0], [2, 6 * branch], [-3, -2 * branch], [1, 0]];
+            let expected = [[2, 0], [0, -2 * branch], [1, 0]];
+            for gauge in [-3, 2] {
+                let first = first.map(|pair| Quadratic(pair.map(|x| Real::from(x * gauge))));
+                let second = second.map(|pair| Quadratic(pair.map(Real::from)));
+                let gcd = ordered_field_polynomial_gcd(&first, &second, &mut Field).unwrap();
+                assert_eq!(gcd.len(), 3);
+                for (actual, expected) in gcd.iter().zip(expected) {
+                    let scaled = Field
+                        .multiply(&Quadratic(expected.map(Real::from)), &gcd[2])
+                        .unwrap();
+                    assert_eq!(
+                        Field.sign(
+                            &Field
+                                .add(actual, &Field.scale(&scaled, &Real::from(-1)).unwrap())
+                                .unwrap()
+                        ),
+                        Ok(Ordering::Equal)
+                    );
+                }
+            }
+        }
     }
 
     #[test]
