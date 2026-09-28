@@ -126,7 +126,7 @@ fn assert_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert!(point.x().and_then(|x| x.representation()).is_some());
     assert!(point.y().and_then(|y| y.representation()).is_some());
-    assert_transformed_tangent(image.tangent());
+    assert_transformed_tangent(decided(image.tangent().unwrap()));
     if let Some(second) = image.second_derivative() {
         assert_transformed_tangent(second);
     }

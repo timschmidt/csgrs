@@ -2154,11 +2154,14 @@ impl RationalBezier2 {
         &self,
         parameter: &crate::BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
+    ) -> CurveResult<Classification<RationalBezierAlgebraicTangentImage2>> {
         Ok(self
             .derivatives_at_algebraic_parameter(parameter, 1, policy)?
-            .pop()
-            .expect("one requested rational derivative image"))
+            .map(|mut images| {
+                images
+                    .pop()
+                    .expect("one requested rational derivative image")
+            }))
     }
 
     /// Evaluates exact affine derivative images through `max_order` at an
@@ -2173,9 +2176,9 @@ impl RationalBezier2 {
         parameter: &crate::BezierAlgebraicParameter2,
         max_order: usize,
         policy: &CurveContext,
-    ) -> CurveResult<Vec<RationalBezierAlgebraicTangentImage2>> {
+    ) -> CurveResult<Classification<Vec<RationalBezierAlgebraicTangentImage2>>> {
         if let Some(images) = parameter.cached_rational_bezier_derivative_images(self, max_order) {
-            return Ok(images);
+            return Ok(Classification::Decided(images));
         }
         let power_basis = self.homogeneous_power_basis()?;
         let images = rational_derivative_images_from_power_basis(
@@ -2186,10 +2189,12 @@ impl RationalBezier2 {
             policy,
             max_order,
         )?;
-        if images
-            .iter()
-            .all(|image| image.status() == crate::BezierAlgebraicImageStatus::Transformed)
+        if let Classification::Decided(images) = &images
+            && images
+                .iter()
+                .all(|image| image.status() == crate::BezierAlgebraicImageStatus::Transformed)
         {
+            // Retained expressions own this parameter and must not form a cache cycle.
             parameter.retain_rational_bezier_derivative_images(self, images.clone());
         }
         Ok(images)

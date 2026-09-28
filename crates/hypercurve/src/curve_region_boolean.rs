@@ -14562,12 +14562,18 @@ fn algebraic_endpoint_tangent_at_vertex(
         if split.start_topology_vertex == Some(vertex) {
             return if *reversed { end_image } else { start_image }
                 .as_ref()
-                .and_then(|image| image.try_tangent().ok());
+                .and_then(|image| match image.tangent() {
+                    Ok(Classification::Decided(tangent)) => Some(tangent),
+                    _ => None,
+                });
         }
         if split.end_topology_vertex == Some(vertex) {
             return if *reversed { start_image } else { end_image }
                 .as_ref()
-                .and_then(|image| image.try_tangent().ok());
+                .and_then(|image| match image.tangent() {
+                    Ok(Classification::Decided(tangent)) => Some(tangent),
+                    _ => None,
+                });
         }
         None
     })

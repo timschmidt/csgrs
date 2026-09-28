@@ -21,9 +21,12 @@ fn vector_from_curve(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> Option<BezierAlgebraicTangentVector2> {
-    let tangent = curve
+    let Classification::Decided(tangent) = curve
         .tangent_at_algebraic_parameter(parameter, policy)
-        .ok()?;
+        .ok()?
+    else {
+        return None;
+    };
     BezierAlgebraicTangentVector2::from_image(&tangent).vector
 }
 
@@ -32,9 +35,12 @@ fn second_vector_from_curve(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> Option<BezierAlgebraicTangentVector2> {
-    let tangent = curve
+    let Classification::Decided(tangent) = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
-        .ok()?;
+        .ok()?
+    else {
+        return None;
+    };
     BezierAlgebraicTangentVector2::from_image(&tangent).vector
 }
 
@@ -43,9 +49,12 @@ fn second_vector_from_rational_curve(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> Option<BezierAlgebraicTangentVector2> {
-    let tangent = curve
+    let Classification::Decided(tangent) = curve
         .second_derivative_at_algebraic_parameter(parameter, policy)
-        .ok()?;
+        .ok()?
+    else {
+        return None;
+    };
     BezierAlgebraicTangentVector2::from_image(&tangent).vector
 }
 

@@ -16219,7 +16219,7 @@ impl BezierParallelAlgebraicCuspFrame2 {
         tangent_scale: &Real,
         denominator_scale: &Real,
         policy: &CurveContext,
-    ) -> CurveResult<RationalBezierAlgebraicTangentImage2> {
+    ) -> CurveResult<Classification<RationalBezierAlgebraicTangentImage2>> {
         let dx_numerator = polynomial_subtract(
             &polynomial_scale(&self.data.normal_x_numerator, normal_scale),
             &polynomial_scale(&self.data.normal_y_numerator, tangent_scale),
@@ -17137,14 +17137,12 @@ impl BezierAlgebraicCuspSemicircle2 {
         let radial_coefficient = Real::from(-4_i8) * parameter * &one_minus;
         let tangent_coefficient =
             self.turn_sign() * Real::from(2_i8) * (Real::one() - Real::from(2_i8) * parameter);
-        Ok(Classification::Decided(
-            frame.tangent_image_from_frame_scales(
-                &(&self.data.radial_distance * radial_coefficient),
-                &(&self.data.radial_distance * tangent_coefficient),
-                &(&denominator * &denominator),
-                policy,
-            )?,
-        ))
+        frame.tangent_image_from_frame_scales(
+            &(&self.data.radial_distance * radial_coefficient),
+            &(&self.data.radial_distance * tangent_coefficient),
+            &(&denominator * &denominator),
+            policy,
+        )
     }
 
     pub(crate) fn start_point_evidence(

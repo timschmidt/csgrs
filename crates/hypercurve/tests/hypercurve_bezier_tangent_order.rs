@@ -84,9 +84,11 @@ fn tangent_vector_at(
     curve: &QuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
 ) -> BezierAlgebraicTangentVector2 {
-    let tangent = curve
-        .tangent_at_algebraic_parameter(parameter, &policy())
-        .unwrap();
+    let tangent = decided(
+        curve
+            .tangent_at_algebraic_parameter(parameter, &policy())
+            .unwrap(),
+    );
     let BezierAlgebraicTangentVectorEvidence { status, vector, .. } =
         BezierAlgebraicTangentVector2::from_image(&tangent);
     assert_eq!(status, BezierAlgebraicTangentVectorStatus::Extracted);
@@ -108,7 +110,7 @@ fn rational_endpoint_vectors(
         )
         .unwrap(),
     );
-    let tangent = BezierAlgebraicTangentVector2::from_image(image.tangent());
+    let tangent = BezierAlgebraicTangentVector2::from_image(decided(image.tangent().unwrap()));
     assert_eq!(
         tangent.status,
         BezierAlgebraicTangentVectorStatus::Extracted

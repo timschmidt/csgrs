@@ -1405,8 +1405,10 @@ fn retained_endpoint_side_data(
                 derivative_source: None,
             }));
         }
-        let Ok(tangent_image) = image.try_tangent() else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
+        let tangent_image = match image.tangent() {
+            Ok(Classification::Decided(image)) => image,
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
         };
         let Some(tangent) = retained_algebraic_tangent(tangent_image) else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
@@ -1899,13 +1901,13 @@ mod endpoint_adjacency_tests {
         assert!(lazy.second_derivative().is_none());
         assert!(lazy.third_derivative().is_none());
         assert_eq!(lazy.point(), eager.point());
-        assert_eq!(lazy.try_tangent(), eager.try_tangent());
+        assert_eq!(lazy.tangent(), eager.tangent());
 
         let source =
             retained_algebraic_derivative_source(Some(&BezierSubcurve2::Cubic(curve)), &parameter)
                 .expect("cubic derivative source");
         for (order, expected) in [
-            (1, eager.try_tangent().ok()),
+            (1, Some(crate::tests::decided(eager.tangent().unwrap()))),
             (2, eager.second_derivative()),
             (3, eager.third_derivative()),
         ] {
@@ -2637,33 +2639,40 @@ fn retained_algebraic_derivative(
         BezierSubcurve2::Quadratic(curve) => match order {
             1 => curve
                 .tangent_at_algebraic_parameter(&source.parameter, policy)
-                .map(Some),
+                .map(|image| image.map(Some)),
             2 => curve
                 .second_derivative_at_algebraic_parameter(&source.parameter, policy)
-                .map(Some),
-            _ => Ok(None),
+                .map(|image| image.map(Some)),
+            _ => Ok(Classification::Decided(None)),
         },
         BezierSubcurve2::Cubic(curve) => match order {
             1 => curve
                 .tangent_at_algebraic_parameter(&source.parameter, policy)
-                .map(Some),
+                .map(|image| image.map(Some)),
             2 => curve
                 .second_derivative_at_algebraic_parameter(&source.parameter, policy)
-                .map(Some),
+                .map(|image| image.map(Some)),
             3 => curve
                 .third_derivative_at_algebraic_parameter(&source.parameter, policy)
-                .map(Some),
-            _ => Ok(None),
+                .map(|image| image.map(Some)),
+            _ => Ok(Classification::Decided(None)),
         },
         BezierSubcurve2::RationalQuadratic(curve) => curve
             .derivatives_at_algebraic_parameter(&source.parameter, order, policy)
-            .map(|derivatives| derivatives.into_iter().nth(order - 1)),
+            .map(|derivatives| {
+                derivatives.map(|derivatives| derivatives.into_iter().nth(order - 1))
+            }),
         BezierSubcurve2::Rational(curve) => curve
             .derivatives_at_algebraic_parameter(&source.parameter, order, policy)
-            .map(|derivatives| derivatives.into_iter().nth(order - 1)),
+            .map(|derivatives| {
+                derivatives.map(|derivatives| derivatives.into_iter().nth(order - 1))
+            }),
     };
     let mut derivative = match derivative {
-        Ok(derivative) => derivative.as_ref().and_then(retained_algebraic_tangent),
+        Ok(Classification::Decided(derivative)) => {
+            derivative.as_ref().and_then(retained_algebraic_tangent)
+        }
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
     if source.reversed && order % 2 == 1 {

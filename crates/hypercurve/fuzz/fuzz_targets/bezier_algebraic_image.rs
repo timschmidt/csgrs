@@ -90,9 +90,12 @@ fuzz_target!(|data: &[u8]| {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => panic!("finite polynomial point blocked: {reason:?}"),
     };
-    let tangent = curve
+    let Classification::Decided(tangent) = curve
         .tangent_at_algebraic_parameter(&parameter, &policy)
-        .expect("valid algebraic parameter should produce a tangent evidence");
+        .expect("valid algebraic parameter should produce tangent evidence")
+    else {
+        panic!("finite polynomial tangent must be certified");
+    };
 
     if mode == 0 {
         assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
@@ -127,9 +130,16 @@ fuzz_target!(|data: &[u8]| {
                 rational_point,
                 Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
             ));
+            assert!(matches!(
+                rational_tangent,
+                Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+            ));
         } else if mode == 0 {
             let Classification::Decided(rational_point) = rational_point else {
                 panic!("finite rational image must be certified");
+            };
+            let Classification::Decided(rational_tangent) = rational_tangent else {
+                panic!("finite rational tangent must be certified");
             };
             assert_eq!(
                 rational_point.status(),

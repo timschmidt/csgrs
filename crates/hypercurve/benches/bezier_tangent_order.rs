@@ -32,9 +32,11 @@ fn vector(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> BezierAlgebraicTangentVector2 {
-    let tangent = curve
-        .tangent_at_algebraic_parameter(parameter, policy)
-        .unwrap();
+    let tangent = decided(
+        curve
+            .tangent_at_algebraic_parameter(parameter, policy)
+            .unwrap(),
+    );
     BezierAlgebraicTangentVector2::from_image(&tangent)
         .vector
         .unwrap()
@@ -45,9 +47,11 @@ fn second_vector(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> BezierAlgebraicTangentVector2 {
-    let tangent = curve
-        .second_derivative_at_algebraic_parameter(parameter, policy)
-        .unwrap();
+    let tangent = decided(
+        curve
+            .second_derivative_at_algebraic_parameter(parameter, policy)
+            .unwrap(),
+    );
     BezierAlgebraicTangentVector2::from_image(&tangent)
         .vector
         .unwrap()
@@ -58,9 +62,11 @@ fn rational_vector(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> BezierAlgebraicTangentVector2 {
-    let tangent = curve
-        .tangent_at_algebraic_parameter(parameter, policy)
-        .unwrap();
+    let tangent = decided(
+        curve
+            .tangent_at_algebraic_parameter(parameter, policy)
+            .unwrap(),
+    );
     BezierAlgebraicTangentVector2::from_image(&tangent)
         .vector
         .unwrap()
@@ -71,9 +77,11 @@ fn rational_second_vector(
     parameter: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> BezierAlgebraicTangentVector2 {
-    let tangent = curve
-        .second_derivative_at_algebraic_parameter(parameter, policy)
-        .unwrap();
+    let tangent = decided(
+        curve
+            .second_derivative_at_algebraic_parameter(parameter, policy)
+            .unwrap(),
+    );
     BezierAlgebraicTangentVector2::from_image(&tangent)
         .vector
         .unwrap()

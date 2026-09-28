@@ -1011,9 +1011,11 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
             .and_then(|coordinate| coordinate.representation())
             .is_some()
     );
-    let derivatives = parabola
-        .derivatives_at_algebraic_parameter(first_parameter, 3, &policy)
-        .unwrap();
+    let derivatives = decided(
+        parabola
+            .derivatives_at_algebraic_parameter(first_parameter, 3, &policy)
+            .unwrap(),
+    );
     assert_eq!(derivatives.len(), 3);
     assert!(
         derivatives

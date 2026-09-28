@@ -460,13 +460,15 @@ fn main() {
     let started = Instant::now();
     let mut derivative_count = 0_usize;
     for _ in 0..derivative_iterations {
-        let derivatives = parabola
-            .derivatives_at_algebraic_parameter(
-                black_box(&algebraic_parameter),
-                black_box(3),
-                &policy,
-            )
-            .expect("algebraic derivatives remain represented");
+        let derivatives = decided(
+            parabola
+                .derivatives_at_algebraic_parameter(
+                    black_box(&algebraic_parameter),
+                    black_box(3),
+                    &policy,
+                )
+                .expect("algebraic derivatives remain represented"),
+        );
         derivative_count = derivative_count.wrapping_add(black_box(derivatives.len()));
     }
     let elapsed = started.elapsed();

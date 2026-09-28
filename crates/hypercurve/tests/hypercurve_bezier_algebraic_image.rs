@@ -58,9 +58,11 @@ fn quadratic_point_and_tangent_images_retain_algebraic_coordinate_evidence() {
             .point_at_algebraic_parameter(&parameter, &policy())
             .unwrap(),
     );
-    let tangent = curve
-        .tangent_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    let tangent = decided(
+        curve
+            .tangent_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
 
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert_eq!(
@@ -109,9 +111,11 @@ fn cubic_point_and_tangent_images_use_power_basis_resultants() {
             .point_at_algebraic_parameter(&parameter, &policy())
             .unwrap(),
     );
-    let tangent = curve
-        .tangent_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    let tangent = decided(
+        curve
+            .tangent_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
 
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert_eq!(
@@ -175,12 +179,16 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
             .point_at_algebraic_parameter(&parameter, &policy())
             .unwrap(),
     );
-    let tangent = conic
-        .tangent_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
-    let second_derivative = conic
-        .second_derivative_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    let tangent = decided(
+        conic
+            .tangent_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
+    let second_derivative = decided(
+        conic
+            .second_derivative_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
 
     assert_eq!(std::mem::size_of_val(&point), std::mem::size_of::<usize>());
     assert_eq!(
@@ -401,12 +409,16 @@ fn rational_image_cache_keeps_curve_family_certificate_shapes_distinct() {
     .unwrap();
     let parameter = sqrt_half_parameter();
 
-    let general_tangent = general
-        .tangent_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
-    let conic_tangent = conic
-        .tangent_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    let general_tangent = decided(
+        general
+            .tangent_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
+    let conic_tangent = decided(
+        conic
+            .tangent_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
 
     assert_eq!(
         general_tangent.dx().unwrap().denominator_coefficients(),
@@ -478,14 +490,6 @@ fn rational_point_images_require_finite_affine_coordinates() {
                 ));
             }
         }
-        // Tangent construction still exposes its separate diagnostic report.
-        assert_eq!(
-            conic
-                .tangent_at_algebraic_parameter(&pole, &policy)
-                .unwrap()
-                .status(),
-            BezierAlgebraicImageStatus::XImageFailed
-        );
     }
 }
 
@@ -510,7 +514,7 @@ proptest! {
         );
 
         let point = decided(curve.point_at_algebraic_parameter(&parameter, &policy()).unwrap());
-        let tangent = curve.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap();
+        let tangent = decided(curve.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap());
         let exact_point = curve.point_at(q(1, 2));
 
         prop_assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
@@ -549,7 +553,7 @@ proptest! {
         );
 
         let point = decided(conic.point_at_algebraic_parameter(&parameter, &policy()).unwrap());
-        let tangent = conic.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap();
+        let tangent = decided(conic.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap());
         let exact_point = match conic.point_at(q(1, 2), &policy()) {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => panic!("midpoint unexpectedly uncertain: {reason:?}"),
@@ -669,41 +673,51 @@ fn polynomial_endpoint_derivatives_replay_exact_values_in_the_shared_carrier() {
             assert!(quadratic_endpoint.third_derivative().is_none());
             for (direct, retained, dx, dy) in [
                 (
-                    quadratic
-                        .tangent_at_algebraic_parameter(&root, &policy)
-                        .unwrap(),
-                    quadratic_endpoint.tangent(),
+                    decided(
+                        quadratic
+                            .tangent_at_algebraic_parameter(&root, &policy)
+                            .unwrap(),
+                    ),
+                    decided(quadratic_endpoint.tangent().unwrap()),
                     &coefficient * &sqrt_two,
                     r(2),
                 ),
                 (
-                    quadratic
-                        .second_derivative_at_algebraic_parameter(&root, &policy)
-                        .unwrap(),
+                    decided(
+                        quadratic
+                            .second_derivative_at_algebraic_parameter(&root, &policy)
+                            .unwrap(),
+                    ),
                     quadratic_endpoint.second_derivative().unwrap(),
                     &coefficient * r(2),
                     r(0),
                 ),
                 (
-                    cubic
-                        .tangent_at_algebraic_parameter(&root, &policy)
-                        .unwrap(),
-                    cubic_endpoint.tangent(),
+                    decided(
+                        cubic
+                            .tangent_at_algebraic_parameter(&root, &policy)
+                            .unwrap(),
+                    ),
+                    decided(cubic_endpoint.tangent().unwrap()),
                     &coefficient * q(3, 2),
                     r(3),
                 ),
                 (
-                    cubic
-                        .second_derivative_at_algebraic_parameter(&root, &policy)
-                        .unwrap(),
+                    decided(
+                        cubic
+                            .second_derivative_at_algebraic_parameter(&root, &policy)
+                            .unwrap(),
+                    ),
                     cubic_endpoint.second_derivative().unwrap(),
                     &coefficient * &sqrt_two * r(3),
                     r(0),
                 ),
                 (
-                    cubic
-                        .third_derivative_at_algebraic_parameter(&root, &policy)
-                        .unwrap(),
+                    decided(
+                        cubic
+                            .third_derivative_at_algebraic_parameter(&root, &policy)
+                            .unwrap(),
+                    ),
                     cubic_endpoint.third_derivative().unwrap(),
                     &coefficient * r(6),
                     r(0),
@@ -719,6 +733,102 @@ fn polynomial_endpoint_derivatives_replay_exact_values_in_the_shared_carrier() {
                             Classification::Decided(Ordering::Equal)
                         );
                     }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn rational_derivative_images_require_finite_affine_domain() {
+    use hypercurve::{BezierAlgebraicEndpointImage2, UncertaintyReason};
+    use std::cmp::Ordering;
+
+    // With d = 2t - 1, this curve is (2t/d, 1/2 - 1/(2d^2)).
+    // Its first three derivatives are (-2/d^2, 2/d^3),
+    // (8/d^3, -12/d^4), and (-48/d^4, 96/d^5).
+    let conic =
+        RationalQuadraticBezier2::try_new(p(0, 0), p(1, 1), p(2, 0), r(1), r(-1), r(1)).unwrap();
+    let general = RationalBezier2::from(conic.clone());
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let pole = isolate(polynomial(vec![r(-1), r(2)]), interval(r(0), r(1)));
+        for _ in 0..2 {
+            for image in [
+                conic.tangent_at_algebraic_parameter(&pole, &policy),
+                general.tangent_at_algebraic_parameter(&pole, &policy),
+                conic.second_derivative_at_algebraic_parameter(&pole, &policy),
+            ] {
+                assert!(matches!(
+                    image,
+                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                ));
+            }
+            for order in [1, 2, 3] {
+                for images in [
+                    conic.derivatives_at_algebraic_parameter(&pole, order, &policy),
+                    general.derivatives_at_algebraic_parameter(&pole, order, &policy),
+                ] {
+                    assert!(matches!(
+                        images,
+                        Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                    ));
+                }
+            }
+        }
+        for images in [
+            conic.derivatives_at_algebraic_parameter(&pole, 0, &policy),
+            general.derivatives_at_algebraic_parameter(&pole, 0, &policy),
+        ] {
+            assert!(decided(images.unwrap()).is_empty());
+        }
+        for (value, expected) in [
+            (q(1, 4), [(-8, -16), (-64, -192), (-768, -3072)]),
+            (q(3, 4), [(-8, 16), (64, -192), (-768, 3072)]),
+        ] {
+            let parameter = isolate(polynomial(vec![-value, r(1)]), interval(r(0), r(1)));
+            let check = |image: &hypercurve::RationalBezierAlgebraicTangentImage2, order: usize| {
+                let (dx, dy) = expected[order - 1];
+                for (coordinate, value) in [(image.dx().unwrap(), dx), (image.dy().unwrap(), dy)] {
+                    assert_eq!(
+                        coordinate.compare_to_real(&r(value), &policy),
+                        Classification::Decided(Ordering::Equal)
+                    );
+                }
+            };
+            for _ in 0..2 {
+                for images in [
+                    conic.derivatives_at_algebraic_parameter(&parameter, 3, &policy),
+                    general.derivatives_at_algebraic_parameter(&parameter, 3, &policy),
+                ] {
+                    let images = decided(images.unwrap());
+                    assert_eq!(images.len(), 3);
+                    for (order, image) in images.iter().enumerate() {
+                        check(image, order + 1);
+                    }
+                }
+                for image in [
+                    conic.tangent_at_algebraic_parameter(&parameter, &policy),
+                    general.tangent_at_algebraic_parameter(&parameter, &policy),
+                ] {
+                    check(&decided(image.unwrap()), 1);
+                }
+                check(
+                    &decided(
+                        conic
+                            .second_derivative_at_algebraic_parameter(&parameter, &policy)
+                            .unwrap(),
+                    ),
+                    2,
+                );
+                for endpoint in [
+                    BezierAlgebraicEndpointImage2::rational_quadratic(&conic, &parameter, &policy),
+                    BezierAlgebraicEndpointImage2::rational(&general, &parameter, &policy),
+                ] {
+                    let endpoint = decided(endpoint.unwrap());
+                    check(decided(endpoint.tangent().unwrap()), 1);
+                    check(endpoint.second_derivative().unwrap(), 2);
+                    check(endpoint.third_derivative().unwrap(), 3);
+                    assert!(endpoint.is_exact());
                 }
             }
         }
