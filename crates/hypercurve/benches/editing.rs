@@ -1517,19 +1517,26 @@ fn bench_represented_bezier_corner_solvers(iterations: u32) -> CurveResult<()> {
         Curve2::from(line(-4, 2, -4, 0)),
     ])
     .expect("region benchmark path must remain exact");
-    let region = CurveRegion2::try_from_boundary_paths(&[region_path], &CurveContext::STRICT)
-        .expect("represented Bezier benchmark region must remain exact")
-        .into_value();
+    let region = CurveRegion2::try_from_boundary_paths(
+        &[region_path],
+        hypercurve::FillRule::EvenOdd,
+        &CurveContext::STRICT,
+    )
+    .expect("represented Bezier benchmark region must remain exact")
+    .into_value();
     let two_bezier_region_path = CurvePath2::try_new(vec![
         Curve2::from(QuadraticBezier2::new(p(-1, 2), p(0, 1), p(0, 0))),
         Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2))),
         Curve2::from(line(1, 2, -1, 2)),
     ])
     .expect("two-Bezier region benchmark path must remain exact");
-    let two_bezier_region =
-        CurveRegion2::try_from_boundary_paths(&[two_bezier_region_path], &CurveContext::STRICT)
-            .expect("two-Bezier benchmark region must remain exact")
-            .into_value();
+    let two_bezier_region = CurveRegion2::try_from_boundary_paths(
+        &[two_bezier_region_path],
+        hypercurve::FillRule::EvenOdd,
+        &CurveContext::STRICT,
+    )
+    .expect("two-Bezier benchmark region must remain exact")
+    .into_value();
     let next_setback = (s(657).sqrt()? / s(16))?;
 
     bench_represented_bezier_chamfer_lane(

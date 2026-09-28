@@ -1399,7 +1399,10 @@ fn assert_corner_region_survives_boundary_paths(
 ) {
     let paths = decided(region.boundary_paths(policy).unwrap());
     assert_eq!(paths.len(), expected.len());
-    let restored = certified(CurveRegion2::try_from_boundary_paths(&paths, policy).unwrap());
+    let restored = certified(
+        CurveRegion2::try_from_boundary_paths(&paths, hypercurve::FillRule::EvenOdd, policy)
+            .unwrap(),
+    );
     for (label, actual) in [("generated", region), ("restored", &restored)] {
         for (point, location) in probes {
             assert_eq!(
@@ -1567,9 +1570,13 @@ fn unified_region_corners_preserve_circular_geometry_across_representations() {
                 Curve2::from(LineSeg2::try_new(p(-2, 1), p(-2, 0)).unwrap()),
             ])
             .unwrap();
-            let source = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                .map(certified)
-                .unwrap();
+            let source = CurveRegion2::try_from_boundary_paths(
+                &[path],
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .map(certified)
+            .unwrap();
 
             let CurveCornerSolutions2::Unique(chamfered) = source
                 .chamfer_loop_vertex_by_setbacks(
@@ -1678,9 +1685,13 @@ fn retained_circular_regions_chamfer_over_the_full_support() {
                 } else {
                     path.clone()
                 };
-                let source = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                    .map(certified)
-                    .unwrap();
+                let source = CurveRegion2::try_from_boundary_paths(
+                    &[path],
+                    hypercurve::FillRule::EvenOdd,
+                    &policy,
+                )
+                .map(certified)
+                .unwrap();
                 let (loop_index, corner) = boundary_vertex_at(&source, &p(0, 0), &policy);
                 let trim_count = source
                     .chamfer_loop_vertex_by_setbacks(
@@ -1813,9 +1824,13 @@ fn unified_region_corners_use_represented_bezier_incidence() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-            .unwrap()
-            .into_value();
+        let source = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
         let filleted = {
             let solutions = source
                 .fillet_loop_vertex(
@@ -1918,9 +1933,13 @@ fn unified_region_chamfer_retains_algebraic_bezier_cut() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-            .map(certified)
-            .unwrap();
+        let source = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .map(certified)
+        .unwrap();
         let CurveCornerSolutions2::Unique(chamfered) = source
             .chamfer_loop_vertex_by_setbacks(
                 0,
@@ -1978,9 +1997,13 @@ fn unified_region_chamfer_reenters_general_algebraic_chords() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (path,) in &paths {
-            let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(path), &policy)
-                .unwrap()
-                .into_value();
+            let source = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(path),
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
             let (loop_index, corner) = boundary_vertex_at(&source, &p(0, 0), &policy);
             let first = source
                 .chamfer_loop_vertex_by_setbacks(
@@ -2146,9 +2169,13 @@ fn unified_region_chamfer_joins_two_algebraic_bezier_cuts() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (path, vertex_index) in &paths {
-            let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(path), &policy)
-                .map(certified)
-                .unwrap();
+            let source = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(path),
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .map(certified)
+            .unwrap();
             let CurveCornerSolutions2::Unique(chamfered) = source
                 .chamfer_loop_vertex_by_setbacks(
                     0,
@@ -2207,9 +2234,13 @@ fn algebraic_chamfer_participates_in_a_disjoint_boolean_batch() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-            .unwrap()
-            .into_value();
+        let source = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
         let CurveCornerSolutions2::Unique(chamfered) = source
             .chamfer_loop_vertex_by_setbacks(
                 0,
@@ -2264,9 +2295,13 @@ fn one_field_algebraic_chamfer_regularizes_without_rebuilding_its_solver() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-            .unwrap()
-            .into_value();
+        let source = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
         let CurveCornerSolutions2::Unique(chamfered) = source
             .chamfer_loop_vertex_by_setbacks(
                 0,
@@ -2349,10 +2384,13 @@ fn unified_region_corners_use_canonical_spline_bezier_spans() {
         ])
         .unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let source =
-                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-                    .unwrap()
-                    .into_value();
+            let source = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
             let source_paths = decided(source.boundary_paths(&policy).unwrap());
             let canonical_family = source_paths[0].curves()[1].family();
             assert_eq!(
@@ -4421,8 +4459,12 @@ fn line_parabola_fillet_extends_the_regular_incident_cell_exactly() {
                     path
                 };
                 let region = certified(
-                    CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                        .expect("the exact fixture promotes"),
+                    CurveRegion2::try_from_boundary_paths(
+                        &[path],
+                        hypercurve::FillRule::EvenOdd,
+                        &policy,
+                    )
+                    .expect("the exact fixture promotes"),
                 );
                 let corner = corner_index(&region);
                 candidates(certified(
@@ -4577,9 +4619,13 @@ fn arc_parabola_fillet_recovers_exact_complement_contacts() {
             } else {
                 source_path()
             };
-            let region = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                .expect("the exact fixture promotes")
-                .into_value();
+            let region = CurveRegion2::try_from_boundary_paths(
+                &[path],
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .expect("the exact fixture promotes")
+            .into_value();
             let corner = corner_index(&region);
             let edited = candidates(
                 region
@@ -5112,9 +5158,13 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-            .unwrap()
-            .into_value();
+        let source = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
         let result = source
             .fillet_loop_vertex(
                 0,
@@ -5173,10 +5223,13 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
                 .collect(),
         )
         .unwrap();
-        let cutter =
-            CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&cutter_path), &policy)
-                .expect("the exact crossing cutter must form a region")
-                .into_value();
+        let cutter = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&cutter_path),
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .expect("the exact crossing cutter must form a region")
+        .into_value();
         let crossing = filleted
             .boolean_regions(&cutter, &policy)
             .expect("the local selected-fiber fillet contacts must complete Boolean topology")
@@ -5204,6 +5257,7 @@ fn non_ph_bezier_pair_fillet_retains_general_selected_circle() {
         .unwrap();
         let curved_cutter = CurveRegion2::try_from_boundary_paths(
             std::slice::from_ref(&curved_cutter_path),
+            hypercurve::FillRule::EvenOdd,
             &policy,
         )
         .expect("the curved exact cutter must form a region")
@@ -5279,9 +5333,13 @@ fn exact_high_degree_elevations_reenter_the_quadratic_corner_kernel() {
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let region = CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-            .unwrap()
-            .into_value();
+        let region = CurveRegion2::try_from_boundary_paths(
+            std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
         assert_eq!(
             region.boundary_loops()[0]
                 .curves()
@@ -5331,6 +5389,7 @@ fn non_ph_bezier_pair_projective_fillet_retains_algebraic_extensions() {
             };
             let source = CurveRegion2::try_from_boundary_paths(
                 std::slice::from_ref(&oriented_path),
+                hypercurve::FillRule::EvenOdd,
                 &policy,
             )
             .unwrap()
@@ -7608,10 +7667,13 @@ fn crossing_authored_loops_publish_the_regularized_even_odd_set() {
     let curved = rational_cap_path();
     let cutter = path_from_contour(&square(-1, 2, 1, 5));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let region =
-            CurveRegion2::try_from_boundary_paths(&[curved.clone(), cutter.clone()], &policy)
-                .map(certified)
-                .unwrap();
+        let region = CurveRegion2::try_from_boundary_paths(
+            &[curved.clone(), cutter.clone()],
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .map(certified)
+        .unwrap();
         assert!(
             decided(region.filled_side_is_left(&policy).unwrap())
                 .iter()
@@ -8163,6 +8225,7 @@ fn boundary_paths_obey_terminal_policy_once() {
     for _ in 0..2 {
         let constructed = CurveRegion2::try_from_boundary_paths(
             std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
             &CurveContext::APPROXIMATE_512,
         )
         .expect("the authorized terminal closes and cancels the retraced loop");
@@ -8174,6 +8237,7 @@ fn boundary_paths_obey_terminal_policy_once() {
         assert!(
             CurveRegion2::try_from_boundary_paths(
                 std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
                 &CurveContext::STRICT,
             )
             .is_err()
@@ -8281,7 +8345,10 @@ fn selected_boundary_paths_retain_domains_through_repeated_region_roundtrips() {
     ])
     .unwrap();
     let policy = CurveContext::STRICT;
-    let source = certified(CurveRegion2::try_from_boundary_paths(&[path], &policy).unwrap());
+    let source = certified(
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy)
+            .unwrap(),
+    );
     let CurveCornerSolutions2::Unique(mut region) = certified(
         source
             .chamfer_loop_vertex_by_setbacks(
@@ -8316,7 +8383,10 @@ fn selected_boundary_paths_retain_domains_through_repeated_region_roundtrips() {
             assert_eq!(paths[0].curves(), previous);
         }
         prior = Some(paths[0].curves().to_vec());
-        region = certified(CurveRegion2::try_from_boundary_paths(&paths, &policy).unwrap());
+        region = certified(
+            CurveRegion2::try_from_boundary_paths(&paths, hypercurve::FillRule::EvenOdd, &policy)
+                .unwrap(),
+        );
     }
     for (query, expected) in [
         (p(-2, 1), RegionPointLocation::Inside),
@@ -8334,7 +8404,10 @@ fn selected_boundary_paths_retain_domains_through_repeated_region_roundtrips() {
     }
     let paths = decided(region.boundary_paths(&policy).unwrap());
     let reversed = certified(paths[0].reversed(&policy).unwrap());
-    let restored = certified(CurveRegion2::try_from_boundary_paths(&[reversed], &policy).unwrap());
+    let restored = certified(
+        CurveRegion2::try_from_boundary_paths(&[reversed], hypercurve::FillRule::EvenOdd, &policy)
+            .unwrap(),
+    );
     assert!(
         certified(
             region
@@ -8417,7 +8490,12 @@ fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
                         .all(|left| *left)
                 );
                 let exported = decided(region.boundary_paths(&policy).unwrap());
-                let replay = CurveRegion2::try_from_boundary_paths(&exported, &policy).unwrap();
+                let replay = CurveRegion2::try_from_boundary_paths(
+                    &exported,
+                    hypercurve::FillRule::EvenOdd,
+                    &policy,
+                )
+                .unwrap();
                 assert_eq!(replay.certainty, CurveCertainty::Certified);
                 assert_eq!(replay.value.len(), loops);
                 for (point, expected) in &samples {
@@ -8437,7 +8515,12 @@ fn region_constructors_remove_canceled_boundaries_and_filled_seams() {
         }
         let twice = double_wound_quadratic_cap();
         for outcome in [
-            CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&twice), &policy).unwrap(),
+            CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&twice),
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap(),
             CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &[twice],
                 &[CurveRegionLoopRole::Material],
@@ -8482,6 +8565,7 @@ fn region_corner_edits_publish_normalized_hole_openings() {
         for fillet in [false, true] {
             let source = CurveRegion2::try_from_boundary_paths(
                 &[square_path(0, 8), square_path(1, 3)],
+                hypercurve::FillRule::EvenOdd,
                 &policy,
             )
             .unwrap()
@@ -8564,6 +8648,191 @@ fn region_corner_edits_publish_normalized_hole_openings() {
                     ),
                     expected
                 );
+            }
+        }
+    }
+}
+
+#[test]
+fn compound_fill_retains_signed_multiplicity_and_reversal_identity() {
+    use RegionPointLocation::{Boundary, Inside, Outside};
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let once = path_from_contour(&square(0, 0, 4, 4));
+        let twice =
+            CurvePath2::try_new(once.curves().iter().chain(once.curves()).cloned().collect())
+                .unwrap();
+        let opposite = certified(once.reversed(&policy).unwrap());
+        for reverse in [false, true] {
+            let paths = [twice.clone(), opposite.clone()].map(|path| {
+                if reverse {
+                    certified(path.reversed(&policy).unwrap())
+                } else {
+                    path
+                }
+            });
+            for reverse_order in [false, true] {
+                let ordered = if reverse_order {
+                    vec![paths[1].clone(), paths[0].clone()]
+                } else {
+                    paths.to_vec()
+                };
+                for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+                    let region = certified(
+                        CurveRegion2::try_from_boundary_paths(&ordered, fill_rule, &policy)
+                            .unwrap(),
+                    );
+                    assert_eq!(region.len(), 1);
+                    for (point, expected) in
+                        [(p(2, 2), Inside), (p(0, 2), Boundary), (p(5, 2), Outside)]
+                    {
+                        assert_eq!(
+                            certified(region.classify_point(&point.into(), &policy).unwrap()),
+                            Classification::Decided(expected)
+                        );
+                    }
+                    let area = decided(region.filled_area(&policy).unwrap()).unwrap();
+                    assert_eq!(
+                        area.partial_cmp(&Real::from(16)),
+                        Some(std::cmp::Ordering::Equal)
+                    );
+                    let grown = certified(
+                        region
+                            .offset(Real::one(), &OffsetCornerStyle2::Round, &policy)
+                            .unwrap(),
+                    );
+                    for (point, expected) in
+                        [(p(-1, 2), Boundary), (p(0, 2), Inside), (p(-2, 2), Outside)]
+                    {
+                        assert_eq!(
+                            certified(grown.classify_point(&point.into(), &policy).unwrap()),
+                            Classification::Decided(expected)
+                        );
+                    }
+                    let difference = certified(
+                        region
+                            .boolean_region(&region, hypercurve::BooleanOp::Difference, &policy)
+                            .unwrap(),
+                    );
+                    assert!(difference.is_empty());
+                }
+            }
+        }
+        for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+            assert!(
+                certified(CurveRegion2::try_from_boundary_paths(&[], fill_rule, &policy).unwrap())
+                    .is_empty()
+            );
+        }
+    }
+}
+
+#[test]
+fn compound_circle_fill_selects_exact_algebraic_overlap_and_canceled_seams() {
+    use RegionPointLocation::{Boundary, Inside, Outside};
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let first = path_from_contour(&circle(0, 0, 2));
+        let second = path_from_contour(&circle(2, 0, 2));
+        for opposite in [false, true] {
+            let second = if opposite {
+                certified(second.reversed(&policy).unwrap())
+            } else {
+                second.clone()
+            };
+            for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+                let region = certified(
+                    CurveRegion2::try_from_boundary_paths(
+                        &[first.clone(), second.clone()],
+                        fill_rule,
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                let filled = fill_rule == FillRule::NonZero && !opposite;
+                for (point, expected) in [
+                    (p(-1, 0), Inside),
+                    (p(1, 0), if filled { Inside } else { Outside }),
+                    (p(3, 0), Inside),
+                    (p(0, 0), if filled { Inside } else { Boundary }),
+                    (p(2, 0), if filled { Inside } else { Boundary }),
+                    (p(5, 0), Outside),
+                ] {
+                    assert_eq!(
+                        certified(region.classify_point(&point.into(), &policy).unwrap()),
+                        Classification::Decided(expected)
+                    );
+                }
+                let replay = certified(
+                    CurveRegion2::try_from_boundary_paths(
+                        &decided(region.boundary_paths(&policy).unwrap()),
+                        FillRule::NonZero,
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                assert_eq!(
+                    certified(replay.classify_point(&p(1, 0).into(), &policy).unwrap()),
+                    Classification::Decided(if filled { Inside } else { Outside })
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn compound_fill_reuses_retained_rational_and_generated_boundaries() {
+    use RegionPointLocation::{Boundary, Inside, Outside};
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let generated = axis_aligned_algebraic_rectangle(&policy);
+        let generated_paths = decided(generated.boundary_paths(&policy).unwrap());
+        assert_eq!(generated_paths.len(), 1);
+        let fixtures = [
+            (rational_cap_path(), p(0, 0), p(2, -1), p(3, 0)),
+            (
+                generated_paths[0].clone(),
+                Point2::new(q(1, 2), q(1, 2)),
+                p(0, 0),
+                p(2, 0),
+            ),
+        ];
+        for (path, inside, boundary, outside) in fixtures {
+            let opposite = certified(path.reversed(&policy).unwrap());
+            for (second, opposed) in [(path.clone(), false), (opposite, true)] {
+                for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+                    let region = certified(
+                        CurveRegion2::try_from_boundary_paths(
+                            &[path.clone(), second.clone()],
+                            fill_rule,
+                            &policy,
+                        )
+                        .unwrap(),
+                    );
+                    let survives = fill_rule == FillRule::NonZero && !opposed;
+                    assert_eq!(region.is_empty(), !survives);
+                    for (point, expected) in [
+                        (&inside, if survives { Inside } else { Outside }),
+                        (&boundary, if survives { Boundary } else { Outside }),
+                        (&outside, Outside),
+                    ] {
+                        assert_eq!(
+                            certified(
+                                region
+                                    .classify_point(&point.clone().into(), &policy)
+                                    .unwrap()
+                            ),
+                            Classification::Decided(expected)
+                        );
+                    }
+                    let replay = certified(
+                        region
+                            .boolean_region(
+                                &CurveRegion2::empty(),
+                                hypercurve::BooleanOp::Union,
+                                &policy,
+                            )
+                            .unwrap(),
+                    );
+                    assert_eq!(replay.is_empty(), !survives);
+                }
             }
         }
     }

@@ -626,3 +626,114 @@ fn document_import_applies_fill_rule_before_normalizing_repeated_traversal() {
         assert_eq!(result.value, Classification::Decided(expected));
     }
 }
+
+#[test]
+fn compound_fill_uses_global_winding_before_nesting_and_overlap_selection() {
+    use hypercurve::{
+        CurveCertainty,
+        RegionPointLocation::{Boundary, Inside, Outside},
+    };
+    for (layout, first, same, opposite) in [
+        (
+            "nested",
+            "M0 0 H10 V10 H0 Z",
+            "M2 2 H8 V8 H2 Z",
+            "M2 2 V8 H8 V2 Z",
+        ),
+        (
+            "overlap",
+            "M0 0 H4 V4 H0 Z",
+            "M2 0 H6 V4 H2 Z",
+            "M2 0 V4 H6 V0 Z",
+        ),
+    ] {
+        for (same_direction, second) in [(true, same), (false, opposite)] {
+            for fill in ["nonzero", "evenodd"] {
+                for reverse_order in [false, true] {
+                    let data = if reverse_order {
+                        format!("{second} {first}")
+                    } else {
+                        format!("{first} {second}")
+                    };
+                    let document = format!(
+                        r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill-rule="{fill}" d="{data}"/></svg>"#
+                    );
+                    let geometry=import_svg_document(&document).unwrap_or_else(|_| panic!("compound import failed: {layout}, {fill}, same={same_direction}, order={reverse_order}"));
+                    let filled = fill == "nonzero" && same_direction;
+                    let queries = if layout == "nested" {
+                        vec![
+                            (1, 1, Inside),
+                            (5, 5, if filled { Inside } else { Outside }),
+                            (2, 5, if filled { Inside } else { Boundary }),
+                            (0, 5, Boundary),
+                            (11, 5, Outside),
+                        ]
+                    } else {
+                        vec![
+                            (1, 2, Inside),
+                            (3, 2, if filled { Inside } else { Outside }),
+                            (5, 2, Inside),
+                            (2, 2, if filled { Inside } else { Boundary }),
+                            (4, 2, if filled { Inside } else { Boundary }),
+                            (0, 2, Boundary),
+                            (7, 2, Outside),
+                        ]
+                    };
+                    assert_eq!(geometry.region().len(), if filled { 1 } else { 2 });
+                    for (x, y, expected) in queries {
+                        let result = geometry
+                            .region()
+                            .classify_point(&point(x, y).into(), &CurveContext::STRICT)
+                            .unwrap();
+                        assert_eq!(result.certainty, CurveCertainty::Certified);
+                        assert_eq!(
+                            result.value,
+                            Classification::Decided(expected),
+                            "{layout}, {fill}, same={same_direction}, order={reverse_order}, point=({x},{y})"
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn compound_fill_preserves_recursive_islands_and_cancels_opposed_traversals() {
+    use hypercurve::RegionPointLocation::{Boundary, Inside, Outside};
+    for fill in ["nonzero", "evenodd"] {
+        let document = format!(
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill-rule="{fill}" d="M0 0 H10 V10 H0 Z M2 2 H8 V8 H2 Z M4 4 H6 V6 H4 Z"/></svg>"#
+        );
+        let geometry = import_svg_document(&document).unwrap();
+        for (x, y, expected) in [
+            (1, 1, Inside),
+            (3, 3, if fill == "nonzero" { Inside } else { Outside }),
+            (5, 5, Inside),
+            (4, 5, if fill == "nonzero" { Inside } else { Boundary }),
+            (11, 5, Outside),
+        ] {
+            assert_eq!(
+                geometry
+                    .region()
+                    .classify_point(&point(x, y).into(), &CurveContext::STRICT)
+                    .unwrap()
+                    .into_value(),
+                Classification::Decided(expected)
+            );
+        }
+        let canceled = format!(
+            r#"<svg xmlns="http://www.w3.org/2000/svg"><path fill-rule="{fill}" d="M0 0 H4 V4 H0 Z M0 0 V4 H4 V0 Z"/></svg>"#
+        );
+        let geometry = import_svg_document(&canceled).unwrap();
+        assert!(geometry.region().is_empty());
+        assert_eq!(
+            geometry
+                .region()
+                .classify_point(&point(0, 2).into(), &CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(Outside)
+        );
+    }
+}

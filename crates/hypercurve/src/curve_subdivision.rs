@@ -3402,9 +3402,10 @@ mod tests {
                 Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(closing)),
             ])
             .unwrap();
-            let region = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                .unwrap()
-                .value;
+            let region =
+                CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy)
+                    .unwrap()
+                    .value;
             let corners = [p(2, 0), p(4, 0), p(4, 3), p(2, 3)];
             let cutter = CurvePath2::try_new(
                 (0..4)
@@ -3420,9 +3421,10 @@ mod tests {
                     .collect(),
             )
             .unwrap();
-            let cutter = CurveRegion2::try_from_boundary_paths(&[cutter], &policy)
-                .unwrap()
-                .value;
+            let cutter =
+                CurveRegion2::try_from_boundary_paths(&[cutter], crate::FillRule::EvenOdd, &policy)
+                    .unwrap()
+                    .value;
             let result = region.boolean_regions(&cutter, &policy).unwrap();
             assert_eq!(result.certainty, CurveCertainty::Certified);
             for (region, expected) in [

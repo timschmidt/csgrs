@@ -528,10 +528,13 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
 fn retained_exact_line_images_assign_nested_material_and_hole() {
     let outer = quadratic_polygon_path(&[p(0, 0), p(6, 0), p(6, 6), p(0, 6)]);
     let same_orientation_inner = quadratic_polygon_path(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
-    let retained =
-        CurveRegion2::try_from_boundary_paths(&[outer, same_orientation_inner], &policy())
-            .unwrap()
-            .into_value();
+    let retained = CurveRegion2::try_from_boundary_paths(
+        &[outer, same_orientation_inner],
+        hypercurve::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
 
     let roles = decided(retained.loop_roles(&policy()).unwrap());
     assert_eq!(
@@ -573,7 +576,9 @@ fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies()
         ]),
     ];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let outcome = CurveRegion2::try_from_boundary_paths(&paths, &policy).unwrap();
+        let outcome =
+            CurveRegion2::try_from_boundary_paths(&paths, hypercurve::FillRule::EvenOdd, &policy)
+                .unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let retained = outcome.into_value();
         assert_eq!(
@@ -741,10 +746,13 @@ fn retained_exact_algebraic_endpoint_line_images_assign_roles() {
     )
     .unwrap()
     .into_value();
-    let retained =
-        CurveRegion2::try_from_boundary_paths(&[outer, same_orientation_inner], &policy())
-            .unwrap()
-            .into_value();
+    let retained = CurveRegion2::try_from_boundary_paths(
+        &[outer, same_orientation_inner],
+        hypercurve::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
     let clone = retained.clone();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let roles = decided(retained.loop_roles(&policy).unwrap());
@@ -814,9 +822,10 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
     let path = CurvePath2::try_new_with_policy(vec![first, second, lower], &policy)
         .unwrap()
         .into_value();
-    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-        .unwrap()
-        .into_value();
+    let region =
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy)
+            .unwrap()
+            .into_value();
     let clone = region.clone();
 
     assert!(region.has_algebraic_fragments());
@@ -866,9 +875,10 @@ fn retained_certified_nonlinear_line_image_uses_authoritative_roles() {
         QuadraticBezier2::new(p(0, 4), p(0, 2), p(0, 0)).into(),
     ])
     .unwrap();
-    let retained = CurveRegion2::try_from_boundary_paths(&[path], &policy())
-        .unwrap()
-        .into_value();
+    let retained =
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy())
+            .unwrap()
+            .into_value();
 
     assert_eq!(
         decided(retained.loop_roles(&policy()).unwrap()),
@@ -905,10 +915,13 @@ fn quadratic_lens_path(left_x: i32, right_x: i32, height: i32) -> CurvePath2 {
 fn regularized_nonlinear_boundary_retains_roles_area_and_provenance() {
     let material = quadratic_lens_path(0, 8, 4);
     let same_orientation_inner = quadratic_lens_path(2, 6, 1);
-    let retained =
-        CurveRegion2::try_from_boundary_paths(&[material, same_orientation_inner], &policy())
-            .unwrap()
-            .into_value();
+    let retained = CurveRegion2::try_from_boundary_paths(
+        &[material, same_orientation_inner],
+        hypercurve::FillRule::EvenOdd,
+        &policy(),
+    )
+    .unwrap()
+    .into_value();
 
     assert_eq!(
         decided(retained.loop_roles(&policy()).unwrap()),
@@ -1299,7 +1312,12 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
                 outcome.into_value()
             })
             .collect::<Vec<_>>();
-        let reconstructed = CurveRegion2::try_from_boundary_paths(&reversed, &policy).unwrap();
+        let reconstructed = CurveRegion2::try_from_boundary_paths(
+            &reversed,
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap();
         assert_eq!(reconstructed.certainty, CurveCertainty::Certified);
         let xor = region
             .boolean_region(
@@ -1361,9 +1379,10 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
             square(2, 14),
             square(20, 24),
         ];
-        let region = CurveRegion2::try_from_boundary_paths(&paths, &policy)
-            .unwrap()
-            .into_value();
+        let region =
+            CurveRegion2::try_from_boundary_paths(&paths, hypercurve::FillRule::EvenOdd, &policy)
+                .unwrap()
+                .into_value();
         let outcome = region.material_components(&policy).unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let components = outcome.into_value();

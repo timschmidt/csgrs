@@ -75,6 +75,7 @@ fn elevated_circle(center_x: i32, policy: &CurveContext) -> CurveRegion2 {
         &[CurvePath2::try_new_with_policy(curves, policy)
             .unwrap()
             .into_value()],
+        hypercurve::FillRule::EvenOdd,
         policy,
     )
     .unwrap()

@@ -1778,9 +1778,13 @@ mod tests {
 
     #[test]
     fn projects_higher_order_region_after_exact_role_assignment() {
-        let region = CurveRegion2::try_from_boundary_paths(&[cubic_cap()], &CurveContext::STRICT)
-            .unwrap()
-            .into_value();
+        let region = CurveRegion2::try_from_boundary_paths(
+            &[cubic_cap()],
+            crate::FillRule::EvenOdd,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
         let options = FiniteProjectionOptions::try_new(1.0e-3).unwrap();
         let policy = CurveContext::STRICT;
         let profiles = region
@@ -1817,9 +1821,13 @@ mod tests {
             ),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths(&[circle], &CurveContext::STRICT)
-            .unwrap()
-            .into_value();
+        let region = CurveRegion2::try_from_boundary_paths(
+            &[circle],
+            crate::FillRule::EvenOdd,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
         let Classification::Decided(paths) = region
             .project_to_finite_curve_paths(&CurveContext::STRICT)
             .unwrap()

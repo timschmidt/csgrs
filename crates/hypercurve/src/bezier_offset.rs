@@ -135904,6 +135904,7 @@ mod conversion_tests {
                 curves.push(closing.into());
                 CurveRegion2::try_from_boundary_paths(
                     &[CurvePath2::try_new(curves).unwrap()],
+                    crate::FillRule::EvenOdd,
                     &policy,
                 )
                 .unwrap()
@@ -159235,9 +159236,13 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     .collect(),
             )
             .unwrap();
-            let container = crate::CurveRegion2::try_from_boundary_paths(&[square], &policy)
-                .unwrap()
-                .into_value();
+            let container = crate::CurveRegion2::try_from_boundary_paths(
+                &[square],
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
             let booleans = region
                 .boolean_regions(&container, &policy)
                 .expect("the all-algebraic cusp loop must classify against an affine region")

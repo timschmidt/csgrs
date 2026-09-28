@@ -452,12 +452,20 @@ fn retired_algebraic_polyline_case() -> RetiredFailureCase {
 
     RetiredFailureCase {
         failure: RetiredFailure::AlgebraicPolylineContacts,
-        first: CurveRegion2::try_from_boundary_paths(&[first_path], &CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
-        second: CurveRegion2::try_from_boundary_paths(&[second_path], &CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
+        first: CurveRegion2::try_from_boundary_paths(
+            &[first_path],
+            hypercurve::FillRule::EvenOdd,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
+        second: CurveRegion2::try_from_boundary_paths(
+            &[second_path],
+            hypercurve::FillRule::EvenOdd,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value(),
     }
 }
 
@@ -490,12 +498,14 @@ fn retired_uniform_weight_area_case() -> RetiredFailureCase {
         failure: RetiredFailure::UniformWeightGeneralRationalArea,
         first: CurveRegion2::try_from_boundary_paths(
             &[generated_path(&line_region)],
+            hypercurve::FillRule::EvenOdd,
             &CurveContext::STRICT,
         )
         .expect("retired line region is valid")
         .into_value(),
         second: CurveRegion2::try_from_boundary_paths(
             &[generated_path(&rational_region)],
+            hypercurve::FillRule::EvenOdd,
             &CurveContext::STRICT,
         )
         .expect("retired uniform-weight rational region is valid")
@@ -955,6 +965,7 @@ fn retired_transformed_degree_elevated_line_case() -> RetiredFailureCase {
         .collect();
     let source = CurveRegion2::try_from_boundary_paths(
         &[CurvePath2::try_new(curves).unwrap()],
+        hypercurve::FillRule::EvenOdd,
         &CurveContext::STRICT,
     )
     .unwrap()

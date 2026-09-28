@@ -1186,31 +1186,9 @@ fn path_as_native_wire(path: &CurvePath2) -> Option<CurveString2> {
 }
 
 fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<CurveRegion2> {
-    if paths.is_empty() {
-        return Ok(CurveRegion2::empty());
-    }
-    let policy = CurveContext::STRICT;
-    let preliminary =
-        CurveRegion2::try_from_boundary_paths_raw(paths, &policy).map_err(svg_geometry_error)?;
-    let roles = match preliminary
-        .loop_roles_raw(&policy)
-        .map_err(svg_geometry_error)?
-    {
-        Classification::Decided(roles) => roles,
-        Classification::Uncertain(reason) => {
-            return Err(SvgError::Geometry(format!(
-                "path loop roles were not certified: {reason:?}"
-            )));
-        }
-    };
-    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-        paths,
-        &roles,
-        &vec![fill_rule; paths.len()],
-        &policy,
-    )
-    .map(CurveOutcome::into_value)
-    .map_err(svg_geometry_error)
+    CurveRegion2::try_from_boundary_paths(paths, fill_rule, &CurveContext::STRICT)
+        .map(CurveOutcome::into_value)
+        .map_err(svg_geometry_error)
 }
 
 fn geometry_from_paths(

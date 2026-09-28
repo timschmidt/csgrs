@@ -4170,9 +4170,13 @@ mod tests {
                 } else {
                     source
                 };
-                let region = CurveRegion2::try_from_boundary_paths(&[source], &policy)
-                    .unwrap()
-                    .into_value();
+                let region = CurveRegion2::try_from_boundary_paths(
+                    &[source],
+                    crate::FillRule::EvenOdd,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
                 let outcome = region
                     .fillet_loop_vertex(
                         0,

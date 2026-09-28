@@ -97,7 +97,11 @@ fn clamped_splines_preserve_discontinuous_knot_sides_and_span_images() {
                 .unwrap();
                 let path = CurvePath2::try_new(vec![clamped, Curve2::from(closing_line)]).unwrap();
                 assert!(matches!(
-                    CurveRegion2::try_from_boundary_paths(&[path], &policy),
+                    CurveRegion2::try_from_boundary_paths(
+                        &[path],
+                        hypercurve::FillRule::EvenOdd,
+                        &policy
+                    ),
                     Err(ExactCurveError::Invalid {
                         cause: CurveError::DisconnectedCurvePath,
                         ..
@@ -272,9 +276,13 @@ fn top_level_curve_carries_every_public_family() {
 #[test]
 fn top_level_curve_region_classifies_points_and_shares_results() {
     let policy = CurveContext::STRICT;
-    let region = CurveRegion2::try_from_boundary_paths(&[every_family_closed_path()], &policy)
-        .unwrap()
-        .into_value();
+    let region = CurveRegion2::try_from_boundary_paths(
+        &[every_family_closed_path()],
+        hypercurve::FillRule::EvenOdd,
+        &policy,
+    )
+    .unwrap()
+    .into_value();
     let clone = region.clone();
     let signed_area = match region.signed_area(&policy).unwrap().into_value() {
         Classification::Decided(Some(area)) => area,
@@ -315,9 +323,13 @@ fn top_level_curve_region_classifies_points_and_shares_results() {
         Curve2::from(LineSeg2::try_new(p(0, 2), p(0, 0)).unwrap()),
     ])
     .unwrap();
-    let bounded = CurveRegion2::try_from_boundary_paths(&[square], &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    let bounded = CurveRegion2::try_from_boundary_paths(
+        &[square],
+        hypercurve::FillRule::EvenOdd,
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
     let bounded_clone = bounded.clone();
     assert_eq!(
         bounded
@@ -396,7 +408,12 @@ fn top_level_curve_region_rejects_open_boundary_paths_with_context() {
     )])
     .unwrap();
 
-    let error = CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::STRICT).unwrap_err();
+    let error = CurveRegion2::try_from_boundary_paths(
+        &[path],
+        hypercurve::FillRule::EvenOdd,
+        &CurveContext::STRICT,
+    )
+    .unwrap_err();
 
     assert!(matches!(
         error,
@@ -799,9 +816,13 @@ fn closed_curve_path_corner_edits_support_the_start_end_seam() {
     };
     assert_eq!(arc.center(), &p(1, 1));
     assert_eq!(arc.end(), &p(1, 0));
-    CurveRegion2::try_from_boundary_paths(&[solved_fillet], &CurveContext::STRICT)
-        .unwrap()
-        .into_value();
+    CurveRegion2::try_from_boundary_paths(
+        &[solved_fillet],
+        hypercurve::FillRule::EvenOdd,
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
 }
 
 #[test]
@@ -1879,9 +1900,13 @@ fn retained_circular_conic_pairs_extend_on_native_supports() {
                 } else {
                     boundary_path
                 };
-                let region = CurveRegion2::try_from_boundary_paths(&[boundary_path], &policy)
-                    .unwrap()
-                    .into_value();
+                let region = CurveRegion2::try_from_boundary_paths(
+                    &[boundary_path],
+                    hypercurve::FillRule::EvenOdd,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
                 let fragments = region.boundary_loops()[0].curves();
                 let corner = (0..fragments.len())
                     .find(|index| {

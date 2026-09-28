@@ -53,8 +53,12 @@ fn boundary_admission_rejects_disconnected_spline_spans() {
             assert_same_point(&path.start(), &path.end(), &policy);
             for error in [
                 path.boundary_loop(&policy).unwrap_err(),
-                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-                    .unwrap_err(),
+                CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(&path),
+                    hypercurve::FillRule::EvenOdd,
+                    &policy,
+                )
+                .unwrap_err(),
             ] {
                 assert!(matches!(
                     error,
@@ -266,7 +270,12 @@ fn selected_path_chamfers_close_through_all_region_booleans() {
                 &edited.curves().last().unwrap().end(),
                 &policy,
             );
-            let source = CurveRegion2::try_from_boundary_paths(&[edited], &policy).unwrap();
+            let source = CurveRegion2::try_from_boundary_paths(
+                &[edited],
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap();
             assert_eq!(source.certainty, CurveCertainty::Certified);
             let corners = [
                 Point2::new(q(-1, 2), Real::from(-1)),
@@ -285,7 +294,12 @@ fn selected_path_chamfers_close_through_all_region_booleans() {
                     .collect(),
             )
             .unwrap();
-            let cutter = CurveRegion2::try_from_boundary_paths(&[cutter], &policy).unwrap();
+            let cutter = CurveRegion2::try_from_boundary_paths(
+                &[cutter],
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap();
             assert_eq!(cutter.certainty, CurveCertainty::Certified);
             let booleans = source
                 .value

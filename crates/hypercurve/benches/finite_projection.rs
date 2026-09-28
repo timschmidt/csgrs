@@ -46,9 +46,13 @@ fn cubic_region() -> CurveRegion2 {
         Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
     ])
     .unwrap();
-    CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::STRICT)
-        .unwrap()
-        .into_value()
+    CurveRegion2::try_from_boundary_paths(
+        &[path],
+        hypercurve::FillRule::EvenOdd,
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value()
 }
 
 fn measure(name: &str, iterations: u32, mut workload: impl FnMut() -> usize) {

@@ -217,7 +217,11 @@ fuzz_target!(|data: &[u8]| {
         .collect::<Vec<_>>();
     if outer.len() == 4 && inner.len() == 4 {
         if let (Ok(outer), Ok(inner)) = (CurvePath2::try_new(outer), CurvePath2::try_new(inner)) {
-            if let Ok(region) = CurveRegion2::try_from_boundary_paths(&[outer, inner], &policy) {
+            if let Ok(region) = CurveRegion2::try_from_boundary_paths(
+                &[outer, inner],
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            ) {
                 let _ = region.value.loop_roles(&policy);
             }
         }

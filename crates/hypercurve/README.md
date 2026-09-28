@@ -42,6 +42,13 @@ batches accept `&[CurvePoint2]` and share query preparation across scalar and
 generated points. Closed paths retain their trace and even-odd interior; filled
 regions classify their regularized boundary, including holes and nested islands.
 
+`CurveRegion2::try_from_boundary_paths(paths, fill_rule, policy)` applies one
+fill rule to the total signed winding of all closed paths, then publishes the
+regularized set. `NonZero` preserves equally oriented overlaps and cancels
+opposite winding; `EvenOdd` selects odd winding. SVG compound fills use this
+same admission path. Explicit material/hole constructors instead combine each
+loop's filled membership by its supplied role.
+
 ## Install
 
 ```toml

@@ -304,6 +304,7 @@ fn boolean_paths(
 fn square(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurveRegion2 {
     CurveRegion2::try_from_boundary_paths(
         &[square_path(min_x, min_y, max_x, max_y)],
+        hypercurve::FillRule::EvenOdd,
         &CurveContext::STRICT,
     )
     .unwrap()
@@ -391,12 +392,20 @@ fn region_intersection_carriers_replay_prepared_charts_and_outlive_inputs() {
                 } else {
                     second_path
                 };
-                let first = CurveRegion2::try_from_boundary_paths(&[first_path], &policy)
-                    .unwrap()
-                    .into_value();
-                let second = CurveRegion2::try_from_boundary_paths(&[second_path], &policy)
-                    .unwrap()
-                    .into_value();
+                let first = CurveRegion2::try_from_boundary_paths(
+                    &[first_path],
+                    hypercurve::FillRule::EvenOdd,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
+                let second = CurveRegion2::try_from_boundary_paths(
+                    &[second_path],
+                    hypercurve::FillRule::EvenOdd,
+                    &policy,
+                )
+                .unwrap()
+                .into_value();
                 for (first, second) in [(&first, &second), (&second, &first)] {
                     let report = first.intersect_region(second, &policy).unwrap();
                     assert_eq!(report.certainty, CurveCertainty::Certified);
@@ -547,10 +556,13 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
                 )
                 .unwrap(),
             );
-            let region =
-                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-                    .unwrap()
-                    .value;
+            let region = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .value;
             // These operands have not been explicitly regularized by the caller.
             for (first, second) in [(&region, &cap), (&cap, &region)] {
                 let report = first.intersect_region(second, &policy).unwrap();
@@ -645,6 +657,7 @@ fn symbolic_rectangle(width: Real) -> CurveRegion2 {
         .collect();
     CurveRegion2::try_from_boundary_paths(
         &[CurvePath2::try_new(curves).unwrap()],
+        hypercurve::FillRule::EvenOdd,
         &CurveContext::STRICT,
     )
     .unwrap()
@@ -1768,6 +1781,7 @@ fn approximate_offset_reports_a_consumed_terminal_for_symbolic_zero_distance() {
 fn curved_region_boolean_respects_nested_hole_roles() {
     let ring = CurveRegion2::try_from_boundary_paths(
         &[square_path(0, 0, 10, 10), square_path(2, 2, 8, 8)],
+        hypercurve::FillRule::EvenOdd,
         &CurveContext::STRICT,
     )
     .unwrap()

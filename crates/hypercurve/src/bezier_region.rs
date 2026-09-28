@@ -10413,17 +10413,21 @@ impl CurveRegion2 {
         Ok(region)
     }
 
-    /// Constructs a top-level exact curved region from closed boundary paths.
+    /// Constructs the exact regularized fill of closed boundary paths.
     ///
-    /// Reuses each path's cached exact boundary, including generated selected
-    /// curves, without requiring native materialization. Even-odd composition
-    /// of the input loops is regularized before publishing the region.
+    /// The fill rule applies to the sum of signed winding across all paths.
+    /// Thus equally oriented overlapping paths add under `NonZero`, while
+    /// opposite traversals cancel. `EvenOdd` selects odd total winding.
+    /// Reuses each path's cached boundary, including retained generated curves;
+    /// construction removes canceled seams and orients material on the left.
     pub fn try_from_boundary_paths(
         paths: &[CurvePath2],
+        fill_rule: FillRule,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
-            Self::try_from_boundary_paths_raw(paths, attempt)?.finish_construction(attempt)
+            Self::regularize_boundary_paths_raw(paths, fill_rule, attempt)
+                .map_err(|error| error.with_operation(CurveOperation2::Construction))
         })
     }
 
@@ -13119,7 +13123,7 @@ impl CurveRegion2 {
         }))
     }
 
-    pub(crate) fn classify_point_from_boundary_side_ray_with_windings(
+    pub(crate) fn loop_windings_from_boundary_side_ray(
         &self,
         point: &Point2,
         direction_x: Real,
@@ -13130,7 +13134,7 @@ impl CurveRegion2 {
         source_fragment_index: usize,
         source_parameter: Option<&CurveParameter2>,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<(Vec<i32>, RegionPointLocation)>> {
+    ) -> CurveResult<Classification<Vec<i32>>> {
         let direction_squared = &direction_x * &direction_x + &direction_y * &direction_y;
         match real_sign(&direction_squared, policy) {
             Some(RealSign::Positive) => {}
@@ -13153,21 +13157,6 @@ impl CurveRegion2 {
         {
             return Err(CurveError::Topology(
                 "boundary-side ray source is outside the retained region".into(),
-            ));
-        }
-        if self
-            .data
-            .certified_loop_roles
-            .as_ref()
-            .is_some_and(|roles| roles.len() != self.data.boundary_loops.len())
-            || self
-                .data
-                .certified_loop_fill_rules
-                .as_ref()
-                .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
-        {
-            return Err(CurveError::Topology(
-                "curve-region loop semantics are inconsistent with boundary loops".into(),
             ));
         }
 
@@ -13206,11 +13195,10 @@ impl CurveRegion2 {
                 }
             }
         }
-        let location = self.region_location_from_loop_windings(&windings)?;
-        Ok(Classification::Decided((windings, location)))
+        Ok(Classification::Decided(windings))
     }
 
-    pub(crate) fn classify_algebraic_point_from_boundary_side_ray_with_windings(
+    pub(crate) fn algebraic_loop_windings_from_boundary_side_ray(
         &self,
         point: &RationalBezierAlgebraicPointImage2,
         direction_x: Real,
@@ -13218,7 +13206,7 @@ impl CurveRegion2 {
         source_loop_index: usize,
         source_fragment_index: usize,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<(Vec<i32>, RegionPointLocation)>> {
+    ) -> CurveResult<Classification<Vec<i32>>> {
         let direction_squared = &direction_x * &direction_x + &direction_y * &direction_y;
         match real_sign(&direction_squared, policy) {
             Some(RealSign::Positive) => {}
@@ -13246,21 +13234,6 @@ impl CurveRegion2 {
                 "algebraic boundary-side ray source is not a retained algebraic fragment".into(),
             ));
         };
-        if self
-            .data
-            .certified_loop_roles
-            .as_ref()
-            .is_some_and(|roles| roles.len() != self.data.boundary_loops.len())
-            || self
-                .data
-                .certified_loop_fill_rules
-                .as_ref()
-                .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
-        {
-            return Err(CurveError::Topology(
-                "curve-region loop semantics are inconsistent with boundary loops".into(),
-            ));
-        }
         let point = match point.predicate_evaluator(policy)? {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => {
@@ -13304,8 +13277,7 @@ impl CurveRegion2 {
             };
             windings.push(winding);
         }
-        let location = self.region_location_from_loop_windings(&windings)?;
-        Ok(Classification::Decided((windings, location)))
+        Ok(Classification::Decided(windings))
     }
 
     pub(crate) fn region_location_from_loop_windings(
@@ -18033,10 +18005,13 @@ mod tests {
         )
         .unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let region =
-                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-                    .unwrap()
-                    .into_value();
+            let region = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
             let mut current = region.clone();
             for _ in 0..16 {
                 let outcome = current.material_components(&policy).unwrap();
@@ -18359,7 +18334,7 @@ mod tests {
                             BezierLineCrossingDirection::NegativeToPositive
                         };
                         let result = region
-                            .classify_point_from_boundary_side_ray_with_windings(
+                            .loop_windings_from_boundary_side_ray(
                                 &point,
                                 (other.x() - point.x()) * &sign,
                                 (other.y() - point.y()) * sign,
@@ -18371,6 +18346,12 @@ mod tests {
                                 &policy,
                             )
                             .unwrap();
+                        let result = result.map(|windings| {
+                            let location = region
+                                .region_location_from_loop_windings(&windings)
+                                .unwrap();
+                            (windings, location)
+                        });
                         assert_eq!(
                             result,
                             Classification::Decided((
@@ -32377,6 +32358,7 @@ mod tests {
 
         let strict = CurveRegion2::try_from_boundary_paths(
             std::slice::from_ref(&path),
+            crate::FillRule::EvenOdd,
             &CurveContext::STRICT,
         )
         .expect_err("strict construction must preserve an undecidable closure");
@@ -32389,6 +32371,7 @@ mod tests {
 
         let approximate = CurveRegion2::try_from_boundary_paths(
             std::slice::from_ref(&path),
+            crate::FillRule::EvenOdd,
             &CurveContext::APPROXIMATE_512,
         )
         .expect("the authorized terminal equality must close the path");
@@ -32405,9 +32388,13 @@ mod tests {
             exact_start,
         ))])
         .unwrap();
-        let exact = CurveRegion2::try_from_boundary_paths(&[exact_path], &CurveContext::STRICT)
-            .unwrap()
-            .into_value();
+        let exact = CurveRegion2::try_from_boundary_paths(
+            &[exact_path],
+            crate::FillRule::EvenOdd,
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
         assert!(exact.is_empty());
         assert!(exact.data.strict_materialized_connectivity_certified);
     }
@@ -32862,10 +32849,13 @@ mod tests {
                 ));
             }
         }
-        let region =
-            CurveRegion2::try_from_boundary_paths(&[CurvePath2::try_new(curves).unwrap()], &policy)
-                .unwrap()
-                .into_value();
+        let region = CurveRegion2::try_from_boundary_paths(
+            &[CurvePath2::try_new(curves).unwrap()],
+            crate::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap()
+        .into_value();
         let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
         assert_eq!(
             region
@@ -32986,10 +32976,13 @@ mod single_loop_corner_publication_tests {
         ])
         .unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let source =
-                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-                    .unwrap()
-                    .into_value();
+            let source = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
             assert_eq!(source.len(), 1);
             let Classification::Decided(paths) =
                 source.boundary_paths(&policy).unwrap().into_value()
@@ -33338,9 +33331,12 @@ mod retained_point_classification_tests {
                 LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap();
             let path =
                 CurvePath2::try_new(vec![line.clone().into(), line.reversed().into()]).unwrap();
-            let filled =
-                CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), &policy)
-                    .unwrap();
+            let filled = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap();
             assert_eq!(filled.certainty, CurveCertainty::Certified);
             assert!(filled.value.is_empty());
             for kind in 0..4 {
@@ -33375,9 +33371,10 @@ mod retained_point_classification_tests {
             let top =
                 LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(-1, 1)).unwrap();
             let path = CurvePath2::try_new(vec![lower.into(), top.into()]).unwrap();
-            let cap = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-                .unwrap()
-                .value;
+            let cap =
+                CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy)
+                    .unwrap()
+                    .value;
             let offset = cap
                 .offset(q(1, 4), &OffsetCornerStyle2::Round, &policy)
                 .unwrap();

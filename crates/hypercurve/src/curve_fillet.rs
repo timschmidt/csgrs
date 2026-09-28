@@ -2908,6 +2908,7 @@ mod tests {
         ));
         crate::CurveRegion2::try_from_boundary_paths(
             &[CurvePath2::try_new(curves).unwrap()],
+            crate::FillRule::EvenOdd,
             policy,
         )
         .unwrap()
@@ -4228,6 +4229,7 @@ mod tests {
                 ));
                 let result = crate::CurveRegion2::try_from_boundary_paths(
                     &[CurvePath2::try_new(curves).unwrap()],
+                    crate::FillRule::EvenOdd,
                     &policy,
                 )
                 .unwrap();
@@ -4358,6 +4360,7 @@ mod tests {
             let region = |path: &CurvePath2| {
                 let region = crate::CurveRegion2::try_from_boundary_paths(
                     std::slice::from_ref(path),
+                    crate::FillRule::EvenOdd,
                     &policy,
                 )
                 .unwrap();
@@ -4594,6 +4597,7 @@ mod tests {
                             }
                             let outcome = crate::CurveRegion2::try_from_boundary_paths(
                                 &[CurvePath2::try_new(curves).unwrap()],
+                                crate::FillRule::EvenOdd,
                                 &policy,
                             )
                             .unwrap();
@@ -4707,6 +4711,7 @@ mod tests {
                         );
                         crate::CurveRegion2::try_from_boundary_paths(
                             &[CurvePath2::try_new(curves).unwrap()],
+                            crate::FillRule::EvenOdd,
                             &policy,
                         )
                         .unwrap()
@@ -5273,7 +5278,12 @@ mod tests {
             let closed = CurvePath2::try_new_with_policy(curves, &policy)
                 .unwrap()
                 .value;
-            let source = crate::CurveRegion2::try_from_boundary_paths(&[closed], &policy).unwrap();
+            let source = crate::CurveRegion2::try_from_boundary_paths(
+                &[closed],
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap();
             assert_eq!(source.certainty, crate::CurveCertainty::Certified);
             let source = source.value.regularized_region(&policy).unwrap();
             assert_eq!(source.certainty, crate::CurveCertainty::Certified);
@@ -5380,8 +5390,12 @@ mod tests {
                                 .collect(),
                         )
                         .unwrap();
-                        let clip =
-                            crate::CurveRegion2::try_from_boundary_paths(&[clip], &policy).unwrap();
+                        let clip = crate::CurveRegion2::try_from_boundary_paths(
+                            &[clip],
+                            crate::FillRule::EvenOdd,
+                            &policy,
+                        )
+                        .unwrap();
                         assert_eq!(clip.certainty, crate::CurveCertainty::Certified);
                         let clipped = offset.value.boolean_regions(&clip.value, &policy).unwrap();
                         assert_eq!(clipped.certainty, crate::CurveCertainty::Certified);
@@ -5774,7 +5788,12 @@ mod stationary_family_composition_regression {
             let closed = CurvePath2::try_new_with_policy(curves, &policy)
                 .unwrap()
                 .value;
-            let source = crate::CurveRegion2::try_from_boundary_paths(&[closed], &policy).unwrap();
+            let source = crate::CurveRegion2::try_from_boundary_paths(
+                &[closed],
+                crate::FillRule::EvenOdd,
+                &policy,
+            )
+            .unwrap();
             assert_eq!(source.certainty, crate::CurveCertainty::Certified);
             let source = source.value.regularized_region(&policy).unwrap();
             assert_eq!(source.certainty, crate::CurveCertainty::Certified);
@@ -5881,8 +5900,12 @@ mod stationary_family_composition_regression {
                                 .collect(),
                         )
                         .unwrap();
-                        let clip =
-                            crate::CurveRegion2::try_from_boundary_paths(&[clip], &policy).unwrap();
+                        let clip = crate::CurveRegion2::try_from_boundary_paths(
+                            &[clip],
+                            crate::FillRule::EvenOdd,
+                            &policy,
+                        )
+                        .unwrap();
                         assert_eq!(clip.certainty, crate::CurveCertainty::Certified);
                         let clipped = offset.value.boolean_regions(&clip.value, &policy).unwrap();
                         assert_eq!(clipped.certainty, crate::CurveCertainty::Certified);

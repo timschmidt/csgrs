@@ -91,6 +91,7 @@ fn square_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<Cu
 fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurveRegion2> {
     CurveRegion2::try_from_boundary_paths(
         &[square_path(min_x, min_y, max_x, max_y)?],
+        hypercurve::FillRule::EvenOdd,
         &CurveContext::STRICT,
     )
     .map(|outcome| outcome.into_value())
@@ -516,8 +517,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .split_at(algebraic_cut.into(), &policy)?
         .into_value();
     let algebraic_path = CurvePath2::try_new(vec![head, tail, lower.into()])?;
-    let algebraic_region =
-        CurveRegion2::try_from_boundary_paths(&[algebraic_path], &policy)?.into_value();
+    let algebraic_region = CurveRegion2::try_from_boundary_paths(
+        &[algebraic_path],
+        hypercurve::FillRule::EvenOdd,
+        &policy,
+    )?
+    .into_value();
     let algebraic_region_query = hypercurve::CurvePoint2::from(p(2, 0));
     decided(
         algebraic_region
@@ -596,8 +601,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             algebraic_chord(p(min, max), p(min, min), &policy)?,
         ])?);
     }
-    let algebraic_line_region =
-        CurveRegion2::try_from_boundary_paths(&algebraic_paths, &policy)?.into_value();
+    let algebraic_line_region = CurveRegion2::try_from_boundary_paths(
+        &algebraic_paths,
+        hypercurve::FillRule::EvenOdd,
+        &policy,
+    )?
+    .into_value();
     let started = Instant::now();
     let mut algebraic_line_role_checksum = 0_usize;
     for _ in 0..iterations {

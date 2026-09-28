@@ -155,6 +155,9 @@ struct CurveRegionBooleanContextData<'a> {
     first_carrier_count: usize,
     authored_carrier_pair_count: usize,
     pairs: Vec<RegionCarrierPair>,
+    // Authored compound fills select from global signed winding. This rule
+    // belongs to unary construction and is absent from published regions.
+    regularization_fill_rule: Option<FillRule>,
     strict_line_image_only: OnceLock<bool>,
     operand_bounds: [OnceLock<Box<RegionOperandBounds>>; 2],
 }
@@ -1314,6 +1317,19 @@ impl CurveRegion2 {
         })
     }
 
+    /// Applies an authored compound fill before publishing a normalized set.
+    /// No raw-region regularization cache can be reused under another fill rule.
+    pub(crate) fn regularize_boundary_paths_raw(
+        paths: &[crate::CurvePath2],
+        fill_rule: FillRule,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        let raw = Self::try_from_boundary_paths_raw(paths, policy)?;
+        let mut context = CurveRegionBooleanContext::try_new_unary(&raw, policy)?;
+        context.data.regularization_fill_rule = Some(fill_rule);
+        context.build_regularized_region()
+    }
+
     /// Collects exact contacts and overlaps between regularized region boundaries.
     /// Authored winding and canceled seams are resolved before intersection.
     pub fn intersect_region(
@@ -1448,6 +1464,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count: carrier_count,
                 authored_carrier_pair_count: 0,
                 pairs: Vec::new(),
+                regularization_fill_rule: None,
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
@@ -1490,6 +1507,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                regularization_fill_rule: None,
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
@@ -1541,6 +1559,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                regularization_fill_rule: None,
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
@@ -1573,6 +1592,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count: carrier_count,
                 authored_carrier_pair_count,
                 pairs,
+                regularization_fill_rule: None,
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
@@ -1693,6 +1713,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 first_carrier_count: 1,
                 authored_carrier_pair_count: boundary_carriers.len(),
                 pairs,
+                regularization_fill_rule: None,
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
@@ -7909,14 +7930,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Ok(None);
             };
             let left = self
-                .data
-                .first
-                .region_location_from_loop_windings(left)
+                .location_from_windings(self.data.first, left)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             let right = self
-                .data
-                .first
-                .region_location_from_loop_windings(right)
+                .location_from_windings(self.data.first, right)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             Ok(Some(action_from_result_sides(
                 left == RegionPointLocation::Inside,
@@ -9369,14 +9386,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 (outgoing, incoming)
             };
             let left = self
-                .data
-                .first
-                .region_location_from_loop_windings(&left_windings)
+                .location_from_windings(self.data.first, &left_windings)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             let right = self
-                .data
-                .first
-                .region_location_from_loop_windings(&right_windings)
+                .location_from_windings(self.data.first, &right_windings)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -9434,8 +9447,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 )
             })?;
             let location = self
-                .region_for_carrier(carrier_index)
-                .region_location_from_loop_windings(&windings)
+                .location_from_windings(self.region_for_carrier(carrier_index), &windings)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -9959,14 +9971,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         (opposite, windings)
                     };
                     let left = self
-                        .data
-                        .first
-                        .region_location_from_loop_windings(&left_windings)
+                        .location_from_windings(self.data.first, &left_windings)
                         .map_err(|cause| self.invalid(carrier_index, cause))?;
                     let right = self
-                        .data
-                        .first
-                        .region_location_from_loop_windings(&right_windings)
+                        .location_from_windings(self.data.first, &right_windings)
                         .map_err(|cause| self.invalid(carrier_index, cause))?;
                     #[cfg(feature = "dispatch-trace")]
                     hyperreal::dispatch_trace::record(
@@ -10026,14 +10034,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 (opposite, windings)
             };
             let left = self
-                .data
-                .first
-                .region_location_from_loop_windings(&left_windings)
+                .location_from_windings(self.data.first, &left_windings)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             let right = self
-                .data
-                .first
-                .region_location_from_loop_windings(&right_windings)
+                .location_from_windings(self.data.first, &right_windings)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -10115,7 +10119,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             let classification = self
                 .region_for_carrier(carrier_index)
-                .classify_algebraic_point_from_boundary_side_ray_with_windings(
+                .algebraic_loop_windings_from_boundary_side_ray(
                     representative,
                     Real::from(direction_x),
                     Real::from(direction_y),
@@ -10125,7 +10129,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 )
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             match classification {
-                Classification::Decided(classification) => return Ok(classification),
+                Classification::Decided(windings) => {
+                    let location = self
+                        .location_from_windings(self.region_for_carrier(carrier_index), &windings)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    return Ok((windings, location));
+                }
                 Classification::Uncertain(reason) => {
                     last_reason = reason;
                 }
@@ -10215,7 +10224,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         for (direction_x, direction_y) in directions.into_iter().flatten() {
             let result = self
                 .region_for_carrier(carrier_index)
-                .classify_point_from_boundary_side_ray_with_windings(
+                .loop_windings_from_boundary_side_ray(
                     representative,
                     direction_x,
                     direction_y,
@@ -10232,13 +10241,46 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 )
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             match result {
-                Classification::Decided(classification) => return Ok(classification),
+                Classification::Decided(windings) => {
+                    let location = self
+                        .location_from_windings(self.region_for_carrier(carrier_index), &windings)
+                        .map_err(|cause| self.invalid(carrier_index, cause))?;
+                    return Ok((windings, location));
+                }
                 Classification::Uncertain(reason) => {
                     last_reason = reason;
                 }
             }
         }
         Err(self.blocked(carrier_index, last_reason))
+    }
+
+    fn location_from_windings(
+        &self,
+        region: &CurveRegion2,
+        windings: &[i32],
+    ) -> CurveResult<RegionPointLocation> {
+        let Some(fill_rule) = self.data.regularization_fill_rule else {
+            return region.region_location_from_loop_windings(windings);
+        };
+        if windings.len() != region.boundary_loops().len() {
+            return Err(CurveError::Topology(
+                "compound winding vector is inconsistent with boundary loops".into(),
+            ));
+        }
+        let winding = windings.iter().try_fold(0_i64, |sum, &value| {
+            sum.checked_add(i64::from(value))
+                .ok_or_else(|| CurveError::Topology("compound winding overflowed i64".into()))
+        })?;
+        let inside = match fill_rule {
+            FillRule::NonZero => winding != 0,
+            FillRule::EvenOdd => winding.rem_euclid(2) != 0,
+        };
+        Ok(if inside {
+            RegionPointLocation::Inside
+        } else {
+            RegionPointLocation::Outside
+        })
     }
 
     fn region_for_carrier(&self, carrier_index: usize) -> &CurveRegion2 {
@@ -16234,6 +16276,7 @@ mod certified_successor_tests {
                         first_carrier_count: 1,
                         authored_carrier_pair_count: 1,
                         pairs: Vec::new(),
+                        regularization_fill_rule: None,
                         strict_line_image_only: OnceLock::new(),
                         operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                     },
@@ -16635,6 +16678,7 @@ mod certified_successor_tests {
                             first_carrier_count: 1,
                             authored_carrier_pair_count: 0,
                             pairs: Vec::new(),
+                            regularization_fill_rule: None,
                             strict_line_image_only: OnceLock::new(),
                             operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                         },
@@ -16969,6 +17013,7 @@ mod certified_successor_tests {
                                     first_carrier_count: 2,
                                     authored_carrier_pair_count: 1,
                                     pairs: vec![pair],
+                                    regularization_fill_rule: None,
                                     strict_line_image_only: OnceLock::new(),
                                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                                 },
@@ -17144,6 +17189,7 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: vec![pair],
+                    regularization_fill_rule: None,
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
@@ -17255,6 +17301,7 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: vec![pair],
+                    regularization_fill_rule: None,
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
@@ -17394,6 +17441,7 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: vec![pair],
+                    regularization_fill_rule: None,
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
@@ -18362,6 +18410,7 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: Vec::new(),
+                    regularization_fill_rule: None,
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
@@ -18562,6 +18611,7 @@ mod certified_successor_tests {
                             endpoint_contact: None,
                         },
                     }],
+                    regularization_fill_rule: None,
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
@@ -18728,6 +18778,7 @@ mod certified_successor_tests {
                                 endpoint_contact: None,
                             },
                         }],
+                        regularization_fill_rule: None,
                         strict_line_image_only: OnceLock::new(),
                         operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                     },
@@ -19374,6 +19425,7 @@ mod certified_successor_tests {
                         endpoint_contact: None,
                     },
                 }],
+                regularization_fill_rule: None,
                 strict_line_image_only: OnceLock::new(),
                 operand_bounds: std::array::from_fn(|_| OnceLock::new()),
             },
@@ -20302,6 +20354,7 @@ mod certified_successor_tests {
                     first_carrier_count: 1,
                     authored_carrier_pair_count: 1,
                     pairs: Vec::new(),
+                    regularization_fill_rule: None,
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
@@ -21034,7 +21087,7 @@ mod certified_successor_tests {
                 assert_eq!(
                     policy
                         .strict_predicate_pass(|| {
-                            raw.classify_algebraic_point_from_boundary_side_ray_with_windings(
+                            raw.algebraic_loop_windings_from_boundary_side_ray(
                                 &chord_midpoint,
                                 Real::one(),
                                 Real::zero(),
@@ -21043,7 +21096,12 @@ mod certified_successor_tests {
                                 &policy,
                             )
                         })
-                        .unwrap(),
+                        .unwrap()
+                        .map(|windings| {
+                            let location =
+                                raw.region_location_from_loop_windings(&windings).unwrap();
+                            (windings, location)
+                        }),
                     Classification::Decided((vec![if reversed { -1 } else { 1 }], Inside))
                 );
                 let normalized = raw.regularized_region(&policy).unwrap();
@@ -21329,6 +21387,7 @@ mod certified_successor_tests {
                             endpoint_contact: None,
                         },
                     }],
+                    regularization_fill_rule: None,
                     strict_line_image_only: OnceLock::new(),
                     operand_bounds: std::array::from_fn(|_| OnceLock::new()),
                 },
@@ -22714,6 +22773,7 @@ mod certified_successor_tests {
             .collect();
         CurveRegion2::try_from_boundary_paths(
             &[CurvePath2::try_new(curves).unwrap()],
+            crate::FillRule::EvenOdd,
             &CurveContext::STRICT,
         )
         .unwrap()

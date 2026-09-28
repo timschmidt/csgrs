@@ -14925,6 +14925,7 @@ mod tests {
 
         let strict_region = crate::CurveRegion2::try_from_boundary_paths(
             std::slice::from_ref(&path),
+            crate::FillRule::EvenOdd,
             &CurveContext::STRICT,
         )
         .unwrap_err();
@@ -14936,6 +14937,7 @@ mod tests {
         ));
         let approximate_region = crate::CurveRegion2::try_from_boundary_paths(
             std::slice::from_ref(&path),
+            crate::FillRule::EvenOdd,
             &CurveContext::APPROXIMATE_512,
         )
         .expect("region construction must revalidate the terminal internal join");

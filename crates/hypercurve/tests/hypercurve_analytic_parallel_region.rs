@@ -113,9 +113,10 @@ fn boundary_curves_reenter_boolean_without_native_conversion() {
     let path = CurvePath2::try_new_with_policy(curves.to_vec(), &policy)
         .expect("generated analytic boundary curves remain one exact path")
         .into_value();
-    let replay = CurveRegion2::try_from_boundary_paths(&[path], &policy)
-        .expect("the exact boundary path re-enters region construction")
-        .into_value();
+    let replay =
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy)
+            .expect("the exact boundary path re-enters region construction")
+            .into_value();
     let disjoint = analytic_square(10, 14, &policy);
     let batch = replay
         .boolean_regions(&disjoint, &policy)
@@ -1249,8 +1250,12 @@ fn general_boundary_paths_preserve_analytic_carriers_and_boolean_reentry() {
         assert!(analytic.bounds().is_ok());
         let reversed_path = paths[0].reversed(&policy).unwrap();
         assert_eq!(reversed_path.certainty, CurveCertainty::Certified);
-        let restored =
-            CurveRegion2::try_from_boundary_paths(&[reversed_path.value], &policy).unwrap();
+        let restored = CurveRegion2::try_from_boundary_paths(
+            &[reversed_path.value],
+            hypercurve::FillRule::EvenOdd,
+            &policy,
+        )
+        .unwrap();
         assert_eq!(restored.certainty, CurveCertainty::Certified);
         let clipped = restored
             .value

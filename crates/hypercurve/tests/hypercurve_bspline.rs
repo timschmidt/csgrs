@@ -289,9 +289,10 @@ fn extracted_bspline_spans_feed_unified_region_area() {
             .to_vec(),
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
-    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
-        .unwrap()
-        .into_value();
+    let region =
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy())
+            .unwrap()
+            .into_value();
 
     assert!(decided(region.signed_area(&policy()).unwrap().into_value()) == Some(q(88, 3)));
 }
@@ -521,9 +522,10 @@ fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
             .native_subcurves(&policy()),
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
-    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
-        .unwrap()
-        .into_value();
+    let region =
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy())
+            .unwrap()
+            .into_value();
 
     assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
 }
@@ -801,9 +803,10 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
             .native_subcurves(&policy()),
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
-    let region = CurveRegion2::try_from_boundary_paths(&[path], &policy())
-        .unwrap()
-        .into_value();
+    let region =
+        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy())
+            .unwrap()
+            .into_value();
 
     assert!(decided(region.signed_area(&policy()).unwrap().into_value()).is_some());
 }
