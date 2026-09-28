@@ -7,9 +7,9 @@ use hypercurve::{
     BezierRetainedOverlap2, BezierRetainedOverlapEvidence2, BezierRetainedOverlapExtent2,
     BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
     BezierRetainedOverlapRelation2, BezierRetainedResolvedLinearOverlap2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveError, IntersectionKind,
-    LineLineIntersection, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalBezier2,
-    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveError,
+    CurveOverlapOrientation2, IntersectionKind, LineLineIntersection, LineSeg2, ParamRange, Point2,
+    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -1088,10 +1088,7 @@ fn retained_overlap_evidence_preserves_strict_rational_overlap_ranges() {
     };
     assert_eq!(overlap.first_range(), &ParamRange::new(q(1, 2), r(1)));
     assert_eq!(overlap.second_range(), &ParamRange::new(r(0), r(1)));
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
     assert_eq!(
         graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
         Classification::Uncertain(UncertaintyReason::Boundary)
@@ -1109,7 +1106,7 @@ fn retained_overlap_evidence_preserves_strict_rational_overlap_ranges() {
     );
     assert_eq!(
         overlap_splits[0].orientation(),
-        RationalBezierOverlapOrientation2::Same
+        CurveOverlapOrientation2::Same
     );
     assert_eq!(
         overlap_splits[0].extent(),
@@ -1126,10 +1123,7 @@ fn retained_overlap_evidence_preserves_strict_rational_overlap_ranges() {
     assert_eq!(resolved.second_refined_fragment_index(), 2);
     assert_eq!(resolved.first_original_fragment_index(), 0);
     assert_eq!(resolved.second_original_fragment_index(), 1);
-    assert_eq!(
-        resolved.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(resolved.orientation(), CurveOverlapOrientation2::Same);
 
     let traversal = decided(graph.traverse_retained_splitting_rational_overlaps(&policy()));
     assert_eq!(
@@ -1183,10 +1177,7 @@ fn retained_rational_overlap_refinement_cancels_reversed_span() {
     assert_eq!(refinement.resolved_overlaps().len(), 1);
     let resolved = &refinement.resolved_overlaps()[0];
     assert_eq!(resolved.second_local_range(), &ParamRange::new(r(1), r(0)));
-    assert_eq!(
-        resolved.orientation(),
-        RationalBezierOverlapOrientation2::Reversed
-    );
+    assert_eq!(resolved.orientation(), CurveOverlapOrientation2::Reversed);
     let traversal = decided(graph.traverse_retained_splitting_rational_overlaps(&policy()));
     assert_eq!(
         traversal.refined_traversal().shadowed_fragment_indices(),

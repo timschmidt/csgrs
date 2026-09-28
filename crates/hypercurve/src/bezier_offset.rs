@@ -57,11 +57,11 @@ use crate::{
     BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2, Classification,
     CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError, CurveGeometry2,
-    CurveIntersectionCandidates2, CurveOperation2, CurveParameter2, CurveParameterRange2,
-    CurvePath2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult, LineCircleRelation,
-    LineSeg2, Point2, QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
-    RationalBezierAlgebraicTangentImage2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
+    CurveIntersectionCandidates2, CurveOperation2, CurveOverlapOrientation2, CurveParameter2,
+    CurveParameterRange2, CurvePath2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult,
+    LineCircleRelation, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
     RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
 };
 use hyperreal::{Rational as HyperRational, RealSign, ZeroKnowledge};
@@ -800,7 +800,7 @@ pub(crate) struct BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
     other_end: BezierAlgebraicSelectedFiberParameter2,
     cusp_start: BezierAlgebraicCuspSemicircleParameter2,
     cusp_end: BezierAlgebraicCuspSemicircleParameter2,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     map: BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2,
 }
 
@@ -1190,7 +1190,7 @@ pub(crate) struct BezierAlgebraicCuspSemicircleMappedOverlap2 {
     other_range: CurveParameterRange2,
     cusp_start: BezierAlgebraicCuspSemicircleParameter2,
     cusp_end: BezierAlgebraicCuspSemicircleParameter2,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     parameter_map: BezierAlgebraicCuspSemicircleMappedOverlapMap2,
     map_reversed: bool,
 }
@@ -1234,7 +1234,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         self.cusp_end.clone()
     }
 
-    pub(crate) const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub(crate) const fn orientation(&self) -> CurveOverlapOrientation2 {
         self.orientation
     }
 
@@ -1286,8 +1286,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
         &self,
         other_start: bool,
     ) -> BezierAlgebraicCuspSemicircleParameter2 {
-        let cusp_start =
-            other_start == (self.orientation == RationalBezierOverlapOrientation2::Same);
+        let cusp_start = other_start == (self.orientation == CurveOverlapOrientation2::Same);
         if cusp_start {
             self.cusp_start_parameter()
         } else {
@@ -1296,8 +1295,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
     }
 
     fn other_parameter_at_cusp_endpoint(&self, cusp_start: bool) -> CurveParameter2 {
-        let other_start =
-            cusp_start == (self.orientation == RationalBezierOverlapOrientation2::Same);
+        let other_start = cusp_start == (self.orientation == CurveOverlapOrientation2::Same);
         if other_start {
             self.other_range.start().clone()
         } else {
@@ -1475,8 +1473,8 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 _ => None,
             };
             if let Some((parameter, orientation)) = same_map_parameter {
-                let reverse = self.map_reversed
-                    != (orientation == RationalBezierOverlapOrientation2::Reversed);
+                let reverse =
+                    self.map_reversed != (orientation == CurveOverlapOrientation2::Reversed);
                 let parameter = if reverse {
                     parameter.unit_complement().ok_or_else(|| {
                         CurveError::Topology(
@@ -1538,7 +1536,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     data.coincident_pair_source()
             {
                 let target_reversed = source_reversed
-                    ^ (self.orientation == RationalBezierOverlapOrientation2::Reversed)
+                    ^ (self.orientation == CurveOverlapOrientation2::Reversed)
                     ^ self.map_reversed;
                 let candidates = match source.rational_parameters_for_contact(
                     contact,
@@ -1569,7 +1567,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                     data.coincident_pair_source()
             {
                 let target_reversed = source_reversed
-                    ^ (self.orientation == RationalBezierOverlapOrientation2::Reversed)
+                    ^ (self.orientation == CurveOverlapOrientation2::Reversed)
                     ^ self.map_reversed;
                 let candidates = match source.parallel_parameters_for_contact(
                     contact,
@@ -1698,8 +1696,8 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 _ => None,
             };
             if let Some((parameter, orientation)) = equivalent_cross_map_parameter {
-                let reverse = self.map_reversed
-                    != (orientation == RationalBezierOverlapOrientation2::Reversed);
+                let reverse =
+                    self.map_reversed != (orientation == CurveOverlapOrientation2::Reversed);
                 let parameter = if reverse {
                     parameter.unit_complement().ok_or_else(|| {
                         CurveError::Topology(
@@ -2708,7 +2706,7 @@ fn rational_parallel_parameter_orientation_at_cut(
     source_parameter: &BezierParameter2,
     source_is_rational: bool,
     policy: &CurveContext,
-) -> CurveResult<Classification<Option<RationalBezierOverlapOrientation2>>> {
+) -> CurveResult<Classification<Option<CurveOverlapOrientation2>>> {
     if !policy.accepts_retained_policy(rational.data.policy)
         || !policy.accepts_retained_policy(parallel.data.policy)
     {
@@ -2731,11 +2729,11 @@ fn rational_parallel_parameter_orientation_at_cut(
     }
     let mut uncertain = None;
     for orientation in [
-        RationalBezierOverlapOrientation2::Same,
-        RationalBezierOverlapOrientation2::Reversed,
+        CurveOverlapOrientation2::Same,
+        CurveOverlapOrientation2::Reversed,
     ] {
         let rational_parameter =
-            if source_is_rational || orientation == RationalBezierOverlapOrientation2::Same {
+            if source_is_rational || orientation == CurveOverlapOrientation2::Same {
                 source_parameter.clone()
             } else {
                 source_parameter.unit_complement()
@@ -2761,7 +2759,7 @@ fn rational_parallel_parameters_match_at_cut(
     rational: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     parallel: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
     rational_parameter: &BezierParameter2,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     rational_parallel_diameter_relation_at_cut(
@@ -2933,7 +2931,7 @@ fn parallel_parameters_are_complementary_at_cut(
     first: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
     second: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
     shared_parameter: &BezierParameter2,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     construction_policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     if !construction_policy.accepts_retained_policy(first.data.policy)
@@ -3059,7 +3057,7 @@ fn parallel_parameters_are_complementary_at_cut(
 fn scaled_oriented_rational_diameter(
     diameter: &BezierAlgebraicCuspSemicircleRationalDiameter2,
     scale: &BivariatePolynomial,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     negate: bool,
 ) -> (
     BivariatePolynomial,
@@ -3172,7 +3170,7 @@ fn rational_parameters_are_complementary_at_cut(
     first: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     second: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     shared_parameter: &BezierParameter2,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     if !policy.accepts_retained_policy(first.data.policy)
@@ -3203,7 +3201,7 @@ fn rational_parameters_are_complementary_at_cut(
     let (first_rational, first_radical) = scaled_oriented_rational_diameter(
         first_diameter,
         oriented_second_radius.as_ref(),
-        RationalBezierOverlapOrientation2::Same,
+        CurveOverlapOrientation2::Same,
         false,
     );
     let (second_rational, second_radical) =
@@ -3222,7 +3220,7 @@ fn rational_parallel_diameter_relation_at_cut(
     rational: &BezierAlgebraicCuspSemicircleRationalParameterMap2,
     parallel: &BezierAlgebraicCuspSemicircleParallelParameterMap2,
     rational_parameter: &BezierParameter2,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     opposite: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
@@ -3261,7 +3259,7 @@ fn rational_parallel_diameter_relation_at_cut(
     let (rational_term, rational_radical) = scaled_oriented_rational_diameter(
         rational_diameter,
         parallel_radius_squared_denominator.as_ref(),
-        RationalBezierOverlapOrientation2::Same,
+        CurveOverlapOrientation2::Same,
         !opposite,
     );
     independent_diameter_sum_is_zero(
@@ -3276,9 +3274,9 @@ fn rational_parallel_diameter_relation_at_cut(
 
 fn bivariate_orient_second_parameter<'a>(
     polynomial: &'a BivariatePolynomial,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
 ) -> Cow<'a, BivariatePolynomial> {
-    if orientation == RationalBezierOverlapOrientation2::Same {
+    if orientation == CurveOverlapOrientation2::Same {
         Cow::Borrowed(polynomial)
     } else {
         Cow::Owned(bivariate_complement_second_parameter(polynomial))
@@ -12672,8 +12670,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     map,
                     contact,
                     first,
-                    reversed
-                        ^ (overlap.data.orientation == RationalBezierOverlapOrientation2::Reversed),
+                    reversed ^ (overlap.data.orientation == CurveOverlapOrientation2::Reversed),
                 ))
             }
             Self::Rational { .. } | Self::Parallel { .. } | Self::PairOverlap { .. } => None,
@@ -12738,8 +12735,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     anchor_first,
                     radial_product_sign,
                     policy,
-                    reversed
-                        ^ (overlap.data.orientation == RationalBezierOverlapOrientation2::Reversed),
+                    reversed ^ (overlap.data.orientation == CurveOverlapOrientation2::Reversed),
                 ))
             }
             Self::Rational { .. }
@@ -12781,8 +12777,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 Some((
                     map,
                     contact,
-                    reversed
-                        ^ (overlap.data.orientation == RationalBezierOverlapOrientation2::Reversed),
+                    reversed ^ (overlap.data.orientation == CurveOverlapOrientation2::Reversed),
                 ))
             }
             Self::Rational { .. }
@@ -12869,8 +12864,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                     chord,
                     cross,
                     policy,
-                    reversed
-                        ^ (overlap.data.orientation == RationalBezierOverlapOrientation2::Reversed),
+                    reversed ^ (overlap.data.orientation == CurveOverlapOrientation2::Reversed),
                 ))
             }
             Self::Parallel { .. }
@@ -14142,10 +14136,10 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             let mut uncertainty = None;
             let mut shared_parameter = None;
             for orientation in [
-                RationalBezierOverlapOrientation2::Same,
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Reversed,
             ] {
-                let second_parameter = if orientation == RationalBezierOverlapOrientation2::Same {
+                let second_parameter = if orientation == CurveOverlapOrientation2::Same {
                     second_parameter.clone()
                 } else {
                     second_parameter
@@ -14500,7 +14494,7 @@ pub(crate) struct BezierAlgebraicChordRationalOverlap2 {
     source: RationalBezier2,
     chord_range: [BezierAlgebraicChordParameter2; 2],
     source_range: CurveParameterRange2,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
 }
 
 #[derive(Clone, Debug)]
@@ -14616,7 +14610,7 @@ impl PartialEq for BezierAlgebraicChordPairPoint2 {
 pub(crate) struct BezierAlgebraicChordPairOverlap2 {
     first_range: [BezierAlgebraicChordParameter2; 2],
     second_range: [BezierAlgebraicChordParameter2; 2],
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
 }
 
 #[derive(Clone, Debug)]
@@ -15062,7 +15056,7 @@ struct BezierAlgebraicCuspSemicirclePairOverlapData2 {
     parameter_map: BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2,
     first_boundaries: [BezierAlgebraicCuspSemicirclePairEndpoint2; 2],
     second_boundaries: [BezierAlgebraicCuspSemicirclePairEndpoint2; 2],
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     policy: CurveContext,
 }
 
@@ -22933,11 +22927,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                                         cusp_start: overlap.cusp_start_parameter(),
                                         cusp_end: overlap.cusp_end_parameter(),
                                         orientation: match overlap.orientation() {
-                                            RationalBezierOverlapOrientation2::Same => {
-                                                RationalBezierOverlapOrientation2::Reversed
+                                            CurveOverlapOrientation2::Same => {
+                                                CurveOverlapOrientation2::Reversed
                                             }
-                                            RationalBezierOverlapOrientation2::Reversed => {
-                                                RationalBezierOverlapOrientation2::Same
+                                            CurveOverlapOrientation2::Reversed => {
+                                                CurveOverlapOrientation2::Same
                                             }
                                         },
                                         parameter_map: overlap.parameter_map.clone(),
@@ -24128,16 +24122,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             };
             let (cusp_start, cusp_end, orientation) = match order {
-                std::cmp::Ordering::Less => (
-                    first_cusp,
-                    second_cusp,
-                    RationalBezierOverlapOrientation2::Same,
-                ),
-                std::cmp::Ordering::Greater => (
-                    second_cusp,
-                    first_cusp,
-                    RationalBezierOverlapOrientation2::Reversed,
-                ),
+                std::cmp::Ordering::Less => {
+                    (first_cusp, second_cusp, CurveOverlapOrientation2::Same)
+                }
+                std::cmp::Ordering::Greater => {
+                    (second_cusp, first_cusp, CurveOverlapOrientation2::Reversed)
+                }
                 std::cmp::Ordering::Equal => {
                     return Err(CurveError::Topology(
                         "positive parallel overlap mapped to a zero cusp range".into(),
@@ -33031,9 +33021,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>> {
         let orientation = if self.is_clockwise() == other.is_clockwise() {
-            RationalBezierOverlapOrientation2::Same
+            CurveOverlapOrientation2::Same
         } else {
-            RationalBezierOverlapOrientation2::Reversed
+            CurveOverlapOrientation2::Reversed
         };
         let (first_boundaries, second_boundaries) = if radial_cross == RealSign::Zero {
             let radial_same = match radial_dot.ok_or_else(|| {
@@ -33047,7 +33037,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     ));
                 }
             };
-            let traversal_same = orientation == RationalBezierOverlapOrientation2::Same;
+            let traversal_same = orientation == CurveOverlapOrientation2::Same;
             if radial_same != traversal_same {
                 return Ok(Classification::Decided(
                     BezierAlgebraicCuspSemicirclePairIntersections2::EndpointContacts(
@@ -36892,9 +36882,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             };
             let orientation = if angular == expected_same_sign {
-                RationalBezierOverlapOrientation2::Same
+                CurveOverlapOrientation2::Same
             } else {
-                RationalBezierOverlapOrientation2::Reversed
+                CurveOverlapOrientation2::Reversed
             };
             // Complete boundary isolation makes the selected-half and angular
             // signs constant on this regular cell. Its nonzero angular sign
@@ -36951,7 +36941,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         let second =
                             map.mapped_parameter(pair[1].parameter.clone(), second, RealSign::Zero);
                         let (cusp_start, cusp_end) =
-                            if orientation == RationalBezierOverlapOrientation2::Same {
+                            if orientation == CurveOverlapOrientation2::Same {
                                 (first, second)
                             } else {
                                 (second, first)
@@ -40956,9 +40946,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ));
             }
             let orientation = if angular == expected_same_sign {
-                RationalBezierOverlapOrientation2::Same
+                CurveOverlapOrientation2::Same
             } else {
-                RationalBezierOverlapOrientation2::Reversed
+                CurveOverlapOrientation2::Reversed
             };
             let cell_endpoint =
                 |boundary: &BezierAlgebraicCuspSemicircleRationalComponentBoundary2,
@@ -40970,8 +40960,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                         // determine which endpoint without re-solving the
                         // retained three-field diameter predicate.
                         let at_end = match orientation {
-                            RationalBezierOverlapOrientation2::Same => at_right,
-                            RationalBezierOverlapOrientation2::Reversed => !at_right,
+                            CurveOverlapOrientation2::Same => at_right,
+                            CurveOverlapOrientation2::Reversed => !at_right,
                         };
                         let parameter = BezierAlgebraicCuspSemicircleParameter2::Exact(if at_end {
                             Real::one()
@@ -41011,7 +41001,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let (cusp_start, cusp_end) = if orientation == RationalBezierOverlapOrientation2::Same {
+            let (cusp_start, cusp_end) = if orientation == CurveOverlapOrientation2::Same {
                 (first, second)
             } else {
                 (second, first)
@@ -41473,8 +41463,8 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         &BezierAlgebraicCuspSemicircleParameter2,
     ); 2] {
         let [first, second] = match self.orientation {
-            RationalBezierOverlapOrientation2::Same => [&self.other_start, &self.other_end],
-            RationalBezierOverlapOrientation2::Reversed => [&self.other_end, &self.other_start],
+            CurveOverlapOrientation2::Same => [&self.other_start, &self.other_end],
+            CurveOverlapOrientation2::Reversed => [&self.other_end, &self.other_start],
         };
         [(first, &self.cusp_start), (second, &self.cusp_end)]
     }
@@ -41495,7 +41485,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         self.cusp_end.clone()
     }
 
-    pub(crate) const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub(crate) const fn orientation(&self) -> CurveOverlapOrientation2 {
         self.orientation
     }
 
@@ -42976,12 +42966,9 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         }
     }
 
-    fn parameterization_orientation(
-        &self,
-        other: &Self,
-    ) -> Option<RationalBezierOverlapOrientation2> {
+    fn parameterization_orientation(&self, other: &Self) -> Option<CurveOverlapOrientation2> {
         if Arc::ptr_eq(&self.data, &other.data) || self.shares_parameterization(other) {
-            return Some(RationalBezierOverlapOrientation2::Same);
+            return Some(CurveOverlapOrientation2::Same);
         }
         let (
             BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::OneField {
@@ -43005,7 +42992,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
             && first_diameter.is_second_complement_of(second_diameter)
             && first_radius == &bivariate_complement_second_parameter(second_radius)
             && self.data.policy == other.data.policy)
-            .then_some(RationalBezierOverlapOrientation2::Reversed)
+            .then_some(CurveOverlapOrientation2::Reversed)
     }
 
     /// Orders one exact contact parameter against a represented parameter.
@@ -43387,12 +43374,9 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
         }
     }
 
-    fn parameterization_orientation(
-        &self,
-        other: &Self,
-    ) -> Option<RationalBezierOverlapOrientation2> {
+    fn parameterization_orientation(&self, other: &Self) -> Option<CurveOverlapOrientation2> {
         if Arc::ptr_eq(&self.data, &other.data) || self.shares_parameterization(other) {
-            return Some(RationalBezierOverlapOrientation2::Same);
+            return Some(CurveOverlapOrientation2::Same);
         }
         let (
             BezierAlgebraicCuspSemicircleParallelParameterMapSystem2::OneField {
@@ -43421,7 +43405,7 @@ impl BezierAlgebraicCuspSemicircleParallelParameterMap2 {
                 == bivariate_complement_second_parameter(&second_diameter.radical)
             && first_radius == &bivariate_complement_second_parameter(second_radius)
             && first_speed == &bivariate_complement_second_parameter(second_speed))
-            .then_some(RationalBezierOverlapOrientation2::Reversed)
+            .then_some(CurveOverlapOrientation2::Reversed)
     }
 
     /// Orders one analytic-parallel contact against a represented semicircle parameter.
@@ -50547,7 +50531,7 @@ impl PartialEq for BezierAlgebraicCuspChordDerivedPoint2 {
 }
 
 impl BezierAlgebraicCuspSemicirclePairOverlap2 {
-    pub(crate) fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub(crate) fn orientation(&self) -> CurveOverlapOrientation2 {
         self.data.orientation
     }
 
@@ -50682,7 +50666,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             return source.clone();
         }
         if self.has_exact_endpoint_map() {
-            return if self.data.orientation == RationalBezierOverlapOrientation2::Same {
+            return if self.data.orientation == CurveOverlapOrientation2::Same {
                 parameter.clone()
             } else if let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) = parameter {
                 BezierAlgebraicCuspSemicircleParameter2::Exact(Real::one() - parameter)
@@ -50945,7 +50929,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             | BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::SimilarityTransport {
                 ..
             } => {
-                let mapped = if self.data.orientation == RationalBezierOverlapOrientation2::Same {
+                let mapped = if self.data.orientation == CurveOverlapOrientation2::Same {
                     source.clone()
                 } else {
                     Real::one() - source
@@ -50958,7 +50942,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         let source_clockwise = if source_first {
             first_clockwise
         } else {
-            first_clockwise ^ (self.data.orientation == RationalBezierOverlapOrientation2::Reversed)
+            first_clockwise ^ (self.data.orientation == CurveOverlapOrientation2::Reversed)
         };
         let source_turn = if source_clockwise { -1_i8 } else { 1_i8 };
         let cross_direction = if source_first {
@@ -51076,7 +51060,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             !source_first,
         );
         Ok(source.cmp_by_refinement(&inverse, policy)?.map(|order| {
-            if self.data.orientation == RationalBezierOverlapOrientation2::Same {
+            if self.data.orientation == CurveOverlapOrientation2::Same {
                 order
             } else {
                 order.reverse()
@@ -51098,7 +51082,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             }
         };
         if self.has_exact_endpoint_map() {
-            return if self.data.orientation == RationalBezierOverlapOrientation2::Same {
+            return if self.data.orientation == CurveOverlapOrientation2::Same {
                 Ok(Classification::Decided(source_bracket))
             } else {
                 complement_cusp_parameter_bracket(source_bracket, policy)
@@ -51540,7 +51524,7 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 } if overlap.has_exact_endpoint_map() => {
                     Ok(source.scalar_value(policy)?.map(|parameter| {
                         parameter.map(|parameter| {
-                            if overlap.data.orientation == RationalBezierOverlapOrientation2::Same {
+                            if overlap.data.orientation == CurveOverlapOrientation2::Same {
                                 parameter
                             } else {
                                 Real::one() - parameter
@@ -53055,7 +53039,7 @@ other => return match other {
             return Ok(first_source
                 .cmp_by_refinement(second_source, policy)?
                 .map(|order| {
-                    if first_overlap.data.orientation == RationalBezierOverlapOrientation2::Same {
+                    if first_overlap.data.orientation == CurveOverlapOrientation2::Same {
                         order
                     } else {
                         order.reverse()
@@ -81927,9 +81911,9 @@ impl BezierAlgebraicChord2 {
                         [second_high, second_low]
                     },
                     orientation: if same_direction {
-                        RationalBezierOverlapOrientation2::Same
+                        CurveOverlapOrientation2::Same
                     } else {
-                        RationalBezierOverlapOrientation2::Reversed
+                        CurveOverlapOrientation2::Reversed
                     },
                 },
             ]),
@@ -82173,9 +82157,9 @@ impl BezierAlgebraicChord2 {
                                 upper.source_parameter,
                             ),
                             orientation: if source_order == std::cmp::Ordering::Less {
-                                RationalBezierOverlapOrientation2::Same
+                                CurveOverlapOrientation2::Same
                             } else {
-                                RationalBezierOverlapOrientation2::Reversed
+                                CurveOverlapOrientation2::Reversed
                             },
                         },
                     ]),
@@ -82439,7 +82423,7 @@ impl BezierAlgebraicChord2 {
                         first.source_parameter,
                         second.source_parameter,
                     ),
-                    RationalBezierOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
                 ),
                 std::cmp::Ordering::Greater => (
                     [second.chord_parameter, first.chord_parameter],
@@ -82447,7 +82431,7 @@ impl BezierAlgebraicChord2 {
                         second.source_parameter,
                         first.source_parameter,
                     ),
-                    RationalBezierOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Reversed,
                 ),
                 std::cmp::Ordering::Equal => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -83699,7 +83683,7 @@ impl BezierAlgebraicChordPairOverlap2 {
         [&self.second_range[0], &self.second_range[1]]
     }
 
-    pub(crate) const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub(crate) const fn orientation(&self) -> CurveOverlapOrientation2 {
         self.orientation
     }
 }
@@ -83712,7 +83696,7 @@ impl BezierAlgebraicChordRationalOverlap2 {
         source: RationalBezier2,
         chord_range: [BezierAlgebraicChordParameter2; 2],
         source_range: CurveParameterRange2,
-        orientation: RationalBezierOverlapOrientation2,
+        orientation: CurveOverlapOrientation2,
     ) -> Self {
         Self {
             chord,
@@ -83837,7 +83821,7 @@ impl BezierAlgebraicChordRationalOverlap2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         let source_order = if self.chord.data.parameter_axis.coordinate_increases
-            == (self.orientation == RationalBezierOverlapOrientation2::Same)
+            == (self.orientation == CurveOverlapOrientation2::Same)
         {
             std::cmp::Ordering::Less
         } else {
@@ -83861,7 +83845,7 @@ impl BezierAlgebraicChordRationalOverlap2 {
         &self.source_range
     }
 
-    pub(crate) const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub(crate) const fn orientation(&self) -> CurveOverlapOrientation2 {
         self.orientation
     }
 
@@ -102996,10 +102980,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
         };
         let mut retained_orientation = None;
-        let mut retain_orientation = |orientation: RationalBezierOverlapOrientation2| {
+        let mut retain_orientation = |orientation: CurveOverlapOrientation2| {
             let sign = match orientation {
-                RationalBezierOverlapOrientation2::Same => RealSign::Positive,
-                RationalBezierOverlapOrientation2::Reversed => RealSign::Negative,
+                CurveOverlapOrientation2::Same => RealSign::Positive,
+                CurveOverlapOrientation2::Reversed => RealSign::Negative,
             };
             match retained_orientation {
                 Some(retained) if retained != sign => Err(CurveError::Topology(
@@ -111616,7 +111600,7 @@ fn structural_parallel_overlap(
         )
     {
         return Ok(Some(unit_overlap(
-            RationalBezierOverlapOrientation2::Same,
+            CurveOverlapOrientation2::Same,
             Real::zero(),
             Real::one(),
         )));
@@ -111628,7 +111612,7 @@ fn structural_parallel_overlap(
         )
     {
         return Ok(Some(unit_overlap(
-            RationalBezierOverlapOrientation2::Reversed,
+            CurveOverlapOrientation2::Reversed,
             Real::one(),
             Real::zero(),
         )));
@@ -111700,8 +111684,8 @@ fn certified_parallel_source_overlap(
         }));
     };
     let second_distance = match overlap.orientation() {
-        RationalBezierOverlapOrientation2::Same => second.distance().clone(),
-        RationalBezierOverlapOrientation2::Reversed => -second.distance().clone(),
+        CurveOverlapOrientation2::Same => second.distance().clone(),
+        CurveOverlapOrientation2::Reversed => -second.distance().clone(),
     };
     Ok(
         match compare_reals(first.distance(), &second_distance, policy) {
@@ -130232,8 +130216,8 @@ fn parameter_component_overlap_from_domain_with_endpoint_inclusion(
     endpoint_inclusion: [bool; 2],
 ) -> RationalBezierIntersectionOverlap2 {
     let orientation = match direction {
-        std::cmp::Ordering::Less => RationalBezierOverlapOrientation2::Same,
-        std::cmp::Ordering::Greater => RationalBezierOverlapOrientation2::Reversed,
+        std::cmp::Ordering::Less => CurveOverlapOrientation2::Same,
+        std::cmp::Ordering::Greater => CurveOverlapOrientation2::Reversed,
         std::cmp::Ordering::Equal => unreachable!("a component domain has nonzero derivative"),
     };
     match (retained_parameter, direction) {
@@ -140411,9 +140395,9 @@ mod conversion_tests {
                     assert_eq!(
                         overlap.orientation(),
                         if circle.is_clockwise() == reverse_source {
-                            RationalBezierOverlapOrientation2::Same
+                            CurveOverlapOrientation2::Same
                         } else {
-                            RationalBezierOverlapOrientation2::Reversed
+                            CurveOverlapOrientation2::Reversed
                         },
                     );
                     let interior = BezierAlgebraicSelectedFiberAuthority2::exact_parameter(
@@ -142709,7 +142693,7 @@ mod conversion_tests {
                     ref overlaps
                 )) if overlaps.len() == 1
                     && overlaps[0].orientation()
-                        == RationalBezierOverlapOrientation2::Reversed
+                        == CurveOverlapOrientation2::Reversed
             ));
         }
     }
@@ -143518,10 +143502,7 @@ mod conversion_tests {
                     .unwrap(),
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
             assert_eq!(
                 overlap
                     .source_range()
@@ -143585,7 +143566,7 @@ mod conversion_tests {
             ));
             assert_eq!(
                 contained_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
+                CurveOverlapOrientation2::Reversed
             );
 
             let collinear_disjoint = RationalBezier2::try_from_subcurve(
@@ -143749,12 +143730,12 @@ mod conversion_tests {
                 (
                     offset.clone(),
                     RealSign::Positive,
-                    RationalBezierOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
                 ),
                 (
                     offset.reversed(),
                     RealSign::Negative,
-                    RationalBezierOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Reversed,
                 ),
             ] {
                 let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
@@ -143883,10 +143864,7 @@ mod conversion_tests {
             let [split_overlap] = split_overlaps.as_slice() else {
                 panic!("the split retained-offset chord must publish one overlap");
             };
-            assert_eq!(
-                split_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
+            assert_eq!(split_overlap.orientation(), CurveOverlapOrientation2::Same,);
             let [split_start, split_end] = split_overlap.chord_range();
             assert_eq!(
                 split_start
@@ -143980,17 +143958,14 @@ mod conversion_tests {
             assert_eq!(
                 retraced_overlaps
                     .iter()
-                    .filter(
-                        |overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Same
-                    )
+                    .filter(|overlap| overlap.orientation() == CurveOverlapOrientation2::Same)
                     .count(),
                 1,
             );
             assert_eq!(
                 retraced_overlaps
                     .iter()
-                    .filter(|overlap| overlap.orientation()
-                        == RationalBezierOverlapOrientation2::Reversed)
+                    .filter(|overlap| overlap.orientation() == CurveOverlapOrientation2::Reversed)
                     .count(),
                 1,
             );
@@ -144489,11 +144464,8 @@ mod conversion_tests {
                 panic!("partial collinear chord must remain exact");
             };
             for (other, orientation) in [
-                (partial.clone(), RationalBezierOverlapOrientation2::Same),
-                (
-                    partial.reversed(),
-                    RationalBezierOverlapOrientation2::Reversed,
-                ),
+                (partial.clone(), CurveOverlapOrientation2::Same),
+                (partial.reversed(), CurveOverlapOrientation2::Reversed),
             ] {
                 let overlap_result = first.chord_intersections(&other, &policy).unwrap();
                 let Classification::Decided(BezierAlgebraicChordPairIntersections2::Overlaps(
@@ -144514,13 +144486,11 @@ mod conversion_tests {
                 );
                 assert_eq!(
                     second_low.cmp_by_refinement(second_high, &policy).unwrap(),
-                    Classification::Decided(
-                        if orientation == RationalBezierOverlapOrientation2::Same {
-                            std::cmp::Ordering::Less
-                        } else {
-                            std::cmp::Ordering::Greater
-                        }
-                    )
+                    Classification::Decided(if orientation == CurveOverlapOrientation2::Same {
+                        std::cmp::Ordering::Less
+                    } else {
+                        std::cmp::Ordering::Greater
+                    })
                 );
                 for (first, second) in [(first_low, second_low), (first_high, second_high)] {
                     assert_eq!(
@@ -144991,11 +144961,8 @@ mod conversion_tests {
             .parallel_left_retained(Real::one(), &policy)
             .unwrap();
             for (other, orientation) in [
-                (overlapping.clone(), RationalBezierOverlapOrientation2::Same),
-                (
-                    overlapping.reversed(),
-                    RationalBezierOverlapOrientation2::Reversed,
-                ),
+                (overlapping.clone(), CurveOverlapOrientation2::Same),
+                (overlapping.reversed(), CurveOverlapOrientation2::Reversed),
             ] {
                 let result = horizontal.chord_intersections(&other, &policy).unwrap();
                 let Classification::Decided(BezierAlgebraicChordPairIntersections2::Overlaps(
@@ -145164,9 +145131,7 @@ mod conversion_tests {
             assert_eq!(
                 overlaps
                     .iter()
-                    .filter(|overlap| {
-                        overlap.orientation() == RationalBezierOverlapOrientation2::Same
-                    })
+                    .filter(|overlap| { overlap.orientation() == CurveOverlapOrientation2::Same })
                     .count(),
                 1
             );
@@ -145174,7 +145139,7 @@ mod conversion_tests {
                 overlaps
                     .iter()
                     .filter(|overlap| {
-                        overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
+                        overlap.orientation() == CurveOverlapOrientation2::Reversed
                     })
                     .count(),
                 1
@@ -145295,10 +145260,7 @@ mod conversion_tests {
             let [overlap] = overlaps.as_slice() else {
                 panic!("expected one branch overlap beside the contact, got {overlaps:?}");
             };
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
             let [overlap_start, overlap_end] = overlap.chord_range();
             assert_eq!(
                 overlap_start
@@ -146940,11 +146902,8 @@ mod conversion_tests {
             ))
             .unwrap();
             for (carrier, orientation) in [
-                (retained.clone(), RationalBezierOverlapOrientation2::Same),
-                (
-                    retained.reversed(),
-                    RationalBezierOverlapOrientation2::Reversed,
-                ),
+                (retained.clone(), CurveOverlapOrientation2::Same),
+                (retained.reversed(), CurveOverlapOrientation2::Reversed),
             ] {
                 let overlap_result = carrier
                     .rational_intersections(&spanning, &CurveParameterRange2::unit(), None, &policy)
@@ -146979,13 +146938,11 @@ mod conversion_tests {
                         .start()
                         .cmp_by_refinement(overlap.source_range().end(), &policy)
                         .unwrap(),
-                    Classification::Decided(
-                        if orientation == RationalBezierOverlapOrientation2::Same {
-                            std::cmp::Ordering::Less
-                        } else {
-                            std::cmp::Ordering::Greater
-                        }
-                    ),
+                    Classification::Decided(if orientation == CurveOverlapOrientation2::Same {
+                        std::cmp::Ordering::Less
+                    } else {
+                        std::cmp::Ordering::Greater
+                    }),
                 );
             }
 
@@ -147012,17 +146969,14 @@ mod conversion_tests {
             assert_eq!(
                 overlaps
                     .iter()
-                    .filter(
-                        |overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Same
-                    )
+                    .filter(|overlap| overlap.orientation() == CurveOverlapOrientation2::Same)
                     .count(),
                 1,
             );
             assert_eq!(
                 overlaps
                     .iter()
-                    .filter(|overlap| overlap.orientation()
-                        == RationalBezierOverlapOrientation2::Reversed)
+                    .filter(|overlap| overlap.orientation() == CurveOverlapOrientation2::Reversed)
                     .count(),
                 1,
             );
@@ -148578,10 +148532,7 @@ mod conversion_tests {
                 overlap.other_range(),
                 &CurveParameterRange2::new_validated((Real::zero()).into(), (Real::one()).into()),
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same,);
             assert_eq!(
                 overlap
                     .cusp_start_parameter()
@@ -148629,7 +148580,7 @@ mod conversion_tests {
             );
             assert_eq!(
                 partial_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             );
             assert_eq!(
                 partial_overlap
@@ -148674,7 +148625,7 @@ mod conversion_tests {
             );
             assert_eq!(
                 reversed_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
             );
             assert_eq!(
                 reversed_overlap
@@ -149511,7 +149462,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 pair_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
             );
             let pair_mapped_cut = pair_overlap.map_parameter(&algebraic_rational_cusp_cut, true);
             assert!(matches!(
@@ -150162,7 +150113,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 correlated_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             );
             assert!(!correlated_overlap.has_exact_endpoint_map());
             let correlated_parallel_cut =
@@ -150415,12 +150366,8 @@ mod conversion_tests {
                 cusp_start: nonlinear_analytic_overlap.cusp_start_parameter(),
                 cusp_end: nonlinear_analytic_overlap.cusp_end_parameter(),
                 orientation: match nonlinear_analytic_overlap.orientation() {
-                    RationalBezierOverlapOrientation2::Same => {
-                        RationalBezierOverlapOrientation2::Reversed
-                    }
-                    RationalBezierOverlapOrientation2::Reversed => {
-                        RationalBezierOverlapOrientation2::Same
-                    }
+                    CurveOverlapOrientation2::Same => CurveOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Reversed => CurveOverlapOrientation2::Same,
                 },
                 parameter_map: nonlinear_analytic_overlap.parameter_map.clone(),
                 map_reversed: !nonlinear_analytic_overlap.map_reversed,
@@ -152413,10 +152360,7 @@ mod conversion_tests {
             let [overlap] = overlaps.as_slice() else {
                 panic!("the independently encoded quarter must publish one overlap cell");
             };
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
             let Classification::Decided(cusp_cut) = overlap
                 .cusp_parameter_for_other(&region_parameter(algebraic_target.clone()), &policy)
                 .unwrap()
@@ -152489,7 +152433,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 reversed_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
             );
             let Classification::Decided(reversed_cut) = reversed_overlap
                 .other_parameter_for_cusp(&cusp_cut, &policy)
@@ -152991,7 +152935,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 shifted_analytic_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             );
             let shifted_analytic_source_owners = Arc::strong_count(chamfer_authority);
             let shifted_analytic_inversion = shifted_analytic_overlap
@@ -153922,7 +153866,7 @@ mod conversion_tests {
             };
             assert_eq!(
                 pair_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
             );
             let wrapped_pair_parameter = pair_overlap.map_parameter(&first_parameter, true);
             assert!(matches!(
@@ -154286,7 +154230,7 @@ mod conversion_tests {
                     };
                     assert_eq!(
                         overlap.orientation(),
-                        RationalBezierOverlapOrientation2::Same,
+                        CurveOverlapOrientation2::Same,
                     );
 
                     let two_thirds = (Real::from(2_i8) / Real::from(3_i8))?;
@@ -154638,7 +154582,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     };
                     assert_eq!(
                         reversed_overlap.orientation(),
-                        RationalBezierOverlapOrientation2::Reversed,
+                        CurveOverlapOrientation2::Reversed,
                     );
                     let reversed_left =
                         reversed_overlap.map_parameter(&left_source_parameter, true);
@@ -155268,11 +155212,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
 
             for (second, expected_orientation) in [
-                (first.clone(), RationalBezierOverlapOrientation2::Same),
-                (
-                    first.reversed(),
-                    RationalBezierOverlapOrientation2::Reversed,
-                ),
+                (first.clone(), CurveOverlapOrientation2::Same),
+                (first.reversed(), CurveOverlapOrientation2::Reversed),
             ] {
                 let Classification::Decided(
                     BezierAlgebraicCuspSemicirclePairIntersections2::Overlap(overlap),
@@ -155337,10 +155278,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             else {
                 panic!("rotated selected semicircles must retain their shared quadrant");
             };
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
             assert_eq!(
                 overlap.first_boundaries(),
                 [
@@ -155983,10 +155921,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             else {
                 panic!("reversed partial overlap must retain the same image");
             };
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed,);
             assert_eq!(
                 overlap.second_boundaries(),
                 [
@@ -162979,9 +162914,9 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         assert_eq!(
                             overlap.orientation(),
                             if reversed {
-                                RationalBezierOverlapOrientation2::Reversed
+                                CurveOverlapOrientation2::Reversed
                             } else {
-                                RationalBezierOverlapOrientation2::Same
+                                CurveOverlapOrientation2::Same
                             },
                         );
                     }
@@ -163030,9 +162965,9 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     assert_eq!(
                         overlap.orientation(),
                         if reversed {
-                            RationalBezierOverlapOrientation2::Reversed
+                            CurveOverlapOrientation2::Reversed
                         } else {
-                            RationalBezierOverlapOrientation2::Same
+                            CurveOverlapOrientation2::Same
                         },
                     );
                     if reversed {
@@ -165129,14 +165064,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 Classification::Decided(Some(_))
             ));
             for (target, orientation) in [
-                (
-                    quarter_circle.clone(),
-                    RationalBezierOverlapOrientation2::Reversed,
-                ),
-                (
-                    quarter_circle.reversed(),
-                    RationalBezierOverlapOrientation2::Same,
-                ),
+                (quarter_circle.clone(), CurveOverlapOrientation2::Reversed),
+                (quarter_circle.reversed(), CurveOverlapOrientation2::Same),
             ] {
                 let Classification::Decided(
                     BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
@@ -169620,11 +169549,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let first = recursively_pair_radial_rational_center_half(&policy);
             let aligned = recursively_pair_radial_rational_center_half(&policy);
             for (second, expected_orientation) in [
-                (aligned.clone(), RationalBezierOverlapOrientation2::Same),
-                (
-                    aligned.reversed(),
-                    RationalBezierOverlapOrientation2::Reversed,
-                ),
+                (aligned.clone(), CurveOverlapOrientation2::Same),
+                (aligned.reversed(), CurveOverlapOrientation2::Reversed),
             ] {
                 for (left, right) in [(&first, &second), (&second, &first)] {
                     let result = left.pair_intersections(right, &policy).unwrap();
@@ -169658,11 +169584,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 .transform_similarity(&quarter_turn)
                 .unwrap();
             for (second, expected_orientation) in [
-                (partial.clone(), RationalBezierOverlapOrientation2::Same),
-                (
-                    partial.reversed(),
-                    RationalBezierOverlapOrientation2::Reversed,
-                ),
+                (partial.clone(), CurveOverlapOrientation2::Same),
+                (partial.reversed(), CurveOverlapOrientation2::Reversed),
             ] {
                 for (left, right) in [(&first, &second), (&second, &first)] {
                     let result = left.pair_intersections(right, &policy).unwrap();
@@ -169690,7 +169613,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     let (source, target) = if left == &first {
                         (
                             three_quarters.clone(),
-                            if expected_orientation == RationalBezierOverlapOrientation2::Same {
+                            if expected_orientation == CurveOverlapOrientation2::Same {
                                 third.clone()
                             } else {
                                 two_thirds.clone()
@@ -169698,7 +169621,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         )
                     } else {
                         (
-                            if expected_orientation == RationalBezierOverlapOrientation2::Same {
+                            if expected_orientation == CurveOverlapOrientation2::Same {
                                 third.clone()
                             } else {
                                 two_thirds.clone()
@@ -170054,10 +169977,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 else {
                     panic!("the coincident three-root pair must overlap: {result:?}");
                 };
-                assert_eq!(
-                    overlap.orientation(),
-                    RationalBezierOverlapOrientation2::Same
-                );
+                assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
                 assert!(!overlap.has_exact_endpoint_map());
                 for parameter in [
                     overlap.first_start_parameter(),
@@ -170109,10 +170029,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     panic!("aligned coincident halves must fully overlap: {result:?}");
                 };
                 assert!(overlap.has_exact_endpoint_map());
-                assert_eq!(
-                    overlap.orientation(),
-                    RationalBezierOverlapOrientation2::Same
-                );
+                assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
             }
             for (first, second) in [(&pair, &antipodal), (&antipodal, &pair)] {
                 let result = first.pair_intersections(second, &policy).unwrap();
@@ -170397,10 +170314,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     panic!("independently authored aligned halves must overlap: {result:?}");
                 };
                 assert!(overlap.has_exact_endpoint_map());
-                assert_eq!(
-                    overlap.orientation(),
-                    RationalBezierOverlapOrientation2::Same,
-                );
+                assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same,);
             }
 
             let partial = independent_pair_radial_unit_circle(&policy)
@@ -170415,10 +170329,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     panic!("quarter-turned selected halves must partially overlap: {result:?}");
                 };
                 assert!(!overlap.has_exact_endpoint_map());
-                assert_eq!(
-                    overlap.orientation(),
-                    RationalBezierOverlapOrientation2::Same,
-                );
+                assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same,);
                 for parameter in [
                     overlap.first_start_parameter(),
                     overlap.first_end_parameter(),
@@ -171146,10 +171057,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     .unwrap(),
                 Classification::Decided(true),
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same,);
             assert_eq!(
                 overlap
                     .cusp_end_parameter()
@@ -171197,10 +171105,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed] = reversed.as_slice() else {
                 panic!("the reversed selected quarter must retain one monotone cell");
             };
-            assert_eq!(
-                reversed.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
-            );
+            assert_eq!(reversed.orientation(), CurveOverlapOrientation2::Reversed,);
             assert_eq!(
                 reversed
                     .other_range()
@@ -171230,14 +171135,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
             assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(folded.len(), 2);
-            assert_eq!(
-                folded[0].orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
-            assert_eq!(
-                folded[1].orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
-            );
+            assert_eq!(folded[0].orientation(), CurveOverlapOrientation2::Same,);
+            assert_eq!(folded[1].orientation(), CurveOverlapOrientation2::Reversed,);
         }
     }
 
@@ -172038,10 +171937,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 overlap.other_range(),
                 &CurveParameterRange2::new_validated((Real::zero()).into(), (Real::one()).into()),
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
             assert_eq!(
                 overlap
                     .cusp_start_parameter()
@@ -172104,7 +172000,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
             assert_eq!(
                 reversed_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
             );
             let Classification::Decided(reversed_cut) = reversed_overlap
                 .other_parameter_for_cusp(&cusp_cut, &policy)
@@ -172167,11 +172063,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(folded_overlaps.len(), 2);
             assert_eq!(
                 folded_overlaps[0].orientation(),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             );
             assert_eq!(
                 folded_overlaps[1].orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
             );
             let half = (Real::one() / Real::from(2_i8)).unwrap();
             for (overlap, expected_start, expected_end) in [
@@ -173447,9 +173343,9 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             assert_eq!(
                                 overlap.orientation(),
                                 if negative_tangent == reversed {
-                                    RationalBezierOverlapOrientation2::Same
+                                    CurveOverlapOrientation2::Same
                                 } else {
-                                    RationalBezierOverlapOrientation2::Reversed
+                                    CurveOverlapOrientation2::Reversed
                                 }
                             );
                         }
@@ -173840,12 +173736,9 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(overlaps.len(), 2);
             assert_eq!(
                 overlaps[0].orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
             );
-            assert_eq!(
-                overlaps[1].orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
+            assert_eq!(overlaps[1].orientation(), CurveOverlapOrientation2::Same,);
         }
     }
 
@@ -174041,9 +173934,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 result => panic!("the opaque line branch must publish overlaps: {result:?}"),
             };
             assert!(!overlaps.is_empty());
-            assert!(overlaps.iter().any(|overlap| {
-                overlap.orientation() == RationalBezierOverlapOrientation2::Same
-            }));
+            assert!(
+                overlaps
+                    .iter()
+                    .any(|overlap| { overlap.orientation() == CurveOverlapOrientation2::Same })
+            );
             assert!(
                 overlaps
                     .iter()
@@ -174116,7 +174011,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
             assert_eq!(
                 algebraic_overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             );
             assert_eq!(
                 algebraic_overlap
@@ -185426,10 +185321,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the selected rational quarter must retain one monotone overlap");
             };
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same,);
             assert_eq!(
                 overlap
                     .other_start_parameter()
@@ -185518,10 +185410,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed] = reversed_overlaps.as_slice() else {
                 panic!("the reversed quarter must retain one overlap");
             };
-            assert_eq!(
-                reversed.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
-            );
+            assert_eq!(reversed.orientation(), CurveOverlapOrientation2::Reversed,);
             let Classification::Decided(reversed_cut) = reversed
                 .other_parameter_for_cusp(
                     &BezierAlgebraicCuspSemicircleParameter2::Exact(quarter.clone()),
@@ -185555,14 +185444,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
             assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(folded.len(), 2);
-            assert_eq!(
-                folded[0].orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
-            assert_eq!(
-                folded[1].orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
-            );
+            assert_eq!(folded[0].orientation(), CurveOverlapOrientation2::Same,);
+            assert_eq!(folded[1].orientation(), CurveOverlapOrientation2::Reversed,);
             for (overlap, expected_start, expected_end) in [
                 (&folded[0], Real::zero(), half.clone()),
                 (&folded[1], half.clone(), Real::one()),
@@ -185812,10 +185695,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = overlaps.as_slice() else {
                 panic!("the analytic quarter must retain one monotone overlap");
             };
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same,
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same,);
             assert_eq!(
                 overlap
                     .other_start_parameter()
@@ -185851,10 +185731,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [reversed] = reversed.as_slice() else {
                 panic!("the reversed analytic quarter must retain one overlap");
             };
-            assert_eq!(
-                reversed.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
-            );
+            assert_eq!(reversed.orientation(), CurveOverlapOrientation2::Reversed,);
 
             let cusp_overlap_start = overlap.cusp_start_parameter();
             let cusp_overlap_end = overlap.cusp_end_parameter();
@@ -189192,10 +189069,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 overlap.second_range().scalar_endpoints(),
                 Some((&Real::one(), &half)),
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed,
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed,);
             assert!(overlap.includes_start());
             assert!(!overlap.includes_end());
             assert!(component.selected_pairs().is_empty());
@@ -189267,7 +189141,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     assert_eq!(evidence.overlaps.len(), expected_overlaps);
                     assert_eq!(evidence.component_overlaps.len(), expected_overlaps);
                     assert!(evidence.overlaps.iter().any(|overlap| {
-                        overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
+                        overlap.orientation() == CurveOverlapOrientation2::Reversed
                             && overlap.second_range().scalar_endpoints()
                                 == Some((
                                     &Real::one(),
@@ -189276,7 +189150,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     }));
                     if expected_overlaps == 2 {
                         assert!(evidence.overlaps.iter().any(|overlap| {
-                            overlap.orientation() == RationalBezierOverlapOrientation2::Same
+                            overlap.orientation() == CurveOverlapOrientation2::Same
                                 && overlap.second_range().scalar_endpoints()
                                     == Some((
                                         &Real::zero(),
@@ -191133,7 +191007,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 parameter(Real::one()),
                 parameter(half.clone()),
                 parameter(Real::one()),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
                 [true, true],
             ),
             support: Arc::new(BivariatePolynomial::new(vec![
@@ -191257,7 +191131,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 parameter(Real::one()),
                 parameter(Real::zero()),
                 parameter(half.clone()),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
                 [true, true],
             ),
             // 2v-u=0 maps alpha to alpha/2 without leaving its recursive
@@ -191276,7 +191150,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 parameter(Real::one()),
                 parameter(Real::zero()),
                 parameter(Real::one()),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
                 [true, true],
             ),
             // v-u^3=0 forces the reverse map through the complete projected
@@ -191298,7 +191172,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 parameter(Real::one()),
                 parameter(half.clone()),
                 parameter(Real::one()),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
                 [true, true],
             ),
             // (v-u)(v-(1-u))=0 has two ordered unit roots. The authored
@@ -191318,7 +191192,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 parameter(Real::one()),
                 parameter(Real::zero()),
                 parameter(Real::one()),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
                 [true, true],
             ),
             // v-u+(u^2-1/2)v^3=0 specializes to v=u at the selected
@@ -191631,10 +191505,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 overlap.second_range().scalar_endpoints(),
                 Some((&one, &half))
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
             assert!(overlap.includes_start());
             assert!(!overlap.includes_end());
         }
@@ -191726,10 +191597,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
             assert!(system.selected_pairs().is_empty());
             assert!(system.excluded_pairs().is_empty());
             #[cfg(feature = "dispatch-trace")]
@@ -191790,10 +191658,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 overlap.second_range().scalar_endpoints(),
                 Some((&quarter, &Real::one()))
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
         }
     }
 
@@ -191965,10 +191830,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 real_sign(&(second_end - &alpha), &policy),
                 Some(RealSign::Zero)
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
         }
     }
 
@@ -192023,10 +191885,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 .unwrap(),
                 Classification::Decided(RealSign::Zero)
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 
             let Classification::Decided(Some(partitioned)) =
                 parameter_component_system(&equations, &crossing_branch, &policy, config).unwrap()
@@ -192095,12 +191954,18 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
             assert_eq!(system.overlaps.len(), 2);
             assert!(system.selected_pairs().is_empty());
-            assert!(system.overlaps.iter().any(|overlap| {
-                overlap.orientation() == RationalBezierOverlapOrientation2::Same
-            }));
-            assert!(system.overlaps.iter().any(|overlap| {
-                overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
-            }));
+            assert!(
+                system
+                    .overlaps
+                    .iter()
+                    .any(|overlap| { overlap.orientation() == CurveOverlapOrientation2::Same })
+            );
+            assert!(
+                system
+                    .overlaps
+                    .iter()
+                    .any(|overlap| { overlap.orientation() == CurveOverlapOrientation2::Reversed })
+            );
             let Classification::Decided(candidate_system) =
                 parallel_candidate_system_from_parameter_components(system, &policy).unwrap()
             else {
@@ -192194,12 +192059,18 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
             assert_eq!(system.overlaps.len(), 2);
             assert!(system.selected_pairs().is_empty());
-            assert!(system.overlaps.iter().any(|overlap| {
-                overlap.orientation() == RationalBezierOverlapOrientation2::Same
-            }));
-            assert!(system.overlaps.iter().any(|overlap| {
-                overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
-            }));
+            assert!(
+                system
+                    .overlaps
+                    .iter()
+                    .any(|overlap| { overlap.orientation() == CurveOverlapOrientation2::Same })
+            );
+            assert!(
+                system
+                    .overlaps
+                    .iter()
+                    .any(|overlap| { overlap.orientation() == CurveOverlapOrientation2::Reversed })
+            );
         }
     }
 
@@ -192236,7 +192107,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert!(system.selected_pairs().is_empty());
             assert_eq!(
                 system.overlaps[0].orientation(),
-                RationalBezierOverlapOrientation2::Same
+                CurveOverlapOrientation2::Same
             );
         }
     }
@@ -192282,10 +192153,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 overlap.second_range().scalar_endpoints(),
                 Some((&Real::one(), &Real::zero()))
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
         }
     }
 
@@ -192298,7 +192166,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     vec![Real::from(-3_i8)],
                     vec![Real::from(-1_i8)],
                 ]),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             ),
             (
                 BivariatePolynomial::new(vec![
@@ -192306,7 +192174,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     vec![Real::from(-3_i8)],
                     vec![Real::from(-1_i8)],
                 ]),
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
             ),
             (
                 BivariatePolynomial::new(vec![
@@ -192314,7 +192182,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     vec![Real::from(-1_i8)],
                     vec![Real::from(-1_i8)],
                 ]),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             ),
             (
                 BivariatePolynomial::new(vec![
@@ -192329,7 +192197,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     vec![Real::zero()],
                     vec![Real::from(-1_i8)],
                 ]),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             ),
         ];
         let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
@@ -192356,11 +192224,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 assert_eq!(overlap.first_range().start().scalar(), Some(&Real::zero()));
                 assert_eq!(overlap.first_range().end().scalar(), Some(&Real::one()));
                 match expected_orientation {
-                    RationalBezierOverlapOrientation2::Same => {
+                    CurveOverlapOrientation2::Same => {
                         assert_eq!(overlap.second_range().start().scalar(), Some(&Real::zero()));
                         assert_eq!(overlap.second_range().end().scalar(), Some(&Real::one()));
                     }
-                    RationalBezierOverlapOrientation2::Reversed => {
+                    CurveOverlapOrientation2::Reversed => {
                         assert_eq!(overlap.second_range().start().scalar(), Some(&Real::one()));
                         assert_eq!(overlap.second_range().end().scalar(), Some(&Real::zero()));
                     }
@@ -192409,14 +192277,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 ascending.first_range().scalar_endpoints(),
                 Some((&half, &Real::one()))
             );
-            assert_eq!(
-                descending.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
-            assert_eq!(
-                ascending.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(descending.orientation(), CurveOverlapOrientation2::Reversed);
+            assert_eq!(ascending.orientation(), CurveOverlapOrientation2::Same);
             assert_eq!(
                 descending.second_range().start().scalar(),
                 Some(&Real::one())
@@ -192485,9 +192347,9 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     last.orientation(),
                 ],
                 [
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Reversed,
-                    RationalBezierOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Same,
                 ]
             );
             assert_eq!(first.second_range().end(), middle.second_range().start());
@@ -192546,14 +192408,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 ascending.second_range().start().scalar(),
                 Some(&Real::zero())
             );
-            assert_eq!(
-                descending.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
-            assert_eq!(
-                ascending.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(descending.orientation(), CurveOverlapOrientation2::Reversed);
+            assert_eq!(ascending.orientation(), CurveOverlapOrientation2::Same);
         }
     }
 
@@ -192598,11 +192454,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             }
             assert_eq!(lower.second_range().start().scalar(), Some(&Real::zero()));
             assert_eq!(upper.second_range().start().scalar(), Some(&Real::one()));
-            assert_eq!(lower.orientation(), RationalBezierOverlapOrientation2::Same);
-            assert_eq!(
-                upper.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
+            assert_eq!(lower.orientation(), CurveOverlapOrientation2::Same);
+            assert_eq!(upper.orientation(), CurveOverlapOrientation2::Reversed);
             assert!(lower.second_range().end().scalar().is_none());
             assert!(upper.second_range().end().scalar().is_none());
 
@@ -192616,7 +192469,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             };
             assert_eq!(
                 selected_upper.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
+                CurveOverlapOrientation2::Reversed
             );
             assert_eq!(
                 selected_upper.second_range().start().scalar(),
@@ -192682,10 +192535,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     upper_right.orientation(),
                 ],
                 [
-                    RationalBezierOverlapOrientation2::Reversed,
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Reversed,
                 ]
             );
 
@@ -192700,8 +192553,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(
                 [upper_left.orientation(), upper_right.orientation()],
                 [
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Reversed,
                 ]
             );
         }
@@ -192756,10 +192609,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     upper_right.orientation(),
                 ],
                 [
-                    RationalBezierOverlapOrientation2::Reversed,
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Reversed,
                 ]
             );
             for overlap in [lower_left, upper_left] {
@@ -192838,10 +192691,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     upper_right.orientation(),
                 ],
                 [
-                    RationalBezierOverlapOrientation2::Reversed,
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Reversed,
                 ]
             );
             for overlap in evidence.overlaps.iter() {
@@ -193022,9 +192875,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 evidence
                     .overlaps
                     .iter()
-                    .filter(|overlap| {
-                        overlap.orientation() == RationalBezierOverlapOrientation2::Same
-                    })
+                    .filter(|overlap| { overlap.orientation() == CurveOverlapOrientation2::Same })
                     .count(),
                 4
             );
@@ -193180,10 +193031,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
         }
     }
 
@@ -193277,8 +193125,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             assert_eq!(
                 [descending.orientation(), ascending.orientation(),],
                 [
-                    RationalBezierOverlapOrientation2::Reversed,
-                    RationalBezierOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Same,
                 ]
             );
             assert_eq!(descending.second_range().start().scalar(), Some(&half));
@@ -193391,10 +193239,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 overlap.second_range().scalar_endpoints(),
                 Some((&Real::zero(), &Real::one()))
             );
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
         }
     }
 
@@ -193584,10 +193429,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     upper_right.orientation(),
                 ],
                 [
-                    RationalBezierOverlapOrientation2::Reversed,
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Same,
-                    RationalBezierOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Reversed,
                 ]
             );
         }
@@ -193628,14 +193473,8 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [descending, ascending] = system.overlaps.as_ref() else {
                 panic!("one algebraic turning event must produce two cells");
             };
-            assert_eq!(
-                descending.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
-            assert_eq!(
-                ascending.orientation(),
-                RationalBezierOverlapOrientation2::Same
-            );
+            assert_eq!(descending.orientation(), CurveOverlapOrientation2::Reversed);
+            assert_eq!(ascending.orientation(), CurveOverlapOrientation2::Same);
             assert_eq!(
                 descending.first_range().start().scalar(),
                 Some(&Real::zero())
@@ -194130,10 +193969,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             let [overlap] = system.overlaps.as_ref() else {
                 panic!("only the selected component should survive branch replay");
             };
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
             assert_eq!(
                 overlap.second_range().scalar_endpoints(),
                 Some((
@@ -194783,7 +194619,7 @@ mod chord_overlap_transport_tests {
                     Real::one().into(),
                     Real::from(2).into(),
                 ),
-                orientation: RationalBezierOverlapOrientation2::Same,
+                orientation: CurveOverlapOrientation2::Same,
             };
             let cut = chord_cut(&overlap, Real::from(2), Real::from(3), &policy);
             let clipped = exact(

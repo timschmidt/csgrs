@@ -2,9 +2,9 @@ use hypercurve::BezierAlgebraicImageStatus;
 use hypercurve::{
     Axis2, BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
     BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveFamily2, CurveIntersectionCandidates2, CurveOperation2, CurvePoint2, LineSeg2, ParamRange,
-    Point2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
-    RationalBezierOverlapOrientation2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
+    CurveFamily2, CurveIntersectionCandidates2, CurveOperation2, CurveOverlapOrientation2,
+    CurvePoint2, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalBezier2,
+    RationalBezierIntersectionContacts2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
     Real,
 };
 use hyperreal::Rational;
@@ -158,9 +158,9 @@ fn independent_quadratic_tail_overlap_retains_one_exact_interval() {
                     assert_eq!(
                         overlap.orientation(),
                         if reversed {
-                            RationalBezierOverlapOrientation2::Reversed
+                            CurveOverlapOrientation2::Reversed
                         } else {
-                            RationalBezierOverlapOrientation2::Same
+                            CurveOverlapOrientation2::Same
                         }
                     );
                     for (range, expected) in [
@@ -613,17 +613,17 @@ fn general_rational_contacts_recognize_projective_scale_and_reversal() {
     for (other, orientation, second_range) in [
         (
             curve.clone(),
-            RationalBezierOverlapOrientation2::Same,
+            CurveOverlapOrientation2::Same,
             ParamRange::new(r(0), r(1)),
         ),
         (
             scaled,
-            RationalBezierOverlapOrientation2::Same,
+            CurveOverlapOrientation2::Same,
             ParamRange::new(r(0), r(1)),
         ),
         (
             curve.reversed(),
-            RationalBezierOverlapOrientation2::Reversed,
+            CurveOverlapOrientation2::Reversed,
             ParamRange::new(r(1), r(0)),
         ),
     ] {
@@ -1136,10 +1136,7 @@ fn rational_resultant_replays_identical_and_reversed_full_image_overlap() {
     else {
         panic!("identical curve did not retain certified overlap");
     };
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
     assert_eq!(
         overlap.first_range(),
         &ParamRange::new(Real::zero(), Real::one())
@@ -1154,10 +1151,7 @@ fn rational_resultant_replays_identical_and_reversed_full_image_overlap() {
     else {
         panic!("reversed curve did not retain certified overlap");
     };
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Reversed
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
     assert_eq!(
         overlap.second_range(),
         &ParamRange::new(Real::one(), Real::zero())
@@ -1196,10 +1190,7 @@ fn projectively_reparameterized_rational_quadratic_certifies_shared_conic() {
         overlap.second_range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 
     let RationalBezierIntersectionContacts2::Overlap(reversed) = first
         .intersection_contacts(&second.reversed(), &CurveContext::STRICT)
@@ -1207,10 +1198,7 @@ fn projectively_reparameterized_rational_quadratic_certifies_shared_conic() {
     else {
         panic!("reversed projective conic did not retain overlap");
     };
-    assert_eq!(
-        reversed.orientation(),
-        RationalBezierOverlapOrientation2::Reversed
-    );
+    assert_eq!(reversed.orientation(), CurveOverlapOrientation2::Reversed);
     assert_eq!(
         reversed.second_range().scalar_endpoints(),
         Some((&Real::one(), &Real::zero()))
@@ -1257,10 +1245,7 @@ fn independently_trimmed_projective_conics_retain_partial_overlap() {
             .unwrap(),
         Classification::Decided(std::cmp::Ordering::Less)
     ));
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 }
 
 #[test]
@@ -1306,10 +1291,7 @@ fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
     let RationalBezierIntersectionContacts2::Overlap(overlap) = contacts else {
         panic!("partial nonlinear shared image did not retain certified overlap: {contacts:?}");
     };
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
     assert_eq!(
         overlap.first_range(),
         &ParamRange::new(q(1, 2), Real::one())
@@ -1325,10 +1307,7 @@ fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
     else {
         panic!("reversed partial nonlinear shared image did not retain certified overlap");
     };
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Reversed
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
     assert_eq!(
         overlap.first_range(),
         &ParamRange::new(q(1, 2), Real::one())
@@ -1409,10 +1388,7 @@ fn line_image_overlap_retains_irrational_algebraic_parameter_boundary() {
         overlap.second_range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 }
 
 #[test]
@@ -1438,10 +1414,7 @@ fn line_image_overlap_accepts_monotone_parameterization_with_stationary_point() 
         overlap.second_range().scalar_endpoints(),
         Some((&Real::zero(), &Real::one()))
     );
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 }
 
 #[test]
@@ -1489,10 +1462,7 @@ fn polynomial_graph_overlap_retains_irrational_curved_boundary() {
         BezierParameter2::Algebraic(_)
     ));
     assert_eq!(overlap.second_range().end().scalar(), Some(&Real::one()));
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 }
 
 #[test]

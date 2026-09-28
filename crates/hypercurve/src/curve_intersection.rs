@@ -21,8 +21,7 @@ use crate::{
     CurveGeometry2, CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2,
     CurvePoint2, CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult,
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange,
-    Point2, RationalBezier2, RationalBezierIntersectionContacts2,
-    RationalBezierOverlapOrientation2, UncertaintyReason,
+    Point2, RationalBezier2, RationalBezierIntersectionContacts2, UncertaintyReason,
 };
 
 /// Exact location in a curve's retained span chart.
@@ -105,6 +104,15 @@ impl CurveIntersectionParameterComponent2 {
     }
 }
 
+/// Relative parameter orientation of a certified shared curve image.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CurveOverlapOrientation2 {
+    /// Both parameter domains traverse the shared image in the same direction.
+    Same,
+    /// The second parameter domain traverses the shared image in reverse.
+    Reversed,
+}
+
 /// Certified positive-length overlap between two retained curve spans.
 ///
 /// The oriented ranges bound the overlap closure. Endpoint inclusion remains
@@ -115,7 +123,7 @@ pub struct CurveIntersectionOverlap2 {
     pub(crate) second_span_index: usize,
     pub(crate) first_range: CurveParameterRange2,
     pub(crate) second_range: CurveParameterRange2,
-    pub(crate) orientation: RationalBezierOverlapOrientation2,
+    pub(crate) orientation: CurveOverlapOrientation2,
     pub(crate) endpoint_inclusion: [bool; 2],
     pub(crate) parameter_correspondence: CurveOverlapCorrespondence2,
 }
@@ -162,7 +170,7 @@ pub(crate) enum CurveCircleOverlap2 {
 }
 
 impl CurveCircleOverlap2 {
-    pub(crate) fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub(crate) fn orientation(&self) -> CurveOverlapOrientation2 {
         match self {
             Self::Pair(source) => source.orientation(),
             Self::Mapped(source) => source.orientation(),
@@ -407,7 +415,7 @@ impl CurveOverlapCorrespondence2 {
         second: &RationalBezier2,
         first_range: &BezierParameterRange2,
         second_range: &BezierParameterRange2,
-        orientation: RationalBezierOverlapOrientation2,
+        orientation: CurveOverlapOrientation2,
         policy: &CurveContext,
     ) -> Self {
         let overlap = crate::RationalBezierIntersectionOverlap2::from_certified_parameters(
@@ -866,7 +874,7 @@ enum PreparedRationalPair {
     RetainedLineageOverlap {
         first_range: ParamRange,
         second_range: ParamRange,
-        orientation: RationalBezierOverlapOrientation2,
+        orientation: CurveOverlapOrientation2,
     },
     Blocked(UncertaintyReason),
 }
@@ -938,9 +946,9 @@ fn prepare_rational_pairs(
                     first_range: overlap.first,
                     second_range: overlap.second,
                     orientation: if overlap.same_orientation {
-                        RationalBezierOverlapOrientation2::Same
+                        CurveOverlapOrientation2::Same
                     } else {
-                        RationalBezierOverlapOrientation2::Reversed
+                        CurveOverlapOrientation2::Reversed
                     },
                 });
                 continue;
@@ -1226,8 +1234,8 @@ fn build_native_line_evidence(
             b_range,
         } => {
             let orientation = match compare_reals(b_range.start(), b_range.end(), policy) {
-                Some(std::cmp::Ordering::Less) => RationalBezierOverlapOrientation2::Same,
-                Some(std::cmp::Ordering::Greater) => RationalBezierOverlapOrientation2::Reversed,
+                Some(std::cmp::Ordering::Less) => CurveOverlapOrientation2::Same,
+                Some(std::cmp::Ordering::Greater) => CurveOverlapOrientation2::Reversed,
                 Some(std::cmp::Ordering::Equal) => {
                     return Err(ExactCurveError::invalid(
                         CurveOperation2::Intersection,
@@ -1731,10 +1739,10 @@ fn build_native_coincident_arc_evidence(
                         .map_err(|cause| native_arc_parameter_error(second, cause))?
                     {
                         Classification::Decided(std::cmp::Ordering::Less) => {
-                            RationalBezierOverlapOrientation2::Same
+                            CurveOverlapOrientation2::Same
                         }
                         Classification::Decided(std::cmp::Ordering::Greater) => {
-                            RationalBezierOverlapOrientation2::Reversed
+                            CurveOverlapOrientation2::Reversed
                         }
                         Classification::Decided(std::cmp::Ordering::Equal) => {
                             return Err(native_arc_parameter_error(
@@ -2691,7 +2699,7 @@ impl CurveIntersectionOverlap2 {
     }
 
     /// Returns relative traversal orientation on the shared image.
-    pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub const fn orientation(&self) -> CurveOverlapOrientation2 {
         self.orientation
     }
 

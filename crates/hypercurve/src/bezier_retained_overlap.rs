@@ -23,9 +23,9 @@ use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::{
     Aabb2, BezierArrangementChain2, BezierArrangementGraph2, BezierArrangementTraversal2,
     BezierCurveRelation, BezierParameter2, BezierParameterRange2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CurveContext, CurveError, CurveResult, LineLineIntersection,
-    LineSeg2, ParamRange, Point2, RationalBezier2, RationalBezierIntersectionContacts2,
-    RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2, UncertaintyReason,
+    BezierSubcurve2, Classification, CurveContext, CurveError, CurveOverlapOrientation2,
+    CurveResult, LineLineIntersection, LineSeg2, ParamRange, Point2, RationalBezier2,
+    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2, UncertaintyReason,
 };
 
 /// Exact positive-dimensional overlap relation between two arrangement fragments.
@@ -364,7 +364,7 @@ pub struct BezierRetainedRationalOverlapSplit2 {
     second_fragment_index: usize,
     first_bezier_range: ParamRange,
     second_bezier_range: ParamRange,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     extent: BezierRetainedOverlapExtent2,
 }
 
@@ -387,7 +387,7 @@ pub struct BezierRetainedResolvedRationalOverlap2 {
     second_original_fragment_index: usize,
     first_local_range: ParamRange,
     second_local_range: ParamRange,
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
     extent: BezierRetainedOverlapExtent2,
 }
 
@@ -459,7 +459,7 @@ impl BezierRetainedRationalOverlapSplit2 {
         second_fragment_index: usize,
         first_bezier_range: ParamRange,
         second_bezier_range: ParamRange,
-        orientation: RationalBezierOverlapOrientation2,
+        orientation: CurveOverlapOrientation2,
         extent: BezierRetainedOverlapExtent2,
     ) -> CurveResult<Self> {
         validate_ordered_overlap_indices(first_fragment_index, second_fragment_index)?;
@@ -495,7 +495,7 @@ impl BezierRetainedRationalOverlapSplit2 {
     }
 
     /// Returns the relative traversal orientation of the shared image.
-    pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub const fn orientation(&self) -> CurveOverlapOrientation2 {
         self.orientation
     }
 
@@ -1133,7 +1133,7 @@ impl BezierRetainedResolvedRationalOverlap2 {
         second_original_fragment_index: usize,
         first_local_range: ParamRange,
         second_local_range: ParamRange,
-        orientation: RationalBezierOverlapOrientation2,
+        orientation: CurveOverlapOrientation2,
         extent: BezierRetainedOverlapExtent2,
     ) -> CurveResult<Self> {
         validate_ordered_overlap_indices(
@@ -1188,7 +1188,7 @@ impl BezierRetainedResolvedRationalOverlap2 {
     }
 
     /// Returns the relative orientation of the refined overlap span.
-    pub const fn orientation(&self) -> RationalBezierOverlapOrientation2 {
+    pub const fn orientation(&self) -> CurveOverlapOrientation2 {
         self.orientation
     }
 
@@ -2643,10 +2643,10 @@ fn traverse_consuming_resolved_rational_overlaps(
     let mut consumed = vec![false; refinement.graph().len()];
     for overlap in refinement.resolved_overlaps() {
         match overlap.orientation() {
-            RationalBezierOverlapOrientation2::Same => {
+            CurveOverlapOrientation2::Same => {
                 consumed[overlap.second_refined_fragment_index()] = true;
             }
-            RationalBezierOverlapOrientation2::Reversed => {
+            CurveOverlapOrientation2::Reversed => {
                 consumed[overlap.first_refined_fragment_index()] = true;
                 consumed[overlap.second_refined_fragment_index()] = true;
             }

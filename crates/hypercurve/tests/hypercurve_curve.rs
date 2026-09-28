@@ -3290,7 +3290,7 @@ fn direct_bezier_pair_fillet_retains_both_incident_extensions() {
                             assert!(overlap.includes_start() && overlap.includes_end());
                             assert_eq!(
                                 overlap.orientation(),
-                                hypercurve::RationalBezierOverlapOrientation2::Same
+                                hypercurve::CurveOverlapOrientation2::Same
                             );
                             ascending(overlap.first_range())
                         })

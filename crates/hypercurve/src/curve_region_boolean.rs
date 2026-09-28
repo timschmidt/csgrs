@@ -40,12 +40,11 @@ use crate::{
     BezierParameterRange2, BezierSplitFragment2, BezierSubcurve2, BooleanOp, Classification,
     ContourPointLocation, Curve2, CurveContext, CurveError, CurveFamily2,
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
-    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveParameter2,
-    CurveParameterRange2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, CurveResult,
-    ExactCurveError, ExactCurveResult, FillRule, LineSeg2, LineSide, QuadraticBezier2,
-    RationalBezier2, RationalBezierIntersectionOverlap2, RationalBezierOverlapOrientation2,
-    RationalBezierPointIncidence2, Real, RealSign, RegionPointLocation, Segment2,
-    UncertaintyReason,
+    CurveIntersectionPairBlockerKind2, CurveOperation2, CurveOutcome, CurveOverlapOrientation2,
+    CurveParameter2, CurveParameterRange2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
+    CurveResult, ExactCurveError, ExactCurveResult, FillRule, LineSeg2, LineSide, QuadraticBezier2,
+    RationalBezier2, RationalBezierIntersectionOverlap2, RationalBezierPointIncidence2, Real,
+    RealSign, RegionPointLocation, Segment2, UncertaintyReason,
 };
 
 /// Region operand that owns one retained Boolean carrier.
@@ -290,7 +289,7 @@ struct CarrierOverlap {
     second_range: CurveParameterRange2,
     first_endpoint_vertices: [usize; 2],
     second_endpoint_vertices: [usize; 2],
-    orientation: RationalBezierOverlapOrientation2,
+    orientation: CurveOverlapOrientation2,
 }
 
 impl CarrierOverlap {
@@ -2539,12 +2538,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         Some(Ordering::Less) => (
                             b_range.start().clone(),
                             b_range.end().clone(),
-                            RationalBezierOverlapOrientation2::Same,
+                            CurveOverlapOrientation2::Same,
                         ),
                         Some(Ordering::Greater) => (
                             b_range.end().clone(),
                             b_range.start().clone(),
-                            RationalBezierOverlapOrientation2::Reversed,
+                            CurveOverlapOrientation2::Reversed,
                         ),
                         Some(Ordering::Equal) => {
                             return Err(self.invalid(
@@ -5912,7 +5911,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn paired_overlap_ranges(
         &self,
         pair: &RegionCarrierPair,
-        orientation: RationalBezierOverlapOrientation2,
+        orientation: CurveOverlapOrientation2,
         (first, second): (CurveParameterRange2, CurveParameterRange2),
     ) -> ExactCurveResult<(CurveParameterRange2, CurveParameterRange2)> {
         let first_direction = decided_parameter_cmp(first.start(), first.end(), &self.data.policy)?;
@@ -5922,7 +5921,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Err(self.invalid(pair.first_carrier_index, CurveError::DegenerateOverlapRange));
         }
         let corresponding = (first_direction == second_direction)
-            == (orientation == RationalBezierOverlapOrientation2::Same);
+            == (orientation == CurveOverlapOrientation2::Same);
         let second = if corresponding {
             second
         } else {
@@ -7270,64 +7269,63 @@ impl<'a> CurveRegionBooleanContext<'a> {
             winding_sector_links.push((right_face(incoming), right_face(outgoing)));
         }
 
-        let overlap_orientation_between_edges = |first_edge: usize,
-                                                 second_edge: usize|
-         -> ExactCurveResult<Option<bool>> {
-            let (first_carrier_index, first_split_index) = edge_sources[first_edge];
-            let (second_carrier_index, second_split_index) = edge_sources[second_edge];
-            let first_fragment =
-                &topology.split_fragments[first_carrier_index][first_split_index].fragment;
-            let second_fragment =
-                &topology.split_fragments[second_carrier_index][second_split_index].fragment;
-            let first_range = first_fragment.curve_region_parameter_range();
-            let second_range = second_fragment.curve_region_parameter_range();
-            let mut relation = None;
-            for overlap in &topology.overlaps {
-                let ranges = if overlap.first_carrier_index == first_carrier_index
-                    && overlap.second_carrier_index == second_carrier_index
-                {
-                    Some((&overlap.first_range, &overlap.second_range))
-                } else if overlap.second_carrier_index == first_carrier_index
-                    && overlap.first_carrier_index == second_carrier_index
-                {
-                    Some((&overlap.second_range, &overlap.first_range))
-                } else {
-                    None
-                };
-                let Some((first_overlap, second_overlap)) = ranges else {
-                    continue;
-                };
-                if !range_contains_fragment(
-                    first_overlap,
-                    first_range.start(),
-                    first_range.end(),
-                    &self.data.policy,
-                )? || !range_contains_fragment(
-                    second_overlap,
-                    second_range.start(),
-                    second_range.end(),
-                    &self.data.policy,
-                )? {
-                    continue;
-                }
-                let reversed = (overlap.orientation == RationalBezierOverlapOrientation2::Reversed)
-                    ^ self.data.carriers[first_carrier_index].reversed
-                    ^ self.data.carriers[second_carrier_index].reversed;
-                match relation {
-                    Some(existing) if existing != reversed => {
-                        return Err(self.invalid(
-                            first_carrier_index,
-                            CurveError::Topology(
-                                "overlap orientations disagree at a contact sector".into(),
-                            ),
-                        ));
+        let overlap_orientation_between_edges =
+            |first_edge: usize, second_edge: usize| -> ExactCurveResult<Option<bool>> {
+                let (first_carrier_index, first_split_index) = edge_sources[first_edge];
+                let (second_carrier_index, second_split_index) = edge_sources[second_edge];
+                let first_fragment =
+                    &topology.split_fragments[first_carrier_index][first_split_index].fragment;
+                let second_fragment =
+                    &topology.split_fragments[second_carrier_index][second_split_index].fragment;
+                let first_range = first_fragment.curve_region_parameter_range();
+                let second_range = second_fragment.curve_region_parameter_range();
+                let mut relation = None;
+                for overlap in &topology.overlaps {
+                    let ranges = if overlap.first_carrier_index == first_carrier_index
+                        && overlap.second_carrier_index == second_carrier_index
+                    {
+                        Some((&overlap.first_range, &overlap.second_range))
+                    } else if overlap.second_carrier_index == first_carrier_index
+                        && overlap.first_carrier_index == second_carrier_index
+                    {
+                        Some((&overlap.second_range, &overlap.first_range))
+                    } else {
+                        None
+                    };
+                    let Some((first_overlap, second_overlap)) = ranges else {
+                        continue;
+                    };
+                    if !range_contains_fragment(
+                        first_overlap,
+                        first_range.start(),
+                        first_range.end(),
+                        &self.data.policy,
+                    )? || !range_contains_fragment(
+                        second_overlap,
+                        second_range.start(),
+                        second_range.end(),
+                        &self.data.policy,
+                    )? {
+                        continue;
                     }
-                    Some(_) => {}
-                    None => relation = Some(reversed),
+                    let reversed = (overlap.orientation == CurveOverlapOrientation2::Reversed)
+                        ^ self.data.carriers[first_carrier_index].reversed
+                        ^ self.data.carriers[second_carrier_index].reversed;
+                    match relation {
+                        Some(existing) if existing != reversed => {
+                            return Err(self.invalid(
+                                first_carrier_index,
+                                CurveError::Topology(
+                                    "overlap orientations disagree at a contact sector".into(),
+                                ),
+                            ));
+                        }
+                        Some(_) => {}
+                        None => relation = Some(reversed),
+                    }
                 }
-            }
-            Ok(relation)
-        };
+                Ok(relation)
+            };
 
         // Interior crossing and tangent certificates fix the local face
         // sectors without materializing the contact coordinate. At authored
@@ -7598,7 +7596,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let second_edges = collect_edges(overlap.second_carrier_index, &overlap.second_range)?;
             let first_carrier = &self.data.carriers[overlap.first_carrier_index];
             let second_carrier = &self.data.carriers[overlap.second_carrier_index];
-            let reversed = (overlap.orientation == RationalBezierOverlapOrientation2::Reversed)
+            let reversed = (overlap.orientation == CurveOverlapOrientation2::Reversed)
                 ^ first_carrier.reversed
                 ^ second_carrier.reversed;
 
@@ -11668,7 +11666,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
         let first = &self.data.carriers[overlap.first_carrier_index];
         let second = &self.data.carriers[overlap.second_carrier_index];
-        let same_source_direction = overlap.orientation == RationalBezierOverlapOrientation2::Same;
+        let same_source_direction = overlap.orientation == CurveOverlapOrientation2::Same;
         let same_traversal = same_source_direction == (first.reversed == second.reversed);
         if let Some(action) =
             self.shared_algebraic_chord_action(overlap, fragment, same_traversal, operation)?
@@ -16304,7 +16302,7 @@ mod certified_successor_tests {
                 first_range.end().clone(),
                 second_range.start().clone(),
                 second_range.end().clone(),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
                 [true, true],
             );
             let endpoint_correspondence =
@@ -18441,7 +18439,7 @@ mod certified_successor_tests {
             assert_eq!(intersections.overlaps().len(), 1, "{intersections:?}");
             assert_eq!(
                 intersections.overlaps()[0].overlap().orientation(),
-                RationalBezierOverlapOrientation2::Reversed
+                CurveOverlapOrientation2::Reversed
             );
             assert!(
                 intersections.overlaps()[0]
@@ -18535,7 +18533,7 @@ mod certified_successor_tests {
             let [overlap] = pair_result.overlaps.as_slice() else {
                 panic!("expected one algebraic chord overlap: {pair_result:?}");
             };
-            assert_eq!(overlap.orientation, RationalBezierOverlapOrientation2::Same);
+            assert_eq!(overlap.orientation, CurveOverlapOrientation2::Same);
             assert!(overlap.first_range.start().is_algebraic_chord());
             assert!(overlap.second_range.start().is_algebraic_chord());
 
@@ -18702,12 +18700,12 @@ mod certified_successor_tests {
                 (
                     LineSeg2::try_new(Point2::from_values(2, 0), Point2::from_values(5, 0))
                         .unwrap(),
-                    RationalBezierOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
                 ),
                 (
                     LineSeg2::try_new(Point2::from_values(5, 0), Point2::from_values(2, 0))
                         .unwrap(),
-                    RationalBezierOverlapOrientation2::Reversed,
+                    CurveOverlapOrientation2::Reversed,
                 ),
             ] {
                 let result = evaluate(line);
@@ -19693,7 +19691,7 @@ mod certified_successor_tests {
             let [overlap] = overlap.overlaps.as_slice() else {
                 panic!("expected one chord/parallel overlap: {overlap:?}");
             };
-            assert_eq!(overlap.orientation, RationalBezierOverlapOrientation2::Same);
+            assert_eq!(overlap.orientation, CurveOverlapOrientation2::Same);
             assert!(overlap.first_range.start().is_algebraic_chord());
             assert!(overlap.second_range.start().as_bezier_parameter().is_some());
 
@@ -19765,7 +19763,7 @@ mod certified_successor_tests {
             };
             assert_eq!(
                 selected_overlap.overlap().orientation(),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             );
             #[cfg(feature = "dispatch-trace")]
             {
@@ -20029,7 +20027,7 @@ mod certified_successor_tests {
             };
             assert_eq!(
                 opaque_overlap.overlap().orientation(),
-                RationalBezierOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
             );
             for (actual, expected) in [
                 (
@@ -20134,7 +20132,7 @@ mod certified_successor_tests {
                 };
                 assert_eq!(
                     algebraic_overlap.overlap().orientation(),
-                    RationalBezierOverlapOrientation2::Same,
+                    CurveOverlapOrientation2::Same,
                 );
                 assert_eq!(
                     algebraic_overlap
@@ -21294,7 +21292,7 @@ mod certified_successor_tests {
             assert!(!pair_result.contacts[0].is_certified_transverse());
             assert_eq!(
                 pair_result.overlaps[0].orientation,
-                RationalBezierOverlapOrientation2::Same
+                CurveOverlapOrientation2::Same
             );
 
             let evidence = context

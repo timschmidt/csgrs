@@ -186,7 +186,7 @@ pub use curve_intersection::{
     CurveIntersectionCandidates2, CurveIntersectionContact2, CurveIntersectionOverlap2,
     CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2,
     CurveIntersectionParameterComponent2, CurveIntersectionResult2, CurveIntersectionTopology2,
-    CurveLocation2, CurveParameterSet2,
+    CurveLocation2, CurveOverlapOrientation2, CurveParameterSet2,
 };
 pub use curve_path_intersection::{
     CurvePathIntersectionBlocker2, CurvePathIntersectionContact2, CurvePathIntersectionOverlap2,
@@ -242,8 +242,7 @@ pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{
     HomogeneousControl2, RationalBezier2, RationalBezierIntersectionContact2,
     RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionTopology2, RationalBezierOverlapOrientation2,
-    RationalBezierPointIncidence2,
+    RationalBezierIntersectionTopology2, RationalBezierPointIncidence2,
 };
 pub use reconstruct::PolylineReconstructionOptions;
 pub use region::RegionPointLocation;

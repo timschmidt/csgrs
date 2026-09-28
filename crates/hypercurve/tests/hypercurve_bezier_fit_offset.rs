@@ -6,10 +6,10 @@ use hypercurve::{
     BezierParallelIntersectionContact2, BezierParallelIntersectionSet2,
     BezierParallelPairIntersectionContact2, BezierParallelPairIntersectionSet2,
     BezierParallelVerificationOptions, BezierParameter2, Classification, CubicBezier2, Curve2,
-    CurveContext, CurveError, CurveIntersectionCandidates2, CurveParameterRange2, CurvePath2,
-    CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, Rational, RationalBezier2, RationalBezierIntersectionOverlap2,
-    RationalBezierOverlapOrientation2, RationalQuadraticBezier2, Real, RealSign,
+    CurveContext, CurveError, CurveIntersectionCandidates2, CurveOverlapOrientation2,
+    CurveParameterRange2, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole, FillRule,
+    LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, Rational, RationalBezier2,
+    RationalBezierIntersectionOverlap2, RationalQuadraticBezier2, Real, RealSign,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -1727,10 +1727,7 @@ fn parallel_pair_structural_overlap_preserves_relative_orientation() {
         let [same_overlap] = same.overlaps() else {
             panic!("identical carriers did not retain one overlap");
         };
-        assert_eq!(
-            same_overlap.orientation(),
-            RationalBezierOverlapOrientation2::Same
-        );
+        assert_eq!(same_overlap.orientation(), CurveOverlapOrientation2::Same);
         assert_eq!(
             same_overlap.second_range().scalar_endpoints(),
             Some((&r(0), &r(1)))
@@ -1746,7 +1743,7 @@ fn parallel_pair_structural_overlap_preserves_relative_orientation() {
         };
         assert_eq!(
             reversed_overlap.orientation(),
-            RationalBezierOverlapOrientation2::Reversed
+            CurveOverlapOrientation2::Reversed
         );
         assert_eq!(
             reversed_overlap.second_range().scalar_endpoints(),
@@ -1772,13 +1769,8 @@ fn parallel_pair_certifies_partial_source_overlap_and_reparameterization() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (second, orientation, second_start, second_end) in [
-            (&same, RationalBezierOverlapOrientation2::Same, r(0), r(1)),
-            (
-                &reversed,
-                RationalBezierOverlapOrientation2::Reversed,
-                r(1),
-                r(0),
-            ),
+            (&same, CurveOverlapOrientation2::Same, r(0), r(1)),
+            (&reversed, CurveOverlapOrientation2::Reversed, r(1), r(0)),
         ] {
             assert_eq!(
                 first
@@ -2602,10 +2594,7 @@ fn parallel_rational_contacts_resolve_selected_and_opposite_shared_components() 
             overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
-        assert_eq!(
-            overlap.orientation(),
-            RationalBezierOverlapOrientation2::Same
-        );
+        assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
         let opposite_intersections =
             decided_parallel_set(parallel.intersections(&opposite, &policy).unwrap());
         assert!(opposite_intersections.is_empty());
@@ -2631,10 +2620,7 @@ fn parallel_rational_contacts_retain_partial_and_reversed_overlap_ranges() {
             overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &q(1, 2)))
         );
-        assert_eq!(
-            overlap.orientation(),
-            RationalBezierOverlapOrientation2::Same
-        );
+        assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 
         let reversed_intersections = decided_parallel_set(
             parallel
@@ -2646,10 +2632,7 @@ fn parallel_rational_contacts_retain_partial_and_reversed_overlap_ranges() {
             reversed.first_range().scalar_endpoints(),
             Some((&q(1, 2), &Real::one()))
         );
-        assert_eq!(
-            reversed.orientation(),
-            RationalBezierOverlapOrientation2::Reversed
-        );
+        assert_eq!(reversed.orientation(), CurveOverlapOrientation2::Reversed);
     }
 }
 
@@ -2686,10 +2669,7 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
             overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
-        assert_eq!(
-            overlap.orientation(),
-            RationalBezierOverlapOrientation2::Same
-        );
+        assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 
         let Classification::Decided(partial) = target
             .subcurve_between_exact(&q(1, 4), &q(3, 4), &policy)
@@ -2708,10 +2688,7 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
             partial.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
-        assert_eq!(
-            partial.orientation(),
-            RationalBezierOverlapOrientation2::Same
-        );
+        assert_eq!(partial.orientation(), CurveOverlapOrientation2::Same);
 
         let reversed_intersections =
             decided_parallel_set(parallel.intersections(&target.reversed(), &policy).unwrap());
@@ -2724,10 +2701,7 @@ fn parallel_rational_contacts_transport_a_nonlinear_rational_parameter_component
             reversed.second_range().scalar_endpoints(),
             Some((&Real::one(), &Real::zero()))
         );
-        assert_eq!(
-            reversed.orientation(),
-            RationalBezierOverlapOrientation2::Reversed
-        );
+        assert_eq!(reversed.orientation(), CurveOverlapOrientation2::Reversed);
     }
 }
 
@@ -2759,10 +2733,7 @@ fn parallel_rational_contacts_transport_an_implicit_parameter_component() {
             overlap.second_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
-        assert_eq!(
-            overlap.orientation(),
-            RationalBezierOverlapOrientation2::Same
-        );
+        assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
     }
 }
 
@@ -2822,10 +2793,10 @@ fn parallel_rational_contacts_partition_two_turning_implicit_graphs() {
                 upper_right.orientation(),
             ],
             [
-                RationalBezierOverlapOrientation2::Reversed,
-                RationalBezierOverlapOrientation2::Same,
-                RationalBezierOverlapOrientation2::Same,
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Reversed,
             ]
         );
     }
@@ -2892,10 +2863,10 @@ fn parallel_rational_contacts_partition_a_closed_implicit_oval() {
                 upper_right.orientation(),
             ],
             [
-                RationalBezierOverlapOrientation2::Reversed,
-                RationalBezierOverlapOrientation2::Same,
-                RationalBezierOverlapOrientation2::Same,
-                RationalBezierOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Same,
+                CurveOverlapOrientation2::Reversed,
             ]
         );
     }
@@ -2940,8 +2911,8 @@ fn parallel_rational_contacts_partition_an_implicit_cusp() {
         assert!(intersections.contacts().is_empty());
         assert_eq!(intersections.overlaps().len(), 2);
         for orientation in [
-            RationalBezierOverlapOrientation2::Reversed,
-            RationalBezierOverlapOrientation2::Same,
+            CurveOverlapOrientation2::Reversed,
+            CurveOverlapOrientation2::Same,
         ] {
             let overlap = intersections
                 .overlaps()
@@ -2989,12 +2960,12 @@ fn parallel_rational_contacts_partition_a_noninjective_parameter_component() {
         let same = intersections
             .overlaps()
             .iter()
-            .find(|overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Same)
+            .find(|overlap| overlap.orientation() == CurveOverlapOrientation2::Same)
             .expect("forward noninjective branch was not retained");
         let reversed = intersections
             .overlaps()
             .iter()
-            .find(|overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Reversed)
+            .find(|overlap| overlap.orientation() == CurveOverlapOrientation2::Reversed)
             .expect("reverse noninjective branch was not retained");
         assert_eq!(
             same.first_range().scalar_endpoints(),
@@ -3090,11 +3061,14 @@ fn parallel_rational_component_can_yield_overlaps_and_an_isolated_contact() {
             intersections
                 .overlaps()
                 .iter()
-                .any(|overlap| overlap.orientation() == RationalBezierOverlapOrientation2::Same)
+                .any(|overlap| overlap.orientation() == CurveOverlapOrientation2::Same)
         );
-        assert!(intersections.overlaps().iter().any(|overlap| {
-            overlap.orientation() == RationalBezierOverlapOrientation2::Reversed
-        }));
+        assert!(
+            intersections
+                .overlaps()
+                .iter()
+                .any(|overlap| { overlap.orientation() == CurveOverlapOrientation2::Reversed })
+        );
     }
 }
 
@@ -3150,10 +3124,7 @@ fn parallel_rational_contacts_clip_a_component_at_both_curve_domains() {
                 .unwrap(),
             Classification::Decided(std::cmp::Ordering::Less)
         );
-        assert_eq!(
-            overlap.orientation(),
-            RationalBezierOverlapOrientation2::Same
-        );
+        assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
     }
 }
 

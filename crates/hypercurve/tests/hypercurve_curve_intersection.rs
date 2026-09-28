@@ -6,8 +6,8 @@ use hypercurve::{
 };
 use hypercurve::{
     BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
-    LineSeg2, Point2, RationalBezier2, RationalBezierOverlapOrientation2, Real,
+    CurveContext, CurveGeometry2, CurveOverlapOrientation2, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, FillRule, LineSeg2, Point2, RationalBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -607,9 +607,9 @@ fn retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts()
                         assert_eq!(
                             overlap.orientation(),
                             if reversed {
-                                RationalBezierOverlapOrientation2::Reversed
+                                CurveOverlapOrientation2::Reversed
                             } else {
-                                RationalBezierOverlapOrientation2::Same
+                                CurveOverlapOrientation2::Same
                             }
                         );
                         assert!(overlap.includes_start());
@@ -718,9 +718,9 @@ fn generated_chamfer_tails_reuse_paired_overlap_boundaries() {
                 assert_eq!(
                     overlap.orientation(),
                     if reversed {
-                        RationalBezierOverlapOrientation2::Reversed
+                        CurveOverlapOrientation2::Reversed
                     } else {
-                        RationalBezierOverlapOrientation2::Same
+                        CurveOverlapOrientation2::Same
                     }
                 );
                 assert!(overlap.includes_start() && overlap.includes_end());
@@ -1254,9 +1254,9 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                         assert_eq!(
                             overlap.orientation(),
                             if reverse_chord != reverse_other {
-                                RationalBezierOverlapOrientation2::Reversed
+                                CurveOverlapOrientation2::Reversed
                             } else {
-                                RationalBezierOverlapOrientation2::Same
+                                CurveOverlapOrientation2::Same
                             }
                         );
                         assert!(overlap.includes_start() && overlap.includes_end());
@@ -1935,10 +1935,7 @@ fn native_retraced_overlaps_survive_independent_restriction() {
             }
             assert_eq!(restrictions.len(), 1);
             let mut overlap = restrictions.pop().unwrap();
-            assert_eq!(
-                overlap.orientation(),
-                RationalBezierOverlapOrientation2::Reversed
-            );
+            assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
             for _ in 0..8 {
                 overlap = decided(
                     overlap
@@ -2168,7 +2165,7 @@ fn top_level_shared_component_retains_certified_overlap() {
     assert_eq!(evidence.overlaps().len(), 1);
     assert_eq!(
         evidence.overlaps()[0].orientation(),
-        RationalBezierOverlapOrientation2::Same
+        CurveOverlapOrientation2::Same
     );
     let graph = topology.arrangement_graph();
     assert_eq!(graph.len(), 2);
@@ -2230,7 +2227,7 @@ fn independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap() 
     );
     assert_eq!(
         evidence.overlaps()[0].orientation(),
-        RationalBezierOverlapOrientation2::Same
+        CurveOverlapOrientation2::Same
     );
 }
 
@@ -2563,7 +2560,7 @@ fn top_level_polynomial_trims_reuse_certified_source_lineage() {
     );
     assert_eq!(
         reversed_evidence.overlaps()[0].orientation(),
-        RationalBezierOverlapOrientation2::Reversed
+        CurveOverlapOrientation2::Reversed
     );
 }
 
@@ -2761,10 +2758,7 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
         &Real::zero()
     );
     assert_eq!(overlap.second_range().end().scalar().unwrap(), &Real::one());
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 
     assert_eq!(topology.first().len(), 3);
     assert_eq!(topology.second().len(), 1);
@@ -2787,7 +2781,7 @@ fn native_arc_dispatch_retains_partial_same_circle_overlap_ranges() {
     );
     assert_eq!(
         reversed_overlap.orientation(),
-        RationalBezierOverlapOrientation2::Reversed
+        CurveOverlapOrientation2::Reversed
     );
 }
 
@@ -3028,13 +3022,18 @@ fn path_overlap_orientation_feeds_canonical_region_boolean_side_logic() {
         .into_value();
 
     assert_eq!(same_evidence.overlaps().len(), 4);
-    assert!(same_evidence.overlaps().iter().all(|overlap| {
-        overlap.overlap().orientation() == RationalBezierOverlapOrientation2::Same
-    }));
+    assert!(
+        same_evidence
+            .overlaps()
+            .iter()
+            .all(|overlap| { overlap.overlap().orientation() == CurveOverlapOrientation2::Same })
+    );
     assert_eq!(reversed_evidence.overlaps().len(), 4);
-    assert!(reversed_evidence.overlaps().iter().all(|overlap| {
-        overlap.overlap().orientation() == RationalBezierOverlapOrientation2::Reversed
-    }));
+    assert!(
+        reversed_evidence.overlaps().iter().all(|overlap| {
+            overlap.overlap().orientation() == CurveOverlapOrientation2::Reversed
+        })
+    );
 
     for (second, second_side) in [
         (&same, CurveBoundaryInteriorSide2::Left),
@@ -3081,10 +3080,7 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     assert_eq!(overlap.first_range().end().scalar().unwrap(), &r(1));
     assert_eq!(overlap.second_range().start().scalar().unwrap(), &r(0));
     assert_eq!(overlap.second_range().end().scalar().unwrap(), &q(1, 2));
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Same
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Same);
 
     assert_eq!(topology.first().len(), 2);
     assert_eq!(topology.second().len(), 2);
@@ -3105,7 +3101,7 @@ fn native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints() {
     );
     assert_eq!(
         reversed_overlap.orientation(),
-        RationalBezierOverlapOrientation2::Reversed
+        CurveOverlapOrientation2::Reversed
     );
 }
 
@@ -3124,10 +3120,7 @@ fn promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries() {
     assert_eq!(overlap.first_range().end().scalar().unwrap(), &q(3, 4));
     assert_eq!(overlap.second_range().start().scalar().unwrap(), &r(1));
     assert_eq!(overlap.second_range().end().scalar().unwrap(), &r(0));
-    assert_eq!(
-        overlap.orientation(),
-        RationalBezierOverlapOrientation2::Reversed
-    );
+    assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
 
     let cases = [
         (BooleanOp::Union, r(12)),
@@ -3600,9 +3593,9 @@ fn generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal() {
                     assert_eq!(
                         overlap.orientation(),
                         if first_reversed ^ second_reversed {
-                            RationalBezierOverlapOrientation2::Reversed
+                            CurveOverlapOrientation2::Reversed
                         } else {
-                            RationalBezierOverlapOrientation2::Same
+                            CurveOverlapOrientation2::Same
                         }
                     );
                     for (a, b) in [

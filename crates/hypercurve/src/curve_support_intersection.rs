@@ -97,7 +97,7 @@ impl Pair<'_> {
     fn overlap(
         &self,
         [mut first_range, mut second_range]: [CurveParameterRange2; 2],
-        mut orientation: RationalBezierOverlapOrientation2,
+        mut orientation: CurveOverlapOrientation2,
         mut inclusion: [bool; 2],
         correspondence: CurveOverlapCorrespondence2,
     ) -> ExactCurveResult<CurveIntersectionOverlap2> {
@@ -121,12 +121,8 @@ impl Pair<'_> {
         }
         if self.first.reversed != self.second.reversed {
             orientation = match orientation {
-                RationalBezierOverlapOrientation2::Same => {
-                    RationalBezierOverlapOrientation2::Reversed
-                }
-                RationalBezierOverlapOrientation2::Reversed => {
-                    RationalBezierOverlapOrientation2::Same
-                }
+                CurveOverlapOrientation2::Same => CurveOverlapOrientation2::Reversed,
+                CurveOverlapOrientation2::Reversed => CurveOverlapOrientation2::Same,
             };
         }
         Ok(CurveIntersectionOverlap2 {
@@ -3120,9 +3116,9 @@ mod circle_dispatch_tests {
                                         assert_eq!(
                                             overlap.orientation(),
                                             if first_reversed == second_reversed {
-                                                RationalBezierOverlapOrientation2::Same
+                                                CurveOverlapOrientation2::Same
                                             } else {
-                                                RationalBezierOverlapOrientation2::Reversed
+                                                CurveOverlapOrientation2::Reversed
                                             }
                                         );
                                     }
@@ -3174,9 +3170,9 @@ mod circle_dispatch_tests {
                                     assert_eq!(
                                         overlap.orientation(),
                                         if a ^ b {
-                                            RationalBezierOverlapOrientation2::Reversed
+                                            CurveOverlapOrientation2::Reversed
                                         } else {
-                                            RationalBezierOverlapOrientation2::Same
+                                            CurveOverlapOrientation2::Same
                                         }
                                     );
                                 }
@@ -3661,9 +3657,9 @@ mod analytic_dispatch_tests {
                     assert_eq!(
                         result.overlaps()[0].orientation(),
                         if reverse {
-                            RationalBezierOverlapOrientation2::Reversed
+                            CurveOverlapOrientation2::Reversed
                         } else {
-                            RationalBezierOverlapOrientation2::Same
+                            CurveOverlapOrientation2::Same
                         },
                     );
                 }
@@ -3826,9 +3822,9 @@ mod analytic_dispatch_tests {
                     assert_eq!(
                         overlap.orientation(),
                         if reversed {
-                            RationalBezierOverlapOrientation2::Reversed
+                            CurveOverlapOrientation2::Reversed
                         } else {
-                            RationalBezierOverlapOrientation2::Same
+                            CurveOverlapOrientation2::Same
                         }
                     );
                     let smaller =
@@ -3888,9 +3884,9 @@ mod analytic_dispatch_tests {
                     assert_eq!(
                         result.overlaps()[0].orientation(),
                         if reverse_source {
-                            RationalBezierOverlapOrientation2::Reversed
+                            CurveOverlapOrientation2::Reversed
                         } else {
-                            RationalBezierOverlapOrientation2::Same
+                            CurveOverlapOrientation2::Same
                         }
                     );
                 }
