@@ -117849,26 +117849,61 @@ impl BezierParallel2 {
         second_range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
+        Ok(self
+            .parallel_intersections_on_regular_domains(
+                other,
+                [first_range, second_range],
+                ParameterComponentQuery2::RetainFinite,
+                policy,
+            )?
+            .map(|result| {
+                debug_assert!(result.components.is_empty());
+                result.intersections
+            }))
+    }
+
+    /// Keeps selected components and isolated contacts on the same regular
+    /// source branches. A component query needs correlated domain clipping,
+    /// including its endpoint frames, before a family can be published.
+    fn parallel_intersections_on_regular_domains(
+        &self,
+        other: &Self,
+        ranges: [&CurveParameterRange2; 2],
+        query: ParameterComponentQuery2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         // A rational image keeps its exact source chart even when a retained
         // range supplies a branch-oriented tangent frame for the other operand.
-        match self.rational_parallel_pair_intersections(
-            other,
-            Some([first_range, second_range]),
-            policy,
-        )? {
-            Classification::Decided(Some(intersections)) => {
-                return self.replay_regular_pair_endpoint_tangents(
-                    other,
-                    [first_range, second_range],
-                    intersections,
-                    policy,
-                );
+        let rational = if matches!(query, ParameterComponentQuery2::RetainFinite) {
+            self.rational_parallel_pair_intersections(other, Some(ranges), policy)?
+                .map(|result| result.map(BezierParallelPairDomainIntersectionSet2::enumerated))
+        } else {
+            self.rational_parallel_pair_intersections_on_regular_ranges(
+                other, ranges, query, policy,
+            )?
+        };
+        match rational {
+            Classification::Decided(Some(result)) => {
+                return Ok(self
+                    .replay_regular_pair_endpoint_tangents(
+                        other,
+                        ranges,
+                        result.intersections,
+                        policy,
+                    )?
+                    .map(|intersections| {
+                        BezierParallelPairDomainIntersectionSet2::with_components(
+                            intersections,
+                            result.components,
+                        )
+                    }));
             }
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
         }
+        let [first_range, second_range] = ranges;
         let first_frame =
             match self.source_oriented_regularized_tangent_field(first_range, policy)? {
                 Classification::Decided(frame) => frame,
@@ -117888,8 +117923,14 @@ impl BezierParallel2 {
         // projection, even when neither source needs a cancelled frame.
         let unit = CurveParameterRange2::unit();
         let unit_domain = first_range == &unit && second_range == &unit;
-        if unit_domain && first_frame.is_none() && second_frame.is_none() {
-            return self.parallel_intersections_without_regular_frame(other, policy);
+        if unit_domain
+            && first_frame.is_none()
+            && second_frame.is_none()
+            && matches!(query, ParameterComponentQuery2::RetainFinite)
+        {
+            return Ok(self
+                .parallel_intersections_without_regular_frame(other, policy)?
+                .map(BezierParallelPairDomainIntersectionSet2::enumerated));
         }
         let Some(system) = (match parallel_pair_equation_system_with_tangent_fields(
             self,
@@ -117905,24 +117946,18 @@ impl BezierParallel2 {
             }
         }) else {
             return Ok(Classification::Decided(
-                BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
+                BezierParallelPairDomainIntersectionSet2::from_components(Vec::new()),
             ));
         };
-        if !unit_domain {
-            return Ok(self
-                .parallel_intersections_from_system_in_domain(
-                    other,
-                    system,
-                    [first_range, second_range]
-                        .map(|range| CurveParameterDomain2::new(range, None)),
-                    ParameterComponentQuery2::RetainFinite,
-                    Some([first_range, second_range]),
-                    policy,
-                )?
-                .map(|result| {
-                    debug_assert!(result.components.is_empty());
-                    result.intersections
-                }));
+        if !unit_domain || !matches!(query, ParameterComponentQuery2::RetainFinite) {
+            return self.parallel_intersections_from_system_in_domain(
+                other,
+                system,
+                ranges.map(|range| CurveParameterDomain2::new(range, None)),
+                query,
+                Some(ranges),
+                policy,
+            );
         }
         let projection =
             match project_unit_parallel_pair_intersection_system(&system, self, other, policy)? {
@@ -117931,14 +117966,16 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        self.replay_parallel_pair_projection_with_ranges(
-            other,
-            &system,
-            projection,
-            BezierParallelPairParameterSelection2::All,
-            Some([first_range, second_range]),
-            policy,
-        )
+        Ok(self
+            .replay_parallel_pair_projection_with_ranges(
+                other,
+                &system,
+                projection,
+                BezierParallelPairParameterSelection2::All,
+                Some(ranges),
+                policy,
+            )?
+            .map(BezierParallelPairDomainIntersectionSet2::enumerated))
     }
 
     /// Rational materialization preserves point and parameter identity, but
@@ -118062,42 +118099,50 @@ impl BezierParallel2 {
             })
         {
             let intersections = match self.parallel_intersections(other, policy)? {
-                Classification::Decided(intersections) => intersections,
+                Classification::Decided(intersections) => Some(intersections),
+                // A stationary endpoint may have a unique one-sided frame.
+                // Component queries must reach the same regular-branch solver
+                // as finite intersections before declaring it undecidable.
+                Classification::Uncertain(UncertaintyReason::Boundary) => None,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            if matches!(query, ParameterComponentQuery2::RetainFinite)
-                || !intersections.is_complete()
-            {
+            if let Some(intersections) = intersections {
+                if matches!(query, ParameterComponentQuery2::RetainFinite)
+                    || !intersections.is_complete()
+                {
+                    return Ok(Classification::Decided(
+                        BezierParallelPairDomainIntersectionSet2::enumerated(intersections),
+                    ));
+                }
+                let components = match retain_finite_parallel_components(
+                    self,
+                    other,
+                    &intersections,
+                    domains,
+                    policy,
+                )? {
+                    Classification::Decided(components) => components,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                if matches!(query, ParameterComponentQuery2::FirstComponent(_))
+                    && !components.is_empty()
+                {
+                    return Ok(Classification::Decided(
+                        BezierParallelPairDomainIntersectionSet2::from_components(components),
+                    ));
+                }
                 return Ok(Classification::Decided(
-                    BezierParallelPairDomainIntersectionSet2::enumerated(intersections),
+                    BezierParallelPairDomainIntersectionSet2::with_components(
+                        intersections,
+                        components,
+                    ),
                 ));
             }
-            let components = match retain_finite_parallel_components(
-                self,
-                other,
-                &intersections,
-                domains,
-                policy,
-            )? {
-                Classification::Decided(components) => components,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            if matches!(query, ParameterComponentQuery2::FirstComponent(_))
-                && !components.is_empty()
-            {
-                return Ok(Classification::Decided(
-                    BezierParallelPairDomainIntersectionSet2::from_components(components),
-                ));
-            }
-            return Ok(Classification::Decided(
-                BezierParallelPairDomainIntersectionSet2::with_components(
-                    intersections,
-                    components,
-                ),
-            ));
         }
-        if matches!(query, ParameterComponentQuery2::RetainFinite) {
-            debug_assert!(domains.iter().all(|domain| domain.extension.is_none()));
+        if domains.iter().all(|domain| domain.extension.is_none()) {
+            let retain_finite = matches!(query, ParameterComponentQuery2::RetainFinite);
             // Pointwise source normals are undefined at a source cusp. A zero
             // only at an endpoint still has one regular branch frame. An open
             // interior zero does not, and must not be published as a contact.
@@ -118135,7 +118180,7 @@ impl BezierParallel2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
-                if endpoint_cusp[index] {
+                if endpoint_cusp[index] || !retain_finite {
                     continue;
                 }
                 // A PH image must own the requested normal sheet. Native
@@ -118158,43 +118203,43 @@ impl BezierParallel2 {
                     "parallel-pair-domain",
                     "one-sided-source-cusp",
                 );
-                return Ok(self
-                    .parallel_intersections_on_regular_ranges(
-                        other,
-                        domains[0].finite,
-                        domains[1].finite,
-                        policy,
-                    )?
-                    .map(BezierParallelPairDomainIntersectionSet2::enumerated));
+                return self.parallel_intersections_on_regular_domains(
+                    other,
+                    domains.map(|domain| domain.finite),
+                    query,
+                    policy,
+                );
             }
-            match rational_images.each_ref() {
-                [Some(first), Some(second)] => {
-                    return Ok(rational_pair_intersections_on_ranges(
-                        &first.source().to_rational_bezier()?,
-                        &second.source().to_rational_bezier()?,
-                        domains.map(|domain| domain.finite),
-                        false,
-                        policy,
-                    )?
-                    .map(BezierParallelPairDomainIntersectionSet2::enumerated));
+            if retain_finite {
+                match rational_images.each_ref() {
+                    [Some(first), Some(second)] => {
+                        return Ok(rational_pair_intersections_on_ranges(
+                            &first.source().to_rational_bezier()?,
+                            &second.source().to_rational_bezier()?,
+                            domains.map(|domain| domain.finite),
+                            false,
+                            policy,
+                        )?
+                        .map(BezierParallelPairDomainIntersectionSet2::enumerated));
+                    }
+                    [None, Some(second)] => {
+                        return self.zero_distance_pair_intersections_in_domain(
+                            second, domains, false, false, query, None, policy,
+                        );
+                    }
+                    [Some(first), None] => {
+                        return other.zero_distance_pair_intersections_in_domain(
+                            first,
+                            [domains[1], domains[0]],
+                            true,
+                            false,
+                            query,
+                            None,
+                            policy,
+                        );
+                    }
+                    [None, None] => {}
                 }
-                [None, Some(second)] => {
-                    return self.zero_distance_pair_intersections_in_domain(
-                        second, domains, false, false, query, None, policy,
-                    );
-                }
-                [Some(first), None] => {
-                    return other.zero_distance_pair_intersections_in_domain(
-                        first,
-                        [domains[1], domains[0]],
-                        true,
-                        false,
-                        query,
-                        None,
-                        policy,
-                    );
-                }
-                [None, None] => {}
             }
         }
         // A zero displacement is its rational source on every finite chart,
@@ -118951,6 +118996,29 @@ impl BezierParallel2 {
         let Some(ranges) = ranges else {
             return Ok(Classification::Decided(None));
         };
+        Ok(self
+            .rational_parallel_pair_intersections_on_regular_ranges(
+                other,
+                ranges,
+                ParameterComponentQuery2::RetainFinite,
+                policy,
+            )?
+            .map(|result| {
+                result.map(|result| {
+                    debug_assert!(result.components.is_empty());
+                    result.intersections
+                })
+            }))
+    }
+
+    fn rational_parallel_pair_intersections_on_regular_ranges(
+        &self,
+        other: &Self,
+        ranges: [&CurveParameterRange2; 2],
+        query: ParameterComponentQuery2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierParallelPairDomainIntersectionSet2>>> {
+        let strict = policy.strict_counterpart();
         // PH images must select the requested normal sheet, including exterior
         // intervals. Their unchanged source parameters enter the existing
         // finite-domain authority; no new coordinate or parameter image is needed.
@@ -118987,12 +119055,11 @@ impl BezierParallel2 {
                     ranges.map(|range| CurveParameterDomain2::new(range, None)),
                     swapped,
                     false,
-                    ParameterComponentQuery2::RetainFinite,
+                    query,
                     regular_parallel_range,
                     policy,
                 )?
                 .map(|result| {
-                    debug_assert!(result.components.is_empty());
                     #[cfg(feature = "dispatch-trace")]
                     if result.intersections.is_complete() {
                         hyperreal::dispatch_trace::record(
@@ -119001,7 +119068,7 @@ impl BezierParallel2 {
                             "rational-domains",
                         );
                     }
-                    Some(result.intersections)
+                    Some(result)
                 }));
         }
         Ok(Classification::Decided(None))
@@ -193750,6 +193817,77 @@ mod regular_parallel_contact_tests {
         match value {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => panic!("regular-cell query blocked: {reason:?}"),
+        }
+    }
+    #[test]
+    fn stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints() {
+        use CurveParameterComponentSelection2::{NeedsConstraint, Selected};
+        let parallel = CubicBezier2::new(
+            p(0, 0),
+            p(0, 0),
+            Point2::new(q(1, 3), Real::zero()),
+            p(1, 1),
+        )
+        .parallel_left(-Real::one())
+        .unwrap();
+        // C(t)=(t²,t³) has a right-hand normal at t=0. The same
+        // offset on both axes retains u=v, including that limiting endpoint.
+        // Its right offset is injective here: the x component of its tangent
+        // is positive away from zero and its curvature scale is positive.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for upper in [q(1, 2), Real::one()] {
+                let range =
+                    CurveParameterRange2::new_validated(Real::zero().into(), upper.clone().into());
+                for reversed in [false, true] {
+                    let range = if reversed {
+                        CurveParameterRange2::new_validated(
+                            range.end().clone(),
+                            range.start().clone(),
+                        )
+                    } else {
+                        range.clone()
+                    };
+                    for query in [
+                        ParameterComponentQuery2::AllComponents(None),
+                        ParameterComponentQuery2::FirstComponent(None),
+                    ] {
+                        let result = decided(
+                            parallel
+                                .parallel_intersections_in_domain(
+                                    &parallel,
+                                    [CurveParameterDomain2::new(&range, None); 2],
+                                    query,
+                                    &policy,
+                                )
+                                .unwrap(),
+                        );
+                        assert!(result.intersections.is_complete());
+                        assert_eq!(result.components.len(), 1);
+                        let component = &result.components[0];
+                        assert!(matches!(
+                            decided(component.constrain([None, None], &policy).unwrap()),
+                            NeedsConstraint
+                        ));
+                        for value in [Real::zero(), q(1, 4), upper.clone()] {
+                            let parameter = CurveParameter2::from(value);
+                            for axis in 0..2 {
+                                let constraints =
+                                    [0, 1].map(|index| (index == axis).then_some(&parameter));
+                                let Selected(pair) =
+                                    decided(component.constrain(constraints, &policy).unwrap())
+                                else {
+                                    panic!("an exact contact must select the stationary family");
+                                };
+                                for actual in pair {
+                                    assert!(decided(
+                                        actual.same_value(&parameter, &policy).unwrap()
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     #[test]

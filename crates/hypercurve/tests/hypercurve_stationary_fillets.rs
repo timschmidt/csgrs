@@ -162,31 +162,23 @@ mod contacts {
     }
 
     #[test]
-    fn quadratic_line_extends_stationary_contacts_strict() {
+    fn quadratic_line_preserves_stationary_contacts_strict() {
         for kind in [1, 2] {
             for reversed in [false, true] {
-                check_mode(
-                    kind,
-                    CurveContext::STRICT,
-                    reversed,
-                    CurveCornerMode2::TrimOrExtend,
-                    true,
-                );
+                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                    check_mode(kind, CurveContext::STRICT, reversed, mode, true);
+                }
             }
         }
     }
 
     #[test]
-    fn quadratic_line_extends_stationary_contacts_approximate() {
+    fn quadratic_line_preserves_stationary_contacts_approximate() {
         for kind in [1, 2] {
             for reversed in [false, true] {
-                check_mode(
-                    kind,
-                    CurveContext::APPROXIMATE_512,
-                    reversed,
-                    CurveCornerMode2::TrimOrExtend,
-                    true,
-                );
+                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                    check_mode(kind, CurveContext::APPROXIMATE_512, reversed, mode, true);
+                }
             }
         }
     }
