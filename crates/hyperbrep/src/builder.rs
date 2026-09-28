@@ -3549,7 +3549,7 @@ fn validate_planar_path_nesting(
             Ok(result.contacts().is_empty() && result.overlaps().is_empty())
         };
     let classify = |container: &CurvePath2,
-                    point: &CurvePoint2|
+                    point: &hypercurve::CurvePoint2|
      -> Result<ContourPointLocation, ConstructionError> {
         match container
             .classify_point(point, &policy)
@@ -3568,13 +3568,7 @@ fn validate_planar_path_nesting(
         if !paths_are_disjoint(outer, hole)? {
             return Err(ConstructionError::IntersectingProfiles);
         }
-        if classify(
-            outer,
-            (hole.start())
-                .coordinates()
-                .ok_or(GeometryError::UnsupportedPcurveContour)?,
-        )? != ContourPointLocation::Inside
-        {
+        if classify(outer, &hole.start())? != ContourPointLocation::Inside {
             return Err(ConstructionError::HoleOutside);
         }
     }
@@ -3583,18 +3577,8 @@ fn validate_planar_path_nesting(
             if !paths_are_disjoint(&holes[first], &holes[second])? {
                 return Err(ConstructionError::IntersectingProfiles);
             }
-            if classify(
-                &holes[first],
-                (holes[second].start())
-                    .coordinates()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
-            )? == ContourPointLocation::Inside
-                || classify(
-                    &holes[second],
-                    (holes[first].start())
-                        .coordinates()
-                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                )? == ContourPointLocation::Inside
+            if classify(&holes[first], &holes[second].start())? == ContourPointLocation::Inside
+                || classify(&holes[second], &holes[first].start())? == ContourPointLocation::Inside
             {
                 return Err(ConstructionError::NestedHoles);
             }
@@ -10581,5 +10565,62 @@ mod tests {
             concave.classify_point(solid, &p(6, 6, 1)).unwrap(),
             SolidPointLocation::Outside
         );
+    }
+    #[test]
+    fn planar_path_nesting_preserves_generated_offset_endpoints() {
+        let policy = CurveContext::STRICT;
+        let point = |x, y| CurvePoint2::new(r(x), r(y));
+        let line = |first, second| Curve2::from(LineSeg2::try_new(first, second).unwrap());
+        let cap = CurvePath2::try_new(vec![
+            hypercurve::QuadraticBezier2::new(point(-1, 1), point(0, -1), point(1, 1)).into(),
+            line(point(1, 1), point(-1, 1)),
+        ])
+        .unwrap();
+        let region = CurveRegion2::try_from_boundary_paths(&[cap], &policy)
+            .unwrap()
+            .into_value();
+        let offset = region
+            .offset(
+                (Real::one() / r(4)).unwrap(),
+                &hypercurve::OffsetCornerStyle2::Round,
+                &policy,
+            )
+            .unwrap();
+        assert_eq!(offset.certainty, hypercurve::CurveCertainty::Certified);
+        let paths = offset.value.boundary_paths(&policy).unwrap();
+        assert_eq!(paths.certainty, hypercurve::CurveCertainty::Certified);
+        let Classification::Decided(mut paths) = paths.value else {
+            panic!("the exact offset retains its boundary paths");
+        };
+        assert_eq!(paths.len(), 1);
+        let mut curves = paths.pop().unwrap().curves().to_vec();
+        let retained_start = curves
+            .iter()
+            .position(|curve| curve.start().coordinates().is_none())
+            .expect("the offset has a generated endpoint");
+        curves.rotate_left(retained_start);
+        let hole = CurvePath2::try_new(curves).unwrap();
+        assert!(hole.start().coordinates().is_none());
+        let rectangle = |low, high| {
+            let points = [
+                point(low, low),
+                point(high, low),
+                point(high, high),
+                point(low, high),
+            ];
+            CurvePath2::try_new(
+                (0..4)
+                    .map(|i| line(points[i].clone(), points[(i + 1) % 4].clone()))
+                    .collect(),
+            )
+            .unwrap()
+        };
+        assert!(
+            validate_planar_path_nesting(&rectangle(-3, 3), std::slice::from_ref(&hole)).is_ok()
+        );
+        assert!(matches!(
+            validate_planar_path_nesting(&rectangle(5, 8), &[hole]),
+            Err(ConstructionError::HoleOutside)
+        ));
     }
 }

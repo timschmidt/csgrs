@@ -1204,7 +1204,7 @@ fn planar_trace_crosses_face_interior(
     let surface = face_surface(model, face);
     let parameter = project_to_plane(surface, &point)?;
     match planar_face_region(model, face)?
-        .classify_point(&parameter, &CurveContext::STRICT)?
+        .classify_point(&parameter.clone().into(), &CurveContext::STRICT)?
         .into_value()
     {
         Classification::Decided(RegionPointLocation::Inside) => Ok(true),
@@ -3863,7 +3863,7 @@ fn retained_curve_face_intervals(
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             match region
-                .classify_point(representative, &CurveContext::STRICT)
+                .classify_point(&representative.clone().into(), &CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value()
             {
@@ -4648,7 +4648,7 @@ fn coplanar_boundary_split_traces(
                 let classify = |point: &Point3| {
                     let parameter = project_to_plane(target_surface, point)?;
                     target_region
-                        .classify_point(&parameter, &CurveContext::STRICT)
+                        .classify_point(&parameter.clone().into(), &CurveContext::STRICT)
                         .map(|outcome| outcome.into_value())
                         .map_err(GeometryError::from)
                 };
@@ -4727,7 +4727,7 @@ fn point_in_supported_face_trim(
     let mut unresolved = None;
     for parameter in parameters {
         match region
-            .classify_point(&parameter, &CurveContext::STRICT)?
+            .classify_point(&parameter.clone().into(), &CurveContext::STRICT)?
             .into_value()
         {
             Classification::Decided(RegionPointLocation::Inside)
@@ -5000,7 +5000,7 @@ fn trim_segment_to_planar_face(
         let midpoint = ((&interval[0] + &interval[1]) / Real::from(2))
             .map_err(|_| GeometryError::ProjectiveDivision)?;
         match region
-            .classify_point(&source.point_at(midpoint), &policy)?
+            .classify_point(&source.point_at(midpoint).into(), &policy)?
             .into_value()
         {
             Classification::Decided(RegionPointLocation::Inside) => {

@@ -1492,7 +1492,7 @@ impl CertifiedRevolutionBoundary {
         match self {
             Self::Native(contour) => Ok(contour.classify_point(point, policy)),
             Self::Curved(path) => path
-                .classify_point(point, policy)
+                .classify_point(&point.clone().into(), policy)
                 .map(|outcome| outcome.into_value())
                 .map_err(GeometryError::from),
         }
@@ -2716,7 +2716,7 @@ impl Model {
         let policy = CurveContext::STRICT;
         let loop_start = materialized_loop.curve().start();
         let classify = |path: &CurvePath2,
-                        point: &CurvePoint2|
+                        point: &hypercurve::CurvePoint2|
          -> Result<ContourPointLocation, TopologyEditError> {
             match path
                 .classify_point(point, &policy)
@@ -2730,24 +2730,12 @@ impl Model {
             }
         };
         let outer_path = self.build_model_wire_curve_path(*outer)?;
-        if classify(
-            &outer_path,
-            (loop_start)
-                .coordinates()
-                .ok_or(GeometryError::UnsupportedPcurveContour)?,
-        )? != ContourPointLocation::Inside
-        {
+        if classify(&outer_path, &loop_start)? != ContourPointLocation::Inside {
             return Err(TopologyEditError::ClosedFaceSplitNotInMaterial { face: face_id });
         }
         for hole in inner {
             let hole_path = self.build_model_wire_curve_path(*hole)?;
-            if classify(
-                &hole_path,
-                (loop_start)
-                    .coordinates()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
-            )? != ContourPointLocation::Outside
-            {
+            if classify(&hole_path, &loop_start)? != ContourPointLocation::Outside {
                 return Err(TopologyEditError::ClosedFaceSplitNotInMaterial { face: face_id });
             }
         }
@@ -2803,12 +2791,7 @@ impl Model {
         for hole in inner {
             let hole_path = self.build_model_wire_curve_path(*hole)?;
             let representative = hole_path.start();
-            match classify(
-                &loop_path,
-                (representative)
-                    .coordinates()
-                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
-            )? {
+            match classify(&loop_path, &representative)? {
                 ContourPointLocation::Inside => enclosed_inner.push(*hole),
                 ContourPointLocation::Outside => exterior_inner.push(*hole),
                 ContourPointLocation::Boundary => {
@@ -3667,7 +3650,7 @@ impl Model {
             let representative = contour.segments()[0].start();
             let classify = |path: &CurvePath2| -> Result<bool, TopologyEditError> {
                 match path
-                    .classify_point(representative, &policy)
+                    .classify_point(&representative.clone().into(), &policy)
                     .map_err(GeometryError::from)?
                     .into_value()
                 {
@@ -4554,7 +4537,7 @@ impl Model {
                 let representative = contour.segments()[0].start();
                 let classify = |path: &CurvePath2| -> Result<bool, TopologyEditError> {
                     match path
-                        .classify_point(representative, &policy)
+                        .classify_point(&representative.clone().into(), &policy)
                         .map_err(GeometryError::from)?
                         .into_value()
                     {
@@ -6593,7 +6576,7 @@ impl Model {
         if min_order == std::cmp::Ordering::Less || max_order == std::cmp::Ordering::Greater {
             return Ok(SolidPointLocation::Outside);
         }
-        let planar = CurvePoint2::new(planar_u, planar_v);
+        let planar = hypercurve::CurvePoint2::from(CurvePoint2::new(planar_u, planar_v));
         let policy = CurveContext::STRICT;
         let planar_location = match &prism.profile {
             CertifiedPrismProfile::Paths { outer, holes } => {
@@ -7150,7 +7133,7 @@ impl Model {
         let policy = CurveContext::STRICT;
         match self
             .build_model_wire_curve_path(*outer)?
-            .classify_point(point, &policy)
+            .classify_point(&point.clone().into(), &policy)
             .map_err(GeometryError::from)?
             .into_value()
         {
@@ -7168,7 +7151,7 @@ impl Model {
         for wire in inner {
             match self
                 .build_model_wire_curve_path(*wire)?
-                .classify_point(point, &policy)
+                .classify_point(&point.clone().into(), &policy)
                 .map_err(GeometryError::from)?
                 .into_value()
             {
@@ -10859,12 +10842,7 @@ impl ModelBuilder {
                 });
             }
             match outer_path
-                .classify_point(
-                    (path.start())
-                        .coordinates()
-                        .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                    &policy,
-                )
+                .classify_point(&path.start(), &policy)
                 .map_err(GeometryError::from)?
                 .into_value()
             {
@@ -10893,22 +10871,12 @@ impl ModelBuilder {
                 }
                 let nested = classification_is_inside(
                     first_path
-                        .classify_point(
-                            (second_path.start())
-                                .coordinates()
-                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                            &policy,
-                        )
+                        .classify_point(&second_path.start(), &policy)
                         .map_err(GeometryError::from)?
                         .into_value(),
                 )? || classification_is_inside(
                     second_path
-                        .classify_point(
-                            (first_path.start())
-                                .coordinates()
-                                .ok_or(GeometryError::UnsupportedPcurveContour)?,
-                            &policy,
-                        )
+                        .classify_point(&first_path.start(), &policy)
                         .map_err(GeometryError::from)?
                         .into_value(),
                 )?;
@@ -12481,7 +12449,7 @@ impl ModelBuilder {
             let contact = point.clone() + direction.clone() * cut;
             let contact = project_point_to_surface_plane(&contact, surface)?;
             match region
-                .classify_point(&contact, &CurveContext::STRICT)
+                .classify_point(&contact.clone().into(), &CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value()
             {
@@ -12511,7 +12479,7 @@ impl ModelBuilder {
             let midpoint = point.clone() + direction.clone() * midpoint;
             let midpoint = project_point_to_surface_plane(&midpoint, surface)?;
             match region
-                .classify_point(&midpoint, &CurveContext::STRICT)
+                .classify_point(&midpoint.clone().into(), &CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value()
             {
@@ -12563,7 +12531,7 @@ impl ModelBuilder {
                 match self
                     .face_region_in_plane_frame(*face_id, surface)?
                     .classify_point(
-                        &project_point_to_surface_plane(point, surface)?,
+                        &project_point_to_surface_plane(point, surface)?.into(),
                         &CurveContext::STRICT,
                     )
                     .map_err(GeometryError::from)?
@@ -12634,7 +12602,7 @@ impl ModelBuilder {
             match self
                 .face_region_in_plane_frame(*face_id, surface)?
                 .classify_point(
-                    &project_point_to_surface_plane(&intersection, surface)?,
+                    &project_point_to_surface_plane(&intersection, surface)?.into(),
                     &CurveContext::STRICT,
                 )
                 .map_err(GeometryError::from)?
