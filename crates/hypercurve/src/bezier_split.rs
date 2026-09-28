@@ -30,12 +30,13 @@ use crate::bezier_offset::{
 };
 use crate::bezier_parameter::scalar_in_open_interval;
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
+use crate::rational_bezier_general::project_homogeneous;
 use crate::{
     Axis2, BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2,
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierEndpoint, BezierParallel2,
     BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, CurveContext,
-    CurveError, CurveResult, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalQuadraticBezier2, Similarity2, UncertaintyReason,
+    CurveError, CurveResult, HomogeneousControl2, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Similarity2, UncertaintyReason,
 };
 
 /// Exact local parameter on any supported curve carrier.
@@ -1801,18 +1802,12 @@ impl BezierSubcurve2 {
                 // Keep compact native kernels on their certified domain. An
                 // exterior interval gets a fresh affine chart; unit-domain
                 // injectivity facts must not escape with that extension.
-                let result = if in_closed_unit_interval(start, policy) == Some(true)
+                if in_closed_unit_interval(start, policy) == Some(true)
                     && in_closed_unit_interval(end, policy) == Some(true)
                 {
-                    self.subcurve_between_exact(start, end, policy)?
+                    self.subcurve_between_exact(start, end, policy)
                 } else {
-                    self.subcurve_between_affine_exact(start, end, policy)?
-                };
-                match result {
-                    Classification::Decided(curve) => Ok(curve),
-                    Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
-                        "Bezier exact split is uncertified: {reason:?}"
-                    ))),
+                    self.subcurve_between_affine_exact(start, end, policy)
                 }
             },
             |parameter| {
@@ -1837,9 +1832,7 @@ impl BezierSubcurve2 {
             Self::Cubic(curve) => Ok(Classification::Decided(Self::Cubic(
                 curve.subcurve_between_exact(start, end, policy)?,
             ))),
-            Self::RationalQuadratic(curve) => Ok(Classification::Decided(Self::RationalQuadratic(
-                curve.subcurve_between_exact(start, end, policy)?,
-            ))),
+            Self::RationalQuadratic(curve) => curve.subcurve_between_exact(start, end, policy),
             Self::Rational(curve) => curve
                 .subcurve_between_exact(start, end, policy)
                 .map(|result| result.map(Self::Rational)),
@@ -2289,9 +2282,9 @@ impl QuadraticBezier2 {
             false,
             true,
             |start, end| {
-                Ok(BezierSubcurve2::Quadratic(
+                Ok(Classification::Decided(BezierSubcurve2::Quadratic(
                     self.subcurve_between_exact(start, end, policy)?,
-                ))
+                )))
             },
             |parameter| BezierAlgebraicEndpointImage2::quadratic(self, parameter, policy),
             BezierSubcurve2::Quadratic(self.clone()),
@@ -2412,9 +2405,9 @@ impl CubicBezier2 {
             false,
             true,
             |start, end| {
-                Ok(BezierSubcurve2::Cubic(
+                Ok(Classification::Decided(BezierSubcurve2::Cubic(
                     self.subcurve_between_exact(start, end, policy)?,
-                ))
+                )))
             },
             |parameter| BezierAlgebraicEndpointImage2::cubic(self, parameter, policy),
             BezierSubcurve2::Cubic(self.clone()),
@@ -2509,96 +2502,160 @@ impl RationalQuadraticBezier2 {
             policy,
             false,
             true,
-            |start, end| {
-                Ok(BezierSubcurve2::RationalQuadratic(
-                    self.subcurve_between_exact(start, end, policy)?,
-                ))
-            },
+            |start, end| self.subcurve_between_exact(start, end, policy),
             |parameter| BezierAlgebraicEndpointImage2::rational_quadratic(self, parameter, policy),
             BezierSubcurve2::RationalQuadratic(self.clone()),
         )
     }
 
     /// Materializes the exact conic subcurve over `[start, end]`.
+    ///
+    /// A finite conic may have a zero interior homogeneous weight after a cut.
+    /// Such a result retains its homogeneous quadratic instead of requiring an
+    /// affine control point that does not exist.
     pub fn subcurve_between_exact(
         &self,
         start: &Real,
         end: &Real,
         policy: &CurveContext,
-    ) -> CurveResult<RationalQuadraticBezier2> {
-        validate_exact_range(start, end, policy)?;
-        if compare_reals(start, end, policy) == Some(Ordering::Equal) {
-            let point = match self.point_at(start.clone(), policy) {
+    ) -> CurveResult<Classification<BezierSubcurve2>> {
+        let strict = policy.strict_counterpart();
+        validate_exact_range(start, end, &strict)?;
+        if compare_reals(start, end, &strict) == Some(Ordering::Equal) {
+            let point = match self.point_at(start.clone(), &strict) {
                 Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Err(CurveError::Topology(format!(
-                        "rational Bezier endpoint evaluation uncertain: {reason:?}"
-                    )));
-                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            return RationalQuadraticBezier2::try_new(
-                point.clone(),
-                point.clone(),
-                point,
-                Real::one(),
-                Real::one(),
-                Real::one(),
-            );
+            return Ok(Classification::Decided(BezierSubcurve2::RationalQuadratic(
+                RationalQuadraticBezier2::try_new(
+                    point.clone(),
+                    point.clone(),
+                    point,
+                    Real::one(),
+                    Real::one(),
+                    Real::one(),
+                )?,
+            )));
         }
-        if compare_reals(start, &Real::zero(), policy) == Some(Ordering::Equal)
-            && compare_reals(end, &Real::one(), policy) == Some(Ordering::Equal)
+        if compare_reals(start, &Real::zero(), &strict) == Some(Ordering::Equal)
+            && compare_reals(end, &Real::one(), &strict) == Some(Ordering::Equal)
         {
-            return Ok(self.clone());
+            return Ok(Classification::Decided(BezierSubcurve2::RationalQuadratic(
+                self.clone(),
+            )));
         }
-        if compare_reals(start, &Real::zero(), policy) == Some(Ordering::Equal) {
-            let (left, _) = self.split_at_exact(end.clone(), policy)?;
-            return Ok(left);
-        }
-        if compare_reals(end, &Real::one(), policy) == Some(Ordering::Equal) {
-            let (_, right) = self.split_at_exact(start.clone(), policy)?;
-            return Ok(right);
-        }
-
-        let (left, _) = self.split_at_exact(end.clone(), policy)?;
-        let local_start = (start.clone() / end.clone())?;
-        let (_, middle) = left.split_at_exact(local_start, policy)?;
-        Ok(middle)
+        let points = self.control_points();
+        let weights = self.weights();
+        let controls: [_; 3] = std::array::from_fn(|i| {
+            HomogeneousControl2::from_affine(points[i], weights[i].clone())
+        });
+        // The symmetric quadratic blossom gives H(start,start),
+        // H(start,end), H(end,end) directly. No local start/end division or
+        // intermediate affine control net is needed.
+        let first = controls[0].lerp(&controls[1], start);
+        let second = controls[1].lerp(&controls[2], start);
+        let last_first = controls[0].lerp(&controls[1], end);
+        let last_second = controls[1].lerp(&controls[2], end);
+        self.materialize_homogeneous_subcurve(
+            [
+                first.lerp(&second, start),
+                first.lerp(&second, end),
+                last_first.lerp(&last_second, end),
+            ],
+            self.common_nonzero_weight_sign(&strict),
+            &strict,
+        )
     }
 
-    /// Splits this rational quadratic at one represented parameter.
+    /// Splits this rational quadratic at one exact finite parameter.
+    ///
+    /// Finite endpoints are required; an interior homogeneous control need
+    /// not have a finite affine projection. Exterior cuts do not inherit the
+    /// source's unit-domain weight-sign certificate.
     pub fn split_at_exact(
         &self,
         t: Real,
         policy: &CurveContext,
-    ) -> CurveResult<(RationalQuadraticBezier2, RationalQuadraticBezier2)> {
-        let retained_common_weight_sign = if in_closed_unit_interval(&t, policy) == Some(true) {
-            self.common_nonzero_weight_sign(policy)
+    ) -> CurveResult<Classification<(BezierSubcurve2, BezierSubcurve2)>> {
+        let strict = policy.strict_counterpart();
+        let retained_common_weight_sign = if in_closed_unit_interval(&t, &strict) == Some(true) {
+            self.common_nonzero_weight_sign(&strict)
         } else {
             None
         };
-        let controls = self.control_points();
+        let points = self.control_points();
         let weights = self.weights();
-        let levels = homogeneous_de_casteljau_levels(&controls, &weights, t);
-        let left = levels
-            .iter()
-            .map(|level| level[0].clone())
-            .collect::<Vec<_>>();
-        let right = levels
-            .iter()
-            .rev()
-            .map(|level| level[level.len() - 1].clone())
-            .collect::<Vec<_>>();
-        let implicit_quadratic_conic = self.retained_implicit_quadratic_conic().cloned();
-        let circular_conic = self.retained_circular_conic().cloned();
-        Ok((
-            rational_from_homogeneous(&left, policy, retained_common_weight_sign)?
-                .with_retained_conic_provenance(
-                    implicit_quadratic_conic.clone(),
-                    circular_conic.clone(),
-                ),
-            rational_from_homogeneous(&right, policy, retained_common_weight_sign)?
-                .with_retained_conic_provenance(implicit_quadratic_conic, circular_conic),
-        ))
+        let [start, control, end] = std::array::from_fn(|i| {
+            HomogeneousControl2::from_affine(points[i], weights[i].clone())
+        });
+        let first = start.lerp(&control, &t);
+        let second = control.lerp(&end, &t);
+        let contact = first.lerp(&second, &t);
+        let left = match self.materialize_homogeneous_subcurve(
+            [start, first, contact.clone()],
+            retained_common_weight_sign,
+            &strict,
+        )? {
+            Classification::Decided(curve) => curve,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(self
+            .materialize_homogeneous_subcurve(
+                [contact, second, end],
+                retained_common_weight_sign,
+                &strict,
+            )?
+            .map(|right| (left, right)))
+    }
+
+    fn materialize_homogeneous_subcurve(
+        &self,
+        controls: [HomogeneousControl2; 3],
+        retained_common_weight_sign: Option<RealSign>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierSubcurve2>> {
+        let points = controls
+            .each_ref()
+            .map(|control| project_homogeneous(control, policy));
+        match points {
+            [
+                Classification::Decided(start),
+                Classification::Decided(control),
+                Classification::Decided(end),
+            ] => {
+                let [start_weight, control_weight, end_weight] =
+                    controls.map(|control| control.weight().clone());
+                Ok(Classification::Decided(BezierSubcurve2::RationalQuadratic(
+                    RationalQuadraticBezier2::try_new_with_common_weight_sign_and_implicit_conic(
+                        start,
+                        control,
+                        end,
+                        start_weight,
+                        control_weight,
+                        end_weight,
+                        retained_common_weight_sign,
+                        self.retained_implicit_quadratic_conic().cloned(),
+                        self.retained_circular_conic().cloned(),
+                    )?,
+                )))
+            }
+            [Classification::Uncertain(reason), _, _]
+            | [_, _, Classification::Uncertain(reason)] => Ok(Classification::Uncertain(reason)),
+            [_, Classification::Uncertain(_), _] => Ok(RationalBezier2::from_homogeneous_controls(
+                controls.into(),
+                policy,
+            )?
+            .map(|curve| {
+                let curve = match self.retained_implicit_quadratic_conic() {
+                    Some(conic) => curve.with_implicit_quadratic_conic(
+                        conic.clone(),
+                        self.retained_circular_conic().cloned(),
+                    ),
+                    None => curve,
+                };
+                BezierSubcurve2::Rational(curve)
+            })),
+        }
     }
 }
 
@@ -2619,11 +2676,9 @@ impl RationalBezier2 {
             policy,
             false,
             true,
-            |start, end| match self.subcurve_between_exact(start, end, policy)? {
-                Classification::Decided(curve) => Ok(BezierSubcurve2::Rational(curve)),
-                Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
-                    "general rational Bezier exact split is uncertified: {reason:?}"
-                ))),
+            |start, end| {
+                self.subcurve_between_exact(start, end, policy)
+                    .map(|result| result.map(BezierSubcurve2::Rational))
             },
             |parameter| BezierAlgebraicEndpointImage2::rational(self, parameter, policy),
             BezierSubcurve2::Rational(self.clone()),
@@ -2642,7 +2697,7 @@ fn split_curve_at_parameters<F, G>(
     source_curve: BezierSubcurve2,
 ) -> CurveResult<Classification<BezierSplitMaterialization2>>
 where
-    F: FnMut(&Real, &Real) -> CurveResult<BezierSubcurve2>,
+    F: FnMut(&Real, &Real) -> CurveResult<Classification<BezierSubcurve2>>,
     G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
 {
     let mut boundaries = vec![range.start().clone(), range.end().clone()];
@@ -2714,7 +2769,12 @@ where
         let end = pair[1].clone();
         match (start.scalar(), end.scalar()) {
             (Some(start_exact), Some(end_exact)) => {
-                let curve = materialize(start_exact, end_exact)?;
+                let curve = match materialize(start_exact, end_exact)? {
+                    Classification::Decided(curve) => curve,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
                 fragments.push(BezierSplitFragment2::Materialized { start, end, curve });
             }
             _ => {
@@ -2855,85 +2915,200 @@ fn validate_ordered_exact_range(
     }
 }
 
-#[derive(Clone, Debug)]
-struct HomogeneousControl {
-    x: Real,
-    y: Real,
-    weight: Real,
-}
+#[cfg(test)]
+mod finite_conic_split_regression {
+    use super::*;
 
-fn homogeneous_de_casteljau_levels(
-    controls: &[&Point2; 3],
-    weights: &[&Real; 3],
-    t: Real,
-) -> Vec<Vec<HomogeneousControl>> {
-    let mut levels = vec![
-        controls
-            .iter()
-            .zip(weights.iter())
-            .map(|(point, weight)| HomogeneousControl {
-                x: point.x() * *weight,
-                y: point.y() * *weight,
-                weight: (*weight).clone(),
-            })
-            .collect::<Vec<_>>(),
-    ];
-
-    while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
-        let previous = levels.last().expect("level exists");
-        let next = previous
-            .windows(2)
-            .map(|pair| lerp_homogeneous(&pair[0], &pair[1], t.clone()))
-            .collect::<Vec<_>>();
-        levels.push(next);
+    fn q(n: i32, d: i32) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
     }
 
-    levels
-}
-
-fn lerp_homogeneous(
-    first: &HomogeneousControl,
-    second: &HomogeneousControl,
-    t: Real,
-) -> HomogeneousControl {
-    let one_minus_t = Real::one() - &t;
-    HomogeneousControl {
-        x: (&first.x * &one_minus_t) + (&second.x * &t),
-        y: (&first.y * &one_minus_t) + (&second.y * &t),
-        weight: (&first.weight * &one_minus_t) + (&second.weight * &t),
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("conic operation undecided: {reason:?}"),
+        }
     }
-}
 
-fn rational_from_homogeneous(
-    controls: &[HomogeneousControl],
-    policy: &CurveContext,
-    retained_common_weight_sign: Option<RealSign>,
-) -> CurveResult<RationalQuadraticBezier2> {
-    let mut points = Vec::with_capacity(controls.len());
-    let mut weights = Vec::with_capacity(controls.len());
-    for control in controls {
-        match is_zero(&control.weight, policy) {
-            Some(true) => return Err(CurveError::ZeroRationalBezierWeight),
-            Some(false) => {}
-            None => {
-                return Err(CurveError::Real(
-                    "rational split weight sign uncertain".into(),
+    #[test]
+    fn finite_conic_split_retains_zero_intermediate_homogeneous_weight() {
+        // D(t)=1-3t+3t²=1/4+3(t-1/2)² is positive everywhere.
+        // At t=2/3, the first split has weights [1,0,1/3], and its
+        // middle homogeneous numerator is (-1/3,-1/3), not an affine point.
+        let expected = CurvePoint2::from(Point2::new(Real::from(2), q(-2, 3)));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for scale in [-1, 1] {
+                let conic = RationalQuadraticBezier2::try_new(
+                    Point2::from_values(0, 0),
+                    Point2::from_values(1, 1),
+                    Point2::from_values(2, 0),
+                    scale.into(),
+                    q(-scale, 2),
+                    scale.into(),
+                )
+                .unwrap();
+                let (native_left, native_right) =
+                    decided(conic.split_at_exact(q(2, 3), &policy).unwrap());
+                assert!(
+                    matches!(&native_left, BezierSubcurve2::Rational(curve) if curve.affine_control_points().is_none())
+                );
+                assert!(matches!(
+                    native_right,
+                    BezierSubcurve2::RationalQuadratic(_)
+                ));
+                for (general, source) in [
+                    (
+                        true,
+                        crate::Curve2::from(RationalBezier2::from(conic.clone())),
+                    ),
+                    (false, crate::Curve2::from(conic.clone())),
+                ] {
+                    for reversed in [false, true] {
+                        let source = if reversed {
+                            source.reversed(&policy).unwrap().value
+                        } else {
+                            source.clone()
+                        };
+                        let cut = if reversed { q(1, 3) } else { q(2, 3) };
+                        let Ok(split) = source.split_at(cut.clone().into(), &policy) else {
+                            panic!(
+                                "finite conic cut failed: general={general}, reversed={reversed}, scale={scale}"
+                            );
+                        };
+                        let (left, right) = split.value;
+                        for point in [left.end(), right.start()] {
+                            assert!(matches!(
+                                point.coincides_with(&expected, &policy).value,
+                                Classification::Decided(true)
+                            ));
+                        }
+                        assert!(
+                            crate::CurvePath2::try_new_with_policy(
+                                vec![left.clone(), right.clone()],
+                                &policy
+                            )
+                            .is_ok()
+                        );
+                        for part in [&left, &right] {
+                            assert!(
+                                part.split_at(q(1, 2).into(), &policy).is_ok(),
+                                "the exact result must admit a subsequent cut"
+                            );
+                        }
+                        for n in 0..=4 {
+                            let local = q(n, 4);
+                            for (part, original) in [
+                                (&left, &local * &cut),
+                                (&right, &cut + &local * (Real::one() - &cut)),
+                            ] {
+                                let actual =
+                                    part.point_at(&local.clone().into(), &policy).unwrap().value;
+                                let expected =
+                                    source.point_at(&original.into(), &policy).unwrap().value;
+                                assert!(matches!(
+                                    actual.coincides_with(&expected, &policy).value,
+                                    Classification::Decided(true)
+                                ));
+                            }
+                        }
+                    }
+                }
+                let materialized = decided(
+                    conic
+                        .split_at_parameters(&[BezierParameter2::Exact(q(2, 3))], &policy)
+                        .unwrap(),
+                );
+                assert!(materialized.is_fully_materialized());
+                assert_eq!(materialized.fragments().len(), 2);
+            }
+        }
+    }
+
+    #[test]
+    fn conic_homogeneous_cuts_retain_circle_and_tangent_evidence() {
+        use std::sync::Arc;
+        let start = Point2::new(q(-3, 5), q(4, 5));
+        let end = Point2::new(q(-3, 5), q(-4, 5));
+        let arc = crate::CircularArc2::try_from_center(
+            start.clone(),
+            end.clone(),
+            Point2::from_values(0, 0),
+            false,
+        )
+        .unwrap();
+        let (implicit, mut circle) = crate::arc_bezier::circular_conic_provenance(&arc);
+        Arc::make_mut(&mut circle).tangent_contacts = Some(Arc::from([
+            crate::rational_bezier::RationalQuadraticCircleTangentContact2::Line {
+                line: LineSeg2::try_new(start.clone(), Point2::new(q(-7, 5), q(1, 5))).unwrap(),
+                point: start.clone(),
+            },
+        ]));
+        let conic = RationalQuadraticBezier2::try_unit_end_weights(
+            start,
+            Point2::new(q(-5, 3), Real::zero()),
+            end,
+            q(3, 5),
+        )
+        .unwrap()
+        .with_retained_conic_provenance(Some(implicit.clone()), Some(circle.clone()));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // D(t)=1-4t/5+4t²/5 > 0 everywhere. The exterior cut creates
+            // a zero middle weight without a pole or a change of support.
+            let (left, right) = decided(conic.split_at_exact(q(5, 2), &policy).unwrap());
+            assert!(
+                matches!(&left, BezierSubcurve2::Rational(curve) if curve.affine_control_points().is_none())
+            );
+            for part in [
+                left.clone(),
+                right,
+                decided(
+                    left.subcurve_between_exact(&q(1, 4), &q(3, 4), &policy)
+                        .unwrap(),
+                ),
+                left.reversed(),
+            ] {
+                let rational = RationalBezier2::try_from_subcurve(&part).unwrap();
+                assert!(
+                    rational
+                        .retained_implicit_quadratic_conic()
+                        .is_some_and(|value| Arc::ptr_eq(value, &implicit))
+                );
+                assert!(
+                    rational
+                        .retained_circular_conic()
+                        .is_some_and(|value| Arc::ptr_eq(value, &circle))
+                );
+                assert!(matches!(
+                    rational.denominator_sign(&crate::CurveParameterRange2::unit()),
+                    Classification::Decided(RealSign::Positive)
                 ));
             }
         }
-        let x = (&control.x / &control.weight)?;
-        let y = (&control.y / &control.weight)?;
-        points.push(Point2::new(x, y));
-        weights.push(control.weight.clone());
     }
 
-    RationalQuadraticBezier2::try_new_with_common_weight_sign(
-        points[0].clone(),
-        points[1].clone(),
-        points[2].clone(),
-        weights[0].clone(),
-        weights[1].clone(),
-        weights[2].clone(),
-        retained_common_weight_sign,
-    )
+    #[test]
+    fn conic_exterior_cuts_do_not_export_unit_weight_signs_across_poles() {
+        let conic = RationalQuadraticBezier2::try_new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 1),
+            Point2::from_values(2, 0),
+            4.into(),
+            2.into(),
+            1.into(),
+        )
+        .unwrap();
+        // D(t)=(t-2)²: the positive authored weights prove only the unit domain.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert!(matches!(
+                conic.split_at_exact(2.into(), &policy).unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+            let (left, _) = decided(conic.split_at_exact(3.into(), &policy).unwrap());
+            let rational = RationalBezier2::try_from_subcurve(&left).unwrap();
+            assert!(matches!(
+                rational.denominator_sign(&crate::CurveParameterRange2::unit()),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+        }
+    }
 }

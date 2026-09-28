@@ -955,13 +955,21 @@ impl Curve2 {
                     .subcurve_between_exact(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?,
             ),
-            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
-                CurveGeometry2::RationalQuadraticBezier(
-                    curve
-                        .subcurve_between_exact(&start, &end, policy)
-                        .map_err(|cause| self.subdivision_error(cause))?,
-                )
-            }
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => CurveGeometry2::from_bezier(
+                match curve
+                    .subcurve_between_exact(&start, &end, policy)
+                    .map_err(|cause| self.subdivision_error(cause))?
+                {
+                    Classification::Decided(curve) => curve,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Subdivision,
+                            self.family(),
+                            reason,
+                        ));
+                    }
+                },
+            ),
             Some(CurveGeometry2::RationalBezier(curve)) => CurveGeometry2::RationalBezier(
                 match curve
                     .subcurve_between_exact(&start, &end, policy)

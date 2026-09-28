@@ -3264,9 +3264,15 @@ mod tests {
                 weights[2].clone(),
             )
             .unwrap();
-            let (left, right) = curve
+            let Classification::Decided((
+                crate::BezierSubcurve2::RationalQuadratic(left),
+                crate::BezierSubcurve2::RationalQuadratic(right),
+            )) = curve
                 .split_at_exact(half.clone(), &CurveContext::STRICT)
-                .unwrap();
+                .unwrap()
+            else {
+                panic!("positive-weight conic cuts retain finite affine controls");
+            };
             let whole = curve
                 .area_moments_contribution()
                 .unwrap()

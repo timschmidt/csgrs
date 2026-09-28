@@ -99,26 +99,6 @@ impl RationalQuadraticBezier2 {
         control_weight: Real,
         end_weight: Real,
     ) -> Result<Self, CurveError> {
-        Self::try_new_with_common_weight_sign(
-            start,
-            control,
-            end,
-            start_weight,
-            control_weight,
-            end_weight,
-            None,
-        )
-    }
-
-    pub(crate) fn try_new_with_common_weight_sign(
-        start: Point2,
-        control: Point2,
-        end: Point2,
-        start_weight: Real,
-        control_weight: Real,
-        end_weight: Real,
-        retained_common_weight_sign: Option<RealSign>,
-    ) -> Result<Self, CurveError> {
         Self::try_new_with_common_weight_sign_and_implicit_conic(
             start,
             control,
@@ -126,7 +106,7 @@ impl RationalQuadraticBezier2 {
             start_weight,
             control_weight,
             end_weight,
-            retained_common_weight_sign,
+            None,
             None,
             None,
         )

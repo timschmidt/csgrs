@@ -2313,9 +2313,10 @@ fn refine_graph_at_boundaries(
             if compare_reals(&local_start, &local_end, policy) == Some(std::cmp::Ordering::Equal) {
                 continue;
             }
-            let subcurve = match subcurve_between_local(curve, &local_start, &local_end, policy) {
-                Classification::Decided(subcurve) => subcurve,
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+            let subcurve = match curve.subcurve_between_exact(&local_start, &local_end, policy) {
+                Ok(Classification::Decided(subcurve)) => subcurve,
+                Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
             };
             let refined_start = compose_source_parameter(source_start, source_end, &local_start);
             let refined_end = compose_source_parameter(source_start, source_end, &local_end);
@@ -2531,38 +2532,6 @@ fn refined_overlap_orientation(
     }
 
     Classification::Uncertain(UncertaintyReason::Boundary)
-}
-
-fn subcurve_between_local(
-    curve: &BezierSubcurve2,
-    start: &Real,
-    end: &Real,
-    policy: &CurveContext,
-) -> Classification<BezierSubcurve2> {
-    let result = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve
-            .subcurve_between_exact(start, end, policy)
-            .map(BezierSubcurve2::Quadratic),
-        BezierSubcurve2::Cubic(curve) => curve
-            .subcurve_between_exact(start, end, policy)
-            .map(BezierSubcurve2::Cubic),
-        BezierSubcurve2::RationalQuadratic(curve) => curve
-            .subcurve_between_exact(start, end, policy)
-            .map(BezierSubcurve2::RationalQuadratic),
-        BezierSubcurve2::Rational(curve) => {
-            match curve.subcurve_between_exact(start, end, policy) {
-                Ok(Classification::Decided(curve)) => Ok(BezierSubcurve2::Rational(curve)),
-                Ok(Classification::Uncertain(_)) => {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                }
-                Err(error) => Err(error),
-            }
-        }
-    };
-    match result {
-        Ok(curve) => Classification::Decided(curve),
-        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-    }
 }
 
 fn compose_source_parameter(source_start: &Real, source_end: &Real, local: &Real) -> Real {

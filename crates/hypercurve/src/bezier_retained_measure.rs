@@ -351,9 +351,10 @@ fn retained_algebraic_source_interval_bounds(
         Classification::Decided(range) => range,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
-    let subcurve = match subcurve_between_exact(source_curve, &range_start, &range_end, policy) {
-        Classification::Decided(subcurve) => subcurve,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
+    let subcurve = match source_curve.subcurve_between_exact(&range_start, &range_end, policy) {
+        Ok(Classification::Decided(subcurve)) => subcurve,
+        Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+        Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
     retained_curve_bounds(&subcurve)
 }
@@ -586,38 +587,6 @@ fn parameter_interval_hull(
         return Classification::Uncertain(UncertaintyReason::Ordering);
     }
     Classification::Decided((lower, upper))
-}
-
-fn subcurve_between_exact(
-    curve: &BezierSubcurve2,
-    start: &Real,
-    end: &Real,
-    policy: &CurveContext,
-) -> Classification<BezierSubcurve2> {
-    let result = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve
-            .subcurve_between_exact(start, end, policy)
-            .map(BezierSubcurve2::Quadratic),
-        BezierSubcurve2::Cubic(curve) => curve
-            .subcurve_between_exact(start, end, policy)
-            .map(BezierSubcurve2::Cubic),
-        BezierSubcurve2::RationalQuadratic(curve) => curve
-            .subcurve_between_exact(start, end, policy)
-            .map(BezierSubcurve2::RationalQuadratic),
-        BezierSubcurve2::Rational(curve) => {
-            match curve.subcurve_between_exact(start, end, policy) {
-                Ok(Classification::Decided(curve)) => Ok(BezierSubcurve2::Rational(curve)),
-                Ok(Classification::Uncertain(_)) => {
-                    return Classification::Uncertain(UncertaintyReason::Unsupported);
-                }
-                Err(error) => Err(error),
-            }
-        }
-    };
-    match result {
-        Ok(curve) => Classification::Decided(curve),
-        Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-    }
 }
 
 fn retained_curve_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {

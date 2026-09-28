@@ -461,9 +461,12 @@ fn exact_cubic_subcurve_matches_original_endpoints_at_range_bounds() {
 fn exact_rational_quadratic_split_preserves_conic_endpoint_evaluation() {
     let curve =
         RationalQuadraticBezier2::try_unit_end_weights(p(1, 0), p(1, 1), p(0, 1), q(1, 2)).unwrap();
-    let subcurve = curve
+    let Classification::Decided(subcurve) = curve
         .subcurve_between_exact(&r(0), &q(1, 2), &policy())
-        .unwrap();
+        .unwrap()
+    else {
+        panic!("finite conic cut must be decided");
+    };
     let expected_midpoint = match curve.point_at(q(1, 2), &policy()) {
         Classification::Decided(point) => point,
         Classification::Uncertain(reason) => {
