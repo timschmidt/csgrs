@@ -834,3 +834,95 @@ fn rational_derivative_images_require_finite_affine_domain() {
         }
     }
 }
+
+#[test]
+fn high_order_derivative_images_preserve_selected_source_domains() {
+    use hypercurve::{HomogeneousControl2, UncertaintyReason};
+    use std::cmp::Ordering;
+
+    // C(t)=(t/(1+t),1/(1+t)), authored with a common homogeneous factor F.
+    // Keep the original domain: roots of F are still excluded even though
+    // the affine quotient would have a removable singularity there.
+    fn choose(n: usize, k: usize) -> u64 {
+        (0..k.min(n - k)).fold(1, |value, j| value * (n - j) as u64 / (j + 1) as u64)
+    }
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for (factor_power, has_pole) in [(0, false), (3, false), (7, false), (3, true)] {
+            let degree = 2 * factor_power + if has_pole { 3 } else { 1 };
+            let mut factor = vec![Real::zero(); degree];
+            for j in 0..=factor_power {
+                let coefficient = Real::from(choose(factor_power, j));
+                if has_pole {
+                    factor[2 * j] = &factor[2 * j] - &coefficient;
+                    factor[2 * j + 2] = &factor[2 * j + 2] + r(3) * coefficient;
+                } else {
+                    factor[2 * j] = coefficient;
+                }
+            }
+            let controls = (0..=degree)
+                .map(|i| {
+                    let mut x = Real::zero();
+                    let mut y = Real::zero();
+                    for (k, coefficient) in factor.iter().enumerate() {
+                        if k <= i {
+                            y += (coefficient * Real::from(choose(i, k))
+                                / Real::from(choose(degree, k)))
+                            .unwrap();
+                        }
+                        if k < i {
+                            x += (coefficient * Real::from(choose(i, k + 1))
+                                / Real::from(choose(degree, k + 1)))
+                            .unwrap();
+                        }
+                    }
+                    let weight = &x + &y;
+                    HomogeneousControl2::new(x, y, weight)
+                })
+                .collect();
+            let curve =
+                decided(RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap());
+            // For the pole case, P=(2t^2-1)(3t^2-1). The denominator is not
+            // invertible modulo all of P, but it is nonzero at the selected root.
+            let source = if has_pole {
+                vec![r(1), r(0), r(-5), r(0), r(6)]
+            } else {
+                vec![r(-1), r(0), r(2)]
+            };
+            let parameter = isolate(polynomial(source.clone()), interval(q(2, 3), q(3, 4)));
+            let images = decided(
+                curve
+                    .derivatives_at_algebraic_parameter(&parameter, 8, &policy)
+                    .unwrap(),
+            );
+            assert_eq!(images.len(), 8);
+            let t = (r(2).sqrt().unwrap() / r(2)).unwrap();
+            let denominator = Real::one() + t;
+            let mut power = denominator.clone();
+            let mut factorial = 1_u64;
+            for (index, image) in images.iter().enumerate() {
+                let order = index + 1;
+                factorial *= order as u64;
+                power *= &denominator;
+                // d^k(1/(1+t)) = (-1)^k k!/(1+t)^(k+1), and x=1-y.
+                let dy = (r(if order % 2 == 0 { 1 } else { -1 }) * Real::from(factorial) / &power)
+                    .unwrap();
+                for (coordinate, expected) in [
+                    (image.dx().unwrap(), -dy.clone()),
+                    (image.dy().unwrap(), dy),
+                ] {
+                    assert_eq!(
+                        coordinate.compare_to_real(&expected, &policy),
+                        Classification::Decided(Ordering::Equal)
+                    );
+                }
+            }
+            if has_pole {
+                let pole = isolate(polynomial(source), interval(q(1, 2), q(3, 5)));
+                assert!(matches!(
+                    curve.derivatives_at_algebraic_parameter(&pole, 8, &policy),
+                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                ));
+            }
+        }
+    }
+}

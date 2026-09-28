@@ -2016,9 +2016,14 @@ pub(crate) fn rational_derivative_images_from_power_basis(
     policy: &CurveContext,
     max_order: usize,
 ) -> CurveResult<Classification<Vec<RationalBezierAlgebraicTangentImage2>>> {
+    if max_order == 0 {
+        return Ok(Classification::Decided(Vec::new()));
+    }
     let strict = policy.strict_counterpart();
     let denominator_derivative = derivative_coefficients(&denominator);
-    let mut denominator_power = denominator.clone();
+    let denominator_image =
+        reduce_algebraic_image_polynomial(parameter, denominator.clone(), &strict)?;
+    let mut denominator_power = denominator_image.clone();
     let mut images = Vec::with_capacity(max_order);
     for order in 1..=max_order {
         let coefficient = Real::from(order as u64);
@@ -2036,19 +2041,24 @@ pub(crate) fn rational_derivative_images_from_power_basis(
                 coefficient,
             ),
         );
-        denominator_power = multiply_polynomials(&denominator_power, &denominator);
+        // Denominator powers are values at the selected root, never differentiated.
+        // Retain their reduced representatives between products. The numerator
+        // recurrence above still differentiates full source polynomials.
+        denominator_power = reduce_algebraic_image_polynomial(
+            parameter,
+            multiply_polynomials(&denominator_power, &denominator_image),
+            &strict,
+        )?;
         let dx_numerator =
             reduce_algebraic_image_polynomial(parameter, x_numerator.clone(), &strict)?;
         let dy_numerator =
             reduce_algebraic_image_polynomial(parameter, y_numerator.clone(), &strict)?;
-        let derivative_denominator =
-            reduce_algebraic_image_polynomial(parameter, denominator_power.clone(), &strict)?;
         match rational_tangent_image(
             parameter,
             RationalTangentPolynomials {
                 dx_numerator,
                 dy_numerator,
-                denominator: derivative_denominator,
+                denominator: denominator_power.clone(),
             },
             &strict,
         )? {
