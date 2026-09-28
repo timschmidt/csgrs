@@ -318,9 +318,10 @@ exact signatures.
   reconstruct_from_polyline}` and
   `Contour2::{from_real_ring, from_finite_ring,
   reconstruct_from_closed_polyline}` import or reconstruct line/arc geometry.
-- `CurveRegion2::recover_from_finite_profiles` reconstructs a region from
-  finite material/hole profiles. `PolylineReconstructionOptions` controls the
-  distance tolerance.
+- `CurveRegion2::recover_from_finite_profiles` reconstructs and regularizes a
+  region from finite material/hole profiles, returning `CurveOutcome` with the
+  admission certainty. `PolylineReconstructionOptions` controls reconstruction
+  tolerance; the import remains lossy relative to the original source curves.
 - `project_to_finite_polyline`, `project_to_finite_curve_paths`,
   `project_to_finite_profiles`, and `project_to_finite_region` provide explicit
   finite approximations. `FiniteProjectionOptions` makes the curve chord-error

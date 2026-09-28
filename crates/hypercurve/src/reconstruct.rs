@@ -15,9 +15,9 @@ use std::f64::consts::PI;
 use hyperreal::Real;
 
 use crate::{
-    BulgeVertex2, Contour2, CurveContext, CurveError, CurveFamily2, CurveOperation2, CurveRegion2,
-    CurveResult, CurveString2, ExactCurveError, ExactCurveResult, FillRule, FinitePolyline2,
-    FiniteRegionProfile2, LineSeg2, Point2, Segment2,
+    BulgeVertex2, Contour2, CurveContext, CurveError, CurveFamily2, CurveOperation2, CurveOutcome,
+    CurveRegion2, CurveResult, CurveString2, ExactCurveError, ExactCurveResult, FillRule,
+    FinitePolyline2, FiniteRegionProfile2, LineSeg2, Point2, Segment2,
 };
 
 const DEFAULT_DISTANCE_TOLERANCE: f64 = 1e-6;
@@ -328,18 +328,19 @@ impl Contour2 {
 }
 
 impl CurveRegion2 {
-    /// Recovers exact-scalar line/arc boundaries from segmented finite profiles.
+    /// Recovers a regularized region from segmented finite profiles.
     ///
-    /// This mirrors [`CurveRegion2::project_to_finite_profiles`]. Material and
-    /// hole bins are taken directly from the profile structure rather than
-    /// inferred from sampled winding. General source curves cannot be recovered
-    /// losslessly from chords, so use the evidence-bearing variant when that
-    /// provenance boundary matters to the caller.
+    /// Material and hole roles come from the profile structure. Reconstructed
+    /// native contours enter the same exact region admission as authored
+    /// contours, resolving overlaps and canceled seams before publication.
+    /// The outcome records the predicates consumed by that admission.
+    /// Reconstruction is lossy relative to the original source curves; the
+    /// resulting exact set is defined by the reconstructed line/arc contours.
     pub fn recover_from_finite_profiles(
         profiles: &[FiniteRegionProfile2],
         options: PolylineReconstructionOptions,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Self> {
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
         let mut material_contours = Vec::with_capacity(profiles.len());
         let hole_count = profiles.iter().map(|profile| profile.holes().len()).sum();
         let mut hole_contours = Vec::with_capacity(hole_count);
@@ -352,7 +353,7 @@ impl CurveRegion2 {
             }
         }
 
-        Self::try_from_native_contours_raw(material_contours, hole_contours, policy)
+        Self::try_from_native_contours(material_contours, hole_contours, policy)
     }
 }
 

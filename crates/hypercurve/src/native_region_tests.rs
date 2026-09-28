@@ -806,3 +806,133 @@ fn batched_classifier_and_structural_facts_use_the_unified_surface() {
             .collect::<Vec<_>>()
     );
 }
+
+#[test]
+fn empty_unordered_arrangement_reenters_exact_set_operations() {
+    use crate::BooleanOp;
+    let material = region(vec![rectangle(0, 0, 4, 4)], Vec::new());
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for fill_rule in [FillRule::EvenOdd, FillRule::NonZero] {
+            let outcome = CurveRegion2::arrange_unordered_segments(&[], fill_rule, &policy)
+                .expect("an empty arrangement represents the empty set");
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            let arranged = outcome.into_value();
+            assert_eq!(arranged.fill_rule(), fill_rule);
+            assert_eq!(arranged.source_segment_count(), 0);
+            assert_eq!(arranged.output_ring_count(), Some(0));
+            assert_eq!(arranged.output_boundary_segment_count(), Some(0));
+            assert_eq!(
+                arranged.output_boundary_segment_kind_counts(),
+                Some(SegmentKindCounts::default())
+            );
+            assert!(arranged.status().is_native_exact());
+            assert!(arranged.blocker().is_none());
+            let empty = arranged
+                .into_region()
+                .expect("empty arrangement has a region");
+            assert!(empty.is_empty());
+            for (operation, empty_first_filled, empty_second_filled) in [
+                (BooleanOp::Union, true, true),
+                (BooleanOp::Intersection, false, false),
+                (BooleanOp::Difference, false, true),
+                (BooleanOp::Xor, true, true),
+            ] {
+                for (first, second, filled) in [
+                    (&empty, &material, empty_first_filled),
+                    (&material, &empty, empty_second_filled),
+                ] {
+                    let result = first.boolean_region(second, operation, &policy).unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    let result = result.into_value();
+                    assert_eq!(result.is_empty(), !filled);
+                    for (point, expected) in [
+                        (
+                            p(2, 2),
+                            if filled {
+                                RegionPointLocation::Inside
+                            } else {
+                                RegionPointLocation::Outside
+                            },
+                        ),
+                        (
+                            p(4, 2),
+                            if filled {
+                                RegionPointLocation::Boundary
+                            } else {
+                                RegionPointLocation::Outside
+                            },
+                        ),
+                        (p(5, 2), RegionPointLocation::Outside),
+                    ] {
+                        assert_eq!(
+                            result
+                                .classify_point(&point.into(), &policy)
+                                .unwrap()
+                                .into_value(),
+                            Classification::Decided(expected)
+                        );
+                    }
+                }
+            }
+            let offset = empty
+                .offset(Real::from(-1), &crate::OffsetCornerStyle2::Round, &policy)
+                .unwrap();
+            assert_eq!(offset.certainty, CurveCertainty::Certified);
+            assert!(offset.value.is_empty());
+        }
+    }
+}
+
+#[test]
+fn empty_region_offsets_preserve_set_and_policy_identity() {
+    use crate::{BooleanOp, ExactCurveError, OffsetCornerStyle2};
+    let material = region(vec![rectangle(0, 0, 4, 4)], Vec::new());
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let difference = material
+            .boolean_region(&material, BooleanOp::Difference, &policy)
+            .unwrap()
+            .into_value();
+        let collapsed = material
+            .offset(Real::from(-3), &OffsetCornerStyle2::Bevel, &policy)
+            .unwrap()
+            .into_value();
+        assert!(difference.is_empty());
+        assert!(collapsed.is_empty());
+        let sine = Real::e().sin();
+        let cosine = Real::e().cos();
+        let symbolic_zero = &sine * &sine + &cosine * &cosine - Real::one();
+        for empty in [CurveRegion2::empty(), difference, collapsed] {
+            for style in [
+                OffsetCornerStyle2::Round,
+                OffsetCornerStyle2::Bevel,
+                OffsetCornerStyle2::Miter {
+                    limit: Real::from(4),
+                },
+            ] {
+                for distance in [
+                    Real::from(-1),
+                    Real::zero(),
+                    Real::one(),
+                    symbolic_zero.clone(),
+                ] {
+                    let result = empty.offset(distance, &style, &policy).unwrap();
+                    assert_eq!(result.certainty, CurveCertainty::Certified);
+                    assert!(result.value.is_empty());
+                }
+            }
+            assert!(matches!(
+                empty.offset(
+                    Real::one(),
+                    &OffsetCornerStyle2::Miter {
+                        limit: Real::from(-1)
+                    },
+                    &policy
+                ),
+                Err(ExactCurveError::Invalid {
+                    cause: CurveError::InvalidOffsetOptions,
+                    ..
+                })
+            ));
+        }
+    }
+}

@@ -190,3 +190,208 @@ fn finite_ring_import_rejects_all_duplicate_source_edges() {
         CurveError::InsufficientVertices
     );
 }
+
+fn rectangle_for_recovery(xmin: i32, ymin: i32, xmax: i32, ymax: i32) -> Contour2 {
+    Contour2::from_bulge_vertices(
+        &[(xmin, ymin), (xmax, ymin), (xmax, ymax), (xmin, ymax)]
+            .map(|(x, y)| BulgeVertex2::new(Point2::from_values(x, y), Real::zero())),
+    )
+    .unwrap()
+}
+
+fn profiles_for_recovery(
+    material: Vec<Contour2>,
+    holes: Vec<Contour2>,
+    policy: &hypercurve::CurveContext,
+) -> Vec<hypercurve::FiniteRegionProfile2> {
+    let region = hypercurve::CurveRegion2::try_from_native_contours(material, holes, policy)
+        .unwrap()
+        .into_value();
+    let projection = region
+        .project_to_finite_profiles(
+            &hypercurve::FiniteProjectionOptions::try_new(0.01).unwrap(),
+            policy,
+        )
+        .unwrap();
+    let hypercurve::Classification::Decided(profiles) = projection.into_value() else {
+        panic!("rectangles have exact finite profiles");
+    };
+    profiles
+}
+
+fn recover_profiles(
+    profiles: &[hypercurve::FiniteRegionProfile2],
+    policy: &hypercurve::CurveContext,
+) -> hypercurve::CurveRegion2 {
+    let outcome = hypercurve::CurveRegion2::recover_from_finite_profiles(
+        profiles,
+        PolylineReconstructionOptions {
+            min_arc_points: 8,
+            ..PolylineReconstructionOptions::DEFAULT
+        },
+        policy,
+    )
+    .unwrap();
+    assert_eq!(outcome.certainty, hypercurve::CurveCertainty::Certified);
+    outcome.into_value()
+}
+
+#[test]
+fn finite_profile_recovery_regularizes_overlaps_before_publication() {
+    use hypercurve::{Classification, CurveContext, OffsetCornerStyle2, RegionPointLocation};
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let mut profiles = profiles_for_recovery(
+            vec![rectangle_for_recovery(0, 0, 4, 4)],
+            Vec::new(),
+            &policy,
+        );
+        profiles.extend(profiles_for_recovery(
+            vec![rectangle_for_recovery(2, 0, 6, 4)],
+            Vec::new(),
+            &policy,
+        ));
+        for reverse in [false, true] {
+            if reverse {
+                profiles.reverse();
+            }
+            let recovered = recover_profiles(&profiles, &policy);
+            assert_eq!(recovered.len(), 1);
+            let Classification::Decided(Some(area)) =
+                recovered.filled_area(&policy).unwrap().into_value()
+            else {
+                panic!("the rectangle has an exact area");
+            };
+            assert_eq!(
+                area.partial_cmp(&Real::from(24)),
+                Some(std::cmp::Ordering::Equal)
+            );
+            for (x, expected) in [
+                (-1, RegionPointLocation::Outside),
+                (0, RegionPointLocation::Boundary),
+                (2, RegionPointLocation::Inside),
+                (4, RegionPointLocation::Inside),
+                (6, RegionPointLocation::Boundary),
+                (7, RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    recovered
+                        .classify_point(&Point2::from_values(x, 2).into(), &policy)
+                        .unwrap()
+                        .into_value(),
+                    Classification::Decided(expected)
+                );
+            }
+            let expanded = recovered
+                .offset(Real::one(), &OffsetCornerStyle2::Round, &policy)
+                .unwrap()
+                .into_value();
+            for (x, expected) in [
+                (-2, RegionPointLocation::Outside),
+                (-1, RegionPointLocation::Boundary),
+                (3, RegionPointLocation::Inside),
+                (7, RegionPointLocation::Boundary),
+                (8, RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    expanded
+                        .classify_point(&Point2::from_values(x, 2).into(), &policy)
+                        .unwrap()
+                        .into_value(),
+                    Classification::Decided(expected)
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn finite_profile_recovery_preserves_nested_islands_and_cancels_filled_holes() {
+    use hypercurve::{Classification, CurveContext, RegionPointLocation};
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let profiles = profiles_for_recovery(
+            vec![
+                rectangle_for_recovery(0, 0, 10, 10),
+                rectangle_for_recovery(4, 4, 6, 6),
+            ],
+            vec![rectangle_for_recovery(2, 2, 8, 8)],
+            &policy,
+        );
+        let recovered = recover_profiles(&profiles, &policy);
+        assert_eq!(recovered.len(), 3);
+        assert_eq!(
+            recovered.loop_role_counts(&policy).unwrap().into_value(),
+            Classification::Decided((2, 1))
+        );
+        let Classification::Decided(Some(area)) =
+            recovered.filled_area(&policy).unwrap().into_value()
+        else {
+            panic!("nested rectangles have an exact area");
+        };
+        assert_eq!(
+            area.partial_cmp(&Real::from(68)),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for (x, expected) in [
+            (1, RegionPointLocation::Inside),
+            (2, RegionPointLocation::Boundary),
+            (3, RegionPointLocation::Outside),
+            (4, RegionPointLocation::Boundary),
+            (5, RegionPointLocation::Inside),
+            (8, RegionPointLocation::Boundary),
+            (9, RegionPointLocation::Inside),
+        ] {
+            assert_eq!(
+                recovered
+                    .classify_point(&Point2::from_values(x, 5).into(), &policy)
+                    .unwrap()
+                    .into_value(),
+                Classification::Decided(expected)
+            );
+        }
+        let mut filled_profiles = profiles;
+        filled_profiles.extend(profiles_for_recovery(
+            vec![rectangle_for_recovery(2, 2, 8, 8)],
+            Vec::new(),
+            &policy,
+        ));
+        let filled = recover_profiles(&filled_profiles, &policy);
+        assert_eq!(filled.len(), 1);
+        let Classification::Decided(Some(area)) = filled.filled_area(&policy).unwrap().into_value()
+        else {
+            panic!("the filled rectangle has an exact area");
+        };
+        assert_eq!(
+            area.partial_cmp(&Real::from(100)),
+            Some(std::cmp::Ordering::Equal)
+        );
+        for x in [2, 4, 5, 6, 8] {
+            assert_eq!(
+                filled
+                    .classify_point(&Point2::from_values(x, 5).into(), &policy)
+                    .unwrap()
+                    .into_value(),
+                Classification::Decided(RegionPointLocation::Inside)
+            );
+        }
+    }
+}
+
+#[test]
+fn finite_profile_recovery_accepts_empty_input_with_certified_topology() {
+    for policy in [
+        hypercurve::CurveContext::STRICT,
+        hypercurve::CurveContext::APPROXIMATE_512,
+    ] {
+        let recovered = recover_profiles(&[], &policy);
+        assert!(recovered.is_empty());
+        let offset = recovered
+            .offset(
+                Real::from(-1),
+                &hypercurve::OffsetCornerStyle2::Bevel,
+                &policy,
+            )
+            .unwrap();
+        assert_eq!(offset.certainty, hypercurve::CurveCertainty::Certified);
+        assert!(offset.value.is_empty());
+    }
+}

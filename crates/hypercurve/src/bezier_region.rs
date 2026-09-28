@@ -1852,9 +1852,6 @@ fn arrange_unordered_native_segments_raw(
     fill_rule: FillRule,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveRegionArrangement2> {
-    if source_segments.is_empty() {
-        return Err(curve_region_promotion_error(CurveError::EmptyCurveString));
-    }
     let rings = match assemble_unordered_segment_rings(source_segments, policy) {
         Ok(rings) => rings,
         Err(reason) => {
@@ -1891,8 +1888,10 @@ fn arrange_unordered_native_segments_raw(
         }
         Err(error) => return Err(error),
     };
-    raw.data_mut_for_construction().certified_loop_fill_rules =
-        Some(Arc::from(vec![fill_rule; paths.len()]));
+    if !raw.is_empty() {
+        raw.data_mut_for_construction().certified_loop_fill_rules =
+            Some(Arc::from(vec![fill_rule; paths.len()]));
+    }
     let region = match raw.regularized_region_raw(policy) {
         Ok(region) => region,
         Err(ExactCurveError::Blocked(blocker)) => {
@@ -10085,7 +10084,7 @@ impl CurveRegion2 {
     /// The input adapter only orders endpoint-disjoint closed walks. Interior
     /// contacts, overlaps, winding, face selection, and output roles are all
     /// decided by the same all-family arrangement used by Boolean and offset
-    /// operations.
+    /// operations. An empty collection produces the canonical empty region.
     pub fn arrange_unordered_segments(
         source_segments: &[Segment2],
         fill_rule: FillRule,
@@ -12291,7 +12290,8 @@ impl CurveRegion2 {
     /// all-line contractions, non-convex collapses, and higher carriers use the
     /// same boundary-walk/band construction and authoritative arrangement.
     /// Unsupported retained source fragments return explicit uncertainty rather
-    /// than sampled geometry.
+    /// than sampled geometry. After corner-option validation, an empty region
+    /// remains empty for every signed distance without requiring its sign.
     pub fn offset(
         &self,
         distance: Real,
@@ -12535,7 +12535,7 @@ impl CurveRegion2 {
         corner_style: &OffsetCornerStyle2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
-        if is_zero(&distance, policy) == Some(true) {
+        if self.is_empty() || is_zero(&distance, policy) == Some(true) {
             return Ok(Classification::Decided(self.clone()));
         }
         let distance_positive = match real_sign(&distance, policy) {
