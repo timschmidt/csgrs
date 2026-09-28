@@ -10576,9 +10576,10 @@ mod tests {
             line(point(1, 1), point(-1, 1)),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths(&[cap], &policy)
-            .unwrap()
-            .into_value();
+        let region =
+            CurveRegion2::try_from_boundary_paths(&[cap], hypercurve::FillRule::EvenOdd, &policy)
+                .unwrap()
+                .into_value();
         let offset = region
             .offset(
                 (Real::one() / r(4)).unwrap(),
