@@ -396,10 +396,10 @@ impl BezierParameterPolynomial {
 
     /// Isolates every distinct root in one finite represented interval.
     ///
-    /// This uses the same authoritative Sturm carrier as unit-interval
-    /// isolation, but evaluates the original polynomial at the requested
-    /// boundaries. Avoiding an affine polynomial composition keeps large
-    /// rational endpoints from inflating every coefficient and later replay.
+    /// Retains the original polynomial and evaluates its exact boundaries.
+    /// Nonrational coefficients first use the shared division-free Bernstein
+    /// proof; unresolved cases keep Sturm replay. Rational inputs avoid an
+    /// affine composition that could inflate large endpoint coefficients.
     pub(crate) fn isolate_interval_roots(
         &self,
         lower: &Real,
@@ -3785,7 +3785,7 @@ fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
     derivative
 }
 
-enum UnitRootSearch {
+enum RootSearch {
     Isolated(Vec<BezierParameter2>),
     RepresentedRoot(Real),
 }
@@ -3924,6 +3924,130 @@ fn subdivide_rational_bernstein_half(
     }
     right.reverse();
     (left, right)
+}
+
+/// Try the shared division-free isolator on the actual finite interval.
+/// Its singleton proof belongs to the original polynomial, including when
+/// interval endpoints and coefficients lie in different exact scalar fields.
+/// Unavailable signs or repeated roots retain the complete Sturm fallback.
+fn exact_nonrational_bernstein_interval_roots(
+    polynomial: &BezierParameterPolynomial,
+    lower: &Real,
+    upper: &Real,
+    policy: &CurveContext,
+    trace: &mut BezierRootIsolationTrace2,
+) -> CurveResult<Option<RootSearch>> {
+    use hypersolve::{
+        OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
+        OrderedFieldRootIsolationStatus, isolate_ordered_field_polynomial_roots,
+    };
+    if polynomial.degree() < 2
+        || polynomial
+            .coefficients()
+            .iter()
+            .all(|x| x.exact_rational_ref().is_some())
+    {
+        return Ok(None);
+    }
+    // Hypersolve owns subdivision and root-count evidence; Hypercurve only
+    // supplies its existing exact scalar decisions and retains the parameter.
+    struct ScalarField<'a>(&'a CurveContext);
+    impl OrderedFieldPolynomialContext<Real> for ScalarField<'_> {
+        type Error = ();
+        fn constant(&mut self, value: &Real) -> Result<Real, ()> {
+            Ok(value.clone())
+        }
+        fn add(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
+            Ok(left + right)
+        }
+        fn multiply(&mut self, left: &Real, right: &Real) -> Result<Real, ()> {
+            Ok(left * right)
+        }
+        fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, ()> {
+            Ok(value * scale)
+        }
+        fn normalize_positive_scale(&mut self, _: &mut [Real]) {}
+        fn sign(&mut self, value: &Real) -> Result<Ordering, ()> {
+            self.sign_if_separated(value)?.ok_or(())
+        }
+        fn sign_if_separated(&mut self, value: &Real) -> Result<Option<Ordering>, ()> {
+            // These signs certify a root, so an approximate terminal decision
+            // cannot become part of its reusable algebraic authority.
+            Ok(self
+                .0
+                .strict_predicate_pass(|| real_sign(value, self.0))
+                .map(|s| match s {
+                    RealSign::Negative => Ordering::Less,
+                    RealSign::Zero => Ordering::Equal,
+                    RealSign::Positive => Ordering::Greater,
+                }))
+        }
+    }
+    let report = match isolate_ordered_field_polynomial_roots(
+        polynomial.coefficients().to_vec(),
+        lower,
+        upper,
+        OrderedFieldRootIsolationConfig {
+            max_subdivision_depth: 64,
+            refinement_steps: 0,
+        },
+        &mut ScalarField(policy),
+    ) {
+        Ok(report) => report,
+        Err(()) => return Ok(None),
+    };
+    if report.status != OrderedFieldRootIsolationStatus::Isolated {
+        return Ok(None);
+    }
+    trace.bisections += report.subdivision_steps;
+    // Keep represented roots in the existing deflation loop. Adjoining an
+    // algebraic parameter for an already represented contact needlessly
+    // enlarges every subsequent point, circle and offset coefficient field.
+    if let Some(root) = report
+        .intervals
+        .iter()
+        .find_map(|interval| interval.exact_root.as_ref())
+    {
+        return Ok(Some(RootSearch::RepresentedRoot(root.clone())));
+    }
+    let strict = policy.strict_counterpart();
+    let mut roots = Vec::with_capacity(report.intervals.len());
+    for interval in report.intervals {
+        let interval = match BezierParameterInterval::try_new_ordered(
+            interval.lower,
+            interval.upper,
+            &strict,
+        )? {
+            Classification::Decided(interval) => interval,
+            Classification::Uncertain(_) => return Ok(None),
+        };
+        let mut parameter = BezierAlgebraicParameter2::from_certified_simple_singleton(
+            polynomial.clone(),
+            interval,
+        );
+        // Unit Bernstein and Sturm isolation both move singleton brackets
+        // inside the requested range. Preserve that construction behavior:
+        // a represented root encountered on the way keeps its scalar identity
+        // instead of becoming an unnecessary algebraic extension. This is
+        // sign-change refinement of an already certified simple singleton.
+        let mut remaining = 64;
+        while parameter.interval().start() == lower || parameter.interval().end() == upper {
+            if remaining == 0 {
+                return Ok(None);
+            }
+            remaining -= 1;
+            match refine_algebraic_sign_change(&parameter, 1, &strict) {
+                Some(BezierParameter2::Exact(root)) => {
+                    return Ok(Some(RootSearch::RepresentedRoot(root)));
+                }
+                Some(BezierParameter2::Algebraic(refined)) => parameter = refined,
+                None => return Ok(None),
+            }
+            trace.bisections += 1;
+        }
+        roots.push(BezierParameter2::Algebraic(parameter));
+    }
+    Ok(Some(RootSearch::Isolated(roots)))
 }
 
 fn exact_nonrational_bernstein_unit_roots(
@@ -4287,19 +4411,34 @@ fn isolate_roots_in_interval(
             represented.append(&mut algebraic);
             break;
         }
-        match search_interval_roots(
-            &polynomial,
-            &represented_boundaries,
-            lower,
-            upper,
-            policy,
-            &mut trace,
-        )? {
-            Classification::Decided(UnitRootSearch::Isolated(mut algebraic)) => {
+        let bernstein_search = if !allow_unit_bernstein && !has_interior_represented_root {
+            exact_nonrational_bernstein_interval_roots(
+                &polynomial,
+                lower,
+                upper,
+                policy,
+                &mut trace,
+            )?
+        } else {
+            None
+        };
+        let search = match bernstein_search {
+            Some(search) => Classification::Decided(search),
+            None => search_interval_roots(
+                &polynomial,
+                &represented_boundaries,
+                lower,
+                upper,
+                policy,
+                &mut trace,
+            )?,
+        };
+        match search {
+            Classification::Decided(RootSearch::Isolated(mut algebraic)) => {
                 represented.append(&mut algebraic);
                 break;
             }
-            Classification::Decided(UnitRootSearch::RepresentedRoot(root)) => {
+            Classification::Decided(RootSearch::RepresentedRoot(root)) => {
                 represented.push(BezierParameter2::Exact(root.clone()));
                 coefficients = polynomial.coefficients;
                 loop {
@@ -4429,7 +4568,7 @@ fn search_interval_roots(
     domain_end: &Real,
     policy: &CurveContext,
     trace: &mut BezierRootIsolationTrace2,
-) -> CurveResult<Classification<UnitRootSearch>> {
+) -> CurveResult<Classification<RootSearch>> {
     let sequence = match sturm_sequence(polynomial.coefficients(), policy)? {
         Classification::Decided(sequence) => Arc::new(sequence),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -4526,9 +4665,7 @@ fn search_interval_roots(
                 Some(trace),
             )? {
                 Classification::Decided(Some(root)) => {
-                    return Ok(Classification::Decided(UnitRootSearch::RepresentedRoot(
-                        root,
-                    )));
+                    return Ok(Classification::Decided(RootSearch::RepresentedRoot(root)));
                 }
                 Classification::Decided(None) => {
                     isolated.push(BezierParameter2::Algebraic(parameter));
@@ -4542,7 +4679,7 @@ fn search_interval_roots(
         let midpoint = Real::average_pair(&start, &end);
         let midpoint_variations = match sturm_point_evidence(&sequence, &midpoint, policy)? {
             Classification::Decided(SturmPointEvidence::Root) => {
-                return Ok(Classification::Decided(UnitRootSearch::RepresentedRoot(
+                return Ok(Classification::Decided(RootSearch::RepresentedRoot(
                     midpoint,
                 )));
             }
@@ -4586,7 +4723,7 @@ fn search_interval_roots(
             trace.interval_root_counts += 1;
         }
     }
-    Ok(Classification::Decided(UnitRootSearch::Isolated(isolated)))
+    Ok(Classification::Decided(RootSearch::Isolated(isolated)))
 }
 
 fn insert_parameter_ordered(
@@ -7434,5 +7571,171 @@ mod conversion_tests {
         assert!(coefficients[2..].iter().all(|coefficient| {
             compare_reals(coefficient, &Real::zero(), &policy) == Some(Ordering::Equal)
         }));
+    }
+}
+
+#[cfg(test)]
+mod finite_field_bernstein_regression {
+    use super::*;
+
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                panic!("exact finite isolation declined: {reason:?}")
+            }
+        }
+    }
+
+    #[test]
+    fn finite_field_isolation_reuses_original_polynomial_and_simple_root_proof() {
+        let integers = [-3, -2, -1, 1, 2, 3];
+        let coefficients = integers
+            .iter()
+            .fold(vec![Real::one()], |coefficients, root| {
+                let mut product = vec![Real::zero(); coefficients.len() + 1];
+                for (degree, coefficient) in coefficients.iter().enumerate() {
+                    product[degree] -= coefficient * Real::from(*root);
+                    product[degree + 1] += coefficient;
+                }
+                product
+            });
+        let extent = Real::from(10).sqrt().unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for scale in [Real::pi(), -Real::pi()] {
+                let defining = decided(
+                    BezierParameterPolynomial::try_new_power_basis(
+                        coefficients.iter().map(|c| c * &scale).collect(),
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                let result = decided(
+                    isolate_roots_in_interval(
+                        defining.coefficients().to_vec(),
+                        &(-&extent),
+                        &extent,
+                        false,
+                        BezierRootIsolationTrace2::default(),
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                assert_eq!(result.trace().sturm_sequence_builds(), 0);
+                assert_eq!(result.roots().len(), integers.len());
+                for (root, expected) in result.roots().iter().zip(integers) {
+                    let BezierParameter2::Algebraic(root) = root else {
+                        panic!("nondyadic roots retain their original polynomial authority");
+                    };
+                    assert!(root.polynomial() == &defining);
+                    assert_eq!(
+                        compare_reals(root.interval().start(), &Real::from(expected), &policy),
+                        Some(Ordering::Less)
+                    );
+                    assert_eq!(
+                        compare_reals(root.interval().end(), &Real::from(expected), &policy),
+                        Some(Ordering::Greater)
+                    );
+                    assert!(root.data.shared.sturm_sequence.get().is_none());
+                }
+                assert_eq!(
+                    defining
+                        .simple_root_classifications(result.roots(), &policy)
+                        .unwrap(),
+                    vec![Classification::Decided(true); 6]
+                );
+                for root in result.roots() {
+                    let BezierParameter2::Algebraic(root) = root else {
+                        unreachable!()
+                    };
+                    assert!(root.data.shared.sturm_sequence.get().is_none());
+                }
+                let empty = decided(
+                    defining
+                        .isolate_interval_roots(&extent, &Real::from(11).sqrt().unwrap(), &policy)
+                        .unwrap(),
+                );
+                assert!(empty.is_empty());
+            }
+        }
+    }
+
+    #[test]
+    fn finite_field_isolation_keeps_repeated_roots_and_closed_boundaries() {
+        let scale = Real::from(3).sqrt().unwrap();
+        let alpha = Real::from(2).sqrt().unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // sqrt(3) * (t² - 2)² has just the two repeated roots ±sqrt(2).
+            let defining = decided(
+                BezierParameterPolynomial::try_new_power_basis(
+                    [4, 0, -4, 0, 1].map(|c| Real::from(c) * &scale).to_vec(),
+                    &policy,
+                )
+                .unwrap(),
+            );
+            for (lower, upper) in [(-&alpha, alpha.clone()), (Real::from(-2), Real::from(2))] {
+                let roots = decided(
+                    defining
+                        .isolate_interval_roots(&lower, &upper, &policy)
+                        .unwrap(),
+                );
+                assert_eq!(roots.len(), 2);
+                for (root, expected) in roots.iter().zip([-&alpha, alpha.clone()]) {
+                    assert_eq!(
+                        root.cmp_by_refinement(&BezierParameter2::Exact(expected), &policy)
+                            .unwrap(),
+                        Classification::Decided(Ordering::Equal)
+                    );
+                }
+                assert_eq!(
+                    defining
+                        .simple_root_classifications(&roots, &policy)
+                        .unwrap(),
+                    vec![Classification::Decided(false); 2]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn finite_field_isolation_preserves_represented_contacts_near_domain_boundaries() {
+        let gap = (Real::one() / Real::from(4095)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for contact in [
+                Real::from(-2),
+                Real::zero(),
+                Real::one(),
+                (Real::from(7) / Real::from(5)).unwrap(),
+            ] {
+                // pi * (t - contact) * (t² + 1) has one simple real root.
+                // The finite chart extends slightly past the contact. Keeping
+                // a wide singleton here would introduce an avoidable selected
+                // root into all later contact, circle and offset expressions.
+                let coefficients = [-&contact, Real::one(), -&contact, Real::one()]
+                    .map(|coefficient| coefficient * Real::pi())
+                    .to_vec();
+                let defining = decided(
+                    BezierParameterPolynomial::try_new_power_basis(coefficients, &policy).unwrap(),
+                );
+                for (lower, upper) in [
+                    (&contact - &gap, &contact + Real::one()),
+                    (&contact - Real::one(), &contact + &gap),
+                ] {
+                    let roots = decided(
+                        defining
+                            .isolate_interval_roots(&lower, &upper, &policy)
+                            .unwrap(),
+                    );
+                    assert_eq!(roots.len(), 1);
+                    let BezierParameter2::Exact(root) = &roots[0] else {
+                        panic!("a represented contact must retain its scalar identity");
+                    };
+                    assert_eq!(
+                        compare_reals(root, &contact, &policy),
+                        Some(Ordering::Equal)
+                    );
+                }
+            }
+        }
     }
 }
