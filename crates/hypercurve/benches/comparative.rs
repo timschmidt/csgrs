@@ -16,7 +16,7 @@ use curvo::prelude::{
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2, Similarity2,
+    BezierParameterPolynomial, CurvePoint2, Similarity2,
 };
 use hypercurve::{
     BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
@@ -638,11 +638,10 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     )
     .expect("closed benchmark boundary")
     .into_value();
-    let hypercurve = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    let hypercurve = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &policy,
     )
     .expect("valid benchmark region")

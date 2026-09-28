@@ -966,10 +966,10 @@ fn boundary_contacts_at(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bezier_region::CurveBoundaryInteriorSide2;
     use crate::{
-        CircularArc2, Contour2, CurveBoundaryInteriorSide2, CurveCertainty, CurveContext,
-        CurvePath2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Real,
-        Segment2,
+        CircularArc2, Contour2, CurveCertainty, CurveContext, CurvePath2, CurveRegionLoopRole,
+        FillRule, LineSeg2, Point2, QuadraticBezier2, Real, Segment2,
     };
 
     fn p(x: i32, y: i32) -> Point2 {
@@ -1035,11 +1035,10 @@ mod tests {
             Curve2::from(LineSeg2::try_new(p(0, 4), p(0, 0)).unwrap()),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[path],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[CurveBoundaryInteriorSide2::Left],
             &CurveContext::STRICT,
         )
         .unwrap()
@@ -1139,11 +1138,10 @@ mod tests {
             Curve2::from(LineSeg2::try_new(p(0, 2), p(0, 0)).unwrap()),
         ])
         .unwrap();
-        let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[boundary],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[CurveBoundaryInteriorSide2::Left],
             &CurveContext::STRICT,
         )
         .unwrap()

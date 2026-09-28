@@ -4,10 +4,10 @@ use std::time::Instant;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParallelFragment2, BezierParallelVerificationOptions,
     BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
-    CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
-    CurveIntersectionCandidates2, CurveParameterRange2, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
+    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveIntersectionCandidates2,
+    CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, CurveResult, FillRule,
+    LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
+    Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -859,11 +859,10 @@ fn curve_region_algebraic_partition_fixture(
     if cyclic_seam {
         curves.rotate_left(1);
     }
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new(curves)?],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Right],
         &policy,
     )?
     .into_value())

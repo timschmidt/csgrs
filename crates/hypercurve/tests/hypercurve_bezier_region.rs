@@ -1471,14 +1471,13 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
         );
 
         // Admission removes the inner filled seam before component extraction.
-        let authored = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        let authored = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[
                 quadratic_polygon_path(&[p(0, 0), p(8, 0), p(8, 8), p(0, 8)]),
                 quadratic_polygon_path(&[p(2, 2), p(6, 2), p(6, 6), p(2, 6)]),
             ],
             &[CurveRegionLoopRole::Material; 2],
             &[hypercurve::FillRule::NonZero; 2],
-            &[hypercurve::CurveBoundaryInteriorSide2::Left; 2],
             &policy,
         )
         .unwrap()

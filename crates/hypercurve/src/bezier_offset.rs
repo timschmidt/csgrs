@@ -136657,11 +136657,12 @@ mod conversion_tests {
     }
 
     use super::*;
+    use crate::bezier_region::CurveBoundaryInteriorSide2;
     use crate::rational_bezier::RationalQuadraticCircle2;
     use crate::{
         BezierParallelFragment2, BezierSplitFragment2, BezierSubcurve2, CircularArc2,
-        CurveBoundaryInteriorSide2, CurveCertainty, CurveCornerMode2, CurveCornerSolutions2,
-        CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
+        CurveCertainty, CurveCornerMode2, CurveCornerSolutions2, CurveRegion2,
+        CurveRegionBoundaryLoop2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
     };
 
     fn region_parameter(parameter: BezierParameter2) -> CurveParameter2 {
@@ -158973,7 +158974,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     vec![crate::CurveRegionBoundaryLoop2::new(vec![arc, chord], &policy).unwrap()],
                     vec![crate::CurveRegionLoopRole::Material],
                     vec![crate::FillRule::NonZero],
-                    vec![crate::CurveBoundaryInteriorSide2::Left],
+                    vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
                 )
                 .unwrap()
             };
@@ -159198,7 +159199,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 vec![boundary],
                 vec![crate::CurveRegionLoopRole::Material],
                 vec![crate::FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
             let regularized = region
@@ -159287,7 +159288,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 vec![boundary],
                 vec![crate::CurveRegionLoopRole::Material],
                 vec![crate::FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
 
@@ -159479,7 +159480,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 vec![boundary],
                 vec![crate::CurveRegionLoopRole::Material],
                 vec![crate::FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
 
@@ -171871,7 +171872,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     vec![boundary],
                     vec![crate::CurveRegionLoopRole::Material],
                     vec![crate::FillRule::NonZero],
-                    vec![crate::CurveBoundaryInteriorSide2::Left],
+                    vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
                 )
                 .unwrap()
             };

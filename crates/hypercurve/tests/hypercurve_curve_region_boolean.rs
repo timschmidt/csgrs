@@ -6,9 +6,8 @@ use hypercurve::{
     RegionPointLocation, Segment2,
 };
 use hypercurve::{
-    CircularArc2, CubicBezier2, CurveBoundaryInteriorSide2, CurveRegionLoopRole, FillRule,
-    OffsetCornerStyle2, QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
-    UncertaintyReason,
+    CircularArc2, CubicBezier2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
+    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2, UncertaintyReason,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
@@ -108,15 +107,10 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                             .unwrap(),
                     );
                     let region = certified(
-                        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                             &[path],
                             &[CurveRegionLoopRole::Material],
                             &[FillRule::NonZero],
-                            &[if reversed {
-                                CurveBoundaryInteriorSide2::Right
-                            } else {
-                                CurveBoundaryInteriorSide2::Left
-                            }],
                             &policy,
                         )
                         .unwrap(),
@@ -172,10 +166,7 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
     .unwrap();
     // W = 1-4t+2t² has a pole between these two finite restrictions.
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        for (start, end, side) in [
-            (Real::zero(), q(1, 4), CurveBoundaryInteriorSide2::Right),
-            (q(3, 4), Real::one(), CurveBoundaryInteriorSide2::Left),
-        ] {
+        for (start, end) in [(Real::zero(), q(1, 4)), (q(3, 4), Real::one())] {
             let a = source.point_at(&start, &policy).unwrap();
             let b = source.point_at(&end, &policy).unwrap();
             let middle = source
@@ -205,11 +196,10 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
                 CurvePath2::try_new_with_policy(vec![curve, chord.into()], &policy).unwrap(),
             );
             let region = certified(
-                CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                     &[path],
                     &[CurveRegionLoopRole::Material],
                     &[FillRule::NonZero],
-                    &[side],
                     &policy,
                 )
                 .unwrap(),
@@ -267,16 +257,11 @@ fn square_path(min_x: i64, min_y: i64, max_x: i64, max_y: i64) -> CurvePath2 {
     CurvePath2::try_new(curves).unwrap()
 }
 
-fn path_region(
-    path: &CurvePath2,
-    interior_side: CurveBoundaryInteriorSide2,
-    policy: &CurveContext,
-) -> CurveRegion2 {
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         std::slice::from_ref(path),
         &[CurveRegionLoopRole::Material],
         &[FillRule::EvenOdd],
-        &[interior_side],
         policy,
     )
     .unwrap()
@@ -287,16 +272,10 @@ fn boolean_paths(
     first: &CurvePath2,
     second: &CurvePath2,
     operation: BooleanOp,
-    first_interior_side: CurveBoundaryInteriorSide2,
-    second_interior_side: CurveBoundaryInteriorSide2,
     policy: &CurveContext,
 ) -> CurveRegion2 {
-    path_region(first, first_interior_side, policy)
-        .boolean_region(
-            &path_region(second, second_interior_side, policy),
-            operation,
-            policy,
-        )
+    path_region(first, policy)
+        .boolean_region(&path_region(second, policy), operation, policy)
         .unwrap()
         .into_value()
 }
@@ -547,11 +526,10 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
                 CurvePath2::try_new_with_policy(vec![curve, chord.into()], &policy).unwrap(),
             );
             let cap = certified(
-                CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                     &[cap_path],
                     &[CurveRegionLoopRole::Material],
                     &[FillRule::NonZero],
-                    &[CurveBoundaryInteriorSide2::Left],
                     &policy,
                 )
                 .unwrap(),
@@ -674,11 +652,10 @@ fn symbolic_quadratic_cap(control_y: Real, policy: &CurveContext) -> CurveRegion
         Curve2::from(LineSeg2::try_new(point(2, 4), point(-2, 4)).unwrap()),
     ])
     .unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -703,11 +680,10 @@ fn symbolic_general_line_region(control_y: Real, policy: &CurveContext) -> Curve
         Curve2::from(LineSeg2::try_new(point(0, 4), point(0, 0)).unwrap()),
     ])
     .unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -734,13 +710,12 @@ fn symbolic_elevated_circle(center_x: Real, policy: &CurveContext) -> CurveRegio
             curves.push(Curve2::from(general));
         }
     }
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new_with_policy(curves, policy)
             .unwrap()
             .into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -1457,11 +1432,7 @@ fn regularized_topology_does_not_upgrade_terminal_connectivity() {
     assert!(CurvePath2::try_new_with_policy(curves.clone(), &CurveContext::STRICT).is_err());
     let path = CurvePath2::try_new_with_policy(curves, &CurveContext::APPROXIMATE_512).unwrap();
     assert_eq!(path.certainty, CurveCertainty::Approximate512Consumed);
-    let authored = path_region(
-        &path.value,
-        CurveBoundaryInteriorSide2::Left,
-        &CurveContext::APPROXIMATE_512,
-    );
+    let authored = path_region(&path.value, &CurveContext::APPROXIMATE_512);
     let normalized = authored
         .regularized_region(&CurveContext::APPROXIMATE_512)
         .unwrap();
@@ -1551,11 +1522,10 @@ fn empty_output_does_not_certify_an_approximate_normalization() {
     ])
     .unwrap();
     let construct = |policy: &CurveContext| {
-        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             std::slice::from_ref(&path),
             &[CurveRegionLoopRole::Material],
             &[FillRule::EvenOdd],
-            &[CurveBoundaryInteriorSide2::Right],
             policy,
         )
     };
@@ -1817,14 +1787,7 @@ fn algebraic_curved_region_output_can_feed_another_boolean() {
     .unwrap();
     let cutter_path = square_path(-3, 2, 3, 5);
     let policy = CurveContext::STRICT;
-    let algebraic = boolean_paths(
-        &curved,
-        &cutter_path,
-        BooleanOp::Difference,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
-        &policy,
-    );
+    let algebraic = boolean_paths(&curved, &cutter_path, BooleanOp::Difference, &policy);
     assert!(algebraic.has_algebraic_fragments());
 
     let disjoint = square(10, 0, 12, 2);
@@ -1880,16 +1843,12 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
         &curved,
         &square_path(-3, -1, 3, 2),
         BooleanOp::Intersection,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
         &policy,
     );
     let wide = boolean_paths(
         &curved,
         &square_path(-3, -1, 3, 3),
         BooleanOp::Intersection,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
         &policy,
     );
     assert!(narrow.has_algebraic_fragments());
@@ -1959,21 +1918,14 @@ fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
         &quadratic,
         &square_path(-3, -1, 3, 2),
         BooleanOp::Intersection,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
         &policy,
     );
     assert!(narrow.has_algebraic_fragments());
-    for (cubic, interior_side) in [
-        (&cubic, CurveBoundaryInteriorSide2::Left),
-        (&reversed_cubic, CurveBoundaryInteriorSide2::Right),
-    ] {
+    for cubic in [&cubic, &reversed_cubic] {
         let wide = boolean_paths(
             cubic,
             &square_path(-3, -1, 3, 3),
             BooleanOp::Intersection,
-            interior_side,
-            CurveBoundaryInteriorSide2::Left,
             &policy,
         );
         assert!(wide.has_algebraic_fragments());
@@ -2038,21 +1990,14 @@ fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
             &quadratic,
             &square_path(-3, -1, 3, 2),
             BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
             &policy,
         );
         assert!(narrow.has_algebraic_fragments());
-        for (wide_path, interior_side) in [
-            (&reparameterized, CurveBoundaryInteriorSide2::Left),
-            (&reversed_reparameterized, CurveBoundaryInteriorSide2::Right),
-        ] {
+        for wide_path in [&reparameterized, &reversed_reparameterized] {
             let wide = boolean_paths(
                 wide_path,
                 &square_path(-3, -1, 3, 3),
                 BooleanOp::Intersection,
-                interior_side,
-                CurveBoundaryInteriorSide2::Left,
                 &policy,
             );
             assert!(wide.has_algebraic_fragments());
@@ -2135,20 +2080,11 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
     );
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let narrow = boolean_paths(
-            &polynomial,
-            &narrow_clip,
-            BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        );
+        let narrow = boolean_paths(&polynomial, &narrow_clip, BooleanOp::Intersection, &policy);
         let wide = boolean_paths(
             &reparameterized,
             &wide_clip,
             BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
             &policy,
         );
         assert!(narrow.has_algebraic_fragments());
@@ -2263,14 +2199,7 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
                 .value,
             Classification::Decided(true)
         );
-        let narrow = boolean_paths(
-            &first,
-            &narrow_clip,
-            BooleanOp::Intersection,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        );
+        let narrow = boolean_paths(&first, &narrow_clip, BooleanOp::Intersection, &policy);
         assert!(!narrow.has_algebraic_fragments());
         assert_eq!(
             narrow
@@ -2280,10 +2209,7 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
                 .sum::<usize>(),
             4
         );
-        for (wide_path, interior_side) in [
-            (&second, CurveBoundaryInteriorSide2::Left),
-            (&second_reversed, CurveBoundaryInteriorSide2::Right),
-        ] {
+        for wide_path in [&second, &second_reversed] {
             let wide_clip = square_path(-1, -1, 3, 5);
             let wide_topology = wide_path
                 .intersection_topology(&wide_clip, &policy)
@@ -2298,14 +2224,7 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
                     .value,
                 Classification::Decided(true)
             );
-            let wide = boolean_paths(
-                wide_path,
-                &wide_clip,
-                BooleanOp::Intersection,
-                interior_side,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            );
+            let wide = boolean_paths(wide_path, &wide_clip, BooleanOp::Intersection, &policy);
             assert!(!wide.has_algebraic_fragments());
 
             let results = narrow.boolean_regions(&wide, &policy).unwrap().into_value();

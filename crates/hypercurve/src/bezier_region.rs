@@ -488,7 +488,7 @@ impl PartialEq for CurveRegion2 {
 
 /// Filled side of an oriented closed curve boundary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CurveBoundaryInteriorSide2 {
+pub(crate) enum CurveBoundaryInteriorSide2 {
     /// Material lies to the left while traversing the boundary.
     Left,
     /// Material lies to the right while traversing the boundary.
@@ -10152,7 +10152,6 @@ impl CurveRegion2 {
             &roles,
             &fill_rules,
             policy,
-            None,
         )?;
         promoted.data_mut_for_construction().line_image_region = PolicyClassificationCache::new();
         promoted
@@ -10315,7 +10314,9 @@ impl CurveRegion2 {
     /// self-overlapping loops using non-zero winding. One role and fill rule
     /// must be supplied for every boundary path. Each filled loop contributes
     /// +1 for material or -1 for a hole; positive total depth selects the set.
-    /// Construction returns its regularized boundary, with material on the left.
+    /// The arrangement certifies the interior side from exact winding;
+    /// callers do not supply orientation hints. Construction returns the
+    /// regularized boundary, with material on the left.
     pub fn try_from_boundary_paths_with_loop_semantics(
         paths: &[CurvePath2],
         roles: &[CurveRegionLoopRole],
@@ -10324,52 +10325,7 @@ impl CurveRegion2 {
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
             Self::try_from_boundary_paths_with_loop_semantics_raw(
-                paths, roles, fill_rules, attempt, None,
-            )?
-            .finish_construction(attempt)
-        })
-    }
-
-    /// Constructs a curved region with explicit loop roles, fill rules, and
-    /// authored interior sides.
-    ///
-    /// This is the immediate exact constructor for carriers whose signed-area
-    /// integral is not yet representable, including nonuniform general
-    /// rational Beziers. The supplied side is topology evidence, not an
-    /// approximation: `Left` states that filled material lies to the left
-    /// while traversing the corresponding path, and `Right` states the
-    /// opposite. One entry must be supplied for every path.
-    pub fn try_from_boundary_paths_with_loop_topology(
-        paths: &[CurvePath2],
-        roles: &[CurveRegionLoopRole],
-        fill_rules: &[FillRule],
-        interior_sides: &[CurveBoundaryInteriorSide2],
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Self>> {
-        resolve_certified_operation(policy, |attempt| {
-            if paths.len() != interior_sides.len() {
-                let family = paths
-                    .first()
-                    .map_or(CurveFamily2::Line, |path| path.curves()[0].family());
-                return Err(ExactCurveError::invalid(
-                    CurveOperation2::Construction,
-                    family,
-                    CurveError::Topology(
-                        "curved-region interior sides must match boundary path count".into(),
-                    ),
-                ));
-            }
-            Self::try_from_boundary_paths_with_loop_semantics_raw(
-                paths,
-                roles,
-                fill_rules,
-                attempt,
-                Some(
-                    interior_sides
-                        .iter()
-                        .map(|side| *side == CurveBoundaryInteriorSide2::Left)
-                        .collect(),
-                ),
+                paths, roles, fill_rules, attempt,
             )?
             .finish_construction(attempt)
         })
@@ -10380,7 +10336,6 @@ impl CurveRegion2 {
         roles: &[CurveRegionLoopRole],
         fill_rules: &[FillRule],
         policy: &CurveContext,
-        certified_filled_sides: Option<Vec<bool>>,
     ) -> ExactCurveResult<Self> {
         if paths.len() != roles.len() || paths.len() != fill_rules.len() {
             let family = paths
@@ -10399,11 +10354,6 @@ impl CurveRegion2 {
             let data = region.data_mut_for_construction();
             data.certified_loop_roles = Some(Arc::from(roles));
             data.certified_loop_fill_rules = Some(Arc::from(fill_rules));
-        }
-        if let Some(filled_sides) = certified_filled_sides {
-            region = region
-                .with_certified_filled_side_is_left(filled_sides)
-                .map_err(curve_region_promotion_error)?;
         }
         if let Some(native) = native_region_from_curve_paths(paths, roles, fill_rules)
             .map_err(curve_region_promotion_error)?
@@ -23117,15 +23067,10 @@ mod tests {
                 } else {
                     path.clone()
                 };
-                let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                     std::slice::from_ref(&source_path),
                     &[CurveRegionLoopRole::Material],
                     &[FillRule::NonZero],
-                    &[if reversed {
-                        CurveBoundaryInteriorSide2::Right
-                    } else {
-                        CurveBoundaryInteriorSide2::Left
-                    }],
                     &policy,
                 )
                 .expect("the nonlinear retained circle enters CurveRegion2")

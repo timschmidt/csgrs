@@ -3,9 +3,9 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BooleanOp, BulgeVertex2,
-    CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2,
-    QuadraticBezier2, RationalBezier2, Real,
+    CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2,
+    CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2,
+    RationalBezier2, Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -144,13 +144,12 @@ fn analytic_square(min_x: i32, max_x: i32, policy: &CurveContext) -> CurveRegion
             analytic_parallel_curve(start, midpoint, end, 0, false, policy)
         })
         .collect();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new_with_policy(fragments, policy)
             .unwrap()
             .into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -180,40 +179,29 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
         policy,
     )
     .unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary.into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
     .into_value()
 }
 
-fn clipped_region(
-    path: &CurvePath2,
-    clip: CurvePath2,
-    interior_side: CurveBoundaryInteriorSide2,
-    policy: &CurveContext,
-) -> CurveRegion2 {
-    let promote = |path: &CurvePath2, interior_side| {
-        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+fn clipped_region(path: &CurvePath2, clip: CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+    let promote = |path: &CurvePath2| {
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             std::slice::from_ref(path),
             &[CurveRegionLoopRole::Material],
             &[FillRule::EvenOdd],
-            &[interior_side],
             policy,
         )
         .unwrap()
         .into_value()
     };
-    promote(path, interior_side)
-        .boolean_region(
-            &promote(&clip, CurveBoundaryInteriorSide2::Left),
-            BooleanOp::Intersection,
-            policy,
-        )
+    promote(path)
+        .boolean_region(&promote(&clip), BooleanOp::Intersection, policy)
         .unwrap()
         .into_value()
 }
@@ -251,18 +239,8 @@ fn conic_overlap_regions(
         &quadratic
     };
     (
-        clipped_region(
-            &quadratic,
-            rectangle_path(-3, -1, 3, 2),
-            CurveBoundaryInteriorSide2::Left,
-            policy,
-        ),
-        clipped_region(
-            wide,
-            rectangle_path(-3, -1, 3, 3),
-            CurveBoundaryInteriorSide2::Left,
-            policy,
-        ),
+        clipped_region(&quadratic, rectangle_path(-3, -1, 3, 2), policy),
+        clipped_region(wide, rectangle_path(-3, -1, 3, 3), policy),
     )
 }
 
@@ -283,18 +261,8 @@ fn nonlinear_line_overlap_regions(policy: &CurveContext) -> (CurveRegion2, Curve
         .unwrap()
     };
     (
-        clipped_region(
-            &line_region(1),
-            rectangle_path(-1, -1, 2, 5),
-            CurveBoundaryInteriorSide2::Left,
-            policy,
-        ),
-        clipped_region(
-            &line_region(3),
-            rectangle_path(-1, -1, 3, 5),
-            CurveBoundaryInteriorSide2::Left,
-            policy,
-        ),
+        clipped_region(&line_region(1), rectangle_path(-1, -1, 2, 5), policy),
+        clipped_region(&line_region(3), rectangle_path(-1, -1, 3, 5), policy),
     )
 }
 
@@ -327,18 +295,8 @@ fn cubic_mobius_overlap_regions(policy: &CurveContext) -> (CurveRegion2, CurveRe
     ])
     .unwrap();
     (
-        clipped_region(
-            &polynomial,
-            rectangle_path(-20, -10, 20, -1),
-            CurveBoundaryInteriorSide2::Left,
-            policy,
-        ),
-        clipped_region(
-            &projective,
-            rectangle_path(-20, -10, 20, 0),
-            CurveBoundaryInteriorSide2::Left,
-            policy,
-        ),
+        clipped_region(&polynomial, rectangle_path(-20, -10, 20, -1), policy),
+        clipped_region(&projective, rectangle_path(-20, -10, 20, 0), policy),
     )
 }
 

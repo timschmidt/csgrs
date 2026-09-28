@@ -16797,7 +16797,7 @@ mod certified_successor_tests {
             vec![boundary],
             vec![CurveRegionLoopRole::Material],
             vec![FillRule::NonZero],
-            vec![crate::CurveBoundaryInteriorSide2::Left],
+            vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
         )
         .expect("valid selected-field region")
     }
@@ -16952,7 +16952,7 @@ mod certified_successor_tests {
                     ],
                     vec![CurveRegionLoopRole::Material],
                     vec![FillRule::NonZero],
-                    vec![crate::CurveBoundaryInteriorSide2::Left],
+                    vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
                 )
                 .unwrap();
                 for complementary in [false, true] {
@@ -17663,7 +17663,7 @@ mod certified_successor_tests {
                 vec![boundary],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid exact retained-chord region");
             let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
@@ -17940,7 +17940,7 @@ mod certified_successor_tests {
                 vec![boundary],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid retained test region");
             let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
@@ -18113,7 +18113,7 @@ mod certified_successor_tests {
                 vec![chord_loop, source_loop],
                 vec![CurveRegionLoopRole::Material; 2],
                 vec![FillRule::NonZero; 2],
-                vec![crate::CurveBoundaryInteriorSide2::Left; 2],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left; 2],
             )
             .expect("valid multi-loop retained test region");
             let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
@@ -18259,14 +18259,14 @@ mod certified_successor_tests {
                 vec![chord_loop],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid independent-field chord region");
             let source_region = CurveRegion2::try_new_with_loop_topology(
                 vec![source_loop],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid diagonal source region");
             let context =
@@ -18487,7 +18487,7 @@ mod certified_successor_tests {
                 vec![chord_loop],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid independent-field chord region");
 
@@ -18517,7 +18517,7 @@ mod certified_successor_tests {
                 vec![source_loop],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid source rectangle");
 
@@ -19275,7 +19275,7 @@ mod certified_successor_tests {
                 vec![boundary],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid analytic rectangle");
             let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
@@ -20435,7 +20435,7 @@ mod certified_successor_tests {
                     vec![boundary],
                     vec![CurveRegionLoopRole::Material],
                     vec![FillRule::NonZero],
-                    vec![crate::CurveBoundaryInteriorSide2::Left],
+                    vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
                 )
                 .expect("valid algebraic chord triangle")
             };
@@ -20625,7 +20625,7 @@ mod certified_successor_tests {
                 vec![chord_loop],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid independent-field chord triangle");
 
@@ -20660,7 +20660,7 @@ mod certified_successor_tests {
                 vec![source_loop],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Right],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Right],
             )
             .expect("valid retraced source region");
 
@@ -20985,8 +20985,8 @@ mod certified_successor_tests {
 
     #[test]
     fn regularization_orders_all_branches_at_a_pinched_algebraic_corner() {
-        use crate::CurveBoundaryInteriorSide2::{Left, Right};
         use crate::RegionPointLocation::{Boundary, Inside, Outside};
+        use crate::bezier_region::CurveBoundaryInteriorSide2::{Left, Right};
 
         let q = |numerator: i32, denominator: i32| {
             (Real::from(numerator) / Real::from(denominator)).unwrap()
@@ -21199,7 +21199,6 @@ mod certified_successor_tests {
                         &circles.iter().map(|circle| circle.2).collect::<Vec<_>>(),
                         &vec![FillRule::NonZero; circles.len()],
                         &policy,
-                        None,
                     )
                     .unwrap();
                     let normalized = raw.regularized_region_raw(&policy).unwrap();
@@ -21297,7 +21296,7 @@ mod certified_successor_tests {
                     vec![CurveRegionBoundaryLoop2::new(vec![fragment], &policy).unwrap()],
                     vec![CurveRegionLoopRole::Material],
                     vec![FillRule::NonZero],
-                    vec![crate::CurveBoundaryInteriorSide2::Left],
+                    vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
                 )
                 .unwrap();
                 let normalized = region.regularized_region(&policy).unwrap();
@@ -21480,7 +21479,7 @@ mod certified_successor_tests {
                 vec![boundary],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .expect("valid adjacent independent-field region");
             let context = CurveRegionBooleanContext::try_new_unary(&region, &policy)
@@ -21692,12 +21691,12 @@ mod certified_successor_tests {
             for (fragments, interior_side, expected_action) in [
                 (
                     forward,
-                    crate::CurveBoundaryInteriorSide2::Left,
+                    crate::bezier_region::CurveBoundaryInteriorSide2::Left,
                     RegionFragmentAction::Keep,
                 ),
                 (
                     reversed,
-                    crate::CurveBoundaryInteriorSide2::Right,
+                    crate::bezier_region::CurveBoundaryInteriorSide2::Right,
                     RegionFragmentAction::KeepReversed,
                 ),
             ] {
@@ -21796,7 +21795,7 @@ mod certified_successor_tests {
                 vec![boundary],
                 vec![CurveRegionLoopRole::Material],
                 vec![FillRule::NonZero],
-                vec![crate::CurveBoundaryInteriorSide2::Left],
+                vec![crate::bezier_region::CurveBoundaryInteriorSide2::Left],
             )
             .unwrap();
             let distant_algebraic_point =
@@ -21854,7 +21853,7 @@ mod certified_successor_tests {
             let curved_cap = |control_y: i8| {
                 let left = Point2::from_values(-10, -10);
                 let right = Point2::from_values(10, -10);
-                CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                     &[CurvePath2::try_new(vec![
                         Curve2::from(LineSeg2::try_new(left.clone(), right.clone()).unwrap()),
                         Curve2::from(QuadraticBezier2::new(
@@ -21866,7 +21865,6 @@ mod certified_successor_tests {
                     .unwrap()],
                     &[CurveRegionLoopRole::Material],
                     &[FillRule::NonZero],
-                    &[crate::CurveBoundaryInteriorSide2::Left],
                     &policy,
                 )
                 .unwrap()
@@ -21911,7 +21909,7 @@ mod certified_successor_tests {
                 parameter.clone(),
                 &policy,
             );
-            let parabola_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            let parabola_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &[CurvePath2::try_new(vec![
                     Curve2::from(parabola),
                     Curve2::from(
@@ -21926,7 +21924,6 @@ mod certified_successor_tests {
                 .unwrap()],
                 &[CurveRegionLoopRole::Material],
                 &[FillRule::NonZero],
-                &[crate::CurveBoundaryInteriorSide2::Left],
                 &policy,
             )
             .unwrap()
@@ -21951,7 +21948,7 @@ mod certified_successor_tests {
             let lower_right = Point2::from_values(2, -1);
             let upper_right = Point2::from_values(2, 1);
             let upper_left = Point2::from_values(-2, 1);
-            let dyadic_crossing_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            let dyadic_crossing_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &[CurvePath2::try_new(vec![
                     Curve2::from(
                         LineSeg2::try_new(lower_left.clone(), lower_right.clone()).unwrap(),
@@ -21967,7 +21964,6 @@ mod certified_successor_tests {
                 .unwrap()],
                 &[CurveRegionLoopRole::Material],
                 &[FillRule::NonZero],
-                &[crate::CurveBoundaryInteriorSide2::Left],
                 &policy,
             )
             .unwrap()
@@ -21983,7 +21979,7 @@ mod certified_successor_tests {
             let tangent_end = Point2::new(Real::from(2_i8), &ninth * Real::from(4_i8));
             let tangent_upper_right = Point2::new(Real::from(3_i8), &ninth * Real::from(4_i8));
             let tangent_lower_right = Point2::new(Real::from(3_i8), ninth.clone());
-            let tangent_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            let tangent_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &[CurvePath2::try_new(vec![
                     Curve2::from(QuadraticBezier2::new(
                         tangent_start.clone(),
@@ -22002,7 +21998,6 @@ mod certified_successor_tests {
                 .unwrap()],
                 &[CurveRegionLoopRole::Material],
                 &[FillRule::NonZero],
-                &[crate::CurveBoundaryInteriorSide2::Right],
                 &policy,
             )
             .unwrap()
@@ -22057,8 +22052,8 @@ mod certified_successor_tests {
                 vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
                 vec![FillRule::NonZero; 2],
                 vec![
-                    crate::CurveBoundaryInteriorSide2::Left,
-                    crate::CurveBoundaryInteriorSide2::Right,
+                    crate::bezier_region::CurveBoundaryInteriorSide2::Left,
+                    crate::bezier_region::CurveBoundaryInteriorSide2::Right,
                 ],
             )
             .unwrap();
@@ -22533,9 +22528,9 @@ mod certified_successor_tests {
                     vec![CurveRegionLoopRole::Material],
                     vec![FillRule::NonZero],
                     vec![if reversed {
-                        crate::CurveBoundaryInteriorSide2::Right
+                        crate::bezier_region::CurveBoundaryInteriorSide2::Right
                     } else {
-                        crate::CurveBoundaryInteriorSide2::Left
+                        crate::bezier_region::CurveBoundaryInteriorSide2::Left
                     }],
                 )
                 .unwrap();

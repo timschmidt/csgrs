@@ -1,10 +1,10 @@
 use hypercurve::{
     BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
     BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, Classification, CubicBezier2, Curve2,
-    CurveBoundaryInteriorSide2, CurveCertainty, CurveContext, CurveFamily2, CurveParameterRange2,
-    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2,
-    LineSide, OffsetCornerStyle2, Point2, QuadraticBezier2, Real, RegionPointLocation,
+    BezierRetainedEndpointEnvelope2, Classification, CubicBezier2, Curve2, CurveCertainty,
+    CurveContext, CurveFamily2, CurveParameterRange2, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2, LineSide, OffsetCornerStyle2,
+    Point2, QuadraticBezier2, Real, RegionPointLocation,
 };
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalBezier2,
@@ -89,13 +89,12 @@ fn analytic_square(min_x: i64, max_x: i64, policy: &CurveContext) -> CurveRegion
             ))
         })
         .collect();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new_with_policy(fragments, policy)
             .unwrap()
             .into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -167,11 +166,10 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
         policy,
     )
     .unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary.into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -227,15 +225,10 @@ fn analytic_rational_arc_corner_region(
             .collect();
     }
     let boundary = CurvePath2::try_new_with_policy(fragments, policy).unwrap();
-    let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary.into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[if reversed {
-            CurveBoundaryInteriorSide2::Left
-        } else {
-            CurveBoundaryInteriorSide2::Right
-        }],
         policy,
     )
     .unwrap()
@@ -569,11 +562,10 @@ fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 
         policy,
     )
     .unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary.into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -817,11 +809,10 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     )
     .expect("the shared analytic carrier and cusp parameter certify connectivity");
     assert_eq!(boundary.value.curves().len(), 3);
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary.into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Right],
         policy,
     )
     .expect("the radical cusp cap has exact regularized topology")
@@ -876,13 +867,12 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
         Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
     };
     fragments.push(quadratic_line(end, start));
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new_with_policy(fragments, policy)
             .unwrap()
             .into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()

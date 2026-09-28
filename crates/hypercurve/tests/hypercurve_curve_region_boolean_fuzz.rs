@@ -4,9 +4,9 @@ mod pathological_fixture;
 use std::collections::HashSet;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveBoundaryInteriorSide2, CurveContext,
-    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, RationalQuadraticBezier2, Real, Similarity2,
+    BooleanOp, CircularArc2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2,
+    CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
+    RationalQuadraticBezier2, Real, Similarity2,
 };
 use proptest::prelude::*;
 use proptest::test_runner::{FileFailurePersistence, TestCaseError};
@@ -241,11 +241,10 @@ fn generated_path(specification: &GeneratedRegion) -> CurvePath2 {
 
 fn generated_region(specification: &GeneratedRegion) -> CurveRegion2 {
     let path = generated_path(specification);
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &CurveContext::STRICT,
     )
     .expect("outward graph curves form a simple exact region")
@@ -833,15 +832,10 @@ fn exact_circle_region(start_quarter: usize, reversed: bool) -> CurveRegion2 {
             .to_vec();
     }
     let path = CurvePath2::try_new(curves).unwrap();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[if reversed {
-            CurveBoundaryInteriorSide2::Right
-        } else {
-            CurveBoundaryInteriorSide2::Left
-        }],
         &CurveContext::STRICT,
     )
     .unwrap()
@@ -1128,7 +1122,7 @@ fn algebraic_polyline_contacts_preserve_exact_contact_distinction() {
 }
 
 #[test]
-fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
+fn authored_loop_semantics_support_reversed_nonuniform_rational_regions() {
     let specification = GeneratedRegion {
         origin_x: -4,
         origin_y: -3,
@@ -1141,22 +1135,10 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         weight_denominator: 3,
     };
     let forward_path = generated_path(&specification);
-    assert!(
-        CurveRegion2::try_from_boundary_paths_with_loop_topology(
-            std::slice::from_ref(&forward_path),
-            &[CurveRegionLoopRole::Material],
-            &[FillRule::NonZero],
-            &[],
-            &CurveContext::STRICT,
-        )
-        .is_err(),
-        "interior-side evidence count must match the authored loops"
-    );
-    let forward = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    let forward = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         std::slice::from_ref(&forward_path),
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &CurveContext::STRICT,
     )
     .unwrap()
@@ -1165,11 +1147,10 @@ fn explicit_loop_topology_supports_reversed_nonuniform_rational_regions() {
         .reversed(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let reversed = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    let reversed = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[reversed_path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Right],
         &CurveContext::STRICT,
     )
     .unwrap()
@@ -1417,11 +1398,10 @@ fn tangent_family_region(family: u8, material_above: bool, outer_y: i16) -> Curv
             Curve2::from(LineSeg2::try_new(point(4, outer_y), point(4, endpoint_y)).unwrap()),
         ]
     };
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new(curves).expect("the tangent fixture boundary is connected")],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &CurveContext::STRICT,
     )
     .expect("the tangent fixture bounds a simple exact region")

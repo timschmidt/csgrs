@@ -2,7 +2,7 @@ mod support;
 
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CurveBoundaryInteriorSide2, CurvePoint2,
+    BezierParameterPolynomial, CurvePoint2,
 };
 use hypercurve::{
     BezierFlatteningOptions, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
@@ -448,11 +448,10 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
     )
     .unwrap()
     .into_value();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -677,21 +676,10 @@ fn algebraic_material_hole_rectangle(
         shifted_algebraic_rectangle_boundary(0, 0, 12, 4, reverse, &parameter, policy),
         shifted_algebraic_rectangle_boundary(5, 1, 7, 3, reverse, &parameter, policy),
     ];
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &boundaries,
         &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole],
         &[fill_rule; 2],
-        &if reverse {
-            [
-                CurveBoundaryInteriorSide2::Right,
-                CurveBoundaryInteriorSide2::Left,
-            ]
-        } else {
-            [
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Right,
-            ]
-        },
         policy,
     )
     .unwrap()
@@ -839,11 +827,10 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     let boundary = CurvePath2::try_new_with_policy(fragments, policy)
         .unwrap()
         .into_value();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         policy,
     )
     .unwrap()
@@ -919,15 +906,10 @@ fn axis_aligned_algebraic_dumbbell_region(
     let boundary = CurvePath2::try_new_with_policy(fragments, policy)
         .unwrap()
         .into_value();
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary],
         &[CurveRegionLoopRole::Material],
         &[fill_rule],
-        &[if reverse {
-            CurveBoundaryInteriorSide2::Right
-        } else {
-            CurveBoundaryInteriorSide2::Left
-        }],
         policy,
     )
     .unwrap()
@@ -2970,11 +2952,10 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
         )
         .unwrap()
         .into_value();
-        let source = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        let source = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[boundary],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[CurveBoundaryInteriorSide2::Left],
             &policy,
         )
         .unwrap()
@@ -3966,15 +3947,10 @@ fn selected_algebraic_cusp_chamfers_use_the_unified_retained_kernel() {
             } else {
                 authored.clone()
             };
-            let region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+            let region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                 &[path],
                 &[CurveRegionLoopRole::Material],
                 &[FillRule::NonZero],
-                &[if reverse {
-                    CurveBoundaryInteriorSide2::Right
-                } else {
-                    CurveBoundaryInteriorSide2::Left
-                }],
                 &policy,
             )
             .unwrap()
@@ -4037,11 +4013,10 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
         let boundary = CurvePath2::try_new_with_policy(fragments, policy)
             .unwrap()
             .into_value();
-        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[boundary],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[CurveBoundaryInteriorSide2::Left],
             policy,
         )
         .unwrap()
@@ -4054,11 +4029,10 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
             let seam_source = if reverse {
                 let paths = decided(seam_source.boundary_paths(&policy).unwrap());
                 let boundary = paths[0].reversed(&policy).unwrap().into_value();
-                CurveRegion2::try_from_boundary_paths_with_loop_topology(
+                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                     &[boundary],
                     &[CurveRegionLoopRole::Material],
                     &[FillRule::NonZero],
-                    &[CurveBoundaryInteriorSide2::Right],
                     &policy,
                 )
                 .unwrap()
@@ -4213,24 +4187,20 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
             chord(corner, outgoing.clone()),
             chord(outgoing, incoming),
         ];
-        let interior_side = if reverse {
+        if reverse {
             fragments = fragments
                 .iter()
                 .rev()
                 .map(|fragment| fragment.reversed(policy).unwrap().into_value())
                 .collect();
-            CurveBoundaryInteriorSide2::Right
-        } else {
-            CurveBoundaryInteriorSide2::Left
-        };
+        }
         let boundary = CurvePath2::try_new_with_policy(fragments, policy)
             .unwrap()
             .into_value();
-        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[boundary],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[interior_side],
             policy,
         )
         .unwrap()
@@ -4333,24 +4303,20 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
             chord(upper_right, upper_left.clone()),
             chord(upper_left, lower_left),
         ];
-        let interior_side = if reverse {
+        if reverse {
             fragments = fragments
                 .iter()
                 .rev()
                 .map(|fragment| fragment.reversed(policy).unwrap().into_value())
                 .collect();
-            CurveBoundaryInteriorSide2::Right
-        } else {
-            CurveBoundaryInteriorSide2::Left
-        };
+        }
         let boundary = CurvePath2::try_new_with_policy(fragments, policy)
             .unwrap()
             .into_value();
-        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[boundary],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[interior_side],
             policy,
         )
         .unwrap()
@@ -4737,24 +4703,20 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
             chord(upper_right, upper_left.clone()),
             chord(upper_left, lower_left),
         ];
-        let interior_side = if reverse {
+        if reverse {
             fragments = fragments
                 .iter()
                 .rev()
                 .map(|fragment| fragment.reversed(policy).unwrap().into_value())
                 .collect();
-            CurveBoundaryInteriorSide2::Right
-        } else {
-            CurveBoundaryInteriorSide2::Left
-        };
+        }
         let boundary = CurvePath2::try_new_with_policy(fragments, policy)
             .unwrap()
             .into_value();
-        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[boundary],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[interior_side],
             policy,
         )
         .unwrap()
@@ -5710,11 +5672,10 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         )
         .unwrap()
         .into_value();
-        let retained_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        let retained_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[retained_boundary],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[CurveBoundaryInteriorSide2::Left],
             &policy,
         )
         .unwrap()
@@ -6483,15 +6444,10 @@ fn algebraic_chord_expansion_merges_coupled_material_loops_exactly() {
                 .map(|path| path.reversed(&policy).unwrap().into_value())
                 .collect();
         }
-        let source = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        let source = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &boundaries,
             &[CurveRegionLoopRole::Material; 2],
             &[fill_rule; 2],
-            &[if reverse {
-                CurveBoundaryInteriorSide2::Right
-            } else {
-                CurveBoundaryInteriorSide2::Left
-            }; 2],
             &policy,
         )
         .unwrap()
@@ -8832,6 +8788,107 @@ fn compound_fill_reuses_retained_rational_and_generated_boundaries() {
                             .unwrap(),
                     );
                     assert_eq!(replay.is_empty(), !survives);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn authored_region_sides_are_certified_before_offset_and_boolean_reentry() {
+    use RegionPointLocation::{Boundary, Inside, Outside};
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for rational in [false, true] {
+            let vertices = [p(0, 0), p(4, 0), p(4, 4), p(0, 4), p(0, 0)];
+            let path = CurvePath2::try_new(
+                vertices
+                    .windows(2)
+                    .map(|edge| {
+                        if rational {
+                            let (dx, dy) = edge[0].delta_from(&edge[1]);
+                            let middle =
+                                Point2::new(edge[0].x() - dx * q(1, 2), edge[0].y() - dy * q(1, 2));
+                            RationalBezier2::try_new(
+                                vec![edge[0].clone(), middle, edge[1].clone()],
+                                vec![Real::one(), Real::from(2), Real::from(3)],
+                            )
+                            .unwrap()
+                            .into()
+                        } else {
+                            LineSeg2::try_new(edge[0].clone(), edge[1].clone())
+                                .unwrap()
+                                .into()
+                        }
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            for reverse in [false, true] {
+                let path = if reverse {
+                    certified(path.reversed(&policy).unwrap())
+                } else {
+                    path.clone()
+                };
+                for fill_rule in [FillRule::NonZero, FillRule::EvenOdd] {
+                    let region = certified(
+                        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
+                            std::slice::from_ref(&path),
+                            &[CurveRegionLoopRole::Material],
+                            &[fill_rule],
+                            &policy,
+                        )
+                        .unwrap(),
+                    );
+                    assert_eq!(region.len(), 1);
+                    assert_eq!(
+                        decided(region.loop_roles(&policy).unwrap()),
+                        vec![CurveRegionLoopRole::Material]
+                    );
+                    assert_eq!(
+                        decided(region.filled_side_is_left(&policy).unwrap()),
+                        &[true]
+                    );
+                    let area = decided(region.signed_area(&policy).unwrap()).unwrap();
+                    assert_eq!(
+                        area.partial_cmp(&Real::from(16)),
+                        Some(std::cmp::Ordering::Equal)
+                    );
+                    for (point, expected) in
+                        [(p(2, 2), Inside), (p(0, 2), Boundary), (p(-1, 2), Outside)]
+                    {
+                        assert_eq!(
+                            decided(region.classify_point(&point.into(), &policy).unwrap()),
+                            expected
+                        );
+                    }
+                    let grown = certified(
+                        region
+                            .offset(Real::one(), &OffsetCornerStyle2::Round, &policy)
+                            .unwrap(),
+                    );
+                    for (point, expected) in [
+                        (Point2::new(-q(1, 2), Real::from(2)), Inside),
+                        (p(-1, 2), Boundary),
+                        (p(-2, 2), Outside),
+                    ] {
+                        assert_eq!(
+                            decided(grown.classify_point(&point.into(), &policy).unwrap()),
+                            expected
+                        );
+                    }
+                    let recovered = certified(
+                        grown
+                            .boolean_region(&region, hypercurve::BooleanOp::Intersection, &policy)
+                            .unwrap(),
+                    );
+                    for (point, expected) in
+                        [(p(2, 2), Inside), (p(0, 2), Boundary), (p(-1, 2), Outside)]
+                    {
+                        assert_eq!(
+                            decided(recovered.classify_point(&point.into(), &policy).unwrap()),
+                            expected
+                        );
+                    }
                 }
             }
         }

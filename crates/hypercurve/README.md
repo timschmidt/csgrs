@@ -47,7 +47,8 @@ fill rule to the total signed winding of all closed paths, then publishes the
 regularized set. `NonZero` preserves equally oriented overlaps and cancels
 opposite winding; `EvenOdd` selects odd winding. SVG compound fills use this
 same admission path. Explicit material/hole constructors instead combine each
-loop's filled membership by its supplied role.
+loop's filled membership by its supplied role. Interior sides are certified by the
+arrangement from winding; authoring does not require orientation hints.
 
 ## Install
 

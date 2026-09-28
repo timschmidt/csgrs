@@ -12,7 +12,7 @@ use hypercurve::{Curve2, CurvePath2};
 
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CubicBezier2, CurveBoundaryInteriorSide2, CurvePoint2,
+    BezierParameterPolynomial, CubicBezier2, CurvePoint2,
 };
 
 fn s(value: i32) -> Real {
@@ -772,11 +772,10 @@ fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::
     );
     let closure = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
     let path = CurvePath2::try_new(vec![source_curve, chord.into(), closure.into()])?;
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &policy,
     )?
     .into_value())
@@ -804,11 +803,10 @@ fn independent_field_algebraic_chord_regions()
         "independent-field chord must remain exact",
     );
     let chord_path = CurvePath2::try_new(vec![chord.into(), y_curve, x_curve])?;
-    let chord_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    let chord_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[chord_path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &policy,
     )?
     .into_value();
@@ -817,11 +815,10 @@ fn independent_field_algebraic_chord_regions()
         QuadraticBezier2::from_line_segment(line(1, 1, -1, 1)).into(),
         QuadraticBezier2::from_line_segment(line(-1, 1, 0, 0)).into(),
     ])?;
-    let source_region = CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    let source_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[source_path],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &policy,
     )?
     .into_value();
@@ -892,11 +889,10 @@ fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dy
         chord(second_apex, second_start)?.into(),
     ])?;
     let region = |path| {
-        CurveRegion2::try_from_boundary_paths_with_loop_topology(
+        CurveRegion2::try_from_boundary_paths_with_loop_semantics(
             &[path],
             &[CurveRegionLoopRole::Material],
             &[FillRule::NonZero],
-            &[CurveBoundaryInteriorSide2::Left],
             &policy,
         )
         .map(|outcome| outcome.into_value())
@@ -941,11 +937,10 @@ fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::e
         ],
         &policy,
     )?;
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[path.into_value()],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &policy,
     )?
     .into_value())
@@ -997,11 +992,10 @@ fn axis_aligned_algebraic_dumbbell_offset_region()
             "axis-aligned dumbbell chord must remain exact",
         )));
     }
-    Ok(CurveRegion2::try_from_boundary_paths_with_loop_topology(
+    Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new(fragments)?],
         &[CurveRegionLoopRole::Material],
         &[FillRule::NonZero],
-        &[CurveBoundaryInteriorSide2::Left],
         &policy,
     )?
     .into_value())

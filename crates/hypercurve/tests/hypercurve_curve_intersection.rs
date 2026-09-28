@@ -5,9 +5,9 @@ use hypercurve::{
     QuadraticBezier2, RationalQuadraticBezier2, RegionPointLocation, UncertaintyReason,
 };
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveContext, CurveGeometry2, CurveOverlapOrientation2, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, LineSeg2, Point2, RationalBezier2, Real,
+    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveGeometry2,
+    CurveOverlapOrientation2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
+    Point2, RationalBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -80,16 +80,11 @@ fn curve_parameter_comparison_reports_terminal_certainty() {
     );
 }
 
-fn path_region(
-    path: &CurvePath2,
-    interior_side: CurveBoundaryInteriorSide2,
-    policy: &CurveContext,
-) -> CurveRegion2 {
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         std::slice::from_ref(path),
         &[CurveRegionLoopRole::Material],
         &[FillRule::EvenOdd],
-        &[interior_side],
         policy,
     )
     .expect("test path must define an exact region")
@@ -100,16 +95,10 @@ fn boolean_paths(
     first: &CurvePath2,
     second: &CurvePath2,
     operation: BooleanOp,
-    first_interior_side: CurveBoundaryInteriorSide2,
-    second_interior_side: CurveBoundaryInteriorSide2,
     policy: &CurveContext,
 ) -> CurveRegion2 {
-    path_region(first, first_interior_side, policy)
-        .boolean_region(
-            &path_region(second, second_interior_side, policy),
-            operation,
-            policy,
-        )
+    path_region(first, policy)
+        .boolean_region(&path_region(second, policy), operation, policy)
         .expect("test region Boolean must complete exactly")
         .into_value()
 }
@@ -2369,14 +2358,7 @@ fn promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary() {
         Some(BezierParameter2::Algebraic(_))
     ));
 
-    let region = boolean_paths(
-        &first,
-        &second,
-        BooleanOp::Union,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
-        &CurveContext::STRICT,
-    );
+    let region = boolean_paths(&first, &second, BooleanOp::Union, &CurveContext::STRICT);
     assert_eq!(region.boundary_loops().len(), 1);
 }
 
@@ -2434,14 +2416,7 @@ fn promoted_region_boolean_consumes_irrational_polynomial_graph_overlap() {
         Some(BezierParameter2::Algebraic(_))
     ));
 
-    let region = boolean_paths(
-        &first,
-        &second,
-        BooleanOp::Union,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
-        &CurveContext::STRICT,
-    );
+    let region = boolean_paths(&first, &second, BooleanOp::Union, &CurveContext::STRICT);
     let exported = region.boundary_paths(&CurveContext::STRICT).unwrap();
     assert_eq!(exported.certainty, hypercurve::CurveCertainty::Certified);
     let Classification::Decided(paths) = exported.value else {
@@ -2462,16 +2437,8 @@ fn region_boolean_reports_terminal_use_after_explicit_path_promotion() {
     let second = symbolic_rectangle_path(second_x);
     let approximate = CurveContext::APPROXIMATE_512;
 
-    let strict_first = path_region(
-        &first,
-        CurveBoundaryInteriorSide2::Left,
-        &CurveContext::STRICT,
-    );
-    let strict_second = path_region(
-        &second,
-        CurveBoundaryInteriorSide2::Left,
-        &CurveContext::STRICT,
-    );
+    let strict_first = path_region(&first, &CurveContext::STRICT);
+    let strict_second = path_region(&second, &CurveContext::STRICT);
     let strict = strict_first
         .boolean_region(&strict_second, BooleanOp::Union, &CurveContext::STRICT)
         .unwrap_err();
@@ -2481,8 +2448,8 @@ fn region_boolean_reports_terminal_use_after_explicit_path_promotion() {
             if blocker.operation() == CurveOperation2::Boolean
     ));
 
-    let approximate_first = path_region(&first, CurveBoundaryInteriorSide2::Left, &approximate);
-    let approximate_second = path_region(&second, CurveBoundaryInteriorSide2::Left, &approximate);
+    let approximate_first = path_region(&first, &approximate);
+    let approximate_second = path_region(&second, &approximate);
     let region = approximate_first
         .boolean_region(&approximate_second, BooleanOp::Union, &approximate)
         .expect("region Boolean must report the shared terminal");
@@ -2827,14 +2794,7 @@ fn promoted_region_boolean_resolves_partial_same_circle_arc_boundaries() {
         (BooleanOp::Xor, &first_area - &second_area),
     ];
     for (operation, expected_area) in cases {
-        let region = boolean_paths(
-            &first,
-            &second,
-            operation,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        );
+        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
         assert!(
             region
                 .boundary_loops()
@@ -2945,14 +2905,7 @@ fn promoted_region_boolean_consumes_partial_nonlinear_shared_boundary() {
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        let region = boolean_paths(
-            &first,
-            &second,
-            operation,
-            CurveBoundaryInteriorSide2::Right,
-            CurveBoundaryInteriorSide2::Right,
-            &policy,
-        );
+        let region = boolean_paths(&first, &second, operation, &policy);
         assert!(
             region
                 .boundary_loops()
@@ -3035,28 +2988,20 @@ fn path_overlap_orientation_feeds_canonical_region_boolean_side_logic() {
         })
     );
 
-    for (second, second_side) in [
-        (&same, CurveBoundaryInteriorSide2::Left),
-        (&reversed, CurveBoundaryInteriorSide2::Right),
-    ] {
+    for (second, second_is_reversed) in [(&same, false), (&reversed, true)] {
         for (operation, expected_area) in [
             (BooleanOp::Union, r(4)),
             (BooleanOp::Intersection, r(4)),
             (BooleanOp::Difference, r(0)),
             (BooleanOp::Xor, r(0)),
         ] {
-            let region = boolean_paths(
-                &first,
-                second,
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                second_side,
-                &policy,
-            );
+            let region = boolean_paths(&first, second, operation, &policy);
+            let area = decided(region.signed_area(&policy).unwrap().into_value())
+                .expect("the polygon Boolean has a represented area");
             assert_eq!(
-                decided(region.signed_area(&policy).unwrap().into_value()),
-                Some(expected_area),
-                "{operation:?}, second side {second_side:?}"
+                area.partial_cmp(&expected_area),
+                Some(std::cmp::Ordering::Equal),
+                "{operation:?}, reversed second={second_is_reversed}"
             );
         }
     }
@@ -3129,14 +3074,7 @@ fn promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries() {
         (BooleanOp::Xor, r(12)),
     ];
     for (operation, expected_area) in cases {
-        let region = boolean_paths(
-            &first,
-            &second,
-            operation,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        );
+        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
         assert_eq!(
             decided(
                 region
@@ -3162,14 +3100,7 @@ fn promoted_region_boolean_materializes_exact_regularized_operation_matrix() {
     ];
 
     for (operation, expected_area) in cases {
-        let region = boolean_paths(
-            &first,
-            &second,
-            operation,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &policy,
-        );
+        let region = boolean_paths(&first, &second, operation, &policy);
         assert!(
             region
                 .boundary_loops()
@@ -3182,14 +3113,7 @@ fn promoted_region_boolean_materializes_exact_regularized_operation_matrix() {
         );
     }
 
-    let direct = boolean_paths(
-        &first,
-        &second,
-        BooleanOp::Union,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
-        &policy,
-    );
+    let direct = boolean_paths(&first, &second, BooleanOp::Union, &policy);
     assert_eq!(
         decided(direct.signed_area(&policy).unwrap().into_value()),
         Some(r(7))
@@ -3213,14 +3137,7 @@ fn promoted_region_boolean_consumes_complete_shared_boundaries() {
     ];
 
     for (operation, expected_area) in cases {
-        let region = boolean_paths(
-            &first,
-            &second,
-            operation,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        );
+        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
         assert_eq!(
             decided(
                 region
@@ -3249,22 +3166,13 @@ fn promoted_region_boolean_preserves_disjoint_exact_conic_boundaries() {
     };
     let first = circle(0);
     let second = circle(4);
-    let union = boolean_paths(
-        &first,
-        &second,
-        BooleanOp::Union,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
-        &CurveContext::STRICT,
-    );
+    let union = boolean_paths(&first, &second, BooleanOp::Union, &CurveContext::STRICT);
     assert_eq!(union.boundary_loops().len(), 2);
 
     let intersection = boolean_paths(
         &first,
         &second,
         BooleanOp::Intersection,
-        CurveBoundaryInteriorSide2::Left,
-        CurveBoundaryInteriorSide2::Left,
         &CurveContext::STRICT,
     );
     assert!(intersection.is_empty());
@@ -3308,14 +3216,7 @@ fn promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_spli
     }));
 
     for operation in [BooleanOp::Union, BooleanOp::Intersection] {
-        let region = boolean_paths(
-            &first,
-            &second,
-            operation,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        );
+        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
         assert_eq!(region.boundary_loops().len(), 1);
         assert!(!region.boundary_loops()[0].has_algebraic_fragments());
     }
@@ -3349,14 +3250,7 @@ fn path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly() {
     }
 
     for operation in [BooleanOp::Difference, BooleanOp::Xor] {
-        let region = boolean_paths(
-            &first,
-            &second,
-            operation,
-            CurveBoundaryInteriorSide2::Left,
-            CurveBoundaryInteriorSide2::Left,
-            &CurveContext::STRICT,
-        );
+        let region = boolean_paths(&first, &second, operation, &CurveContext::STRICT);
         assert!(region.has_algebraic_fragments());
         assert_eq!(
             region
@@ -3509,14 +3403,7 @@ fn equivalent_top_level_families_complete_independent_region_booleans() {
             BooleanOp::Difference,
             BooleanOp::Xor,
         ] {
-            let _region = boolean_paths(
-                &source,
-                &cutter,
-                operation,
-                CurveBoundaryInteriorSide2::Left,
-                CurveBoundaryInteriorSide2::Left,
-                &policy,
-            );
+            let _region = boolean_paths(&source, &cutter, operation, &policy);
         }
     }
 }

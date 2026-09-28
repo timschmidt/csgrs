@@ -6,9 +6,9 @@ use hypercurve::{
     BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
     BezierSplitFragment2, BezierSubcurve2, BooleanOp, BulgeVertex2, Classification, Contour2,
-    Curve2, CurveBoundaryInteriorSide2, CurveContext, CurveError, CurvePath2, CurvePoint2,
-    CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2,
-    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    Curve2, CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2,
+    CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -104,16 +104,11 @@ fn square_region(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<
     })
 }
 
-fn path_region(
-    path: &CurvePath2,
-    interior_side: CurveBoundaryInteriorSide2,
-    policy: &CurveContext,
-) -> CurveResult<CurveRegion2> {
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveResult<CurveRegion2> {
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         std::slice::from_ref(path),
         &[CurveRegionLoopRole::Material],
         &[FillRule::EvenOdd],
-        &[interior_side],
         policy,
     )
     .map(|outcome| outcome.into_value())
@@ -332,8 +327,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ])
     .map_err(|error| CurveError::Topology(format!("curved benchmark path: {error}")))?;
     let cutter = square_path(-3, 2, 3, 5)?;
-    let curved_region = path_region(&curved, CurveBoundaryInteriorSide2::Left, &policy)?;
-    let cutter_region = path_region(&cutter, CurveBoundaryInteriorSide2::Left, &policy)?;
+    let curved_region = path_region(&curved, &policy)?;
+    let cutter_region = path_region(&cutter, &policy)?;
     let algebraic = curved_region
         .boolean_region(&cutter_region, BooleanOp::Difference, &policy)
         .map_err(|error| CurveError::Topology(format!("curved benchmark setup: {error}")))?

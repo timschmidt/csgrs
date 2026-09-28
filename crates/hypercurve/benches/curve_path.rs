@@ -2,9 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveBoundaryInteriorSide2,
-    CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2,
-    QuadraticBezier2, Real,
+    BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurvePath2,
+    CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -34,16 +33,11 @@ fn rectangle(x0: i32, y0: i32, x1: i32, y1: i32) -> CurvePath2 {
     .expect("benchmark rectangle is connected")
 }
 
-fn path_region(
-    path: &CurvePath2,
-    interior_side: CurveBoundaryInteriorSide2,
-    policy: &CurveContext,
-) -> CurveRegion2 {
-    CurveRegion2::try_from_boundary_paths_with_loop_topology(
+fn path_region(path: &CurvePath2, policy: &CurveContext) -> CurveRegion2 {
+    CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         std::slice::from_ref(path),
         &[CurveRegionLoopRole::Material],
         &[FillRule::EvenOdd],
-        &[interior_side],
         policy,
     )
     .expect("benchmark path is a valid exact region boundary")
@@ -282,10 +276,8 @@ fn main() {
 
     let partial_first = rectangle(0, 0, 2, 4);
     let partial_second = rectangle(2, 1, 4, 3);
-    let partial_first_region =
-        path_region(&partial_first, CurveBoundaryInteriorSide2::Left, &policy);
-    let partial_second_region =
-        path_region(&partial_second, CurveBoundaryInteriorSide2::Left, &policy);
+    let partial_first_region = path_region(&partial_first, &policy);
+    let partial_second_region = path_region(&partial_second, &policy);
     let boolean_iterations = 500_u32;
     let started = Instant::now();
     let mut boolean_checksum = 0_usize;
@@ -340,16 +332,8 @@ fn main() {
         ),
     ])
     .expect("benchmark circular-segment path is connected");
-    let partial_arc_first_region = path_region(
-        &partial_arc_first,
-        CurveBoundaryInteriorSide2::Left,
-        &policy,
-    );
-    let partial_arc_second_region = path_region(
-        &partial_arc_second,
-        CurveBoundaryInteriorSide2::Left,
-        &policy,
-    );
+    let partial_arc_first_region = path_region(&partial_arc_first, &policy);
+    let partial_arc_second_region = path_region(&partial_arc_second, &policy);
     let started = Instant::now();
     let mut partial_arc_checksum = 0_usize;
     for _ in 0..boolean_iterations {
@@ -378,13 +362,8 @@ fn main() {
             .expect("benchmark cubic subcurve is exact"),
         -6,
     );
-    let nonlinear_first_region =
-        path_region(&nonlinear_first, CurveBoundaryInteriorSide2::Right, &policy);
-    let nonlinear_second_region = path_region(
-        &nonlinear_second,
-        CurveBoundaryInteriorSide2::Right,
-        &policy,
-    );
+    let nonlinear_first_region = path_region(&nonlinear_first, &policy);
+    let nonlinear_second_region = path_region(&nonlinear_second, &policy);
     let started = Instant::now();
     let mut nonlinear_checksum = 0_usize;
     for _ in 0..boolean_iterations {
@@ -450,16 +429,8 @@ fn main() {
         CurvePath2::try_new(vec![first_circle]).expect("benchmark circle path is connected");
     let second_circle_path =
         CurvePath2::try_new(vec![second_circle]).expect("benchmark circle path is connected");
-    let first_circle_region = path_region(
-        &first_circle_path,
-        CurveBoundaryInteriorSide2::Left,
-        &policy,
-    );
-    let second_circle_region = path_region(
-        &second_circle_path,
-        CurveBoundaryInteriorSide2::Left,
-        &policy,
-    );
+    let first_circle_region = path_region(&first_circle_path, &policy);
+    let second_circle_region = path_region(&second_circle_path, &policy);
     let started = Instant::now();
     let mut circle_checksum = 0_usize;
     for _ in 0..boolean_iterations {
