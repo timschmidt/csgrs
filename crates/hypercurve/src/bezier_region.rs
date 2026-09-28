@@ -566,113 +566,11 @@ impl<'a> CurveRegionProfile2<'a> {
     }
 }
 
-/// Exact nesting-derived role assignment for native retained curved loops.
-///
-/// This evidence never trusts authored orientation to distinguish material
-/// from holes. It chooses an exact
-/// representative point on each candidate loop and classifies it against every
-/// other native Bezier/conic loop by counting certified ray crossings. Boundary
-/// hits, tangent-only ray contacts, algebraic carriers, unresolved line-contact
-/// predicates, and unsupported area/zero-area loops remain explicit
-/// uncertainty. The crossing rule is the exact-object analogue of the
-/// point-in-polygon method surveyed by boundary-first winding classification
-/// 131-144; all branch decisions follow exact-computation discipline.
-#[derive(Clone, Debug, PartialEq)]
-pub struct CurveRegionNestingRoleEvidence2 {
+/// Internal result of nesting raw native loops. Boundary provenance remains
+/// owned by the region; the caller consumes only roles and signed areas.
+struct NativeLoopNesting2 {
     roles: Vec<CurveRegionLoopRole>,
-    nesting_depths: Vec<usize>,
     signed_areas: Vec<Real>,
-    sample_points: Vec<Point2>,
-    loop_fragment_counts: Option<Vec<usize>>,
-    loop_arrangement_sources: Option<Vec<Option<Vec<CurveRegionFragmentSource2>>>>,
-}
-
-impl CurveRegionNestingRoleEvidence2 {
-    /// Constructs a retained curved-loop nesting role evidence.
-    pub fn new(
-        roles: Vec<CurveRegionLoopRole>,
-        nesting_depths: Vec<usize>,
-        signed_areas: Vec<Real>,
-        sample_points: Vec<Point2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        validate_evidence_length(roles.len(), "nesting depth", nesting_depths.len())?;
-        validate_evidence_length(roles.len(), "signed area", signed_areas.len())?;
-        validate_evidence_length(roles.len(), "sample point", sample_points.len())?;
-        validate_nesting_depth_roles(&roles, &nesting_depths)?;
-        validate_nonzero_signed_area_evidence(&signed_areas, policy)?;
-        Ok(Self {
-            roles,
-            nesting_depths,
-            signed_areas,
-            sample_points,
-            loop_fragment_counts: None,
-            loop_arrangement_sources: None,
-        })
-    }
-
-    fn with_loop_fragment_counts(mut self, loop_fragment_counts: Vec<usize>) -> CurveResult<Self> {
-        validate_loop_fragment_counts(self.roles.len(), &loop_fragment_counts)?;
-        self.loop_fragment_counts = Some(loop_fragment_counts);
-        Ok(self)
-    }
-
-    /// Attaches one optional arrangement source trail per retained loop.
-    pub fn with_loop_arrangement_sources(
-        mut self,
-        loop_arrangement_sources: Vec<Option<Vec<CurveRegionFragmentSource2>>>,
-    ) -> CurveResult<Self> {
-        validate_loop_arrangement_sources(self.roles.len(), &loop_arrangement_sources)?;
-        validate_counted_loop_arrangement_source_counts(
-            self.loop_fragment_counts.as_deref(),
-            &loop_arrangement_sources,
-        )?;
-        self.loop_arrangement_sources = Some(loop_arrangement_sources);
-        Ok(self)
-    }
-
-    /// Returns one assigned role per retained boundary loop.
-    pub fn roles(&self) -> &[CurveRegionLoopRole] {
-        &self.roles
-    }
-
-    /// Returns the certified count of containing loops for each retained loop.
-    pub fn nesting_depths(&self) -> &[usize] {
-        &self.nesting_depths
-    }
-
-    /// Returns exact signed areas used to certify nondegenerate native loops.
-    pub fn signed_areas(&self) -> &[Real] {
-        &self.signed_areas
-    }
-
-    /// Returns exact sample points used for nesting classification.
-    pub fn sample_points(&self) -> &[Point2] {
-        &self.sample_points
-    }
-
-    /// Returns per-loop arrangement/source provenance when the evidence has it.
-    pub fn loop_arrangement_sources(&self) -> Option<&[Option<Vec<CurveRegionFragmentSource2>>]> {
-        self.loop_arrangement_sources.as_deref()
-    }
-
-    /// Returns loop indices assigned as material.
-    pub fn material_loop_indices(&self) -> Vec<usize> {
-        self.roles
-            .iter()
-            .enumerate()
-            .filter_map(|(index, role)| (*role == CurveRegionLoopRole::Material).then_some(index))
-            .collect()
-    }
-
-    /// Returns loop indices assigned as holes.
-    pub fn hole_loop_indices(&self) -> Vec<usize> {
-        self.roles
-            .iter()
-            .enumerate()
-            .filter_map(|(index, role)| (*role == CurveRegionLoopRole::Hole).then_some(index))
-            .collect()
-    }
 }
 
 impl BezierBoundaryLoop2 {
@@ -10359,13 +10257,12 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
         resolve_certified_operation(policy, |attempt| {
-            let nesting =
-                match Self::native_boundary_contour_nesting_evidence_raw(&contours, attempt)? {
-                    Classification::Decided(nesting) => nesting,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let nesting = match Self::native_boundary_contour_nesting_raw(&contours, attempt)? {
+                Classification::Decided(nesting) => nesting,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             let roles = nesting.roles;
             let mut material = Vec::new();
             let mut holes = Vec::new();
@@ -10381,26 +10278,23 @@ impl CurveRegion2 {
         })
     }
 
-    /// Produces authoritative all-family nesting evidence for native contours.
+    /// Classifies native contours through the shared raw-loop nesting authority.
     ///
-    /// This is the only role classifier used by native boundary construction,
-    /// unordered native arrangement, and retained exact line images. Native
-    /// segments are promoted to exact Bezier/conic carriers, distinct loop
-    /// pairs are validated through the general curve-pair kernel, and
-    /// containment then uses the same boundary classifier as every other
-    /// `CurveRegion2` carrier. Returning full evidence lets every caller reuse
-    /// the certified depths without maintaining another contour-nesting path.
-    pub(crate) fn native_boundary_contour_nesting_evidence_raw(
+    /// Contours become exact Bezier/conic paths. The general path-intersection
+    /// kernel checks pair contacts before containment assigns roles. The
+    /// result supplies roles and signed areas without copying boundary
+    /// provenance into a separate report.
+    fn native_boundary_contour_nesting_raw(
         contours: &[Contour2],
         policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<CurveRegionNestingRoleEvidence2>> {
+    ) -> ExactCurveResult<Classification<NativeLoopNesting2>> {
         let paths = contours
             .iter()
             .map(curve_path_from_native_contour)
             .collect::<ExactCurveResult<Vec<_>>>()?;
         let region = Self::try_from_boundary_paths_raw(&paths, policy)?;
         region
-            .curved_nesting_role_evidence_raw(policy)
+            .native_loop_nesting_raw(policy)
             .map_err(curve_region_promotion_error)
     }
 
@@ -10985,11 +10879,11 @@ impl CurveRegion2 {
             }
         }
 
-        match self.curved_nesting_role_evidence_raw(policy)? {
+        match self.native_loop_nesting_raw(policy)? {
             Classification::Decided(evidence) => {
                 return filled_sides_from_roles_and_areas(
-                    evidence.roles(),
-                    evidence.signed_areas(),
+                    &evidence.roles,
+                    &evidence.signed_areas,
                     policy,
                 )
                 .map(|sides| Classification::Decided(Arc::from(sides)));
@@ -11158,7 +11052,7 @@ impl CurveRegion2 {
             contours.push(contour);
         }
 
-        let nesting = match Self::native_boundary_contour_nesting_evidence_raw(&contours, policy) {
+        let nesting = match Self::native_boundary_contour_nesting_raw(&contours, policy) {
             Ok(Classification::Decided(evidence)) => evidence,
             Ok(Classification::Uncertain(reason)) => {
                 return Ok(Classification::Uncertain(reason));
@@ -11180,19 +11074,10 @@ impl CurveRegion2 {
     /// role parity comes from exact containment depth. This makes
     /// same-orientation nested nonlinear loops classify as material/hole by
     /// topology instead of by their authored orientation.
-    pub fn curved_nesting_role_evidence(
+    fn native_loop_nesting_raw(
         &self,
         policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<CurveRegionNestingRoleEvidence2>>> {
-        resolve_certified_operation(policy, |attempt| {
-            self.curved_nesting_role_evidence_raw(attempt)
-        })
-    }
-
-    pub(crate) fn curved_nesting_role_evidence_raw(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<CurveRegionNestingRoleEvidence2>> {
+    ) -> CurveResult<Classification<NativeLoopNesting2>> {
         let Some(native_loops) = self.native_boundary_loops() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -11293,7 +11178,6 @@ impl CurveRegion2 {
         }
 
         let mut roles = Vec::with_capacity(native_loops.len());
-        let mut nesting_depths = Vec::with_capacity(native_loops.len());
         for (candidate_index, sample) in sample_points.iter().enumerate() {
             let mut depth = 0_usize;
             for (container_index, container) in native_loops.iter().enumerate() {
@@ -11319,7 +11203,6 @@ impl CurveRegion2 {
                     }
                 }
             }
-            nesting_depths.push(depth);
             roles.push(if depth.is_multiple_of(2) {
                 CurveRegionLoopRole::Material
             } else {
@@ -11327,18 +11210,13 @@ impl CurveRegion2 {
             });
         }
 
-        let evidence = CurveRegionNestingRoleEvidence2::new(
+        // Check source identity on its authoritative owner instead of cloning
+        // provenance into a separate nesting report and validating that copy.
+        validate_retained_region_arrangement_sources(&self.data.boundary_loops)?;
+        Ok(Classification::Decided(NativeLoopNesting2 {
             roles,
-            nesting_depths,
             signed_areas,
-            sample_points,
-            policy,
-        )?
-        .with_loop_fragment_counts(retained_loop_fragment_counts(&self.data.boundary_loops))?
-        .with_loop_arrangement_sources(retained_loop_arrangement_sources(
-            &self.data.boundary_loops,
-        ))?;
-        Ok(Classification::Decided(evidence))
+        }))
     }
 
     /// Returns one exact material/hole role per retained loop.
@@ -11382,9 +11260,9 @@ impl CurveRegion2 {
         if self.has_regularized_filled_left_topology(policy) {
             return self.regularized_retained_loop_roles_raw(policy);
         }
-        match self.curved_nesting_role_evidence_raw(policy)? {
+        match self.native_loop_nesting_raw(policy)? {
             Classification::Decided(evidence) => {
-                return Ok(Classification::Decided(evidence.roles().to_vec()));
+                return Ok(Classification::Decided(evidence.roles));
             }
             Classification::Uncertain(UncertaintyReason::Unsupported) => {}
             Classification::Uncertain(reason) => {
@@ -14153,22 +14031,6 @@ fn affine_region_point(
     )
 }
 
-fn retained_loop_arrangement_sources(
-    boundary_loops: &[CurveRegionBoundaryLoop2],
-) -> Vec<Option<Vec<CurveRegionFragmentSource2>>> {
-    boundary_loops
-        .iter()
-        .map(|boundary_loop| boundary_loop.arrangement_sources().map(<[_]>::to_vec))
-        .collect()
-}
-
-fn retained_loop_fragment_counts(boundary_loops: &[CurveRegionBoundaryLoop2]) -> Vec<usize> {
-    boundary_loops
-        .iter()
-        .map(CurveRegionBoundaryLoop2::len)
-        .collect()
-}
-
 fn filled_sides_from_roles_and_areas(
     roles: &[CurveRegionLoopRole],
     signed_areas: &[Real],
@@ -14195,79 +14057,6 @@ fn filled_sides_from_roles_and_areas(
         .collect()
 }
 
-fn validate_loop_fragment_counts(
-    loop_count: usize,
-    loop_fragment_counts: &[usize],
-) -> CurveResult<()> {
-    validate_evidence_length(
-        loop_count,
-        "loop fragment count",
-        loop_fragment_counts.len(),
-    )?;
-    if loop_fragment_counts.contains(&0) {
-        return Err(CurveError::Topology(
-            "retained role evidence loop fragment counts must be nonzero".into(),
-        ));
-    }
-    Ok(())
-}
-
-fn validate_loop_arrangement_sources(
-    loop_count: usize,
-    loop_arrangement_sources: &[Option<Vec<CurveRegionFragmentSource2>>],
-) -> CurveResult<()> {
-    validate_evidence_length(
-        loop_count,
-        "loop arrangement source",
-        loop_arrangement_sources.len(),
-    )?;
-    if loop_arrangement_sources.iter().flatten().any(Vec::is_empty) {
-        return Err(CurveError::Topology(
-            "retained role evidence present loop arrangement sources must be nonempty".into(),
-        ));
-    }
-    let indices = loop_arrangement_sources
-        .iter()
-        .filter_map(Option::as_ref)
-        .flat_map(|sources| {
-            sources
-                .iter()
-                .map(|source| source.arrangement_fragment_index())
-        })
-        .collect::<Vec<_>>();
-    validate_unique_arrangement_source_indices(
-        indices,
-        "retained role evidence loop arrangement sources must not reuse arrangement fragments",
-    )
-}
-
-fn validate_counted_loop_arrangement_source_counts(
-    loop_fragment_counts: Option<&[usize]>,
-    loop_arrangement_sources: &[Option<Vec<CurveRegionFragmentSource2>>],
-) -> CurveResult<()> {
-    let Some(loop_fragment_counts) = loop_fragment_counts else {
-        if loop_arrangement_sources.iter().any(Option::is_some) {
-            return Err(CurveError::Topology(
-                "retained role evidence present loop arrangement sources require loop fragment count evidence"
-                    .into(),
-            ));
-        }
-        return Ok(());
-    };
-
-    for (fragment_count, sources) in loop_fragment_counts.iter().zip(loop_arrangement_sources) {
-        if let Some(sources) = sources
-            && sources.len() != *fragment_count
-        {
-            return Err(CurveError::Topology(
-                "retained role evidence loop source count does not match loop fragment count"
-                    .into(),
-            ));
-        }
-    }
-    Ok(())
-}
-
 fn validate_unique_arrangement_source_indices(
     mut indices: Vec<usize>,
     error: &str,
@@ -14275,61 +14064,6 @@ fn validate_unique_arrangement_source_indices(
     indices.sort_unstable();
     if indices.windows(2).any(|window| window[0] == window[1]) {
         return Err(CurveError::Topology(error.into()));
-    }
-    Ok(())
-}
-
-fn validate_evidence_length(
-    loop_count: usize,
-    evidence_name: &str,
-    evidence_count: usize,
-) -> CurveResult<()> {
-    if loop_count == 0 {
-        return Err(CurveError::Topology(
-            "retained role evidence must carry at least one loop".into(),
-        ));
-    }
-    if loop_count != evidence_count {
-        return Err(CurveError::Topology(format!(
-            "retained role evidence {evidence_name} count does not match loop count"
-        )));
-    }
-    Ok(())
-}
-
-fn validate_nesting_depth_roles(
-    roles: &[CurveRegionLoopRole],
-    nesting_depths: &[usize],
-) -> CurveResult<()> {
-    for (role, depth) in roles.iter().zip(nesting_depths) {
-        let expected = if depth.is_multiple_of(2) {
-            CurveRegionLoopRole::Material
-        } else {
-            CurveRegionLoopRole::Hole
-        };
-        if *role != expected {
-            return Err(CurveError::Topology(
-                "retained nesting role evidence role does not match certified nesting depth".into(),
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn validate_nonzero_signed_area_evidence(
-    signed_areas: &[Real],
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    for signed_area in signed_areas {
-        match real_sign(signed_area, policy) {
-            Some(RealSign::Positive | RealSign::Negative) => {}
-            Some(RealSign::Zero) | None => {
-                return Err(CurveError::Topology(
-                    "retained curved nesting role evidence must carry certified nonzero signed-area evidence"
-                        .into(),
-                ));
-            }
-        }
     }
     Ok(())
 }
@@ -32619,10 +32353,10 @@ mod tests {
                 &policy,
             )
             .unwrap();
-            assert_eq!(
-                raw.curved_nesting_role_evidence_raw(&policy).unwrap(),
+            assert!(matches!(
+                raw.native_loop_nesting_raw(&policy).unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary)
-            );
+            ));
             assert_eq!(
                 raw.loop_roles_raw(&policy).unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary)

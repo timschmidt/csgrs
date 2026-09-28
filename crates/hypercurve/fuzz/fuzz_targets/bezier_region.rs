@@ -135,7 +135,6 @@ fuzz_target!(|data: &[u8]| {
                     let region = outcome.into_value();
                     let _ = region.signed_area(&policy);
                     let _ = region.loop_roles(&policy);
-                    let _ = region.curved_nesting_role_evidence(&policy);
                     let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                     let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
                 },
@@ -149,7 +148,6 @@ fuzz_target!(|data: &[u8]| {
                     let region = outcome.into_value();
                     let _ = region.signed_area(&policy);
                     let _ = region.loop_roles(&policy);
-                    let _ = region.curved_nesting_role_evidence(&policy);
                     let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                     let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
                 },
@@ -167,7 +165,6 @@ fuzz_target!(|data: &[u8]| {
                 let region = outcome.into_value();
                 let _ = region.signed_area(&policy);
                 let _ = region.loop_roles(&policy);
-                let _ = region.curved_nesting_role_evidence(&policy);
                 let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
                 let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
             });

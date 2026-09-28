@@ -5,9 +5,9 @@ use hypercurve::{
     BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
     BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification, Curve2,
     CurveCertainty, CurveContext, CurveError, CurveOutcome, CurvePath2, CurvePoint2, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionFragmentSource2, CurveRegionLoopRole,
-    CurveRegionNestingRoleEvidence2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalQuadraticBezier2, Real, RegionPointLocation, UncertaintyReason,
+    CurveRegionBoundaryLoop2, CurveRegionFragmentSource2, CurveRegionLoopRole, Point2,
+    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation,
+    UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -467,12 +467,11 @@ fn resolved_rational_overlap_traversal_materializes_unified_region() {
     let retained_sources = retained.boundary_loops()[0]
         .arrangement_sources()
         .expect("normalized curved boundary keeps arrangement provenance");
-    let role_evidence = decided(retained.curved_nesting_role_evidence(&policy()).unwrap());
-    let evidence_sources = role_evidence
-        .loop_arrangement_sources()
-        .expect("authoritative nesting evidence keeps loop sources");
-    assert_eq!(evidence_sources.len(), 1);
-    assert_eq!(evidence_sources[0].as_deref(), Some(retained_sources));
+    assert_eq!(retained_sources.len(), retained.boundary_loops()[0].len());
+    assert_eq!(
+        decided(retained.loop_roles(&policy()).unwrap()),
+        vec![CurveRegionLoopRole::Material]
+    );
 
     assert!(decided(retained.signed_area(&policy()).unwrap()).is_some());
 }
@@ -612,68 +611,12 @@ fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies()
 }
 
 #[test]
-fn retained_nesting_evidence_constructor_rejects_mismatched_evidence() {
-    let roles = vec![CurveRegionLoopRole::Material];
-
+fn empty_boundary_loops_do_not_certify_signed_area() {
     assert_topology_error(CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
         Vec::new(),
         Vec::new(),
         &policy(),
     ));
-    assert_topology_error(CurveRegionNestingRoleEvidence2::new(
-        roles.clone(),
-        vec![0],
-        vec![r(1)],
-        Vec::new(),
-        &policy(),
-    ));
-    assert_topology_error(CurveRegionNestingRoleEvidence2::new(
-        Vec::new(),
-        Vec::new(),
-        Vec::new(),
-        Vec::new(),
-        &policy(),
-    ));
-    assert_topology_error(CurveRegionNestingRoleEvidence2::new(
-        roles,
-        vec![1],
-        vec![r(1)],
-        vec![p(0, 0)],
-        &policy(),
-    ));
-    assert_topology_error(CurveRegionNestingRoleEvidence2::new(
-        vec![CurveRegionLoopRole::Material],
-        vec![0],
-        vec![r(0)],
-        vec![p(0, 0)],
-        &policy(),
-    ));
-    assert_topology_error(
-        CurveRegionNestingRoleEvidence2::new(
-            vec![CurveRegionLoopRole::Material],
-            vec![0],
-            vec![r(-1)],
-            vec![p(0, 0)],
-            &policy(),
-        )
-        .unwrap()
-        .with_loop_arrangement_sources(vec![Some(Vec::new())]),
-    );
-    assert_topology_error(
-        CurveRegionNestingRoleEvidence2::new(
-            vec![CurveRegionLoopRole::Material],
-            vec![0],
-            vec![r(-1)],
-            vec![p(0, 0)],
-            &policy(),
-        )
-        .unwrap()
-        .with_loop_arrangement_sources(vec![Some(vec![CurveRegionFragmentSource2::new(0, 0, 0)])]),
-    );
-}
-
-#[test]
-fn empty_boundary_loops_do_not_certify_signed_area() {
     assert_topology_error(BezierBoundaryLoop2::new(Vec::new(), &policy()));
     assert_topology_error(CurveRegionBoundaryLoop2::new(Vec::new(), &policy()));
 }
@@ -959,7 +902,7 @@ fn quadratic_lens_path(left_x: i32, right_x: i32, height: i32) -> CurvePath2 {
 }
 
 #[test]
-fn retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole() {
+fn regularized_nonlinear_boundary_retains_roles_area_and_provenance() {
     let material = quadratic_lens_path(0, 8, 4);
     let same_orientation_inner = quadratic_lens_path(2, 6, 1);
     let retained =
@@ -967,24 +910,23 @@ fn retained_curved_nesting_role_evidence_assigns_same_orientation_nonlinear_hole
             .unwrap()
             .into_value();
 
-    let nesting = decided(retained.curved_nesting_role_evidence(&policy()).unwrap());
-    let nesting_sources = nesting
-        .loop_arrangement_sources()
-        .expect("curved nesting evidence retains normalized graph provenance per loop");
-    assert_eq!(nesting_sources.len(), 2);
-    for (sources, boundary) in nesting_sources.iter().zip(retained.boundary_loops()) {
-        assert_eq!(sources.as_deref(), boundary.arrangement_sources());
-    }
     assert_eq!(
-        nesting.roles(),
-        &[CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+        decided(retained.loop_roles(&policy()).unwrap()),
+        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
-    assert_eq!(nesting.nesting_depths(), &[0, 1]);
-    assert_eq!(nesting.signed_areas()[0], q(64, 3));
-    assert_eq!(nesting.signed_areas()[1], q(-8, 3));
-    assert_eq!(nesting.material_loop_indices(), vec![0]);
-    assert_eq!(nesting.hole_loop_indices(), vec![1]);
-    assert_eq!(nesting.sample_points().len(), 2);
+    let profiles = decided(retained.boundary_profiles(&policy()).unwrap());
+    assert_eq!(profiles.len(), 1);
+    assert_eq!(profiles[0].material_loop_index(), 0);
+    assert_eq!(profiles[0].hole_loop_indices(), &[1]);
+    for (boundary, expected_area) in retained.boundary_loops().iter().zip([q(64, 3), q(-8, 3)]) {
+        let sources = boundary
+            .arrangement_sources()
+            .expect("normalized boundary retains its source provenance");
+        assert_eq!(sources.len(), boundary.len());
+        let area = decided(boundary.signed_area(&policy()).unwrap())
+            .expect("quadratic lens has an exact signed area");
+        assert_real_eq(&area, &expected_area);
+    }
 }
 
 #[test]

@@ -132,7 +132,7 @@ pub use bezier_region::{
     CurveRegionArrangementStage2, CurveRegionBoundaryLoop2,
     CurveRegionCertifiedSegmentationEvidence2, CurveRegionCertifiedSegmentationResult2,
     CurveRegionFragmentSource2, CurveRegionLoopRole, CurveRegionNativeContourView2,
-    CurveRegionNestingRoleEvidence2, CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
+    CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,

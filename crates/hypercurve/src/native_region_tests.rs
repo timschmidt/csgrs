@@ -96,6 +96,26 @@ fn empty_region_classifies_everything_outside() {
 }
 
 #[test]
+fn empty_native_boundary_input_constructs_an_exact_empty_region() {
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let outcome = CurveRegion2::try_from_native_boundary_contours(Vec::new(), &policy)
+            .expect("empty boundary input represents the empty set");
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let Classification::Decided(region) = outcome.into_value() else {
+            panic!("empty boundary input has decided topology");
+        };
+        assert!(region.is_empty());
+        assert_eq!(
+            region
+                .classify_point(&p(0, 0).into(), &policy)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(RegionPointLocation::Outside)
+        );
+    }
+}
+
+#[test]
 fn material_contour_classifies_inside_outside_and_boundary() {
     let region = region(vec![rectangle(0, 0, 10, 10)], Vec::new());
     assert_eq!(
