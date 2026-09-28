@@ -238,9 +238,7 @@ pub use nurbs::{
 pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
 pub use policy::{CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions};
-pub use polynomial_spline::{
-    PolynomialSplineBezierDecomposition2, PolynomialSplineBezierSpanView2, PolynomialSplineCurve2,
-};
+pub use polynomial_spline::{PolynomialSplineBezierSpanView2, PolynomialSplineCurve2};
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{
     HomogeneousControl2, RationalBezier2, RationalBezierIntersectionContact2,

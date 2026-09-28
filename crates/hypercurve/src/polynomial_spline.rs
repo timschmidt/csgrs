@@ -21,7 +21,7 @@ type Cached<T> = Result<T, ExactCurveError>;
 struct PolynomialSplineData2 {
     retained: PolynomialBSplineCurve2,
     endpoints: SplineEndpoints2,
-    decomposition: PolicyEvaluationCache<PolynomialSplineBezierDecomposition2>,
+    decomposition: PolicyEvaluationCache<PolynomialBSplineBezierExtraction2>,
     rational_spans: PolicyEvaluationCache<Vec<RationalBezier2>>,
 }
 
@@ -39,13 +39,6 @@ enum SplineEndpoints2 {
 #[derive(Clone, Debug)]
 pub struct PolynomialSplineCurve2 {
     data: Arc<PolynomialSplineData2>,
-}
-
-/// Exact Bezier decomposition retained by a [`PolynomialSplineCurve2`].
-#[derive(Clone, Debug, PartialEq)]
-pub struct PolynomialSplineBezierDecomposition2 {
-    extraction: PolynomialBSplineBezierExtraction2,
-    intervals: Vec<(Real, Real)>,
 }
 
 /// Borrowed polynomial Bezier span with source provenance.
@@ -175,10 +168,6 @@ impl PolynomialSplineCurve2 {
                 retained.extract_bezier_spans(policy),
                 CurveOperation2::Construction,
             )?;
-            let intervals = require_classification(
-                source_intervals(&extraction, policy)?,
-                CurveOperation2::Construction,
-            )?;
             let start = extraction
                 .spans()
                 .first()
@@ -192,10 +181,7 @@ impl PolynomialSplineCurve2 {
                 .end()
                 .clone();
             if !policy.permits_approximate_512() {
-                decomposition.seed_certified(PolynomialSplineBezierDecomposition2 {
-                    extraction,
-                    intervals,
-                });
+                decomposition.seed_certified(extraction);
             }
             SplineEndpoints2::Extracted { start, end }
         };
@@ -463,7 +449,7 @@ impl PolynomialSplineCurve2 {
     pub fn bezier_decomposition(
         &self,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<&PolynomialSplineBezierDecomposition2>> {
+    ) -> ExactCurveResult<CurveOutcome<&PolynomialBSplineBezierExtraction2>> {
         resolve_certified_operation(policy, |attempt| {
             self.bezier_decomposition_for_operation(attempt, CurveOperation2::BezierDecomposition)
         })
@@ -472,23 +458,12 @@ impl PolynomialSplineCurve2 {
     pub(crate) fn bezier_decomposition_with_policy(
         &self,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<&PolynomialSplineBezierDecomposition2>> {
+    ) -> ExactCurveResult<Classification<&PolynomialBSplineBezierExtraction2>> {
         resolve_cached_evaluation(&self.data.decomposition, policy, |attempt| {
-            let extraction = match map_classified_curve_result(
+            map_classified_curve_result(
                 self.data.retained.extract_bezier_spans(attempt),
                 CurveOperation2::BezierDecomposition,
-            )? {
-                Classification::Decided(extraction) => extraction,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            Ok(source_intervals(&extraction, attempt)?.map(|intervals| {
-                PolynomialSplineBezierDecomposition2 {
-                    extraction,
-                    intervals,
-                }
-            }))
+            )
         })
     }
 
@@ -496,7 +471,7 @@ impl PolynomialSplineCurve2 {
         &self,
         policy: &CurveContext,
         operation: CurveOperation2,
-    ) -> ExactCurveResult<&PolynomialSplineBezierDecomposition2> {
+    ) -> ExactCurveResult<&PolynomialBSplineBezierExtraction2> {
         require_classification(
             self.bezier_decomposition_with_policy(policy)
                 .map_err(|error| remap_spline_operation(error, operation))?,
@@ -1018,38 +993,6 @@ impl PartialEq for PolynomialSplineCurve2 {
     }
 }
 
-impl PolynomialSplineBezierDecomposition2 {
-    /// Returns the source spline degree.
-    pub const fn degree(&self) -> usize {
-        self.extraction.degree()
-    }
-
-    /// Returns the exact refined control net after knot insertion.
-    pub fn refined_control_points(&self) -> &[Point2] {
-        self.extraction.refined_control_points()
-    }
-
-    /// Returns the exact refined knot vector after knot insertion.
-    pub fn refined_knots(&self) -> &[Real] {
-        self.extraction.refined_knots()
-    }
-
-    /// Returns exact native Bezier spans in source-parameter order.
-    pub fn spans(&self) -> &[BezierSubcurve2] {
-        self.extraction.spans()
-    }
-
-    /// Returns source-parameter intervals corresponding one-to-one with spans.
-    pub fn intervals(&self) -> &[(Real, Real)] {
-        &self.intervals
-    }
-
-    /// Returns how many exact knot insertions produced Bezier form.
-    pub const fn inserted_knot_count(&self) -> usize {
-        self.extraction.inserted_knot_count()
-    }
-}
-
 impl<'a> PolynomialSplineBezierSpanView2<'a> {
     /// Returns this span's stable index in source-parameter order.
     pub const fn span_index(self) -> usize {
@@ -1065,42 +1008,6 @@ impl<'a> PolynomialSplineBezierSpanView2<'a> {
     pub fn knot_interval(self) -> (&'a Real, &'a Real) {
         (&self.interval.0, &self.interval.1)
     }
-}
-
-fn source_intervals(
-    extraction: &PolynomialBSplineBezierExtraction2,
-    policy: &CurveContext,
-) -> ExactCurveResult<Classification<Vec<(Real, Real)>>> {
-    let degree = extraction.degree();
-    let knots = extraction.refined_knots();
-    let end = knots.len().saturating_sub(degree + 1);
-    let mut intervals = Vec::with_capacity(extraction.spans().len());
-    for index in degree..end {
-        match crate::classify::compare_reals(&knots[index], &knots[index + 1], policy) {
-            Some(Ordering::Less) => {
-                intervals.push((knots[index].clone(), knots[index + 1].clone()));
-            }
-            Some(Ordering::Equal) => {}
-            Some(Ordering::Greater) => {
-                return Err(ExactCurveError::invalid(
-                    CurveOperation2::BezierDecomposition,
-                    CurveFamily2::PolynomialBSpline,
-                    CurveError::InvalidBSpline,
-                ));
-            }
-            None => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
-            }
-        }
-    }
-    if intervals.len() != extraction.spans().len() {
-        return Err(ExactCurveError::invalid(
-            CurveOperation2::BezierDecomposition,
-            CurveFamily2::PolynomialBSpline,
-            CurveError::Topology("B-spline span/interval count mismatch".into()),
-        ));
-    }
-    Ok(Classification::Decided(intervals))
 }
 
 fn has_clamped_endpoints(

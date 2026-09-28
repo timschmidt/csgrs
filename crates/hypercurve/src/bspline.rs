@@ -45,6 +45,7 @@ pub struct PolynomialBSplineBezierExtraction2 {
     refined_control_points: Vec<Point2>,
     refined_knots: Vec<Real>,
     spans: Vec<BezierSubcurve2>,
+    intervals: Vec<(Real, Real)>,
     inserted_knot_count: usize,
 }
 
@@ -246,19 +247,7 @@ impl PolynomialBSplineCurve2 {
                 }
             }
         }
-        let spans = match extract_refined_bezier_spans(&refined, policy)? {
-            Classification::Decided(spans) => spans,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        Ok(Classification::Decided(
-            PolynomialBSplineBezierExtraction2 {
-                degree: self.degree,
-                refined_control_points: refined.control_points,
-                refined_knots: refined.knots,
-                spans,
-                inserted_knot_count: refined.inserted_knot_count,
-            },
-        ))
+        extract_refined_bezier_spans(refined, policy)
     }
 }
 
@@ -281,6 +270,11 @@ impl PolynomialBSplineBezierExtraction2 {
     /// Returns the extracted Bezier spans in parameter order.
     pub fn spans(&self) -> &[BezierSubcurve2] {
         &self.spans
+    }
+
+    /// Returns source knot intervals corresponding one-to-one with the spans.
+    pub fn intervals(&self) -> &[(Real, Real)] {
+        &self.intervals
     }
 
     /// Returns how many knots were inserted to produce the Bezier form.
@@ -1397,10 +1391,11 @@ fn knot_partition_point(
 }
 
 fn extract_refined_bezier_spans(
-    refined: &BSplineWorkingCurve,
+    refined: BSplineWorkingCurve,
     policy: &CurveContext,
-) -> CurveResult<Classification<Vec<BezierSubcurve2>>> {
+) -> CurveResult<Classification<PolynomialBSplineBezierExtraction2>> {
     let mut spans = Vec::new();
+    let mut intervals = Vec::new();
     let linear_half = if refined.degree == 1 {
         Some((Real::one() / Real::from(2_i8))?)
     } else {
@@ -1462,8 +1457,22 @@ fn extract_refined_bezier_spans(
             )?),
         };
         spans.push(span);
+        // The same positive knot window owns the geometry and its chart.
+        intervals.push((
+            refined.knots[knot_index].clone(),
+            refined.knots[knot_index + 1].clone(),
+        ));
     }
-    Ok(Classification::Decided(spans))
+    Ok(Classification::Decided(
+        PolynomialBSplineBezierExtraction2 {
+            degree: refined.degree,
+            refined_control_points: refined.control_points,
+            refined_knots: refined.knots,
+            spans,
+            intervals,
+            inserted_knot_count: refined.inserted_knot_count,
+        },
+    ))
 }
 
 fn extract_refined_rational_spans(
