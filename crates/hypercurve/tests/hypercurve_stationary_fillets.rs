@@ -43,7 +43,13 @@ mod contacts {
             _ => unreachable!(),
         }
     }
-    fn check_mode(kind: u8, policy: CurveContext, reversed: bool, mode: CurveCornerMode2) {
+    fn check_mode(
+        kind: u8,
+        policy: CurveContext,
+        reversed: bool,
+        mode: CurveCornerMode2,
+        quadratic_line: bool,
+    ) {
         // Kind 0 is (t,t^2), kind 1 is the same image (t^2,t^4), and
         // kind 2 is the one-sided cusp (t^2,t^3). Both stationary charts have
         // the exact right-hand tangent +x at their authored start.
@@ -58,13 +64,19 @@ mod contacts {
         // contact, and a (3,4,5) normal at the curved contact.
         let mut request = CurveFillet2::new(radius);
         request.center = Some(point(cx, cy).into());
-        let path = CurvePath2::try_new(vec![
+        let line: Curve2 = if quadratic_line {
+            QuadraticBezier2::new(
+                Point2::from_values(0, -2),
+                Point2::from_values(0, -1),
+                Point2::from_values(0, 0),
+            )
+            .into()
+        } else {
             LineSeg2::try_new(Point2::from_values(0, -2), Point2::from_values(0, 0))
                 .unwrap()
-                .into(),
-            source(kind),
-        ])
-        .unwrap();
+                .into()
+        };
+        let path = CurvePath2::try_new(vec![line, source(kind)]).unwrap();
         let path = if reversed {
             path.reversed(&policy).unwrap().into_value()
         } else {
@@ -147,6 +159,36 @@ mod contacts {
     #[test]
     fn one_sided_cusp_approximate() {
         check(2, CurveContext::APPROXIMATE_512)
+    }
+
+    #[test]
+    fn quadratic_line_extends_stationary_contacts_strict() {
+        for kind in [1, 2] {
+            for reversed in [false, true] {
+                check_mode(
+                    kind,
+                    CurveContext::STRICT,
+                    reversed,
+                    CurveCornerMode2::TrimOrExtend,
+                    true,
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn quadratic_line_extends_stationary_contacts_approximate() {
+        for kind in [1, 2] {
+            for reversed in [false, true] {
+                check_mode(
+                    kind,
+                    CurveContext::APPROXIMATE_512,
+                    reversed,
+                    CurveCornerMode2::TrimOrExtend,
+                    true,
+                );
+            }
+        }
     }
 
     fn interior_stationary_contact_mode(
@@ -283,7 +325,7 @@ mod contacts {
 
     fn check_reversed(kind: u8, policy: CurveContext, reversed: bool) {
         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-            check_mode(kind, policy, reversed, mode)
+            check_mode(kind, policy, reversed, mode, false)
         }
     }
     fn interior_stationary_contact_reversed(policy: CurveContext, reversed: bool) {
