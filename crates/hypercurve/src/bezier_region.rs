@@ -10189,17 +10189,6 @@ impl CurveRegion2 {
     /// decided by the same all-family arrangement used by Boolean and offset
     /// operations.
     pub fn arrange_unordered_segments(
-        source_segments: Vec<Segment2>,
-        fill_rule: FillRule,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveRegionArrangement2>> {
-        resolve_certified_operation(policy, |attempt| {
-            arrange_unordered_native_segments_raw(&source_segments, fill_rule, attempt)
-        })
-    }
-
-    /// Arranges borrowed unordered exact line/arc segments into unified topology.
-    pub fn arrange_unordered_segments_borrowed(
         source_segments: &[Segment2],
         fill_rule: FillRule,
         policy: &CurveContext,

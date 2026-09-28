@@ -22,7 +22,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ];
 
     let result = CurveRegion2::arrange_unordered_segments(
-        boundary.into_iter().map(Segment2::Line).collect(),
+        &boundary.into_iter().map(Segment2::Line).collect::<Vec<_>>(),
         FillRule::NonZero,
         &policy,
     )?

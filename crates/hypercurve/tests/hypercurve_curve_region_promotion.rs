@@ -7370,11 +7370,14 @@ fn unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse() {
 
 #[test]
 fn unified_native_arrangement_exposes_immediate_evidence() {
-    let source = square(0, 0, 4, 4).segments().to_vec();
-    let result =
-        CurveRegion2::arrange_unordered_segments(source, FillRule::NonZero, &CurveContext::STRICT)
-            .unwrap()
-            .into_value();
+    let source = square(0, 0, 4, 4);
+    let result = CurveRegion2::arrange_unordered_segments(
+        source.segments(),
+        FillRule::NonZero,
+        &CurveContext::STRICT,
+    )
+    .unwrap()
+    .into_value();
 
     assert!(result.region().is_some());
     assert_eq!(result.fill_rule(), FillRule::NonZero);

@@ -71,7 +71,7 @@ fn filled_area(region: &CurveRegion2) -> Classification<Option<Real>> {
 
 fn arrange_lines(segments: Vec<crate::LineSeg2>, fill_rule: FillRule) -> CurveRegionArrangement2 {
     CurveRegion2::arrange_unordered_segments(
-        segments.into_iter().map(Segment2::Line).collect(),
+        &segments.into_iter().map(Segment2::Line).collect::<Vec<_>>(),
         fill_rule,
         &policy(),
     )
@@ -79,31 +79,8 @@ fn arrange_lines(segments: Vec<crate::LineSeg2>, fill_rule: FillRule) -> CurveRe
     .into_value()
 }
 
-fn arrange_lines_borrowed(
-    segments: &[crate::LineSeg2],
-    fill_rule: FillRule,
-) -> CurveRegionArrangement2 {
-    let segments = segments
-        .iter()
-        .cloned()
-        .map(Segment2::Line)
-        .collect::<Vec<_>>();
-    CurveRegion2::arrange_unordered_segments_borrowed(&segments, fill_rule, &policy())
-        .unwrap()
-        .into_value()
-}
-
 fn arrange_segments(segments: Vec<Segment2>, fill_rule: FillRule) -> CurveRegionArrangement2 {
-    CurveRegion2::arrange_unordered_segments(segments, fill_rule, &policy())
-        .unwrap()
-        .into_value()
-}
-
-fn arrange_segments_borrowed(
-    segments: &[Segment2],
-    fill_rule: FillRule,
-) -> CurveRegionArrangement2 {
-    CurveRegion2::arrange_unordered_segments_borrowed(segments, fill_rule, &policy())
+    CurveRegion2::arrange_unordered_segments(&segments, fill_rule, &policy())
         .unwrap()
         .into_value()
 }
@@ -244,44 +221,6 @@ fn unordered_lines_materialize_one_authoritative_region() {
     assert_eq!(
         classify(region, &p(2, 2)),
         Classification::Decided(RegionPointLocation::Inside)
-    );
-}
-
-#[test]
-fn borrowed_unordered_lines_and_segments_have_identical_semantics() {
-    let lines = vec![
-        line(0, 0, 4, 0),
-        line(0, 4, 4, 4),
-        line(0, 0, 0, 4),
-        line(4, 0, 4, 4),
-    ];
-    let line_result = arrange_lines_borrowed(&lines, FillRule::NonZero);
-    let segments = lines
-        .iter()
-        .cloned()
-        .map(Segment2::Line)
-        .collect::<Vec<_>>();
-    let segment_result = arrange_segments_borrowed(&segments, FillRule::NonZero);
-    assert_eq!(line_result.source_segment_count(), 4);
-    assert_eq!(segment_result.source_segment_count(), 4);
-    assert_eq!(line_result.stage(), segment_result.stage());
-    assert_eq!(line_result.status(), segment_result.status());
-    assert_eq!(line_result.blocker(), segment_result.blocker());
-    assert_eq!(
-        line_result.output_ring_count(),
-        segment_result.output_ring_count()
-    );
-    assert_eq!(
-        line_result.output_boundary_segment_count(),
-        segment_result.output_boundary_segment_count()
-    );
-    assert_eq!(
-        line_result.output_boundary_segment_kind_counts(),
-        segment_result.output_boundary_segment_kind_counts()
-    );
-    assert_eq!(
-        classify(line_result.region().unwrap(), &p(2, 2)),
-        classify(segment_result.region().unwrap(), &p(2, 2))
     );
 }
 
@@ -687,7 +626,7 @@ fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
     ];
 
     let segments = lines.into_iter().map(Segment2::Line).collect::<Vec<_>>();
-    let strict = CurveRegion2::arrange_unordered_segments_borrowed(
+    let strict = CurveRegion2::arrange_unordered_segments(
         &segments,
         FillRule::NonZero,
         &CurveContext::STRICT,
@@ -697,7 +636,7 @@ fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
     assert!(strict.value.region().is_none());
     assert!(strict.value.status().is_retained_evidence());
 
-    let approximate = CurveRegion2::arrange_unordered_segments_borrowed(
+    let approximate = CurveRegion2::arrange_unordered_segments(
         &segments,
         FillRule::NonZero,
         &CurveContext::APPROXIMATE_512,
@@ -709,18 +648,6 @@ fn unordered_native_arrangement_obeys_the_approximate_512_terminal() {
     );
     assert!(approximate.value.region().is_some());
     assert!(approximate.value.status().is_native_exact());
-
-    let approximate_owned = CurveRegion2::arrange_unordered_segments(
-        segments,
-        FillRule::NonZero,
-        &CurveContext::APPROXIMATE_512,
-    )
-    .unwrap();
-    assert_eq!(
-        approximate_owned.certainty,
-        CurveCertainty::Approximate512Consumed
-    );
-    assert!(approximate_owned.value.region().is_some());
 }
 
 proptest! {

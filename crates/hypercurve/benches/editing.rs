@@ -1800,13 +1800,10 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result = CurveRegion2::arrange_unordered_segments_borrowed(
-            &segments,
-            FillRule::NonZero,
-            &policy,
-        )
-        .expect("native line arrangement must evaluate")
-        .into_value();
+        let result =
+            CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)
+                .expect("native line arrangement must evaluate")
+                .into_value();
         if !result.status().is_native_exact() || result.region().is_none() {
             panic!("unordered line segment region build benchmark became non-native");
         }
@@ -1840,13 +1837,10 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     let mut total_endpoint_checks = 0_usize;
 
     for _ in 0..iterations {
-        let result = CurveRegion2::arrange_unordered_segments_borrowed(
-            &segments,
-            FillRule::NonZero,
-            &policy,
-        )
-        .expect("native mixed arrangement must evaluate")
-        .into_value();
+        let result =
+            CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)
+                .expect("native mixed arrangement must evaluate")
+                .into_value();
         if !result.status().is_native_exact() || result.region().is_none() {
             panic!("unordered native segment region build benchmark became non-native");
         }
@@ -1874,7 +1868,7 @@ fn bench_region_arrangement_immediate_replay(iterations: u32) -> CurveResult<()>
         Segment2::Line(line(0, 10, 0, 0)),
     ];
     let policy = CurveContext::STRICT;
-    let result = CurveRegion2::arrange_unordered_segments(segments, FillRule::NonZero, &policy)
+    let result = CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)
         .expect("native line arrangement must evaluate")
         .into_value();
     let started = Instant::now();
