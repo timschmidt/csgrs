@@ -3070,7 +3070,7 @@ pub fn contains_xy_with_context(
     }
     let classification = decisions.consume_curve(
         input
-            .classify_point(&Point2::new(x, y), decisions.curve_policy())
+            .classify_point(&Point2::new(x, y).into(), decisions.curve_policy())
             .map_err(|error| ValidationError::Geometry(error.to_string()))?,
     );
     let inside = match classification {
@@ -3597,10 +3597,8 @@ mod tests {
 
         let curves = paths[0].curves();
         let vertices_at = |level: &Real| {
-            let witness = hypercurve::CurvePoint2::from(Point2::new(
-                Real::zero(),
-                level.clone(),
-            ));
+            let witness =
+                hypercurve::CurvePoint2::from(Point2::new(Real::zero(), level.clone()));
             curves
                 .iter()
                 .filter(|curve| {
