@@ -5932,13 +5932,19 @@ variation:
 
 ### Immediate arrangement reports
 
+These measurements describe historical reporting interfaces. Unordered
+arrangement now returns `CurveRegion2` through the common exact-result type;
+its former report, stage, and eager summary computation have been removed.
+Counts and native views are requested on the region. The historical timings
+below do not measure that later removal.
+
 The unordered line/arc arrangement API now returns an immediate
 `RegionArrangement2` with a semantic `RegionArrangementReport2`. Public
 `ExactCurveArrangement*Cache2`, bucket, reference, and fact carriers, along
 with cache-returning accessors, are gone from the crate root and generated
 documentation. The result and report expose output, blocker, count, and
 provenance facts directly; private caches remain an implementation detail.
-`CurveRegionArrangement2` follows the same `report()` vocabulary.
+The curved arrangement result then followed the same `report()` vocabulary.
 
 The first pre-change serialized editing run measured 21.046 us for the line
 arrangement, 21.473 us for the native line/arc arrangement, and 3 ns for report
@@ -5970,9 +5976,9 @@ tests, and compilation of every fuzz target.
 `RegionArrangementReport2` and the `report()` / `into_report()` transitions
 have now been retired. `RegionArrangement2` owns its shared immutable facts,
 summary, and optional region directly, so callers inspect the completed
-operation without entering a second report lifecycle. `CurveRegionArrangement2`
-uses the same ownership model after immediately promoting any native output and
-exposes its summary, status, blocker, and source count directly. Three duplicate
+operation without entering a second report lifecycle. At this checkpoint,
+the curved arrangement result used the same ownership model after immediately
+promoting native output and exposed its summary, status, blocker, and source count. Three duplicate
 source-cache fields that became unreachable with the report wrapper were also
 removed.
 

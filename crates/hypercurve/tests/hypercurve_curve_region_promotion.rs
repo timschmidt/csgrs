@@ -7384,21 +7384,34 @@ fn unified_mixed_line_arc_erosion_splits_after_a_curved_neck_collapse() {
 }
 
 #[test]
-fn unified_native_arrangement_exposes_immediate_evidence() {
+fn unified_native_arrangement_returns_a_certified_region() {
     let source = square(0, 0, 4, 4);
     let result = CurveRegion2::arrange_unordered_segments(
         source.segments(),
         FillRule::NonZero,
         &CurveContext::STRICT,
     )
-    .unwrap()
-    .into_value();
-
-    assert!(result.region().is_some());
-    assert_eq!(result.fill_rule(), FillRule::NonZero);
-    assert_eq!(result.source_segment_count(), 4);
-    assert!(result.status().is_native_exact());
-    assert_eq!(result.blocker(), None);
+    .unwrap();
+    assert_eq!(result.certainty, CurveCertainty::Certified);
+    let region = result.into_value();
+    assert_eq!(region.len(), 1);
+    assert!(
+        decided(region.filled_area(&CurveContext::STRICT).unwrap())
+            .is_some_and(|area| area == Real::from(16))
+    );
+    for (point, expected) in [
+        (p(2, 2), RegionPointLocation::Inside),
+        (p(0, 2), RegionPointLocation::Boundary),
+        (p(5, 2), RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            region
+                .classify_point(&point.into(), &CurveContext::STRICT)
+                .unwrap()
+                .into_value(),
+            Classification::Decided(expected)
+        );
+    }
 }
 
 #[test]

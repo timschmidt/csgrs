@@ -315,6 +315,9 @@ exact signatures.
   overlap, or touch; their individual contour fill rules do not override the
   chosen compound fill. Explicit material/hole constructors retain per-loop
   fill semantics.
+  Unordered segment admission returns the region through the same exact-result
+  contract. Unresolved endpoint assembly or topology remains an exact blocker;
+  native views and structural counts are computed when requested.
 - `CurveRegion2::{intersect_region, boolean_region, boolean_regions}` returns
   intersection topology between regularized boundaries, or regularized union,
   intersection, difference, and xor results. Authored winding and canceled

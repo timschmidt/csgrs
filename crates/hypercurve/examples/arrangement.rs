@@ -21,20 +21,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         line(0, 4, 0, 0)?,
     ];
 
-    let result = CurveRegion2::arrange_unordered_segments(
+    let region = CurveRegion2::arrange_unordered_segments(
         &boundary.into_iter().map(Segment2::Line).collect::<Vec<_>>(),
         FillRule::NonZero,
         &policy,
     )?
     .into_value();
-    let region = match result.region_classification() {
-        Classification::Decided(region) => region,
-        Classification::Uncertain(reason) => {
-            panic!("arrangement blocked with retained uncertainty: {reason:?}");
-        }
-    };
-    assert!(result.status().is_native_exact());
-    assert_eq!(result.source_segment_count(), 4);
     assert!(matches!(
         region
             .classify_point(&p(2, 2).into(), &policy)?

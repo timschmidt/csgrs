@@ -3,10 +3,9 @@ use std::time::Instant;
 
 use hypercurve::{
     BooleanOp, BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext,
-    CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionArrangementStage2,
-    CurveRegionLoopRole, CurveResult, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
-    FillRule, LineSeg2, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
-    Segment2,
+    CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionLoopRole, CurveResult,
+    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, LineSeg2,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2,
 };
 use hypercurve::{Curve2, CurvePath2};
 
@@ -1793,31 +1792,25 @@ fn bench_unordered_line_segment_region_build(iterations: u32) -> CurveResult<()>
     ];
     let policy = CurveContext::STRICT;
     let started = Instant::now();
-    let mut total_request_sources = 0_usize;
-    let mut total_evidence_counts = 0_usize;
-    let mut total_retained_outputs = 0_usize;
-    let mut total_segments = 0_usize;
-    let mut total_endpoint_checks = 0_usize;
-
+    let mut total_loops = 0_usize;
+    let mut total_spans = 0_usize;
     for _ in 0..iterations {
-        let result =
+        let region =
             CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)
-                .expect("native line arrangement must evaluate")
+                .expect("native arrangement must produce an exact region")
                 .into_value();
-        if !result.status().is_native_exact() || result.region().is_none() {
-            panic!("unordered line segment region build benchmark became non-native");
-        }
-        total_request_sources += black_box(result.source_segment_count());
-        total_evidence_counts += black_box(result.status().is_native_exact() as usize);
-        total_retained_outputs += black_box(result.output_ring_count().unwrap_or(0));
-        total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
-        total_endpoint_checks +=
-            black_box((result.stage() == CurveRegionArrangementStage2::CurveArrangement) as usize);
+        total_loops += black_box(region.len());
+        total_spans += black_box(
+            region
+                .boundary_loops()
+                .iter()
+                .map(|loop_| loop_.len())
+                .sum::<usize>(),
+        );
     }
-
     let elapsed = started.elapsed();
     println!(
-        "unordered_line_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), request sources={total_request_sources}, evidence counts={total_evidence_counts}, retained outputs={total_retained_outputs}, total segments={total_segments}, endpoint checks={total_endpoint_checks}",
+        "unordered_line_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={total_loops}, spans={total_spans}",
         elapsed / iterations
     );
     Ok(())
@@ -1830,61 +1823,25 @@ fn bench_unordered_native_segment_region_build(iterations: u32) -> CurveResult<(
     ];
     let policy = CurveContext::STRICT;
     let started = Instant::now();
-    let mut total_request_sources = 0_usize;
-    let mut total_evidence_counts = 0_usize;
-    let mut total_retained_outputs = 0_usize;
-    let mut total_segments = 0_usize;
-    let mut total_endpoint_checks = 0_usize;
-
+    let mut total_loops = 0_usize;
+    let mut total_spans = 0_usize;
     for _ in 0..iterations {
-        let result =
+        let region =
             CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)
-                .expect("native mixed arrangement must evaluate")
+                .expect("native arrangement must produce an exact region")
                 .into_value();
-        if !result.status().is_native_exact() || result.region().is_none() {
-            panic!("unordered native segment region build benchmark became non-native");
-        }
-        total_request_sources += black_box(result.source_segment_count());
-        total_evidence_counts += black_box(result.status().is_native_exact() as usize);
-        total_retained_outputs += black_box(result.output_ring_count().unwrap_or(0));
-        total_segments += black_box(result.output_boundary_segment_count().unwrap_or_default());
-        total_endpoint_checks +=
-            black_box((result.stage() == CurveRegionArrangementStage2::CurveArrangement) as usize);
+        total_loops += black_box(region.len());
+        total_spans += black_box(
+            region
+                .boundary_loops()
+                .iter()
+                .map(|loop_| loop_.len())
+                .sum::<usize>(),
+        );
     }
-
     let elapsed = started.elapsed();
     println!(
-        "unordered_native_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), request sources={total_request_sources}, evidence counts={total_evidence_counts}, retained outputs={total_retained_outputs}, total segments={total_segments}, endpoint checks={total_endpoint_checks}",
-        elapsed / iterations
-    );
-    Ok(())
-}
-
-fn bench_region_arrangement_immediate_replay(iterations: u32) -> CurveResult<()> {
-    let segments = vec![
-        Segment2::Line(line(0, 0, 10, 0)),
-        Segment2::Line(line(10, 0, 10, 10)),
-        Segment2::Line(line(10, 10, 0, 10)),
-        Segment2::Line(line(0, 10, 0, 0)),
-    ];
-    let policy = CurveContext::STRICT;
-    let result = CurveRegion2::arrange_unordered_segments(&segments, FillRule::NonZero, &policy)
-        .expect("native line arrangement must evaluate")
-        .into_value();
-    let started = Instant::now();
-    let mut checksum = 0_usize;
-
-    for _ in 0..iterations {
-        let immediate = black_box(&result);
-        checksum = checksum.wrapping_add(black_box(immediate.source_segment_count()));
-        checksum = checksum.wrapping_add(black_box(
-            immediate.output_boundary_segment_count().unwrap_or(0),
-        ));
-    }
-
-    let elapsed = started.elapsed();
-    println!(
-        "region_arrangement_immediate_replay: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        "unordered_native_segment_region_build: {iterations} iterations in {elapsed:?} ({:?}/iter), loops={total_loops}, spans={total_spans}",
         elapsed / iterations
     );
     Ok(())
@@ -2170,7 +2127,6 @@ fn main() -> CurveResult<()> {
     bench_boundary_contour_region_build(1_000)?;
     bench_unordered_line_segment_region_build(1_000)?;
     bench_unordered_native_segment_region_build(1_000)?;
-    bench_region_arrangement_immediate_replay(100_000)?;
     bench_contour_line_merge_evidence(1_000)?;
     bench_contour_signed_area_cache(100_000)?;
     bench_region_boolean(1_000)?;

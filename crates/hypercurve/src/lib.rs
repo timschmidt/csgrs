@@ -128,10 +128,10 @@ pub use bezier_parameter::{
     BezierRootIsolationResult2, BezierRootIsolationTrace2,
 };
 pub use bezier_region::{
-    BezierBoundaryLoop2, CurveRegion2, CurveRegionArrangement2, CurveRegionArrangementStage2,
-    CurveRegionBoundaryLoop2, CurveRegionCertifiedSegmentationEvidence2,
-    CurveRegionCertifiedSegmentationResult2, CurveRegionFragmentSource2, CurveRegionLoopRole,
-    CurveRegionNativeContourView2, CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
+    BezierBoundaryLoop2, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionCertifiedSegmentationEvidence2, CurveRegionCertifiedSegmentationResult2,
+    CurveRegionFragmentSource2, CurveRegionLoopRole, CurveRegionNativeContourView2,
+    CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
 };
 pub use bezier_retained_measure::{
     BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
