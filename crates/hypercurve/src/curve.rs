@@ -7300,9 +7300,9 @@ fn fillet_offset_centers(
                 // avoidable coordinate constructions.
                 let (point, source_frame) = if let Some(range) = &regular_range {
                     let (point, tangent) = match support
-                        .source_cusp_limit_point_and_tangent_support(
+                        .regular_source_point_and_tangent_support(
                             support,
-                            &parameter,
+                            &parameter.clone().into(),
                             range,
                             RealSign::Positive,
                             policy,

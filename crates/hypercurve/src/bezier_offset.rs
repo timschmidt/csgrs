@@ -95257,28 +95257,6 @@ impl BezierAnalyticParallelPoint2 {
         )
     }
 
-    fn new_with_regularized_tangent_distance(
-        parallel: BezierParallel2,
-        parameter: BezierParameter2,
-        frame_tangent: Arc<BezierAnalyticParallelTangentField2>,
-        tangent_distance: Real,
-        policy: &CurveContext,
-    ) -> Self {
-        Self {
-            data: Arc::new(BezierAnalyticParallelPointData2 {
-                parallel,
-                parameter: BezierAnalyticParallelPointParameter2::Bezier(parameter),
-                frame_tangent: Some(frame_tangent),
-                tangent_distance,
-                translation_x: Real::zero(),
-                translation_y: Real::zero(),
-                policy: policy.retained_object_policy(),
-                bounds_cache: Mutex::new(None),
-                recursive_projective_point: OnceLock::new(),
-            }),
-        }
-    }
-
     fn new_with_tangent_distance_parameter(
         parallel: BezierParallel2,
         parameter: BezierAnalyticParallelPointParameter2,
@@ -110371,7 +110349,7 @@ impl BezierParallelPairIntersectionContact2 {
         &self.second_parameter
     }
 
-    /// Returns whether exact represented first derivatives certify a crossing.
+    /// Returns whether exact tangent directions on the queried branches certify a crossing.
     pub const fn is_certified_transverse(&self) -> bool {
         self.certified_transverse
     }
@@ -112586,22 +112564,21 @@ impl BezierParallel2 {
         })
     }
 
-    /// Constructs the finite one-sided parallel limit and an oriented tangent
-    /// support at a source singularity bounding one regular parameter branch.
+    /// Constructs a point and an oriented unit-tangent support on one regular
+    /// source branch, including its finite one-sided stationary endpoint.
     ///
-    /// If the homogeneous hodograph is `H = g U`, the branch sign of `g`
-    /// makes `sign(g) U` agree with the authored source traversal throughout
-    /// `range`.  Cancelling `g` is an exact polynomial identity under STRICT;
-    /// it therefore defines both unit-frame limits at the singular parameter
-    /// without sampling, fitting, or allowing APPROXIMATE_512 to become
-    /// persistent construction evidence.
-    /// The tangent support is anchored on `tangent_anchor`, which must share
-    /// this source chart. Reoffset joins therefore retain the original corner
-    /// while the returned limit point belongs to the composed distance.
-    pub(crate) fn source_cusp_limit_point_and_tangent_support(
+    /// Cancelling the exact common hodograph factor and retaining its branch
+    /// sign preserves the selected source normal. The parameter keeps its native,
+    /// selected-fiber or recursive authority; no global root projection is needed.
+    /// The source weight and primitive speed must be nonzero at the contact.
+    ///
+    /// The point uses this parallel's distance, while the tangent is anchored
+    /// on `tangent_anchor` in the same source chart. Its direction is relative
+    /// to the increasing source tangent, before any parallel derivative scale.
+    pub(crate) fn regular_source_point_and_tangent_support(
         &self,
         tangent_anchor: &Self,
-        parameter: &BezierParameter2,
+        parameter: &CurveParameter2,
         range: &CurveParameterRange2,
         tangent_direction: RealSign,
         policy: &CurveContext,
@@ -112609,74 +112586,55 @@ impl BezierParallel2 {
         debug_assert!(Arc::ptr_eq(&self.data.source, &tangent_anchor.data.source));
         if tangent_direction == RealSign::Zero {
             return Err(CurveError::Topology(
-                "source-cusp parallel tangent direction was zero".into(),
+                "regular source tangent direction was zero".into(),
             ));
         }
-        let interior = match range.strict_interior_scalar(&policy.strict_counterpart())? {
-            Classification::Decided(interior) => interior,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let frame =
-            match self.source_oriented_regularized_tangent_field_at_interior(&interior, policy)? {
-                Classification::Decided(Some(frame)) => frame,
-                Classification::Decided(None) => {
+        let strict = policy.strict_counterpart();
+        if let Some(weight) = self.source_power_basis()?.weight {
+            match parameter.polynomial_sign(weight, &strict)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Decided(RealSign::Zero) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let speed_squared = polynomial_add(
-            &polynomial_multiply(&frame.x, &frame.x),
-            &polynomial_multiply(&frame.y, &frame.y),
-        );
-        let strict = policy.strict_counterpart();
-        match signed_coefficients_at_parameter(&speed_squared, parameter, &strict)? {
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        let frame = match self.source_oriented_regularized_tangent_field(range, &strict)? {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let (x, y) = match &frame {
+            Some(frame) => (&frame.x, &frame.y),
+            None => {
+                let differential = self.differential()?;
+                (&differential.tangent_x, &differential.tangent_y)
+            }
+        };
+        let speed_squared = polynomial_add(&polynomial_multiply(x, x), &polynomial_multiply(y, y));
+        match parameter.polynomial_sign(&speed_squared, &strict)? {
             Classification::Decided(RealSign::Positive) => {}
             Classification::Decided(RealSign::Zero) => {
-                return Err(CurveError::Topology(
-                    "cancelled source hodograph still vanished at its cusp".into(),
-                ));
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
             Classification::Decided(RealSign::Negative) => {
                 return Err(CurveError::Topology(
-                    "cancelled source hodograph had negative squared speed".into(),
+                    "regular source frame had negative squared speed".into(),
                 ));
             }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        let point = BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
-            self.clone(),
-            parameter.clone(),
-            Arc::clone(&frame),
-            Real::zero(),
-            policy,
-        );
-        let anchor = if self.distance() == tangent_anchor.distance() {
-            point.clone()
-        } else {
-            BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
-                tangent_anchor.clone(),
-                parameter.clone(),
-                Arc::clone(&frame),
-                Real::zero(),
-                policy,
-            )
-        };
-        let support = BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
-            tangent_anchor.clone(),
-            parameter.clone(),
-            frame,
-            match tangent_direction {
-                RealSign::Positive => Real::one(),
-                RealSign::Negative => -Real::one(),
-                RealSign::Zero => unreachable!("zero tangent direction returned above"),
-            },
-            policy,
-        );
-        let retain = |point: BezierAnalyticParallelPoint2| -> CurveResult<_> {
+        let retain = |parallel: &Self, tangent_distance| -> CurveResult<_> {
+            let Some(point) =
+                BezierAnalyticParallelPoint2::new_with_region_parameter_and_frame_tangent(
+                    parallel.clone(),
+                    parameter,
+                    frame.clone(),
+                    tangent_distance,
+                    policy,
+                )
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
             Ok(match point.represented_point(policy)? {
                 Classification::Decided(Some(point)) => {
                     Classification::Decided(CurvePoint2::from(point))
@@ -112685,29 +112643,34 @@ impl BezierParallel2 {
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             })
         };
-        let point = match retain(point)? {
+        let point = match retain(self, Real::zero())? {
             Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let anchor = match retain(anchor)? {
-            Classification::Decided(anchor) => anchor,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let support = match retain(support)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
+        let anchor = if self.distance() == tangent_anchor.distance() {
+            point.clone()
+        } else {
+            match retain(tangent_anchor, Real::zero())? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
+        };
+        let support = match retain(
+            tangent_anchor,
+            match tangent_direction {
+                RealSign::Positive => Real::one(),
+                RealSign::Negative => -Real::one(),
+                RealSign::Zero => unreachable!("zero tangent direction returned above"),
+            },
+        )? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         let tangent = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
             anchor, support, policy,
         )? {
             Classification::Decided(tangent) => tangent,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         Ok(Classification::Decided((point, tangent)))
     }
@@ -117894,7 +117857,12 @@ impl BezierParallel2 {
             policy,
         )? {
             Classification::Decided(Some(intersections)) => {
-                return Ok(Classification::Decided(intersections));
+                return self.replay_regular_pair_endpoint_tangents(
+                    other,
+                    [first_range, second_range],
+                    intersections,
+                    policy,
+                );
             }
             Classification::Decided(None) => {}
             Classification::Uncertain(reason) => {
@@ -117971,6 +117939,101 @@ impl BezierParallel2 {
             Some([first_range, second_range]),
             policy,
         )
+    }
+
+    /// Rational materialization preserves point and parameter identity, but
+    /// its raw derivative vanishes at an endpoint cusp. Retain the original
+    /// source branches' limiting tangent relation there. Ordinary contacts
+    /// reuse their existing signs without constructing tangent supports.
+    fn replay_regular_pair_endpoint_tangents(
+        &self,
+        other: &Self,
+        ranges: [&CurveParameterRange2; 2],
+        mut intersections: BezierParallelPairIntersectionSet2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
+        if !intersections.is_complete() {
+            return Ok(Classification::Decided(intersections));
+        }
+        let strict = policy.strict_counterpart();
+        'contacts: for index in 0..intersections.contacts.len() {
+            let contact = &intersections.contacts[index];
+            // Native incidence kernels may leave both signs absent when
+            // a derivative vanishes, instead of explicitly reporting zero.
+            // Any nonzero sign already proves both tangent directions exist.
+            if [contact.tangent_cross_sign, contact.tangent_dot_sign]
+                .into_iter()
+                .any(|sign| matches!(sign, Some(RealSign::Positive | RealSign::Negative)))
+            {
+                continue;
+            }
+            let parameters = [contact.first_parameter(), contact.second_parameter()];
+            let mut endpoint = false;
+            for (parameter, range) in parameters.into_iter().zip(ranges) {
+                for bound in [range.start(), range.end()] {
+                    match parameter.same_value(bound, &strict)? {
+                        Classification::Decided(true) => {
+                            endpoint = true;
+                            break;
+                        }
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+            }
+            if !endpoint {
+                continue;
+            }
+            let mut tangents = [None, None];
+            for (axis, parallel) in [self, other].into_iter().enumerate() {
+                let direction = match parallel.parallel_derivative_scale_sign_on_regular_range(
+                    parameters[axis],
+                    ranges[axis],
+                    &strict,
+                )? {
+                    Classification::Decided(RealSign::Zero) => {
+                        // An interior cusp or collapsed parallel has no unique
+                        // tangent selected by these range endpoints.
+                        continue 'contacts;
+                    }
+                    Classification::Decided(direction) => direction,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+                tangents[axis] = Some(
+                    match parallel.regular_source_point_and_tangent_support(
+                        parallel,
+                        parameters[axis],
+                        ranges[axis],
+                        direction,
+                        &strict,
+                    )? {
+                        Classification::Decided((_, tangent)) => tangent,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    },
+                );
+            }
+            let [first, second] =
+                tangents.map(|tangent| tangent.expect("both original source frames were retained"));
+            let cross = match first.tangent_cross_sign(&second, &strict)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let dot = match first.tangent_dot_sign(&second, &strict)? {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let contact = &mut Arc::make_mut(&mut intersections.contacts)[index];
+            contact.tangent_cross_sign = Some(cross);
+            contact.tangent_dot_sign = Some(dot);
+            contact.certified_transverse = cross != RealSign::Zero;
+        }
+        Ok(Classification::Decided(intersections))
     }
 
     /// Returns selected-branch intersections on both retained finite ranges
@@ -139143,9 +139206,9 @@ mod conversion_tests {
                 "finite domain evidence was incomplete or inconsistent"
             );
             let limit = match parallel
-                .source_cusp_limit_point_and_tangent_support(
+                .regular_source_point_and_tangent_support(
                     &parallel,
-                    &BezierParameter2::Exact(half.clone()),
+                    &CurveParameter2::from(half.clone()),
                     &before,
                     RealSign::Positive,
                     &policy,
@@ -159875,16 +159938,18 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             ]);
             let parallel = source.parallel_left(fraction(1, 20)).unwrap();
             let raw = BezierAnalyticParallelPoint2::new(parallel.clone(), alpha.clone(), &policy);
-            let reduced = BezierAnalyticParallelPoint2::new_with_regularized_tangent_distance(
-                parallel,
-                alpha,
-                Arc::new(BezierAnalyticParallelTangentField2 {
-                    x: vec![Real::one(), Real::zero(), -Real::one()],
-                    y: vec![Real::zero(), Real::from(2_i8)],
-                }),
-                Real::zero(),
-                &policy,
-            );
+            let reduced =
+                BezierAnalyticParallelPoint2::new_with_region_parameter_and_frame_tangent(
+                    parallel,
+                    &CurveParameter2::from(alpha),
+                    Some(Arc::new(BezierAnalyticParallelTangentField2 {
+                        x: vec![Real::one(), Real::zero(), -Real::one()],
+                        y: vec![Real::zero(), Real::from(2_i8)],
+                    })),
+                    Real::zero(),
+                    &policy,
+                )
+                .unwrap();
             let Classification::Decided(Some(raw_coordinates)) =
                 raw.recursive_projective_point(&policy).unwrap()
             else {
@@ -172256,6 +172321,34 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     assert_eq!(result.contacts().len(), usize::from(touching));
                     if touching {
                         let contact = &result.contacts()[0];
+                        // Curvature is 2/[t^2(1+t^2)^2]. At t=1/2 the
+                        // radius 25/128 center locus changes from negative
+                        // to positive speed. Its owned one-sided tangents
+                        // are opposite, although both point derivatives vanish.
+                        for (parameter, range, expected) in [
+                            (contact.first_parameter(), &left, RealSign::Negative),
+                            (contact.second_parameter(), &right, RealSign::Positive),
+                        ] {
+                            let (_, dot) = match parallel
+                                .vector_tangent_cross_and_dot_signs_on_regular_range(
+                                    parameter,
+                                    &q(3, 5),
+                                    &q(4, 5),
+                                    &CurveParameterRange2::from_bezier_range(range.clone()),
+                                    &policy,
+                                )
+                                .unwrap()
+                            {
+                                Classification::Decided(signs) => signs,
+                                Classification::Uncertain(reason) => {
+                                    panic!("independent PH tangent blocked: {reason:?}")
+                                }
+                            };
+                            assert_eq!(dot, expected);
+                        }
+                        assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Zero));
+                        assert_eq!(contact.tangent_dot_sign(), Some(RealSign::Negative));
+
                         for parameter in [contact.first_parameter(), contact.second_parameter()] {
                             assert_eq!(
                                 parameter
@@ -194416,6 +194509,228 @@ mod regular_parallel_contact_tests {
                             );
                         }
                     }
+                }
+            }
+        }
+    }
+    fn retained_frame_test_parameters(value: Real, policy: &CurveContext) -> [CurveParameter2; 3] {
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![-q(1, 2), Real::zero(), Real::one()],
+                policy,
+            )
+            .unwrap(),
+        );
+        let interval =
+            decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), policy).unwrap());
+        let alpha =
+            decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
+        let selected =
+            BezierAlgebraicSelectedFiberAuthority2::exact_parameter(alpha, value.clone(), policy);
+        let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
+        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let recursive = decided(
+            BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                BezierRecursiveQuadraticProjectiveScalar2 {
+                    numerator: field.constant(value.clone()).unwrap(),
+                    denominator: field.constant(Real::one()).unwrap(),
+                },
+                Some((Real::zero(), Real::one())),
+                policy,
+            )
+            .unwrap(),
+        );
+        [
+            value.into(),
+            CurveParameter2::from_selected_fiber(selected),
+            CurveParameter2::from_recursive_projective(recursive),
+        ]
+    }
+
+    #[test]
+    fn regular_source_frames_accept_every_retained_parameter_authority() {
+        let source = CubicBezier2::new(
+            p(0, 0),
+            p(0, 0),
+            Point2::new(q(1, 3), Real::zero()),
+            p(1, 1),
+        );
+        let anchor = source.parallel_left(Real::one()).unwrap();
+        let parallel = anchor.with_distance(Real::from(2));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for parameter in retained_frame_test_parameters(Real::zero(), &policy) {
+                for (range, normal) in [
+                    (CurveParameterRange2::unit(), 1_i64),
+                    (
+                        CurveParameterRange2::new_validated(
+                            (-Real::one()).into(),
+                            Real::zero().into(),
+                        ),
+                        -1,
+                    ),
+                ] {
+                    for direction in [RealSign::Positive, RealSign::Negative] {
+                        let (point, tangent) = decided(
+                            parallel
+                                .regular_source_point_and_tangent_support(
+                                    &anchor, &parameter, &range, direction, &policy,
+                                )
+                                .unwrap(),
+                        );
+                        let dx = normal
+                            * if direction == RealSign::Positive {
+                                1
+                            } else {
+                                -1
+                            };
+                        for (actual, expected) in [
+                            (&point, p(0, 2 * normal)),
+                            (tangent.start(), p(0, normal)),
+                            (tangent.end(), p(dx, normal)),
+                        ] {
+                            assert_eq!(
+                                actual.same_point(&expected.into(), &policy),
+                                Classification::Decided(true)
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn regular_source_frames_retain_unprojectable_selected_parameters() {
+        let source = CubicBezier2::new(
+            p(0, 0),
+            p(0, 0),
+            Point2::new(q(1, 3), Real::zero()),
+            p(1, 1),
+        );
+        let anchor = source.parallel_left(Real::one()).unwrap();
+        let parallel = anchor.with_distance(Real::from(2));
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected = degree_nine_selected_fiber_parameter_for_test(q(1, 2), 32768, &policy);
+            assert!(selected.data.representations.bezier.get().is_none());
+            let parameter = CurveParameter2::from_selected_fiber(selected.clone());
+            let (point, tangent) = decided(
+                parallel
+                    .regular_source_point_and_tangent_support(
+                        &anchor,
+                        &parameter,
+                        &CurveParameterRange2::unit(),
+                        RealSign::Positive,
+                        &policy,
+                    )
+                    .unwrap(),
+            );
+            // At positive t, the raw tangent t(2,3t) and cancelled field
+            // (2,3t) define the same unit normal and tangent. These independent
+            // procedural expressions must compare without a global eliminant.
+            for (actual, support, displacement) in [
+                (&point, &parallel, Real::zero()),
+                (tangent.start(), &anchor, Real::zero()),
+                (tangent.end(), &anchor, Real::one()),
+            ] {
+                let expected =
+                    BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                        support.clone(),
+                        &parameter,
+                        displacement,
+                        &policy,
+                    )
+                    .unwrap();
+                assert_eq!(
+                    actual.same_point(&CurvePoint2::from(expected), &policy),
+                    Classification::Decided(true)
+                );
+            }
+            assert!(selected.data.representations.bezier.get().is_none());
+        }
+    }
+
+    #[test]
+    fn regular_source_frames_reject_poles_in_every_parameter_authority() {
+        let source =
+            RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![-Real::one(), Real::one()])
+                .unwrap();
+        let parallel = source.parallel_left(Real::one()).unwrap();
+        let range = CurveParameterRange2::new_validated(q(1, 2).into(), Real::one().into());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for parameter in retained_frame_test_parameters(q(1, 2), &policy) {
+                assert!(matches!(
+                    parallel
+                        .regular_source_point_and_tangent_support(
+                            &parallel,
+                            &parameter,
+                            &range,
+                            RealSign::Positive,
+                            &policy
+                        )
+                        .unwrap(),
+                    Classification::Uncertain(UncertaintyReason::Boundary)
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn rational_pair_endpoint_tangents_preserve_both_operand_roles() {
+        let cusp = CubicBezier2::new(
+            p(0, 0),
+            p(0, 0),
+            Point2::new(q(1, 3), Real::zero()),
+            p(1, 1),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        let line = QuadraticBezier2::new(p(0, 0), Point2::new(Real::zero(), q(1, 2)), p(0, 1))
+            .parallel_left(Real::zero())
+            .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for reversed_range in [false, true] {
+                let range = if reversed_range {
+                    CurveParameterRange2::new_validated(Real::one().into(), Real::zero().into())
+                } else {
+                    CurveParameterRange2::unit()
+                };
+                for swapped in [false, true] {
+                    let (first, second) = if swapped {
+                        (&line, &cusp)
+                    } else {
+                        (&cusp, &line)
+                    };
+                    let result = decided(
+                        first
+                            .parallel_intersections_on_regular_ranges(
+                                second, &range, &range, &policy,
+                            )
+                            .unwrap(),
+                    );
+                    assert!(result.is_complete());
+                    assert_eq!(result.contacts().len(), 1);
+                    let contact = &result.contacts()[0];
+                    for parameter in [contact.first_parameter(), contact.second_parameter()] {
+                        assert_eq!(
+                            parameter
+                                .polynomial_sign(&[Real::zero(), Real::one()], &policy)
+                                .unwrap(),
+                            Classification::Decided(RealSign::Zero)
+                        );
+                    }
+                    // C(t)=(t^2,t^3) owns tangent +x at t=0; the line
+                    // owns +y. Reversing a query range keeps source-parameter
+                    // orientation; swapping operands reverses only the cross.
+                    assert_eq!(
+                        contact.tangent_cross_sign(),
+                        Some(if swapped {
+                            RealSign::Negative
+                        } else {
+                            RealSign::Positive
+                        })
+                    );
+                    assert_eq!(contact.tangent_dot_sign(), Some(RealSign::Zero));
+                    assert!(contact.is_certified_transverse());
                 }
             }
         }

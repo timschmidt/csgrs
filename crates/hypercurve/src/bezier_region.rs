@@ -4483,9 +4483,9 @@ fn exact_offset_spans_from_source_singular_parallel(
          -> CurveResult<Classification<(CurvePoint2, CurveTangent2)>> {
             if singular {
                 return parallel
-                    .source_cusp_limit_point_and_tangent_support(
+                    .regular_source_point_and_tangent_support(
                         parallel,
-                        parameter,
+                        &parameter.clone().into(),
                         &CurveParameterRange2::from_bezier_range(source_range.clone()),
                         scale,
                         policy,
@@ -5786,8 +5786,12 @@ fn exact_offset_span_from_regular_parallel_range(
             };
             // The point belongs to the new offset, but a join's tangent support
             // remains anchored at the original region corner.
-            let limit = composed.source_cusp_limit_point_and_tangent_support(
-                parallel, parameter, range, direction, policy,
+            let limit = composed.regular_source_point_and_tangent_support(
+                parallel,
+                &parameter.clone().into(),
+                range,
+                direction,
+                policy,
             );
             if composed_distance_sign != RealSign::Zero
                 || matches!(&limit, Ok(Classification::Decided(_)))
