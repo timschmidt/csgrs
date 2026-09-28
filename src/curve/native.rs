@@ -1788,6 +1788,7 @@ pub fn bezier_region_with_context(
     let region = decisions.consume_curve(
         CurveRegion2::try_from_boundary_paths(
             std::slice::from_ref(&path),
+            hypercurve::FillRule::EvenOdd,
             decisions.curve_policy(),
         )
         .map_err(|error| ValidationError::Geometry(error.to_string()))?,
@@ -3184,10 +3185,13 @@ mod tests {
             Curve2::from(LineSeg2::try_new(p3, terminal_p0).unwrap()),
         ])
         .unwrap();
-        let region =
-            CurveRegion2::try_from_boundary_paths(&[path], &CurveContext::APPROXIMATE_512)
-                .unwrap()
-                .into_value();
+        let region = CurveRegion2::try_from_boundary_paths(
+            &[path],
+            hypercurve::FillRule::EvenOdd,
+            &CurveContext::APPROXIMATE_512,
+        )
+        .unwrap()
+        .into_value();
 
         let strict = try_finite_profiles(&region, &GeometryContext::STRICT).unwrap();
         assert_eq!(strict.certainty, crate::GeometryCertainty::Certified);
