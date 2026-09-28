@@ -372,16 +372,7 @@ mod policy_tests {
                 image.exact_coordinate(false, &policy),
                 Some(point.y().clone())
             );
-            assert!(
-                image
-                    .data
-                    .parametric_source
-                    .as_ref()
-                    .unwrap()
-                    .resolved
-                    .get()
-                    .is_none()
-            );
+            assert!(image.parametric_source().unwrap().resolved.get().is_none());
 
             // Proportional homogeneous coordinates do not remove a pole.
             let pole = polynomial.coefficients().to_vec();
@@ -632,7 +623,7 @@ pub struct BezierAlgebraicTangentImage2 {
     message: Option<String>,
 }
 
-/// Exact algebraic image of a rational quadratic Bezier affine point.
+/// Exact affine point of a rational Bezier at one selected algebraic parameter.
 #[derive(Clone, Debug)]
 pub struct RationalBezierAlgebraicPointImage2 {
     data: Arc<RationalBezierAlgebraicPointImageData>,
@@ -640,13 +631,24 @@ pub struct RationalBezierAlgebraicPointImage2 {
 
 #[derive(Debug, PartialEq)]
 struct RationalBezierAlgebraicPointImageData {
-    status: BezierAlgebraicImageStatus,
     parameter: AlgebraicRootRepresentation,
-    x: Option<BezierAlgebraicRationalCoordinateImage>,
-    y: Option<BezierAlgebraicRationalCoordinateImage>,
-    retained_expression: Option<RetainedRationalPointExpression>,
-    parametric_source: Option<RetainedRationalPointParametricSource>,
-    message: Option<String>,
+    definition: RationalPointDefinition,
+}
+
+// The enclosing Arc already allocates one immutable image. Keep its active
+// definition inline instead of adding a separate allocation for coordinates.
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, PartialEq)]
+enum RationalPointDefinition {
+    Coordinates {
+        x: BezierAlgebraicRationalCoordinateImage,
+        y: BezierAlgebraicRationalCoordinateImage,
+    },
+    Expression {
+        expression: RetainedRationalPointExpression,
+        message: &'static str,
+    },
+    Parametric(RetainedRationalPointParametricSource),
 }
 
 #[derive(Debug, PartialEq)]
@@ -696,27 +698,21 @@ impl RationalBezierAlgebraicPointImage2 {
         Arc::ptr_eq(&self.data, &other.data)
     }
 
-    fn new(
-        status: BezierAlgebraicImageStatus,
+    fn from_coordinates(
         parameter: AlgebraicRootRepresentation,
-        x: Option<BezierAlgebraicRationalCoordinateImage>,
-        y: Option<BezierAlgebraicRationalCoordinateImage>,
-        retained_expression: Option<RetainedRationalPointExpression>,
-        message: Option<String>,
+        x: BezierAlgebraicRationalCoordinateImage,
+        y: BezierAlgebraicRationalCoordinateImage,
     ) -> Self {
         Self {
             data: Arc::new(RationalBezierAlgebraicPointImageData {
-                status,
                 parameter,
-                x,
-                y,
-                retained_expression,
-                parametric_source: None,
-                message,
+                definition: RationalPointDefinition::Coordinates { x, y },
             }),
         }
     }
 
+    /// The owning geometry supplies the non-pole certificate for this exact
+    /// expression when independent coordinate projection cannot finish.
     pub(crate) fn from_retained_expression(
         parameter: BezierAlgebraicParameter2,
         parameter_root: AlgebraicRootRepresentation,
@@ -725,21 +721,24 @@ impl RationalBezierAlgebraicPointImage2 {
         denominator: Vec<Real>,
         message: &'static str,
     ) -> Self {
-        Self::new(
-            BezierAlgebraicImageStatus::RetainedRationalExpression,
-            parameter_root,
-            None,
-            None,
-            Some(RetainedRationalPointExpression {
-                parameter,
-                x_numerator,
-                y_numerator,
-                denominator,
+        Self {
+            data: Arc::new(RationalBezierAlgebraicPointImageData {
+                parameter: parameter_root,
+                definition: RationalPointDefinition::Expression {
+                    expression: RetainedRationalPointExpression {
+                        parameter,
+                        x_numerator,
+                        y_numerator,
+                        denominator,
+                    },
+                    message,
+                },
             }),
-            Some(message.to_owned()),
-        )
+        }
     }
 
+    /// The caller owns the source's finite-domain proof at this parameter.
+    /// Retain that source without forcing its Cartesian coordinate images.
     pub(crate) fn from_parametric_source(
         curve: RationalBezier2,
         parameter: BezierAlgebraicParameter2,
@@ -747,24 +746,35 @@ impl RationalBezierAlgebraicPointImage2 {
     ) -> Self {
         Self {
             data: Arc::new(RationalBezierAlgebraicPointImageData {
-                status: BezierAlgebraicImageStatus::RetainedRationalExpression,
                 parameter: parameter_representation(&parameter, policy),
-                x: None,
-                y: None,
-                retained_expression: None,
-                parametric_source: Some(RetainedRationalPointParametricSource {
-                    curve,
-                    parameter,
-                    resolved: OnceLock::new(),
-                }),
-                message: None,
+                definition: RationalPointDefinition::Parametric(
+                    RetainedRationalPointParametricSource {
+                        curve,
+                        parameter,
+                        resolved: OnceLock::new(),
+                    },
+                ),
             }),
+        }
+    }
+
+    fn retained_expression(&self) -> Option<&RetainedRationalPointExpression> {
+        match &self.data.definition {
+            RationalPointDefinition::Expression { expression, .. } => Some(expression),
+            _ => None,
+        }
+    }
+
+    fn parametric_source(&self) -> Option<&RetainedRationalPointParametricSource> {
+        match &self.data.definition {
+            RationalPointDefinition::Parametric(source) => Some(source),
+            _ => None,
         }
     }
 
     #[inline(never)]
     pub(crate) fn resolved(&self, policy: &CurveContext) -> Option<&Self> {
-        let Some(source) = &self.data.parametric_source else {
+        let Some(source) = self.parametric_source() else {
             return Some(self);
         };
         if let Some(image) = source.resolved.get() {
@@ -793,7 +803,7 @@ impl RationalBezierAlgebraicPointImage2 {
         if let (Some(x), Some(y)) = (resolved.x(), resolved.y()) {
             return Some([x.representation()?.clone(), y.representation()?.clone()]);
         }
-        let expression = resolved.data.retained_expression.as_ref()?;
+        let expression = resolved.retained_expression()?;
         let Classification::Decided(image) = rational_point_image_from_power_basis(
             &expression.parameter,
             expression.x_numerator.clone(),
@@ -823,7 +833,7 @@ impl RationalBezierAlgebraicPointImage2 {
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> Option<Classification<Aabb2>> {
-        if let Some(source) = self.data.parametric_source.as_ref() {
+        if let Some(source) = self.parametric_source() {
             let parameter = crate::BezierParameter2::Algebraic(source.parameter.clone())
                 .refined_isolating_interval(refinement_steps, policy);
             let (start, end) = match &parameter {
@@ -848,10 +858,8 @@ impl RationalBezierAlgebraicPointImage2 {
         other: &Self,
         policy: &CurveContext,
     ) -> Option<Classification<bool>> {
-        let (Some(first), Some(second)) = (
-            self.data.parametric_source.as_ref(),
-            other.data.parametric_source.as_ref(),
-        ) else {
+        let (Some(first), Some(second)) = (self.parametric_source(), other.parametric_source())
+        else {
             return None;
         };
         if first.curve != second.curve {
@@ -879,9 +887,14 @@ impl RationalBezierAlgebraicPointImage2 {
         }
     }
 
-    /// Returns the final construction status.
+    /// Reports whether coordinates are projected or retained by their exact source.
     pub fn status(&self) -> BezierAlgebraicImageStatus {
-        self.data.status
+        match &self.data.definition {
+            RationalPointDefinition::Coordinates { .. } => BezierAlgebraicImageStatus::Transformed,
+            RationalPointDefinition::Expression { .. } | RationalPointDefinition::Parametric(_) => {
+                BezierAlgebraicImageStatus::RetainedRationalExpression
+            }
+        }
     }
 
     /// Returns the represented Bezier parameter used as the source root.
@@ -891,27 +904,28 @@ impl RationalBezierAlgebraicPointImage2 {
 
     /// Returns the x coordinate rational image when construction reached it.
     pub fn x(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
-        self.data.x.as_ref()
+        match &self.data.definition {
+            RationalPointDefinition::Coordinates { x, .. } => Some(x),
+            _ => None,
+        }
     }
 
     /// Returns the y coordinate rational image when construction reached it.
     pub fn y(&self) -> Option<&BezierAlgebraicRationalCoordinateImage> {
-        self.data.y.as_ref()
+        match &self.data.definition {
+            RationalPointDefinition::Coordinates { y, .. } => Some(y),
+            _ => None,
+        }
     }
 
     /// Returns the exact isolated source parameter retained for a
     /// Real-coefficient rational expression.
     pub fn retained_parameter(&self) -> Option<&BezierAlgebraicParameter2> {
-        self.data
-            .retained_expression
-            .as_ref()
-            .map(|expression| &expression.parameter)
-            .or_else(|| {
-                self.data
-                    .parametric_source
-                    .as_ref()
-                    .map(|source| &source.parameter)
-            })
+        match &self.data.definition {
+            RationalPointDefinition::Coordinates { .. } => None,
+            RationalPointDefinition::Expression { expression, .. } => Some(&expression.parameter),
+            RationalPointDefinition::Parametric(source) => Some(&source.parameter),
+        }
     }
 
     /// Returns the exact x numerator, y numerator, and shared denominator for
@@ -922,29 +936,28 @@ impl RationalBezierAlgebraicPointImage2 {
     /// three polynomial vectors merely to preserve the cheaper same-field
     /// equality path.
     pub fn retained_coordinate_polynomials(&self) -> Option<(&[Real], &[Real], &[Real])> {
-        if let Some(expression) = self.data.retained_expression.as_ref() {
-            return Some((
+        match &self.data.definition {
+            RationalPointDefinition::Expression { expression, .. } => Some((
                 expression.x_numerator.as_slice(),
                 expression.y_numerator.as_slice(),
                 expression.denominator.as_slice(),
-            ));
+            )),
+            RationalPointDefinition::Parametric(source) => {
+                let power_basis = source.curve.homogeneous_power_basis().ok()?;
+                Some((
+                    power_basis.x_numerator.as_slice(),
+                    power_basis.y_numerator.as_slice(),
+                    power_basis.weight.as_slice(),
+                ))
+            }
+            RationalPointDefinition::Coordinates { x, y } => {
+                (x.denominator_coefficients() == y.denominator_coefficients()).then_some((
+                    x.numerator_coefficients(),
+                    y.numerator_coefficients(),
+                    x.denominator_coefficients(),
+                ))
+            }
         }
-        if let Some(source) = self.data.parametric_source.as_ref() {
-            let power_basis = source.curve.homogeneous_power_basis().ok()?;
-            return Some((
-                power_basis.x_numerator.as_slice(),
-                power_basis.y_numerator.as_slice(),
-                power_basis.weight.as_slice(),
-            ));
-        }
-        let (Some(x), Some(y)) = (self.data.x.as_ref(), self.data.y.as_ref()) else {
-            return None;
-        };
-        (x.denominator_coefficients() == y.denominator_coefficients()).then_some((
-            x.numerator_coefficients(),
-            y.numerator_coefficients(),
-            x.denominator_coefficients(),
-        ))
     }
 
     /// Materializes one exact linear projection while the Cartesian
@@ -1311,7 +1324,7 @@ impl RationalBezierAlgebraicPointImage2 {
             ));
         };
         let (x_numerator, y_numerator, denominator) =
-            if let Some(expression) = image.data.retained_expression.as_ref() {
+            if let Some(expression) = image.retained_expression() {
                 (
                     expression.x_numerator.as_slice(),
                     expression.y_numerator.as_slice(),
@@ -1366,9 +1379,12 @@ impl RationalBezierAlgebraicPointImage2 {
         ))
     }
 
-    /// Returns a compact diagnostic message for failed construction.
+    /// Describes a retained expression when coordinate projection is deferred.
     pub fn message(&self) -> Option<&str> {
-        self.data.message.as_deref()
+        match &self.data.definition {
+            RationalPointDefinition::Expression { message, .. } => Some(message),
+            _ => None,
+        }
     }
 }
 
@@ -2060,35 +2076,20 @@ fn rational_point_image_with_parameter_representation(
             first: x,
             second: y,
         } => Ok(Classification::Decided(
-            RationalBezierAlgebraicPointImage2::new(
-                BezierAlgebraicImageStatus::Transformed,
-                parameter_root,
-                Some(x),
-                Some(y),
-                None,
-                None,
-            ),
+            RationalBezierAlgebraicPointImage2::from_coordinates(parameter_root, x, y),
         )),
         RationalCoordinateImagePair::Retained {
             first_numerator: x_numerator,
             second_numerator: y_numerator,
             denominator,
         } => Ok(Classification::Decided(
-            RationalBezierAlgebraicPointImage2::new(
-                BezierAlgebraicImageStatus::RetainedRationalExpression,
+            RationalBezierAlgebraicPointImage2::from_retained_expression(
+                parameter.clone(),
                 parameter_root,
-                None,
-                None,
-                Some(RetainedRationalPointExpression {
-                    parameter: parameter.clone(),
-                    x_numerator,
-                    y_numerator,
-                    denominator,
-                }),
-                Some(
-                    "retained an exact non-pole Real-coefficient rational point expression"
-                        .to_owned(),
-                ),
+                x_numerator,
+                y_numerator,
+                denominator,
+                "retained an exact non-pole Real-coefficient rational point expression",
             ),
         )),
         RationalCoordinateImagePair::Failed { reason, .. } => Ok(Classification::Uncertain(reason)),
