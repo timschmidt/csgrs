@@ -1413,20 +1413,15 @@ fn retained_endpoint_side_data(
         let Some(tangent) = retained_algebraic_tangent(tangent_image) else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
         };
-        let second_derivative = match image.second_derivative() {
-            Some(image) => match retained_algebraic_tangent(image) {
-                Some(tangent) => Some(tangent),
-                None => return Classification::Uncertain(UncertaintyReason::Boundary),
-            },
-            None => None,
-        };
-        let third_derivative = match image.third_derivative() {
-            Some(image) => match retained_algebraic_tangent(image) {
-                Some(tangent) => Some(tangent),
-                None => return Classification::Uncertain(UncertaintyReason::Boundary),
-            },
-            None => None,
-        };
+        // Higher derivatives are optional projected coordinates here. Exact
+        // source expressions stay on the endpoint image; ordering requests
+        // only the additional derivative evidence it actually needs.
+        let second_derivative = image
+            .second_derivative()
+            .and_then(retained_algebraic_tangent);
+        let third_derivative = image
+            .third_derivative()
+            .and_then(retained_algebraic_tangent);
         return Classification::Decided(Some(RetainedEndpointSideData {
             point: Some(point),
             tangent: Some(tangent),
@@ -1877,6 +1872,68 @@ mod endpoint_adjacency_tests {
             Classification::Uncertain(reason) => {
                 panic!("parameter isolation unexpectedly uncertain: {reason:?}")
             }
+        }
+    }
+
+    #[test]
+    fn optional_unprojected_derivatives_do_not_block_endpoint_setup() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let polynomial = crate::tests::decided(
+                crate::BezierParameterPolynomial::try_new_power_basis(
+                    vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval = crate::tests::decided(
+                crate::BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy)
+                    .unwrap(),
+            );
+            let parameter = crate::tests::decided(
+                crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
+                    .unwrap(),
+            );
+            // x=(4t^3-pi)^2/(1+t),y=0. At the selected root, point and
+            // tangent are zero, while x''=72*pi*t/(1+t) retains its source
+            // expression. Its optional projection must not block the available
+            // point/tangent evidence.
+            let controls = (0..=6)
+                .map(|i| {
+                    let cubic = if i < 3 { 0 } else { i * (i - 1) * (i - 2) / 6 };
+                    let x = Real::pi() * Real::pi()
+                        - (Real::from(8 * cubic) * Real::pi() / Real::from(20)).unwrap()
+                        + Real::from(if i == 6 { 16 } else { 0 });
+                    crate::HomogeneousControl2::new(
+                        x,
+                        Real::zero(),
+                        Real::one() + (Real::from(i) / Real::from(6)).unwrap(),
+                    )
+                })
+                .collect();
+            let curve = crate::tests::decided(
+                crate::RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap(),
+            );
+            let source = BezierSubcurve2::Rational(curve.clone());
+            let image = crate::tests::decided(
+                BezierAlgebraicEndpointImage2::rational(&curve, &parameter, &policy).unwrap(),
+            );
+            assert_eq!(
+                image.second_derivative().unwrap().status(),
+                crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+            );
+            let Classification::Decided(Some(side)) = retained_endpoint_side_data(
+                &BezierParameter2::Algebraic(parameter),
+                Some(&image),
+                Some(&source),
+                None,
+                RetainedEndpointScope::TangentOrder,
+                &policy,
+            ) else {
+                panic!("unused higher-derivative projection blocked endpoint evidence");
+            };
+            assert!(side.point.is_some() && side.tangent.is_some());
+            assert!(side.second_derivative.is_none());
+            assert!(side.derivative_source.is_some());
         }
     }
 

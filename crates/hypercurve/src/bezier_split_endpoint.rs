@@ -14,8 +14,8 @@
 use std::{sync::Arc, sync::OnceLock};
 
 use crate::{
-    BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierSubcurve2, Classification,
-    CubicBezier2, CurveContext, CurveResult, QuadraticBezier2, RationalBezierAlgebraicPointImage2,
+    BezierAlgebraicParameter2, BezierSubcurve2, Classification, CubicBezier2, CurveContext,
+    CurveResult, QuadraticBezier2, RationalBezierAlgebraicPointImage2,
     RationalBezierAlgebraicTangentImage2, RationalQuadraticBezier2,
 };
 
@@ -180,8 +180,8 @@ impl BezierAlgebraicEndpointImage2 {
         let tangent = derivatives
             .next()
             .expect("three requested rational derivative images");
-        let second_derivative = derivatives.next().and_then(transformed_rational_derivative);
-        let third_derivative = derivatives.next().and_then(transformed_rational_derivative);
+        let second_derivative = derivatives.next();
+        let third_derivative = derivatives.next();
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
@@ -227,8 +227,8 @@ impl BezierAlgebraicEndpointImage2 {
         let tangent = derivatives
             .next()
             .expect("three requested rational derivative images");
-        let second_derivative = derivatives.next().and_then(transformed_rational_derivative);
-        let third_derivative = derivatives.next().and_then(transformed_rational_derivative);
+        let second_derivative = derivatives.next();
+        let third_derivative = derivatives.next();
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
@@ -296,8 +296,8 @@ impl BezierAlgebraicEndpointImage2 {
         }
     }
 
-    /// Returns exact second-derivative endpoint evidence when the source curve
-    /// family can currently construct it.
+    /// Returns retained exact second-derivative evidence, including a source
+    /// expression whose coordinate roots have not been materialized.
     pub fn second_derivative(&self) -> Option<&RationalBezierAlgebraicTangentImage2> {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized {
@@ -307,7 +307,8 @@ impl BezierAlgebraicEndpointImage2 {
         }
     }
 
-    /// Returns exact third-derivative endpoint evidence when retained.
+    /// Returns retained exact third-derivative evidence, including a source
+    /// expression whose coordinate roots have not been materialized.
     pub fn third_derivative(&self) -> Option<&RationalBezierAlgebraicTangentImage2> {
         match self.data.as_ref() {
             BezierAlgebraicEndpointImageData::Materialized {
@@ -444,18 +445,12 @@ impl BezierAlgebraicEndpointImage2 {
     }
 }
 
-fn transformed_rational_derivative(
-    derivative: RationalBezierAlgebraicTangentImage2,
-) -> Option<RationalBezierAlgebraicTangentImage2> {
-    (derivative.status() == BezierAlgebraicImageStatus::Transformed).then_some(derivative)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{
-        BezierParameterInterval, BezierParameterPolynomial, Point2, RationalBezier2, Real,
-        UncertaintyReason,
+        BezierAlgebraicImageStatus, BezierParameterInterval, BezierParameterPolynomial, Point2,
+        RationalBezier2, Real, UncertaintyReason,
     };
 
     #[test]
@@ -512,6 +507,72 @@ mod tests {
                 );
             }
             assert!(endpoint.is_exact());
+        }
+    }
+
+    #[test]
+    fn rational_endpoints_retain_nonrational_higher_derivatives() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let polynomial = crate::tests::decided(
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval = crate::tests::decided(
+                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+            );
+            let parameter = crate::tests::decided(
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+            );
+            // C=(1/(1+t),t/(1+t)). At the positive root of 4t^3-pi,
+            // the kth x derivative is (-1)^k*k!/(1+t)^(k+1), and y=1-x.
+            let conic = RationalQuadraticBezier2::try_new(
+                Point2::from_values(1, 0),
+                Point2::new(q(2, 3), q(1, 3)),
+                Point2::new(q(1, 2), q(1, 2)),
+                Real::one(),
+                q(3, 2),
+                Real::from(2),
+            )
+            .unwrap();
+            let general = RationalBezier2::from(conic.clone());
+            for endpoint in [
+                BezierAlgebraicEndpointImage2::rational_quadratic(&conic, &parameter, &policy),
+                BezierAlgebraicEndpointImage2::rational(&general, &parameter, &policy),
+            ] {
+                let endpoint = crate::tests::decided(endpoint.unwrap());
+                for (index, derivative) in [
+                    crate::tests::decided(endpoint.tangent().unwrap()),
+                    endpoint
+                        .second_derivative()
+                        .expect("exact second derivative"),
+                    endpoint.third_derivative().expect("exact third derivative"),
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    assert_eq!(
+                        derivative.status(),
+                        BezierAlgebraicImageStatus::RetainedRationalExpression
+                    );
+                    assert!(derivative.retained_parameter() == Some(&parameter));
+                    for use_x in [true, false] {
+                        let positive = (index % 2 == 1) == use_x;
+                        assert_eq!(
+                            derivative.coordinate_sign(use_x, &policy).unwrap(),
+                            Classification::Decided(if positive {
+                                crate::RealSign::Positive
+                            } else {
+                                crate::RealSign::Negative
+                            })
+                        );
+                    }
+                }
+                assert!(endpoint.is_exact());
+            }
         }
     }
 
