@@ -9610,7 +9610,7 @@ fn checked_binomial(n: usize, k: usize) -> Option<u64> {
     })
 }
 
-fn exact_binomial(n: usize, k: usize) -> Option<Real> {
+pub(crate) fn exact_binomial(n: usize, k: usize) -> Option<Real> {
     if let Some(value) = checked_binomial(n, k) {
         return Some(Real::from(value));
     }

@@ -926,3 +926,56 @@ fn high_order_derivative_images_preserve_selected_source_domains() {
         }
     }
 }
+
+#[test]
+fn selected_derivative_jets_preserve_high_order_rational_tails() {
+    use hypercurve::HomogeneousControl2;
+    use std::cmp::Ordering;
+
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for degree in [8, 40] {
+            // C(t)=(t/(1+t^degree),1/(1+t^degree)). Its Taylor series
+            // at zero has only powers m*degree and m*degree+1. This oracle
+            // does not use the quotient-derivative recurrence. At order 80,
+            // the recurrence also needs binomials larger than u64::MAX.
+            let controls = (0..=degree)
+                .map(|i| {
+                    HomogeneousControl2::new(
+                        q(i, degree),
+                        Real::one(),
+                        r(if i == degree { 2 } else { 1 }),
+                    )
+                })
+                .collect();
+            let curve =
+                decided(RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap());
+            let parameter = isolate(polynomial(vec![r(0), r(1)]), interval(r(-1), r(1)));
+            let images = decided(
+                curve
+                    .derivatives_at_algebraic_parameter(&parameter, 2 * degree as usize, &policy)
+                    .unwrap(),
+            );
+            assert_eq!(images.len(), 2 * degree as usize);
+            let mut factorial = Real::one();
+            for (index, image) in images.iter().enumerate() {
+                let order = index as i32 + 1;
+                factorial *= r(order);
+                for (coordinate, exponent) in [
+                    (image.dx().unwrap(), order - 1),
+                    (image.dy().unwrap(), order),
+                ] {
+                    let expected = if exponent % degree == 0 {
+                        r(if (exponent / degree) % 2 == 0 { 1 } else { -1 }) * &factorial
+                    } else {
+                        Real::zero()
+                    };
+                    assert_eq!(
+                        coordinate.compare_to_real(&expected, &policy),
+                        Classification::Decided(Ordering::Equal),
+                        "degree={degree} derivative_order={order}",
+                    );
+                }
+            }
+        }
+    }
+}

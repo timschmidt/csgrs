@@ -2012,7 +2012,7 @@ pub(crate) fn rational_derivative_images_from_power_basis(
     parameter: &BezierAlgebraicParameter2,
     mut x_numerator: Vec<Real>,
     mut y_numerator: Vec<Real>,
-    denominator: Vec<Real>,
+    mut denominator: Vec<Real>,
     policy: &CurveContext,
     max_order: usize,
 ) -> CurveResult<Classification<Vec<RationalBezierAlgebraicTangentImage2>>> {
@@ -2020,39 +2020,81 @@ pub(crate) fn rational_derivative_images_from_power_basis(
         return Ok(Classification::Decided(Vec::new()));
     }
     let strict = policy.strict_counterpart();
-    let denominator_derivative = derivative_coefficients(&denominator);
+    let denominator_degree = denominator
+        .iter()
+        .rposition(|coefficient| !coefficient.definitely_zero())
+        .unwrap_or(0);
     let denominator_image =
         reduce_algebraic_image_polynomial(parameter, denominator.clone(), &strict)?;
+    let mut previous_denominator_power = vec![Real::one()];
     let mut denominator_power = denominator_image.clone();
+    let mut denominator_derivatives = Vec::new();
+    let mut numerators = vec![(
+        reduce_algebraic_image_polynomial(parameter, x_numerator.clone(), &strict)?,
+        reduce_algebraic_image_polynomial(parameter, y_numerator.clone(), &strict)?,
+    )];
     let mut images = Vec::with_capacity(max_order);
     for order in 1..=max_order {
-        let coefficient = Real::from(order as u64);
-        x_numerator = subtract_polynomials(
-            &multiply_polynomials(&derivative_coefficients(&x_numerator), &denominator),
-            &scale_polynomial(
-                &multiply_polynomials(&x_numerator, &denominator_derivative),
-                coefficient.clone(),
-            ),
+        // Differentiate only the original source polynomials. Congruence at
+        // the selected root does not preserve their derivatives.
+        x_numerator = derivative_coefficients(&x_numerator);
+        y_numerator = derivative_coefficients(&y_numerator);
+        if order <= denominator_degree {
+            denominator = derivative_coefficients(&denominator);
+            let derivative =
+                reduce_algebraic_image_polynomial(parameter, denominator.clone(), &strict)?;
+            denominator_derivatives.push(reduce_algebraic_image_polynomial(
+                parameter,
+                multiply_polynomials(&derivative, &previous_denominator_power),
+                &strict,
+            )?);
+        }
+        let mut dx_numerator = multiply_polynomials(
+            &reduce_algebraic_image_polynomial(parameter, x_numerator.clone(), &strict)?,
+            &denominator_power,
         );
-        y_numerator = subtract_polynomials(
-            &multiply_polynomials(&derivative_coefficients(&y_numerator), &denominator),
-            &scale_polynomial(
-                &multiply_polynomials(&y_numerator, &denominator_derivative),
-                coefficient,
-            ),
+        let mut dy_numerator = multiply_polynomials(
+            &reduce_algebraic_image_polynomial(parameter, y_numerator.clone(), &strict)?,
+            &denominator_power,
         );
-        // Denominator powers are values at the selected root, never differentiated.
-        // Retain their reduced representatives between products. The numerator
-        // recurrence above still differentiates full source polynomials.
+        // Write N_k and D_j for the original source derivatives. Leibniz
+        // applied to N = D*C gives C^(k) = A_k / D^(k+1), where
+        // A_k = N_k*D^k - sum_j binomial(k,j)*D_j*D^(j-1)*A_(k-j).
+        // These products only use values at the selected root,
+        // so every retained A_k and D derivative/power may stay reduced.
+        // No inverse modulo the whole source polynomial is required.
+        for (index, derivative) in denominator_derivatives.iter().enumerate() {
+            if derivative.iter().all(Real::definitely_zero) {
+                continue;
+            }
+            let denominator_order = index + 1;
+            let Some(coefficient) =
+                crate::rational_bezier_general::exact_binomial(order, denominator_order)
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let (previous_x, previous_y) = &numerators[order - denominator_order];
+            dx_numerator = subtract_polynomials(
+                &dx_numerator,
+                &scale_polynomial(
+                    &multiply_polynomials(derivative, previous_x),
+                    coefficient.clone(),
+                ),
+            );
+            dy_numerator = subtract_polynomials(
+                &dy_numerator,
+                &scale_polynomial(&multiply_polynomials(derivative, previous_y), coefficient),
+            );
+        }
+        let dx_numerator = reduce_algebraic_image_polynomial(parameter, dx_numerator, &strict)?;
+        let dy_numerator = reduce_algebraic_image_polynomial(parameter, dy_numerator, &strict)?;
+        numerators.push((dx_numerator.clone(), dy_numerator.clone()));
+        previous_denominator_power = denominator_power;
         denominator_power = reduce_algebraic_image_polynomial(
             parameter,
-            multiply_polynomials(&denominator_power, &denominator_image),
+            multiply_polynomials(&previous_denominator_power, &denominator_image),
             &strict,
         )?;
-        let dx_numerator =
-            reduce_algebraic_image_polynomial(parameter, x_numerator.clone(), &strict)?;
-        let dy_numerator =
-            reduce_algebraic_image_polynomial(parameter, y_numerator.clone(), &strict)?;
         match rational_tangent_image(
             parameter,
             RationalTangentPolynomials {
