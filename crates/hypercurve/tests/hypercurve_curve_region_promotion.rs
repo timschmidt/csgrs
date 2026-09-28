@@ -8023,15 +8023,15 @@ fn native_contour_constructors_publish_regularized_membership() {
         Classification::Decided(RegionPointLocation::Boundary)
     );
     let boundaries = vec![square(2, 2, 8, 8), square(0, 0, 10, 10)];
-    let nested = decided(
-        CurveRegion2::try_from_native_boundary_contours(boundaries, &policy)
+    let nested =
+        CurveRegion2::try_from_native_boundary_contours(&boundaries, FillRule::EvenOdd, &policy)
             .unwrap()
-            .into_value(),
-    );
+            .into_value();
 
+    assert_eq!(decided(nested.loop_role_counts(&policy).unwrap()), (1, 1));
     assert_eq!(
-        decided(nested.loop_roles(&policy).unwrap()),
-        vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
+        certified(nested.classify_point(&p(1, 1).into(), &policy).unwrap()),
+        Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
         certified(nested.classify_point(&p(5, 5).into(), &policy).unwrap()),

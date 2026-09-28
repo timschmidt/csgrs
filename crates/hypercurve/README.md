@@ -310,6 +310,11 @@ exact signatures.
   is a separate lossy output adapter and never participates in offset
   topology. Point queries return membership of the regularized set; authored
   winding multiplicity is resolved during construction.
+  Boundary-path and native-boundary constructors take one explicit global fill
+  rule and return a regularized region directly. Native contours may cross,
+  overlap, or touch; their individual contour fill rules do not override the
+  chosen compound fill. Explicit material/hole constructors retain per-loop
+  fill semantics.
 - `CurveRegion2::{intersect_region, boolean_region, boolean_regions}` returns
   intersection topology between regularized boundaries, or regularized union,
   intersection, difference, and xor results. Authored winding and canceled

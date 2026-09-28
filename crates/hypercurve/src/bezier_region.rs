@@ -10245,35 +10245,23 @@ impl CurveRegion2 {
         Self::try_from_native_contours(material_contours, Vec::new(), policy)
     }
 
-    /// Nests unordered native boundary contours and promotes their decided roles.
+    /// Constructs the exact regularized fill of native boundary contours.
     ///
-    /// Even containment depth becomes material and odd depth becomes a hole.
-    /// Intersecting, touching, or otherwise uncertifiable boundaries remain an
-    /// explicit uncertainty.
+    /// The explicit fill rule applies to the sum of signed winding across all
+    /// contours, independent of their individual fill rules. `EvenOdd` gives
+    /// nesting parity; `NonZero` adds equally oriented contours and cancels
+    /// opposite traversals. Crossings, overlaps, and touching boundaries use
+    /// the same arrangement as general boundary paths.
     pub fn try_from_native_boundary_contours(
-        contours: Vec<Contour2>,
+        contours: &[Contour2],
+        fill_rule: FillRule,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
-        resolve_certified_operation(policy, |attempt| {
-            let nesting = match Self::native_boundary_contour_nesting_raw(&contours, attempt)? {
-                Classification::Decided(nesting) => nesting,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let roles = nesting.roles;
-            let mut material = Vec::new();
-            let mut holes = Vec::new();
-            for (contour, role) in contours.into_iter().zip(roles) {
-                match role {
-                    CurveRegionLoopRole::Material => material.push(contour),
-                    CurveRegionLoopRole::Hole => holes.push(contour),
-                }
-            }
-            Self::try_from_native_contours_raw(material, holes, attempt)?
-                .finish_construction(attempt)
-                .map(Classification::Decided)
-        })
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        let paths = contours
+            .iter()
+            .map(curve_path_from_native_contour)
+            .collect::<ExactCurveResult<Vec<_>>>()?;
+        Self::try_from_boundary_paths(&paths, fill_rule, policy)
     }
 
     /// Classifies native contours through the shared raw-loop nesting authority.

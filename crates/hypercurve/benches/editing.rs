@@ -1766,14 +1766,13 @@ fn bench_boundary_contour_region_build(iterations: u32) -> CurveResult<()> {
     let mut total_roles = 0_usize;
 
     for _ in 0..iterations {
-        let Classification::Decided(region) = CurveRegion2::try_from_native_boundary_contours(
-            vec![material.clone(), hole.clone(), island.clone()],
+        let region = CurveRegion2::try_from_native_boundary_contours(
+            &[material.clone(), hole.clone(), island.clone()],
+            FillRule::EvenOdd,
             &policy,
         )
         .expect("native boundary construction must evaluate")
-        .into_value() else {
-            panic!("boundary contour region build benchmark became uncertain");
-        };
+        .into_value();
         total_roles += black_box(region.len());
     }
 
