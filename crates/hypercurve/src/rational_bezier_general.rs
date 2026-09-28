@@ -1751,7 +1751,11 @@ impl RationalBezier2 {
         }
         let mut points = Vec::with_capacity(self.homogeneous_controls().len());
         for control in self.homogeneous_controls() {
-            match project_homogeneous(control, &CurveContext::STRICT) {
+            match project_homogeneous(
+                &control.weight,
+                || [&control.x, &control.y],
+                &CurveContext::STRICT,
+            ) {
                 Classification::Decided(point) => points.push(point),
                 Classification::Uncertain(_) => return None,
             }
@@ -1922,7 +1926,9 @@ impl RationalBezier2 {
             && self.data.homogeneous_power_basis.get().is_none()
         {
             return match self.homogeneous_bernstein_value(parameter, policy) {
-                Classification::Decided(point) => project_homogeneous(&point, policy),
+                Classification::Decided(point) => {
+                    project_homogeneous(&point.weight, || [&point.x, &point.y], policy)
+                }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             };
         }
@@ -1930,10 +1936,12 @@ impl RationalBezier2 {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
         project_homogeneous(
-            &HomogeneousControl2 {
-                x: Real::eval_poly(&power_basis.x_numerator, parameter),
-                y: Real::eval_poly(&power_basis.y_numerator, parameter),
-                weight: Real::eval_poly(&power_basis.weight, parameter),
+            &Real::eval_poly(&power_basis.weight, parameter),
+            || {
+                [
+                    Real::eval_poly(&power_basis.x_numerator, parameter),
+                    Real::eval_poly(&power_basis.y_numerator, parameter),
+                ]
             },
             policy,
         )
@@ -2050,11 +2058,17 @@ impl RationalBezier2 {
             None => return Classification::Uncertain(UncertaintyReason::RealSign),
         }
         let denominator = &weight * &weight;
-        let Ok(dx) = (&dx * &weight - &x * &dweight) / &denominator else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
+        let dx = match (&dx * &weight - &x * &dweight) / &denominator {
+            Ok(value) => value,
+            Err(error) => {
+                return Classification::Uncertain(UncertaintyReason::from_real_division(error));
+            }
         };
-        let Ok(dy) = (&dy * &weight - &y * &dweight) / denominator else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
+        let dy = match (&dy * &weight - &y * &dweight) / denominator {
+            Ok(value) => value,
+            Err(error) => {
+                return Classification::Uncertain(UncertaintyReason::from_real_division(error));
+            }
         };
         Classification::Decided(CurveDerivative2::new(dx, dy))
     }
@@ -2223,7 +2237,11 @@ impl RationalBezier2 {
             }
             let mut points = Vec::with_capacity(controls.len());
             for control in controls {
-                match project_homogeneous(&control, &CurveContext::STRICT) {
+                match project_homogeneous(
+                    &control.weight,
+                    || [&control.x, &control.y],
+                    &CurveContext::STRICT,
+                ) {
                     Classification::Decided(point) => points.push(point),
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
@@ -4754,11 +4772,17 @@ impl RationalBezier2 {
                 x -= &coefficient * &denominator[denominator_order] * &previous.0;
                 y -= &coefficient * &denominator[denominator_order] * &previous.1;
             }
-            let Ok(x) = x / &denominator[0] else {
-                return Classification::Uncertain(UncertaintyReason::Boundary);
+            let x = match x / &denominator[0] {
+                Ok(value) => value,
+                Err(error) => {
+                    return Classification::Uncertain(UncertaintyReason::from_real_division(error));
+                }
             };
-            let Ok(y) = y / &denominator[0] else {
-                return Classification::Uncertain(UncertaintyReason::Boundary);
+            let y = match y / &denominator[0] {
+                Ok(value) => value,
+                Err(error) => {
+                    return Classification::Uncertain(UncertaintyReason::from_real_division(error));
+                }
             };
             derivatives.push((x, y));
         }
@@ -5655,8 +5679,11 @@ impl RationalBezier2 {
         let other_first = if reversed { degree - 1 } else { 1 };
         let scale_numerator = &other.weights()[other_first] * &self.weights()[0];
         let scale_denominator = &self.weights()[1] * &other.weights()[other_base];
-        let Ok(scale) = scale_numerator / scale_denominator else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
+        let scale = match scale_numerator / scale_denominator {
+            Ok(value) => value,
+            Err(error) => {
+                return Classification::Uncertain(UncertaintyReason::from_real_division(error));
+            }
         };
         match real_sign(&scale, policy) {
             Some(RealSign::Positive) => {}
@@ -6567,7 +6594,7 @@ impl RationalBezier2 {
                 y: y.clone(),
                 weight: weight.clone(),
             };
-            match project_homogeneous(&point, policy) {
+            match project_homogeneous(&point.weight, || [&point.x, &point.y], policy) {
                 Classification::Decided(point) => controls.push(point),
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -9909,29 +9936,32 @@ fn real_nonnegative_integer_power(base: &Real, mut exponent: usize) -> Real {
     result
 }
 
-pub(crate) fn project_homogeneous(
-    point: &HomogeneousControl2,
+/// Project only after the denominator is decided nonzero. Numerators may be
+/// borrowed from retained controls or evaluated on demand without cloning them.
+pub(crate) fn project_homogeneous<T: AsRef<Real>>(
+    weight: &Real,
+    numerators: impl FnOnce() -> [T; 2],
     policy: &CurveContext,
 ) -> Classification<Point2> {
-    match is_zero(&point.weight, policy) {
+    match is_zero(weight, policy) {
         Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
         Some(false) => {}
         None => return Classification::Uncertain(UncertaintyReason::RealSign),
     }
     // Scalar division can have less nonzero evidence than the geometric
     // predicate above. A failed proof is not a proof of an affine pole.
-    let division_blocker = |error| match error {
-        hyperreal::Problem::DivideByZero => UncertaintyReason::Boundary,
-        hyperreal::Problem::UnknownZero => UncertaintyReason::RealSign,
-        _ => UncertaintyReason::Unsupported,
-    };
-    let x = match &point.x / &point.weight {
+    let [x, y] = numerators();
+    let x = match x.as_ref() / weight {
         Ok(value) => value,
-        Err(error) => return Classification::Uncertain(division_blocker(error)),
+        Err(error) => {
+            return Classification::Uncertain(UncertaintyReason::from_real_division(error));
+        }
     };
-    let y = match &point.y / &point.weight {
+    let y = match y.as_ref() / weight {
         Ok(value) => value,
-        Err(error) => return Classification::Uncertain(division_blocker(error)),
+        Err(error) => {
+            return Classification::Uncertain(UncertaintyReason::from_real_division(error));
+        }
     };
     Classification::Decided(Point2::new(x, y))
 }
@@ -9945,8 +9975,21 @@ fn from_homogeneous(
         return Err(CurveError::InvalidRationalBezier);
     }
     let endpoints = match [
-        project_homogeneous(&controls[0], policy),
-        project_homogeneous(&controls[controls.len() - 1], policy),
+        project_homogeneous(
+            &controls[0].weight,
+            || [&controls[0].x, &controls[0].y],
+            policy,
+        ),
+        project_homogeneous(
+            &controls[controls.len() - 1].weight,
+            || {
+                [
+                    &controls[controls.len() - 1].x,
+                    &controls[controls.len() - 1].y,
+                ]
+            },
+            policy,
+        ),
     ] {
         [Classification::Decided(start), Classification::Decided(end)] => [start, end],
         [Classification::Uncertain(reason), _] | [_, Classification::Uncertain(reason)] => {
@@ -13038,12 +13081,14 @@ mod tests {
 
         let actual = curve.point_at(&parameter, &policy).unwrap();
         let expected = match curve.homogeneous_de_casteljau_value(&parameter) {
-            Classification::Decided(value) => match project_homogeneous(&value, &policy) {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    panic!("de Casteljau projection blocked: {reason:?}")
+            Classification::Decided(value) => {
+                match project_homogeneous(&value.weight, || [&value.x, &value.y], &policy) {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        panic!("de Casteljau projection blocked: {reason:?}")
+                    }
                 }
-            },
+            }
             Classification::Uncertain(reason) => {
                 panic!("de Casteljau evaluation blocked: {reason:?}")
             }

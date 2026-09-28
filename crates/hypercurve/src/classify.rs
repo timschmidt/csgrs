@@ -60,6 +60,17 @@ pub enum UncertaintyReason {
     Unsupported,
 }
 
+impl UncertaintyReason {
+    /// Distinguish an undefined scalar quotient from an unresolved nonzero proof.
+    pub(crate) fn from_real_division(error: hyperreal::Problem) -> Self {
+        match error {
+            hyperreal::Problem::DivideByZero => Self::Boundary,
+            hyperreal::Problem::UnknownZero => Self::RealSign,
+            _ => Self::Unsupported,
+        }
+    }
+}
+
 /// Side of an oriented line.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum LineSide {

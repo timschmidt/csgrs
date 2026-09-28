@@ -367,17 +367,16 @@ impl RationalBSplineCurve2 {
                 points.last().expect("validated controls").clone(),
             ]);
         }
-        let start = match project_homogeneous(&self.homogeneous_controls[0], policy) {
+        let first = &self.homogeneous_controls[0];
+        let start = match project_homogeneous(&first.weight, || [&first.x, &first.y], policy) {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
-        project_homogeneous(
-            self.homogeneous_controls
-                .last()
-                .expect("validated controls"),
-            policy,
-        )
-        .map(|end| [start, end])
+        let last = self
+            .homogeneous_controls
+            .last()
+            .expect("validated controls");
+        project_homogeneous(&last.weight, || [&last.x, &last.y], policy).map(|end| [start, end])
     }
 
     /// Returns a finite affine authoring view when it can be certified.
@@ -387,7 +386,11 @@ impl RationalBSplineCurve2 {
         }
         let mut points = Vec::with_capacity(self.homogeneous_controls.len());
         for control in &self.homogeneous_controls {
-            match project_homogeneous(control, &CurveContext::STRICT) {
+            match project_homogeneous(
+                &control.weight,
+                || [&control.x, &control.y],
+                &CurveContext::STRICT,
+            ) {
                 Classification::Decided(point) => points.push(point),
                 Classification::Uncertain(_) => return None,
             }

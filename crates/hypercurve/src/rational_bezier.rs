@@ -275,23 +275,22 @@ impl RationalQuadraticBezier2 {
             }
         }
         let denominator = self.denominator_at(&t);
-        match is_zero(&denominator, policy) {
-            Some(true) => return Classification::Uncertain(UncertaintyReason::Boundary),
-            Some(false) => {}
-            None => return Classification::Uncertain(UncertaintyReason::RealSign),
-        }
-
-        let numerator_x =
-            evaluate_quadratic_power_basis(self.weighted_coordinate_power_basis(Axis2::X), &t);
-        let numerator_y =
-            evaluate_quadratic_power_basis(self.weighted_coordinate_power_basis(Axis2::Y), &t);
-        let Ok(x) = numerator_x / &denominator else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
-        };
-        let Ok(y) = numerator_y / denominator else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
-        };
-        Classification::Decided(Point2::new(x, y))
+        crate::rational_bezier_general::project_homogeneous(
+            &denominator,
+            || {
+                [
+                    evaluate_quadratic_power_basis(
+                        self.weighted_coordinate_power_basis(Axis2::X),
+                        &t,
+                    ),
+                    evaluate_quadratic_power_basis(
+                        self.weighted_coordinate_power_basis(Axis2::Y),
+                        &t,
+                    ),
+                ]
+            },
+            policy,
+        )
     }
 
     fn point_at_quadratic_weight(&self, t: &Real, weight_squared: &Real) -> Option<Point2> {

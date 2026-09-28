@@ -2626,9 +2626,9 @@ impl RationalQuadraticBezier2 {
         retained_common_weight_sign: Option<RealSign>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierSubcurve2>> {
-        let points = controls
-            .each_ref()
-            .map(|control| project_homogeneous(control, policy));
+        let points = controls.each_ref().map(|control| {
+            project_homogeneous(&control.weight, || [&control.x, &control.y], policy)
+        });
         match points {
             [
                 Classification::Decided(start),
