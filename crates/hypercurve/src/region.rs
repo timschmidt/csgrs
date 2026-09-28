@@ -74,11 +74,6 @@ impl LineArcRegion2 {
     pub fn structural_facts(&self) -> crate::RegionFacts {
         self.as_view().structural_facts()
     }
-
-    /// Returns signed containment depth for non-boundary points.
-    pub fn signed_depth(&self, point: &Point2, policy: &CurveContext) -> Classification<i32> {
-        self.as_view().signed_depth(point, policy)
-    }
 }
 
 /// Borrowed view over material and hole contours.

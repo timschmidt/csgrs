@@ -294,13 +294,14 @@ exact signatures.
 - `CurveRegion2::{empty, arrange_unordered_segments,
   try_from_native_contours,
   try_from_native_material_contours, try_from_native_boundary_contours,
-  try_from_boundary_paths, classify_point, signed_depth, signed_area,
+  try_from_boundary_paths, classify_point, classify_points, signed_area,
   filled_area, boundary_profiles, boundary_paths,
   segment_certified, offset}` is the mixed-family region API. `offset` is the
   sole region offset operation and takes an explicit `OffsetCornerStyle2`;
   unsupported exact carriers remain explicit blockers. `segment_certified`
   is a separate lossy output adapter and never participates in offset
-  topology.
+  topology. Point queries return membership of the regularized set; authored
+  winding multiplicity is resolved during construction.
 - `CurveRegion2::{intersect_region, boolean_region, boolean_regions}` returns
   intersection topology between regularized boundaries, or regularized union,
   intersection, difference, and xor results. Authored winding and canceled

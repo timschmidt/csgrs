@@ -9109,6 +9109,21 @@ binary-size measurements are claimed.
 Samples, exact test names, source snapshot identifiers and executable hashes:
 [2026-09-28-exact-composition-replay.json](benchmarks/checkpoints/2026-09-28-exact-composition-replay.json).
 
+## 2026-09-28: regularized region point queries
+
+`CurveRegion2::classify_point` and `classify_points` accept retained exact
+`CurvePoint2` values, including generated points without stored Cartesian
+coordinates. The separate public signed-depth query has been removed: published
+regions represent regularized filled sets, and point membership is the public
+query. Internal contour winding and signed contributions remain part of exact
+classification and arrangement construction.
+
+The immediate native benchmark now calls `classify_point`, with its input point
+constructed before timing, and reports
+`curve_region_immediate_native_classification`. Earlier signed-depth timings
+above describe the removed API and are retained as historical measurements;
+this change claims no new timing comparison.
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

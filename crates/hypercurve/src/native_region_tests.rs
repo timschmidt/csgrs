@@ -65,10 +65,6 @@ fn classify(region: &CurveRegion2, point: &crate::Point2) -> Classification<Regi
         .into_value()
 }
 
-fn depth(region: &CurveRegion2, point: &crate::Point2) -> Classification<i32> {
-    region.signed_depth(point, &policy()).unwrap().into_value()
-}
-
 fn filled_area(region: &CurveRegion2) -> Classification<Option<Real>> {
     region.filled_area(&policy()).unwrap().into_value()
 }
@@ -116,7 +112,6 @@ fn arrange_segments_borrowed(
 fn empty_region_classifies_everything_outside() {
     let region = CurveRegion2::empty();
     assert!(region.is_empty());
-    assert_eq!(depth(&region, &p(0, 0)), Classification::Decided(0));
     assert_eq!(
         classify(&region, &p(0, 0)),
         Classification::Decided(RegionPointLocation::Outside)
@@ -141,7 +136,7 @@ fn material_contour_classifies_inside_outside_and_boundary() {
 }
 
 #[test]
-fn sparse_region_classification_and_hole_depth_are_exact() {
+fn sparse_region_and_hole_classification_are_exact() {
     let region = region(
         vec![
             rectangle(0, 0, 10, 10),
@@ -150,9 +145,14 @@ fn sparse_region_classification_and_hole_depth_are_exact() {
         ],
         vec![rectangle(3, 3, 7, 7)],
     );
-    assert_eq!(depth(&region, &p(21, 21)), Classification::Decided(1));
-    assert_eq!(depth(&region, &p(5, 5)), Classification::Decided(0));
-    assert_eq!(depth(&region, &p(100, 100)), Classification::Decided(0));
+    assert_eq!(
+        classify(&region, &p(21, 21)),
+        Classification::Decided(RegionPointLocation::Inside)
+    );
+    assert_eq!(
+        classify(&region, &p(100, 100)),
+        Classification::Decided(RegionPointLocation::Outside)
+    );
     assert_eq!(
         classify(&region, &p(20, 22)),
         Classification::Decided(RegionPointLocation::Boundary)
@@ -164,29 +164,21 @@ fn sparse_region_classification_and_hole_depth_are_exact() {
 }
 
 #[test]
-fn material_island_inside_hole_adds_depth_back() {
+fn material_island_inside_hole_restores_membership() {
     let region = region(
         vec![rectangle(0, 0, 10, 10), rectangle(4, 4, 6, 6)],
         vec![rectangle(2, 2, 8, 8)],
     );
-    for (point, expected_depth, expected_location) in [
-        (p(1, 1), 1, RegionPointLocation::Inside),
-        (p(3, 3), 0, RegionPointLocation::Outside),
-        (p(5, 5), 1, RegionPointLocation::Inside),
+    for (point, expected_location) in [
+        (p(1, 1), RegionPointLocation::Inside),
+        (p(3, 3), RegionPointLocation::Outside),
+        (p(5, 5), RegionPointLocation::Inside),
     ] {
-        assert_eq!(
-            depth(&region, &point),
-            Classification::Decided(expected_depth)
-        );
         assert_eq!(
             classify(&region, &point),
             Classification::Decided(expected_location)
         );
     }
-    assert_eq!(
-        depth(&region, &p(2, 5)),
-        Classification::Uncertain(UncertaintyReason::Boundary)
-    );
     assert_eq!(
         classify(&region, &p(2, 5)),
         Classification::Decided(RegionPointLocation::Boundary)

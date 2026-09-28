@@ -446,24 +446,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         CurveRegion2::try_from_native_material_contours(vec![rectangle(-4, -4, 4, 4)], &policy)
             .unwrap()
             .into_value();
-    let depth_point = p(1, 1);
+    let native_point = hypercurve::CurvePoint2::from(p(1, 1));
     decided(
         immediate_region
-            .signed_depth(&depth_point, &policy)?
+            .classify_point(&native_point, &policy)?
             .into_value(),
     );
     let started = Instant::now();
-    let mut depth_checksum = 0_i32;
+    let mut native_classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
-        depth_checksum = depth_checksum.wrapping_add(decided(
+        let location = decided(
             immediate_region
-                .signed_depth(black_box(&depth_point), black_box(&policy))?
+                .classify_point(black_box(&native_point), black_box(&policy))?
                 .into_value(),
-        ));
+        );
+        native_classification_checksum =
+            native_classification_checksum.wrapping_add(black_box(location as usize));
     }
     let elapsed = started.elapsed();
     println!(
-        "curve_region_immediate_native_signed_depth: {classification_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={depth_checksum}",
+        "curve_region_immediate_native_classification: {classification_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={native_classification_checksum}",
         elapsed / classification_iterations
     );
 

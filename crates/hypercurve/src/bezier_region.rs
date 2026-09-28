@@ -147,13 +147,13 @@ impl CurveRegionFragmentSource2 {
     }
 }
 
-/// A higher-order retained region built from accepted native/algebraic carriers.
+/// An exact regularized planar filled set with mixed-family boundary curves.
 ///
-/// This is the first region object for decided retained traversals containing
-/// algebraic endpoint-image fragments. It intentionally does not flatten or
-/// approximate those fragments and it does not claim a finite area integral for
-/// them. Construction and decision remain separate; native polynomial subloops
-/// reuse the Green-integral path described above.
+/// Public constructors resolve authored winding and canceled seams before
+/// publishing the region. Its boundary retains selected-root and endpoint
+/// evidence without requiring stored Cartesian coordinates. Exact area
+/// integrals are optional; membership and region operations use certified
+/// boundary topology.
 #[derive(Clone)]
 pub struct CurveRegion2 {
     data: Arc<CurveRegionData2>,
@@ -10138,13 +10138,6 @@ fn offset_vectors_are_structurally_opposite(first: &(Real, Real), second: &(Real
         && (&first.1 + &second.1).zero_status() == hyperreal::ZeroKnowledge::Zero
 }
 
-const fn curve_region_role_depth(role: CurveRegionLoopRole) -> i32 {
-    match role {
-        CurveRegionLoopRole::Material => 1,
-        CurveRegionLoopRole::Hole => -1,
-    }
-}
-
 struct RetainedDeferredArcContact2 {
     source_parameter: CurveParameter2,
     source_at_start: bool,
@@ -13498,131 +13491,6 @@ impl CurveRegion2 {
         } else {
             RegionPointLocation::Outside
         })
-    }
-
-    /// Returns signed material-minus-hole containment depth for a non-boundary point.
-    ///
-    /// Explicit roles are authoritative. Otherwise the exact curved nesting
-    /// classifier derives one role per loop before depth accumulation. Each
-    /// loop's own fill rule controls whether it contributes at the query point.
-    /// Boundary points return `Uncertain(Boundary)` rather than an arbitrary
-    /// integer.
-    pub fn signed_depth(
-        &self,
-        point: &Point2,
-        policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<i32>>> {
-        resolve_certified_operation(policy, |attempt| self.signed_depth_raw(point, attempt))
-    }
-
-    pub(crate) fn signed_depth_raw(
-        &self,
-        point: &Point2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<i32>> {
-        if self.has_regularized_filled_left_topology(policy) {
-            match self.native_line_arc_region(policy)? {
-                Classification::Decided(region) => {
-                    return Ok(region.signed_depth(point, policy));
-                }
-                Classification::Uncertain(_) => {}
-            }
-        }
-        self.signed_depth_from_boundaries(point, policy)
-    }
-
-    fn signed_depth_from_boundaries(
-        &self,
-        point: &Point2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<i32>> {
-        let roles = match self.loop_roles_raw(policy)? {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        if roles.len() != self.data.boundary_loops.len() {
-            return Err(CurveError::Topology(
-                "curve-region signed-depth roles are inconsistent with boundary loops".into(),
-            ));
-        }
-        if self
-            .data
-            .certified_loop_fill_rules
-            .as_ref()
-            .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
-        {
-            return Err(CurveError::Topology(
-                "curve-region signed-depth fill rules are inconsistent with boundary loops".into(),
-            ));
-        }
-
-        let mut depth = 0_i32;
-        if let Some(native_loops) = self.native_boundary_loops() {
-            let native_bounds = self.native_boundary_bounds(policy);
-            for (index, (boundary_loop, role)) in native_loops.iter().zip(&roles).enumerate() {
-                if native_bounds.is_some_and(|bounds| {
-                    matches!(
-                        bounds[index].contains_point(point, policy),
-                        Classification::Decided(false)
-                    )
-                }) {
-                    continue;
-                }
-                let fill_rule = self
-                    .data
-                    .certified_loop_fill_rules
-                    .as_ref()
-                    .map_or(FillRule::EvenOdd, |rules| rules[index]);
-                match classify_point_against_native_loop_after_bounds_with_fill_rule(
-                    boundary_loop,
-                    point,
-                    fill_rule,
-                    policy,
-                )? {
-                    Classification::Decided(ContourPointLocation::Inside) => {
-                        depth += curve_region_role_depth(*role);
-                    }
-                    Classification::Decided(ContourPointLocation::Outside) => {}
-                    Classification::Decided(ContourPointLocation::Boundary) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            return Ok(Classification::Decided(depth));
-        }
-
-        for (index, (boundary_loop, role)) in
-            self.data.boundary_loops.iter().zip(&roles).enumerate()
-        {
-            let fill_rule = self
-                .data
-                .certified_loop_fill_rules
-                .as_ref()
-                .map_or(FillRule::EvenOdd, |rules| rules[index]);
-            match classify_point_against_retained_loop_with_fill_rule(
-                boundary_loop,
-                point,
-                fill_rule,
-                policy,
-            )? {
-                Classification::Decided(ContourPointLocation::Inside) => {
-                    depth += curve_region_role_depth(*role);
-                }
-                Classification::Decided(ContourPointLocation::Outside) => {}
-                Classification::Decided(ContourPointLocation::Boundary) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        Ok(Classification::Decided(depth))
     }
 
     /// Returns retained boundary loops.
@@ -33339,7 +33207,7 @@ mod tests {
     }
 
     #[test]
-    fn explicit_signed_loops_classify_without_regularized_native_fast_path() {
+    fn explicit_signed_loops_classify_after_regularization() {
         fn rectangle(min_x: i32, max_x: i32) -> CurvePath2 {
             let corners = [p(min_x, -3), p(max_x, -3), p(max_x, 3), p(min_x, 3)];
             CurvePath2::try_new(
@@ -33378,12 +33246,6 @@ mod tests {
                 .classify_point(&p(2, 0).into(), &policy)
                 .map(CurveOutcome::into_value),
             Ok(Classification::Decided(RegionPointLocation::Outside))
-        );
-        assert_eq!(
-            region
-                .signed_depth(&p(2, 0), &policy)
-                .map(CurveOutcome::into_value),
-            Ok(Classification::Decided(0))
         );
     }
 }

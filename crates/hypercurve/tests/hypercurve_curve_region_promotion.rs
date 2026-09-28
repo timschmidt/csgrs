@@ -7920,11 +7920,6 @@ fn nonlinear_curved_winding_honors_authored_fill_rules_exactly() {
             certified(region.classify_point(&p(0, 2).into(), &policy).unwrap()),
             Classification::Decided(expected)
         );
-        let expected_depth = i32::from(expected == RegionPointLocation::Inside);
-        assert_eq!(
-            certified(region.signed_depth(&p(0, 2), &policy).unwrap()),
-            Classification::Decided(expected_depth)
-        );
         assert_eq!(
             decided(region.filled_area(&policy).unwrap()),
             Some(if fill_rule == FillRule::NonZero {
@@ -7976,7 +7971,7 @@ fn nonperiodic_self_contact_does_not_claim_a_green_integral_as_filled_area() {
 }
 
 #[test]
-fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
+fn native_contour_constructors_publish_regularized_membership() {
     let policy = CurveContext::STRICT;
     let region = CurveRegion2::try_from_native_contours(
         vec![square(0, 0, 10, 10), square(2, 2, 8, 8)],
@@ -7991,20 +7986,20 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
         vec![CurveRegionLoopRole::Material]
     );
     assert_eq!(
-        certified(region.signed_depth(&p(1, 1), &policy).unwrap()),
-        Classification::Decided(1)
+        certified(region.classify_point(&p(1, 1).into(), &policy).unwrap()),
+        Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        certified(region.signed_depth(&p(3, 3), &policy).unwrap()),
-        Classification::Decided(1)
+        certified(region.classify_point(&p(3, 3).into(), &policy).unwrap()),
+        Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        certified(region.signed_depth(&p(5, 5), &policy).unwrap()),
-        Classification::Decided(1)
+        certified(region.classify_point(&p(5, 5).into(), &policy).unwrap()),
+        Classification::Decided(RegionPointLocation::Inside)
     );
     assert_eq!(
-        certified(region.signed_depth(&p(0, 5), &policy).unwrap()),
-        Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+        certified(region.classify_point(&p(0, 5).into(), &policy).unwrap()),
+        Classification::Decided(RegionPointLocation::Boundary)
     );
     let boundaries = vec![square(2, 2, 8, 8), square(0, 0, 10, 10)];
     let nested = decided(
@@ -8018,8 +8013,8 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
         vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
     assert_eq!(
-        certified(nested.signed_depth(&p(5, 5), &policy).unwrap()),
-        Classification::Decided(0)
+        certified(nested.classify_point(&p(5, 5).into(), &policy).unwrap()),
+        Classification::Decided(RegionPointLocation::Outside)
     );
 }
 #[test]
