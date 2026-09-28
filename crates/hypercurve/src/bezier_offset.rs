@@ -86708,7 +86708,7 @@ impl BezierParallelPointQuery2<'_> {
     /// coefficient field. Homogeneous coordinates preserve their correlation;
     /// the common polynomial factor is the contact proof, and one oriented
     /// normal sign selects the authored offset without adjoining a speed root.
-    fn visit_recursive_point_parameters(
+    fn visit_point_parameters(
         &self,
         point: &CurvePoint2,
         incident: Option<&BezierParallelIncidentDomain2>,
@@ -87088,139 +87088,6 @@ impl BezierParallelPointQuery2<'_> {
             product_sign(point.denominator_sign(), weight_sign),
         )))
     }
-
-    fn contains_parameter(
-        &self,
-        parameter: &BezierParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<bool>> {
-        CurveParameterDomain2::new(self.range, None)
-            .contains_finite_parameter(&parameter.clone().into(), policy)
-    }
-
-    fn visit_point_parameters_from_systems(
-        &self,
-        [authority, other]: [&BezierParallelAlgebraicIncidenceSystem2; 2],
-        point: &RationalBezierAlgebraicPointPredicate2<'_>,
-        incident: Option<&BezierParallelIncidentDomain2>,
-        domain: CurveParameterDomain2<'_>,
-        policy: &CurveContext,
-        visitor: &mut impl FnMut(Option<&CurveParameter2>) -> ControlFlow<()>,
-    ) -> CurveResult<Classification<Option<ControlFlow<()>>>> {
-        let parameters = match Self::projected_parameters(authority, point, domain, policy)? {
-            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(parameters)) => {
-                parameters
-            }
-            Classification::Decided(
-                BezierAlgebraicFiberProjection2::IdenticallyZero
-                | BezierAlgebraicFiberProjection2::Degenerate,
-            ) => return Ok(Classification::Decided(None)),
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        for parameter in parameters {
-            match self
-                .expression_sign_at_candidate(authority, authority, point, &parameter, policy)?
-            {
-                Classification::Decided(RealSign::Zero) => {}
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => continue,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-            match self.contains_parameter(&parameter, policy)? {
-                Classification::Decided(true) => {}
-                Classification::Decided(false) => {
-                    let Some(incident) = incident else {
-                        continue;
-                    };
-                    match incident
-                        .contains_extension_parameter(&parameter.clone().into(), policy)?
-                    {
-                        Classification::Decided(true) => {}
-                        Classification::Decided(false) => continue,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
-                }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-            match self.expression_sign_at_candidate(authority, other, point, &parameter, policy)? {
-                Classification::Decided(RealSign::Zero) => {
-                    let parameter = CurveParameter2::from(parameter);
-                    if let stop @ ControlFlow::Break(()) = visitor(Some(&parameter)) {
-                        return Ok(Classification::Decided(Some(stop)));
-                    }
-                }
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-        Ok(Classification::Decided(Some(ControlFlow::Continue(()))))
-    }
-
-    fn visit_point_parameters(
-        &self,
-        point: &RationalBezierAlgebraicPointPredicate2<'_>,
-        incident: Option<&BezierParallelIncidentDomain2>,
-        policy: &CurveContext,
-        visitor: &mut impl FnMut(Option<&CurveParameter2>) -> ControlFlow<()>,
-    ) -> CurveResult<Classification<ControlFlow<()>>> {
-        let expanded = match incident
-            .map(|incident| incident.expanded_range(self.range, policy))
-            .transpose()?
-        {
-            Some(Classification::Decided(range)) => Some(range),
-            Some(Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-            None => None,
-        };
-        let domain = CurveParameterDomain2::new(
-            expanded.as_ref().unwrap_or(self.range),
-            incident.map(BezierParallelIncidentDomain2::parameter_ray),
-        );
-        let zero = Real::zero();
-        let one = Real::one();
-        let x = self.system(point, &one, &zero)?;
-        let y = self.system(point, &zero, &one)?;
-        match self.visit_point_parameters_from_systems(
-            [&x, &y],
-            point,
-            incident,
-            domain,
-            policy,
-            visitor,
-        )? {
-            Classification::Decided(Some(flow)) => {
-                return Ok(Classification::Decided(flow));
-            }
-            Classification::Decided(None) => {}
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        match self.visit_point_parameters_from_systems(
-            [&y, &x],
-            point,
-            incident,
-            domain,
-            policy,
-            visitor,
-        )? {
-            Classification::Decided(Some(flow)) => Ok(Classification::Decided(flow)),
-            Classification::Decided(None) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Boundary))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
-    }
 }
 
 impl BezierParallelAlgebraicRay2 {
@@ -87311,8 +87178,25 @@ impl BezierParallelAlgebraicRay2 {
             range: &self.range,
             frame: None,
         };
+        let expanded = match incident
+            .map(|incident| incident.expanded_range(&self.range, policy))
+            .transpose()?
+        {
+            Some(Classification::Decided(range)) => Some(range),
+            Some(Classification::Uncertain(reason)) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+            None => None,
+        };
+        let domain = CurveParameterDomain2::new(
+            expanded.as_ref().unwrap_or(&self.range),
+            incident.map(BezierParallelIncidentDomain2::parameter_ray),
+        );
+        let retained = CurvePoint2::from(point.point_image().clone());
         Ok(query
-            .visit_point_parameters(point, incident, policy, &mut |_| ControlFlow::Break(()))?
+            .visit_point_parameters(&retained, incident, domain, policy, &mut |_| {
+                ControlFlow::Break(())
+            })?
             .map(|flow| flow.is_break()))
     }
 
@@ -114112,7 +113996,7 @@ impl BezierParallel2 {
                         range,
                         frame: frame.as_deref(),
                     }
-                    .visit_recursive_point_parameters(point, incident, domain, policy, visitor)
+                    .visit_point_parameters(point, incident, domain, policy, visitor)
                 }
                 CurvePoint2(CurvePointData2::Algebraic(_)) => unreachable!(),
             };
@@ -114127,30 +114011,13 @@ impl BezierParallel2 {
             Classification::Decided(frame) => frame,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        if let Classification::Uncertain(reason) = self.certify_source_frame_in_domain(
-            SelectedThirdAxisDomain2::Finite(domain.finite),
-            frame.as_deref(),
-            policy,
-        )? {
-            return Ok(Classification::Uncertain(reason));
-        }
-        // Membership is independent of traversal. Keep the former ray's
-        // increasing-domain schedule, including its whole-unit fast paths.
-        let increasing = match policy
-            .strict_predicate_pass(|| range.start().cmp_by_refinement(range.end(), policy))?
-        {
-            Classification::Decided(order) if order.is_gt() => Some(
-                CurveParameterRange2::new_validated(range.end().clone(), range.start().clone()),
-            ),
-            Classification::Decided(_) => None,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let point = CurvePoint2::from(point.point_image().clone());
         BezierParallelPointQuery2 {
             parallel: self,
-            range: increasing.as_ref().unwrap_or(range),
+            range,
             frame: frame.as_deref(),
         }
-        .visit_point_parameters(&point, incident, policy, visitor)
+        .visit_point_parameters(&point, incident, domain, policy, visitor)
     }
 
     fn source_circle_polynomial(
@@ -163528,6 +163395,68 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         );
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn algebraic_image_incidence_retains_a_collapsed_parallel_domain() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let parallel = RationalQuadraticBezier2::try_unit_end_weights(
+            Point2::from_values(2, 0),
+            Point2::from_values(2, 1),
+            Point2::from_values(1, 1),
+            Real::from(2).sqrt().unwrap() * &half,
+        )
+        .unwrap()
+        .parallel_left(Real::one())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let BezierParameter2::Algebraic(alpha) =
+                algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
+            else {
+                unreachable!()
+            };
+            // Q(alpha)=(2*alpha^2,0)=(1,0), independently of the circle.
+            let point = CurvePoint2::from(
+                RationalBezierAlgebraicPointImage2::from_retained_expression(
+                    alpha.clone(),
+                    parameter_representation(&alpha, &policy),
+                    vec![Real::zero(), Real::zero(), Real::from(2)],
+                    vec![Real::zero()],
+                    vec![Real::one()],
+                    "independent algebraic image at a collapsed parallel",
+                ),
+            );
+            assert!(point.coordinates().is_none());
+            let same = point.coincides_with(&CurvePoint2::from(Point2::from_values(1, 0)), &policy);
+            assert_eq!(same.certainty, crate::CurveCertainty::Certified);
+            assert_eq!(same.value, Classification::Decided(true));
+            for (distance, expected) in [(1, 1), (-1, 0)] {
+                let mut visits = 0;
+                let parallel = parallel.with_distance(Real::from(distance));
+                let range = CurveParameterRange2::unit();
+                let mut visitor = |parameter: Option<&CurveParameter2>| {
+                    assert!(
+                        parameter.is_none(),
+                        "a collapsed parallel retains all source parameters"
+                    );
+                    visits += 1;
+                    ControlFlow::Continue(())
+                };
+                let result = parallel.visit_point_incidence_evidence(
+                    &point,
+                    &range,
+                    None,
+                    false,
+                    &policy,
+                    &mut visitor,
+                );
+                assert_eq!(
+                    result.unwrap(),
+                    Classification::Decided(ControlFlow::Continue(()))
+                );
+                assert_eq!(visits, expected);
             }
         }
     }
