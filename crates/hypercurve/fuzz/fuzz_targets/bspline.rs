@@ -1,8 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    Classification, CurveContext, HomogeneousControl2, Point2, PolynomialBSplineCurve2,
-    RationalBSplineCurve2, Real, RetainedBSplineSpanFactEvidence2,
+    Classification, CurveContext, HomogeneousControl2, NurbsCurve2, Point2, PolynomialSplineCurve2,
+    Real, RetainedBSplineSpanFactEvidence2, SplinePeriodicity2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -42,31 +42,25 @@ fuzz_target!(|data: &[u8]| {
     let mut knots = vec![Real::zero(); degree + 1];
     knots.push(Real::one());
     knots.extend(std::iter::repeat_n(Real::from(2_i8), degree + 1));
-    if let Ok(Classification::Decided(spline)) =
-        PolynomialBSplineCurve2::try_new(degree, controls.clone(), knots.clone(), &policy)
+    if let Ok(spline) =
+        PolynomialSplineCurve2::try_new(degree, controls.clone(), knots.clone(), &policy)
     {
-        let _ = spline.extract_bezier_spans(&policy).map(|classification| {
-            let Classification::Decided(extraction) = classification else {
-                return;
-            };
-            let _ = extraction
-                .span_fact_evidence(&policy)
-                .map(|classification| {
-                    let Classification::Decided(evidence) = classification else {
-                        return;
-                    };
-                    touch_span_fact_evidence(&evidence);
-                });
-        });
+        let spline = spline.into_value();
+        if let Ok(extraction) = spline.bezier_decomposition(&policy) {
+            if let Ok(Classification::Decided(evidence)) =
+                extraction.into_value().span_fact_evidence(&policy)
+            {
+                touch_span_fact_evidence(&evidence);
+            }
+        }
     }
     let weights = controls
         .iter()
         .enumerate()
         .map(|(index, _)| Real::from(((data[index % data.len()] % 7) as i32) + 1))
         .collect::<Vec<_>>();
-    let authored =
-        RationalBSplineCurve2::try_new(degree, controls.clone(), weights, knots.clone(), &policy);
-    let homogeneous = RationalBSplineCurve2::from_homogeneous_controls(
+    let authored = NurbsCurve2::try_new(degree, controls.clone(), weights, knots.clone(), &policy);
+    let homogeneous = NurbsCurve2::from_homogeneous_controls(
         degree,
         controls
             .iter()
@@ -81,13 +75,16 @@ fuzz_target!(|data: &[u8]| {
             })
             .collect(),
         knots,
+        SplinePeriodicity2::NonPeriodic,
         &policy,
     );
     for construction in [authored, homogeneous] {
-        let Ok(Classification::Decided(spline)) = construction else {
+        let Ok(spline) = construction else {
             continue;
         };
-        if let Ok(Classification::Decided(extraction)) = spline.extract_bezier_spans(&policy) {
+        let spline = spline.into_value();
+        if let Ok(extraction) = spline.bezier_decomposition(&policy) {
+            let extraction = extraction.into_value();
             if let Ok(Classification::Decided(facts)) = extraction.span_fact_evidence(&policy) {
                 touch_span_fact_evidence(&facts);
             }
@@ -100,16 +97,8 @@ fuzz_target!(|data: &[u8]| {
             }
             let _ = extraction.native_subcurves(&policy);
         }
-        if let Ok(curve) = hypercurve::NurbsCurve2::from_homogeneous_controls(
-            degree,
-            spline.homogeneous_controls().to_vec(),
-            spline.knots().to_vec(),
-            hypercurve::SplinePeriodicity2::NonPeriodic,
-            &policy,
-        ) {
-            if let Ok(refined) = curve.into_value().insert_knot(Real::one(), &policy) {
-                let _ = refined.into_value().remove_knot(Real::one(), &policy);
-            }
+        if let Ok(refined) = spline.insert_knot(Real::one(), &policy) {
+            let _ = refined.into_value().remove_knot(Real::one(), &policy);
         }
     }
 });

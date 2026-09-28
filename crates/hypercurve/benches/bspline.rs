@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     Classification, Curve2, CurveCertainty, CurveContext, CurveResult, NurbsCurve2, Point2,
-    PolynomialBSplineCurve2, PolynomialSplineCurve2, RationalBSplineCurve2, Real,
+    PolynomialSplineCurve2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -124,18 +124,26 @@ fn main() -> CurveResult<()> {
     }
 
     let policy = CurveContext::STRICT;
-    let spline = decided(PolynomialBSplineCurve2::try_new(
-        3,
-        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-        &policy,
-    )?);
+    let spline = || {
+        PolynomialSplineCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy,
+        )
+        .expect("benchmark spline operation remains exact")
+        .into_value()
+    };
 
     let iterations = 20_000_u32;
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let extraction = decided(spline.extract_bezier_spans(&policy)?);
+        let curve = spline();
+        let extraction = curve
+            .bezier_decomposition(&policy)
+            .expect("benchmark spline operation remains exact")
+            .into_value();
         let facts = decided(extraction.span_fact_evidence(&policy)?);
         checksum ^= black_box(
             extraction.spans().len() + extraction.inserted_knot_count() + facts.span_facts().len(),
@@ -143,7 +151,7 @@ fn main() -> CurveResult<()> {
     }
     let elapsed = started.elapsed();
     println!(
-        "bspline_bezier_extraction: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        "polynomial_spline_cold_construction_decomposition_and_facts: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / iterations
     );
 
@@ -192,17 +200,25 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let rational = decided(RationalBSplineCurve2::try_new(
-        2,
-        vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
-        vec![r(1), r(2), r(4), r(1)],
-        vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
-        &policy,
-    )?);
+    let rational = || {
+        NurbsCurve2::try_new(
+            2,
+            vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
+            vec![r(1), r(2), r(4), r(1)],
+            vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
+            &policy,
+        )
+        .expect("benchmark spline operation remains exact")
+        .into_value()
+    };
     let started = Instant::now();
     let mut rational_checksum = 0_usize;
     for _ in 0..iterations {
-        let extraction = decided(rational.extract_bezier_spans(&policy)?);
+        let curve = rational();
+        let extraction = curve
+            .bezier_decomposition(&policy)
+            .expect("benchmark spline operation remains exact")
+            .into_value();
         let facts = decided(extraction.span_fact_evidence(&policy)?);
         rational_checksum ^= black_box(
             extraction.spans().len() + extraction.inserted_knot_count() + facts.span_facts().len(),
@@ -210,21 +226,29 @@ fn main() -> CurveResult<()> {
     }
     let elapsed = started.elapsed();
     println!(
-        "rational_quadratic_bspline_bezier_extraction: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_checksum}",
+        "nurbs_quadratic_cold_construction_decomposition_and_facts: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_checksum}",
         elapsed / iterations
     );
 
-    let rational_cubic = decided(RationalBSplineCurve2::try_new(
-        3,
-        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-        vec![r(1), r(2), r(4), r(8), r(16)],
-        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-        &policy,
-    )?);
+    let rational_cubic = || {
+        NurbsCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(1), r(2), r(4), r(8), r(16)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy,
+        )
+        .expect("benchmark spline operation remains exact")
+        .into_value()
+    };
     let started = Instant::now();
     let mut rational_cubic_checksum = 0_usize;
     for _ in 0..iterations {
-        let extraction = decided(rational_cubic.extract_bezier_spans(&policy)?);
+        let curve = rational_cubic();
+        let extraction = curve
+            .bezier_decomposition(&policy)
+            .expect("benchmark spline operation remains exact")
+            .into_value();
         let facts = decided(extraction.span_fact_evidence(&policy)?);
         rational_cubic_checksum ^= black_box(
             extraction.spans().len()
@@ -235,39 +259,51 @@ fn main() -> CurveResult<()> {
     }
     let elapsed = started.elapsed();
     println!(
-        "rational_cubic_bspline_bezier_extraction: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_cubic_checksum}",
+        "nurbs_cubic_cold_construction_decomposition_and_facts: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_cubic_checksum}",
         elapsed / iterations
     );
 
-    let equal_weight_rational_cubic = decided(RationalBSplineCurve2::try_new(
-        3,
-        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-        vec![r(5), r(5), r(5), r(5), r(5)],
-        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-        &policy,
-    )?);
+    let equal_weight_rational_cubic = || {
+        NurbsCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            vec![r(5), r(5), r(5), r(5), r(5)],
+            vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
+            &policy,
+        )
+        .expect("benchmark spline operation remains exact")
+        .into_value()
+    };
     let started = Instant::now();
     let mut native_checksum = 0_usize;
     for _ in 0..iterations {
-        let extraction = decided(equal_weight_rational_cubic.extract_bezier_spans(&policy)?);
+        let curve = equal_weight_rational_cubic();
+        let extraction = curve
+            .bezier_decomposition(&policy)
+            .expect("benchmark spline operation remains exact")
+            .into_value();
         let native = extraction.native_subcurves(&policy);
         native_checksum ^= black_box(native.len() + extraction.inserted_knot_count());
     }
     let elapsed = started.elapsed();
     println!(
-        "rational_cubic_bspline_native_subcurves: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={native_checksum}",
+        "nurbs_equal_weight_cubic_cold_construction_decomposition_and_promotion: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={native_checksum}",
         elapsed / iterations
     );
 
     let started = Instant::now();
     let mut general_native_checksum = 0_usize;
     for _ in 0..iterations {
-        let extraction = decided(rational_cubic.extract_bezier_spans(&policy)?);
+        let curve = rational_cubic();
+        let extraction = curve
+            .bezier_decomposition(&policy)
+            .expect("benchmark spline operation remains exact")
+            .into_value();
         general_native_checksum ^= black_box(extraction.native_subcurves(&policy).len());
     }
     let elapsed = started.elapsed();
     println!(
-        "rational_cubic_bspline_general_native_evidence: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={general_native_checksum}",
+        "nurbs_cubic_cold_construction_decomposition_and_promotion: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={general_native_checksum}",
         elapsed / iterations
     );
 

@@ -1,10 +1,8 @@
 //! Exact polynomial and rational B-spline span extraction.
 //!
-//! This module is the first retained B-spline carrier in `hypercurve`.  It
-//! keeps the authored control net, weights, and knot vector as exact [`Real`]
-//! data, then extracts Bezier spans by exact Boehm knot insertion. This follows
-//! the exact-geometric-computation rule: preserve the source object and change
-//! representation only through replayable exact construction evidence.
+//! Private control-net definitions for the retained polynomial spline and NURBS
+//! curves. Authored controls, weights, and knots remain exact [`Real`] data;
+//! Boehm knot insertion produces replayable Bezier extraction evidence.
 
 use std::cmp::Ordering;
 use std::sync::OnceLock;
@@ -27,7 +25,7 @@ use crate::{
 /// use specialized polynomial carriers; higher-degree spans use exact general
 /// Beziers with unit weights, without approximation or degree reduction.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PolynomialBSplineCurve2 {
+pub(crate) struct PolynomialBSplineCurve2 {
     degree: usize,
     control_points: Vec<Point2>,
     knots: Vec<Real>,
@@ -56,7 +54,7 @@ pub struct PolynomialBSplineBezierExtraction2 {
 /// zero or mixed control weights. An affine control view is available only when
 /// every control can be projected to a finite point.
 #[derive(Clone, Debug)]
-pub struct RationalBSplineCurve2 {
+pub(crate) struct RationalBSplineCurve2 {
     degree: usize,
     homogeneous_controls: Vec<HomogeneousControl2>,
     affine_control_points: OnceLock<Vec<Point2>>,
@@ -136,22 +134,7 @@ impl PolynomialBSplineCurve2 {
     /// The knot vector must be nondecreasing, have length
     /// `control_points.len() + degree + 1`, and define a positive active domain.
     /// Clamped and unclamped knot vectors use exact comparisons through `policy`.
-    pub fn try_new(
-        degree: usize,
-        control_points: Vec<Point2>,
-        knots: Vec<Real>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        Self::try_new_with_periodicity(
-            degree,
-            control_points,
-            knots,
-            SplinePeriodicity2::NonPeriodic,
-            policy,
-        )
-    }
-
-    pub(crate) fn try_new_with_periodicity(
+    pub(crate) fn try_new(
         degree: usize,
         control_points: Vec<Point2>,
         knots: Vec<Real>,
@@ -185,22 +168,22 @@ impl PolynomialBSplineCurve2 {
     }
 
     /// Returns the polynomial degree.
-    pub const fn degree(&self) -> usize {
+    pub(crate) const fn degree(&self) -> usize {
         self.degree
     }
 
     /// Returns the retained control net.
-    pub fn control_points(&self) -> &[Point2] {
+    pub(crate) fn control_points(&self) -> &[Point2] {
         &self.control_points
     }
 
     /// Returns the retained knot vector.
-    pub fn knots(&self) -> &[Real] {
+    pub(crate) fn knots(&self) -> &[Real] {
         &self.knots
     }
 
     /// Returns the retained finite or periodic spline semantics.
-    pub const fn periodicity(&self) -> &SplinePeriodicity2 {
+    pub(crate) const fn periodicity(&self) -> &SplinePeriodicity2 {
         &self.periodicity
     }
 
@@ -210,7 +193,7 @@ impl PolynomialBSplineCurve2 {
     /// the spline degree.  The resulting control net can then be read in
     /// Bezier blocks over each nonzero knot span.  This is Boehm knot insertion
     /// used as an exact construction, not a numeric tessellation.
-    pub fn extract_bezier_spans(
+    pub(crate) fn extract_bezier_spans(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<PolynomialBSplineBezierExtraction2>> {
@@ -298,24 +281,7 @@ impl RationalBSplineCurve2 {
     /// weight must be certified nonzero, and the knot vector must be
     /// nondecreasing with `control_points.len() + degree + 1` entries. For
     /// controls at infinity, use [`Self::from_homogeneous_controls`].
-    pub fn try_new(
-        degree: usize,
-        control_points: Vec<Point2>,
-        weights: Vec<Real>,
-        knots: Vec<Real>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        Self::try_new_with_periodicity(
-            degree,
-            control_points,
-            weights,
-            knots,
-            SplinePeriodicity2::NonPeriodic,
-            policy,
-        )
-    }
-
-    pub(crate) fn try_new_with_periodicity(
+    pub(crate) fn try_new(
         degree: usize,
         control_points: Vec<Point2>,
         weights: Vec<Real>,
@@ -340,33 +306,19 @@ impl RationalBSplineCurve2 {
             .map(|(point, weight)| HomogeneousControl2::from_affine(point, weight.clone()))
             .collect();
         Ok(
-            Self::from_homogeneous_with_periodicity(degree, controls, knots, periodicity, policy)?
-                .map(|curve| {
+            Self::from_homogeneous_controls(degree, controls, knots, periodicity, policy)?.map(
+                |curve| {
                     let _ = curve.affine_control_points.set(control_points);
                     let _ = curve.weights.set(weights);
                     curve
-                }),
+                },
+            ),
         )
     }
 
     /// Retains exact homogeneous controls and the authored knot vector.
     /// Zero control weights do not imply a pole of the spline denominator.
-    pub fn from_homogeneous_controls(
-        degree: usize,
-        controls: Vec<HomogeneousControl2>,
-        knots: Vec<Real>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        Self::from_homogeneous_with_periodicity(
-            degree,
-            controls,
-            knots,
-            SplinePeriodicity2::NonPeriodic,
-            policy,
-        )
-    }
-
-    pub(crate) fn from_homogeneous_with_periodicity(
+    pub(crate) fn from_homogeneous_controls(
         degree: usize,
         controls: Vec<HomogeneousControl2>,
         knots: Vec<Real>,
@@ -396,12 +348,12 @@ impl RationalBSplineCurve2 {
     }
 
     /// Returns the retained polynomial degree.
-    pub const fn degree(&self) -> usize {
+    pub(crate) const fn degree(&self) -> usize {
         self.degree
     }
 
     /// Returns the authoritative homogeneous Bernstein/de Boor controls.
-    pub fn homogeneous_controls(&self) -> &[HomogeneousControl2] {
+    pub(crate) fn homogeneous_controls(&self) -> &[HomogeneousControl2] {
         &self.homogeneous_controls
     }
 
@@ -429,7 +381,7 @@ impl RationalBSplineCurve2 {
     }
 
     /// Returns a finite affine authoring view when it can be certified.
-    pub fn affine_control_points(&self) -> Option<&[Point2]> {
+    pub(crate) fn affine_control_points(&self) -> Option<&[Point2]> {
         if let Some(points) = self.affine_control_points.get() {
             return Some(points);
         }
@@ -445,7 +397,7 @@ impl RationalBSplineCurve2 {
     }
 
     /// Returns the retained homogeneous control weights.
-    pub fn weights(&self) -> &[Real] {
+    pub(crate) fn weights(&self) -> &[Real] {
         self.weights.get_or_init(|| {
             self.homogeneous_controls
                 .iter()
@@ -455,12 +407,12 @@ impl RationalBSplineCurve2 {
     }
 
     /// Returns the retained knot vector.
-    pub fn knots(&self) -> &[Real] {
+    pub(crate) fn knots(&self) -> &[Real] {
         &self.knots
     }
 
     /// Returns the retained finite or periodic spline semantics.
-    pub const fn periodicity(&self) -> &SplinePeriodicity2 {
+    pub(crate) const fn periodicity(&self) -> &SplinePeriodicity2 {
         &self.periodicity
     }
 
@@ -490,7 +442,7 @@ impl RationalBSplineCurve2 {
             return Ok(Classification::Decided((self.clone(), 0)));
         }
         let inserted_knot_count = refined.inserted_knot_count;
-        match Self::from_homogeneous_with_periodicity(
+        match Self::from_homogeneous_controls(
             self.degree,
             refined.controls,
             refined.knots,
@@ -565,7 +517,7 @@ impl RationalBSplineCurve2 {
         }
         coarse_controls[blend_end + 1..].clone_from_slice(&fine_controls[blend_end + 2..]);
 
-        let candidate = match Self::from_homogeneous_with_periodicity(
+        let candidate = match Self::from_homogeneous_controls(
             self.degree,
             coarse_controls,
             coarse_knots,
@@ -592,7 +544,7 @@ impl RationalBSplineCurve2 {
     /// Each distinct interior knot is inserted until its multiplicity equals
     /// the degree. The refined coefficients remain homogeneous; only the two
     /// endpoints of each emitted span must project to finite points.
-    pub fn extract_bezier_spans(
+    pub(crate) fn extract_bezier_spans(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBSplineBezierExtraction2>> {
@@ -1666,7 +1618,7 @@ mod tests {
             period: Real::from(4),
         };
         let polynomial = decided(
-            PolynomialBSplineCurve2::try_new_with_periodicity(
+            PolynomialBSplineCurve2::try_new(
                 2,
                 periodic_controls(),
                 periodic_knots(),
@@ -1678,7 +1630,7 @@ mod tests {
         assert_eq!(polynomial.periodicity(), &periodicity);
 
         let rational = decided(
-            RationalBSplineCurve2::try_new_with_periodicity(
+            RationalBSplineCurve2::try_new(
                 2,
                 periodic_controls(),
                 vec![Real::one(); 6],
@@ -1699,7 +1651,7 @@ mod tests {
 
     #[test]
     fn retained_periodicity_rejects_a_period_different_from_the_active_domain() {
-        let result = PolynomialBSplineCurve2::try_new_with_periodicity(
+        let result = PolynomialBSplineCurve2::try_new(
             2,
             periodic_controls(),
             periodic_knots(),

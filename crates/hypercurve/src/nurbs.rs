@@ -1,7 +1,7 @@
 //! Retained NURBS carrier with policy-isolated exact decomposition caches.
 
 use crate::HomogeneousControl2;
-use crate::bspline::{SpanParameterLocation, select_span_indices};
+use crate::bspline::{RationalBSplineCurve2, SpanParameterLocation, select_span_indices};
 use std::sync::{Arc, OnceLock};
 
 use crate::policy::{
@@ -12,8 +12,8 @@ use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
     BezierSubcurve2, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
     CurveOperation2, CurveOutcome, CurveParameterSide2, ExactCurveError, ExactCurveResult, Point2,
-    RationalBSplineBezierExtraction2, RationalBSplineCurve2, RationalBezier2, RationalBezierSpan2,
-    Real, Similarity2, SplinePeriodicity2, UncertaintyReason,
+    RationalBSplineBezierExtraction2, RationalBezier2, RationalBezierSpan2, Real, Similarity2,
+    SplinePeriodicity2, UncertaintyReason,
 };
 
 const MAX_RETAINED_KNOT_REFINEMENTS: usize = 8;
@@ -169,7 +169,7 @@ impl NurbsCurve2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let retained = exact_value(
-            RationalBSplineCurve2::try_new_with_periodicity(
+            RationalBSplineCurve2::try_new(
                 degree,
                 control_points,
                 weights,
@@ -207,7 +207,7 @@ impl NurbsCurve2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         let retained = exact_value(
-            RationalBSplineCurve2::from_homogeneous_with_periodicity(
+            RationalBSplineCurve2::from_homogeneous_controls(
                 degree,
                 controls,
                 knots,

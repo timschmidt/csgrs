@@ -1,6 +1,6 @@
 //! Retained polynomial B-spline carrier with policy-isolated exact caches.
 
-use crate::bspline::{SpanParameterLocation, select_span_indices};
+use crate::bspline::{PolynomialBSplineCurve2, SpanParameterLocation, select_span_indices};
 use std::cmp::Ordering;
 use std::sync::Arc;
 
@@ -11,8 +11,8 @@ use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
     BezierSubcurve2, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
     CurveOperation2, CurveOutcome, CurveParameterSide2, ExactCurveError, ExactCurveResult,
-    NurbsCurve2, Point2, PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2,
-    RationalBezier2, Real, Similarity2, SplinePeriodicity2, UncertaintyReason,
+    NurbsCurve2, Point2, PolynomialBSplineBezierExtraction2, RationalBezier2, Real, Similarity2,
+    SplinePeriodicity2, UncertaintyReason,
 };
 
 type Cached<T> = Result<T, ExactCurveError>;
@@ -126,32 +126,8 @@ impl PolynomialSplineCurve2 {
         periodicity: SplinePeriodicity2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        let valid_layout = degree
-            .checked_add(1)
-            .and_then(|order| {
-                control_points
-                    .len()
-                    .checked_add(order)
-                    .map(|knot_count| (order, knot_count))
-            })
-            .is_some_and(|(order, expected_knots)| {
-                degree >= 1 && control_points.len() >= order && knots.len() == expected_knots
-            });
-        if !valid_layout {
-            return Err(ExactCurveError::invalid(
-                CurveOperation2::Construction,
-                CurveFamily2::PolynomialBSpline,
-                CurveError::InvalidBSpline,
-            ));
-        }
         let retained = exact_value(
-            PolynomialBSplineCurve2::try_new_with_periodicity(
-                degree,
-                control_points,
-                knots,
-                periodicity,
-                policy,
-            ),
+            PolynomialBSplineCurve2::try_new(degree, control_points, knots, periodicity, policy),
             CurveOperation2::Construction,
         )?;
         let decomposition = PolicyEvaluationCache::new();

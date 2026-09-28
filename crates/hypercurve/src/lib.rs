@@ -171,9 +171,8 @@ pub use bezier_topology::{
 };
 pub use boolean_op::BooleanOp;
 pub use bspline::{
-    PolynomialBSplineBezierExtraction2, PolynomialBSplineCurve2, RationalBSplineBezierExtraction2,
-    RationalBSplineCurve2, RationalBezierSpan2, RetainedBSplineSpanFactEvidence2,
-    RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
+    PolynomialBSplineBezierExtraction2, RationalBSplineBezierExtraction2, RationalBezierSpan2,
+    RetainedBSplineSpanFactEvidence2, RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
 };
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
