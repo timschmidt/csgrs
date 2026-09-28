@@ -16,7 +16,7 @@ use gerber_types::{
     Rectangular, Rotation, Scaling, StepAndRepeat, Unit, ZeroOmission,
 };
 use hypercurve::{
-    Classification, Contour2, CurveRegion2, CurveString2, FiniteProjectionOptions,
+    Classification, Contour2, CurveRegion2, CurveString2, FillRule, FiniteProjectionOptions,
     FiniteRegionProfile2,
 };
 use hyperlattice::Real;
@@ -800,24 +800,17 @@ impl RegionBuilder {
                 })
             })
             .collect::<Result<Vec<_>, _>>()?;
-        let region = match decisions.consume_curve(
+        let region = decisions.consume_curve(
             CurveRegion2::try_from_native_boundary_contours(
-                contours,
+                &contours,
+                FillRule::EvenOdd,
                 decisions.curve_policy(),
             )
             .map_err(|error| IoError::Geometry {
                 format: "Gerber",
                 detail: error.to_string(),
             })?,
-        ) {
-            Classification::Decided(region) => region,
-            Classification::Uncertain(reason) => {
-                return Err(IoError::Geometry {
-                    format: "Gerber",
-                    detail: format!("region contour nesting is uncertain: {reason:?}"),
-                });
-            },
-        };
+        );
         Ok(region)
     }
 }
