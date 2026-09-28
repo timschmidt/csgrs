@@ -2757,11 +2757,17 @@ fn exact_rational_polynomial_interval_bernstein_variations(
 
 /// Returns the exact square-free part of a nonzero polynomial.
 ///
-/// The result has the same distinct roots as `polynomial`. `None` means that
+/// The result has the same distinct roots as `polynomial`. Rational input
+/// discards its common denominator and integer content. `None` means that
 /// coefficient classification, GCD construction, or exact division could not
 /// be certified under `policy`; it never returns an approximate polynomial.
 pub fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
     let polynomial = trim_polynomial(polynomial, policy)?;
+    // Root evidence is unchanged by a nonzero rational content. Keep that
+    // content out of the defining polynomial, its boundary evaluations and
+    // subsequent coefficient fields. Arbitrary exact coefficients retain
+    // their existing field and never undergo rational reconstruction.
+    let polynomial = primitive_integer_polynomial(&polynomial).unwrap_or(polynomial);
     let derivative = derivative(&polynomial);
     let gcd = if polynomial
         .iter()
@@ -2769,7 +2775,7 @@ pub fn square_free_part(polynomial: Vec<Real>, policy: PredicatePolicy) -> Optio
     {
         let derivative = trim_polynomial(derivative, policy)?;
         if let Some(gcd) = primitive_integer_polynomial_gcd(&polynomial, &derivative) {
-            monic_normalize(gcd, policy)?
+            gcd
         } else {
             polynomial_gcd(polynomial.clone(), derivative, policy)?
         }
@@ -5252,6 +5258,85 @@ mod tests {
             prop_assert_eq!(reports[0].root_at_upper, Some(false));
             prop_assert_eq!(reports[0].variation_bound, Some(1));
             prop_assert_eq!(reports[0].root_count_parity, Some(1));
+        }
+    }
+}
+
+#[cfg(test)]
+mod primitive_root_evidence_regression {
+    use super::*;
+
+    #[test]
+    fn square_free_root_evidence_removes_common_rational_scale() {
+        // This is (25t^2-14)(400t^6+300t^4+75t^2-14).
+        // alpha^2=(cbrt(81/25)-1)/4 is a root of the second factor.
+        let original = [196, 0, -1400, 0, -2325, 0, 1900, 0, 10000].map(Real::from);
+        let alpha = ((Real::new(HyperRational::fraction(81, 25).unwrap())
+            .root_n(3)
+            .unwrap()
+            - Real::one())
+            / Real::from(4))
+        .unwrap()
+        .sqrt()
+        .unwrap();
+        let wide = HyperRational::from_bigint_fraction(
+            BigInt::from(1_u8) << 1024_usize,
+            num::BigUint::from(625_u32),
+        )
+        .unwrap();
+        for scale in [HyperRational::fraction(16777216, 625).unwrap(), wide] {
+            for negative in [false, true] {
+                let scale = Real::new(if negative {
+                    -scale.clone()
+                } else {
+                    scale.clone()
+                });
+                let input = original.iter().map(|value| value * &scale).collect();
+                let reduced = square_free_part(input, PredicatePolicy::STRICT)
+                    .expect("rational root evidence must normalize");
+                let expected = original
+                    .iter()
+                    .map(|value| {
+                        if negative {
+                            -value.clone()
+                        } else {
+                            value.clone()
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(reduced.len(), expected.len());
+                for (actual, expected) in reduced.iter().zip(&expected) {
+                    assert_eq!(actual.exact_rational_ref(), expected.exact_rational_ref());
+                }
+                assert_eq!(
+                    Real::eval_poly(&reduced, &alpha)
+                        .certified_sign_until(-512)
+                        .sign(),
+                    Some(hyperreal::RealSign::Zero)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn square_free_root_evidence_keeps_primitive_repeated_factor_quotients() {
+        // (2t-1)^2(3t+1) -> (2t-1)(3t+1), without a monic
+        // GCD reintroducing a redundant factor of two in the quotient.
+        let scale = Real::new(HyperRational::fraction(-17, 625).unwrap());
+        let input = [1, -1, -8, 12]
+            .map(|value| Real::from(value) * &scale)
+            .to_vec();
+        let reduced = square_free_part(input, PredicatePolicy::STRICT)
+            .expect("exact repeated factor division");
+        assert_eq!(reduced.len(), 3);
+        for (actual, expected) in reduced.iter().zip([1, 1, -6].map(HyperRational::new)) {
+            assert_eq!(actual.exact_rational_ref(), Some(&expected));
+        }
+        for root in [
+            HyperRational::fraction(1, 2).unwrap(),
+            HyperRational::fraction(-1, 3).unwrap(),
+        ] {
+            assert!(Real::eval_poly(&reduced, &Real::new(root)).definitely_zero());
         }
     }
 }

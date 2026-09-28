@@ -371,7 +371,7 @@ pub struct AlgebraicRootRepresentation {
     pub interval_index: usize,
     /// Exact coefficients in ascending power order.
     pub polynomial_coefficients: Vec<Real>,
-    /// Certified unit isolating interval or exact point interval.
+    /// Certified finite isolating interval or exact point interval.
     pub interval: IsolatedRootInterval,
     /// Validation evidence for the representation.
     pub validation: AlgebraicRootValidationReport,
