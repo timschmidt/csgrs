@@ -232,8 +232,8 @@ pub use intersect::{
     LineLineIntersection, ParamRange, SegmentIntersection,
 };
 pub use nurbs::{
-    NurbsBezierDecomposition2, NurbsBezierSpanView2, NurbsCurve2, NurbsDegreeElevation2,
-    NurbsElevatedBezierSpan2, NurbsNativeSpanView2,
+    NurbsBezierSpanView2, NurbsCurve2, NurbsDegreeElevation2, NurbsElevatedBezierSpan2,
+    NurbsNativeSpanView2,
 };
 pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;

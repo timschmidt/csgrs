@@ -24,7 +24,7 @@ const MAX_RETAINED_DEGREE_ELEVATIONS: usize = 8;
 struct NurbsData2 {
     retained: RationalBSplineCurve2,
     endpoints: [Point2; 2],
-    decomposition: PolicyEvaluationCache<NurbsBezierDecomposition2>,
+    decomposition: PolicyEvaluationCache<RationalBSplineBezierExtraction2>,
     native_subcurves: PolicyEvaluationCache<Vec<BezierSubcurve2>>,
     knot_refinements: BoundedPolicyResultCache<Vec<Real>, NurbsCurve2>,
     knot_removals: BoundedPolicyResultCache<Real, Option<NurbsCurve2>>,
@@ -41,12 +41,6 @@ struct NurbsData2 {
 #[derive(Clone, Debug)]
 pub struct NurbsCurve2 {
     data: Arc<NurbsData2>,
-}
-
-/// Exact homogeneous Bezier decomposition retained by a [`NurbsCurve2`].
-#[derive(Clone, Debug, PartialEq)]
-pub struct NurbsBezierDecomposition2 {
-    extraction: RationalBSplineBezierExtraction2,
 }
 
 /// Borrowed exact NURBS Bezier span and its knot-span index.
@@ -262,7 +256,7 @@ impl NurbsCurve2 {
                 .expect("validated NURBS has a positive span")
                 .clone();
             if !policy.permits_approximate_512() {
-                decomposition.seed_certified(NurbsBezierDecomposition2 { extraction });
+                decomposition.seed_certified(extraction);
             }
             [start, end]
         };
@@ -977,7 +971,7 @@ impl NurbsCurve2 {
     pub fn bezier_decomposition(
         &self,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<&NurbsBezierDecomposition2>> {
+    ) -> ExactCurveResult<CurveOutcome<&RationalBSplineBezierExtraction2>> {
         resolve_certified_operation(policy, |attempt| {
             self.bezier_decomposition_for_operation(attempt, CurveOperation2::BezierDecomposition)
         })
@@ -986,15 +980,12 @@ impl NurbsCurve2 {
     pub(crate) fn bezier_decomposition_with_policy(
         &self,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Classification<&NurbsBezierDecomposition2>> {
+    ) -> ExactCurveResult<Classification<&RationalBSplineBezierExtraction2>> {
         resolve_cached_evaluation(&self.data.decomposition, policy, |attempt| {
             map_classified_curve_result(
                 self.data.retained.extract_bezier_spans(attempt),
                 CurveOperation2::BezierDecomposition,
             )
-            .map(|decomposition| {
-                decomposition.map(|extraction| NurbsBezierDecomposition2 { extraction })
-            })
         })
     }
 
@@ -1002,7 +993,7 @@ impl NurbsCurve2 {
         &self,
         policy: &CurveContext,
         operation: CurveOperation2,
-    ) -> ExactCurveResult<&NurbsBezierDecomposition2> {
+    ) -> ExactCurveResult<&RationalBSplineBezierExtraction2> {
         require_classification(
             self.bezier_decomposition_with_policy(policy)
                 .map_err(|error| remap_nurbs_operation(error, operation))?,
@@ -1053,7 +1044,7 @@ impl NurbsCurve2 {
                     }
                 };
                 Ok(Classification::Decided(
-                    decomposition.extraction.native_subcurves(attempt),
+                    decomposition.native_subcurves(attempt),
                 ))
             })? {
                 Classification::Decided(subcurves) => Classification::Decided(subcurves.as_slice()),
@@ -1509,33 +1500,6 @@ impl NurbsCurve2 {
 impl PartialEq for NurbsCurve2 {
     fn eq(&self, other: &Self) -> bool {
         self.data.retained == other.data.retained
-    }
-}
-
-impl NurbsBezierDecomposition2 {
-    /// Returns the retained NURBS degree.
-    pub const fn degree(&self) -> usize {
-        self.extraction.degree()
-    }
-
-    /// Returns the exact refined homogeneous control net after knot insertion.
-    pub fn refined_homogeneous_controls(&self) -> &[HomogeneousControl2] {
-        self.extraction.refined_homogeneous_controls()
-    }
-
-    /// Returns the exact refined knot vector after knot insertion.
-    pub fn refined_knots(&self) -> &[Real] {
-        self.extraction.refined_knots()
-    }
-
-    /// Returns retained rational Bezier spans in source-parameter order.
-    pub fn spans(&self) -> &[RationalBezierSpan2] {
-        self.extraction.spans()
-    }
-
-    /// Returns how many exact knot insertions produced Bezier form.
-    pub const fn inserted_knot_count(&self) -> usize {
-        self.extraction.inserted_knot_count()
     }
 }
 
