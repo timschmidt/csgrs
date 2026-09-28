@@ -479,3 +479,36 @@ fn gerber_context_reaches_aperture_composition_and_projection() {
     );
     assert!(gerber::import_gerber_with_context(b"invalid", &APPROXIMATE).is_err());
 }
+
+#[cfg(feature = "gerber-io")]
+#[test]
+fn gerber_boundary_contours_preserve_nested_parity_and_roundtrip() {
+    use csgrs::io::gerber;
+    use hypercurve::{Classification, CurveContext, Point2, RegionPointLocation};
+    let source = b"%FSLAX46Y46*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nG36*\nX0Y0D02*\nX10000000Y0D01*\nX10000000Y10000000D01*\nX0Y10000000D01*\nX0Y0D01*\nX2000000Y2000000D02*\nX8000000Y2000000D01*\nX8000000Y8000000D01*\nX2000000Y8000000D01*\nX2000000Y2000000D01*\nG37*\nM02*\n";
+    for context in [GeometryContext::STRICT, APPROXIMATE] {
+        let imported = gerber::import_gerber_with_context(source, &context).unwrap();
+        assert_eq!(imported.certainty, GeometryCertainty::Certified);
+        let exported = gerber::export_gerber(&imported.value.0).unwrap();
+        let restored = gerber::import_gerber_with_context(&exported, &context).unwrap();
+        for region in [&imported.value.0, &restored.value.0] {
+            for (x, y, expected) in [
+                (1, 1, RegionPointLocation::Inside),
+                (5, 5, RegionPointLocation::Outside),
+                (2, 5, RegionPointLocation::Boundary),
+                (11, 5, RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    region
+                        .classify_point(
+                            &Point2::from_values(x, y).into(),
+                            &CurveContext::STRICT
+                        )
+                        .unwrap()
+                        .into_value(),
+                    Classification::Decided(expected)
+                );
+            }
+        }
+    }
+}
