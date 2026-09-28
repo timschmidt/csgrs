@@ -90,7 +90,11 @@ pub(super) struct ComponentParameterChart2 {
     numerator: [Real; 2],
     denominator: [Real; 2],
     interval: ComponentParameterInterval2,
-    finite_owner: Option<(CurveParameterRange2, BezierParameterRayDirection2)>,
+    finite_owner: Option<(
+        CurveParameterRange2,
+        [bool; 2],
+        BezierParameterRayDirection2,
+    )>,
 }
 
 impl ComponentParameterChart2 {
@@ -121,46 +125,51 @@ impl ComponentParameterChart2 {
                 (
                     [ray.anchor.clone(), direction - ray.anchor],
                     [Real::one(), -Real::one()],
-                    Some((chart.domain.finite.clone(), ray.direction)),
+                    Some((
+                        chart.domain.finite.clone(),
+                        chart.domain.inclusion,
+                        ray.direction,
+                    )),
                 )
             }
         };
-        let closed = finite_owner.is_none();
+        let inclusion = if finite_owner.is_none() {
+            chart.domain.inclusion
+        } else {
+            [false; 2]
+        };
         Ok(Classification::Decided(Self {
             numerator,
             denominator,
-            interval: ComponentParameterInterval2 {
-                range,
-                inclusion: [closed; 2],
-            },
+            interval: ComponentParameterInterval2 { range, inclusion },
             finite_owner,
         }))
     }
 
-    /// Partitions the compact chart after subtracting the closed finite owner.
-    /// Open cut ends prevent an incident component from republishing that owner.
+    /// Partitions the compact chart after subtracting its finite owner.
+    /// Each cut keeps exactly the complement of that owner's endpoint inclusion.
     pub(super) fn owned_intervals(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<ComponentParameterInterval2>>> {
-        let Some((finite, direction)) = &self.finite_owner else {
+        let Some((finite, inclusion, direction)) = &self.finite_owner else {
             return Ok(Classification::Decided(vec![self.interval.clone()]));
         };
         let endpoints = match finite.ordered_endpoints(policy)? {
             Classification::Decided(endpoints) => endpoints,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let endpoints = if *direction == BezierParameterRayDirection2::Increasing {
-            endpoints
+        let (endpoints, inclusion) = if *direction == BezierParameterRayDirection2::Increasing {
+            (endpoints, *inclusion)
         } else {
-            [endpoints[1], endpoints[0]]
+            ([endpoints[1], endpoints[0]], [inclusion[1], inclusion[0]])
         };
         let anchor = CurveParameter2::from(self.numerator[0].clone());
         let inverse_numerator = [-self.numerator[0].clone(), self.denominator[0].clone()];
         let inverse_denominator = [self.numerator[1].clone(), -self.denominator[1].clone()];
         let range = &self.interval.range;
         let mut cuts = [None, None];
-        for (endpoint, cut) in endpoints.into_iter().zip(&mut cuts) {
+        for ((endpoint, included), cut) in endpoints.into_iter().zip(inclusion).zip(&mut cuts) {
             let on_ray = match endpoint.cmp_by_refinement(&anchor, policy)? {
                 Classification::Decided(order) => {
                     if *direction == BezierParameterRayDirection2::Increasing {
@@ -186,6 +195,18 @@ impl ComponentParameterChart2 {
             } else {
                 range.start().clone()
             };
+            // A finite endpoint outside the open ray must not close the
+            // ray's anchor or regularity barrier when its cut is clamped.
+            let included = if included {
+                false
+            } else {
+                match self.interval.contains(&mapped, policy)? {
+                    Classification::Decided(inside) => inside,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            };
             let mapped = match mapped.cmp_by_refinement(range.start(), policy)? {
                 Classification::Decided(order) if order.is_le() => range.start().clone(),
                 Classification::Decided(_) => {
@@ -199,13 +220,22 @@ impl ComponentParameterChart2 {
                 }
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            *cut = Some(mapped);
+            *cut = Some((mapped, included));
         }
-        let [lower, upper] = cuts.map(|cut| cut.expect("both finite boundaries were transported"));
+        let [(lower, lower_included), (upper, upper_included)] =
+            cuts.map(|cut| cut.expect("both finite boundaries were transported"));
         let mut intervals = Vec::with_capacity(2);
         for (start, end, inclusion) in [
-            (range.start(), &lower, [self.interval.inclusion[0], false]),
-            (&upper, range.end(), [false, self.interval.inclusion[1]]),
+            (
+                range.start(),
+                &lower,
+                [self.interval.inclusion[0], lower_included],
+            ),
+            (
+                &upper,
+                range.end(),
+                [upper_included, self.interval.inclusion[1]],
+            ),
         ] {
             match start.cmp_by_refinement(end, policy)? {
                 Classification::Decided(std::cmp::Ordering::Less) => {
@@ -253,8 +283,9 @@ impl ComponentParameterChart2 {
         parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CurveParameter2>>> {
-        if let Some((finite, _)) = &self.finite_owner {
+        if let Some((finite, inclusion, _)) = &self.finite_owner {
             match CurveParameterDomain2::new(finite, None)
+                .with_finite_inclusion(*inclusion)
                 .contains_finite_parameter(parameter, policy)?
             {
                 Classification::Decided(true) => return Ok(Classification::Decided(None)),
@@ -622,7 +653,7 @@ pub(super) fn retain_finite_parallel_components(
             denominator: [Real::one(), Real::zero()],
             interval: ComponentParameterInterval2 {
                 range: CurveParameterRange2::new_validated(lower.clone(), upper.clone()),
-                inclusion: [true, true],
+                inclusion: domain.inclusion,
             },
             finite_owner: None,
         });
@@ -1086,6 +1117,7 @@ mod tests {
                             Real::from(2).into(),
                             Real::from(4).into(),
                         ),
+                        [true; 2],
                         BezierParameterRayDirection2::Increasing,
                     )),
                 },

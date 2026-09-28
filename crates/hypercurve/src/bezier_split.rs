@@ -676,12 +676,15 @@ pub struct CurveParameterRange2 {
     end: CurveParameter2,
 }
 
-/// A closed finite scalar range and an optional open, barrier-limited ray.
-/// The finite range owns every root in their overlap. A geometric caller
-/// includes any certified endpoint-to-anchor bridge in that finite range.
+/// An exact finite interval and an optional open, barrier-limited ray.
+/// The finite interval owns its included roots in their overlap. A geometric
+/// caller includes any certified endpoint-to-anchor bridge in that interval.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct CurveParameterDomain2<'a> {
     pub(crate) finite: &'a CurveParameterRange2,
+    /// Inclusion of the numerically lower and upper finite endpoints,
+    /// independent of the range's traversal direction.
+    pub(crate) inclusion: [bool; 2],
     pub(crate) extension: Option<crate::bezier_parameter::BezierParameterRay2<'a>>,
 }
 
@@ -690,7 +693,16 @@ impl<'a> CurveParameterDomain2<'a> {
         finite: &'a CurveParameterRange2,
         extension: Option<crate::bezier_parameter::BezierParameterRay2<'a>>,
     ) -> Self {
-        Self { finite, extension }
+        Self {
+            finite,
+            inclusion: [true; 2],
+            extension,
+        }
+    }
+
+    pub(crate) const fn with_finite_inclusion(mut self, inclusion: [bool; 2]) -> Self {
+        self.inclusion = inclusion;
+        self
     }
 
     /// Returns increasing exact boundaries and their outward scalar bounds.
@@ -728,7 +740,7 @@ impl<'a> CurveParameterDomain2<'a> {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            parameter_is_in_ordered_closed_range(parameter, lower, upper, policy)
+            parameter_is_in_ordered_range(parameter, lower, upper, self.inclusion, policy)
         })
     }
 
@@ -740,7 +752,7 @@ impl<'a> CurveParameterDomain2<'a> {
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         if self.finite == range {
-            return Ok(Classification::Decided(true));
+            return Ok(Classification::Decided(self.inclusion == [true; 2]));
         }
         for endpoint in [range.start(), range.end()] {
             match self.contains_finite_parameter(endpoint, policy)? {
@@ -762,6 +774,7 @@ impl<'a> CurveParameterDomain2<'a> {
         if let Some((start, end)) = self.finite.as_bezier_parameters()
             && start.scalar() == Some(&Real::zero())
             && end.scalar() == Some(&Real::one())
+            && self.inclusion == [true; 2]
         {
             return polynomial.isolate_unit_interval_roots(policy);
         }
@@ -780,10 +793,11 @@ impl<'a> CurveParameterDomain2<'a> {
             };
             let mut retained = Vec::with_capacity(roots.len());
             for root in roots {
-                match parameter_is_in_ordered_closed_range(
+                match parameter_is_in_ordered_range(
                     &root.clone().into(),
                     lower,
                     upper,
+                    self.inclusion,
                     policy,
                 )? {
                     Classification::Decided(true) => retained.push(root),
@@ -798,20 +812,23 @@ impl<'a> CurveParameterDomain2<'a> {
     }
 }
 
-fn parameter_is_in_ordered_closed_range(
+fn parameter_is_in_ordered_range(
     parameter: &CurveParameter2,
     lower: &CurveParameter2,
     upper: &CurveParameter2,
+    inclusion: [bool; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     match parameter.cmp_by_refinement(lower, policy)? {
-        Classification::Decided(Ordering::Less) => return Ok(Classification::Decided(false)),
+        Classification::Decided(order) if order.is_lt() || (order.is_eq() && !inclusion[0]) => {
+            return Ok(Classification::Decided(false));
+        }
         Classification::Decided(_) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
     Ok(parameter
         .cmp_by_refinement(upper, policy)?
-        .map(|order| !order.is_gt()))
+        .map(|order| order.is_lt() || (order.is_eq() && inclusion[1])))
 }
 
 impl CurveParameterRange2 {

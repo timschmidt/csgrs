@@ -70674,6 +70674,17 @@ fn selected_axis_parameters_in_domain(
             Classification::Decided(projection) => return Ok(Classification::Decided(projection)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+    if domain.inclusion != [true; 2] {
+        let mut owned = Vec::with_capacity(parameters.len());
+        for parameter in parameters {
+            match domain.contains_finite_parameter(&parameter.clone().into(), policy)? {
+                Classification::Decided(true) => owned.push(parameter),
+                Classification::Decided(false) => {}
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        parameters = owned;
+    }
     if let Some(extension) = domain.extension {
         match parameters_in_domain(SelectedThirdAxisDomain2::IncidentRay {
             anchor: extension.anchor,
@@ -86775,12 +86786,17 @@ impl BezierParallelAlgebraicRay2 {
                         policy,
                     )
                 } else {
-                    selected_fiber_parameters(
-                        &system.incidence,
-                        &BezierParameter2::Algebraic(parameter.clone()),
-                        domain.finite,
-                        policy,
-                    )
+                    selected_axis_parameters_in_domain(domain, policy, |axis_domain| {
+                        let SelectedThirdAxisDomain2::Finite(range) = axis_domain else {
+                            unreachable!("this query has no incident extension")
+                        };
+                        selected_fiber_parameters(
+                            &system.incidence,
+                            &BezierParameter2::Algebraic(parameter.clone()),
+                            range,
+                            policy,
+                        )
+                    })
                 }
             }
         })
@@ -117852,7 +117868,7 @@ impl BezierParallel2 {
         Ok(self
             .parallel_intersections_on_regular_domains(
                 other,
-                [first_range, second_range],
+                [first_range, second_range].map(|range| CurveParameterDomain2::new(range, None)),
                 ParameterComponentQuery2::RetainFinite,
                 policy,
             )?
@@ -117868,18 +117884,22 @@ impl BezierParallel2 {
     fn parallel_intersections_on_regular_domains(
         &self,
         other: &Self,
-        ranges: [&CurveParameterRange2; 2],
+        domains: [CurveParameterDomain2<'_>; 2],
         query: ParameterComponentQuery2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
+        let ranges = domains.map(|domain| domain.finite);
+        let closed_finite = domains
+            .iter()
+            .all(|domain| domain.extension.is_none() && domain.inclusion == [true; 2]);
         // A rational image keeps its exact source chart even when a retained
         // range supplies a branch-oriented tangent frame for the other operand.
-        let rational = if matches!(query, ParameterComponentQuery2::RetainFinite) {
+        let rational = if closed_finite && matches!(query, ParameterComponentQuery2::RetainFinite) {
             self.rational_parallel_pair_intersections(other, Some(ranges), policy)?
                 .map(|result| result.map(BezierParallelPairDomainIntersectionSet2::enumerated))
         } else {
-            self.rational_parallel_pair_intersections_on_regular_ranges(
-                other, ranges, query, policy,
+            self.rational_parallel_pair_intersections_in_regular_domains(
+                other, domains, query, policy,
             )?
         };
         match rational {
@@ -117922,8 +117942,11 @@ impl BezierParallel2 {
         // queried unit spans. Retained and extended ranges own their own
         // projection, even when neither source needs a cancelled frame.
         let unit = CurveParameterRange2::unit();
-        let unit_domain = first_range == &unit && second_range == &unit;
+        let unit_domain = first_range == &unit
+            && second_range == &unit
+            && domains.iter().all(|domain| domain.extension.is_none());
         if unit_domain
+            && closed_finite
             && first_frame.is_none()
             && second_frame.is_none()
             && matches!(query, ParameterComponentQuery2::RetainFinite)
@@ -117949,11 +117972,14 @@ impl BezierParallel2 {
                 BezierParallelPairDomainIntersectionSet2::from_components(Vec::new()),
             ));
         };
-        if !unit_domain || !matches!(query, ParameterComponentQuery2::RetainFinite) {
+        if !unit_domain
+            || !closed_finite
+            || !matches!(query, ParameterComponentQuery2::RetainFinite)
+        {
             return self.parallel_intersections_from_system_in_domain(
                 other,
                 system,
-                ranges.map(|range| CurveParameterDomain2::new(range, None)),
+                domains,
                 query,
                 Some(ranges),
                 policy,
@@ -118095,7 +118121,9 @@ impl BezierParallel2 {
         // and component clipping before a correspondence can be admitted.
         if query.normal_constraints().is_none()
             && domains.iter().all(|domain| {
-                domain.extension.is_none() && domain.finite == &CurveParameterRange2::unit()
+                domain.extension.is_none()
+                    && domain.inclusion == [true; 2]
+                    && domain.finite == &CurveParameterRange2::unit()
             })
         {
             let intersections = match self.parallel_intersections(other, policy)? {
@@ -118203,16 +118231,17 @@ impl BezierParallel2 {
                     "parallel-pair-domain",
                     "one-sided-source-cusp",
                 );
-                return self.parallel_intersections_on_regular_domains(
-                    other,
-                    domains.map(|domain| domain.finite),
-                    query,
-                    policy,
-                );
+                return self
+                    .parallel_intersections_on_regular_domains(other, domains, query, policy);
             }
             if retain_finite {
                 match rational_images.each_ref() {
                     [Some(first), Some(second)] => {
+                        if domains.iter().any(|domain| domain.inclusion != [true; 2]) {
+                            return first.zero_distance_pair_intersections_in_domain(
+                                second, domains, false, false, query, None, policy,
+                            );
+                        }
                         return Ok(rational_pair_intersections_on_ranges(
                             &first.source().to_rational_bezier()?,
                             &second.source().to_rational_bezier()?,
@@ -118599,7 +118628,12 @@ impl BezierParallel2 {
         let mut domain_components = Vec::new();
         let mut component_overlaps = Vec::new();
         if let Some(support) = constraint.component_support {
-            if matches!(query, ParameterComponentQuery2::RetainFinite) && !off_diagonal {
+            if matches!(query, ParameterComponentQuery2::RetainFinite)
+                && !off_diagonal
+                && domains
+                    .iter()
+                    .all(|domain| domain.extension.is_none() && domain.inclusion == [true; 2])
+            {
                 match self.replay_constant_parameter_components(
                     &other,
                     domains.map(|domain| domain.finite),
@@ -118997,9 +119031,9 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(None));
         };
         Ok(self
-            .rational_parallel_pair_intersections_on_regular_ranges(
+            .rational_parallel_pair_intersections_in_regular_domains(
                 other,
-                ranges,
+                ranges.map(|range| CurveParameterDomain2::new(range, None)),
                 ParameterComponentQuery2::RetainFinite,
                 policy,
             )?
@@ -119011,10 +119045,10 @@ impl BezierParallel2 {
             }))
     }
 
-    fn rational_parallel_pair_intersections_on_regular_ranges(
+    fn rational_parallel_pair_intersections_in_regular_domains(
         &self,
         other: &Self,
-        ranges: [&CurveParameterRange2; 2],
+        domains: [CurveParameterDomain2<'_>; 2],
         query: ParameterComponentQuery2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierParallelPairDomainIntersectionSet2>>> {
@@ -119023,11 +119057,12 @@ impl BezierParallel2 {
         // intervals. Their unchanged source parameters enter the existing
         // finite-domain authority; no new coordinate or parameter image is needed.
         for swapped in [false, true] {
-            let (parallel, rational, ranges) = if swapped {
-                (other, self, [ranges[1], ranges[0]])
+            let (parallel, rational, domains) = if swapped {
+                (other, self, [domains[1], domains[0]])
             } else {
-                (self, other, ranges)
+                (self, other, domains)
             };
+            let ranges = domains.map(|domain| domain.finite);
             let Ok(Classification::Decided(Some(component))) =
                 strict.bounded_exact_predicate_pass(|| {
                     rational.exact_rational_parallel_component_on_regular_range(ranges[1], &strict)
@@ -119052,7 +119087,7 @@ impl BezierParallel2 {
             return Ok(parallel
                 .zero_distance_pair_intersections_in_domain(
                     &zero,
-                    ranges.map(|range| CurveParameterDomain2::new(range, None)),
+                    domains,
                     swapped,
                     false,
                     query,
@@ -130887,9 +130922,15 @@ impl<'a> ParameterComponentChart2<'a> {
             Classification::Decided(range) => range,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let closed = !matches!(self.mapping, ParameterComponentMap2::Incident(_));
+        let inclusion = if matches!(self.mapping, ParameterComponentMap2::Incident(_)) {
+            [false; 2]
+        } else {
+            self.domain.inclusion
+        };
         let after_start = match parameter.cmp_by_refinement(range.start(), policy)? {
-            Classification::Decided(ordering) => ordering.is_gt() || (closed && ordering.is_eq()),
+            Classification::Decided(ordering) => {
+                ordering.is_gt() || (inclusion[0] && ordering.is_eq())
+            }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         if !after_start {
@@ -130897,7 +130938,7 @@ impl<'a> ParameterComponentChart2<'a> {
         }
         Ok(parameter
             .cmp_by_refinement(range.end(), policy)?
-            .map(|ordering| ordering.is_lt() || (closed && ordering.is_eq())))
+            .map(|ordering| ordering.is_lt() || (inclusion[1] && ordering.is_eq())))
     }
 
     /// Finite roots keep their original ownership. Overlapping ray events
@@ -193821,7 +193862,7 @@ mod regular_parallel_contact_tests {
     }
     #[test]
     fn stationary_component_queries_keep_one_sided_endpoints_and_exact_constraints() {
-        use CurveParameterComponentSelection2::{NeedsConstraint, Selected};
+        use CurveParameterComponentSelection2::{Empty, NeedsConstraint, Selected};
         let parallel = CubicBezier2::new(
             p(0, 0),
             p(0, 0),
@@ -193847,41 +193888,55 @@ mod regular_parallel_contact_tests {
                     } else {
                         range.clone()
                     };
-                    for query in [
-                        ParameterComponentQuery2::AllComponents(None),
-                        ParameterComponentQuery2::FirstComponent(None),
-                    ] {
-                        let result = decided(
-                            parallel
-                                .parallel_intersections_in_domain(
-                                    &parallel,
-                                    [CurveParameterDomain2::new(&range, None); 2],
-                                    query,
-                                    &policy,
-                                )
-                                .unwrap(),
-                        );
-                        assert!(result.intersections.is_complete());
-                        assert_eq!(result.components.len(), 1);
-                        let component = &result.components[0];
-                        assert!(matches!(
-                            decided(component.constrain([None, None], &policy).unwrap()),
-                            NeedsConstraint
-                        ));
-                        for value in [Real::zero(), q(1, 4), upper.clone()] {
-                            let parameter = CurveParameter2::from(value);
-                            for axis in 0..2 {
-                                let constraints =
-                                    [0, 1].map(|index| (index == axis).then_some(&parameter));
-                                let Selected(pair) =
-                                    decided(component.constrain(constraints, &policy).unwrap())
-                                else {
-                                    panic!("an exact contact must select the stationary family");
-                                };
-                                for actual in pair {
-                                    assert!(decided(
-                                        actual.same_value(&parameter, &policy).unwrap()
-                                    ));
+                    for inclusion in [[true, true], [true, false], [false, true], [false, false]] {
+                        for query in [
+                            ParameterComponentQuery2::AllComponents(None),
+                            ParameterComponentQuery2::FirstComponent(None),
+                        ] {
+                            let result = decided(
+                                parallel
+                                    .parallel_intersections_in_domain(
+                                        &parallel,
+                                        [CurveParameterDomain2::new(&range, None)
+                                            .with_finite_inclusion(inclusion);
+                                            2],
+                                        query,
+                                        &policy,
+                                    )
+                                    .unwrap(),
+                            );
+                            assert!(result.intersections.is_complete());
+                            assert_eq!(result.components.len(), 1);
+                            let component = &result.components[0];
+                            assert!(matches!(
+                                decided(component.constrain([None, None], &policy).unwrap()),
+                                NeedsConstraint
+                            ));
+                            for (value, included) in [
+                                (Real::zero(), inclusion[0]),
+                                (q(1, 4), true),
+                                (upper.clone(), inclusion[1]),
+                            ] {
+                                let parameter = CurveParameter2::from(value);
+                                for axis in 0..2 {
+                                    let constraints =
+                                        [0, 1].map(|index| (index == axis).then_some(&parameter));
+                                    let selection =
+                                        decided(component.constrain(constraints, &policy).unwrap());
+                                    if !included {
+                                        assert!(matches!(selection, Empty));
+                                        continue;
+                                    }
+                                    let Selected(pair) = selection else {
+                                        panic!(
+                                            "an owned exact contact must select the stationary family"
+                                        );
+                                    };
+                                    for actual in pair {
+                                        assert!(decided(
+                                            actual.same_value(&parameter, &policy).unwrap()
+                                        ));
+                                    }
                                 }
                             }
                         }
@@ -195044,6 +195099,272 @@ mod empty_incident_component_tests {
                 };
                 for actual in pair {
                     assert!(decided(actual.same_value(&parameter, &policy)));
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod finite_domain_ownership_tests {
+    use super::*;
+
+    fn q(n: i32, d: i32) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+
+    fn decided<T>(value: CurveResult<Classification<T>>) -> T {
+        match value.unwrap() {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                panic!("domain ownership was uncertain: {reason:?}")
+            }
+        }
+    }
+
+    #[test]
+    fn finite_endpoint_ownership_filters_independent_roots_and_selected_axes() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let root_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+                vec![Real::from(-2), Real::zero(), Real::one()],
+                &policy,
+            ));
+            let interval = decided(BezierParameterInterval::try_new_ordered(
+                Real::one(),
+                q(3, 2),
+                &policy,
+            ));
+            let lower = BezierParameter2::Algebraic(decided(
+                BezierAlgebraicParameter2::try_isolate(root_polynomial, interval, &policy),
+            ));
+            // A different degree-four root authority must compare equal to the
+            // retained sqrt(2) endpoint without replacing either certificate.
+            let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+                polynomial_multiply(
+                    &[Real::from(-2), Real::zero(), Real::one()],
+                    &polynomial_multiply(
+                        &[Real::from(-3), Real::from(2)],
+                        &[Real::from(-2), Real::one()],
+                    ),
+                ),
+                &policy,
+            ));
+            let expected = [
+                lower,
+                BezierParameter2::Exact(q(3, 2)),
+                BezierParameter2::Exact(Real::from(2)),
+            ];
+            for reversed in [false, true] {
+                let ends = if reversed { [2, 0] } else { [0, 2] };
+                let range = CurveParameterRange2::new_validated(
+                    expected[ends[0]].clone().into(),
+                    expected[ends[1]].clone().into(),
+                );
+                for inclusion in [[true, true], [true, false], [false, true], [false, false]] {
+                    let domain =
+                        CurveParameterDomain2::new(&range, None).with_finite_inclusion(inclusion);
+                    assert_eq!(
+                        decided(domain.contains_finite_range(&range, &policy)),
+                        inclusion == [true; 2]
+                    );
+                    let roots = decided(domain.finite_roots(&polynomial, &policy));
+                    let selected = decided(selected_axis_parameters_in_domain(
+                        domain,
+                        &policy,
+                        |axis| {
+                            assert!(matches!(axis, SelectedThirdAxisDomain2::Finite(_)));
+                            Ok(Classification::Decided(
+                                BezierAlgebraicFiberProjection2::Parameters(expected.to_vec()),
+                            ))
+                        },
+                    ));
+                    let BezierAlgebraicFiberProjection2::Parameters(selected) = selected else {
+                        panic!("three certified finite roots have a discrete projection");
+                    };
+                    for actual in [roots, selected] {
+                        let owned = [inclusion[0], true, inclusion[1]];
+                        assert_eq!(
+                            actual.len(),
+                            owned.into_iter().filter(|included| *included).count()
+                        );
+                        for (expected, included) in expected.iter().zip(owned) {
+                            let matches = actual
+                                .iter()
+                                .filter(|root| {
+                                    decided(root.cmp_by_refinement(expected, &policy)).is_eq()
+                                })
+                                .count();
+                            assert_eq!(matches, usize::from(included));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn finite_and_incident_components_partition_open_endpoints_once() {
+        let diagonal =
+            BivariatePolynomial::new(vec![vec![Real::zero(), -Real::one()], vec![Real::one()]]);
+        let positive = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let config = CurveIntersectionResultantConfig {
+            min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+            max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for increasing in [false, true] {
+                let sign = if increasing { 1 } else { -1 };
+                for anchor_at_end in [false, true] {
+                    let finite = CurveParameterRange2::new_validated(
+                        Real::from(if anchor_at_end { 0 } else { 2 * sign }).into(),
+                        Real::from(4 * sign).into(),
+                    );
+                    let other = CurveParameterRange2::new_validated(
+                        Real::zero().into(),
+                        Real::from(6 * sign).into(),
+                    );
+                    let anchor = Real::from(if anchor_at_end { 4 * sign } else { 0 });
+                    let barrier = BezierParameter2::Exact(Real::from(6 * sign));
+                    let ray = BezierParameterRay2 {
+                        anchor: &anchor,
+                        direction: if increasing {
+                            BezierParameterRayDirection2::Increasing
+                        } else {
+                            BezierParameterRayDirection2::Decreasing
+                        },
+                        barrier: Some(&barrier),
+                    };
+                    for inclusion in [[true, true], [true, false], [false, true], [false, false]] {
+                        let domain = CurveParameterDomain2::new(&finite, Some(ray))
+                            .with_finite_inclusion(inclusion);
+                        for swapped in [false, true] {
+                            let domains = if swapped {
+                                [CurveParameterDomain2::new(&other, None), domain]
+                            } else {
+                                [domain, CurveParameterDomain2::new(&other, None)]
+                            };
+                            let selected = decided(select_parameter_component_in_domain(
+                                &diagonal,
+                                &ParameterComponentSelector2::Positive(&positive, None),
+                                domains,
+                                ParameterComponentQuery2::AllComponents(None),
+                                &policy,
+                                config,
+                            ));
+                            for value in [0, 1, 2, 3, 4, 5, 6] {
+                                let parameter = CurveParameter2::from(Real::from(value * sign));
+                                let count = selected
+                                    .components
+                                    .iter()
+                                    .filter(|component| {
+                                        decided(
+                                            component
+                                                .contains_pair(&parameter, &parameter, &policy),
+                                        )
+                                    })
+                                    .count();
+                                let included = if value == 6 {
+                                    false
+                                } else if anchor_at_end && (value == 0 || value == 4) {
+                                    inclusion[usize::from((value == 4) == increasing)]
+                                } else {
+                                    value != 0
+                                };
+                                assert_eq!(
+                                    count,
+                                    usize::from(included),
+                                    "value {value}, increasing {increasing}, anchored {anchor_at_end}, inclusion {inclusion:?}, swapped {swapped}"
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn rational_stationary_components_keep_opposite_source_charts_and_ownership() {
+        use CurveParameterComponentSelection2::{Empty, NeedsConstraint, Selected};
+        // Offsets of (u²,0) and ((1-v)²,0) agree at (u²,-1) on
+        // the selected sides of their stationary ends, with v=1-u.
+        let first = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(-Real::one())
+        .unwrap();
+        let second = QuadraticBezier2::new(
+            Point2::from_values(1, 0),
+            Point2::from_values(0, 0),
+            Point2::from_values(0, 0),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let first_range = CurveParameterRange2::new_validated(Real::zero().into(), q(1, 2).into());
+        let second_range = CurveParameterRange2::new_validated(q(1, 2).into(), Real::one().into());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for first_owned in [false, true] {
+                for second_owned in [false, true] {
+                    let domains = [
+                        CurveParameterDomain2::new(&first_range, None)
+                            .with_finite_inclusion([first_owned, true]),
+                        CurveParameterDomain2::new(&second_range, None)
+                            .with_finite_inclusion([true, second_owned]),
+                    ];
+                    for swapped in [false, true] {
+                        let (a, b, domains) = if swapped {
+                            (&second, &first, [domains[1], domains[0]])
+                        } else {
+                            (&first, &second, domains)
+                        };
+                        for query in [
+                            ParameterComponentQuery2::AllComponents(None),
+                            ParameterComponentQuery2::FirstComponent(None),
+                        ] {
+                            let result = decided(
+                                a.parallel_intersections_in_domain(b, domains, query, &policy),
+                            );
+                            assert!(result.intersections.is_complete());
+                            assert_eq!(result.components.len(), 1);
+                            let component = &result.components[0];
+                            assert!(matches!(
+                                decided(component.constrain([None, None], &policy)),
+                                NeedsConstraint
+                            ));
+                            for value in [Real::zero(), q(1, 4), q(1, 2)] {
+                                let owned = value != Real::zero() || (first_owned && second_owned);
+                                let pair = [
+                                    CurveParameter2::from(value.clone()),
+                                    CurveParameter2::from(Real::one() - value),
+                                ];
+                                let pair = if swapped {
+                                    [pair[1].clone(), pair[0].clone()]
+                                } else {
+                                    pair
+                                };
+                                for axis in 0..2 {
+                                    let selection = decided(component.constrain(
+                                        [0, 1].map(|index| (index == axis).then_some(&pair[index])),
+                                        &policy,
+                                    ));
+                                    if !owned {
+                                        assert!(matches!(selection, Empty));
+                                        continue;
+                                    }
+                                    let Selected(actual) = selection else {
+                                        panic!(
+                                            "an owned PH contact must select the exact correspondence"
+                                        );
+                                    };
+                                    for (actual, expected) in actual.iter().zip(&pair) {
+                                        assert!(decided(actual.same_value(expected, &policy)));
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

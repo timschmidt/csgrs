@@ -7190,17 +7190,16 @@ fn fillet_offset_centers(
                                 // A stationary seam belongs to the regular cell
                                 // retained by the cut. Opposite normal sheets
                                 // must neither be merged nor both published.
-                                let excluded = if retains_lower_side {
-                                    range.start()
-                                } else {
-                                    range.end()
-                                };
-                                match CurveParameter2::from(parameter.clone())
-                                    .cmp_by_refinement(excluded, policy)
+                                let cell =
+                                    CurveParameterDomain2::new(&range, None).with_finite_inclusion(
+                                        [!retains_lower_side, retains_lower_side],
+                                    );
+                                match cell
+                                    .contains_finite_parameter(&parameter.clone().into(), policy)
                                     .map_err(invalid)?
                                 {
-                                    Classification::Decided(order) if order.is_eq() => continue,
-                                    Classification::Decided(_) => {}
+                                    Classification::Decided(false) => continue,
+                                    Classification::Decided(true) => {}
                                     Classification::Uncertain(reason) => {
                                         return Err(blocked(reason));
                                     }
