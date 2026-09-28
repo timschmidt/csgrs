@@ -187,6 +187,8 @@ mod contacts {
         policy: CurveContext,
         reversed: bool,
         mode: CurveCornerMode2,
+        quadratic_line: bool,
+        constraint: u8,
     ) {
         // C(t)=(t^2,t^3), -1<=t<=1, with public t=2*u-1. The
         // previous retained branch has tangent -x at u=1/2, although C'=0.
@@ -196,13 +198,29 @@ mod contacts {
             point(q(-1, 3), -Real::one()),
             Point2::from_values(1, 1),
         );
-        let next =
-            LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(-3, -2)).unwrap();
-        let path = CurvePath2::try_new(vec![source.into(), next.into()]).unwrap();
+        let next: Curve2 = if quadratic_line {
+            QuadraticBezier2::new(
+                Point2::from_values(1, 1),
+                point(-Real::one(), q(-1, 2)),
+                Point2::from_values(-3, -2),
+            )
+            .into()
+        } else {
+            LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(-3, -2))
+                .unwrap()
+                .into()
+        };
+        let path = CurvePath2::try_new(vec![source.into(), next]).unwrap();
         let mut request = CurveFillet2::new(Real::one());
-        request.center = Some(Point2::from_values(0, -1).into());
-        request.contacts[usize::from(reversed)] =
-            Some(CurveFilletContact2::Parameter(q(1, 2).into()));
+        if constraint < 3 {
+            request.center = Some(Point2::from_values(0, -1).into());
+        }
+        request.contacts[usize::from(reversed)] = match constraint {
+            0 | 3 => Some(CurveFilletContact2::Parameter(q(1, 2).into())),
+            1 => Some(CurveFilletContact2::Point(Point2::from_values(0, 0).into())),
+            2 => None,
+            _ => unreachable!(),
+        };
         let path = if reversed {
             path.reversed(&policy).unwrap().into_value()
         } else {
@@ -267,6 +285,7 @@ mod contacts {
         policy: CurveContext,
         reversed: bool,
         mode: CurveCornerMode2,
+        quadratic_line: bool,
     ) {
         // C(t)=(t²,t³), -1<=t<=2. At u=1/3 the retained previous
         // branch approaches the origin in direction -x. The circle centered at
@@ -279,9 +298,19 @@ mod contacts {
             Point2::from_values(0, -4),
             Point2::from_values(4, 8),
         );
-        let line =
-            LineSeg2::try_new(Point2::from_values(4, 8), Point2::from_values(-2, 0)).unwrap();
-        let path = CurvePath2::try_new(vec![curve.into(), line.into()]).unwrap();
+        let line: Curve2 = if quadratic_line {
+            QuadraticBezier2::new(
+                Point2::from_values(4, 8),
+                Point2::from_values(1, 4),
+                Point2::from_values(-2, 0),
+            )
+            .into()
+        } else {
+            LineSeg2::try_new(Point2::from_values(4, 8), Point2::from_values(-2, 0))
+                .unwrap()
+                .into()
+        };
+        let path = CurvePath2::try_new(vec![curve.into(), line]).unwrap();
         let path = if reversed {
             path.reversed(&policy).unwrap().into_value()
         } else {
@@ -320,14 +349,47 @@ mod contacts {
             check_mode(kind, policy, reversed, mode, false)
         }
     }
+    fn quadratic_line_interior_contacts(policy: CurveContext) {
+        for reversed in [false, true] {
+            for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                for constraint in 0..4 {
+                    interior_stationary_contact_mode(policy, reversed, mode, true, constraint);
+                }
+            }
+        }
+    }
+    fn quadratic_line_opposite_sheet(policy: CurveContext) {
+        for reversed in [false, true] {
+            for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                opposite_stationary_sheet_mode(policy, reversed, mode, true);
+            }
+        }
+    }
+    #[test]
+    fn quadratic_line_interior_contacts_strict() {
+        quadratic_line_interior_contacts(CurveContext::STRICT);
+    }
+    #[test]
+    fn quadratic_line_interior_contacts_approximate() {
+        quadratic_line_interior_contacts(CurveContext::APPROXIMATE_512);
+    }
+    #[test]
+    fn quadratic_line_opposite_sheet_strict() {
+        quadratic_line_opposite_sheet(CurveContext::STRICT);
+    }
+    #[test]
+    fn quadratic_line_opposite_sheet_approximate() {
+        quadratic_line_opposite_sheet(CurveContext::APPROXIMATE_512);
+    }
+
     fn interior_stationary_contact_reversed(policy: CurveContext, reversed: bool) {
         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-            interior_stationary_contact_mode(policy, reversed, mode)
+            interior_stationary_contact_mode(policy, reversed, mode, false, 0)
         }
     }
     fn opposite_stationary_sheet(policy: CurveContext, reversed: bool) {
         for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
-            opposite_stationary_sheet_mode(policy, reversed, mode)
+            opposite_stationary_sheet_mode(policy, reversed, mode, false)
         }
     }
 }

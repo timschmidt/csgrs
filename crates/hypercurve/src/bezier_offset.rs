@@ -112411,6 +112411,60 @@ impl BezierParallel2 {
         self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)
     }
 
+    /// A finite cell may share its normal field with an incident extension
+    /// only when that extension stays on the same regular source sheet.
+    fn source_tangent_field_in_regular_domain(
+        &self,
+        domain: CurveParameterDomain2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
+        let field = match self.source_oriented_regularized_tangent_field(domain.finite, policy)? {
+            Classification::Decided(field) => field,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let (Some(frame), Some(ray)) = (field.as_deref(), domain.extension) else {
+            return Ok(Classification::Decided(field));
+        };
+        match ray.is_empty(policy)? {
+            Classification::Decided(true) => return Ok(Classification::Decided(field)),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        let differential = self.differential()?;
+        let dot = polynomial_add(
+            &polynomial_multiply(&differential.tangent_x, &frame.x),
+            &polynomial_multiply(&differential.tangent_y, &frame.y),
+        );
+        let strict = policy.strict_counterpart();
+        match real_sign(&Real::eval_poly(&dot, ray.anchor), &strict) {
+            Some(RealSign::Positive) => {}
+            Some(_) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        let polynomial = match polynomial_from_coefficients(dot, &strict)? {
+            Classification::Decided(Some(polynomial)) => polynomial,
+            Classification::Decided(None) => {
+                unreachable!("the dot product was positive at the anchor")
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        match (SelectedThirdAxisDomain2::IncidentRay {
+            anchor: ray.anchor,
+            direction: ray.direction,
+            barrier: ray.barrier,
+        })
+        .isolate(&polynomial, &strict)?
+        {
+            Classification::Decided(roots) if roots.is_empty() => {
+                Ok(Classification::Decided(field))
+            }
+            Classification::Decided(_) => {
+                Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+            }
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
     fn source_oriented_regularized_tangent_field_at_interior(
         &self,
         interior: &Real,
@@ -112690,6 +112744,28 @@ impl BezierParallel2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         Ok(Classification::Decided((point, tangent)))
+    }
+
+    /// Tests the original source tangent at a retained parameter without
+    /// materializing its coordinates or replacing its scalar authority.
+    pub(crate) fn source_tangent_nonzero_at(
+        &self,
+        parameter: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let speed = parallel_speed_squared_polynomial(self.differential()?);
+        Ok(
+            match parameter.polynomial_sign(&speed, &policy.strict_counterpart())? {
+                Classification::Decided(RealSign::Positive) => Classification::Decided(true),
+                Classification::Decided(RealSign::Zero) => Classification::Decided(false),
+                Classification::Decided(RealSign::Negative) => {
+                    return Err(CurveError::Topology(
+                        "source tangent had negative squared speed".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
     /// Retains a point on one certified regular carrier range without
@@ -113206,6 +113282,29 @@ impl BezierParallel2 {
         domain: CurveParameterDomain2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIncidence2>> {
+        self.point_incidence_with_tangent_field(point, domain, None, policy)
+    }
+
+    pub(crate) fn point_incidence_in_regular_domain(
+        &self,
+        point: &Point2,
+        domain: CurveParameterDomain2<'_>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIncidence2>> {
+        let frame = match self.source_tangent_field_in_regular_domain(domain, policy)? {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        self.point_incidence_with_tangent_field(point, domain, frame.as_deref(), policy)
+    }
+
+    fn point_incidence_with_tangent_field(
+        &self,
+        point: &Point2,
+        domain: CurveParameterDomain2<'_>,
+        frame: Option<&BezierAnalyticParallelTangentField2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierParallelIncidence2>> {
         let distance_sign = match real_sign(self.distance(), policy) {
             Some(sign) => sign,
             None => {
@@ -113234,11 +113333,23 @@ impl BezierParallel2 {
             return common_polynomial_roots(delta_x, delta_y, domain, policy);
         }
 
-        let differential = self.differential()?;
-        let speed_squared = parallel_speed_squared_polynomial(differential);
+        let (tangent_x, tangent_y) = match frame {
+            Some(frame) => (frame.x.as_slice(), frame.y.as_slice()),
+            None => {
+                let differential = self.differential()?;
+                (
+                    differential.tangent_x.as_slice(),
+                    differential.tangent_y.as_slice(),
+                )
+            }
+        };
+        let speed_squared = polynomial_add(
+            &polynomial_multiply(tangent_x, tangent_x),
+            &polynomial_multiply(tangent_y, tangent_y),
+        );
         let orthogonality = polynomial_add(
-            &polynomial_multiply(&delta_x, &differential.tangent_x),
-            &polynomial_multiply(&delta_y, &differential.tangent_y),
+            &polynomial_multiply(&delta_x, tangent_x),
+            &polynomial_multiply(&delta_y, tangent_y),
         );
         let weighted_distance = match source.weight {
             Some(weight) => polynomial_scale(weight, self.distance()),
@@ -113260,8 +113371,8 @@ impl BezierParallel2 {
             };
 
         let orientation = polynomial_subtract(
-            &polynomial_multiply(&delta_y, &differential.tangent_x),
-            &polynomial_multiply(&delta_x, &differential.tangent_y),
+            &polynomial_multiply(&delta_y, tangent_x),
+            &polynomial_multiply(&delta_x, tangent_y),
         );
         let orientation = match source.weight {
             Some(weight) => polynomial_multiply(&orientation, weight),
@@ -117882,7 +117993,7 @@ impl BezierParallel2 {
     /// Keeps selected components and isolated contacts on the same regular
     /// source branches. A component query needs correlated domain clipping,
     /// including its endpoint frames, before a family can be published.
-    fn parallel_intersections_on_regular_domains(
+    pub(crate) fn parallel_intersections_on_regular_domains(
         &self,
         other: &Self,
         domains: [CurveParameterDomain2<'_>; 2],
@@ -117893,6 +118004,20 @@ impl BezierParallel2 {
         let closed_finite = domains
             .iter()
             .all(|domain| domain.extension.is_none() && domain.inclusion == [true; 2]);
+        let mut extension_frames = None;
+        if domains.iter().any(|domain| domain.extension.is_some()) {
+            let mut frames = [None, None];
+            for (axis, parallel) in [self, other].into_iter().enumerate() {
+                frames[axis] =
+                    match parallel.source_tangent_field_in_regular_domain(domains[axis], policy)? {
+                        Classification::Decided(frame) => frame,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+            }
+            extension_frames = Some(frames);
+        }
         // A rational image keeps its exact source chart even when a retained
         // range supplies a branch-oriented tangent frame for the other operand.
         let rational = if closed_finite && matches!(query, ParameterComponentQuery2::RetainFinite) {
@@ -117925,20 +118050,26 @@ impl BezierParallel2 {
             }
         }
         let [first_range, second_range] = ranges;
-        let first_frame =
+        let first_frame = if let Some(frames) = &extension_frames {
+            frames[0].clone()
+        } else {
             match self.source_oriented_regularized_tangent_field(first_range, policy)? {
                 Classification::Decided(frame) => frame,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
-            };
-        let second_frame =
+            }
+        };
+        let second_frame = if let Some(frames) = &extension_frames {
+            frames[1].clone()
+        } else {
             match other.source_oriented_regularized_tangent_field(second_range, policy)? {
                 Classification::Decided(frame) => frame,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
-            };
+            }
+        };
         // Unit-span bounds and root enumeration are valid only for the
         // queried unit spans. Retained and extended ranges own their own
         // projection, even when neither source needs a cancelled frame.
@@ -118178,6 +118309,7 @@ impl BezierParallel2 {
             let strict = policy.strict_counterpart();
             let mut rational_images = [None, None];
             let mut endpoint_cusp = [false, false];
+            let mut regular_sources = true;
             for (index, (parallel, domain)) in [self, other].into_iter().zip(domains).enumerate() {
                 match real_sign(parallel.distance(), &strict) {
                     Some(RealSign::Zero) => {
@@ -118198,7 +118330,19 @@ impl BezierParallel2 {
                         )? {
                             Classification::Decided(true) => endpoint_cusp[index] = true,
                             Classification::Decided(false) => {
-                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                                if retain_finite {
+                                    // Native overlap evidence is attached to
+                                    // regular retained carriers; it cannot
+                                    // supply one frame across this cusp.
+                                    return Ok(Classification::Uncertain(
+                                        UncertaintyReason::Boundary,
+                                    ));
+                                }
+                                // A general domain can contain several normal
+                                // sheets. Its unsquared selector excludes the
+                                // undefined speed-zero point on every sheet.
+                                regular_sources = false;
+                                continue;
                             }
                             Classification::Uncertain(reason) => {
                                 return Ok(Classification::Uncertain(reason));
@@ -118225,7 +118369,7 @@ impl BezierParallel2 {
                     rational_images[index] = Some(component.curve().parallel_left(Real::zero())?);
                 }
             }
-            if endpoint_cusp[0] || endpoint_cusp[1] {
+            if regular_sources && (endpoint_cusp[0] || endpoint_cusp[1]) {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::record(
                     "hypercurve",
@@ -118235,7 +118379,7 @@ impl BezierParallel2 {
                 return self
                     .parallel_intersections_on_regular_domains(other, domains, query, policy);
             }
-            if retain_finite {
+            if retain_finite && regular_sources {
                 match rational_images.each_ref() {
                     [Some(first), Some(second)] => {
                         if domains.iter().any(|domain| domain.inclusion != [true; 2]) {
@@ -118761,10 +118905,14 @@ impl BezierParallel2 {
     /// divide the structural diagonal from both radical equations. All routes
     /// retain the ordered operand roles. Finite region queries retain every
     /// component map; corner queries retain components and isolated contacts.
+    /// `regular_sources` selects one-sided endpoint frames only for domains
+    /// already partitioned into regular source cells, with same-sheet rays.
+    /// General domains keep their pointwise normal selector across singularities.
     pub(crate) fn self_intersections_in_domain(
         &self,
         domains: [CurveParameterDomain2<'_>; 2],
         query: ParameterComponentQuery2<'_>,
+        regular_sources: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
         let query = query.without_identity_constraints(policy);
@@ -118787,7 +118935,47 @@ impl BezierParallel2 {
                 &second, domains, false, true, query, None, policy,
             );
         }
-        let Some(system) = (match parallel_pair_equation_system(self, self, false, policy)? {
+        let mut frames = [None, None];
+        if regular_sources {
+            let speed = parallel_speed_squared_polynomial(self.differential()?);
+            for (axis, domain) in domains.into_iter().enumerate() {
+                match polynomial_is_nonzero_on_parameter_range(&speed, domain.finite, policy)? {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        match polynomial_roots_touch_only_range_endpoints(
+                            &speed,
+                            domain.finite,
+                            policy,
+                        )? {
+                            Classification::Decided(true) => {}
+                            Classification::Decided(false) => {
+                                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                            }
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                frames[axis] = match self.source_tangent_field_in_regular_domain(domain, policy)? {
+                    Classification::Decided(frame) => frame,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            }
+        }
+        let Some(system) = (match parallel_pair_equation_system_with_tangent_fields(
+            self,
+            self,
+            frames[0].as_deref(),
+            frames[1].as_deref(),
+            false,
+            policy,
+        )? {
             Classification::Decided(system) => system,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -118917,11 +119105,12 @@ impl BezierParallel2 {
         if let Some(source_projection) = source_isolated_projection {
             prepend_parallel_pair_projection(&mut projection, source_projection);
         }
-        let result = self.replay_parallel_pair_projection(
+        let result = self.replay_parallel_pair_projection_with_ranges(
             self,
             &system,
             projection,
             BezierParallelPairParameterSelection2::OffDiagonal,
+            regular_sources.then(|| domains.map(|domain| domain.finite)),
             policy,
         )?;
         let result = match result {
@@ -119786,7 +119975,7 @@ impl BezierParallel2 {
     /// contact. At a stationary endpoint the first nonzero Taylor coefficient
     /// of each curvature predicate supplies the exact local sign; no new
     /// scalar image or root isolation is needed.
-    fn parallel_derivative_scale_sign_on_regular_range(
+    pub(crate) fn parallel_derivative_scale_sign_on_regular_range(
         &self,
         parameter: &CurveParameter2,
         range: &CurveParameterRange2,
@@ -131223,6 +131412,25 @@ pub(crate) struct BezierParallelDerivativeConstraint2 {
 }
 
 impl BezierParallelDerivativeConstraint2 {
+    /// Replays the constant orientation on a source cell already partitioned
+    /// at every source singularity and original-parallel cusp. The cell's
+    /// endpoints use its one-sided orientation, including a stationary seam.
+    pub(crate) fn selects_regular_range(
+        &self,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        let strict = policy.strict_counterpart();
+        let interior = match range.strict_interior_scalar(&strict)? {
+            Classification::Decided(interior) => interior,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(self
+            .parallel
+            .parallel_derivative_scale_sign(&interior.into(), &strict)?
+            .map(|sign| sign == self.expected))
+    }
+
     fn polynomials(&self) -> CurveResult<&BezierParallelDerivativePolynomials2> {
         match self.polynomials.get_or_init(|| {
             self.parallel
@@ -139361,6 +139569,53 @@ mod conversion_tests {
                 ),
                 "an open interior source cusp is not a one-sided frame"
             );
+
+            // Component queries retain separate parameter intervals instead
+            // of attaching one frame to the whole range. Both regular sheets
+            // survive, while their undefined shared source parameter does not.
+            let components = match parallel
+                .parallel_intersections_in_domain(
+                    &parallel,
+                    [CurveParameterDomain2::new(&interior, None); 2],
+                    ParameterComponentQuery2::AllComponents(None),
+                    &policy,
+                )
+                .unwrap()
+            {
+                Classification::Decided(result) => result,
+                Classification::Uncertain(reason) => {
+                    panic!("the separate pointwise components must decide: {reason:?}")
+                }
+            };
+            let (intersections, components) = components.into_parts();
+            assert!(intersections.is_complete());
+            assert!(!components.is_empty());
+            for numerator in [3_i8, 4, 5] {
+                let parameter =
+                    CurveParameter2::from((Real::from(numerator) / Real::from(8_i8)).unwrap());
+                let mut owners = 0;
+                for component in &components {
+                    match component
+                        .constrain([Some(&parameter), None], &policy)
+                        .unwrap()
+                    {
+                        Classification::Decided(CurveParameterComponentSelection2::Empty) => {}
+                        Classification::Decided(CurveParameterComponentSelection2::Selected(
+                            pair,
+                        )) => {
+                            owners += 1;
+                            for selected in pair {
+                                assert_eq!(
+                                    selected.same_value(&parameter, &policy).unwrap(),
+                                    Classification::Decided(true),
+                                );
+                            }
+                        }
+                        _ => panic!("one exact contact must decide each component's owner"),
+                    }
+                }
+                assert_eq!(owners, usize::from(numerator != 4));
+            }
         }
     }
 
@@ -174435,6 +174690,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 .self_intersections_in_domain(
                     [CurveParameterDomain2::new(&range, None); 2],
                     ParameterComponentQuery2::RetainFinite,
+                    false,
                     &policy,
                 )
                 .unwrap()
@@ -174843,6 +175099,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 .each_ref()
                                 .map(|range| CurveParameterDomain2::new(range, None)),
                             ParameterComponentQuery2::FirstComponent(None),
+                            false,
                             &policy,
                         )
                         .unwrap()
@@ -174895,6 +175152,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     ),
                                 ],
                                 ParameterComponentQuery2::FirstComponent(None),
+                                false,
                                 &policy,
                             )
                             .unwrap()
@@ -175504,6 +175762,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                         .each_ref()
                                         .map(|range| CurveParameterDomain2::new(range, None)),
                                     ParameterComponentQuery2::FirstComponent(None),
+                                    false,
                                     &policy,
                                 )
                             })
@@ -175627,6 +175886,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 .each_ref()
                                 .map(|range| CurveParameterDomain2::new(range, None)),
                             ParameterComponentQuery2::FirstComponent(None),
+                            false,
                             &policy,
                         )
                     })
@@ -175706,6 +175966,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             .each_ref()
                             .map(|range| CurveParameterDomain2::new(range, None)),
                         ParameterComponentQuery2::RetainFinite,
+                        false,
                         &policy,
                     )
                     .unwrap()
@@ -175844,6 +176105,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     parallel.self_intersections_in_domain(
                                         axes.map(|axis| domains[axis]),
                                         ParameterComponentQuery2::FirstComponent(None),
+                                        false,
                                         &policy,
                                     )
                                 })
@@ -175928,6 +176190,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             .each_ref()
                             .map(|range| CurveParameterDomain2::new(range, None)),
                         ParameterComponentQuery2::FirstComponent(None),
+                        false,
                         &policy,
                     )
                 })
@@ -175990,6 +176253,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                     .each_ref()
                                     .map(|range| CurveParameterDomain2::new(range, None)),
                                 ParameterComponentQuery2::FirstComponent(None),
+                                false,
                                 &policy,
                             )
                         })
@@ -176039,6 +176303,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 parallel.self_intersections_in_domain(
                                     domains,
                                     ParameterComponentQuery2::FirstComponent(None),
+                                    false,
                                     &policy,
                                 )
                             })

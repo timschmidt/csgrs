@@ -1504,6 +1504,350 @@ impl FilletContactSelection2 {
     }
 }
 
+/// Discovers exact pair centers while the original incident sources remain
+/// available for cut reconstruction and constrained component replay.
+pub(super) fn parallel_pair_centers(
+    sources: [FilletParallelSource2<'_>; 2],
+    supports: [&BezierParallel2; 2],
+    domains: [FilletContactDomain2; 2],
+    families: [CurveFamily2; 2],
+    normal_constraints: Option<&[crate::bezier_offset::BezierParallelDerivativeConstraint2; 2]>,
+    policy: &CurveContext,
+) -> ExactCurveResult<FilletCenters2> {
+    let mut centers = FilletCenters2::default();
+    let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Fillet, families[0], cause);
+    let blocked = |reason| ExactCurveError::blocked(CurveOperation2::Fillet, families[0], reason);
+    let identical_contact_curves = supports[0] == supports[1]
+        && sources[0].parallel_distance() == sources[1].parallel_distance();
+    let original_ranges = sources.map(|source| source.curve_parameter_range());
+    let mut incidents = [None, None];
+    let mut expanded = [None, None];
+    let mut partitions = [None, None];
+    for axis in 0..2 {
+        if domains[axis].mode() == CurveCornerMode2::TrimOrExtend {
+            let incident =
+                sources[axis].incident_domain(supports[axis], axis == 0, families[axis], policy)?;
+            expanded[axis] = Some(
+                match incident
+                    .expanded_range(&original_ranges[axis], policy)
+                    .map_err(invalid)?
+                {
+                    Classification::Decided(range) => range,
+                    Classification::Uncertain(reason) => return Err(blocked(reason)),
+                },
+            );
+            incidents[axis] = Some(incident);
+        }
+        let range = expanded[axis].as_ref().unwrap_or(&original_ranges[axis]);
+        let source = supports[axis].with_distance(sources[axis].parallel_distance());
+        let analysis = match source
+            .singularity_analysis(range, policy)
+            .map_err(invalid)?
+        {
+            Classification::Decided(analysis) => analysis,
+            Classification::Uncertain(reason) => return Err(blocked(reason)),
+        };
+        if !analysis.source_is_regular() || !analysis.parallel_is_cusp_free() {
+            partitions[axis] = Some(match analysis.regular_subranges(policy).map_err(invalid)? {
+                Classification::Decided(cells) => cells,
+                Classification::Uncertain(reason) => return Err(blocked(reason)),
+            });
+        }
+    }
+    let finite = [0, 1].map(|axis| expanded[axis].as_ref().unwrap_or(&original_ranges[axis]));
+    let cells = [0, 1].map(|axis| {
+        partitions[axis]
+            .as_deref()
+            .unwrap_or(std::slice::from_ref(finite[axis]))
+    });
+    let mut selected_cells = [Vec::new(), Vec::new()];
+    if let Some(constraints) = normal_constraints {
+        for axis in 0..2 {
+            for range in cells[axis] {
+                selected_cells[axis].push(
+                    match constraints[axis]
+                        .selects_regular_range(range, policy)
+                        .map_err(invalid)?
+                    {
+                        Classification::Decided(selected) => selected,
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    },
+                );
+            }
+        }
+    }
+    let regular_frames = partitions.iter().any(Option::is_some);
+    for first in 0..cells[0].len() {
+        'second: for second in 0..cells[1].len() {
+            let indices = [first, second];
+            let ranges = [0, 1].map(|axis| &cells[axis][indices[axis]]);
+            let mut parameter_domains = ranges.map(|range| CurveParameterDomain2::new(range, None));
+            for axis in 0..2 {
+                if partitions[axis].is_some() {
+                    let retains_lower = (axis == 0) != sources[axis].is_reversed();
+                    parameter_domains[axis].inclusion = [!retains_lower, retains_lower];
+                }
+                if let Some(incident) = &incidents[axis] {
+                    let ray = incident.parameter_ray();
+                    let last_cell = match ray.direction {
+                        crate::BezierParameterRayDirection2::Increasing => {
+                            indices[axis] + 1 == cells[axis].len()
+                        }
+                        crate::BezierParameterRayDirection2::Decreasing => indices[axis] == 0,
+                    };
+                    if last_cell {
+                        match ray.is_empty(policy).map_err(invalid)? {
+                            Classification::Decided(true) => {}
+                            Classification::Decided(false) => {
+                                parameter_domains[axis].extension = Some(ray)
+                            }
+                            Classification::Uncertain(reason) => return Err(blocked(reason)),
+                        }
+                    }
+                }
+            }
+            if normal_constraints.is_some() {
+                for axis in 0..2 {
+                    if parameter_domains[axis].extension.is_none()
+                        && !selected_cells[axis][indices[axis]]
+                    {
+                        continue 'second;
+                    }
+                }
+            }
+            // The source analysis already proves a constant nonzero
+            // derivative scale on each finite cell. Its selected normal also
+            // owns the cell's stationary boundary. Rays can cross additional
+            // original-offset cusps and keep their algebraic normal selector.
+            let constraints = parameter_domains
+                .iter()
+                .any(|domain| domain.extension.is_some())
+                .then_some(normal_constraints)
+                .flatten();
+            let query = crate::bezier_offset::ParameterComponentQuery2::AllComponents(constraints);
+            let result = if identical_contact_curves {
+                supports[0].self_intersections_in_domain(
+                    parameter_domains,
+                    query,
+                    regular_frames,
+                    policy,
+                )
+            } else if regular_frames {
+                supports[0].parallel_intersections_on_regular_domains(
+                    supports[1],
+                    parameter_domains,
+                    query,
+                    policy,
+                )
+            } else {
+                supports[0].parallel_intersections_in_domain(
+                    supports[1],
+                    parameter_domains,
+                    query,
+                    policy,
+                )
+            }
+            .map_err(invalid)?;
+            let (intersections, components) = match result {
+                Classification::Decided(result) => result.into_parts(),
+                Classification::Uncertain(reason) => return Err(blocked(reason)),
+            };
+            if !intersections.is_complete() {
+                return Err(blocked(crate::UncertaintyReason::Predicate));
+            }
+            centers.components.extend(components);
+            'contacts: for contact in intersections.contacts() {
+                let parameters = [contact.first_parameter(), contact.second_parameter()];
+                // The domain owns stationary seams before either isolated
+                // contacts or positive-dimensional families are replayed.
+                for component in &centers.components {
+                    match component
+                        .contains_pair(parameters[0], parameters[1], policy)
+                        .map_err(invalid)?
+                    {
+                        Classification::Decided(true) => continue 'contacts,
+                        Classification::Decided(false) => {}
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    }
+                }
+                for axis in 0..2 {
+                    if !sources[axis].parameter_is_admissible(
+                        parameters[axis],
+                        axis == 0,
+                        domains[axis],
+                        incidents[axis].as_ref(),
+                        families[axis],
+                        policy,
+                    )? {
+                        continue 'contacts;
+                    }
+                }
+                let center = if regular_frames {
+                    regular_parallel_pair_center(
+                        sources, supports, parameters, ranges, families, policy,
+                    )?
+                } else {
+                    let point = analytic_parallel_point_evidence(
+                        supports[0],
+                        parameters[0],
+                        CurveOperation2::Fillet,
+                        families[0],
+                        policy,
+                    )?;
+                    let reversed = sources[0]
+                        .support_reverses_source_at(
+                            supports[0],
+                            parameters[0],
+                            families[0],
+                            policy,
+                        )?
+                        .zip(sources[1].support_reverses_source_at(
+                            supports[1],
+                            parameters[1],
+                            families[1],
+                            policy,
+                        )?)
+                        .map(|(first, second)| first != second);
+                    let orient = |sign| {
+                        reversed.map(|reverse| {
+                            if reverse {
+                                reverse_fillet_sign(sign)
+                            } else {
+                                sign
+                            }
+                        })
+                    };
+                    FilletCenterWitness2 {
+                        source_frames: [None, None],
+                        point,
+                        previous_parameter: Some(parameters[0].clone()),
+                        next_parameter: Some(parameters[1].clone()),
+                        retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+                            cross: contact.tangent_cross_sign().and_then(orient),
+                            dot: contact.tangent_dot_sign().and_then(orient),
+                            center_parallel: None,
+                            source_direction: None,
+                            canonical_anchor_curve: None,
+                            deferred_arc_contact: None,
+                        }),
+                    }
+                };
+                centers.push(center);
+            }
+        }
+    }
+    Ok(centers)
+}
+
+/// Retains the source side that survives the cut. The center support's own
+/// derivative scale does not determine the original curve's orientation.
+fn regular_parallel_pair_center(
+    sources: [FilletParallelSource2<'_>; 2],
+    supports: [&BezierParallel2; 2],
+    parameters: [&CurveParameter2; 2],
+    ranges: [&CurveParameterRange2; 2],
+    families: [CurveFamily2; 2],
+    policy: &CurveContext,
+) -> ExactCurveResult<FilletCenterWitness2> {
+    let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Fillet, families[0], cause);
+    let blocked = |reason| ExactCurveError::blocked(CurveOperation2::Fillet, families[0], reason);
+    let mut point = None;
+    let mut frames = [None, None];
+    let mut limiting_frames = [false; 2];
+    let mut reversed = false;
+    for axis in 0..2 {
+        let source = supports[axis].with_distance(sources[axis].parallel_distance());
+        let pointwise_scale = source
+            .parallel_derivative_scale_sign(parameters[axis], policy)
+            .map_err(invalid)?;
+        let stationary = pointwise_scale == Classification::Decided(RealSign::Zero);
+        let scale = match if stationary {
+            source
+                .parallel_derivative_scale_sign_on_regular_range(
+                    parameters[axis],
+                    ranges[axis],
+                    policy,
+                )
+                .map_err(invalid)?
+        } else {
+            pointwise_scale
+        } {
+            Classification::Decided(RealSign::Zero) => {
+                return Err(blocked(crate::UncertaintyReason::Boundary));
+            }
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Err(blocked(reason)),
+        };
+        let (center, tangent) = match supports[axis]
+            .regular_source_point_and_tangent_support(
+                supports[axis],
+                parameters[axis],
+                ranges[axis],
+                RealSign::Positive,
+                policy,
+            )
+            .map_err(invalid)?
+        {
+            Classification::Decided(frame) => frame,
+            Classification::Uncertain(reason) => return Err(blocked(reason)),
+        };
+        if axis == 0 {
+            point = Some(center);
+        }
+        limiting_frames[axis] = stationary
+            || !matches!(
+                source.source_tangent_nonzero_at(parameters[axis], policy),
+                Ok(Classification::Decided(true))
+            );
+        reversed ^= sources[axis].is_reversed() ^ (scale == RealSign::Negative);
+        frames[axis] = Some(FilletSourceFrame2 {
+            tangent,
+            derivative_scale: scale,
+        });
+    }
+    let [first, second] = frames
+        .each_ref()
+        .map(|frame| &frame.as_ref().unwrap().tangent);
+    let orient = |sign| {
+        if reversed {
+            reverse_fillet_sign(sign)
+        } else {
+            sign
+        }
+    };
+    let cross = match first.tangent_cross_sign(second, policy).map_err(invalid)? {
+        Classification::Decided(sign) => orient(sign),
+        Classification::Uncertain(reason) => return Err(blocked(reason)),
+    };
+    let dot = match first.tangent_dot_sign(second, policy).map_err(invalid)? {
+        Classification::Decided(sign) => orient(sign),
+        Classification::Uncertain(reason) => return Err(blocked(reason)),
+    };
+    // Ordinary cuts retain their native point and support evidence. A
+    // limiting frame is needed only at a stationary contact, or when an
+    // ordinary tangent certificate is unavailable; forcing it on every
+    // contact needlessly changes the representation used by later edits.
+    for (frame, needed) in frames.iter_mut().zip(limiting_frames) {
+        if !needed {
+            *frame = None;
+        }
+    }
+    Ok(FilletCenterWitness2 {
+        source_frames: frames,
+        point: point.unwrap(),
+        previous_parameter: Some(parameters[0].clone()),
+        next_parameter: Some(parameters[1].clone()),
+        retained_anchor_evidence: Some(RetainedFilletAnchorEvidence2 {
+            cross: Some(cross),
+            dot: Some(dot),
+            center_parallel: None,
+            source_direction: None,
+            canonical_anchor_curve: None,
+            deferred_arc_contact: None,
+        }),
+    })
+}
+
 /// Replays component constraints while the prepared offsets remain borrowed.
 /// No family result or copied center support escapes the carrier solver.
 pub(super) struct FilletComponentReplay2<'a, 'b> {
@@ -1550,7 +1894,6 @@ impl FilletComponentReplay2<'_, '_> {
             domains,
             families,
         };
-        let mut prepared = None;
         let mut selected_pairs = Vec::new();
         for component in components {
             if let (Some(requested), Some(image)) =
@@ -1559,12 +1902,7 @@ impl FilletComponentReplay2<'_, '_> {
             {
                 continue;
             }
-            if prepared.is_none() {
-                prepared = Some(replay.contact_constraints(binding, policy)?);
-            }
-            let constraints = prepared
-                .as_ref()
-                .expect("constraints for this center support");
+            let constraints = replay.contact_constraints(binding, component, policy)?;
             for first in constraints[0].alternatives() {
                 for second in constraints[1].alternatives() {
                     if let Some(corner) =
@@ -1589,20 +1927,32 @@ impl FilletComponentReplay2<'_, '_> {
     fn contact_constraints(
         &self,
         binding: &FilletConstraintBinding2<'_>,
+        component: &crate::bezier_offset::CurveParameterComponent2,
         policy: &CurveContext,
     ) -> ExactCurveResult<[FilletContactSelection2; 2]> {
         let data = self;
         let mut constraints = [FilletContactSelection2::Any, FilletContactSelection2::Any];
         for (axis, constraint) in constraints.iter_mut().enumerate() {
             let (source, support) = data.parallel(axis);
-            *constraint = binding.parallel_contact_parameters(
-                axis,
-                source,
-                support,
-                data.domains[axis],
-                data.families[axis],
-                policy,
-            )?;
+            *constraint =
+                if let Some(CurveFilletContact2::Point(point)) = &binding.request.contacts[axis] {
+                    self.point_parameters(
+                        component,
+                        axis,
+                        &support.with_distance(source.parallel_distance()),
+                        point,
+                        policy,
+                    )?
+                } else {
+                    binding.parallel_contact_parameters(
+                        axis,
+                        source,
+                        support,
+                        data.domains[axis],
+                        data.families[axis],
+                        policy,
+                    )?
+                };
         }
         if binding.request.contacts.iter().all(Option::is_none)
             && let Some(center) = &binding.request.center
@@ -1610,34 +1960,59 @@ impl FilletComponentReplay2<'_, '_> {
             // A correspondence transports one selected contact to the other.
             // A constant center leaves both contact axes free and still needs
             // contact constraints; it cannot select an arbitrary representative.
-            constraints[0] = self.center_parameters(0, center, policy)?;
+            constraints[0] =
+                self.point_parameters(component, 0, self.parallel(0).1, center, policy)?;
             if matches!(constraints[0], FilletContactSelection2::Any) {
-                constraints[1] = self.center_parameters(1, center, policy)?;
+                constraints[1] =
+                    self.point_parameters(component, 1, self.parallel(1).1, center, policy)?;
             }
         }
         Ok(constraints)
     }
 
-    fn center_parameters(
+    fn point_parameters(
         &self,
+        component: &crate::bezier_offset::CurveParameterComponent2,
         axis: usize,
+        support: &BezierParallel2,
         point: &CurvePoint2,
         policy: &CurveContext,
     ) -> ExactCurveResult<FilletContactSelection2> {
-        let data = self;
-        let family = data.families[axis];
-        let (source, support) = data.parallel(axis);
-        let incident = (data.domains[axis].mode() == CurveCornerMode2::TrimOrExtend)
-            .then(|| source.incident_domain(support, axis == 0, family, policy))
+        let family = self.families[axis];
+        let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause);
+        let blocked = |reason| ExactCurveError::blocked(CurveOperation2::Fillet, family, reason);
+        let (range, extended) = match component
+            .source_chart_range(axis, policy)
+            .map_err(invalid)?
+        {
+            Classification::Decided(chart) => chart,
+            Classification::Uncertain(reason) => return Err(blocked(reason)),
+        };
+        let (source, center_support) = self.parallel(axis);
+        let incident = extended
+            .then(|| source.incident_domain(center_support, axis == 0, family, policy))
             .transpose()?;
-        fillet_point_parameters(
-            support,
-            point,
-            &source.curve_parameter_range(),
-            incident.as_ref(),
-            family,
-            policy,
-        )
+        if let Some(point) = point.coordinates() {
+            let domain = CurveParameterDomain2::new(
+                &range,
+                incident.as_ref().map(|incident| incident.parameter_ray()),
+            );
+            return match support
+                .point_incidence_in_regular_domain(point, domain, policy)
+                .map_err(invalid)?
+            {
+                Classification::Decided(crate::BezierParallelIncidence2::EntireCurve) => {
+                    Ok(FilletContactSelection2::Any)
+                }
+                Classification::Decided(crate::BezierParallelIncidence2::Parameters(
+                    parameters,
+                )) => Ok(FilletContactSelection2::Parameters(
+                    parameters.into_iter().map(CurveParameter2::from).collect(),
+                )),
+                Classification::Uncertain(reason) => Err(blocked(reason)),
+            };
+        }
+        fillet_point_parameters(support, point, &range, incident.as_ref(), family, policy)
     }
 
     fn select(
@@ -1704,24 +2079,41 @@ impl FilletComponentReplay2<'_, '_> {
             }
         }
         selected_pairs.push(selected.clone());
-        let [previous, next] = &selected;
-        let point = match component.point_image() {
-            Some(point) => point.clone(),
-            None => analytic_parallel_point_evidence(
-                data.parallel(0).1,
-                previous,
-                CurveOperation2::Fillet,
-                data.families[0],
-                policy,
-            )?,
-        };
-        let center = FilletCenterWitness2 {
-            source_frames: [None, None],
-            point,
-            previous_parameter: Some(previous.clone()),
-            next_parameter: Some(next.clone()),
-            retained_anchor_evidence: Some(self.tangent_evidence(&selected, policy)?),
-        };
+        let pairs = [self.parallel(0), self.parallel(1)];
+        let mut ranges = [None, None];
+        for (axis, range) in ranges.iter_mut().enumerate() {
+            *range = Some(
+                match component
+                    .source_chart_range(axis, policy)
+                    .map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Fillet,
+                            data.families[axis],
+                            cause,
+                        )
+                    })? {
+                    Classification::Decided((range, _)) => range,
+                    Classification::Uncertain(reason) => {
+                        return Err(ExactCurveError::blocked(
+                            CurveOperation2::Fillet,
+                            data.families[axis],
+                            reason,
+                        ));
+                    }
+                },
+            );
+        }
+        let mut center = regular_parallel_pair_center(
+            pairs.map(|(source, _)| source),
+            pairs.map(|(_, support)| support),
+            [&selected[0], &selected[1]],
+            ranges.each_ref().map(|range| range.as_ref().unwrap()),
+            data.families,
+            policy,
+        )?;
+        if let Some(point) = component.point_image() {
+            center.point = point.clone();
+        }
         Ok(
             match fillet_corner_from_center(
                 data.offsets[0],
@@ -1738,78 +2130,6 @@ impl FilletComponentReplay2<'_, '_> {
                 FilletCornerSelection2::Outside | FilletCornerSelection2::Degenerate => None,
             },
         )
-    }
-
-    fn tangent_evidence(
-        &self,
-        parameters: &[CurveParameter2; 2],
-        policy: &CurveContext,
-    ) -> ExactCurveResult<RetainedFilletAnchorEvidence2> {
-        let invalid =
-            |cause| ExactCurveError::invalid(CurveOperation2::Fillet, self.families[0], cause);
-        let blocked =
-            |reason| ExactCurveError::blocked(CurveOperation2::Fillet, self.families[0], reason);
-        let (first, first_support) = self.parallel(0);
-        let (second, second_support) = self.parallel(1);
-        let source = first_support.with_distance(first.parallel_distance());
-        let direction = match source
-            .parallel_derivative_scale_sign(&parameters[0], policy)
-            .map_err(invalid)?
-        {
-            Classification::Decided(RealSign::Zero) => {
-                return Err(blocked(crate::UncertaintyReason::Boundary));
-            }
-            Classification::Decided(sign) => {
-                if first.is_reversed() {
-                    reverse_fillet_sign(sign)
-                } else {
-                    sign
-                }
-            }
-            Classification::Uncertain(reason) => return Err(blocked(reason)),
-        };
-        // The component owns the selected parameters. Retain their oriented
-        // source-tangent relation just as the isolated-contact kernel does,
-        // without reconstructing Cartesian tangent coordinates or roots.
-        let tangent = match crate::BezierAlgebraicChord2::from_certified_retained_parallel_oriented_unit_tangent(
-            source,
-            &parameters[0],
-            direction,
-            policy,
-        ).map_err(invalid)? {
-            Classification::Decided(tangent) => tangent,
-            Classification::Uncertain(reason) => return Err(blocked(reason)),
-        };
-        let other = second_support.with_distance(second.parallel_distance());
-        let relation = |cross| {
-            let one = Real::one();
-            let zero = Real::zero();
-            match tangent
-                .tangent_cross_dot_parallel_linear_combination_sign(
-                    &other,
-                    &parameters[1],
-                    if cross { &one } else { &zero },
-                    if cross { &zero } else { &one },
-                    policy,
-                )
-                .map_err(invalid)?
-            {
-                Classification::Decided(sign) => Ok(if second.is_reversed() {
-                    reverse_fillet_sign(sign)
-                } else {
-                    sign
-                }),
-                Classification::Uncertain(reason) => Err(blocked(reason)),
-            }
-        };
-        Ok(RetainedFilletAnchorEvidence2 {
-            cross: Some(relation(true)?),
-            dot: Some(relation(false)?),
-            center_parallel: None,
-            source_direction: None,
-            canonical_anchor_curve: None,
-            deferred_arc_contact: None,
-        })
     }
 }
 
@@ -4579,13 +4899,23 @@ mod tests {
                     source.clone()
                 };
                 let request = CurveFillet2::new(q(1, 128));
-                assert!(matches!(
-                    source.fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy),
-                    Err(ExactCurveError::Invalid {
-                        cause: CurveError::FilletConstraintRequired,
-                        ..
-                    })
-                ));
+                let unconstrained =
+                    source.fillet_vertex(1, &request, CurveCornerMode2::TrimOnly, &policy);
+                assert!(
+                    matches!(
+                        unconstrained,
+                        Err(ExactCurveError::Invalid {
+                            cause: CurveError::FilletConstraintRequired,
+                            ..
+                        })
+                    ),
+                    "radius-only family: error={:?}, solutions={:?}",
+                    unconstrained.as_ref().err(),
+                    unconstrained.as_ref().ok().map(|result| (
+                        result.value.candidate_count(),
+                        result.value.no_solution_reason()
+                    ))
+                );
                 for excluded in [Real::zero(), Real::one()] {
                     let mut request = request.clone();
                     request.contacts[0] = Some(CurveFilletContact2::Parameter(excluded.into()));

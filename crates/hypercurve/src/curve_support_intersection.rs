@@ -1963,6 +1963,7 @@ impl Pair<'_> {
             source.self_intersections_in_domain(
                 [crate::bezier_split::CurveParameterDomain2::new(&self.first.range, None); 2],
                 crate::bezier_offset::ParameterComponentQuery2::RetainFinite,
+                false,
                 self.policy,
             ),
             self.first.support.family(),

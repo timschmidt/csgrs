@@ -419,6 +419,48 @@ impl CurveParameterComponent2 {
         self.point_image.as_ref()
     }
 
+    /// Returns the original finite chart that selects this axis's source
+    /// frame, and whether the component uses its incident extension.
+    pub(crate) fn source_chart_range(
+        &self,
+        axis: usize,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<(CurveParameterRange2, bool)>> {
+        let chart = &self.charts[if self.swapped { 1 - axis } else { axis }];
+        if let Some((finite, _, _)) = &chart.finite_owner {
+            return Ok(Classification::Decided((finite.clone(), true)));
+        }
+        let mut endpoints = [None, None];
+        for (parameter, endpoint) in [chart.interval.range.start(), chart.interval.range.end()]
+            .into_iter()
+            .zip(&mut endpoints)
+        {
+            *endpoint = Some(
+                match ComponentParameterChart2::image(
+                    parameter,
+                    &chart.numerator,
+                    &chart.denominator,
+                    policy,
+                )? {
+                    Classification::Decided(Some(parameter)) => parameter,
+                    Classification::Decided(None) => {
+                        return Err(CurveError::Topology(
+                            "a finite component chart has a pole at its boundary".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+            );
+        }
+        let [start, end] = endpoints.map(|endpoint| endpoint.unwrap());
+        Ok(Classification::Decided((
+            CurveParameterRange2::new_validated(start, end),
+            false,
+        )))
+    }
+
     pub(super) fn swapped(mut self) -> Self {
         self.swapped = !self.swapped;
         self
