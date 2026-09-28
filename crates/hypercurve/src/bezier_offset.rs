@@ -119132,10 +119132,12 @@ impl BezierParallel2 {
                 constraints[1].parallel.derivative_scale_constraint(
                     CurveResultantParameter::First,
                     constraints[1].expected,
+                    constraints[1].side,
                 ),
                 constraints[0].parallel.derivative_scale_constraint(
                     CurveResultantParameter::Second,
                     constraints[0].expected,
+                    constraints[0].side,
                 ),
             ]),
             _ => None,
@@ -120460,27 +120462,58 @@ impl BezierParallel2 {
             },
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let side_sign = |coefficients: &[Real]| -> CurveResult<Classification<RealSign>> {
-            let mut derivative = Cow::Borrowed(coefficients);
-            let mut reverse = false;
-            while !derivative.is_empty() {
-                match parameter.polynomial_sign(&derivative, &strict)? {
-                    Classification::Decided(RealSign::Zero) => {}
-                    Classification::Decided(sign) => {
-                        return Ok(Classification::Decided(if reverse {
-                            product_sign(sign, RealSign::Negative)
-                        } else {
-                            sign
-                        }));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-                derivative = Cow::Owned(polynomial_derivative(&derivative));
-                reverse ^= !increasing;
+        self.parallel_derivative_scale_sign_from_side(
+            parameter,
+            if increasing {
+                BezierParameterRayDirection2::Increasing
+            } else {
+                BezierParameterRayDirection2::Decreasing
+            },
+            &strict,
+        )
+    }
+
+    /// Uses the surviving contact side when an original offset has a cusp.
+    /// The source normal must be defined at the contact; a pole or stationary
+    /// source cannot acquire a tangent from an unrelated incident range.
+    pub(crate) fn parallel_derivative_scale_sign_at_side(
+        &self,
+        parameter: &CurveParameter2,
+        side: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let scale = self.parallel_derivative_scale_sign(parameter, policy)?;
+        if scale != Classification::Decided(RealSign::Zero) {
+            return Ok(scale);
+        }
+        let strict = policy.strict_counterpart();
+        match self.source_tangent_nonzero_at(parameter, &strict)? {
+            Classification::Decided(true) => {}
+            Classification::Decided(false) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
-            Ok(Classification::Decided(RealSign::Zero))
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        if let Some(weight) = self.source_power_basis()?.weight {
+            match parameter.polynomial_sign(weight, &strict)? {
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Decided(RealSign::Zero) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        self.parallel_derivative_scale_sign_from_side(parameter, side, &strict)
+    }
+
+    fn parallel_derivative_scale_sign_from_side(
+        &self,
+        parameter: &CurveParameter2,
+        side: BezierParameterRayDirection2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<RealSign>> {
+        let side_sign = |coefficients: &[Real]| {
+            parameter_polynomial_side_sign(coefficients, parameter, side, policy)
         };
         let source = self.source_power_basis()?;
         let differential = self.differential()?;
@@ -120710,12 +120743,14 @@ impl BezierParallel2 {
         &self,
         axis: CurveResultantParameter,
         expected: RealSign,
+        side: Option<BezierParameterRayDirection2>,
     ) -> BezierParallelDerivativeConstraint2 {
         debug_assert_ne!(expected, RealSign::Zero);
         BezierParallelDerivativeConstraint2 {
             parallel: self.clone(),
             axis,
             expected,
+            side,
             polynomials: OnceLock::new(),
         }
     }
@@ -120724,6 +120759,7 @@ impl BezierParallel2 {
         &self,
         axis: CurveResultantParameter,
         expected: RealSign,
+        side: Option<BezierParameterRayDirection2>,
     ) -> CurveResult<BezierParallelDerivativePolynomials2> {
         debug_assert_ne!(expected, RealSign::Zero);
         // The identity offset has scale +1 even at a stationary source
@@ -120735,6 +120771,8 @@ impl BezierParallel2 {
                 signed_curvature: BivariatePolynomial::new(vec![vec![Real::zero()]]),
                 cusp_norm: BivariatePolynomial::new(vec![vec![-Real::one()]]),
                 expected,
+                axis,
+                side,
             });
         }
         let source = self.source_power_basis()?;
@@ -120760,7 +120798,9 @@ impl BezierParallel2 {
             speed_squared: lift(speed),
             signed_curvature: lift(curvature),
             cusp_norm: lift(norm),
+            axis,
             expected,
+            side,
         })
     }
 
@@ -124575,6 +124615,35 @@ fn polynomial_derivative(coefficients: &[Real]) -> Vec<Real> {
         .skip(1)
         .map(|(degree, coefficient)| coefficient * Real::from(degree as u64))
         .collect()
+}
+
+/// The first nonzero Taylor coefficient determines the exact local sign.
+/// Reuse the parameter's existing field/root authority without scalar images
+/// or root isolation; an identically zero polynomial stays zero.
+fn parameter_polynomial_side_sign(
+    coefficients: &[Real],
+    parameter: &CurveParameter2,
+    side: BezierParameterRayDirection2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let mut derivative = Cow::Borrowed(coefficients);
+    let mut reverse = false;
+    while !derivative.is_empty() {
+        match parameter.polynomial_sign(&derivative, policy)? {
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Decided(sign) => {
+                return Ok(Classification::Decided(if reverse {
+                    product_sign(sign, RealSign::Negative)
+                } else {
+                    sign
+                }));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        derivative = Cow::Owned(polynomial_derivative(&derivative));
+        reverse ^= side == BezierParameterRayDirection2::Decreasing;
+    }
+    Ok(Classification::Decided(RealSign::Zero))
 }
 
 /// On a regular source, sign(1-d*kappa) is sign(S^(3/2)+K).
@@ -131628,6 +131697,7 @@ pub(crate) struct BezierParallelDerivativeConstraint2 {
     parallel: BezierParallel2,
     axis: CurveResultantParameter,
     expected: RealSign,
+    side: Option<BezierParameterRayDirection2>,
     polynomials: OnceLock<CurveResult<BezierParallelDerivativePolynomials2>>,
 }
 
@@ -131654,7 +131724,7 @@ impl BezierParallelDerivativeConstraint2 {
     fn polynomials(&self) -> CurveResult<&BezierParallelDerivativePolynomials2> {
         match self.polynomials.get_or_init(|| {
             self.parallel
-                .derivative_scale_polynomials(self.axis, self.expected)
+                .derivative_scale_polynomials(self.axis, self.expected, self.side)
         }) {
             Ok(polynomials) => Ok(polynomials),
             Err(error) => Err(error.clone()),
@@ -131663,11 +131733,13 @@ impl BezierParallelDerivativeConstraint2 {
 }
 
 struct BezierParallelDerivativePolynomials2 {
+    axis: CurveResultantParameter,
     offset_distance: Real,
     speed_squared: BivariatePolynomial,
     signed_curvature: BivariatePolynomial,
     cusp_norm: BivariatePolynomial,
     expected: RealSign,
+    side: Option<BezierParameterRayDirection2>,
 }
 
 impl BezierParallelDerivativePolynomials2 {
@@ -131696,12 +131768,56 @@ impl BezierParallelDerivativePolynomials2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        Ok(
+        let scale =
             parallel_derivative_scale_from_curvature_sign(sign(&self.signed_curvature)?, || {
                 sign(&self.cusp_norm)
-            })?
-            .map(|scale| scale == self.expected),
-        )
+            })?;
+        if scale != Classification::Decided(RealSign::Zero) || self.side.is_none() {
+            return Ok(scale.map(|scale| scale == self.expected));
+        }
+        let side_sign = |polynomial: &BivariatePolynomial| {
+            // These normal predicates depend on only the original source
+            // axis. Separate affine/incident charts preserve that structure.
+            let (parameter, coefficients) = match self.axis {
+                CurveResultantParameter::First => {
+                    debug_assert!(polynomial.coefficients.iter().all(|row| row.len() <= 1));
+                    (
+                        first,
+                        Cow::Owned(
+                            polynomial
+                                .coefficients
+                                .iter()
+                                .map(|row| row.first().cloned().unwrap_or_else(Real::zero))
+                                .collect::<Vec<_>>(),
+                        ),
+                    )
+                }
+                CurveResultantParameter::Second => {
+                    debug_assert!(polynomial.coefficients.len() <= 1);
+                    (
+                        second,
+                        Cow::Borrowed(
+                            polynomial
+                                .coefficients
+                                .first()
+                                .map(Vec::as_slice)
+                                .unwrap_or(&[]),
+                        ),
+                    )
+                }
+            };
+            parameter_polynomial_side_sign(
+                &coefficients,
+                &parameter.clone().into(),
+                self.side.unwrap(),
+                &policy.strict_counterpart(),
+            )
+        };
+        Ok(parallel_derivative_scale_from_curvature_sign(
+            side_sign(&self.signed_curvature)?,
+            || side_sign(&self.cusp_norm),
+        )?
+        .map(|scale| scale == self.expected))
     }
 
     fn in_charts(
@@ -131713,7 +131829,37 @@ impl BezierParallelDerivativePolynomials2 {
             transform_parameter_component_chart_polynomial(polynomial, first, second)
                 .map(Cow::into_owned)
         };
+        let side = if let Some(side) = self.side {
+            let chart = match self.axis {
+                CurveResultantParameter::First => first,
+                CurveResultantParameter::Second => second,
+            };
+            let reversed = match chart.mapping {
+                ParameterComponentMap2::Identity => false,
+                ParameterComponentMap2::Affine(mapping) => {
+                    match real_sign(&mapping.scale, &CurveContext::STRICT)? {
+                        RealSign::Positive => false,
+                        RealSign::Negative => true,
+                        RealSign::Zero => return None,
+                    }
+                }
+                ParameterComponentMap2::Incident(ray) => {
+                    ray.direction == BezierParameterRayDirection2::Decreasing
+                }
+            };
+            Some(
+                if (side == BezierParameterRayDirection2::Increasing) != reversed {
+                    BezierParameterRayDirection2::Increasing
+                } else {
+                    BezierParameterRayDirection2::Decreasing
+                },
+            )
+        } else {
+            None
+        };
         Some(Self {
+            axis: self.axis,
+            side,
             offset_distance: self.offset_distance.clone(),
             speed_squared: transform(&self.speed_squared)?,
             signed_curvature: transform(&self.signed_curvature)?,
@@ -136374,8 +136520,11 @@ mod conversion_tests {
                             [RealSign::Positive, RealSign::Negative]
                         };
                         let constraints = std::array::from_fn(|axis| {
-                            originals[order[axis]]
-                                .derivative_scale_constraint(axes[axis], signs[order[axis]])
+                            originals[order[axis]].derivative_scale_constraint(
+                                axes[axis],
+                                signs[order[axis]],
+                                None,
+                            )
                         });
                         let supports = [first, &second];
                         // Both nonzero center traces have exact rational images.
@@ -136442,8 +136591,11 @@ mod conversion_tests {
                     Some(RealSign::Zero)
                 );
                 for expected in [RealSign::Positive, RealSign::Negative] {
-                    let constraint = stationary_identity
-                        .derivative_scale_constraint(CurveResultantParameter::First, expected);
+                    let constraint = stationary_identity.derivative_scale_constraint(
+                        CurveResultantParameter::First,
+                        expected,
+                        None,
+                    );
                     assert_eq!(
                         constraint
                             .polynomials()
@@ -136460,12 +136612,16 @@ mod conversion_tests {
             }
         }
         let constraints = [
-            source
-                .with_distance(q(41, 64))
-                .derivative_scale_constraint(CurveResultantParameter::First, RealSign::Negative),
-            source
-                .with_distance(q(5, 8))
-                .derivative_scale_constraint(CurveResultantParameter::Second, RealSign::Positive),
+            source.with_distance(q(41, 64)).derivative_scale_constraint(
+                CurveResultantParameter::First,
+                RealSign::Negative,
+                None,
+            ),
+            source.with_distance(q(5, 8)).derivative_scale_constraint(
+                CurveResultantParameter::Second,
+                RealSign::Positive,
+                None,
+            ),
         ];
         let diagonal =
             BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![-Real::one()]]);
@@ -196532,6 +196688,192 @@ mod retained_structural_pair_domain_regression {
                         );
                     }
                 }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod incident_offset_cusp_side_regression {
+    use super::*;
+
+    fn q(n: i32, d: i32) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+
+    fn cusp_parallel() -> BezierParallel2 {
+        CubicBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(q(1, 3), Real::zero()),
+            Point2::new(q(2, 3), q(1, 3)),
+            Point2::new(q(2, 3), Real::one()),
+        )
+        .parallel_left(Real::from(2))
+        .unwrap()
+    }
+
+    #[test]
+    fn incident_cusp_normal_side_survives_parameter_chart_reversal() {
+        let parallel = cusp_parallel();
+        let unit = CurveParameterRange2::unit();
+        let domain = CurveParameterDomain2::new(&unit, None);
+        let range = std::cell::OnceCell::new();
+        let identity = ParameterComponentChart2 {
+            domain,
+            mapping: ParameterComponentMap2::Identity,
+            range: &range,
+        };
+        let negative = ParameterComponentAffineMap2 {
+            scale: Real::from(-2),
+            offset: Real::from(2),
+        };
+        let zero = Real::zero();
+        let two = Real::from(2);
+        let increasing = BezierParameterRay2 {
+            anchor: &zero,
+            direction: BezierParameterRayDirection2::Increasing,
+            barrier: None,
+        };
+        let decreasing = BezierParameterRay2 {
+            anchor: &two,
+            direction: BezierParameterRayDirection2::Decreasing,
+            barrier: None,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            assert_eq!(
+                parallel
+                    .parallel_derivative_scale_sign(&Real::one().into(), &policy)
+                    .unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+            for (side, expected) in [
+                (BezierParameterRayDirection2::Decreasing, RealSign::Negative),
+                (BezierParameterRayDirection2::Increasing, RealSign::Positive),
+            ] {
+                assert_eq!(
+                    parallel
+                        .parallel_derivative_scale_sign_at_side(&Real::one().into(), side, &policy)
+                        .unwrap(),
+                    Classification::Decided(expected)
+                );
+                for axis in [
+                    CurveResultantParameter::First,
+                    CurveResultantParameter::Second,
+                ] {
+                    for (mapping, contact) in [
+                        (ParameterComponentMap2::Identity, Real::one()),
+                        (ParameterComponentMap2::Affine(&negative), q(1, 2)),
+                        (ParameterComponentMap2::Incident(increasing), q(1, 2)),
+                        (ParameterComponentMap2::Incident(decreasing), q(1, 2)),
+                    ] {
+                        let chart = ParameterComponentChart2 {
+                            mapping,
+                            ..identity
+                        };
+                        let charts = match axis {
+                            CurveResultantParameter::First => [chart, identity],
+                            CurveResultantParameter::Second => [identity, chart],
+                        };
+                        let contact = BezierParameter2::Exact(contact);
+                        let other = BezierParameter2::Exact(q(1, 3));
+                        let parameters = match axis {
+                            CurveResultantParameter::First => [&contact, &other],
+                            CurveResultantParameter::Second => [&other, &contact],
+                        };
+                        for selected in [false, true] {
+                            let sign = if selected {
+                                expected
+                            } else {
+                                product_sign(expected, RealSign::Negative)
+                            };
+                            let constraint =
+                                parallel.derivative_scale_constraint(axis, sign, Some(side));
+                            let transformed = constraint
+                                .polynomials()
+                                .unwrap()
+                                .in_charts(charts[0], charts[1])
+                                .unwrap();
+                            assert_eq!(
+                                transformed
+                                    .selected_at(parameters[0], parameters[1], &policy)
+                                    .unwrap(),
+                                Classification::Decided(selected)
+                            );
+                        }
+                        let pointwise = parallel.derivative_scale_constraint(axis, expected, None);
+                        let transformed = pointwise
+                            .polynomials()
+                            .unwrap()
+                            .in_charts(charts[0], charts[1])
+                            .unwrap();
+                        assert_eq!(
+                            transformed
+                                .selected_at(parameters[0], parameters[1], &policy)
+                                .unwrap(),
+                            Classification::Decided(false)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn incident_cusp_side_does_not_create_undefined_or_collapsed_tangents() {
+        let stationary = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let pole = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(2, 0),
+            ],
+            vec![4.into(), 2.into(), 1.into()],
+        )
+        .unwrap()
+        .parallel_left(Real::one())
+        .unwrap();
+        // P(t)=((1-t²)/(1+t²),2t/(1+t²)); its unit left parallel
+        // is the circle center for every parameter, not a tangent branch.
+        let collapsed = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(1, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(0, 1),
+            ],
+            vec![1.into(), 1.into(), 2.into()],
+        )
+        .unwrap()
+        .parallel_left(Real::one())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for side in [
+                BezierParameterRayDirection2::Decreasing,
+                BezierParameterRayDirection2::Increasing,
+            ] {
+                for (curve, parameter) in [(&stationary, Real::zero()), (&pole, Real::from(2))] {
+                    assert!(matches!(
+                        curve
+                            .parallel_derivative_scale_sign_at_side(
+                                &parameter.into(),
+                                side,
+                                &policy
+                            )
+                            .unwrap(),
+                        Classification::Uncertain(UncertaintyReason::Boundary)
+                    ));
+                }
+                assert_eq!(
+                    collapsed
+                        .parallel_derivative_scale_sign_at_side(&q(1, 2).into(), side, &policy)
+                        .unwrap(),
+                    Classification::Decided(RealSign::Zero)
+                );
             }
         }
     }

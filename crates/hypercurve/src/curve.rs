@@ -4820,40 +4820,64 @@ impl<'a> FilletParallelSource2<'a> {
         }
     }
 
+    /// The curve segment retained by this corner determines the tangent side
+    /// at an original-offset cusp, including contacts beyond the authored end.
+    fn retained_contact_side(&self, previous: bool) -> crate::BezierParameterRayDirection2 {
+        if previous != self.is_reversed() {
+            crate::BezierParameterRayDirection2::Decreasing
+        } else {
+            crate::BezierParameterRayDirection2::Increasing
+        }
+    }
+
     fn support_reverses_source_at(
         &self,
         support: &BezierParallel2,
         parameter: &CurveParameter2,
+        previous: bool,
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<bool>> {
-        let derivative_scale = |parallel: &BezierParallel2| match parallel
-            .parallel_derivative_scale_sign(parameter, policy)
-            .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
-        {
-            Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
-                Ok(Some(sign))
+        let derivative_scale = |parallel: &BezierParallel2, original: bool| {
+            let result = if original {
+                parallel.parallel_derivative_scale_sign_at_side(
+                    parameter,
+                    self.retained_contact_side(previous),
+                    policy,
+                )
+            } else {
+                parallel.parallel_derivative_scale_sign(parameter, policy)
+            };
+            match result
+                .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
+            {
+                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
+                    Ok(Some(sign))
+                }
+                Classification::Decided(RealSign::Zero) => Ok(None),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                    CurveOperation2::Fillet,
+                    family,
+                    reason,
+                )),
             }
-            Classification::Decided(RealSign::Zero) => Ok(None),
-            Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                family,
-                reason,
-            )),
         };
         let (source_scale, reversed) = match self {
             Self::Direct(_) => (Some(RealSign::Positive), false),
-            Self::Retained(source) => (derivative_scale(source.parallel())?, source.is_reversed()),
+            Self::Retained(source) => (
+                derivative_scale(source.parallel(), true)?,
+                source.is_reversed(),
+            ),
             Self::Selected(source) => (
-                derivative_scale(&source.parallel_carrier())?,
+                derivative_scale(&source.parallel_carrier(), true)?,
                 source.is_reversed(),
             ),
         };
-        // Tangent signs from the center locus are reusable only when both
-        // derivatives are nonzero. A center-locus cusp is not a singularity
-        // of the contact curve, and does not invalidate the tangent circle.
+        // Compare the surviving original tangent with the pointwise center
+        // derivative. A center-locus cusp still supplies no tangent evidence;
+        // it is not a singularity of the original contact curve.
         Ok(source_scale
-            .zip(derivative_scale(support)?)
+            .zip(derivative_scale(support, false)?)
             .map(|(source, center)| (source != center) != reversed))
     }
 
@@ -5189,23 +5213,35 @@ impl<'a> PreparedFilletCarrier2<'a> {
                 ),
             ));
         }
-        Ok(Some(parallel.derivative_scale_constraint(axis, expected)))
+        Ok(Some(parallel.derivative_scale_constraint(
+            axis,
+            expected,
+            Some(source.retained_contact_side(axis == hypersolve::CurveResultantParameter::First)),
+        )))
     }
 
     fn accepts_offset_contact(
         &self,
         offset: &FilletOffsetCarrier2<'_, '_>,
         parameter: Option<&CurveParameter2>,
+        previous: bool,
         signed_distance: &Real,
         family: CurveFamily2,
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
-        let Self::Parallel { parallel, .. } = self else {
+        let Self::Parallel {
+            source, parallel, ..
+        } = self
+        else {
             return Ok(true);
         };
         let parameter = parameter.expect("a parallel center retains its source parameter");
         let sign = match parallel
-            .parallel_derivative_scale_sign(parameter, policy)
+            .parallel_derivative_scale_sign_at_side(
+                parameter,
+                source.retained_contact_side(previous),
+                policy,
+            )
             .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Fillet, family, cause))?
         {
             Classification::Decided(RealSign::Zero) => {
@@ -6074,6 +6110,7 @@ fn solve_carrier_fillet_corner(
                             prepared.accepts_offset_contact(
                                 offset,
                                 center.parameter(axis == 0),
+                                axis == 0,
                                 &signed_distance,
                                 family,
                                 policy,
@@ -6519,6 +6556,7 @@ fn retain_cusp_parallel_fillet_contact(
     let analytic_support_reverses_source = parallel_source.support_reverses_source_at(
         analytic_support,
         &analytic_parameter,
+        !cusp_is_previous,
         analytic_family,
         policy,
     )?;
@@ -7255,6 +7293,7 @@ fn fillet_offset_centers(
                     let support_reverses_source = source.support_reverses_source_at(
                         support,
                         &parameter.clone().into(),
+                        parallel_is_previous,
                         parallel_family,
                         policy,
                     )?;
@@ -7584,7 +7623,7 @@ fn fillet_offset_centers(
                                 dot = reverse_fillet_sign(dot);
                             }
                             let analytic_support_reverses_source = parallel_source.support_reverses_source_at(
-                                analytic_support, &contact.parallel_parameter.clone().into(), analytic_family, policy,
+                                analytic_support, &contact.parallel_parameter.clone().into(), !cusp_is_previous, analytic_family, policy,
                             )?;
                             if analytic_support_reverses_source == Some(true) {
                                 cross = reverse_fillet_sign(cross);
@@ -9462,6 +9501,7 @@ fn fillet_offset_centers(
                 let analytic_support_reverses_source = parallel_source.support_reverses_source_at(
                     analytic_support,
                     contact.parallel_parameter(),
+                    analytic_is_previous,
                     analytic_family,
                     policy,
                 )?;
@@ -12794,20 +12834,20 @@ mod tests {
                     .find(is_shared)
                     .expect("the next normal sheet reaches the same rational center");
                 let accepted = |parameter: &CurveParameter2| {
-                    [previous, next]
-                        .into_iter()
-                        .zip(&prepared)
-                        .all(|(offset, prepared)| {
+                    [previous, next].into_iter().zip(&prepared).enumerate().all(
+                        |(axis, (offset, prepared))| {
                             prepared
                                 .accepts_offset_contact(
                                     offset,
                                     Some(parameter),
+                                    axis == 0,
                                     &signed_radius,
                                     CurveFamily2::AnalyticParallel,
                                     &policy,
                                 )
                                 .unwrap()
-                        })
+                        },
+                    )
                 };
                 assert!(accepted(&parameter));
                 // Coincident centers alone do not establish original tangent
