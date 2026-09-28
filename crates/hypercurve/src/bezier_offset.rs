@@ -88219,6 +88219,91 @@ impl BezierAlgebraicChord2 {
         )
     }
 
+    /// Cancels the anchors and positive speed denominators of two retained
+    /// tangent displacements before signing their polynomial directions.
+    /// Selected parameters remain authoritative; equality can identify one
+    /// shared scalar even when the two witnesses use different root carriers.
+    fn analytic_tangent_pair_linear_combination_sign(
+        &self,
+        other: &Self,
+        cross_scale: &Real,
+        dot_scale: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<RealSign>> {
+        let (
+            CurvePoint2(CurvePointData2::AnalyticParallel(first)),
+            CurvePoint2(CurvePointData2::AnalyticParallel(first_end)),
+            CurvePoint2(CurvePointData2::AnalyticParallel(second)),
+            CurvePoint2(CurvePointData2::AnalyticParallel(second_end)),
+        ) = (self.start(), self.end(), other.start(), other.end())
+        else {
+            return Ok(None);
+        };
+        policy.bounded_exact_predicate_pass(|| {
+            let mut orientation = RealSign::Positive;
+            for (start, end) in [(first, first_end), (second, second_end)] {
+                let Some(Classification::Decided(sign)) =
+                    start.shared_tangent_displacement_sign(end, policy)
+                else {
+                    return Ok(None);
+                };
+                orientation = product_sign(orientation, sign);
+            }
+            let (first_x, first_y) = first.frame_tangent_power_basis()?;
+            let (second_x, second_y) = second.frame_tangent_power_basis()?;
+            let first_parameter = first.data.parameter.curve_parameter();
+            let second_parameter = second.data.parameter.curve_parameter();
+            let strict = policy.strict_counterpart();
+            let sign = if matches!(
+                first_parameter.same_value(&second_parameter, &strict)?,
+                Classification::Decided(true)
+            ) {
+                let cross = polynomial_subtract(
+                    &polynomial_multiply(first_x, second_y),
+                    &polynomial_multiply(first_y, second_x),
+                );
+                let dot = polynomial_add(
+                    &polynomial_multiply(first_x, second_x),
+                    &polynomial_multiply(first_y, second_y),
+                );
+                first.parameter_polynomial_sign(
+                    &polynomial_add(
+                        &polynomial_scale(&cross, cross_scale),
+                        &polynomial_scale(&dot, dot_scale),
+                    ),
+                    &strict,
+                )?
+            } else if let (Some(first_parameter), Some(second_parameter)) = (
+                first_parameter.as_bezier_parameter(),
+                second_parameter.as_bezier_parameter(),
+            ) {
+                let cross = bivariate_subtract(
+                    &bivariate_outer_product(first_x, second_y),
+                    &bivariate_outer_product(first_y, second_x),
+                );
+                let dot = bivariate_add(
+                    &bivariate_outer_product(first_x, second_x),
+                    &bivariate_outer_product(first_y, second_y),
+                );
+                signed_bivariate_at_parameter_pair(
+                    &bivariate_add(
+                        &bivariate_scale(cross, cross_scale),
+                        &bivariate_scale(dot, dot_scale),
+                    ),
+                    first_parameter,
+                    second_parameter,
+                    &strict,
+                )?
+            } else {
+                return Ok(None);
+            };
+            Ok(match sign {
+                Classification::Decided(sign) => Some(product_sign(orientation, sign)),
+                Classification::Uncertain(_) => None,
+            })
+        })
+    }
+
     fn certified_axis_tangent_relation_sign(&self, other: &Self, cross: bool) -> Option<RealSign> {
         let (first, second) = self
             .certified_axis_direction()
@@ -88426,6 +88511,14 @@ impl BezierAlgebraicChord2 {
                         }
                     })
                 });
+        }
+        if let Some(sign) = self.analytic_tangent_pair_linear_combination_sign(
+            other,
+            cross_scale,
+            dot_scale,
+            policy,
+        )? {
+            return Ok(Classification::Decided(sign));
         }
         if dot_scale.zero_status() == ZeroKnowledge::Zero
             && let Some(cross_scale_sign @ (RealSign::Negative | RealSign::Positive)) =
@@ -94701,6 +94794,33 @@ impl BezierAnalyticParallelPoint2 {
         Ok(None)
     }
 
+    /// Returns the orientation of a displacement in one retained tangent
+    /// frame. Different anchors or normal sheets cannot share this proof.
+    fn shared_tangent_displacement_sign(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> Option<Classification<RealSign>> {
+        if self.data.parallel != other.data.parallel
+            || self.data.parameter != other.data.parameter
+            || self.data.frame_tangent != other.data.frame_tangent
+            || self.data.translation_x != other.data.translation_x
+            || self.data.translation_y != other.data.translation_y
+            || !policy.accepts_retained_policy(self.data.policy)
+            || !policy.accepts_retained_policy(other.data.policy)
+        {
+            return None;
+        }
+        let displacement = &other.data.tangent_distance - &self.data.tangent_distance;
+        match real_sign(&displacement, &CurveContext::STRICT) {
+            Some(sign @ (RealSign::Negative | RealSign::Positive)) => {
+                Some(Classification::Decided(sign))
+            }
+            Some(RealSign::Zero) => None,
+            None => Some(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+    }
+
     /// Signs a linear form of the exact displacement from `self` to `other`
     /// when both points were authored in one retained unit-tangent frame.
     ///
@@ -94715,22 +94835,10 @@ impl BezierAnalyticParallelPoint2 {
         coefficient_y: &Real,
         policy: &CurveContext,
     ) -> Option<CurveResult<Classification<RealSign>>> {
-        if self.data.parallel != other.data.parallel
-            || self.data.parameter != other.data.parameter
-            || self.data.frame_tangent != other.data.frame_tangent
-            || self.data.translation_x != other.data.translation_x
-            || self.data.translation_y != other.data.translation_y
-            || !policy.accepts_retained_policy(self.data.policy)
-            || !policy.accepts_retained_policy(other.data.policy)
-        {
-            return None;
-        }
-        let displacement = &other.data.tangent_distance - &self.data.tangent_distance;
-        let displacement_sign = match real_sign(&displacement, &CurveContext::STRICT) {
-            Some(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
-            Some(RealSign::Zero) => return None,
-            None => {
-                return Some(Ok(Classification::Uncertain(UncertaintyReason::RealSign)));
+        let displacement_sign = match self.shared_tangent_displacement_sign(other, policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => {
+                return Some(Ok(Classification::Uncertain(reason)));
             }
         };
         let (tangent_x, tangent_y) = match self.frame_tangent_power_basis() {
@@ -195189,6 +195297,30 @@ mod regular_parallel_contact_tests {
                     Classification::Decided(true)
                 );
             }
+            // Two displaced tangent witnesses share the selected scalar,
+            // but have different anchors and opposite traversal. Their
+            // relation must reuse the polynomial directions without a global
+            // parameter image or separately reconstructed unit vectors.
+            let other_anchor = anchor.with_distance(q(3, 7));
+            let (_, opposite) = decided(
+                other_anchor
+                    .regular_source_point_and_tangent_support(
+                        &other_anchor,
+                        &parameter,
+                        &CurveParameterRange2::unit(),
+                        RealSign::Negative,
+                        &policy,
+                    )
+                    .unwrap(),
+            );
+            assert_eq!(
+                tangent.tangent_cross_sign(&opposite, &policy).unwrap(),
+                Classification::Decided(RealSign::Zero)
+            );
+            assert_eq!(
+                tangent.tangent_dot_sign(&opposite, &policy).unwrap(),
+                Classification::Decided(RealSign::Negative)
+            );
             assert!(selected.data.representations.bezier.get().is_none());
         }
     }
