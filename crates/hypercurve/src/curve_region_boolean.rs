@@ -11205,14 +11205,19 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 CurvePoint2::from(outside),
                 point.clone(),
                 &self.data.policy,
-            )
-            .map_err(|cause| self.invalid(owner_carrier_index, cause))?
-            {
-                Classification::Decided(probe) => probe,
-                Classification::Uncertain(reason) => {
+            ) {
+                Ok(Classification::Decided(probe)) => probe,
+                Ok(Classification::Uncertain(reason)) => {
                     last_reason = reason;
                     continue;
                 }
+                // This candidate lies strictly outside the certified boundary
+                // enclosure. Coincidence with it already locates the target;
+                // a zero-length probe needs no intersections or winding replay.
+                Err(CurveError::ZeroLengthLine) => {
+                    return Ok(Classification::Decided(RegionPointLocation::Outside));
+                }
+                Err(cause) => return Err(self.invalid(owner_carrier_index, cause)),
             };
             let probe_end = CurveParameter2::from_algebraic_chord(probe.end_parameter());
             let evidence = match self.intersect_algebraic_probe_carriers(
