@@ -37877,8 +37877,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             };
             let point = match exact_contact_point_evidence(other, &candidate, policy)? {
-                Some(point) => point,
-                None => match &candidate {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(UncertaintyReason::Boundary) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(_) => match &candidate {
                     BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
                         RationalBezierAlgebraicPointImage2::from_parametric_source(
                             other.clone(),
@@ -40640,8 +40643,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         {
             let point = match exact_contact_point_evidence(other, &cusp_parameter, policy)? {
-                Some(point) => point,
-                None => {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(UncertaintyReason::Boundary) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(_) => {
                     CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(
                         other.clone(),
                         self.cusp_parameter().clone(),
@@ -40723,8 +40729,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
             };
             let point = match exact_contact_point_evidence(other, &candidate, policy)? {
-                Some(point) => point,
-                None => match &candidate {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(UncertaintyReason::Boundary) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(_) => match &candidate {
                     BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
                         RationalBezierAlgebraicPointImage2::from_parametric_source(
                             other.clone(),
@@ -41063,8 +41072,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 continue;
             }
             let point = match exact_contact_point_evidence(other, &boundary.parameter, policy)? {
-                Some(point) => point,
-                None => match &boundary.parameter {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(UncertaintyReason::Boundary) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(_) => match &boundary.parameter {
                     BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
                         RationalBezierAlgebraicPointImage2::from_parametric_source(
                             other.clone(),
@@ -44374,9 +44386,15 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         };
         let mut points = Vec::with_capacity(parameters.len());
         for parameter in parameters {
-            if let Some(point) = exact_contact_point_evidence(target, &parameter, policy)? {
-                points.push(point);
-                continue;
+            match exact_contact_point_evidence(target, &parameter, policy)? {
+                Classification::Decided(point) => {
+                    points.push(point);
+                    continue;
+                }
+                Classification::Uncertain(UncertaintyReason::Boundary) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(_) => {}
             }
             match parameter {
                 BezierParameter2::Algebraic(parameter) => points.push(CurvePoint2::from(
@@ -51773,8 +51791,12 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
             && parallel.distance().zero_status() == ZeroKnowledge::Zero
         {
             let source = parallel.source().to_rational_bezier()?;
-            if let Some(point) = exact_contact_point_evidence(&source, parameter, policy)? {
-                return Ok(Classification::Decided(Some(point)));
+            match exact_contact_point_evidence(&source, parameter, policy)? {
+                Classification::Decided(point) => return Ok(Classification::Decided(Some(point))),
+                Classification::Uncertain(UncertaintyReason::Boundary) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(_) => {}
             }
         }
         if semicircle.data.frame.rational().is_none()
@@ -83496,18 +83518,26 @@ fn rational_point_evidence_at_parameter(
     parameter: &BezierParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurvePoint2>> {
-    if let Some(point) = exact_contact_point_evidence(source, parameter, policy)? {
-        return Ok(Classification::Decided(point));
-    }
-    match parameter {
-        BezierParameter2::Algebraic(parameter) => Ok(Classification::Decided(CurvePoint2::from(
-            RationalBezierAlgebraicPointImage2::from_parametric_source(
-                source.clone(),
-                parameter.clone(),
-                policy,
-            ),
-        ))),
-        BezierParameter2::Exact(_) => Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+    match exact_contact_point_evidence(source, parameter, policy)? {
+        Classification::Decided(point) => Ok(Classification::Decided(point)),
+        Classification::Uncertain(UncertaintyReason::Boundary) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+        }
+        Classification::Uncertain(reason) => match parameter {
+            BezierParameter2::Algebraic(parameter) => {
+                Ok(Classification::Decided(CurvePoint2::from(
+                    // These contact callers own a finite source-domain proof.
+                    // Coordinate projection may be unavailable, but a certified
+                    // zero denominator above must never be replaced by this source.
+                    RationalBezierAlgebraicPointImage2::from_parametric_source(
+                        source.clone(),
+                        parameter.clone(),
+                        policy,
+                    ),
+                )))
+            }
+            BezierParameter2::Exact(_) => Ok(Classification::Uncertain(reason)),
+        },
     }
 }
 
@@ -96507,10 +96537,14 @@ impl BezierAnalyticParallelPoint2 {
             .all(|value| real_sign(value, &CurveContext::STRICT) == Some(RealSign::Zero))
         {
             let source = self.data.parallel.source().to_rational_bezier()?;
-            if let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(
+            match crate::rational_bezier_general::exact_contact_point_evidence(
                 &source, parameter, policy,
             )? {
-                return Ok(Classification::Decided(Some(point)));
+                Classification::Decided(point) => return Ok(Classification::Decided(Some(point))),
+                Classification::Uncertain(UncertaintyReason::Boundary) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(_) => {}
             }
         }
         Ok(self
@@ -119316,11 +119350,9 @@ impl BezierParallel2 {
             tangent_field.as_deref(),
             regular_parallel_range,
             |parameter| {
-                Ok(Some(CurvePoint2::from(BezierAnalyticParallelPoint2::new(
-                    zero.clone(),
-                    parameter.clone(),
-                    policy,
-                ))))
+                Ok(Classification::Decided(CurvePoint2::from(
+                    BezierAnalyticParallelPoint2::new(zero.clone(), parameter.clone(), policy),
+                )))
             },
             policy,
         )? {
@@ -121572,7 +121604,7 @@ impl BezierParallel2 {
                 }
                 continue;
             };
-            let Some(point) =
+            let Classification::Decided(point) =
                 exact_contact_point_evidence(&rational_conic, &canonical_parameter, policy)?
             else {
                 return Ok(no_fast_path());
@@ -121827,7 +121859,7 @@ impl BezierParallel2 {
         off_diagonal: bool,
         tangent_field: Option<&BezierAnalyticParallelTangentField2>,
         retained_parallel_range: Option<&CurveParameterRange2>,
-        mut point_evidence: impl FnMut(&BezierParameter2) -> CurveResult<Option<CurvePoint2>>,
+        mut point_evidence: impl FnMut(&BezierParameter2) -> CurveResult<Classification<CurvePoint2>>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIntersectionSet2>> {
         let BezierParallelIntersectionCandidateSystem2 {
@@ -122022,7 +122054,7 @@ impl BezierParallel2 {
                         }
                     }
                 }
-                let Some(point) = point_evidence(other_parameter)? else {
+                let Classification::Decided(point) = point_evidence(other_parameter)? else {
                     incomplete = true;
                     continue;
                 };
@@ -122109,7 +122141,7 @@ impl BezierParallel2 {
                     continue;
                 }
             }
-            let Some(point) = point_evidence(&pair.other_parameter)? else {
+            let Classification::Decided(point) = point_evidence(&pair.other_parameter)? else {
                 incomplete = true;
                 continue;
             };
@@ -135880,6 +135912,43 @@ pub(crate) use conversion_tests::recursively_line_contact_radial_half;
 
 #[cfg(test)]
 mod conversion_tests {
+    #[test]
+    fn contact_fallback_never_replaces_a_certified_pole() {
+        use crate::tests::decided;
+        let curve = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 1),
+                Point2::from_values(2, 0),
+            ],
+            vec![Real::one(), -Real::one(), Real::one()],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let polynomial = decided(
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![Real::from(-1), Real::from(2)],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval = decided(
+                BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+            );
+            let parameter = decided(
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+            );
+            assert!(matches!(
+                rational_point_evidence_at_parameter(
+                    &curve,
+                    &BezierParameter2::Algebraic(parameter),
+                    &policy
+                ),
+                Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+            ));
+        }
+    }
+
     use crate::BezierAlgebraicImageStatus;
     #[test]
     fn independent_oblique_chords_support_constrained_fillet_families() {
@@ -172666,9 +172735,9 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             )
             .unwrap();
             let endpoint = |parameter: &BezierParameter2| {
-                exact_contact_point_evidence(&diagonal, parameter, &policy)
-                    .unwrap()
-                    .expect("the diagonal selected point must retain exact evidence")
+                crate::tests::decided(
+                    exact_contact_point_evidence(&diagonal, parameter, &policy).unwrap(),
+                )
             };
             let chord =
                 match BezierAlgebraicChord2::try_new(endpoint(start), endpoint(end), &policy)
@@ -172723,9 +172792,9 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             )
             .unwrap();
             let endpoint = |parameter: &BezierParameter2| {
-                exact_contact_point_evidence(&diagonal, parameter, &policy)
-                    .unwrap()
-                    .expect("the diagonal selected point must retain exact evidence")
+                crate::tests::decided(
+                    exact_contact_point_evidence(&diagonal, parameter, &policy).unwrap(),
+                )
             };
             let chord =
                 match BezierAlgebraicChord2::try_new(endpoint(start), endpoint(end), &policy)

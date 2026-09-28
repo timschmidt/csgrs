@@ -11039,14 +11039,22 @@ fn bezier_parallel_source_point_evidence(
         };
     }
     let rational_source = bezier_parallel_rational_source(parallel, operation, family)?;
-    if let Some(point) = crate::rational_bezier_general::exact_contact_point_evidence(
+    match crate::rational_bezier_general::exact_contact_point_evidence(
         &rational_source,
         parameter,
         policy,
     )
     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
     {
-        return Ok(point);
+        Classification::Decided(point) => return Ok(point),
+        Classification::Uncertain(crate::UncertaintyReason::Boundary) => {
+            return Err(ExactCurveError::blocked(
+                operation,
+                family,
+                crate::UncertaintyReason::Boundary,
+            ));
+        }
+        Classification::Uncertain(_) => {}
     }
     {
         // A selected fiber can have non-rational coefficients even though the
@@ -13752,13 +13760,14 @@ mod tests {
                 vec![Real::one(); 2],
             )
             .unwrap();
-            let corner = crate::rational_bezier_general::exact_contact_point_evidence(
-                &diagonal,
-                &selected_parameter,
-                &policy,
-            )
-            .unwrap()
-            .expect("the selected corner retains exact evidence");
+            let corner = crate::tests::decided(
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    &diagonal,
+                    &selected_parameter,
+                    &policy,
+                )
+                .unwrap(),
+            );
             let translated = |point: &CurvePoint2, x, y| {
                 match crate::BezierAlgebraicChord2::translated_endpoint(
                     point,

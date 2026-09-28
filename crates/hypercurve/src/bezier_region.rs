@@ -1458,7 +1458,7 @@ pub(crate) fn curve_fragment_endpoint_point(
             return crate::rational_bezier_general::exact_contact_point_evidence(
                 &source, parameter, policy,
             )
-            .map(Classification::Decided);
+            .map(|point| point.map(Some));
         }
         BezierSplitFragment2::AnalyticParallel(fragment) => {
             let parameter = if start_endpoint != fragment.is_reversed() {
@@ -3851,21 +3851,6 @@ fn append_exact_algebraic_line_join(
     }
 }
 
-fn exact_rational_endpoint_evidence(
-    curve: &RationalBezier2,
-    parameter: &BezierParameter2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<CurvePoint2>> {
-    Ok(
-        match crate::rational_bezier_general::exact_contact_point_evidence(
-            curve, parameter, policy,
-        )? {
-            Some(point) => Classification::Decided(point),
-            None => Classification::Uncertain(UncertaintyReason::Unsupported),
-        },
-    )
-}
-
 fn exact_circular_algebraic_endpoint_tangent(
     curve: &RationalBezier2,
     parameter: &BezierParameter2,
@@ -3933,13 +3918,16 @@ fn exact_offset_spans_from_algebraic_endpoint_images(
     let source_subcurve = BezierSubcurve2::RationalQuadratic(source_curve.clone());
     let source_rational = RationalBezier2::try_from_subcurve(&source_subcurve)?;
     let (traversal_start, traversal_end) = if reversed { (end, start) } else { (start, end) };
-    let source_end =
-        match exact_rational_endpoint_evidence(&source_rational, traversal_end, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let source_end = match crate::rational_bezier_general::exact_contact_point_evidence(
+        &source_rational,
+        traversal_end,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     let carrier_distance = if reversed {
         -distance
     } else {
@@ -4019,20 +4007,26 @@ fn exact_offset_spans_from_algebraic_endpoint_images(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     let offset_rational = RationalBezier2::try_from_subcurve(&offset_subcurve)?;
-    let offset_start =
-        match exact_rational_endpoint_evidence(&offset_rational, traversal_start, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-    let offset_end =
-        match exact_rational_endpoint_evidence(&offset_rational, traversal_end, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let offset_start = match crate::rational_bezier_general::exact_contact_point_evidence(
+        &offset_rational,
+        traversal_start,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let offset_end = match crate::rational_bezier_general::exact_contact_point_evidence(
+        &offset_rational,
+        traversal_end,
+        policy,
+    )? {
+        Classification::Decided(point) => point,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     let start_tangent = match exact_circular_algebraic_endpoint_tangent(
         &offset_rational,
         traversal_start,
@@ -4294,13 +4288,16 @@ fn exact_offset_spans_from_source_singular_parallel(
                 }
             })
             .collect();
-        let source_end =
-            match exact_rational_endpoint_evidence(&source_rational, source_range.end(), policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let source_end = match crate::rational_bezier_general::exact_contact_point_evidence(
+            &source_rational,
+            source_range.end(),
+            policy,
+        )? {
+            Classification::Decided(point) => point,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         spans.push(ExactOffsetSpan2 {
             fragments,
             source_end,
@@ -19944,11 +19941,12 @@ mod tests {
         let source =
             RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
                 .expect("the algebraic endpoint source is finite");
-        let lower_left = crate::rational_bezier_general::exact_contact_point_evidence(
-            &source, &parameter, policy,
-        )
-        .expect("the algebraic endpoint has exact evidence")
-        .expect("the algebraic endpoint remains representable by retained evidence");
+        let lower_left = crate::tests::decided(
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &source, &parameter, policy,
+            )
+            .expect("the algebraic endpoint has exact evidence"),
+        );
         let upper_left = match crate::BezierAlgebraicChord2::translated_endpoint(
             &lower_left,
             &Real::zero(),
@@ -22224,13 +22222,14 @@ mod tests {
         let selected_point = |start: Point2, end: Point2, denominator| {
             let source = RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])
                 .expect("the selected chord endpoint source is finite");
-            crate::rational_bezier_general::exact_contact_point_evidence(
-                &source,
-                &positive_inverse_sqrt_parameter(denominator, policy),
-                policy,
+            crate::tests::decided(
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    &source,
+                    &positive_inverse_sqrt_parameter(denominator, policy),
+                    policy,
+                )
+                .expect("the selected chord endpoint has exact evidence"),
             )
-            .expect("the selected chord endpoint has exact evidence")
-            .expect("the selected chord endpoint remains representable")
         };
         let chord = |start, end| match crate::BezierAlgebraicChord2::try_new(start, end, policy)
             .expect("the retained center support is valid")
@@ -28000,9 +27999,12 @@ mod tests {
         };
         let point_evidence = |source: &BezierSubcurve2, parameter: &BezierParameter2| {
             let source = RationalBezier2::try_from_subcurve(source).unwrap();
-            crate::rational_bezier_general::exact_contact_point_evidence(&source, parameter, policy)
-                .unwrap()
-                .expect("the algebraic line endpoint must retain point evidence")
+            crate::tests::decided(
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    &source, parameter, policy,
+                )
+                .unwrap(),
+            )
         };
         let chord = match crate::BezierAlgebraicChord2::try_new(
             point_evidence(&x_source, &x_parameter),
@@ -28223,10 +28225,10 @@ mod tests {
             p(1, 1),
         ));
         let rational = RationalBezier2::try_from_subcurve(&source).unwrap();
-        let corner =
+        let corner = crate::tests::decided(
             crate::rational_bezier_general::exact_contact_point_evidence(&rational, &alpha, policy)
-                .unwrap()
-                .expect("the nonlinear algebraic endpoint retains point evidence");
+                .unwrap(),
+        );
         let chord = match crate::BezierAlgebraicChord2::try_new(
             CurvePoint2::from(p(0, 0)),
             corner.clone(),
@@ -28672,13 +28674,14 @@ mod tests {
             let lower_parameter = positive_inverse_sqrt_parameter(3, &policy);
             let upper_parameter = positive_inverse_sqrt_parameter(2, &policy);
             let algebraic_point = |parameter: &BezierParameter2| {
-                crate::rational_bezier_general::exact_contact_point_evidence(
-                    &y_rational,
-                    parameter,
-                    &policy,
+                crate::tests::decided(
+                    crate::rational_bezier_general::exact_contact_point_evidence(
+                        &y_rational,
+                        parameter,
+                        &policy,
+                    )
+                    .unwrap(),
                 )
-                .unwrap()
-                .expect("the independent y-axis root retains point evidence")
             };
             let vertices = [
                 algebraic_point(&lower_parameter),
@@ -29139,13 +29142,14 @@ mod tests {
             vec![Real::one(); 3],
         )
         .unwrap();
-        let selected_point = crate::rational_bezier_general::exact_contact_point_evidence(
-            &source,
-            &selected_parameter,
-            policy,
-        )
-        .unwrap()
-        .expect("the selected quadratic point retains exact evidence");
+        let selected_point = crate::tests::decided(
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &source,
+                &selected_parameter,
+                policy,
+            )
+            .unwrap(),
+        );
         let corner = CurvePoint2::from(p(0, 0));
         let chord = match crate::BezierAlgebraicChord2::try_new(
             corner.clone(),
@@ -29210,13 +29214,14 @@ mod tests {
         let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
         let diagonal =
             RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(); 2]).unwrap();
-        let corner = crate::rational_bezier_general::exact_contact_point_evidence(
-            &diagonal,
-            &selected_parameter,
-            policy,
-        )
-        .unwrap()
-        .expect("the selected corner retains exact evidence");
+        let corner = crate::tests::decided(
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &diagonal,
+                &selected_parameter,
+                policy,
+            )
+            .unwrap(),
+        );
         let translated =
             |point: &CurvePoint2, x, y| match crate::BezierAlgebraicChord2::translated_endpoint(
                 point,
@@ -29293,13 +29298,14 @@ mod tests {
     ) -> CurveRegion2 {
         let selected = |start: Point2, end: Point2, radicand| {
             let source = RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap();
-            crate::rational_bezier_general::exact_contact_point_evidence(
-                &source,
-                &positive_inverse_sqrt_parameter(radicand, policy),
-                policy,
+            crate::tests::decided(
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    &source,
+                    &positive_inverse_sqrt_parameter(radicand, policy),
+                    policy,
+                )
+                .unwrap(),
             )
-            .unwrap()
-            .expect("the independent chord endpoint retains exact evidence")
         };
         let previous_start = selected(p(0, 0), p(0, 1), 3);
         let corner = selected(p(0, 0), p(1, 0), 2);
@@ -29357,13 +29363,14 @@ mod tests {
         let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
         let diagonal =
             RationalBezier2::try_new(vec![p(0, 0), p(1, 1)], vec![Real::one(); 2]).unwrap();
-        let corner = crate::rational_bezier_general::exact_contact_point_evidence(
-            &diagonal,
-            &selected_parameter,
-            policy,
-        )
-        .unwrap()
-        .expect("the selected chord/arc corner retains exact evidence");
+        let corner = crate::tests::decided(
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &diagonal,
+                &selected_parameter,
+                policy,
+            )
+            .unwrap(),
+        );
         let translated =
             |point: &CurvePoint2, x, y| match crate::BezierAlgebraicChord2::translated_endpoint(
                 point,
@@ -29484,13 +29491,14 @@ mod tests {
         let center_source =
             RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2]).unwrap();
         let center_parameter = positive_inverse_sqrt_parameter(2, policy);
-        let center = crate::rational_bezier_general::exact_contact_point_evidence(
-            &center_source,
-            &center_parameter,
-            policy,
-        )
-        .unwrap()
-        .expect("the selected circle center retains exact evidence");
+        let center = crate::tests::decided(
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &center_source,
+                &center_parameter,
+                policy,
+            )
+            .unwrap(),
+        );
         let circle = match crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
             &center,
             (1, 0),
@@ -29520,13 +29528,14 @@ mod tests {
             RationalBezier2::try_new(vec![p(0, 0), p(1, -1), p(2, -3)], vec![Real::one(); 3])
                 .unwrap();
         let independent_parameter = positive_inverse_sqrt_parameter(3, policy);
-        let independent = crate::rational_bezier_general::exact_contact_point_evidence(
-            &independent_source,
-            &independent_parameter,
-            policy,
-        )
-        .unwrap()
-        .expect("the independent chord endpoint retains exact evidence");
+        let independent = crate::tests::decided(
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &independent_source,
+                &independent_parameter,
+                policy,
+            )
+            .unwrap(),
+        );
         let source_chord =
             match crate::BezierAlgebraicChord2::try_new(independent.clone(), start.clone(), policy)
                 .unwrap()
@@ -29978,11 +29987,12 @@ mod tests {
                             vec![Real::one(); 2],
                         )
                         .unwrap();
-                        crate::rational_bezier_general::exact_contact_point_evidence(
-                            &source, &parameter, &policy,
+                        crate::tests::decided(
+                            crate::rational_bezier_general::exact_contact_point_evidence(
+                                &source, &parameter, &policy,
+                            )
+                            .unwrap(),
                         )
-                        .unwrap()
-                        .expect("the algebraic chord endpoint retains exact evidence")
                     };
                     let target_root = 1.0 / f64::from(target_radicand).sqrt();
                     let quarter_grid = (center_y - target_root) * 4.0;
@@ -30589,13 +30599,14 @@ mod tests {
             let center_source =
                 RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2]).unwrap();
             let center_parameter = positive_inverse_sqrt_parameter(2, &policy);
-            let center = crate::rational_bezier_general::exact_contact_point_evidence(
-                &center_source,
-                &center_parameter,
-                &policy,
-            )
-            .unwrap()
-            .expect("the selected reconstruction center retains exact evidence");
+            let center = crate::tests::decided(
+                crate::rational_bezier_general::exact_contact_point_evidence(
+                    &center_source,
+                    &center_parameter,
+                    &policy,
+                )
+                .unwrap(),
+            );
             let Classification::Decided(Some(circle)) =
                 crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
                     &center,

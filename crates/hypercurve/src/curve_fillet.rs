@@ -3794,11 +3794,12 @@ mod tests {
                     vec![Real::one(); 2],
                 )
                 .unwrap();
-                crate::rational_bezier_general::exact_contact_point_evidence(
-                    &source, &roots[0], &policy,
+                crate::tests::decided(
+                    crate::rational_bezier_general::exact_contact_point_evidence(
+                        &source, &roots[0], &policy,
+                    )
+                    .unwrap(),
                 )
-                .unwrap()
-                .unwrap()
             };
             let Classification::Decided(previous) = crate::BezierAlgebraicChord2::try_new(
                 selected(Point2::from_values(0, 1), 3),
