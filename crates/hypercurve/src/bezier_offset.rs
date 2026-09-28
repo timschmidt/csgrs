@@ -37456,7 +37456,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let candidates = match recursive_projective_polynomial_parameters(
             &system.field,
             circle_polynomial,
-            range,
+            SelectedThirdAxisDomain2::Finite(range),
             policy,
         )? {
             Classification::Decided(candidates) => candidates,
@@ -61586,7 +61586,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             &self.field,
             coefficients,
             crossing.clone(),
-            range,
+            SelectedThirdAxisDomain2::Finite(range),
             policy,
         )? {
             Classification::Decided(mut parameters) => {
@@ -65026,7 +65026,7 @@ fn recursive_quadratic_polynomial_local_parameters(
     Ok(Some(retained))
 }
 
-/// Isolates every root in a finite original-parameter range over a retained
+/// Isolates every root in an original-parameter domain over a retained
 /// recursive quadratic field. Linear and quadratic roots remain projective
 /// values in that same tower. Higher degrees use the shared dense projection
 /// only as an enumerator and replay every candidate on the authored recursive
@@ -65035,7 +65035,7 @@ fn recursive_projective_polynomial_parameters_with_crossing(
     field: &BezierRecursiveQuadraticField2,
     mut coefficients: Vec<BezierRecursiveQuadraticValue2>,
     strict_unit_crossing: Option<BezierRecursiveQuadraticUnitCrossing2>,
-    range: &CurveParameterRange2,
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
     while coefficients
@@ -65068,8 +65068,7 @@ fn recursive_projective_polynomial_parameters_with_crossing(
         });
     }
 
-    let domain = CurveParameterDomain2::new(range, None);
-    let unit_domain = range == &CurveParameterRange2::unit();
+    let unit_domain = matches!(domain, SelectedThirdAxisDomain2::Finite(range) if range == &CurveParameterRange2::unit());
     debug_assert!(strict_unit_crossing.is_none() || unit_domain);
     if unit_domain && recursive_quadratic_closed_unit_bernstein_sign(&coefficients).is_some() {
         #[cfg(feature = "dispatch-trace")]
@@ -65160,7 +65159,7 @@ fn recursive_projective_polynomial_parameters_with_crossing(
                 }
             };
             if !has_certified_bounds {
-                match domain.contains_finite_parameter(
+                match domain.contains_parameter(
                     &CurveParameter2::from_recursive_projective(parameter.clone()),
                     policy,
                 )? {
@@ -65193,25 +65192,29 @@ fn recursive_projective_polynomial_parameters_with_crossing(
         return Ok(Classification::Decided(retained));
     }
 
-    let (_, bounds) = match domain.finite_envelope(policy)? {
-        Classification::Decided(envelope) => envelope,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    if let Some(candidates) =
-        recursive_quadratic_polynomial_local_parameters(field, &coefficients, bounds, policy)?
-    {
-        if unit_domain {
-            return Ok(Classification::Decided(candidates));
-        }
-        let mut retained = Vec::with_capacity(candidates.len());
-        for candidate in candidates {
-            match domain.contains_finite_parameter(&candidate, policy)? {
-                Classification::Decided(true) => retained.push(candidate),
-                Classification::Decided(false) => {}
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    if let SelectedThirdAxisDomain2::Finite(range) = domain {
+        let (_, bounds) = match CurveParameterDomain2::new(range, None).finite_envelope(policy)? {
+            Classification::Decided(envelope) => envelope,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if let Some(candidates) =
+            recursive_quadratic_polynomial_local_parameters(field, &coefficients, bounds, policy)?
+        {
+            if unit_domain {
+                return Ok(Classification::Decided(candidates));
             }
+            let mut retained = Vec::with_capacity(candidates.len());
+            for candidate in candidates {
+                match domain.contains_parameter(&candidate, policy)? {
+                    Classification::Decided(true) => retained.push(candidate),
+                    Classification::Decided(false) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            return Ok(Classification::Decided(retained));
         }
-        return Ok(Classification::Decided(retained));
     }
 
     let Some((base, projection)) = recursive_quadratic_polynomial_projection(coefficients.clone())
@@ -65223,23 +65226,19 @@ fn recursive_projective_polynomial_parameters_with_crossing(
             "a recursive polynomial projection changed its retained base".into(),
         ));
     }
-    let candidates = match selected_dense_last_axis_parameters(
-        &projection,
-        &base.sources,
-        SelectedThirdAxisDomain2::Finite(range),
-        policy,
-    )? {
-        Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
-            candidates
-        }
-        Classification::Decided(
-            BezierAlgebraicFiberProjection2::IdenticallyZero
-            | BezierAlgebraicFiberProjection2::Degenerate,
-        ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let candidates =
+        match selected_dense_last_axis_parameters(&projection, &base.sources, domain, policy)? {
+            Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {
+                candidates
+            }
+            Classification::Decided(
+                BezierAlgebraicFiberProjection2::IdenticallyZero
+                | BezierAlgebraicFiberProjection2::Degenerate,
+            ) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
     let mut retained = Vec::with_capacity(candidates.len());
     for candidate in candidates {
         let candidate = CurveParameter2::from(candidate);
@@ -65268,17 +65267,17 @@ fn recursive_projective_polynomial_parameters_with_crossing(
 fn recursive_projective_polynomial_parameters(
     field: &BezierRecursiveQuadraticField2,
     coefficients: Vec<BezierRecursiveQuadraticValue2>,
-    range: &CurveParameterRange2,
+    domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<CurveParameter2>>> {
-    let strict_unit_crossing = (range == &CurveParameterRange2::unit())
+    let strict_unit_crossing = (matches!(domain, SelectedThirdAxisDomain2::Finite(range) if range == &CurveParameterRange2::unit()))
         .then(|| recursive_quadratic_polynomial_strict_unit_crossing(field, &coefficients))
         .flatten();
     recursive_projective_polynomial_parameters_with_crossing(
         field,
         coefficients,
         strict_unit_crossing,
-        range,
+        domain,
         policy,
     )
 }
@@ -65361,13 +65360,17 @@ fn recursive_projective_point_rational_axis_parameters(
     {
         weight.pop();
     }
-    let candidates =
-        match recursive_projective_polynomial_parameters(&field, equation, range, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let candidates = match recursive_projective_polynomial_parameters(
+        &field,
+        equation,
+        SelectedThirdAxisDomain2::Finite(range),
+        policy,
+    )? {
+        Classification::Decided(candidates) => candidates,
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     let mut retained = Vec::with_capacity(candidates.len());
     for candidate in candidates {
         let weight_sign = policy.strict_predicate_pass(|| {
@@ -65718,6 +65721,62 @@ enum SelectedThirdAxisDomain2<'a> {
 }
 
 impl SelectedThirdAxisDomain2<'_> {
+    fn contains_parameter(
+        self,
+        parameter: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        match self {
+            Self::Finite(range) => {
+                CurveParameterDomain2::new(range, None).contains_finite_parameter(parameter, policy)
+            }
+            Self::AffineLine => Ok(Classification::Decided(true)),
+            Self::IncidentRay {
+                anchor,
+                direction,
+                barrier,
+            } => {
+                let wanted = match direction {
+                    BezierParameterRayDirection2::Increasing => std::cmp::Ordering::Greater,
+                    BezierParameterRayDirection2::Decreasing => std::cmp::Ordering::Less,
+                };
+                match parameter.cmp_by_refinement(&CurveParameter2::from(anchor.clone()), policy)? {
+                    Classification::Decided(order) if order != wanted => {
+                        return Ok(Classification::Decided(false));
+                    }
+                    Classification::Decided(_) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                if let Some(barrier) = barrier {
+                    return Ok(parameter
+                        .cmp_by_refinement(&CurveParameter2::from(barrier.clone()), policy)?
+                        .map(|order| order == wanted.reverse()));
+                }
+                Ok(Classification::Decided(true))
+            }
+        }
+    }
+
+    fn polynomial_is_nonzero(
+        self,
+        coefficients: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        if let Self::Finite(range) = self {
+            return polynomial_is_nonzero_on_parameter_range(coefficients, range, policy);
+        }
+        let polynomial = match polynomial_from_coefficients(coefficients.to_vec(), policy)? {
+            Classification::Decided(Some(polynomial)) => polynomial,
+            Classification::Decided(None) => return Ok(Classification::Decided(false)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(self
+            .isolate(&polynomial, policy)?
+            .map(|roots| roots.is_empty()))
+    }
+
     fn strict_sample(self, policy: &CurveContext) -> CurveResult<Classification<Real>> {
         policy.strict_predicate_pass(|| match self {
             Self::Finite(range) => range.strict_interior_scalar(policy),
@@ -77581,7 +77640,7 @@ impl BezierAlgebraicChord2 {
                 let (roots, mut root_classification_complete) =
                     match recursive_projective_polynomial_parameters(
                         field,
-                        cross.clone(), range,
+                        cross.clone(), SelectedThirdAxisDomain2::Finite(range),
                         strict,
                     )? {
                         Classification::Decided(roots) => (roots, true),
@@ -86638,13 +86697,230 @@ pub(crate) fn retained_point_linear_difference_to_algebraic_sign(
 /// Borrowed point-incidence equations shared by membership and winding.
 /// A regular cell may supply its oriented primitive normal without requiring
 /// endpoint geometry, traversal, or a winding-ray carrier.
-struct BezierParallelAlgebraicPointQuery2<'a> {
+struct BezierParallelPointQuery2<'a> {
     parallel: &'a BezierParallel2,
     range: &'a CurveParameterRange2,
     frame: Option<&'a BezierAnalyticParallelTangentField2>,
 }
 
-impl BezierParallelAlgebraicPointQuery2<'_> {
+impl BezierParallelPointQuery2<'_> {
+    /// The Cartesian incidence theorem also holds in a point's retained
+    /// coefficient field. Homogeneous coordinates preserve their correlation;
+    /// the common polynomial factor is the contact proof, and one oriented
+    /// normal sign selects the authored offset without adjoining a speed root.
+    fn visit_recursive_point_parameters(
+        &self,
+        point: &CurvePoint2,
+        incident: Option<&BezierParallelIncidentDomain2>,
+        domain: CurveParameterDomain2<'_>,
+        policy: &CurveContext,
+        visitor: &mut impl FnMut(Option<&CurveParameter2>) -> ControlFlow<()>,
+    ) -> CurveResult<Classification<ControlFlow<()>>> {
+        let strict = policy.strict_counterpart();
+        let point = match recursive_projective_evidence_points(&[point], &strict)? {
+            Classification::Decided(Some(mut points)) => points.remove(0),
+            Classification::Decided(None) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let field = point.denominator.field();
+        let source = self.parallel.source_power_basis()?;
+        let unit = [Real::one()];
+        let weight = source.weight.unwrap_or(&unit);
+        let finite = SelectedThirdAxisDomain2::Finite(domain.finite);
+        let extension = incident.map(|incident| SelectedThirdAxisDomain2::IncidentRay {
+            anchor: incident.anchor(),
+            direction: incident.direction(),
+            barrier: incident.barrier(),
+        });
+        for axis in std::iter::once(finite).chain(extension) {
+            match axis.polynomial_is_nonzero(weight, &strict)? {
+                Classification::Decided(true) => {}
+                Classification::Decided(false) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        let distance_sign = match real_sign(self.parallel.distance(), &strict) {
+            Some(sign) => sign,
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        };
+        let tangent = if distance_sign == RealSign::Zero {
+            None
+        } else {
+            let differential = self.parallel.differential()?;
+            Some(
+                self.frame
+                    .map(|frame| (&frame.x[..], &frame.y[..]))
+                    .unwrap_or((&differential.tangent_x, &differential.tangent_y)),
+            )
+        };
+        let Some((equations, normal)) = (|| {
+            let real = |values: &[Real]| recursive_quadratic_real_polynomial(&field, values);
+            let multiply = recursive_quadratic_polynomial_multiply;
+            let scale = recursive_quadratic_polynomial_scale;
+            let add = |a: &[_], b: &[_]| recursive_quadratic_polynomial_combine(a, b, false);
+            let subtract = |a: &[_], b: &[_]| recursive_quadratic_polynomial_combine(a, b, true);
+            let weight = real(weight)?;
+            // delta = D*W*(point - source), for the retained point (X/D,Y/D).
+            let delta_x = subtract(
+                &scale(&weight, &point.x)?,
+                &scale(&real(source.x_numerator)?, &point.denominator)?,
+            )?;
+            let delta_y = subtract(
+                &scale(&weight, &point.y)?,
+                &scale(&real(source.y_numerator)?, &point.denominator)?,
+            )?;
+            let Some((x, y)) = tangent else {
+                return Some(([delta_x, delta_y], None));
+            };
+            let speed = polynomial_add(&polynomial_multiply(x, x), &polynomial_multiply(y, y));
+            let x = real(x)?;
+            let y = real(y)?;
+            let orthogonality = add(&multiply(&delta_x, &x)?, &multiply(&delta_y, &y)?)?;
+            let weighted_distance = recursive_quadratic_polynomial_scale_real(
+                &scale(&weight, &point.denominator)?,
+                self.parallel.distance(),
+            )?;
+            let distance = subtract(
+                &add(
+                    &multiply(&delta_x, &delta_x)?,
+                    &multiply(&delta_y, &delta_y)?,
+                )?,
+                &multiply(&weighted_distance, &weighted_distance)?,
+            )?;
+            let orientation = multiply(
+                &subtract(&multiply(&delta_y, &x)?, &multiply(&delta_x, &y)?)?,
+                &weighted_distance,
+            )?;
+            Some(([orthogonality, distance], Some((speed, orientation))))
+        })() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let common = match hypersolve::ordered_field_polynomial_gcd(
+            &equations[0],
+            &equations[1],
+            &mut BezierRecursiveOrderedFieldContext2 {
+                field: field.clone(),
+                policy: strict,
+            },
+        ) {
+            Ok(common) => common,
+            Err(BezierRecursiveOrderedFieldError2::Curve(error)) => return Err(error),
+            Err(BezierRecursiveOrderedFieldError2::Uncertain) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
+            }
+        };
+        if common.is_empty() {
+            if let Some((_, orientation)) = &normal {
+                // Both equations are polynomial identities. On this connected
+                // source domain, nonzero weight, distance and speed make the
+                // branch continuous and nonzero; one strict sign chooses the
+                // whole authored sheet, including its incident continuation.
+                for axis in std::iter::once(finite).chain(extension) {
+                    if let Classification::Uncertain(reason) = self
+                        .parallel
+                        .certify_source_frame_in_domain(axis, self.frame, &strict)?
+                    {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                match recursive_projective_polynomial_sign_at_parameter(
+                    &field,
+                    orientation,
+                    domain.finite.start(),
+                    &strict,
+                )? {
+                    Classification::Decided(RealSign::Positive) => {}
+                    Classification::Decided(RealSign::Negative) => {
+                        return Ok(Classification::Decided(ControlFlow::Continue(())));
+                    }
+                    Classification::Decided(RealSign::Zero) => {
+                        return Err(CurveError::Topology(
+                            "a regular collapsed parallel lost its normal branch".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            return Ok(Classification::Decided(visitor(None)));
+        }
+        for axis in std::iter::once(finite).chain(extension) {
+            let candidates = match recursive_projective_polynomial_parameters(
+                &field,
+                common.clone(),
+                axis,
+                &strict,
+            )? {
+                Classification::Decided(candidates) => candidates,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            for candidate in candidates {
+                match CurveParameterDomain2::new(self.range, None)
+                    .contains_finite_parameter(&candidate, &strict)?
+                {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        let Some(incident) = incident else {
+                            continue;
+                        };
+                        match incident.contains_extension_parameter(&candidate, &strict)? {
+                            Classification::Decided(true) => {}
+                            Classification::Decided(false) => continue,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                if let Some((speed, orientation)) = &normal {
+                    match candidate.polynomial_sign(speed, &strict)? {
+                        Classification::Decided(RealSign::Positive) => {}
+                        Classification::Decided(RealSign::Zero) => {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                        }
+                        Classification::Decided(RealSign::Negative) => {
+                            return Err(CurveError::Topology(
+                                "a recursive point incidence had negative squared speed".into(),
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                    match recursive_projective_polynomial_sign_at_parameter(
+                        &field,
+                        orientation,
+                        &candidate,
+                        &strict,
+                    )? {
+                        Classification::Decided(RealSign::Positive) => {}
+                        Classification::Decided(RealSign::Negative) => continue,
+                        Classification::Decided(RealSign::Zero) => {
+                            return Err(CurveError::Topology(
+                                "a regular point incidence lost its normal branch".into(),
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                if let stop @ ControlFlow::Break(()) = visitor(Some(&candidate)) {
+                    return Ok(Classification::Decided(stop));
+                }
+            }
+        }
+        Ok(Classification::Decided(ControlFlow::Continue(())))
+    }
+
     fn system(
         &self,
         point: &RationalBezierAlgebraicPointPredicate2<'_>,
@@ -87030,7 +87306,7 @@ impl BezierParallelAlgebraicRay2 {
         incident: Option<&BezierParallelIncidentDomain2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let query = BezierParallelAlgebraicPointQuery2 {
+        let query = BezierParallelPointQuery2 {
             parallel: &self.parallel,
             range: &self.range,
             frame: None,
@@ -87152,7 +87428,7 @@ impl BezierParallelAlgebraicRay2 {
         skip_incident_origin: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
-        let query = BezierParallelAlgebraicPointQuery2 {
+        let query = BezierParallelPointQuery2 {
             parallel: &self.parallel,
             range: &self.range,
             frame: None,
@@ -87161,7 +87437,7 @@ impl BezierParallelAlgebraicRay2 {
         let side_y = direction_x.clone();
         let side = query.system(point, &side_x, &side_y)?;
         let ahead = query.system(point, direction_x, direction_y)?;
-        let parameters = match BezierParallelAlgebraicPointQuery2::projected_parameters(
+        let parameters = match BezierParallelPointQuery2::projected_parameters(
             &side,
             point,
             CurveParameterDomain2::new(&self.range, None),
@@ -113825,7 +114101,18 @@ impl BezierParallel2 {
                 CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
                 | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                 | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_)) => {
-                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                    let frame = match frame()? {
+                        Classification::Decided(frame) => frame,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                    BezierParallelPointQuery2 {
+                        parallel: self,
+                        range,
+                        frame: frame.as_deref(),
+                    }
+                    .visit_recursive_point_parameters(point, incident, domain, policy, visitor)
                 }
                 CurvePoint2(CurvePointData2::Algebraic(_)) => unreachable!(),
             };
@@ -113858,7 +114145,7 @@ impl BezierParallel2 {
             Classification::Decided(_) => None,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        BezierParallelAlgebraicPointQuery2 {
+        BezierParallelPointQuery2 {
             parallel: self,
             range: increasing.as_ref().unwrap_or(range),
             frame: frame.as_deref(),
@@ -122381,25 +122668,9 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<()>> {
         policy.strict_predicate_pass(|| {
-            let nonzero = |coefficients: &[Real]| {
-                if let SelectedThirdAxisDomain2::Finite(range) = domain {
-                    return polynomial_is_nonzero_on_parameter_range(coefficients, range, policy);
-                }
-                let polynomial = match polynomial_from_coefficients(coefficients.to_vec(), policy)?
-                {
-                    Classification::Decided(Some(polynomial)) => polynomial,
-                    Classification::Decided(None) => return Ok(Classification::Decided(false)),
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                Ok(domain
-                    .isolate(&polynomial, policy)?
-                    .map(|roots| roots.is_empty()))
-            };
             let source = self.source_power_basis()?;
             if let Some(weight) = source.weight {
-                match nonzero(weight)? {
+                match domain.polynomial_is_nonzero(weight, policy)? {
                     Classification::Decided(true) => {}
                     Classification::Decided(false) => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -122416,7 +122687,7 @@ impl BezierParallel2 {
                     .unwrap_or((&differential.tangent_x, &differential.tangent_y));
                 let speed_squared =
                     polynomial_add(&polynomial_multiply(x, x), &polynomial_multiply(y, y));
-                match nonzero(&speed_squared)? {
+                match domain.polynomial_is_nonzero(&speed_squared, policy)? {
                     Classification::Decided(true) => {}
                     Classification::Decided(false) => {
                         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -125659,7 +125930,7 @@ impl BezierParameterComponentOverlap2 {
         let candidates = match recursive_projective_polynomial_parameters(
             &scalar.numerator.field(),
             equation,
-            &CurveParameterRange2::unit(),
+            SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
             policy,
         )? {
             Classification::Decided(candidates) => candidates,
@@ -160090,7 +160361,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     field.constant(Real::zero()).unwrap(),
                     field.constant(Real::one()).unwrap(),
                 ],
-                &CurveParameterRange2::unit(),
+                SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                 &policy,
             )
             .unwrap() else {
@@ -160569,7 +160840,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     field.constant(Real::zero()).unwrap(),
                     raw_coordinates.denominator.clone(),
                 ],
-                &CurveParameterRange2::unit(),
+                SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                 &policy,
             )
             .unwrap() else {
@@ -160666,7 +160937,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     field.constant(Real::zero()).unwrap(),
                     first_coordinates.denominator.clone(),
                 ],
-                &CurveParameterRange2::unit(),
+                SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                 &policy,
             )
             .unwrap() else {
@@ -160902,7 +161173,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     &[-half.clone(), Real::zero(), Real::zero(), Real::one()],
                 )
                 .unwrap(),
-                &CurveParameterRange2::unit(),
+                SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                 &policy,
             )
             .unwrap() else {
@@ -161642,7 +161913,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     recursive_projective_polynomial_parameters(
                         &field,
                         defining,
-                        &CurveParameterRange2::unit(),
+                        SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                         &policy,
                     )
                     .unwrap()
@@ -161745,7 +162016,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     recursive_projective_polynomial_parameters(
                         &field,
                         defining,
-                        &CurveParameterRange2::unit(),
+                        SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                         &policy,
                     )
                     .unwrap()
@@ -161834,7 +162105,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 recursive_projective_polynomial_parameters(
                     &field,
                     coefficients.clone(),
-                    &CurveParameterRange2::unit(),
+                    SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                     attempt,
                 )
             })
@@ -161886,7 +162157,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 .into_iter()
                 .map(|value| field.constant(value).unwrap())
                 .collect(),
-                &CurveParameterRange2::unit(),
+                SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                 &policy,
             )
             .unwrap() else {
@@ -161934,7 +162205,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     .into_iter()
                     .map(|value| field.constant(value).unwrap())
                     .collect(),
-                &CurveParameterRange2::unit(),
+                SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                 &policy,
             )
             .unwrap() else {
@@ -162134,7 +162405,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                             &field,
                             coefficients,
                             Some(crossing),
-                            &CurveParameterRange2::unit(),
+                            SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
                             &policy,
                         )
                         .unwrap()
@@ -163196,6 +163467,380 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         1,
         false
     );
+
+    #[test]
+    fn recursive_incidence_accepts_cusp_contact_and_derived_points() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let tangent = CurvePoint2::from(strict_tangent_chord_query_point());
+            let (_, quarter, overlap) = selected_fiber_rational_quarter_overlap(&policy);
+            let derived = overlap
+                .map
+                .contact(
+                    overlap.other_end.clone(),
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                    RealSign::Zero,
+                )
+                .point_evidence();
+            assert!(matches!(
+                derived,
+                CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
+            ));
+            for (point, expected) in [
+                (tangent, Point2::from_values(1, 0)),
+                (derived, quarter.end().clone()),
+            ] {
+                assert!(point.coordinates().is_none());
+                let same = point.coincides_with(&CurvePoint2::from(expected.clone()), &policy);
+                assert_eq!(same.certainty, crate::CurveCertainty::Certified);
+                assert_eq!(same.value, Classification::Decided(true));
+                let source = QuadraticBezier2::new(
+                    expected.translated(-Real::one(), -Real::one()),
+                    expected.translated(Real::zero(), -Real::one()),
+                    expected.translated(Real::one(), -Real::one()),
+                )
+                .parallel_left(Real::one())
+                .unwrap();
+                for distance in [-1, 1] {
+                    let mut parameters = Vec::new();
+                    assert_eq!(
+                        source
+                            .with_distance(Real::from(distance))
+                            .visit_point_incidence_evidence(
+                                &point,
+                                &CurveParameterRange2::unit(),
+                                None,
+                                false,
+                                &policy,
+                                &mut |parameter| {
+                                    parameters.push(parameter.unwrap().clone());
+                                    ControlFlow::Continue(())
+                                },
+                            )
+                            .unwrap(),
+                        Classification::Decided(ControlFlow::Continue(()))
+                    );
+                    assert_eq!(parameters.len(), usize::from(distance > 0));
+                    for parameter in parameters {
+                        assert_eq!(
+                            parameter.same_value(&half.clone().into(), &policy).unwrap(),
+                            Classification::Decided(true)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    fn recursive_test_point(point: &Point2, policy: &CurveContext) -> CurvePoint2 {
+        let fifth = (Real::one() / Real::from(5)).unwrap();
+        let start = point.translated(Real::from(4) * &fifth, -Real::from(3) * &fifth);
+        let end = start.translated(Real::from(3), Real::from(4));
+        let Classification::Decided(chord) =
+            BezierAlgebraicChord2::try_new(start.into(), end.into(), policy).unwrap()
+        else {
+            panic!("the independent oblique source chord is nondegenerate");
+        };
+        let (point, _) = BezierAlgebraicChordParallelPoint2::new_pair(
+            chord,
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            policy,
+        );
+        let point = CurvePoint2::from(point);
+        assert!(point.coordinates().is_none());
+        point
+    }
+
+    #[test]
+    fn recursive_incidence_preserves_selected_point_fields() {
+        let fifth = (Real::one() / Real::from(5)).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new(half.clone(), Real::zero()),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(-Real::one())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for coefficients in [
+                vec![-half.clone(), Real::zero(), Real::one()],
+                vec![
+                    -Real::one(),
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                ],
+            ] {
+                let BezierParameter2::Algebraic(alpha) = algebraic_parameter(coefficients.clone())
+                else {
+                    unreachable!()
+                };
+                for sign in [-1, 1] {
+                    let image = |x: Real, y: Real| {
+                        CurvePoint2::from(
+                            RationalBezierAlgebraicPointImage2::from_retained_expression(
+                                alpha.clone(),
+                                parameter_representation(&alpha, &policy),
+                                vec![x, Real::from(sign)],
+                                vec![y],
+                                vec![Real::one()],
+                                "independent recursive point incidence",
+                            ),
+                        )
+                    };
+                    let start = image(Real::from(4) * &fifth, -Real::from(8) * &fifth);
+                    let end = image(Real::from(19) * &fifth, Real::from(12) * &fifth);
+                    let Classification::Decided(chord) =
+                        BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
+                    else {
+                        panic!("selected endpoints define the same oblique direction")
+                    };
+                    let (point, _) = BezierAlgebraicChordParallelPoint2::new_pair(
+                        chord,
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        &policy,
+                    );
+                    let point = CurvePoint2::from(point);
+                    assert!(point.coordinates().is_none());
+                    assert_eq!(
+                        point
+                            .coincides_with(&image(Real::zero(), -Real::one()), &policy)
+                            .value,
+                        Classification::Decided(true)
+                    );
+                    for reversed in [false, true] {
+                        for (start, end, matches) in [(0, 1, sign > 0), (-1, 0, sign < 0)] {
+                            let range = if reversed {
+                                CurveParameterRange2::new_validated(
+                                    Real::from(end).into(),
+                                    Real::from(start).into(),
+                                )
+                            } else {
+                                CurveParameterRange2::new_validated(
+                                    Real::from(start).into(),
+                                    Real::from(end).into(),
+                                )
+                            };
+                            let mut parameters = Vec::new();
+                            assert_eq!(
+                                parallel
+                                    .visit_point_incidence_evidence(
+                                        &point,
+                                        &range,
+                                        None,
+                                        false,
+                                        &policy,
+                                        &mut |parameter| {
+                                            parameters.push(
+                                            parameter
+                                                .expect(
+                                                    "the affine source has an isolated preimage",
+                                                )
+                                                .clone(),
+                                        );
+                                            ControlFlow::Continue(())
+                                        }
+                                    )
+                                    .unwrap(),
+                                Classification::Decided(ControlFlow::Continue(()))
+                            );
+                            assert_eq!(parameters.len(), usize::from(matches));
+                            for parameter in parameters {
+                                assert_eq!(
+                                    parameter
+                                        .polynomial_sign(
+                                            &coefficients
+                                                .iter()
+                                                .enumerate()
+                                                .map(|(power, coefficient)| {
+                                                    if sign < 0 && power % 2 == 1 {
+                                                        -coefficient
+                                                    } else {
+                                                        coefficient.clone()
+                                                    }
+                                                })
+                                                .collect::<Vec<_>>(),
+                                            &policy
+                                        )
+                                        .unwrap(),
+                                    Classification::Decided(RealSign::Zero)
+                                );
+                                assert_eq!(
+                                    parameter
+                                        .cmp_by_refinement(&Real::zero().into(), &policy)
+                                        .unwrap(),
+                                    Classification::Decided(if sign > 0 {
+                                        std::cmp::Ordering::Greater
+                                    } else {
+                                        std::cmp::Ordering::Less
+                                    })
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_incidence_keeps_stationary_and_collapsed_semantics() {
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let parallel = QuadraticBezier2::new(
+            Point2::from_values(1, 0),
+            Point2::from_values(-1, 0),
+            Point2::from_values(1, 0),
+        )
+        .parallel_left(Real::one())
+        .unwrap();
+        let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
+        let circle = RationalQuadraticBezier2::try_unit_end_weights(
+            center.translated(Real::one(), Real::zero()),
+            center.translated(Real::one(), Real::one()),
+            center.translated(Real::zero(), Real::one()),
+            (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap(),
+        )
+        .unwrap()
+        .parallel_left(Real::one())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (y, expected) in [(1, Real::from(3) * &quarter), (-1, quarter.clone())] {
+                let point =
+                    recursive_test_point(&Point2::new(quarter.clone(), Real::from(y)), &policy);
+                let mut parameters = Vec::new();
+                assert_eq!(
+                    parallel
+                        .visit_point_incidence_evidence(
+                            &point,
+                            &CurveParameterRange2::unit(),
+                            None,
+                            false,
+                            &policy,
+                            &mut |parameter| {
+                                parameters.push(parameter.unwrap().clone());
+                                ControlFlow::Continue(())
+                            }
+                        )
+                        .unwrap(),
+                    Classification::Decided(ControlFlow::Continue(()))
+                );
+                assert_eq!(parameters.len(), 1);
+                assert_eq!(
+                    parameters[0].same_value(&expected.into(), &policy).unwrap(),
+                    Classification::Decided(true)
+                );
+            }
+            let point = recursive_test_point(&Point2::from_values(0, 1), &policy);
+            assert!(matches!(
+                parallel
+                    .contains_point_evidence(&point, &CurveParameterRange2::unit(), None, &policy)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+            let point = recursive_test_point(&Point2::from_values(0, 0), &policy);
+            assert_eq!(
+                parallel
+                    .with_distance(Real::zero())
+                    .contains_point_evidence(&point, &CurveParameterRange2::unit(), None, &policy)
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+            let point = recursive_test_point(&center, &policy);
+            for (distance, expected) in [(1, 1), (-1, 0)] {
+                let mut visits = 0;
+                assert_eq!(
+                    circle
+                        .with_distance(Real::from(distance))
+                        .visit_point_incidence_evidence(
+                            &point,
+                            &CurveParameterRange2::unit(),
+                            None,
+                            false,
+                            &policy,
+                            &mut |parameter| {
+                                assert!(
+                                    parameter.is_none(),
+                                    "a collapsed source retains the entire contact domain"
+                                );
+                                visits += 1;
+                                ControlFlow::Continue(())
+                            }
+                        )
+                        .unwrap(),
+                    Classification::Decided(ControlFlow::Continue(()))
+                );
+                assert_eq!(visits, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn recursive_incidence_preserves_exterior_domains_and_pole_barriers() {
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let parallel = RationalBezier2::try_new(
+            vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
+            vec![-Real::one(), Real::one()],
+        )
+        .unwrap()
+        .parallel_left(Real::one())
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let point = recursive_test_point(
+                &Point2::new(Real::from(3) * &quarter, -Real::one()),
+                &policy,
+            );
+            let foreign =
+                recursive_test_point(&Point2::new(quarter.clone(), -Real::one()), &policy);
+            for reversed in [false, true] {
+                let range = if reversed {
+                    CurveParameterRange2::new_validated(Real::from(3).into(), Real::from(2).into())
+                } else {
+                    CurveParameterRange2::new_validated(Real::from(2).into(), Real::from(3).into())
+                };
+                let Classification::Decided(incident) = parallel
+                    .incident_domain_from_parameter(
+                        &Real::from(2).into(),
+                        BezierParameterRayDirection2::Decreasing,
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the exterior source component has a first pole")
+                };
+                assert_eq!(
+                    parallel
+                        .contains_point_evidence(&point, &range, None, &policy)
+                        .unwrap(),
+                    Classification::Decided(false)
+                );
+                assert_eq!(
+                    parallel
+                        .contains_point_evidence(&point, &range, Some(&incident), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
+                );
+                assert_eq!(
+                    parallel
+                        .contains_point_evidence(&foreign, &range, Some(&incident), &policy)
+                        .unwrap(),
+                    Classification::Decided(false)
+                );
+            }
+            assert!(matches!(
+                parallel
+                    .contains_point_evidence(&point, &CurveParameterRange2::unit(), None, &policy)
+                    .unwrap(),
+                Classification::Uncertain(UncertaintyReason::Boundary)
+            ));
+        }
+    }
 
     #[test]
     fn retained_point_membership_preserves_domains_and_regular_barriers() {
