@@ -121,8 +121,10 @@ Point2
 
 A `Contour2` is a closed, connected line/arc boundary with a fill rule.
 `CurvePath2` generalizes connected paths to every supported curve family.
-`CurveRegion2` stores filled topology as oriented native Bézier boundary
-fragments and is the main input to mixed-family region operations.
+`CurveRegion2` stores filled topology as oriented exact boundary curves and
+is the main input to mixed-family region operations. Curve operations emit
+boundary provenance for inspection; authored input supplies geometry and fill
+semantics.
 
 ## API guide
 

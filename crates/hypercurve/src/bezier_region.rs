@@ -109,7 +109,10 @@ impl PartialEq for CurveRegionBoundaryLoop2 {
     }
 }
 
-/// Arrangement provenance for one retained boundary fragment.
+/// Provenance recorded while constructing a retained boundary fragment.
+///
+/// Curve operations supply these records; completed boundaries expose them
+/// for inspection without accepting caller-authored arrangement indices.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CurveRegionFragmentSource2 {
     arrangement_fragment_index: usize,
@@ -119,7 +122,7 @@ pub struct CurveRegionFragmentSource2 {
 
 impl CurveRegionFragmentSource2 {
     /// Constructs retained fragment provenance from arrangement graph indices.
-    pub const fn new(
+    pub(crate) const fn new(
         arrangement_fragment_index: usize,
         source_curve_index: usize,
         source_fragment_index: usize,
@@ -939,32 +942,6 @@ impl CurveRegionBoundaryLoop2 {
         Ok(Self {
             fragments,
             arrangement_sources: None,
-            connectivity_policy: Some(policy.retained_object_policy()),
-            curves: OnceLock::new(),
-            rational_evaluators: OnceLock::new(),
-        })
-    }
-
-    /// Constructs a retained boundary loop with one source record per fragment.
-    pub fn try_new_with_arrangement_sources(
-        fragments: Vec<BezierSplitFragment2>,
-        arrangement_sources: Vec<CurveRegionFragmentSource2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        let fragments = fragments
-            .into_iter()
-            .map(|fragment| canonicalize_retained_rational_fragment(fragment, policy))
-            .collect::<Vec<_>>();
-        validate_retained_boundary_loop(&fragments, policy)?;
-        if fragments.len() != arrangement_sources.len() {
-            return Err(CurveError::Topology(
-                "retained boundary source count does not match fragment count".to_owned(),
-            ));
-        }
-        validate_retained_boundary_loop_sources(&arrangement_sources)?;
-        Ok(Self {
-            fragments,
-            arrangement_sources: Some(arrangement_sources),
             connectivity_policy: Some(policy.retained_object_policy()),
             curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
@@ -17579,6 +17556,86 @@ mod tests {
     }
 
     #[test]
+    fn certified_boundary_constructors_validate_arrangement_sources() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let fragments = [(p(0, 0), p(1, 0)), (p(1, 0), p(0, 0))]
+                .into_iter()
+                .map(|(start, end)| BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                        start.clone(),
+                        start.lerp(&end, q(1, 2)),
+                        end,
+                    )),
+                })
+                .collect();
+            let boundary = CurveRegionBoundaryLoop2::new(fragments, &policy).unwrap();
+            for sources in [
+                Vec::new(),
+                vec![CurveRegionFragmentSource2::new(0, 0, 0)],
+                vec![
+                    CurveRegionFragmentSource2::new(0, 0, 0),
+                    CurveRegionFragmentSource2::new(0, 1, 0),
+                ],
+            ] {
+                assert!(matches!(
+                    CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
+                        boundary.fragments.clone(),
+                        sources.clone(),
+                        &policy
+                    ),
+                    Err(CurveError::Topology(_))
+                ));
+                assert!(matches!(
+                    CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                        boundary.fragments.clone(),
+                        Some(sources),
+                        &policy
+                    ),
+                    Err(CurveError::Topology(_))
+                ));
+            }
+            let sources = vec![
+                CurveRegionFragmentSource2::new(7, 3, 0),
+                CurveRegionFragmentSource2::new(8, 3, 1),
+            ];
+            for result in [
+                CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
+                    boundary.fragments.clone(),
+                    sources.clone(),
+                    &policy,
+                ),
+                CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                    boundary.fragments.clone(),
+                    Some(sources.clone()),
+                    &policy,
+                ),
+            ] {
+                let result = result.unwrap();
+                assert_eq!(result.len(), 2);
+                assert_eq!(result.arrangement_sources(), Some(sources.as_slice()));
+            }
+            assert!(matches!(
+                CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
+                    Vec::new(),
+                    Vec::new(),
+                    &policy
+                ),
+                Err(CurveError::Topology(_))
+            ));
+            assert!(matches!(
+                CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(
+                    Vec::new(),
+                    Some(Vec::new()),
+                    &policy
+                ),
+                Err(CurveError::Topology(_))
+            ));
+        }
+    }
+
+    #[test]
     fn retained_region_constructor_rejects_reused_arrangement_sources_across_loops() {
         let boundary = |vertices: &[Point2], sources| {
             let fragments = (0..vertices.len())
@@ -17596,8 +17653,9 @@ mod tests {
                     }
                 })
                 .collect();
-            CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
-                fragments,
+            let boundary = CurveRegionBoundaryLoop2::new(fragments, &CurveContext::STRICT).unwrap();
+            CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
+                boundary.fragments,
                 sources,
                 &CurveContext::STRICT,
             )
@@ -31745,8 +31803,9 @@ mod tests {
                     )
                 })
                 .collect::<Vec<_>>();
-            CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
-                fragments,
+            let boundary = CurveRegionBoundaryLoop2::new(fragments, policy).unwrap();
+            CurveRegionBoundaryLoop2::try_new_from_certified_arrangement_chain(
+                boundary.fragments,
                 (0..4)
                     .map(|index| {
                         CurveRegionFragmentSource2::new(source_base + index, source_base + index, 0)

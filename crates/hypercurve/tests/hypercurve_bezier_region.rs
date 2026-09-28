@@ -1,11 +1,10 @@
 use hypercurve::{
-    BezierAlgebraicChord2, BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2,
-    BezierArrangementFragment2, BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2,
-    BezierParameterInterval, BezierParameterPolynomial, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
-    BezierRetainedOverlapEvidence2, BezierSplitFragment2, BezierSubcurve2, Classification, Curve2,
-    CurveCertainty, CurveContext, CurveError, CurveOutcome, CurvePath2, CurvePoint2, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionFragmentSource2, CurveRegionLoopRole, Point2,
+    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
+    BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
+    BezierRetainedEnvelopeSourceKind, BezierRetainedOverlapEvidence2, BezierSplitFragment2,
+    BezierSubcurve2, Classification, Curve2, CurveCertainty, CurveContext, CurveError,
+    CurveOutcome, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, Point2,
     QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation,
     UncertaintyReason,
 };
@@ -108,13 +107,6 @@ fn algebraic_sqrt_eighth_parameter() -> BezierAlgebraicParameter2 {
 fn algebraic_image(curve: &QuadraticBezier2) -> BezierAlgebraicEndpointImage2 {
     BezierAlgebraicEndpointImage2::quadratic(curve, &algebraic_midpoint_parameter(), &policy())
         .unwrap()
-}
-
-fn retained_algebraic_line_fragment(start: Point2, end: Point2) -> BezierSplitFragment2 {
-    BezierSplitFragment2::AlgebraicChord(decided(
-        BezierAlgebraicChord2::try_new(CurvePoint2::from(start), CurvePoint2::from(end), &policy())
-            .unwrap(),
-    ))
 }
 
 fn algebraic_endpoint_line(start: Point2, end: Point2) -> Curve2 {
@@ -617,11 +609,6 @@ fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies()
 
 #[test]
 fn empty_boundary_loops_do_not_certify_signed_area() {
-    assert_topology_error(CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
-        Vec::new(),
-        Vec::new(),
-        &policy(),
-    ));
     assert_topology_error(BezierBoundaryLoop2::new(Vec::new(), &policy()));
     assert_topology_error(CurveRegionBoundaryLoop2::new(Vec::new(), &policy()));
 }
@@ -703,21 +690,6 @@ fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
             start_image: None,
             end_image: Some(forged_image),
         }],
-        &policy(),
-    ));
-}
-
-#[test]
-fn retained_boundary_loop_constructor_rejects_duplicate_arrangement_sources() {
-    assert_topology_error(CurveRegionBoundaryLoop2::try_new_with_arrangement_sources(
-        vec![
-            retained_algebraic_line_fragment(p(0, 0), p(1, 0)),
-            retained_algebraic_line_fragment(p(1, 0), p(0, 0)),
-        ],
-        vec![
-            CurveRegionFragmentSource2::new(0, 0, 0),
-            CurveRegionFragmentSource2::new(0, 1, 0),
-        ],
         &policy(),
     ));
 }
