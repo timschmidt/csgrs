@@ -3687,9 +3687,31 @@ impl RationalBezier2 {
             }
         };
         let mut contacts = Vec::with_capacity(other_parameters.len());
+        let common_weight_sign = matches!(
+            other.control_weight_sign(),
+            Classification::Decided(RealSign::Positive | RealSign::Negative)
+        );
+        let strict = policy.strict_counterpart();
         for (parameter, simple_root) in other_parameters.iter().zip(simple_roots) {
-            // The quadratic frame is nonsingular and both rational
-            // denominators have a certified common sign. Consequently a
+            // Clearing the implicit equation also retains projective contacts
+            // at infinity. Only finite points may enter affine contact replay.
+            // Common-sign Bernstein weights certify every root on this unit
+            // chart; mixed weights require the original source denominator.
+            if !common_weight_sign {
+                match signed_coefficients_at_parameter(
+                    &other.homogeneous_power_basis()?.weight,
+                    parameter,
+                    &strict,
+                )? {
+                    Classification::Decided(RealSign::Zero) => continue,
+                    Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Some(Classification::Uncertain(reason)));
+                    }
+                }
+            }
+            // The quadratic frame is nonsingular and the source denominator
+            // is nonzero at this selected contact. Consequently a
             // simple root of the cleared implicit substitution has nonzero
             // directional derivative, which is exactly transversality of the
             // two regular affine images. Multiple or undecided roots retain
@@ -9938,6 +9960,77 @@ fn from_homogeneous(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn implicit_conic_contacts_exclude_projective_poles() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for middle_weight in [2, -1, -2] {
+                for (dx, dy) in [(1, 0), (0, 1)] {
+                    let curve = |dx, dy| {
+                        RationalBezier2::try_new(
+                            vec![
+                                Point2::from_values(dx, dy),
+                                Point2::from_values(1 + dx, 1 + dy),
+                                Point2::from_values(2 + dx, dy),
+                            ],
+                            vec![Real::one(), Real::from(middle_weight), Real::one()],
+                        )
+                        .unwrap()
+                    };
+                    let first = curve(0, 0);
+                    let second = curve(dx, dy);
+                    let contacts = first.intersection_contacts(&second, &policy).unwrap();
+                    assert!(matches!(
+                        contacts,
+                        RationalBezierIntersectionContacts2::Contacts(_)
+                            | RationalBezierIntersectionContacts2::NoIntersection
+                    ));
+                    let expected_count = usize::from(dx == 1 && middle_weight != -1);
+                    assert_eq!(contacts.isolated_contacts().len(), expected_count);
+                    for contact in contacts.isolated_contacts() {
+                        // The translated conics meet on x=3/2. Only one of
+                        // y=(4 +/- sqrt(7))/3 belongs to each finite unit trace.
+                        let radical = Real::from(7).sqrt().unwrap();
+                        let height = if middle_weight == 2 {
+                            Real::from(4) - radical
+                        } else {
+                            Real::from(4) + radical
+                        };
+                        let expected = CurvePoint2::from(Point2::new(
+                            q(3, 2),
+                            (height / Real::from(3)).unwrap(),
+                        ));
+                        assert!(matches!(
+                            contact.point().coincides_with(&expected, &policy).value,
+                            Classification::Decided(true)
+                        ));
+                        for (source, parameter) in [
+                            (&first, contact.first_parameter()),
+                            (&second, contact.second_parameter()),
+                        ] {
+                            let point = match parameter {
+                                BezierParameter2::Exact(parameter) => {
+                                    CurvePoint2::from(source.point_at(parameter, &policy).unwrap())
+                                }
+                                BezierParameter2::Algebraic(parameter) => {
+                                    CurvePoint2::from(crate::tests::decided(
+                                        source
+                                            .point_at_algebraic_parameter(parameter, &policy)
+                                            .unwrap(),
+                                    ))
+                                }
+                            };
+                            assert!(matches!(
+                                contact.point().coincides_with(&point, &policy).value,
+                                Classification::Decided(true)
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     #[test]
     fn rational_contact_evidence_preserves_affine_domain_blockers() {
         use crate::tests::decided;
