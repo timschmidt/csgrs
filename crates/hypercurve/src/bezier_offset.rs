@@ -118975,7 +118975,6 @@ impl BezierParallel2 {
             candidates,
             basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
             overlap: None,
-            component_overlaps: Arc::from([]),
             component_overlap_evidence: Arc::from([]),
             component_pairs: Arc::from([]),
             selected_component_pair_count: 0,
@@ -119875,7 +119874,6 @@ impl BezierParallel2 {
             candidates,
             basis: projection_basis,
             overlap,
-            component_overlaps,
             component_overlap_evidence,
             component_pairs,
             selected_component_pair_count,
@@ -119883,7 +119881,6 @@ impl BezierParallel2 {
             radical_component_projection: _,
         } = projection;
         if let Some(overlap) = overlap.as_ref()
-            && component_overlaps.is_empty()
             && component_overlap_evidence.is_empty()
             && component_pairs.is_empty()
             && residual_equations.is_none()
@@ -119894,6 +119891,17 @@ impl BezierParallel2 {
                     Arc::from([overlap.clone()]),
                 ),
             ));
+        }
+        // The component certificates own their domains. Publish each identical
+        // interval record once, while retaining every map and selected branch.
+        // A duplicated interval would make consumers visit all matching maps
+        // repeatedly; no exact comparison or geometric equivalence is assumed.
+        let mut component_overlaps = Vec::new();
+        for component in component_overlap_evidence.iter() {
+            let overlap = component.overlap();
+            if !component_overlaps.contains(overlap) {
+                component_overlaps.push(overlap.clone());
+            }
         }
         let overlap_correspondence = if let Some(overlap) = overlap.as_ref() {
             let first_source = self.source().to_rational_bezier()?;
@@ -120348,7 +120356,7 @@ impl BezierParallel2 {
             }
         }
         let contacts = contacts.into();
-        let mut overlaps = component_overlaps.to_vec();
+        let mut overlaps = component_overlaps;
         if let Some(overlap) = overlap
             && !overlaps.contains(&overlap)
         {
@@ -130612,7 +130620,6 @@ struct BezierParallelPairProjection2 {
     candidates: CurveIntersectionCandidates2,
     basis: BezierParallelPairProjectionBasis2,
     overlap: Option<RationalBezierIntersectionOverlap2>,
-    component_overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
     component_overlap_evidence: Arc<[BezierParameterComponentOverlap2]>,
     component_pairs: Arc<[BezierParallelIntersectionParameterPair2]>,
     selected_component_pair_count: usize,
@@ -131119,7 +131126,6 @@ fn parameter_domain_constraint(
                 candidates,
                 basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
                 overlap: None,
-                component_overlaps: Arc::from([]),
                 component_overlap_evidence: Arc::from([]),
                 component_pairs: Arc::from([]),
                 selected_component_pair_count: 0,
@@ -131154,7 +131160,6 @@ fn retain_parameter_component_pairs(
         candidates: CurveIntersectionCandidates2::NoIntersection,
         basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
         overlap: None,
-        component_overlaps: Arc::from([]),
         component_overlap_evidence: Arc::from([]),
         component_pairs: Arc::from([]),
         selected_component_pair_count: 0,
@@ -131164,10 +131169,6 @@ fn retain_parameter_component_pairs(
     if !overlaps.is_empty() {
         let mut evidence = projection.component_overlap_evidence.to_vec();
         evidence.extend(overlaps);
-        projection.component_overlaps = evidence
-            .iter()
-            .map(|overlap| overlap.overlap().clone())
-            .collect();
         projection.component_overlap_evidence = evidence.into();
     }
     let mut retained =
@@ -132658,10 +132659,6 @@ fn project_parallel_pair_without_components_in_domain(
                 Classification::Decided(source) => source.selected_overlap().cloned(),
                 Classification::Uncertain(_) => None,
             },
-            component_overlaps: component_overlaps
-                .iter()
-                .map(|overlap| overlap.overlap().clone())
-                .collect(),
             component_overlap_evidence: component_overlaps.into(),
             component_pairs: match source_overlap {
                 Classification::Decided(source) => source.contacts.clone(),
@@ -132746,7 +132743,6 @@ fn project_unit_parallel_pair_intersection_system(
                 candidates: projected,
                 basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
                 overlap: None,
-                component_overlaps: Arc::from([]),
                 component_overlap_evidence: Arc::from([]),
                 component_pairs: Arc::from([]),
                 selected_component_pair_count: 0,
@@ -132781,7 +132777,6 @@ fn project_unit_parallel_pair_intersection_system(
             candidates: fallback,
             basis: BezierParallelPairProjectionBasis2::FirstAndNorm,
             overlap: None,
-            component_overlaps: Arc::from([]),
             component_overlap_evidence: Arc::from([]),
             component_pairs: match &source_overlap {
                 Classification::Decided(source) => source.contacts.clone(),
@@ -196989,6 +196984,61 @@ mod structural_overlap_trace_regression {
         let Classification::Decided(actual) = actual else {
             panic!("the same finite offset trace must remain representable and decidable");
         };
+        assert_eq!(
+            actual.overlaps().len(),
+            1,
+            "one closed correspondence covers the trace"
+        );
+        for component in actual.component_overlaps() {
+            let overlap = component.overlap();
+            let public = crate::CurveIntersectionOverlap2 {
+                first_span_index: 0,
+                second_span_index: 0,
+                first_range: CurveParameterRange2::from_bezier_range(overlap.first_range().clone()),
+                second_range: CurveParameterRange2::from_bezier_range(
+                    overlap.second_range().clone(),
+                ),
+                orientation: overlap.orientation(),
+                endpoint_inclusion: [overlap.includes_start(), overlap.includes_end()],
+                parameter_correspondence:
+                    crate::curve_intersection::CurveOverlapCorrespondence2::ParameterComponent {
+                        source: component.clone(),
+                        swapped: false,
+                    },
+            };
+            let second = if reversed {
+                [q(1, 2).into(), q(3, 4).into()]
+            } else {
+                [q(1, 4).into(), Real::one().into()]
+            };
+            let clipped = public
+                .restrict([Real::zero().into(), q(1, 2).into()], second, &policy)
+                .unwrap()
+                .value;
+            let Classification::Decided(Some(clipped)) = clipped else {
+                panic!("the retained correspondence must reenter exact clipping");
+            };
+            let expected = if reversed {
+                [q(1, 4), q(1, 2), q(3, 4), q(1, 2)]
+            } else {
+                [q(1, 4), q(1, 2), q(1, 4), q(1, 2)]
+            };
+            for (actual, expected) in [
+                clipped.first_range().start(),
+                clipped.first_range().end(),
+                clipped.second_range().start(),
+                clipped.second_range().end(),
+            ]
+            .into_iter()
+            .zip(expected)
+            {
+                assert!(
+                    actual.same_value(&expected.into(), &policy).unwrap()
+                        == Classification::Decided(true)
+                );
+            }
+            assert!(clipped.includes_start() && clipped.includes_end());
+        }
         eprintln!(
             "REPARAMETERIZED_OVERLAP reversed={reversed} complete={} contacts={} overlaps={}",
             actual.is_complete(),
