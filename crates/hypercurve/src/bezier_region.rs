@@ -18355,7 +18355,7 @@ mod tests {
             let curve = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)))
                 .subcurve(
                     Real::zero().into(),
-                    BezierParameter2::algebraic(parameter).into(),
+                    BezierParameter2::Algebraic(parameter).into(),
                     &policy,
                 )
                 .unwrap()
@@ -22191,7 +22191,7 @@ mod tests {
         let Classification::Decided(parameter) = parameter else {
             panic!("the exact algebraic parameter must be decided");
         };
-        BezierParameter2::algebraic(parameter)
+        BezierParameter2::Algebraic(parameter)
     }
 
     fn sqrt_third_algebraic_parameter(policy: &CurveContext) -> BezierParameter2 {
@@ -22217,7 +22217,7 @@ mod tests {
         let Classification::Decided(parameter) = parameter else {
             panic!("the exact algebraic parameter must be decided");
         };
-        BezierParameter2::algebraic(parameter)
+        BezierParameter2::Algebraic(parameter)
     }
 
     #[derive(Clone, Copy)]
@@ -32567,7 +32567,7 @@ mod tests {
         )
         .expect("the polynomial cubic has a rational Bezier representation");
         let split = source
-            .split_at_parameters(&[BezierParameter2::algebraic(parameter)], &policy)
+            .split_at_parameters(&[BezierParameter2::Algebraic(parameter)], &policy)
             .expect("the exact algebraic split is constructible");
         let Classification::Decided(split) = split else {
             panic!("the exact algebraic split must be decided");

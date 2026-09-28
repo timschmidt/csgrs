@@ -111,7 +111,7 @@ fn main() -> CurveResult<()> {
         elapsed / iterations
     );
 
-    let close_rational = decided(BezierParameter2::exact(q(353_553, 500_000), &policy)?);
+    let close_rational = BezierParameter2::Exact(q(353_553, 500_000));
     let refinement_iterations = 10_000_u32;
     for (label, coefficients) in [
         ("refined_ordering", vec![r(-1), r(0), r(2)]),
@@ -127,7 +127,7 @@ fn main() -> CurveResult<()> {
         let irrational_interval =
             decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);
         let irrational =
-            BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+            BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
                 irrational_polynomial,
                 irrational_interval,
                 &policy,

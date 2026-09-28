@@ -323,7 +323,7 @@ fn algebraic_parameter_recovers_represented_linear_root() {
         represented
     );
     assert_eq!(
-        BezierParameter2::algebraic(clone)
+        BezierParameter2::Algebraic(clone)
             .promote_represented_exact_point(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Exact(q(1, 2)))
@@ -343,7 +343,7 @@ fn nonrational_linear_parameter_uses_exact_point_api() {
     assert!(exact.exact_rational_ref().is_none());
     assert_eq!(
         decided(
-            BezierParameter2::algebraic(parameter)
+            BezierParameter2::Algebraic(parameter)
                 .promote_represented_exact_point(&policy())
                 .unwrap(),
         ),
@@ -363,7 +363,7 @@ fn irrational_nonlinear_parameter_remains_algebraic() {
         Classification::Decided(None)
     );
     assert!(matches!(
-        BezierParameter2::algebraic(parameter)
+        BezierParameter2::Algebraic(parameter)
             .promote_represented_exact_point(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Algebraic(_))
@@ -372,7 +372,7 @@ fn irrational_nonlinear_parameter_remains_algebraic() {
 
 #[test]
 fn oriented_parameter_range_retains_irrational_boundary() {
-    let start = BezierParameter2::algebraic(isolate(
+    let start = BezierParameter2::Algebraic(isolate(
         polynomial(vec![r(-1), r(0), r(2)]),
         interval(q(2, 3), q(3, 4)),
     ));
@@ -402,7 +402,7 @@ fn oriented_parameter_range_retains_irrational_boundary() {
 
 #[test]
 fn parameter_range_promotes_represented_rational_boundary() {
-    let start = BezierParameter2::algebraic(isolate(
+    let start = BezierParameter2::Algebraic(isolate(
         polynomial(vec![r(-1), r(2)]),
         interval(q(2, 5), q(3, 5)),
     ));
@@ -456,7 +456,7 @@ fn nonlinear_algebraic_parameter_reconstructs_exact_rational_root() {
         Classification::Decided(Some(q(1, 3)))
     );
     assert_eq!(
-        BezierParameter2::algebraic(parameter)
+        BezierParameter2::Algebraic(parameter)
             .promote_represented_exact_point(&policy())
             .unwrap(),
         Classification::Decided(BezierParameter2::Exact(q(1, 3)))
@@ -504,33 +504,17 @@ fn reversed_parameter_intervals_are_rejected() {
 
 #[test]
 fn exact_and_algebraic_parameters_compare_only_when_certified() {
-    let left = BezierParameter2::exact(q(1, 4), &policy())
-        .unwrap()
-        .map(|value| value);
-    let left = match left {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => {
-            panic!("exact parameter unexpectedly uncertain: {reason:?}")
-        }
-    };
+    let left = BezierParameter2::Exact(q(1, 4));
 
     let polynomial = polynomial(vec![r(-1), r(2)]);
-    let algebraic = BezierParameter2::algebraic(isolate(polynomial, interval(q(2, 5), q(3, 5))));
+    let algebraic = BezierParameter2::Algebraic(isolate(polynomial, interval(q(2, 5), q(3, 5))));
 
     assert_eq!(
         left.cmp_by_interval(&algebraic, &policy()).unwrap(),
         Classification::Decided(Ordering::Less)
     );
 
-    let overlapping = BezierParameter2::exact(q(1, 2), &policy())
-        .unwrap()
-        .map(|value| value);
-    let overlapping = match overlapping {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => {
-            panic!("exact parameter unexpectedly uncertain: {reason:?}")
-        }
-    };
+    let overlapping = BezierParameter2::Exact(q(1, 2));
     assert_eq!(
         overlapping.cmp_by_interval(&algebraic, &policy()).unwrap(),
         Classification::Decided(Ordering::Equal)
@@ -540,8 +524,8 @@ fn exact_and_algebraic_parameters_compare_only_when_certified() {
 #[test]
 fn endpoint_touching_singleton_isolators_have_strict_order() {
     let defining = polynomial(vec![r(-112), r(576), r(-576)]);
-    let left = BezierParameter2::algebraic(isolate(defining.clone(), interval(q(1, 4), q(1, 2))));
-    let right = BezierParameter2::algebraic(isolate(defining, interval(q(1, 2), q(3, 4))));
+    let left = BezierParameter2::Algebraic(isolate(defining.clone(), interval(q(1, 4), q(1, 2))));
+    let right = BezierParameter2::Algebraic(isolate(defining, interval(q(1, 2), q(3, 4))));
 
     assert_eq!(
         left.cmp_by_interval(&right, &policy()).unwrap(),
@@ -555,11 +539,11 @@ fn endpoint_touching_singleton_isolators_have_strict_order() {
 
 #[test]
 fn equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators() {
-    let quadratic = BezierParameter2::algebraic(isolate(
+    let quadratic = BezierParameter2::Algebraic(isolate(
         polynomial(vec![r(-1), r(0), r(2)]),
         interval(q(2, 3), q(3, 4)),
     ));
-    let cubic = BezierParameter2::algebraic(isolate(
+    let cubic = BezierParameter2::Algebraic(isolate(
         polynomial(vec![r(-1), r(-1), r(2), r(2)]),
         interval(q(7, 10), q(4, 5)),
     ));
@@ -576,19 +560,11 @@ fn equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators() 
 
 #[test]
 fn overlapping_distinct_parameters_compare_by_certified_refinement() {
-    let irrational = BezierParameter2::algebraic(isolate(
+    let irrational = BezierParameter2::Algebraic(isolate(
         polynomial(vec![r(-1), r(0), r(2)]),
         interval(q(2, 3), q(3, 4)),
     ));
-    let close_rational = BezierParameter2::exact(q(353_553, 500_000), &policy())
-        .unwrap()
-        .map(|parameter| parameter);
-    let close_rational = match close_rational {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            panic!("exact parameter unexpectedly uncertain: {reason:?}")
-        }
-    };
+    let close_rational = BezierParameter2::Exact(q(353_553, 500_000));
 
     assert_eq!(
         close_rational
@@ -608,7 +584,7 @@ fn overlapping_distinct_parameters_compare_by_certified_refinement() {
 fn algebraic_root_sign_change_tracks_multiplicity_parity() {
     let simple = polynomial(vec![r(-1), r(0), r(2)]);
     let simple_root =
-        BezierParameter2::algebraic(isolate(simple.clone(), interval(q(2, 3), q(3, 4))));
+        BezierParameter2::Algebraic(isolate(simple.clone(), interval(q(2, 3), q(3, 4))));
     assert_eq!(
         simple
             .changes_sign_at_root(&simple_root, &policy())
@@ -618,7 +594,7 @@ fn algebraic_root_sign_change_tracks_multiplicity_parity() {
 
     let double = polynomial(vec![r(1), r(0), r(-4), r(0), r(4)]);
     let double_root =
-        BezierParameter2::algebraic(isolate(double.clone(), interval(q(2, 3), q(3, 4))));
+        BezierParameter2::Algebraic(isolate(double.clone(), interval(q(2, 3), q(3, 4))));
     assert_eq!(
         double
             .changes_sign_at_root(&double_root, &policy())

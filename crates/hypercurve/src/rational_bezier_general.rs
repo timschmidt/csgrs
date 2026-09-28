@@ -8322,11 +8322,12 @@ fn real_coefficient_rational_image_parameter(
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
         let value = (numerator / denominator)?;
-        return match BezierParameter2::exact(value, &strict) {
-            Ok(Classification::Decided(parameter)) => Ok(Classification::Decided(Some(parameter))),
-            Err(CurveError::InvalidBezierParameter) => Ok(Classification::Decided(None)),
-            Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
-            Err(error) => Err(error),
+        return match in_closed_unit_interval(&value, &strict) {
+            Some(true) => Ok(Classification::Decided(Some(BezierParameter2::Exact(
+                value,
+            )))),
+            Some(false) => Ok(Classification::Decided(None)),
+            None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         };
     }
 
@@ -8369,8 +8370,13 @@ fn real_coefficient_rational_image_parameter(
     }
 
     let mut refinement = BezierParameterRefinement2::new(source_parameter, &strict);
+    let mut image_refinements = image_parameters
+        .iter()
+        .map(|parameter| BezierParameterRefinement2::new(parameter, &strict))
+        .collect::<Vec<_>>();
     let mut refinement_steps = 0_usize;
     let mut denominator_sign = None;
+    let mut excluded_endpoints = [false; 2];
     loop {
         let refined = refinement.refine_to(refinement_steps);
         let source_interval = match refined.known_interval(&strict)? {
@@ -8396,13 +8402,72 @@ fn real_coefficient_rational_image_parameter(
                 return Ok(Classification::Decided(None));
             }
 
-            let mut containing = image_parameters.iter().filter(|parameter| {
-                image_parameter_contains_map_interval(parameter, &image_interval, &strict)
-            });
-            if let Some(parameter) = containing.next()
-                && containing.next().is_none()
-            {
-                return Ok(Classification::Decided(Some(parameter.clone())));
+            let inside = [
+                matches!(
+                    compare_reals(&image_interval.lower, &Real::zero(), &strict),
+                    Some(Ordering::Greater | Ordering::Equal)
+                ),
+                matches!(
+                    compare_reals(&image_interval.upper, &Real::one(), &strict),
+                    Some(Ordering::Less | Ordering::Equal)
+                ),
+            ];
+            // This root inventory is complete on the unit interval. Once the
+            // image enclosure lies there, a single possible owner identifies
+            // the image. A scalar witness must not hide another overlapping
+            // algebraic root merely because its carrier has a wider interval.
+            if inside == [true; 2] {
+                let mut possible = image_refinements.iter_mut().filter_map(|refinement| {
+                    let parameter = refinement.refine_to(0);
+                    if !image_parameter_may_meet_map_interval(parameter, &image_interval, &strict) {
+                        return None;
+                    }
+                    // A deflated isolator may still cover another image root.
+                    // Refine possible competitors as well as the source; only
+                    // narrowing the source cannot separate such retained boxes.
+                    let steps = if parameter.scalar().is_some() {
+                        0
+                    } else {
+                        refinement_steps.saturating_sub(64)
+                    };
+                    let parameter = refinement.refine_to(steps);
+                    image_parameter_may_meet_map_interval(parameter, &image_interval, &strict)
+                        .then_some(parameter)
+                });
+                if let Some(parameter) = possible.next()
+                    && possible.next().is_none()
+                {
+                    return Ok(Classification::Decided(Some(parameter.clone())));
+                }
+            } else if refinement_steps >= 64 {
+                // An exact endpoint can straddle the unit boundary forever.
+                // The map enclosure already proves a nonzero denominator;
+                // replay N=0 or N-D=0 at the retained source to own that point.
+                for endpoint in 0..2 {
+                    if inside[endpoint] || excluded_endpoints[endpoint] {
+                        continue;
+                    }
+                    let coefficients = if endpoint == 0 {
+                        candidate.numerator.clone()
+                    } else {
+                        subtract_power_polynomials(&candidate.numerator, &candidate.denominator)
+                    };
+                    match signed_coefficients_at_parameter(
+                        &coefficients,
+                        source_parameter,
+                        &strict,
+                    )? {
+                        Classification::Decided(RealSign::Zero) => {
+                            return Ok(Classification::Decided(Some(BezierParameter2::Exact(
+                                Real::from(endpoint as i8),
+                            ))));
+                        }
+                        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                            excluded_endpoints[endpoint] = true
+                        }
+                        Classification::Uncertain(_) => {}
+                    }
+                }
             }
         }
         let next = next_rational_image_refinement(refinement_steps)?;
@@ -8439,34 +8504,24 @@ fn real_coefficient_rational_image_parameter(
     }
 }
 
-fn image_parameter_contains_map_interval(
+fn image_parameter_may_meet_map_interval(
     parameter: &BezierParameter2,
     image_interval: &ExactRealInterval,
     policy: &CurveContext,
 ) -> bool {
-    match parameter {
-        BezierParameter2::Exact(value) => {
-            matches!(
-                compare_reals(&image_interval.lower, value, policy),
-                Some(Ordering::Less | Ordering::Equal)
-            ) && matches!(
-                compare_reals(value, &image_interval.upper, policy),
-                Some(Ordering::Less | Ordering::Equal)
-            )
-        }
-        BezierParameter2::Algebraic(_) => {
-            let Ok(Classification::Decided(interval)) = parameter.known_interval(policy) else {
-                return false;
-            };
-            matches!(
-                compare_reals(interval.start(), &image_interval.lower, policy),
-                Some(Ordering::Less | Ordering::Equal)
-            ) && matches!(
-                compare_reals(&image_interval.upper, interval.end(), policy),
-                Some(Ordering::Less | Ordering::Equal)
-            )
-        }
-    }
+    // Both a retained isolator and a learned scalar enclose the same root.
+    // Only certified disjointness excludes a candidate; an unavailable
+    // comparison must remain possible while the source enclosure refines.
+    let Ok(Classification::Decided(interval)) = parameter.known_interval(policy) else {
+        return true;
+    };
+    !matches!(
+        compare_reals(interval.end(), &image_interval.lower, policy),
+        Some(Ordering::Less)
+    ) && !matches!(
+        compare_reals(&image_interval.upper, interval.start(), policy),
+        Some(Ordering::Less)
+    )
 }
 
 fn next_rational_image_refinement(current: usize) -> CurveResult<usize> {
@@ -8780,11 +8835,12 @@ fn exact_rational_parameter_image(
             value,
         ))));
     }
-    match BezierParameter2::exact(value, policy) {
-        Ok(Classification::Decided(parameter)) => Ok(Classification::Decided(Some(parameter))),
-        Err(CurveError::InvalidBezierParameter) => Ok(Classification::Decided(None)),
-        Ok(Classification::Uncertain(reason)) => Ok(Classification::Uncertain(reason)),
-        Err(error) => Err(error),
+    match in_closed_unit_interval(&value, policy) {
+        Some(true) => Ok(Classification::Decided(Some(BezierParameter2::Exact(
+            value,
+        )))),
+        Some(false) => Ok(Classification::Decided(None)),
+        None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
 }
 
@@ -11934,6 +11990,228 @@ mod tests {
     }
 
     #[test]
+    fn rational_image_selection_reuses_learned_exact_scalar_views() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let margin = (Real::one() / Real::from(16)).unwrap();
+        for value in [half.clone().sqrt().unwrap(), Real::pi() * &quarter] {
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let Classification::Decided(polynomial) =
+                    BezierParameterPolynomial::try_new_power_basis(
+                        vec![-(&value * &value), Real::zero(), Real::one()],
+                        &CurveContext::STRICT,
+                    )
+                    .unwrap()
+                else {
+                    panic!("the exact image polynomial must be certified");
+                };
+                let Classification::Decided(interval) = BezierParameterInterval::try_new(
+                    half.clone(),
+                    Real::one(),
+                    &CurveContext::STRICT,
+                )
+                .unwrap() else {
+                    panic!("the positive image root must be bracketed");
+                };
+                let Classification::Decided(root) = BezierAlgebraicParameter2::try_isolate(
+                    polynomial,
+                    interval,
+                    &CurveContext::STRICT,
+                )
+                .unwrap() else {
+                    panic!("the positive image root must be isolated");
+                };
+                let parameter = BezierParameter2::Algebraic(root);
+                let retained = parameter.clone();
+                assert!(parameter.scalar().is_none());
+                let image_interval = ExactRealInterval {
+                    lower: &value - &margin,
+                    upper: &value + &margin,
+                };
+                assert!(image_parameter_may_meet_map_interval(
+                    &parameter,
+                    &image_interval,
+                    &policy
+                ));
+                let exact = BezierParameter2::Exact(value.clone());
+                assert_eq!(
+                    parameter.same_value(&exact, &CurveContext::STRICT).unwrap(),
+                    Classification::Decided(true)
+                );
+                assert!(matches!(retained, BezierParameter2::Algebraic(_)));
+                assert!(retained.scalar().is_some());
+                let foreign = ExactRealInterval {
+                    lower: Real::zero(),
+                    upper: quarter.clone(),
+                };
+                for parameter in [&exact, &retained] {
+                    assert!(image_parameter_may_meet_map_interval(
+                        parameter,
+                        &image_interval,
+                        &policy
+                    ));
+                    assert!(!image_parameter_may_meet_map_interval(
+                        parameter, &foreign, &policy
+                    ));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn rational_image_selection_refines_competing_deflated_isolators() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // (t-1/2)(t^2-1/2) has two unit roots. The retained isolator of
+            // the second factor may include 1/2, which it no longer defines.
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![quarter.clone(), -half.clone(), -half.clone(), Real::one()],
+                    &CurveContext::STRICT,
+                )
+                .unwrap()
+            else {
+                panic!("the image polynomial must be certified");
+            };
+            let Classification::Decided(interval) = BezierParameterInterval::try_new(
+                quarter.clone(),
+                (Real::from(5) / Real::from(8)).unwrap(),
+                &CurveContext::STRICT,
+            )
+            .unwrap() else {
+                panic!("the rational source root must be bracketed");
+            };
+            let Classification::Decided(source) = BezierAlgebraicParameter2::try_isolate(
+                polynomial.clone(),
+                interval,
+                &CurveContext::STRICT,
+            )
+            .unwrap() else {
+                panic!("the rational source root must be isolated");
+            };
+            let source = BezierParameter2::Algebraic(source);
+            let Classification::Decided(factor) = BezierParameterPolynomial::try_new_power_basis(
+                vec![-half.clone(), Real::zero(), Real::one()],
+                &CurveContext::STRICT,
+            )
+            .unwrap() else {
+                panic!("the deflated factor must be certified");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(Real::zero(), Real::one(), &CurveContext::STRICT)
+                    .unwrap()
+            else {
+                panic!("the positive competing root must be bracketed");
+            };
+            let Classification::Decided(other) =
+                BezierAlgebraicParameter2::try_isolate(factor, interval, &CurveContext::STRICT)
+                    .unwrap()
+            else {
+                panic!("the positive competing root must be isolated");
+            };
+            let Classification::Decided(candidate) = conic_parameter_candidate(
+                polynomial.coefficients(),
+                &(vec![Real::zero(), Real::one()], vec![Real::one()]),
+                &CurveContext::STRICT,
+            )
+            .unwrap() else {
+                panic!("the identity image map must be certified");
+            };
+            assert!(candidate.quotient_matrices.set(None).is_ok());
+            assert!(candidate.image_polynomial.set(Some(polynomial)).is_ok());
+            assert!(
+                candidate
+                    .image_parameters
+                    .set(Ok(Classification::Decided(vec![
+                        BezierParameter2::Exact(half.clone()),
+                        BezierParameter2::Algebraic(other),
+                    ])))
+                    .is_ok()
+            );
+            let Classification::Decided(Some(image)) =
+                real_coefficient_rational_image_parameter(&source, &candidate, &policy).unwrap()
+            else {
+                panic!("a competing deflated isolator must not prevent exact image selection");
+            };
+            assert_eq!(
+                image
+                    .same_value(
+                        &BezierParameter2::Exact(half.clone()),
+                        &CurveContext::STRICT
+                    )
+                    .unwrap(),
+                Classification::Decided(true)
+            );
+        }
+    }
+
+    #[test]
+    fn rational_image_selection_certifies_unit_endpoints_before_admission() {
+        let half = (Real::one() / Real::from(2)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(polynomial) =
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![-half.clone(), Real::zero(), Real::one()],
+                    &CurveContext::STRICT,
+                )
+                .unwrap()
+            else {
+                panic!("the source polynomial must be certified");
+            };
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(half.clone(), Real::one(), &CurveContext::STRICT)
+                    .unwrap()
+            else {
+                panic!("the source interval must be certified");
+            };
+            let Classification::Decided(source) = BezierAlgebraicParameter2::try_isolate(
+                polynomial.clone(),
+                interval,
+                &CurveContext::STRICT,
+            )
+            .unwrap() else {
+                panic!("the positive source root must be isolated");
+            };
+            let source = BezierParameter2::Algebraic(source);
+            for value in [-1, 0, 1, 2] {
+                // At the selected root of t^2-1/2, the map is exactly value.
+                let Classification::Decided(candidate) = conic_parameter_candidate(
+                    polynomial.coefficients(),
+                    &(
+                        vec![Real::from(value) - &half, Real::zero(), Real::one()],
+                        vec![Real::one()],
+                    ),
+                    &CurveContext::STRICT,
+                )
+                .unwrap() else {
+                    panic!("the exact map must be constructible");
+                };
+                assert!(candidate.quotient_matrices.set(None).is_ok());
+                let result =
+                    real_coefficient_rational_image_parameter(&source, &candidate, &policy)
+                        .unwrap();
+                if (0..=1).contains(&value) {
+                    let Classification::Decided(Some(parameter)) = result else {
+                        panic!("an exact unit endpoint must be admitted");
+                    };
+                    assert_eq!(
+                        parameter
+                            .same_value(
+                                &BezierParameter2::Exact(Real::from(value)),
+                                &CurveContext::STRICT
+                            )
+                            .unwrap(),
+                        Classification::Decided(true)
+                    );
+                } else {
+                    assert_eq!(result, Classification::Decided(None));
+                }
+            }
+        }
+    }
+
+    #[test]
     fn conic_rational_image_separation_refines_past_the_old_limit() {
         let strict = CurveContext::STRICT;
         let one = Real::one();
@@ -12027,7 +12305,7 @@ mod tests {
         assert_ne!(
             image_parameters
                 .iter()
-                .filter(|parameter| image_parameter_contains_map_interval(
+                .filter(|parameter| image_parameter_may_meet_map_interval(
                     parameter,
                     &old_image_interval,
                     &strict,
@@ -12045,8 +12323,27 @@ mod tests {
             .set(Ok(Classification::Decided(image_parameters)))
             .expect("the test candidate root cache was empty");
 
-        let selected_source = ((&one - fifth.sqrt().unwrap()) / &two).unwrap();
+        let selected_source = ((&one - fifth.clone().sqrt().unwrap()) / &two).unwrap();
         let expected = Real::eval_poly(&numerator, &selected_source);
+        let opposite_source = ((&one + fifth.sqrt().unwrap()) / &two).unwrap();
+        let opposite = BezierParameter2::Exact(Real::eval_poly(&numerator, &opposite_source));
+        let Ok(Classification::Decided(images)) = candidate.image_parameters.get().unwrap() else {
+            unreachable!()
+        };
+        let mut warmed = 0;
+        for image in images {
+            match image.same_value(&opposite, &strict).unwrap() {
+                Classification::Decided(true) => warmed += 1,
+                Classification::Decided(false) => {}
+                Classification::Uncertain(_) => {
+                    panic!("the independent competing image must be decidable")
+                }
+            }
+        }
+        assert_eq!(
+            warmed, 1,
+            "warm the other conjugate before selecting this source image"
+        );
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
@@ -12413,7 +12710,44 @@ mod tests {
             compare_reals(point.x(), &expected_x, &policy),
             Some(std::cmp::Ordering::Equal)
         );
+        // Keeping the entire curve must reuse its weight-sign proof instead
+        // of expanding all homogeneous coordinates just to check endpoints.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let split = curve.split_at_parameters(&[], &policy).unwrap();
+            assert!(matches!(split, Classification::Decided(_)));
+        }
         assert!(curve.data.homogeneous_power_basis.get().is_none());
+    }
+
+    #[test]
+    fn split_boundary_checks_keep_unit_weight_proofs_within_the_unit_domain() {
+        // The positive Bernstein weights prove finiteness on [0,1], but the
+        // same denominator (t-2)^2 has an exact pole at the exterior cut.
+        let curve = crate::RationalQuadraticBezier2::try_new(
+            Point2::from_values(0, 0),
+            Point2::from_values(1, 1),
+            Point2::from_values(2, 0),
+            Real::from(4),
+            Real::from(2),
+            Real::one(),
+        )
+        .unwrap();
+        for source in [
+            crate::BezierSubcurve2::RationalQuadratic(curve.clone()),
+            crate::BezierSubcurve2::Rational(curve.into()),
+        ] {
+            for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+                let result = source.split_at_parameters_refined(
+                    &BezierParameterRange2::from_exact(Real::one(), Real::from(2)),
+                    &[],
+                    &policy,
+                );
+                assert!(matches!(
+                    result,
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                ));
+            }
+        }
     }
 
     #[test]

@@ -30,9 +30,9 @@ fn main() -> CurveResult<()> {
     let policy = CurveContext::STRICT;
     let curve = CubicBezier2::new(p(0, 0), p(2, 6), p(6, -2), p(8, 0));
     let parameters = [
-        decided(BezierParameter2::exact(q(1, 4), &policy)?),
-        decided(BezierParameter2::exact(q(1, 2), &policy)?),
-        decided(BezierParameter2::exact(q(3, 4), &policy)?),
+        BezierParameter2::Exact(q(1, 4)),
+        BezierParameter2::Exact(q(1, 2)),
+        BezierParameter2::Exact(q(3, 4)),
     ];
 
     let iterations = 25_000_u32;
@@ -84,15 +84,15 @@ fn main() -> CurveResult<()> {
     let linear_algebraic_interval =
         decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);
     let linear_algebraic =
-        BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+        BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
             linear_algebraic_polynomial,
             linear_algebraic_interval,
             &policy,
         )?));
     let linear_algebraic_parameters = [
-        decided(BezierParameter2::exact(q(1, 4), &policy)?),
+        BezierParameter2::Exact(q(1, 4)),
         linear_algebraic,
-        decided(BezierParameter2::exact(q(3, 4), &policy)?),
+        BezierParameter2::Exact(q(3, 4)),
     ];
 
     let started = Instant::now();
@@ -113,15 +113,15 @@ fn main() -> CurveResult<()> {
         &policy,
     )?);
     let algebraic_interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);
-    let algebraic = BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+    let algebraic = BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
         algebraic_polynomial,
         algebraic_interval,
         &policy,
     )?));
     let algebraic_parameters = [
-        decided(BezierParameter2::exact(q(1, 4), &policy)?),
+        BezierParameter2::Exact(q(1, 4)),
         algebraic,
-        decided(BezierParameter2::exact(q(3, 4), &policy)?),
+        BezierParameter2::Exact(q(3, 4)),
     ];
 
     let started = Instant::now();

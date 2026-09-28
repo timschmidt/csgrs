@@ -60,12 +60,7 @@ fuzz_target!(|data: &[u8]| {
             point(chunk[2], chunk[3]),
             point(chunk[4], chunk[5]),
         );
-        let mut parameters = Vec::new();
-        if let Ok(Classification::Decided(parameter)) =
-            BezierParameter2::exact(unit_from_byte(chunk[6]), &policy)
-        {
-            parameters.push(parameter);
-        }
+        let parameters = vec![BezierParameter2::Exact(unit_from_byte(chunk[6]))];
         if let Ok(Classification::Decided(materialization)) =
             curve.split_at_parameters(&parameters, &policy)
         {

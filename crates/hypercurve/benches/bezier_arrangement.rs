@@ -68,7 +68,7 @@ fn line_fragment(
 
 fn main() -> CurveResult<()> {
     let policy = CurveContext::STRICT;
-    let split = [decided(BezierParameter2::exact(q(1, 2), &policy)?)];
+    let split = [BezierParameter2::Exact(q(1, 2))];
     let mut materializations = Vec::new();
     let curve_count = benchmark_curve_count();
     for index in 0..curve_count {
@@ -314,7 +314,7 @@ fn main() -> CurveResult<()> {
     );
 
     let algebraic_parameter =
-        BezierParameter2::algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+        BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
             decided(BezierParameterPolynomial::try_new_power_basis(
                 vec![r(-1), r(2)],
                 &policy,

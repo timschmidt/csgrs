@@ -968,7 +968,7 @@ impl RationalQuadraticBezier2 {
         crate::facts::rational_quadratic_bezier_facts(self)
     }
 
-    fn denominator_at(&self, t: &Real) -> Real {
+    pub(crate) fn denominator_at(&self, t: &Real) -> Real {
         evaluate_quadratic_power_basis(self.weight_power_basis(), t)
     }
 

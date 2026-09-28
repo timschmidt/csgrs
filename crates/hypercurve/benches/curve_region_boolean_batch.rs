@@ -104,10 +104,6 @@ fn rectangle_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurvePath2 
     .unwrap()
 }
 
-fn exact_parameter(value: i32, policy: &CurveContext) -> BezierParameter2 {
-    decided(BezierParameter2::exact(Real::from(value), policy).unwrap())
-}
-
 fn analytic_parallel_curve(
     start: Point2,
     midpoint: Point2,
@@ -119,8 +115,8 @@ fn analytic_parallel_curve(
     let (start_parameter, end_parameter) = if reversed { (1, 0) } else { (0, 1) };
     let range = decided(
         BezierParameterRange2::try_new(
-            exact_parameter(start_parameter, policy),
-            exact_parameter(end_parameter, policy),
+            BezierParameter2::Exact(Real::from(start_parameter)),
+            BezierParameter2::Exact(Real::from(end_parameter)),
             policy,
         )
         .unwrap(),

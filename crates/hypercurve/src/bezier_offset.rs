@@ -111352,6 +111352,28 @@ fn parallel_pair_contact_parameters_are_retained(
     Ok(uncertain.map_or(Classification::Decided(false), Classification::Uncertain))
 }
 
+/// Combines retained component events with replayed isolated contacts through
+/// the same exact deduplication and completeness authority on every domain.
+fn extend_parallel_pair_contacts(
+    result: Classification<BezierParallelPairIntersectionSet2>,
+    retained_contacts: Vec<BezierParallelPairIntersectionContact2>,
+    policy: &CurveContext,
+) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
+    match result {
+        Classification::Decided(intersections) if !retained_contacts.is_empty() => {
+            merge_parallel_pair_intersection_sets(
+                intersections,
+                BezierParallelPairIntersectionSet2::complete(
+                    retained_contacts.into(),
+                    Arc::from([]),
+                ),
+                policy,
+            )
+        }
+        result => Ok(result),
+    }
+}
+
 fn merge_parallel_pair_intersection_sets(
     first: BezierParallelPairIntersectionSet2,
     second: BezierParallelPairIntersectionSet2,
@@ -117012,13 +117034,10 @@ impl BezierParallel2 {
             let line_parameter = if affine_line_parameter {
                 Some(BezierParameter2::Exact(line_parameter))
             } else {
-                match BezierParameter2::exact(line_parameter, policy) {
-                    Ok(Classification::Decided(parameter)) => Some(parameter),
-                    Err(CurveError::InvalidBezierParameter) => None,
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                    Err(error) => return Err(error),
+                match in_closed_unit_interval(&line_parameter, policy) {
+                    Some(true) => Some(BezierParameter2::Exact(line_parameter)),
+                    Some(false) => None,
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
                 }
             };
             return Ok(Classification::Decided((point.into(), line_parameter)));
@@ -118477,6 +118496,58 @@ impl BezierParallel2 {
                 BezierParallelPairDomainIntersectionSet2::from_components(Vec::new()),
             ));
         };
+        // A retained subdomain of the authored unit spans can reuse the
+        // structural source correspondence, while residual projection still
+        // owns both requested domains. No cancelled source frame is involved;
+        // opposite one-sided source normals keep the general domain selector.
+        if !unit_domain
+            && closed_finite
+            && first_frame.is_none()
+            && second_frame.is_none()
+            && matches!(query, ParameterComponentQuery2::RetainFinite)
+            && ranges.iter().all(|range| {
+                matches!(
+                    CurveParameterDomain2::new(&unit, None).contains_finite_range(range, policy),
+                    Ok(Classification::Decided(true))
+                )
+            })
+            && let Some(overlap) = structural_parallel_overlap(self, other, policy)?
+        {
+            let source_overlap =
+                Classification::Decided(CertifiedParallelSourceOverlap2::without_contacts(
+                    CertifiedParallelSourceOverlapKind2::Selected(overlap),
+                ));
+            if let Some(BezierParallelPairDomainProjection2::Enumerated {
+                projection,
+                retained_contacts,
+                components,
+            }) = project_parallel_pair_without_components_in_domain(
+                &system,
+                self,
+                other,
+                &source_overlap,
+                domains,
+                query,
+                None,
+                policy,
+            )? {
+                let result = self.replay_parallel_pair_projection_with_ranges(
+                    other,
+                    &system,
+                    projection,
+                    BezierParallelPairParameterSelection2::All,
+                    Some(ranges),
+                    policy,
+                )?;
+                let result = extend_parallel_pair_contacts(result, retained_contacts, policy)?;
+                return Ok(result.map(|intersections| {
+                    BezierParallelPairDomainIntersectionSet2::with_components(
+                        intersections,
+                        components,
+                    )
+                }));
+            }
+        }
         if !unit_domain
             || !closed_finite
             || !matches!(query, ParameterComponentQuery2::RetainFinite)
@@ -118993,19 +119064,7 @@ impl BezierParallel2 {
             regular_ranges,
             policy,
         )?;
-        let result = match result {
-            Classification::Decided(intersections) if !retained_contacts.is_empty() => {
-                merge_parallel_pair_intersection_sets(
-                    intersections,
-                    BezierParallelPairIntersectionSet2::complete(
-                        retained_contacts.into(),
-                        Arc::from([]),
-                    ),
-                    policy,
-                )?
-            }
-            result => result,
-        };
+        let result = extend_parallel_pair_contacts(result, retained_contacts, policy)?;
         Ok(result.map(|result| {
             BezierParallelPairDomainIntersectionSet2::with_components(result, domain_components)
         }))
@@ -119486,19 +119545,7 @@ impl BezierParallel2 {
             regular_sources.then(|| domains.map(|domain| domain.finite)),
             policy,
         )?;
-        let result = match result {
-            Classification::Decided(intersections) if !retained_contacts.is_empty() => {
-                merge_parallel_pair_intersection_sets(
-                    intersections,
-                    BezierParallelPairIntersectionSet2::complete(
-                        retained_contacts.into(),
-                        Arc::from([]),
-                    ),
-                    policy,
-                )?
-            }
-            result => result,
-        };
+        let result = extend_parallel_pair_contacts(result, retained_contacts, policy)?;
         let mut result = match result {
             Classification::Decided(result) => result,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -196598,6 +196645,94 @@ mod finite_domain_ownership_tests {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod retained_structural_pair_domain_regression {
+    use super::*;
+
+    #[test]
+    fn retained_structural_correspondence_preserves_off_diagonal_contact_domains() {
+        let point = |x, y| Point2::from_values(x, y);
+        let source = CubicBezier2::new(point(0, 0), point(1, 4), point(3, -4), point(4, 0));
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let parallel = source.parallel_left(half.clone()).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let Classification::Decided(reference) =
+                parallel.parallel_intersections(&parallel, &policy).unwrap()
+            else {
+                panic!("the complete native structural pair must be certified");
+            };
+            assert!(reference.is_complete());
+            assert_eq!(reference.contacts().len(), 2);
+            let contact = &reference.contacts()[0];
+            let first = contact.first_parameter();
+            let second = contact.second_parameter();
+            let (lower, upper) = match first.cmp_by_refinement(second, &policy).unwrap() {
+                Classification::Decided(std::cmp::Ordering::Less) => (first, second),
+                Classification::Decided(std::cmp::Ordering::Greater) => (second, first),
+                _ => panic!("the reference contact must be off the diagonal"),
+            };
+            let Classification::Decided(split) =
+                lower.strict_scalar_between_ordered(upper, &policy).unwrap()
+            else {
+                panic!("distinct crossing parameters must admit a separating cut");
+            };
+            let ranges = [
+                CurveParameterRange2::new_validated(Real::zero().into(), split.clone().into()),
+                CurveParameterRange2::new_validated(split.into(), Real::one().into()),
+            ];
+            for swap in [false, true] {
+                let requested = if swap {
+                    [&ranges[1], &ranges[0]]
+                } else {
+                    [&ranges[0], &ranges[1]]
+                };
+                let domains = requested.map(|range| CurveParameterDomain2::new(range, None));
+                let mut expected = Vec::new();
+                for contact in reference.contacts() {
+                    let parameters = [contact.first_parameter(), contact.second_parameter()];
+                    if domains.iter().zip(parameters).all(|(domain, parameter)| {
+                        domain
+                            .contains_finite_parameter(parameter, &policy)
+                            .unwrap()
+                            == Classification::Decided(true)
+                    }) {
+                        expected.push(contact);
+                    }
+                }
+                assert_eq!(
+                    expected.len(),
+                    1,
+                    "the separated domains contain one off-diagonal crossing"
+                );
+                let Classification::Decided(actual) = parallel
+                    .parallel_intersections_on_regular_ranges(
+                        &parallel,
+                        requested[0],
+                        requested[1],
+                        &policy,
+                    )
+                    .unwrap()
+                else {
+                    panic!("retained structural pair replay must classify");
+                };
+                assert!(actual.is_complete());
+                assert_eq!(actual.contacts().len(), expected.len());
+                for (got, wanted) in actual.contacts().iter().zip(expected) {
+                    for (got, wanted) in [
+                        (got.first_parameter(), wanted.first_parameter()),
+                        (got.second_parameter(), wanted.second_parameter()),
+                    ] {
+                        assert_eq!(
+                            got.same_value(wanted, &policy).unwrap(),
+                            Classification::Decided(true)
+                        );
                     }
                 }
             }

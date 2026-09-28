@@ -1797,7 +1797,6 @@ impl BezierSubcurve2 {
             policy,
             true,
             false,
-            |parameter| matches!(self.point_at(parameter, policy), Classification::Decided(_)),
             |start, end| {
                 // Keep compact native kernels on their certified domain. An
                 // exterior interval gets a fresh affine chart; unit-domain
@@ -2289,7 +2288,6 @@ impl QuadraticBezier2 {
             policy,
             false,
             true,
-            |_| true,
             |start, end| {
                 Ok(BezierSubcurve2::Quadratic(
                     self.subcurve_between_exact(start, end, policy)?,
@@ -2413,7 +2411,6 @@ impl CubicBezier2 {
             policy,
             false,
             true,
-            |_| true,
             |start, end| {
                 Ok(BezierSubcurve2::Cubic(
                     self.subcurve_between_exact(start, end, policy)?,
@@ -2512,12 +2509,6 @@ impl RationalQuadraticBezier2 {
             policy,
             false,
             true,
-            |parameter| {
-                matches!(
-                    self.point_at(parameter.clone(), policy),
-                    Classification::Decided(_)
-                )
-            },
             |start, end| {
                 Ok(BezierSubcurve2::RationalQuadratic(
                     self.subcurve_between_exact(start, end, policy)?,
@@ -2628,12 +2619,6 @@ impl RationalBezier2 {
             policy,
             false,
             true,
-            |parameter| {
-                matches!(
-                    self.point_at_classified(parameter, policy),
-                    Classification::Decided(_)
-                )
-            },
             |start, end| match self.subcurve_between_exact(start, end, policy)? {
                 Classification::Decided(curve) => Ok(BezierSubcurve2::Rational(curve)),
                 Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
@@ -2646,13 +2631,12 @@ impl RationalBezier2 {
     }
 }
 
-fn split_curve_at_parameters<F, G, H>(
+fn split_curve_at_parameters<F, G>(
     range: &BezierParameterRange2,
     parameters: &[BezierParameter2],
     policy: &CurveContext,
     refine_ordering: bool,
     promote_exact_points: bool,
-    mut exact_boundary_is_regular: H,
     mut materialize: F,
     mut endpoint_image: G,
     source_curve: BezierSubcurve2,
@@ -2660,24 +2644,17 @@ fn split_curve_at_parameters<F, G, H>(
 where
     F: FnMut(&Real, &Real) -> CurveResult<BezierSubcurve2>,
     G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
-    H: FnMut(&Real) -> bool,
 {
     let mut boundaries = vec![range.start().clone(), range.end().clone()];
     for parameter in parameters {
         validate_parameter(parameter, policy)?;
-        let promoted = if promote_exact_points {
+        let parameter = if promote_exact_points {
             match parameter.clone().promote_represented_exact_point(policy)? {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         } else {
             parameter.clone()
-        };
-        let parameter = match promoted.scalar() {
-            Some(exact) if parameter.scalar().is_none() && !exact_boundary_is_regular(exact) => {
-                parameter.clone()
-            }
-            _ => promoted,
         };
         push_boundary(&mut boundaries, parameter, policy, refine_ordering)?;
     }
@@ -2701,6 +2678,36 @@ where
         .iter()
         .map(|boundary| endpoint_image_for(boundary, &mut endpoint_image))
         .collect::<CurveResult<Vec<_>>>()?;
+    // Ordering and endpoint images may publish scalar witnesses shared by
+    // retained parameter clones. A pole cannot become a finite split endpoint
+    // merely because its scalar view became available, nor can cloning undo
+    // that evidence. Check every scalar boundary before materializing fragments.
+    for parameter in boundaries.iter().filter_map(BezierParameter2::scalar) {
+        let regular = match &source_curve {
+            BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => true,
+            BezierSubcurve2::RationalQuadratic(curve) => {
+                is_zero(&curve.denominator_at(parameter), policy) == Some(false)
+            }
+            BezierSubcurve2::Rational(curve)
+                if in_closed_unit_interval(parameter, policy) == Some(true)
+                    && matches!(
+                        curve.control_weight_sign(),
+                        Classification::Decided(RealSign::Positive | RealSign::Negative)
+                    ) =>
+            {
+                true
+            }
+            BezierSubcurve2::Rational(curve) => {
+                is_zero(
+                    &Real::eval_poly(&curve.homogeneous_power_basis()?.weight, parameter),
+                    policy,
+                ) == Some(false)
+            }
+        };
+        if !regular {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+    }
     let mut fragments = Vec::with_capacity(boundaries.len().saturating_sub(1));
     for (pair, image_pair) in boundaries.windows(2).zip(endpoint_images.windows(2)) {
         let start = pair[0].clone();

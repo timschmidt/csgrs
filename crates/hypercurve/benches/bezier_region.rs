@@ -140,7 +140,7 @@ fn algebraic_polynomial_parameter(
         interval_end,
         policy,
     )?);
-    Ok(BezierParameter2::algebraic(decided(
+    Ok(BezierParameter2::Algebraic(decided(
         BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy)?,
     )))
 }
@@ -389,7 +389,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         elapsed / classification_iterations
     );
 
-    let half = decided(BezierParameter2::exact(q(1, 2), &policy)?);
+    let half = BezierParameter2::Exact(q(1, 2));
     let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
     let graph = BezierArrangementGraph2::from_split_materializations(&[

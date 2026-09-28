@@ -826,7 +826,7 @@ fn curve_region_algebraic_partition_fixture(
         else {
             panic!("the benchmark algebraic parameter must be decided");
         };
-        let algebraic = BezierParameter2::algebraic(parameter);
+        let algebraic = BezierParameter2::Algebraic(parameter);
         [(zero.clone(), algebraic.clone()), (algebraic, one.clone())]
             .into_iter()
             .map(|(start, end)| {

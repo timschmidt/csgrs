@@ -27,13 +27,13 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn partial_line_overlap_graph() -> BezierArrangementGraph2 {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 0), p(6, 0))),
     };
     graph(vec![
@@ -64,8 +64,8 @@ fn graph(fragments: Vec<hypercurve::BezierArrangementFragment2>) -> BezierArrang
 #[test]
 fn arrangement_graph_rejects_duplicate_source_fragment_evidence() {
     let fragment = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
     };
 
@@ -84,8 +84,8 @@ fn arrangement_graph_rejects_invalid_unique_source_fragment_ranges() {
             0,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(1)),
-                end: exact(r(0)),
+                start: BezierParameter2::Exact(r(1)),
+                end: BezierParameter2::Exact(r(0)),
                 curve: curve.clone(),
             },
         ),
@@ -95,8 +95,8 @@ fn arrangement_graph_rejects_invalid_unique_source_fragment_ranges() {
             1,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(q(1, 2)),
-                end: exact(q(1, 2)),
+                start: BezierParameter2::Exact(q(1, 2)),
+                end: BezierParameter2::Exact(q(1, 2)),
                 curve,
             },
         ),
@@ -106,7 +106,7 @@ fn arrangement_graph_rejects_invalid_unique_source_fragment_ranges() {
 #[test]
 fn arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence() {
     let parameter = algebraic_midpoint_parameter();
-    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let algebraic = BezierParameter2::Algebraic(parameter.clone());
     let source_curve = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
     let forged_image = algebraic_endpoint_image(
         &QuadraticBezier2::new(p(0, 1), p(1, 1), p(2, 1)),
@@ -119,7 +119,7 @@ fn arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence() {
             0,
             BezierSplitFragment2::RetainedBezier {
                 reversed: false,
-                start: exact(r(0)),
+                start: BezierParameter2::Exact(r(0)),
                 end: algebraic.clone(),
                 source_curve: BezierSubcurve2::Quadratic(source_curve),
                 start_image: None,
@@ -133,8 +133,8 @@ fn arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence() {
             0,
             BezierSplitFragment2::RetainedBezier {
                 reversed: false,
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 source_curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                     p(0, 0),
                     p(1, 0),
@@ -150,13 +150,13 @@ fn arrangement_graph_rejects_forged_algebraic_endpoint_image_evidence() {
 #[test]
 fn arrangement_graph_accepts_adjacent_reused_source_fragment_ranges() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(q(1, 2)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(q(1, 2)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(q(1, 2)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(q(1, 2)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
     };
 
@@ -172,8 +172,8 @@ fn exact_endpoint_buckets_retain_symbolic_matches() {
     let symbolic = Real::pi();
     assert!(symbolic.exact_rational_ref().is_none());
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
             Point2::new(&symbolic - r(2), r(0)),
             Point2::new(&symbolic - r(1), r(0)),
@@ -181,8 +181,8 @@ fn exact_endpoint_buckets_retain_symbolic_matches() {
         )),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
             Point2::new(symbolic.clone(), r(0)),
             Point2::new(&symbolic + r(1), r(0)),
@@ -199,8 +199,8 @@ fn exact_endpoint_buckets_retain_symbolic_matches() {
             usize::try_from(index + 2).unwrap(),
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                     p(x, 0),
                     p(x + 1, 0),
@@ -223,13 +223,13 @@ fn exact_endpoint_buckets_retain_symbolic_matches() {
 #[test]
 fn arrangement_graph_rejects_overlapping_reused_source_fragment_ranges() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(q(3, 4)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(q(3, 4)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(3, 0))),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(q(1, 2)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(q(1, 2)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
     };
 
@@ -258,16 +258,12 @@ fn contact_parameters_follow_their_carrier_domains() {
     }
 }
 
-fn exact(value: Real) -> BezierParameter2 {
-    decided(BezierParameter2::exact(value, &policy()).unwrap())
-}
-
 fn algebraic_sqrt_half() -> BezierParameter2 {
     let polynomial = decided(
         BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(0), r(2)], &policy()).unwrap(),
     );
     let interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy()).unwrap());
-    BezierParameter2::algebraic(decided(
+    BezierParameter2::Algebraic(decided(
         BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy()).unwrap(),
     ))
 }
@@ -342,12 +338,12 @@ fn exact_split_fragments_traverse_as_one_closed_bezier_chain() {
     let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
     let upper_split = decided(
         upper
-            .split_at_parameters(&[exact(q(1, 2))], &policy())
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
             .unwrap(),
     );
     let lower_split = decided(
         lower
-            .split_at_parameters(&[exact(q(1, 2))], &policy())
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
             .unwrap(),
     );
 
@@ -364,18 +360,18 @@ fn exact_split_fragments_traverse_as_one_closed_bezier_chain() {
 #[test]
 fn branch_vertex_is_explicit_uncertainty_not_arbitrary_successor() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 1), p(4, 1), p(5, 0))),
     };
     let third = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
     };
     let graph = graph(vec![
@@ -393,18 +389,18 @@ fn branch_vertex_is_explicit_uncertainty_not_arbitrary_successor() {
 #[test]
 fn tangent_ordered_traversal_resolves_simple_branch_vertex() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
     };
     let upward = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 1), p(4, 1), p(5, 0))),
     };
     let straightest = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
     };
     let graph = graph(vec![
@@ -422,18 +418,18 @@ fn tangent_ordered_traversal_resolves_simple_branch_vertex() {
 #[test]
 fn tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let first_out = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0))),
     };
     let second_out = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 2), p(5, 0))),
     };
     let graph = graph(vec![
@@ -456,18 +452,18 @@ fn tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents() {
 #[test]
 fn tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let first_out = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0))),
     };
     let second_out = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 1), p(4, 0))),
     };
     let graph = graph(vec![
@@ -489,20 +485,20 @@ fn tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents() {
 #[test]
 fn tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tangents() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let upward = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::RationalQuadratic(
             RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3)).unwrap(),
         ),
     };
     let downward = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::RationalQuadratic(
             RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, -1), r(1), r(2), r(3))
                 .unwrap(),
@@ -528,20 +524,20 @@ fn tangent_ordered_traversal_uses_rational_second_order_for_equal_outgoing_tange
 #[test]
 fn tangent_ordered_traversal_rejects_equal_rational_second_order_successors() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let first_out = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::RationalQuadratic(
             RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3)).unwrap(),
         ),
     };
     let second_out = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::RationalQuadratic(
             RationalQuadraticBezier2::try_new(p(2, 0), p(3, 0), p(4, 1), r(1), r(2), r(3)).unwrap(),
         ),
@@ -565,18 +561,18 @@ fn tangent_ordered_traversal_rejects_equal_rational_second_order_successors() {
 #[test]
 fn tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let upward = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
     };
     let downward = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, -1))),
     };
     let graph = graph(vec![
@@ -599,18 +595,18 @@ fn tangent_ordered_traversal_uses_third_order_for_cubic_same_tangent_inflections
 #[test]
 fn tangent_ordered_traversal_rejects_equal_third_order_cubic_successors() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let first_out = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
     };
     let second_out = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Cubic(CubicBezier2::new(p(2, 0), p(3, 0), p(4, 0), p(5, 1))),
     };
     let graph = graph(vec![
@@ -634,7 +630,10 @@ fn algebraic_split_boundary_blocks_graph_traversal() {
     let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let split = decided(
         curve
-            .split_at_parameters(&[algebraic_sqrt_half(), exact(q(4, 5))], &policy())
+            .split_at_parameters(
+                &[algebraic_sqrt_half(), BezierParameter2::Exact(q(4, 5))],
+                &policy(),
+            )
             .unwrap(),
     );
     let graph = BezierArrangementGraph2::from_split_materializations(&[split]).unwrap();
@@ -648,13 +647,13 @@ fn algebraic_split_boundary_blocks_graph_traversal() {
 #[test]
 fn retained_tangent_order_traverses_algebraic_branch_vertex() {
     let parameter = algebraic_midpoint_parameter();
-    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let algebraic = BezierParameter2::Algebraic(parameter.clone());
     let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
     let upward_curve = through_origin_with_midpoint_tangent(0, 1);
     let downward_curve = through_origin_with_midpoint_tangent(0, -1);
     let incoming = BezierSplitFragment2::RetainedBezier {
         reversed: false,
-        start: exact(r(0)),
+        start: BezierParameter2::Exact(r(0)),
         end: algebraic.clone(),
         source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
@@ -663,7 +662,7 @@ fn retained_tangent_order_traverses_algebraic_branch_vertex() {
     let upward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic.clone(),
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::Quadratic(upward_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
@@ -671,7 +670,7 @@ fn retained_tangent_order_traverses_algebraic_branch_vertex() {
     let downward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic,
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::Quadratic(downward_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
@@ -696,13 +695,13 @@ fn retained_tangent_order_traverses_algebraic_branch_vertex() {
 #[test]
 fn retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents() {
     let parameter = algebraic_midpoint_parameter();
-    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let algebraic = BezierParameter2::Algebraic(parameter.clone());
     let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
     let source_downward_curve = through_origin_with_midpoint_tangent(0, -1);
     let source_upward_curve = through_origin_with_midpoint_tangent(0, 1);
     let incoming = BezierSplitFragment2::RetainedBezier {
         reversed: false,
-        start: exact(r(0)),
+        start: BezierParameter2::Exact(r(0)),
         end: algebraic.clone(),
         source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
@@ -710,7 +709,7 @@ fn retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents()
     };
     let upward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
-        start: exact(r(0)),
+        start: BezierParameter2::Exact(r(0)),
         end: algebraic.clone(),
         source_curve: BezierSubcurve2::Quadratic(source_downward_curve.clone()),
         start_image: None,
@@ -720,7 +719,7 @@ fn retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents()
     .unwrap();
     let downward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
-        start: exact(r(0)),
+        start: BezierParameter2::Exact(r(0)),
         end: algebraic,
         source_curve: BezierSubcurve2::Quadratic(source_upward_curve.clone()),
         start_image: None,
@@ -743,13 +742,13 @@ fn retained_tangent_order_transforms_reversed_algebraic_endpoints_and_tangents()
 #[test]
 fn retained_tangent_order_rejects_equal_algebraic_successors() {
     let parameter = algebraic_midpoint_parameter();
-    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let algebraic = BezierParameter2::Algebraic(parameter.clone());
     let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
     let first_curve = through_origin_with_midpoint_tangent(0, 1);
     let second_curve = through_origin_with_midpoint_tangent(0, 1);
     let incoming = BezierSplitFragment2::RetainedBezier {
         reversed: false,
-        start: exact(r(0)),
+        start: BezierParameter2::Exact(r(0)),
         end: algebraic.clone(),
         source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
@@ -758,7 +757,7 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
     let first = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic.clone(),
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::Quadratic(first_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&first_curve, &parameter)),
         end_image: None,
@@ -766,7 +765,7 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
     let second = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic,
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::Quadratic(second_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&second_curve, &parameter)),
         end_image: None,
@@ -786,13 +785,13 @@ fn retained_tangent_order_rejects_equal_algebraic_successors() {
 #[test]
 fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
     let parameter = algebraic_midpoint_parameter();
-    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let algebraic = BezierParameter2::Algebraic(parameter.clone());
     let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
     let upward_curve = through_origin_with_horizontal_midpoint_tangent(1);
     let downward_curve = through_origin_with_horizontal_midpoint_tangent(-1);
     let incoming = BezierSplitFragment2::RetainedBezier {
         reversed: false,
-        start: exact(r(0)),
+        start: BezierParameter2::Exact(r(0)),
         end: algebraic.clone(),
         source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
@@ -801,7 +800,7 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
     let upward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic.clone(),
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::Quadratic(upward_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
@@ -809,7 +808,7 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
     let downward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic,
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::Quadratic(downward_curve.clone()),
         start_image: Some(algebraic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
@@ -829,13 +828,13 @@ fn retained_tangent_order_uses_algebraic_second_order_for_equal_successors() {
 #[test]
 fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_successors() {
     let parameter = algebraic_midpoint_parameter();
-    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let algebraic = BezierParameter2::Algebraic(parameter.clone());
     let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
     let upward_curve = rational_through_origin_with_horizontal_midpoint_tangent(1);
     let downward_curve = rational_through_origin_with_horizontal_midpoint_tangent(-1);
     let incoming = BezierSplitFragment2::RetainedBezier {
         reversed: false,
-        start: exact(r(0)),
+        start: BezierParameter2::Exact(r(0)),
         end: algebraic.clone(),
         source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
@@ -844,7 +843,7 @@ fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_success
     let upward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic.clone(),
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::RationalQuadratic(upward_curve.clone()),
         start_image: Some(algebraic_rational_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
@@ -852,7 +851,7 @@ fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_success
     let downward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic,
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::RationalQuadratic(downward_curve.clone()),
         start_image: Some(algebraic_rational_endpoint_image(
             &downward_curve,
@@ -875,13 +874,13 @@ fn retained_tangent_order_uses_rational_algebraic_second_order_for_equal_success
 #[test]
 fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_inflections() {
     let parameter = algebraic_midpoint_parameter();
-    let algebraic = BezierParameter2::algebraic(parameter.clone());
+    let algebraic = BezierParameter2::Algebraic(parameter.clone());
     let incoming_curve = through_origin_with_midpoint_tangent(1, 0);
     let upward_curve = through_origin_with_horizontal_midpoint_tangent_and_third_order(8);
     let downward_curve = through_origin_with_horizontal_midpoint_tangent_and_third_order(-8);
     let incoming = BezierSplitFragment2::RetainedBezier {
         reversed: false,
-        start: exact(r(0)),
+        start: BezierParameter2::Exact(r(0)),
         end: algebraic.clone(),
         source_curve: BezierSubcurve2::Quadratic(incoming_curve.clone()),
         start_image: None,
@@ -890,7 +889,7 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
     let upward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic.clone(),
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::Cubic(upward_curve.clone()),
         start_image: Some(algebraic_cubic_endpoint_image(&upward_curve, &parameter)),
         end_image: None,
@@ -898,7 +897,7 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
     let downward = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: algebraic,
-        end: exact(r(1)),
+        end: BezierParameter2::Exact(r(1)),
         source_curve: BezierSubcurve2::Cubic(downward_curve.clone()),
         start_image: Some(algebraic_cubic_endpoint_image(&downward_curve, &parameter)),
         end_image: None,
@@ -923,13 +922,13 @@ fn retained_tangent_order_uses_algebraic_third_order_for_cubic_same_tangent_infl
 fn retained_overlap_evidence_finds_identical_materialized_fragments() {
     let curve = QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0));
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(curve.clone()),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(curve),
     };
     let graph = graph(vec![
@@ -971,8 +970,8 @@ fn empty_overlap_refinement_preserves_exact_unit_fragment() {
         0,
         0,
         BezierSplitFragment2::Materialized {
-            start: exact(r(0)),
-            end: exact(r(1)),
+            start: BezierParameter2::Exact(r(0)),
+            end: BezierParameter2::Exact(r(1)),
             curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
         },
     )]);
@@ -1015,8 +1014,8 @@ fn retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments
             0,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Rational(curve),
             },
         ),
@@ -1024,8 +1023,8 @@ fn retained_overlap_evidence_recognizes_projectively_reversed_rational_fragments
             1,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Rational(scaled_reversed),
             },
         ),
@@ -1060,8 +1059,8 @@ fn retained_overlap_evidence_preserves_strict_rational_overlap_ranges() {
             0,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Rational(curve),
             },
         ),
@@ -1069,8 +1068,8 @@ fn retained_overlap_evidence_preserves_strict_rational_overlap_ranges() {
             1,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Rational(tail),
             },
         ),
@@ -1162,8 +1161,8 @@ fn retained_rational_overlap_refinement_cancels_reversed_span() {
             0,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Rational(curve),
             },
         ),
@@ -1171,8 +1170,8 @@ fn retained_rational_overlap_refinement_cancels_reversed_span() {
             1,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Rational(tail),
             },
         ),
@@ -1218,8 +1217,8 @@ fn retained_rational_overlap_promotes_represented_incidence_root() {
             0,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Rational(nonlinear_line),
             },
         ),
@@ -1227,8 +1226,8 @@ fn retained_rational_overlap_promotes_represented_incidence_root() {
             1,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Rational(affine_tail),
             },
         ),
@@ -1466,8 +1465,8 @@ fn retained_overlap_refined_fragment_constructor_validates_local_range() {
 #[test]
 fn retained_linear_overlap_split_graph_rejects_missing_refined_provenance() {
     let fragment = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
@@ -1634,8 +1633,8 @@ fn retained_linear_overlap_split_graph_rejects_forged_split_evidence_geometry() 
 #[test]
 fn retained_linear_overlap_traversal_rejects_indices_outside_refinement() {
     let fragment = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
@@ -1664,8 +1663,8 @@ fn retained_linear_overlap_traversal_rejects_incomplete_refined_partition() {
     assert_eq!(refinement.graph().len(), 4);
 
     let unrelated_fragment = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let unrelated_graph = graph(vec![hypercurve::BezierArrangementFragment2::new(
@@ -1700,8 +1699,8 @@ fn retained_overlap_evidence_finds_reversed_degree_elevated_same_image() {
             0,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Quadratic(quadratic),
             },
         ),
@@ -1709,8 +1708,8 @@ fn retained_overlap_evidence_finds_reversed_degree_elevated_same_image() {
             1,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Cubic(cubic_reversed),
             },
         ),
@@ -1731,13 +1730,13 @@ fn retained_overlap_evidence_finds_reversed_degree_elevated_same_image() {
 #[test]
 fn retained_overlap_evidence_separates_endpoint_touch_from_overlap() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0))),
     };
     let graph = graph(vec![
@@ -1756,13 +1755,13 @@ fn retained_overlap_evidence_separates_endpoint_touch_from_overlap() {
 #[test]
 fn retained_overlap_evidence_extracts_partial_line_image_split_ranges() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(4, 0), p(6, 0))),
     };
     let graph = graph(vec![
@@ -1886,8 +1885,8 @@ fn retained_overlap_evidence_extracts_partial_line_image_split_ranges() {
     else {
         panic!("expected exact quadratic overlap fragment from first curve");
     };
-    assert_eq!(start, &exact(q(1, 2)));
-    assert_eq!(end, &exact(r(1)));
+    assert_eq!(start, &BezierParameter2::Exact(q(1, 2)));
+    assert_eq!(end, &BezierParameter2::Exact(r(1)));
     assert_eq!(overlap_from_first.start(), &p(2, 0));
     assert_eq!(overlap_from_first.end(), &p(4, 0));
     let BezierSplitFragment2::Materialized {
@@ -1898,8 +1897,8 @@ fn retained_overlap_evidence_extracts_partial_line_image_split_ranges() {
     else {
         panic!("expected exact quadratic overlap fragment from second curve");
     };
-    assert_eq!(start, &exact(r(0)));
-    assert_eq!(end, &exact(q(1, 2)));
+    assert_eq!(start, &BezierParameter2::Exact(r(0)));
+    assert_eq!(end, &BezierParameter2::Exact(q(1, 2)));
     assert_eq!(overlap_from_second.start(), &p(2, 0));
     assert_eq!(overlap_from_second.end(), &p(4, 0));
 }
@@ -1907,13 +1906,13 @@ fn retained_overlap_evidence_extracts_partial_line_image_split_ranges() {
 #[test]
 fn retained_linear_overlap_refinement_evidence_reversed_span_orientation() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
     };
     let reversed_overlap = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(3, 0), p(2, 0))),
     };
     let graph = graph(vec![
@@ -1961,28 +1960,28 @@ fn retained_linear_overlap_refinement_evidence_reversed_span_orientation() {
 #[test]
 fn retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop() {
     let bottom = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(2, 0), p(4, 0))),
     };
     let overlapping_bottom_tail = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
     };
     let right = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(4, 1), p(4, 2))),
     };
     let top = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 2), p(2, 2), p(0, 2))),
     };
     let left = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 2), p(0, 1), p(0, 0))),
     };
     let graph = graph(vec![
@@ -2029,43 +2028,43 @@ fn retained_linear_overlap_traversal_splits_and_consumes_duplicate_span_in_loop(
 #[test]
 fn retained_linear_overlap_traversal_cancels_reversed_internal_span_in_loop() {
     let left_bottom = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))),
     };
     let shared_up = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(2, 1), p(2, 2))),
     };
     let left_top = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 2), p(1, 2), p(0, 2))),
     };
     let left_edge = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 2), p(0, 1), p(0, 0))),
     };
     let right_bottom = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(3, 0), p(4, 0))),
     };
     let right_edge = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(4, 1), p(4, 2))),
     };
     let right_top = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 2), p(3, 2), p(2, 2))),
     };
     let shared_down = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 2), p(2, 1), p(2, 0))),
     };
     let graph = graph(vec![
@@ -2107,8 +2106,8 @@ fn retained_overlap_evidence_does_not_call_same_curve_image_a_line_split() {
             0,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Quadratic(curve.clone()),
             },
         ),
@@ -2116,8 +2115,8 @@ fn retained_overlap_evidence_does_not_call_same_curve_image_a_line_split() {
             1,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Quadratic(curve),
             },
         ),
@@ -2133,13 +2132,13 @@ fn retained_overlap_evidence_does_not_call_same_curve_image_a_line_split() {
 #[test]
 fn retained_overlap_evidence_rejects_nonlinear_line_image_bezier_ranges() {
     let first = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(4, 0))),
     };
     let second = BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(1, 0), p(3, 0), p(5, 0))),
     };
     let graph = graph(vec![
@@ -2177,8 +2176,8 @@ fn retained_overlap_traversal_deduplicates_oriented_duplicate_loop_edges() {
                 edge_index,
                 duplicate_index,
                 BezierSplitFragment2::Materialized {
-                    start: exact(r(0)),
-                    end: exact(r(1)),
+                    start: BezierParameter2::Exact(r(0)),
+                    end: BezierParameter2::Exact(r(1)),
                     curve: BezierSubcurve2::Quadratic(edge.clone()),
                 },
             ));
@@ -2212,8 +2211,8 @@ fn retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary()
             0,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Quadratic(forward),
             },
         ),
@@ -2221,8 +2220,8 @@ fn retained_overlap_traversal_rejects_reversed_duplicate_as_ownership_boundary()
             1,
             0,
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: BezierSubcurve2::Quadratic(reversed),
             },
         ),

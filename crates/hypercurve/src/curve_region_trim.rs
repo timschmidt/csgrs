@@ -1806,7 +1806,7 @@ mod tests {
             let circle = decided(
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support,
-                    crate::BezierParameter2::algebraic(sqrt_half_parameter(&policy)).into(),
+                    crate::BezierParameter2::Algebraic(sqrt_half_parameter(&policy)).into(),
                     Real::one(),
                     false,
                     &policy,

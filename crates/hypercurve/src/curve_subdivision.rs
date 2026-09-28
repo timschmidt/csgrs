@@ -3229,7 +3229,7 @@ mod tests {
             let circle = decided(
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     support,
-                    BezierParameter2::algebraic(parameter).into(),
+                    BezierParameter2::Algebraic(parameter).into(),
                     Real::one(),
                     true,
                     &policy,
@@ -3369,7 +3369,7 @@ mod tests {
             )
             .unwrap();
             let start = decided(
-                CurveParameter2::from(BezierParameter2::algebraic(parameter))
+                CurveParameter2::from(BezierParameter2::Algebraic(parameter))
                     .affine_image_unbounded(&q(1, 4), &Real::zero(), &policy)
                     .unwrap(),
                 family,

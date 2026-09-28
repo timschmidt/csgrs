@@ -31,12 +31,7 @@ fuzz_target!(|data: &[u8]| {
         point(data[4], data[5]),
     );
 
-    let mut parameters = Vec::new();
-    if let Ok(Classification::Decided(parameter)) =
-        BezierParameter2::exact(unit_from_byte(data[6]), &policy)
-    {
-        parameters.push(parameter);
-    }
+    let mut parameters = vec![BezierParameter2::Exact(unit_from_byte(data[6]))];
 
     if data[9] & 1 == 1 {
         let start = unit_from_byte(data[7].min(data[8]));
@@ -51,7 +46,7 @@ fuzz_target!(|data: &[u8]| {
             && let Ok(Classification::Decided(algebraic)) =
                 BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
         {
-            parameters.push(BezierParameter2::algebraic(algebraic));
+            parameters.push(BezierParameter2::Algebraic(algebraic));
         }
     }
     if data[9] & 2 == 2
@@ -68,7 +63,7 @@ fuzz_target!(|data: &[u8]| {
         && let Ok(Classification::Decided(algebraic)) =
             BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
     {
-        parameters.push(BezierParameter2::algebraic(algebraic));
+        parameters.push(BezierParameter2::Algebraic(algebraic));
     }
 
     if let Ok(Classification::Decided(materialization)) =

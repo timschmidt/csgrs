@@ -171,6 +171,9 @@ impl PartialEq for BezierAlgebraicParameter2 {
 }
 
 /// Exact Bezier parameter carrier.
+///
+/// Operations validate this value against their source domain; the carrier
+/// itself does not impose the authored unit interval.
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum BezierParameter2 {
@@ -1629,20 +1632,6 @@ impl BezierAlgebraicParameter2 {
 }
 
 impl BezierParameter2 {
-    /// Constructs a represented exact Bezier parameter.
-    pub fn exact(value: Real, policy: &CurveContext) -> CurveResult<Classification<Self>> {
-        match in_closed_unit_interval(&value, policy) {
-            Some(true) => Ok(Classification::Decided(Self::Exact(value))),
-            Some(false) => Err(CurveError::InvalidBezierParameter),
-            None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-        }
-    }
-
-    /// Wraps a validated algebraic Bezier parameter.
-    pub const fn algebraic(value: BezierAlgebraicParameter2) -> Self {
-        Self::Algebraic(value)
-    }
-
     /// Returns a stored `Real` view without reconstructing a selected root.
     /// A selected parameter remains exact when this view is absent.
     pub fn scalar(&self) -> Option<&Real> {
@@ -2144,6 +2133,16 @@ impl BezierParameter2 {
         unit_domain: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
+        let admit_exact = |value: Real, policy: &CurveContext| {
+            if unit_domain {
+                match in_closed_unit_interval(&value, policy) {
+                    Some(true) => {}
+                    Some(false) => return Err(CurveError::InvalidBezierParameter),
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+                }
+            }
+            Ok(Classification::Decided(Self::Exact(value)))
+        };
         if !representation.is_valid() || representation.interval.distinct_root_count != 1 {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
@@ -2152,11 +2151,7 @@ impl BezierParameter2 {
                 .then_some(&representation.interval.lower)
         });
         if let Some(exact) = exact_point {
-            return if unit_domain {
-                Self::exact(exact.clone(), policy)
-            } else {
-                Ok(Classification::Decided(Self::Exact(exact.clone())))
-            };
+            return admit_exact(exact.clone(), policy);
         }
         // Solver intervals own (lower, upper], while native isolators keep
         // endpoint roots separate from their defining polynomial. Preserve an
@@ -2172,11 +2167,7 @@ impl BezierParameter2 {
         ) {
             Some(RealSign::Zero) => {
                 let exact = representation.interval.upper.clone();
-                return if unit_domain {
-                    Self::exact(exact, &strict)
-                } else {
-                    Ok(Classification::Decided(Self::Exact(exact)))
-                };
+                return admit_exact(exact, &strict);
             }
             Some(RealSign::Positive | RealSign::Negative) => {}
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
@@ -2199,11 +2190,7 @@ impl BezierParameter2 {
             // The retained singleton and nonzero leading coefficient already
             // identify this unique quotient, over any exact Real field.
             let exact = (-constant / slope)?;
-            return if unit_domain {
-                Self::exact(exact, &strict)
-            } else {
-                Ok(Classification::Decided(Self::Exact(exact)))
-            };
+            return admit_exact(exact, &strict);
         }
         if unit_domain {
             let in_start = in_closed_unit_interval(&representation.interval.lower, policy);
@@ -7727,6 +7714,78 @@ mod finite_field_bernstein_regression {
 #[cfg(test)]
 mod finite_interval_import_regression {
     use super::*;
+
+    #[test]
+    fn represented_root_imports_admit_exact_values_in_the_requested_domain() {
+        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let values = [
+            (-Real::one(), false),
+            (Real::from(2), false),
+            (-Real::from(2).sqrt().unwrap(), false),
+            (Real::from(2).sqrt().unwrap(), false),
+            (Real::pi() * &quarter, true),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (value, in_unit_domain) in &values {
+                for form in 0..3 {
+                    let mut representation = AlgebraicRootRepresentation::from_exact_value(value);
+                    if form != 0 {
+                        // The solver owns (lower, upper]. Its lower endpoint
+                        // is a different root, which the importer must deflate.
+                        // Form 1 owns value at the upper endpoint; form 2 owns
+                        // the same root strictly inside the deflated interval.
+                        let lower = value - Real::one();
+                        representation.polynomial_coefficients =
+                            vec![&lower * value, -(&lower + value), Real::one()];
+                        representation.interval = hypersolve::IsolatedRootInterval {
+                            lower,
+                            upper: if form == 1 {
+                                value.clone()
+                            } else {
+                                value + &quarter
+                            },
+                            exact_root: None,
+                            distinct_root_count: 1,
+                        };
+                        representation.validation =
+                            hypersolve::validate_algebraic_root_representation(
+                                &representation,
+                                hypersolve::PredicatePolicy::STRICT,
+                            );
+                    }
+                    assert!(representation.is_valid());
+                    let generic = BezierParameter2::from_algebraic_root_representation_unbounded(
+                        &representation,
+                        &policy,
+                    )
+                    .unwrap();
+                    let Classification::Decided(BezierParameter2::Exact(actual)) = generic else {
+                        panic!("an explicitly represented root retains its exact scalar");
+                    };
+                    assert_eq!(
+                        compare_reals(&actual, value, &CurveContext::STRICT),
+                        Some(std::cmp::Ordering::Equal)
+                    );
+                    let native = BezierParameter2::from_algebraic_root_representation(
+                        &representation,
+                        &policy,
+                    );
+                    if *in_unit_domain {
+                        let Ok(Classification::Decided(BezierParameter2::Exact(actual))) = native
+                        else {
+                            panic!("the native chart admits the selected interior value");
+                        };
+                        assert_eq!(
+                            compare_reals(&actual, value, &CurveContext::STRICT),
+                            Some(std::cmp::Ordering::Equal)
+                        );
+                    } else {
+                        assert!(matches!(native, Err(CurveError::InvalidBezierParameter)));
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn unit_import_keeps_its_domain_after_generic_interval_construction() {

@@ -81,10 +81,6 @@ fn reversed_algebraic_fragment(fragment: &BezierSplitFragment2) -> BezierSplitFr
     fragment.reversed().unwrap()
 }
 
-fn exact(value: Real) -> BezierParameter2 {
-    decided(BezierParameter2::exact(value, &policy()).unwrap())
-}
-
 fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
     let polynomial = decided(
         BezierParameterPolynomial::try_new_power_basis(vec![r(-1), r(2)], &policy()).unwrap(),
@@ -129,7 +125,7 @@ fn algebraic_endpoint_line(start: Point2, end: Point2) -> Curve2 {
     Curve2::from(QuadraticBezier2::new(start, end, far))
         .subcurve(
             Real::zero().into(),
-            BezierParameter2::algebraic(algebraic_midpoint_parameter()).into(),
+            BezierParameter2::Algebraic(algebraic_midpoint_parameter()).into(),
             &policy(),
         )
         .unwrap()
@@ -160,8 +156,8 @@ fn materialized_line_fragment_at(
         source_curve_index,
         source_fragment_index,
         BezierSplitFragment2::Materialized {
-            start: exact(r(0)),
-            end: exact(r(1)),
+            start: BezierParameter2::Exact(r(0)),
+            end: BezierParameter2::Exact(r(1)),
             curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                 start, midpoint, end,
             )),
@@ -188,12 +184,12 @@ fn closed_polynomial_arrangement_materializes_retained_region_with_exact_area() 
     let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
     let upper_split = decided(
         upper
-            .split_at_parameters(&[exact(q(1, 2))], &policy())
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
             .unwrap(),
     );
     let lower_split = decided(
         lower
-            .split_at_parameters(&[exact(q(1, 2))], &policy())
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
             .unwrap(),
     );
     let graph =
@@ -319,12 +315,12 @@ fn conic_region_boundary_materializes_with_exact_area() {
         .unwrap();
     let upper_split = decided(
         upper
-            .split_at_parameters(&[exact(q(1, 2))], &policy())
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
             .unwrap(),
     );
     let lower_split = decided(
         lower
-            .split_at_parameters(&[exact(q(1, 2))], &policy())
+            .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
             .unwrap(),
     );
     let graph =
@@ -694,8 +690,8 @@ fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
     assert_topology_error(CurveRegionBoundaryLoop2::new(
         vec![
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                     p(0, 0),
                     p(1, 0),
@@ -703,8 +699,8 @@ fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
                 )),
             },
             BezierSplitFragment2::Materialized {
-                start: exact(r(0)),
-                end: exact(r(1)),
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
                 curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                     p(3, 0),
                     p(4, 0),
@@ -734,7 +730,7 @@ fn retained_boundary_loop_constructor_rejects_forged_materialized_range_order() 
 
 #[test]
 fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
-    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let parameter = BezierParameter2::Algebraic(algebraic_midpoint_parameter());
     let source_curve = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0));
     let forged_image = algebraic_image(&QuadraticBezier2::new(p(0, 1), p(1, 1), p(2, 1)));
 
@@ -850,7 +846,7 @@ fn retained_exact_algebraic_endpoint_line_images_assign_roles() {
 fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
     let policy = policy();
     let upper = Curve2::from(QuadraticBezier2::new(p(-1, 0), p(0, 2), p(1, 0)));
-    let parameter = BezierParameter2::algebraic(algebraic_sqrt_half_parameter()).into();
+    let parameter = BezierParameter2::Algebraic(algebraic_sqrt_half_parameter()).into();
     let split = upper.split_at(parameter, &policy).unwrap();
     assert_eq!(split.certainty, CurveCertainty::Certified);
     let (first, second) = split.into_value();
@@ -1044,7 +1040,7 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
     let split = decided(
         curve
             .split_at_parameters(
-                &[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],
+                &[BezierParameter2::Algebraic(algebraic_sqrt_half_parameter())],
                 &policy(),
             )
             .unwrap(),
@@ -1052,8 +1048,8 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
     assert!(split.has_retained_beziers());
     let mut fragments = split.fragments().to_vec();
     fragments.push(BezierSplitFragment2::Materialized {
-        start: exact(r(0)),
-        end: exact(r(1)),
+        start: BezierParameter2::Exact(r(0)),
+        end: BezierParameter2::Exact(r(1)),
         curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
             p(4, 0),
             p(2, 0),
@@ -1089,7 +1085,7 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
     let split = decided(
         curve
             .split_at_parameters(
-                &[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],
+                &[BezierParameter2::Algebraic(algebraic_sqrt_half_parameter())],
                 &policy(),
             )
             .unwrap(),
@@ -1119,7 +1115,7 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
     let split = decided(
         curve
             .split_at_parameters(
-                &[BezierParameter2::algebraic(
+                &[BezierParameter2::Algebraic(
                     algebraic_sqrt_eighth_parameter(),
                 )],
                 &policy(),
@@ -1147,7 +1143,7 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
 
 #[test]
 fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evidence() {
-    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let parameter = BezierParameter2::Algebraic(algebraic_midpoint_parameter());
     let source = line_midpoint_curve(-1, 0, 1);
     let partial = BezierSplitFragment2::RetainedBezier {
         reversed: false,
@@ -1163,7 +1159,7 @@ fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evid
 
 #[test]
 fn retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence() {
-    let parameter = BezierParameter2::algebraic(algebraic_midpoint_parameter());
+    let parameter = BezierParameter2::Algebraic(algebraic_midpoint_parameter());
     let source_curve =
         hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)));
     let source_only = BezierSplitFragment2::RetainedBezier {
@@ -1186,8 +1182,8 @@ proptest! {
         let upper = QuadraticBezier2::new(p(0, 0), p(2, height), p(4, 0));
         let lower = QuadraticBezier2::new(p(4, 0), p(2, -height), p(0, 0));
         let graph = BezierArrangementGraph2::from_split_materializations(&[
-            decided(upper.split_at_parameters(&[exact(q(1, 2))], &policy()).unwrap()),
-            decided(lower.split_at_parameters(&[exact(q(1, 2))], &policy()).unwrap()),
+            decided(upper.split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy()).unwrap()),
+            decided(lower.split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy()).unwrap()),
         ])
         .unwrap();
         let traversal = decided(graph.traverse_branch_free(&policy()));
@@ -1300,7 +1296,7 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
         let split = decided(
             upper
                 .split_at_parameters(
-                    &[BezierParameter2::algebraic(algebraic_sqrt_half_parameter())],
+                    &[BezierParameter2::Algebraic(algebraic_sqrt_half_parameter())],
                     &policy,
                 )
                 .unwrap(),

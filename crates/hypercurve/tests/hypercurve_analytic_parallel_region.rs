@@ -15,17 +15,10 @@ fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
 }
 
-fn exact_parameter(value: i64, policy: &CurveContext) -> BezierParameter2 {
-    match BezierParameter2::exact(Real::from(value), policy).unwrap() {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => panic!("unexpected parameter uncertainty: {reason:?}"),
-    }
-}
-
 fn range(start: i64, end: i64, policy: &CurveContext) -> BezierParameterRange2 {
     match BezierParameterRange2::try_new(
-        exact_parameter(start, policy),
-        exact_parameter(end, policy),
+        BezierParameter2::Exact(Real::from(start)),
+        BezierParameter2::Exact(Real::from(end)),
         policy,
     )
     .unwrap()
@@ -758,8 +751,8 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     };
     assert!(cusp.scalar().is_some());
 
-    let zero = exact_parameter(0, policy);
-    let one = exact_parameter(1, policy);
+    let zero = BezierParameter2::Exact(Real::from(0));
+    let one = BezierParameter2::Exact(Real::from(1));
     let make_range =
         |start: BezierParameter2, end: BezierParameter2| match BezierParameterRange2::try_new(
             start, end, policy,
@@ -835,10 +828,10 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
         panic!("expected two algebraic parallel cusps");
     };
     let boundaries = [
-        exact_parameter(0, policy),
+        BezierParameter2::Exact(Real::from(0)),
         first_cusp.clone(),
         second_cusp.clone(),
-        exact_parameter(1, policy),
+        BezierParameter2::Exact(Real::from(1)),
     ];
     let mut fragments = boundaries
         .windows(2)

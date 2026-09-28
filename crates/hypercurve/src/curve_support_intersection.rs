@@ -2395,7 +2395,7 @@ mod circle_dispatch_tests {
         let circle = exact(
             BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 support,
-                BezierParameter2::algebraic(parameter).into(),
+                BezierParameter2::Algebraic(parameter).into(),
                 Real::one(),
                 false,
                 policy,
@@ -2631,7 +2631,7 @@ mod circle_dispatch_tests {
                     )
                     .unwrap(),
                 );
-                BezierParameter2::algebraic(exact(
+                BezierParameter2::Algebraic(exact(
                     crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
                         .unwrap(),
                 ))
@@ -2756,7 +2756,7 @@ mod circle_dispatch_tests {
             let interval = exact(
                 crate::BezierParameterInterval::try_new(Real::one(), q(9, 8), &policy).unwrap(),
             );
-            let selected = BezierParameter2::algebraic(exact(
+            let selected = BezierParameter2::Algebraic(exact(
                 crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
                     .unwrap(),
             ));
@@ -3318,7 +3318,7 @@ mod circle_dispatch_tests {
             let circle = exact(
                 BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                     source,
-                    BezierParameter2::algebraic(parameter).into(),
+                    BezierParameter2::Algebraic(parameter).into(),
                     Real::one(),
                     false,
                     &policy,
