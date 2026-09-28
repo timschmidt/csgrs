@@ -238,10 +238,7 @@ pub fn triangulate_planar_face(
         .collect::<Vec<_>>();
     let flat_triangles =
         hypertri::earcut(&TRIANGULATION_CONTEXT, &hypertri_points, &hole_indices)?.value;
-    let mut triangles = flat_triangles
-        .chunks_exact(3)
-        .map(|indices| [indices[0], indices[1], indices[2]])
-        .collect::<Vec<_>>();
+    let mut triangles = flat_triangles.as_chunks::<3>().0.to_vec();
     retain_all_boundary_samples(&parameters, &mut triangles)?;
     for triangle in &mut triangles {
         orient_triangle(&parameters, triangle, face.orientation())?;
@@ -290,10 +287,7 @@ pub fn approximate_face_chordally(
         .collect::<Vec<_>>();
     let flat_triangles =
         hypertri::earcut(&TRIANGULATION_CONTEXT, &hypertri_points, &hole_indices)?.value;
-    let mut triangles = flat_triangles
-        .chunks_exact(3)
-        .map(|indices| [indices[0], indices[1], indices[2]])
-        .collect::<Vec<_>>();
+    let mut triangles = flat_triangles.as_chunks::<3>().0.to_vec();
     retain_all_boundary_samples(&parameters, &mut triangles)?;
     for triangle in &mut triangles {
         orient_triangle(&parameters, triangle, face.orientation())?;

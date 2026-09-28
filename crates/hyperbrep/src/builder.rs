@@ -3710,7 +3710,7 @@ fn persistent_extrusion_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Co
 fn spatial_extrusion_curve(curve: &Curve2, z: &Real) -> Result<Curve3, ConstructionError> {
     let lift = |point: &CurvePoint2| Point3::new(point.x().clone(), point.y().clone(), z.clone());
     match curve.geometry() {
-        None => return Err(ConstructionError::UnsupportedPlanarProfile),
+        None => Err(ConstructionError::UnsupportedPlanarProfile),
         Some(CurveGeometry2::Line(line)) => Ok(Curve3::line(lift(line.start()), lift(line.end()))?),
         Some(CurveGeometry2::CircularArc(arc)) => {
             spatial_segment_curve(&Segment2::Arc(arc.clone()), z).map(|(curve, _)| curve)
@@ -3776,7 +3776,7 @@ fn lift_planar_pcurve(curve: &Curve2, surface: &Surface) -> Result<Curve3, Const
     let lift =
         |point: &CurvePoint2| surface.point_at(&Point2::new(point.x().clone(), point.y().clone()));
     match curve.geometry() {
-        None => return Err(ConstructionError::UnsupportedPlanarProfile),
+        None => Err(ConstructionError::UnsupportedPlanarProfile),
         Some(CurveGeometry2::Line(line)) => {
             Ok(Curve3::line(lift(line.start())?, lift(line.end())?)?)
         }

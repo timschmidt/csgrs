@@ -7,9 +7,9 @@ use std::fmt;
 use hypercurve::{
     Aabb2, BezierLineImageFitRelation, BezierSubcurve2, BooleanOp, Classification, Contour2,
     ContourPointLocation, Curve2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionLoopRole, CurveString2,
-    ExactCurveError, FillRule, LineArcIntersection, LineLineIntersection, LineSeg2,
-    RationalBezier2, RationalQuadraticBezier2, RegionPointLocation, Segment2, UncertaintyReason,
+    CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionLoopRole, ExactCurveError,
+    FillRule, LineArcIntersection, LineLineIntersection, LineSeg2, RationalBezier2,
+    RationalQuadraticBezier2, RegionPointLocation, Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
@@ -4316,7 +4316,7 @@ fn parameter_lines_face_trim_intervals(
         let start = point_on_parameter_line(&origin, &direction, &span_start);
         let end = point_on_parameter_line(&origin, &direction, &span_end);
         let source_line = LineSeg2::try_new(start, end)?;
-        let source = CurveString2::try_new(vec![Segment2::Line(source_line.clone())])?;
+        let source = CurvePath2::try_new(vec![source_line.clone().into()])?;
         let trimmed = match source.trim_inside_region(&region, &policy) {
             Ok(paths) => paths.into_value(),
             Err(ExactCurveError::Blocked(blocker)) => {

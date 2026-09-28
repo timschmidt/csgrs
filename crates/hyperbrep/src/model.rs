@@ -21705,7 +21705,7 @@ mod tests {
 #[test]
 fn homogeneous_pcurve_validation_requires_a_nonzero_projective_scale() {
     use hypercurve::HomogeneousControl2;
-    let expected = vec![
+    let expected = [
         HomogeneousControl2::new(Real::one(), Real::zero(), Real::one()),
         HomogeneousControl2::new(Real::zero(), Real::one(), Real::zero()),
         HomogeneousControl2::new(-Real::one(), Real::zero(), Real::one()),
