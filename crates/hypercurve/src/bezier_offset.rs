@@ -37876,23 +37876,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 }
             };
-            let point = match exact_contact_point_evidence(other, &candidate, policy)? {
+            let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {
                 Classification::Decided(point) => point,
-                Classification::Uncertain(UncertaintyReason::Boundary) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
-                Classification::Uncertain(_) => match &candidate {
-                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
-                        RationalBezierAlgebraicPointImage2::from_parametric_source(
-                            other.clone(),
-                            parameter.clone(),
-                            policy,
-                        ),
-                    ),
-                    BezierParameter2::Exact(_) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                },
             };
             contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {
                 other_parameter: CurveParameter2::from(candidate),
@@ -40642,17 +40630,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         {
-            let point = match exact_contact_point_evidence(other, &cusp_parameter, policy)? {
+            let point = match rational_point_evidence_at_parameter(other, &cusp_parameter, policy)?
+            {
                 Classification::Decided(point) => point,
-                Classification::Uncertain(UncertaintyReason::Boundary) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(_) => {
-                    CurvePoint2::from(RationalBezierAlgebraicPointImage2::from_parametric_source(
-                        other.clone(),
-                        self.cusp_parameter().clone(),
-                        policy,
-                    ))
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
             };
             contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {
@@ -40728,23 +40710,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let point = match exact_contact_point_evidence(other, &candidate, policy)? {
+            let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {
                 Classification::Decided(point) => point,
-                Classification::Uncertain(UncertaintyReason::Boundary) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
-                Classification::Uncertain(_) => match &candidate {
-                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
-                        RationalBezierAlgebraicPointImage2::from_parametric_source(
-                            other.clone(),
-                            parameter.clone(),
-                            policy,
-                        ),
-                    ),
-                    BezierParameter2::Exact(_) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                    }
-                },
             };
             contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {
                 other_parameter: CurveParameter2::from(candidate),
@@ -41071,24 +41041,13 @@ impl BezierAlgebraicCuspSemicircle2 {
             if location == BezierAlgebraicCuspSemicircleContactLocation2::Interior {
                 continue;
             }
-            let point = match exact_contact_point_evidence(other, &boundary.parameter, policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(UncertaintyReason::Boundary) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(_) => match &boundary.parameter {
-                    BezierParameter2::Algebraic(parameter) => CurvePoint2::from(
-                        RationalBezierAlgebraicPointImage2::from_parametric_source(
-                            other.clone(),
-                            parameter.clone(),
-                            policy,
-                        ),
-                    ),
-                    BezierParameter2::Exact(_) => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            let point =
+                match rational_point_evidence_at_parameter(other, &boundary.parameter, policy)? {
+                    Classification::Decided(point) => point,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
                     }
-                },
-            };
+                };
             contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {
                 other_parameter: CurveParameter2::from(boundary.parameter.clone()),
                 point,
@@ -44386,26 +44345,10 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         };
         let mut points = Vec::with_capacity(parameters.len());
         for parameter in parameters {
-            match exact_contact_point_evidence(target, &parameter, policy)? {
-                Classification::Decided(point) => {
-                    points.push(point);
-                    continue;
-                }
-                Classification::Uncertain(UncertaintyReason::Boundary) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-                }
-                Classification::Uncertain(_) => {}
-            }
-            match parameter {
-                BezierParameter2::Algebraic(parameter) => points.push(CurvePoint2::from(
-                    RationalBezierAlgebraicPointImage2::from_parametric_source(
-                        target.clone(),
-                        parameter,
-                        policy,
-                    ),
-                )),
-                BezierParameter2::Exact(_) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
+            match rational_point_evidence_at_parameter(target, &parameter, policy)? {
+                Classification::Decided(point) => points.push(point),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
                 }
             }
         }
