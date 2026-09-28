@@ -1814,6 +1814,7 @@ impl BezierSubcurve2 {
                 BezierAlgebraicEndpointImage2::from_source_curve_first_order(
                     self, parameter, policy,
                 )
+                .map(Classification::Decided)
             },
             self.clone(),
         )
@@ -2253,8 +2254,13 @@ fn validate_algebraic_endpoint_image_boundary(
                     "algebraic {name} Bezier split endpoint image must retain exact evidence"
                 )));
             }
-            let expected =
-                BezierAlgebraicEndpointImage2::from_source_curve(source_curve, parameter, policy)?;
+            let Classification::Decided(expected) =
+                BezierAlgebraicEndpointImage2::from_source_curve(source_curve, parameter, policy)?
+            else {
+                return Err(CurveError::Topology(
+                    "algebraic split endpoint is not a certified finite source point".into(),
+                ));
+            };
             if !image.matches_required_source_evidence(&expected) {
                 return Err(CurveError::Topology(format!(
                     "algebraic {name} Bezier split endpoint image does not match retained source curve"
@@ -2286,7 +2292,10 @@ impl QuadraticBezier2 {
                     self.subcurve_between_exact(start, end, policy)?,
                 )))
             },
-            |parameter| BezierAlgebraicEndpointImage2::quadratic(self, parameter, policy),
+            |parameter| {
+                BezierAlgebraicEndpointImage2::quadratic(self, parameter, policy)
+                    .map(Classification::Decided)
+            },
             BezierSubcurve2::Quadratic(self.clone()),
         )
     }
@@ -2409,7 +2418,10 @@ impl CubicBezier2 {
                     self.subcurve_between_exact(start, end, policy)?,
                 )))
             },
-            |parameter| BezierAlgebraicEndpointImage2::cubic(self, parameter, policy),
+            |parameter| {
+                BezierAlgebraicEndpointImage2::cubic(self, parameter, policy)
+                    .map(Classification::Decided)
+            },
             BezierSubcurve2::Cubic(self.clone()),
         )
     }
@@ -2698,7 +2710,9 @@ fn split_curve_at_parameters<F, G>(
 ) -> CurveResult<Classification<BezierSplitMaterialization2>>
 where
     F: FnMut(&Real, &Real) -> CurveResult<Classification<BezierSubcurve2>>,
-    G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
+    G: FnMut(
+        &BezierAlgebraicParameter2,
+    ) -> CurveResult<Classification<BezierAlgebraicEndpointImage2>>,
 {
     let mut boundaries = vec![range.start().clone(), range.end().clone()];
     for parameter in parameters {
@@ -2729,10 +2743,13 @@ where
         }
     }
 
-    let endpoint_images = boundaries
-        .iter()
-        .map(|boundary| endpoint_image_for(boundary, &mut endpoint_image))
-        .collect::<CurveResult<Vec<_>>>()?;
+    let mut endpoint_images = Vec::with_capacity(boundaries.len());
+    for boundary in &boundaries {
+        match endpoint_image_for(boundary, &mut endpoint_image)? {
+            Classification::Decided(image) => endpoint_images.push(image),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
     // Ordering and endpoint images may publish scalar witnesses shared by
     // retained parameter clones. A pole cannot become a finite split endpoint
     // merely because its scalar view became available, nor can cloning undo
@@ -2810,13 +2827,17 @@ where
 fn endpoint_image_for<G>(
     parameter: &BezierParameter2,
     endpoint_image: &mut G,
-) -> CurveResult<Option<BezierAlgebraicEndpointImage2>>
+) -> CurveResult<Classification<Option<BezierAlgebraicEndpointImage2>>>
 where
-    G: FnMut(&BezierAlgebraicParameter2) -> CurveResult<BezierAlgebraicEndpointImage2>,
+    G: FnMut(
+        &BezierAlgebraicParameter2,
+    ) -> CurveResult<Classification<BezierAlgebraicEndpointImage2>>,
 {
     match parameter {
-        BezierParameter2::Exact(_) => Ok(None),
-        BezierParameter2::Algebraic(parameter) => Ok(Some(endpoint_image(parameter)?)),
+        BezierParameter2::Exact(_) => Ok(Classification::Decided(None)),
+        BezierParameter2::Algebraic(parameter) => {
+            endpoint_image(parameter).map(|image| image.map(Some))
+        }
     }
 }
 

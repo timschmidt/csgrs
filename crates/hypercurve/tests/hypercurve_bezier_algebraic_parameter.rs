@@ -742,9 +742,10 @@ mod finite_parameter_interval_contract {
             for sign in [-1, 1] {
                 let root = square_root(sign, &policy);
                 let image = source.point_at_algebraic_parameter(&root, &policy).unwrap();
-                assert_eq!(image.status(), BezierAlgebraicImageStatus::XImageFailed);
-                assert!(image.x().is_none() && image.y().is_none());
-                assert!(image.retained_coordinate_polynomials().is_none());
+                assert!(matches!(
+                    image,
+                    Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+                ));
             }
         }
     }

@@ -1740,12 +1740,12 @@ mod tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let parameter = sqrt_half_parameter(&policy);
             let endpoint = |x| {
-                CurvePoint2::from(
+                CurvePoint2::from(crate::tests::decided(
                     crate::RationalBezier2::try_new(vec![p(0, 0), p(x, 0)], vec![Real::one(); 2])
                         .unwrap()
                         .point_at_algebraic_parameter(&parameter, &policy)
                         .unwrap(),
-                )
+                ))
             };
             let chord = decided(
                 crate::BezierAlgebraicChord2::try_new(endpoint(-4), endpoint(4), &policy).unwrap(),

@@ -627,11 +627,18 @@ fn validate_arrangement_algebraic_endpoint_image(
                 )));
             }
             if let Some(source_curve) = source_curve {
-                let expected = BezierAlgebraicEndpointImage2::from_source_curve(
-                    source_curve,
-                    parameter,
-                    policy,
-                )?;
+                let Classification::Decided(expected) =
+                    BezierAlgebraicEndpointImage2::from_source_curve(
+                        source_curve,
+                        parameter,
+                        policy,
+                    )?
+                else {
+                    return Err(CurveError::Topology(
+                        "algebraic arrangement endpoint is not a certified finite source point"
+                            .into(),
+                    ));
+                };
                 if !image.matches_required_source_evidence(&expected) {
                     return Err(CurveError::Topology(format!(
                         "algebraic {name} Bezier arrangement endpoint image does not match retained source curve"
@@ -1381,8 +1388,10 @@ fn retained_endpoint_side_data(
                 derivative_source,
             }));
         }
-        let Ok(point_image) = image.try_point() else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
+        let point_image = match image.point() {
+            Ok(Classification::Decided(image)) => image,
+            Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+            Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
         };
         let Some(point) = retained_algebraic_point_key(point_image) else {
             return Classification::Uncertain(UncertaintyReason::Boundary);
@@ -1893,7 +1902,7 @@ mod endpoint_adjacency_tests {
         assert!(lazy.is_lazy_first_order());
         assert!(lazy.second_derivative().is_none());
         assert!(lazy.third_derivative().is_none());
-        assert_eq!(lazy.try_point(), eager.try_point());
+        assert_eq!(lazy.point(), eager.point());
         assert_eq!(lazy.try_tangent(), eager.try_tangent());
 
         let source =

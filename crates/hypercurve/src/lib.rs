@@ -282,6 +282,13 @@ pub use hyperlimit::PredicatePolicy;
 
 #[cfg(test)]
 mod tests {
+    pub(crate) fn decided<T>(value: crate::Classification<T>) -> T {
+        match value {
+            crate::Classification::Decided(value) => value,
+            crate::Classification::Uncertain(reason) => panic!("expected exact value: {reason:?}"),
+        }
+    }
+
     use super::*;
 
     fn s(value: i32) -> Real {

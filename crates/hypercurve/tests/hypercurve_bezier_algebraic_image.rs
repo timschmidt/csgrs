@@ -146,9 +146,11 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
         RationalQuadraticBezier2::try_new(p(0, 0), p(2, 4), p(6, 0), r(1), r(2), r(3)).unwrap();
     let parameter = sqrt_half_parameter();
 
-    let point = conic
-        .point_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    let point = decided(
+        conic
+            .point_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
     let tangent = conic
         .tangent_at_algebraic_parameter(&parameter, &policy())
         .unwrap();
@@ -221,9 +223,11 @@ fn rational_point_image_transforms_exact_real_linear_root() {
         interval(q(1, 4), q(1, 2)),
     );
 
-    let point = conic
-        .point_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
+    let point = decided(
+        conic
+            .point_at_algebraic_parameter(&parameter, &policy())
+            .unwrap(),
+    );
 
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert!(point.parameter().is_valid());
@@ -316,9 +320,11 @@ fn conic_point_images_reuse_exact_evaluation_across_weight_charts() {
                         let parameter =
                             isolate(polynomial(vec![-t.clone(), r(1)]), interval(r(0), r(1)));
                         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-                            let image = conic
-                                .point_at_algebraic_parameter(&parameter, &policy)
-                                .unwrap();
+                            let image = decided(
+                                conic
+                                    .point_at_algebraic_parameter(&parameter, &policy)
+                                    .unwrap(),
+                            );
                             assert_eq!(image.status(), BezierAlgebraicImageStatus::Transformed);
                             for point in [
                                 decided(conic.point_at(t.clone(), &policy)),
@@ -389,21 +395,74 @@ fn rational_image_cache_keeps_curve_family_certificate_shapes_distinct() {
 }
 
 #[test]
-fn rational_quadratic_denominator_boundary_is_reported() {
+fn rational_point_images_require_finite_affine_coordinates() {
+    use hypercurve::{BezierAlgebraicEndpointImage2, CurvePoint2, UncertaintyReason};
+
+    // D(t) = (1-2t)^2, with y numerator -1/2 at the pole.
+    // There is no affine point to admit, even though the parameter is exact.
     let conic =
         RationalQuadraticBezier2::try_new(p(0, 0), p(1, 1), p(2, 0), r(1), r(-1), r(1)).unwrap();
-    let parameter = isolate(polynomial(vec![r(-1), r(2)]), interval(q(2, 5), q(3, 5)));
-
-    let point = conic
-        .point_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
-    let tangent = conic
-        .tangent_at_algebraic_parameter(&parameter, &policy())
-        .unwrap();
-
-    assert_eq!(point.status(), BezierAlgebraicImageStatus::XImageFailed);
-    assert!(point.message().unwrap().contains("rational coordinate"));
-    assert_eq!(tangent.status(), BezierAlgebraicImageStatus::XImageFailed);
+    let general = RationalBezier2::from(conic.clone());
+    let pole = isolate(polynomial(vec![r(-1), r(2)]), interval(q(2, 5), q(3, 5)));
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for _ in 0..2 {
+            for result in [
+                conic.point_at_algebraic_parameter(&pole, &policy),
+                general.point_at_algebraic_parameter(&pole, &policy),
+            ] {
+                assert!(matches!(
+                    result,
+                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                ));
+            }
+            for result in [
+                BezierAlgebraicEndpointImage2::rational_quadratic(&conic, &pole, &policy),
+                BezierAlgebraicEndpointImage2::rational(&general, &pole, &policy),
+            ] {
+                assert!(matches!(
+                    result,
+                    Ok(Classification::Uncertain(UncertaintyReason::Boundary))
+                ));
+            }
+        }
+        for (parameter_value, expected) in [
+            (q(1, 4), Point2::new(r(-1), q(-3, 2))),
+            (q(3, 4), Point2::new(r(3), q(-3, 2))),
+        ] {
+            let parameter = isolate(
+                polynomial(vec![-parameter_value, r(1)]),
+                interval(r(0), r(1)),
+            );
+            for image in [
+                decided(
+                    conic
+                        .point_at_algebraic_parameter(&parameter, &policy)
+                        .unwrap(),
+                ),
+                decided(
+                    general
+                        .point_at_algebraic_parameter(&parameter, &policy)
+                        .unwrap(),
+                ),
+            ] {
+                let point = CurvePoint2::from(image);
+                assert!(matches!(
+                    point
+                        .coincides_with(&CurvePoint2::from(expected.clone()), &policy)
+                        .value,
+                    Classification::Decided(true)
+                ));
+            }
+        }
+        // Tangent construction still exposes its separate diagnostic report.
+        assert_eq!(
+            conic
+                .tangent_at_algebraic_parameter(&pole, &policy)
+                .unwrap()
+                .status(),
+            BezierAlgebraicImageStatus::XImageFailed
+        );
+    }
 }
 
 proptest! {
@@ -465,7 +524,7 @@ proptest! {
             interval(q(2, 5), q(3, 5)),
         );
 
-        let point = conic.point_at_algebraic_parameter(&parameter, &policy()).unwrap();
+        let point = decided(conic.point_at_algebraic_parameter(&parameter, &policy()).unwrap());
         let tangent = conic.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap();
         let exact_point = match conic.point_at(q(1, 2), &policy()) {
             Classification::Decided(point) => point,

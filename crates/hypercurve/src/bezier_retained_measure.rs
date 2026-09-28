@@ -466,9 +466,10 @@ fn parameter_endpoint_interval(
                 Classification::Uncertain(_) => None,
             }
         }
-        BezierParameter2::Algebraic(_) => {
-            image.and_then(|image| algebraic_endpoint_interval(image.point()))
-        }
+        BezierParameter2::Algebraic(_) => image.and_then(|image| match image.point().ok()? {
+            Classification::Decided(point) => algebraic_endpoint_interval(point),
+            Classification::Uncertain(_) => None,
+        }),
     }
 }
 
@@ -638,10 +639,24 @@ impl EndpointEnvelopeAccumulator {
                 let Some(end_image) = end_image else {
                     return Classification::Uncertain(UncertaintyReason::Boundary);
                 };
-                let Some(start) = algebraic_endpoint_interval(start_image.point()) else {
+                let start_point = match start_image.point() {
+                    Ok(Classification::Decided(point)) => point,
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
+                };
+                let Some(start) = algebraic_endpoint_interval(start_point) else {
                     return Classification::Uncertain(UncertaintyReason::Boundary);
                 };
-                let Some(end) = algebraic_endpoint_interval(end_image.point()) else {
+                let end_point = match end_image.point() {
+                    Ok(Classification::Decided(point)) => point,
+                    Ok(Classification::Uncertain(reason)) => {
+                        return Classification::Uncertain(reason);
+                    }
+                    Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
+                };
+                let Some(end) = algebraic_endpoint_interval(end_point) else {
                     return Classification::Uncertain(UncertaintyReason::Boundary);
                 };
                 match self.include_endpoint(start) {

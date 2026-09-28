@@ -16760,7 +16760,7 @@ mod certified_successor_tests {
         let parameter = sqrt_half_parameter(policy);
         let point = |positive: bool, height: i32| {
             let endpoint_x = if positive { 1 } else { -1 };
-            CurvePoint2::from(
+            CurvePoint2::from(crate::tests::decided(
                 RationalBezier2::try_new(
                     vec![
                         Point2::from_values(0, height),
@@ -16771,7 +16771,7 @@ mod certified_successor_tests {
                 .expect("valid selected-field line")
                 .point_at_algebraic_parameter(&parameter, policy)
                 .expect("selected-field endpoint"),
-            )
+            ))
         };
         let bottom_left = point(false, 0);
         let bottom_right = point(true, 0);
@@ -17390,11 +17390,11 @@ mod certified_successor_tests {
                 let curve =
                     RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()])
                         .expect("valid endpoint carrier");
-                CurvePoint2::from(
+                CurvePoint2::from(crate::tests::decided(
                     curve
                         .point_at_algebraic_parameter(parameter, &policy)
                         .expect("valid endpoint image"),
-                )
+                ))
             };
             let chord = decided(
                 crate::BezierAlgebraicChord2::try_new(
@@ -21311,11 +21311,11 @@ mod certified_successor_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let endpoint_parameter = sqrt_half_parameter(&policy);
             let horizontal = rational_line(0, 1);
-            let endpoint = CurvePoint2::from(
+            let endpoint = CurvePoint2::from(crate::tests::decided(
                 horizontal
                     .point_at_algebraic_parameter(&endpoint_parameter, &policy)
                     .expect("exact algebraic endpoint image"),
-            );
+            ));
             let chord = decided(
                 crate::BezierAlgebraicChord2::try_new(
                     CurvePoint2::from(Point2::from_values(0, 0)),

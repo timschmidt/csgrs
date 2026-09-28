@@ -266,7 +266,7 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut rational_transformed = 0_usize;
     for _ in 0..iterations {
-        let point = conic.point_at_algebraic_parameter(&midpoint, &policy)?;
+        let point = decided(conic.point_at_algebraic_parameter(&midpoint, &policy)?);
         let tangent = conic.tangent_at_algebraic_parameter(&midpoint, &policy)?;
         rational_transformed +=
             black_box(point.x().is_some() as usize + tangent.dx().is_some() as usize);

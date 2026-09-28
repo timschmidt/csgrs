@@ -1284,11 +1284,17 @@ fn validate_retained_source_endpoint_image(
                     "retained algebraic endpoint image must retain exact or replayable first-order source evidence".into(),
                 ));
             }
-            let expected = crate::BezierAlgebraicEndpointImage2::from_source_curve(
-                source_curve,
-                parameter,
-                policy,
-            )?;
+            let Classification::Decided(expected) =
+                crate::BezierAlgebraicEndpointImage2::from_source_curve(
+                    source_curve,
+                    parameter,
+                    policy,
+                )?
+            else {
+                return Err(CurveError::Topology(
+                    "retained algebraic endpoint is not a certified finite source point".into(),
+                ));
+            };
             if !image.matches_required_source_evidence(&expected) {
                 return Err(CurveError::Topology(
                     "retained algebraic endpoint image does not match retained source curve".into(),
@@ -3993,18 +3999,25 @@ fn exact_offset_spans_from_algebraic_endpoint_images(
     let offset_subcurve = BezierSubcurve2::RationalQuadratic(offset_curve);
     let endpoint_image = |parameter: &BezierParameter2| -> CurveResult<_> {
         match parameter {
-            BezierParameter2::Exact(_) => Ok(None),
+            BezierParameter2::Exact(_) => Ok(Classification::Decided(None)),
             BezierParameter2::Algebraic(parameter) => {
-                Ok(Some(BezierAlgebraicEndpointImage2::from_source_curve(
+                BezierAlgebraicEndpointImage2::from_source_curve(
                     &offset_subcurve,
                     parameter,
                     policy,
-                )?))
+                )
+                .map(|image| image.map(Some))
             }
         }
     };
-    let start_image = endpoint_image(start)?;
-    let end_image = endpoint_image(end)?;
+    let start_image = match endpoint_image(start)? {
+        Classification::Decided(image) => image,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let end_image = match endpoint_image(end)? {
+        Classification::Decided(image) => image,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
     let offset_rational = RationalBezier2::try_from_subcurve(&offset_subcurve)?;
     let offset_start =
         match exact_rational_endpoint_evidence(&offset_rational, traversal_start, policy)? {
@@ -14078,7 +14091,12 @@ fn retained_line_endpoint_point(
             let Some(image) = image else {
                 return Classification::Uncertain(UncertaintyReason::Boundary);
             };
-            match exact_point_from_image(image.point(), Some(policy)) {
+            let point = match image.point() {
+                Ok(Classification::Decided(point)) => point,
+                Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
+            };
+            match exact_point_from_image(point, Some(policy)) {
                 Some(point) => Classification::Decided(point),
                 None => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
@@ -17106,18 +17124,22 @@ fn algebraic_contact_order_along_ray(
             origin_coordinate,
             policy,
         )),
-        BezierSubcurve2::RationalQuadratic(curve) => rational_image_coordinate_order(
-            &curve.point_at_algebraic_parameter(parameter, policy)?,
-            use_x,
-            origin_coordinate,
-            policy,
-        ),
-        BezierSubcurve2::Rational(curve) => rational_image_coordinate_order(
-            &curve.point_at_algebraic_parameter(parameter, policy)?,
-            use_x,
-            origin_coordinate,
-            policy,
-        ),
+        BezierSubcurve2::RationalQuadratic(curve) => {
+            match curve.point_at_algebraic_parameter(parameter, policy)? {
+                Classification::Decided(image) => {
+                    rational_image_coordinate_order(&image, use_x, origin_coordinate, policy)
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        }
+        BezierSubcurve2::Rational(curve) => {
+            match curve.point_at_algebraic_parameter(parameter, policy)? {
+                Classification::Decided(image) => {
+                    rational_image_coordinate_order(&image, use_x, origin_coordinate, policy)
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        }
     }?;
     Ok(ordering.map(|ordering| {
         if direction_sign == RealSign::Negative {
@@ -17509,7 +17531,7 @@ mod tests {
                     vec![Real::one(), q(3, 4), q(1, 2)],
                 ).unwrap();
                 let selected_end = root(&[-10, 0, 1], q(31, 10), q(16, 5));
-                let boundary = curve.point_at_algebraic_parameter(&selected_end, &policy).unwrap();
+                let boundary = crate::tests::decided(curve.point_at_algebraic_parameter(&selected_end, &policy).unwrap());
                 let boundary = decided(boundary.predicate_evaluator(&policy).unwrap());
                 for end in [
                     BezierParameter2::Exact(q(16, 5)),
@@ -21662,11 +21684,11 @@ mod tests {
             vec![Real::one(), Real::one(), Real::one()],
         )
         .expect("the selected center source is a valid rational quadratic");
-        let center = CurvePoint2::from(
+        let center = CurvePoint2::from(crate::tests::decided(
             center_source
                 .point_at_algebraic_parameter(parameter, policy)
                 .expect("the selected center has an exact rational image"),
-        );
+        ));
         (center_parameter, center)
     }
 
@@ -21773,11 +21795,11 @@ mod tests {
                     vec![Real::one(), Real::one(), Real::one()],
                 )
                 .expect("the neighboring selected center source is a valid rational quadratic");
-                let neighbor_center = CurvePoint2::from(
+                let neighbor_center = CurvePoint2::from(crate::tests::decided(
                     neighbor_center_source
                         .point_at_algebraic_parameter(center_parameter, policy)
                         .expect("the neighboring center has an exact rational image"),
-                );
+                ));
                 let Classification::Decided(Some(neighbor_support)) =
                     crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
                         &neighbor_center,
@@ -22415,11 +22437,11 @@ mod tests {
         let center_source =
             RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 0)], vec![Real::one(); 3])
                 .unwrap();
-        let center = CurvePoint2::from(
+        let center = CurvePoint2::from(crate::tests::decided(
             center_source
                 .point_at_algebraic_parameter(center_parameter, policy)
                 .unwrap(),
-        );
+        ));
         let Classification::Decided(Some(circle)) =
             crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
                 &center,
@@ -24114,16 +24136,16 @@ mod tests {
         let second_source =
             RationalBezier2::try_new(vec![p(0, 0), p(0, 1)], vec![Real::one(), Real::one()])
                 .expect("the second selected center source is valid");
-        let first_center = CurvePoint2::from(
+        let first_center = CurvePoint2::from(crate::tests::decided(
             first_source
                 .point_at_algebraic_parameter(&first_parameter, policy)
                 .expect("the first selected center image is exact"),
-        );
-        let second_center = CurvePoint2::from(
+        ));
+        let second_center = CurvePoint2::from(crate::tests::decided(
             second_source
                 .point_at_algebraic_parameter(&second_parameter, policy)
                 .expect("the second selected center image is exact"),
-        );
+        ));
         let Classification::Decided(Some(first_circle)) =
             crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
                 &first_center,
@@ -26409,11 +26431,11 @@ mod tests {
                 vec![Real::one(); 2],
             )
             .expect("the translated cutter point source is rational");
-            let selected = CurvePoint2::from(
+            let selected = CurvePoint2::from(crate::tests::decided(
                 source
                     .point_at_algebraic_parameter(&parameter, &construction_policy)
                     .expect("the translated cutter point is exact"),
-            );
+            ));
             let selected_vertices = vertices
                 .iter()
                 .map(|vertex| {
@@ -27014,9 +27036,11 @@ mod tests {
             let BezierParameter2::Algebraic(parameter) = parameter else {
                 panic!("sqrt(1/2) must remain algebraic");
             };
-            let query = query_curve
-                .point_at_algebraic_parameter(&parameter, &policy)
-                .unwrap();
+            let query = crate::tests::decided(
+                query_curve
+                    .point_at_algebraic_parameter(&parameter, &policy)
+                    .unwrap(),
+            );
             let Classification::Decided(query) = query.predicate_evaluator(&policy).unwrap() else {
                 panic!("the algebraic query predicate must construct");
             };
@@ -27126,16 +27150,18 @@ mod tests {
             };
             let quarter = q(1, 4);
             let image = |start_x: Real, end_x: Real| {
-                RationalBezier2::try_new(
-                    vec![
-                        Point2::new(start_x, Real::zero()),
-                        Point2::new(end_x, Real::zero()),
-                    ],
-                    vec![Real::one(); 2],
+                crate::tests::decided(
+                    RationalBezier2::try_new(
+                        vec![
+                            Point2::new(start_x, Real::zero()),
+                            Point2::new(end_x, Real::zero()),
+                        ],
+                        vec![Real::one(); 2],
+                    )
+                    .expect("the affine algebraic point carrier is finite")
+                    .point_at_algebraic_parameter(alpha_root, &policy)
+                    .expect("the affine algebraic point image is exact"),
                 )
-                .expect("the affine algebraic point carrier is finite")
-                .point_at_algebraic_parameter(alpha_root, &policy)
-                .expect("the affine algebraic point image is exact")
             };
             let start = CurvePoint2::from(image(-quarter.clone(), Real::from(3_i8) * &quarter));
             let query_image = image(Real::zero(), Real::one());
@@ -27207,9 +27233,10 @@ mod tests {
             let line =
                 RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
                     .unwrap();
-            let query_image = line
-                .point_at_algebraic_parameter(alpha_root, &policy)
-                .unwrap();
+            let query_image = crate::tests::decided(
+                line.point_at_algebraic_parameter(alpha_root, &policy)
+                    .unwrap(),
+            );
             let Classification::Decided(query) = query_image.predicate_evaluator(&policy).unwrap()
             else {
                 panic!("the algebraic side-ray origin predicate must construct");
@@ -27272,9 +27299,11 @@ mod tests {
             let BezierParameter2::Algebraic(alpha_root) = &alpha else {
                 panic!("sqrt(1/2) must remain algebraic");
             };
-            let query_image = query_curve
-                .point_at_algebraic_parameter(alpha_root, &policy)
-                .unwrap();
+            let query_image = crate::tests::decided(
+                query_curve
+                    .point_at_algebraic_parameter(alpha_root, &policy)
+                    .unwrap(),
+            );
             let Classification::Decided(query) = query_image.predicate_evaluator(&policy).unwrap()
             else {
                 panic!("the genuine-parallel side-ray predicate must construct");
@@ -27506,13 +27535,15 @@ mod tests {
                 panic!("sqrt(1/2) must remain algebraic");
             };
             let image = |height: i8| {
-                RationalBezier2::try_new(
-                    vec![p(0, i32::from(height)), p(1, i32::from(height))],
-                    vec![Real::one(), Real::one()],
+                crate::tests::decided(
+                    RationalBezier2::try_new(
+                        vec![p(0, i32::from(height)), p(1, i32::from(height))],
+                        vec![Real::one(), Real::one()],
+                    )
+                    .unwrap()
+                    .point_at_algebraic_parameter(alpha_root, &policy)
+                    .unwrap(),
                 )
-                .unwrap()
-                .point_at_algebraic_parameter(alpha_root, &policy)
-                .unwrap()
             };
             let center = CurvePoint2::from(image(0));
             let query_image = image(-1);
@@ -27609,10 +27640,12 @@ mod tests {
                 panic!("sqrt(1/2) must remain algebraic");
             };
             let image = |end: Point2| {
-                RationalBezier2::try_new(vec![p(0, 0), end], vec![Real::one(); 2])
-                    .unwrap()
-                    .point_at_algebraic_parameter(alpha_root, &policy)
-                    .unwrap()
+                crate::tests::decided(
+                    RationalBezier2::try_new(vec![p(0, 0), end], vec![Real::one(); 2])
+                        .unwrap()
+                        .point_at_algebraic_parameter(alpha_root, &policy)
+                        .unwrap(),
+                )
             };
             let outside_image = image(p(1, 0));
             let Classification::Decided(query) =
@@ -27791,11 +27824,12 @@ mod tests {
                 panic!("sqrt(1/2) must remain algebraic");
             };
             for y_sign in [-1, 1] {
-                let query_image =
+                let query_image = crate::tests::decided(
                     RationalBezier2::try_new(vec![p(-1, 0), p(-1, y_sign)], vec![Real::one(); 2])
                         .unwrap()
                         .point_at_algebraic_parameter(alpha_root, &policy)
-                        .unwrap();
+                        .unwrap(),
+                );
                 let Classification::Decided(query) =
                     query_image.predicate_evaluator(&policy).unwrap()
                 else {
@@ -27870,9 +27904,11 @@ mod tests {
                 vec![Real::one(); 2],
             )
             .expect("valid query carrier");
-            let query = query_curve
-                .point_at_algebraic_parameter(alpha_root, &policy)
-                .expect("selected query point");
+            let query = crate::tests::decided(
+                query_curve
+                    .point_at_algebraic_parameter(alpha_root, &policy)
+                    .expect("selected query point"),
+            );
             let query = match query.predicate_evaluator(&policy).unwrap() {
                 Classification::Decided(query) => query,
                 Classification::Uncertain(reason) => {
@@ -27941,7 +27977,10 @@ mod tests {
             let BezierParameter2::Algebraic(parameter) = parameter else {
                 panic!("the selected endpoint must remain algebraic");
             };
-            BezierAlgebraicEndpointImage2::from_source_curve(source, parameter, policy).unwrap()
+            crate::tests::decided(
+                BezierAlgebraicEndpointImage2::from_source_curve(source, parameter, policy)
+                    .unwrap(),
+            )
         };
         let x_fragment = BezierSplitFragment2::RetainedBezier {
             reversed: false,
@@ -28203,10 +28242,10 @@ mod tests {
             start: alpha.clone(),
             end: BezierParameter2::Exact(Real::one()),
             source_curve: source.clone(),
-            start_image: Some(
+            start_image: Some(crate::tests::decided(
                 BezierAlgebraicEndpointImage2::from_source_curve(&source, alpha_root, policy)
                     .unwrap(),
-            ),
+            )),
             end_image: None,
         };
         let closure = BezierSplitFragment2::Materialized {
@@ -28908,11 +28947,11 @@ mod tests {
                 let BezierParameter2::Algebraic(parameter) = parameter else {
                     panic!("the selected endpoint parameter must remain algebraic");
                 };
-                CurvePoint2::from(
+                CurvePoint2::from(crate::tests::decided(
                     source
                         .point_at_algebraic_parameter(parameter, &policy)
                         .expect("the selected endpoint image is exact"),
-                )
+                ))
             };
             let chord = match crate::BezierAlgebraicChord2::try_new(
                 selected_point(&endpoint_source, &parallel_parameter),
@@ -29010,11 +29049,11 @@ mod tests {
             let BezierParameter2::Algebraic(parameter) = &independent_parameter else {
                 panic!("the independent endpoint parameter must remain algebraic");
             };
-            CurvePoint2::from(
+            CurvePoint2::from(crate::tests::decided(
                 independent_source
                     .point_at_algebraic_parameter(parameter, policy)
                     .unwrap(),
-            )
+            ))
         };
         let chord = match crate::BezierAlgebraicChord2::try_new(
             parallel_endpoint,

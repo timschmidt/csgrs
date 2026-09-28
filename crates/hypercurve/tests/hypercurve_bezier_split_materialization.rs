@@ -10,6 +10,13 @@ use hypercurve::{
 };
 use proptest::prelude::*;
 
+fn decided<T>(value: Classification<T>) -> T {
+    match value {
+        Classification::Decided(value) => value,
+        Classification::Uncertain(reason) => panic!("expected exact value: {reason:?}"),
+    }
+}
+
 fn r(value: i32) -> Real {
     value.into()
 }
@@ -110,7 +117,7 @@ fn assert_polynomial_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2
         .as_ref()
         .expect("algebraic boundary should retain an endpoint image");
     assert!(image.is_exact());
-    match image.point() {
+    match decided(image.point().unwrap()) {
         BezierEndpointPointImage2::Polynomial(point) => {
             assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
             assert!(point.x().and_then(|x| x.representation()).is_some());
@@ -137,7 +144,7 @@ fn assert_rational_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>)
         .as_ref()
         .expect("algebraic boundary should retain a rational endpoint image");
     assert!(image.is_exact());
-    match image.point() {
+    match decided(image.point().unwrap()) {
         BezierEndpointPointImage2::Rational(point) => {
             assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
             assert!(point.x().and_then(|x| x.representation()).is_some());
@@ -655,8 +662,9 @@ fn rational_algebraic_endpoint_retains_second_derivative_when_constructed() {
         BezierParameter2::Algebraic(parameter) => parameter,
         BezierParameter2::Exact(_) => panic!("expected algebraic parameter"),
     };
-    let image =
-        BezierAlgebraicEndpointImage2::rational_quadratic(&curve, &parameter, &policy()).unwrap();
+    let image = decided(
+        BezierAlgebraicEndpointImage2::rational_quadratic(&curve, &parameter, &policy()).unwrap(),
+    );
 
     assert_rational_endpoint_image(&Some(image.clone()));
     assert_rational_second_derivative_endpoint_image(&image);

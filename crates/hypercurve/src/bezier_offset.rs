@@ -52,17 +52,17 @@ use crate::rational_bezier_general::{
     resultant_parameter_projection,
 };
 use crate::{
-    Aabb2, Axis2, BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierLineContact,
-    BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
-    BezierLineImageFitRelation, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2, Classification,
-    CubicBezier2, Curve2, CurveContext, CurveDerivative2, CurveError, CurveGeometry2,
-    CurveIntersectionCandidates2, CurveOperation2, CurveOverlapOrientation2, CurveParameter2,
-    CurveParameterRange2, CurvePath2, CurvePoint2, CurveResult, ExactCurveError, ExactCurveResult,
-    LineCircleRelation, LineSeg2, Point2, QuadraticBezier2, RationalBezier2,
-    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalQuadraticBezier2, Real, Similarity2, UncertaintyReason,
+    Aabb2, Axis2, BezierAlgebraicParameter2, BezierLineContact, BezierLineContactKind,
+    BezierLineContactRelation, BezierLineCrossingDirection, BezierLineImageFitRelation,
+    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
+    BezierParameterRayDirection2, Classification, CubicBezier2, Curve2, CurveContext,
+    CurveDerivative2, CurveError, CurveGeometry2, CurveIntersectionCandidates2, CurveOperation2,
+    CurveOverlapOrientation2, CurveParameter2, CurveParameterRange2, CurvePath2, CurvePoint2,
+    CurveResult, ExactCurveError, ExactCurveResult, LineCircleRelation, LineSeg2, Point2,
+    QuadraticBezier2, RationalBezier2, RationalBezierAlgebraicPointImage2,
+    RationalBezierAlgebraicTangentImage2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalQuadraticBezier2, Real, Similarity2,
+    UncertaintyReason,
 };
 use hyperreal::{Rational as HyperRational, RealSign, ZeroKnowledge};
 use hypersolve::{
@@ -16189,15 +16189,21 @@ impl BezierParallelAlgebraicCuspFrame2 {
             denominator.clone(),
             policy,
         )?;
-        Ok(match image.status() {
-            BezierAlgebraicImageStatus::Transformed
-            | BezierAlgebraicImageStatus::RetainedRationalExpression => image,
-            BezierAlgebraicImageStatus::InvalidParameterEvidence
-            | BezierAlgebraicImageStatus::XImageFailed
-            | BezierAlgebraicImageStatus::YImageFailed => {
+        Ok(match image {
+            Classification::Decided(image) => image,
+            Classification::Uncertain(UncertaintyReason::Boundary) => {
+                return Err(CurveError::Topology(
+                    "a certified selected-circle frame point acquired a zero denominator".into(),
+                ));
+            }
+            Classification::Uncertain(_) => {
+                // The selected frame and nonzero source scale already certify this affine denominator.
                 RationalBezierAlgebraicPointImage2::from_retained_expression(
                     self.data.parameter.clone(),
-                    image.parameter().clone(),
+                    crate::bezier_algebraic_image::parameter_representation(
+                        &self.data.parameter,
+                        &policy.strict_counterpart(),
+                    ),
                     x_numerator,
                     y_numerator,
                     denominator,
@@ -117157,15 +117163,21 @@ impl BezierParallel2 {
             denominator.clone(),
             policy,
         )?;
-        let image = match image.status() {
-            BezierAlgebraicImageStatus::Transformed
-            | BezierAlgebraicImageStatus::RetainedRationalExpression => image,
-            BezierAlgebraicImageStatus::InvalidParameterEvidence
-            | BezierAlgebraicImageStatus::XImageFailed
-            | BezierAlgebraicImageStatus::YImageFailed => {
+        let image = match image {
+            Classification::Decided(image) => image,
+            Classification::Uncertain(UncertaintyReason::Boundary) => {
+                return Err(CurveError::Topology(
+                    "a certified supporting-line contact acquired a zero denominator".into(),
+                ));
+            }
+            Classification::Uncertain(_) => {
+                // The selected line parameter already certifies this affine denominator.
                 RationalBezierAlgebraicPointImage2::from_retained_expression(
                     algebraic_parameter.clone(),
-                    image.parameter().clone(),
+                    crate::bezier_algebraic_image::parameter_representation(
+                        algebraic_parameter,
+                        &policy.strict_counterpart(),
+                    ),
                     x_numerator,
                     y_numerator,
                     denominator,
@@ -135868,6 +135880,7 @@ pub(crate) use conversion_tests::recursively_line_contact_radial_half;
 
 #[cfg(test)]
 mod conversion_tests {
+    use crate::BezierAlgebraicImageStatus;
     #[test]
     fn independent_oblique_chords_support_constrained_fillet_families() {
         use crate::{Curve2, CurveFillet2, CurveFilletContact2, CurvePath2};
@@ -138227,9 +138240,9 @@ mod conversion_tests {
             ] {
                 let contact = CurveParameter2::from(native.clone());
                 let point = match &native {
-                    BezierParameter2::Algebraic(root) => CurvePoint2::from(
+                    BezierParameter2::Algebraic(root) => CurvePoint2::from(crate::tests::decided(
                         source.point_at_algebraic_parameter(root, &policy).unwrap(),
-                    ),
+                    )),
                     BezierParameter2::Exact(value) => {
                         CurvePoint2::from(Point2::new(value.clone(), value * value))
                     }
@@ -142997,16 +143010,16 @@ mod conversion_tests {
                 ),
             ))
             .unwrap();
-            let start = CurvePoint2::from(
+            let start = CurvePoint2::from(crate::tests::decided(
                 first_curve
                     .point_at_algebraic_parameter(&first_parameter, &policy)
                     .unwrap(),
-            );
-            let end = CurvePoint2::from(
+            ));
+            let end = CurvePoint2::from(crate::tests::decided(
                 second_curve
                     .point_at_algebraic_parameter(&second_parameter, &policy)
                     .unwrap(),
-            );
+            ));
 
             let Classification::Decided(chord) =
                 BezierAlgebraicChord2::try_new(start.clone(), end.clone(), &policy).unwrap()
@@ -143109,11 +143122,11 @@ mod conversion_tests {
                 else {
                     panic!("sqrt(1/2) must remain a selected algebraic parameter");
                 };
-                let source = CurvePoint2::from(
+                let source = CurvePoint2::from(crate::tests::decided(
                     diagonal
                         .point_at_algebraic_parameter(&parameter, &policy)
                         .unwrap(),
-                );
+                ));
                 let transform = Similarity2::try_from_real_affine(
                     Real::one(),
                     -Real::one(),
@@ -143244,11 +143257,11 @@ mod conversion_tests {
         .unwrap();
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let point = CurvePoint2::from(
+            let point = CurvePoint2::from(crate::tests::decided(
                 diagonal
                     .point_at_algebraic_parameter(&parameter, &policy)
                     .unwrap(),
-            );
+            ));
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
             let compare = || {
@@ -143318,16 +143331,16 @@ mod conversion_tests {
         .unwrap();
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let first = CurvePoint2::from(
+            let first = CurvePoint2::from(crate::tests::decided(
                 diagonal
                     .point_at_algebraic_parameter(&first_parameter, &policy)
                     .unwrap(),
-            );
-            let second = CurvePoint2::from(
+            ));
+            let second = CurvePoint2::from(crate::tests::decided(
                 diagonal
                     .point_at_algebraic_parameter(&second_parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
                 algebraic_chord_points_linear_order(
                     &first,
@@ -143369,16 +143382,16 @@ mod conversion_tests {
                 ),
             ))
             .unwrap();
-            let start = CurvePoint2::from(
+            let start = CurvePoint2::from(crate::tests::decided(
                 horizontal
                     .point_at_algebraic_parameter(&first_parameter, &policy)
                     .unwrap(),
-            );
-            let end = CurvePoint2::from(
+            ));
+            let end = CurvePoint2::from(crate::tests::decided(
                 horizontal
                     .point_at_algebraic_parameter(&second_parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(chord) =
                 BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
             else {
@@ -143664,16 +143677,16 @@ mod conversion_tests {
                 unreachable!("sqrt(1/2) must remain algebraic");
             };
             let root_support = line(Point2::from_values(0, 0), Point2::from_values(1, 0));
-            let start = CurvePoint2::from(
+            let start = CurvePoint2::from(crate::tests::decided(
                 root_support
                     .point_at_algebraic_parameter(&start_parameter, &policy)
                     .unwrap(),
-            );
-            let end = CurvePoint2::from(
+            ));
+            let end = CurvePoint2::from(crate::tests::decided(
                 root_support
                     .point_at_algebraic_parameter(&end_parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(root_chord) =
                 BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
             else {
@@ -144094,11 +144107,11 @@ mod conversion_tests {
                 ),
             ))
             .unwrap();
-            let selected_endpoint = CurvePoint2::from(
+            let selected_endpoint = CurvePoint2::from(crate::tests::decided(
                 horizontal
                     .point_at_algebraic_parameter(&endpoint_parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
                 selected_endpoint,
                 CurvePoint2::from(Point2::from_values(0, -1)),
@@ -144248,11 +144261,11 @@ mod conversion_tests {
             let four_fifths_parameter = parameter(fraction(4, 5));
             let tenth_parameter = parameter(fraction(1, 10));
             let image = |source: &RationalBezier2, parameter: &BezierAlgebraicParameter2| {
-                CurvePoint2::from(
+                CurvePoint2::from(crate::tests::decided(
                     source
                         .point_at_algebraic_parameter(parameter, &policy)
                         .unwrap(),
-                )
+                ))
             };
             let first_start = image(&horizontal, &half_parameter);
             let first_end = image(&horizontal, &third_parameter);
@@ -144739,7 +144752,7 @@ mod conversion_tests {
                     unreachable!("sqrt(1/2) must remain algebraic");
                 };
                 let endpoint = |height: i8| {
-                    CurvePoint2::from(
+                    CurvePoint2::from(crate::tests::decided(
                         RationalBezier2::try_new(
                             vec![
                                 Point2::new(Real::from(12), Real::from(height)),
@@ -144750,7 +144763,7 @@ mod conversion_tests {
                         .unwrap()
                         .point_at_algebraic_parameter(&parameter, policy)
                         .unwrap(),
-                    )
+                    ))
                 };
                 let Classification::Decided(vertical) =
                     BezierAlgebraicChord2::try_new(endpoint(0), endpoint(4), policy).unwrap()
@@ -145004,11 +145017,11 @@ mod conversion_tests {
             )
             .unwrap();
             let image = |source: &RationalBezier2, parameter: &BezierAlgebraicParameter2| {
-                CurvePoint2::from(
+                CurvePoint2::from(crate::tests::decided(
                     source
                         .point_at_algebraic_parameter(parameter, &policy)
                         .unwrap(),
-                )
+                ))
             };
             let retained = |source: &RationalBezier2,
                             start: &BezierAlgebraicParameter2,
@@ -145097,16 +145110,16 @@ mod conversion_tests {
                 ),
             ))
             .unwrap();
-            let first = CurvePoint2::from(
+            let first = CurvePoint2::from(crate::tests::decided(
                 horizontal
                     .point_at_algebraic_parameter(&first_parameter, &policy)
                     .unwrap(),
-            );
-            let second = CurvePoint2::from(
+            ));
+            let second = CurvePoint2::from(crate::tests::decided(
                 horizontal
                     .point_at_algebraic_parameter(&second_parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(chord) =
                 BezierAlgebraicChord2::try_new(first.clone(), second, &policy).unwrap()
             else {
@@ -145320,16 +145333,16 @@ mod conversion_tests {
                 ),
             ))
             .unwrap();
-            let start = CurvePoint2::from(
+            let start = CurvePoint2::from(crate::tests::decided(
                 x_axis
                     .point_at_algebraic_parameter(&first_parameter, &policy)
                     .unwrap(),
-            );
-            let end = CurvePoint2::from(
+            ));
+            let end = CurvePoint2::from(crate::tests::decided(
                 y_axis
                     .point_at_algebraic_parameter(&second_parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(chord) =
                 BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
             else {
@@ -145407,11 +145420,11 @@ mod conversion_tests {
                 )),
             )
             .unwrap();
-            let single_contact = CurvePoint2::from(
+            let single_contact = CurvePoint2::from(crate::tests::decided(
                 single_contact_source
                     .point_at_algebraic_parameter(&parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(single_contact_chord) = BezierAlgebraicChord2::try_new(
                 CurvePoint2::from(Point2::from_values(-1, 0)),
                 single_contact,
@@ -145446,11 +145459,11 @@ mod conversion_tests {
                 ),
             ))
             .unwrap();
-            let collinear_contact = CurvePoint2::from(
+            let collinear_contact = CurvePoint2::from(crate::tests::decided(
                 collinear_source
                     .point_at_algebraic_parameter(&parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(collinear_chord) = BezierAlgebraicChord2::try_new(
                 CurvePoint2::from(Point2::from_values(-1, 0)),
                 collinear_contact,
@@ -145482,11 +145495,11 @@ mod conversion_tests {
                     Point2::from_values(2, 0),
                 )))
                 .unwrap();
-            let repeated_contact = CurvePoint2::from(
+            let repeated_contact = CurvePoint2::from(crate::tests::decided(
                 repeated_contact_source
                     .point_at_algebraic_parameter(&parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(repeated_contact_chord) = BezierAlgebraicChord2::try_new(
                 CurvePoint2::from(Point2::from_values(0, 0)),
                 repeated_contact,
@@ -147459,16 +147472,16 @@ mod conversion_tests {
                 ))
                 .unwrap()
             };
-            let start = CurvePoint2::from(
+            let start = CurvePoint2::from(crate::tests::decided(
                 endpoint_curve(Point2::from_values(-3, -3), Point2::from_values(-2, -3))
                     .point_at_algebraic_parameter(&start_parameter, &policy)
                     .unwrap(),
-            );
-            let end = CurvePoint2::from(
+            ));
+            let end = CurvePoint2::from(crate::tests::decided(
                 endpoint_curve(Point2::from_values(3, 3), Point2::from_values(3, 4))
                     .point_at_algebraic_parameter(&end_parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(chord) =
                 BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
             else {
@@ -154269,7 +154282,7 @@ mod conversion_tests {
                             )),
                         )?;
                         Ok(CurvePoint2::from(
-                            curve.point_at_algebraic_parameter(parameter, &policy)?,
+                            crate::tests::decided(curve.point_at_algebraic_parameter(parameter, &policy)?),
                         ))
                     };
                     let secant = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
@@ -154712,7 +154725,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 ),
                             )?;
                             Ok(CurvePoint2::from(
-                                curve.point_at_algebraic_parameter(parameter, &policy)?,
+                                crate::tests::decided(curve.point_at_algebraic_parameter(parameter, &policy)?),
                             ))
                         };
                     let Classification::Decided(common_support) =
@@ -154879,7 +154892,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                                 ),
                             )?;
                             Ok(CurvePoint2::from(
-                                curve.point_at_algebraic_parameter(parameter, &policy)?,
+                                crate::tests::decided(curve.point_at_algebraic_parameter(parameter, &policy)?),
                             ))
                         };
                     // Distinct horizontal conjugacy supports keep the chord's
@@ -157262,11 +157275,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     ),
                 ))
                 .ok()?;
-                Some(CurvePoint2::from(
+                Some(CurvePoint2::from(decided(
                     curve
                         .point_at_algebraic_parameter(parameter, &policy)
                         .ok()?,
-                ))
+                )?))
             };
             let secant = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
                 endpoint(-2, -1, &start_parameter)?,
@@ -157482,11 +157495,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                         ),
                     ))
                     .ok()?;
-                    Some(CurvePoint2::from(
+                    Some(CurvePoint2::from(decided(
                         curve
                             .point_at_algebraic_parameter(parameter, &policy)
                             .ok()?,
-                    ))
+                    )?))
                 };
             let secant = decided(
                 BezierAlgebraicChord2::try_new(
@@ -174065,16 +174078,16 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 ),
             ))
             .unwrap();
-            let start = CurvePoint2::from(
+            let start = CurvePoint2::from(crate::tests::decided(
                 horizontal
                     .point_at_algebraic_parameter(&first_parameter, &policy)
                     .unwrap(),
-            );
-            let end = CurvePoint2::from(
+            ));
+            let end = CurvePoint2::from(crate::tests::decided(
                 horizontal
                     .point_at_algebraic_parameter(&second_parameter, &policy)
                     .unwrap(),
-            );
+            ));
             let Classification::Decided(chord) =
                 BezierAlgebraicChord2::try_new(start, end, &policy).unwrap()
             else {
@@ -184904,10 +184917,12 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 panic!("the weighted center must isolate");
             };
             assert_eq!(
-                source
-                    .point_at_algebraic_parameter(&center_parameter, &policy)
-                    .unwrap()
-                    .exact_point(&CurveContext::STRICT),
+                crate::tests::decided(
+                    source
+                        .point_at_algebraic_parameter(&center_parameter, &policy)
+                        .unwrap()
+                )
+                .exact_point(&CurveContext::STRICT),
                 Some(Point2::from_values(0, 0)),
             );
             let Classification::Decided(Some(circle)) =
@@ -185546,9 +185561,11 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             else {
                 panic!("the algebraic query parameter must isolate");
             };
-            let query = query_curve
-                .point_at_algebraic_parameter(&parameter, &policy)
-                .unwrap();
+            let query = crate::tests::decided(
+                query_curve
+                    .point_at_algebraic_parameter(&parameter, &policy)
+                    .unwrap(),
+            );
             let Classification::Decided(query) = query.predicate_evaluator(&policy).unwrap() else {
                 panic!("the algebraic query predicate must construct");
             };

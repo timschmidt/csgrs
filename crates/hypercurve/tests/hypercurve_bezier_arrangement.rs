@@ -329,7 +329,7 @@ fn algebraic_rational_endpoint_image(
     curve: &RationalQuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
 ) -> BezierAlgebraicEndpointImage2 {
-    BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, &policy()).unwrap()
+    decided(BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, &policy()).unwrap())
 }
 
 #[test]

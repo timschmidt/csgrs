@@ -2106,14 +2106,16 @@ impl RationalBezier2 {
     /// The clone-shared homogeneous power basis is transformed through the
     /// exact rational-image package, preserving represented algebraic
     /// coordinates and denominator validation instead of sampling the
-    /// parameter interval.
+    /// parameter interval. A proved pole returns a boundary blocker; an
+    /// unresolved denominator preserves its predicate reason without creating
+    /// an affine point image.
     pub fn point_at_algebraic_parameter(
         &self,
         parameter: &crate::BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+    ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
         if let Some(image) = parameter.cached_rational_bezier_point_image(self) {
-            return Ok(image);
+            return Ok(Classification::Decided(image));
         }
         let power_basis = self.homogeneous_power_basis()?;
         let image = rational_point_image_from_power_basis(
@@ -2123,7 +2125,11 @@ impl RationalBezier2 {
             power_basis.weight.clone(),
             policy,
         )?;
-        if image.status() == crate::BezierAlgebraicImageStatus::Transformed {
+        if let Classification::Decided(image) = &image
+            && image.status() == crate::BezierAlgebraicImageStatus::Transformed
+        {
+            // Retained expressions own this parameter, so storing them here
+            // would create a strong ownership cycle.
             parameter.retain_rational_bezier_point_image(self, image.clone());
         }
         Ok(image)
@@ -5236,7 +5242,11 @@ impl RationalBezier2 {
                     let BezierParameter2::Algebraic(refined) = refined else {
                         return self.candidate_point_replay(refined, policy);
                     };
-                    let image = self.point_at_algebraic_parameter(refined, policy)?;
+                    let Classification::Decided(image) =
+                        self.point_at_algebraic_parameter(refined, policy)?
+                    else {
+                        continue;
+                    };
                     let (Some(x), Some(y)) = (
                         image.x().and_then(|coordinate| coordinate.representation()),
                         image.y().and_then(|coordinate| coordinate.representation()),
@@ -8626,14 +8636,9 @@ pub(crate) fn exact_contact_point_evidence(
         }
         BezierParameter2::Algebraic(parameter) => {
             let image = curve.point_at_algebraic_parameter(parameter, policy)?;
-            Ok(match image.status() {
-                crate::BezierAlgebraicImageStatus::Transformed
-                | crate::BezierAlgebraicImageStatus::RetainedRationalExpression => {
-                    Some(CurvePoint2::from(image))
-                }
-                crate::BezierAlgebraicImageStatus::XImageFailed
-                | crate::BezierAlgebraicImageStatus::YImageFailed
-                | crate::BezierAlgebraicImageStatus::InvalidParameterEvidence => None,
+            Ok(match image {
+                Classification::Decided(image) => Some(CurvePoint2::from(image)),
+                Classification::Uncertain(_) => None,
             })
         }
     }
@@ -10009,9 +10014,11 @@ mod tests {
                         .unwrap(),
                         Classification::Decided(RealSign::Zero)
                     );
-                    let image = curve
-                        .point_at_algebraic_parameter(parameter, &policy)
-                        .unwrap();
+                    let image = crate::tests::decided(
+                        curve
+                            .point_at_algebraic_parameter(parameter, &policy)
+                            .unwrap(),
+                    );
                     assert_eq!(
                         image
                             .coordinate_order_to_real(false, &ratio(1, 2), &policy)
@@ -10778,9 +10785,11 @@ mod tests {
             parameter.clone(),
             &policy,
         );
-        let resolved = curve
-            .point_at_algebraic_parameter(&parameter, &policy)
-            .unwrap();
+        let resolved = crate::tests::decided(
+            curve
+                .point_at_algebraic_parameter(&parameter, &policy)
+                .unwrap(),
+        );
 
         assert_eq!(
             deferred
@@ -10820,9 +10829,11 @@ mod tests {
             vec![Real::one(), Real::from(2_i8), Real::from(3_i8)],
         )
         .unwrap();
-        let retained_image = curve
-            .point_at_algebraic_parameter(&parameter, &policy)
-            .unwrap();
+        let retained_image = crate::tests::decided(
+            curve
+                .point_at_algebraic_parameter(&parameter, &policy)
+                .unwrap(),
+        );
         assert_eq!(
             retained_image.status(),
             crate::BezierAlgebraicImageStatus::RetainedRationalExpression

@@ -102,12 +102,14 @@ fn rising() -> QuadraticBezier2 {
 fn rational_endpoint_vectors(
     curve: &RationalQuadraticBezier2,
 ) -> (BezierAlgebraicTangentVector2, BezierAlgebraicTangentVector2) {
-    let image = BezierAlgebraicEndpointImage2::rational_quadratic(
-        curve,
-        &algebraic_midpoint_parameter(),
-        &policy(),
-    )
-    .unwrap();
+    let image = decided(
+        BezierAlgebraicEndpointImage2::rational_quadratic(
+            curve,
+            &algebraic_midpoint_parameter(),
+            &policy(),
+        )
+        .unwrap(),
+    );
     let tangent = BezierAlgebraicTangentVector2::from_endpoint_image(image.tangent());
     assert_eq!(
         tangent.status,

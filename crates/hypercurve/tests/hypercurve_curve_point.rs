@@ -8,10 +8,10 @@ use hypercurve::{
 
 mod support;
 
-fn decided<T: std::fmt::Debug>(value: Classification<T>) -> T {
+fn decided<T>(value: Classification<T>) -> T {
     match value {
         Classification::Decided(value) => value,
-        other => panic!("expected a certified decision: {other:?}"),
+        Classification::Uncertain(reason) => panic!("expected a certified decision: {reason:?}"),
     }
 }
 
@@ -48,11 +48,11 @@ fn selected_point(reversed: bool) -> CurvePoint2 {
         controls.reverse();
     }
     let curve = RationalBezier2::try_new(controls, vec![Real::one(); 2]).unwrap();
-    CurvePoint2::from(
+    CurvePoint2::from(decided(
         curve
             .point_at_algebraic_parameter(&parameter, &policy)
             .unwrap(),
-    )
+    ))
 }
 
 #[test]

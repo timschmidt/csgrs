@@ -14317,11 +14317,11 @@ mod tests {
             vec![Real::one(), Real::one(), Real::one()],
         )
         .expect("the selected center source is valid");
-        let center = CurvePoint2::from(
+        let center = CurvePoint2::from(crate::tests::decided(
             center_source
                 .point_at_algebraic_parameter(&parameter, policy)
                 .expect("the selected center retains its exact image"),
-        );
+        ));
         let support =
             crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_axis_aligned_center(
                 &center,

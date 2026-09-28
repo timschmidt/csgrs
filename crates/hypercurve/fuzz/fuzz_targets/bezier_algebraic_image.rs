@@ -119,11 +119,14 @@ fuzz_target!(|data: &[u8]| {
             .tangent_at_algebraic_parameter(&parameter, &policy)
             .expect("valid algebraic parameter should produce a rational tangent evidence");
         if mode == 2 {
-            assert_eq!(
-                rational_point.status(),
-                BezierAlgebraicImageStatus::XImageFailed
-            );
+            assert!(matches!(
+                rational_point,
+                Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
+            ));
         } else if mode == 0 {
+            let Classification::Decided(rational_point) = rational_point else {
+                panic!("finite rational image must be certified");
+            };
             assert_eq!(
                 rational_point.status(),
                 BezierAlgebraicImageStatus::Transformed

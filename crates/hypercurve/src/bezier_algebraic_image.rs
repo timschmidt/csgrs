@@ -661,7 +661,7 @@ struct RetainedRationalPointExpression {
 struct RetainedRationalPointParametricSource {
     curve: RationalBezier2,
     parameter: BezierAlgebraicParameter2,
-    resolved: OnceLock<Option<RationalBezierAlgebraicPointImage2>>,
+    resolved: OnceLock<RationalBezierAlgebraicPointImage2>,
 }
 
 pub(crate) struct RationalBezierAlgebraicPointPredicate2<'a> {
@@ -767,15 +767,19 @@ impl RationalBezierAlgebraicPointImage2 {
         let Some(source) = &self.data.parametric_source else {
             return Some(self);
         };
-        source
-            .resolved
-            .get_or_init(|| {
-                source
-                    .curve
-                    .point_at_algebraic_parameter(&source.parameter, policy)
-                    .ok()
-            })
-            .as_ref()
+        if let Some(image) = source.resolved.get() {
+            return Some(image);
+        }
+        let Ok(Classification::Decided(image)) = source
+            .curve
+            .point_at_algebraic_parameter(&source.parameter, policy)
+        else {
+            return None;
+        };
+        // A failed attempt is not a point definition or a permanent cache
+        // entry. Only exact successful images can satisfy later requests.
+        let _ = source.resolved.set(image);
+        source.resolved.get()
     }
 
     /// Materializes both exact coordinate representations from whichever
@@ -790,14 +794,17 @@ impl RationalBezierAlgebraicPointImage2 {
             return Some([x.representation()?.clone(), y.representation()?.clone()]);
         }
         let expression = resolved.data.retained_expression.as_ref()?;
-        let image = rational_point_image_from_power_basis(
+        let Classification::Decided(image) = rational_point_image_from_power_basis(
             &expression.parameter,
             expression.x_numerator.clone(),
             expression.y_numerator.clone(),
             expression.denominator.clone(),
             policy,
         )
-        .ok()?;
+        .ok()?
+        else {
+            return None;
+        };
         Some([
             image.x()?.representation()?.clone(),
             image.y()?.representation()?.clone(),
@@ -1876,18 +1883,24 @@ impl RationalQuadraticBezier2 {
     /// certification is delegated to `hypersolve`'s rational-image package, so
     /// projective boundary uncertainty stays evidence-bearing instead of being
     /// sampled into affine space.  This is the rational Bezier analogue of the
-    /// polynomial image construction above; see the exactness model for the exact-object
+    /// polynomial image construction above. Only a decided finite image can
+    /// become an exact curve point; a pole returns a boundary blocker and an
+    /// unresolved denominator retains its predicate reason. See the exactness model for the exact-object
     /// boundary and the Bernstein curve model for the homogeneous conic equations.
     pub fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+    ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
         if let Some(image) = parameter.cached_rational_quadratic_point_image(self) {
-            return Ok(image);
+            return Ok(Classification::Decided(image));
         }
         let image = rational_point_image(parameter, rational_point_coefficients(self), policy)?;
-        if image.status() == BezierAlgebraicImageStatus::Transformed {
+        if let Classification::Decided(image) = &image
+            && image.status() == crate::BezierAlgebraicImageStatus::Transformed
+        {
+            // Retained expressions own this parameter, so storing them here
+            // would create a strong ownership cycle.
             parameter.retain_rational_quadratic_point_image(self, image.clone());
         }
         Ok(image)
@@ -2018,7 +2031,7 @@ fn rational_point_image(
     parameter: &BezierAlgebraicParameter2,
     coefficients: RationalCoordinatePolynomials,
     policy: &CurveContext,
-) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
     let strict = policy.strict_counterpart();
     let parameter_root = parameter_representation(parameter, &strict);
     rational_point_image_with_parameter_representation(
@@ -2034,7 +2047,7 @@ fn rational_point_image_with_parameter_representation(
     parameter_root: AlgebraicRootRepresentation,
     coefficients: RationalCoordinatePolynomials,
     policy: &CurveContext,
-) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
     match rational_coordinate_image_pair(
         parameter,
         &parameter_root,
@@ -2046,41 +2059,39 @@ fn rational_point_image_with_parameter_representation(
         RationalCoordinateImagePair::Transformed {
             first: x,
             second: y,
-        } => Ok(RationalBezierAlgebraicPointImage2::new(
-            BezierAlgebraicImageStatus::Transformed,
-            parameter_root,
-            Some(x),
-            Some(y),
-            None,
-            None,
+        } => Ok(Classification::Decided(
+            RationalBezierAlgebraicPointImage2::new(
+                BezierAlgebraicImageStatus::Transformed,
+                parameter_root,
+                Some(x),
+                Some(y),
+                None,
+                None,
+            ),
         )),
         RationalCoordinateImagePair::Retained {
             first_numerator: x_numerator,
             second_numerator: y_numerator,
             denominator,
-        } => Ok(RationalBezierAlgebraicPointImage2::new(
-            BezierAlgebraicImageStatus::RetainedRationalExpression,
-            parameter_root,
-            None,
-            None,
-            Some(RetainedRationalPointExpression {
-                parameter: parameter.clone(),
-                x_numerator,
-                y_numerator,
-                denominator,
-            }),
-            Some(
-                "retained an exact non-pole Real-coefficient rational point expression".to_owned(),
+        } => Ok(Classification::Decided(
+            RationalBezierAlgebraicPointImage2::new(
+                BezierAlgebraicImageStatus::RetainedRationalExpression,
+                parameter_root,
+                None,
+                None,
+                Some(RetainedRationalPointExpression {
+                    parameter: parameter.clone(),
+                    x_numerator,
+                    y_numerator,
+                    denominator,
+                }),
+                Some(
+                    "retained an exact non-pole Real-coefficient rational point expression"
+                        .to_owned(),
+                ),
             ),
         )),
-        RationalCoordinateImagePair::Failed(status) => Ok(RationalBezierAlgebraicPointImage2::new(
-            status,
-            parameter_root,
-            None,
-            None,
-            None,
-            Some("rational coordinate point image or denominator proof failed".to_owned()),
-        )),
+        RationalCoordinateImagePair::Failed { reason, .. } => Ok(Classification::Uncertain(reason)),
     }
 }
 
@@ -2090,7 +2101,7 @@ pub(crate) fn rational_point_image_from_power_basis(
     y_numerator: Vec<Real>,
     denominator: Vec<Real>,
     policy: &CurveContext,
-) -> CurveResult<RationalBezierAlgebraicPointImage2> {
+) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
     let strict = policy.strict_counterpart();
     let mut parameter_root = parameter_representation(parameter, &strict);
     let x_numerator = reduce_algebraic_image_polynomial(parameter, x_numerator, &strict)?;
@@ -2267,7 +2278,7 @@ fn rational_tangent_image(
                     .to_owned(),
             ),
         )),
-        RationalCoordinateImagePair::Failed(status) => {
+        RationalCoordinateImagePair::Failed { status, .. } => {
             Ok(RationalBezierAlgebraicTangentImage2::new(
                 status,
                 parameter_root,
@@ -2345,7 +2356,10 @@ enum RationalCoordinateImagePair {
         second_numerator: Vec<Real>,
         denominator: Vec<Real>,
     },
-    Failed(BezierAlgebraicImageStatus),
+    Failed {
+        status: BezierAlgebraicImageStatus,
+        reason: UncertaintyReason,
+    },
 }
 
 fn rational_coordinate_image_pair(
@@ -2402,10 +2416,14 @@ fn rational_coordinate_image_pair(
                 denominator: denominator_coefficients,
             })
         }
-        Classification::Decided(RealSign::Zero) => Ok(RationalCoordinateImagePair::Failed(
-            BezierAlgebraicImageStatus::XImageFailed,
-        )),
-        Classification::Uncertain(_) => Ok(RationalCoordinateImagePair::Failed(failed_status)),
+        Classification::Decided(RealSign::Zero) => Ok(RationalCoordinateImagePair::Failed {
+            status: BezierAlgebraicImageStatus::XImageFailed,
+            reason: UncertaintyReason::Boundary,
+        }),
+        Classification::Uncertain(reason) => Ok(RationalCoordinateImagePair::Failed {
+            status: failed_status,
+            reason,
+        }),
     }
 }
 

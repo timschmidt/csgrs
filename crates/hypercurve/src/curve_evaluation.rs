@@ -625,9 +625,11 @@ mod tests {
         let rational = &source
             .rational_evaluators_for_operation(&policy, CurveOperation2::Evaluation)
             .unwrap()[0];
-        let cached = rational
-            .point_at_algebraic_parameter(root, &policy)
-            .unwrap();
+        let cached = crate::tests::decided(
+            rational
+                .point_at_algebraic_parameter(root, &policy)
+                .unwrap(),
+        );
         for _ in 0..16 {
             let point = source.point_at(&parameter, &policy).unwrap().value;
             let image = point.as_algebraic().unwrap().resolved(&policy).unwrap();

@@ -833,7 +833,7 @@ fn noninjective_collinear_algebraic_chord_paths()
     let endpoint = |parameter: &BezierAlgebraicParameter2| {
         horizontal
             .point_at_algebraic_parameter(parameter, &policy)
-            .map(CurvePoint2::from)
+            .map(|image| CurvePoint2::from(expect_decided(image, "exact benchmark endpoint")))
     };
     let first_endpoint = endpoint(&first_parameter)?;
     let second_endpoint = endpoint(&second_parameter)?;
@@ -863,7 +863,7 @@ fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dy
         let parameter = positive_sqrt_ratio_parameter(numerator, denominator, &policy)?;
         source
             .point_at_algebraic_parameter(&parameter, &policy)
-            .map(CurvePoint2::from)
+            .map(|image| CurvePoint2::from(expect_decided(image, "exact benchmark endpoint")))
     };
     let first_start = endpoint(&horizontal, 1, 2)?;
     let first_end = endpoint(&horizontal, 1, 3)?;
@@ -911,12 +911,14 @@ fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::e
             vec![Real::one(); 2],
         )
     };
-    let bottom_right = CurvePoint2::from(
+    let bottom_right = CurvePoint2::from(expect_decided(
         horizontal(Real::zero())?.point_at_algebraic_parameter(&parameter, &policy)?,
-    );
-    let top_right = CurvePoint2::from(
+        "exact benchmark endpoint",
+    ));
+    let top_right = CurvePoint2::from(expect_decided(
         horizontal(Real::one())?.point_at_algebraic_parameter(&parameter, &policy)?,
-    );
+        "exact benchmark endpoint",
+    ));
     let bottom_left = CurvePoint2::from(p(0, 0));
     let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
@@ -958,11 +960,12 @@ fn axis_aligned_algebraic_dumbbell_offset_region()
             vec![Real::one(); 2],
         )
         .map(|curve| {
-            CurvePoint2::from(
+            CurvePoint2::from(expect_decided(
                 curve
                     .point_at_algebraic_parameter(&parameter, &policy)
                     .expect("algebraic dumbbell endpoint must remain selected"),
-            )
+                "exact benchmark endpoint",
+            ))
         })
     };
     let exact = |x, y| CurvePoint2::from(p(x, y));

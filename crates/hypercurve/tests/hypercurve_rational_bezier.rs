@@ -989,9 +989,11 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
     let BezierParameter2::Algebraic(first_parameter) = &first_parameters[0] else {
         unreachable!("asserted algebraic parameter")
     };
-    let image = parabola
-        .point_at_algebraic_parameter(first_parameter, &policy)
-        .unwrap();
+    let image = decided(
+        parabola
+            .point_at_algebraic_parameter(first_parameter, &policy)
+            .unwrap(),
+    );
     assert_eq!(
         image.status(),
         BezierAlgebraicImageStatus::Transformed,
