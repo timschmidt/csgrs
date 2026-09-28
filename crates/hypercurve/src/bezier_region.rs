@@ -18182,7 +18182,7 @@ mod tests {
                         .unwrap(),
                     );
                     let interval = decided(
-                        BezierParameterInterval::try_new_ordered(lower, upper, &policy).unwrap(),
+                        BezierParameterInterval::try_new(lower, upper, &policy).unwrap(),
                     );
                     decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap())
                 };

@@ -20905,8 +20905,7 @@ mod certified_successor_tests {
                 .unwrap(),
             );
             let interval = decided(
-                crate::BezierParameterInterval::try_new_ordered(q(7, 4), Real::from(2), &policy)
-                    .unwrap(),
+                crate::BezierParameterInterval::try_new(q(7, 4), Real::from(2), &policy).unwrap(),
             );
             let cut_root = decided(
                 BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),

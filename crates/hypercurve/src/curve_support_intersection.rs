@@ -2624,7 +2624,7 @@ mod circle_dispatch_tests {
                     .unwrap(),
                 );
                 let interval = exact(
-                    crate::BezierParameterInterval::try_new_ordered(
+                    crate::BezierParameterInterval::try_new(
                         Real::from(shift) + q(1, 2),
                         Real::from(shift) + q(3, 4),
                         &policy,
@@ -2754,8 +2754,7 @@ mod circle_dispatch_tests {
                 .unwrap(),
             );
             let interval = exact(
-                crate::BezierParameterInterval::try_new_ordered(Real::one(), q(9, 8), &policy)
-                    .unwrap(),
+                crate::BezierParameterInterval::try_new(Real::one(), q(9, 8), &policy).unwrap(),
             );
             let selected = BezierParameter2::algebraic(exact(
                 crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)

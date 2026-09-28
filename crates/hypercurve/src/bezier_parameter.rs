@@ -76,9 +76,9 @@ pub struct BezierRootIsolationResult2 {
 
 /// Closed isolating interval for a Bezier parameter root.
 ///
-/// Public construction certifies `[0, 1]` membership and `start <= end`.
-/// Internally, exact corner-extension charts may retain an ordered finite
-/// interval outside the segment domain. `BezierAlgebraicParameter2`
+/// Construction certifies `start <= end` for arbitrary finite exact bounds.
+/// The owning curve operation separately validates its parameter domain.
+/// `BezierAlgebraicParameter2`
 /// additionally requires the defining polynomial to have no endpoint root and
 /// exactly one distinct root in this interval under Sturm validation.
 #[derive(Clone, Debug, PartialEq)]
@@ -192,7 +192,7 @@ pub(crate) struct BezierParameterRefinement2<'a> {
     policy: &'a CurveContext,
 }
 
-/// Oriented positive-length range in a Bezier segment's `[0, 1]` domain.
+/// Oriented positive-length range of exact Bezier source parameters.
 ///
 /// Endpoints retain their exact representation, including isolated algebraic
 /// roots. A descending range records reversed traversal; callers do not need
@@ -841,7 +841,7 @@ fn map_compact_incident_ray_root(
                 if lower == upper {
                     break;
                 }
-                let interval = match BezierParameterInterval::try_new_ordered(
+                let interval = match BezierParameterInterval::try_new(
                     Real::new(lower),
                     Real::new(upper),
                     &strict,
@@ -934,24 +934,11 @@ impl BezierRootIsolationResult2 {
 }
 
 impl BezierParameterInterval {
-    /// Constructs a closed interval in Bezier parameter space.
+    /// Certifies ordered exact bounds for a closed finite parameter interval.
+    ///
+    /// Curve operations enforce their own source domains; this interval can
+    /// also retain roots on an exterior continuation of an authored segment.
     pub fn try_new(
-        start: Real,
-        end: Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        let in_start = in_closed_unit_interval(&start, policy);
-        let in_end = in_closed_unit_interval(&end, policy);
-        match (in_start, in_end) {
-            (Some(false), _) | (_, Some(false)) => return Err(CurveError::InvalidBezierParameter),
-            (Some(true), Some(true)) => {}
-            _ => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-        }
-
-        Self::try_new_ordered(start, end, policy)
-    }
-
-    pub(crate) fn try_new_ordered(
         start: Real,
         end: Real,
         policy: &CurveContext,
@@ -1966,7 +1953,7 @@ impl BezierParameter2 {
         // An enclosure query preserves them without reapplying the authored
         // domain, and an already proved scalar needs no further isolation.
         if let Some(value) = self.scalar() {
-            return BezierParameterInterval::try_new_ordered(value.clone(), value.clone(), policy);
+            return BezierParameterInterval::try_new(value.clone(), value.clone(), policy);
         }
         let Self::Algebraic(value) = self else {
             unreachable!("an exact parameter always has a scalar view");
@@ -2218,19 +2205,22 @@ impl BezierParameter2 {
                 Ok(Classification::Decided(Self::Exact(exact)))
             };
         }
-        let interval = match if unit_domain {
-            BezierParameterInterval::try_new(
-                representation.interval.lower.clone(),
-                representation.interval.upper.clone(),
-                policy,
-            )
-        } else {
-            BezierParameterInterval::try_new_ordered(
-                representation.interval.lower.clone(),
-                representation.interval.upper.clone(),
-                policy,
-            )
-        }? {
+        if unit_domain {
+            let in_start = in_closed_unit_interval(&representation.interval.lower, policy);
+            let in_end = in_closed_unit_interval(&representation.interval.upper, policy);
+            match (in_start, in_end) {
+                (Some(false), _) | (_, Some(false)) => {
+                    return Err(CurveError::InvalidBezierParameter);
+                }
+                (Some(true), Some(true)) => {}
+                _ => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+            }
+        }
+        let interval = match BezierParameterInterval::try_new(
+            representation.interval.lower.clone(),
+            representation.interval.upper.clone(),
+            policy,
+        )? {
             Classification::Decided(interval) => interval,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -2509,7 +2499,7 @@ impl BezierParameter2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let interval = match BezierParameterInterval::try_new_ordered(start, end, policy)? {
+                let interval = match BezierParameterInterval::try_new(start, end, policy)? {
                     Classification::Decided(interval) => interval,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -3102,7 +3092,7 @@ fn refine_algebraic_sign_change(
             return None;
         }
     }
-    let interval = match BezierParameterInterval::try_new_ordered(start, end, policy).ok()? {
+    let interval = match BezierParameterInterval::try_new(start, end, policy).ok()? {
         Classification::Decided(interval) => interval,
         Classification::Uncertain(_) => return None,
     };
@@ -3223,7 +3213,7 @@ impl<'a> RefinedParameter<'a> {
             0 => (midpoint, interval.end().clone()),
             _ => return Err(CurveError::InvalidBezierAlgebraicParameter),
         };
-        match BezierParameterInterval::try_new_ordered(start, end, policy)? {
+        match BezierParameterInterval::try_new(start, end, policy)? {
             Classification::Decided(refined) => {
                 *interval = refined;
                 if left_count == 0 {
@@ -4013,14 +4003,11 @@ fn exact_nonrational_bernstein_interval_roots(
     let strict = policy.strict_counterpart();
     let mut roots = Vec::with_capacity(report.intervals.len());
     for interval in report.intervals {
-        let interval = match BezierParameterInterval::try_new_ordered(
-            interval.lower,
-            interval.upper,
-            &strict,
-        )? {
-            Classification::Decided(interval) => interval,
-            Classification::Uncertain(_) => return Ok(None),
-        };
+        let interval =
+            match BezierParameterInterval::try_new(interval.lower, interval.upper, &strict)? {
+                Classification::Decided(interval) => interval,
+                Classification::Uncertain(_) => return Ok(None),
+            };
         let mut parameter = BezierAlgebraicParameter2::from_certified_simple_singleton(
             polynomial.clone(),
             interval,
@@ -4644,7 +4631,7 @@ fn search_interval_roots(
             continue;
         }
         if count == 1 && !touches_start && !touches_end {
-            let interval = match BezierParameterInterval::try_new_ordered(start, end, policy)? {
+            let interval = match BezierParameterInterval::try_new(start, end, policy)? {
                 Classification::Decided(interval) => interval,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -5210,8 +5197,7 @@ mod conversion_tests {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             // This singleton straddles the first map's pole at 3/2.
             let interval = decided(
-                BezierParameterInterval::try_new_ordered(Real::one(), Real::from(2), &policy)
-                    .unwrap(),
+                BezierParameterInterval::try_new(Real::one(), Real::from(2), &policy).unwrap(),
                 "wide singleton",
             );
             let source =
@@ -5290,7 +5276,7 @@ mod conversion_tests {
     #[test]
     fn refinement_to_an_exact_root_precedes_touching_interval_order() {
         let defining = polynomial(&[-3, 2]);
-        let interval = BezierParameterInterval::try_new_ordered(
+        let interval = BezierParameterInterval::try_new(
             rational(4, 3),
             Real::from(2_i8),
             &CurveContext::STRICT,
@@ -6596,14 +6582,12 @@ mod conversion_tests {
                     else {
                         panic!("exact rational polynomial");
                     };
-                    let Classification::Decided(interval) =
-                        BezierParameterInterval::try_new_ordered(
-                            rational(lower[0], lower[1]),
-                            rational(upper[0], upper[1]),
-                            &policy,
-                        )
-                        .unwrap()
-                    else {
+                    let Classification::Decided(interval) = BezierParameterInterval::try_new(
+                        rational(lower[0], lower[1]),
+                        rational(upper[0], upper[1]),
+                        &policy,
+                    )
+                    .unwrap() else {
                         panic!("exact ordered interval");
                     };
                     let Classification::Decided(root) = BezierAlgebraicParameter2::try_isolate(
@@ -7735,6 +7719,51 @@ mod finite_field_bernstein_regression {
                         Some(Ordering::Equal)
                     );
                 }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod finite_interval_import_regression {
+    use super::*;
+
+    #[test]
+    fn unit_import_keeps_its_domain_after_generic_interval_construction() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (lower, upper) in [(-2, -1), (1, 2)] {
+                let mut representation = AlgebraicRootRepresentation {
+                    constraint_index: 0,
+                    symbol: hypersolve::SymbolId(0),
+                    interval_index: 0,
+                    polynomial_coefficients: vec![Real::from(-2), Real::zero(), Real::one()],
+                    interval: hypersolve::IsolatedRootInterval {
+                        lower: Real::from(lower),
+                        upper: Real::from(upper),
+                        exact_root: None,
+                        distinct_root_count: 1,
+                    },
+                    validation: hypersolve::AlgebraicRootValidationReport {
+                        status: hypersolve::AlgebraicRootValidationStatus::Valid,
+                        message: None,
+                    },
+                };
+                representation.validation = hypersolve::validate_algebraic_root_representation(
+                    &representation,
+                    hypersolve::PredicatePolicy::STRICT,
+                );
+                assert!(representation.is_valid());
+                assert!(matches!(
+                    BezierParameter2::from_algebraic_root_representation(&representation, &policy),
+                    Err(CurveError::InvalidBezierParameter)
+                ));
+                assert!(matches!(
+                    BezierParameter2::from_algebraic_root_representation_unbounded(
+                        &representation,
+                        &policy
+                    ),
+                    Ok(Classification::Decided(BezierParameter2::Algebraic(_)))
+                ));
             }
         }
     }

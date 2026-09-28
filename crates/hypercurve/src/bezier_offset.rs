@@ -8528,8 +8528,7 @@ fn selected_dense_guided_quadratic_parameters(
                 continue;
             }
             let interval =
-                match BezierParameterInterval::try_new_ordered(lower, upper, &CurveContext::STRICT)
-                {
+                match BezierParameterInterval::try_new(lower, upper, &CurveContext::STRICT) {
                     Ok(Classification::Decided(interval)) => interval,
                     Ok(Classification::Uncertain(_)) => continue,
                     Err(error) => return Err(error),
@@ -21116,7 +21115,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let interval = match BezierParameterInterval::try_new_ordered(
+                let interval = match BezierParameterInterval::try_new(
                     &parameter - Real::one(),
                     &parameter + Real::one(),
                     &CurveContext::STRICT,
@@ -107580,7 +107579,7 @@ fn algebraic_selected_parameters_from_norm(
                 }
                 None => None,
             };
-            let parameter_interval = match BezierParameterInterval::try_new_ordered(
+            let parameter_interval = match BezierParameterInterval::try_new(
                 interval.lower,
                 interval.upper,
                 &CurveContext::STRICT,
@@ -107982,7 +107981,7 @@ fn selected_fiber_parameter_at_exact_retained(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let interval = match BezierParameterInterval::try_new_ordered(
+    let interval = match BezierParameterInterval::try_new(
         root.lower.clone(),
         root.upper.clone(),
         &CurveContext::STRICT,
@@ -135141,7 +135140,7 @@ fn retained_incident_ray_regular_anchor_from_polynomials(
         }
         // The endpoint may belong to an exterior affine chart. Regularity
         // has already certified this entire bridge; only its ordering matters.
-        let interval = match BezierParameterInterval::try_new_ordered(
+        let interval = match BezierParameterInterval::try_new(
             lower.clone(),
             upper.clone(),
             &CurveContext::STRICT,
@@ -137520,8 +137519,7 @@ mod conversion_tests {
                     Classification::Decided(polynomial) => polynomial,
                     Classification::Uncertain(reason) => panic!("native polynomial: {reason:?}"),
                 },
-                match BezierParameterInterval::try_new_ordered(half.clone(), Real::one(), &policy)
-                    .unwrap()
+                match BezierParameterInterval::try_new(half.clone(), Real::one(), &policy).unwrap()
                 {
                     Classification::Decided(interval) => interval,
                     Classification::Uncertain(reason) => panic!("native interval: {reason:?}"),
@@ -157655,12 +157653,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                     panic!("exact quadratic");
                 };
                 let (lower, upper) = if sign < 0 { (-2, -1) } else { (1, 2) };
-                let Classification::Decided(interval) = BezierParameterInterval::try_new_ordered(
-                    Real::from(lower),
-                    Real::from(upper),
-                    &policy,
-                )
-                .unwrap() else {
+                let Classification::Decided(interval) =
+                    BezierParameterInterval::try_new(Real::from(lower), Real::from(upper), &policy)
+                        .unwrap()
+                else {
                     panic!("exact isolator");
                 };
                 let Classification::Decided(parameter) =
@@ -160332,12 +160328,10 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
             else {
                 panic!("the source parameter is selected algebraically");
             };
-            let Classification::Decided(interval) = BezierParameterInterval::try_new_ordered(
-                Real::from(-1_i8),
-                -fraction(1, 2),
-                &policy,
-            )
-            .unwrap() else {
+            let Classification::Decided(interval) =
+                BezierParameterInterval::try_new(Real::from(-1_i8), -fraction(1, 2), &policy)
+                    .unwrap()
+            else {
                 panic!("the negative root interval is exact");
             };
             let Classification::Decided(negative_alpha) = BezierAlgebraicParameter2::try_isolate(
@@ -195723,7 +195717,7 @@ mod empty_incident_component_tests {
                 vec![Real::from(-2_i8), Real::zero(), Real::one()],
                 &policy,
             ));
-            let interval = decided(BezierParameterInterval::try_new_ordered(
+            let interval = decided(BezierParameterInterval::try_new(
                 Real::one(),
                 Real::from(2_i8),
                 &policy,
@@ -195795,7 +195789,7 @@ mod finite_domain_ownership_tests {
                 vec![Real::from(-2), Real::zero(), Real::one()],
                 &policy,
             ));
-            let interval = decided(BezierParameterInterval::try_new_ordered(
+            let interval = decided(BezierParameterInterval::try_new(
                 Real::one(),
                 q(3, 2),
                 &policy,
