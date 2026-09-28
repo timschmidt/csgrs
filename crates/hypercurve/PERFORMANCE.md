@@ -9072,6 +9072,43 @@ Validation: 107 release tests pass across `hypercurve_curve`,
 `hypercurve_derivative_completeness`, with `dispatch-trace` enabled. This is
 API and correctness qualification; no new throughput benchmark is claimed.
 
+## 2026-09-28: exact composition replay
+
+Three serial matched pairs, with alternating execution order, measured the
+following complete release-test workloads. Every run passed its exact geometry
+and retained-evidence assertions.
+
+| Workload | Baseline median | Updated median | Change |
+| --- | ---: | ---: | ---: |
+| Joined continuous-fillet selection and replay | 3.018 s | 0.314 s | -89.59% |
+| Degree-six reparameterized offset overlap | 47.878 s | 45.834 s | -4.27% |
+
+The joined-path test makes 68 public fillet requests across both traversal
+directions and policies. It requires an additional exact constraint for a
+continuous family, rejects incompatible constraints, checks selected centers,
+contacts, radius and circle orientation, and repeats successful selections under
+the strict policy. Its constructor helpers and successful operation/assertion
+sequence match the earlier baseline; only failure diagnostics changed. The
+previously recorded 3.017-to-5.471-second regression no longer appears in this
+workload. This comparison spans several intervening implementation changes and
+does not isolate their individual contributions.
+
+The offset comparison changes only Hypersolve's common rational ordinate
+content normalization before interpolation, subsequently committed as
+`106130aa5c45672fe170386635ad7e94741097d7`. Both binaries run the unchanged
+degree-six regression: two isolated crossings, one closed overlap, and exact
+reuse of its retained correspondences through public overlap clipping. All
+three updated times lie below all three baseline times.
+
+These are subprocess wall times for whole tests, including startup and
+process-wait polling. They are not per-fillet latencies or a claim about all
+curve operations. The joined-path binary precedes the later mechanically
+verified overlap-orientation rename. No new allocation, retained-memory or
+binary-size measurements are claimed.
+
+Samples, exact test names, source snapshot identifiers and executable hashes:
+[2026-09-28-exact-composition-replay.json](benchmarks/checkpoints/2026-09-28-exact-composition-replay.json).
+
 ## Optimization boundary
 
 The retained x sweep addresses broad-phase pair scheduling only. A full

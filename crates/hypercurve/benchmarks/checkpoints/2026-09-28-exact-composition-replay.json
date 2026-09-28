@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-28",
+  "protocol": "Three serial paired release-test executions per comparison, alternating historical/current order. No concurrent builds or qualification. Times are subprocess wall clock including harness startup and process-wait polling.",
+  "artifact_directory": "hypercurve-api-review-2026-09-12 (workspace sibling)",
+  "workloads": [
+    {
+      "name": "joined_continuous_fillet_replay",
+      "test": "curve::curve_fillet::tests::joined_path_selects_and_replays_a_continuous_fillet_family",
+      "receipt": "joined-fillet-comparison-20260928-v710-terminal.json",
+      "datasets": {
+        "historical": {
+          "source_snapshot": "finite-domain-ownership-20260927-v527",
+          "source_manifest_sha256": "f2c28004f2fdf6e6dfa741ad3d995dbbf28d29ca0055ebbbbbde084617db3008",
+          "binary_filename": "finite-domain-ownership-20260927-v527-hypercurve-tests",
+          "binary_sha256": "b8083c1ba7e48b0bfd502aadc363b41bc5fd563cc45fed0907fb697746f2a796",
+          "samples_seconds": [
+            3.017772409133613,
+            3.0677436320111156,
+            3.017884701024741
+          ],
+          "median_seconds": 3.017884701024741
+        },
+        "current": {
+          "source_snapshot": "native-path-shims-20260928-v707",
+          "source_manifest_sha256": "a0c6088b36f8bd909ddfa407da0d71b8f52266423a2477c2106932dff6c5f441",
+          "binary_filename": "native-path-shims-20260928-v707-hypercurve-tests",
+          "binary_sha256": "5bc63c1f9bb8c562fa648c2b039549d564aa1e1c54e5fa57f5399b71e8f86584",
+          "samples_seconds": [
+            0.31431858194991946,
+            0.3142467369325459,
+            0.3142815539613366
+          ],
+          "median_seconds": 0.3142815539613366
+        }
+      },
+      "all_six_cases_passed": true
+    },
+    {
+      "name": "degree_six_offset_overlap",
+      "test": "bezier_offset::structural_overlap_trace_regression::monotone_reparameterization_preserves_structural_pair_crossings_strict",
+      "receipt": "interpolation-content-comparison-20260928-v699-terminal.json",
+      "datasets": {
+        "baseline": {
+          "source_snapshot": "projection-overlap-20260928-v695",
+          "source_manifest_sha256": "8dddc4dd9e1fc1356e11d275a232f3bc295f4b8716932f5c74d69ea81b9385ab",
+          "binary_filename": "projection-overlap-20260928-v695-hypercurve-tests",
+          "binary_sha256": "75c4c6f2698922f292f6bd1114d54df4f2c21828e0b7885e1be676bde0d0cb2c",
+          "samples_seconds": [
+            47.524575830902904,
+            47.87797054601833,
+            47.92854729807004
+          ],
+          "median_seconds": 47.87797054601833
+        },
+        "candidate": {
+          "source_snapshot": "interpolation-content-20260928-v697",
+          "source_manifest_sha256": "931d9391c8cc1cc30d78b2dcd758eacf4400e3840545fc67d2d3fc0712246435",
+          "binary_filename": "interpolation-content-20260928-v697-hypercurve-tests",
+          "binary_sha256": "14e239716adfa64f002d29c22f950c5f07bfeb3d48eed4965b762b39d92041f5",
+          "samples_seconds": [
+            45.82323097786866,
+            45.83372189803049,
+            46.02391707804054
+          ],
+          "median_seconds": 45.83372189803049
+        }
+      },
+      "all_six_cases_passed": true
+    }
+  ],
+  "limits": [
+    "These are full regression workloads, not per-operation microbenchmarks or a uniform performance claim.",
+    "Joined-fillet constructor helpers, successful operation sequence and geometric assertions match the historical baseline; only failure diagnostics differ. All 68 public fillet requests include constraint rejection, both traversal directions, both policies and strict replay.",
+    "The joined-fillet current binary precedes the subsequently verified orientation-only API rename. Intervening implementation contributions are not isolated.",
+    "The offset comparison changes only common rational ordinate content normalization in Hypersolve. Its test retains two isolated crossings, one overlap and public overlap-clipping replay.",
+    "No new allocation, retained-memory or binary-size measurements."
+  ]
+}
