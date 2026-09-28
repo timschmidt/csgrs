@@ -4739,10 +4739,34 @@ fn interpolate_samples(samples: &[PolynomialSample], min_precision: i32) -> Opti
     // distinct nodes, including grids with omitted degree-drop fibers. Unlike
     // rebuilding every Lagrange basis, construction takes quadratic work and
     // linear live storage. Coefficients remain arbitrary exact Real values.
-    let mut differences = samples
+    // Interpolation is linear in its ordinates. Remove their common rational
+    // content once instead of carrying it through every divided difference;
+    // restore its signed value only after reconstruction. Arbitrary exact
+    // ordinates retain the same general coefficient-field path.
+    let rational_values = samples
         .iter()
-        .map(|sample| sample.value.clone())
-        .collect::<Vec<_>>();
+        .map(|sample| sample.value.exact_rational_ref())
+        .collect::<Option<Vec<_>>>();
+    let (mut differences, scale) = if let Some(values) = rational_values {
+        let integers = Rational::primitive_bigint_ratio(&values);
+        let scale = values
+            .iter()
+            .zip(&integers)
+            .find(|(value, _)| !value.is_zero())
+            .map(|(value, integer)| Real::from(*value / Rational::from_bigint(integer.clone())));
+        (
+            integers
+                .into_iter()
+                .map(|value| Real::from(Rational::from_bigint(value)))
+                .collect::<Vec<_>>(),
+            scale,
+        )
+    } else {
+        (
+            samples.iter().map(|sample| sample.value.clone()).collect(),
+            None,
+        )
+    };
     for order in 1..samples.len() {
         for index in (order..samples.len()).rev() {
             differences[index] = ((&differences[index] - &differences[index - 1])
@@ -4754,6 +4778,11 @@ fn interpolate_samples(samples: &[PolynomialSample], min_precision: i32) -> Opti
     for (sample, coefficient) in samples.iter().zip(differences).rev() {
         result = multiply_by_linear_factor(result, -sample.parameter_value.clone());
         result[0] += coefficient;
+    }
+    if let Some(scale) = scale {
+        for coefficient in &mut result {
+            *coefficient *= &scale;
+        }
     }
     trim_trailing_zeroes(result, min_precision).ok()
 }
@@ -4775,6 +4804,43 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    #[test]
+    fn interpolation_preserves_scaled_integer_valued_polynomials() {
+        // Binomial(t,6) has integer values on integer nodes but fractional
+        // coefficients. Nonuniform samples omit some zero fibers. Content
+        // extraction must preserve the complete polynomial, not just its roots.
+        let magnitude = (0..12).fold(real(1), |value, _| value * real(1009));
+        for scale in [real(0), real(1), (-magnitude / real(37)).unwrap()] {
+            let evaluate = |parameter: &Real| {
+                (0..6).fold(scale.clone(), |value, index| {
+                    value * (parameter - real(index))
+                }) / real(720)
+            };
+            for reversed in [false, true] {
+                let mut samples = [0, 1, 2, 4, 5, 8, 11]
+                    .into_iter()
+                    .map(|node| {
+                        let parameter_value = real(node);
+                        let value = evaluate(&parameter_value).unwrap();
+                        PolynomialSample {
+                            parameter_value,
+                            value,
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                if reversed {
+                    samples.reverse();
+                }
+                let coefficients = interpolate_samples(&samples, -512).unwrap();
+                assert!(coefficients.len() <= 7);
+                for node in -4..=16 {
+                    let node = real(node);
+                    assert!(eval_univariate(&coefficients, &node) == evaluate(&node).unwrap());
+                }
+            }
+        }
     }
 
     #[test]
