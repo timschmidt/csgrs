@@ -12,9 +12,8 @@ use crate::bbox::{Aabb2, aabbs_decided_disjoint, decided_segment_aabb};
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{
     ArcArcIntersection, BulgeVertex2, CircularArc2, Classification, CurveContext, CurveError,
-    CurvePath2, CurvePathRegionTrim2, CurveRegion2, CurveResult, ExactCurveResult,
-    LineArcIntersection, LineLineIntersection, LineSeg2, LineSide, ParamRange, Point2, Segment2,
-    SegmentIntersection, SegmentKind, UncertaintyReason,
+    CurveResult, LineArcIntersection, LineLineIntersection, LineSeg2, LineSide, ParamRange, Point2,
+    Segment2, SegmentIntersection, SegmentKind, UncertaintyReason,
 };
 
 /// One segment-pair event between two curve strings.
@@ -213,7 +212,7 @@ impl CurveString2 {
 
     /// Links an ordered sequence of open curve strings by certified endpoints.
     pub fn link_ordered_connected_endpoints(
-        curve_strings: Vec<Self>,
+        curve_strings: impl IntoIterator<Item = Self>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
         let mut iter = curve_strings.into_iter();
@@ -232,14 +231,6 @@ impl CurveString2 {
             };
         }
         Ok(Classification::Decided(accumulated))
-    }
-
-    /// Borrowed counterpart to the ordered endpoint-link operation.
-    pub fn link_ordered_connected_endpoints_borrowed(
-        curve_strings: &[Self],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<CurveString2>> {
-        Self::link_ordered_connected_endpoints(curve_strings.to_vec(), policy)
     }
 
     /// Connects self.end to other.start with an exact line segment.
@@ -493,38 +484,6 @@ impl CurveString2 {
             policy,
         )?;
         self.trim_between_curve_intersection_events(start_events, end_events, policy)
-    }
-
-    /// Retains the maximal connected portions of this open curve string inside a region.
-    ///
-    /// Native segments are promoted to one [`CurvePath2`] and clipped by its
-    /// authoritative all-family kernel. Algebraic boundary contacts remain
-    /// retained exact fragment evidence rather than being coerced into native
-    /// line/arc endpoints.
-    pub fn trim_inside_region(
-        &self,
-        region: &CurveRegion2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<crate::CurveOutcome<Vec<CurvePathRegionTrim2>>> {
-        let curves = self
-            .segments()
-            .iter()
-            .map(|segment| match segment {
-                Segment2::Line(line) => crate::Curve2::from(line.clone()),
-                Segment2::Arc(arc) => crate::Curve2::from(arc.clone()),
-            })
-            .collect();
-        CurvePath2::try_new(curves)?.trim_inside_region(region, policy)
-    }
-
-    /// Extends one endpoint line segment to an exact point on its supporting line.
-    pub fn extend_line_endpoint_to_point(
-        &self,
-        endpoint: CurveStringEndpoint2,
-        target_point: Point2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<CurveString2>> {
-        self.extend_endpoint_to_point(endpoint, target_point, policy)
     }
 
     /// Extends one endpoint segment to an exact target point.

@@ -1,5 +1,5 @@
 use hypercurve::{
-    BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError,
+    BulgeVertex2, CircularArc2, Classification, Contour2, CurveContext, CurveError, CurvePath2,
     CurvePathRegionTrim2, CurveRegion2, CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2,
     LineSeg2, Point2, Real, Segment2, SegmentKindCounts, UncertaintyReason,
 };
@@ -316,7 +316,7 @@ fn curve_string_ordered_link_materializes_multistep_chain() {
     assert_eq!(linked.end(), Some(&p(3, 0)));
 
     let Classification::Decided(borrowed) =
-        CurveString2::link_ordered_connected_endpoints_borrowed(&curves, &policy()).unwrap()
+        CurveString2::link_ordered_connected_endpoints(curves.iter().cloned(), &policy()).unwrap()
     else {
         panic!("borrowed ordered link should materialize");
     };
@@ -407,7 +407,7 @@ fn curve_string_extend_line_start_to_exact_target() {
         CurveString2::try_new(vec![line_segment(0, 0, 2, 0), line_segment(2, 0, 2, 2)]).unwrap();
 
     let Classification::Decided(extended) = curve
-        .extend_line_endpoint_to_point(CurveStringEndpoint2::Start, p(-3, 0), &policy())
+        .extend_endpoint_to_point(CurveStringEndpoint2::Start, p(-3, 0), &policy())
         .unwrap()
     else {
         panic!("start line extension should materialize");
@@ -423,7 +423,7 @@ fn curve_string_extend_line_evidence_interior_target_boundary() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
     assert_eq!(
         curve
-            .extend_line_endpoint_to_point(CurveStringEndpoint2::End, p(1, 0), &policy())
+            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(1, 0), &policy())
             .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
@@ -434,7 +434,7 @@ fn curve_string_extend_line_evidence_off_support_boundary() {
     let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
     assert_eq!(
         curve
-            .extend_line_endpoint_to_point(CurveStringEndpoint2::End, p(5, 1), &policy())
+            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(5, 1), &policy())
             .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
@@ -447,7 +447,7 @@ fn curve_string_extend_arc_endpoint_evidence_off_circle_boundary() {
     .unwrap();
     assert_eq!(
         curve
-            .extend_line_endpoint_to_point(CurveStringEndpoint2::End, p(3, 0), &policy())
+            .extend_endpoint_to_point(CurveStringEndpoint2::End, p(3, 0), &policy())
             .unwrap(),
         Classification::Uncertain(UncertaintyReason::Boundary)
     );
@@ -759,8 +759,9 @@ fn curve_string_trim_between_curve_intersections_evidence_overlap_blocker() {
     );
 }
 #[test]
-fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
-    let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)]).unwrap();
+fn curve_path_trim_inside_region_splits_disconnected_inside_windows() {
+    let curve =
+        CurvePath2::try_new(vec![LineSeg2::try_new(p(-2, 1), p(8, 1)).unwrap().into()]).unwrap();
     let region = CurveRegion2::try_from_native_material_contours(
         vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)],
         &policy(),
@@ -779,7 +780,7 @@ fn curve_string_trim_inside_region_splits_disconnected_inside_windows() {
 }
 
 #[test]
-fn curve_string_trim_inside_region_respects_holes() {
+fn curve_path_trim_inside_region_respects_holes() {
     let region = CurveRegion2::try_from_native_contours(
         vec![rectangle(0, 0, 10, 4)],
         vec![rectangle(4, 0, 6, 4)],
@@ -787,7 +788,8 @@ fn curve_string_trim_inside_region_respects_holes() {
     )
     .unwrap()
     .into_value();
-    let curve = CurveString2::try_new(vec![line_segment(1, 2, 9, 2)]).unwrap();
+    let curve =
+        CurvePath2::try_new(vec![LineSeg2::try_new(p(1, 2), p(9, 2)).unwrap().into()]).unwrap();
 
     let trimmed = curve
         .trim_inside_region(&region, &policy())
@@ -799,9 +801,10 @@ fn curve_string_trim_inside_region_respects_holes() {
 }
 
 #[test]
-fn curve_string_trim_inside_region_retains_boundary_overlap() {
+fn curve_path_trim_inside_region_retains_boundary_overlap() {
     let region = rectangle_region(0, 0, 4, 4);
-    let curve = CurveString2::try_new(vec![line_segment(0, 0, 4, 0)]).unwrap();
+    let curve =
+        CurvePath2::try_new(vec![LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap().into()]).unwrap();
 
     let trimmed = curve
         .trim_inside_region(&region, &policy())

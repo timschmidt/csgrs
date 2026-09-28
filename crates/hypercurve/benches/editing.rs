@@ -201,7 +201,9 @@ fn bench_curve_intersection_trim(iterations: u32) -> CurveResult<()> {
 }
 
 fn bench_region_trim(iterations: u32) -> CurveResult<()> {
-    let curve = CurveString2::try_new(vec![line_segment(-2, 1, 8, 1)])?;
+    // Repeated queries retain the common path and its exact source owners.
+    let curve = CurvePath2::try_new(vec![LineSeg2::try_new(p(-2, 1), p(8, 1))?.into()])
+        .expect("benchmark path must connect exactly");
     let policy = CurveContext::STRICT;
     let region = CurveRegion2::try_from_native_material_contours(
         vec![rectangle(0, 0, 2, 2), rectangle(4, 0, 6, 2)],
@@ -222,7 +224,7 @@ fn bench_region_trim(iterations: u32) -> CurveResult<()> {
 
     let elapsed = started.elapsed();
     println!(
-        "curve_string_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}",
+        "curve_path_region_trim: {iterations} iterations in {elapsed:?} ({:?}/iter), total outputs={total_outputs}",
         elapsed / iterations
     );
     Ok(())

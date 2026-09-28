@@ -101,10 +101,6 @@ fuzz_target!(|data: &[u8]| {
         let _ = curve.trim_between_curve_intersections(&other, &other, &policy);
     }
 
-    if let Some(region) = rectangle_region(points[0].clone(), data[12], data[13]) {
-        let _ = curve.trim_inside_region(&region, &policy);
-    }
-
     let curves = curve
         .segments()
         .iter()
@@ -114,6 +110,9 @@ fuzz_target!(|data: &[u8]| {
         })
         .collect();
     if let Ok(path) = CurvePath2::try_new(curves) {
+        if let Some(region) = rectangle_region(points[0].clone(), data[12], data[13]) {
+            let _ = path.trim_inside_region(&region, &policy);
+        }
         let _ = path.chamfer_vertex_by_setbacks(
             1,
             q(data[14]),
