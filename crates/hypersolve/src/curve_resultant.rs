@@ -17,7 +17,8 @@ use crate::bareiss::{BareissError, determinant_bareiss, determinant_integer_poly
 use crate::curve_substitution::RationalParametricCurve2;
 use crate::integer_interpolation::primitive_integer_polynomial_gcd;
 use crate::resultant::{
-    UnivariateResultantError, resultant_univariate_polynomials, sylvester_matrix,
+    UnivariateResultantError, resultant_exact_rational_polynomials_value,
+    resultant_univariate_polynomials, sylvester_matrix,
 };
 use crate::root_isolation::{
     UnivariateSturmPoint, UnivariateSturmSequence, polynomial_div_rem_borrowed_divisor,
@@ -2108,20 +2109,28 @@ pub fn resultant_bivariate_polynomial_system(
         {
             continue;
         }
-        let resultant =
-            match resultant_univariate_polynomials(&first, &second, config.min_precision) {
-                Ok(report) => report.resultant,
-                Err(error) => {
-                    return curve_resultant_report(
-                        CurveIntersectionResultantStatus::ResultantError,
-                        retained_parameter,
-                        eliminated_parameter,
-                        degree_bound,
-                        Vec::new(),
-                        Some(error),
-                    );
-                }
-            };
+        // Rationality was established from every original coefficient, so
+        // specialization stays in that exact field. Samples need only the
+        // value; constructing and discarding pivot reports loses useful work.
+        let sampled = if rational_coefficients {
+            resultant_exact_rational_polynomials_value(&first, &second, config.min_precision)
+        } else {
+            resultant_univariate_polynomials(&first, &second, config.min_precision)
+                .map(|report| report.resultant)
+        };
+        let resultant = match sampled {
+            Ok(value) => value,
+            Err(error) => {
+                return curve_resultant_report(
+                    CurveIntersectionResultantStatus::ResultantError,
+                    retained_parameter,
+                    eliminated_parameter,
+                    degree_bound,
+                    Vec::new(),
+                    Some(error),
+                );
+            }
+        };
         samples.push(PolynomialSample {
             parameter_value,
             value: resultant,
@@ -4726,21 +4735,25 @@ fn eval_univariate(coefficients: &[Real], value: &Real) -> Real {
 }
 
 fn interpolate_samples(samples: &[PolynomialSample], min_precision: i32) -> Option<Vec<Real>> {
-    let mut result = vec![Real::zero(); samples.len()];
-    for (sample_index, sample) in samples.iter().enumerate() {
-        let mut basis = vec![Real::one()];
-        let mut denominator = Real::one();
-        for (other_index, other) in samples.iter().enumerate() {
-            if sample_index == other_index {
-                continue;
-            }
-            basis = multiply_by_linear_factor(basis, -other.parameter_value.clone());
-            denominator *= sample.parameter_value.clone() - other.parameter_value.clone();
+    // Divided differences retain the exact sampled polynomial on arbitrary
+    // distinct nodes, including grids with omitted degree-drop fibers. Unlike
+    // rebuilding every Lagrange basis, construction takes quadratic work and
+    // linear live storage. Coefficients remain arbitrary exact Real values.
+    let mut differences = samples
+        .iter()
+        .map(|sample| sample.value.clone())
+        .collect::<Vec<_>>();
+    for order in 1..samples.len() {
+        for index in (order..samples.len()).rev() {
+            differences[index] = ((&differences[index] - &differences[index - 1])
+                / (&samples[index].parameter_value - &samples[index - order].parameter_value))
+                .ok()?;
         }
-        let scale = (sample.value.clone() / denominator).ok()?;
-        for (index, coefficient) in basis.into_iter().enumerate() {
-            result[index] += coefficient * scale.clone();
-        }
+    }
+    let mut result = Vec::new();
+    for (sample, coefficient) in samples.iter().zip(differences).rev() {
+        result = multiply_by_linear_factor(result, -sample.parameter_value.clone());
+        result[0] += coefficient;
     }
     trim_trailing_zeroes(result, min_precision).ok()
 }
@@ -4762,6 +4775,58 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    #[test]
+    fn interpolation_preserves_arbitrary_exact_values_on_nonuniform_nodes() {
+        let coefficients = vec![
+            Real::pi(),
+            real(2).sqrt().unwrap(),
+            Real::from(Rational::fraction(-3, 5).unwrap()),
+            real(7),
+        ];
+        let nodes = [
+            real(-3),
+            Real::from(Rational::fraction(1, 2).unwrap()),
+            real(2),
+            real(5),
+        ];
+        for reversed in [false, true] {
+            let mut samples = nodes
+                .iter()
+                .map(|parameter| PolynomialSample {
+                    parameter_value: parameter.clone(),
+                    value: eval_univariate(&coefficients, parameter),
+                })
+                .collect::<Vec<_>>();
+            if reversed {
+                samples.reverse();
+            }
+            let interpolated =
+                interpolate_samples(&samples, -512).expect("distinct exact nodes interpolate");
+            assert_eq!(interpolated.len(), coefficients.len());
+            for (actual, expected) in interpolated.iter().zip(&coefficients) {
+                assert!(matches!(
+                    (actual - expected).certified_sign_until(-512),
+                    CertifiedRealSign::Known {
+                        sign: RealSign::Zero,
+                        ..
+                    }
+                ));
+            }
+        }
+        let duplicate = vec![
+            PolynomialSample {
+                parameter_value: real(1),
+                value: real(2),
+            },
+            PolynomialSample {
+                parameter_value: real(1),
+                value: real(3),
+            },
+        ];
+        assert!(interpolate_samples(&duplicate, -512).is_none());
+        assert!(interpolate_samples(&[], -512).unwrap() == vec![real(0)]);
     }
 
     #[test]
@@ -6542,6 +6607,60 @@ mod tests {
                         ..
                     }
                 ));
+            }
+        }
+    }
+
+    #[test]
+    fn rational_interpolation_preserves_signed_scale_at_degree_drops_on_either_axis() {
+        // F=c(t u^7-(t+2)), G=d((t-1)u^6-(t+3)). Coprime exponents
+        // give Res(F,G)=c^6 d^7 ((t-1)^7(t+2)^6-t^6(t+3)^7).
+        // Dimension 13 uses interpolation; t=0 and t=1 must be skipped as
+        // samples without losing their values in the completed polynomial.
+        let c = Real::from(Rational::fraction(2, 3).unwrap());
+        let d = Real::from(Rational::fraction(-5, 7).unwrap());
+        let mut first = vec![vec![real(0); 8]; 2];
+        first[0][0] = -real(2) * &c;
+        first[1][0] = -c.clone();
+        first[1][7] = c.clone();
+        let first = BivariatePolynomial::new(first);
+        let mut second = vec![vec![real(0); 7]; 2];
+        second[0][0] = -real(3) * &d;
+        second[1][0] = -d.clone();
+        second[0][6] = -d.clone();
+        second[1][6] = d.clone();
+        let second = BivariatePolynomial::new(second);
+        let pow = |value: &Real, exponent: usize| {
+            (0..exponent).fold(Real::one(), |result, _| result * value)
+        };
+        let scale = pow(&c, 6) * pow(&d, 7);
+        for retained in [
+            CurveResultantParameter::First,
+            CurveResultantParameter::Second,
+        ] {
+            let (first, second, orientation) = match retained {
+                CurveResultantParameter::First => (first.clone(), second.clone(), real(1)),
+                CurveResultantParameter::Second => {
+                    (swap_bivariate(&first), swap_bivariate(&second), real(-1))
+                }
+            };
+            let report = resultant_bivariate_polynomial_system(
+                &first,
+                &second,
+                retained,
+                CurveIntersectionResultantConfig::default(),
+            );
+            assert_eq!(report.status, CurveIntersectionResultantStatus::Constructed);
+            assert_eq!(report.degree_bound, 13);
+            assert!(report.resultant_coefficients.len() <= 14);
+            // Nineteen independent values determine the entire polynomial
+            // of degree at most 13, including both exceptional fibers.
+            for parameter in (-3..=15).map(real) {
+                let expected = &orientation
+                    * &scale
+                    * (pow(&(&parameter - real(1)), 7) * pow(&(&parameter + real(2)), 6)
+                        - pow(&parameter, 6) * pow(&(&parameter + real(3)), 7));
+                assert!(eval_univariate(&report.resultant_coefficients, &parameter) == expected);
             }
         }
     }

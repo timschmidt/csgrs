@@ -257,15 +257,24 @@ pub(crate) fn resultant_exact_rational_polynomials_value(
         return Ok(real_pow(&left[0], right_degree));
     }
 
-    if let (Some(left_integers), Some(right_integers)) = (
-        left.iter()
-            .map(|coefficient| coefficient.exact_rational_ref()?.to_big_integer())
-            .collect::<Option<Vec<_>>>(),
-        right
+    // Normalize each input once, instead of clearing the same polynomial's
+    // denominators independently in every Sylvester row. Restore both signed
+    // contents to their resultant homogeneity powers after integer elimination.
+    let integer_content = |coefficients: &[Real]| {
+        let rational = coefficients
             .iter()
-            .map(|coefficient| coefficient.exact_rational_ref()?.to_big_integer())
-            .collect::<Option<Vec<_>>>(),
-    ) {
+            .map(Real::exact_rational_ref)
+            .collect::<Option<Vec<_>>>()?;
+        let integers = Rational::primitive_bigint_ratio(&rational);
+        let index = rational
+            .iter()
+            .position(|coefficient| !coefficient.is_zero())?;
+        let scale = rational[index] / Rational::from_bigint(integers[index].clone());
+        Some((integers, scale))
+    };
+    if let (Some((left_integers, left_scale)), Some((right_integers, right_scale))) =
+        (integer_content(left), integer_content(right))
+    {
         let dimension =
             left_degree
                 .checked_add(right_degree)
@@ -291,7 +300,13 @@ pub(crate) fn resultant_exact_rational_polynomials_value(
             }
         }
         if let Some(determinant) = determinant_integer_bareiss_flat(&mut sylvester, dimension) {
-            return Ok(Real::from(Rational::from_bigint(determinant)));
+            return Ok(if determinant.is_zero() {
+                Real::zero()
+            } else {
+                Real::from(Rational::from_bigint(determinant))
+                    * real_pow(&Real::from(left_scale), right_degree)
+                    * real_pow(&Real::from(right_scale), left_degree)
+            });
         }
     }
 
@@ -1287,7 +1302,7 @@ mod tests {
     }
 
     #[test]
-    fn scalar_resultant_keeps_the_exact_rational_fallback() {
+    fn scalar_resultant_preserves_exact_fractional_scale() {
         let fraction = |numerator, denominator| {
             Real::from(Rational::fraction(numerator, denominator).unwrap())
         };
@@ -1610,24 +1625,23 @@ mod tests {
     proptest! {
         #[test]
         fn generated_exact_rational_scalar_resultants_match_full_reports(
-            left in prop::collection::vec(-4_i16..=4, 1..=4),
-            right in prop::collection::vec(-4_i16..=4, 1..=4),
+            left in prop::collection::vec((-4_i16..=4, 1_u16..=11), 1..=4),
+            right in prop::collection::vec((-4_i16..=4, 1_u16..=11), 1..=4),
         ) {
             let left = left
                 .into_iter()
-                .map(|coefficient| real(i64::from(coefficient)))
+                .map(|(numerator, denominator)| Real::from(Rational::fraction(i64::from(numerator), u64::from(denominator)).unwrap()))
                 .collect::<Vec<_>>();
             let right = right
                 .into_iter()
-                .map(|coefficient| real(i64::from(coefficient)))
+                .map(|(numerator, denominator)| Real::from(Rational::fraction(i64::from(numerator), u64::from(denominator)).unwrap()))
                 .collect::<Vec<_>>();
             let expected = resultant_univariate_polynomials(&left, &right, -64)
                 .unwrap()
                 .resultant;
 
-            prop_assert_eq!(
-                resultant_exact_rational_polynomials_value(&left, &right, -64),
-                Ok(expected),
+            prop_assert!(
+                resultant_exact_rational_polynomials_value(&left, &right, -64) == Ok(expected)
             );
         }
 
