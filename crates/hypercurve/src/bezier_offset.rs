@@ -113917,6 +113917,18 @@ impl BezierParallel2 {
                 Ok(Classification::Decided(None))
             }
         };
+        let retained = |point: &CurvePoint2, visitor: &mut _| {
+            let frame = match frame()? {
+                Classification::Decided(frame) => frame,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            BezierParallelPointQuery2 {
+                parallel: self,
+                range,
+                frame: frame.as_deref(),
+            }
+            .visit_point_parameters(point, incident, domain, policy, visitor)
+        };
         let CurvePoint2(CurvePointData2::Algebraic(point)) = point else {
             return match point {
                 CurvePoint2(CurvePointData2::Endpoint(endpoint)) => {
@@ -113972,8 +113984,11 @@ impl BezierParallel2 {
                                 policy,
                                 visitor,
                             ),
+                        // The optional Cartesian view is not the point's
+                        // domain. Its source parameter and positive speed
+                        // already share a retained field with exact replay.
                         Classification::Decided(None) => {
-                            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                            retained(&CurvePoint2::from(point.clone()), visitor)
                         }
                         Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
                     };
@@ -114007,18 +114022,7 @@ impl BezierParallel2 {
                 CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
                 | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
                 | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_)) => {
-                    let frame = match frame()? {
-                        Classification::Decided(frame) => frame,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    BezierParallelPointQuery2 {
-                        parallel: self,
-                        range,
-                        frame: frame.as_deref(),
-                    }
-                    .visit_point_parameters(point, incident, domain, policy, visitor)
+                    retained(point, visitor)
                 }
                 CurvePoint2(CurvePointData2::Algebraic(_)) => unreachable!(),
             };
@@ -114029,17 +114033,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let frame = match frame()? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let point = CurvePoint2::from(point.point_image().clone());
-        BezierParallelPointQuery2 {
-            parallel: self,
-            range,
-            frame: frame.as_deref(),
-        }
-        .visit_point_parameters(&point, incident, domain, policy, visitor)
+        retained(&CurvePoint2::from(point.point_image().clone()), visitor)
     }
 
     fn source_circle_polynomial(
@@ -163475,6 +163469,74 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         let point = CurvePoint2::from(point);
         assert!(point.coordinates().is_none());
         point
+    }
+
+    #[test]
+    fn displaced_algebraic_point_incidence_reuses_its_retained_field() {
+        // P(u)=(-2u-u²,2), alpha²+2alpha-2=0, 0<alpha<1.
+        // Its left distance-one image is exactly (-2,1). The source root
+        // remains algebraic and the cold point has no Cartesian view.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter = algebraic_parameter(vec![Real::from(-2), Real::from(2), Real::one()]);
+            let source = QuadraticBezier2::new(
+                Point2::from_values(0, 2),
+                Point2::from_values(-1, 2),
+                Point2::from_values(-3, 2),
+            )
+            .parallel_left(Real::one())
+            .unwrap();
+            let point =
+                BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
+                    source,
+                    &parameter.into(),
+                    Real::zero(),
+                    &policy,
+                )
+                .expect("a nonzero-speed algebraic contact retains its point");
+            assert!(matches!(
+                point.predicate_point_evidence(&policy).unwrap(),
+                Classification::Decided(None)
+            ));
+            let point = CurvePoint2::from(point);
+            let query = QuadraticBezier2::from_line_segment(LineSeg2::new_unchecked(
+                Point2::from_values(-3, 0),
+                Point2::from_values(0, 0),
+            ))
+            .parallel_left(Real::one())
+            .unwrap();
+            for distance in [1, -1] {
+                let query = query.with_distance(Real::from(distance));
+                for regular_domain in [false, true] {
+                    let mut contacts = Vec::new();
+                    assert_eq!(
+                        query
+                            .visit_point_incidence_evidence(
+                                &point,
+                                &CurveParameterRange2::unit(),
+                                None,
+                                regular_domain,
+                                &policy,
+                                &mut |parameter| {
+                                    contacts
+                                        .push(parameter.expect("isolated line contact").clone());
+                                    ControlFlow::Continue(())
+                                },
+                            )
+                            .unwrap(),
+                        Classification::Decided(ControlFlow::Continue(()))
+                    );
+                    assert_eq!(contacts.len(), usize::from(distance == 1));
+                    for parameter in contacts {
+                        assert_eq!(
+                            parameter
+                                .polynomial_sign(&[Real::from(-1), Real::from(3)], &policy)
+                                .unwrap(),
+                            Classification::Decided(RealSign::Zero)
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]

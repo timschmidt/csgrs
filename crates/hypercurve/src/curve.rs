@@ -5969,29 +5969,42 @@ fn solve_carrier_fillet_corner(
                         }
                     }
                 }
-                if matches!(previous_offset, FilletOffsetCarrier2::Point { .. })
-                    || matches!(next_offset, FilletOffsetCarrier2::Point { .. })
-                {
-                    let solutions = curve_fillet::constrained_collapsed_fillet(
-                        [&previous, &next],
-                        [previous_offset, next_offset],
-                        clockwise,
-                        &signed_distance,
-                        retain_selected_circle_endpoints,
-                        domains,
-                        [previous_family, next_family],
-                        constraints,
-                        policy,
-                    )?;
-                    match candidates.append(solutions) {
-                        Some(CurveCornerNoSolution2::DegenerateCandidate) => saw_degenerate = true,
-                        Some(CurveCornerNoSolution2::OutsideTrimDomain) => {
-                            saw_outside_domain = true
+                if let Some(centers) = curve_fillet::constrained_fillet_centers(
+                    [&previous, &next],
+                    [previous_offset, next_offset],
+                    &signed_distance,
+                    domains,
+                    [previous_family, next_family],
+                    constraints,
+                    policy,
+                )? {
+                    saw_unsatisfied |= centers.no_solution_reason()
+                        == Some(CurveCornerNoSolution2::UnsatisfiedConstraints);
+                    for center in centers.solutions() {
+                        let solutions = curve_fillet::fillet_at_center(
+                            [&previous, &next],
+                            [previous_offset, next_offset],
+                            center,
+                            clockwise,
+                            &signed_distance,
+                            retain_selected_circle_endpoints,
+                            domains,
+                            [previous_family, next_family],
+                            constraints,
+                            policy,
+                        )?;
+                        match candidates.append(solutions) {
+                            Some(CurveCornerNoSolution2::DegenerateCandidate) => {
+                                saw_degenerate = true
+                            }
+                            Some(CurveCornerNoSolution2::OutsideTrimDomain) => {
+                                saw_outside_domain = true
+                            }
+                            Some(CurveCornerNoSolution2::UnsatisfiedConstraints) => {
+                                saw_unsatisfied = true
+                            }
+                            _ => (),
                         }
-                        Some(CurveCornerNoSolution2::UnsatisfiedConstraints) => {
-                            saw_unsatisfied = true
-                        }
-                        _ => (),
                     }
                     continue;
                 }

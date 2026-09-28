@@ -994,12 +994,145 @@ pub(super) fn constrained_coincident_linear_fillet(
     Err(constraint_required(families[0]))
 }
 
-/// Resolves a collapsed center while its original source and chart still live.
-/// The fixed center does not select any contact on the collapsed circle.
-#[allow(clippy::too_many_arguments)]
-pub(super) fn constrained_collapsed_fillet(
+/// Narrows center discovery before pair elimination. A selected contact keeps
+/// its original parameter; distinct preimages remain distinct cuts even when
+/// they map to the same center.
+pub(super) fn constrained_fillet_centers(
     prepared: [&PreparedFilletCarrier2<'_>; 2],
     offsets: [&FilletOffsetCarrier2<'_, '_>; 2],
+    signed_distance: &Real,
+    domains: [FilletContactDomain2; 2],
+    families: [CurveFamily2; 2],
+    binding: Option<&FilletConstraintBinding2<'_>>,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CurveCornerSolutions2<FilletCenterWitness2>>> {
+    let witness = |point, parameters: [Option<CurveParameter2>; 2]| {
+        let [previous_parameter, next_parameter] = parameters;
+        FilletCenterWitness2 {
+            source_frames: [None, None],
+            point,
+            previous_parameter,
+            next_parameter,
+            retained_anchor_evidence: None,
+        }
+    };
+    for offset in offsets {
+        if let FilletOffsetCarrier2::Point { point, .. } = offset {
+            return Ok(Some(CurveCornerSolutions2::Unique(witness(
+                point.clone(),
+                [None, None],
+            ))));
+        }
+    }
+    let Some(binding) = binding.filter(|binding| binding.request.has_constraints()) else {
+        return Ok(None);
+    };
+    // Native support solvers already retain specialized contact certificates.
+    // Keep them; general parallel pairs need the expensive pair elimination.
+    if !offsets
+        .iter()
+        .all(|offset| matches!(offset, FilletOffsetCarrier2::Parallel { .. }))
+    {
+        return Ok(None);
+    }
+    if binding.request.center.is_none()
+        && !offsets.iter().enumerate().any(|(axis, offset)| {
+            matches!(offset, FilletOffsetCarrier2::Parallel { .. })
+                && binding.request.contacts[axis].is_some()
+        })
+    {
+        return Ok(None);
+    }
+    // A stationary source needs the existing regular-cell solver's owned
+    // limiting normal. Ordinary point inversion is complete on regular source
+    // ranges; an incident ray already ends at its first source-normal barrier.
+    for offset in offsets {
+        if let FilletOffsetCarrier2::Parallel { source, support } = offset {
+            // Affine pairs retain an inexpensive source correspondence. Its
+            // parameter relation is stronger reconstruction evidence than
+            // independently inverting one selected center on that line.
+            if support.has_exact_affine_line_parameterization() {
+                return Ok(None);
+            }
+            let regular = policy.bounded_exact_predicate_pass(|| {
+                support
+                    .with_distance(Real::zero())
+                    .singularity_analysis(&source.curve_parameter_range(), policy)
+                    .map(|analysis| analysis.map(|analysis| analysis.source_is_regular()))
+            });
+            if !matches!(regular, Ok(Classification::Decided(true))) {
+                return Ok(None);
+            }
+        }
+    }
+    if let Some(center) = &binding.request.center {
+        return Ok(Some(CurveCornerSolutions2::Unique(witness(
+            center.clone(),
+            [None, None],
+        ))));
+    }
+    for (axis, offset) in offsets.into_iter().enumerate() {
+        let FilletOffsetCarrier2::Parallel { source, support } = offset else {
+            continue;
+        };
+        let FilletContactSelection2::Parameters(parameters) = binding.parallel_contact_parameters(
+            axis,
+            *source,
+            support,
+            domains[axis],
+            families[axis],
+            policy,
+        )?
+        else {
+            continue;
+        };
+        let incident = (domains[axis].mode() == CurveCornerMode2::TrimOrExtend)
+            .then(|| source.incident_domain(support, axis == 0, families[axis], policy))
+            .transpose()?;
+        let mut centers = CornerSolutionAccumulator::Empty;
+        for parameter in parameters {
+            if !source.parameter_is_admissible(
+                &parameter,
+                axis == 0,
+                domains[axis],
+                incident.as_ref(),
+                families[axis],
+                policy,
+            )? || !prepared[axis].accepts_offset_contact(
+                offset,
+                Some(&parameter),
+                axis == 0,
+                signed_distance,
+                families[axis],
+                policy,
+            )? {
+                continue;
+            }
+            let center = analytic_parallel_point_evidence(
+                support,
+                &parameter,
+                CurveOperation2::Fillet,
+                families[axis],
+                policy,
+            )?;
+            let mut parameters = [None, None];
+            parameters[axis] = Some(parameter);
+            centers.push(witness(center, parameters));
+        }
+        return Ok(Some(
+            centers.finish(CurveCornerNoSolution2::UnsatisfiedConstraints),
+        ));
+    }
+    Ok(None)
+}
+
+/// Recovers every contact of a known center while source charts still live.
+/// A fixed center does not select a contact on a collapsed circle.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn fillet_at_center(
+    prepared: [&PreparedFilletCarrier2<'_>; 2],
+    offsets: [&FilletOffsetCarrier2<'_, '_>; 2],
+    selected: &FilletCenterWitness2,
     clockwise: bool,
     signed_distance: &Real,
     retain_selected_circle_endpoints: bool,
@@ -1008,28 +1141,32 @@ pub(super) fn constrained_collapsed_fillet(
     binding: Option<&FilletConstraintBinding2<'_>>,
     policy: &CurveContext,
 ) -> ExactCurveResult<CurveCornerSolutions2<FilletCorner2>> {
-    let (center, other_axis) = match offsets {
-        [FilletOffsetCarrier2::Point { point, .. }, _] => (point, 1),
-        [_, FilletOffsetCarrier2::Point { point, .. }] => (point, 0),
-        _ => unreachable!("a collapsed offset retains its fixed center"),
-    };
+    let center = &selected.point;
     let empty = |reason| Ok(CurveCornerSolutions2::NoSolution(reason));
     if let Some(requested) = binding.and_then(|binding| binding.request.center.as_ref())
         && !fillet_point_matches(center, requested, families[0], policy)?
     {
         return empty(CurveCornerNoSolution2::UnsatisfiedConstraints);
     }
-    if !matches!(offsets[other_axis], FilletOffsetCarrier2::Parallel { .. })
-        && !point_on_fillet_offset(
-            center,
-            offsets[other_axis],
-            other_axis == 0,
-            domains[other_axis],
-            families[other_axis],
-            policy,
-        )?
-    {
-        return empty(CurveCornerNoSolution2::NoTangentCircle);
+    for (axis, offset) in offsets.into_iter().enumerate() {
+        if !matches!(offset, FilletOffsetCarrier2::Parallel { .. })
+            && !point_on_fillet_offset(
+                center,
+                offset,
+                axis == 0,
+                domains[axis],
+                families[axis],
+                policy,
+            )?
+        {
+            return empty(
+                if binding.is_some_and(|binding| binding.request.has_constraints()) {
+                    CurveCornerNoSolution2::UnsatisfiedConstraints
+                } else {
+                    CurveCornerNoSolution2::NoTangentCircle
+                },
+            );
+        }
     }
     let mut cuts: [Option<CurveCornerSolutions2<FilletContactWitness2>>; 2] = [None, None];
     for axis in 0..2 {
@@ -1195,7 +1332,11 @@ pub(super) fn constrained_collapsed_fillet(
                 )?
             }
             FilletOffsetCarrier2::Parallel { source, support } => {
+                let incident = (domains[axis].mode() == CurveCornerMode2::TrimOrExtend)
+                    .then(|| source.incident_domain(support, axis == 0, families[axis], policy))
+                    .transpose()?;
                 let requested = binding
+                    .filter(|_| selected.parameter(axis == 0).is_none())
                     .map(|binding| {
                         binding.parallel_contact_parameters(
                             axis,
@@ -1209,12 +1350,12 @@ pub(super) fn constrained_collapsed_fillet(
                     .transpose()?
                     .unwrap_or(FilletContactSelection2::Any);
                 let (parameters, certified_center) =
-                    if matches!(requested, FilletContactSelection2::Any) {
-                        let incident = (domains[axis].mode() == CurveCornerMode2::TrimOrExtend)
-                            .then(|| {
-                                source.incident_domain(support, axis == 0, families[axis], policy)
-                            })
-                            .transpose()?;
+                    if let Some(parameter) = selected.parameter(axis == 0) {
+                        (
+                            FilletContactSelection2::Parameters(vec![parameter.clone()]),
+                            true,
+                        )
+                    } else if matches!(requested, FilletContactSelection2::Any) {
                         (
                             fillet_point_parameters(
                                 support,
@@ -1248,16 +1389,14 @@ pub(super) fn constrained_collapsed_fillet(
                 let mut contacts = CornerSolutionAccumulator::Empty;
                 let mut saw_outside = false;
                 for parameter in parameters {
-                    if source
-                        .parameter_placement(
-                            &parameter,
-                            axis == 0,
-                            domains[axis],
-                            families[axis],
-                            policy,
-                        )?
-                        .is_none()
-                    {
+                    if !source.parameter_is_admissible(
+                        &parameter,
+                        axis == 0,
+                        domains[axis],
+                        incident.as_ref(),
+                        families[axis],
+                        policy,
+                    )? {
                         saw_outside = true;
                         continue;
                     }
@@ -1314,6 +1453,8 @@ pub(super) fn constrained_collapsed_fillet(
                         CurveCornerNoSolution2::UnsatisfiedConstraints
                     } else if saw_outside {
                         CurveCornerNoSolution2::OutsideTrimDomain
+                    } else if binding.is_some_and(|binding| binding.request.center.is_some()) {
+                        CurveCornerNoSolution2::UnsatisfiedConstraints
                     } else {
                         CurveCornerNoSolution2::NoTangentCircle
                     };
@@ -1345,13 +1486,44 @@ pub(super) fn constrained_collapsed_fillet(
     let mut candidates = CornerSolutionAccumulator::Empty;
     for previous in previous.solutions() {
         for next in next.solutions() {
-            let witness = FilletCenterWitness2 {
+            let mut witness = FilletCenterWitness2 {
                 source_frames: [None, None],
                 point: center.clone(),
                 previous_parameter: previous.center_parameter.clone(),
                 next_parameter: next.center_parameter.clone(),
                 retained_anchor_evidence: None,
             };
+            if let [
+                FilletOffsetCarrier2::Parallel {
+                    source: first,
+                    support: first_support,
+                },
+                FilletOffsetCarrier2::Parallel {
+                    source: second,
+                    support: second_support,
+                },
+            ] = offsets
+            {
+                // The selected center eliminates incidence work, not its
+                // contact proof. Reuse the regular pair's tangent authority,
+                // including opposed tangents and surviving offset-cusp sides.
+                let ranges = [
+                    first.curve_parameter_range(),
+                    second.curve_parameter_range(),
+                ];
+                witness = regular_parallel_pair_center(
+                    [*first, *second],
+                    [first_support, second_support],
+                    [
+                        previous.center_parameter.as_ref().unwrap(),
+                        next.center_parameter.as_ref().unwrap(),
+                    ],
+                    ranges.each_ref(),
+                    families,
+                    policy,
+                )?;
+                witness.point = center.clone();
+            }
             match fillet_corner_from_cuts(
                 offsets,
                 &witness,
@@ -6186,5 +6358,291 @@ mod incident_parallel_cusp_fillet_regression {
     #[test]
     fn incident_parallel_cusp_fillet_retains_polynomial_line_contact() {
         incident_cusp_case(true);
+    }
+}
+
+#[cfg(test)]
+mod incident_parallel_cusp_nonlinear_regression {
+    use super::*;
+    use crate::bezier_split::{BezierSelectedFiberFragment2, BezierSelectedFiberSource2};
+
+    fn q(n: i64, d: i64) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+
+    fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
+        let result = actual.coincides_with(expected, policy);
+        assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+        assert_eq!(result.value, Classification::Decided(true));
+    }
+
+    fn incident_cusp_case() {
+        // P(t)=(t-t^3/3,t^2) has positive speed 1+t^2 on the entire real axis.
+        // Its distance-2 left parallel has derivative
+        // (1-4/(1+t^2)^2)*(1-t^2,2t). At t=1 it has the cusp Q=(-4/3,1).
+        // The surviving t<1 branch approaches Q with tangent (0,-1).
+        // The authored parallel ends at t=3/4, so this contact is on its ray.
+        let contact = Point2::new(q(-4, 3), Real::one());
+        let join = Point2::new(q(-2097, 1600), q(449, 400));
+        let center = Point2::new(q(-1747, 1200), Real::one());
+        let radius = q(49, 400);
+        let vx = join.x() - center.x();
+        let vy = join.y() - center.y();
+        let square = &vx * &vx + &vy * &vy;
+        let delta = q(697, 4800);
+        // The lower of the two independent circle tangents from J. Its
+        // clockwise direction agrees with both surviving curve tangents.
+        let line_contact = Point2::new(
+            center.x() + ((&radius * &radius * &vx + &radius * &delta * &vy) / &square).unwrap(),
+            center.y() + ((&radius * &radius * &vy - &radius * &delta * &vx) / &square).unwrap(),
+        );
+        for (policy_index, policy) in [CurveContext::STRICT, CurveContext::APPROXIMATE_512]
+            .into_iter()
+            .enumerate()
+        {
+            let sign = |value: Real| crate::classify::real_sign(&value, &policy);
+            assert_eq!(
+                sign(&delta * &delta + &radius * &radius - &square),
+                Some(RealSign::Zero),
+            );
+            let rx = line_contact.x() - center.x();
+            let ry = line_contact.y() - center.y();
+            let tx = line_contact.x() - join.x();
+            let ty = line_contact.y() - join.y();
+            assert_eq!(
+                sign(&rx * &rx + &ry * &ry - &radius * &radius),
+                Some(RealSign::Zero)
+            );
+            assert_eq!(sign(&rx * &tx + &ry * &ty), Some(RealSign::Zero));
+            assert_eq!(sign(&ry * &tx - &rx * &ty), Some(RealSign::Positive));
+            assert_eq!(sign(rx), Some(RealSign::Positive));
+            assert_eq!(sign(ry), Some(RealSign::Negative));
+            let parallel = CubicBezier2::new(
+                Point2::from_values(0, 0),
+                Point2::new(q(1, 3), Real::zero()),
+                Point2::new(q(2, 3), q(1, 3)),
+                Point2::new(q(2, 3), Real::one()),
+            )
+            .parallel_left(Real::from(2))
+            .unwrap();
+            for (parameter, expected) in [(q(3, 4), &join), (Real::one(), &contact)] {
+                let Classification::Decided(actual) =
+                    parallel.point_at(&parameter, &policy).unwrap()
+                else {
+                    panic!("the source normal is defined at the authored endpoint and offset cusp");
+                };
+                same(&actual.into(), &expected.clone().into(), &policy);
+            }
+            let previous: Curve2 = BezierSelectedFiberFragment2::new(
+                BezierSelectedFiberSource2::AnalyticParallel(parallel),
+                CurveParameterRange2::new_validated(Real::zero().into(), q(3, 4).into()),
+                Point2::from_values(0, 2).into(),
+                join.clone().into(),
+            )
+            .into();
+            let dx = line_contact.x() - join.x();
+            let dy = line_contact.y() - join.y();
+            let nx = -dy.clone();
+            let ny = dx.clone();
+            // R(u)=J+2uD+u(u-1/2)^2 N, N perpendicular to D=L-J.
+            // R(1/2)=L and R'(1/2)=2D; R' dot D=2|D|²>0.
+            // For u>=0 the added normal term points away from the circle;
+            // for u<0 its tangential distance exceeds delta>radius. Thus
+            // L is the unique contact with this constrained circle.
+            let control = |d: &Real, n: &Real, origin: &Real, along: Real, normal: Real| {
+                origin + along * d + normal * n
+            };
+            let next: Curve2 = CubicBezier2::new(
+                join.clone(),
+                Point2::new(
+                    control(&dx, &nx, join.x(), q(2, 3), q(1, 12)),
+                    control(&dy, &ny, join.y(), q(2, 3), q(1, 12)),
+                ),
+                Point2::new(
+                    control(&dx, &nx, join.x(), q(4, 3), q(-1, 6)),
+                    control(&dy, &ny, join.y(), q(4, 3), q(-1, 6)),
+                ),
+                Point2::new(
+                    control(&dx, &nx, join.x(), Real::from(2), q(1, 4)),
+                    control(&dy, &ny, join.y(), Real::from(2), q(1, 4)),
+                ),
+            )
+            .into();
+            let path = CurvePath2::try_new_with_policy(vec![previous, next], &policy)
+                .unwrap()
+                .value;
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().value
+                } else {
+                    path.clone()
+                };
+                for constraint in ["center", "parameter", "point"] {
+                    let mut request = CurveFillet2::new(radius.clone());
+                    match constraint {
+                        "center" => request.center = Some(center.clone().into()),
+                        "parameter" => {
+                            request.contacts[usize::from(reversed)] =
+                                Some(CurveFilletContact2::Parameter(Real::one().into()))
+                        }
+                        "point" => {
+                            request.contacts[usize::from(reversed)] =
+                                Some(CurveFilletContact2::Point(contact.clone().into()))
+                        }
+                        _ => unreachable!(),
+                    }
+                    eprintln!(
+                        "nonlinear cusp: policy={policy_index}, reversed={reversed}, constraint={constraint}"
+                    );
+                    let result = match path.fillet_vertex(
+                        1,
+                        &request,
+                        CurveCornerMode2::TrimOrExtend,
+                        &policy,
+                    ) {
+                        Ok(result) => result,
+                        Err(ExactCurveError::Blocked(blocker)) => {
+                            panic!(
+                                "known incident cusp fillet blocked: {:?}; reversed={reversed}, constraint={constraint}, nonlinear_partner=true",
+                                blocker.reason()
+                            )
+                        }
+                        Err(ExactCurveError::Invalid { cause, .. }) => panic!(
+                            "known incident cusp fillet invalid: {:?}",
+                            std::mem::discriminant(&cause)
+                        ),
+                    };
+                    assert_eq!(result.certainty, crate::CurveCertainty::Certified);
+                    assert_eq!(
+                        result.value.candidate_count(),
+                        1,
+                        "the incident cusp has one constrained nonzero fillet"
+                    );
+                    let solution = &result.value.solutions()[0];
+                    for expected in [contact.clone(), line_contact.clone()] {
+                        let expected = CurvePoint2::from(expected);
+                        assert!(
+                            solution.curves().windows(2).any(|pair| {
+                                pair[0].end().coincides_with(&expected, &policy).value
+                                    == Classification::Decided(true)
+                                    && pair[1].start().coincides_with(&expected, &policy).value
+                                        == Classification::Decided(true)
+                            }),
+                            "the independently known contact must remain a path junction"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn incident_parallel_cusp_fillet_retains_nonlinear_partner_contact() {
+        incident_cusp_case();
+    }
+}
+
+#[cfg(test)]
+mod constrained_regular_loop_fillet_regression {
+    use super::*;
+
+    fn q(n: i64, d: i64) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+
+    #[test]
+    fn point_constraint_preserves_distinct_regular_loop_contacts() {
+        // P(t)=(u^2-1/16,u^3-u/16), u=t-1/2. P(1/4)=P(3/4)=0,
+        // with tangents (-4,1)/8 and (4,1)/8. The source is regular:
+        // its x derivative vanishes only at u=0, where y'=-1/16.
+        // Both left normal centers lie on the previous vertical line's
+        // left parallel for r=3(17+sqrt(17))/256. Their y coordinates have
+        // opposite signs; the lower contact trims and the upper extends.
+        let root = Real::from(17).sqrt().unwrap();
+        let radius = q(3, 256) * (Real::from(17) + &root);
+        let height = q(3, 64) * (Real::one() + &root);
+        let origin: CurvePoint2 = Point2::from_values(0, 0).into();
+        let join = Point2::new(q(3, 16), q(-3, 32));
+        let curve = CubicBezier2::new(
+            join.clone(),
+            Point2::new(q(-7, 48), q(13, 96)),
+            Point2::new(q(-7, 48), q(-13, 96)),
+            Point2::new(q(3, 16), q(3, 32)),
+        );
+        for (policy_index, policy) in [CurveContext::STRICT, CurveContext::APPROXIMATE_512]
+            .into_iter()
+            .enumerate()
+        {
+            let path = CurvePath2::try_new_with_policy(
+                vec![
+                    LineSeg2::try_new(Point2::new(q(3, 16), -Real::from(2)), join.clone())
+                        .unwrap()
+                        .into(),
+                    curve.clone().into(),
+                ],
+                &policy,
+            )
+            .unwrap()
+            .value;
+            for reversed in [false, true] {
+                let path = if reversed {
+                    path.reversed(&policy).unwrap().value
+                } else {
+                    path.clone()
+                };
+                let axis = usize::from(!reversed);
+                for mode in [CurveCornerMode2::TrimOnly, CurveCornerMode2::TrimOrExtend] {
+                    let mut request = CurveFillet2::new(radius.clone());
+                    request.contacts[axis] = Some(CurveFilletContact2::Point(origin.clone()));
+                    let solve = |request: &CurveFillet2| {
+                        path.fillet_vertex(1, request, mode, &policy).unwrap_or_else(|error| {
+                            match error {
+                                ExactCurveError::Blocked(blocker) => panic!(
+                                    "regular loop: policy={policy_index}, reversed={reversed}, mode={mode:?}, reason={:?}", blocker.reason()),
+                                ExactCurveError::Invalid { cause, .. } => panic!(
+                                    "regular loop invalid: {:?}", std::mem::discriminant(&cause)),
+                            }
+                        })
+                    };
+                    let selected = solve(&request);
+                    assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
+                    let expected = if mode == CurveCornerMode2::TrimOnly {
+                        1
+                    } else {
+                        2
+                    };
+                    assert_eq!(selected.value.candidate_count(), expected);
+                    for positive in [false, true] {
+                        let y = if positive {
+                            height.clone()
+                        } else {
+                            -height.clone()
+                        };
+                        request.center = Some(Point2::new(q(3, 16) - &radius, y.clone()).into());
+                        let selected = solve(&request);
+                        assert_eq!(selected.certainty, crate::CurveCertainty::Certified);
+                        let admitted = !positive || mode == CurveCornerMode2::TrimOrExtend;
+                        assert_eq!(selected.value.candidate_count(), usize::from(admitted));
+                        if admitted {
+                            let expected_line: CurvePoint2 = Point2::new(q(3, 16), y).into();
+                            let result = &selected.value.solutions()[0];
+                            for contact in [&origin, &expected_line] {
+                                assert!(result.curves().windows(2).any(|pair| {
+                                    pair[0].end().same_point(contact, &policy)
+                                        == Classification::Decided(true)
+                                        && pair[1].start().same_point(contact, &policy)
+                                            == Classification::Decided(true)
+                                }));
+                            }
+                        }
+                    }
+                    request.center = Some(Point2::from_values(4, 4).into());
+                    assert_eq!(
+                        solve(&request).value.no_solution_reason(),
+                        Some(CurveCornerNoSolution2::UnsatisfiedConstraints)
+                    );
+                }
+            }
+        }
     }
 }
