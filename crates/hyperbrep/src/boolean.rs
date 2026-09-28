@@ -3859,11 +3859,8 @@ fn retained_curve_face_intervals(
                 }
                 Err(error) => return Err(GeometryError::from(error)),
             };
-            let Some(representative) = representative.coordinates() else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
             match region
-                .classify_point(&representative.clone().into(), &CurveContext::STRICT)
+                .classify_point(&representative, &CurveContext::STRICT)
                 .map_err(GeometryError::from)?
                 .into_value()
             {
