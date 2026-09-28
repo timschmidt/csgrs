@@ -112037,16 +112037,20 @@ impl BezierParallelSingularityAnalysis2 {
         &self.parallel_cusps
     }
 
-    /// Partitions this exact range into cells with regular interiors. Singular
+    /// Partitions this exact range into increasing cells with regular interiors. Singular
     /// endpoints stay in their original authority; consumers choose the
     /// appropriate one-sided frame. Both root inventories are already ordered.
     pub(crate) fn regular_subranges(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveParameterRange2>>> {
+        let [lower, upper] = match self.range.ordered_endpoints(policy)? {
+            Classification::Decided(endpoints) => endpoints,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         let mut sources = self.source_singularities.iter().peekable();
         let mut cusps = self.parallel_cusps.iter().peekable();
-        let mut start = self.range.start().clone();
+        let mut start = lower.clone();
         let mut ranges = Vec::with_capacity(sources.len() + cusps.len() + 1);
         loop {
             let boundary = match (sources.peek(), cusps.peek()) {
@@ -112078,7 +112082,7 @@ impl BezierParallelSingularityAnalysis2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            match boundary.cmp_by_refinement(self.range.end(), policy)? {
+            match boundary.cmp_by_refinement(upper, policy)? {
                 Classification::Decided(std::cmp::Ordering::Equal) => break,
                 Classification::Decided(std::cmp::Ordering::Less) => {}
                 Classification::Decided(std::cmp::Ordering::Greater) => {
@@ -112093,10 +112097,7 @@ impl BezierParallelSingularityAnalysis2 {
             ranges.push(CurveParameterRange2::new_validated(start, boundary.clone()));
             start = boundary;
         }
-        ranges.push(CurveParameterRange2::new_validated(
-            start,
-            self.range.end().clone(),
-        ));
+        ranges.push(CurveParameterRange2::new_validated(start, upper.clone()));
         Ok(Classification::Decided(ranges))
     }
 
@@ -193858,6 +193859,85 @@ mod regular_parallel_contact_tests {
         match value {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => panic!("regular-cell query blocked: {reason:?}"),
+        }
+    }
+    #[test]
+    fn regular_source_cells_preserve_reversed_and_algebraic_range_boundaries() {
+        let source = CubicBezier2::new(
+            p(1, -1),
+            Point2::new(q(-1, 3), Real::one()),
+            Point2::new(q(-1, 3), -Real::one()),
+            p(1, 1),
+        )
+        .parallel_left(Real::zero())
+        .unwrap();
+        // C(t)=(t²,t³), t=2u-1. Source speed vanishes only at u=1/2.
+        // Curvature is 6/(|t|*(4+9t²)^(3/2)), decreasing with |t|.
+        // Distance 125/96 therefore contributes exactly two parallel cusps,
+        // at t=±1/2, i.e. u=1/4 and 3/4.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let root = |leading, lower, upper| {
+                let polynomial = decided(
+                    BezierParameterPolynomial::try_new_power_basis(
+                        vec![-Real::one(), Real::zero(), Real::from(leading)],
+                        &policy,
+                    )
+                    .unwrap(),
+                );
+                let interval =
+                    decided(BezierParameterInterval::try_new(lower, upper, &policy).unwrap());
+                CurveParameter2::from(BezierParameter2::Algebraic(decided(
+                    BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+                )))
+            };
+            let algebraic = [
+                root(8_i32, q(1, 4), q(1, 2)),
+                root(2_i32, q(1, 2), Real::one()),
+            ];
+            for distance in [Real::zero(), q(125, 96)] {
+                let parallel = source.with_distance(distance.clone());
+                for cropped in [false, true] {
+                    let endpoints = if cropped {
+                        algebraic.clone()
+                    } else {
+                        [
+                            CurveParameter2::from(Real::zero()),
+                            CurveParameter2::from(Real::one()),
+                        ]
+                    };
+                    let mut expected = vec![endpoints[0].clone()];
+                    if !cropped && distance != Real::zero() {
+                        expected.push(q(1, 4).into());
+                    }
+                    expected.push(q(1, 2).into());
+                    if !cropped && distance != Real::zero() {
+                        expected.push(q(3, 4).into());
+                    }
+                    expected.push(endpoints[1].clone());
+                    for reversed in [false, true] {
+                        let order = if reversed { [1, 0] } else { [0, 1] };
+                        let range = CurveParameterRange2::new_validated(
+                            endpoints[order[0]].clone(),
+                            endpoints[order[1]].clone(),
+                        );
+                        let analysis =
+                            decided(parallel.singularity_analysis(&range, &policy).unwrap());
+                        let cells = decided(analysis.regular_subranges(&policy).unwrap());
+                        assert_eq!(cells.len(), expected.len() - 1);
+                        // The outer endpoints retain their exact parameter
+                        // authorities, even when the query traversed them backwards.
+                        assert!(cells.first().unwrap().start() == &endpoints[0]);
+                        assert!(cells.last().unwrap().end() == &endpoints[1]);
+                        for (cell, endpoints) in cells.iter().zip(expected.windows(2)) {
+                            for (actual, expected) in
+                                [cell.start(), cell.end()].into_iter().zip(endpoints)
+                            {
+                                assert!(decided(actual.same_value(expected, &policy).unwrap()));
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     #[test]
