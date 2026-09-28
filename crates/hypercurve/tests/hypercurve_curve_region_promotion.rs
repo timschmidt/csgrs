@@ -8008,25 +8008,17 @@ fn native_contour_constructors_and_signed_depth_need_no_region_wrapper() {
     );
     let boundaries = vec![square(2, 2, 8, 8), square(0, 0, 10, 10)];
     let nested = decided(
-        CurveRegion2::try_from_native_boundary_contours(boundaries.clone(), &policy)
+        CurveRegion2::try_from_native_boundary_contours(boundaries, &policy)
             .unwrap()
             .into_value(),
     );
-    let borrowed = decided(
-        CurveRegion2::try_from_native_boundary_contours_borrowed(&boundaries, &policy)
-            .unwrap()
-            .into_value(),
-    );
+
     assert_eq!(
         decided(nested.loop_roles(&policy).unwrap()),
         vec![CurveRegionLoopRole::Material, CurveRegionLoopRole::Hole]
     );
     assert_eq!(
         certified(nested.signed_depth(&p(5, 5), &policy).unwrap()),
-        Classification::Decided(0)
-    );
-    assert_eq!(
-        certified(borrowed.signed_depth(&p(5, 5), &policy).unwrap()),
         Classification::Decided(0)
     );
 }

@@ -10422,14 +10422,6 @@ impl CurveRegion2 {
             .map_err(curve_region_promotion_error)
     }
 
-    /// Borrowed counterpart to [`Self::try_from_native_boundary_contours`].
-    pub fn try_from_native_boundary_contours_borrowed(
-        contours: &[Contour2],
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Classification<Self>>> {
-        Self::try_from_native_boundary_contours(contours.to_vec(), policy)
-    }
-
     pub(crate) fn try_from_line_arc_region_raw(
         region: &LineArcRegion2,
         policy: &CurveContext,
@@ -12997,7 +12989,8 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Vec<Classification<RegionPointLocation>>>> {
         resolve_certified_operation(policy, |attempt| {
-            let native = if self.has_regularized_filled_left_topology(attempt)
+            let native = if points.iter().any(|point| point.coordinates().is_some())
+                && self.has_regularized_filled_left_topology(attempt)
                 && let Classification::Decided(native) = self.native_line_arc_region(attempt)?
             {
                 Some(crate::prepared::RegionQuery2::from_region_view(

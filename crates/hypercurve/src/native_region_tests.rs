@@ -219,22 +219,6 @@ fn boundary_contour_nesting_assigns_disjoint_nested_roles() {
 }
 
 #[test]
-fn borrowed_boundary_contours_use_the_same_authoritative_constructor() {
-    let contours = vec![rectangle(0, 0, 5, 5), rectangle(1, 1, 3, 3)];
-    let classified = CurveRegion2::try_from_native_boundary_contours_borrowed(&contours, &policy())
-        .unwrap()
-        .into_value();
-    let Classification::Decided(region) = classified else {
-        panic!("nested borrowed contours should be decided: {classified:?}");
-    };
-    assert_eq!(contours.len(), 2);
-    assert_eq!(
-        region.loop_role_counts(&policy()).unwrap().into_value(),
-        Classification::Decided((1, 1))
-    );
-}
-
-#[test]
 fn boundary_contour_nesting_rejects_crossing_or_touching_loops() {
     for contours in [
         vec![rectangle(0, 0, 4, 4), rectangle(2, -1, 6, 3)],
