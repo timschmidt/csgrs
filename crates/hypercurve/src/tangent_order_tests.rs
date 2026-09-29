@@ -1,9 +1,12 @@
-use hypercurve::{
-    BezierAlgebraicParameter2, BezierAlgebraicSameTangentOrderStatus,
-    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierTangentTurnOrdering2, Classification, CurveContext, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
-    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
+use crate::bezier_tangent_order::{
+    BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
+    BezierAlgebraicTangentVector2, BezierTangentTurnOrdering2,
+    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
+    compare_algebraic_tangent_turn_from_base,
+};
+use crate::{
+    BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
+    CurveContext, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {

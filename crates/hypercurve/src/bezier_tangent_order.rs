@@ -26,7 +26,7 @@ use hypersolve::{
 /// An exact tangent vector with represented coordinate roots or a shared
 /// selected-source derivative image. Coordinate projection is optional.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicTangentVector2 {
+pub(crate) struct BezierAlgebraicTangentVector2 {
     definition: TangentVectorDefinition,
 }
 
@@ -91,7 +91,7 @@ impl BezierAlgebraicTangentVector2 {
 
 /// Certified turn ordering for two candidate tangents around a base tangent.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BezierTangentTurnOrdering2 {
+pub(crate) enum BezierTangentTurnOrdering2 {
     /// The first candidate is encountered before the second in counter-clockwise order.
     FirstBeforeSecond,
     /// The second candidate is encountered before the first in counter-clockwise order.
@@ -100,7 +100,7 @@ pub enum BezierTangentTurnOrdering2 {
 
 /// Status for algebraic tangent-order comparison.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum BezierAlgebraicTangentOrderStatus {
+pub(crate) enum BezierAlgebraicTangentOrderStatus {
     /// The two candidate turns were ordered.
     Ordered,
     /// The candidates have the same exact direction.
@@ -116,7 +116,7 @@ pub enum BezierAlgebraicTangentOrderStatus {
 /// Status for comparing two same-direction algebraic tangent branches with
 /// second-order local evidence.
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum BezierAlgebraicSameTangentOrderStatus {
+pub(crate) enum BezierAlgebraicSameTangentOrderStatus {
     /// The two same-tangent candidates were ordered by signed curvature.
     Ordered,
     /// The retained evidence still represents the same local branch direction.
@@ -131,7 +131,7 @@ pub enum BezierAlgebraicSameTangentOrderStatus {
 
 /// Sign construction evidence for a cross, dot, or norm-squared scalar.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicScalarSignEvidence {
+pub(crate) struct BezierAlgebraicScalarSignEvidence {
     arithmetic: Vec<AlgebraicRootArithmeticReport>,
     value: Option<TangentScalar>,
     /// Certified sign relative to zero.
@@ -177,7 +177,7 @@ struct RetainedTangentBilinear {
 
 /// Evidence for a certified algebraic tangent-order predicate.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicTangentOrderEvidence {
+pub(crate) struct BezierAlgebraicTangentOrderEvidence {
     /// Final predicate status.
     pub status: BezierAlgebraicTangentOrderStatus,
     /// Certified ordering when `status == Ordered`.
@@ -194,7 +194,7 @@ pub struct BezierAlgebraicTangentOrderEvidence {
 
 /// Evidence for a certified algebraic same-tangent higher-order predicate.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicSameTangentOrderEvidence {
+pub(crate) struct BezierAlgebraicSameTangentOrderEvidence {
     /// Final predicate status.
     pub status: BezierAlgebraicSameTangentOrderStatus,
     /// Certified ordering when `status == Ordered`.
@@ -210,6 +210,7 @@ pub struct BezierAlgebraicSameTangentOrderEvidence {
     pub message: Option<String>,
 }
 
+#[cfg(test)]
 /// Compares two candidate tangent turns from a base tangent.
 ///
 /// The result matches the native branch-order predicate: first classify each
@@ -219,7 +220,7 @@ pub struct BezierAlgebraicSameTangentOrderEvidence {
 /// certified interval bounds. Retained images can use a proved common selected
 /// parameter or an exact constant operand, with their denominator signs checked
 /// separately. No isolating interval is sampled as a coordinate.
-pub fn compare_algebraic_tangent_turn_from_base(
+pub(crate) fn compare_algebraic_tangent_turn_from_base(
     base: &BezierAlgebraicTangentVector2,
     first: &BezierAlgebraicTangentVector2,
     second: &BezierAlgebraicTangentVector2,
@@ -457,7 +458,7 @@ fn compare_algebraic_tangent_turn_from_base_impl(
 /// retains reduced field values when independent scalar roots are unavailable.
 /// A common selected field must be certified. The derivatives are with respect to the
 /// source parameter, and normalization removes positive parameter-speed factors.
-pub fn compare_algebraic_same_tangent_second_order(
+pub(crate) fn compare_algebraic_same_tangent_second_order(
     first_tangent: &BezierAlgebraicTangentVector2,
     first_second_derivative: &BezierAlgebraicTangentVector2,
     second_tangent: &BezierAlgebraicTangentVector2,
@@ -585,7 +586,7 @@ pub fn compare_algebraic_same_tangent_second_order(
 /// clearing positive speed denominators. Source-side witnesses may be signed
 /// in their selected parameter; same-side magnitudes retain reduced selected-field
 /// values or represented scalar roots. Only certified signs determine the order.
-pub fn compare_algebraic_same_tangent_third_order(
+pub(crate) fn compare_algebraic_same_tangent_third_order(
     first_tangent: &BezierAlgebraicTangentVector2,
     first_third_derivative: &BezierAlgebraicTangentVector2,
     second_tangent: &BezierAlgebraicTangentVector2,

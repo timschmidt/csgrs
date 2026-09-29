@@ -2,203 +2,76 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierAlgebraicTangentVector2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurveContext, CurveResult, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
-    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
+    Classification, Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2,
+    QuadraticBezier2, Real, RegionPointLocation,
 };
-
-fn r(value: i32) -> Real {
-    value.into()
-}
 
 fn q(numerator: i32, denominator: i32) -> Real {
     (Real::from(numerator) / Real::from(denominator)).unwrap()
 }
 
-fn p(x: Real, y: Real) -> Point2 {
-    Point2::new(x, y)
+/// The graph `y = k x^2` on `x` in `[0, 1]`, leaving the origin horizontally.
+fn parabola(k: i32) -> QuadraticBezier2 {
+    QuadraticBezier2::new(
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(q(1, 2), Real::zero()),
+        Point2::new(Real::one(), Real::from(k)),
+    )
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("benchmark unexpectedly uncertain: {reason:?}"),
-    }
+/// A lens whose two sides share the origin with one horizontal tangent, so
+/// admission orders the branch vertex by curvature.
+fn tangent_lens(a: i32, b: i32, policy: &CurveContext) -> CurvePath2 {
+    let upper = Curve2::from(parabola(b))
+        .reversed(policy)
+        .expect("reversal is exact")
+        .into_value();
+    let closing = LineSeg2::try_new(
+        Point2::new(Real::one(), Real::from(a)),
+        Point2::new(Real::one(), Real::from(b)),
+    )
+    .expect("distinct curvatures give a nonzero closing segment");
+    CurvePath2::try_new(vec![Curve2::from(parabola(a)), closing.into(), upper])
+        .expect("the lens boundary is connected")
 }
 
-fn vector(
-    curve: &QuadraticBezier2,
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
-) -> BezierAlgebraicTangentVector2 {
-    let tangent = decided(
-        curve
-            .tangent_at_algebraic_parameter(parameter, policy)
-            .unwrap(),
-    );
-    BezierAlgebraicTangentVector2::from_image(&tangent)
-}
-
-fn second_vector(
-    curve: &QuadraticBezier2,
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
-) -> BezierAlgebraicTangentVector2 {
-    let tangent = decided(
-        curve
-            .second_derivative_at_algebraic_parameter(parameter, policy)
-            .unwrap(),
-    );
-    BezierAlgebraicTangentVector2::from_image(&tangent)
-}
-
-fn rational_vector(
-    curve: &RationalQuadraticBezier2,
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
-) -> BezierAlgebraicTangentVector2 {
-    let tangent = decided(
-        curve
-            .tangent_at_algebraic_parameter(parameter, policy)
-            .unwrap(),
-    );
-    BezierAlgebraicTangentVector2::from_image(&tangent)
-}
-
-fn rational_second_vector(
-    curve: &RationalQuadraticBezier2,
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
-) -> BezierAlgebraicTangentVector2 {
-    let tangent = decided(
-        curve
-            .second_derivative_at_algebraic_parameter(parameter, policy)
-            .unwrap(),
-    );
-    BezierAlgebraicTangentVector2::from_image(&tangent)
-}
-
-fn main() -> CurveResult<()> {
+fn bench_lens(name: &str, a: i32, b: i32, iterations: u32) {
     let policy = CurveContext::STRICT;
-    let parameter = decided(BezierAlgebraicParameter2::try_isolate(
-        decided(BezierParameterPolynomial::try_new_power_basis(
-            vec![r(-1), r(0), r(2)],
-            &policy,
-        )?),
-        decided(BezierParameterInterval::try_new(q(1, 2), r(1), &policy)?),
-        &policy,
-    )?);
-
-    let base_curve = QuadraticBezier2::new(p(r(0), r(0)), p(q(1, 2), r(0)), p(r(1), r(0)));
-    let first_curve = QuadraticBezier2::new(p(r(0), r(0)), p(r(0), r(0)), p(q(1, 2), r(1)));
-    let second_curve = QuadraticBezier2::new(p(r(0), r(0)), p(q(1, 2), r(0)), p(r(1), q(1, 2)));
-    let base = vector(&base_curve, &parameter, &policy);
-    let first = vector(&first_curve, &parameter, &policy);
-    let second = vector(&second_curve, &parameter, &policy);
-
-    let iterations = 10_000_u32;
+    let path = tangent_lens(a, b, &policy);
+    let inside = Point2::new(q(1, 2), q(a + b, 8)).into();
     let started = Instant::now();
-    let mut ordered = 0_usize;
+    let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let evidence = decided(compare_algebraic_tangent_turn_from_base(
-            &base, &first, &second, &policy,
-        ));
-        ordered += black_box(usize::from(evidence.ordering.is_some()));
+        let region = CurveRegion2::try_from_boundary_paths(
+            black_box(std::slice::from_ref(&path)),
+            FillRule::EvenOdd,
+            &policy,
+        )
+        .expect("the tangent lens is admitted")
+        .into_value();
+        let location = region
+            .classify_point(black_box(&inside), &policy)
+            .expect("classification completes")
+            .value;
+        assert_eq!(
+            location,
+            Classification::Decided(RegionPointLocation::Inside)
+        );
+        checksum += black_box(region.len());
     }
     let elapsed = started.elapsed();
     println!(
-        "bezier_algebraic_tangent_order: {iterations} iterations in {elapsed:?} ({:?}/iter), ordered={ordered}",
+        "{name}: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / iterations
     );
+}
 
-    let same_tangent = vector(&base_curve, &parameter, &policy);
-    let upward_curve = QuadraticBezier2::new(p(r(-1), r(1)), p(r(0), r(-1)), p(r(1), r(1)));
-    let downward_curve = QuadraticBezier2::new(p(r(-1), r(-1)), p(r(0), r(1)), p(r(1), r(-1)));
-    let upward_second = second_vector(&upward_curve, &parameter, &policy);
-    let downward_second = second_vector(&downward_curve, &parameter, &policy);
-    let started = Instant::now();
-    let mut same_tangent_ordered = 0_usize;
-    for _ in 0..iterations {
-        let evidence = decided(compare_algebraic_same_tangent_second_order(
-            &same_tangent,
-            &upward_second,
-            &same_tangent,
-            &downward_second,
-            &policy,
-        ));
-        same_tangent_ordered += black_box(usize::from(evidence.ordering.is_some()));
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_algebraic_same_tangent_second_order: {iterations} iterations in {elapsed:?} ({:?}/iter), ordered={same_tangent_ordered}",
-        elapsed / iterations
+fn main() {
+    bench_lens("bezier_tangent_order_second_order_lens", 1, 2, 200);
+    bench_lens(
+        "bezier_tangent_order_near_equal_curvature_lens",
+        15,
+        16,
+        200,
     );
-
-    let rational_parameter = decided(BezierAlgebraicParameter2::try_isolate(
-        decided(BezierParameterPolynomial::try_new_power_basis(
-            vec![r(-1), r(2)],
-            &policy,
-        )?),
-        decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?),
-        &policy,
-    )?);
-    let rational_upward = RationalQuadraticBezier2::try_new(
-        p(r(-1), r(1)),
-        p(r(0), r(-1)),
-        p(r(1), r(1)),
-        r(1),
-        r(1),
-        r(1),
-    )?;
-    let rational_downward = RationalQuadraticBezier2::try_new(
-        p(r(-1), r(-1)),
-        p(r(0), r(1)),
-        p(r(1), r(-1)),
-        r(1),
-        r(1),
-        r(1),
-    )?;
-    let rational_tangent = rational_vector(&rational_upward, &rational_parameter, &policy);
-    let rational_upward_second =
-        rational_second_vector(&rational_upward, &rational_parameter, &policy);
-    let rational_downward_second =
-        rational_second_vector(&rational_downward, &rational_parameter, &policy);
-    let started = Instant::now();
-    let mut rational_same_tangent_ordered = 0_usize;
-    for _ in 0..iterations {
-        let evidence = decided(compare_algebraic_same_tangent_second_order(
-            &rational_tangent,
-            &rational_upward_second,
-            &rational_tangent,
-            &rational_downward_second,
-            &policy,
-        ));
-        rational_same_tangent_ordered += black_box(usize::from(evidence.ordering.is_some()));
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_rational_algebraic_same_tangent_second_order: {iterations} iterations in {elapsed:?} ({:?}/iter), ordered={rational_same_tangent_ordered}",
-        elapsed / iterations
-    );
-
-    let started = Instant::now();
-    let mut third_tangent_ordered = 0_usize;
-    for _ in 0..iterations {
-        let evidence = decided(compare_algebraic_same_tangent_third_order(
-            &same_tangent,
-            &upward_second,
-            &same_tangent,
-            &downward_second,
-            &policy,
-        ));
-        third_tangent_ordered += black_box(usize::from(evidence.ordering.is_some()));
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_algebraic_same_tangent_third_order: {iterations} iterations in {elapsed:?} ({:?}/iter), ordered={third_tangent_ordered}",
-        elapsed / iterations
-    );
-
-    Ok(())
 }

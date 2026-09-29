@@ -85,6 +85,8 @@ mod split_materialization_tests;
 mod straight_skeleton;
 #[cfg(feature = "svg")]
 mod svg;
+#[cfg(test)]
+mod tangent_order_tests;
 mod transform;
 mod translation_obstacle;
 #[cfg(feature = "triangulation")]
@@ -143,12 +145,10 @@ pub(crate) use bezier_split::BezierSubcurve2;
 pub(crate) use bezier_split::{BezierParallelFragment2, BezierSplitFragment2};
 pub use bezier_split::{CurveParameter2, CurveParameterRange2};
 pub(crate) use bezier_split_endpoint::BezierAlgebraicEndpointImage2;
-pub use bezier_tangent_order::{
-    BezierAlgebraicSameTangentOrderEvidence, BezierAlgebraicSameTangentOrderStatus,
-    BezierAlgebraicScalarSignEvidence, BezierAlgebraicTangentOrderEvidence,
-    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierTangentTurnOrdering2,
+pub(crate) use bezier_tangent_order::{
+    BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
+    BezierAlgebraicTangentVector2, BezierTangentTurnOrdering2,
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
-    compare_algebraic_tangent_turn_from_base,
 };
 pub use bezier_topology::{
     Axis2, BezierCurveIntersectionPoint, BezierCurveIntersectionRegion, BezierCurveRelation,

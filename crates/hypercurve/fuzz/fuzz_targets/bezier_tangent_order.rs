@@ -1,179 +1,71 @@
 #![no_main]
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2,
-    BezierParameterInterval, BezierParameterPolynomial, Classification, CurveContext, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
-    compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
+    Classification, Curve2, CurveContext, CurvePath2, CurveRegion2, FillRule, LineSeg2, Point2,
+    QuadraticBezier2, Real, RegionPointLocation,
 };
 use libfuzzer_sys::fuzz_target;
 
-fn real(byte: u8) -> Real {
-    Real::from(byte as i32 - 128)
+fn half() -> Real {
+    (Real::from(1) / Real::from(2)).unwrap()
 }
 
-fn point(x: u8, y: u8) -> Point2 {
-    Point2::new(real(x), real(y))
-}
-
-fn vector_from_curve(
-    curve: &QuadraticBezier2,
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
-) -> Option<BezierAlgebraicTangentVector2> {
-    let Classification::Decided(tangent) = curve
-        .tangent_at_algebraic_parameter(parameter, policy)
-        .ok()?
-    else {
-        return None;
-    };
-    Some(BezierAlgebraicTangentVector2::from_image(&tangent))
-}
-
-fn second_vector_from_curve(
-    curve: &QuadraticBezier2,
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
-) -> Option<BezierAlgebraicTangentVector2> {
-    let Classification::Decided(tangent) = curve
-        .second_derivative_at_algebraic_parameter(parameter, policy)
-        .ok()?
-    else {
-        return None;
-    };
-    Some(BezierAlgebraicTangentVector2::from_image(&tangent))
-}
-
-fn second_vector_from_rational_curve(
-    curve: &RationalQuadraticBezier2,
-    parameter: &BezierAlgebraicParameter2,
-    policy: &CurveContext,
-) -> Option<BezierAlgebraicTangentVector2> {
-    let Classification::Decided(tangent) = curve
-        .second_derivative_at_algebraic_parameter(parameter, policy)
-        .ok()?
-    else {
-        return None;
-    };
-    Some(BezierAlgebraicTangentVector2::from_image(&tangent))
+/// The graph `y = k x^2` on `x` in `[0, 1]`, leaving the origin horizontally.
+fn parabola(k: &Real) -> QuadraticBezier2 {
+    QuadraticBezier2::new(
+        Point2::new(Real::zero(), Real::zero()),
+        Point2::new(half(), Real::zero()),
+        Point2::new(Real::one(), k.clone()),
+    )
 }
 
 fuzz_target!(|data: &[u8]| {
-    if data.len() < 18 {
+    if data.len() < 3 {
         return;
     }
-
-    let policy = CurveContext::STRICT;
-    let Ok(Classification::Decided(polynomial)) = BezierParameterPolynomial::try_new_power_basis(
-        vec![Real::from(-1), Real::from(2)],
-        &policy,
-    ) else {
+    // Two distinct curvatures with a common horizontal tangent at the origin.
+    // The origin is a branch vertex that only second-order tangent ordering
+    // resolves; the sign bit reflects the lens below the axis.
+    let first = i32::from(data[0] % 16) + 1;
+    let second = i32::from(data[1] % 16) + 1;
+    if first == second {
         return;
-    };
-    let Ok(Classification::Decided(interval)) = BezierParameterInterval::try_new(
-        (Real::from(2) / Real::from(5)).unwrap(),
-        (Real::from(3) / Real::from(5)).unwrap(),
-        &policy,
-    ) else {
-        return;
-    };
-    let Ok(Classification::Decided(parameter)) =
-        BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy)
-    else {
-        return;
-    };
-
-    let curves = [
-        QuadraticBezier2::new(
-            point(data[0], data[1]),
-            point(data[2], data[3]),
-            point(data[4], data[5]),
-        ),
-        QuadraticBezier2::new(
-            point(data[6], data[7]),
-            point(data[8], data[9]),
-            point(data[10], data[11]),
-        ),
-        QuadraticBezier2::new(
-            point(data[12], data[13]),
-            point(data[14], data[15]),
-            point(data[16], data[17]),
-        ),
-    ];
-    let Some(base) = vector_from_curve(&curves[0], &parameter, &policy) else {
-        return;
-    };
-    let Some(first) = vector_from_curve(&curves[1], &parameter, &policy) else {
-        return;
-    };
-    let Some(second) = vector_from_curve(&curves[2], &parameter, &policy) else {
-        return;
-    };
-
-    if let Classification::Decided(evidence) =
-        compare_algebraic_tangent_turn_from_base(&base, &first, &second, &policy)
-    {
-        if evidence.status == BezierAlgebraicTangentOrderStatus::Ordered {
-            assert!(evidence.ordering.is_some());
-        }
     }
+    let sign = if data[2] & 1 == 0 { 1 } else { -1 };
+    let (a, b) = (Real::from(sign * first), Real::from(sign * second));
+    let policy = if data[2] & 2 == 0 {
+        CurveContext::STRICT
+    } else {
+        CurveContext::APPROXIMATE_512
+    };
+    let lower = Curve2::from(parabola(&a));
+    let upper = Curve2::from(parabola(&b))
+        .reversed(&policy)
+        .expect("reversal is exact")
+        .into_value();
+    let closing = LineSeg2::try_new(
+        Point2::new(Real::one(), a.clone()),
+        Point2::new(Real::one(), b.clone()),
+    )
+    .expect("distinct curvatures give a nonzero closing segment");
+    let path = CurvePath2::try_new(vec![lower, closing.into(), upper])
+        .expect("the lens boundary is connected");
+    let region = CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd, &policy)
+        .expect("a simple tangent lens must be admitted")
+        .into_value();
 
-    let Some(first_second) = second_vector_from_curve(&curves[1], &parameter, &policy) else {
-        return;
-    };
-    let Some(second_second) = second_vector_from_curve(&curves[2], &parameter, &policy) else {
-        return;
-    };
-    let _ = compare_algebraic_same_tangent_second_order(
-        &first,
-        &first_second,
-        &second,
-        &second_second,
-        &policy,
-    );
-    let _ = compare_algebraic_same_tangent_third_order(
-        &first,
-        &first_second,
-        &second,
-        &second_second,
-        &policy,
-    );
-
-    let Ok(first_rational) = RationalQuadraticBezier2::try_new(
-        point(data[0], data[1]),
-        point(data[2], data[3]),
-        point(data[4], data[5]),
-        Real::one(),
-        Real::from((data[0] % 7) as i32 + 1),
-        Real::one(),
-    ) else {
-        return;
-    };
-    let Ok(second_rational) = RationalQuadraticBezier2::try_new(
-        point(data[6], data[7]),
-        point(data[8], data[9]),
-        point(data[10], data[11]),
-        Real::one(),
-        Real::from((data[1] % 7) as i32 + 1),
-        Real::one(),
-    ) else {
-        return;
-    };
-    let Some(first_rational_second) =
-        second_vector_from_rational_curve(&first_rational, &parameter, &policy)
-    else {
-        return;
-    };
-    let Some(second_rational_second) =
-        second_vector_from_rational_curve(&second_rational, &parameter, &policy)
-    else {
-        return;
-    };
-    let _ = compare_algebraic_same_tangent_second_order(
-        &first,
-        &first_rational_second,
-        &second,
-        &second_rational_second,
-        &policy,
-    );
+    // At x = 1/2 the curves sit at a/4 and b/4, so (a+b)/8 is strictly inside.
+    let eighth = (Real::from(1) / Real::from(8)).unwrap();
+    let inside = Point2::new(half(), (&a + &b) * &eighth);
+    let outside = Point2::new(half(), Real::from(-sign * 32));
+    for (point, expected) in [
+        (inside, RegionPointLocation::Inside),
+        (outside, RegionPointLocation::Outside),
+    ] {
+        let location = region
+            .classify_point(&point.into(), &policy)
+            .expect("classification completes")
+            .value;
+        assert_eq!(location, Classification::Decided(expected));
+    }
 });
