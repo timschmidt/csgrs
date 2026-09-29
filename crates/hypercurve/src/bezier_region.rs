@@ -13574,8 +13574,8 @@ fn transform_retained_region_fragment(
                 reversed: *reversed,
                 start: start.clone(),
                 end: end.clone(),
-                start_image: transform_region_endpoint_image(start, &source, policy)?,
-                end_image: transform_region_endpoint_image(end, &source, policy)?,
+                start_image: transform_region_endpoint_image(start, &source, policy),
+                end_image: transform_region_endpoint_image(end, &source, policy),
                 source_curve: source,
             })
         }
@@ -13677,14 +13677,12 @@ fn transform_region_endpoint_image(
     parameter: &BezierParameter2,
     source: &BezierSubcurve2,
     policy: &CurveContext,
-) -> ExactCurveResult<Option<BezierAlgebraicEndpointImage2>> {
+) -> Option<BezierAlgebraicEndpointImage2> {
     match parameter {
-        BezierParameter2::Exact(_) => Ok(None),
-        BezierParameter2::Algebraic(parameter) => {
-            BezierAlgebraicEndpointImage2::from_source_curve_first_order(source, parameter, policy)
-                .map(Some)
-                .map_err(affine_region_error)
-        }
+        BezierParameter2::Exact(_) => None,
+        BezierParameter2::Algebraic(parameter) => Some(
+            BezierAlgebraicEndpointImage2::from_source_curve_first_order(source, parameter, policy),
+        ),
     }
 }
 

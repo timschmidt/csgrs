@@ -198,21 +198,20 @@ impl CurveSupport2 {
                         });
                     }
                     let endpoint = |parameter: &crate::BezierParameter2| match parameter {
-                        crate::BezierParameter2::Exact(_) => Ok(None),
-                        crate::BezierParameter2::Algebraic(parameter) => {
+                        crate::BezierParameter2::Exact(_) => None,
+                        crate::BezierParameter2::Algebraic(parameter) => Some(
                             crate::BezierAlgebraicEndpointImage2::from_source_curve_first_order(
                                 curve, parameter, policy,
-                            )
-                            .map(Some)
-                        }
+                            ),
+                        ),
                     };
                     BezierSplitFragment2::RetainedBezier {
                         reversed: false,
                         start: start.clone(),
                         end: end.clone(),
                         source_curve: curve.clone(),
-                        start_image: endpoint(start)?,
-                        end_image: endpoint(end)?,
+                        start_image: endpoint(start),
+                        end_image: endpoint(end),
                     }
                 }
                 Self::Parallel(parallel) => {

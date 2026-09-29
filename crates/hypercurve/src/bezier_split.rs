@@ -1811,10 +1811,11 @@ impl BezierSubcurve2 {
                 }
             },
             |parameter| {
-                BezierAlgebraicEndpointImage2::from_source_curve_first_order(
-                    self, parameter, policy,
-                )
-                .map(Classification::Decided)
+                Ok(Classification::Decided(
+                    BezierAlgebraicEndpointImage2::from_source_curve_first_order(
+                        self, parameter, policy,
+                    ),
+                ))
             },
             self.clone(),
         )

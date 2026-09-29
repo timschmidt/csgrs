@@ -1947,8 +1947,11 @@ mod endpoint_adjacency_tests {
             Point2::new(Real::from(3), Real::from(-1)),
             point(4),
         );
-        let lazy =
-            BezierAlgebraicEndpointImage2::cubic_first_order(&curve, &parameter, &policy).unwrap();
+        let lazy = BezierAlgebraicEndpointImage2::from_source_curve_first_order(
+            &BezierSubcurve2::Cubic(curve.clone()),
+            &parameter,
+            &policy,
+        );
         let eager = crate::tests::decided(
             BezierAlgebraicEndpointImage2::cubic(&curve, &parameter, &policy).unwrap(),
         );

@@ -82,18 +82,15 @@ impl BezierAlgebraicEndpointImage2 {
         source_curve: &BezierSubcurve2,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        match source_curve {
-            BezierSubcurve2::Quadratic(curve) => {
-                Self::quadratic_first_order(curve, parameter, policy)
-            }
-            BezierSubcurve2::Cubic(curve) => Self::cubic_first_order(curve, parameter, policy),
-            BezierSubcurve2::RationalQuadratic(curve) => {
-                Self::rational_quadratic_first_order(curve, parameter, policy)
-            }
-            BezierSubcurve2::Rational(curve) => {
-                Self::rational_first_order(curve, parameter, policy)
-            }
+    ) -> Self {
+        Self {
+            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
+                parameter: parameter.clone(),
+                curve: Box::new(source_curve.clone()),
+                policy: *policy,
+                point: OnceLock::new(),
+                tangent: OnceLock::new(),
+            }),
         }
     }
 
@@ -193,22 +190,6 @@ impl BezierAlgebraicEndpointImage2 {
         }))
     }
 
-    pub(crate) fn rational_quadratic_first_order(
-        curve: &RationalQuadraticBezier2,
-        parameter: &BezierAlgebraicParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        Ok(Self {
-            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
-                parameter: parameter.clone(),
-                curve: Box::new(BezierSubcurve2::RationalQuadratic(curve.clone())),
-                policy: *policy,
-                point: OnceLock::new(),
-                tangent: OnceLock::new(),
-            }),
-        })
-    }
-
     /// Constructs endpoint evidence for an arbitrary-degree rational Bezier.
     pub fn rational(
         curve: &crate::RationalBezier2,
@@ -238,54 +219,6 @@ impl BezierAlgebraicEndpointImage2 {
                 third_derivative,
             }),
         }))
-    }
-
-    pub(crate) fn rational_first_order(
-        curve: &crate::RationalBezier2,
-        parameter: &BezierAlgebraicParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        Ok(Self {
-            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
-                parameter: parameter.clone(),
-                curve: Box::new(BezierSubcurve2::Rational(curve.clone())),
-                policy: *policy,
-                point: OnceLock::new(),
-                tangent: OnceLock::new(),
-            }),
-        })
-    }
-
-    pub(crate) fn quadratic_first_order(
-        curve: &QuadraticBezier2,
-        parameter: &BezierAlgebraicParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        Ok(Self {
-            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
-                parameter: parameter.clone(),
-                curve: Box::new(BezierSubcurve2::Quadratic(curve.clone())),
-                policy: *policy,
-                point: OnceLock::new(),
-                tangent: OnceLock::new(),
-            }),
-        })
-    }
-
-    pub(crate) fn cubic_first_order(
-        curve: &CubicBezier2,
-        parameter: &BezierAlgebraicParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Self> {
-        Ok(Self {
-            data: Arc::new(BezierAlgebraicEndpointImageData::LazyFirstOrder {
-                parameter: parameter.clone(),
-                curve: Box::new(BezierSubcurve2::Cubic(curve.clone())),
-                policy: *policy,
-                point: OnceLock::new(),
-                tangent: OnceLock::new(),
-            }),
-        })
     }
 
     /// Returns the algebraic Bezier parameter at this endpoint.
@@ -608,8 +541,7 @@ mod tests {
             for source in &sources {
                 let endpoint = BezierAlgebraicEndpointImage2::from_source_curve_first_order(
                     source, &parameter, &policy,
-                )
-                .unwrap();
+                );
                 for _ in 0..2 {
                     assert!(matches!(
                         endpoint.point(),
