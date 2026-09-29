@@ -2518,42 +2518,191 @@ impl Curve2 {
     }
 
     /// Returns per-span incidence locations, or `None` when every span is
-    /// constant at the point.
+    /// constant at the point. Authored spans replay their rational incidence
+    /// equations; generated parallels, chords, and selected circles use their
+    /// own exact incidence authorities on their retained source ranges.
     fn span_point_locations(
         &self,
         point: &Point2,
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Option<Vec<CurveLocation2>>>> {
-        let fragments = self.native_bezier_fragments_for_operation(policy, operation)?;
-        let evaluators = self.rational_evaluators_for_operation(policy, operation)?;
+        let invalid = |cause| ExactCurveError::invalid(operation, self.family(), cause);
+        if self.geometry().is_some() {
+            // Authored curves reuse their cached native spans and evaluators.
+            let fragments = self.native_bezier_fragments_for_operation(policy, operation)?;
+            let evaluators = self.rational_evaluators_for_operation(policy, operation)?;
+            let mut locations = Vec::new();
+            let mut constant_spans = 0;
+            for (span_index, (fragment, evaluator)) in fragments.iter().zip(evaluators).enumerate()
+            {
+                match evaluator
+                    .point_incidence_on_range(point, &CurveParameterRange2::unit(), policy)
+                    .map_err(invalid)?
+                {
+                    Classification::Decided(crate::RationalBezierPointIncidence2::Parameters(
+                        parameters,
+                    )) => {
+                        locations.extend(parameters.into_iter().map(|parameter| CurveLocation2 {
+                            span_index,
+                            span_range: fragment.span_range().clone(),
+                            local_parameter: parameter.into(),
+                        }))
+                    }
+                    Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve) => {
+                        constant_spans += 1;
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            return Ok(if constant_spans == 0 {
+                Classification::Decided(Some(locations))
+            } else if constant_spans == fragments.len() {
+                Classification::Decided(None)
+            } else {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            });
+        }
+        let spans = self.source_spans(policy, operation)?;
+        let query = CurvePoint2::from(point.clone());
         let mut locations = Vec::new();
         let mut constant_spans = 0;
-        for (span_index, (fragment, evaluator)) in fragments.iter().zip(evaluators).enumerate() {
-            let parameters = match evaluator
-                .point_incidence_on_range(point, &crate::CurveParameterRange2::unit(), policy)
-                .map_err(|cause| ExactCurveError::invalid(operation, self.family(), cause))?
-            {
-                Classification::Decided(crate::RationalBezierPointIncidence2::Parameters(
-                    parameters,
-                )) => parameters,
-                Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve) => {
-                    constant_spans += 1;
-                    continue;
+        for (span_index, span) in spans.iter().enumerate() {
+            let chart = span.chart();
+            let parameters: Vec<CurveParameter2> = match &span.fragment {
+                crate::BezierSplitFragment2::Materialized { curve, .. } => {
+                    let rational = RationalBezier2::try_from_subcurve(curve).map_err(invalid)?;
+                    match rational
+                        .point_incidence_on_range(point, &CurveParameterRange2::unit(), policy)
+                        .map_err(invalid)?
+                    {
+                        Classification::Decided(
+                            crate::RationalBezierPointIncidence2::Parameters(parameters),
+                        ) => parameters.into_iter().map(Into::into).collect(),
+                        Classification::Decided(
+                            crate::RationalBezierPointIncidence2::EntireCurve,
+                        ) => {
+                            constant_spans += 1;
+                            continue;
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
                 }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
+                fragment => {
+                    let range = fragment.curve_region_parameter_range();
+                    match crate::curve_support::CurveSupport2::from_fragment(fragment) {
+                        crate::curve_support::CurveSupport2::Bezier(curve) => {
+                            let rational =
+                                RationalBezier2::try_from_subcurve(&curve).map_err(invalid)?;
+                            match rational
+                                .point_incidence_on_range(point, &range, policy)
+                                .map_err(invalid)?
+                            {
+                                Classification::Decided(
+                                    crate::RationalBezierPointIncidence2::Parameters(parameters),
+                                ) => parameters.into_iter().map(Into::into).collect(),
+                                Classification::Decided(
+                                    crate::RationalBezierPointIncidence2::EntireCurve,
+                                ) => {
+                                    constant_spans += 1;
+                                    continue;
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            }
+                        }
+                        crate::curve_support::CurveSupport2::Parallel(parallel) => {
+                            match parallel
+                                .point_incidence(point, &range, policy)
+                                .map_err(invalid)?
+                            {
+                                Classification::Decided(
+                                    crate::BezierParallelIncidence2::Parameters(parameters),
+                                ) => parameters.into_iter().map(Into::into).collect(),
+                                Classification::Decided(
+                                    crate::BezierParallelIncidence2::EntireCurve,
+                                ) => {
+                                    constant_spans += 1;
+                                    continue;
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            }
+                        }
+                        crate::curve_support::CurveSupport2::Line(chord) => {
+                            match chord.point_parameter(&query, policy).map_err(invalid)? {
+                                Classification::Decided(parameter) => parameter
+                                    .into_iter()
+                                    .map(CurveParameter2::from_algebraic_chord)
+                                    .collect(),
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            }
+                        }
+                        crate::curve_support::CurveSupport2::Circle(circle) => {
+                            let incidence = circle
+                                .semicircle()
+                                .retained_point_incidence_sign(&query, policy)
+                                .map_err(invalid)?;
+                            if let Classification::Uncertain(reason) = incidence {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                            if incidence != Classification::Decided(crate::RealSign::Zero) {
+                                Vec::new()
+                            } else {
+                                let parameter = match circle
+                                    .semicircle()
+                                    .parameter_at_certified_incident_point(&query, policy)
+                                    .map_err(invalid)?
+                                {
+                                    Classification::Decided(parameter) => parameter,
+                                    Classification::Uncertain(reason) => {
+                                        return Ok(Classification::Uncertain(reason));
+                                    }
+                                };
+                                // A point on the complementary half lies off
+                                // this fragment's angular range.
+                                let inside = match parameter.as_algebraic_cusp() {
+                                    Some(cusp) if !parameter.is_algebraic_cusp_complement() => {
+                                        match circle
+                                            .certified_incident_point_evidence_location(
+                                                cusp, &query, policy,
+                                            )
+                                            .map_err(invalid)?
+                                        {
+                                            Classification::Decided(location) => !matches!(
+                                                location,
+                                                crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::Exterior
+                                            ),
+                                            Classification::Uncertain(reason) => {
+                                                return Ok(Classification::Uncertain(reason));
+                                            }
+                                        }
+                                    }
+                                    _ => false,
+                                };
+                                if inside { vec![parameter] } else { Vec::new() }
+                            }
+                        }
+                    }
                 }
             };
             locations.extend(parameters.into_iter().map(|parameter| CurveLocation2 {
                 span_index,
-                span_range: fragment.span_range().clone(),
-                local_parameter: parameter.into(),
+                span_range: chart.clone(),
+                local_parameter: parameter,
             }));
         }
         if constant_spans == 0 {
             Ok(Classification::Decided(Some(locations)))
-        } else if constant_spans == fragments.len() {
+        } else if constant_spans == spans.len() {
             Ok(Classification::Decided(None))
         } else {
             // A partly constant spline has a positive-dimensional preimage

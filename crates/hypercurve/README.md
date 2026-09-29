@@ -236,7 +236,9 @@ exact signatures.
   intersection or corner locations, without rounding either endpoint.
   `point_locations` reports every exact parameter visit of a represented
   point as `CurveLocation2` values, one per visit and one per continuous
-  spline seam, or `EntireCurve` for a constant curve. Exact
+  spline seam, or `EntireCurve` for a constant curve. Authored spans reuse
+  their cached rational evaluators; generated parallels, chords, and selected
+  circles use their own incidence authorities on their retained ranges. Exact
   region trimming returns reusable `Curve2` pieces from authored and generated
   supports. The parameter-retaining form reports their oriented source
   locations as `CurveLocation2`, exact parameter ranges and boundary contacts.

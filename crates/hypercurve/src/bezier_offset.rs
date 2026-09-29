@@ -73389,6 +73389,23 @@ impl BezierAlgebraicChord2 {
         Ok(self.parameter_on_retained_support(point))
     }
 
+    /// Locates a point on this finite chord: `None` when it is off the
+    /// support or outside the chord. Support incidence is decided first, so
+    /// the finite parameter is never inferred from an unproved projection.
+    pub(crate) fn point_parameter(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierAlgebraicChordParameter2>>> {
+        match self.oriented_side_by_refinement(point, policy)? {
+            Classification::Decided(crate::classify::LineSide::On) => {
+                self.parameter_at_certified_point(point.clone(), policy)
+            }
+            Classification::Decided(_) => Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
+    }
+
     pub(crate) fn parameter_at_certified_point(
         &self,
         point: CurvePoint2,

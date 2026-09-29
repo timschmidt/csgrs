@@ -3920,4 +3920,81 @@ mod point_locations {
                 if blocker.reason() == UncertaintyReason::Unsupported
         ));
     }
+
+    #[test]
+    fn generated_curves_locate_their_exact_points() {
+        use hypercurve::{
+            BezierParameter2, BezierParameterRange2, CurvePath2, CurveRegion2, FillRule,
+            OffsetCornerStyle2,
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // The left parallel at distance 1 of the x-axis quadratic is y = 1.
+            let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0))
+                .parallel_left(r(1))
+                .unwrap();
+            let range = match BezierParameterRange2::try_new(
+                BezierParameter2::Exact(r(0)),
+                BezierParameter2::Exact(r(1)),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(range) => range,
+                Classification::Uncertain(reason) => panic!("{reason:?}"),
+            };
+            let analytic = match Curve2::try_analytic_parallel(parallel, range, &policy).unwrap() {
+                Classification::Decided(curve) => curve,
+                Classification::Uncertain(reason) => panic!("{reason:?}"),
+            };
+            assert_eq!(scalars(&locations(&analytic, p(1, 1), &policy)), [q(1, 2)]);
+            assert!(locations(&analytic, p(1, -1), &policy).is_empty());
+
+            let chord = match Curve2::try_line(
+                CurvePoint2::from(p(0, 0)),
+                CurvePoint2::from(p(4, 2)),
+                &policy,
+            )
+            .unwrap()
+            {
+                Classification::Decided(curve) => curve,
+                Classification::Uncertain(reason) => panic!("{reason:?}"),
+            };
+            assert_eq!(locations(&chord, p(2, 1), &policy).len(), 1);
+            assert!(locations(&chord, p(6, 3), &policy).is_empty());
+            assert!(locations(&chord, p(2, 2), &policy).is_empty());
+
+            // Every represented boundary start of a round offset is found on
+            // its own generated curve.
+            let lens = CurvePath2::try_new(vec![
+                Curve2::from(QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0))),
+                Curve2::from(QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0))),
+            ])
+            .unwrap();
+            let region = CurveRegion2::try_from_boundary_paths(&[lens], FillRule::EvenOdd, &policy)
+                .unwrap()
+                .into_value();
+            let offset = region
+                .offset(q(1, 4), &OffsetCornerStyle2::Round, &policy)
+                .unwrap()
+                .into_value();
+            let mut checked = 0;
+            for boundary in offset.boundary_loops() {
+                for curve in boundary.curves() {
+                    let start = curve.start();
+                    if start.coordinates().is_none() {
+                        continue;
+                    }
+                    let outcome = curve.point_locations(&start, &policy).unwrap();
+                    match outcome.value {
+                        CurvePointLocations2::Locations(found) => assert!(!found.is_empty()),
+                        CurvePointLocations2::EntireCurve => {
+                            panic!("offset curves are not constant")
+                        }
+                    }
+                    checked += 1;
+                }
+            }
+            assert!(checked > 0);
+        }
+    }
 }
