@@ -25,10 +25,14 @@ fn rational_line_derivatives_exceed_machine_binomial_orders() {
         let unified = Curve2::from(curve.clone());
         assert_eq!(
             unified
-                .derivatives_at(&parameter, 128, &CurveContext::STRICT)
+                .derivatives_at(&parameter.clone().into(), 128, &CurveContext::STRICT)
                 .expect("the top-level curve must preserve high derivative completeness")
                 .into_value(),
             derivatives
+                .iter()
+                .cloned()
+                .map(hypercurve::CurveVector2::from)
+                .collect::<Vec<_>>()
         );
         // x(t)=3t/(2+t), so x^(k)=6*(-1)^(k-1)*k!/(2+t)^(k+1).
         let denominator = Real::from(2) + &parameter;

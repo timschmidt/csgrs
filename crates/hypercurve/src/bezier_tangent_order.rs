@@ -74,6 +74,21 @@ impl BezierAlgebraicTangentVector2 {
         }
     }
 
+    /// Returns the exact sign of one coordinate when its retained image can
+    /// decide it.
+    pub(crate) fn coordinate_sign(
+        &self,
+        use_x: bool,
+        policy: &CurveContext,
+    ) -> crate::CurveResult<Classification<RealSign>> {
+        match self.image() {
+            Some(image) => image.coordinate_sign(use_x, policy),
+            None => Ok(Classification::Uncertain(
+                crate::UncertaintyReason::Unsupported,
+            )),
+        }
+    }
+
     pub(crate) fn negated(&self, policy: &CurveContext) -> Option<Self> {
         if let Some(image) = self
             .image()

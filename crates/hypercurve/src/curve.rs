@@ -75,6 +75,81 @@ pub struct CurveDerivative2 {
     zero_status: hyperreal::ZeroKnowledge,
 }
 
+/// Exact derivative vector of a curve at a general public parameter.
+///
+/// Coordinates are either represented reals or selected algebraic values kept
+/// in the field of the parameter that produced them. Selected coordinates are
+/// never rounded; [`Self::represented_coordinates`] is the narrower query for
+/// callers that need two represented reals.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveVector2 {
+    data: CurveVectorData2,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum CurveVectorData2 {
+    Represented(CurveDerivative2),
+    /// A selected-field vector times an exact positive chart factor.
+    Selected {
+        vector: crate::BezierAlgebraicTangentVector2,
+        chart_factor: Real,
+    },
+}
+
+impl CurveVector2 {
+    /// Returns the represented coordinates, when both are plain reals.
+    pub fn represented_coordinates(&self) -> Option<(&Real, &Real)> {
+        match &self.data {
+            CurveVectorData2::Represented(derivative) => Some((derivative.dx(), derivative.dy())),
+            CurveVectorData2::Selected { .. } => None,
+        }
+    }
+
+    /// Decides the exact sign of one coordinate.
+    pub fn coordinate_sign(
+        &self,
+        axis: crate::Axis2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<RealSign>> {
+        let use_x = axis == crate::Axis2::X;
+        match &self.data {
+            CurveVectorData2::Represented(derivative) => {
+                let value = if use_x {
+                    derivative.dx()
+                } else {
+                    derivative.dy()
+                };
+                Ok(match crate::classify::real_sign(value, policy) {
+                    Some(sign) => Classification::Decided(sign),
+                    None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
+                })
+            }
+            // The chart factor is a positive power of 1/width.
+            CurveVectorData2::Selected { vector, .. } => {
+                vector.coordinate_sign(use_x, policy).map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Evaluation,
+                        CurveFamily2::RationalBezier,
+                        cause,
+                    )
+                })
+            }
+        }
+    }
+
+    fn represented(derivative: CurveDerivative2) -> Self {
+        Self {
+            data: CurveVectorData2::Represented(derivative),
+        }
+    }
+}
+
+impl From<CurveDerivative2> for CurveVector2 {
+    fn from(derivative: CurveDerivative2) -> Self {
+        Self::represented(derivative)
+    }
+}
+
 /// Side policy for differential evaluation at a retained span boundary.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum CurveParameterSide2 {
@@ -1299,34 +1374,28 @@ impl Curve2 {
     /// Native curves use `[0, 1]`; spline curves use their authored knot
     /// domain. Promoted rational evaluators are built once per shared curve and
     /// preserve source-span parameter scaling.
+    ///
+    /// Selected algebraic parameters on authored spans return selected-field
+    /// vectors without rounding the parameter.
     pub fn derivative_at(
         &self,
-        parameter: &Real,
+        parameter: &CurveParameter2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+    ) -> ExactCurveResult<CurveOutcome<CurveVector2>> {
         self.derivative_at_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates an exact first derivative with explicit knot-boundary side policy.
     pub fn derivative_at_side(
         &self,
-        parameter: &Real,
+        parameter: &CurveParameter2,
         side: CurveParameterSide2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+    ) -> ExactCurveResult<CurveOutcome<CurveVector2>> {
         resolve_certified_operation(policy, |attempt| {
-            self.derivative_at_side_with_policy(parameter, side, attempt)
+            let mut derivatives = self.general_derivatives_at_side(parameter, 1, side, attempt)?;
+            Ok(derivatives.pop().expect("one derivative requested"))
         })
-    }
-
-    pub(crate) fn derivative_at_side_with_policy(
-        &self,
-        parameter: &Real,
-        side: CurveParameterSide2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveDerivative2> {
-        let mut derivatives = self.derivatives_at_side_with_policy(parameter, 1, side, policy)?;
-        Ok(derivatives.pop().expect("one derivative requested"))
     }
 
     /// Evaluates the first periodic derivative at any wrappable parameter.
@@ -1334,7 +1403,7 @@ impl Curve2 {
         &self,
         parameter: &Real,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+    ) -> ExactCurveResult<CurveOutcome<CurveVector2>> {
         self.derivative_at_wrapped_side(parameter, CurveParameterSide2::Automatic, policy)
     }
 
@@ -1344,11 +1413,13 @@ impl Curve2 {
         parameter: &Real,
         side: CurveParameterSide2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<CurveDerivative2>> {
+    ) -> ExactCurveResult<CurveOutcome<CurveVector2>> {
         resolve_certified_operation(policy, |attempt| {
             let mut derivatives =
                 self.derivatives_at_wrapped_side_with_policy(parameter, 1, side, attempt)?;
-            Ok(derivatives.pop().expect("one derivative requested"))
+            Ok(CurveVector2::represented(
+                derivatives.pop().expect("one derivative requested"),
+            ))
         })
     }
 
@@ -1358,24 +1429,143 @@ impl Curve2 {
     /// `[0, 1]`; spline curves use their authored knot domain.
     pub fn derivatives_at(
         &self,
-        parameter: &Real,
+        parameter: &CurveParameter2,
         max_order: usize,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveVector2>>> {
         self.derivatives_at_side(parameter, max_order, CurveParameterSide2::Automatic, policy)
     }
 
     /// Evaluates exact derivatives with explicit retained-fragment side policy.
     pub fn derivatives_at_side(
         &self,
-        parameter: &Real,
+        parameter: &CurveParameter2,
         max_order: usize,
         side: CurveParameterSide2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveVector2>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.derivatives_at_side_with_policy(parameter, max_order, side, attempt)
+            self.general_derivatives_at_side(parameter, max_order, side, attempt)
         })
+    }
+
+    /// Dispatches represented parameters to the scalar kernel and selected
+    /// parameters to the authored span's algebraic derivative images.
+    fn general_derivatives_at_side(
+        &self,
+        parameter: &CurveParameter2,
+        max_order: usize,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<CurveVector2>> {
+        if let Some(scalar) = parameter.scalar() {
+            return Ok(self
+                .derivatives_at_side_with_policy(scalar, max_order, side, policy)?
+                .into_iter()
+                .map(CurveVector2::represented)
+                .collect());
+        }
+        self.selected_derivatives_at(parameter, max_order, side, policy)
+    }
+
+    fn selected_derivatives_at(
+        &self,
+        parameter: &CurveParameter2,
+        max_order: usize,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<CurveVector2>> {
+        let family = self.family();
+        let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Evaluation, family, cause);
+        let blocked =
+            |reason| ExactCurveError::blocked(CurveOperation2::Evaluation, family, reason);
+        fn decided<T>(value: Classification<T>, family: CurveFamily2) -> ExactCurveResult<T> {
+            match value {
+                Classification::Decided(value) => Ok(value),
+                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+                    CurveOperation2::Evaluation,
+                    family,
+                    reason,
+                )),
+            }
+        }
+        if self.geometry().is_none() {
+            // Generated carriers keep their own selected-root evidence; their
+            // general derivative route is not yet shared here.
+            return Err(blocked(crate::UncertaintyReason::Unsupported));
+        }
+        let fragments =
+            self.native_bezier_fragments_for_operation(policy, CurveOperation2::Evaluation)?;
+        let evaluators =
+            self.rational_evaluators_for_operation(policy, CurveOperation2::Evaluation)?;
+        for (fragment, evaluator) in fragments.iter().zip(evaluators) {
+            let (start, end) = fragment.parameter_range();
+            let start_order = decided(
+                parameter
+                    .cmp_by_refinement(&CurveParameter2::from(start.clone()), policy)
+                    .map_err(invalid)?,
+                family,
+            )?;
+            let end_order = decided(
+                parameter
+                    .cmp_by_refinement(&CurveParameter2::from(end.clone()), policy)
+                    .map_err(invalid)?,
+                family,
+            )?;
+            // A selected root equal to a knot is that represented knot.
+            if start_order.is_eq() {
+                return self.general_derivatives_at_side(
+                    &CurveParameter2::from(start.clone()),
+                    max_order,
+                    side,
+                    policy,
+                );
+            }
+            if end_order.is_eq() {
+                return self.general_derivatives_at_side(
+                    &CurveParameter2::from(end.clone()),
+                    max_order,
+                    side,
+                    policy,
+                );
+            }
+            if !(start_order.is_gt() && end_order.is_lt()) {
+                continue;
+            }
+            let width = end - start;
+            let scale = (Real::one() / &width).map_err(|cause| invalid(cause.into()))?;
+            let offset = -(start * &scale);
+            let local = decided(
+                parameter
+                    .affine_image_unbounded(&scale, &offset, policy)
+                    .map_err(invalid)?,
+                family,
+            )?;
+            let Some(crate::BezierParameter2::Algebraic(local)) = local.as_bezier_parameter()
+            else {
+                return Err(blocked(crate::UncertaintyReason::Unsupported));
+            };
+            let images = decided(
+                evaluator
+                    .derivatives_at_algebraic_parameter(&local, max_order, policy)
+                    .map_err(invalid)?,
+                family,
+            )?;
+            // Chain rule: order k scales by (1 / width)^k.
+            let mut chart_factor = Real::one();
+            let mut vectors = Vec::with_capacity(images.len());
+            for image in &images {
+                chart_factor = &chart_factor * &scale;
+                vectors.push(CurveVector2 {
+                    data: CurveVectorData2::Selected {
+                        vector: crate::BezierAlgebraicTangentVector2::from_image(image),
+                        chart_factor: chart_factor.clone(),
+                    },
+                });
+            }
+            return Ok(vectors);
+        }
+        Err(invalid(CurveError::InvalidBezierParameter))
     }
 
     pub(crate) fn derivatives_at_side_with_policy(
@@ -1424,7 +1614,7 @@ impl Curve2 {
         parameter: &Real,
         max_order: usize,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveVector2>>> {
         self.derivatives_at_wrapped_side(
             parameter,
             max_order,
@@ -1440,9 +1630,13 @@ impl Curve2 {
         max_order: usize,
         side: CurveParameterSide2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Vec<CurveDerivative2>>> {
+    ) -> ExactCurveResult<CurveOutcome<Vec<CurveVector2>>> {
         resolve_certified_operation(policy, |attempt| {
-            self.derivatives_at_wrapped_side_with_policy(parameter, max_order, side, attempt)
+            Ok(self
+                .derivatives_at_wrapped_side_with_policy(parameter, max_order, side, attempt)?
+                .into_iter()
+                .map(CurveVector2::represented)
+                .collect())
         })
     }
 

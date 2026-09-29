@@ -547,14 +547,26 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
     let line = Curve2::from(LineSeg2::try_new(p(0, 0), p(2, 0)).unwrap());
     let line_clone = line.clone();
     let line_derivative = line
-        .derivative_at(&half, &CurveContext::STRICT)
+        .derivative_at(&half.clone().into(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
-    assert_eq!(line_derivative.dx(), &r(2));
-    assert_eq!(line_derivative.dy(), &r(0));
+    assert_eq!(
+        line_derivative
+            .represented_coordinates()
+            .expect("represented derivative")
+            .0,
+        &r(2)
+    );
+    assert_eq!(
+        line_derivative
+            .represented_coordinates()
+            .expect("represented derivative")
+            .1,
+        &r(0)
+    );
     assert_eq!(
         line_clone
-            .derivative_at(&half, &CurveContext::STRICT)
+            .derivative_at(&half.clone().into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         line_derivative
@@ -562,11 +574,23 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
 
     let quadratic = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 2), p(2, 0)));
     let quadratic_derivative = quadratic
-        .derivative_at(&half, &CurveContext::STRICT)
+        .derivative_at(&half.clone().into(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
-    assert_eq!(quadratic_derivative.dx(), &r(2));
-    assert_eq!(quadratic_derivative.dy(), &r(0));
+    assert_eq!(
+        quadratic_derivative
+            .represented_coordinates()
+            .expect("represented derivative")
+            .0,
+        &r(2)
+    );
+    assert_eq!(
+        quadratic_derivative
+            .represented_coordinates()
+            .expect("represented derivative")
+            .1,
+        &r(0)
+    );
 
     let spline = Curve2::try_polynomial_bspline(
         2,
@@ -580,21 +604,35 @@ fn top_level_curve_derivatives_preserve_parameter_domains_and_share_evaluators()
         panic!("top-level polynomial constructor returned another family");
     };
     let spline_derivative = spline
-        .derivative_at(&r(1), &CurveContext::STRICT)
+        .derivative_at(&r(1).into(), &CurveContext::STRICT)
         .unwrap()
         .into_value();
-    assert_eq!(spline_derivative.dx(), &r(1));
-    assert_eq!(spline_derivative.dy(), &r(0));
     assert_eq!(
-        retained_spline
-            .derivative_at(&r(1), &CurveContext::STRICT)
-            .unwrap()
-            .into_value(),
+        spline_derivative
+            .represented_coordinates()
+            .expect("represented derivative")
+            .0,
+        &r(1)
+    );
+    assert_eq!(
+        spline_derivative
+            .represented_coordinates()
+            .expect("represented derivative")
+            .1,
+        &r(0)
+    );
+    assert_eq!(
+        hypercurve::CurveVector2::from(
+            retained_spline
+                .derivative_at(&r(1), &CurveContext::STRICT)
+                .unwrap()
+                .into_value()
+        ),
         spline_derivative
     );
     assert_eq!(
         spline
-            .derivative_at(&r(1), &CurveContext::STRICT)
+            .derivative_at(&r(1).into(), &CurveContext::STRICT)
             .unwrap()
             .into_value(),
         spline_derivative
@@ -609,14 +647,32 @@ fn top_level_curve_exposes_exact_higher_derivatives() {
     let half = (r(1) / r(2)).unwrap();
 
     let derivatives = curve
-        .derivatives_at(&half, 3, &CurveContext::STRICT)
+        .derivatives_at(&half.clone().into(), 3, &CurveContext::STRICT)
         .unwrap()
         .into_value();
 
     assert_eq!(derivatives.len(), 3);
-    assert_eq!(derivatives[0].dx(), &r(3));
-    assert_eq!(derivatives[1].dx(), &r(-6));
-    assert_eq!(derivatives[2].dx(), &r(18));
+    assert_eq!(
+        derivatives[0]
+            .represented_coordinates()
+            .expect("represented derivative")
+            .0,
+        &r(3)
+    );
+    assert_eq!(
+        derivatives[1]
+            .represented_coordinates()
+            .expect("represented derivative")
+            .0,
+        &r(-6)
+    );
+    assert_eq!(
+        derivatives[2]
+            .represented_coordinates()
+            .expect("represented derivative")
+            .0,
+        &r(18)
+    );
 }
 #[test]
 fn mixed_curve_path_fillet_accepts_every_non_arc_family_pair() {
@@ -4019,5 +4075,76 @@ candidates.pop().unwrap()
         };
         prop_assert_eq!(retained.center(), &p(source_radius, 0));
         prop_assert_eq!(retained.end(), &p(source_radius, source_radius));
+    }
+}
+
+#[test]
+fn derivatives_at_selected_parameters_stay_exact() {
+    use hypercurve::{
+        Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+        BezierParameterPolynomial, Classification, CurveParameter2, RealSign,
+    };
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("{reason:?}"),
+        }
+    }
+    let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        // The positive root of scale*t^2 - constant in [lower, upper].
+        let root = |scale: i64, constant: i64, lower: Real, upper: Real| {
+            let polynomial = decided(
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![Real::from(-constant), Real::zero(), Real::from(scale)],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval =
+                decided(BezierParameterInterval::try_new(lower, upper, &policy).unwrap());
+            CurveParameter2::from(BezierParameter2::Algebraic(decided(
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+            )))
+        };
+        let signs = |curve: &Curve2, parameter: &CurveParameter2| {
+            let derivative = curve
+                .derivative_at(parameter, &policy)
+                .unwrap()
+                .into_value();
+            assert!(derivative.represented_coordinates().is_none());
+            [Axis2::X, Axis2::Y]
+                .map(|axis| decided(derivative.coordinate_sign(axis, &policy).unwrap()))
+        };
+        let sqrt_half = root(2, 1, q(2, 3), q(3, 4));
+
+        // P(t) = (2t, 4t^2), so P'(t) = (2, 8t).
+        let parabola = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 4)));
+        assert_eq!(
+            signs(&parabola, &sqrt_half),
+            [RealSign::Positive, RealSign::Positive]
+        );
+        // P(t) = (2t, 2t - 2t^2), so P'(t) = (2, 2 - 4t) and 2 - 2*sqrt(2) < 0.
+        let arch = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0)));
+        assert_eq!(
+            signs(&arch, &sqrt_half),
+            [RealSign::Positive, RealSign::Negative]
+        );
+
+        // The same arch on knot domain [0, 2]: the chart factor 1/2 is exact,
+        // and s = sqrt(2) maps to the local root sqrt(1/2).
+        let spline = Curve2::try_polynomial_bspline(
+            2,
+            vec![p(0, 0), p(1, 1), p(2, 0)],
+            [0, 0, 0, 2, 2, 2].map(Real::from).to_vec(),
+            &policy,
+        )
+        .unwrap()
+        .into_value();
+        let sqrt_two = root(1, 2, q(4, 3), q(3, 2));
+        assert_eq!(
+            signs(&spline, &sqrt_two),
+            [RealSign::Positive, RealSign::Negative]
+        );
     }
 }

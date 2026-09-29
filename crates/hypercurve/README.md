@@ -238,7 +238,13 @@ exact signatures.
   point as `CurveLocation2` values, one per visit and one per continuous
   spline seam, or `EntireCurve` for a constant curve. Authored spans reuse
   their cached rational evaluators; generated parallels, chords, and selected
-  circles use their own incidence authorities on their retained ranges. Exact
+  circles use their own incidence authorities on their retained ranges.
+  `point_at` and `derivative_at` take general `CurveParameter2` values.
+  Derivatives are `CurveVector2`: represented coordinates when the parameter
+  is a plain real, otherwise a selected-field vector with an exact chart
+  factor whose coordinate signs are decided without rounding. Selected
+  parameters are supported on authored spans; generated carriers report an
+  explicit unsupported blocker there. Exact
   region trimming returns reusable `Curve2` pieces from authored and generated
   supports. The parameter-retaining form reports their oriented source
   locations as `CurveLocation2`, exact parameter ranges and boundary contacts.

@@ -637,15 +637,19 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
     let top_level = Curve2::from(curve);
     assert!(
         top_level
-            .derivative_at(&r(1), &CurveContext::STRICT)
+            .derivative_at(&r(1).into(), &CurveContext::STRICT)
             .is_err()
     );
     assert_eq!(
         top_level
-            .derivative_at_side(&r(1), CurveParameterSide2::Right, &CurveContext::STRICT)
+            .derivative_at_side(
+                &r(1).into(),
+                CurveParameterSide2::Right,
+                &CurveContext::STRICT
+            )
             .unwrap()
             .into_value(),
-        right
+        hypercurve::CurveVector2::from(right)
     );
 }
 
@@ -2152,10 +2156,26 @@ fn spline_parameter_search_preserves_every_discontinuous_knot_side() {
                     point.value.coordinates(),
                     Some(&Point2::new(r(2 * i) + &local_x, r(0)))
                 );
-                let derivative = curve.derivative_at(&parameter, &policy).unwrap();
+                let derivative = curve
+                    .derivative_at(&parameter.clone().into(), &policy)
+                    .unwrap();
                 assert_eq!(derivative.certainty, hypercurve::CurveCertainty::Certified);
-                assert_eq!(derivative.value.dx(), &(&local_dx / &width).unwrap());
-                assert_eq!(derivative.value.dy(), &r(0));
+                assert_eq!(
+                    derivative
+                        .value
+                        .represented_coordinates()
+                        .expect("represented derivative")
+                        .0,
+                    &(&local_dx / &width).unwrap()
+                );
+                assert_eq!(
+                    derivative
+                        .value
+                        .represented_coordinates()
+                        .expect("represented derivative")
+                        .1,
+                    &r(0)
+                );
             }
             for i in 0..=SPANS {
                 let parameter = r(i * i).into();

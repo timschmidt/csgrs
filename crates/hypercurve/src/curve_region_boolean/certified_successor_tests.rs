@@ -4802,13 +4802,24 @@ fn finite_self_crossing_regions_retain_boundary_ownership_on_reentry() {
                                     }
                                     checked += 1;
                                     let tangent = certified(
-                                        curve.derivative_at(&parameter, &policy).unwrap(),
+                                        curve
+                                            .derivative_at(&parameter.clone().into(), &policy)
+                                            .unwrap(),
                                     );
                                     for sample_left in [false, true] {
                                         let step = if sample_left { q(1, 128) } else { q(-1, 128) };
                                         let sample = Point2::new(
-                                            Real::from(-1) - &step * tangent.dy(),
-                                            &step * tangent.dx(),
+                                            Real::from(-1)
+                                                - &step
+                                                    * tangent
+                                                        .represented_coordinates()
+                                                        .expect("represented derivative")
+                                                        .1,
+                                            &step
+                                                * tangent
+                                                    .represented_coordinates()
+                                                    .expect("represented derivative")
+                                                    .0,
                                         );
                                         let expected = if sample_left == left {
                                             RegionPointLocation::Inside
