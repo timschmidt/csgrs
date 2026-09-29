@@ -22899,9 +22899,12 @@ mod tests {
                         )
                 });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
+                // The collapsed circle leaves its contact free; the other
+                // contact meets the known center only at the excluded corner
+                // endpoint, which does not prove that the inserted arc collapses.
                 assert_eq!(
                     (result.value).no_solution_reason(),
-                    Some(crate::CurveCornerNoSolution2::DegenerateCandidate,)
+                    Some(crate::CurveCornerNoSolution2::OutsideTrimDomain)
                 );
             }
         }
@@ -22949,23 +22952,25 @@ mod tests {
                     reversed,
                 );
                 let corner = selected_circle_rational_arc_corner(&region);
-                let result = region
-                    .fillet_loop_vertex(
-                        0,
-                        corner,
-                        &crate::CurveFillet2::new(Real::one()),
-                        CurveCornerMode2::TrimOnly,
-                        &policy,
-                    )
-                    .unwrap_or_else(|error| {
-                        panic!(
-                            "concentric collapsed offsets must preserve their common center: policy={policy:?}, reversed={reversed}, error={error:?}"
-                        )
-                    });
-                assert_eq!(result.certainty, CurveCertainty::Certified);
-                assert_eq!(
-                    (result.value).no_solution_reason(),
-                    Some(crate::CurveCornerNoSolution2::DegenerateCandidate,)
+                // Both offsets collapse to the common center, so every contact
+                // on the shared circle is admissible: the family needs an
+                // exact contact constraint rather than an arbitrary choice.
+                let result = region.fillet_loop_vertex(
+                    0,
+                    corner,
+                    &crate::CurveFillet2::new(Real::one()),
+                    CurveCornerMode2::TrimOnly,
+                    &policy,
+                );
+                assert!(
+                    matches!(
+                        result,
+                        Err(crate::ExactCurveError::Invalid {
+                            cause: CurveError::FilletConstraintRequired,
+                            ..
+                        })
+                    ),
+                    "policy={policy:?}, reversed={reversed}, result={result:?}"
                 );
             }
         }
@@ -23148,9 +23153,12 @@ mod tests {
                         )
                     });
                 assert_eq!(result.certainty, CurveCertainty::Certified);
+                // The collapsed circle leaves its contact free; the other
+                // contact meets the known center only at the excluded corner
+                // endpoint, which does not prove that the inserted arc collapses.
                 assert_eq!(
                     (result.value).no_solution_reason(),
-                    Some(crate::CurveCornerNoSolution2::DegenerateCandidate,)
+                    Some(crate::CurveCornerNoSolution2::OutsideTrimDomain)
                 );
             }
         }

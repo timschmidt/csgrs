@@ -5334,7 +5334,10 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             self.cmp_bezier_parameter_uncached(other, attempt)
         });
         let order = outcome.value?;
+        // An exact fiber root already is the native representation; only
+        // proofs for otherwise unrepresented roots are worth retaining.
         if order == Classification::Decided(std::cmp::Ordering::Equal)
+            && self.represented_value().is_none()
             && outcome.certainty == crate::CurveCertainty::Certified
             && policy
                 .strict_counterpart()
