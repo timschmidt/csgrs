@@ -5,11 +5,11 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, BezierLineImageFitRelation, BezierSubcurve2, BooleanOp, Classification, Contour2,
-    ContourPointLocation, Curve2, CurveContext, CurvePath2, CurveRegion2,
-    CurveRegionBoundaryContact2, CurveRegionBoundaryKind2, CurveRegionLoopRole, ExactCurveError,
-    FillRule, LineArcIntersection, LineLineIntersection, LineSeg2, RationalBezier2,
-    RationalQuadraticBezier2, RegionPointLocation, Segment2, UncertaintyReason,
+    Aabb2, BezierLineImageFitRelation, BooleanOp, Classification, Contour2, ContourPointLocation,
+    Curve2, CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, CurveRegionBoundaryContact2,
+    CurveRegionBoundaryKind2, CurveRegionLoopRole, ExactCurveError, FillRule, LineArcIntersection,
+    LineLineIntersection, LineSeg2, RationalBezier2, RationalQuadraticBezier2, RegionPointLocation,
+    Segment2, UncertaintyReason,
 };
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 
@@ -3244,7 +3244,7 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
                     Err(error) => return Err(GeometryError::from(error).into()),
                 };
                 for span in spans {
-                    let Some(line) = lift_planar_line_image(plane, span.curve())? else {
+                    let Some(line) = lift_planar_line_image(plane, &span.curve())? else {
                         return Ok(None);
                     };
                     traces.push(line);
@@ -3256,7 +3256,7 @@ pub(crate) fn contained_face_boundary_traces_on_plane(
                 .map_err(GeometryError::from)?
                 .into_value()
             {
-                let Some(line) = lift_planar_line_image(plane, fragment.curve())? else {
+                let Some(line) = lift_planar_line_image(plane, &fragment.curve())? else {
                     return Ok(None);
                 };
                 traces.push(line);
@@ -3494,22 +3494,23 @@ fn concatenate_closed_contained_spline_trace(
             .into_value()
         {
             let rational = match fragment.curve() {
-                BezierSubcurve2::Quadratic(curve) => RationalBezier2::try_new(
+                CurveGeometry2::QuadraticBezier(curve) => RationalBezier2::try_new(
                     curve.control_points().into_iter().cloned().collect(),
                     vec![Real::one(); 3],
                 )
                 .map_err(GeometryError::from)?,
-                BezierSubcurve2::Cubic(curve) => RationalBezier2::try_new(
+                CurveGeometry2::CubicBezier(curve) => RationalBezier2::try_new(
                     curve.control_points().into_iter().cloned().collect(),
                     vec![Real::one(); 4],
                 )
                 .map_err(GeometryError::from)?,
-                BezierSubcurve2::RationalQuadratic(curve) => RationalBezier2::try_new(
+                CurveGeometry2::RationalQuadraticBezier(curve) => RationalBezier2::try_new(
                     curve.control_points().into_iter().cloned().collect(),
                     curve.weights().into_iter().cloned().collect(),
                 )
                 .map_err(GeometryError::from)?,
-                BezierSubcurve2::Rational(curve) => curve.clone(),
+                CurveGeometry2::RationalBezier(curve) => curve,
+                _ => return Ok(None),
             };
             spans.push(rational);
         }
@@ -3621,15 +3622,20 @@ fn push_contained_face_curve_fragments(
 
 fn lift_planar_line_image(
     surface: &Surface,
-    curve: &BezierSubcurve2,
+    curve: &CurveGeometry2,
 ) -> Result<Option<Curve3>, GeometryError> {
     let relation = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.fit_exact_line_image(&CurveContext::STRICT)?,
-        BezierSubcurve2::Cubic(curve) => curve.fit_exact_line_image(&CurveContext::STRICT)?,
-        BezierSubcurve2::RationalQuadratic(curve) => {
+        CurveGeometry2::QuadraticBezier(curve) => {
             curve.fit_exact_line_image(&CurveContext::STRICT)?
         }
-        BezierSubcurve2::Rational(curve) => curve.fit_exact_line_image(&CurveContext::STRICT)?,
+        CurveGeometry2::CubicBezier(curve) => curve.fit_exact_line_image(&CurveContext::STRICT)?,
+        CurveGeometry2::RationalQuadraticBezier(curve) => {
+            curve.fit_exact_line_image(&CurveContext::STRICT)?
+        }
+        CurveGeometry2::RationalBezier(curve) => {
+            curve.fit_exact_line_image(&CurveContext::STRICT)?
+        }
+        _ => return Ok(None),
     };
     let Classification::Decided(BezierLineImageFitRelation::Fit(fit)) = relation else {
         return Ok(None);
@@ -6496,7 +6502,7 @@ fn trim_conic_to_planar_face(
             };
             retained_fragments.push(
                 SurfaceIntersectionCurve::on_single_plane(
-                    lift_planar_bezier(surface, span.curve())?,
+                    lift_planar_bezier(surface, &span.curve())?,
                     surface,
                     operand,
                 )?
@@ -6653,27 +6659,28 @@ fn ellipse_arc_point(
     Ok(data.center.clone() + data.x.clone() * x_scale + data.y.clone() * y_scale)
 }
 
-fn lift_planar_bezier(surface: &Surface, curve: &BezierSubcurve2) -> Result<Curve3, GeometryError> {
+fn lift_planar_bezier(surface: &Surface, curve: &CurveGeometry2) -> Result<Curve3, GeometryError> {
     let (points, weights): (Vec<_>, Vec<_>) = match curve {
-        BezierSubcurve2::Quadratic(curve) => (
+        CurveGeometry2::QuadraticBezier(curve) => (
             curve.control_points().into_iter().cloned().collect(),
             vec![Real::one(); 3],
         ),
-        BezierSubcurve2::Cubic(curve) => (
+        CurveGeometry2::CubicBezier(curve) => (
             curve.control_points().into_iter().cloned().collect(),
             vec![Real::one(); 4],
         ),
-        BezierSubcurve2::RationalQuadratic(curve) => (
+        CurveGeometry2::RationalQuadraticBezier(curve) => (
             curve.control_points().into_iter().cloned().collect(),
             curve.weights().into_iter().cloned().collect(),
         ),
-        BezierSubcurve2::Rational(curve) => (
+        CurveGeometry2::RationalBezier(curve) => (
             curve
                 .affine_control_points()
                 .ok_or(GeometryError::UnsupportedIntersection)?
                 .to_vec(),
             curve.weights().to_vec(),
         ),
+        _ => return Err(GeometryError::UnsupportedIntersection),
     };
     let points = points
         .into_iter()

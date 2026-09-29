@@ -4,9 +4,9 @@ use std::collections::HashMap;
 use std::fmt;
 
 use hypercurve::{
-    Aabb2, BezierSubcurve2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2,
-    CurveContext, CurveGeometry2, CurvePath2, CurveRegion2, LineSeg2, Point2 as CurvePoint2,
-    RationalBezier2, Segment2,
+    Aabb2, CircularArc2, Classification, Contour2, ContourPointLocation, Curve2, CurveContext,
+    CurveGeometry2, CurvePath2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2,
+    Segment2,
 };
 use hyperlattice::{Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
@@ -3587,23 +3587,24 @@ fn validate_planar_path_nesting(
     Ok(())
 }
 
-fn persistent_rational_bezier(curve: &BezierSubcurve2) -> Result<Curve2, ConstructionError> {
+fn persistent_rational_bezier(curve: &CurveGeometry2) -> Result<Curve2, ConstructionError> {
     let (control_points, weights) = match curve {
-        BezierSubcurve2::Quadratic(curve) => (
+        CurveGeometry2::QuadraticBezier(curve) => (
             curve.control_points().into_iter().cloned().collect(),
             vec![Real::one(); 3],
         ),
-        BezierSubcurve2::Cubic(curve) => (
+        CurveGeometry2::CubicBezier(curve) => (
             curve.control_points().into_iter().cloned().collect(),
             vec![Real::one(); 4],
         ),
         // Preserve the native conic family and its lineage certificate.
         // Promoting this to a general rational Bezier discards the family
         // distinction that strict downstream topology predicates consume.
-        BezierSubcurve2::RationalQuadratic(curve) => {
+        CurveGeometry2::RationalQuadraticBezier(curve) => {
             return Ok(Curve2::from(curve.clone()));
         }
-        BezierSubcurve2::Rational(curve) => return Ok(Curve2::from(curve.clone())),
+        CurveGeometry2::RationalBezier(curve) => return Ok(Curve2::from(curve.clone())),
+        other => return Ok(Curve2::new(other.clone())),
     };
     RationalBezier2::try_new(control_points, weights)
         .map(Curve2::from)
@@ -3638,18 +3639,20 @@ fn persistent_planar_curves(curves: &[Curve2]) -> Result<Vec<Curve2>, Constructi
                     .map_err(GeometryError::from)?
                     .into_value()
                 {
-                    persistent.push(persistent_rational_bezier(fragment.curve())?);
+                    persistent.push(persistent_rational_bezier(&fragment.curve())?);
                 }
             }
             Some(CurveGeometry2::QuadraticBezier(curve)) => persistent.push(
-                persistent_rational_bezier(&BezierSubcurve2::Quadratic(curve.clone()))?,
+                persistent_rational_bezier(&CurveGeometry2::QuadraticBezier(curve.clone()))?,
             ),
             Some(CurveGeometry2::CubicBezier(curve)) => persistent.push(
-                persistent_rational_bezier(&BezierSubcurve2::Cubic(curve.clone()))?,
+                persistent_rational_bezier(&CurveGeometry2::CubicBezier(curve.clone()))?,
             ),
-            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => persistent.push(
-                persistent_rational_bezier(&BezierSubcurve2::RationalQuadratic(curve.clone()))?,
-            ),
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
+                persistent.push(persistent_rational_bezier(
+                    &CurveGeometry2::RationalQuadraticBezier(curve.clone()),
+                )?)
+            }
         }
     }
     Ok(persistent)
@@ -3678,14 +3681,16 @@ fn persistent_extrusion_path_curves(path: &CurvePath2) -> Result<Vec<Curve2>, Co
                 );
             }
             Some(CurveGeometry2::QuadraticBezier(curve)) => persistent.push(
-                persistent_rational_bezier(&BezierSubcurve2::Quadratic(curve.clone()))?,
+                persistent_rational_bezier(&CurveGeometry2::QuadraticBezier(curve.clone()))?,
             ),
             Some(CurveGeometry2::CubicBezier(curve)) => persistent.push(
-                persistent_rational_bezier(&BezierSubcurve2::Cubic(curve.clone()))?,
+                persistent_rational_bezier(&CurveGeometry2::CubicBezier(curve.clone()))?,
             ),
-            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => persistent.push(
-                persistent_rational_bezier(&BezierSubcurve2::RationalQuadratic(curve.clone()))?,
-            ),
+            Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
+                persistent.push(persistent_rational_bezier(
+                    &CurveGeometry2::RationalQuadraticBezier(curve.clone()),
+                )?)
+            }
         }
     }
     Ok(persistent)
