@@ -22,6 +22,24 @@ fn q(numerator: i32, denominator: i32) -> Real {
     (s(numerator) / s(denominator)).expect("nonzero benchmark denominator")
 }
 
+/// Retains an analytic parallel over its unit source range as a general curve.
+fn unit_parallel_curve(parallel: &hypercurve::BezierParallel2) -> CurveResult<Curve2> {
+    let Classification::Decided(range) = BezierParameterRange2::try_new(
+        BezierParameter2::Exact(Real::zero()),
+        BezierParameter2::Exact(Real::one()),
+        &CurveContext::STRICT,
+    )?
+    else {
+        panic!("the unit benchmark range must be decided");
+    };
+    let Classification::Decided(curve) =
+        Curve2::try_analytic_parallel(parallel.clone(), range, &CurveContext::STRICT)?
+    else {
+        panic!("the benchmark parallel must be decided");
+    };
+    Ok(curve)
+}
+
 fn bench_line_offset(iterations: u32) -> CurveResult<()> {
     let line = LineSeg2::try_new(p(0, 0), p(3, 4))?;
     let started = Instant::now();
@@ -237,14 +255,15 @@ fn bench_bezier_parallel_intersections(
         candidate_elapsed / iterations
     );
 
+    let parallel_curve = unit_parallel_curve(parallel)?;
+    let other_curve = Curve2::from(other.clone());
     let started = Instant::now();
     let mut contact_count = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(contacts) =
-            parallel.intersections(black_box(other), black_box(&policy))?
-        else {
-            panic!("{name} contact replay became uncertain");
-        };
+        let contacts = parallel_curve
+            .intersect_curve(black_box(&other_curve), black_box(&policy))
+            .expect("the benchmark contact replay must remain exact")
+            .value;
         contact_count += black_box(
             contacts.contacts().len()
                 + contacts.overlaps().len()
@@ -289,14 +308,15 @@ fn bench_bezier_parallel_pair_intersections(
         candidate_elapsed / iterations
     );
 
+    let first_curve = unit_parallel_curve(first)?;
+    let second_curve = unit_parallel_curve(second)?;
     let started = Instant::now();
     let mut contact_count = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(contacts) =
-            first.parallel_intersections(black_box(second), black_box(&policy))?
-        else {
-            panic!("{name} contact replay became uncertain");
-        };
+        let contacts = first_curve
+            .intersect_curve(black_box(&second_curve), black_box(&policy))
+            .expect("the benchmark contact replay must remain exact")
+            .value;
         contact_count += black_box(
             contacts.contacts().len()
                 + contacts.overlaps().len()
@@ -490,19 +510,20 @@ fn bench_bezier_parallel_boundary_parameter_fiber(iterations: u32) -> CurveResul
         candidate_elapsed / iterations
     );
 
+    let parallel_curve = unit_parallel_curve(&parallel)?;
+    let constant_curve = Curve2::from(constant.clone());
     let started = Instant::now();
     let mut contact_count = 0_usize;
     for _ in 0..iterations {
-        let Classification::Decided(contacts) =
-            parallel.intersections(black_box(&constant), black_box(&policy))?
-        else {
-            panic!("boundary parameter-fiber contact replay became uncertain");
-        };
+        let contacts = parallel_curve
+            .intersect_curve(black_box(&constant_curve), black_box(&policy))
+            .expect("the boundary parameter-fiber replay must remain exact")
+            .value;
         contact_count += black_box(
             contacts.contacts().len()
                 + contacts.overlaps().len()
                 + usize::from(!contacts.is_complete())
-                + usize::from(!contacts.is_empty()),
+                + usize::from(!contacts.is_disjoint()),
         );
     }
     let contact_elapsed = started.elapsed();
@@ -671,11 +692,13 @@ fn bench_bezier_parallel_intersection_lanes() -> CurveResult<()> {
     let mut cold_checksum = 0_usize;
     for _ in 0..cold_iterations {
         let cold_parallel = ph_overlap_source.clone().parallel_left(s(1))?;
-        let Classification::Decided(contacts) =
-            cold_parallel.intersections(black_box(&ph_overlap_target), &CurveContext::STRICT)?
-        else {
-            panic!("cold PH overlap replay became uncertain");
-        };
+        let contacts = unit_parallel_curve(&cold_parallel)?
+            .intersect_curve(
+                black_box(&Curve2::from(ph_overlap_target.clone())),
+                &CurveContext::STRICT,
+            )
+            .expect("the cold PH overlap replay must remain exact")
+            .value;
         cold_checksum += black_box(
             (contacts.is_complete()
                 && contacts.contacts().is_empty()

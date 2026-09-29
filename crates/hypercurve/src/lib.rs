@@ -62,6 +62,8 @@ mod native_region_tests;
 mod nurbs;
 mod nurbs_interpolation;
 mod offset;
+#[cfg(test)]
+mod parallel_kernel_tests;
 mod point;
 mod policy;
 mod polynomial_spline;
@@ -118,14 +120,15 @@ pub(crate) use bezier_offset::{
 };
 pub use bezier_offset::{
     BezierAlgebraicCuspSemicircleFragment2, BezierParallel2, BezierParallelApproximationCurve2,
-    BezierParallelIncidence2, BezierParallelIntersectionContact2,
-    BezierParallelIntersectionParameterComponent2, BezierParallelIntersectionSet2,
-    BezierParallelPairIntersectionContact2, BezierParallelPairIntersectionParameterComponent2,
-    BezierParallelPairIntersectionSet2, BezierParallelSingularityAnalysis2, BezierParallelSource2,
-    BezierParallelVerificationOptions, Blend2dCubicQuadraticReduction2,
-    Blend2dQuadraticOffsetCandidate2, CertifiedBezierParallelApproximation2,
-    CertifiedBezierParallelPath2, CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
+    BezierParallelSingularityAnalysis2, BezierParallelSource2, BezierParallelVerificationOptions,
+    Blend2dCubicQuadraticReduction2, Blend2dQuadraticOffsetCandidate2,
+    CertifiedBezierParallelApproximation2, CertifiedBezierParallelPath2,
+    CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
     CertifiedPythagoreanHodographOffset2, LevienCubicOffsetCandidate2,
+};
+pub(crate) use bezier_offset::{
+    BezierParallelIncidence2,
+    BezierParallelPairIntersectionSet2,
 };
 pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,

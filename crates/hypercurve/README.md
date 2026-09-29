@@ -190,9 +190,9 @@ exact signatures.
   unified `CurveRegion2` engine below.
 - `BezierParallel2::{from_source, source, distance, point_at, derivative_at,
   reversed, split_at_exact, subcurve_between_exact, conservative_bounds,
-  transform_similarity, point_incidence, supporting_line_incidence,
-  intersections, parallel_intersection_candidates, parallel_intersections}`
-  is the compact exact procedural parallel carrier. General parallel pairs use
+  transform_similarity}` is the compact exact procedural parallel carrier.
+  Incidence and intersection go through `Curve2::try_analytic_parallel`,
+  `Curve2::point_locations`, and `Curve2::intersect_curve`. General parallel pairs use
   complete polynomial projections, exact common-component saturation,
   selected normal and tangent-degeneracy predicates, refined tensor-Bernstein
   rejection, and preconditioned Poincare-Miranda box replay. Exact source

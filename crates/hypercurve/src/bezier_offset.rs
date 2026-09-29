@@ -110629,7 +110629,7 @@ fn reduce_algebraic_cusp_radical_expression(
 
 /// Complete exact parameter evidence for incidence on an analytic parallel.
 #[derive(Clone, Debug, PartialEq)]
-pub enum BezierParallelIncidence2 {
+pub(crate) enum BezierParallelIncidence2 {
     /// Every defined parameter satisfies the incidence query.
     EntireCurve,
     /// The complete ordered set of represented or isolated algebraic parameters.
@@ -110645,7 +110645,7 @@ pub enum BezierParallelIncidence2 {
 /// Selected component boundaries retain their local field and source map;
 /// they do not require reconstruction as standalone polynomial roots.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierParallelPairIntersectionContact2 {
+pub(crate) struct BezierParallelPairIntersectionContact2 {
     first_parameter: CurveParameter2,
     second_parameter: CurveParameter2,
     certified_transverse: bool,
@@ -110691,7 +110691,7 @@ impl BezierParallelPairIntersectionContact2 {
 /// A missing parameter means that the complete queried domain of that
 /// operand belongs to this component. At least one parameter is missing.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierParallelPairIntersectionParameterComponent2 {
+pub(crate) struct BezierParallelPairIntersectionParameterComponent2 {
     first_parameter: Option<BezierParameter2>,
     second_parameter: Option<BezierParameter2>,
     point: crate::CurvePoint2,
@@ -110712,11 +110712,6 @@ impl BezierParallelPairIntersectionParameterComponent2 {
     pub const fn point(&self) -> &crate::CurvePoint2 {
         &self.point
     }
-
-    /// Returns whether the whole authored parameter square forms the component.
-    pub const fn is_entire_parameter_square(&self) -> bool {
-        self.first_parameter.is_none() && self.second_parameter.is_none()
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -110734,7 +110729,7 @@ enum BezierParallelPairIntersectionSupplement2 {
 /// pointer. Rare point-image components and incomplete elimination evidence
 /// share that optional allocation.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierParallelPairIntersectionSet2 {
+pub(crate) struct BezierParallelPairIntersectionSet2 {
     contacts: Arc<[BezierParallelPairIntersectionContact2]>,
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
     supplement: Option<Arc<BezierParallelPairIntersectionSupplement2>>,
@@ -110872,6 +110867,14 @@ pub(crate) fn rational_pair_intersections_on_ranges(
 }
 
 impl BezierParallelPairIntersectionSet2 {
+    #[cfg(test)]
+    pub(crate) fn is_empty(&self) -> bool {
+        self.is_complete()
+            && self.contacts.is_empty()
+            && self.overlaps.is_empty()
+            && self.parameter_components().is_empty()
+    }
+
     fn complete(
         contacts: Arc<[BezierParallelPairIntersectionContact2]>,
         overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
@@ -110969,14 +110972,6 @@ impl BezierParallelPairIntersectionSet2 {
             Some(BezierParallelPairIntersectionSupplement2::Complete { .. }) | None => None,
         }
     }
-
-    /// Returns whether a complete result proves the finite images disjoint.
-    pub fn is_empty(&self) -> bool {
-        self.is_complete()
-            && self.contacts.is_empty()
-            && self.overlaps.is_empty()
-            && self.parameter_components().is_empty()
-    }
 }
 
 struct BezierParallelIntersectionCandidateSystem2 {
@@ -111023,7 +111018,7 @@ impl BezierParallelIntersectionCandidateSystem2 {
 
 /// One exactly replayed contact between an analytic parallel and a rational Bezier.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierParallelIntersectionContact2 {
+pub(crate) struct BezierParallelIntersectionContact2 {
     parallel_parameter: BezierParameter2,
     other_parameter: BezierParameter2,
     point: crate::CurvePoint2,
@@ -111033,6 +111028,11 @@ pub struct BezierParallelIntersectionContact2 {
 }
 
 impl BezierParallelIntersectionContact2 {
+    #[cfg(test)]
+    pub(crate) const fn tangent_dot_sign(&self) -> Option<RealSign> {
+        self.tangent_dot_sign
+    }
+
     /// Returns the exact parameter on the analytic parallel.
     pub const fn parallel_parameter(&self) -> &BezierParameter2 {
         &self.parallel_parameter
@@ -111058,17 +111058,6 @@ impl BezierParallelIntersectionContact2 {
     pub const fn tangent_cross_sign(&self) -> Option<RealSign> {
         self.tangent_cross_sign
     }
-
-    /// Returns the certified sign of the analytic-parallel tangent dotted
-    /// with the rational-curve tangent, when exact replay decided it.
-    ///
-    /// Together with [`Self::tangent_cross_sign`], this preserves the complete
-    /// oriented tangent relation at a contact. In particular, a zero cross
-    /// product can still distinguish equal from opposite tangent directions
-    /// without evaluating either selected algebraic parameter approximately.
-    pub const fn tangent_dot_sign(&self) -> Option<RealSign> {
-        self.tangent_dot_sign
-    }
 }
 
 /// One exact positive-dimensional parameter component with zero-dimensional image.
@@ -111078,13 +111067,18 @@ impl BezierParallelIntersectionContact2 {
 /// keeps collapsed or constant curves out of positive-length overlap evidence
 /// while retaining their complete parameter solution set.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierParallelIntersectionParameterComponent2 {
+pub(crate) struct BezierParallelIntersectionParameterComponent2 {
     parallel_parameter: Option<BezierParameter2>,
     other_parameter: Option<BezierParameter2>,
     point: crate::CurvePoint2,
 }
 
 impl BezierParallelIntersectionParameterComponent2 {
+    #[cfg(test)]
+    pub(crate) const fn is_entire_parameter_square(&self) -> bool {
+        self.parallel_parameter.is_none() && self.other_parameter.is_none()
+    }
+
     fn fixed_parallel_parameter(parallel_parameter: BezierParameter2, point: Point2) -> Self {
         Self {
             parallel_parameter: Some(parallel_parameter),
@@ -111125,11 +111119,6 @@ impl BezierParallelIntersectionParameterComponent2 {
     pub const fn point(&self) -> &crate::CurvePoint2 {
         &self.point
     }
-
-    /// Returns whether both complete authored parameter domains form the component.
-    pub const fn is_entire_parameter_square(&self) -> bool {
-        self.parallel_parameter.is_none() && self.other_parameter.is_none()
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -111148,13 +111137,21 @@ enum BezierParallelIntersectionSupplement2 {
 /// parameter-component or incomplete-replay payload shares the existing
 /// optional pointer, so the common result representation does not grow.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierParallelIntersectionSet2 {
+pub(crate) struct BezierParallelIntersectionSet2 {
     contacts: Arc<[BezierParallelIntersectionContact2]>,
     overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
     supplement: Option<Arc<BezierParallelIntersectionSupplement2>>,
 }
 
 impl BezierParallelIntersectionSet2 {
+    #[cfg(test)]
+    pub(crate) fn is_empty(&self) -> bool {
+        self.is_complete()
+            && self.contacts.is_empty()
+            && self.overlaps.is_empty()
+            && self.parameter_components().is_empty()
+    }
+
     fn complete(
         contacts: Arc<[BezierParallelIntersectionContact2]>,
         overlaps: Arc<[RationalBezierIntersectionOverlap2]>,
@@ -111253,14 +111250,6 @@ impl BezierParallelIntersectionSet2 {
             Some(BezierParallelIntersectionSupplement2::Incomplete(candidates)) => Some(candidates),
             Some(BezierParallelIntersectionSupplement2::Complete { .. }) | None => None,
         }
-    }
-
-    /// Returns whether a complete result proves the two finite images disjoint.
-    pub fn is_empty(&self) -> bool {
-        self.is_complete()
-            && self.contacts.is_empty()
-            && self.overlaps.is_empty()
-            && self.parameter_components().is_empty()
     }
 }
 
@@ -113611,7 +113600,7 @@ impl BezierParallel2 {
     /// `(CW-(X,Y)) dot rotate90(H) * W * d` then removes the opposite normal
     /// branch without evaluating an approximate square root. Polynomial curves
     /// are the `W=1` specialization.
-    pub fn point_incidence(
+    pub(crate) fn point_incidence(
         &self,
         point: &Point2,
         range: &CurveParameterRange2,
@@ -116561,34 +116550,6 @@ impl BezierParallel2 {
         ]))
     }
 
-    /// Returns complete exact parameters where this parallel meets a supporting line.
-    ///
-    /// The finite endpoints of `line` define its nonzero direction and support;
-    /// they do not clip the result to the segment. For homogeneous source
-    /// `(X/W,Y/W)`, signed line numerator `L`, tangent numerator `H`, and line
-    /// direction `V`, candidates are the roots of
-    /// `L^2(H dot H)-d^2(V dot H)^2W^2`. Exact signs of `L` and
-    /// `d(V dot H)W` remove the branch introduced by squaring. A zero-distance
-    /// carrier takes the direct unsquared source-line route and remains valid
-    /// at source stationary parameters.
-    pub fn supporting_line_incidence(
-        &self,
-        line: &LineSeg2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierParallelIncidence2>> {
-        self.supporting_line_incidence_with_certified_contacts(
-            line,
-            None,
-            &[],
-            &[],
-            false,
-            None,
-            None,
-            None,
-            policy,
-        )
-    }
-
     /// Uses a caller-certified nonzero direction and retained tangencies for
     /// the same supporting line.
     ///
@@ -118278,7 +118239,7 @@ impl BezierParallel2 {
     /// share the exact projection and selected-branch replay used by
     /// off-diagonal self-contact analysis; certified source correspondences
     /// are saturated before their residual isolated contacts are replayed.
-    pub fn parallel_intersections(
+    pub(crate) fn parallel_intersections(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -121668,7 +121629,7 @@ impl BezierParallel2 {
     /// towers remain explicit
     /// [`BezierParallelIntersectionSet2::incomplete_candidates`] evidence; no
     /// projected root is promoted without exact replay.
-    pub fn intersections(
+    pub(crate) fn intersections(
         &self,
         other: &RationalBezier2,
         policy: &CurveContext,
