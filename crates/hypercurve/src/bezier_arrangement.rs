@@ -18,7 +18,7 @@
 //! order is not certified, traversal stops instead of guessing.
 
 use crate::CurvePointData2;
-use std::{cmp::Ordering, collections::HashMap, fmt, sync::OnceLock};
+use std::{borrow::Cow, cmp::Ordering, collections::HashMap, fmt, sync::OnceLock};
 
 use crate::bezier_tangent_order::{
     compare_algebraic_equal_curvature_third_order,
@@ -1860,8 +1860,10 @@ mod endpoint_adjacency_tests {
     #[test]
     fn equal_curvature_graph_jets_ignore_source_acceleration() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            for algebraic in [false, true] {
-                let vector = |dx: Real, dy: Real| {
+            for (first_algebraic, second_algebraic) in
+                [(false, false), (false, true), (true, false), (true, true)]
+            {
+                let vector = |algebraic: bool, dx: Real, dy: Real| {
                     if algebraic {
                         RetainedTangentVector::Algebraic(Box::new(
                             BezierAlgebraicTangentVector2::new(
@@ -1880,19 +1882,22 @@ mod endpoint_adjacency_tests {
                             (1, -1, TurnOrdering::SecondBeforeFirst),
                             (1, 1, TurnOrdering::SameDirection),
                         ] {
-                            let jet = |speed: i32, acceleration: i32, k: i32| {
+                            let jet = |algebraic: bool, speed: i32, acceleration: i32, k: i32| {
                                 let mut data = endpoint(0);
                                 // x=s*u+a*u^2, y=c*x^2+k*x^3. The graph is
                                 // independent of the positive source speed
                                 // and tangential acceleration a. Its common
                                 // nonzero curvature fixes the angular half;
                                 // the smaller k is encountered first.
-                                data.start_tangent = Some(vector(Real::from(speed), Real::zero()));
+                                data.start_tangent =
+                                    Some(vector(algebraic, Real::from(speed), Real::zero()));
                                 data.start_second_derivative = Some(vector(
+                                    algebraic,
                                     Real::from(2 * acceleration),
                                     &curvature * Real::from(2 * speed.pow(2)),
                                 ));
                                 data.start_third_derivative = Some(vector(
+                                    algebraic,
                                     Real::zero(),
                                     &curvature * Real::from(12 * speed * acceleration)
                                         + Real::from(6 * k * speed.pow(3)),
@@ -1901,8 +1906,8 @@ mod endpoint_adjacency_tests {
                             };
                             assert_eq!(
                                 compare_retained_same_tangent_second_order(
-                                    &jet(first_speed, 1, first_k),
-                                    &jet(second_speed, -1, second_k),
+                                    &jet(first_algebraic, first_speed, 1, first_k),
+                                    &jet(second_algebraic, second_speed, -1, second_k),
                                     &policy,
                                 ),
                                 Classification::Decided(expected),
@@ -2213,8 +2218,8 @@ mod endpoint_adjacency_tests {
             };
             let expected = expected.and_then(retained_algebraic_tangent);
             assert_eq!(
-                retained_algebraic_vector(Some(&actual)),
-                retained_algebraic_vector(expected.as_ref())
+                Some(retained_tangent_as_algebraic(&actual)),
+                expected.as_ref().map(retained_tangent_as_algebraic)
             );
         }
     }
@@ -2751,13 +2756,15 @@ fn compare_retained_turn_from_base(
     }
 }
 
-fn retained_tangent_as_algebraic(tangent: &RetainedTangentVector) -> BezierAlgebraicTangentVector2 {
+fn retained_tangent_as_algebraic(
+    tangent: &RetainedTangentVector,
+) -> Cow<'_, BezierAlgebraicTangentVector2> {
     match tangent {
-        RetainedTangentVector::Native(tangent) => BezierAlgebraicTangentVector2::new(
+        RetainedTangentVector::Native(tangent) => Cow::Owned(BezierAlgebraicTangentVector2::new(
             AlgebraicRootRepresentation::from_exact_value(&tangent.dx),
             AlgebraicRootRepresentation::from_exact_value(&tangent.dy),
-        ),
-        RetainedTangentVector::Algebraic(tangent) => tangent.as_ref().clone(),
+        )),
+        RetainedTangentVector::Algebraic(tangent) => Cow::Borrowed(tangent.as_ref()),
     }
 }
 
@@ -2803,10 +2810,11 @@ fn compare_retained_same_tangent_second_order(
             retained_native_vector(second.start_third_derivative.as_ref()),
             policy,
         ),
-        (
-            RetainedTangentVector::Algebraic(first_tangent),
-            RetainedTangentVector::Algebraic(second_tangent),
-        ) => {
+        _ => {
+            // Both exact carriers use the same comparison authority. Borrow
+            // represented roots and promote only native coordinate values.
+            let first_tangent = retained_tangent_as_algebraic(&first_tangent);
+            let second_tangent = retained_tangent_as_algebraic(&second_tangent);
             let first_second_derivative =
                 match retained_algebraic_higher_derivative(first, 2, policy) {
                     Classification::Decided(derivative) => derivative,
@@ -2822,15 +2830,19 @@ fn compare_retained_same_tangent_second_order(
                     }
                 };
             match (
-                retained_algebraic_vector(first_second_derivative.as_ref()),
-                retained_algebraic_vector(second_second_derivative.as_ref()),
+                first_second_derivative
+                    .as_ref()
+                    .map(retained_tangent_as_algebraic),
+                second_second_derivative
+                    .as_ref()
+                    .map(retained_tangent_as_algebraic),
             ) {
                 (Some(first_second_derivative), Some(second_second_derivative)) => {
                     match compare_algebraic_same_tangent_second_order(
-                        first_tangent,
-                        first_second_derivative,
-                        second_tangent,
-                        second_second_derivative,
+                        &first_tangent,
+                        &first_second_derivative,
+                        &second_tangent,
+                        &second_second_derivative,
                         policy,
                     ) {
                         Classification::Decided(evidence) => {
@@ -2855,8 +2867,8 @@ fn compare_retained_same_tangent_second_order(
                                 return compare_retained_algebraic_same_tangent_third_order(
                                     first,
                                     second,
-                                    [first_tangent, first_second_derivative],
-                                    [second_tangent, second_second_derivative],
+                                    [&first_tangent, &first_second_derivative],
+                                    [&second_tangent, &second_second_derivative],
                                     zero_curvature,
                                     policy,
                                 );
@@ -2872,7 +2884,6 @@ fn compare_retained_same_tangent_second_order(
                 _ => Classification::Decided(TurnOrdering::SameDirection),
             }
         }
-        _ => Classification::Decided(TurnOrdering::SameDirection),
     }
 }
 
@@ -2893,22 +2904,26 @@ fn compare_retained_algebraic_same_tangent_third_order(
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
     match (
-        retained_algebraic_vector(first_third_derivative.as_ref()),
-        retained_algebraic_vector(second_third_derivative.as_ref()),
+        first_third_derivative
+            .as_ref()
+            .map(retained_tangent_as_algebraic),
+        second_third_derivative
+            .as_ref()
+            .map(retained_tangent_as_algebraic),
     ) {
         (Some(first_third_derivative), Some(second_third_derivative)) => {
             let comparison = if zero_curvature {
                 compare_algebraic_same_tangent_third_order(
                     first_jet[0],
-                    first_third_derivative,
+                    &first_third_derivative,
                     second_jet[0],
-                    second_third_derivative,
+                    &second_third_derivative,
                     policy,
                 )
             } else {
                 compare_algebraic_equal_curvature_third_order(
-                    [first_jet[0], first_jet[1], first_third_derivative],
-                    [second_jet[0], second_jet[1], second_third_derivative],
+                    [first_jet[0], first_jet[1], &first_third_derivative],
+                    [second_jet[0], second_jet[1], &second_third_derivative],
                     policy,
                 )
             };
@@ -3050,15 +3065,6 @@ fn retained_algebraic_same_tangent_evidence_to_turn(
 fn retained_native_vector(vector: Option<&RetainedTangentVector>) -> Option<&TangentVector> {
     match vector {
         Some(RetainedTangentVector::Native(vector)) => Some(vector),
-        _ => None,
-    }
-}
-
-fn retained_algebraic_vector(
-    vector: Option<&RetainedTangentVector>,
-) -> Option<&BezierAlgebraicTangentVector2> {
-    match vector {
-        Some(RetainedTangentVector::Algebraic(vector)) => Some(vector),
         _ => None,
     }
 }
