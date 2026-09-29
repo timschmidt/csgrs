@@ -464,7 +464,7 @@ impl PcbRegion {
         }
         match self
             .region
-            .classify_point(&Point2::new(x, y), &CurveContext::STRICT)
+            .classify_point(&Point2::new(x, y).into(), &CurveContext::STRICT)
             .ok()?
             .value
         {
