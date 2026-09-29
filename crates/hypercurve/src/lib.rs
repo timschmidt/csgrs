@@ -139,8 +139,9 @@ pub use bezier_region::{
     CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
 };
 
+pub(crate) use bezier_split::BezierSubcurve2;
 pub(crate) use bezier_split::{BezierParallelFragment2, BezierSplitFragment2};
-pub use bezier_split::{BezierSubcurve2, CurveParameter2, CurveParameterRange2};
+pub use bezier_split::{CurveParameter2, CurveParameterRange2};
 pub(crate) use bezier_split_endpoint::BezierAlgebraicEndpointImage2;
 pub use bezier_tangent_order::{
     BezierAlgebraicSameTangentOrderEvidence, BezierAlgebraicSameTangentOrderStatus,

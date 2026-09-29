@@ -35,7 +35,7 @@ fn same(actual: &CurvePoint2, expected: &CurvePoint2, policy: &CurveContext) {
 #[test]
 fn exterior_selected_bezier_ranges_retain_their_chart_through_repeated_cuts() {
     // Q(t) = (t-2, (t-2)^2), restricted to a finite exterior chart.
-    let source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+    let source = CurveGeometry2::QuadraticBezier(QuadraticBezier2::new(
         p(-2, 4),
         Point2::new(q(-3, 2), Real::from(2)),
         p(-1, 1),
@@ -149,7 +149,7 @@ fn rational_range_admission_checks_only_the_retained_interval() {
                 };
                 let curve = certified(
                     Curve2::try_from_bezier_range(
-                        BezierSubcurve2::Rational(source.clone()),
+                        CurveGeometry2::RationalBezier(source.clone()),
                         range(endpoints.0.into(), endpoints.1.into(), &policy),
                         &policy,
                     )
@@ -176,7 +176,7 @@ fn rational_range_admission_checks_only_the_retained_interval() {
         // A finite endpoint pair is insufficient when the interval crosses a pole.
         for (start, end) in [(0, 1), (1, 2), (2, 0)] {
             let error = Curve2::try_from_bezier_range(
-                BezierSubcurve2::Rational(source.clone()),
+                CurveGeometry2::RationalBezier(source.clone()),
                 range(Real::from(start).into(), Real::from(end).into(), &policy),
                 &policy,
             )
@@ -196,7 +196,7 @@ fn bezier_range_construction_reuses_selected_fiber_parameters() {
     let squared = Real::from(5).sqrt().unwrap() - Real::from(2);
     let y = (squared.clone().sqrt().unwrap() / (Real::one() + &squared)).unwrap();
     let expected: CurvePoint2 = Point2::new(q(-1, 2), y).into();
-    let source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+    let source = CurveGeometry2::QuadraticBezier(QuadraticBezier2::new(
         Point2::new(q(-1, 2), Real::from(-1)),
         Point2::new(q(-1, 2), q(1, 2)),
         Point2::new(q(-1, 2), Real::from(2)),

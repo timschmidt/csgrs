@@ -364,7 +364,7 @@ fn segment_curves(
         };
         source_fragment_count += fragments.len();
         for fragment in fragments {
-            let polyline = match fragment.curve().flatten_certified(options, policy) {
+            let polyline = match fragment.native_curve().flatten_certified(options, policy) {
                 Classification::Decided(polyline) => polyline,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };

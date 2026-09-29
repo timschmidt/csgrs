@@ -3,8 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSubcurve2, BooleanOp, BulgeVertex2, Classification, Contour2,
-    Curve2, CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
+    BezierParameterPolynomial, BooleanOp, BulgeVertex2, Classification, Contour2, Curve2,
+    CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
     CurveResult, FillRule, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
@@ -149,19 +149,10 @@ fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> Curve
         elapsed / iterations
     );
 
-    let curve = BezierSubcurve2::Cubic(hypercurve::CubicBezier2::new(
-        p(0, 0),
-        p(1, 3),
-        p(3, -2),
-        p(4, 0),
-    ));
+    let curve = hypercurve::CubicBezier2::new(p(0, 0), p(1, 3), p(3, -2), p(4, 0));
     let started = Instant::now();
     for _ in 0..iterations {
-        black_box(decided(
-            black_box(&curve)
-                .signed_area_contribution(black_box(policy))?
-                .into_value(),
-        ));
+        black_box(black_box(&curve).signed_area_contribution()?);
     }
     let elapsed = started.elapsed();
     println!(
@@ -171,11 +162,7 @@ fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> Curve
 
     let started = Instant::now();
     for _ in 0..iterations {
-        black_box(decided(
-            black_box(&curve)
-                .area_moments_contribution(black_box(policy))?
-                .into_value(),
-        ));
+        black_box(black_box(&curve).area_moments_contribution()?);
     }
     let elapsed = started.elapsed();
     println!(

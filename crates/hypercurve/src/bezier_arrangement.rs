@@ -2641,16 +2641,6 @@ impl BezierSubcurve2 {
         }
     }
 
-    /// Returns the exact start point of this native subcurve.
-    pub fn start_point(&self) -> Point2 {
-        self.endpoints().0
-    }
-
-    /// Returns the exact end point of this native subcurve.
-    pub fn end_point(&self) -> Point2 {
-        self.endpoints().1
-    }
-
     fn endpoint_data(&self, policy: &CurveContext) -> Classification<EndpointData> {
         self.endpoint_data_with_higher_derivatives(policy, true)
     }

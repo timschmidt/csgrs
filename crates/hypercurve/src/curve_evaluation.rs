@@ -523,7 +523,7 @@ mod tests {
                     .unwrap(),
                 Classification::Decided(true)
             );
-            let source = RationalBezier2::try_from_subcurve(span.curve()).unwrap();
+            let source = RationalBezier2::try_from_subcurve(span.native_curve()).unwrap();
             let basis = source.homogeneous_power_basis().unwrap();
             assert_eq!(
                 image.retained_coordinate_polynomials(),

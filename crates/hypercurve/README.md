@@ -212,7 +212,9 @@ exact signatures.
   insert_knot, insert_knots, remove_knot, degree_elevation,
   elevated_to_degree, split_at, subcurve, clamped_subcurve, reversed,
   transform_similarity, bezier_decomposition, bezier_spans,
-  native_subcurves}`.
+  native_subcurves}`. Extracted spans, span views, and native Bézier fragments
+  are reported as `CurveGeometry2`, the same authored-family vocabulary used by
+  `Curve2::new`.
 - NURBS and rational Bézier spans share `HomogeneousControl2` coefficients.
   Extraction, knot insertion/removal, and degree recomposition preserve zero
   and mixed control weights without affine projection. `homogeneous_controls`

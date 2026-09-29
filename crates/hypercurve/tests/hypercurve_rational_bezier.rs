@@ -391,7 +391,7 @@ fn top_level_general_rational_curve_preserves_family_and_native_geometry() {
     assert_eq!(fragments.len(), 1);
     assert!(matches!(
         fragments[0].curve(),
-        hypercurve::BezierSubcurve2::Rational(_)
+        hypercurve::CurveGeometry2::RationalBezier(_)
     ));
 }
 

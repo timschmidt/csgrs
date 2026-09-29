@@ -1161,7 +1161,7 @@ pub(crate) fn intersect_parameter_ranges(
 /// A native Bezier subcurve produced by exact split materialization.
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
-pub enum BezierSubcurve2 {
+pub(crate) enum BezierSubcurve2 {
     /// Polynomial quadratic Bezier subcurve.
     Quadratic(QuadraticBezier2),
     /// Polynomial cubic Bezier subcurve.
@@ -1791,7 +1791,7 @@ impl BezierSubcurve2 {
             Self::Cubic(curve) => Ok(Classification::Decided(Self::Cubic(
                 curve.subcurve_between_exact(start, end, policy)?,
             ))),
-            Self::RationalQuadratic(curve) => curve.subcurve_between_exact(start, end, policy),
+            Self::RationalQuadratic(curve) => curve.subcurve_between_exact_native(start, end, policy),
             Self::Rational(curve) => curve
                 .subcurve_between_exact(start, end, policy)
                 .map(|result| result.map(Self::Rational)),
@@ -2168,18 +2168,30 @@ impl RationalQuadraticBezier2 {
             policy,
             false,
             true,
-            |start, end| self.subcurve_between_exact(start, end, policy),
+            |start, end| self.subcurve_between_exact_native(start, end, policy),
             |parameter| BezierAlgebraicEndpointImage2::rational_quadratic(self, parameter, policy),
             BezierSubcurve2::RationalQuadratic(self.clone()),
         )
     }
 
-    /// Materializes the exact conic subcurve over `[start, end]`.
+    /// Materializes the exact conic subcurve over `[start, end]` as general
+    /// curve geometry.
     ///
     /// A finite conic may have a zero interior homogeneous weight after a cut.
     /// Such a result retains its homogeneous quadratic instead of requiring an
     /// affine control point that does not exist.
     pub fn subcurve_between_exact(
+        &self,
+        start: &Real,
+        end: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<crate::CurveGeometry2>> {
+        Ok(self
+            .subcurve_between_exact_native(start, end, policy)?
+            .map(crate::CurveGeometry2::from_bezier))
+    }
+
+    pub(crate) fn subcurve_between_exact_native(
         &self,
         start: &Real,
         end: &Real,
@@ -2239,6 +2251,19 @@ impl RationalQuadraticBezier2 {
     /// not have a finite affine projection. Exterior cuts do not inherit the
     /// source's unit-domain weight-sign certificate.
     pub fn split_at_exact(
+        &self,
+        t: Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<(crate::CurveGeometry2, crate::CurveGeometry2)>> {
+        Ok(self.split_at_exact_native(t, policy)?.map(|(first, second)| {
+            (
+                crate::CurveGeometry2::from_bezier(first),
+                crate::CurveGeometry2::from_bezier(second),
+            )
+        }))
+    }
+
+    pub(crate) fn split_at_exact_native(
         &self,
         t: Real,
         policy: &CurveContext,
@@ -2619,7 +2644,7 @@ mod finite_conic_split_regression {
                 )
                 .unwrap();
                 let (native_left, native_right) =
-                    decided(conic.split_at_exact(q(2, 3), &policy).unwrap());
+                    decided(conic.split_at_exact_native(q(2, 3), &policy).unwrap());
                 assert!(
                     matches!(&native_left, BezierSubcurve2::Rational(curve) if curve.affine_control_points().is_none())
                 );
@@ -2730,7 +2755,7 @@ mod finite_conic_split_regression {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             // D(t)=1-4t/5+4t²/5 > 0 everywhere. The exterior cut creates
             // a zero middle weight without a pole or a change of support.
-            let (left, right) = decided(conic.split_at_exact(q(5, 2), &policy).unwrap());
+            let (left, right) = decided(conic.split_at_exact_native(q(5, 2), &policy).unwrap());
             assert!(
                 matches!(&left, BezierSubcurve2::Rational(curve) if curve.affine_control_points().is_none())
             );
@@ -2779,7 +2804,7 @@ mod finite_conic_split_regression {
                 conic.split_at_exact(2.into(), &policy).unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary)
             ));
-            let (left, _) = decided(conic.split_at_exact(3.into(), &policy).unwrap());
+            let (left, _) = decided(conic.split_at_exact_native(3.into(), &policy).unwrap());
             let rational = RationalBezier2::try_from_subcurve(&left).unwrap();
             assert!(matches!(
                 rational.denominator_sign(&crate::CurveParameterRange2::unit()),

@@ -1025,9 +1025,16 @@ impl NurbsCurve2 {
     pub fn native_subcurves(
         &self,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<&[BezierSubcurve2]>> {
+    ) -> ExactCurveResult<CurveOutcome<Vec<crate::CurveGeometry2>>> {
         resolve_certified_operation(policy, |attempt| {
             self.native_subcurves_for_operation(attempt, CurveOperation2::NativeTopology)
+                .map(|spans| {
+                    spans
+                        .iter()
+                        .cloned()
+                        .map(crate::CurveGeometry2::from_bezier)
+                        .collect()
+                })
         })
     }
 
@@ -1044,7 +1051,7 @@ impl NurbsCurve2 {
                     }
                 };
                 Ok(Classification::Decided(
-                    decomposition.native_subcurves(attempt),
+                    decomposition.native_beziers(attempt),
                 ))
             })? {
                 Classification::Decided(subcurves) => Classification::Decided(subcurves.as_slice()),
@@ -1531,9 +1538,9 @@ impl<'a> NurbsNativeSpanView2<'a> {
         self.source_span
     }
 
-    /// Returns the exact promoted native Bezier/conic curve.
-    pub const fn curve(self) -> &'a BezierSubcurve2 {
-        self.curve
+    /// Returns the exact promoted native Bezier/conic curve geometry.
+    pub fn curve(self) -> crate::CurveGeometry2 {
+        crate::CurveGeometry2::from_bezier(self.curve.clone())
     }
 }
 
@@ -1835,5 +1842,36 @@ mod layout_tests {
     fn nurbs_carrier_keeps_compact_policy_aware_storage() {
         assert_eq!(core::mem::size_of::<NurbsCurve2>(), 8);
         assert_eq!(core::mem::size_of::<NurbsData2>(), 488);
+    }
+}
+
+#[cfg(test)]
+mod native_span_cache_tests {
+    use crate::{CurveContext, NurbsCurve2, Point2, Real};
+
+    #[test]
+    fn native_spans_are_promoted_once_and_borrowed() {
+        let p = |x, y| Point2::new(Real::from(x), Real::from(y));
+        let curve = NurbsCurve2::try_new(
+            3,
+            vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
+            [1, 2, 4, 8, 16].map(Real::from).to_vec(),
+            [0, 0, 0, 0, 1, 2, 2, 2, 2].map(Real::from).to_vec(),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .into_value();
+        let first = crate::tests::decided(
+            curve
+                .native_subcurves_with_policy(&CurveContext::STRICT)
+                .unwrap(),
+        );
+        let second = crate::tests::decided(
+            curve
+                .native_subcurves_with_policy(&CurveContext::STRICT)
+                .unwrap(),
+        );
+        assert_eq!(first.len(), 2);
+        assert!(std::ptr::eq(first, second));
     }
 }

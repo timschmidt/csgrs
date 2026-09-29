@@ -468,7 +468,7 @@ impl PolynomialSplineCurve2 {
                 CurveOperation2::BezierDecomposition,
             )?;
             Ok(decomposition
-                .spans()
+                .native_spans()
                 .iter()
                 .zip(decomposition.intervals())
                 .enumerate()
@@ -583,7 +583,7 @@ impl PolynomialSplineCurve2 {
         )?;
         let first_interval = &decomposition.intervals()[first.index];
         let first_point = evaluate_span(
-            &decomposition.spans()[first.index],
+            &decomposition.native_spans()[first.index],
             &first_interval.0,
             &first_interval.1,
             parameter,
@@ -595,7 +595,7 @@ impl PolynomialSplineCurve2 {
         }
         let last_interval = &decomposition.intervals()[last.index];
         let last_point = evaluate_span(
-            &decomposition.spans()[last.index],
+            &decomposition.native_spans()[last.index],
             &last_interval.0,
             &last_interval.1,
             parameter,
@@ -841,7 +841,7 @@ impl PolynomialSplineCurve2 {
                     }
                 };
                 decomposition
-                    .spans()
+                    .native_spans()
                     .iter()
                     .map(rationalize_subcurve)
                     .collect::<ExactCurveResult<Vec<_>>>()
@@ -975,9 +975,9 @@ impl<'a> PolynomialSplineBezierSpanView2<'a> {
         self.span_index
     }
 
-    /// Returns the exact native polynomial Bezier curve.
-    pub const fn curve(self) -> &'a BezierSubcurve2 {
-        self.curve
+    /// Returns the exact native polynomial Bezier curve geometry.
+    pub fn curve(self) -> crate::CurveGeometry2 {
+        crate::CurveGeometry2::from_bezier(self.curve.clone())
     }
 
     /// Returns the exact source knot interval.

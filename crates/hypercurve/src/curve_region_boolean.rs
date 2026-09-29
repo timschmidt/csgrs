@@ -10861,7 +10861,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             &BezierSplitFragment2::Materialized {
                 start: start.clone(),
                 end: end.clone(),
-                curve: span.curve().clone(),
+                curve: span.native_curve().clone(),
             },
         )
     }

@@ -3268,7 +3268,7 @@ mod tests {
                 crate::BezierSubcurve2::RationalQuadratic(left),
                 crate::BezierSubcurve2::RationalQuadratic(right),
             )) = curve
-                .split_at_exact(half.clone(), &CurveContext::STRICT)
+                .split_at_exact_native(half.clone(), &CurveContext::STRICT)
                 .unwrap()
             else {
                 panic!("positive-weight conic cuts retain finite affine controls");

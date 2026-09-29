@@ -728,8 +728,8 @@ impl CurveRegionBoundaryLoop2 {
                 // A spline can still have a discontinuous interior knot, so
                 // certify its promoted span joins before retaining a cycle.
                 for adjacent in native.windows(2) {
-                    let (_, left_end) = adjacent[0].curve().endpoint_refs();
-                    let (right_start, _) = adjacent[1].curve().endpoint_refs();
+                    let (_, left_end) = adjacent[0].native_curve().endpoint_refs();
+                    let (right_start, _) = adjacent[1].native_curve().endpoint_refs();
                     match CurvePoint2::from(left_end.clone())
                         .same_point(&CurvePoint2::from(right_start.clone()), policy)
                     {
@@ -752,7 +752,7 @@ impl CurveRegionBoundaryLoop2 {
                         .map(|native| BezierSplitFragment2::Materialized {
                             start: BezierParameter2::Exact(Real::zero()),
                             end: BezierParameter2::Exact(Real::one()),
-                            curve: native.curve().clone(),
+                            curve: native.native_curve().clone(),
                         }),
                 );
             }
@@ -11724,7 +11724,7 @@ impl CurveRegion2 {
             .map(|fragment| BezierSplitFragment2::Materialized {
                 start: BezierParameter2::Exact(Real::zero()),
                 end: BezierParameter2::Exact(Real::one()),
-                curve: fragment.curve().clone(),
+                curve: fragment.native_curve().clone(),
             })
             .collect::<Vec<_>>();
         let left_spans =
@@ -17123,8 +17123,8 @@ fn subcurve_relation_to_line_with_contacts(
 }
 
 impl BezierSubcurve2 {
-    /// Returns exact signed-area contribution when implemented for this curve family.
-    pub fn signed_area_contribution(
+    #[cfg(test)]
+    pub(crate) fn signed_area_contribution(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
@@ -17140,6 +17140,7 @@ impl BezierSubcurve2 {
         resolve_certified_operation(policy, |attempt| self.signed_area_contribution_raw(attempt))
     }
 
+    #[cfg(test)]
     pub(crate) fn signed_area_contribution_raw(
         &self,
         policy: &CurveContext,
@@ -17161,9 +17162,8 @@ impl BezierSubcurve2 {
         }
     }
 
-    /// Returns exact signed-area and first-moment contributions when the
-    /// fragment has an implemented symbolic integral.
-    pub fn area_moments_contribution(
+    #[cfg(test)]
+    pub(crate) fn area_moments_contribution(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<BezierAreaMoments2>>>> {
@@ -17224,13 +17224,6 @@ impl BezierSubcurve2 {
             },
         }
     }
-}
-
-fn certified_measurement<T>(value: T) -> CurveOutcome<Classification<Option<T>>> {
-    CurveOutcome::new(
-        Classification::Decided(Some(value)),
-        CurveCertainty::Certified,
-    )
 }
 
 fn rational_line_signed_area_contribution(
@@ -17905,7 +17898,7 @@ mod tests {
                 CircularArc2::try_from_center(p(1, 0), p(0, 1), p(0, 0), false).unwrap(),
             );
             let spans = arc.native_bezier_fragments(&policy).unwrap().value;
-            let source = RationalBezier2::try_from_subcurve(spans[0].curve()).unwrap();
+            let source = RationalBezier2::try_from_subcurve(spans[0].native_curve()).unwrap();
             let parameter = q(1, 4);
             let Classification::Decided(point) = source.point_at_classified(&parameter, &policy)
             else {
@@ -33081,4 +33074,12 @@ mod retained_point_classification_tests {
             }
         }
     }
+}
+
+#[cfg(test)]
+fn certified_measurement<T>(value: T) -> CurveOutcome<Classification<Option<T>>> {
+    CurveOutcome::new(
+        Classification::Decided(Some(value)),
+        CurveCertainty::Certified,
+    )
 }

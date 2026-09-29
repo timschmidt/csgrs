@@ -387,7 +387,7 @@ impl Curve2 {
             let parallel;
             let parameters = if circular {
                 parallel = None;
-                let evaluator = RationalBezier2::try_from_subcurve(chart.curve())
+                let evaluator = RationalBezier2::try_from_subcurve(chart.native_curve())
                     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?;
                 let mut parameters = Vec::new();
                 for point in circular_contacts

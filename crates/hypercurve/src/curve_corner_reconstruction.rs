@@ -171,7 +171,7 @@ impl CornerSourceFragments2 {
                 // the complete source here, including two cuts on one circle.
                 for (index, fragment) in native.iter().enumerate() {
                     let rational =
-                        RationalBezier2::try_from_subcurve(fragment.curve()).map_err(|cause| {
+                        RationalBezier2::try_from_subcurve(fragment.native_curve()).map_err(|cause| {
                             ExactCurveError::invalid(operation, curve.family(), cause)
                         })?;
                     let Some(parameter) = RetainedRationalCornerArc2::parameter_at_incident_point(
@@ -310,7 +310,7 @@ impl CornerSourceFragments2 {
                 .map(|fragment| BezierSplitFragment2::Materialized {
                     start: BezierParameter2::Exact(Real::zero()),
                     end: BezierParameter2::Exact(Real::one()),
-                    curve: fragment.curve().clone(),
+                    curve: fragment.native_curve().clone(),
                 })
                 .collect(),
             cut_index,

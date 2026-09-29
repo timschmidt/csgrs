@@ -1,10 +1,10 @@
 mod support;
 
+use hypercurve::{Curve2, CurveParameterSide2, Similarity2};
 use hypercurve::{
-    BezierSubcurve2, CurveContext, CurveError, CurveFamily2, CurveOperation2, ExactCurveError,
+    CurveContext, CurveError, CurveFamily2, CurveGeometry2, CurveOperation2, ExactCurveError,
     Point2, PolynomialSplineCurve2, Real, SplinePeriodicity2,
 };
-use hypercurve::{Curve2, CurveParameterSide2, Similarity2};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -346,7 +346,7 @@ fn linear_polynomial_spline_evaluates_elevated_spans() {
             .into_value()
             .spans()
             .iter()
-            .all(|span| matches!(span, BezierSubcurve2::Quadratic(_)))
+            .all(|span| matches!(span, CurveGeometry2::QuadraticBezier(_)))
     );
 }
 
@@ -379,7 +379,7 @@ fn polynomial_spline_clones_share_one_decomposition() {
     assert_eq!(spans[1].span_index(), 1);
     assert_eq!(spans[0].knot_interval(), (&r(0), &r(1)));
     assert_eq!(spans[1].knot_interval(), (&r(1), &r(2)));
-    assert!(std::ptr::eq(spans[0].curve(), &first.spans()[0]));
+    assert_eq!(spans[0].curve(), first.spans()[0]);
 }
 #[test]
 fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
@@ -406,7 +406,7 @@ fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
         .into_value()
         .collect::<Vec<_>>();
     assert_eq!(spans.len(), 1);
-    let BezierSubcurve2::Rational(span) = spans[0].curve() else {
+    let CurveGeometry2::RationalBezier(span) = spans[0].curve() else {
         panic!("degree-four polynomial span did not use the general exact carrier");
     };
     assert_eq!(span.degree(), 4);
@@ -561,7 +561,7 @@ fn polynomial_spline_interior_knot_uses_retained_span_boundary() {
         .unwrap()
         .into_value();
     let expected = match &decomposition.spans()[0] {
-        BezierSubcurve2::Cubic(span) => span.end().clone(),
+        CurveGeometry2::CubicBezier(span) => span.end().clone(),
         _ => panic!("cubic B-spline produced a non-cubic span"),
     };
 

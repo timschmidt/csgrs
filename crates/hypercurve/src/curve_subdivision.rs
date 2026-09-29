@@ -162,11 +162,30 @@ impl Curve2 {
     ///
     /// The public parameter domain is ascending; the supplied range determines
     /// traversal. Use [`Self::subcurve`] to restrict an existing finite curve.
+    ///
+    /// Lines, circular arcs, and splines are not single Bezier sources and
+    /// report an unsupported construction.
     pub fn try_from_bezier_range(
-        source: BezierSubcurve2,
+        source: CurveGeometry2,
         range: CurveParameterRange2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
+        let family = source.family();
+        let source = match source {
+            CurveGeometry2::QuadraticBezier(curve) => BezierSubcurve2::Quadratic(curve),
+            CurveGeometry2::CubicBezier(curve) => BezierSubcurve2::Cubic(curve),
+            CurveGeometry2::RationalQuadraticBezier(curve) => {
+                BezierSubcurve2::RationalQuadratic(curve)
+            }
+            CurveGeometry2::RationalBezier(curve) => BezierSubcurve2::Rational(curve),
+            _ => {
+                return Err(ExactCurveError::blocked(
+                    CurveOperation2::Construction,
+                    family,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+        };
         resolve_certified_operation(policy, |attempt| {
             let support = CurveSupport2::Bezier(source);
             let family = support.family();
@@ -267,7 +286,7 @@ impl Curve2 {
                         fragment: BezierSplitFragment2::Materialized {
                             start: BezierParameter2::Exact(Real::zero()),
                             end: BezierParameter2::Exact(Real::one()),
-                            curve: span.curve().clone(),
+                            curve: span.native_curve().clone(),
                         },
                         source_scale: end - start,
                         source_offset: start.clone(),
@@ -648,7 +667,7 @@ impl CurveSourceRange2 {
                     fragment: BezierSplitFragment2::Materialized {
                         start: BezierParameter2::Exact(Real::zero()),
                         end: BezierParameter2::Exact(Real::one()),
-                        curve: native.curve().clone(),
+                        curve: native.native_curve().clone(),
                     },
                     source_scale: width.clone(),
                     source_offset: chart_start.clone(),
@@ -665,7 +684,7 @@ impl CurveSourceRange2 {
                         family,
                     )
                 };
-                let (native_start, native_end) = native.curve().endpoint_refs();
+                let (native_start, native_end) = native.native_curve().endpoint_refs();
                 let (start, start_point) = if cuts_start {
                     (local(self.range.start())?, self.endpoints[0].clone())
                 } else {
@@ -677,7 +696,7 @@ impl CurveSourceRange2 {
                     (Real::one().into(), CurvePoint2::from(native_end.clone()))
                 };
                 CurveSourceSpan2 {
-                    fragment: CurveSupport2::Bezier(native.curve().clone())
+                    fragment: CurveSupport2::Bezier(native.native_curve().clone())
                         .restrict_certified(
                             CurveParameterRange2::new_validated(start, end),
                             Some([start_point, end_point]),

@@ -357,7 +357,7 @@ impl CurvePath2 {
                 for fragment in fragments {
                     append_bezier_subcurve_samples(
                         &mut points,
-                        fragment.curve(),
+                        fragment.native_curve(),
                         options,
                         policy,
                         0,

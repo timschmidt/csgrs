@@ -1,5 +1,5 @@
 use hypercurve::{
-    BezierSubcurve2, Classification, Curve2, CurveContext, CurveError, CurvePath2, CurveRegion2,
+    Classification, Curve2, CurveContext, CurveError, CurveGeometry2, CurvePath2, CurveRegion2,
     ExactCurveError, NurbsCurve2, Point2, PolynomialSplineCurve2, Real,
     RetainedSpanAxisMonotonicity, UncertaintyReason,
 };
@@ -46,7 +46,7 @@ fn linear_bspline_spans_are_elevated_exactly() {
 
     assert_eq!(extraction.degree(), 1);
     assert_eq!(extraction.spans().len(), 2);
-    let BezierSubcurve2::Quadratic(first) = &extraction.spans()[0] else {
+    let CurveGeometry2::QuadraticBezier(first) = &extraction.spans()[0] else {
         panic!("linear span was not elevated to a quadratic");
     };
     assert_point_eq(first.start(), &p(0, 0));
@@ -67,7 +67,7 @@ fn rational_linear_span_preserves_homogeneous_parameterization() {
     .into_value();
     let extraction = spline.bezier_decomposition(&policy()).unwrap().into_value();
     let native = extraction.native_subcurves(&policy());
-    let BezierSubcurve2::Rational(curve) = &native[0] else {
+    let CurveGeometry2::RationalBezier(curve) = &native[0] else {
         panic!("expected the original degree-one rational evaluator");
     };
     assert_eq!(curve.degree(), 1);
@@ -88,7 +88,7 @@ fn rational_linear_span_retains_its_denominator_pole() {
     .into_value();
     let extraction = spline.bezier_decomposition(&policy()).unwrap().into_value();
     let native = extraction.native_subcurves(&policy());
-    let BezierSubcurve2::Rational(curve) = &native[0] else {
+    let CurveGeometry2::RationalBezier(curve) = &native[0] else {
         panic!("expected rational span");
     };
     assert_eq!(curve.degree(), 1);
@@ -112,7 +112,7 @@ fn quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion() {
     assert_eq!(extraction.inserted_knot_count(), 1);
     assert_eq!(extraction.spans().len(), 2);
     match &extraction.spans()[0] {
-        BezierSubcurve2::Quadratic(curve) => {
+        CurveGeometry2::QuadraticBezier(curve) => {
             assert_point_eq(curve.start(), &p(0, 0));
             assert_point_eq(curve.control(), &p(2, 4));
             assert_point_eq(curve.end(), &p(3, 4));
@@ -120,7 +120,7 @@ fn quadratic_bspline_extracts_bezier_spans_by_exact_knot_insertion() {
         _ => panic!("expected quadratic span"),
     }
     match &extraction.spans()[1] {
-        BezierSubcurve2::Quadratic(curve) => {
+        CurveGeometry2::QuadraticBezier(curve) => {
             assert_point_eq(curve.start(), &p(3, 4));
             assert_point_eq(curve.control(), &p(4, 4));
             assert_point_eq(curve.end(), &p(6, 0));
@@ -144,7 +144,7 @@ fn cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot() {
     assert_eq!(extraction.inserted_knot_count(), 2);
     assert_eq!(extraction.spans().len(), 2);
     match &extraction.spans()[0] {
-        BezierSubcurve2::Cubic(curve) => {
+        CurveGeometry2::CubicBezier(curve) => {
             assert_point_eq(curve.start(), &p(0, 0));
             assert_point_eq(curve.control1(), &p(1, 3));
             assert_point_eq(curve.control2(), &p(2, 3));
@@ -153,7 +153,7 @@ fn cubic_bspline_extracts_spans_with_degree_multiplicity_at_internal_knot() {
         _ => panic!("expected cubic span"),
     }
     match &extraction.spans()[1] {
-        BezierSubcurve2::Cubic(curve) => {
+        CurveGeometry2::CubicBezier(curve) => {
             assert_point_eq(curve.start(), &p(3, 3));
             assert_point_eq(curve.control1(), &p(4, 3));
             assert_point_eq(curve.control2(), &p(5, 3));
@@ -217,10 +217,10 @@ fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
 
     assert_eq!(extraction.inserted_knot_count(), 3);
     assert_eq!(extraction.spans().len(), 2);
-    let BezierSubcurve2::Quadratic(first) = &extraction.spans()[0] else {
+    let CurveGeometry2::QuadraticBezier(first) = &extraction.spans()[0] else {
         panic!("unclamped quadratic did not extract a quadratic first span");
     };
-    let BezierSubcurve2::Quadratic(second) = &extraction.spans()[1] else {
+    let CurveGeometry2::QuadraticBezier(second) = &extraction.spans()[1] else {
         panic!("unclamped quadratic did not extract a quadratic second span");
     };
     assert!(first.control_points() == [&Point2::new(r(1), r(2)), &p(2, 4), &p(3, 4)]);
@@ -321,7 +321,7 @@ fn rational_quadratic_bspline_extracts_homogeneous_bezier_spans() {
             == [r(1), r(2), r(3), r(4), r(1)]
     );
     match extraction.spans()[0].native_subcurve(&policy()) {
-        BezierSubcurve2::RationalQuadratic(curve) => {
+        CurveGeometry2::RationalQuadraticBezier(curve) => {
             assert_point_eq(curve.start(), &p(0, 0));
             assert_point_eq(curve.control(), &p(2, 4));
             assert_point_eq(curve.end(), &Point2::new(q(10, 3), r(4)));
@@ -332,7 +332,7 @@ fn rational_quadratic_bspline_extracts_homogeneous_bezier_spans() {
         _ => panic!("expected rational quadratic span"),
     }
     match extraction.spans()[1].native_subcurve(&policy()) {
-        BezierSubcurve2::RationalQuadratic(curve) => {
+        CurveGeometry2::RationalQuadraticBezier(curve) => {
             assert_point_eq(curve.start(), &Point2::new(q(10, 3), r(4)));
             assert_point_eq(curve.control(), &p(4, 4));
             assert_point_eq(curve.end(), &p(6, 0));
@@ -365,10 +365,11 @@ fn equal_weight_quadratic_nurbs_matches_polynomial_bspline_spans() {
         .into_value();
 
     for (polynomial_span, rational_span) in polynomial.spans().iter().zip(rational.spans()) {
-        let BezierSubcurve2::Quadratic(polynomial) = polynomial_span else {
+        let CurveGeometry2::QuadraticBezier(polynomial) = polynomial_span else {
             panic!("expected polynomial quadratic")
         };
-        let BezierSubcurve2::RationalQuadratic(rational) = rational_span.native_subcurve(&policy())
+        let CurveGeometry2::RationalQuadraticBezier(rational) =
+            rational_span.native_subcurve(&policy())
         else {
             panic!("expected rational quadratic")
         };
@@ -440,7 +441,7 @@ fn equal_weight_retained_rational_cubic_matches_polynomial_cubic_spans() {
 
     assert_eq!(rational.spans().len(), polynomial.spans().len());
     for (polynomial_span, rational_span) in polynomial.spans().iter().zip(rational.spans()) {
-        let BezierSubcurve2::Cubic(polynomial) = polynomial_span else {
+        let CurveGeometry2::CubicBezier(polynomial) = polynomial_span else {
             panic!("expected polynomial cubic")
         };
         assert_eq!(rational_span.curve().degree(), 3);
@@ -478,7 +479,7 @@ fn retained_rational_quadratic_spans_promote_to_native_conic_topology() {
     let extraction = spline.bezier_decomposition(&policy()).unwrap().into_value();
     let native = extraction.native_subcurves(&policy());
     assert_eq!(native.len(), 1);
-    let BezierSubcurve2::RationalQuadratic(curve) = &native[0] else {
+    let CurveGeometry2::RationalQuadraticBezier(curve) = &native[0] else {
         panic!("expected conic specialization");
     };
     assert_point_eq(curve.start(), &p(0, 0));
@@ -545,7 +546,7 @@ fn nonuniform_rational_cubic_spans_promote_without_degree_reduction() {
     let native = extraction.native_subcurves(&policy());
     assert_eq!(native.len(), extraction.spans().len());
     for (span, native) in extraction.spans().iter().zip(&native) {
-        let BezierSubcurve2::Rational(curve) = native else {
+        let CurveGeometry2::RationalBezier(curve) = native else {
             panic!("expected general rational span");
         };
         assert_eq!(curve.degree(), 3);
@@ -573,7 +574,7 @@ fn equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics() {
     assert!(
         native
             .iter()
-            .all(|span| matches!(span, BezierSubcurve2::Cubic(_)))
+            .all(|span| matches!(span, CurveGeometry2::CubicBezier(_)))
     );
     assert!(extraction.spans()[0].knot_interval() == (&r(0), &r(1)));
     assert!(extraction.spans()[1].knot_interval() == (&r(1), &r(2)));

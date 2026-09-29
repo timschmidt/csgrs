@@ -989,7 +989,7 @@ fn has_native_point_image_span(curve: &Curve2, policy: &CurveContext) -> ExactCu
         .iter()
         .any(|fragment| {
             matches!(
-                fragment.curve().point_image(&strict),
+                fragment.native_curve().point_image(&strict),
                 Classification::Decided(Some(_))
             )
         }))
@@ -1655,7 +1655,7 @@ fn build_native_coincident_arc_evidence(
     let mut overlaps = Vec::new();
 
     for (first_span_index, first_fragment) in first_fragments.iter().enumerate() {
-        let (first_start, first_end) = first_fragment.curve().endpoints();
+        let (first_start, first_end) = first_fragment.native_curve().endpoints();
         let first_span = if first_fragments.len() == 1 {
             first_arc.clone()
         } else {
@@ -1669,7 +1669,7 @@ fn build_native_coincident_arc_evidence(
             )
         };
         for (second_span_index, second_fragment) in second_fragments.iter().enumerate() {
-            let (second_start, second_end) = second_fragment.curve().endpoints();
+            let (second_start, second_end) = second_fragment.native_curve().endpoints();
             let second_span = if second_fragments.len() == 1 {
                 second_arc.clone()
             } else {
@@ -1948,7 +1948,7 @@ fn arc_span_indices_for_point(
     }
     let mut indices = Vec::new();
     for (span_index, fragment) in fragments.iter().enumerate() {
-        let (start, end) = fragment.curve().endpoints();
+        let (start, end) = fragment.native_curve().endpoints();
         let span = CircularArc2::new_with_certified_radius(
             start,
             end,
@@ -3306,8 +3306,8 @@ mod overlap_restriction_tests {
             .unwrap();
             assert!(!clipped.includes_start());
             assert!(clipped.includes_end());
-            let a = Curve2::from(first_spans[overlap.first_span_index()].curve().clone());
-            let b = Curve2::from(second_spans[overlap.second_span_index()].curve().clone());
+            let a = Curve2::from(first_spans[overlap.first_span_index()].native_curve().clone());
+            let b = Curve2::from(second_spans[overlap.second_span_index()].native_curve().clone());
             for (a_parameter, b_parameter) in [
                 (
                     clipped.first_range().start(),

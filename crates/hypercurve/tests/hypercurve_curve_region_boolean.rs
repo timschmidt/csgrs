@@ -28,7 +28,7 @@ fn decided<T>(value: Classification<T>) -> T {
 
 #[test]
 fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
-    use hypercurve::{BezierAlgebraicChord2, BezierSubcurve2, RationalQuadraticBezier2};
+    use hypercurve::{BezierAlgebraicChord2, CurveGeometry2, RationalQuadraticBezier2};
     let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for shift in [0, 1, -2] {
@@ -46,18 +46,18 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                 )
             };
             let sources = [
-                BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                CurveGeometry2::QuadraticBezier(QuadraticBezier2::new(
                     controls[0].clone(),
                     controls[1].clone(),
                     controls[2].clone(),
                 )),
-                BezierSubcurve2::Cubic(CubicBezier2::new(
+                CurveGeometry2::CubicBezier(CubicBezier2::new(
                     controls[0].clone(),
                     blend(&controls[0], &controls[1]),
                     blend(&controls[2], &controls[1]),
                     controls[2].clone(),
                 )),
-                BezierSubcurve2::RationalQuadratic(
+                CurveGeometry2::RationalQuadraticBezier(
                     RationalQuadraticBezier2::try_new(
                         controls[0].clone(),
                         controls[1].clone(),
@@ -68,7 +68,7 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                     )
                     .unwrap(),
                 ),
-                BezierSubcurve2::Rational(
+                CurveGeometry2::RationalBezier(
                     RationalBezier2::try_new(controls.to_vec(), vec![Real::one(); 3])
                         .unwrap()
                         .elevated_to_degree(5)
@@ -157,7 +157,7 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
 
 #[test]
 fn native_chart_poles_do_not_block_finite_region_queries() {
-    use hypercurve::{BezierAlgebraicChord2, BezierSubcurve2};
+    use hypercurve::{BezierAlgebraicChord2, CurveGeometry2};
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     let source = RationalBezier2::try_new(
         vec![point(0, 0), point(0, 1), point(1, 0)],
@@ -186,7 +186,7 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
                 decided(CurveParameterRange2::try_new(start.into(), end.into(), &policy).unwrap());
             let curve = certified(
                 Curve2::try_from_bezier_range(
-                    BezierSubcurve2::Rational(source.clone()),
+                    CurveGeometry2::RationalBezier(source.clone()),
                     range,
                     &policy,
                 )
@@ -468,7 +468,7 @@ fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
 
 #[test]
 fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
-    use hypercurve::{BezierAlgebraicChord2, BezierSubcurve2, CurveCornerMode2};
+    use hypercurve::{BezierAlgebraicChord2, CurveCornerMode2, CurveGeometry2};
     let ratio = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
@@ -513,8 +513,12 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
                 .unwrap(),
             );
             let curve = certified(
-                Curve2::try_from_bezier_range(BezierSubcurve2::Quadratic(source), range, &policy)
-                    .unwrap(),
+                Curve2::try_from_bezier_range(
+                    CurveGeometry2::QuadraticBezier(source),
+                    range,
+                    &policy,
+                )
+                .unwrap(),
             );
             let Classification::Decided(chord) =
                 BezierAlgebraicChord2::try_new(point(-1, 1).into(), point(0, 0).into(), &policy)

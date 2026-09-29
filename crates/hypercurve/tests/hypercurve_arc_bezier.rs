@@ -1,8 +1,8 @@
 mod support;
 
 use hypercurve::{
-    BezierSubcurve2, CircularArc2, Classification, Curve2, CurveContext, CurveGeometry2,
-    CurvePath2, LineSeg2, Point2, Real, UncertaintyReason,
+    CircularArc2, Classification, Curve2, CurveContext, CurveGeometry2, CurvePath2, LineSeg2,
+    Point2, Real, UncertaintyReason,
 };
 use hypercurve::{CurveCertainty, CurveOperation2, ExactCurveError};
 use hyperreal::RealSign;
@@ -444,7 +444,7 @@ fn top_level_arc_reuses_promotion_and_builds_mixed_boundary() {
     assert!(
         fragments
             .iter()
-            .all(|fragment| matches!(fragment.curve(), BezierSubcurve2::RationalQuadratic(_)))
+            .all(|fragment| matches!(fragment.curve(), CurveGeometry2::RationalQuadraticBezier(_)))
     );
     assert_eq!(
         arc.point_at(&half().into(), &CurveContext::STRICT)
@@ -511,12 +511,9 @@ fn public_arc_native_topology_obeys_terminal_policy_once() {
         CurveCertainty::Approximate512Consumed
     );
     assert_eq!(approximate_curve_fragments.value.len(), 2);
-    assert!(
-        approximate_curve_fragments
-            .value
-            .iter()
-            .all(|fragment| { matches!(fragment.curve(), BezierSubcurve2::RationalQuadratic(_)) })
-    );
+    assert!(approximate_curve_fragments.value.iter().all(|fragment| {
+        matches!(fragment.curve(), CurveGeometry2::RationalQuadraticBezier(_))
+    }));
     assert!(matches!(
         curve.native_bezier_fragments(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))

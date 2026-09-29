@@ -911,7 +911,7 @@ fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Cu
                 .into_value()
                 .iter()
                 .map(|fragment| {
-                    transform_bezier_subcurve(fragment.curve(), transform).map(Curve2::from)
+                    transform_bezier_subcurve(fragment.native_curve(), transform).map(Curve2::from)
                 })
                 .collect::<SvgResult<Vec<_>>>()?
         }

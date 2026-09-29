@@ -250,8 +250,16 @@ impl PolynomialBSplineBezierExtraction2 {
         &self.refined_knots
     }
 
-    /// Returns the extracted Bezier spans in parameter order.
-    pub fn spans(&self) -> &[BezierSubcurve2] {
+    /// Returns the extracted Bezier span geometry in parameter order.
+    pub fn spans(&self) -> Vec<crate::CurveGeometry2> {
+        self.spans
+            .iter()
+            .cloned()
+            .map(crate::CurveGeometry2::from_bezier)
+            .collect()
+    }
+
+    pub(crate) fn native_spans(&self) -> &[BezierSubcurve2] {
         &self.spans
     }
 
@@ -609,11 +617,18 @@ impl RationalBSplineBezierExtraction2 {
         &self.spans
     }
 
-    /// Returns exact native spans, sharing the general rational evaluator.
-    pub fn native_subcurves(&self, policy: &CurveContext) -> Vec<BezierSubcurve2> {
+    /// Returns exact native span geometry, sharing the general rational evaluator.
+    pub fn native_subcurves(&self, policy: &CurveContext) -> Vec<crate::CurveGeometry2> {
         self.spans
             .iter()
             .map(|span| span.native_subcurve(policy))
+            .collect()
+    }
+
+    pub(crate) fn native_beziers(&self, policy: &CurveContext) -> Vec<BezierSubcurve2> {
+        self.spans
+            .iter()
+            .map(|span| span.native_bezier(policy))
             .collect()
     }
 
@@ -629,7 +644,7 @@ impl RationalBSplineBezierExtraction2 {
     ) -> CurveResult<Classification<RetainedBSplineSpanFactEvidence2>> {
         let mut facts = Vec::with_capacity(self.spans.len());
         for (span_index, span) in self.spans.iter().enumerate() {
-            let native = span.native_subcurve(policy);
+            let native = span.native_bezier(policy);
             let bounds = match subcurve_certified_bounds(&native) {
                 Classification::Decided(bounds) => bounds,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -825,7 +840,11 @@ impl RationalBezierSpan2 {
 
     /// Selects an exact polynomial/conic specialization when available.
     /// Every remaining span retains its original rational carrier and degree.
-    pub fn native_subcurve(&self, policy: &CurveContext) -> BezierSubcurve2 {
+    pub fn native_subcurve(&self, policy: &CurveContext) -> crate::CurveGeometry2 {
+        crate::CurveGeometry2::from_bezier(self.native_bezier(policy))
+    }
+
+    pub(crate) fn native_bezier(&self, policy: &CurveContext) -> BezierSubcurve2 {
         let strict = policy.strict_counterpart();
         if let Some(points) = self.curve.affine_control_points() {
             let weights = self.curve.weights();

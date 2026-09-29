@@ -348,7 +348,7 @@ impl PartialEq for NativeBezierFragment2 {
 }
 
 impl CurveGeometry2 {
-    fn from_bezier(curve: BezierSubcurve2) -> Self {
+    pub(crate) fn from_bezier(curve: BezierSubcurve2) -> Self {
         match curve {
             BezierSubcurve2::Quadratic(curve) => Self::QuadraticBezier(curve),
             BezierSubcurve2::Cubic(curve) => Self::CubicBezier(curve),
@@ -975,7 +975,7 @@ impl Curve2 {
             ),
             Some(CurveGeometry2::RationalQuadraticBezier(curve)) => CurveGeometry2::from_bezier(
                 match curve
-                    .subcurve_between_exact(&start, &end, policy)
+                    .subcurve_between_exact_native(&start, &end, policy)
                     .map_err(|cause| self.subdivision_error(cause))?
                 {
                     Classification::Decided(curve) => curve,
@@ -1588,7 +1588,7 @@ impl Curve2 {
                 };
                 fragments
                     .iter()
-                    .map(|fragment| rationalize_subcurve(fragment.curve(), self.family()))
+                    .map(|fragment| rationalize_subcurve(fragment.native_curve(), self.family()))
                     .collect::<ExactCurveResult<Vec<_>>>()
                     .map(Classification::Decided)
             })? {
@@ -2582,6 +2582,12 @@ impl From<RationalQuadraticBezier2> for Curve2 {
     }
 }
 
+impl From<CurveGeometry2> for Curve2 {
+    fn from(value: CurveGeometry2) -> Self {
+        Self::new(value)
+    }
+}
+
 impl From<BezierSubcurve2> for Curve2 {
     fn from(value: BezierSubcurve2) -> Self {
         Self::new(CurveGeometry2::from_bezier(value))
@@ -2645,8 +2651,12 @@ impl CurveSpanRange2 {
 }
 
 impl NativeBezierFragment2 {
-    /// Returns the promoted exact native curve.
-    pub const fn curve(&self) -> &BezierSubcurve2 {
+    /// Returns the promoted exact native curve geometry.
+    pub fn curve(&self) -> CurveGeometry2 {
+        CurveGeometry2::from_bezier(self.curve.clone())
+    }
+
+    pub(crate) const fn native_curve(&self) -> &BezierSubcurve2 {
         &self.curve
     }
 
@@ -2716,9 +2726,9 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
         _ => {
             let fragments = curve
                 .native_bezier_fragments_for_operation(&policy, CurveOperation2::NativeTopology)?;
-            let mut bounds = decided_subcurve_bounds(fragments[0].curve(), curve.family())?;
+            let mut bounds = decided_subcurve_bounds(fragments[0].native_curve(), curve.family())?;
             for fragment in &fragments[1..] {
-                let fragment_bounds = decided_subcurve_bounds(fragment.curve(), curve.family())?;
+                let fragment_bounds = decided_subcurve_bounds(fragment.native_curve(), curve.family())?;
                 bounds = decided_bounds(bounds.union(&fragment_bounds), curve.family())?;
             }
             Ok(bounds)
@@ -2935,7 +2945,7 @@ fn promote_native_bezier_fragments(
             };
             Ok(Classification::Decided(
                 decomposition
-                    .spans()
+                    .native_spans()
                     .iter()
                     .zip(decomposition.intervals())
                     .map(|(curve, (start, end))| native(curve.clone(), start.clone(), end.clone()))
@@ -2992,7 +3002,7 @@ fn evaluate_promoted_arc(
                         cause.into(),
                     )
                 })?;
-                let BezierSubcurve2::RationalQuadratic(curve) = fragment.curve() else {
+                let BezierSubcurve2::RationalQuadratic(curve) = fragment.native_curve() else {
                     return Err(ExactCurveError::invalid(
                         CurveOperation2::Evaluation,
                         CurveFamily2::CircularArc,
@@ -3491,7 +3501,7 @@ impl RetainedRationalCornerArc2 {
                 evaluator.clone()
             }
             ExactCornerBezier2::NativeSpan(fragment) => {
-                RationalBezier2::try_from_subcurve(fragment.curve())
+                RationalBezier2::try_from_subcurve(fragment.native_curve())
                     .map_err(|cause| ExactCurveError::invalid(operation, family, cause))?
             }
         };
@@ -4195,7 +4205,7 @@ fn native_span_circular_arc(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CircularArc2>> {
-    let support = match fragment.curve() {
+    let support = match fragment.native_curve() {
         BezierSubcurve2::RationalQuadratic(curve) => rational_quadratic_circular_arc(curve, policy),
         BezierSubcurve2::Rational(curve) => rational_bezier_circular_arc(curve, policy),
         BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => return Ok(None),
@@ -4335,7 +4345,7 @@ fn exact_corner_bezier_parallel(
                 unreachable!("only direct Bezier corner carriers request an analytic parallel")
             }
         },
-        ExactCornerBezier2::NativeSpan(fragment) => match fragment.curve() {
+        ExactCornerBezier2::NativeSpan(fragment) => match fragment.native_curve() {
             BezierSubcurve2::Quadratic(source) => source.parallel_left(distance),
             BezierSubcurve2::Cubic(source) => source.parallel_left(distance),
             BezierSubcurve2::RationalQuadratic(source) => source.parallel_left(distance),
@@ -4368,9 +4378,9 @@ impl<'a> ExactCornerBezier2<'a> {
             }
             Self::NativeSpan(fragment) => {
                 if previous {
-                    fragment.curve().end()
+                    fragment.native_curve().end()
                 } else {
-                    fragment.curve().start()
+                    fragment.native_curve().start()
                 }
             }
         }
@@ -12498,7 +12508,7 @@ fn materialize_corner_side(
         (local_parameter, Real::zero())
     };
     let extension = match fragment
-        .curve()
+        .native_curve()
         .subcurve_between_affine_exact(&start, &end, policy)
         .map_err(|cause| ExactCurveError::invalid(operation, curve.family(), cause))?
     {

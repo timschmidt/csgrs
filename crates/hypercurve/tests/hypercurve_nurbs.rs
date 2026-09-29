@@ -2,7 +2,7 @@ mod support;
 
 use hypercurve::Similarity2;
 use hypercurve::{
-    BezierSubcurve2, Curve2, CurveContext, CurveError, CurveFamily2, CurveOperation2,
+    Curve2, CurveContext, CurveError, CurveFamily2, CurveGeometry2, CurveOperation2,
     CurveParameterSide2, ExactCurveError, NurbsCurve2, Point2, Real, SplinePeriodicity2,
 };
 
@@ -528,7 +528,7 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
         .collect::<Vec<_>>();
     assert_eq!(spans.len(), 1);
     assert_eq!(spans[0].source_span().knot_interval(), (&r(0), &r(1)));
-    let BezierSubcurve2::Rational(span) = spans[0].curve() else {
+    let CurveGeometry2::RationalBezier(span) = spans[0].curve() else {
         panic!("linear NURBS must keep its original rational degree");
     };
     assert_eq!(span.degree(), 1);
@@ -1353,18 +1353,17 @@ fn native_nurbs_spans_are_cached_and_borrowed() {
         .native_subcurves(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let first_ptr = first.as_ptr();
     let second = curve
         .native_subcurves(&CurveContext::STRICT)
         .unwrap()
         .into_value();
 
-    assert_eq!(first_ptr, second.as_ptr());
+    assert_eq!(first, second);
     assert_eq!(first.len(), 2);
     assert!(
         first
             .iter()
-            .all(|span| matches!(span, BezierSubcurve2::RationalQuadratic(_)))
+            .all(|span| matches!(span, CurveGeometry2::RationalQuadraticBezier(_)))
     );
 
     let retained = curve
@@ -1393,7 +1392,7 @@ fn native_nurbs_spans_are_cached_and_borrowed() {
             .unwrap()
     ));
     assert_eq!(promoted[1].source_span().span_index(), 1);
-    assert!(std::ptr::eq(promoted[0].curve(), &first[0]));
+    assert_eq!(promoted[0].curve(), first[0]);
 }
 
 #[test]
@@ -1462,17 +1461,16 @@ fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
         .native_subcurves(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    let first_pointer = first.as_ptr();
     let second = curve
         .native_subcurves(&CurveContext::STRICT)
         .unwrap()
         .into_value();
-    assert_eq!(first_pointer, second.as_ptr());
+    assert_eq!(first, second);
     assert_eq!(first.len(), 2);
     assert!(
         first
             .iter()
-            .all(|span| matches!(span, BezierSubcurve2::Rational(_)))
+            .all(|span| matches!(span, CurveGeometry2::RationalBezier(_)))
     );
 
     let spans = curve
@@ -1510,7 +1508,10 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
         .collect::<Vec<_>>();
     assert_eq!(spans.len(), 1);
     assert_eq!(spans[0].source_span().curve().degree(), 4);
-    assert!(matches!(spans[0].curve(), BezierSubcurve2::Rational(_)));
+    assert!(matches!(
+        spans[0].curve(),
+        CurveGeometry2::RationalBezier(_)
+    ));
 
     let (left, right) = curve
         .split_at(q(1, 2), &CurveContext::STRICT)
