@@ -1,13 +1,27 @@
-use hypercurve::{
+use crate::bezier_split::BezierSplitMaterialization2;
+use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicImageStatus, RationalBezierAlgebraicTangentImage2,
 };
-use hypercurve::{
+use crate::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
-    Classification, CubicBezier2, CurveContext, CurveError, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2,
+    CurveContext, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
+
+fn is_fully_materialized(split: &BezierSplitMaterialization2) -> bool {
+    split
+        .fragments()
+        .iter()
+        .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }))
+}
+
+fn has_retained_beziers(split: &BezierSplitMaterialization2) -> bool {
+    split
+        .fragments()
+        .iter()
+        .any(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
+}
 
 fn decided<T>(value: Classification<T>) -> T {
     match value {
@@ -30,14 +44,6 @@ fn p(x: i32, y: i32) -> Point2 {
 
 fn policy() -> CurveContext {
     CurveContext::STRICT
-}
-
-fn assert_topology_error<T>(result: hypercurve::CurveResult<T>) {
-    match result {
-        Err(CurveError::Topology(_)) => {}
-        Ok(_) => panic!("expected topology error"),
-        Err(error) => panic!("expected topology error, got {error:?}"),
-    }
 }
 
 fn algebraic_midpoint_interval(start: Real, end: Real) -> BezierParameter2 {
@@ -148,7 +154,7 @@ fn exact_quadratic_split_materializes_native_subcurves() {
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(materialization.is_fully_materialized());
+    assert!(is_fully_materialized(&materialization));
     assert_eq!(materialization.fragments().len(), 2);
     let BezierSplitFragment2::Materialized {
         curve: BezierSubcurve2::Quadratic(left),
@@ -170,183 +176,6 @@ fn exact_quadratic_split_materializes_native_subcurves() {
     assert_eq!(right.start(), &midpoint);
     assert_eq!(left.start(), curve.start());
     assert_eq!(right.end(), curve.end());
-}
-
-#[test]
-fn split_materialization_constructor_rejects_duplicate_fragments() {
-    assert_topology_error(BezierSplitMaterialization2::new(Vec::new()));
-
-    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
-    let materialization = match curve
-        .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
-        .unwrap()
-    {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
-    };
-
-    let first = materialization.fragments()[0].clone();
-    let second = materialization.fragments()[1].clone();
-    BezierSplitMaterialization2::new(vec![first.clone(), second]).unwrap();
-    assert_topology_error(BezierSplitMaterialization2::new(vec![first.clone(), first]));
-}
-
-#[test]
-fn split_materialization_constructor_rejects_incomplete_source_coverage() {
-    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
-    let materialization = match curve
-        .split_at_parameters(
-            &[
-                BezierParameter2::Exact(q(1, 3)),
-                BezierParameter2::Exact(q(2, 3)),
-            ],
-            &policy(),
-        )
-        .unwrap()
-    {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
-    };
-
-    let middle = materialization.fragments()[1].clone();
-    assert_topology_error(BezierSplitMaterialization2::new(vec![middle]));
-}
-
-#[test]
-fn split_materialization_constructor_rejects_noncontiguous_fragments() {
-    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
-    let materialization = match curve
-        .split_at_parameters(
-            &[
-                BezierParameter2::Exact(q(1, 3)),
-                BezierParameter2::Exact(q(2, 3)),
-            ],
-            &policy(),
-        )
-        .unwrap()
-    {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
-    };
-
-    let first = materialization.fragments()[0].clone();
-    let third = materialization.fragments()[2].clone();
-    assert_topology_error(BezierSplitMaterialization2::new(vec![first, third]));
-}
-
-#[test]
-fn split_materialization_constructor_rejects_disconnected_materialized_fragments() {
-    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
-    let first_curve = BezierSubcurve2::Quadratic(
-        curve
-            .subcurve_between_exact(&r(0), &q(1, 2), &policy())
-            .unwrap(),
-    );
-    let disconnected_second_curve =
-        BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(10, 0), p(11, 0), p(12, 0)));
-
-    assert_topology_error(BezierSplitMaterialization2::new(vec![
-        BezierSplitFragment2::Materialized {
-            start: BezierParameter2::Exact(r(0)),
-            end: BezierParameter2::Exact(q(1, 2)),
-            curve: first_curve,
-        },
-        BezierSplitFragment2::Materialized {
-            start: BezierParameter2::Exact(q(1, 2)),
-            end: BezierParameter2::Exact(r(1)),
-            curve: disconnected_second_curve,
-        },
-    ]));
-}
-
-#[test]
-fn split_materialization_constructor_rejects_materialized_algebraic_range() {
-    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
-    let materialized = BezierSubcurve2::Quadratic(
-        curve
-            .subcurve_between_exact(&r(0), &q(1, 2), &policy())
-            .unwrap(),
-    );
-    let fragment = BezierSplitFragment2::Materialized {
-        start: BezierParameter2::Exact(r(0)),
-        end: algebraic_sqrt_half_interval(),
-        curve: materialized,
-    };
-
-    assert_topology_error(BezierSplitMaterialization2::new(vec![fragment]));
-}
-
-#[test]
-fn split_materialization_constructor_rejects_forged_algebraic_endpoint_evidence() {
-    let curve = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
-    let materialization = match curve
-        .split_at_parameters(
-            &[
-                BezierParameter2::Exact(q(1, 4)),
-                algebraic_sqrt_half_interval(),
-                BezierParameter2::Exact(q(4, 5)),
-            ],
-            &policy(),
-        )
-        .unwrap()
-    {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
-    };
-    BezierSplitMaterialization2::new(materialization.fragments().to_vec()).unwrap();
-
-    let BezierSplitFragment2::RetainedBezier {
-        start,
-        end,
-        source_curve,
-        start_image,
-        end_image,
-        ..
-    } = materialization.fragments()[1].clone()
-    else {
-        panic!("expected algebraic endpoint-image fragment");
-    };
-
-    assert_topology_error(BezierSplitMaterialization2::new(vec![
-        BezierSplitFragment2::RetainedBezier {
-            reversed: false,
-            start: start.clone(),
-            end: end.clone(),
-            source_curve: source_curve.clone(),
-            start_image: start_image.clone(),
-            end_image: None,
-        },
-    ]));
-
-    let wrong_parameter = match algebraic_cubic_midpoint_interval() {
-        BezierParameter2::Algebraic(parameter) => parameter,
-        BezierParameter2::Exact(_) => panic!("expected algebraic parameter"),
-    };
-    let wrong_parameter_image = decided(
-        BezierAlgebraicEndpointImage2::quadratic(&curve, &wrong_parameter, &policy()).unwrap(),
-    );
-    assert_topology_error(BezierSplitMaterialization2::new(vec![
-        BezierSplitFragment2::RetainedBezier {
-            reversed: false,
-            start: start.clone(),
-            end: end.clone(),
-            source_curve: source_curve.clone(),
-            start_image: start_image.clone(),
-            end_image: Some(wrong_parameter_image),
-        },
-    ]));
-
-    let wrong_source = BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(0, 4), p(4, 0)));
-    assert_topology_error(BezierSplitMaterialization2::new(vec![
-        BezierSplitFragment2::RetainedBezier {
-            reversed: false,
-            start,
-            end,
-            source_curve: wrong_source,
-            start_image,
-            end_image,
-        },
-    ]));
 }
 
 #[test]
@@ -392,8 +221,8 @@ fn linear_algebraic_boundary_materializes_native_subcurves() {
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(materialization.is_fully_materialized());
-    assert!(!materialization.has_retained_beziers());
+    assert!(is_fully_materialized(&materialization));
+    assert!(!has_retained_beziers(&materialization));
     assert_eq!(materialization.fragments().len(), 2);
     let BezierSplitFragment2::Materialized {
         start,
@@ -426,7 +255,7 @@ fn algebraic_boundary_carries_endpoint_images_without_approximate_materializatio
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(materialization.has_retained_beziers());
+    assert!(has_retained_beziers(&materialization));
     assert_eq!(materialization.fragments().len(), 4);
     assert!(matches!(
         materialization.fragments()[0],
@@ -532,7 +361,7 @@ fn rational_algebraic_boundary_carries_conic_endpoint_images() {
         Classification::Uncertain(reason) => panic!("split unexpectedly uncertain: {reason:?}"),
     };
 
-    assert!(materialization.has_retained_beziers());
+    assert!(has_retained_beziers(&materialization));
     let BezierSplitFragment2::RetainedBezier {
         source_curve,
         start_image,
@@ -570,7 +399,7 @@ fn rational_algebraic_endpoint_retains_second_derivative_when_constructed() {
 fn rational_algebraic_boundary_with_zero_denominator_returns_explicit_uncertainty() {
     let curve =
         RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(1, 1), p(2, 0), r(-1)).unwrap();
-    let general_curve = hypercurve::RationalBezier2::from(curve.clone());
+    let general_curve = crate::RationalBezier2::from(curve.clone());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for general in [false, true] {
             let retained = algebraic_cubic_midpoint_interval();
@@ -619,7 +448,7 @@ fn broad_singleton_isolator_materializes_exact_endpoint_images() {
             panic!("validated nonroot domain endpoints must order the singleton isolator");
         };
         assert_eq!(split.fragments().len(), 2);
-        assert!(split.has_retained_beziers());
+        assert!(has_retained_beziers(&split));
 
         let BezierSplitFragment2::RetainedBezier {
             start,
@@ -674,5 +503,107 @@ proptest! {
 
         prop_assert_eq!(subcurve.start(), &curve.point_at(start));
         prop_assert_eq!(subcurve.end(), &curve.point_at(end));
+    }
+}
+
+#[test]
+fn represented_multi_split_materializes_connected_rational_fragments() {
+    let curve = crate::RationalBezier2::try_new(
+        vec![p(0, 0), p(1, 3), p(3, 3), p(4, 0)],
+        vec![Real::from(1), Real::from(2), Real::from(3), Real::from(4)],
+    )
+    .unwrap();
+    let policy = CurveContext::STRICT;
+    let split = decided(
+        curve
+            .split_at_parameters(
+                &[
+                    BezierParameter2::Exact(q(3, 4)),
+                    BezierParameter2::Exact(q(1, 4)),
+                    BezierParameter2::Exact(q(1, 4)),
+                ],
+                &policy,
+            )
+            .unwrap(),
+    );
+
+    assert!(is_fully_materialized(&split));
+    assert_eq!(split.fragments().len(), 3);
+    let curves = split
+        .fragments()
+        .iter()
+        .map(|fragment| match fragment {
+            BezierSplitFragment2::Materialized {
+                curve: BezierSubcurve2::Rational(curve),
+                ..
+            } => curve,
+            _ => panic!("represented rational split did not materialize natively"),
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(curves[0].start(), curve.start());
+    assert_eq!(curves[0].end(), curves[1].start());
+    assert_eq!(curves[1].end(), curves[2].start());
+    assert_eq!(curves[2].end(), curve.end());
+}
+
+#[test]
+fn rational_algebraic_contact_split_retains_exact_derivative_images() {
+    let policy = CurveContext::STRICT;
+    let half = || (Real::from(1) / Real::from(2)).unwrap();
+    let parabola = crate::RationalBezier2::try_new(
+        vec![
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(half(), Real::zero()),
+            p(1, 1),
+        ],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    let horizontal = crate::RationalBezier2::try_new(
+        vec![
+            Point2::new(Real::zero(), half()),
+            Point2::new(Real::one(), half()),
+        ],
+        vec![Real::one(); 2],
+    )
+    .unwrap();
+    let crate::CurveIntersectionCandidates2::Candidates {
+        first_parameters, ..
+    } = parabola
+        .intersection_candidates(&horizontal, &policy)
+        .unwrap()
+    else {
+        panic!("parabola crossing did not retain resultant candidates");
+    };
+    let split = decided(
+        parabola
+            .split_at_parameters(&first_parameters, &policy)
+            .unwrap(),
+    );
+    assert_eq!(split.fragments().len(), 2);
+    assert!(split.fragments().iter().all(|fragment| matches!(
+        fragment,
+        BezierSplitFragment2::RetainedBezier {
+            start_image,
+            end_image,
+            ..
+        } if start_image.as_ref().is_none_or(|image| image.is_exact())
+            && end_image.as_ref().is_none_or(|image| image.is_exact())
+    )));
+    for image in split
+        .fragments()
+        .iter()
+        .flat_map(|fragment| match fragment {
+            BezierSplitFragment2::RetainedBezier {
+                start_image,
+                end_image,
+                ..
+            } => [start_image.as_ref(), end_image.as_ref()],
+            _ => [None, None],
+        })
+    {
+        let Some(image) = image else { continue };
+        assert!(image.second_derivative().is_some());
+        assert!(image.third_derivative().is_some());
     }
 }

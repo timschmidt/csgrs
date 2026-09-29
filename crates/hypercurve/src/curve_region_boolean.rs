@@ -16210,7 +16210,17 @@ mod certified_successor_tests {
                     range,
                     "the source chart and selected endpoints must survive compaction",
                 );
-                let representative = decided(split.fragment.representative_point(&policy).unwrap());
+                let BezierSplitFragment2::RetainedBezier {
+                    start,
+                    end,
+                    source_curve,
+                    ..
+                } = &split.fragment
+                else {
+                    panic!("the compacted major arc retains its source Bezier");
+                };
+                let parameter = decided(start.strict_scalar_between(end, &policy).unwrap());
+                let representative = decided(source_curve.point_at(&parameter, &policy));
                 assert_eq!(representative, Point2::from_values(1, 0));
                 assert_eq!(split.start_topology_vertex, Some(usize::from(reversed)));
                 assert_eq!(split.end_topology_vertex, Some(usize::from(!reversed)));

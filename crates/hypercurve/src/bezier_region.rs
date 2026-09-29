@@ -72,7 +72,7 @@ use crate::{
 
 /// A closed native Bezier/conic boundary loop.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierBoundaryLoop2 {
+pub(crate) struct BezierBoundaryLoop2 {
     fragments: Vec<BezierSubcurve2>,
 }
 
@@ -113,7 +113,7 @@ impl PartialEq for CurveRegionBoundaryLoop2 {
 /// Curve operations supply these records; completed boundaries expose them
 /// for inspection without accepting caller-authored arrangement indices.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct CurveRegionFragmentSource2 {
+pub(crate) struct CurveRegionFragmentSource2 {
     arrangement_fragment_index: usize,
     source_curve_index: usize,
     source_fragment_index: usize,
@@ -136,16 +136,6 @@ impl CurveRegionFragmentSource2 {
     /// Returns the retained arrangement-graph fragment index.
     pub const fn arrangement_fragment_index(self) -> usize {
         self.arrangement_fragment_index
-    }
-
-    /// Returns the source curve index carried by the graph fragment.
-    pub const fn source_curve_index(self) -> usize {
-        self.source_curve_index
-    }
-
-    /// Returns the split-fragment index within the source curve materialization.
-    pub const fn source_fragment_index(self) -> usize {
-        self.source_fragment_index
     }
 }
 
@@ -490,16 +480,6 @@ struct NativeLoopNesting2 {
 }
 
 impl BezierBoundaryLoop2 {
-    /// Constructs a closed boundary loop from native Bezier/conic fragments.
-    pub fn new(fragments: Vec<BezierSubcurve2>, policy: &CurveContext) -> CurveResult<Self> {
-        let fragments = fragments
-            .into_iter()
-            .map(|curve| canonicalize_exact_rational_subcurve(curve, policy))
-            .collect::<Vec<_>>();
-        validate_native_boundary_loop(&fragments, policy)?;
-        Ok(Self { fragments })
-    }
-
     /// Returns native curve fragments in loop order.
     pub fn fragments(&self) -> &[BezierSubcurve2] {
         &self.fragments
@@ -510,65 +490,12 @@ impl BezierBoundaryLoop2 {
         self.fragments
     }
 
-    /// Returns the number of native fragments in the loop.
-    pub fn len(&self) -> usize {
-        self.fragments.len()
-    }
-
-    /// Returns true when the loop contains no fragments.
-    pub fn is_empty(&self) -> bool {
-        self.fragments.is_empty()
-    }
-
-    /// Returns the exact signed area for loops with implemented area integrals.
-    ///
-    /// Polynomial Beziers use exact polynomial Green integrals. Rational
-    /// quadratics use the homogeneous rational Green integral when their
-    /// denominator is certified nonzero on the affine parameter interval.
-    pub fn signed_area(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
-        resolve_certified_operation(policy, |attempt| self.signed_area_raw(attempt))
-    }
-
     pub(crate) fn signed_area_raw(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
         let mut rational_quadratic_cache = RationalQuadraticAreaIntegralCache::default();
         self.signed_area_with_cache(policy, &mut rational_quadratic_cache)
-    }
-
-    /// Returns exact signed area and first moments when every retained boundary
-    /// fragment has an implemented symbolic integral.
-    ///
-    /// Polynomial Béziers, polynomial-equivalent rational Béziers, finite
-    /// rational quadratics, their exact homogeneous degree elevations,
-    /// arbitrary-degree rational carriers with at-most-quadratic weight
-    /// polynomials, certified cubic-weight carriers, and arbitrary-degree
-    /// weight carriers that rational-root deflation reduces to linear factors
-    /// plus either an exact power of one irreducible quadratic or a quartic
-    /// product of two are integrated directly. `None` preserves another
-    /// genuinely rational boundary whose first-moment integral is not yet
-    /// implemented; it never requests a flattening tolerance.
-    pub fn area_moments(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<CurveOutcome<Classification<Option<BezierAreaMoments2>>>> {
-        resolve_certified_operation(policy, |attempt| self.area_moments_raw(attempt))
-    }
-
-    pub(crate) fn area_moments_raw(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierAreaMoments2>>> {
-        if self.fragments.is_empty() {
-            return Err(CurveError::Topology(
-                "Bezier boundary loop moments require nonempty fragments".to_owned(),
-            ));
-        }
-        boundary_area_moments(self.fragments.iter().map(Some), policy)
     }
 
     fn signed_area_with_cache(
@@ -597,18 +524,6 @@ impl BezierBoundaryLoop2 {
             };
         }
         Ok(Classification::Decided(Some(total)))
-    }
-
-    /// Classifies an exact point against this curved boundary loop.
-    ///
-    /// The classifier uses exact point incidence followed by a certified
-    /// horizontal-ray crossing count. It does not flatten curved fragments.
-    pub fn classify_point(
-        &self,
-        point: &Point2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<ContourPointLocation>> {
-        classify_point_against_native_loop(self, point, policy)
     }
 }
 
@@ -654,38 +569,6 @@ impl From<BezierBoundaryLoop2> for CurveRegionBoundaryLoop2 {
             rational_evaluators: OnceLock::new(),
         }
     }
-}
-
-fn validate_native_boundary_loop(
-    fragments: &[BezierSubcurve2],
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    if fragments.is_empty() {
-        return Err(CurveError::Topology(
-            "Bezier boundary loop requires nonempty fragments".to_owned(),
-        ));
-    }
-
-    for (left, right) in fragments
-        .iter()
-        .zip(fragments.iter().cycle().skip(1))
-        .take(fragments.len())
-    {
-        let (_, left_end) = left.endpoint_refs();
-        let (right_start, _) = right.endpoint_refs();
-        if !certified_points_equal(left_end, right_start, policy) {
-            return Err(CurveError::Topology(
-                "Bezier boundary loop fragments must be endpoint-connected and closed".to_owned(),
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn certified_points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> bool {
-    left == right
-        || (is_zero(&(left.x() - right.x()), policy) == Some(true)
-            && is_zero(&(left.y() - right.y()), policy) == Some(true))
 }
 
 impl BezierSubcurve2 {
@@ -932,7 +815,10 @@ impl CurveRegionBoundaryLoop2 {
     }
 
     /// Constructs a retained boundary loop from accepted split fragments.
-    pub fn new(fragments: Vec<BezierSplitFragment2>, policy: &CurveContext) -> CurveResult<Self> {
+    pub(crate) fn new(
+        fragments: Vec<BezierSplitFragment2>,
+        policy: &CurveContext,
+    ) -> CurveResult<Self> {
         let fragments = fragments
             .into_iter()
             .map(|fragment| canonicalize_retained_rational_fragment(fragment, policy))
@@ -1051,7 +937,7 @@ impl CurveRegionBoundaryLoop2 {
     }
 
     /// Returns arrangement/source indices for graph-built loops, when retained.
-    pub fn arrangement_sources(&self) -> Option<&[CurveRegionFragmentSource2]> {
+    pub(crate) fn arrangement_sources(&self) -> Option<&[CurveRegionFragmentSource2]> {
         self.arrangement_sources.as_deref()
     }
 
@@ -10666,31 +10552,6 @@ impl CurveRegion2 {
         }
     }
 
-    /// Constructs the regularized even-odd set of closed arrangement walks.
-    ///
-    /// The graph supplies exact carriers and selected-parameter evidence. A
-    /// closed traversal proves connectivity, but may still contain crossings,
-    /// overlaps, or canceled seams. Construction resolves those interactions
-    /// before publishing the region, with material on the left of its boundary.
-    /// Overlap refinements enter through their refined graph and traversal.
-    pub fn try_from_arrangement_traversal(
-        graph: &BezierArrangementGraph2,
-        traversal: &BezierArrangementTraversal2,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Self>> {
-        resolve_certified_operation(
-            policy,
-            |attempt| match Self::from_arrangement_traversal_raw(graph, traversal, attempt, true) {
-                Classification::Decided(region) => region.finish_construction(attempt),
-                Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
-                    CurveOperation2::Construction,
-                    CurveFamily2::RationalBezier,
-                    reason,
-                )),
-            },
-        )
-    }
-
     pub(crate) fn from_certified_arrangement_traversal(
         graph: &BezierArrangementGraph2,
         traversal: &BezierArrangementTraversal2,
@@ -14333,19 +14194,6 @@ fn subcurve_control_hull_contains_point(
     }
 }
 
-fn classify_point_against_native_loop(
-    boundary_loop: &BezierBoundaryLoop2,
-    point: &Point2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<ContourPointLocation>> {
-    if let Classification::Decided(bounds) = native_loop_bounds(boundary_loop, policy)
-        && let Classification::Decided(false) = bounds.contains_point(point, policy)
-    {
-        return Ok(Classification::Decided(ContourPointLocation::Outside));
-    }
-    classify_point_against_native_loop_after_bounds(boundary_loop, point, policy)
-}
-
 fn algebraic_point_is_decided_outside_bounds(
     point: &RationalBezierAlgebraicPointPredicate2<'_>,
     bounds: &Aabb2,
@@ -17656,14 +17504,12 @@ mod tests {
 
     #[test]
     fn native_boundary_loops_convert_into_unified_region_validation() {
-        let boundary = BezierBoundaryLoop2::new(
-            vec![
+        let boundary = BezierBoundaryLoop2 {
+            fragments: vec![
                 BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 0))),
                 BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(2, 0), p(1, -1), p(0, 0))),
             ],
-            &CurveContext::STRICT,
-        )
-        .unwrap();
+        };
         let boundary: CurveRegionBoundaryLoop2 = boundary.into();
         assert!(matches!(
             CurveRegion2::new(vec![boundary.clone(), boundary]),

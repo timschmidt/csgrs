@@ -2,13 +2,11 @@
 
 use std::sync::Arc;
 
-use crate::curve_intersection::{
-    CurveIntersectionContext, arrangement_from_curve_pieces, split_curve,
-};
+use crate::curve_intersection::{CurveIntersectionContext, split_curve};
 use crate::policy::resolve_certified_operation;
 use crate::{
-    BezierArrangementGraph2, Classification, Curve2, CurveContext, CurveIntersectionContact2,
-    CurveIntersectionOverlap2, CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2,
+    Classification, Curve2, CurveContext, CurveIntersectionContact2, CurveIntersectionOverlap2,
+    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2,
     CurveIntersectionParameterComponent2, CurveOperation2, CurveOutcome, CurveParameter2,
     CurvePath2, ExactCurveError, ExactCurveResult, UncertaintyReason,
 };
@@ -96,7 +94,6 @@ struct CurvePathIntersectionTopologyData {
     result: CurvePathIntersectionResult2,
     first: Arc<[CurvePathSplit2]>,
     second: Arc<[CurvePathSplit2]>,
-    arrangement: BezierArrangementGraph2,
 }
 
 #[derive(Debug)]
@@ -356,16 +353,11 @@ impl<'a> CurvePathIntersectionContext<'a> {
                 })),
             &self.policy,
         )?;
-        let arrangement = arrangement_from_curve_pieces(
-            first.iter().chain(&second).map(CurvePathSplit2::curves),
-            &self.policy,
-        )?;
         Ok(CurvePathIntersectionTopology2 {
             data: Arc::new(CurvePathIntersectionTopologyData {
                 result,
                 first: first.into(),
                 second: second.into(),
-                arrangement,
             }),
         })
     }
@@ -493,13 +485,6 @@ impl CurvePathIntersectionTopology2 {
     /// Returns split topology for authored curves in the second path.
     pub fn second(&self) -> &[CurvePathSplit2] {
         &self.data.second
-    }
-
-    /// Borrows the arrangement certified with this topology's curve pieces.
-    /// Source indices enumerate the first path's authored curves followed by
-    /// the second path's curves; fragment indices follow each source's traversal.
-    pub fn arrangement_graph(&self) -> &BezierArrangementGraph2 {
-        &self.data.arrangement
     }
 }
 

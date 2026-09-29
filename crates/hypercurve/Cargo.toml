@@ -59,10 +59,6 @@ name = "bezier_algebraic_parameter"
 harness = false
 
 [[bench]]
-name = "bezier_arrangement"
-harness = false
-
-[[bench]]
 name = "bezier_rational_overlap"
 harness = false
 

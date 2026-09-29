@@ -16,12 +16,12 @@ use crate::rational_bezier_general::{
     RationalBezierIntersectionContext, RationalBezierOverlapParameterCorrespondence2,
 };
 use crate::{
-    ArcArcIntersection, BezierArrangementGraph2, BezierParameter2, BezierParameterRange2,
-    CircleCircleRelation, CircularArc2, Classification, Curve2, CurveContext, CurveError,
-    CurveGeometry2, CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2,
-    CurvePoint2, CurveResult, CurveSpanRange2, ExactCurveError, ExactCurveResult,
-    LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange,
-    Point2, RationalBezier2, RationalBezierIntersectionContacts2, UncertaintyReason,
+    ArcArcIntersection, BezierParameter2, BezierParameterRange2, CircleCircleRelation,
+    CircularArc2, Classification, Curve2, CurveContext, CurveError, CurveGeometry2,
+    CurveOperation2, CurveOutcome, CurveParameter2, CurveParameterRange2, CurvePoint2, CurveResult,
+    CurveSpanRange2, ExactCurveError, ExactCurveResult, LineArcIntersection,
+    LineArcIntersectionPoint, LineArcOrder, LineLineIntersection, ParamRange, Point2,
+    RationalBezier2, RationalBezierIntersectionContacts2, UncertaintyReason,
 };
 
 /// Exact location in a curve's retained span chart.
@@ -601,7 +601,7 @@ pub struct CurveIntersectionResult2 {
     data: Arc<CurveIntersectionResultData>,
 }
 
-/// Clone-shared exact curve pieces and arrangement for one complete curve pair.
+/// Clone-shared exact curve pieces for one complete curve pair.
 #[derive(Clone, Debug)]
 pub struct CurveIntersectionTopology2 {
     data: Arc<CurveIntersectionTopologyData>,
@@ -612,7 +612,6 @@ struct CurveIntersectionTopologyData {
     result: CurveIntersectionResult2,
     first: Arc<[Curve2]>,
     second: Arc<[Curve2]>,
-    arrangement: BezierArrangementGraph2,
 }
 
 #[derive(Debug)]
@@ -2447,16 +2446,11 @@ impl CurveIntersectionContext {
                     .map(|parameter| (component.second_span_index(), parameter.clone()))
             }));
         let second = split_curve(&self.data.second, second_parameters, &self.data.policy)?;
-        let arrangement = arrangement_from_curve_pieces(
-            [first.as_slice(), second.as_slice()],
-            &self.data.policy,
-        )?;
         Ok(CurveIntersectionTopology2 {
             data: Arc::new(CurveIntersectionTopologyData {
                 result,
                 first: first.into(),
                 second: second.into(),
-                arrangement,
             }),
         })
     }
@@ -2769,13 +2763,6 @@ impl CurveIntersectionTopology2 {
     pub fn second(&self) -> &[Curve2] {
         &self.data.second
     }
-
-    /// Borrows the arrangement certified with this topology's curve pieces.
-    /// Source indices are zero for the first curve and one for the second;
-    /// fragment indices follow each source's traversal.
-    pub fn arrangement_graph(&self) -> &BezierArrangementGraph2 {
-        &self.data.arrangement
-    }
 }
 
 pub(crate) fn split_curve(
@@ -2824,36 +2811,6 @@ pub(crate) fn split_curve(
         .split_at_parameters(cuts, policy)
         .map(|pieces| pieces.into_iter().map(|(_, curve)| curve).collect())
         .map_err(|error| error.with_operation(CurveOperation2::Arrangement))
-}
-
-/// Lowers exact pieces into the existing retained-fragment arrangement engine.
-/// Source indices name authored curves; fragment indices follow traversal.
-/// No filled region or native materialization is required for retained curves.
-pub(crate) fn arrangement_from_curve_pieces<'a>(
-    sources: impl IntoIterator<Item = &'a [Curve2]>,
-    policy: &CurveContext,
-) -> ExactCurveResult<BezierArrangementGraph2> {
-    let mut fragments = Vec::new();
-    for (source_index, pieces) in sources.into_iter().enumerate() {
-        let mut fragment_index = 0;
-        for curve in pieces {
-            let mut append = |fragment| {
-                fragments.push(crate::BezierArrangementFragment2::new(
-                    source_index,
-                    fragment_index,
-                    fragment,
-                ));
-                fragment_index += 1;
-            };
-            for span in curve
-                .source_spans(policy, CurveOperation2::Arrangement)?
-                .iter()
-            {
-                append(span.fragment.clone());
-            }
-        }
-    }
-    Ok(BezierArrangementGraph2::from_certified_fragments(fragments))
 }
 
 fn matching_contact_index(

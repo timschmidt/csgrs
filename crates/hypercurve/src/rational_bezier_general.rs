@@ -39,10 +39,9 @@ use crate::classify::{
 use crate::intersect::{circle_relation_from_supports, oriented_param_range_overlap};
 use crate::policy::{PolicyClassificationCache, resolve_cached_classification};
 use crate::{
-    Aabb2, Axis2, BezierArrangementGraph2, BezierLineContactKind, BezierLineContactRelation,
-    BezierLineCrossingDirection, BezierLineImageFitRelation, BezierParameter2,
-    BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
-    BezierSplitMaterialization2, BezierSubcurve2, CircleCircleRelation, Classification,
+    Aabb2, Axis2, BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
+    BezierLineImageFitRelation, BezierParameter2, BezierParameterPolynomial, BezierParameterRange2,
+    BezierParameterRayDirection2, BezierSubcurve2, CircleCircleRelation, Classification,
     CurveContext, CurveDerivative2, CurveError, CurveFamily2, CurveIntersectionCandidates2,
     CurveOperation2, CurveOverlapOrientation2, CurveParameter2, CurveParameterRange2, CurvePoint2,
     CurveResult, ExactCurveError, ExactCurveResult, LineSeg2, LineSide, ParamRange, Point2,
@@ -788,60 +787,6 @@ enum RationalBezierSharedComponentReplay {
     Unresolved,
 }
 
-/// Retained split topology derived from one completely replayed curve pair.
-///
-/// The contact collection is shared with the retained pair. The two split
-/// materializations preserve each contact parameter and its exact endpoint
-/// images, so an arrangement can consume the result without rerunning
-/// resultants or algebraic point comparison.
-#[derive(Clone, Debug)]
-pub struct RationalBezierIntersectionTopology2 {
-    data: Arc<RationalBezierIntersectionTopologyData>,
-}
-
-#[derive(Debug)]
-struct RationalBezierIntersectionTopologyData {
-    contacts: Arc<[RationalBezierIntersectionContact2]>,
-    first: BezierSplitMaterialization2,
-    second: BezierSplitMaterialization2,
-    arrangement: OnceLock<CurveResult<BezierArrangementGraph2>>,
-}
-
-impl RationalBezierIntersectionTopology2 {
-    /// Returns all certified pair contacts in deterministic parameter order.
-    pub fn contacts(&self) -> &[RationalBezierIntersectionContact2] {
-        &self.data.contacts
-    }
-
-    /// Returns the first curve split at every certified contact parameter.
-    pub fn first(&self) -> &BezierSplitMaterialization2 {
-        &self.data.first
-    }
-
-    /// Returns the second curve split at every certified contact parameter.
-    pub fn second(&self) -> &BezierSplitMaterialization2 {
-        &self.data.second
-    }
-
-    /// Builds an arrangement graph once and returns a clone-shared fact view.
-    pub fn arrangement_graph_view(&self) -> CurveResult<&BezierArrangementGraph2> {
-        match self.data.arrangement.get_or_init(|| {
-            BezierArrangementGraph2::from_split_materializations(&[
-                self.data.first.clone(),
-                self.data.second.clone(),
-            ])
-        }) {
-            Ok(graph) => Ok(graph),
-            Err(cause) => Err(cause.clone()),
-        }
-    }
-
-    /// Returns an owned arrangement graph from the retained pair materializations.
-    pub fn arrangement_graph(&self) -> CurveResult<BezierArrangementGraph2> {
-        self.arrangement_graph_view().cloned()
-    }
-}
-
 #[derive(Debug)]
 pub(crate) struct RationalBezierIntersectionContext {
     data: RationalBezierIntersectionContextData,
@@ -930,22 +875,6 @@ impl RationalBezierIntersectionContext {
         )
     }
 
-    fn try_topology(&self) -> ExactCurveResult<RationalBezierIntersectionTopology2> {
-        match self.build_topology() {
-            Ok(Classification::Decided(topology)) => Ok(topology),
-            Ok(Classification::Uncertain(reason)) => Err(ExactCurveError::blocked(
-                CurveOperation2::Arrangement,
-                CurveFamily2::RationalBezier,
-                reason,
-            )),
-            Err(cause) => Err(ExactCurveError::invalid(
-                CurveOperation2::Arrangement,
-                CurveFamily2::RationalBezier,
-                cause,
-            )),
-        }
-    }
-
     fn contacts_ref(&self) -> &CurveResult<Classification<RationalBezierIntersectionContacts2>> {
         self.data.contacts.get_or_init(|| {
             self.data.first.replay_intersection_candidate_set(
@@ -954,71 +883,6 @@ impl RationalBezierIntersectionContext {
                 &self.data.policy,
             )
         })
-    }
-
-    fn build_topology(&self) -> CurveResult<Classification<RationalBezierIntersectionTopology2>> {
-        let contacts = match self.contacts_ref() {
-            Ok(Classification::Decided(RationalBezierIntersectionContacts2::NoIntersection)) => {
-                Arc::from([])
-            }
-            Ok(Classification::Decided(RationalBezierIntersectionContacts2::Contacts(
-                contacts,
-            ))) => Arc::clone(contacts),
-            Ok(Classification::Decided(
-                RationalBezierIntersectionContacts2::Overlap(_)
-                | RationalBezierIntersectionContacts2::ContactsAndOverlap { .. },
-            )) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
-            }
-            Ok(Classification::Decided(RationalBezierIntersectionContacts2::Incomplete {
-                ..
-            })) => return Ok(Classification::Uncertain(UncertaintyReason::Predicate)),
-            Ok(Classification::Decided(
-                RationalBezierIntersectionContacts2::DegenerateResultant,
-            )) => return Ok(Classification::Uncertain(UncertaintyReason::Boundary)),
-            Ok(Classification::Uncertain(reason)) => {
-                return Ok(Classification::Uncertain(*reason));
-            }
-            Err(cause) => return Err(cause.clone()),
-        };
-        let first_parameters = contacts
-            .iter()
-            .map(|contact| contact.first_parameter().clone())
-            .collect::<Vec<_>>();
-        let second_parameters = contacts
-            .iter()
-            .map(|contact| contact.second_parameter().clone())
-            .collect::<Vec<_>>();
-        let first = match self
-            .data
-            .first
-            .split_at_parameters(&first_parameters, &self.data.policy)?
-        {
-            Classification::Decided(first) => first,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second = match self
-            .data
-            .second
-            .split_at_parameters(&second_parameters, &self.data.policy)?
-        {
-            Classification::Decided(second) => second,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        Ok(Classification::Decided(
-            RationalBezierIntersectionTopology2 {
-                data: Arc::new(RationalBezierIntersectionTopologyData {
-                    contacts,
-                    first,
-                    second,
-                    arrangement: OnceLock::new(),
-                }),
-            },
-        ))
     }
 }
 
@@ -2823,15 +2687,6 @@ impl RationalBezier2 {
                 cause,
             )),
         }
-    }
-
-    /// Computes exact contact-derived split topology immediately.
-    pub fn intersection_topology(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<RationalBezierIntersectionTopology2> {
-        RationalBezierIntersectionContext::try_new(self, other, policy)?.try_topology()
     }
 
     fn intersection_context_classified(

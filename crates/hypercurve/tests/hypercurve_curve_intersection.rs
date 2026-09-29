@@ -157,8 +157,7 @@ fn top_level_rational_intersection_immediately_returns_sources_and_topology() {
     );
     assert_eq!(topology.first().len(), 2);
     assert_eq!(topology.second().len(), 2);
-    assert_eq!(topology.arrangement_graph().len(), 4);
-    assert_eq!(topology.arrangement_graph().len(), 4);
+    assert_eq!(topology.first().len() + topology.second().len(), 4);
 }
 
 #[test]
@@ -249,7 +248,7 @@ fn top_level_nurbs_intersection_deduplicates_a_shared_knot_contact() {
     );
     assert_eq!(topology.first().len(), 2);
     assert_eq!(topology.second().len(), 2);
-    assert_eq!(topology.arrangement_graph().len(), 4);
+    assert_eq!(topology.first().len() + topology.second().len(), 4);
 }
 
 #[test]
@@ -835,11 +834,7 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
                     let topology = outcome.value;
                     assert_eq!(topology.result().contacts().len(), 1);
                     assert!(topology.result().is_complete());
-                    assert_eq!(topology.arrangement_graph().len(), 4);
-                    assert!(std::ptr::eq(
-                        topology.arrangement_graph(),
-                        topology.clone().arrangement_graph()
-                    ));
+                    assert_eq!(topology.first().len() + topology.second().len(), 4);
                     for (source, pieces, other) in [
                         (first, topology.first(), second),
                         (second, topology.second(), first),
@@ -865,7 +860,7 @@ fn generated_chord_topology_publishes_reusable_curve_pieces() {
                     ];
                     let outcome = paths[0].intersection_topology(&paths[1], &policy).unwrap();
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
-                    assert_eq!(outcome.value.arrangement_graph().len(), 4);
+                    assert_eq!(path_piece_count(&outcome.value), 4);
                     assert_single_contact_curve_pieces(
                         first,
                         outcome.value.first()[0].curves(),
@@ -1051,18 +1046,8 @@ fn split_topology_preserves_both_sides_of_a_discontinuous_spline_knot() {
                                 .value
                         ));
                     }
-                    let graph = topology.arrangement_graph();
-                    assert_eq!(graph.len(), 5);
-                    for source_index in 0..2 {
-                        let count = if (source_index == 0) == swapped { 3 } else { 2 };
-                        let indices = graph
-                            .fragments()
-                            .iter()
-                            .filter(|fragment| fragment.source_curve_index() == source_index)
-                            .map(|fragment| fragment.source_fragment_index())
-                            .collect::<Vec<_>>();
-                        assert_eq!(indices, (0..count).collect::<Vec<_>>());
-                    }
+                    let counts = [topology.first().len(), topology.second().len()];
+                    assert_eq!(counts, if swapped { [3, 2] } else { [2, 3] });
                 }
             }
         }
@@ -1333,7 +1318,7 @@ fn generated_chord_overlaps_retain_independent_and_selected_boundaries() {
                         assert_eq!(outcome.certainty, CurveCertainty::Certified);
                         assert_pieces(outcome.value.first(), outcome.value.second());
                         assert_eq!(
-                            outcome.value.arrangement_graph().len(),
+                            outcome.value.first().len() + outcome.value.second().len(),
                             if case == 2 { 3 } else { 2 }
                         );
                         let paths = [
@@ -1433,7 +1418,10 @@ fn generated_chord_cuts_reenter_collinear_endpoint_intersections() {
                         );
                         let topology = first.intersection_topology(second, &policy).unwrap();
                         assert_eq!(topology.certainty, CurveCertainty::Certified);
-                        assert_eq!(topology.value.arrangement_graph().len(), 2);
+                        assert_eq!(
+                            topology.value.first().len() + topology.value.second().len(),
+                            2
+                        );
                         for (source, pieces) in [
                             (first, topology.value.first()),
                             (second, topology.value.second()),
@@ -2156,12 +2144,12 @@ fn top_level_shared_component_retains_certified_overlap() {
         evidence.overlaps()[0].orientation(),
         CurveOverlapOrientation2::Same
     );
-    let graph = topology.arrangement_graph();
-    assert_eq!(graph.len(), 2);
-    let traversal =
-        decided(graph.traverse_retained_deduplicating_materialized_overlaps(&CurveContext::STRICT));
-    assert_eq!(traversal.shadowed_fragment_indices(), &[1]);
-    assert_eq!(traversal.traversal().len(), 1);
+    assert_eq!(topology.first().len() + topology.second().len(), 2);
+    assert_pieces_share_one_overlap(
+        &topology.first()[0],
+        &topology.second()[0],
+        &CurveContext::STRICT,
+    );
 }
 
 #[test]
@@ -2262,10 +2250,7 @@ fn top_level_partial_nonlinear_overlap_splits_at_retained_ranges() {
 
     assert_eq!(topology.first().len(), 2);
     assert_eq!(topology.second().len(), 2);
-    let graph = topology.arrangement_graph();
-    assert_eq!(graph.len(), 4);
-    let traversal = decided(graph.traverse_retained_deduplicating_materialized_overlaps(&policy));
-    assert_eq!(traversal.shadowed_fragment_indices().len(), 1);
+    assert_pieces_share_one_overlap(&topology.first()[1], &topology.second()[0], &policy);
 }
 
 #[test]
@@ -2305,7 +2290,7 @@ fn top_level_line_image_overlap_preserves_algebraic_split_boundary() {
             .value
     ));
     assert_eq!(topology.second().len(), 1);
-    assert_eq!(topology.arrangement_graph().len(), 3);
+    assert_eq!(topology.first().len() + topology.second().len(), 3);
 
     let first_path = CurvePath2::try_new(vec![first]).unwrap();
     let second_path = CurvePath2::try_new(vec![second]).unwrap();
@@ -2958,8 +2943,7 @@ fn path_pair_immediate_topology_splits_each_authored_curve_once() {
             .sum::<usize>(),
         6
     );
-    assert_eq!(topology.arrangement_graph().len(), 12);
-    assert_eq!(topology.arrangement_graph().len(), 12);
+    assert_eq!(path_piece_count(&topology), 12);
 }
 
 #[test]
@@ -3711,7 +3695,7 @@ mod finite_selected_circle_domains {
             .unwrap(),
         );
         Curve2::from(exact(
-            BezierParallelFragment2::try_new(parallel, range, policy).unwrap(),
+            Curve2::try_analytic_parallel(parallel, range, policy).unwrap(),
         ))
     }
     fn oriented(curve: &Curve2, reverse: bool, policy: &CurveContext) -> Curve2 {
@@ -3803,4 +3787,21 @@ mod finite_selected_circle_domains {
         assert_eq!(cases, 64);
         assert_eq!(failures, 0);
     }
+}
+
+fn path_piece_count(topology: &hypercurve::CurvePathIntersectionTopology2) -> usize {
+    topology
+        .first()
+        .iter()
+        .chain(topology.second())
+        .map(|split| split.curves().len())
+        .sum()
+}
+
+fn assert_pieces_share_one_overlap(first: &Curve2, second: &Curve2, policy: &CurveContext) {
+    let replay = first.intersect_curve(second, policy).unwrap();
+    assert_eq!(replay.certainty, CurveCertainty::Certified);
+    assert!(replay.value.is_complete(), "{:?}", replay.value.blockers());
+    assert!(replay.value.contacts().is_empty());
+    assert_eq!(replay.value.overlaps().len(), 1);
 }

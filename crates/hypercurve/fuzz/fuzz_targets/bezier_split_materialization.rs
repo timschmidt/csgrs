@@ -2,7 +2,7 @@
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierSplitFragment2, Classification, CurveContext, Point2,
+    BezierParameterPolynomial, Classification, Curve2, CurveContext, CurvePoint2, Point2,
     QuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
@@ -31,7 +31,11 @@ fuzz_target!(|data: &[u8]| {
         point(data[4], data[5]),
     );
 
-    let mut parameters = vec![BezierParameter2::Exact(unit_from_byte(data[6]))];
+    let mut parameters = Vec::new();
+    // Public cuts require a strict interior parameter.
+    if !matches!(data[6] % 17, 0 | 16) {
+        parameters.push(BezierParameter2::Exact(unit_from_byte(data[6])));
+    }
 
     if data[9] & 1 == 1 {
         let start = unit_from_byte(data[7].min(data[8]));
@@ -66,37 +70,22 @@ fuzz_target!(|data: &[u8]| {
         parameters.push(BezierParameter2::Algebraic(algebraic));
     }
 
-    if let Ok(Classification::Decided(materialization)) =
-        curve.split_at_parameters(&parameters, &policy)
-    {
-        for fragment in materialization.fragments() {
-            match fragment {
-                BezierSplitFragment2::Materialized { start, end, .. } => {
-                    assert!(start.scalar().is_some());
-                    assert!(end.scalar().is_some());
-                }
-                BezierSplitFragment2::RetainedBezier {
-                    start,
-                    end,
-                    start_image,
-                    end_image,
-                    ..
-                } => {
-                    assert!(start_image.is_some() || end_image.is_some());
-                    if start.scalar().is_none() {
-                        assert!(start_image.as_ref().is_some_and(|image| image.is_exact()));
-                    }
-                    if end.scalar().is_none() {
-                        assert!(end_image.as_ref().is_some_and(|image| image.is_exact()));
-                    }
-                }
-                BezierSplitFragment2::AnalyticParallel(_)
-                | BezierSplitFragment2::AlgebraicChord(_)
-                | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
-                | BezierSplitFragment2::SelectedFiber(_) => {
-                    panic!("splitting an authored quadratic produced an unrelated carrier")
-                }
-            }
-        }
+    let curve = Curve2::from(curve);
+    let coincide = |first: &CurvePoint2, second: &CurvePoint2| {
+        assert_eq!(
+            first.coincides_with(second, &policy).value,
+            Classification::Decided(true)
+        );
+    };
+    for parameter in parameters {
+        // Exact and selected interior cuts of an authored quadratic always
+        // complete; each piece keeps exact, connected endpoint evidence.
+        let (first, second) = curve
+            .split_at(parameter.into(), &policy)
+            .expect("an interior quadratic cut must complete")
+            .into_value();
+        coincide(&first.start(), &curve.start());
+        coincide(&first.end(), &second.start());
+        coincide(&second.end(), &curve.end());
     }
 });

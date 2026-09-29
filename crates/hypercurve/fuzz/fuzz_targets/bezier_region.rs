@@ -1,11 +1,9 @@
 #![no_main]
 
 use hypercurve::{
-    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierArrangementGraph2, BezierParameter2,
-    BezierParameterInterval, BezierParameterPolynomial, BezierRetainedCurveEnvelope2,
-    BezierRetainedEndpointEnvelope2, Classification, Curve2, CurveContext, CurvePath2, CurvePoint2,
-    CurveRegion2, CurveRegionBoundaryLoop2, Point2, QuadraticBezier2, RationalQuadraticBezier2,
-    Real,
+    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, Classification, Curve2, CurveContext, CurvePath2, CurvePoint2,
+    CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -92,85 +90,45 @@ fuzz_target!(|data: &[u8]| {
     }
 
     let policy = CurveContext::STRICT;
-    let mut materializations = Vec::new();
     for chunk in data.chunks(8).take(8) {
         if chunk.len() < 8 {
             break;
         }
-        let curve = QuadraticBezier2::new(
-            point(chunk[0], chunk[1]),
+        let (start, end) = (point(chunk[0], chunk[1]), point(chunk[4], chunk[5]));
+        let curve = Curve2::from(QuadraticBezier2::new(
+            start.clone(),
             point(chunk[2], chunk[3]),
-            point(chunk[4], chunk[5]),
-        );
-        let parameters = vec![BezierParameter2::Exact(unit_from_byte(chunk[6]))];
-        if let Ok(Classification::Decided(materialization)) =
-            curve.split_at_parameters(&parameters, &policy)
-        {
-            materializations.push(materialization);
+            end.clone(),
+        ));
+        let mut cuts = Vec::new();
+        if !matches!(chunk[6] % 17, 0 | 16) {
+            cuts.push(BezierParameter2::Exact(unit_from_byte(chunk[6])));
         }
-        if let Some(algebraic) = algebraic_sqrt_half(&policy)
-            && let Ok(Classification::Decided(split)) =
-                curve.split_at_parameters(&[algebraic], &policy)
-            && let Some(fragment) = split.fragments().first()
-        {
-            if let Ok(loop_) = CurveRegionBoundaryLoop2::new(vec![fragment.clone()], &policy) {
-                let _ = BezierRetainedCurveEnvelope2::from_loop(&loop_, &policy);
-            }
-        }
-        if let Some(algebraic) = algebraic_sqrt_eighth(&policy)
-            && let Ok(Classification::Decided(split)) =
-                curve.split_at_parameters(&[algebraic], &policy)
-            && let Some(fragment) = split.fragments().first()
-        {
-            if let Ok(loop_) = CurveRegionBoundaryLoop2::new(vec![fragment.clone()], &policy) {
-                let _ = BezierRetainedCurveEnvelope2::from_loop(&loop_, &policy);
-            }
-        }
-    }
-
-    if let Ok(graph) = BezierArrangementGraph2::from_split_materializations(&materializations) {
-        if let Classification::Decided(traversal) = graph.traverse_branch_free(&policy) {
-            let _ = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy).map(
-                |outcome| {
-                    let region = outcome.into_value();
-                    let _ = region.signed_area(&policy);
-                    let _ = region.loop_roles(&policy);
-                    let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
-                    let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-                },
-            );
-        }
-        if let Classification::Decided(traversal) =
-            graph.traverse_retained_with_tangent_order(&policy)
-        {
-            let _ = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy).map(
-                |outcome| {
-                    let region = outcome.into_value();
-                    let _ = region.signed_area(&policy);
-                    let _ = region.loop_roles(&policy);
-                    let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
-                    let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-                },
-            );
-        }
-        if let Classification::Decided(traversal) =
-            graph.traverse_retained_splitting_linear_overlaps(&policy)
-        {
-            let _ = CurveRegion2::try_from_arrangement_traversal(
-                traversal.refinement().graph(),
-                traversal.traversal(),
+        cuts.extend(algebraic_sqrt_half(&policy));
+        cuts.extend(algebraic_sqrt_eighth(&policy));
+        for cut in cuts {
+            let Ok(outcome) = curve.split_at(cut.into(), &policy) else {
+                continue;
+            };
+            let (head, tail) = outcome.into_value();
+            let Ok(closing) = LineSeg2::try_new(end.clone(), start.clone()) else {
+                continue;
+            };
+            let Ok(path) = CurvePath2::try_new(vec![head, tail, closing.into()]) else {
+                continue;
+            };
+            if let Ok(outcome) = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                hypercurve::FillRule::EvenOdd,
                 &policy,
-            )
-            .map(|outcome| {
+            ) {
                 let region = outcome.into_value();
                 let _ = region.signed_area(&policy);
                 let _ = region.loop_roles(&policy);
-                let _ = BezierRetainedEndpointEnvelope2::from_region(&region, &policy);
-                let _ = BezierRetainedCurveEnvelope2::from_region(&region, &policy);
-            });
+                let _ = region.bounds(&policy);
+            }
         }
     }
-
     let algebraic_outer = [
         (
             Point2::new(rational(-3, 1), rational(-3, 1)),

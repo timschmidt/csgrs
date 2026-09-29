@@ -1,12 +1,12 @@
-use hypercurve::{
+use crate::FillRule;
+use crate::bezier_retained_measure::BezierRetainedCurveEnvelope2;
+use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementFragment2,
-    BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
-    BezierRetainedEnvelopeSourceKind, BezierRetainedOverlapEvidence2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, Curve2, CurveCertainty, CurveContext, CurveError,
-    CurveOutcome, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionLoopRole, Point2,
-    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, RegionPointLocation,
-    UncertaintyReason,
+    BezierArrangementGraph2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
+    BezierSplitFragment2, BezierSubcurve2, Classification, Curve2, CurveCertainty, CurveContext,
+    CurveError, CurveOutcome, CurvePath2, CurveRegion2, CurveRegionBoundaryLoop2,
+    CurveRegionLoopRole, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    RegionPointLocation,
 };
 use proptest::prelude::*;
 
@@ -68,7 +68,57 @@ fn assert_topology_error<T>(result: Result<T, CurveError>) {
 }
 
 fn graph(fragments: Vec<BezierArrangementFragment2>) -> BezierArrangementGraph2 {
-    BezierArrangementGraph2::new(fragments).unwrap()
+    BezierArrangementGraph2::from_certified_fragments(fragments)
+}
+
+fn split_graph(
+    splits: &[crate::bezier_split::BezierSplitMaterialization2],
+) -> BezierArrangementGraph2 {
+    let mut fragments = Vec::new();
+    for (source, split) in splits.iter().enumerate() {
+        for (index, fragment) in split.fragments().iter().enumerate() {
+            fragments.push(BezierArrangementFragment2::new(
+                source,
+                index,
+                fragment.clone(),
+            ));
+        }
+    }
+    graph(fragments)
+}
+
+/// Admits closed traversal chains through public even-odd path regularization.
+fn region_from_traversal(
+    graph: &BezierArrangementGraph2,
+    traversal: &crate::BezierArrangementTraversal2,
+    policy: &CurveContext,
+) -> crate::ExactCurveResult<crate::CurveOutcome<CurveRegion2>> {
+    let paths = traversal
+        .chains()
+        .iter()
+        .map(|chain| {
+            CurvePath2::try_new(
+                chain
+                    .fragment_indices()
+                    .iter()
+                    .map(|&index| {
+                        crate::Curve2::from_retained_fragment(
+                            graph.fragments()[index].fragment().clone(),
+                        )
+                    })
+                    .collect(),
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    CurveRegion2::try_from_boundary_paths(&paths, FillRule::EvenOdd, policy)
+}
+
+fn loop_envelope(boundary: &CurveRegionBoundaryLoop2) -> BezierRetainedCurveEnvelope2 {
+    let region = CurveRegion2::new(vec![boundary.clone()]).unwrap();
+    decided(BezierRetainedCurveEnvelope2::from_region(
+        &region,
+        &policy(),
+    ))
 }
 
 fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveRegionBoundaryLoop2 {
@@ -76,7 +126,10 @@ fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveRegionBoundaryLoo
 }
 
 fn reversed_algebraic_fragment(fragment: &BezierSplitFragment2) -> BezierSplitFragment2 {
-    assert!(fragment.is_retained_bezier());
+    assert!(matches!(
+        fragment,
+        BezierSplitFragment2::RetainedBezier { .. }
+    ));
     fragment.reversed().unwrap()
 }
 
@@ -152,9 +205,7 @@ fn materialized_line_fragment_at(
         BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(r(0)),
             end: BezierParameter2::Exact(r(1)),
-            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                start, midpoint, end,
-            )),
+            curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, midpoint, end)),
         },
     )
 }
@@ -186,10 +237,9 @@ fn closed_polynomial_arrangement_materializes_retained_region_with_exact_area() 
             .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
             .unwrap(),
     );
-    let graph =
-        BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]).unwrap();
-    let traversal = decided(graph.traverse_branch_free(&policy()));
-    let region = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy())
+    let graph = split_graph(&[upper_split, lower_split]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    let region = region_from_traversal(&graph, &traversal, &policy())
         .expect("regularized arrangement region")
         .into_value();
 
@@ -207,14 +257,16 @@ fn open_arrangement_chain_does_not_materialize_region() {
     let second = QuadraticBezier2::new(p(2, 0), p(3, -1), p(4, 0));
     let first_split = decided(first.split_at_parameters(&[], &policy()).unwrap());
     let second_split = decided(second.split_at_parameters(&[], &policy()).unwrap());
-    let graph =
-        BezierArrangementGraph2::from_split_materializations(&[first_split, second_split]).unwrap();
-    let traversal = decided(graph.traverse_branch_free(&policy()));
+    let graph = split_graph(&[first_split, second_split]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
 
+    // An open walk is invalid boundary input, not an unresolved predicate.
     assert!(matches!(
-        CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy()),
-        Err(hypercurve::ExactCurveError::Blocked(blocker))
-            if blocker.reason() == UncertaintyReason::Boundary
+        region_from_traversal(&graph, &traversal, &policy()),
+        Err(crate::ExactCurveError::Invalid {
+            cause: CurveError::OpenCurvePath,
+            ..
+        })
     ));
 }
 
@@ -317,10 +369,9 @@ fn conic_region_boundary_materializes_with_exact_area() {
             .split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy())
             .unwrap(),
     );
-    let graph =
-        BezierArrangementGraph2::from_split_materializations(&[upper_split, lower_split]).unwrap();
-    let traversal = decided(graph.traverse_branch_free(&policy()));
-    let region = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy())
+    let graph = split_graph(&[upper_split, lower_split]);
+    let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+    let region = region_from_traversal(&graph, &traversal, &policy())
         .expect("regularized arrangement region")
         .into_value();
 
@@ -343,134 +394,6 @@ fn conic_area_rejects_uncertified_projective_denominator() {
 }
 
 #[test]
-fn resolved_linear_overlap_traversal_materializes_unified_region() {
-    let graph = graph(vec![
-        materialized_line_fragment(0, p(0, 0), p(2, 0), p(4, 0)),
-        materialized_line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
-        materialized_line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
-        materialized_line_fragment(3, p(4, 2), p(2, 2), p(0, 2)),
-        materialized_line_fragment(4, p(0, 2), p(0, 1), p(0, 0)),
-    ]);
-
-    assert_eq!(
-        graph.traverse_retained_deduplicating_materialized_overlaps(&policy()),
-        Classification::Uncertain(UncertaintyReason::Boundary)
-    );
-    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
-    assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
-
-    let retained = CurveRegion2::try_from_arrangement_traversal(
-        traversal.refinement().graph(),
-        traversal.traversal(),
-        &policy(),
-    )
-    .expect("regularized arrangement region")
-    .into_value();
-    assert_eq!(retained.len(), 1);
-    assert_eq!(retained.boundary_loops()[0].len(), 4);
-    assert!(!retained.has_algebraic_fragments());
-    assert_eq!(
-        decided(retained.signed_area(&policy()).unwrap()),
-        Some(r(8))
-    );
-    for (point, location) in [
-        (p(2, 1), RegionPointLocation::Inside),
-        (p(2, 0), RegionPointLocation::Boundary),
-        (p(5, 1), RegionPointLocation::Outside),
-    ] {
-        assert_eq!(
-            decided(
-                retained
-                    .classify_point(&point.clone().into(), &policy())
-                    .unwrap()
-            ),
-            location
-        );
-    }
-
-    // Exact line coalescing replaces the input subdivisions with four native
-    // edges. Their represented endpoints supply the geometric evidence.
-    assert_eq!(
-        decided(retained.loop_roles(&policy()).unwrap()),
-        vec![CurveRegionLoopRole::Material]
-    );
-    let native = decided(retained.native_contours_fast_path(&policy()).unwrap());
-    assert_eq!(native.material_contours().len(), 1);
-    assert!(native.hole_contours().is_empty());
-}
-
-#[test]
-fn resolved_rational_overlap_traversal_materializes_unified_region() {
-    let curved_boundary =
-        RationalBezier2::try_new(vec![p(0, 0), p(2, 2), p(4, 0)], vec![r(1), r(1), r(1)]).unwrap();
-    let overlapping_tail = decided(
-        curved_boundary
-            .subcurve_between_exact(&q(1, 2), &r(1), &policy())
-            .unwrap(),
-    );
-    let graph = graph(vec![
-        BezierArrangementFragment2::new(
-            0,
-            0,
-            BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(r(0)),
-                end: BezierParameter2::Exact(r(1)),
-                curve: BezierSubcurve2::Rational(curved_boundary),
-            },
-        ),
-        BezierArrangementFragment2::new(
-            1,
-            0,
-            BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(r(0)),
-                end: BezierParameter2::Exact(r(1)),
-                curve: BezierSubcurve2::Rational(overlapping_tail),
-            },
-        ),
-        materialized_line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
-        materialized_line_fragment(3, p(4, 2), p(2, 2), p(0, 2)),
-        materialized_line_fragment(4, p(0, 2), p(0, 1), p(0, 0)),
-    ]);
-
-    let evidence = decided(BezierRetainedOverlapEvidence2::from_graph(
-        &graph,
-        &policy(),
-    ));
-    assert_eq!(evidence.len(), 1);
-    let refinement = decided(graph.split_retained_rational_overlaps(&policy()));
-    assert_eq!(refinement.graph().len(), 6);
-    let traversal = decided(graph.traverse_retained_splitting_rational_overlaps(&policy()));
-    assert_eq!(traversal.refinement().graph().len(), 6);
-    assert_eq!(traversal.refinement().resolved_overlaps().len(), 1);
-    assert_eq!(
-        traversal.refined_traversal().shadowed_fragment_indices(),
-        &[2]
-    );
-    assert_eq!(traversal.traversal().closed_count(), 1);
-
-    let retained = CurveRegion2::try_from_arrangement_traversal(
-        traversal.refinement().graph(),
-        traversal.traversal(),
-        &policy(),
-    )
-    .expect("regularized arrangement region")
-    .into_value();
-    assert_eq!(retained.len(), 1);
-    assert_eq!(retained.boundary_loops()[0].len(), 5);
-    assert!(!retained.has_algebraic_fragments());
-    let retained_sources = retained.boundary_loops()[0]
-        .arrangement_sources()
-        .expect("normalized curved boundary keeps arrangement provenance");
-    assert_eq!(retained_sources.len(), retained.boundary_loops()[0].len());
-    assert_eq!(
-        decided(retained.loop_roles(&policy()).unwrap()),
-        vec![CurveRegionLoopRole::Material]
-    );
-
-    assert!(decided(retained.signed_area(&policy()).unwrap()).is_some());
-}
-
-#[test]
 fn reversed_internal_overlap_traversal_materializes_union_boundary() {
     let graph = graph(vec![
         materialized_line_fragment_at(0, 0, p(0, 0), p(1, 0), p(2, 0)),
@@ -483,19 +406,15 @@ fn reversed_internal_overlap_traversal_materializes_union_boundary() {
         materialized_line_fragment_at(1, 3, p(2, 2), p(2, 1), p(2, 0)),
     ]);
 
-    let traversal = decided(graph.traverse_retained_splitting_linear_overlaps(&policy()));
-    assert_eq!(
-        traversal.refined_traversal().shadowed_fragment_indices(),
-        &[1, 7]
-    );
-
-    let retained = CurveRegion2::try_from_arrangement_traversal(
-        traversal.refinement().graph(),
-        traversal.traversal(),
-        &policy(),
-    )
-    .expect("regularized arrangement region")
-    .into_value();
+    // Two closed squares share the edge x = 2 with opposite traversals.
+    let traversal = crate::BezierArrangementTraversal2::new(vec![
+        crate::bezier_arrangement::BezierArrangementChain2::new(vec![0, 1, 2, 3], true).unwrap(),
+        crate::bezier_arrangement::BezierArrangementChain2::new(vec![4, 5, 6, 7], true).unwrap(),
+    ])
+    .unwrap();
+    let retained = region_from_traversal(&graph, &traversal, &policy())
+        .expect("regularized arrangement region")
+        .into_value();
     assert_eq!(retained.len(), 1);
     assert_eq!(retained.boundary_loops()[0].len(), 4);
     assert_eq!(
@@ -524,7 +443,7 @@ fn retained_exact_line_images_assign_nested_material_and_hole() {
     let same_orientation_inner = quadratic_polygon_path(&[p(2, 2), p(4, 2), p(4, 4), p(2, 4)]);
     let retained = CurveRegion2::try_from_boundary_paths(
         &[outer, same_orientation_inner],
-        hypercurve::FillRule::EvenOdd,
+        crate::FillRule::EvenOdd,
         &policy(),
     )
     .unwrap()
@@ -571,7 +490,7 @@ fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies()
     ];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome =
-            CurveRegion2::try_from_boundary_paths(&paths, hypercurve::FillRule::EvenOdd, &policy)
+            CurveRegion2::try_from_boundary_paths(&paths, crate::FillRule::EvenOdd, &policy)
                 .unwrap();
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let retained = outcome.into_value();
@@ -610,38 +529,13 @@ fn retained_algebraic_line_images_normalize_crossing_loops_under_both_policies()
 }
 
 #[test]
-fn empty_boundary_loops_do_not_certify_signed_area() {
-    assert_topology_error(BezierBoundaryLoop2::new(Vec::new(), &policy()));
-    assert_topology_error(CurveRegionBoundaryLoop2::new(Vec::new(), &policy()));
-}
-
-#[test]
-fn native_boundary_loop_constructor_rejects_open_fragment_cycle() {
-    assert_topology_error(BezierBoundaryLoop2::new(
-        vec![
-            hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                p(0, 0),
-                p(1, 0),
-                p(2, 0),
-            )),
-            hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                p(3, 0),
-                p(4, 0),
-                p(5, 0),
-            )),
-        ],
-        &policy(),
-    ));
-}
-
-#[test]
 fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
     assert_topology_error(CurveRegionBoundaryLoop2::new(
         vec![
             BezierSplitFragment2::Materialized {
                 start: BezierParameter2::Exact(r(0)),
                 end: BezierParameter2::Exact(r(1)),
-                curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                     p(0, 0),
                     p(1, 0),
                     p(2, 0),
@@ -650,7 +544,7 @@ fn retained_boundary_loop_constructor_rejects_open_fragment_cycle() {
             BezierSplitFragment2::Materialized {
                 start: BezierParameter2::Exact(r(0)),
                 end: BezierParameter2::Exact(r(1)),
-                curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                     p(3, 0),
                     p(4, 0),
                     p(5, 0),
@@ -667,7 +561,7 @@ fn retained_boundary_loop_constructor_rejects_forged_materialized_range_order() 
         vec![BezierSplitFragment2::Materialized {
             start: BezierParameter2::Exact(r(1)),
             end: BezierParameter2::Exact(r(0)),
-            curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+            curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                 p(0, 0),
                 p(1, 1),
                 p(0, 0),
@@ -688,7 +582,7 @@ fn retained_boundary_loop_constructor_rejects_forged_source_endpoint_image() {
             reversed: false,
             start: BezierParameter2::Exact(Real::zero()),
             end: parameter,
-            source_curve: hypercurve::BezierSubcurve2::Quadratic(source_curve),
+            source_curve: crate::BezierSubcurve2::Quadratic(source_curve),
             start_image: None,
             end_image: Some(forged_image),
         }],
@@ -722,7 +616,7 @@ fn retained_exact_algebraic_endpoint_line_images_assign_roles() {
     .into_value();
     let retained = CurveRegion2::try_from_boundary_paths(
         &[outer, same_orientation_inner],
-        hypercurve::FillRule::EvenOdd,
+        crate::FillRule::EvenOdd,
         &policy(),
     )
     .unwrap()
@@ -796,10 +690,9 @@ fn retained_nonlinear_algebraic_carriers_classify_without_materialization() {
     let path = CurvePath2::try_new_with_policy(vec![first, second, lower], &policy)
         .unwrap()
         .into_value();
-    let region =
-        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy)
-            .unwrap()
-            .into_value();
+    let region = CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy)
+        .unwrap()
+        .into_value();
     let clone = region.clone();
 
     assert!(region.has_algebraic_fragments());
@@ -850,7 +743,7 @@ fn retained_certified_nonlinear_line_image_uses_authoritative_roles() {
     ])
     .unwrap();
     let retained =
-        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy())
+        CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy())
             .unwrap()
             .into_value();
 
@@ -891,7 +784,7 @@ fn regularized_nonlinear_boundary_retains_roles_area_and_provenance() {
     let same_orientation_inner = quadratic_lens_path(2, 6, 1);
     let retained = CurveRegion2::try_from_boundary_paths(
         &[material, same_orientation_inner],
-        hypercurve::FillRule::EvenOdd,
+        crate::FillRule::EvenOdd,
         &policy(),
     )
     .unwrap()
@@ -920,59 +813,18 @@ fn regularized_nonlinear_boundary_retains_roles_area_and_provenance() {
 fn retained_curve_envelope_includes_native_bezier_interior_extrema() {
     let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
-    let graph = BezierArrangementGraph2::from_split_materializations(&[
+    let graph = split_graph(&[
         decided(upper.split_at_parameters(&[], &policy()).unwrap()),
         decided(lower.split_at_parameters(&[], &policy()).unwrap()),
-    ])
-    .unwrap();
+    ]);
     let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
-    let retained = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy())
+    let retained = region_from_traversal(&graph, &traversal, &policy())
         .expect("regularized arrangement region")
         .into_value();
-    let sources = retained.boundary_loops()[0]
-        .arrangement_sources()
-        .expect("graph-built retained loop keeps source provenance");
-    assert_eq!(sources.len(), 2);
-    assert_eq!(sources[0].arrangement_fragment_index(), 0);
-    assert_eq!(sources[0].source_curve_index(), 0);
-    assert_eq!(sources[0].source_fragment_index(), 0);
-    assert_eq!(sources[1].arrangement_fragment_index(), 1);
-    assert_eq!(sources[1].source_curve_index(), 1);
-    assert_eq!(sources[1].source_fragment_index(), 0);
 
-    let endpoint_envelope = decided(BezierRetainedEndpointEnvelope2::from_region(
-        &retained,
-        &policy(),
-    ));
-    assert_eq!(endpoint_envelope.envelope().min(), &p(0, 0));
-    assert_eq!(endpoint_envelope.envelope().max(), &p(4, 0));
-    assert_eq!(
-        endpoint_envelope.endpoint_source_kinds(),
-        &[
-            BezierRetainedEnvelopeSourceKind::Native,
-            BezierRetainedEnvelopeSourceKind::Native,
-            BezierRetainedEnvelopeSourceKind::Native,
-            BezierRetainedEnvelopeSourceKind::Native,
-        ]
-    );
-
-    let curve_envelope = decided(BezierRetainedCurveEnvelope2::from_region(
-        &retained,
-        &policy(),
-    ));
-    assert_eq!(curve_envelope.envelope().min(), &p(0, -2));
-    assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
-    assert_eq!(curve_envelope.exact_fragment_count(), 2);
-    assert_eq!(curve_envelope.native_fragment_count(), 2);
-    assert_eq!(curve_envelope.algebraic_fragment_count(), 0);
-    assert!(!curve_envelope.has_algebraic_fragments());
-    assert_eq!(
-        curve_envelope.fragment_source_kinds(),
-        &[
-            BezierRetainedEnvelopeSourceKind::Native,
-            BezierRetainedEnvelopeSourceKind::Native,
-        ]
-    );
+    let envelope = decided(retained.bounds(&policy()).unwrap().into_value());
+    assert_eq!(envelope.min(), &p(0, -2));
+    assert_eq!(envelope.max(), &p(4, 2));
 }
 
 #[test]
@@ -986,38 +838,24 @@ fn retained_curve_envelope_uses_source_bounds_for_algebraic_split_fragments() {
             )
             .unwrap(),
     );
-    assert!(split.has_retained_beziers());
+    assert!(
+        split
+            .fragments()
+            .iter()
+            .any(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
+    );
     let mut fragments = split.fragments().to_vec();
     fragments.push(BezierSplitFragment2::Materialized {
         start: BezierParameter2::Exact(r(0)),
         end: BezierParameter2::Exact(r(1)),
-        curve: hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-            p(4, 0),
-            p(2, 0),
-            p(0, 0),
-        )),
+        curve: crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(4, 0), p(2, 0), p(0, 0))),
     });
     let loop_with_algebraic_boundary = retained_loop(fragments);
 
-    let curve_envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
-        &loop_with_algebraic_boundary,
-        &policy(),
-    ));
+    let curve_envelope = loop_envelope(&loop_with_algebraic_boundary);
 
     assert_eq!(curve_envelope.envelope().min(), &p(0, 0));
     assert_eq!(curve_envelope.envelope().max(), &p(4, 2));
-    assert_eq!(curve_envelope.exact_fragment_count(), 3);
-    assert_eq!(curve_envelope.native_fragment_count(), 1);
-    assert_eq!(curve_envelope.algebraic_fragment_count(), 2);
-    assert!(curve_envelope.has_algebraic_fragments());
-    assert_eq!(
-        curve_envelope.fragment_source_kinds(),
-        &[
-            BezierRetainedEnvelopeSourceKind::Algebraic,
-            BezierRetainedEnvelopeSourceKind::Algebraic,
-            BezierRetainedEnvelopeSourceKind::Native,
-        ]
-    );
 }
 
 #[test]
@@ -1037,17 +875,10 @@ fn retained_curve_envelope_uses_algebraic_parameter_interval_hull() {
         reversed_algebraic_fragment(&first_fragment),
     ]);
 
-    let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
-        &first_fragment_loop,
-        &policy(),
-    ));
+    let envelope = loop_envelope(&first_fragment_loop);
 
     assert_eq!(envelope.envelope().min(), &p(0, 0));
     assert_eq!(envelope.envelope().max(), &Point2::new(q(3, 1), q(2, 1)));
-    assert_eq!(envelope.exact_fragment_count(), 2);
-    assert_eq!(envelope.native_fragment_count(), 0);
-    assert_eq!(envelope.algebraic_fragment_count(), 2);
-    assert!(envelope.has_algebraic_fragments());
 }
 
 #[test]
@@ -1069,17 +900,10 @@ fn retained_curve_envelope_uses_algebraic_endpoint_image_before_interval_hull() 
         reversed_algebraic_fragment(&first_fragment),
     ]);
 
-    let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
-        &first_fragment_loop,
-        &policy(),
-    ));
+    let envelope = loop_envelope(&first_fragment_loop);
 
     assert_eq!(envelope.envelope().min(), &p(0, 0));
     assert_eq!(envelope.envelope().max(), &p(1, 0));
-    assert_eq!(envelope.exact_fragment_count(), 2);
-    assert_eq!(envelope.native_fragment_count(), 0);
-    assert_eq!(envelope.algebraic_fragment_count(), 2);
-    assert!(envelope.has_algebraic_fragments());
 }
 
 #[test]
@@ -1102,7 +926,7 @@ fn retained_boundary_loop_constructor_rejects_incomplete_algebraic_endpoint_evid
 fn retained_boundary_loop_constructor_rejects_source_only_algebraic_endpoint_evidence() {
     let parameter = BezierParameter2::Algebraic(algebraic_midpoint_parameter());
     let source_curve =
-        hypercurve::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)));
+        crate::BezierSubcurve2::Quadratic(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)));
     let source_only = BezierSplitFragment2::RetainedBezier {
         reversed: false,
         start: BezierParameter2::Exact(Real::zero()),
@@ -1122,13 +946,12 @@ proptest! {
     ) {
         let upper = QuadraticBezier2::new(p(0, 0), p(2, height), p(4, 0));
         let lower = QuadraticBezier2::new(p(4, 0), p(2, -height), p(0, 0));
-        let graph = BezierArrangementGraph2::from_split_materializations(&[
+        let graph = split_graph(&[
             decided(upper.split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy()).unwrap()),
             decided(lower.split_at_parameters(&[BezierParameter2::Exact(q(1, 2))], &policy()).unwrap()),
-        ])
-        .unwrap();
-        let traversal = decided(graph.traverse_branch_free(&policy()));
-        let region = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy()).expect("regularized arrangement region")
+        ]);
+        let traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
+        let region = region_from_traversal(&graph, &traversal, &policy()).expect("regularized arrangement region")
                 .into_value();
 
         prop_assert_eq!(
@@ -1196,11 +1019,13 @@ fn arrangement_admission_regularizes_crossings_and_canceled_seams() {
                         b,
                     ));
                 }
-                chains.push(hypercurve::BezierArrangementChain2::new(indices, true).unwrap());
+                chains.push(
+                    crate::bezier_arrangement::BezierArrangementChain2::new(indices, true).unwrap(),
+                );
             }
             let graph = graph(fragments);
-            let traversal = hypercurve::BezierArrangementTraversal2::new(chains).unwrap();
-            let outcome = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy)
+            let traversal = crate::BezierArrangementTraversal2::new(chains).unwrap();
+            let outcome = region_from_traversal(&graph, &traversal, &policy)
                 .expect("closed exact walks must publish their regularized set");
             assert_eq!(outcome.certainty, CurveCertainty::Certified);
             let region = outcome.into_value();
@@ -1225,7 +1050,7 @@ fn arrangement_admission_regularizes_crossings_and_canceled_seams() {
             assert_eq!(replay.certainty, CurveCertainty::Certified);
             assert_eq!(replay.into_value(), region);
             let difference = region
-                .boolean_region(&region, hypercurve::BooleanOp::Difference, &policy)
+                .boolean_region(&region, crate::BooleanOp::Difference, &policy)
                 .unwrap();
             assert_eq!(difference.certainty, CurveCertainty::Certified);
             assert!(difference.into_value().is_empty());
@@ -1250,15 +1075,14 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
             split
                 .fragments()
                 .iter()
-                .all(BezierSplitFragment2::is_retained_bezier)
+                .all(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
         );
-        let graph = BezierArrangementGraph2::from_split_materializations(&[
+        let graph = split_graph(&[
             split,
             decided(lower.split_at_parameters(&[], &policy).unwrap()),
-        ])
-        .unwrap();
+        ]);
         let traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
-        let outcome = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy)
+        let outcome = region_from_traversal(&graph, &traversal, &policy)
             .expect("selected exact curves close through arrangement admission");
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
         let region = outcome.into_value();
@@ -1286,19 +1110,12 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
                 outcome.into_value()
             })
             .collect::<Vec<_>>();
-        let reconstructed = CurveRegion2::try_from_boundary_paths(
-            &reversed,
-            hypercurve::FillRule::EvenOdd,
-            &policy,
-        )
-        .unwrap();
+        let reconstructed =
+            CurveRegion2::try_from_boundary_paths(&reversed, crate::FillRule::EvenOdd, &policy)
+                .unwrap();
         assert_eq!(reconstructed.certainty, CurveCertainty::Certified);
         let xor = region
-            .boolean_region(
-                &reconstructed.into_value(),
-                hypercurve::BooleanOp::Xor,
-                &policy,
-            )
+            .boolean_region(&reconstructed.into_value(), crate::BooleanOp::Xor, &policy)
             .unwrap();
         assert_eq!(xor.certainty, CurveCertainty::Certified);
         assert!(xor.into_value().is_empty());
@@ -1315,7 +1132,7 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
             .unwrap()
             .into_value();
         let union = region
-            .boolean_region(&translated, hypercurve::BooleanOp::Union, &policy)
+            .boolean_region(&translated, crate::BooleanOp::Union, &policy)
             .unwrap()
             .into_value();
         let components = union.material_components(&policy).unwrap();
@@ -1332,12 +1149,12 @@ fn arrangement_admission_retains_selected_curve_evidence_for_reentry() {
 
 #[test]
 fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
-    fn square(a: i32, b: i32) -> hypercurve::CurvePath2 {
+    fn square(a: i32, b: i32) -> crate::CurvePath2 {
         let points = [p(a, a), p(b, a), p(b, b), p(a, b)];
-        hypercurve::CurvePath2::try_new(
+        crate::CurvePath2::try_new(
             (0..4)
                 .map(|i| {
-                    hypercurve::LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone())
+                    crate::LineSeg2::try_new(points[i].clone(), points[(i + 1) % 4].clone())
                         .unwrap()
                         .into()
                 })
@@ -1354,7 +1171,7 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
             square(20, 24),
         ];
         let region =
-            CurveRegion2::try_from_boundary_paths(&paths, hypercurve::FillRule::EvenOdd, &policy)
+            CurveRegion2::try_from_boundary_paths(&paths, crate::FillRule::EvenOdd, &policy)
                 .unwrap()
                 .into_value();
         let outcome = region.material_components(&policy).unwrap();
@@ -1418,20 +1235,20 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
             for other in &components[i + 1..] {
                 assert!(
                     component
-                        .boolean_region(other, hypercurve::BooleanOp::Intersection, &policy)
+                        .boolean_region(other, crate::BooleanOp::Intersection, &policy)
                         .unwrap()
                         .into_value()
                         .is_empty()
                 );
             }
             recomposed = recomposed
-                .boolean_region(component, hypercurve::BooleanOp::Union, &policy)
+                .boolean_region(component, crate::BooleanOp::Union, &policy)
                 .unwrap()
                 .into_value();
         }
         assert!(
             region
-                .boolean_region(&recomposed, hypercurve::BooleanOp::Xor, &policy)
+                .boolean_region(&recomposed, crate::BooleanOp::Xor, &policy)
                 .unwrap()
                 .into_value()
                 .is_empty()
@@ -1451,7 +1268,7 @@ fn material_components_keep_recursive_hole_ownership_and_recompose_exactly() {
                 quadratic_polygon_path(&[p(2, 2), p(6, 2), p(6, 6), p(2, 6)]),
             ],
             &[CurveRegionLoopRole::Material; 2],
-            &[hypercurve::FillRule::NonZero; 2],
+            &[crate::FillRule::NonZero; 2],
             &policy,
         )
         .unwrap()

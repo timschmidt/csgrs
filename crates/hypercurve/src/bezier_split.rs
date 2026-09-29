@@ -1180,7 +1180,7 @@ pub enum BezierSubcurve2 {
 /// algebraic endpoints, which remain isolating-root evidence rather than
 /// rounded coordinates.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierParallelFragment2 {
+pub(crate) struct BezierParallelFragment2 {
     parallel: BezierParallel2,
     range: BezierParameterRange2,
     reversed: bool,
@@ -1216,7 +1216,7 @@ pub struct BezierSelectedFiberFragment2 {
 /// One fragment between adjacent split boundaries.
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
-pub enum BezierSplitFragment2 {
+pub(crate) enum BezierSplitFragment2 {
     /// Both boundaries were represented exactly and the native subcurve exists.
     Materialized {
         /// Start split boundary in the original parameter space.
@@ -1270,17 +1270,11 @@ pub enum BezierSplitFragment2 {
 
 /// Ordered split result for one Bezier segment.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierSplitMaterialization2 {
+pub(crate) struct BezierSplitMaterialization2 {
     fragments: Vec<BezierSplitFragment2>,
 }
 
 impl BezierSplitMaterialization2 {
-    /// Constructs a materialization result from ordered fragments.
-    pub fn new(fragments: Vec<BezierSplitFragment2>) -> CurveResult<Self> {
-        validate_bezier_split_fragments(&fragments)?;
-        Ok(Self { fragments })
-    }
-
     fn from_generated_fragments(fragments: Vec<BezierSplitFragment2>) -> Self {
         debug_assert!(!fragments.is_empty());
         Self { fragments }
@@ -1289,21 +1283,6 @@ impl BezierSplitMaterialization2 {
     /// Returns fragments in increasing source-parameter order.
     pub fn fragments(&self) -> &[BezierSplitFragment2] {
         &self.fragments
-    }
-
-    /// Returns true when every fragment was materialized as a native curve.
-    pub fn is_fully_materialized(&self) -> bool {
-        self.fragments
-            .iter()
-            .all(|fragment| matches!(fragment, BezierSplitFragment2::Materialized { .. }))
-    }
-
-    /// Returns true when a fragment retains a Bezier source and its range
-    /// instead of a native subcurve.
-    pub fn has_retained_beziers(&self) -> bool {
-        self.fragments
-            .iter()
-            .any(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
     }
 }
 
@@ -1317,20 +1296,6 @@ impl BezierSplitFragment2 {
             Self::AnalyticParallel(fragment) => fragment.is_reversed(),
             Self::AlgebraicCuspSemicircle(fragment) => fragment.is_reversed(),
             Self::SelectedFiber(fragment) => fragment.is_reversed(),
-        }
-    }
-
-    /// Returns this fragment's boundaries in its promoted native span.
-    pub const fn parameter_range(&self) -> Option<(&BezierParameter2, &BezierParameter2)> {
-        match self {
-            Self::Materialized { start, end, .. } | Self::RetainedBezier { start, end, .. } => {
-                Some((start, end))
-            }
-            Self::AnalyticParallel(fragment) => {
-                Some((fragment.range.start(), fragment.range.end()))
-            }
-            Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => None,
-            Self::SelectedFiber(_) => None,
         }
     }
 
@@ -1465,16 +1430,8 @@ impl BezierSelectedFiberFragment2 {
 }
 
 impl BezierParallelFragment2 {
-    /// Constructs an analytic parallel fragment on an exact finite oriented range.
-    ///
-    /// The range may extend beyond the authored unit chart. Source poles are
-    /// excluded at every distance; zero distance permits stationary or constant
-    /// sources without requiring a normal.
-    ///
-    /// Source singularities are forbidden on a nonzero-distance fragment.
-    /// Parallel cusps may be range endpoints, where later arrangement splitting
-    /// owns the vertex, but may not remain in the open fragment interior.
-    pub fn try_new(
+    /// Constructs an analytic parallel fragment; see [`Curve2::try_analytic_parallel`].
+    pub(crate) fn try_new(
         parallel: BezierParallel2,
         range: BezierParameterRange2,
         policy: &CurveContext,
@@ -1961,47 +1918,6 @@ fn point_coordinate(point: &Point2, axis: Axis2) -> &Real {
 }
 
 impl BezierSplitFragment2 {
-    /// Returns true when this fragment retains a Bezier source and its range.
-    pub const fn is_retained_bezier(&self) -> bool {
-        matches!(self, Self::RetainedBezier { .. })
-    }
-
-    /// Constructs an exact represented point certified inside this fragment.
-    ///
-    /// Algebraic boundaries use the exact scalar gap between their disjoint
-    /// isolating intervals. This samples neither root: interval ordering proves
-    /// the represented parameter lies strictly between the exact boundaries.
-    pub fn representative_point(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Point2>> {
-        match self {
-            Self::Materialized { curve, .. } => {
-                let half = (Real::one() / Real::from(2_i8))?;
-                Ok(curve.point_at(&half, policy))
-            }
-            Self::AnalyticParallel(fragment) => fragment.representative_point(policy),
-            Self::AlgebraicChord(_) | Self::AlgebraicCuspSemicircle(_) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
-            Self::SelectedFiber(fragment) => fragment.representative_point(policy),
-            Self::RetainedBezier {
-                start,
-                end,
-                source_curve,
-                ..
-            } => {
-                let parameter = match start.strict_scalar_between(end, policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                Ok(source_curve.point_at(&parameter, policy))
-            }
-        }
-    }
-
     /// Returns the retained fragment in reverse traversal direction.
     ///
     /// Materialized fragments reverse exactly. Algebraic endpoint-image
@@ -2040,244 +1956,9 @@ impl BezierSplitFragment2 {
     }
 }
 
-fn validate_bezier_split_fragments(fragments: &[BezierSplitFragment2]) -> CurveResult<()> {
-    if fragments.is_empty() {
-        return Err(CurveError::Topology(
-            "Bezier split materialization must carry at least one source fragment".into(),
-        ));
-    }
-
-    let policy = CurveContext::STRICT;
-    validate_bezier_split_coverage(fragments, &policy)?;
-    for (left_index, left) in fragments.iter().enumerate() {
-        validate_bezier_split_fragment(left, &policy)?;
-        if let Some(right) = fragments.get(left_index + 1) {
-            validate_adjacent_bezier_split_fragments(left, right)?;
-        }
-        if fragments[left_index + 1..]
-            .iter()
-            .any(|right| right == left)
-        {
-            return Err(CurveError::Topology(
-                "Bezier split materialization must not contain duplicate fragments".into(),
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn validate_bezier_split_coverage(
-    fragments: &[BezierSplitFragment2],
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    let (first_start, _) = bezier_split_fragment_range(&fragments[0])?;
-    let (_, last_end) = bezier_split_fragment_range(&fragments[fragments.len() - 1])?;
-    validate_bezier_boundary_equals(first_start, &BezierParameter2::Exact(Real::zero()), policy)?;
-    validate_bezier_boundary_equals(last_end, &BezierParameter2::Exact(Real::one()), policy)?;
-    Ok(())
-}
-
-fn validate_bezier_boundary_equals(
-    actual: &BezierParameter2,
-    expected: &BezierParameter2,
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    match actual.cmp_by_interval(expected, policy)? {
-        Classification::Decided(Ordering::Equal) => Ok(()),
-        Classification::Decided(_) => Err(CurveError::Topology(
-            "Bezier split materialization must cover the full source parameter interval".into(),
-        )),
-        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
-            "Bezier split materialization source coverage is uncertain: {reason:?}"
-        ))),
-    }
-}
-
-fn validate_bezier_split_fragment(
-    fragment: &BezierSplitFragment2,
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    let (start, end) = bezier_split_fragment_range(fragment)?;
-    validate_parameter(start, policy)?;
-    validate_parameter(end, policy)?;
-    validate_bezier_parameter_order(start, end, policy)?;
-
-    match fragment {
-        BezierSplitFragment2::Materialized { start, end, .. } => {
-            if start.scalar().is_none() || end.scalar().is_none() {
-                return Err(CurveError::Topology(
-                    "materialized Bezier split fragment must have exact range boundaries".into(),
-                ));
-            }
-        }
-        BezierSplitFragment2::RetainedBezier {
-            start,
-            end,
-            source_curve,
-            start_image,
-            end_image,
-            ..
-        } => {
-            validate_algebraic_endpoint_image_boundary(
-                "start",
-                start,
-                start_image.as_ref(),
-                source_curve,
-                policy,
-            )?;
-            validate_algebraic_endpoint_image_boundary(
-                "end",
-                end,
-                end_image.as_ref(),
-                source_curve,
-                policy,
-            )?;
-        }
-        BezierSplitFragment2::AnalyticParallel(_) => {
-            return Err(CurveError::Topology(
-                "analytic parallel fragments are region carriers, not native Bezier split materialization"
-                    .into(),
-            ));
-        }
-        BezierSplitFragment2::AlgebraicChord(_) => {
-            return Err(CurveError::Topology(
-                "algebraic chords are region carriers, not native Bezier split materialization"
-                    .into(),
-            ));
-        }
-        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
-            return Err(CurveError::Topology(
-                "algebraic cusp semicircles are region carriers, not native Bezier split materialization"
-                    .into(),
-            ));
-        }
-        BezierSplitFragment2::SelectedFiber(_) => {
-            return Err(CurveError::Topology(
-                "selected-fiber fragments are region carriers, not native Bezier split materialization"
-                    .into(),
-            ));
-        }
-    }
-
-    Ok(())
-}
-
-fn validate_adjacent_bezier_split_fragments(
-    left: &BezierSplitFragment2,
-    right: &BezierSplitFragment2,
-) -> CurveResult<()> {
-    let (_, left_end) = bezier_split_fragment_range(left)?;
-    let (right_start, _) = bezier_split_fragment_range(right)?;
-    if left_end != right_start {
-        return Err(CurveError::Topology(
-            "Bezier split materialization fragments must be contiguous and ordered".into(),
-        ));
-    }
-    if let (
-        BezierSplitFragment2::Materialized {
-            curve: left_curve, ..
-        },
-        BezierSplitFragment2::Materialized {
-            curve: right_curve, ..
-        },
-    ) = (left, right)
-    {
-        let left_endpoint = left_curve.end_point();
-        let right_endpoint = right_curve.start_point();
-        if !certified_split_points_equal(&left_endpoint, &right_endpoint, &CurveContext::STRICT) {
-            return Err(CurveError::Topology(
-                "adjacent materialized Bezier split fragments must be endpoint-connected".into(),
-            ));
-        }
-    }
-    Ok(())
-}
-
-fn certified_split_points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> bool {
-    is_zero(&left.distance_squared(right), policy) == Some(true)
-}
-
-fn bezier_split_fragment_range(
-    fragment: &BezierSplitFragment2,
-) -> CurveResult<(&BezierParameter2, &BezierParameter2)> {
-    match fragment {
-        BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::RetainedBezier { start, end, .. } => Ok((start, end)),
-        BezierSplitFragment2::AnalyticParallel(fragment) => {
-            Ok((fragment.range().start(), fragment.range().end()))
-        }
-        BezierSplitFragment2::AlgebraicChord(_)
-        | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Err(CurveError::Topology(
-            "retained region carrier has a distinct local parameter domain".into(),
-        )),
-        BezierSplitFragment2::SelectedFiber(_) => Err(CurveError::Topology(
-            "retained region carrier has a distinct local parameter domain".into(),
-        )),
-    }
-}
-
-fn validate_bezier_parameter_order(
-    start: &BezierParameter2,
-    end: &BezierParameter2,
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    match start.cmp_by_interval(end, policy)? {
-        Classification::Decided(Ordering::Less) => Ok(()),
-        Classification::Decided(Ordering::Equal | Ordering::Greater) => Err(CurveError::Topology(
-            "Bezier split fragment range must be strictly increasing".into(),
-        )),
-        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
-            "Bezier split fragment range ordering is uncertain: {reason:?}"
-        ))),
-    }
-}
-
-fn validate_algebraic_endpoint_image_boundary(
-    name: &str,
-    boundary: &BezierParameter2,
-    image: Option<&BezierAlgebraicEndpointImage2>,
-    source_curve: &BezierSubcurve2,
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    match (boundary, image) {
-        (BezierParameter2::Exact(_), None) => Ok(()),
-        (BezierParameter2::Exact(_), Some(_)) => Err(CurveError::Topology(format!(
-            "exact {name} Bezier split boundary must not carry algebraic endpoint image evidence"
-        ))),
-        (BezierParameter2::Algebraic(parameter), Some(image)) => {
-            if image.parameter() != parameter {
-                return Err(CurveError::Topology(format!(
-                    "algebraic {name} Bezier split endpoint image parameter does not match boundary"
-                )));
-            }
-            if !image.is_exact() {
-                return Err(CurveError::Topology(format!(
-                    "algebraic {name} Bezier split endpoint image must retain exact evidence"
-                )));
-            }
-            let Classification::Decided(expected) =
-                BezierAlgebraicEndpointImage2::from_source_curve(source_curve, parameter, policy)?
-            else {
-                return Err(CurveError::Topology(
-                    "algebraic split endpoint is not a certified finite source point".into(),
-                ));
-            };
-            if !image.matches_required_source_evidence(&expected) {
-                return Err(CurveError::Topology(format!(
-                    "algebraic {name} Bezier split endpoint image does not match retained source curve"
-                )));
-            }
-            Ok(())
-        }
-        (BezierParameter2::Algebraic(_), None) => Err(CurveError::Topology(format!(
-            "algebraic {name} Bezier split boundary must carry endpoint image evidence"
-        ))),
-    }
-}
-
 impl QuadraticBezier2 {
-    /// Splits this quadratic at exact/algebraic Bezier parameters.
-    pub fn split_at_parameters(
+    #[cfg(test)]
+    pub(crate) fn split_at_parameters(
         &self,
         parameters: &[BezierParameter2],
         policy: &CurveContext,
@@ -2399,28 +2080,6 @@ impl QuadraticBezier2 {
 }
 
 impl CubicBezier2 {
-    /// Splits this cubic at exact/algebraic Bezier parameters.
-    pub fn split_at_parameters(
-        &self,
-        parameters: &[BezierParameter2],
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierSplitMaterialization2>> {
-        split_curve_at_parameters(
-            &BezierParameterRange2::from_exact(Real::zero(), Real::one()),
-            parameters,
-            policy,
-            false,
-            true,
-            |start, end| {
-                Ok(Classification::Decided(BezierSubcurve2::Cubic(
-                    self.subcurve_between_exact(start, end, policy)?,
-                )))
-            },
-            |parameter| BezierAlgebraicEndpointImage2::cubic(self, parameter, policy),
-            BezierSubcurve2::Cubic(self.clone()),
-        )
-    }
-
     /// Materializes the exact subcurve over `[start, end]`.
     pub fn subcurve_between_exact(
         &self,
@@ -2497,8 +2156,8 @@ impl CubicBezier2 {
 }
 
 impl RationalQuadraticBezier2 {
-    /// Splits this conic at exact/algebraic Bezier parameters.
-    pub fn split_at_parameters(
+    #[cfg(test)]
+    pub(crate) fn split_at_parameters(
         &self,
         parameters: &[BezierParameter2],
         policy: &CurveContext,
@@ -2667,12 +2326,8 @@ impl RationalQuadraticBezier2 {
 }
 
 impl RationalBezier2 {
-    /// Splits this rational Bezier at exact/algebraic Bezier parameters.
-    ///
-    /// Represented parameters materialize exact homogeneous subcurves.
-    /// Nonlinear algebraic boundaries retain exact point and tangent images;
-    /// represented boundaries materialize native homogeneous subcurves.
-    pub fn split_at_parameters(
+    #[cfg(test)]
+    pub(crate) fn split_at_parameters(
         &self,
         parameters: &[BezierParameter2],
         policy: &CurveContext,
@@ -3034,7 +2689,12 @@ mod finite_conic_split_regression {
                         .split_at_parameters(&[BezierParameter2::Exact(q(2, 3))], &policy)
                         .unwrap(),
                 );
-                assert!(materialized.is_fully_materialized());
+                assert!(
+                    materialized.fragments().iter().all(|fragment| matches!(
+                        fragment,
+                        BezierSplitFragment2::Materialized { .. }
+                    ))
+                );
                 assert_eq!(materialized.fragments().len(), 2);
             }
         }

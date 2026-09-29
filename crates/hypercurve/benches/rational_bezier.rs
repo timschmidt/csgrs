@@ -558,17 +558,17 @@ fn main() {
         elapsed / immediate_iterations
     );
 
+    let parabola_curve = hypercurve::Curve2::from(parabola.clone());
+    let horizontal_curve = hypercurve::Curve2::from(horizontal.clone());
     let started = Instant::now();
     let mut topology_count = 0_usize;
     for _ in 0..immediate_iterations {
-        let topology = black_box(&parabola)
-            .intersection_topology(black_box(&horizontal), black_box(&policy))
-            .unwrap();
-        topology_count = topology_count.wrapping_add(black_box(
-            topology.first().fragments().len()
-                + topology.second().fragments().len()
-                + topology.arrangement_graph_view().unwrap().len(),
-        ));
+        let topology = black_box(&parabola_curve)
+            .intersection_topology(black_box(&horizontal_curve), black_box(&policy))
+            .unwrap()
+            .into_value();
+        topology_count = topology_count
+            .wrapping_add(black_box(topology.first().len() + topology.second().len()));
     }
     let elapsed = started.elapsed();
     println!(

@@ -2,10 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierParallelFragment2, BezierParameter2, BezierParameterRange2, BooleanOp, BulgeVertex2,
-    CircularArc2, Classification, Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2,
-    CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, Point2, QuadraticBezier2,
-    RationalBezier2, Real,
+    BezierParameter2, BezierParameterRange2, BooleanOp, BulgeVertex2, CircularArc2, Classification,
+    Contour2, CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole,
+    FillRule, LineSeg2, Point2, QuadraticBezier2, RationalBezier2, Real,
 };
 
 fn point(x: i32, y: i32) -> Point2 {
@@ -125,9 +124,7 @@ fn analytic_parallel_curve(
     let parallel = QuadraticBezier2::new(start, midpoint, end)
         .parallel_left(Real::from(distance))
         .unwrap();
-    Curve2::from(decided(
-        BezierParallelFragment2::try_new(parallel, range, policy).unwrap(),
-    ))
+    decided(Curve2::try_analytic_parallel(parallel, range, policy).unwrap())
 }
 
 fn analytic_square(min_x: i32, max_x: i32, policy: &CurveContext) -> CurveRegion2 {

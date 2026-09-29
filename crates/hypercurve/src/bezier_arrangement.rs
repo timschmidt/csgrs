@@ -18,7 +18,7 @@
 //! order is not certified, traversal stops instead of guessing.
 
 use crate::CurvePointData2;
-use std::{borrow::Cow, cmp::Ordering, collections::HashMap, fmt, sync::OnceLock};
+use std::{borrow::Cow, cmp::Ordering, collections::HashMap};
 
 use crate::bezier_tangent_order::{
     compare_algebraic_equal_curvature_third_order,
@@ -29,18 +29,18 @@ use crate::classify::{compare_reals, is_zero, real_sign};
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicSameTangentOrderStatus,
     BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierEndpoint,
-    BezierParameter2, BezierRetainedOverlapEvidence2, BezierSplitFragment2,
-    BezierSplitMaterialization2, BezierSubcurve2, BezierTangentTurnOrdering2, Classification,
-    CurveContext, CurveError, CurveResult, Point2, RationalBezierAlgebraicPointImage2,
-    RationalBezierAlgebraicTangentImage2, UncertaintyReason, ZeroKnowledge,
-    compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
+    BezierParameter2, BezierSplitFragment2, BezierSubcurve2, BezierTangentTurnOrdering2,
+    Classification, CurveContext, CurveError, CurveResult, Point2,
+    RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2, UncertaintyReason,
+    ZeroKnowledge, compare_algebraic_same_tangent_second_order,
+    compare_algebraic_same_tangent_third_order,
 };
 use hyperreal::{Rational, Real, RealSign};
 use hypersolve::AlgebraicRootRepresentation;
 
 /// One retained Bezier arrangement fragment with source provenance.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierArrangementFragment2 {
+pub(crate) struct BezierArrangementFragment2 {
     source_curve_index: usize,
     source_fragment_index: usize,
     start_topology_vertex: Option<usize>,
@@ -49,21 +49,20 @@ pub struct BezierArrangementFragment2 {
 }
 
 /// Branch-free retained Bezier arrangement graph.
-pub struct BezierArrangementGraph2 {
+pub(crate) struct BezierArrangementGraph2 {
     fragments: Vec<BezierArrangementFragment2>,
-    certified_overlap_evidence: OnceLock<Box<Classification<BezierRetainedOverlapEvidence2>>>,
 }
 
 /// One endpoint-connected traversal chain through retained Bezier fragments.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierArrangementChain2 {
+pub(crate) struct BezierArrangementChain2 {
     fragment_indices: Vec<usize>,
     closed: bool,
 }
 
 /// Traversal result for a branch-free retained Bezier arrangement graph.
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct BezierArrangementTraversal2 {
+pub(crate) struct BezierArrangementTraversal2 {
     chains: Vec<BezierArrangementChain2>,
 }
 
@@ -117,92 +116,9 @@ impl BezierArrangementFragment2 {
     }
 }
 
-impl Clone for BezierArrangementGraph2 {
-    fn clone(&self) -> Self {
-        let clone = Self {
-            fragments: self.fragments.clone(),
-            certified_overlap_evidence: OnceLock::new(),
-        };
-        if let Some(evidence) = self.cached_certified_overlap_evidence() {
-            clone.cache_certified_overlap_evidence(evidence);
-        }
-        clone
-    }
-}
-
-impl fmt::Debug for BezierArrangementGraph2 {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter
-            .debug_struct("BezierArrangementGraph2")
-            .field("fragments", &self.fragments)
-            .finish()
-    }
-}
-
-impl Default for BezierArrangementGraph2 {
-    fn default() -> Self {
-        Self {
-            fragments: Vec::new(),
-            certified_overlap_evidence: OnceLock::new(),
-        }
-    }
-}
-
-impl PartialEq for BezierArrangementGraph2 {
-    fn eq(&self, other: &Self) -> bool {
-        self.fragments == other.fragments
-    }
-}
-
 impl BezierArrangementGraph2 {
-    /// Constructs a retained graph from split materializations in source order.
-    pub fn from_split_materializations(
-        materializations: &[BezierSplitMaterialization2],
-    ) -> CurveResult<Self> {
-        let fragments = materializations
-            .iter()
-            .enumerate()
-            .flat_map(|(source_curve_index, materialization)| {
-                materialization.fragments().iter().cloned().enumerate().map(
-                    move |(source_fragment_index, fragment)| {
-                        BezierArrangementFragment2::new(
-                            source_curve_index,
-                            source_fragment_index,
-                            fragment,
-                        )
-                    },
-                )
-            })
-            .collect();
-        Self::new(fragments)
-    }
-
-    /// Constructs a graph from already-retained fragments.
-    pub fn new(fragments: Vec<BezierArrangementFragment2>) -> CurveResult<Self> {
-        validate_arrangement_fragment_provenance(&fragments)?;
-        Ok(Self::from_certified_fragments(fragments))
-    }
-
     pub(crate) fn from_certified_fragments(fragments: Vec<BezierArrangementFragment2>) -> Self {
-        Self {
-            fragments,
-            certified_overlap_evidence: OnceLock::new(),
-        }
-    }
-
-    pub(crate) fn cached_certified_overlap_evidence(
-        &self,
-    ) -> Option<Classification<BezierRetainedOverlapEvidence2>> {
-        self.certified_overlap_evidence
-            .get()
-            .map(|evidence| evidence.as_ref().clone())
-    }
-
-    pub(crate) fn cache_certified_overlap_evidence(
-        &self,
-        evidence: Classification<BezierRetainedOverlapEvidence2>,
-    ) {
-        let _ = self.certified_overlap_evidence.set(Box::new(evidence));
+        Self { fragments }
     }
 
     /// Returns retained fragments.
@@ -210,112 +126,9 @@ impl BezierArrangementGraph2 {
         &self.fragments
     }
 
-    /// Returns true when no fragments are retained.
-    pub fn is_empty(&self) -> bool {
-        self.fragments.is_empty()
-    }
-
     /// Returns the number of retained fragments.
     pub fn len(&self) -> usize {
         self.fragments.len()
-    }
-
-    /// Traverses branch-free materialized fragments into endpoint-connected chains.
-    pub fn traverse_branch_free(
-        &self,
-        policy: &CurveContext,
-    ) -> Classification<BezierArrangementTraversal2> {
-        let mut endpoints = Vec::with_capacity(self.fragments.len());
-        for fragment in &self.fragments {
-            let endpoints_for_fragment = match materialized_endpoints(fragment.fragment()) {
-                Some(endpoints) => endpoints,
-                None => return Classification::Uncertain(UncertaintyReason::Boundary),
-            };
-            endpoints.push(endpoints_for_fragment);
-        }
-
-        let (successors, predecessors) = match endpoint_adjacency(&endpoints, policy) {
-            Classification::Decided(adjacency) => adjacency,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-
-        let mut used = vec![false; self.fragments.len()];
-        let mut chains = Vec::new();
-        for index in 0..self.fragments.len() {
-            if predecessors[index].is_none() && !used[index] {
-                let chain = follow_chain(index, &successors, &endpoints, &mut used, policy);
-                match chain {
-                    Classification::Decided(chain) => chains.push(chain),
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-            }
-        }
-        for index in 0..self.fragments.len() {
-            if !used[index] {
-                let chain = follow_chain(index, &successors, &endpoints, &mut used, policy);
-                match chain {
-                    Classification::Decided(chain) => chains.push(chain),
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-            }
-        }
-
-        decided_arrangement_traversal(chains)
-    }
-
-    /// Traverses materialized fragments and resolves simple branches by tangent order.
-    ///
-    /// At a branch vertex, the outgoing fragment with the smallest certified
-    /// counter-clockwise turn from the incoming endpoint tangent is selected.
-    /// The comparison is exact: it uses signs of cross and dot products, not
-    /// finite angles. This is the local-order step needed before full
-    /// higher-order arrangement traversal can emit regions. Ties, zero
-    /// tangents, unresolved split boundaries, and uncertain signs remain
-    /// explicit uncertainty in the exactness model's sense.
-    pub fn traverse_with_tangent_order(
-        &self,
-        policy: &CurveContext,
-    ) -> Classification<BezierArrangementTraversal2> {
-        let mut endpoints = Vec::with_capacity(self.fragments.len());
-        for fragment in &self.fragments {
-            let endpoints_for_fragment =
-                match materialized_endpoint_data(fragment.fragment(), policy) {
-                    Some(Classification::Decided(endpoints)) => endpoints,
-                    Some(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    None => return Classification::Uncertain(UncertaintyReason::Boundary),
-                };
-            endpoints.push(endpoints_for_fragment);
-        }
-
-        let (outgoing, predecessors) = match tangent_adjacency(&endpoints, policy) {
-            Classification::Decided(adjacency) => adjacency,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-
-        let mut used = vec![false; self.fragments.len()];
-        let mut chains = Vec::new();
-        for index in 0..self.fragments.len() {
-            if predecessors[index] == 0 && !used[index] {
-                match follow_tangent_ordered_chain(index, &outgoing, &endpoints, &mut used, policy)
-                {
-                    Classification::Decided(chain) => chains.push(chain),
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-            }
-        }
-        for index in 0..self.fragments.len() {
-            if !used[index] {
-                match follow_tangent_ordered_chain(index, &outgoing, &endpoints, &mut used, policy)
-                {
-                    Classification::Decided(chain) => chains.push(chain),
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-            }
-        }
-
-        decided_arrangement_traversal(chains)
     }
 
     /// Traverses retained fragments using native and algebraic endpoint evidence.
@@ -483,213 +296,6 @@ impl BezierArrangementGraph2 {
     }
 }
 
-fn validate_arrangement_fragment_provenance(
-    fragments: &[BezierArrangementFragment2],
-) -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
-    for (index, fragment) in fragments.iter().enumerate() {
-        validate_arrangement_fragment_source_range(fragment, &policy)?;
-        for other in &fragments[index + 1..] {
-            if fragment.source_curve_index() == other.source_curve_index()
-                && fragment.source_fragment_index() == other.source_fragment_index()
-            {
-                validate_reused_source_fragment_ranges(fragment, other, &policy)?;
-            }
-        }
-    }
-    Ok(())
-}
-
-fn validate_arrangement_fragment_source_range(
-    fragment: &BezierArrangementFragment2,
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    match fragment.fragment() {
-        BezierSplitFragment2::Materialized { start, end, .. }
-        | BezierSplitFragment2::RetainedBezier { start, end, .. } => match start
-            .cmp_by_interval(end, policy)?
-        {
-            Classification::Decided(std::cmp::Ordering::Less) => {}
-            Classification::Decided(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater) => {
-                return Err(CurveError::Topology(
-                    "retained Bezier arrangement fragment source range must be certified strictly increasing"
-                        .to_owned(),
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Err(CurveError::Topology(format!(
-                    "retained Bezier arrangement fragment source range ordering is uncertain: {reason:?}"
-                )));
-            }
-        },
-        BezierSplitFragment2::AnalyticParallel(fragment) => {
-            match fragment
-                .range()
-                .start()
-                .cmp_by_interval(fragment.range().end(), policy)?
-            {
-                Classification::Decided(std::cmp::Ordering::Less) => {}
-                Classification::Decided(
-                    std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                ) => {
-                    return Err(CurveError::Topology(
-                        "retained analytic parallel arrangement range must be certified strictly increasing"
-                            .to_owned(),
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Err(CurveError::Topology(format!(
-                        "retained analytic parallel arrangement range ordering is uncertain: {reason:?}"
-                    )));
-                }
-            }
-        }
-        BezierSplitFragment2::AlgebraicChord(chord) => {
-            if chord.policy() != *policy {
-                return Err(CurveError::Topology(
-                    "algebraic chord arrangement evidence changed predicate policy".into(),
-                ));
-            }
-        }
-        BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-            fragment.validate_policy(policy)?;
-        }
-        BezierSplitFragment2::SelectedFiber(fragment) => {
-            match fragment
-                .range()
-                .start()
-                .cmp_by_refinement(fragment.range().end(), policy)?
-            {
-                Classification::Decided(std::cmp::Ordering::Less) => {}
-                Classification::Decided(
-                    std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
-                ) => {
-                    return Err(CurveError::Topology(
-                        "selected-fiber arrangement range was not increasing".into(),
-                    ));
-                }
-                Classification::Uncertain(reason) => {
-                    return Err(CurveError::Topology(format!(
-                        "selected-fiber arrangement range remained uncertain: {reason:?}"
-                    )));
-                }
-            }
-        }
-    }
-
-    let BezierSplitFragment2::RetainedBezier {
-        start,
-        end,
-        source_curve,
-        start_image,
-        end_image,
-        ..
-    } = fragment.fragment()
-    else {
-        return Ok(());
-    };
-    validate_arrangement_algebraic_endpoint_image(
-        "start",
-        start,
-        start_image.as_ref(),
-        Some(source_curve),
-        policy,
-    )?;
-    validate_arrangement_algebraic_endpoint_image(
-        "end",
-        end,
-        end_image.as_ref(),
-        Some(source_curve),
-        policy,
-    )
-}
-
-fn validate_arrangement_algebraic_endpoint_image(
-    name: &str,
-    boundary: &BezierParameter2,
-    image: Option<&BezierAlgebraicEndpointImage2>,
-    source_curve: Option<&BezierSubcurve2>,
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    match (boundary, image) {
-        (BezierParameter2::Exact(_), None) => Ok(()),
-        (BezierParameter2::Exact(_), Some(_)) => Err(CurveError::Topology(format!(
-            "exact {name} Bezier arrangement boundary must not carry algebraic endpoint image evidence"
-        ))),
-        (BezierParameter2::Algebraic(parameter), Some(image)) => {
-            if image.parameter() != parameter {
-                return Err(CurveError::Topology(format!(
-                    "algebraic {name} Bezier arrangement endpoint image parameter does not match boundary"
-                )));
-            }
-            if !image.is_exact() {
-                return Err(CurveError::Topology(format!(
-                    "algebraic {name} Bezier arrangement endpoint image must retain exact evidence"
-                )));
-            }
-            if let Some(source_curve) = source_curve {
-                let Classification::Decided(expected) =
-                    BezierAlgebraicEndpointImage2::from_source_curve(
-                        source_curve,
-                        parameter,
-                        policy,
-                    )?
-                else {
-                    return Err(CurveError::Topology(
-                        "algebraic arrangement endpoint is not a certified finite source point"
-                            .into(),
-                    ));
-                };
-                if !image.matches_required_source_evidence(&expected) {
-                    return Err(CurveError::Topology(format!(
-                        "algebraic {name} Bezier arrangement endpoint image does not match retained source curve"
-                    )));
-                }
-            }
-            Ok(())
-        }
-        (BezierParameter2::Algebraic(_), None) => Err(CurveError::Topology(format!(
-            "algebraic {name} Bezier arrangement boundary must carry endpoint image evidence"
-        ))),
-    }
-}
-
-fn validate_reused_source_fragment_ranges(
-    first: &BezierArrangementFragment2,
-    second: &BezierArrangementFragment2,
-    policy: &CurveContext,
-) -> CurveResult<()> {
-    let first_range = first.fragment().curve_region_parameter_range();
-    let second_range = second.fragment().curve_region_parameter_range();
-    match first_range
-        .end()
-        .cmp_by_refinement(second_range.start(), policy)?
-    {
-        Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {
-            return Ok(());
-        }
-        Classification::Decided(std::cmp::Ordering::Greater) => {}
-        Classification::Uncertain(reason) => {
-            return Err(CurveError::Topology(format!(
-                "retained Bezier arrangement graph cannot certify reused source fragment ranges are disjoint: {reason:?}"
-            )));
-        }
-    }
-    match second_range
-        .end()
-        .cmp_by_refinement(first_range.start(), policy)?
-    {
-        Classification::Decided(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => Ok(()),
-        Classification::Decided(std::cmp::Ordering::Greater) => Err(CurveError::Topology(
-            "retained Bezier arrangement graph must not overlap reused source fragment evidence"
-                .to_owned(),
-        )),
-        Classification::Uncertain(reason) => Err(CurveError::Topology(format!(
-            "retained Bezier arrangement graph cannot certify reused source fragment ranges are disjoint: {reason:?}"
-        ))),
-    }
-}
-
 impl BezierArrangementChain2 {
     /// Constructs a traversal chain from retained fragment indices.
     pub fn new(fragment_indices: Vec<usize>, closed: bool) -> CurveResult<Self> {
@@ -705,11 +311,6 @@ impl BezierArrangementChain2 {
         &self.fragment_indices
     }
 
-    /// Consumes the chain and returns retained fragment indices.
-    pub fn into_fragment_indices(self) -> Vec<usize> {
-        self.fragment_indices
-    }
-
     /// Returns true when the chain's last endpoint equals its first endpoint.
     pub const fn is_closed(&self) -> bool {
         self.closed
@@ -718,11 +319,6 @@ impl BezierArrangementChain2 {
     /// Returns the number of fragments in the chain.
     pub fn len(&self) -> usize {
         self.fragment_indices.len()
-    }
-
-    /// Returns true when the chain contains no fragments.
-    pub fn is_empty(&self) -> bool {
-        self.fragment_indices.is_empty()
     }
 }
 
@@ -736,26 +332,6 @@ impl BezierArrangementTraversal2 {
     /// Returns endpoint-connected chains.
     pub fn chains(&self) -> &[BezierArrangementChain2] {
         &self.chains
-    }
-
-    /// Consumes the traversal and returns chains.
-    pub fn into_chains(self) -> Vec<BezierArrangementChain2> {
-        self.chains
-    }
-
-    /// Returns true when no chains were produced.
-    pub fn is_empty(&self) -> bool {
-        self.chains.is_empty()
-    }
-
-    /// Returns the number of chains.
-    pub fn len(&self) -> usize {
-        self.chains.len()
-    }
-
-    /// Counts closed chains.
-    pub fn closed_count(&self) -> usize {
-        self.chains.iter().filter(|chain| chain.is_closed()).count()
     }
 }
 
@@ -813,28 +389,6 @@ fn decided_arrangement_traversal(
     }
 }
 
-fn materialized_endpoints(fragment: &BezierSplitFragment2) -> Option<(Point2, Point2)> {
-    match fragment {
-        BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoints()),
-        BezierSplitFragment2::AnalyticParallel(fragment) => {
-            analytic_parallel_exact_endpoints(fragment, &CurveContext::STRICT)
-        }
-        BezierSplitFragment2::RetainedBezier { .. }
-        | BezierSplitFragment2::AlgebraicChord(_)
-        | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
-        BezierSplitFragment2::SelectedFiber(fragment) => {
-            let (
-                crate::CurvePoint2(CurvePointData2::Exact(start)),
-                crate::CurvePoint2(CurvePointData2::Exact(end)),
-            ) = (fragment.start_point(), fragment.end_point())
-            else {
-                return None;
-            };
-            Some((start.clone(), end.clone()))
-        }
-    }
-}
-
 #[derive(Clone, Debug)]
 struct EndpointData {
     start: Point2,
@@ -857,55 +411,7 @@ impl ExactRationalPointKey {
     }
 }
 
-#[derive(Debug, Default)]
-struct EndpointStartBuckets {
-    exact: HashMap<ExactRationalPointKey, Vec<usize>>,
-    unkeyed: Vec<usize>,
-}
-
 const EXACT_ENDPOINT_BUCKET_MIN_COUNT: usize = 16;
-
-impl EndpointStartBuckets {
-    fn from_points<'a>(points: impl IntoIterator<Item = &'a Point2>) -> Self {
-        let mut buckets = Self::default();
-        for (index, point) in points.into_iter().enumerate() {
-            match ExactRationalPointKey::from_point(point) {
-                Some(key) => buckets.exact.entry(key).or_default().push(index),
-                None => buckets.unkeyed.push(index),
-            }
-        }
-        buckets
-    }
-
-    fn try_for_each_candidate<E>(
-        &self,
-        key: Option<&ExactRationalPointKey>,
-        endpoint_count: usize,
-        mut visit: impl FnMut(usize) -> Result<(), E>,
-    ) -> Result<(), E> {
-        let Some(key) = key else {
-            return (0..endpoint_count).try_for_each(visit);
-        };
-        self.exact
-            .get(key)
-            .into_iter()
-            .flatten()
-            .chain(&self.unkeyed)
-            .copied()
-            .try_for_each(&mut visit)
-    }
-}
-
-fn try_for_each_endpoint_candidate<E>(
-    indexed: Option<(&EndpointStartBuckets, Option<&ExactRationalPointKey>)>,
-    endpoint_count: usize,
-    visit: impl FnMut(usize) -> Result<(), E>,
-) -> Result<(), E> {
-    match indexed {
-        Some((buckets, key)) => buckets.try_for_each_candidate(key, endpoint_count, visit),
-        None => (0..endpoint_count).try_for_each(visit),
-    }
-}
 
 #[derive(Debug, Default)]
 struct RetainedEndpointStartIndex {
@@ -1068,22 +574,6 @@ struct RetainedAlgebraicDerivativeSource {
     curve: Box<BezierSubcurve2>,
     parameter: crate::BezierAlgebraicParameter2,
     reversed: bool,
-}
-
-fn materialized_endpoint_data(
-    fragment: &BezierSplitFragment2,
-    policy: &CurveContext,
-) -> Option<Classification<EndpointData>> {
-    match fragment {
-        BezierSplitFragment2::Materialized { curve, .. } => Some(curve.endpoint_data(policy)),
-        BezierSplitFragment2::AnalyticParallel(fragment) => {
-            Some(analytic_parallel_endpoint_data(fragment, policy))
-        }
-        BezierSplitFragment2::RetainedBezier { .. }
-        | BezierSplitFragment2::AlgebraicChord(_)
-        | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
-        BezierSplitFragment2::SelectedFiber(_) => None,
-    }
 }
 
 fn retained_topology_endpoint_data(
@@ -1280,16 +770,6 @@ fn retained_endpoint_data(
         BezierSplitFragment2::SelectedFiber(_) => Some(Classification::Decided(
             retained_topology_endpoint_data(arrangement_fragment),
         )),
-    }
-}
-
-fn analytic_parallel_exact_endpoints(
-    fragment: &crate::BezierParallelFragment2,
-    policy: &CurveContext,
-) -> Option<(Point2, Point2)> {
-    match analytic_parallel_endpoint_data(fragment, policy) {
-        Classification::Decided(data) => Some((data.start, data.end)),
-        Classification::Uncertain(_) => None,
     }
 }
 
@@ -1592,124 +1072,7 @@ fn negate_retained_tangent(
     }
 }
 
-fn endpoint_adjacency(
-    endpoints: &[(Point2, Point2)],
-    policy: &CurveContext,
-) -> Classification<EndpointAdjacency> {
-    let mut successors = vec![None; endpoints.len()];
-    let mut predecessors = vec![None; endpoints.len()];
-    let indexed = (endpoints.len() >= EXACT_ENDPOINT_BUCKET_MIN_COUNT)
-        .then(|| EndpointStartBuckets::from_points(endpoints.iter().map(|(start, _)| start)));
-
-    for (left_index, (_, left_end)) in endpoints.iter().enumerate() {
-        let left_key = indexed
-            .as_ref()
-            .and_then(|_| ExactRationalPointKey::from_point(left_end));
-        let result = try_for_each_endpoint_candidate(
-            indexed.as_ref().map(|buckets| (buckets, left_key.as_ref())),
-            endpoints.len(),
-            |right_index| {
-                if left_index == right_index {
-                    return Ok(());
-                }
-                match points_equal(left_end, &endpoints[right_index].0, policy) {
-                    Some(true) => {
-                        if successors[left_index].replace(right_index).is_some()
-                            || predecessors[right_index].replace(left_index).is_some()
-                        {
-                            return Err(UncertaintyReason::Boundary);
-                        }
-                    }
-                    Some(false) => {}
-                    None => return Err(UncertaintyReason::RealSign),
-                }
-                Ok(())
-            },
-        );
-        if let Err(reason) = result {
-            return Classification::Uncertain(reason);
-        }
-    }
-
-    Classification::Decided((successors, predecessors))
-}
-
-fn follow_chain(
-    start: usize,
-    successors: &[Option<usize>],
-    endpoints: &[(Point2, Point2)],
-    used: &mut [bool],
-    policy: &CurveContext,
-) -> Classification<BezierArrangementChain2> {
-    let first_start = endpoints[start].0.clone();
-    let mut current = start;
-    let mut indices = Vec::new();
-
-    loop {
-        if used[current] {
-            break;
-        }
-        used[current] = true;
-        indices.push(current);
-
-        let Some(next) = successors[current] else {
-            let closed = match points_equal(&endpoints[current].1, &first_start, policy) {
-                Some(value) => value,
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
-            };
-            return decided_arrangement_chain(indices, closed);
-        };
-        current = next;
-        if current == start {
-            return decided_arrangement_chain(indices, true);
-        }
-    }
-
-    Classification::Uncertain(UncertaintyReason::Boundary)
-}
-
 type TangentAdjacency = (Vec<Vec<usize>>, Vec<usize>);
-
-fn tangent_adjacency(
-    endpoints: &[EndpointData],
-    policy: &CurveContext,
-) -> Classification<TangentAdjacency> {
-    let mut outgoing = vec![Vec::new(); endpoints.len()];
-    let mut predecessors = vec![0_usize; endpoints.len()];
-    let indexed = (endpoints.len() >= EXACT_ENDPOINT_BUCKET_MIN_COUNT).then(|| {
-        EndpointStartBuckets::from_points(endpoints.iter().map(|endpoint| &endpoint.start))
-    });
-
-    for (left_index, left) in endpoints.iter().enumerate() {
-        let left_key = indexed
-            .as_ref()
-            .and_then(|_| ExactRationalPointKey::from_point(&left.end));
-        let result = try_for_each_endpoint_candidate(
-            indexed.as_ref().map(|buckets| (buckets, left_key.as_ref())),
-            endpoints.len(),
-            |right_index| {
-                if left_index == right_index {
-                    return Ok(());
-                }
-                match points_equal(&left.end, &endpoints[right_index].start, policy) {
-                    Some(true) => {
-                        outgoing[left_index].push(right_index);
-                        predecessors[right_index] += 1;
-                    }
-                    Some(false) => {}
-                    None => return Err(UncertaintyReason::RealSign),
-                }
-                Ok(())
-            },
-        );
-        if let Err(reason) = result {
-            return Classification::Uncertain(reason);
-        }
-    }
-    Classification::Decided((outgoing, predecessors))
-}
-
-type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
 
 fn retained_tangent_adjacency(
     endpoints: &[RetainedEndpointData],
@@ -2233,7 +1596,7 @@ mod endpoint_adjacency_tests {
                 },
             )
         };
-        let graph = BezierArrangementGraph2::new(vec![
+        let graph = BezierArrangementGraph2::from_certified_fragments(vec![
             fragment(
                 0,
                 crate::QuadraticBezier2::new(point2(0, 0), point2(1, 0), point2(2, 0)),
@@ -2246,8 +1609,7 @@ mod endpoint_adjacency_tests {
                 2,
                 crate::QuadraticBezier2::new(point2(2, 0), point2(4, 2), point2(5, 0)),
             ),
-        ])
-        .expect("valid branch graph");
+        ]);
         let policy = CurveContext::STRICT;
 
         assert_eq!(
@@ -2260,20 +1622,21 @@ mod endpoint_adjacency_tests {
     fn certified_branch_free_traversal_defers_unused_zero_tangent() {
         let point2 = |x, y| Point2::new(Real::from(x), Real::from(y));
         let start = point2(0, 0);
-        let graph = BezierArrangementGraph2::new(vec![BezierArrangementFragment2::new(
-            0,
-            0,
-            BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(Real::zero()),
-                end: BezierParameter2::Exact(Real::one()),
-                curve: BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
-                    start.clone(),
-                    start,
-                    point2(2, 0),
-                )),
-            },
-        )])
-        .expect("valid branch-free graph");
+        let graph = BezierArrangementGraph2::from_certified_fragments(vec![
+            BezierArrangementFragment2::new(
+                0,
+                0,
+                BezierSplitFragment2::Materialized {
+                    start: BezierParameter2::Exact(Real::zero()),
+                    end: BezierParameter2::Exact(Real::one()),
+                    curve: BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                        start.clone(),
+                        start,
+                        point2(2, 0),
+                    )),
+                },
+            ),
+        ]);
         let policy = CurveContext::STRICT;
 
         assert!(matches!(
@@ -2317,8 +1680,7 @@ mod endpoint_adjacency_tests {
         assert!(first_endpoints.start.is_none());
         assert!(first_endpoints.end.is_none());
 
-        let graph =
-            BezierArrangementGraph2::new(vec![first, second]).expect("valid topology-only graph");
+        let graph = BezierArrangementGraph2::from_certified_fragments(vec![first, second]);
         let Classification::Decided(traversal) =
             graph.traverse_retained_with_certified_successors(&[Some(1), None], &policy)
         else {
@@ -2344,7 +1706,7 @@ mod endpoint_adjacency_tests {
             },
         )
         .with_topology_vertices(Some(7), Some(7));
-        let graph = BezierArrangementGraph2::new(vec![fragment]).unwrap();
+        let graph = BezierArrangementGraph2::from_certified_fragments(vec![fragment]);
         let Classification::Decided(traversal) =
             graph.traverse_retained_with_certified_successors(&[Some(0)], &CurveContext::STRICT)
         else {
@@ -2486,103 +1848,6 @@ fn choose_retained_tangent_successor(
                 } else {
                     ordering
                 } {
-                    Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
-                    Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
-                    Classification::Decided(TurnOrdering::SameDirection) => {
-                        return Classification::Uncertain(UncertaintyReason::Boundary);
-                    }
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-            }
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        }
-    }
-    Classification::Decided(Some(best))
-}
-
-fn follow_tangent_ordered_chain(
-    start: usize,
-    outgoing: &[Vec<usize>],
-    endpoints: &[EndpointData],
-    used: &mut [bool],
-    policy: &CurveContext,
-) -> Classification<BezierArrangementChain2> {
-    let first_start = endpoints[start].start.clone();
-    let mut current = start;
-    let mut indices = Vec::new();
-
-    loop {
-        if used[current] {
-            break;
-        }
-        used[current] = true;
-        indices.push(current);
-
-        let next = match choose_tangent_successor(current, &outgoing[current], endpoints, policy) {
-            Classification::Decided(next) => next,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        let Some(next) = next else {
-            let closed = match points_equal(&endpoints[current].end, &first_start, policy) {
-                Some(value) => value,
-                None => return Classification::Uncertain(UncertaintyReason::RealSign),
-            };
-            return decided_arrangement_chain(indices, closed);
-        };
-
-        current = next;
-        if current == start {
-            return decided_arrangement_chain(indices, true);
-        }
-    }
-
-    Classification::Uncertain(UncertaintyReason::Boundary)
-}
-
-fn choose_tangent_successor(
-    current: usize,
-    candidates: &[usize],
-    endpoints: &[EndpointData],
-    policy: &CurveContext,
-) -> Classification<Option<usize>> {
-    if candidates.is_empty() {
-        return Classification::Decided(None);
-    }
-    if candidates.len() == 1 {
-        return Classification::Decided(Some(candidates[0]));
-    }
-
-    let base = &endpoints[current].end_tangent;
-    if !base.is_nonzero(policy) {
-        return Classification::Uncertain(UncertaintyReason::RealSign);
-    }
-
-    let mut best = candidates[0];
-    for candidate in candidates {
-        if !endpoints[*candidate].start_tangent.is_nonzero(policy) {
-            return Classification::Uncertain(UncertaintyReason::RealSign);
-        }
-    }
-
-    for candidate in candidates.iter().copied().skip(1) {
-        match compare_turn_from_base(
-            base,
-            &endpoints[candidate].start_tangent,
-            &endpoints[best].start_tangent,
-            policy,
-        ) {
-            Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
-            Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
-            Classification::Decided(TurnOrdering::SameDirection) => {
-                match compare_same_tangent_second_order(
-                    &endpoints[candidate].start_tangent,
-                    endpoints[candidate].start_second_derivative.as_ref(),
-                    endpoints[candidate].start_third_derivative.as_ref(),
-                    &endpoints[best].start_tangent,
-                    endpoints[best].start_second_derivative.as_ref(),
-                    endpoints[best].start_third_derivative.as_ref(),
-                    policy,
-                ) {
                     Classification::Decided(TurnOrdering::FirstBeforeSecond) => best = candidate,
                     Classification::Decided(TurnOrdering::SecondBeforeFirst) => {}
                     Classification::Decided(TurnOrdering::SameDirection) => {

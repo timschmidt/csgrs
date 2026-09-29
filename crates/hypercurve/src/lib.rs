@@ -13,6 +13,8 @@
 //! branching.
 
 mod arc_bezier;
+#[cfg(test)]
+mod arrangement_tests;
 mod bbox;
 mod bezier;
 mod bezier_algebraic_image;
@@ -25,7 +27,6 @@ mod bezier_offset;
 mod bezier_parameter;
 mod bezier_region;
 mod bezier_retained_measure;
-mod bezier_retained_overlap;
 mod bezier_split;
 mod bezier_split_endpoint;
 mod bezier_tangent_order;
@@ -44,6 +45,8 @@ mod curve_region_trim;
 mod curve_string;
 mod curve_support;
 mod direction;
+#[cfg(test)]
+mod endpoint_image_tests;
 mod error;
 mod events;
 mod facts;
@@ -68,11 +71,15 @@ mod rational_bezier_general;
 mod reconstruct;
 mod region;
 mod region_nesting;
+#[cfg(test)]
+mod region_pipeline_tests;
 mod retained_status;
 mod segment;
 mod self_intersect;
 mod spline_periodic;
 mod split;
+#[cfg(test)]
+mod split_materialization_tests;
 mod straight_skeleton;
 #[cfg(feature = "svg")]
 mod svg;
@@ -88,9 +95,8 @@ pub use bezier_algebraic_image::{
     BezierAlgebraicImageStatus, BezierAlgebraicRationalCoordinateImage,
     RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
 };
-pub use bezier_arrangement::{
-    BezierArrangementChain2, BezierArrangementFragment2, BezierArrangementGraph2,
-    BezierArrangementTraversal2,
+pub(crate) use bezier_arrangement::{
+    BezierArrangementFragment2, BezierArrangementGraph2, BezierArrangementTraversal2,
 };
 pub use bezier_fit::{
     BezierFitBoundKind, BezierFitCertificate, BezierFitErrorMetric, BezierLineFitRelation,
@@ -126,30 +132,16 @@ pub use bezier_parameter::{
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
     BezierRootIsolationResult2, BezierRootIsolationTrace2,
 };
+pub(crate) use bezier_region::CurveRegionFragmentSource2;
 pub use bezier_region::{
-    BezierBoundaryLoop2, CurveRegion2, CurveRegionBoundaryLoop2,
-    CurveRegionCertifiedSegmentationEvidence2, CurveRegionCertifiedSegmentationResult2,
-    CurveRegionFragmentSource2, CurveRegionLoopRole, CurveRegionNativeContourView2,
+    CurveRegion2, CurveRegionBoundaryLoop2, CurveRegionCertifiedSegmentationEvidence2,
+    CurveRegionCertifiedSegmentationResult2, CurveRegionLoopRole, CurveRegionNativeContourView2,
     CurveRegionProfile2, CurveRegionSegmentationLoopEvidence2,
 };
-pub use bezier_retained_measure::{
-    BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2, BezierRetainedEnvelopeSourceKind,
-};
-pub use bezier_retained_overlap::{
-    BezierRetainedLineOverlapSplit2, BezierRetainedLinearOverlapSplit2,
-    BezierRetainedLinearOverlapSplitGraph2, BezierRetainedLinearOverlapTraversal2,
-    BezierRetainedOverlap2, BezierRetainedOverlapEvidence2, BezierRetainedOverlapExtent2,
-    BezierRetainedOverlapOrientation2, BezierRetainedOverlapRefinedFragment2,
-    BezierRetainedOverlapRelation2, BezierRetainedOverlapTraversal2,
-    BezierRetainedRationalOverlapSplit2, BezierRetainedRationalOverlapSplitGraph2,
-    BezierRetainedRationalOverlapTraversal2, BezierRetainedResolvedLinearOverlap2,
-    BezierRetainedResolvedRationalOverlap2,
-};
-pub use bezier_split::{
-    BezierParallelFragment2, BezierSplitFragment2, BezierSplitMaterialization2, BezierSubcurve2,
-    CurveParameter2, CurveParameterRange2,
-};
-pub use bezier_split_endpoint::BezierAlgebraicEndpointImage2;
+
+pub(crate) use bezier_split::{BezierParallelFragment2, BezierSplitFragment2};
+pub use bezier_split::{BezierSubcurve2, CurveParameter2, CurveParameterRange2};
+pub(crate) use bezier_split_endpoint::BezierAlgebraicEndpointImage2;
 pub use bezier_tangent_order::{
     BezierAlgebraicSameTangentOrderEvidence, BezierAlgebraicSameTangentOrderStatus,
     BezierAlgebraicScalarSignEvidence, BezierAlgebraicTangentOrderEvidence,
@@ -237,7 +229,7 @@ pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub use rational_bezier_general::{
     HomogeneousControl2, RationalBezier2, RationalBezierIntersectionContact2,
     RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
-    RationalBezierIntersectionTopology2, RationalBezierPointIncidence2,
+    RationalBezierPointIncidence2,
 };
 pub use reconstruct::PolylineReconstructionOptions;
 pub use region::RegionPointLocation;

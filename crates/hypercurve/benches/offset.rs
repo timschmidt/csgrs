@@ -2,9 +2,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicParameter2, BezierParallelFragment2, BezierParallelVerificationOptions,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2,
-    CircularArc2, Classification, CubicBezier2, Curve2, CurveContext, CurveIntersectionCandidates2,
+    BezierAlgebraicParameter2, BezierParallelVerificationOptions, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2, CircularArc2,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveIntersectionCandidates2,
     CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, CurveResult, FillRule,
     LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
     Segment2, Similarity2,
@@ -836,7 +836,7 @@ fn curve_region_algebraic_partition_fixture(
                     panic!("the benchmark partition range must be decided");
                 };
                 let Classification::Decided(fragment) =
-                    BezierParallelFragment2::try_new(parallel.clone(), range, &policy)?
+                    Curve2::try_analytic_parallel(parallel.clone(), range, &policy)?
                 else {
                     panic!("the benchmark parallel fragment must be decided");
                 };
@@ -849,7 +849,7 @@ fn curve_region_algebraic_partition_fixture(
             panic!("the benchmark full parameter range must be decided");
         };
         let Classification::Decided(fragment) =
-            BezierParallelFragment2::try_new(parallel, range, &policy)?
+            Curve2::try_analytic_parallel(parallel, range, &policy)?
         else {
             panic!("the benchmark full parallel fragment must be decided");
         };

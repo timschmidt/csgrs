@@ -264,9 +264,7 @@ fn main() {
             .intersection_topology(&second, &policy)
             .expect("benchmark path topology is complete")
             .into_value();
-        topology_checksum ^= black_box(
-            topology.first().len() + topology.second().len() + topology.arrangement_graph().len(),
-        );
+        topology_checksum ^= black_box(topology.first().len() + topology.second().len());
     }
     let elapsed = started.elapsed();
     println!(

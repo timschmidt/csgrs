@@ -1,9 +1,8 @@
 use hypercurve::{
-    BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2,
-    BezierAlgebraicSameTangentOrderStatus, BezierAlgebraicTangentOrderStatus,
-    BezierAlgebraicTangentVector2, BezierParameterInterval, BezierParameterPolynomial,
-    BezierTangentTurnOrdering2, Classification, CurveContext, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
+    BezierAlgebraicParameter2, BezierAlgebraicSameTangentOrderStatus,
+    BezierAlgebraicTangentOrderStatus, BezierAlgebraicTangentVector2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierTangentTurnOrdering2, Classification, CurveContext, Point2,
+    QuadraticBezier2, RationalQuadraticBezier2, Real, compare_algebraic_same_tangent_second_order,
     compare_algebraic_same_tangent_third_order, compare_algebraic_tangent_turn_from_base,
 };
 
@@ -98,20 +97,16 @@ fn rising() -> QuadraticBezier2 {
 fn rational_endpoint_vectors(
     curve: &RationalQuadraticBezier2,
 ) -> (BezierAlgebraicTangentVector2, BezierAlgebraicTangentVector2) {
-    let image = decided(
-        BezierAlgebraicEndpointImage2::rational_quadratic(
-            curve,
-            &algebraic_midpoint_parameter(),
-            &policy(),
-        )
-        .unwrap(),
+    let derivatives = decided(
+        curve
+            .derivatives_at_algebraic_parameter(&algebraic_midpoint_parameter(), 2, &policy())
+            .unwrap(),
     );
-    let tangent = BezierAlgebraicTangentVector2::from_image(decided(image.tangent().unwrap()));
-    let second_derivative = BezierAlgebraicTangentVector2::from_image(
-        image
-            .second_derivative()
-            .expect("rational conic endpoint should retain second derivative evidence"),
-    );
+    let [first, second] = derivatives.as_slice() else {
+        panic!("rational conic endpoint should retain two derivative images");
+    };
+    let tangent = BezierAlgebraicTangentVector2::from_image(first);
+    let second_derivative = BezierAlgebraicTangentVector2::from_image(second);
     (tangent, second_derivative)
 }
 

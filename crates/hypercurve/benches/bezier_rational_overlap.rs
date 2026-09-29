@@ -1,11 +1,7 @@
 use std::hint::black_box;
 use std::time::Instant;
 
-use hypercurve::{
-    BezierArrangementFragment2, BezierArrangementGraph2, BezierParameter2, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CurveContext, CurveResult, Point2, QuadraticBezier2,
-    RationalBezier2, Real,
-};
+use hypercurve::{Classification, Curve2, CurveContext, Point2, RationalBezier2, Real};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -26,65 +22,24 @@ fn decided<T>(classification: Classification<T>) -> T {
     }
 }
 
-fn line_fragment(
-    source: usize,
-    start: Point2,
-    control: Point2,
-    end: Point2,
-) -> BezierArrangementFragment2 {
-    BezierArrangementFragment2::new(
-        source,
-        0,
-        BezierSplitFragment2::Materialized {
-            start: BezierParameter2::Exact(r(0)),
-            end: BezierParameter2::Exact(r(1)),
-            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
-        },
-    )
-}
-
-fn main() -> CurveResult<()> {
+/// Resolves a rational curve against its exact tail: one certified partial
+/// overlap whose shared span splits the full curve.
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let policy = CurveContext::STRICT;
     let rational_curve =
         RationalBezier2::try_new(vec![p(0, 0), p(2, 2), p(4, 0)], vec![r(1), r(1), r(1)])?;
     let rational_tail = decided(rational_curve.subcurve_between_exact(&q(1, 2), &r(1), &policy)?);
-    let graph = BezierArrangementGraph2::new(vec![
-        BezierArrangementFragment2::new(
-            0,
-            0,
-            BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(r(0)),
-                end: BezierParameter2::Exact(r(1)),
-                curve: BezierSubcurve2::Rational(rational_curve),
-            },
-        ),
-        BezierArrangementFragment2::new(
-            1,
-            0,
-            BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(r(0)),
-                end: BezierParameter2::Exact(r(1)),
-                curve: BezierSubcurve2::Rational(rational_tail),
-            },
-        ),
-        line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
-        line_fragment(3, p(4, 2), p(2, 2), p(0, 2)),
-        line_fragment(4, p(0, 2), p(0, 1), p(0, 0)),
-    ])?;
+    let curve = Curve2::from(rational_curve);
+    let tail = Curve2::from(rational_tail);
 
     let iterations = 250_u32;
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let traversal = decided(graph.traverse_retained_splitting_rational_overlaps(&policy));
+        let topology = curve.intersection_topology(&tail, &policy)?.into_value();
+        assert_eq!(topology.result().overlaps().len(), 1);
         checksum ^= black_box(
-            traversal.refinement().graph().len()
-                + traversal.refinement().resolved_overlaps().len()
-                + traversal.traversal().len()
-                + traversal
-                    .refined_traversal()
-                    .shadowed_fragment_indices()
-                    .len(),
+            topology.first().len() + topology.second().len() + topology.result().overlaps().len(),
         );
     }
     let elapsed = started.elapsed();

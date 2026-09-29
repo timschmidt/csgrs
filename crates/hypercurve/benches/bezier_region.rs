@@ -2,13 +2,10 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierArrangementFragment2,
-    BezierArrangementGraph2, BezierBoundaryLoop2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BezierRetainedCurveEnvelope2, BezierRetainedEndpointEnvelope2,
-    BezierSplitFragment2, BezierSubcurve2, BooleanOp, BulgeVertex2, Classification, Contour2,
-    Curve2, CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2,
-    CurveRegionBoundaryLoop2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, Point2,
-    QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, BezierSubcurve2, BooleanOp, BulgeVertex2, Classification, Contour2,
+    Curve2, CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
+    CurveResult, FillRule, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -38,27 +35,6 @@ fn decided<T>(classification: Classification<T>) -> T {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("benchmark unexpectedly uncertain: {reason:?}"),
     }
-}
-
-fn line_fragment(
-    source_curve_index: usize,
-    start: Point2,
-    control: Point2,
-    end: Point2,
-) -> BezierArrangementFragment2 {
-    BezierArrangementFragment2::new(
-        source_curve_index,
-        0,
-        BezierSplitFragment2::Materialized {
-            start: BezierParameter2::Exact(r(0)),
-            end: BezierParameter2::Exact(r(1)),
-            curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, control, end)),
-        },
-    )
-}
-
-fn retained_loop(fragments: Vec<BezierSplitFragment2>) -> CurveResult<CurveRegionBoundaryLoop2> {
-    CurveRegionBoundaryLoop2::new(fragments, &CurveContext::STRICT)
 }
 
 fn square_path(min_x: i32, min_y: i32, max_x: i32, max_y: i32) -> CurveResult<CurvePath2> {
@@ -354,28 +330,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         elapsed / curved_boolean_iterations
     );
 
-    let algebraic_ray_loop = BezierBoundaryLoop2::new(
-        vec![
-            BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                p(0, 0),
-                Point2::new(q(1, 2), r(0)),
-                p(1, 1),
-            )),
-            BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                p(1, 1),
-                Point2::new(q(1, 2), q(1, 2)),
-                p(0, 0),
-            )),
-        ],
-        &policy,
-    )?;
-    let algebraic_ray_query = Point2::new(q(1, 2), q(3, 8));
+    let algebraic_ray_path = CurvePath2::try_new(vec![
+        Curve2::from(QuadraticBezier2::new(
+            p(0, 0),
+            Point2::new(q(1, 2), r(0)),
+            p(1, 1),
+        )),
+        Curve2::from(QuadraticBezier2::new(
+            p(1, 1),
+            Point2::new(q(1, 2), q(1, 2)),
+            p(0, 0),
+        )),
+    ])?;
+    let algebraic_ray_region = even_odd_region(&[algebraic_ray_path], &policy)?;
+    let algebraic_ray_query = CurvePoint2::from(Point2::new(q(1, 2), q(3, 8)));
     let classification_iterations = 2_000_u32;
     let started = Instant::now();
     let mut classification_checksum = 0_usize;
     for _ in 0..classification_iterations {
-        let location =
-            decided(algebraic_ray_loop.classify_point(black_box(&algebraic_ray_query), &policy)?);
+        let location = decided(
+            algebraic_ray_region
+                .classify_point(black_box(&algebraic_ray_query), &policy)?
+                .into_value(),
+        );
         classification_checksum =
             classification_checksum.wrapping_add(black_box(location as usize));
     }
@@ -388,19 +365,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let half = BezierParameter2::Exact(q(1, 2));
     let upper = QuadraticBezier2::new(p(0, 0), p(2, 4), p(4, 0));
     let lower = QuadraticBezier2::new(p(4, 0), p(2, -4), p(0, 0));
-    let graph = BezierArrangementGraph2::from_split_materializations(&[
-        decided(upper.split_at_parameters(std::slice::from_ref(&half), &policy)?),
-        decided(lower.split_at_parameters(std::slice::from_ref(&half), &policy)?),
-    ])?;
-    let traversal = decided(graph.traverse_branch_free(&policy));
+    let lens_path = halved_loop(
+        [Curve2::from(upper.clone()), lower.clone().into()],
+        &half,
+        &policy,
+    )?;
 
     let iterations = 20_000_u32;
     let started = Instant::now();
     let mut checksum = 0_usize;
     for _ in 0..iterations {
-        let region = CurveRegion2::try_from_arrangement_traversal(&graph, &traversal, &policy)
-            .expect("regularized arrangement region")
-            .into_value();
+        let region = even_odd_region(std::slice::from_ref(&lens_path), &policy)?;
         checksum ^=
             black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
     }
@@ -410,11 +385,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         elapsed / iterations
     );
 
-    let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
-    let classified_region =
-        CurveRegion2::try_from_arrangement_traversal(&graph, &retained_traversal, &policy)
-            .expect("regularized arrangement region")
-            .into_value();
+    let classified_region = even_odd_region(std::slice::from_ref(&lens_path), &policy)?;
     let classified_point = hypercurve::CurvePoint2::from(p(2, 0));
     decided(
         classified_region
@@ -468,21 +439,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut retained_checksum = 0_usize;
     for _ in 0..iterations {
-        let region =
-            CurveRegion2::try_from_arrangement_traversal(&graph, &retained_traversal, &policy)
-                .expect("regularized arrangement region")
-                .into_value();
+        let region = even_odd_region(std::slice::from_ref(&lens_path), &policy)?;
         retained_checksum ^=
             black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
-        if let Classification::Decided(envelope) =
-            BezierRetainedEndpointEnvelope2::from_region(&region, &policy)
-        {
-            retained_checksum ^= black_box(format!("{:?}", envelope.envelope()).len());
-        }
-        if let Classification::Decided(envelope) =
-            BezierRetainedCurveEnvelope2::from_region(&region, &policy)
-        {
-            retained_checksum ^= black_box(format!("{:?}", envelope.envelope()).len());
+        if let Classification::Decided(envelope) = region.bounds(&policy)?.into_value() {
+            retained_checksum ^= black_box(format!("{envelope:?}").len());
         }
         if let Classification::Decided(roles) = region.loop_roles(&policy)?.into_value() {
             retained_checksum ^= black_box(roles.len());
@@ -496,28 +457,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let algebraic_cut =
         algebraic_polynomial_parameter(vec![r(-1), r(0), r(2)], q(2, 3), q(3, 4), &policy)?;
-    let algebraic_split =
-        decided(upper.split_at_parameters(std::slice::from_ref(&algebraic_cut), &policy)?);
-    let mut algebraic_loop_fragments = algebraic_split.fragments().to_vec();
-    algebraic_loop_fragments.extend(
-        algebraic_split
-            .fragments()
-            .iter()
-            .rev()
-            .map(BezierSplitFragment2::reversed)
-            .collect::<CurveResult<Vec<_>>>()?,
-    );
-    let algebraic_loop = retained_loop(algebraic_loop_fragments)?;
     let (head, tail) = Curve2::from(upper.clone())
         .split_at(algebraic_cut.into(), &policy)?
         .into_value();
     let algebraic_path = CurvePath2::try_new(vec![head, tail, lower.into()])?;
-    let algebraic_region = CurveRegion2::try_from_boundary_paths(
-        &[algebraic_path],
-        hypercurve::FillRule::EvenOdd,
-        &policy,
-    )?
-    .into_value();
+    let algebraic_region = even_odd_region(&[algebraic_path], &policy)?;
     let algebraic_region_query = hypercurve::CurvePoint2::from(p(2, 0));
     decided(
         algebraic_region
@@ -543,47 +487,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut algebraic_envelope_checksum = 0_usize;
     for _ in 0..iterations {
-        let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
-            &algebraic_loop,
-            &policy,
-        ));
-        algebraic_envelope_checksum ^=
-            black_box(format!("{:?}", envelope.envelope()).len() + envelope.exact_fragment_count());
+        let envelope = decided(algebraic_region.bounds(&policy)?.into_value());
+        algebraic_envelope_checksum ^= black_box(format!("{envelope:?}").len());
     }
     let elapsed = started.elapsed();
     println!(
         "bezier_retained_algebraic_source_envelope: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_envelope_checksum}",
-        elapsed / iterations
-    );
-
-    let exact_endpoint_algebraic_curve = QuadraticBezier2::new(p(0, 0), p(0, 0), p(8, 0));
-    let exact_endpoint_split = decided(exact_endpoint_algebraic_curve.split_at_parameters(
-        &[algebraic_polynomial_parameter(
-            vec![r(-1), r(0), r(8)],
-            q(1, 3),
-            q(2, 5),
-            &policy,
-        )?],
-        &policy,
-    )?);
-    let exact_endpoint_fragment = exact_endpoint_split.fragments()[0].clone();
-    let exact_endpoint_loop = retained_loop(vec![
-        exact_endpoint_fragment.clone(),
-        exact_endpoint_fragment.reversed()?,
-    ])?;
-    let started = Instant::now();
-    let mut algebraic_exact_endpoint_checksum = 0_usize;
-    for _ in 0..iterations {
-        let envelope = decided(BezierRetainedCurveEnvelope2::from_loop(
-            &exact_endpoint_loop,
-            &policy,
-        ));
-        algebraic_exact_endpoint_checksum ^=
-            black_box(format!("{:?}", envelope.envelope()).len() + envelope.exact_fragment_count());
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_retained_algebraic_exact_endpoint_envelope: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={algebraic_exact_endpoint_checksum}",
         elapsed / iterations
     );
 
@@ -596,12 +505,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             algebraic_chord(p(min, max), p(min, min), &policy)?,
         ])?);
     }
-    let algebraic_line_region = CurveRegion2::try_from_boundary_paths(
-        &algebraic_paths,
-        hypercurve::FillRule::EvenOdd,
-        &policy,
-    )?
-    .into_value();
+    let algebraic_line_region = even_odd_region(&algebraic_paths, &policy)?;
     let started = Instant::now();
     let mut algebraic_line_role_checksum = 0_usize;
     for _ in 0..iterations {
@@ -624,25 +528,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         elapsed / iterations
     );
 
-    let overlap_graph = BezierArrangementGraph2::new(vec![
-        line_fragment(0, p(0, 0), p(2, 0), p(4, 0)),
-        line_fragment(1, p(2, 0), p(3, 0), p(4, 0)),
-        line_fragment(2, p(4, 0), p(4, 1), p(4, 2)),
-        line_fragment(3, p(4, 2), p(2, 2), p(0, 2)),
-        line_fragment(4, p(0, 2), p(0, 1), p(0, 0)),
-    ])?;
-    let overlap_traversal =
-        decided(overlap_graph.traverse_retained_splitting_linear_overlaps(&policy));
+    // Two squares traverse their shared edge in opposite directions.
+    let overlap_paths = [square_path(0, 0, 2, 2)?, square_path(2, 0, 4, 2)?];
     let started = Instant::now();
     let mut overlap_checksum = 0_usize;
     for _ in 0..iterations {
-        let retained = CurveRegion2::try_from_arrangement_traversal(
-            overlap_traversal.refinement().graph(),
-            overlap_traversal.traversal(),
-            &policy,
-        )
-        .expect("regularized arrangement region")
-        .into_value();
+        let retained = even_odd_region(&overlap_paths, &policy)?;
         overlap_checksum ^=
             black_box(format!("{:?}", decided(retained.signed_area(&policy)?.into_value())).len());
         if let Classification::Decided(roles) = retained.loop_roles(&policy)?.into_value() {
@@ -662,18 +553,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         RationalQuadraticBezier2::try_unit_end_weights(p(0, 0), p(2, 2), p(4, 0), q(1, 2))?;
     let conic_lower =
         RationalQuadraticBezier2::try_unit_end_weights(p(4, 0), p(2, -2), p(0, 0), q(1, 2))?;
-    let conic_graph = BezierArrangementGraph2::from_split_materializations(&[
-        decided(conic_upper.split_at_parameters(std::slice::from_ref(&half), &policy)?),
-        decided(conic_lower.split_at_parameters(std::slice::from_ref(&half), &policy)?),
-    ])?;
-    let conic_traversal = decided(conic_graph.traverse_branch_free(&policy));
+    let conic_path = halved_loop([conic_upper.into(), conic_lower.into()], &half, &policy)?;
     let started = Instant::now();
     let mut conic_checksum = 0_usize;
     for _ in 0..iterations {
-        let region =
-            CurveRegion2::try_from_arrangement_traversal(&conic_graph, &conic_traversal, &policy)
-                .expect("regularized arrangement region")
-                .into_value();
+        let region = even_odd_region(std::slice::from_ref(&conic_path), &policy)?;
         conic_checksum ^=
             black_box(format!("{:?}", decided(region.signed_area(&policy)?.into_value())).len());
     }
@@ -684,4 +568,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     Ok(())
+}
+
+/// Splits each closed-loop curve at one parameter and joins the halves.
+fn halved_loop(
+    curves: [Curve2; 2],
+    parameter: &BezierParameter2,
+    policy: &CurveContext,
+) -> Result<CurvePath2, Box<dyn std::error::Error>> {
+    let mut halves = Vec::with_capacity(4);
+    for curve in curves {
+        let (first, second) = curve
+            .split_at(parameter.clone().into(), policy)?
+            .into_value();
+        halves.extend([first, second]);
+    }
+    Ok(CurvePath2::try_new(halves)?)
+}
+
+fn even_odd_region(
+    paths: &[CurvePath2],
+    policy: &CurveContext,
+) -> Result<CurveRegion2, Box<dyn std::error::Error>> {
+    Ok(CurveRegion2::try_from_boundary_paths(paths, FillRule::EvenOdd, policy)?.into_value())
 }

@@ -855,7 +855,7 @@ mod finite_fixed_distance_domains {
             .unwrap(),
         );
         Curve2::from(exact(
-            BezierParallelFragment2::try_new(parallel, range, policy).unwrap(),
+            Curve2::try_analytic_parallel(parallel, range, policy).unwrap(),
         ))
     }
     fn run(chart: usize, repeat: bool) {
@@ -1075,7 +1075,7 @@ mod finite_selected_point_domains {
             .unwrap(),
         );
         Curve2::from(exact(
-            BezierParallelFragment2::try_new(parallel, range, policy).unwrap(),
+            Curve2::try_analytic_parallel(parallel, range, policy).unwrap(),
         ))
     }
     fn run(chart: usize) {

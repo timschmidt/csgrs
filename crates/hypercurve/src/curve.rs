@@ -407,6 +407,24 @@ impl Curve2 {
         Self::from_geometry_with_lineage(geometry, lineage)
     }
 
+    /// Constructs an exact analytic Bezier parallel on a finite oriented
+    /// source-parameter range.
+    ///
+    /// The range may extend beyond the authored unit chart. Source poles are
+    /// excluded at every distance; zero distance permits stationary or constant
+    /// sources without requiring a normal. Source singularities are forbidden
+    /// on a nonzero-distance range. Parallel cusps may be range endpoints, where
+    /// later arrangement splitting owns the vertex, but may not remain in the
+    /// open interior. The curve retains the procedural parallel; no fitted
+    /// Bezier or sampled endpoint is introduced.
+    pub fn try_analytic_parallel(
+        parallel: crate::BezierParallel2,
+        range: crate::BezierParameterRange2,
+        policy: &CurveContext,
+    ) -> crate::CurveResult<Classification<Self>> {
+        Ok(crate::BezierParallelFragment2::try_new(parallel, range, policy)?.map(Self::from))
+    }
+
     /// Constructs an exact polynomial B-spline carrier under `policy`.
     pub fn try_polynomial_bspline(
         degree: usize,

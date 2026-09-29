@@ -21,7 +21,7 @@ use crate::{
 
 /// Exact point and tangent images for one algebraic split endpoint.
 #[derive(Clone, Debug)]
-pub struct BezierAlgebraicEndpointImage2 {
+pub(crate) struct BezierAlgebraicEndpointImage2 {
     data: Arc<BezierAlgebraicEndpointImageData>,
 }
 

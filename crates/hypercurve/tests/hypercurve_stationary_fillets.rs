@@ -580,9 +580,9 @@ mod exact_scalars {
 
 mod retained_domains {
     use hypercurve::{
-        BezierParallelFragment2, BezierParameter2, BezierParameterRange2, Classification,
-        CubicBezier2, CurveCertainty, CurveContext, CurveCornerMode2, CurveFillet2, CurvePath2,
-        LineSeg2, Point2, Real,
+        BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, Curve2,
+        CurveCertainty, CurveContext, CurveCornerMode2, CurveFillet2, CurvePath2, LineSeg2, Point2,
+        Real,
     };
     fn q(n: i64, d: i64) -> Real {
         (Real::from(n) / Real::from(d)).unwrap()
@@ -623,7 +623,7 @@ mod retained_domains {
             )
             .unwrap(),
         );
-        let fragment = decided(BezierParallelFragment2::try_new(parallel, range, &policy).unwrap());
+        let fragment = decided(Curve2::try_analytic_parallel(parallel, range, &policy).unwrap());
         let line =
             LineSeg2::try_new(Point2::new(start.x().clone(), Real::from(-2)), start).unwrap();
         let path = CurvePath2::try_new(vec![line.into(), fragment.into()]).unwrap();

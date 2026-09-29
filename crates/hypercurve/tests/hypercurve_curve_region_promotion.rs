@@ -2739,11 +2739,6 @@ fn selected_algebraic_round_joins_reenter_exact_region_offsets() {
             ),
             Classification::Decided(RegionPointLocation::Boundary),
         );
-        assert!(
-            expanded.value.boundary_loops()[0]
-                .arrangement_sources()
-                .is_some()
-        );
         let expanded_again = expanded
             .value
             .offset(q(1, 100), &OffsetCornerStyle2::Round, &policy)

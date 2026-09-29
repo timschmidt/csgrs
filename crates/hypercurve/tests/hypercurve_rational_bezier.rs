@@ -1,11 +1,10 @@
 use hypercurve::BezierAlgebraicImageStatus;
 use hypercurve::{
-    Axis2, BezierLineContactKind, BezierLineContactRelation, BezierParameter2,
-    BezierSplitFragment2, BezierSubcurve2, Classification, CubicBezier2, Curve2, CurveContext,
-    CurveFamily2, CurveIntersectionCandidates2, CurveOperation2, CurveOverlapOrientation2,
-    CurvePoint2, LineSeg2, ParamRange, Point2, QuadraticBezier2, RationalBezier2,
-    RationalBezierIntersectionContacts2, RationalBezierPointIncidence2, RationalQuadraticBezier2,
-    Real,
+    Axis2, BezierLineContactKind, BezierLineContactRelation, BezierParameter2, Classification,
+    CubicBezier2, Curve2, CurveContext, CurveFamily2, CurveIntersectionCandidates2,
+    CurveOperation2, CurveOverlapOrientation2, CurvePoint2, LineSeg2, ParamRange, Point2,
+    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
+    RationalBezierPointIncidence2, RationalQuadraticBezier2, Real,
 };
 use hyperreal::Rational;
 use num::{BigInt, BigUint};
@@ -397,42 +396,6 @@ fn top_level_general_rational_curve_preserves_family_and_native_geometry() {
 }
 
 #[test]
-fn represented_multi_split_materializes_connected_rational_fragments() {
-    let curve = curve();
-    let policy = CurveContext::STRICT;
-    let split = decided(
-        curve
-            .split_at_parameters(
-                &[
-                    BezierParameter2::Exact(q(3, 4)),
-                    BezierParameter2::Exact(q(1, 4)),
-                    BezierParameter2::Exact(q(1, 4)),
-                ],
-                &policy,
-            )
-            .unwrap(),
-    );
-
-    assert!(split.is_fully_materialized());
-    assert_eq!(split.fragments().len(), 3);
-    let curves = split
-        .fragments()
-        .iter()
-        .map(|fragment| match fragment {
-            BezierSplitFragment2::Materialized {
-                curve: BezierSubcurve2::Rational(curve),
-                ..
-            } => curve,
-            _ => panic!("represented rational split did not materialize natively"),
-        })
-        .collect::<Vec<_>>();
-    assert_eq!(curves[0].start(), curve.start());
-    assert_eq!(curves[0].end(), curves[1].start());
-    assert_eq!(curves[1].end(), curves[2].start());
-    assert_eq!(curves[2].end(), curve.end());
-}
-
-#[test]
 fn general_rational_line_contact_retains_exact_parameter_and_kind() {
     let curve = curve();
     let policy = CurveContext::STRICT;
@@ -780,35 +743,39 @@ fn pi_weight_conic_replays_degree_elevated_horizontal_contact() {
         CurveIntersectionCandidates2::NoIntersection
     ));
 
-    let topology = conic
-        .intersection_topology(&cubic_line, &policy)
-        .expect("pi-weight conic topology should remain exact");
-    assert_eq!(topology.contacts().len(), 1);
-    assert_eq!(topology.arrangement_graph().unwrap().fragments().len(), 4);
-
-    let approximate = conic
-        .intersection_topology(&cubic_line, &CurveContext::APPROXIMATE_512)
-        .expect("approximate policy must retain the same exact pi-weight topology");
-    assert_eq!(approximate.contacts().len(), 1);
+    let contacts = |policy: &CurveContext| match conic
+        .intersection_contacts(&cubic_line, policy)
+        .expect("pi-weight conic contacts should remain exact")
+    {
+        RationalBezierIntersectionContacts2::Contacts(contacts) => contacts,
+        other => panic!("pi-weight conic contacts should be isolated: {other:?}"),
+    };
+    let topology = contacts(&policy);
+    assert_eq!(topology.len(), 1);
+    let approximate = contacts(&CurveContext::APPROXIMATE_512);
+    assert_eq!(approximate.len(), 1);
+    for policy in [policy, CurveContext::APPROXIMATE_512] {
+        let pieces = Curve2::from(conic.clone())
+            .intersection_topology(&Curve2::from(cubic_line.clone()), &policy)
+            .expect("the pi-weight conic topology should remain exact")
+            .into_value();
+        assert_eq!(pieces.first().len() + pieces.second().len(), 4);
+    }
     assert_eq!(
-        approximate.arrangement_graph().unwrap().fragments().len(),
-        4
-    );
-    assert_eq!(
-        approximate.contacts()[0]
+        approximate[0]
             .first_parameter()
             .cmp_by_refinement(
-                topology.contacts()[0].first_parameter(),
+                topology[0].first_parameter(),
                 &CurveContext::APPROXIMATE_512,
             )
             .unwrap(),
         Classification::Decided(std::cmp::Ordering::Equal)
     );
     assert_eq!(
-        approximate.contacts()[0]
+        approximate[0]
             .second_parameter()
             .cmp_by_refinement(
-                topology.contacts()[0].second_parameter(),
+                topology[0].second_parameter(),
                 &CurveContext::APPROXIMATE_512,
             )
             .unwrap(),
@@ -1048,55 +1015,13 @@ fn rational_resultant_retains_algebraic_parameter_projections() {
     assert!(contacts[0].second_parameter().scalar().is_none());
     assert!((contacts[0].point()).coordinates().is_none());
 
-    let topology = parabola
-        .intersection_topology(&horizontal, &policy)
-        .unwrap();
-    assert_eq!(topology.contacts().len(), 1);
-    assert_eq!(topology.first().fragments().len(), 2);
-    assert_eq!(topology.second().fragments().len(), 2);
-    assert!(
-        topology
-            .first()
-            .fragments()
-            .iter()
-            .chain(topology.second().fragments())
-            .all(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
-    );
-    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
-    assert_eq!(topology.arrangement_graph_view().unwrap().len(), 4);
-    assert_eq!(topology.arrangement_graph().unwrap().len(), 4);
-
-    let split = decided(
-        parabola
-            .split_at_parameters(&first_parameters, &policy)
-            .unwrap(),
-    );
-    assert_eq!(split.fragments().len(), 2);
-    assert!(split.fragments().iter().all(|fragment| matches!(
-        fragment,
-        BezierSplitFragment2::RetainedBezier {
-            start_image,
-            end_image,
-            ..
-        } if start_image.as_ref().is_none_or(|image| image.is_exact())
-            && end_image.as_ref().is_none_or(|image| image.is_exact())
-    )));
-    for image in split
-        .fragments()
-        .iter()
-        .flat_map(|fragment| match fragment {
-            BezierSplitFragment2::RetainedBezier {
-                start_image,
-                end_image,
-                ..
-            } => [start_image.as_ref(), end_image.as_ref()],
-            _ => [None, None],
-        })
-    {
-        let Some(image) = image else { continue };
-        assert!(image.second_derivative().is_some());
-        assert!(image.third_derivative().is_some());
-    }
+    let topology = Curve2::from(parabola)
+        .intersection_topology(&Curve2::from(horizontal), &policy)
+        .unwrap()
+        .into_value();
+    assert_eq!(topology.result().contacts().len(), 1);
+    assert_eq!(topology.first().len(), 2);
+    assert_eq!(topology.second().len(), 2);
 }
 
 #[test]
@@ -1160,11 +1085,6 @@ fn rational_resultant_replays_identical_and_reversed_full_image_overlap() {
         overlap.second_range(),
         &ParamRange::new(Real::one(), Real::zero())
     );
-    let error = curve
-        .intersection_topology(&curve.clone(), &policy)
-        .unwrap_err();
-    assert_eq!(error.operation(), hypercurve::CurveOperation2::Arrangement);
-    assert_eq!(error.family(), CurveFamily2::RationalBezier);
 }
 
 #[test]

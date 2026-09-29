@@ -65,7 +65,7 @@ impl CurveRegion2 {
 /// subrange. Endpoint images alone are still rejected because they do not prove
 /// any interior extrema.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierRetainedCurveEnvelope2 {
+pub(crate) struct BezierRetainedCurveEnvelope2 {
     envelope: Aabb2,
     exact_fragment_count: usize,
     native_fragment_count: usize,
@@ -75,7 +75,7 @@ pub struct BezierRetainedCurveEnvelope2 {
 
 /// Source class of one retained envelope witness.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BezierRetainedEnvelopeSourceKind {
+pub(crate) enum BezierRetainedEnvelopeSourceKind {
     /// A materialized native Bezier/conic object contributed the witness.
     Native,
     /// A retained algebraic endpoint-image carrier contributed the witness.
@@ -99,113 +99,19 @@ impl BezierRetainedCurveEnvelope2 {
         accumulator.finish()
     }
 
-    /// Constructs a curve-interior envelope for one retained boundary loop.
-    pub fn from_loop(
-        boundary_loop: &CurveRegionBoundaryLoop2,
-        policy: &CurveContext,
-    ) -> Classification<Self> {
-        let mut accumulator = CurveEnvelopeAccumulator::default();
-        match accumulator.include_loop(boundary_loop, policy) {
-            Classification::Decided(()) => accumulator.finish(),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        }
-    }
-
     /// Returns the exact curve-interior envelope.
     pub const fn envelope(&self) -> &Aabb2 {
         &self.envelope
-    }
-
-    /// Returns how many retained fragments contributed certified curve bounds.
-    pub const fn exact_fragment_count(&self) -> usize {
-        self.exact_fragment_count
-    }
-
-    /// Returns how many materialized native fragments contributed exact bounds.
-    pub const fn native_fragment_count(&self) -> usize {
-        self.native_fragment_count
-    }
-
-    /// Returns how many algebraic endpoint-image fragments contributed source-curve bounds.
-    pub const fn algebraic_fragment_count(&self) -> usize {
-        self.algebraic_fragment_count
-    }
-
-    /// Returns true when algebraic source-curve evidence contributed to the envelope.
-    pub const fn has_algebraic_fragments(&self) -> bool {
-        self.algebraic_fragment_count > 0
-    }
-
-    /// Returns one source-kind witness per retained fragment that contributed bounds.
-    pub fn fragment_source_kinds(&self) -> &[BezierRetainedEnvelopeSourceKind] {
-        &self.fragment_source_kinds
     }
 }
 
 /// Exact endpoint envelope for a retained Bezier region or loop.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierRetainedEndpointEnvelope2 {
+pub(crate) struct BezierRetainedEndpointEnvelope2 {
     envelope: Aabb2,
     native_endpoint_count: usize,
     algebraic_endpoint_count: usize,
     endpoint_source_kinds: Vec<BezierRetainedEnvelopeSourceKind>,
-}
-
-impl BezierRetainedEndpointEnvelope2 {
-    /// Constructs an endpoint envelope for a retained region.
-    ///
-    /// Empty regions are unsupported because there is no finite neutral
-    /// envelope. Retained algebraic fragments must provide endpoint point
-    /// images for every endpoint they contribute; otherwise the envelope is
-    /// explicit boundary uncertainty rather than a partial box.
-    pub fn from_region(region: &CurveRegion2, policy: &CurveContext) -> Classification<Self> {
-        let mut accumulator = EndpointEnvelopeAccumulator::default();
-        for boundary_loop in region.boundary_loops() {
-            match accumulator.include_loop(boundary_loop, policy) {
-                Classification::Decided(()) => {}
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            }
-        }
-        accumulator.finish()
-    }
-
-    /// Constructs an endpoint envelope for one retained boundary loop.
-    pub fn from_loop(
-        boundary_loop: &CurveRegionBoundaryLoop2,
-        policy: &CurveContext,
-    ) -> Classification<Self> {
-        let mut accumulator = EndpointEnvelopeAccumulator::default();
-        match accumulator.include_loop(boundary_loop, policy) {
-            Classification::Decided(()) => accumulator.finish(),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        }
-    }
-
-    /// Returns the conservative endpoint envelope.
-    pub const fn envelope(&self) -> &Aabb2 {
-        &self.envelope
-    }
-
-    /// Returns how many native endpoint points contributed to this envelope.
-    pub const fn native_endpoint_count(&self) -> usize {
-        self.native_endpoint_count
-    }
-
-    /// Returns how many algebraic endpoint images contributed to this envelope.
-    pub const fn algebraic_endpoint_count(&self) -> usize {
-        self.algebraic_endpoint_count
-    }
-
-    /// Returns true when at least one represented algebraic endpoint image
-    /// contributed interval evidence.
-    pub const fn has_algebraic_endpoints(&self) -> bool {
-        self.algebraic_endpoint_count > 0
-    }
-
-    /// Returns one source-kind witness per endpoint image that contributed bounds.
-    pub fn endpoint_source_kinds(&self) -> &[BezierRetainedEnvelopeSourceKind] {
-        &self.endpoint_source_kinds
-    }
 }
 
 #[derive(Clone, Debug)]
@@ -600,129 +506,6 @@ fn retained_curve_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {
 }
 
 impl EndpointEnvelopeAccumulator {
-    fn include_loop(
-        &mut self,
-        boundary_loop: &CurveRegionBoundaryLoop2,
-        policy: &CurveContext,
-    ) -> Classification<()> {
-        for fragment in boundary_loop.fragments() {
-            match self.include_fragment(fragment, policy) {
-                Classification::Decided(()) => {}
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            }
-        }
-        Classification::Decided(())
-    }
-
-    fn include_fragment(
-        &mut self,
-        fragment: &BezierSplitFragment2,
-        policy: &CurveContext,
-    ) -> Classification<()> {
-        match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => {
-                let (start, end) = curve.endpoints();
-                match self.include_endpoint(native_endpoint_interval(&start)) {
-                    Classification::Decided(()) => {}
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-                self.include_endpoint(native_endpoint_interval(&end))
-            }
-            BezierSplitFragment2::RetainedBezier {
-                start_image,
-                end_image,
-                ..
-            } => {
-                let Some(start_image) = start_image else {
-                    return Classification::Uncertain(UncertaintyReason::Boundary);
-                };
-                let Some(end_image) = end_image else {
-                    return Classification::Uncertain(UncertaintyReason::Boundary);
-                };
-                let start_point = match start_image.point() {
-                    Ok(Classification::Decided(point)) => point,
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
-                };
-                let Some(start) = algebraic_endpoint_interval(start_point) else {
-                    return Classification::Uncertain(UncertaintyReason::Boundary);
-                };
-                let end_point = match end_image.point() {
-                    Ok(Classification::Decided(point)) => point,
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
-                };
-                let Some(end) = algebraic_endpoint_interval(end_point) else {
-                    return Classification::Uncertain(UncertaintyReason::Boundary);
-                };
-                match self.include_endpoint(start) {
-                    Classification::Decided(()) => {}
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                }
-                self.include_endpoint(end)
-            }
-            BezierSplitFragment2::AnalyticParallel(fragment) => {
-                let Some((start_parameter, end_parameter)) = fragment.range().scalar_endpoints()
-                else {
-                    return Classification::Uncertain(UncertaintyReason::Boundary);
-                };
-                let start = match fragment.parallel().point_at(start_parameter, policy) {
-                    Ok(Classification::Decided(point)) => point,
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
-                };
-                let end = match fragment.parallel().point_at(end_parameter, policy) {
-                    Ok(Classification::Decided(point)) => point,
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
-                };
-                match self.include_endpoint(native_endpoint_interval(&start)) {
-                    Classification::Decided(()) => {}
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                }
-                self.include_endpoint(native_endpoint_interval(&end))
-            }
-            BezierSplitFragment2::AlgebraicChord(chord) => {
-                let bounds = match chord.conservative_bounds(policy) {
-                    Ok(Classification::Decided(bounds)) => bounds,
-                    Ok(Classification::Uncertain(reason)) => {
-                        return Classification::Uncertain(reason);
-                    }
-                    Err(_) => {
-                        return Classification::Uncertain(UncertaintyReason::Unsupported);
-                    }
-                };
-                match self.include_endpoint(native_endpoint_interval(bounds.min())) {
-                    Classification::Decided(()) => {}
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                }
-                self.include_endpoint(native_endpoint_interval(bounds.max()))
-            }
-            BezierSplitFragment2::AlgebraicCuspSemicircle(_) => {
-                Classification::Uncertain(UncertaintyReason::Boundary)
-            }
-            BezierSplitFragment2::SelectedFiber(_) => {
-                Classification::Uncertain(UncertaintyReason::Boundary)
-            }
-        }
-    }
-
     fn include_endpoint(&mut self, endpoint: EndpointInterval) -> Classification<()> {
         let min = Point2::new(endpoint.x.lower, endpoint.y.lower);
         let max = Point2::new(endpoint.x.upper, endpoint.y.upper);

@@ -181,7 +181,7 @@ exact signatures.
   polynomials, cubic-weight carriers with exactly classified discriminants,
   and arbitrary-degree weight carriers whose rational-root deflation leaves
   either a power of one irreducible quadratic or a quartic product of two,
-  plus certified flattening, fitting, and split materialization.
+  plus certified flattening and fitting. Exact cuts go through `Curve2::split_at`.
 - Parallel entry points include `parallel_left`, `parallel_right`, and
   `approximate_parallel_blend2d_certified`. Their result types retain error and
   singularity evidence; exact topology-producing offsets are owned by the
@@ -197,7 +197,8 @@ exact signatures.
   overlap transport handles partial and reversed reparameterizations;
   materializable and structural overlap lanes remain cheaper. Its
   `BezierParallelSource2` plus signed distance is the lossless structural
-  export boundary.
+  export boundary. `Curve2::try_analytic_parallel` restricts a parallel to an
+  exact source-parameter range as a general `Curve2`, without fitting.
 
 ### Splines and unified curves
 
@@ -263,10 +264,8 @@ exact signatures.
   Curve and path `intersection_topology` results expose reusable `Curve2` pieces
   in traversal order. They preserve selected source parameters and one-sided
   spline endpoints without requiring native Bézier materialization. A path's
-  `CurvePathSplit2::curves()` groups pieces by authored curve. The borrowed
-  `arrangement_graph()` shares the topology's retained graph; its source indices
-  identify authored curves, followed by fragment indices in traversal order.
-  Graph preparation participates in the topology operation's certainty result.
+  `CurvePathSplit2::curves()` groups pieces by authored curve. Arrangement
+  graphs are internal: regions are admitted from `CurvePath2` boundaries.
   Retraced components, exterior source domains, and generated circle
   and parallel pair kernels still report explicit blockers where their
   common dispatch is unfinished.

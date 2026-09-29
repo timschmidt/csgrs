@@ -3,8 +3,8 @@ use std::time::Instant;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierFlatteningOptions, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CubicBezier2, CurveContext, CurveResult, Point2,
-    RationalQuadraticBezier2, Real,
+    BezierParameterPolynomial, Classification, CubicBezier2, Curve2, CurveContext, CurveParameter2,
+    Point2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -26,34 +26,67 @@ fn decided<T>(classification: Classification<T>) -> T {
     }
 }
 
-fn main() -> CurveResult<()> {
-    let policy = CurveContext::STRICT;
-    let curve = CubicBezier2::new(p(0, 0), p(2, 6), p(6, -2), p(8, 0));
-    let parameters = [
-        BezierParameter2::Exact(q(1, 4)),
-        BezierParameter2::Exact(q(1, 2)),
-        BezierParameter2::Exact(q(3, 4)),
-    ];
-
-    let iterations = 25_000_u32;
+/// Times one exact public cut, returning the number of pieces produced.
+fn time_cuts(
+    label: &str,
+    curve: &Curve2,
+    parameter: &CurveParameter2,
+    iterations: u32,
+    policy: &CurveContext,
+) -> Result<(), Box<dyn std::error::Error>> {
     let started = Instant::now();
     let mut total = 0_usize;
     for _ in 0..iterations {
-        let materialization = decided(curve.split_at_parameters(&parameters, &policy)?);
-        total += black_box(materialization.fragments().len());
+        let (first, second) = curve.split_at(parameter.clone(), policy)?.into_value();
+        total += black_box(usize::from(first.family() == second.family()) + 1);
     }
     let elapsed = started.elapsed();
     println!(
-        "bezier_split_materialization_cubic: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
+        "{label}: {iterations} iterations in {elapsed:?} ({:?}/iter), total={total}",
         elapsed / iterations
     );
+    Ok(())
+}
+
+fn algebraic(
+    coefficients: Vec<Real>,
+    lower: Real,
+    upper: Real,
+    policy: &CurveContext,
+) -> Result<CurveParameter2, Box<dyn std::error::Error>> {
+    let polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
+        coefficients,
+        policy,
+    )?);
+    let interval = decided(BezierParameterInterval::try_new(lower, upper, policy)?);
+    Ok(
+        BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
+            polynomial, interval, policy,
+        )?))
+        .into(),
+    )
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let policy = CurveContext::STRICT;
+    let cubic = CubicBezier2::new(p(0, 0), p(2, 6), p(6, -2), p(8, 0));
+    let curve = Curve2::from(cubic.clone());
+    let iterations = 25_000_u32;
+    let half: CurveParameter2 = BezierParameter2::Exact(q(1, 2)).into();
+    time_cuts(
+        "bezier_split_materialization_cubic",
+        &curve,
+        &half,
+        iterations,
+        &policy,
+    )?;
 
     let flattening_options = BezierFlatteningOptions::try_new(q(1, 10), 16, &policy)?;
     let flatten_iterations = 10_000_u32;
     let started = Instant::now();
     let mut flattened_total = 0_usize;
     for _ in 0..flatten_iterations {
-        let flattened = decided(curve.flatten_certified(&flattening_options, &policy));
+        let flattened = decided(cubic.flatten_certified(&flattening_options, &policy));
         flattened_total += black_box(flattened.points().len());
     }
     let elapsed = started.elapsed();
@@ -62,79 +95,41 @@ fn main() -> CurveResult<()> {
         elapsed / flatten_iterations
     );
 
-    let rational_curve =
-        RationalQuadraticBezier2::try_new(p(0, 0), p(4, 8), p(8, 0), r(1), r(2), r(1))?;
-    let rational_iterations = 25_000_u32;
-    let started = Instant::now();
-    let mut rational_total = 0_usize;
-    for _ in 0..rational_iterations {
-        let materialization = decided(rational_curve.split_at_parameters(&parameters, &policy)?);
-        rational_total += black_box(materialization.fragments().len());
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_split_materialization_rational_quadratic: {rational_iterations} iterations in {elapsed:?} ({:?}/iter), total={rational_total}",
-        elapsed / rational_iterations
-    );
-
-    let linear_algebraic_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-1), r(2)],
-        &policy,
+    let rational_curve = Curve2::from(RationalQuadraticBezier2::try_new(
+        p(0, 0),
+        p(4, 8),
+        p(8, 0),
+        r(1),
+        r(2),
+        r(1),
     )?);
-    let linear_algebraic_interval =
-        decided(BezierParameterInterval::try_new(q(2, 5), q(3, 5), &policy)?);
-    let linear_algebraic =
-        BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
-            linear_algebraic_polynomial,
-            linear_algebraic_interval,
-            &policy,
-        )?));
-    let linear_algebraic_parameters = [
-        BezierParameter2::Exact(q(1, 4)),
-        linear_algebraic,
-        BezierParameter2::Exact(q(3, 4)),
-    ];
-
-    let started = Instant::now();
-    let mut promoted = 0_usize;
-    for _ in 0..iterations {
-        let materialization =
-            decided(curve.split_at_parameters(&linear_algebraic_parameters, &policy)?);
-        promoted += black_box(usize::from(materialization.is_fully_materialized()));
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_split_linear_algebraic_promotion_cubic: {iterations} iterations in {elapsed:?} ({:?}/iter), promoted={promoted}",
-        elapsed / iterations
-    );
-
-    let algebraic_polynomial = decided(BezierParameterPolynomial::try_new_power_basis(
-        vec![r(-1), r(0), r(2)],
+    time_cuts(
+        "bezier_split_materialization_rational_quadratic",
+        &rational_curve,
+        &half,
+        iterations,
         &policy,
-    )?);
-    let algebraic_interval = decided(BezierParameterInterval::try_new(q(2, 3), q(3, 4), &policy)?);
-    let algebraic = BezierParameter2::Algebraic(decided(BezierAlgebraicParameter2::try_isolate(
-        algebraic_polynomial,
-        algebraic_interval,
-        &policy,
-    )?));
-    let algebraic_parameters = [
-        BezierParameter2::Exact(q(1, 4)),
-        algebraic,
-        BezierParameter2::Exact(q(3, 4)),
-    ];
+    )?;
 
-    let started = Instant::now();
-    let mut retained = 0_usize;
-    for _ in 0..iterations {
-        let materialization = decided(curve.split_at_parameters(&algebraic_parameters, &policy)?);
-        retained += black_box(usize::from(materialization.has_retained_beziers()));
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "bezier_split_algebraic_endpoint_images_cubic: {iterations} iterations in {elapsed:?} ({:?}/iter), retained={retained}",
-        elapsed / iterations
-    );
+    // 2t - 1 has the represented root 1/2 and promotes to a native cut.
+    let linear = algebraic(vec![r(-1), r(2)], q(2, 5), q(3, 5), &policy)?;
+    time_cuts(
+        "bezier_split_linear_algebraic_promotion_cubic",
+        &curve,
+        &linear,
+        iterations,
+        &policy,
+    )?;
+
+    // 2t^2 - 1 retains the selected root sqrt(1/2) and its endpoint images.
+    let quadratic = algebraic(vec![r(-1), r(0), r(2)], q(2, 3), q(3, 4), &policy)?;
+    time_cuts(
+        "bezier_split_algebraic_endpoint_images_cubic",
+        &curve,
+        &quadratic,
+        iterations,
+        &policy,
+    )?;
 
     Ok(())
 }
