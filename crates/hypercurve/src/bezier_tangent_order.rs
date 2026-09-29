@@ -135,13 +135,13 @@ pub struct BezierAlgebraicSameTangentOrderEvidence {
     pub status: BezierAlgebraicSameTangentOrderStatus,
     /// Certified ordering when `status == Ordered`.
     pub ordering: Option<BezierTangentTurnOrdering2>,
-    /// First candidate `cross(B'(t), B''(t))` sign evidence.
-    pub first_curvature_cross: Option<BezierAlgebraicScalarSignEvidence>,
-    /// Second candidate `cross(B'(t), B''(t))` sign evidence.
-    pub second_curvature_cross: Option<BezierAlgebraicScalarSignEvidence>,
-    /// Same-side curvature-magnitude difference after clearing speed
-    /// denominators.
-    pub magnitude_difference: Option<BezierAlgebraicScalarSignEvidence>,
+    /// First candidate's signed normal derivative witness at the compared order.
+    pub first_side_witness: Option<BezierAlgebraicScalarSignEvidence>,
+    /// Second candidate's signed normal derivative witness at the compared order.
+    pub second_side_witness: Option<BezierAlgebraicScalarSignEvidence>,
+    /// Difference of normalized derivative witnesses after clearing positive
+    /// speed denominators, squared when comparing curvature magnitudes.
+    pub normalized_difference: Option<BezierAlgebraicScalarSignEvidence>,
     /// Compact diagnostic for unresolved predicates.
     pub message: Option<String>,
 }
@@ -637,6 +637,173 @@ pub fn compare_algebraic_same_tangent_third_order(
             )
         }
     }
+}
+
+/// Compares regular branches whose common nonzero signed curvature has
+/// already been certified. Each jet contains the first three derivatives.
+pub(crate) fn compare_algebraic_equal_curvature_third_order(
+    first: [&BezierAlgebraicTangentVector2; 3],
+    second: [&BezierAlgebraicTangentVector2; 3],
+    policy: &CurveContext,
+) -> Classification<BezierAlgebraicSameTangentOrderEvidence> {
+    let first_speed = norm_squared_sign(first[0], policy);
+    let second_speed = norm_squared_sign(second[0], policy);
+    for speed in [&first_speed, &second_speed] {
+        let status = match sign_status(speed) {
+            ScalarSignStatus::Positive => continue,
+            ScalarSignStatus::Zero => BezierAlgebraicSameTangentOrderStatus::ZeroTangent,
+            ScalarSignStatus::ArithmeticFailed => {
+                BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed
+            }
+            ScalarSignStatus::Negative | ScalarSignStatus::Undecided => {
+                BezierAlgebraicSameTangentOrderStatus::SignUndecided
+            }
+        };
+        return Classification::Decided(same_tangent_evidence(
+            status,
+            None,
+            None,
+            None,
+            None,
+            speed.message.clone(),
+        ));
+    }
+    let first_witness = graph_third_derivative_witness(first, &first_speed, policy);
+    let second_witness = graph_third_derivative_witness(second, &second_speed, policy);
+    let difference = normalized_graph_third_difference(
+        &first_witness,
+        &second_witness,
+        &first_speed,
+        &second_speed,
+        policy,
+    );
+    let (status, ordering) = match sign_status(&difference) {
+        ScalarSignStatus::Negative => (
+            BezierAlgebraicSameTangentOrderStatus::Ordered,
+            Some(BezierTangentTurnOrdering2::FirstBeforeSecond),
+        ),
+        ScalarSignStatus::Positive => (
+            BezierAlgebraicSameTangentOrderStatus::Ordered,
+            Some(BezierTangentTurnOrdering2::SecondBeforeFirst),
+        ),
+        ScalarSignStatus::Zero => (BezierAlgebraicSameTangentOrderStatus::SameDirection, None),
+        ScalarSignStatus::Undecided => (BezierAlgebraicSameTangentOrderStatus::SignUndecided, None),
+        ScalarSignStatus::ArithmeticFailed => (
+            BezierAlgebraicSameTangentOrderStatus::ArithmeticFailed,
+            None,
+        ),
+    };
+    let message = difference.message.clone();
+    Classification::Decided(same_tangent_evidence(
+        status,
+        ordering,
+        Some(first_witness),
+        Some(second_witness),
+        Some(difference),
+        message,
+    ))
+}
+
+fn graph_third_derivative_witness(
+    [tangent, acceleration, jerk]: [&BezierAlgebraicTangentVector2; 3],
+    speed: &BezierAlgebraicScalarSignEvidence,
+    policy: &CurveContext,
+) -> BezierAlgebraicScalarSignEvidence {
+    // If S=v.v, the graph derivative along the common unit tangent is
+    // [S*cross(v,j)-3*cross(v,a)*(v.a)]/S^3. The second term removes
+    // tangential parameter acceleration; its sign is not a side-of-curve
+    // decision when the already-equal curvature is nonzero.
+    let jerk_cross = cross_sign(tangent, jerk, policy, true);
+    let acceleration_cross = cross_sign(tangent, acceleration, policy, true);
+    let acceleration_dot = dot_sign(tangent, acceleration, policy, true);
+    let normal = binary_from_evidence_values(
+        speed.scalar.as_ref(),
+        None,
+        jerk_cross.scalar.as_ref(),
+        None,
+        AlgebraicRootArithmeticOp::Multiply,
+        policy,
+    );
+    let along = binary_from_evidence_values(
+        acceleration_cross.scalar.as_ref(),
+        None,
+        acceleration_dot.scalar.as_ref(),
+        None,
+        AlgebraicRootArithmeticOp::Multiply,
+        policy,
+    );
+    let correction = binary_from_evidence_values(
+        along.result_representation.as_ref(),
+        along.exact_result.as_ref(),
+        None,
+        Some(&Real::from(3)),
+        AlgebraicRootArithmeticOp::Multiply,
+        policy,
+    );
+    let difference = subtract(
+        normal.result_representation.as_ref(),
+        normal.exact_result.as_ref(),
+        correction.result_representation.as_ref(),
+        correction.exact_result.as_ref(),
+        policy,
+    );
+    let mut arithmetic = jerk_cross.arithmetic;
+    arithmetic.extend(acceleration_cross.arithmetic);
+    arithmetic.extend(acceleration_dot.arithmetic);
+    arithmetic.extend([normal, along, correction, difference]);
+    scalar_sign_evidence(arithmetic, policy)
+}
+
+fn normalized_graph_third_difference(
+    first: &BezierAlgebraicScalarSignEvidence,
+    second: &BezierAlgebraicScalarSignEvidence,
+    first_speed: &BezierAlgebraicScalarSignEvidence,
+    second_speed: &BezierAlgebraicScalarSignEvidence,
+    policy: &CurveContext,
+) -> BezierAlgebraicScalarSignEvidence {
+    let (Some(first), Some(second), Some(first_speed), Some(second_speed)) = (
+        first.scalar.as_ref(),
+        second.scalar.as_ref(),
+        first_speed.scalar.as_ref(),
+        second_speed.scalar.as_ref(),
+    ) else {
+        return scalar_sign_evidence(
+            vec![missing_operand_evidence(
+                AlgebraicRootArithmeticOp::Multiply,
+                "normalized graph derivative requires represented witnesses and speeds",
+            )],
+            policy,
+        );
+    };
+    let first_power = power_representation(first_speed, 3, policy);
+    let second_power = power_representation(second_speed, 3, policy);
+    let first_scaled = binary_from_evidence_values(
+        Some(first),
+        None,
+        second_power.representation.as_ref(),
+        second_power.exact.as_ref(),
+        AlgebraicRootArithmeticOp::Multiply,
+        policy,
+    );
+    let second_scaled = binary_from_evidence_values(
+        Some(second),
+        None,
+        first_power.representation.as_ref(),
+        first_power.exact.as_ref(),
+        AlgebraicRootArithmeticOp::Multiply,
+        policy,
+    );
+    let difference = subtract(
+        first_scaled.result_representation.as_ref(),
+        first_scaled.exact_result.as_ref(),
+        second_scaled.result_representation.as_ref(),
+        second_scaled.exact_result.as_ref(),
+        policy,
+    );
+    let mut arithmetic = first_power.arithmetic;
+    arithmetic.extend(second_power.arithmetic);
+    arithmetic.extend([first_scaled, second_scaled, difference]);
+    scalar_sign_evidence(arithmetic, policy)
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1339,17 +1506,17 @@ fn order_evidence(
 fn same_tangent_evidence(
     status: BezierAlgebraicSameTangentOrderStatus,
     ordering: Option<BezierTangentTurnOrdering2>,
-    first_curvature_cross: Option<BezierAlgebraicScalarSignEvidence>,
-    second_curvature_cross: Option<BezierAlgebraicScalarSignEvidence>,
-    magnitude_difference: Option<BezierAlgebraicScalarSignEvidence>,
+    first_side_witness: Option<BezierAlgebraicScalarSignEvidence>,
+    second_side_witness: Option<BezierAlgebraicScalarSignEvidence>,
+    normalized_difference: Option<BezierAlgebraicScalarSignEvidence>,
     message: Option<String>,
 ) -> BezierAlgebraicSameTangentOrderEvidence {
     BezierAlgebraicSameTangentOrderEvidence {
         status,
         ordering,
-        first_curvature_cross,
-        second_curvature_cross,
-        magnitude_difference,
+        first_side_witness,
+        second_side_witness,
+        normalized_difference,
         message,
     }
 }

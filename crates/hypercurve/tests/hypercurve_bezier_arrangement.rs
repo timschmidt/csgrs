@@ -454,6 +454,53 @@ fn tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents() {
 }
 
 #[test]
+fn tangent_ordered_traversal_resolves_equal_nonzero_curvature() {
+    let curve = |k: i32| {
+        BezierSubcurve2::Cubic(CubicBezier2::new(
+            p(0, 0),
+            Point2::new(q(1, 3), r(0)),
+            Point2::new(q(2, 3), q(1, 3)),
+            p(1, 1 + k),
+        ))
+    };
+    let fragment = |index, curve| {
+        hypercurve::BezierArrangementFragment2::new(
+            index,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(r(0)),
+                end: BezierParameter2::Exact(r(1)),
+                curve,
+            },
+        )
+    };
+    let graph = graph(vec![
+        fragment(
+            0,
+            BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                p(-1, 0),
+                Point2::new(q(-1, 2), r(0)),
+                p(0, 0),
+            )),
+        ),
+        fragment(1, curve(1)),
+        fragment(2, curve(2)),
+    ]);
+    // The graphs y=x^2+x^3 and y=x^2+2x^3 have equal nonzero
+    // curvature. At x>0, the first outgoing ray has the smaller angle.
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for traversal in [
+            graph.traverse_with_tangent_order(&policy),
+            graph.traverse_retained_with_tangent_order(&policy),
+        ] {
+            let traversal = decided(traversal);
+            assert_eq!(traversal.chains()[0].fragment_indices(), [0, 1]);
+            assert_eq!(traversal.chains()[1].fragment_indices(), [2]);
+        }
+    }
+}
+
+#[test]
 fn tangent_ordered_traversal_rejects_equal_second_order_outgoing_tangents() {
     let first = BezierSplitFragment2::Materialized {
         start: BezierParameter2::Exact(r(0)),

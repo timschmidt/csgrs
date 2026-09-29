@@ -21,6 +21,7 @@ use crate::CurvePointData2;
 use std::{cmp::Ordering, collections::HashMap, fmt, sync::OnceLock};
 
 use crate::bezier_tangent_order::{
+    compare_algebraic_equal_curvature_third_order,
     compare_algebraic_tangent_filled_left_face_sign_only,
     compare_algebraic_tangent_turn_from_base_sign_only,
 };
@@ -1806,6 +1807,63 @@ mod endpoint_adjacency_tests {
     use super::*;
 
     #[test]
+    fn equal_curvature_graph_jets_ignore_source_acceleration() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for algebraic in [false, true] {
+                let vector = |dx: Real, dy: Real| {
+                    if algebraic {
+                        RetainedTangentVector::Algebraic(Box::new(
+                            BezierAlgebraicTangentVector2::new(
+                                AlgebraicRootRepresentation::from_exact_value(&dx),
+                                AlgebraicRootRepresentation::from_exact_value(&dy),
+                            ),
+                        ))
+                    } else {
+                        RetainedTangentVector::Native(Box::new(TangentVector { dx, dy }))
+                    }
+                };
+                for curvature in [Real::one(), -Real::one(), Real::pi(), -Real::pi()] {
+                    for (first_speed, second_speed) in [(1_i32, 2_i32), (2, 1), (2, 3)] {
+                        for (first_k, second_k, expected) in [
+                            (-1, 1, TurnOrdering::FirstBeforeSecond),
+                            (1, -1, TurnOrdering::SecondBeforeFirst),
+                            (1, 1, TurnOrdering::SameDirection),
+                        ] {
+                            let jet = |speed: i32, acceleration: i32, k: i32| {
+                                let mut data = endpoint(0);
+                                // x=s*u+a*u^2, y=c*x^2+k*x^3. The graph is
+                                // independent of the positive source speed
+                                // and tangential acceleration a. Its common
+                                // nonzero curvature fixes the angular half;
+                                // the smaller k is encountered first.
+                                data.start_tangent = Some(vector(Real::from(speed), Real::zero()));
+                                data.start_second_derivative = Some(vector(
+                                    Real::from(2 * acceleration),
+                                    &curvature * Real::from(2 * speed.pow(2)),
+                                ));
+                                data.start_third_derivative = Some(vector(
+                                    Real::zero(),
+                                    &curvature * Real::from(12 * speed * acceleration)
+                                        + Real::from(6 * k * speed.pow(3)),
+                                ));
+                                data
+                            };
+                            assert_eq!(
+                                compare_retained_same_tangent_second_order(
+                                    &jet(first_speed, 1, first_k),
+                                    &jet(second_speed, -1, second_k),
+                                    &policy,
+                                ),
+                                Classification::Decided(expected),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn native_same_side_derivative_orders_reverse_under_reflection() {
         let vector = |x: i32, y: i32| TangentVector {
             dx: Real::from(x),
@@ -2725,25 +2783,30 @@ fn compare_retained_same_tangent_second_order(
                         policy,
                     ) {
                         Classification::Decided(evidence) => {
-                            // This third-order witness requires zero curvature
-                            // on both branches. Equal nonzero curvature needs a
-                            // different, acceleration-corrected Taylor witness.
+                            let zero_curvature = evidence
+                                .first_side_witness
+                                .as_ref()
+                                .is_some_and(|witness| witness.sign == Some(Ordering::Equal))
+                                && evidence
+                                    .second_side_witness
+                                    .as_ref()
+                                    .is_some_and(|witness| witness.sign == Some(Ordering::Equal));
+                            // A same-direction report can also mean an absent
+                            // side witness. Request the next order only when
+                            // equality of the signed curvatures is certified.
                             if evidence.status
                                 == BezierAlgebraicSameTangentOrderStatus::SameDirection
-                                && evidence
-                                    .first_curvature_cross
-                                    .as_ref()
-                                    .is_some_and(|cross| cross.sign == Some(Ordering::Equal))
-                                && evidence
-                                    .second_curvature_cross
-                                    .as_ref()
-                                    .is_some_and(|cross| cross.sign == Some(Ordering::Equal))
+                                && (zero_curvature
+                                    || evidence.normalized_difference.as_ref().is_some_and(
+                                        |difference| difference.sign == Some(Ordering::Equal),
+                                    ))
                             {
                                 return compare_retained_algebraic_same_tangent_third_order(
                                     first,
                                     second,
-                                    first_tangent,
-                                    second_tangent,
+                                    [first_tangent, first_second_derivative],
+                                    [second_tangent, second_second_derivative],
+                                    zero_curvature,
                                     policy,
                                 );
                             }
@@ -2765,8 +2828,9 @@ fn compare_retained_same_tangent_second_order(
 fn compare_retained_algebraic_same_tangent_third_order(
     first: &RetainedEndpointData,
     second: &RetainedEndpointData,
-    first_tangent: &BezierAlgebraicTangentVector2,
-    second_tangent: &BezierAlgebraicTangentVector2,
+    first_jet: [&BezierAlgebraicTangentVector2; 2],
+    second_jet: [&BezierAlgebraicTangentVector2; 2],
+    zero_curvature: bool,
     policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
     let first_third_derivative = match retained_algebraic_higher_derivative(first, 3, policy) {
@@ -2782,13 +2846,22 @@ fn compare_retained_algebraic_same_tangent_third_order(
         retained_algebraic_vector(second_third_derivative.as_ref()),
     ) {
         (Some(first_third_derivative), Some(second_third_derivative)) => {
-            match compare_algebraic_same_tangent_third_order(
-                first_tangent,
-                first_third_derivative,
-                second_tangent,
-                second_third_derivative,
-                policy,
-            ) {
+            let comparison = if zero_curvature {
+                compare_algebraic_same_tangent_third_order(
+                    first_jet[0],
+                    first_third_derivative,
+                    second_jet[0],
+                    second_third_derivative,
+                    policy,
+                )
+            } else {
+                compare_algebraic_equal_curvature_third_order(
+                    [first_jet[0], first_jet[1], first_third_derivative],
+                    [second_jet[0], second_jet[1], second_third_derivative],
+                    policy,
+                )
+            };
+            match comparison {
                 Classification::Decided(evidence) => {
                     retained_algebraic_same_tangent_evidence_to_turn(
                         evidence.status,
@@ -2986,12 +3059,57 @@ fn compare_same_tangent_second_order(
                 &second_cross,
                 policy,
             );
-            if first_sign == RealSign::Negative {
+            if ordering == Classification::Decided(TurnOrdering::SameDirection) {
+                compare_equal_curvature_third_order(
+                    [first_tangent, first_second_derivative],
+                    first_third_derivative,
+                    [second_tangent, second_second_derivative],
+                    second_third_derivative,
+                    policy,
+                )
+            } else if first_sign == RealSign::Negative {
                 reverse_turn_ordering(ordering)
             } else {
                 ordering
             }
         }
+    }
+}
+
+fn compare_equal_curvature_third_order(
+    first: [&TangentVector; 2],
+    first_jerk: Option<&TangentVector>,
+    second: [&TangentVector; 2],
+    second_jerk: Option<&TangentVector>,
+    policy: &CurveContext,
+) -> Classification<TurnOrdering> {
+    let (Some(first_jerk), Some(second_jerk)) = (first_jerk, second_jerk) else {
+        return Classification::Decided(TurnOrdering::SameDirection);
+    };
+    let first_speed = speed_squared(first[0]);
+    let second_speed = speed_squared(second[0]);
+    if real_sign(&first_speed, policy) != Some(RealSign::Positive)
+        || real_sign(&second_speed, policy) != Some(RealSign::Positive)
+    {
+        return Classification::Uncertain(UncertaintyReason::RealSign);
+    }
+    // The graph third derivative is J/S^3 with S=v.v and
+    // J=S*cross(v,j)-3*cross(v,a)*(v.a). Equal nonzero curvature fixes
+    // the common angular half, so compare these signed values directly.
+    let witness =
+        |[tangent, acceleration]: [&TangentVector; 2], jerk: &TangentVector, speed: &Real| {
+            speed * cross_vectors(tangent, jerk)
+                - Real::from(3)
+                    * cross_vectors(tangent, acceleration)
+                    * dot_vectors(tangent, acceleration)
+        };
+    let difference = witness(first, first_jerk, &first_speed) * cube(&second_speed)
+        - witness(second, second_jerk, &second_speed) * cube(&first_speed);
+    match real_sign(&difference, policy) {
+        Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
+        Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),
+        Some(RealSign::Zero) => Classification::Decided(TurnOrdering::SameDirection),
+        None => Classification::Uncertain(UncertaintyReason::RealSign),
     }
 }
 

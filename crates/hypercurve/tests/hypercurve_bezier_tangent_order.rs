@@ -285,22 +285,8 @@ fn algebraic_same_tangent_order_uses_second_derivative_side_witness() {
         evidence.ordering,
         Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
     );
-    assert!(
-        evidence
-            .first_curvature_cross
-            .unwrap()
-            .sign
-            .unwrap()
-            .is_gt()
-    );
-    assert!(
-        evidence
-            .second_curvature_cross
-            .unwrap()
-            .sign
-            .unwrap()
-            .is_lt()
-    );
+    assert!(evidence.first_side_witness.unwrap().sign.unwrap().is_gt());
+    assert!(evidence.second_side_witness.unwrap().sign.unwrap().is_lt());
 }
 
 #[test]
@@ -326,22 +312,8 @@ fn rational_algebraic_same_tangent_order_uses_second_derivative_side_witness() {
         evidence.ordering,
         Some(BezierTangentTurnOrdering2::FirstBeforeSecond)
     );
-    assert!(
-        evidence
-            .first_curvature_cross
-            .unwrap()
-            .sign
-            .unwrap()
-            .is_gt()
-    );
-    assert!(
-        evidence
-            .second_curvature_cross
-            .unwrap()
-            .sign
-            .unwrap()
-            .is_lt()
-    );
+    assert!(evidence.first_side_witness.unwrap().sign.unwrap().is_gt());
+    assert!(evidence.second_side_witness.unwrap().sign.unwrap().is_lt());
 }
 
 #[test]
@@ -413,7 +385,7 @@ fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
     );
     assert!(
         third_evidence
-            .first_curvature_cross
+            .first_side_witness
             .unwrap()
             .sign
             .unwrap()
@@ -421,7 +393,7 @@ fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
     );
     assert!(
         third_evidence
-            .second_curvature_cross
+            .second_side_witness
             .unwrap()
             .sign
             .unwrap()
@@ -511,7 +483,7 @@ fn algebraic_same_side_derivative_orders_reverse_under_reflection() {
                         })
                     );
                     assert_eq!(
-                        evidence.first_curvature_cross.unwrap().sign,
+                        evidence.first_side_witness.unwrap().sign,
                         Some(if sign == 1 {
                             std::cmp::Ordering::Greater
                         } else {
