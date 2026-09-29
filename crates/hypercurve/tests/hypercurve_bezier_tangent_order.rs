@@ -469,3 +469,57 @@ fn algebraic_third_order_comparison_is_invariant_under_parameter_speed() {
         }
     }
 }
+
+#[test]
+fn algebraic_same_side_derivative_orders_reverse_under_reflection() {
+    let vector = |x: i32, y: i32| {
+        BezierAlgebraicTangentVector2::new(
+            hypersolve::AlgebraicRootRepresentation::from_exact_value(&r(x)),
+            hypersolve::AlgebraicRootRepresentation::from_exact_value(&r(y)),
+        )
+    };
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for order in [2, 3] {
+            for sign in [1, -1] {
+                for swap in [false, true] {
+                    let (first_k, second_k) = if swap { (2, 1) } else { (1, 2) };
+                    let factor = if order == 2 { 2 } else { 6 };
+                    let tangent = vector(1, 0);
+                    let first = vector(0, sign * factor * first_k);
+                    let second = vector(0, sign * factor * second_k);
+                    // Reflection reverses the orientation of the exact rays
+                    // (x,k*x^order) at any common positive x.
+                    let evidence = decided(if order == 2 {
+                        compare_algebraic_same_tangent_second_order(
+                            &tangent, &first, &tangent, &second, &policy,
+                        )
+                    } else {
+                        compare_algebraic_same_tangent_third_order(
+                            &tangent, &first, &tangent, &second, &policy,
+                        )
+                    });
+                    assert_eq!(
+                        evidence.status,
+                        BezierAlgebraicSameTangentOrderStatus::Ordered
+                    );
+                    assert_eq!(
+                        evidence.ordering,
+                        Some(if (sign == 1) != swap {
+                            BezierTangentTurnOrdering2::FirstBeforeSecond
+                        } else {
+                            BezierTangentTurnOrdering2::SecondBeforeFirst
+                        })
+                    );
+                    assert_eq!(
+                        evidence.first_curvature_cross.unwrap().sign,
+                        Some(if sign == 1 {
+                            std::cmp::Ordering::Greater
+                        } else {
+                            std::cmp::Ordering::Less
+                        }),
+                    );
+                }
+            }
+        }
+    }
+}

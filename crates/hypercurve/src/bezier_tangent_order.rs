@@ -951,6 +951,9 @@ fn compare_algebraic_same_side_magnitude(
         ));
     }
 
+    // Reflection reverses the order of two branches on the negative side.
+    // The squared magnitudes alone cannot retain that orientation.
+    let negative_side = sign_status(&first_cross) == ScalarSignStatus::Negative;
     let magnitude = same_side_magnitude_difference(
         &first_cross,
         &second_cross,
@@ -962,7 +965,11 @@ fn compare_algebraic_same_side_magnitude(
     match sign_status(&magnitude) {
         ScalarSignStatus::Negative => Classification::Decided(same_tangent_evidence(
             BezierAlgebraicSameTangentOrderStatus::Ordered,
-            Some(BezierTangentTurnOrdering2::FirstBeforeSecond),
+            Some(if negative_side {
+                BezierTangentTurnOrdering2::SecondBeforeFirst
+            } else {
+                BezierTangentTurnOrdering2::FirstBeforeSecond
+            }),
             Some(first_cross),
             Some(second_cross),
             Some(magnitude),
@@ -970,7 +977,11 @@ fn compare_algebraic_same_side_magnitude(
         )),
         ScalarSignStatus::Positive => Classification::Decided(same_tangent_evidence(
             BezierAlgebraicSameTangentOrderStatus::Ordered,
-            Some(BezierTangentTurnOrdering2::SecondBeforeFirst),
+            Some(if negative_side {
+                BezierTangentTurnOrdering2::FirstBeforeSecond
+            } else {
+                BezierTangentTurnOrdering2::SecondBeforeFirst
+            }),
             Some(first_cross),
             Some(second_cross),
             Some(magnitude),

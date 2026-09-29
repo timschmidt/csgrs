@@ -1806,6 +1806,56 @@ mod endpoint_adjacency_tests {
     use super::*;
 
     #[test]
+    fn native_same_side_derivative_orders_reverse_under_reflection() {
+        let vector = |x: i32, y: i32| TangentVector {
+            dx: Real::from(x),
+            dy: Real::from(y),
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for order in [2, 3] {
+                for sign in [1, -1] {
+                    for swap in [false, true] {
+                        let (first_k, second_k) = if swap { (2, 1) } else { (1, 2) };
+                        let factor = if order == 2 { 2 } else { 6 };
+                        let tangent = vector(1, 0);
+                        let first = vector(0, sign * factor * first_k);
+                        let second = vector(0, sign * factor * second_k);
+                        // At x>0, reflection reverses the order of the
+                        // rays (x,k*x^order). These are their exact jets.
+                        let comparison = if order == 2 {
+                            compare_same_tangent_second_order(
+                                &tangent,
+                                Some(&first),
+                                None,
+                                &tangent,
+                                Some(&second),
+                                None,
+                                &policy,
+                            )
+                        } else {
+                            compare_same_tangent_third_order(
+                                &tangent,
+                                Some(&first),
+                                &tangent,
+                                Some(&second),
+                                &policy,
+                            )
+                        };
+                        assert_eq!(
+                            comparison,
+                            Classification::Decided(if (sign == 1) != swap {
+                                TurnOrdering::FirstBeforeSecond
+                            } else {
+                                TurnOrdering::SecondBeforeFirst
+                            })
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn native_third_order_comparison_is_invariant_under_parameter_speed() {
         let vector = |x: i32, y: i32| TangentVector {
             dx: Real::from(x),
@@ -2929,13 +2979,18 @@ fn compare_same_tangent_second_order(
             Classification::Decided(TurnOrdering::SecondBeforeFirst)
         }
         (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
-            compare_same_side_curvature_magnitude(
+            let ordering = compare_same_side_curvature_magnitude(
                 first_tangent,
                 &first_cross,
                 second_tangent,
                 &second_cross,
                 policy,
-            )
+            );
+            if first_sign == RealSign::Negative {
+                reverse_turn_ordering(ordering)
+            } else {
+                ordering
+            }
         }
     }
 }
@@ -2982,13 +3037,18 @@ fn compare_same_tangent_third_order(
             Classification::Decided(TurnOrdering::SecondBeforeFirst)
         }
         (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
-            compare_same_side_third_order_magnitude(
+            let ordering = compare_same_side_third_order_magnitude(
                 first_tangent,
                 &first_cross,
                 second_tangent,
                 &second_cross,
                 policy,
-            )
+            );
+            if first_sign == RealSign::Negative {
+                reverse_turn_ordering(ordering)
+            } else {
+                ordering
+            }
         }
     }
 }

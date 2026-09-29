@@ -438,15 +438,19 @@ fn tangent_ordered_traversal_uses_second_order_for_equal_outgoing_tangents() {
         hypercurve::BezierArrangementFragment2::new(2, 0, second_out),
     ]);
 
+    // Match x-coordinates with t=2u-u^2/2, for 0<u<1/2. The second
+    // branch lies above the first by u^2*(u^2-8u+10)/2 > 0. Both rays
+    // point into the upper half-plane, so the first branch is encountered
+    // first counter-clockwise from the incoming horizontal tangent.
     let traversal = decided(graph.traverse_with_tangent_order(&policy()));
     assert_eq!(traversal.len(), 2);
-    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 2]);
-    assert_eq!(traversal.chains()[1].fragment_indices(), &[1]);
+    assert_eq!(traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(traversal.chains()[1].fragment_indices(), &[2]);
 
     let retained_traversal = decided(graph.traverse_retained_with_tangent_order(&policy()));
     assert_eq!(retained_traversal.len(), 2);
-    assert_eq!(retained_traversal.chains()[0].fragment_indices(), &[0, 2]);
-    assert_eq!(retained_traversal.chains()[1].fragment_indices(), &[1]);
+    assert_eq!(retained_traversal.chains()[0].fragment_indices(), &[0, 1]);
+    assert_eq!(retained_traversal.chains()[1].fragment_indices(), &[2]);
 }
 
 #[test]
