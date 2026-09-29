@@ -1807,6 +1807,57 @@ mod endpoint_adjacency_tests {
     use super::*;
 
     #[test]
+    fn polynomial_derivative_sources_retain_exact_zero() {
+        let controls = [
+            point(0),
+            Point2::new(Real::pi(), Real::one()),
+            Point2::from_values(1, 3),
+            point(4),
+        ];
+        let curves = [
+            (
+                BezierSubcurve2::Quadratic(crate::QuadraticBezier2::new(
+                    controls[0].clone(),
+                    controls[1].clone(),
+                    controls[2].clone(),
+                )),
+                2,
+            ),
+            (
+                BezierSubcurve2::Cubic(crate::CubicBezier2::new(
+                    controls[0].clone(),
+                    controls[1].clone(),
+                    controls[2].clone(),
+                    controls[3].clone(),
+                )),
+                3,
+            ),
+        ];
+        let parameter = sqrt_half_parameter();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for (curve, degree) in &curves {
+                for reversed in [false, true] {
+                    let source = RetainedAlgebraicDerivativeSource {
+                        curve: Box::new(curve.clone()),
+                        parameter: parameter.clone(),
+                        reversed,
+                    };
+                    for order in [degree + 1, degree + 5] {
+                        let Classification::Decided(Some(RetainedTangentVector::Algebraic(zero))) =
+                            retained_algebraic_derivative(None, Some(&source), order, &policy)
+                        else {
+                            panic!("a degree-certified zero derivative was lost");
+                        };
+                        for coordinate in [zero.dx(), zero.dy()] {
+                            assert!(coordinate.exact_point_witness() == Some(&Real::zero()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn equal_curvature_graph_jets_ignore_source_acceleration() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for algebraic in [false, true] {
@@ -2905,6 +2956,18 @@ fn retained_algebraic_derivative(
     let Some(source) = source else {
         return Classification::Decided(None);
     };
+    if matches!(
+        (source.curve.as_ref(), order),
+        (BezierSubcurve2::Quadratic(_), 3..) | (BezierSubcurve2::Cubic(_), 4..)
+    ) {
+        // These polynomial derivatives are identically zero, including under
+        // reversed traversal. Their evidence needs no coordinate projection
+        // or selected-parameter arithmetic.
+        let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
+        return Classification::Decided(Some(RetainedTangentVector::Algebraic(Box::new(
+            BezierAlgebraicTangentVector2::new(zero.clone(), zero),
+        ))));
+    }
     let derivative = match source.curve.as_ref() {
         BezierSubcurve2::Quadratic(curve) => match order {
             1 => curve
@@ -3376,7 +3439,10 @@ impl BezierSubcurve2 {
                     start_tangent,
                     end_tangent,
                     include_higher_derivatives.then(|| quadratic_second_derivative(curve)),
-                    None,
+                    include_higher_derivatives.then(|| TangentVector {
+                        dx: Real::zero(),
+                        dy: Real::zero(),
+                    }),
                     Some(start_tangent_zero_status),
                     Some(end_tangent_zero_status),
                 )
