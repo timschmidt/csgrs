@@ -10,7 +10,7 @@ use hypercurve::{
 use hypercurve::{Curve2, CurvePath2};
 
 use hypercurve::{
-    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, CubicBezier2, CurvePoint2,
 };
 
@@ -766,7 +766,7 @@ fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::
         .subcurve(Real::zero().into(), parameter.into(), &policy)?
         .into_value();
     let chord = expect_decided(
-        BezierAlgebraicChord2::try_new(source_curve.end(), p(0, 0).into(), &policy)?,
+        Curve2::try_line(source_curve.end(), p(0, 0).into(), &policy)?,
         "source-related algebraic chord must remain exact",
     );
     let closure = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
@@ -798,7 +798,7 @@ fn independent_field_algebraic_chord_regions()
         .reversed(&policy)?
         .into_value();
     let chord = expect_decided(
-        BezierAlgebraicChord2::try_new(x_curve.end(), y_curve.start(), &policy)?,
+        Curve2::try_line(x_curve.end(), y_curve.start(), &policy)?,
         "independent-field chord must remain exact",
     );
     let chord_path = CurvePath2::try_new(vec![chord.into(), y_curve, x_curve])?;
@@ -838,10 +838,13 @@ fn noninjective_collinear_algebraic_chord_paths()
     let first_endpoint = endpoint(&first_parameter)?;
     let second_endpoint = endpoint(&second_parameter)?;
     let chord = expect_decided(
-        BezierAlgebraicChord2::try_new(first_endpoint, second_endpoint, &policy)?,
+        Curve2::try_line(first_endpoint, second_endpoint, &policy)?,
         "independent-field benchmark chord must remain exact",
     );
-    let chord_path = CurvePath2::try_new(vec![chord.clone().into(), chord.reversed().into()])?;
+    let chord_path = CurvePath2::try_new(vec![
+        chord.clone().into(),
+        chord.reversed(&policy)?.into_value(),
+    ])?;
     let source_path = CurvePath2::try_new(vec![
         QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)).into(),
     ])?;
@@ -870,7 +873,7 @@ fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dy
     let second_start = endpoint(&vertical, 2, 5)?;
     let second_end = endpoint(&vertical, 1, 5)?;
     let chord = |start, end| {
-        BezierAlgebraicChord2::try_new(start, end, &policy)
+        Curve2::try_line(start, end, &policy)
             .map(|chord| expect_decided(chord, "benchmark chord must remain exact"))
     };
     let first = chord(first_start.clone(), first_end.clone())?;
@@ -922,7 +925,7 @@ fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::e
     let bottom_left = CurvePoint2::from(p(0, 0));
     let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
-        BezierAlgebraicChord2::try_new(start, end, &policy).map(|chord| {
+        Curve2::try_line(start, end, &policy).map(|chord| {
             Curve2::from(expect_decided(
                 chord,
                 "axis-aligned benchmark chord must remain exact",
@@ -986,7 +989,7 @@ fn axis_aligned_algebraic_dumbbell_offset_region()
     let mut fragments = Vec::with_capacity(points.len());
     for index in 0..points.len() {
         fragments.push(Curve2::from(expect_decided(
-            BezierAlgebraicChord2::try_new(
+            Curve2::try_line(
                 points[index].clone(),
                 points[(index + 1) % points.len()].clone(),
                 &policy,

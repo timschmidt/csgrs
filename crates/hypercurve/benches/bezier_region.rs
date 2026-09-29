@@ -2,7 +2,7 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BooleanOp, BulgeVertex2, Classification, Contour2, Curve2,
     CurveContext, CurveError, CurvePath2, CurvePoint2, CurveRegion2, CurveRegionLoopRole,
     CurveResult, FillRule, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
@@ -118,7 +118,7 @@ fn algebraic_polynomial_parameter(
 }
 
 fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> CurveResult<Curve2> {
-    Ok(Curve2::from(decided(BezierAlgebraicChord2::try_new(
+    Ok(Curve2::from(decided(Curve2::try_line(
         CurvePoint2::from(start),
         CurvePoint2::from(end),
         policy,

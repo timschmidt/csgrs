@@ -225,11 +225,14 @@ exact signatures.
   retain degree one. Bounds and monotonicity use the actual curve denominator.
 - Wrapped evaluation and one-sided evaluation are available on periodic spline
   carriers through the `*_wrapped` and `*_side` method families.
-- `Curve2::{new, try_polynomial_bspline, try_nurbs,
+- `Curve2::{new, try_line, try_analytic_parallel, try_from_bezier_range,
+  try_polynomial_bspline, try_nurbs,
   try_periodic_polynomial_bspline, try_periodic_nurbs, family, point_at,
   derivative_at, bounds, split_at, subcurve, reversed,
   transform_similarity, native_bezier_fragments, trim_inside_region,
-  trim_inside_region_with_parameters}` is the common owned carrier. Exact
+  trim_inside_region_with_parameters}` is the common owned carrier.
+  `try_line` joins two general exact points, which may be selected algebraic
+  intersection or corner locations, without rounding either endpoint. Exact
   region trimming returns reusable `Curve2` pieces from authored and generated
   supports. The parameter-retaining form reports their oriented source
   locations as `CurveLocation2`, exact parameter ranges and boundary contacts.

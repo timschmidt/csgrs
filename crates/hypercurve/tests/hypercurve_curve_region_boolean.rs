@@ -28,7 +28,7 @@ fn decided<T>(value: Classification<T>) -> T {
 
 #[test]
 fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
-    use hypercurve::{BezierAlgebraicChord2, CurveGeometry2, RationalQuadraticBezier2};
+    use hypercurve::{CurveGeometry2, RationalQuadraticBezier2};
     let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for shift in [0, 1, -2] {
@@ -95,7 +95,7 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                     );
                     let curve_bounds = curve.bounds().unwrap().clone();
                     let chord = decided(
-                        BezierAlgebraicChord2::try_new(
+                        Curve2::try_line(
                             endpoints[0].clone().into(),
                             endpoints[1].clone().into(),
                             &policy,
@@ -157,7 +157,7 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
 
 #[test]
 fn native_chart_poles_do_not_block_finite_region_queries() {
-    use hypercurve::{BezierAlgebraicChord2, CurveGeometry2};
+    use hypercurve::CurveGeometry2;
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     let source = RationalBezier2::try_new(
         vec![point(0, 0), point(0, 1), point(1, 0)],
@@ -177,8 +177,7 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
                 (a.y() + b.y() + Real::from(2) * middle.y()) * q(1, 4),
             );
             let Classification::Decided(chord) =
-                BezierAlgebraicChord2::try_new(b.clone().into(), a.clone().into(), &policy)
-                    .unwrap()
+                Curve2::try_line(b.clone().into(), a.clone().into(), &policy).unwrap()
             else {
                 panic!("represented chord");
             };
@@ -468,7 +467,7 @@ fn region_intersection_removes_authored_internal_and_canceled_boundaries() {
 
 #[test]
 fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
-    use hypercurve::{BezierAlgebraicChord2, CurveCornerMode2, CurveGeometry2};
+    use hypercurve::{CurveCornerMode2, CurveGeometry2};
     let ratio = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let path = CurvePath2::try_new(vec![
@@ -521,8 +520,7 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
                 .unwrap(),
             );
             let Classification::Decided(chord) =
-                BezierAlgebraicChord2::try_new(point(-1, 1).into(), point(0, 0).into(), &policy)
-                    .unwrap()
+                Curve2::try_line(point(-1, 1).into(), point(0, 0).into(), &policy).unwrap()
             else {
                 panic!("exact chord");
             };

@@ -14238,7 +14238,7 @@ pub(crate) enum BezierAlgebraicCuspSemicircleIncidentLocation2 {
 /// decision boundary, and `policy` remains part of the carrier so replay
 /// cannot silently weaken a STRICT construction.
 #[derive(Clone, Debug)]
-pub struct BezierAlgebraicChord2 {
+pub(crate) struct BezierAlgebraicChord2 {
     data: Arc<BezierAlgebraicChordData2>,
 }
 

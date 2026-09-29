@@ -407,6 +407,20 @@ impl Curve2 {
         Self::from_geometry_with_lineage(geometry, lineage)
     }
 
+    /// Constructs the exact nonzero line segment between two general points.
+    ///
+    /// Endpoints may be represented or retained algebraic points, including
+    /// selected intersection and corner locations; neither is rounded nor
+    /// projected into a common field. Coincidence that `policy` cannot decide
+    /// is returned as uncertainty, and coincident endpoints are invalid.
+    pub fn try_line(
+        start: CurvePoint2,
+        end: CurvePoint2,
+        policy: &CurveContext,
+    ) -> crate::CurveResult<Classification<Self>> {
+        Ok(crate::BezierAlgebraicChord2::try_new(start, end, policy)?.map(Self::from))
+    }
+
     /// Constructs an exact analytic Bezier parallel on a finite oriented
     /// source-parameter range.
     ///
@@ -2728,7 +2742,8 @@ fn compute_curve_bounds(curve: &Curve2) -> ExactCurveResult<Aabb2> {
                 .native_bezier_fragments_for_operation(&policy, CurveOperation2::NativeTopology)?;
             let mut bounds = decided_subcurve_bounds(fragments[0].native_curve(), curve.family())?;
             for fragment in &fragments[1..] {
-                let fragment_bounds = decided_subcurve_bounds(fragment.native_curve(), curve.family())?;
+                let fragment_bounds =
+                    decided_subcurve_bounds(fragment.native_curve(), curve.family())?;
                 bounds = decided_bounds(bounds.union(&fragment_bounds), curve.family())?;
             }
             Ok(bounds)

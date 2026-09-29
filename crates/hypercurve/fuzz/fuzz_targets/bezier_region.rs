@@ -1,7 +1,7 @@
 #![no_main]
 
 use hypercurve::{
-    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, Curve2, CurveContext, CurvePath2, CurvePoint2,
     CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
@@ -71,13 +71,7 @@ fn algebraic_sqrt_eighth(policy: &CurveContext) -> Option<BezierParameter2> {
 
 fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> Option<Curve2> {
     Some(Curve2::from(
-        match BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(start),
-            CurvePoint2::from(end),
-            policy,
-        )
-        .ok()?
-        {
+        match Curve2::try_line(CurvePoint2::from(start), CurvePoint2::from(end), policy).ok()? {
             Classification::Decided(chord) => chord,
             Classification::Uncertain(_) => return None,
         },

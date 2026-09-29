@@ -15,8 +15,8 @@ use curvo::prelude::{
 };
 use geo::{BooleanOps as _, Coord, LineString, Polygon};
 use hypercurve::{
-    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CurvePoint2, Similarity2,
+    BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, CurvePoint2,
+    Similarity2,
 };
 use hypercurve::{
     BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
@@ -627,8 +627,7 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     let bottom_left = CurvePoint2::from(Point2::new(Real::zero(), Real::zero()));
     let top_left = CurvePoint2::from(Point2::new(Real::zero(), Real::one()));
     let chord = |start, end| {
-        let chord =
-            BezierAlgebraicChord2::try_new(start, end, &policy).expect("valid benchmark chord");
+        let chord = Curve2::try_line(start, end, &policy).expect("valid benchmark chord");
         Curve2::from(match chord {
             Classification::Decided(chord) => chord,
             Classification::Uncertain(reason) => panic!("benchmark chord: {reason:?}"),

@@ -1,8 +1,7 @@
 mod support;
 
 use hypercurve::{
-    BezierAlgebraicChord2, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, CurvePoint2,
+    BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, CurvePoint2,
 };
 use hypercurve::{
     BezierFlatteningOptions, CircularArc2, Classification, Contour2, CubicBezier2, Curve2,
@@ -432,11 +431,7 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
     ));
     let bottom_left = CurvePoint2::from(p(0, 0));
     let top_left = CurvePoint2::from(p(0, 1));
-    let chord = |start, end| {
-        Curve2::from(decided(
-            BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
-        ))
-    };
+    let chord = |start, end| Curve2::from(decided(Curve2::try_line(start, end, policy).unwrap()));
     let boundary = CurvePath2::try_new_with_policy(
         vec![
             chord(bottom_left.clone(), bottom_right.clone()),
@@ -633,7 +628,7 @@ fn shifted_algebraic_rectangle_boundary(
     let fragments = (0..points.len())
         .map(|index| {
             Curve2::from(decided(
-                BezierAlgebraicChord2::try_new(
+                Curve2::try_line(
                     points[index].clone(),
                     points[(index + 1) % points.len()].clone(),
                     policy,
@@ -815,7 +810,7 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     let fragments = (0..points.len())
         .map(|index| {
             Curve2::from(decided(
-                BezierAlgebraicChord2::try_new(
+                Curve2::try_line(
                     points[index].clone(),
                     points[(index + 1) % points.len()].clone(),
                     policy,
@@ -885,7 +880,7 @@ fn axis_aligned_algebraic_dumbbell_region(
     let fragments = (0..points.len())
         .map(|index| {
             Curve2::from(decided(
-                BezierAlgebraicChord2::try_new(
+                Curve2::try_line(
                     points[index].clone(),
                     points[(index + 1) % points.len()].clone(),
                     policy,
@@ -2932,11 +2927,8 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
         ));
         let origin = CurvePoint2::from(p(0, 0));
         let top = CurvePoint2::from(p(0, 1));
-        let chord = |start, end| {
-            Curve2::from(decided(
-                BezierAlgebraicChord2::try_new(start, end, &policy).unwrap(),
-            ))
-        };
+        let chord =
+            |start, end| Curve2::from(decided(Curve2::try_line(start, end, &policy).unwrap()));
         let boundary = CurvePath2::try_new_with_policy(
             vec![
                 chord(origin.clone(), selected.clone()),
@@ -3994,7 +3986,7 @@ fn canonical_exact_chord_regions_fillet_without_line_demotion() {
         let fragments = points
             .windows(2)
             .map(|edge| {
-                let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                let Classification::Decided(chord) = Curve2::try_line(
                     CurvePoint2::from(edge[0].clone()),
                     CurvePoint2::from(edge[1].clone()),
                     policy,
@@ -4172,11 +4164,8 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
         let corner = CurvePoint2::from(p(0, 0));
         let incoming = selected(p(-5, 0), p(-4, 0));
         let outgoing = selected(p(0, 4), p(0, 5));
-        let chord = |start, end| {
-            Curve2::from(decided(
-                BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
-            ))
-        };
+        let chord =
+            |start, end| Curve2::from(decided(Curve2::try_line(start, end, policy).unwrap()));
         let mut fragments = vec![
             chord(incoming.clone(), corner.clone()),
             chord(corner, outgoing.clone()),
@@ -4284,11 +4273,8 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
         let upper_left = selected(p(-3, 1), p(-2, 1));
         let corner = CurvePoint2::from(p(0, 0));
         let upper_right = CurvePoint2::from(p(1, 1));
-        let chord = |start, end| {
-            Curve2::from(decided(
-                BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
-            ))
-        };
+        let chord =
+            |start, end| Curve2::from(decided(Curve2::try_line(start, end, policy).unwrap()));
 
         let arc =
             Curve2::from(CircularArc2::try_from_center(p(0, 0), p(1, 1), p(1, 0), true).unwrap());
@@ -4686,11 +4672,8 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
         let upper_left = selected(p(-5, 2), p(-4, 2));
         let corner = CurvePoint2::from(p(0, 0));
         let upper_right = CurvePoint2::from(p(1, 2));
-        let chord = |start, end| {
-            Curve2::from(decided(
-                BezierAlgebraicChord2::try_new(start, end, policy).unwrap(),
-            ))
-        };
+        let chord =
+            |start, end| Curve2::from(decided(Curve2::try_line(start, end, policy).unwrap()));
         let quadratic = Curve2::from(QuadraticBezier2::new(p(0, 0), p(0, 1), p(1, 2)));
         let mut fragments = vec![
             chord(lower_left.clone(), corner),
@@ -5648,7 +5631,7 @@ fn exact_support_cutter_reenters_correlated_chord_collinearly() {
         let curves = paths[0].curves();
         assert_eq!(curves.len(), fragments.len());
         let closure = decided(
-            BezierAlgebraicChord2::try_new(
+            Curve2::try_line(
                 curves[after_retained_index].end(),
                 curves[before_cusp_index].start(),
                 &policy,
