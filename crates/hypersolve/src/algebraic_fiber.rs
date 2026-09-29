@@ -1,4 +1,4 @@
-//! Exact real-root counts for polynomial fibers over one represented algebraic root.
+//! Exact arithmetic and polynomial fibers over one selected algebraic root.
 //!
 //! A bivariate subresultant becomes a univariate fiber polynomial after one
 //! parameter is fixed to an algebraic root. Its coefficients then live in the
@@ -8,7 +8,7 @@
 //! counts distinct roots, including roots of even multiplicity, without
 //! sampling either algebraic value.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, sync::Arc};
 
 mod refinement;
 mod subresultant;
@@ -38,6 +38,355 @@ use crate::root_isolation::{
     polynomial_gcd, polynomial_vanishes_at_owned_root,
     refine_isolated_univariate_polynomial_interval,
 };
+
+/// A strict arithmetic context for finite rational functions of one selected root.
+///
+/// Operations reuse the existing local-field reduction, division and sign
+/// machinery. The context owns temporary sign/inverse caches; retained values
+/// own their selected-root evidence and reduced coefficients independently.
+/// Finish a result before dropping the context to retain its latest root
+/// refinement without retaining the calculation's temporary caches.
+pub struct AlgebraicField {
+    source: Arc<AlgebraicRootRepresentation>,
+    state: LocalAlgebraicField,
+}
+
+/// An exact finite value in a selected algebraic field.
+///
+/// Its denominator has been proved nonzero at the selected root. A reducible
+/// defining polynomial is allowed: the denominator need not be invertible on
+/// every other root. Clones share the immutable coefficient and root payloads.
+/// Equality compares stored representations, not arbitrary algebraic identities.
+#[derive(Clone)]
+pub struct AlgebraicFieldValue {
+    source: Arc<AlgebraicRootRepresentation>,
+    root: Arc<AlgebraicRootRepresentation>,
+    element: Arc<LocalFieldElement>,
+}
+
+/// A construction or decision that could not be completed in a selected field.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AlgebraicFieldError {
+    /// The supplied root evidence did not replay strictly.
+    InvalidEvidence,
+    /// An operand belongs to a different selected root.
+    DifferentSelectedRoot,
+    /// A rational-function denominator is zero at the selected root.
+    DivisionByZero,
+    /// An exact coefficient or identity could not be decided.
+    Undecided,
+}
+
+impl From<LocalFieldError> for AlgebraicFieldError {
+    fn from(error: LocalFieldError) -> Self {
+        match error {
+            LocalFieldError::InvalidEvidence | LocalFieldError::InvalidInterval => {
+                Self::InvalidEvidence
+            }
+            LocalFieldError::DivisionByZero => Self::DivisionByZero,
+            LocalFieldError::UnsupportedCoefficient | LocalFieldError::Undecided => Self::Undecided,
+        }
+    }
+}
+
+impl std::fmt::Debug for AlgebraicField {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AlgebraicField")
+            .field("root_degree", &self.state.modulus().len().saturating_sub(1))
+            .finish_non_exhaustive()
+    }
+}
+
+impl std::fmt::Debug for AlgebraicFieldValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AlgebraicFieldValue")
+            .field(
+                "root_degree",
+                &self.root.polynomial_coefficients.len().saturating_sub(1),
+            )
+            .field(
+                "numerator_degree",
+                &self.element.numerator.len().saturating_sub(1),
+            )
+            .field(
+                "denominator_degree",
+                &self
+                    .element
+                    .denominator
+                    .as_ref()
+                    .map(|p| p.len().saturating_sub(1)),
+            )
+            .finish_non_exhaustive()
+    }
+}
+
+impl PartialEq for AlgebraicFieldValue {
+    fn eq(&self, other: &Self) -> bool {
+        (Arc::ptr_eq(&self.source, &other.source) || self.source == other.source)
+            && (Arc::ptr_eq(&self.element, &other.element)
+                || (self.element.numerator == other.element.numerator
+                    && self.element.denominator == other.element.denominator))
+    }
+}
+
+impl AlgebraicFieldValue {
+    /// Returns the retained selected-root certificate, including refinement.
+    pub fn selected_root(&self) -> &AlgebraicRootRepresentation {
+        &self.root
+    }
+
+    /// Borrows the reduced numerator and optional denominator over exact `Real`
+    /// coefficients, in ascending powers of the selected root.
+    /// A missing denominator is the canonical representation of one.
+    pub fn coefficients(&self) -> (&[Real], Option<&[Real]>) {
+        (&self.element.numerator, self.element.denominator.as_deref())
+    }
+
+    /// Borrows a parameter-independent exact value when already normalized.
+    pub fn exact_value(&self) -> Option<&Real> {
+        if self.element.denominator.is_none() && self.element.numerator.len() == 1 {
+            self.element.numerator.first()
+        } else {
+            None
+        }
+    }
+}
+
+impl AlgebraicField {
+    /// Replays a selected-root payload and starts a strict arithmetic batch.
+    /// The supplied isolation evidence remains the proof of uniqueness.
+    pub fn new(root: &AlgebraicRootRepresentation) -> Result<Self, AlgebraicFieldError> {
+        Ok(Self {
+            source: Arc::new(root.clone()),
+            state: LocalAlgebraicField::new(root, PredicatePolicy::STRICT)?,
+        })
+    }
+
+    /// Starts a new batch from an owned, already-admitted value's certificate.
+    /// Temporary caches are not retained by the value.
+    pub fn from_value(value: &AlgebraicFieldValue) -> Self {
+        Self {
+            source: value.source.clone(),
+            state: LocalAlgebraicField::from_validated_root(&value.root, PredicatePolicy::STRICT),
+        }
+    }
+
+    /// Returns the current selected-root presentation and certified interval.
+    pub fn selected_root(&self) -> &AlgebraicRootRepresentation {
+        &self.state.root
+    }
+
+    fn owned(&self, element: LocalFieldElement) -> AlgebraicFieldValue {
+        AlgebraicFieldValue {
+            source: self.source.clone(),
+            root: self.source.clone(),
+            element: Arc::new(element),
+        }
+    }
+
+    fn require_selected_root(
+        &self,
+        root: &AlgebraicRootRepresentation,
+    ) -> Result<(), AlgebraicFieldError> {
+        if self.source.as_ref() == root {
+            return Ok(());
+        }
+        let comparison = crate::algebraic::compare_algebraic_root_representations_by_difference(
+            &self.state.root,
+            root,
+            crate::algebraic::AlgebraicRootRefinementComparisonConfig {
+                policy: PredicatePolicy::STRICT,
+                ..crate::algebraic::AlgebraicRootRefinementComparisonConfig::default()
+            },
+        );
+        if comparison.comparison.status
+            == crate::algebraic::AlgebraicRootComparisonStatus::InvalidEvidence
+        {
+            return Err(AlgebraicFieldError::InvalidEvidence);
+        }
+        match comparison.comparison.ordering {
+            Some(Ordering::Equal)
+                if matches!(
+                    comparison.comparison.status,
+                    crate::algebraic::AlgebraicRootComparisonStatus::Compared
+                        | crate::algebraic::AlgebraicRootComparisonStatus::SameRepresentation
+                ) =>
+            {
+                Ok(())
+            }
+            Some(Ordering::Less | Ordering::Greater)
+                if comparison.comparison.status
+                    == crate::algebraic::AlgebraicRootComparisonStatus::Compared =>
+            {
+                Err(AlgebraicFieldError::DifferentSelectedRoot)
+            }
+            _ => Err(AlgebraicFieldError::Undecided),
+        }
+    }
+
+    fn operand<'a>(
+        &self,
+        value: &'a AlgebraicFieldValue,
+    ) -> Result<&'a LocalFieldElement, AlgebraicFieldError> {
+        if value.exact_value().is_none() && !Arc::ptr_eq(&self.source, &value.source) {
+            self.require_selected_root(&value.root)?;
+        }
+        Ok(&value.element)
+    }
+
+    fn reduced_value(
+        &self,
+        mut value: AlgebraicFieldValue,
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+        let element = &value.element;
+        let modulus_len = self.state.modulus().len();
+        if element.numerator.len() >= modulus_len
+            || element
+                .denominator
+                .as_ref()
+                .is_some_and(|d| d.len() >= modulus_len)
+        {
+            value.element = Arc::new(LocalFieldElement {
+                numerator: self.state.reduce(element.numerator.clone())?,
+                denominator: element
+                    .denominator
+                    .as_ref()
+                    .map(|d| self.state.reduce(d.clone()))
+                    .transpose()?
+                    .and_then(|d| self.state.canonical_denominator(d)),
+            });
+        }
+        Ok(value)
+    }
+
+    /// Constructs an arbitrary exact constant in this field.
+    pub fn constant(&self, value: Real) -> AlgebraicFieldValue {
+        self.owned(LocalFieldElement {
+            numerator: vec![value],
+            denominator: None,
+        })
+    }
+
+    /// Retains a rational function after reducing and proving its denominator
+    /// nonzero at this selected root. The supplied parameter must be proved equal
+    /// to the context's selected root; sharing a polynomial is insufficient.
+    /// In particular, zero over zero is rejected.
+    pub fn rational_function(
+        &mut self,
+        parameter: &AlgebraicRootRepresentation,
+        numerator: Vec<Real>,
+        denominator: Vec<Real>,
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+        self.require_selected_root(parameter)?;
+        let numerator = LocalFieldElement::from_polynomial(numerator, &self.state)?;
+        let denominator = LocalFieldElement::from_polynomial(denominator, &self.state)?;
+        if denominator.is_zero(&mut self.state)? {
+            return Err(AlgebraicFieldError::DivisionByZero);
+        }
+        if denominator.numerator == [Real::one()]
+            || local_field_element_is_structurally_zero(&numerator)
+        {
+            return self.reduced_value(self.owned(numerator));
+        }
+        let value = numerator.divide_after_nonzero(&denominator, &mut self.state)?;
+        self.reduced_value(self.owned(value))
+    }
+
+    /// Adds two values after certifying their common selected root.
+    /// Parameter-independent exact constants can come from any admitted field.
+    pub fn add(
+        &self,
+        first: &AlgebraicFieldValue,
+        second: &AlgebraicFieldValue,
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+        self.reduced_value(
+            self.owned(
+                self.operand(first)?
+                    .add(self.operand(second)?, &self.state)?,
+            ),
+        )
+    }
+    /// Subtracts two values after certifying their common selected root.
+    pub fn subtract(
+        &self,
+        first: &AlgebraicFieldValue,
+        second: &AlgebraicFieldValue,
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+        self.reduced_value(
+            self.owned(
+                self.operand(first)?
+                    .subtract(self.operand(second)?, &self.state)?,
+            ),
+        )
+    }
+    /// Multiplies and reduces two values in this selected field.
+    pub fn multiply(
+        &self,
+        first: &AlgebraicFieldValue,
+        second: &AlgebraicFieldValue,
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+        self.reduced_value(
+            self.owned(
+                self.operand(first)?
+                    .multiply(self.operand(second)?, &self.state)?,
+            ),
+        )
+    }
+    /// Divides after proving the divisor nonzero at the selected root.
+    pub fn divide(
+        &mut self,
+        first: &AlgebraicFieldValue,
+        second: &AlgebraicFieldValue,
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+        let first = self.operand(first)?;
+        let second = self.operand(second)?;
+        let value = first.divide(second, &mut self.state)?;
+        self.reduced_value(self.owned(value))
+    }
+    /// Raises a value to a nonnegative power with reduction after each product.
+    pub fn pow(
+        &self,
+        value: &AlgebraicFieldValue,
+        mut power: usize,
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+        let mut factor = self.operand(value)?.clone();
+        let mut result = LocalFieldElement {
+            numerator: vec![Real::one()],
+            denominator: None,
+        };
+        while power != 0 {
+            if power & 1 != 0 {
+                result = result.multiply(&factor, &self.state)?;
+            }
+            power >>= 1;
+            if power != 0 {
+                factor = factor.multiply(&factor, &self.state)?;
+            }
+        }
+        self.reduced_value(self.owned(result))
+    }
+    /// Certifies a value's sign, sharing refinement within this arithmetic batch.
+    pub fn sign(&mut self, value: &AlgebraicFieldValue) -> Result<Ordering, AlgebraicFieldError> {
+        Ok(self.operand(value)?.sign(&mut self.state)?)
+    }
+    /// Retains the result and the latest selected-root certificate, releasing
+    /// the temporary arithmetic and sign caches with this context. Older values
+    /// are reduced again when the context has removed foreign modulus factors.
+    pub fn finish(
+        self,
+        mut value: AlgebraicFieldValue,
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+        self.operand(&value)?;
+        value = self.reduced_value(value)?;
+        value.source = self.source;
+        value.root = if self.state.root == *value.source {
+            value.source.clone()
+        } else {
+            Arc::new(self.state.root)
+        };
+        Ok(value)
+    }
+}
 
 const LOCAL_FIELD_INTERVAL_SIGN_REFINEMENT_ROUNDS: usize = 8;
 
@@ -3534,14 +3883,18 @@ impl LocalAlgebraicField {
         if !is_valid_local_algebraic_field_evidence(root) {
             return Err(LocalFieldError::InvalidEvidence);
         }
-        Ok(Self {
+        Ok(Self::from_validated_root(root, policy))
+    }
+
+    fn from_validated_root(root: &AlgebraicRootRepresentation, policy: PredicatePolicy) -> Self {
+        Self {
             root: root.clone(),
             signed_polynomials: Vec::new(),
             inverse_polynomials: Vec::new(),
             policy,
             certainty: Certainty::Exact,
             refinement_steps: 0,
-        })
+        }
     }
 
     fn modulus(&self) -> &[Real] {
@@ -4274,6 +4627,220 @@ mod tests {
         root.validation = validate_algebraic_root_representation(&root, policy);
         assert!(root.is_valid());
         root
+    }
+
+    #[test]
+    fn owned_field_values_keep_exact_coefficients_reduced_across_batches() {
+        let root = represented_root(
+            vec![-Real::pi(), real(0), real(0), real(4)],
+            real(0),
+            real(1),
+            PredicatePolicy::STRICT,
+        );
+        let mut field = AlgebraicField::new(&root).unwrap();
+        let alpha = field
+            .rational_function(&root, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        let cube = field.pow(&alpha, 3).unwrap();
+        let expected = field.constant((Real::pi() / real(4)).unwrap());
+        assert_eq!(
+            field
+                .sign(&field.subtract(&cube, &expected).unwrap())
+                .unwrap(),
+            Ordering::Equal
+        );
+        assert_eq!(field.sign(&alpha).unwrap(), Ordering::Greater);
+        let separated = field
+            .subtract(&alpha, &field.constant(rational(9, 10)))
+            .unwrap();
+        assert_eq!(field.sign(&separated).unwrap(), Ordering::Greater);
+        let mut retained = field.finish(alpha).unwrap();
+        assert_ne!(retained.selected_root().interval, root.interval);
+        for _ in 0..32 {
+            let mut batch = AlgebraicField::from_value(&retained);
+            assert!(batch.state.signed_polynomials.is_empty());
+            assert!(batch.state.inverse_polynomials.is_empty());
+            // alpha -> alpha^4/(pi/4) = alpha, without a growing expression tree.
+            let fourth = batch.pow(&retained, 4).unwrap();
+            let factor = batch.constant((Real::pi() / real(4)).unwrap());
+            let next = batch.divide(&fourth, &factor).unwrap();
+            assert_eq!(
+                batch
+                    .sign(&batch.subtract(&next, &retained).unwrap())
+                    .unwrap(),
+                Ordering::Equal
+            );
+            retained = batch.finish(next).unwrap();
+            let (numerator, denominator) = retained.coefficients();
+            assert!(numerator.len() < root.polynomial_coefficients.len());
+            assert!(denominator.is_none_or(|d| d.len() < root.polynomial_coefficients.len()));
+            assert!(algebraic_root_payload_replays_strictly(
+                retained.selected_root()
+            ));
+        }
+        let clone = retained.clone();
+        assert!(Arc::ptr_eq(&clone.element, &retained.element));
+        assert!(Arc::ptr_eq(&clone.root, &retained.root));
+    }
+
+    #[test]
+    fn owned_field_values_require_selected_root_identity() {
+        let root = represented_root(
+            vec![real(-2), real(0), real(1)],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let same = represented_root(
+            vec![real(-4), real(0), real(2)],
+            rational(7, 5),
+            rational(3, 2),
+            PredicatePolicy::STRICT,
+        );
+        let conjugate = represented_root(
+            root.polynomial_coefficients.clone(),
+            real(-2),
+            real(-1),
+            PredicatePolicy::STRICT,
+        );
+        let mut first = AlgebraicField::new(&root).unwrap();
+        let original = first
+            .rational_function(&root, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        let mut other = AlgebraicField::new(&same).unwrap();
+        let equivalent = other
+            .rational_function(&same, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        assert_eq!(
+            first
+                .sign(&first.subtract(&original, &equivalent).unwrap())
+                .unwrap(),
+            Ordering::Equal
+        );
+        assert!(
+            first
+                .rational_function(&same, vec![real(0), real(1)], vec![real(1)])
+                .is_ok()
+        );
+        assert_eq!(
+            first
+                .rational_function(&conjugate, vec![real(0), real(1)], vec![real(1)])
+                .unwrap_err(),
+            AlgebraicFieldError::DifferentSelectedRoot
+        );
+        let mut foreign = AlgebraicField::new(&conjugate).unwrap();
+        let negative = foreign
+            .rational_function(&conjugate, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        assert_eq!(
+            first.multiply(&original, &negative).unwrap_err(),
+            AlgebraicFieldError::DifferentSelectedRoot
+        );
+        let independent = foreign.constant(Real::pi());
+        assert_eq!(
+            first
+                .sign(&first.add(&original, &independent).unwrap())
+                .unwrap(),
+            Ordering::Greater
+        );
+        assert_eq!(
+            first.finish(independent).unwrap().exact_value(),
+            Some(&Real::pi())
+        );
+    }
+
+    #[test]
+    fn owned_field_values_reject_poles_and_preserve_local_denominator_domains() {
+        // The carrier also owns 3, but the selected root is sqrt(2).
+        let root = represented_root(
+            vec![real(6), real(-2), real(-3), real(1)],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let mut field = AlgebraicField::new(&root).unwrap();
+        let old = field
+            .rational_function(&root, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        for numerator in [vec![real(0)], vec![real(1)]] {
+            assert_eq!(
+                field
+                    .rational_function(&root, numerator, vec![real(-2), real(0), real(1)])
+                    .unwrap_err(),
+                AlgebraicFieldError::DivisionByZero
+            );
+        }
+        let inverse = field
+            .rational_function(&root, vec![real(1)], vec![real(-3), real(1)])
+            .unwrap();
+        assert_eq!(field.selected_root().polynomial_coefficients.len(), 3);
+        assert_eq!(field.sign(&inverse).unwrap(), Ordering::Less);
+        let denominator = field.subtract(&old, &field.constant(real(3))).unwrap();
+        let product = field.multiply(&inverse, &denominator).unwrap();
+        assert_eq!(
+            field
+                .sign(&field.subtract(&product, &field.constant(real(1))).unwrap())
+                .unwrap(),
+            Ordering::Equal
+        );
+        let retained = field.finish(inverse).unwrap();
+        assert_eq!(retained.selected_root().polynomial_coefficients.len(), 3);
+        let mut next = AlgebraicField::from_value(&retained);
+        assert_eq!(
+            next.sign(&next.multiply(&retained, &denominator).unwrap())
+                .unwrap(),
+            Ordering::Greater
+        );
+        assert_eq!(
+            next.divide(&retained, &next.constant(real(0))).unwrap_err(),
+            AlgebraicFieldError::DivisionByZero
+        );
+    }
+
+    #[test]
+    fn owned_field_finishing_reduces_older_values_after_factor_removal() {
+        let root = represented_root(
+            vec![real(6), real(-2), real(-3), real(1)],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let mut field = AlgebraicField::new(&root).unwrap();
+        let old = field
+            .rational_function(&root, vec![real(0), real(0), real(1)], vec![real(1)])
+            .unwrap();
+        assert_eq!(old.coefficients().0.len(), 3);
+        let _inverse = field
+            .rational_function(&root, vec![real(1)], vec![real(-3), real(1)])
+            .unwrap();
+        assert_eq!(field.selected_root().polynomial_coefficients.len(), 3);
+        let retained = field.finish(old.clone()).unwrap();
+        assert_eq!(retained.exact_value(), Some(&real(2)));
+        assert_eq!(retained.selected_root().polynomial_coefficients.len(), 3);
+        assert_eq!(old.coefficients().0.len(), 3); // A shared older value is unchanged.
+        assert_eq!(old.selected_root().polynomial_coefficients.len(), 4);
+        let next = AlgebraicField::from_value(&retained);
+        let sum = next.add(&old, &next.constant(real(1))).unwrap();
+        assert_eq!(sum.exact_value(), Some(&real(3)));
+    }
+
+    #[test]
+    fn owned_field_admission_replays_stale_root_payloads() {
+        let mut root = represented_exact_root(Real::pi(), PredicatePolicy::STRICT);
+        root.polynomial_coefficients[0] = -Real::pi() - real(1);
+        assert!(root.is_valid()); // The cached flag alone is not an admission proof.
+        assert_eq!(
+            AlgebraicField::new(&root).unwrap_err(),
+            AlgebraicFieldError::InvalidEvidence
+        );
+        let valid = represented_exact_root(real(2), PredicatePolicy::STRICT);
+        let mut field = AlgebraicField::new(&valid).unwrap();
+        assert_eq!(
+            field
+                .rational_function(&root, vec![real(0), real(1)], vec![real(1)])
+                .unwrap_err(),
+            AlgebraicFieldError::InvalidEvidence
+        );
     }
 
     #[test]
