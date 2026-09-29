@@ -1791,7 +1791,9 @@ impl BezierSubcurve2 {
             Self::Cubic(curve) => Ok(Classification::Decided(Self::Cubic(
                 curve.subcurve_between_exact(start, end, policy)?,
             ))),
-            Self::RationalQuadratic(curve) => curve.subcurve_between_exact_native(start, end, policy),
+            Self::RationalQuadratic(curve) => {
+                curve.subcurve_between_exact_native(start, end, policy)
+            }
             Self::Rational(curve) => curve
                 .subcurve_between_exact(start, end, policy)
                 .map(|result| result.map(Self::Rational)),
@@ -2255,12 +2257,14 @@ impl RationalQuadraticBezier2 {
         t: Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<(crate::CurveGeometry2, crate::CurveGeometry2)>> {
-        Ok(self.split_at_exact_native(t, policy)?.map(|(first, second)| {
-            (
-                crate::CurveGeometry2::from_bezier(first),
-                crate::CurveGeometry2::from_bezier(second),
-            )
-        }))
+        Ok(self
+            .split_at_exact_native(t, policy)?
+            .map(|(first, second)| {
+                (
+                    crate::CurveGeometry2::from_bezier(first),
+                    crate::CurveGeometry2::from_bezier(second),
+                )
+            }))
     }
 
     pub(crate) fn split_at_exact_native(

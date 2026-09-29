@@ -3306,8 +3306,16 @@ mod overlap_restriction_tests {
             .unwrap();
             assert!(!clipped.includes_start());
             assert!(clipped.includes_end());
-            let a = Curve2::from(first_spans[overlap.first_span_index()].native_curve().clone());
-            let b = Curve2::from(second_spans[overlap.second_span_index()].native_curve().clone());
+            let a = Curve2::from(
+                first_spans[overlap.first_span_index()]
+                    .native_curve()
+                    .clone(),
+            );
+            let b = Curve2::from(
+                second_spans[overlap.second_span_index()]
+                    .native_curve()
+                    .clone(),
+            );
             for (a_parameter, b_parameter) in [
                 (
                     clipped.first_range().start(),

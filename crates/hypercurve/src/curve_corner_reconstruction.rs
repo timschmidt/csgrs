@@ -170,8 +170,8 @@ impl CornerSourceFragments2 {
                 // parameter only when entering retained reconstruction. Keep
                 // the complete source here, including two cuts on one circle.
                 for (index, fragment) in native.iter().enumerate() {
-                    let rational =
-                        RationalBezier2::try_from_subcurve(fragment.native_curve()).map_err(|cause| {
+                    let rational = RationalBezier2::try_from_subcurve(fragment.native_curve())
+                        .map_err(|cause| {
                             ExactCurveError::invalid(operation, curve.family(), cause)
                         })?;
                     let Some(parameter) = RetainedRationalCornerArc2::parameter_at_incident_point(
