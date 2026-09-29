@@ -2267,3 +2267,45 @@ fn independent_nonlinear_line_parameters_compact_to_reusable_regions() {
         }
     }
 }
+
+/// Fuzz regression: every boundary piece lies on one vertical support, so the
+/// retraced loop encloses no area and its regularized fill is empty.
+#[test]
+fn collinear_retraced_quadratic_loop_regularizes_to_empty() {
+    use hypercurve::{
+        BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+        BezierParameterPolynomial,
+    };
+    let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let start = point(-128, -32);
+        let end = point(-128, -128);
+        let curve = Curve2::from(QuadraticBezier2::new(
+            start.clone(),
+            point(-128, 127),
+            end.clone(),
+        ));
+        // Roots of 2t^2 - 1 and 8t^2 - 1 select irrational interior cuts.
+        for (square, lower, upper) in [(2, q(2, 3), q(3, 4)), (8, q(1, 3), q(2, 5))] {
+            let polynomial = decided(
+                BezierParameterPolynomial::try_new_power_basis(
+                    vec![Real::from(-1), Real::zero(), Real::from(square)],
+                    &policy,
+                )
+                .unwrap(),
+            );
+            let interval =
+                decided(BezierParameterInterval::try_new(lower, upper, &policy).unwrap());
+            let cut = BezierParameter2::Algebraic(decided(
+                BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+            ));
+            let (head, tail) = curve.split_at(cut.into(), &policy).unwrap().into_value();
+            let closing = LineSeg2::try_new(end.clone(), start.clone()).unwrap();
+            let path = CurvePath2::try_new(vec![head, tail, closing.into()]).unwrap();
+            let region = CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd, &policy)
+                .unwrap_or_else(|error| panic!("square={square}: {error:?}"))
+                .into_value();
+            assert!(region.is_empty(), "square={square}: {region:?}");
+        }
+    }
+}

@@ -296,13 +296,13 @@ struct CarrierOverlap {
 }
 
 impl CarrierOverlap {
-    fn endpoint_vertices(&self, carrier_index: usize) -> Option<[usize; 2]> {
-        if carrier_index == self.first_carrier_index {
-            Some(self.first_endpoint_vertices)
-        } else if carrier_index == self.second_carrier_index {
-            Some(self.second_endpoint_vertices)
+    /// Endpoint vertices of one overlap side. A self-overlap has distinct
+    /// sides on the same carrier, so the side is explicit.
+    fn endpoint_vertices(&self, second: bool) -> [usize; 2] {
+        if second {
+            self.second_endpoint_vertices
         } else {
-            None
+            self.first_endpoint_vertices
         }
     }
 
@@ -325,10 +325,10 @@ impl CarrierOverlap {
 /// scalar range fallback for that uncommon case.
 fn carrier_overlap_split_interval(
     overlap: &CarrierOverlap,
-    carrier_index: usize,
+    second: bool,
     splits: &[SplitCarrierFragment],
 ) -> Option<std::ops::Range<usize>> {
-    let [first_vertex, second_vertex] = overlap.endpoint_vertices(carrier_index)?;
+    let [first_vertex, second_vertex] = overlap.endpoint_vertices(second);
     let boundary_position = |vertex| {
         let mut position = None;
         for (split_index, split) in splits.iter().enumerate() {
@@ -7583,19 +7583,25 @@ impl<'a> CurveRegionBooleanContext<'a> {
             for (split_index, split) in splits.iter().enumerate() {
                 let range = split.fragment.curve_region_parameter_range();
                 for overlap in &topology.overlaps {
-                    let (own_range, other_carrier_index) =
-                        if overlap.first_carrier_index == carrier_index {
-                            (Some(&overlap.first_range), overlap.second_carrier_index)
-                        } else if overlap.second_carrier_index == carrier_index {
-                            (Some(&overlap.second_range), overlap.first_carrier_index)
-                        } else {
-                            (None, usize::MAX)
-                        };
-                    let Some(own_range) = own_range else {
-                        continue;
-                    };
-                    let contains =
-                        match carrier_overlap_split_interval(overlap, carrier_index, splits) {
+                    for (second, side_carrier_index, own_range, other_carrier_index) in [
+                        (
+                            false,
+                            overlap.first_carrier_index,
+                            &overlap.first_range,
+                            overlap.second_carrier_index,
+                        ),
+                        (
+                            true,
+                            overlap.second_carrier_index,
+                            &overlap.second_range,
+                            overlap.first_carrier_index,
+                        ),
+                    ] {
+                        if side_carrier_index != carrier_index {
+                            continue;
+                        }
+                        let contains = match carrier_overlap_split_interval(overlap, second, splits)
+                        {
                             Some(interval) => interval.contains(&split_index),
                             None => range_contains_fragment(
                                 own_range,
@@ -7604,10 +7610,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                 &self.data.policy,
                             )?,
                         };
-                    if contains {
-                        edge_overlapped[carrier_index][split_index] = true;
-                        if other_carrier_index < carrier_index {
-                            edge_owns_overlap[carrier_index][split_index] = false;
+                        // The lower carrier owns a shared span; within one
+                        // retraced carrier, its first overlap side owns it.
+                        if contains {
+                            edge_overlapped[carrier_index][split_index] = true;
+                            if other_carrier_index < carrier_index
+                                || (second && other_carrier_index == carrier_index)
+                            {
+                                edge_owns_overlap[carrier_index][split_index] = false;
+                            }
                         }
                     }
                 }
@@ -7620,6 +7631,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut overlap_links = vec![Vec::<(usize, bool)>::new(); edge_count];
         for overlap in &topology.overlaps {
             let collect_edges = |carrier_index: usize,
+                                 second: bool,
                                  overlap_range: &CurveParameterRange2|
              -> ExactCurveResult<Vec<usize>> {
                 let mut edges = Vec::new();
@@ -7629,7 +7641,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let range = split.fragment.curve_region_parameter_range();
                     let contains = match carrier_overlap_split_interval(
                         overlap,
-                        carrier_index,
+                        second,
                         &topology.split_fragments[carrier_index],
                     ) {
                         Some(interval) => interval.contains(&split_index),
@@ -7646,8 +7658,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 Ok(edges)
             };
-            let first_edges = collect_edges(overlap.first_carrier_index, &overlap.first_range)?;
-            let second_edges = collect_edges(overlap.second_carrier_index, &overlap.second_range)?;
+            let first_edges =
+                collect_edges(overlap.first_carrier_index, false, &overlap.first_range)?;
+            let second_edges =
+                collect_edges(overlap.second_carrier_index, true, &overlap.second_range)?;
             let first_carrier = &self.data.carriers[overlap.first_carrier_index];
             let second_carrier = &self.data.carriers[overlap.second_carrier_index];
             let reversed = (overlap.orientation == CurveOverlapOrientation2::Reversed)
