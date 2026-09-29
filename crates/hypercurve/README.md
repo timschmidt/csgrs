@@ -92,7 +92,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let contour = Contour2::try_new(boundary)?;
     let region =
         CurveRegion2::try_from_native_material_contours(vec![contour], &policy)?.into_value();
-    let location = region.classify_point(&p(1, 1).into(), &policy)?.into_value();
+    let location = region
+        .classify_point(&p(1, 1).into(), &policy)?
+        .into_value();
     assert!(matches!(location, Classification::Decided(_)));
     Ok(())
 }
