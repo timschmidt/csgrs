@@ -14215,7 +14215,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
 /// range may use exact represented endpoints or mapped contact cuts without
 /// materializing the selected cusp fields into a high-degree scalar tower.
 #[derive(Clone, Debug)]
-pub struct BezierAlgebraicCuspSemicircleFragment2 {
+pub(crate) struct BezierAlgebraicCuspSemicircleFragment2 {
     data: Arc<BezierAlgebraicCuspSemicircleFragmentData2>,
 }
 

@@ -114,22 +114,19 @@ pub use bezier_metric::{BezierArcLengthParameterRegion2, BezierLengthBounds2};
 pub use bezier_moment::{BezierAreaMomentPrefixSums2, BezierAreaMoments2, BezierAreaPrefixSums2};
 pub(crate) use bezier_offset::BezierAlgebraicChord2;
 pub(crate) use bezier_offset::BezierAlgebraicChordPairPoint2;
+pub(crate) use bezier_offset::BezierAlgebraicCuspSemicircleFragment2;
 pub(crate) use bezier_offset::{
     BezierAlgebraicChordParallelPoint2, BezierAlgebraicCuspChordDerivedPoint2,
     BezierAlgebraicCuspChordPoint2, BezierAnalyticParallelPoint2, BezierSimilarityPoint2,
 };
 pub use bezier_offset::{
-    BezierAlgebraicCuspSemicircleFragment2, BezierParallel2, BezierParallelApproximationCurve2,
-    BezierParallelSingularityAnalysis2, BezierParallelSource2, BezierParallelVerificationOptions,
-    Blend2dCubicQuadraticReduction2, Blend2dQuadraticOffsetCandidate2,
-    CertifiedBezierParallelApproximation2, CertifiedBezierParallelPath2,
-    CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
+    BezierParallel2, BezierParallelApproximationCurve2, BezierParallelSingularityAnalysis2,
+    BezierParallelSource2, BezierParallelVerificationOptions, Blend2dCubicQuadraticReduction2,
+    Blend2dQuadraticOffsetCandidate2, CertifiedBezierParallelApproximation2,
+    CertifiedBezierParallelPath2, CertifiedBezierParallelSpan2, CertifiedCurvePathParallel2,
     CertifiedPythagoreanHodographOffset2, LevienCubicOffsetCandidate2,
 };
-pub(crate) use bezier_offset::{
-    BezierParallelIncidence2,
-    BezierParallelPairIntersectionSet2,
-};
+pub(crate) use bezier_offset::{BezierParallelIncidence2, BezierParallelPairIntersectionSet2};
 pub use bezier_parameter::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BezierParameterRange2, BezierParameterRayDirection2,
