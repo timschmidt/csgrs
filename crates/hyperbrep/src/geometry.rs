@@ -4,9 +4,8 @@ use std::cmp::Ordering;
 use std::sync::{Arc, OnceLock};
 
 use hypercurve::{
-    BezierParameter2, CircularArc2, Classification, Contour2, Curve2, CurveContext, CurveFamily2,
-    CurveGeometry2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2,
-    RationalBezierPointIncidence2, Segment2,
+    CircularArc2, Classification, Contour2, Curve2, CurveContext, CurveFamily2, CurveGeometry2,
+    CurvePointLocations2, CurveRegion2, LineSeg2, Point2 as CurvePoint2, RationalBezier2, Segment2,
 };
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
@@ -9346,19 +9345,24 @@ fn locate_rational_bezier_parameters(
             )
         })
         .collect();
-    let projected = RationalBezier2::try_new(controls, rational.weights.clone())?;
+    let projected = Curve2::from(RationalBezier2::try_new(
+        controls,
+        rational.weights.clone(),
+    )?);
     let query = CurvePoint2::new(
         control_coordinate(point, first_axis).clone(),
         control_coordinate(point, second_axis).clone(),
     );
-    match projected.point_incidence(&query, &CurveContext::STRICT)? {
-        RationalBezierPointIncidence2::EntireCurve => {
-            Err(GeometryError::UnsupportedParameterLocation)
-        }
-        RationalBezierPointIncidence2::Parameters(parameters) => {
+    match projected
+        .point_locations(&query.into(), &CurveContext::STRICT)?
+        .value
+    {
+        CurvePointLocations2::EntireCurve => Err(GeometryError::UnsupportedParameterLocation),
+        CurvePointLocations2::Locations(locations) => {
             let mut represented = Vec::new();
-            for parameter in parameters {
-                let BezierParameter2::Exact(parameter) = parameter else {
+            for location in locations {
+                // One unit-chart span: local and authored parameters agree.
+                let Some(parameter) = location.local_parameter().scalar().cloned() else {
                     return Err(GeometryError::UnrepresentableParameter);
                 };
                 if points_equal(&curve.point_at(&parameter)?, point)? {
