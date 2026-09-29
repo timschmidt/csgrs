@@ -3,7 +3,7 @@ use std::time::Instant;
 
 use hypercurve::{
     Axis2, BezierParameter2, Classification, CurveContext, CurveIntersectionCandidates2, Point2,
-    RationalBezier2, RationalBezierIntersectionContacts2, RationalBezierPointIncidence2, Real,
+    RationalBezier2, RationalBezierIntersectionContacts2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -125,8 +125,10 @@ fn main() {
         vec![r(1), r(2), r(3), r(4)],
     )
     .expect("benchmark curve is valid");
-    curve
-        .point_incidence(curve.start(), &policy)
+    let general = hypercurve::Curve2::from(curve.clone());
+    let start = hypercurve::CurvePoint2::from(curve.start().clone());
+    general
+        .point_locations(&start, &policy)
         .expect("benchmark point incidence is exact");
 
     let stationary_monotone_curve = || {
@@ -228,12 +230,13 @@ fn main() {
     let started = Instant::now();
     let mut incidence_count = 0_usize;
     for _ in 0..iterations {
-        let incidence = curve
-            .point_incidence(black_box(curve.start()), &policy)
-            .expect("benchmark point incidence is exact");
+        let incidence = general
+            .point_locations(black_box(&start), &policy)
+            .expect("benchmark point incidence is exact")
+            .value;
         incidence_count = incidence_count.wrapping_add(black_box(match incidence {
-            RationalBezierPointIncidence2::EntireCurve => 1,
-            RationalBezierPointIncidence2::Parameters(parameters) => parameters.len(),
+            hypercurve::CurvePointLocations2::EntireCurve => 1,
+            hypercurve::CurvePointLocations2::Locations(locations) => locations.len(),
         }));
     }
     let elapsed = started.elapsed();

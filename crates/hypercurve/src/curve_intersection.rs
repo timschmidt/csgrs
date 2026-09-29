@@ -35,6 +35,17 @@ pub struct CurveLocation2 {
     local_parameter: CurveParameter2,
 }
 
+/// Every exact preimage of one point on a curve.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CurvePointLocations2 {
+    /// The curve is constant at the point, so every parameter maps to it.
+    EntireCurve,
+    /// The complete ordered set of distinct parameter locations. A point
+    /// visited more than once keeps one location per visit; a continuous
+    /// spline seam is reported once.
+    Locations(Vec<CurveLocation2>),
+}
+
 /// One exact top-level curve contact with parameters on both operands.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CurveIntersectionContact2 {
@@ -1010,33 +1021,13 @@ fn certified_singleton_aabb_intersection(
     // A singleton image intersection can have many parameter preimages.
     // Use the existing exact incidence authority for every authored span;
     // its injectivity certificate still admits the cheap endpoint case.
+    // Point images use the common component publisher. An unresolved or
+    // constant incidence never certifies a missing visit.
     let locations = |curve: &Curve2| -> ExactCurveResult<Option<Vec<CurveLocation2>>> {
-        let fragments =
-            curve.native_bezier_fragments_for_operation(policy, CurveOperation2::Intersection)?;
-        let evaluators =
-            curve.rational_evaluators_for_operation(policy, CurveOperation2::Intersection)?;
-        let mut locations = Vec::new();
-        for (span_index, (fragment, evaluator)) in fragments.iter().zip(evaluators).enumerate() {
-            let parameters = match evaluator
-                .point_incidence_on_range(&point, &crate::CurveParameterRange2::unit(), policy)
-                .map_err(|cause| {
-                    ExactCurveError::invalid(CurveOperation2::Intersection, curve.family(), cause)
-                })? {
-                Classification::Decided(crate::RationalBezierPointIncidence2::Parameters(
-                    parameters,
-                )) => parameters,
-                // Point images use the common component publisher. An
-                // unresolved incidence never certifies a missing visit.
-                Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve)
-                | Classification::Uncertain(_) => return Ok(None),
-            };
-            locations.extend(parameters.into_iter().map(|parameter| CurveLocation2 {
-                span_index,
-                span_range: fragment.span_range().clone(),
-                local_parameter: parameter.into(),
-            }));
+        match curve.span_point_locations(&point, CurveOperation2::Intersection, policy)? {
+            Classification::Decided(Some(locations)) => Ok(Some(locations)),
+            Classification::Decided(None) | Classification::Uncertain(_) => Ok(None),
         }
-        Ok(Some(locations))
     };
     let Some(first_locations) = locations(first)? else {
         return Ok(None);
@@ -2453,6 +2444,122 @@ impl CurveIntersectionContext {
                 second: second.into(),
             }),
         })
+    }
+}
+
+impl Curve2 {
+    /// Locates every exact parameter at which this curve passes through a point.
+    ///
+    /// Each span replays its exact incidence equations; roots remain
+    /// represented values or certified isolators, and no parameter is
+    /// rounded. Distinct visits of the same point are all reported. The
+    /// query point must have represented coordinates; a retained algebraic
+    /// point or a generated carrier without a rational span evaluator reports
+    /// an unsupported blocker rather than an empty result.
+    pub fn point_locations(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurvePointLocations2>> {
+        resolve_certified_operation(policy, |attempt| self.point_locations_raw(point, attempt))
+    }
+
+    pub(crate) fn point_locations_raw(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurvePointLocations2> {
+        let blocked =
+            |reason| ExactCurveError::blocked(CurveOperation2::Intersection, self.family(), reason);
+        let Some(point) = point.coordinates() else {
+            return Err(blocked(UncertaintyReason::Unsupported));
+        };
+        let spans = match self.span_point_locations(point, CurveOperation2::Intersection, policy)? {
+            Classification::Decided(Some(locations)) => locations,
+            Classification::Decided(None) => return Ok(CurvePointLocations2::EntireCurve),
+            Classification::Uncertain(reason) => return Err(blocked(reason)),
+        };
+        // A continuous spline seam is the end of one span and the start of
+        // the next; both describe one authored parameter.
+        let mut locations: Vec<CurveLocation2> = Vec::with_capacity(spans.len());
+        for location in spans {
+            let parameter = location.parameter(policy).map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::Intersection, self.family(), cause)
+            })?;
+            let parameter = match parameter {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => return Err(blocked(reason)),
+            };
+            let mut duplicate = false;
+            if let Some(previous_location) = locations.last() {
+                let previous = match previous_location.parameter(policy).map_err(|cause| {
+                    ExactCurveError::invalid(CurveOperation2::Intersection, self.family(), cause)
+                })? {
+                    Classification::Decided(parameter) => parameter,
+                    Classification::Uncertain(reason) => return Err(blocked(reason)),
+                };
+                duplicate = previous_location.span_index != location.span_index
+                    && match previous.same_value(&parameter, policy).map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Intersection,
+                            self.family(),
+                            cause,
+                        )
+                    })? {
+                        Classification::Decided(same) => same,
+                        Classification::Uncertain(reason) => return Err(blocked(reason)),
+                    };
+            }
+            if !duplicate {
+                locations.push(location);
+            }
+        }
+        Ok(CurvePointLocations2::Locations(locations))
+    }
+
+    /// Returns per-span incidence locations, or `None` when every span is
+    /// constant at the point.
+    fn span_point_locations(
+        &self,
+        point: &Point2,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Classification<Option<Vec<CurveLocation2>>>> {
+        let fragments = self.native_bezier_fragments_for_operation(policy, operation)?;
+        let evaluators = self.rational_evaluators_for_operation(policy, operation)?;
+        let mut locations = Vec::new();
+        let mut constant_spans = 0;
+        for (span_index, (fragment, evaluator)) in fragments.iter().zip(evaluators).enumerate() {
+            let parameters = match evaluator
+                .point_incidence_on_range(point, &crate::CurveParameterRange2::unit(), policy)
+                .map_err(|cause| ExactCurveError::invalid(operation, self.family(), cause))?
+            {
+                Classification::Decided(crate::RationalBezierPointIncidence2::Parameters(
+                    parameters,
+                )) => parameters,
+                Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve) => {
+                    constant_spans += 1;
+                    continue;
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            locations.extend(parameters.into_iter().map(|parameter| CurveLocation2 {
+                span_index,
+                span_range: fragment.span_range().clone(),
+                local_parameter: parameter.into(),
+            }));
+        }
+        if constant_spans == 0 {
+            Ok(Classification::Decided(Some(locations)))
+        } else if constant_spans == fragments.len() {
+            Ok(Classification::Decided(None))
+        } else {
+            // A partly constant spline has a positive-dimensional preimage
+            // on some spans only; it is not a finite location set.
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
     }
 }
 

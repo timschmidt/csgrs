@@ -4,7 +4,7 @@ use hypercurve::{
     CubicBezier2, Curve2, CurveContext, CurveFamily2, CurveIntersectionCandidates2,
     CurveOperation2, CurveOverlapOrientation2, CurvePoint2, LineSeg2, ParamRange, Point2,
     QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2,
-    RationalBezierPointIncidence2, RationalQuadraticBezier2, Real,
+    RationalQuadraticBezier2, Real,
 };
 use hyperreal::Rational;
 use num::{BigInt, BigUint};
@@ -32,6 +32,28 @@ fn decided<T>(classification: Classification<T>) -> T {
     match classification {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    }
+}
+
+/// Local parameters locating `point`, or `None` when the whole curve maps to it.
+/// `None` entries are selected algebraic parameters without a scalar payload.
+fn point_parameters(
+    curve: &RationalBezier2,
+    point: &Point2,
+    policy: &CurveContext,
+) -> Option<Vec<Option<Real>>> {
+    match Curve2::from(curve.clone())
+        .point_locations(&CurvePoint2::from(point.clone()), policy)
+        .unwrap()
+        .value
+    {
+        hypercurve::CurvePointLocations2::EntireCurve => None,
+        hypercurve::CurvePointLocations2::Locations(locations) => Some(
+            locations
+                .iter()
+                .map(|location| location.local_parameter().scalar().cloned())
+                .collect(),
+        ),
     }
 }
 
@@ -516,8 +538,8 @@ fn general_rational_point_incidence_rechecks_full_homogeneous_image() {
     let midpoint = Point2::new(q(49, 20), q(9, 4));
 
     assert_eq!(
-        curve.point_incidence(&midpoint, &policy).unwrap(),
-        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(q(1, 2))])
+        point_parameters(&curve, &midpoint, &policy),
+        Some(vec![Some(q(1, 2))])
     );
     assert!(curve.contains_point(&midpoint, &policy).unwrap());
     assert!(!curve.contains_point(&p(5, 1), &policy).unwrap());
@@ -530,13 +552,15 @@ fn general_rational_point_incidence_retains_nonlinear_algebraic_parameter() {
         RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 1)], vec![r(1), r(1), r(1)]).unwrap();
     let policy = CurveContext::STRICT;
     let query = Point2::new(q(1, 2), q(1, 2));
-    let incidence = curve.point_incidence(&query, &policy).unwrap();
-    let RationalBezierPointIncidence2::Parameters(parameters) = incidence else {
+    let Some(parameters) = point_parameters(&curve, &query, &policy) else {
         panic!("nonconstant curve reported whole-curve incidence");
     };
 
     assert_eq!(parameters.len(), 1);
-    assert!(matches!(parameters[0], BezierParameter2::Algebraic(_)));
+    assert!(
+        parameters[0].is_none(),
+        "the root stays a selected algebraic parameter"
+    );
     assert!(curve.contains_point(&query, &policy).unwrap());
 }
 
@@ -546,20 +570,17 @@ fn general_rational_point_incidence_retains_endpoint_and_entire_curve_cases() {
     let parabola =
         RationalBezier2::try_new(vec![p(0, 0), p(0, 0), p(1, 1)], vec![r(1), r(1), r(1)]).unwrap();
     assert_eq!(
-        parabola.point_incidence(&p(0, 0), &policy).unwrap(),
-        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(r(0))])
+        point_parameters(&parabola, &p(0, 0), &policy),
+        Some(vec![Some(r(0))])
     );
     assert_eq!(
-        parabola.point_incidence(&p(1, 1), &policy).unwrap(),
-        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(r(1))])
+        point_parameters(&parabola, &p(1, 1), &policy),
+        Some(vec![Some(r(1))])
     );
 
     let constant =
         RationalBezier2::try_new(vec![p(2, 3), p(2, 3), p(2, 3)], vec![r(1), r(2), r(3)]).unwrap();
-    assert_eq!(
-        constant.point_incidence(&p(2, 3), &policy).unwrap(),
-        RationalBezierPointIncidence2::EntireCurve
-    );
+    assert_eq!(point_parameters(&constant, &p(2, 3), &policy), None);
     assert!(!constant.contains_point(&p(3, 2), &policy).unwrap());
 }
 
@@ -1187,12 +1208,12 @@ fn rational_resultant_certifies_exact_partial_nonlinear_overlap_ranges() {
             .unwrap(),
     );
     assert_eq!(
-        first.point_incidence(second.start(), &policy).unwrap(),
-        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(q(1, 2))])
+        point_parameters(&first, second.start(), &policy),
+        Some(vec![Some(q(1, 2))])
     );
     assert_eq!(
-        second.point_incidence(first.end(), &policy).unwrap(),
-        RationalBezierPointIncidence2::Parameters(vec![BezierParameter2::Exact(q(3, 4))])
+        point_parameters(&second, first.end(), &policy),
+        Some(vec![Some(q(3, 4))])
     );
     let first_overlap = decided(
         first

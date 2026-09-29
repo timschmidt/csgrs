@@ -3805,3 +3805,119 @@ fn assert_pieces_share_one_overlap(first: &Curve2, second: &Curve2, policy: &Cur
     assert!(replay.value.contacts().is_empty());
     assert_eq!(replay.value.overlaps().len(), 1);
 }
+
+mod point_locations {
+    use super::{p, q, r};
+    use hypercurve::{
+        Classification, CubicBezier2, Curve2, CurveContext, CurveParameter2, CurvePoint2,
+        CurvePointLocations2, ExactCurveError, Point2, QuadraticBezier2, RationalBezier2,
+        RationalBezierIntersectionContacts2, Real, UncertaintyReason,
+    };
+
+    fn locations(curve: &Curve2, point: Point2, policy: &CurveContext) -> Vec<CurveParameter2> {
+        let outcome = curve
+            .point_locations(&CurvePoint2::from(point), policy)
+            .unwrap();
+        let CurvePointLocations2::Locations(locations) = outcome.value else {
+            panic!("a nonconstant curve has finitely many locations");
+        };
+        locations
+            .iter()
+            .map(|location| match location.parameter(policy).unwrap() {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => panic!("{reason:?}"),
+            })
+            .collect()
+    }
+
+    fn scalars(parameters: &[CurveParameter2]) -> Vec<Real> {
+        parameters
+            .iter()
+            .map(|parameter| parameter.scalar().expect("represented parameter").clone())
+            .collect()
+    }
+
+    #[test]
+    fn point_locations_report_every_exact_visit() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // (2t, 4t^2): the parabola y = x^2 on x in [0, 2].
+            let parabola = Curve2::from(QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 4)));
+            assert_eq!(scalars(&locations(&parabola, p(1, 1), &policy)), [q(1, 2)]);
+            assert!(locations(&parabola, p(1, 2), &policy).is_empty());
+            // An irrational query point keeps an exact, unrounded parameter.
+            let root_two = Real::from(2).sqrt().unwrap();
+            assert_eq!(
+                locations(&parabola, Point2::new(root_two, r(2)), &policy).len(),
+                1
+            );
+
+            // x = 3t(1-t), y = t(1-t)(2t-1) passes (0,0) at t = 0 and t = 1,
+            // and (3/4, 0) at t = 1/2.
+            let node = Curve2::from(CubicBezier2::new(
+                p(0, 0),
+                Point2::new(r(1), (-r(1) / r(3)).unwrap()),
+                Point2::new(r(1), (r(1) / r(3)).unwrap()),
+                p(0, 0),
+            ));
+            assert_eq!(scalars(&locations(&node, p(0, 0), &policy)), [r(0), r(1)]);
+            assert_eq!(
+                scalars(&locations(&node, Point2::new(q(3, 4), r(0)), &policy)),
+                [q(1, 2)]
+            );
+        }
+    }
+
+    #[test]
+    fn point_locations_report_continuous_spline_seams_once() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // Linear spline (1,0) -> (0,0) -> (1,0) with knots 0, 1, 2.
+            let zigzag = Curve2::try_polynomial_bspline(
+                1,
+                vec![p(1, 0), p(0, 0), p(1, 0)],
+                [0, 0, 1, 2, 2].map(Real::from).to_vec(),
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+            assert_eq!(scalars(&locations(&zigzag, p(0, 0), &policy)), [r(1)]);
+            assert_eq!(scalars(&locations(&zigzag, p(1, 0), &policy)), [r(0), r(2)]);
+        }
+    }
+
+    #[test]
+    fn constant_and_unrepresented_queries_are_explicit() {
+        let policy = CurveContext::STRICT;
+        let constant = Curve2::from(QuadraticBezier2::new(p(1, 1), p(1, 1), p(1, 1)));
+        assert_eq!(
+            constant
+                .point_locations(&CurvePoint2::from(p(1, 1)), &policy)
+                .unwrap()
+                .value,
+            CurvePointLocations2::EntireCurve
+        );
+        // The crossing of y = x^2 with y = 1/2 retains an algebraic point.
+        let parabola = RationalBezier2::try_new(
+            vec![p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1)],
+            vec![r(1); 3],
+        )
+        .unwrap();
+        let horizontal = RationalBezier2::try_new(
+            vec![Point2::new(r(0), q(1, 2)), Point2::new(r(1), q(1, 2))],
+            vec![r(1); 2],
+        )
+        .unwrap();
+        let RationalBezierIntersectionContacts2::Contacts(contacts) = parabola
+            .intersection_contacts(&horizontal, &policy)
+            .unwrap()
+        else {
+            panic!("the crossing is a complete contact");
+        };
+        let point = contacts[0].point();
+        assert!(point.coordinates().is_none());
+        assert!(matches!(
+            Curve2::from(parabola).point_locations(point, &policy),
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Unsupported
+        ));
+    }
+}

@@ -132,7 +132,7 @@ impl RationalBezierLineage {
 
 /// Exact parameter evidence for point incidence on a general rational Bezier.
 #[derive(Clone, Debug, PartialEq)]
-pub enum RationalBezierPointIncidence2 {
+pub(crate) enum RationalBezierPointIncidence2 {
     /// Every parameter maps to the query point.
     EntireCurve,
     /// The complete ordered set of represented or isolated algebraic parameters.
@@ -2544,7 +2544,7 @@ impl RationalBezier2 {
     /// reuse the curve's clone-shared power basis. Their polynomial GCD
     /// contains exactly the common parameter roots, which are returned as
     /// represented values or validated singleton Sturm isolators.
-    pub fn point_incidence(
+    pub(crate) fn point_incidence(
         &self,
         point: &Point2,
         policy: &CurveContext,
