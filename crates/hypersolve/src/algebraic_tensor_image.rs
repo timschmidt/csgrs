@@ -524,7 +524,9 @@ pub fn represent_algebraic_tensor_image(
     let original_source_count = source_roots.len();
     let first_source = source_roots[0].clone();
     let mut source_roots = source_roots.to_vec();
-    let mut relation = relation.clone();
+    // Remove irrelevant rational content before an exact affine substitution
+    // can move the coefficients into a richer field and obscure that scale.
+    let mut relation = normalize_tensor_relation(relation.clone());
     let has_unresolved_source = source_roots
         .iter()
         .any(|source| source.exact_point_witness().is_none());
@@ -571,11 +573,7 @@ pub fn represent_algebraic_tensor_image(
                             offset: Real::zero(),
                         })
                     } else {
-                        algebraic_root_affine_relation(
-                            source,
-                            &source_roots[source_index],
-                            PredicatePolicy::STRICT,
-                        )
+                        algebraic_root_affine_relation(source, &source_roots[source_index])
                     }?;
                     Some((retained_index, affine))
                 });
@@ -1550,16 +1548,24 @@ mod tests {
             exact_root: None,
             distinct_root_count: 1,
         };
+        let expected =
+            represent_algebraic_tensor_image(&sum_relation(2, Real::zero()), &sources, &interval)
+                .representation
+                .unwrap()
+                .polynomial_coefficients;
         let large = Real::from(2).powi_i64(4096).unwrap() + real(17);
         for scale in [large.clone(), -large.inverse_ref().unwrap()] {
             let relation = sum_relation(2, Real::zero()).scale(&scale).unwrap();
             let result = represent_algebraic_tensor_image(&relation, &sources, &interval);
             assert_eq!(result.status, AlgebraicTensorImageStatus::Transformed);
             let root = result.representation.unwrap();
-            assert_eq!(
-                root.polynomial_coefficients,
-                vec![real(1), real(0), real(-10), real(0), real(1)],
-            );
+            assert_eq!(root.polynomial_coefficients.len(), expected.len());
+            assert!(root.polynomial_coefficients.iter().zip(&expected).all(
+                |(actual, expected)| {
+                    compare_reals(actual, expected, PredicatePolicy::STRICT).value()
+                        == Some(std::cmp::Ordering::Equal)
+                }
+            ));
             assert_eq!(
                 validate_algebraic_root_representation(&root, PredicatePolicy::STRICT).status,
                 AlgebraicRootValidationStatus::Valid,
@@ -1750,13 +1756,20 @@ mod tests {
         );
         assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
         assert_eq!(report.elimination_count, 4);
-        let representation = report.representation.unwrap();
-        assert_eq!(representation.polynomial_coefficients.len(), 17);
-        assert!(
-            representation
-                .polynomial_coefficients
-                .iter()
-                .all(|coefficient| coefficient.exact_rational().is_some())
+        let mut representation = report.representation.unwrap();
+        // Exact Real scales collapse all four selected axes to one quadratic
+        // carrier. The intended value, rather than a degree-sixteen rational
+        // presentation of it, is the construction contract.
+        assert_eq!(representation.polynomial_coefficients.len(), 3);
+        let expected = [2_i64, 3, 5, 7]
+            .into_iter()
+            .fold(Real::zero(), |sum, square| {
+                sum + real(square).sqrt().unwrap()
+            });
+        representation.interval.exact_root = Some(expected);
+        assert_eq!(
+            validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT).status,
+            AlgebraicRootValidationStatus::Valid
         );
         assert_eq!(
             represented_root_sign(&representation, PredicatePolicy::STRICT),
@@ -1818,15 +1831,15 @@ mod tests {
         );
         assert_eq!(report.status, AlgebraicTensorImageStatus::Transformed);
         assert_eq!(report.elimination_count, 2);
+        let mut representation = report.representation.unwrap();
+        // The exact affine relation also applies to sources with point
+        // witnesses; retaining their rational carrier is not a requirement.
+        assert_eq!(representation.polynomial_coefficients.len(), 3);
+        representation.interval.exact_root =
+            Some(real(2).sqrt().unwrap() + real(3).sqrt().unwrap());
         assert_eq!(
-            report.representation.unwrap().polynomial_coefficients,
-            vec![
-                Real::one(),
-                Real::zero(),
-                real(-10),
-                Real::zero(),
-                Real::one()
-            ]
+            validate_algebraic_root_representation(&representation, PredicatePolicy::STRICT).status,
+            AlgebraicRootValidationStatus::Valid
         );
     }
 
@@ -1938,10 +1951,7 @@ mod tests {
             },
         };
         let sources = [source(0, -2, -1), source(1, 0, 1)];
-        assert!(
-            algebraic_root_affine_relation(&sources[0], &sources[1], PredicatePolicy::STRICT)
-                .is_none()
-        );
+        assert!(algebraic_root_affine_relation(&sources[0], &sources[1]).is_none());
         let relation = sum_relation(2, Real::zero());
         let interval = IsolatedRootInterval {
             lower: real(-2),

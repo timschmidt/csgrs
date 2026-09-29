@@ -216,7 +216,7 @@ pub struct AlgebraicRootAffineTransformReport {
     pub message: Option<String>,
 }
 
-/// Exact rational affine relation between two selected algebraic roots.
+/// Strictly certified exact affine relation between two selected algebraic roots.
 ///
 /// A returned relation certifies `right = scale * left + offset`.  The
 /// coefficients are inferred from translation-invariant normalized
@@ -224,9 +224,9 @@ pub struct AlgebraicRootAffineTransformReport {
 /// affine image and replaying exact selected-root equality.
 #[derive(Clone, Debug, PartialEq)]
 pub struct AlgebraicRootAffineRelation {
-    /// Nonzero exact-rational scale from the left root to the right root.
+    /// Nonzero exact scale from the left root to the right root.
     pub scale: Real,
-    /// Exact-rational offset from the scaled left root to the right root.
+    /// Exact offset from the scaled left root to the right root.
     pub offset: Real,
 }
 
@@ -1036,29 +1036,25 @@ pub fn translated_algebraic_root_difference(
         .then(|| -offset)
 }
 
-/// Finds an exact rational affine relation between two selected roots.
+/// Finds a strictly certified exact affine relation between two selected roots.
 ///
 /// The defining polynomials are first centered at the mean of all of their
 /// complex roots.  If `right = scale * left + offset`, corresponding centered
 /// monic coefficients of codimension `m` differ by `scale^m`.  The first
-/// informative coefficient therefore supplies at most two rational scale
+/// informative coefficient therefore supplies at most two exact scale
 /// candidates.  A candidate is returned only after [`transform_algebraic_root_affine`]
 /// and an exact common-root proof certify the selected isolating intervals;
 /// coefficient inference alone is never accepted as evidence.
 pub fn algebraic_root_affine_relation(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
-    policy: PredicatePolicy,
 ) -> Option<AlgebraicRootAffineRelation> {
+    let policy = PredicatePolicy::STRICT;
     let left_coefficients = &left.polynomial_coefficients;
     let right_coefficients = &right.polynomial_coefficients;
     if !algebraic_root_comparison_inputs_replay_strictly(left, right)
         || left_coefficients.len() != right_coefficients.len()
         || left_coefficients.len() < 2
-        || left_coefficients
-            .iter()
-            .chain(right_coefficients)
-            .any(|coefficient| coefficient.exact_rational_ref().is_none())
     {
         return None;
     }
@@ -1093,8 +1089,8 @@ pub fn algebraic_root_affine_relation(
     for coefficient_index in (0..degree.saturating_sub(1)).rev() {
         let left = (left_centered[coefficient_index].clone() / left_leading.clone()).ok()?;
         let right = (right_centered[coefficient_index].clone() / right_leading.clone()).ok()?;
-        let left_zero = left.exact_rational_ref()?.is_zero();
-        let right_zero = right.exact_rational_ref()?.is_zero();
+        let left_zero = algebraic_value_sign(&left, policy)? == Ordering::Equal;
+        let right_zero = algebraic_value_sign(&right, policy)? == Ordering::Equal;
         if left_zero || right_zero {
             if left_zero != right_zero {
                 return None;
@@ -1103,8 +1099,15 @@ pub fn algebraic_root_affine_relation(
         }
         let exponent = degree.checked_sub(coefficient_index)?;
         let exponent_u32 = u32::try_from(exponent).ok()?;
-        let scale = (right / left).ok()?.root_n(exponent_u32).ok()?;
-        scale.exact_rational_ref()?;
+        // Centering may cancel nonrational coefficients without producing a
+        // rational payload. Normalize a proved rational power before taking
+        // its root, while retaining every genuinely nonrational candidate.
+        let power = (right / left).ok()?;
+        let power = power
+            .exact_rational_normal_form()
+            .map(Real::new)
+            .unwrap_or(power);
+        let scale = power.root_n(exponent_u32).ok()?;
         scales.push(scale.clone());
         if exponent.is_multiple_of(2) {
             scales.push(-scale);
@@ -4321,10 +4324,7 @@ mod tests {
             translated_algebraic_root_difference(&stale, &valid, PredicatePolicy::STRICT),
             None
         );
-        assert_eq!(
-            algebraic_root_affine_relation(&stale, &valid, PredicatePolicy::STRICT),
-            None
-        );
+        assert_eq!(algebraic_root_affine_relation(&stale, &valid), None);
     }
 
     #[test]
@@ -4785,7 +4785,7 @@ mod tests {
                 Some(epsilon.clone())
             );
             assert_eq!(
-                algebraic_root_affine_relation(&left, &right, policy),
+                algebraic_root_affine_relation(&left, &right),
                 Some(AlgebraicRootAffineRelation {
                     scale: Real::one(),
                     offset: epsilon.clone(),
@@ -4850,22 +4850,91 @@ mod tests {
             validation: AlgebraicRootValidationReport::valid(),
         };
 
-        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
-            assert_eq!(
-                algebraic_root_affine_relation(&left, &right, policy),
-                Some(AlgebraicRootAffineRelation {
-                    scale: scale.clone(),
-                    offset: epsilon.clone(),
-                })
-            );
-            assert_eq!(
-                algebraic_root_affine_relation(&right, &left, policy),
-                Some(AlgebraicRootAffineRelation {
-                    scale: Real::from(2_i8),
-                    offset: -(Real::from(2_i8) * epsilon.clone()),
-                })
-            );
+        assert_eq!(
+            algebraic_root_affine_relation(&left, &right),
+            Some(AlgebraicRootAffineRelation {
+                scale: scale.clone(),
+                offset: epsilon.clone(),
+            })
+        );
+        assert_eq!(
+            algebraic_root_affine_relation(&right, &left),
+            Some(AlgebraicRootAffineRelation {
+                scale: Real::from(2_i8),
+                offset: -(Real::from(2_i8) * epsilon.clone()),
+            })
+        );
+    }
+
+    fn selected_interval_root(
+        coefficients: Vec<Real>,
+        lower: Real,
+        upper: Real,
+    ) -> AlgebraicRootRepresentation {
+        let mut root = exact_point_representation(0, Real::zero());
+        root.polynomial_coefficients = coefficients;
+        root.interval = IsolatedRootInterval {
+            lower,
+            upper,
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        root.validation = validate_algebraic_root_representation(&root, PredicatePolicy::STRICT);
+        assert!(root.is_valid());
+        root
+    }
+
+    #[test]
+    fn affine_relations_preserve_exact_real_coefficients_and_selected_orientation() {
+        let root = selected_interval_root(
+            vec![-Real::pi(), Real::zero(), Real::zero(), real(4)],
+            real(0),
+            real(1),
+        );
+        for scale in [ratio(1, 2), real(-2)] {
+            let offset = Real::pi();
+            let image = transform_algebraic_root_affine(
+                &root,
+                scale.clone(),
+                offset.clone(),
+                PredicatePolicy::STRICT,
+            )
+            .representation
+            .unwrap();
+            let relation =
+                algebraic_root_affine_relation(&root, &image).expect("exact cubic chart transport");
+            assert_eq!(relation.scale, scale);
+            assert_eq!(relation.offset, offset);
         }
+        let root = selected_interval_root(vec![real(-2), real(0), real(1)], real(1), real(2));
+        for sign in [-1, 1] {
+            let scale = real(sign) * real(3).sqrt().unwrap();
+            let image = transform_algebraic_root_affine(
+                &root,
+                scale.clone(),
+                Real::pi(),
+                PredicatePolicy::STRICT,
+            )
+            .representation
+            .unwrap();
+            let relation = algebraic_root_affine_relation(&root, &image)
+                .expect("exact nonrational scale and offset");
+            assert_eq!(relation.scale, scale);
+            assert_eq!(relation.offset, Real::pi());
+        }
+    }
+
+    #[test]
+    fn affine_inference_replays_selection_instead_of_only_matching_coefficients() {
+        // These positive roots share a polynomial, but neither inferred scale
+        // (+/-1) sends the selected 1/2 root to the selected 3/2 root.
+        let left = selected_interval_root(
+            vec![real(9), real(0), real(-40), real(0), real(16)],
+            real(0),
+            real(1),
+        );
+        let right = selected_interval_root(left.polynomial_coefficients.clone(), real(1), real(2));
+        assert!(algebraic_root_affine_relation(&left, &right).is_none());
     }
 
     #[test]

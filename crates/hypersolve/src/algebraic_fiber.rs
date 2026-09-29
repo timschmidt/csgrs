@@ -8,7 +8,7 @@
 //! counts distinct roots, including roots of even multiplicity, without
 //! sampling either algebraic value.
 
-use std::{cmp::Ordering, sync::Arc};
+use std::{borrow::Cow, cell::RefCell, cmp::Ordering, sync::Arc};
 
 mod refinement;
 mod subresultant;
@@ -19,9 +19,10 @@ use hyperlimit::{Certainty, PredicateOutcome, PredicatePolicy, compare_reals};
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::algebraic::{
-    AlgebraicRootPolynomialEvaluationReport, AlgebraicRootPolynomialEvaluationStatus,
-    AlgebraicRootRepresentation, algebraic_root_payload_replays_strictly,
-    evaluate_polynomial_at_algebraic_root, validate_algebraic_root_representation,
+    AlgebraicRootAffineRelation, AlgebraicRootPolynomialEvaluationReport,
+    AlgebraicRootPolynomialEvaluationStatus, AlgebraicRootRepresentation,
+    algebraic_root_payload_replays_strictly, evaluate_polynomial_at_algebraic_root,
+    validate_algebraic_root_representation,
 };
 use crate::curve_resultant::{BivariatePolynomial, CurveResultantParameter};
 use crate::integer_interpolation::{
@@ -42,13 +43,20 @@ use crate::root_isolation::{
 /// A strict arithmetic context for finite rational functions of one selected root.
 ///
 /// Operations reuse the existing local-field reduction, division and sign
-/// machinery. The context owns temporary sign/inverse caches; retained values
+/// machinery. The context owns temporary sign/inverse/transport caches; retained values
 /// own their selected-root evidence and reduced coefficients independently.
 /// Finish a result before dropping the context to retain its latest root
 /// refinement without retaining the calculation's temporary caches.
 pub struct AlgebraicField {
     source: Arc<AlgebraicRootRepresentation>,
     state: LocalAlgebraicField,
+    transports: RefCell<Vec<SelectedParameterTransport>>,
+}
+
+struct SelectedParameterTransport {
+    source: Arc<AlgebraicRootRepresentation>,
+    // None is a certified identity; Some retains source = scale * base + offset.
+    relation: Option<AlgebraicRootAffineRelation>,
 }
 
 /// An exact finite value in a selected algebraic field.
@@ -69,11 +77,9 @@ pub struct AlgebraicFieldValue {
 pub enum AlgebraicFieldError {
     /// The supplied root evidence did not replay strictly.
     InvalidEvidence,
-    /// An operand belongs to a different selected root.
-    DifferentSelectedRoot,
     /// A rational-function denominator is zero at the selected root.
     DivisionByZero,
-    /// An exact coefficient or identity could not be decided.
+    /// An exact coefficient, sign, or selected-parameter transport could not be certified.
     Undecided,
 }
 
@@ -159,6 +165,7 @@ impl AlgebraicField {
         Ok(Self {
             source: Arc::new(root.clone()),
             state: LocalAlgebraicField::new(root, PredicatePolicy::STRICT)?,
+            transports: RefCell::new(Vec::new()),
         })
     }
 
@@ -168,6 +175,7 @@ impl AlgebraicField {
         Self {
             source: value.source.clone(),
             state: LocalAlgebraicField::from_validated_root(&value.root, PredicatePolicy::STRICT),
+            transports: RefCell::new(Vec::new()),
         }
     }
 
@@ -184,12 +192,20 @@ impl AlgebraicField {
         }
     }
 
-    fn require_selected_root(
+    fn parameter_transport(
         &self,
         root: &AlgebraicRootRepresentation,
-    ) -> Result<(), AlgebraicFieldError> {
+    ) -> Result<Option<AlgebraicRootAffineRelation>, AlgebraicFieldError> {
         if self.source.as_ref() == root {
-            return Ok(());
+            return Ok(None);
+        }
+        if let Some(transport) = self
+            .transports
+            .borrow()
+            .iter()
+            .find(|transport| transport.source.as_ref() == root)
+        {
+            return Ok(transport.relation.clone());
         }
         let comparison = crate::algebraic::compare_algebraic_root_representations_by_difference(
             &self.state.root,
@@ -204,34 +220,94 @@ impl AlgebraicField {
         {
             return Err(AlgebraicFieldError::InvalidEvidence);
         }
-        match comparison.comparison.ordering {
-            Some(Ordering::Equal)
-                if matches!(
-                    comparison.comparison.status,
-                    crate::algebraic::AlgebraicRootComparisonStatus::Compared
-                        | crate::algebraic::AlgebraicRootComparisonStatus::SameRepresentation
-                ) =>
-            {
-                Ok(())
-            }
-            Some(Ordering::Less | Ordering::Greater)
-                if comparison.comparison.status
-                    == crate::algebraic::AlgebraicRootComparisonStatus::Compared =>
-            {
-                Err(AlgebraicFieldError::DifferentSelectedRoot)
-            }
-            _ => Err(AlgebraicFieldError::Undecided),
+        let relation = if comparison.comparison.ordering == Some(Ordering::Equal)
+            && matches!(
+                comparison.comparison.status,
+                crate::algebraic::AlgebraicRootComparisonStatus::Compared
+                    | crate::algebraic::AlgebraicRootComparisonStatus::SameRepresentation
+            ) {
+            None
+        } else {
+            // The original presentation can retain an affine relation after a
+            // local division removes foreign factors from the working modulus.
+            Some(
+                crate::algebraic::algebraic_root_affine_relation(&self.source, root)
+                    .or_else(|| {
+                        if self.state.root == *self.source {
+                            None
+                        } else {
+                            crate::algebraic::algebraic_root_affine_relation(&self.state.root, root)
+                        }
+                    })
+                    .ok_or(AlgebraicFieldError::Undecided)?,
+            )
+        };
+        self.transports
+            .borrow_mut()
+            .push(SelectedParameterTransport {
+                source: Arc::new(root.clone()),
+                relation: relation.clone(),
+            });
+        Ok(relation)
+    }
+
+    fn substitute_parameter(
+        &self,
+        coefficients: &[Real],
+        relation: &AlgebraicRootAffineRelation,
+    ) -> Result<Vec<Real>, AlgebraicFieldError> {
+        let Some((leading, remaining)) = coefficients.split_last() else {
+            return Ok(vec![Real::zero()]);
+        };
+        let linear = [relation.offset.clone(), relation.scale.clone()];
+        let mut result = vec![leading.clone()];
+        // Horner substitution reduces after every step instead of constructing
+        // unreduced powers of the affine map or a nested scalar expression.
+        for coefficient in remaining.iter().rev() {
+            result = self.state.multiply_polynomials(&result, &linear)?;
+            result =
+                self.state
+                    .add_polynomials(&result, std::slice::from_ref(coefficient), false)?;
         }
+        Ok(result)
     }
 
     fn operand<'a>(
         &self,
         value: &'a AlgebraicFieldValue,
-    ) -> Result<&'a LocalFieldElement, AlgebraicFieldError> {
-        if value.exact_value().is_none() && !Arc::ptr_eq(&self.source, &value.source) {
-            self.require_selected_root(&value.root)?;
+    ) -> Result<Cow<'a, LocalFieldElement>, AlgebraicFieldError> {
+        if value.exact_value().is_some() || Arc::ptr_eq(&self.source, &value.source) {
+            return Ok(Cow::Borrowed(&value.element));
         }
-        Ok(&value.element)
+        let relation = self.parameter_transport(&value.source).or_else(|error| {
+            if error != AlgebraicFieldError::Undecided || Arc::ptr_eq(&value.root, &value.source) {
+                return Err(error);
+            }
+            let relation = self.parameter_transport(&value.root)?;
+            // An owned value proves that its refined/factored root still names
+            // the original parameter. Retain the successful transport for that
+            // presentation too, avoiding another failed inference on reuse.
+            self.transports
+                .borrow_mut()
+                .push(SelectedParameterTransport {
+                    source: value.source.clone(),
+                    relation: relation.clone(),
+                });
+            Ok(relation)
+        })?;
+        let Some(relation) = relation else {
+            return Ok(Cow::Borrowed(&value.element));
+        };
+        Ok(Cow::Owned(LocalFieldElement {
+            numerator: self.substitute_parameter(&value.element.numerator, &relation)?,
+            denominator: value
+                .element
+                .denominator
+                .as_ref()
+                .map(|d| self.substitute_parameter(d, &relation))
+                .transpose()?
+                .and_then(|d| self.state.canonical_denominator(d)),
+        }))
     }
 
     fn reduced_value(
@@ -268,16 +344,22 @@ impl AlgebraicField {
     }
 
     /// Retains a rational function after reducing and proving its denominator
-    /// nonzero at this selected root. The supplied parameter must be proved equal
-    /// to the context's selected root; sharing a polynomial is insufficient.
-    /// In particular, zero over zero is rejected.
+    /// nonzero at this selected root. A foreign parameter is substituted only
+    /// after strict identity or affine-image replay selects that exact root.
+    /// Sharing a polynomial is insufficient. In particular, zero over zero is rejected.
     pub fn rational_function(
         &mut self,
         parameter: &AlgebraicRootRepresentation,
         numerator: Vec<Real>,
         denominator: Vec<Real>,
     ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
-        self.require_selected_root(parameter)?;
+        let (numerator, denominator) = match self.parameter_transport(parameter)? {
+            Some(relation) => (
+                self.substitute_parameter(&numerator, &relation)?,
+                self.substitute_parameter(&denominator, &relation)?,
+            ),
+            None => (numerator, denominator),
+        };
         let numerator = LocalFieldElement::from_polynomial(numerator, &self.state)?;
         let denominator = LocalFieldElement::from_polynomial(denominator, &self.state)?;
         if denominator.is_zero(&mut self.state)? {
@@ -292,7 +374,7 @@ impl AlgebraicField {
         self.reduced_value(self.owned(value))
     }
 
-    /// Adds two values after certifying their common selected root.
+    /// Adds two values after certifying any required selected-parameter transport.
     /// Parameter-independent exact constants can come from any admitted field.
     pub fn add(
         &self,
@@ -302,11 +384,11 @@ impl AlgebraicField {
         self.reduced_value(
             self.owned(
                 self.operand(first)?
-                    .add(self.operand(second)?, &self.state)?,
+                    .add(self.operand(second)?.as_ref(), &self.state)?,
             ),
         )
     }
-    /// Subtracts two values after certifying their common selected root.
+    /// Subtracts two values after certifying any required selected-parameter transport.
     pub fn subtract(
         &self,
         first: &AlgebraicFieldValue,
@@ -315,7 +397,7 @@ impl AlgebraicField {
         self.reduced_value(
             self.owned(
                 self.operand(first)?
-                    .subtract(self.operand(second)?, &self.state)?,
+                    .subtract(self.operand(second)?.as_ref(), &self.state)?,
             ),
         )
     }
@@ -328,7 +410,7 @@ impl AlgebraicField {
         self.reduced_value(
             self.owned(
                 self.operand(first)?
-                    .multiply(self.operand(second)?, &self.state)?,
+                    .multiply(self.operand(second)?.as_ref(), &self.state)?,
             ),
         )
     }
@@ -340,7 +422,7 @@ impl AlgebraicField {
     ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
         let first = self.operand(first)?;
         let second = self.operand(second)?;
-        let value = first.divide(second, &mut self.state)?;
+        let value = first.divide(&second, &mut self.state)?;
         self.reduced_value(self.owned(value))
     }
     /// Raises a value to a nonnegative power with reduction after each product.
@@ -349,7 +431,7 @@ impl AlgebraicField {
         value: &AlgebraicFieldValue,
         mut power: usize,
     ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
-        let mut factor = self.operand(value)?.clone();
+        let mut factor = self.operand(value)?.into_owned();
         let mut result = LocalFieldElement {
             numerator: vec![Real::one()],
             denominator: None,
@@ -376,7 +458,9 @@ impl AlgebraicField {
         self,
         mut value: AlgebraicFieldValue,
     ) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
-        self.operand(&value)?;
+        if let Cow::Owned(element) = self.operand(&value)? {
+            value.element = Arc::new(element);
+        }
         value = self.reduced_value(value)?;
         value.source = self.source;
         value.root = if self.state.root == *value.source {
@@ -4660,6 +4744,7 @@ mod tests {
             let mut batch = AlgebraicField::from_value(&retained);
             assert!(batch.state.signed_polynomials.is_empty());
             assert!(batch.state.inverse_polynomials.is_empty());
+            assert!(batch.transports.borrow().is_empty());
             // alpha -> alpha^4/(pi/4) = alpha, without a growing expression tree.
             let fourth = batch.pow(&retained, 4).unwrap();
             let factor = batch.constant((Real::pi() / real(4)).unwrap());
@@ -4684,7 +4769,7 @@ mod tests {
     }
 
     #[test]
-    fn owned_field_values_require_selected_root_identity() {
+    fn owned_field_values_preserve_identity_and_transport_distinct_conjugates() {
         let root = represented_root(
             vec![real(-2), real(0), real(1)],
             real(1),
@@ -4722,20 +4807,22 @@ mod tests {
                 .rational_function(&same, vec![real(0), real(1)], vec![real(1)])
                 .is_ok()
         );
+        let transported = first
+            .rational_function(&conjugate, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        assert_eq!(first.sign(&transported).unwrap(), Ordering::Less);
         assert_eq!(
             first
-                .rational_function(&conjugate, vec![real(0), real(1)], vec![real(1)])
-                .unwrap_err(),
-            AlgebraicFieldError::DifferentSelectedRoot
+                .sign(&first.add(&original, &transported).unwrap())
+                .unwrap(),
+            Ordering::Equal
         );
         let mut foreign = AlgebraicField::new(&conjugate).unwrap();
         let negative = foreign
             .rational_function(&conjugate, vec![real(0), real(1)], vec![real(1)])
             .unwrap();
-        assert_eq!(
-            first.multiply(&original, &negative).unwrap_err(),
-            AlgebraicFieldError::DifferentSelectedRoot
-        );
+        let product = first.multiply(&original, &negative).unwrap();
+        assert_eq!(product.exact_value(), Some(&real(-2)));
         let independent = foreign.constant(Real::pi());
         assert_eq!(
             first
@@ -4795,6 +4882,192 @@ mod tests {
             next.divide(&retained, &next.constant(real(0))).unwrap_err(),
             AlgebraicFieldError::DivisionByZero
         );
+    }
+
+    #[test]
+    fn owned_field_transport_reuses_affine_evidence_and_preserves_poles() {
+        let alpha = represented_root(
+            vec![-Real::pi(), real(0), real(0), real(4)],
+            real(0),
+            real(1),
+            PredicatePolicy::STRICT,
+        );
+        let beta = represented_root(
+            vec![-Real::pi(), real(0), real(0), real(32)],
+            real(0),
+            rational(1, 2),
+            PredicatePolicy::STRICT,
+        );
+        let mut field = AlgebraicField::new(&alpha).unwrap();
+        let expected = field
+            .rational_function(&alpha, vec![real(0), rational(1, 2)], vec![real(1)])
+            .unwrap();
+        let mut foreign = AlgebraicField::new(&beta).unwrap();
+        let value = foreign
+            .rational_function(&beta, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        for _ in 0..32 {
+            assert_eq!(
+                field
+                    .sign(&field.subtract(&value, &expected).unwrap())
+                    .unwrap(),
+                Ordering::Equal
+            );
+            let direct = field
+                .rational_function(&beta, vec![real(0), real(1)], vec![real(1)])
+                .unwrap();
+            assert_eq!(
+                field
+                    .sign(&field.subtract(&direct, &expected).unwrap())
+                    .unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(field.transports.borrow().len(), 1);
+        }
+        for numerator in [vec![real(0)], vec![real(1)]] {
+            assert_eq!(
+                field
+                    .rational_function(&beta, numerator, beta.polynomial_coefficients.clone())
+                    .unwrap_err(),
+                AlgebraicFieldError::DivisionByZero
+            );
+        }
+        let inverse = foreign
+            .rational_function(&beta, vec![real(-1)], vec![real(0), real(1)])
+            .unwrap();
+        let product = field.multiply(&inverse, &expected).unwrap();
+        assert_eq!(
+            field
+                .sign(&field.add(&product, &field.constant(real(1))).unwrap())
+                .unwrap(),
+            Ordering::Equal
+        );
+        let cube = field.pow(&value, 3).unwrap();
+        assert_eq!(cube.exact_value(), Some(&(Real::pi() / real(32)).unwrap()));
+        let retained = field.finish(value).unwrap();
+        assert_eq!(retained.coefficients().0, &[real(0), rational(1, 2)]);
+        let mut next = AlgebraicField::from_value(&retained);
+        assert!(next.transports.borrow().is_empty());
+        assert_eq!(next.sign(&retained).unwrap(), Ordering::Greater);
+    }
+
+    #[test]
+    fn owned_field_transport_accepts_exact_real_affine_coefficients() {
+        let alpha = represented_root(
+            vec![real(-2), real(0), real(1)],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let scale = real(3).sqrt().unwrap();
+        let beta = crate::algebraic::transform_algebraic_root_affine(
+            &alpha,
+            scale.clone(),
+            Real::pi(),
+            PredicatePolicy::STRICT,
+        )
+        .representation
+        .unwrap();
+        let mut field = AlgebraicField::new(&alpha).unwrap();
+        let expected = field
+            .rational_function(&alpha, vec![Real::pi(), scale], vec![real(1)])
+            .unwrap();
+        let actual = field
+            .rational_function(&beta, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        assert_eq!(
+            field
+                .sign(&field.subtract(&actual, &expected).unwrap())
+                .unwrap(),
+            Ordering::Equal
+        );
+        assert!(actual.coefficients().0.len() < alpha.polynomial_coefficients.len());
+    }
+
+    #[test]
+    fn owned_field_transport_reuses_refined_and_original_presentations() {
+        let beta = represented_root(
+            vec![real(6), real(-2), real(-3), real(1)],
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let mut foreign = AlgebraicField::new(&beta).unwrap();
+        let value = foreign
+            .rational_function(&beta, vec![real(0), real(1)], vec![real(1)])
+            .unwrap();
+        // A finite inverse removes the factor belonging to the foreign root 3.
+        foreign
+            .rational_function(&beta, vec![real(1)], vec![real(-3), real(1)])
+            .unwrap();
+        let retained = foreign.finish(value).unwrap();
+        assert_eq!(retained.selected_root().polynomial_coefficients.len(), 3);
+        for (coefficients, lower, upper, scale, transports) in [
+            (
+                vec![real(-3), real(0), real(1)],
+                real(1),
+                real(2),
+                rational(2, 3).sqrt().unwrap(),
+                2,
+            ),
+            (
+                vec![real(6), real(-4), real(-12), real(8)],
+                rational(1, 2),
+                real(1),
+                real(2),
+                1,
+            ),
+        ] {
+            let alpha = represented_root(coefficients, lower, upper, PredicatePolicy::STRICT);
+            let mut field = AlgebraicField::new(&alpha).unwrap();
+            let expected = field
+                .rational_function(&alpha, vec![real(0), scale], vec![real(1)])
+                .unwrap();
+            // The first context needs the retained quadratic factor; the
+            // second needs the original cubic presentation. Neither is lost.
+            for _ in 0..32 {
+                assert_eq!(
+                    field
+                        .sign(&field.subtract(&retained, &expected).unwrap())
+                        .unwrap(),
+                    Ordering::Equal
+                );
+                let imported = field
+                    .rational_function(&beta, vec![real(0), real(1)], vec![real(1)])
+                    .unwrap();
+                assert_eq!(
+                    field
+                        .sign(&field.subtract(&imported, &expected).unwrap())
+                        .unwrap(),
+                    Ordering::Equal
+                );
+                assert_eq!(field.transports.borrow().len(), transports);
+            }
+        }
+    }
+
+    #[test]
+    fn owned_field_does_not_invent_an_unproved_parameter_embedding() {
+        let alpha = represented_root(
+            vec![real(9), real(0), real(-40), real(0), real(16)],
+            real(0),
+            real(1),
+            PredicatePolicy::STRICT,
+        );
+        let beta = represented_root(
+            alpha.polynomial_coefficients.clone(),
+            real(1),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let mut field = AlgebraicField::new(&alpha).unwrap();
+        assert_eq!(
+            field
+                .rational_function(&beta, vec![real(0), real(1)], vec![real(1)])
+                .unwrap_err(),
+            AlgebraicFieldError::Undecided
+        );
+        assert!(field.transports.borrow().is_empty());
     }
 
     #[test]
