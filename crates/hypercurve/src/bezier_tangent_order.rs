@@ -4,8 +4,10 @@
 //! ordering. Represented coordinate roots use Hypersolve arithmetic and certified
 //! interval signs. Exact derivative images can instead retain a selected source;
 //! their signs are evaluated in that source without coordinate projection.
-//! Source identity, denominator domains and bilinear operands remain available
-//! for replay. An unavailable scalar view does not make an exact vector invalid.
+//! Source identity and denominator domains remain available for replay. Scalar
+//! normalization reuses reduced Hypersolve field values in scoped arithmetic
+//! batches, preserving correlation without retaining growing expression trees.
+//! An unavailable coordinate-root view does not make an exact vector invalid.
 //! Unresolved decisions remain classified; no parameter interval is sampled as
 //! a coordinate.
 
@@ -15,8 +17,8 @@ use crate::classify::compare_reals;
 use crate::{Classification, CurveContext, RationalBezierAlgebraicTangentImage2};
 use hyperreal::{Real, RealSign};
 use hypersolve::{
-    AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
-    AlgebraicRootRepresentation,
+    AlgebraicField, AlgebraicFieldError, AlgebraicFieldValue, AlgebraicRootArithmeticOp,
+    AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus, AlgebraicRootRepresentation,
 };
 
 /// An exact tangent vector with represented coordinate roots or a shared
@@ -129,15 +131,39 @@ pub enum BezierAlgebraicSameTangentOrderStatus {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierAlgebraicScalarSignEvidence {
     arithmetic: Vec<AlgebraicRootArithmeticReport>,
-    // Keep exact inputs and the operation for selected-source sign replay.
-    source: Option<Box<RetainedTangentBilinear>>,
-    /// Represented scalar when that view is available; retained-source sign
-    /// replay does not require independent coordinate roots.
-    pub scalar: Option<AlgebraicRootRepresentation>,
+    value: Option<TangentScalar>,
     /// Certified sign relative to zero.
     pub sign: Option<Ordering>,
     /// Compact diagnostic for construction or sign failure.
     pub message: Option<String>,
+}
+
+// Each scalar has one exact definition. Bilinear inputs are retained lazily
+// for sign-only predicates; normalization consumes them in a selected field.
+#[derive(Clone, Debug, PartialEq)]
+enum TangentScalar {
+    Represented(AlgebraicRootRepresentation),
+    Selected(AlgebraicFieldValue),
+    Bilinear(Box<RetainedTangentBilinear>),
+}
+
+impl BezierAlgebraicScalarSignEvidence {
+    /// Borrows the scalar root when independently represented.
+    pub fn represented_scalar(&self) -> Option<&AlgebraicRootRepresentation> {
+        match self.value.as_ref()? {
+            TangentScalar::Represented(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    /// Borrows a normalized selected-field value, with finite denominator and
+    /// selected-root evidence available for exact arithmetic and sign replay.
+    pub fn selected_scalar(&self) -> Option<&AlgebraicFieldValue> {
+        match self.value.as_ref()? {
+            TangentScalar::Selected(value) => Some(value),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -426,8 +452,8 @@ fn compare_algebraic_tangent_turn_from_base_impl(
 /// that sign. When both depart on the same side it compares
 /// `cross^2 / |B'|^6` by clearing positive speed denominators. Side witnesses
 /// may be signed directly in their selected source. Same-side normalization
-/// currently requires represented scalar witnesses; an unavailable scalar view
-/// leaves that comparison unresolved. The derivatives are with respect to the
+/// retains reduced field values when independent scalar roots are unavailable.
+/// A common selected field must be certified. The derivatives are with respect to the
 /// source parameter, and normalization removes positive parameter-speed factors.
 pub fn compare_algebraic_same_tangent_second_order(
     first_tangent: &BezierAlgebraicTangentVector2,
@@ -555,8 +581,8 @@ pub fn compare_algebraic_same_tangent_second_order(
 /// witness is `cross(B'(t), B'''(t))`; opposite signs identify the side of
 /// departure, and same-side magnitudes are compared as `cross^2 / |B'|^8` by
 /// clearing positive speed denominators. Source-side witnesses may be signed
-/// in their selected parameter; same-side magnitude comparison still requires
-/// represented scalar witnesses. Only certified signs determine the order.
+/// in their selected parameter; same-side magnitudes retain reduced selected-field
+/// values or represented scalar roots. Only certified signs determine the order.
 pub fn compare_algebraic_same_tangent_third_order(
     first_tangent: &BezierAlgebraicTangentVector2,
     first_third_derivative: &BezierAlgebraicTangentVector2,
@@ -745,18 +771,29 @@ fn graph_third_derivative_witness(
     let jerk_cross = cross_sign(tangent, jerk, policy, true);
     let acceleration_cross = cross_sign(tangent, acceleration, policy, true);
     let acceleration_dot = dot_sign(tangent, acceleration, policy, true);
+    if let Some(evidence) = selected_scalar_calculation(
+        &[speed, &jerk_cross, &acceleration_cross, &acceleration_dot],
+        |field, values| {
+            let normal = field.multiply(&values[0], &values[1])?;
+            let along = field.multiply(&values[2], &values[3])?;
+            let correction = field.multiply(&field.constant(Real::from(3)), &along)?;
+            field.subtract(&normal, &correction)
+        },
+    ) {
+        return evidence;
+    }
     let normal = binary_from_evidence_values(
-        speed.scalar.as_ref(),
+        speed.represented_scalar(),
         None,
-        jerk_cross.scalar.as_ref(),
+        jerk_cross.represented_scalar(),
         None,
         AlgebraicRootArithmeticOp::Multiply,
         policy,
     );
     let along = binary_from_evidence_values(
-        acceleration_cross.scalar.as_ref(),
+        acceleration_cross.represented_scalar(),
         None,
-        acceleration_dot.scalar.as_ref(),
+        acceleration_dot.represented_scalar(),
         None,
         AlgebraicRootArithmeticOp::Multiply,
         policy,
@@ -790,11 +827,21 @@ fn normalized_graph_third_difference(
     second_speed: &BezierAlgebraicScalarSignEvidence,
     policy: &CurveContext,
 ) -> BezierAlgebraicScalarSignEvidence {
+    if let Some(evidence) = selected_scalar_calculation(
+        &[first, second, first_speed, second_speed],
+        |field, values| {
+            let first_scaled = field.multiply(&values[0], &field.pow(&values[3], 3)?)?;
+            let second_scaled = field.multiply(&values[1], &field.pow(&values[2], 3)?)?;
+            field.subtract(&first_scaled, &second_scaled)
+        },
+    ) {
+        return evidence;
+    }
     let (Some(first), Some(second), Some(first_speed), Some(second_speed)) = (
-        first.scalar.as_ref(),
-        second.scalar.as_ref(),
-        first_speed.scalar.as_ref(),
-        second_speed.scalar.as_ref(),
+        first.represented_scalar(),
+        second.represented_scalar(),
+        first_speed.represented_scalar(),
+        second_speed.represented_scalar(),
     ) else {
         return scalar_sign_evidence(
             vec![missing_operand_evidence(
@@ -1037,8 +1084,8 @@ fn source_bilinear_sign(
     let exact = |vector: &BezierAlgebraicTangentVector2| {
         vector.represented_coordinates().and_then(|(x, y)| {
             Some((
-                x.exact_point_witness()?.clone(),
-                y.exact_point_witness()?.clone(),
+                strict_exact_witness(x)?.clone(),
+                strict_exact_witness(y)?.clone(),
             ))
         })
     };
@@ -1089,16 +1136,153 @@ fn source_bilinear_evidence(
     };
     BezierAlgebraicScalarSignEvidence {
         arithmetic: Vec::new(),
-        source: Some(Box::new(RetainedTangentBilinear {
+        value: Some(TangentScalar::Bilinear(Box::new(RetainedTangentBilinear {
             first: first.clone(),
             second: second.clone(),
             dot,
-        })),
-        scalar: (sign == Some(Ordering::Equal))
-            .then(|| AlgebraicRootRepresentation::from_exact_value(&Real::zero())),
+        }))),
         sign,
         message,
     }
+}
+
+fn selected_scalar_calculation(
+    inputs: &[&BezierAlgebraicScalarSignEvidence],
+    calculate: impl FnOnce(
+        &mut AlgebraicField,
+        &[AlgebraicFieldValue],
+    ) -> Result<AlgebraicFieldValue, AlgebraicFieldError>,
+) -> Option<BezierAlgebraicScalarSignEvidence> {
+    let context = inputs
+        .iter()
+        .find_map(|input| {
+            input
+                .selected_scalar()
+                .filter(|value| value.exact_value().is_none())
+                .map(|value| Ok(AlgebraicField::from_value(value)))
+        })
+        .or_else(|| {
+            inputs.iter().find_map(|input| {
+                let TangentScalar::Bilinear(witness) = input.value.as_ref()? else {
+                    return None;
+                };
+                [&witness.first, &witness.second]
+                    .into_iter()
+                    .find(|vector| vector.represented_coordinates().is_none())
+                    .and_then(BezierAlgebraicTangentVector2::image)
+                    .map(|image| AlgebraicField::new(image.parameter()))
+            })
+        })
+        .or_else(|| {
+            inputs.iter().find_map(|input| {
+                input
+                    .selected_scalar()
+                    .map(|value| Ok(AlgebraicField::from_value(value)))
+            })
+        })?;
+    let result = (|| {
+        let mut field = context?;
+        let values = inputs
+            .iter()
+            .map(|input| scalar_in_field(input, &mut field))
+            .collect::<Result<Vec<_>, _>>()?;
+        let value = calculate(&mut field, &values)?;
+        let sign = field.sign(&value);
+        let value = field.finish(value)?;
+        Ok::<_, AlgebraicFieldError>((value, sign))
+    })();
+    Some(match result {
+        Ok((value, sign)) => BezierAlgebraicScalarSignEvidence {
+            arithmetic: Vec::new(),
+            value: Some(TangentScalar::Selected(value)),
+            sign: sign.as_ref().ok().copied(),
+            message: sign
+                .err()
+                .map(|error| format!("selected-field sign is unresolved: {error:?}")),
+        },
+        Err(error) => BezierAlgebraicScalarSignEvidence {
+            arithmetic: Vec::new(),
+            value: None,
+            sign: None,
+            message: Some(format!(
+                "selected-field scalar construction failed: {error:?}"
+            )),
+        },
+    })
+}
+
+fn scalar_in_field(
+    input: &BezierAlgebraicScalarSignEvidence,
+    field: &mut AlgebraicField,
+) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+    match input.value.as_ref().ok_or(AlgebraicFieldError::Undecided)? {
+        TangentScalar::Selected(value) => Ok(value.clone()),
+        TangentScalar::Represented(root) => represented_scalar_in_field(root, field),
+        TangentScalar::Bilinear(witness) => {
+            let [first_x, first_y] = vector_in_field(&witness.first, field)?;
+            let [second_x, second_y] = vector_in_field(&witness.second, field)?;
+            if witness.dot {
+                field.add(
+                    &field.multiply(&first_x, &second_x)?,
+                    &field.multiply(&first_y, &second_y)?,
+                )
+            } else {
+                field.subtract(
+                    &field.multiply(&first_x, &second_y)?,
+                    &field.multiply(&first_y, &second_x)?,
+                )
+            }
+        }
+    }
+}
+
+fn strict_exact_witness(root: &AlgebraicRootRepresentation) -> Option<&Real> {
+    let value = root.exact_point_witness()?;
+    (root.is_valid()
+        && hypersolve::validate_algebraic_root_representation(
+            root,
+            hyperlimit::PredicatePolicy::STRICT,
+        )
+        .status
+            == hypersolve::AlgebraicRootValidationStatus::Valid)
+        .then_some(value)
+}
+
+fn represented_scalar_in_field(
+    root: &AlgebraicRootRepresentation,
+    field: &mut AlgebraicField,
+) -> Result<AlgebraicFieldValue, AlgebraicFieldError> {
+    if let Some(value) = strict_exact_witness(root) {
+        return Ok(field.constant(value.clone()));
+    }
+    // This root can be the selected parameter itself. An unrelated algebraic
+    // coordinate requires an extension field, so the identity guard must hold.
+    field.rational_function(root, vec![Real::zero(), Real::one()], vec![Real::one()])
+}
+
+fn vector_in_field(
+    vector: &BezierAlgebraicTangentVector2,
+    field: &mut AlgebraicField,
+) -> Result<[AlgebraicFieldValue; 2], AlgebraicFieldError> {
+    if let Some((x, y)) = vector.represented_coordinates()
+        && let (Some(x), Some(y)) = (strict_exact_witness(x), strict_exact_witness(y))
+    {
+        return Ok([field.constant(x.clone()), field.constant(y.clone())]);
+    }
+    if let Some(image) = vector.image() {
+        let (x, y, denominator) = image.coordinate_polynomials();
+        return Ok([
+            field.rational_function(image.parameter(), x.to_vec(), denominator.to_vec())?,
+            field.rational_function(image.parameter(), y.to_vec(), denominator.to_vec())?,
+        ]);
+    }
+    let (x, y) = vector
+        .represented_coordinates()
+        .ok_or(AlgebraicFieldError::Undecided)?;
+    Ok([
+        represented_scalar_in_field(x, field)?,
+        represented_scalar_in_field(y, field)?,
+    ])
 }
 
 fn interval_scalar_sign_evidence(
@@ -1107,8 +1291,7 @@ fn interval_scalar_sign_evidence(
 ) -> BezierAlgebraicScalarSignEvidence {
     BezierAlgebraicScalarSignEvidence {
         arithmetic: Vec::new(),
-        source: None,
-        scalar: None,
+        value: None,
         sign: Some(sign),
         message: Some(message.to_owned()),
     }
@@ -1309,7 +1492,23 @@ fn same_side_magnitude_difference(
     speed_power: usize,
     policy: &CurveContext,
 ) -> BezierAlgebraicScalarSignEvidence {
-    let Some(first_cross_scalar) = first_cross.scalar.as_ref() else {
+    if let Some(evidence) = selected_scalar_calculation(
+        &[first_cross, second_cross, first_speed, second_speed],
+        |field, values| {
+            let first_scaled = field.multiply(
+                &field.pow(&values[0], 2)?,
+                &field.pow(&values[3], speed_power)?,
+            )?;
+            let second_scaled = field.multiply(
+                &field.pow(&values[1], 2)?,
+                &field.pow(&values[2], speed_power)?,
+            )?;
+            field.subtract(&first_scaled, &second_scaled)
+        },
+    ) {
+        return evidence;
+    }
+    let Some(first_cross_scalar) = first_cross.represented_scalar() else {
         return scalar_sign_evidence(
             vec![missing_operand_evidence(
                 AlgebraicRootArithmeticOp::Multiply,
@@ -1318,7 +1517,7 @@ fn same_side_magnitude_difference(
             policy,
         );
     };
-    let Some(second_cross_scalar) = second_cross.scalar.as_ref() else {
+    let Some(second_cross_scalar) = second_cross.represented_scalar() else {
         return scalar_sign_evidence(
             vec![missing_operand_evidence(
                 AlgebraicRootArithmeticOp::Multiply,
@@ -1327,7 +1526,7 @@ fn same_side_magnitude_difference(
             policy,
         );
     };
-    let Some(first_speed_scalar) = first_speed.scalar.as_ref() else {
+    let Some(first_speed_scalar) = first_speed.represented_scalar() else {
         return scalar_sign_evidence(
             vec![missing_operand_evidence(
                 AlgebraicRootArithmeticOp::Multiply,
@@ -1336,7 +1535,7 @@ fn same_side_magnitude_difference(
             policy,
         );
     };
-    let Some(second_speed_scalar) = second_speed.scalar.as_ref() else {
+    let Some(second_speed_scalar) = second_speed.represented_scalar() else {
         return scalar_sign_evidence(
             vec![missing_operand_evidence(
                 AlgebraicRootArithmeticOp::Multiply,
@@ -1543,8 +1742,7 @@ fn scalar_sign_evidence(
     let Some(last) = arithmetic.last() else {
         return BezierAlgebraicScalarSignEvidence {
             arithmetic,
-            source: None,
-            scalar: None,
+            value: None,
             sign: None,
             message: Some("scalar construction produced no arithmetic evidence".to_owned()),
         };
@@ -1553,8 +1751,7 @@ fn scalar_sign_evidence(
         return BezierAlgebraicScalarSignEvidence {
             message: last.message.clone(),
             arithmetic,
-            source: None,
-            scalar: None,
+            value: None,
             sign: None,
         };
     }
@@ -1566,8 +1763,7 @@ fn scalar_sign_evidence(
         None => {
             return BezierAlgebraicScalarSignEvidence {
                 arithmetic,
-                source: None,
-                scalar: None,
+                value: None,
                 sign: None,
                 message: Some("scalar arithmetic omitted represented result".to_owned()),
             };
@@ -1579,8 +1775,7 @@ fn scalar_sign_evidence(
     });
     BezierAlgebraicScalarSignEvidence {
         arithmetic,
-        source: None,
-        scalar: Some(scalar),
+        value: Some(TangentScalar::Represented(scalar)),
         sign,
         message,
     }
@@ -1619,9 +1814,7 @@ fn sign_status(evidence: &BezierAlgebraicScalarSignEvidence) -> ScalarSignStatus
         Some(Ordering::Greater) => ScalarSignStatus::Positive,
         Some(Ordering::Less) => ScalarSignStatus::Negative,
         Some(Ordering::Equal) => ScalarSignStatus::Zero,
-        None if evidence.scalar.is_none() && evidence.source.is_none() => {
-            ScalarSignStatus::ArithmeticFailed
-        }
+        None if evidence.value.is_none() => ScalarSignStatus::ArithmeticFailed,
         None => ScalarSignStatus::Undecided,
     }
 }
@@ -1699,6 +1892,194 @@ mod exact_real_status_tests {
             point(q(2, 3), Real::zero()),
             point(Real::one(), Real::one()),
         )
+    }
+
+    #[test]
+    fn selected_scalar_normalization_removes_speed_and_tangential_acceleration() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter = selected_parameter(
+                vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
+                Real::zero(),
+                Real::one(),
+                &policy,
+            );
+            let vector = |x, y| {
+                BezierAlgebraicTangentVector2::from_image(&crate::tests::decided(
+                    crate::bezier_algebraic_image::rational_tangent_image_from_power_basis(
+                        &parameter,
+                        x,
+                        y,
+                        vec![Real::one()],
+                        &policy,
+                    )
+                    .unwrap(),
+                ))
+            };
+            let jet = |s: i32, a: i32, c: i32, d: i32| {
+                // y=c*x^2+d*x^3, with x'=s*alpha^2 and x''=a*pi.
+                // Thus a_y=2*c*x'^2 and j_y=6*c*x'*x''+6*d*x'^3.
+                // The graph derivatives are exactly 2*c and 6*d.
+                let tangent = vector(
+                    vec![Real::zero(), Real::zero(), Real::from(s)],
+                    vec![Real::zero()],
+                );
+                assert!(tangent.represented_coordinates().is_none());
+                let acceleration = vector(
+                    vec![Real::from(a) * Real::pi()],
+                    vec![
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(2 * c * s * s),
+                    ],
+                );
+                let jerk = vector(
+                    vec![Real::one()],
+                    vec![
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(6 * c * s * a) * Real::pi(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::from(6 * d * s * s * s),
+                    ],
+                );
+                [tangent, acceleration, jerk]
+            };
+            for side in [-1, 1] {
+                for (first_speed, second_speed) in [(1, 2), (3, 1)] {
+                    let first = jet(first_speed, -2, side, side);
+                    let second = jet(second_speed, 3, 2 * side, 2 * side);
+                    let comparison =
+                        crate::tests::decided(compare_algebraic_same_tangent_second_order(
+                            &first[0], &first[1], &second[0], &second[1], &policy,
+                        ));
+                    assert_eq!(
+                        comparison.status,
+                        BezierAlgebraicSameTangentOrderStatus::Ordered
+                    );
+                    // Negative rays are ordered by the angular cut at zero.
+                    let expected = if side > 0 {
+                        BezierTangentTurnOrdering2::FirstBeforeSecond
+                    } else {
+                        BezierTangentTurnOrdering2::SecondBeforeFirst
+                    };
+                    assert_eq!(comparison.ordering, Some(expected));
+                    let difference = comparison.normalized_difference.unwrap();
+                    let value = difference.selected_scalar().unwrap();
+                    let mut replay = AlgebraicField::from_value(value);
+                    assert_eq!(replay.sign(value).ok(), difference.sign);
+                    assert!(
+                        value.coefficients().0.len()
+                            < value.selected_root().polynomial_coefficients.len()
+                    );
+
+                    let second = jet(second_speed, 3, side, 2 * side);
+                    let curvature =
+                        crate::tests::decided(compare_algebraic_same_tangent_second_order(
+                            &first[0], &first[1], &second[0], &second[1], &policy,
+                        ));
+                    assert_eq!(
+                        curvature.status,
+                        BezierAlgebraicSameTangentOrderStatus::SameDirection
+                    );
+                    let third =
+                        crate::tests::decided(compare_algebraic_equal_curvature_third_order(
+                            first.each_ref(),
+                            second.each_ref(),
+                            &policy,
+                        ));
+                    assert_eq!(third.status, BezierAlgebraicSameTangentOrderStatus::Ordered);
+                    assert_eq!(third.ordering, Some(expected));
+                    let value = third
+                        .normalized_difference
+                        .as_ref()
+                        .unwrap()
+                        .selected_scalar()
+                        .unwrap();
+                    assert!(
+                        value.coefficients().0.len()
+                            < value.selected_root().polynomial_coefficients.len()
+                    );
+
+                    let first = jet(first_speed, -2, 0, side);
+                    let second = jet(second_speed, 3, 0, 2 * side);
+                    let third = crate::tests::decided(compare_algebraic_same_tangent_third_order(
+                        &first[0], &first[2], &second[0], &second[2], &policy,
+                    ));
+                    assert_eq!(third.status, BezierAlgebraicSameTangentOrderStatus::Ordered);
+                    assert_eq!(third.ordering, Some(expected));
+                    assert!(
+                        third
+                            .normalized_difference
+                            .as_ref()
+                            .unwrap()
+                            .selected_scalar()
+                            .is_some()
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn selected_constant_scalars_do_not_impose_a_foreign_parameter() {
+        let policy = CurveContext::STRICT;
+        let field = AlgebraicField::new(&AlgebraicRootRepresentation::from_exact_value(
+            &Real::from(2),
+        ))
+        .unwrap();
+        let constant = field.constant(Real::pi());
+        let constant = BezierAlgebraicScalarSignEvidence {
+            arithmetic: Vec::new(),
+            value: Some(TangentScalar::Selected(field.finish(constant).unwrap())),
+            sign: Some(Ordering::Greater),
+            message: None,
+        };
+        let parameter = selected_parameter(
+            vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
+            Real::zero(),
+            Real::one(),
+            &policy,
+        );
+        let vector = BezierAlgebraicTangentVector2::from_image(&crate::tests::decided(
+            cubic_power_curve(false, 1)
+                .tangent_at_algebraic_parameter(&parameter, &policy)
+                .unwrap(),
+        ));
+        let speed = norm_squared_sign(&vector, &policy);
+        let product = selected_scalar_calculation(&[&constant, &speed], |field, values| {
+            field.multiply(&values[0], &values[1])
+        })
+        .unwrap();
+        assert_eq!(product.sign, Some(Ordering::Greater));
+        assert!(product.selected_scalar().is_some());
+    }
+
+    #[test]
+    fn source_scalar_constants_reject_stale_exact_point_evidence() {
+        let policy = CurveContext::STRICT;
+        let parameter = selected_parameter(
+            vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
+            Real::zero(),
+            Real::one(),
+            &policy,
+        );
+        let source = BezierAlgebraicTangentVector2::from_image(&crate::tests::decided(
+            cubic_power_curve(false, 1)
+                .tangent_at_algebraic_parameter(&parameter, &policy)
+                .unwrap(),
+        ));
+        let mut invalid = AlgebraicRootRepresentation::from_exact_value(&Real::pi());
+        invalid.polynomial_coefficients[0] = -Real::pi() - Real::one();
+        let vector = BezierAlgebraicTangentVector2::new(
+            invalid,
+            AlgebraicRootRepresentation::from_exact_value(&Real::zero()),
+        );
+        let cross = source_bilinear_evidence(&source, &vector, false, &policy);
+        assert!(cross.sign.is_none());
     }
 
     #[test]
@@ -1786,10 +2167,14 @@ mod exact_real_status_tests {
                 ));
                 assert_eq!(evidence.status, BezierAlgebraicTangentOrderStatus::Ordered);
                 assert_eq!(evidence.ordering, Some(expected));
-                if let Some(witness) = evidence
-                    .first_second_cross
-                    .as_ref()
-                    .and_then(|e| e.source.as_ref())
+                if let Some(witness) =
+                    evidence
+                        .first_second_cross
+                        .as_ref()
+                        .and_then(|e| match e.value.as_ref()? {
+                            TangentScalar::Bilinear(witness) => Some(witness),
+                            _ => None,
+                        })
                 {
                     let replay =
                         source_bilinear_sign(&witness.first, &witness.second, witness.dot, &policy)
@@ -1811,7 +2196,8 @@ mod exact_real_status_tests {
             let dot = dot_sign(&first, &restored, &policy, true);
             assert_eq!(cross.sign, Some(Ordering::Equal));
             assert_eq!(dot.sign, Some(Ordering::Greater));
-            assert!(cross.source.is_some() && dot.source.is_some());
+            assert!(matches!(cross.value, Some(TangentScalar::Bilinear(_))));
+            assert!(matches!(dot.value, Some(TangentScalar::Bilinear(_))));
         }
     }
 
@@ -1991,7 +2377,9 @@ mod exact_real_status_tests {
         );
 
         assert_eq!(evidence.sign, Some(Ordering::Greater));
-        let scalar = evidence.scalar.expect("the exact Real result is retained");
+        let scalar = evidence
+            .represented_scalar()
+            .expect("the exact Real result is retained");
         assert_eq!(scalar.exact_point_witness(), Some(&Real::pi()));
     }
 }

@@ -1611,7 +1611,7 @@ impl RationalBezierAlgebraicTangentImage2 {
             .map(|_| self.coordinate_polynomials())
     }
 
-    fn coordinate_polynomials(&self) -> (&[Real], &[Real], &[Real]) {
+    pub(crate) fn coordinate_polynomials(&self) -> (&[Real], &[Real], &[Real]) {
         match &self.data.definition {
             // The coordinate-pair constructor retains the same source
             // denominator for both coordinates.

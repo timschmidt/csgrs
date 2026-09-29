@@ -2678,3 +2678,108 @@ fn retained_source_tangents_order_without_coordinate_projection() {
         }
     }
 }
+
+#[test]
+fn retained_source_curvature_orders_without_scalar_projection() {
+    use hypercurve::{
+        BezierAlgebraicTangentVector2, BezierArrangementFragment2, HomogeneousControl2,
+    };
+    fn choose(n: i32, k: i32) -> i32 {
+        if n < k {
+            return 0;
+        }
+        (0..k).fold(1, |a, j| a * (n - j)) / (1..=k).product::<i32>()
+    }
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let parameter = decided(
+            BezierAlgebraicParameter2::try_isolate(
+                decided(
+                    BezierParameterPolynomial::try_new_power_basis(
+                        vec![-Real::pi(), r(0), r(0), r(4)],
+                        &policy,
+                    )
+                    .unwrap(),
+                ),
+                decided(BezierParameterInterval::try_new(r(0), r(1), &policy).unwrap()),
+                &policy,
+            )
+            .unwrap(),
+        );
+        for reflected in [false, true] {
+            let candidate = |index, second| {
+                // A=(P,t*P), B=(P,t*P+P^2), P=4*t^3-pi. At the selected
+                // zero of P they have the same nonzero tangent. At matched
+                // x=P(t)>0, B_y-A_y=x^2, so A comes first counter-clockwise.
+                // Reflecting y reverses their angular order.
+                let controls = (0..=6)
+                    .map(|k| {
+                        let x = -Real::pi() + q(choose(k, 3), 5);
+                        let mut y = -Real::pi() * q(k, 6) + q(4 * choose(k, 4), 15);
+                        if second {
+                            y = y + Real::pi() * Real::pi() - Real::pi() * q(2 * choose(k, 3), 5)
+                                + r(if k == 6 { 16 } else { 0 });
+                        }
+                        if reflected {
+                            y = -y;
+                        }
+                        HomogeneousControl2::new(x, y, r(1))
+                    })
+                    .collect();
+                let source = BezierSubcurve2::Rational(decided(
+                    RationalBezier2::from_homogeneous_controls(controls, &policy).unwrap(),
+                ));
+                let image = decided(
+                    BezierAlgebraicEndpointImage2::from_source_curve(&source, &parameter, &policy)
+                        .unwrap(),
+                );
+                let point = decided(image.point().unwrap());
+                assert!(point.x().and_then(|c| c.representation()).is_some());
+                assert!(point.y().and_then(|c| c.representation()).is_some());
+                let tangent = decided(image.tangent().unwrap());
+                assert!(tangent.retained_parameter().is_some());
+                assert!(
+                    BezierAlgebraicTangentVector2::from_image(tangent)
+                        .represented_coordinates()
+                        .is_none()
+                );
+                BezierArrangementFragment2::new(
+                    index,
+                    0,
+                    BezierSplitFragment2::RetainedBezier {
+                        reversed: false,
+                        start: BezierParameter2::Algebraic(parameter.clone()),
+                        end: BezierParameter2::Exact(r(1)),
+                        source_curve: source,
+                        start_image: Some(image),
+                        end_image: None,
+                    },
+                )
+            };
+            for swapped in [false, true] {
+                let incoming = BezierArrangementFragment2::new(
+                    0,
+                    0,
+                    BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(r(0)),
+                        end: BezierParameter2::Exact(r(1)),
+                        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                            p(-1, 0),
+                            Point2::new(q(-1, 2), r(0)),
+                            p(0, 0),
+                        )),
+                    },
+                );
+                let graph = BezierArrangementGraph2::new(vec![
+                    incoming,
+                    candidate(1, swapped),
+                    candidate(2, !swapped),
+                ])
+                .unwrap();
+                let traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
+                let chosen = if swapped != reflected { 2 } else { 1 };
+                assert_eq!(traversal.chains()[0].fragment_indices(), [0, chosen]);
+                assert_eq!(traversal.chains()[1].fragment_indices(), [3 - chosen]);
+            }
+        }
+    }
+}

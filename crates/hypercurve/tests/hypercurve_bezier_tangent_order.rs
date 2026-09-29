@@ -184,7 +184,7 @@ fn algebraic_tangent_order_uses_represented_cross_product_for_same_half() {
         Some(BezierTangentTurnOrdering2::SecondBeforeFirst)
     );
     let cross = evidence.first_second_cross.unwrap();
-    assert!(cross.scalar.unwrap().is_valid());
+    assert!(cross.represented_scalar().unwrap().is_valid());
     assert!(cross.sign.unwrap().is_lt());
 }
 
