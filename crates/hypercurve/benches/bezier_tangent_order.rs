@@ -37,7 +37,7 @@ fn vector(
             .tangent_at_algebraic_parameter(parameter, policy)
             .unwrap(),
     );
-    BezierAlgebraicTangentVector2::from_image(&tangent).unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent)
 }
 
 fn second_vector(
@@ -50,7 +50,7 @@ fn second_vector(
             .second_derivative_at_algebraic_parameter(parameter, policy)
             .unwrap(),
     );
-    BezierAlgebraicTangentVector2::from_image(&tangent).unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent)
 }
 
 fn rational_vector(
@@ -63,7 +63,7 @@ fn rational_vector(
             .tangent_at_algebraic_parameter(parameter, policy)
             .unwrap(),
     );
-    BezierAlgebraicTangentVector2::from_image(&tangent).unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent)
 }
 
 fn rational_second_vector(
@@ -76,7 +76,7 @@ fn rational_second_vector(
             .second_derivative_at_algebraic_parameter(parameter, policy)
             .unwrap(),
     );
-    BezierAlgebraicTangentVector2::from_image(&tangent).unwrap()
+    BezierAlgebraicTangentVector2::from_image(&tangent)
 }
 
 fn main() -> CurveResult<()> {

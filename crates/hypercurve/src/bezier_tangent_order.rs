@@ -1,17 +1,15 @@
 //! Certified tangent-order predicates for algebraic Bezier endpoint images.
 //!
-//! Native arrangement traversal orders branch successors by signs of cross and
-//! dot products.  Algebraic endpoint images need the same predicate without
-//! collapsing represented coordinates to sampled floats.  This module builds
-//! the cross/dot scalars as exact represented algebraic roots with
-//! `hypersolve` arithmetic, then reads their signs only from exact point
-//! witnesses or isolating intervals certified away from zero.  This follows
-//! the exact-geometric-computation boundary between construction and
-//! decision.  The local angular ordering
-//! is the standard orientation/dot half-plane ordering used by arrangement
-//! kernels.
+//! Native and retained arrangement traversal use the same cross/dot half-plane
+//! ordering. Represented coordinate roots use Hypersolve arithmetic and certified
+//! interval signs. Exact derivative images can instead retain a selected source;
+//! their signs are evaluated in that source without coordinate projection.
+//! Source identity, denominator domains and bilinear operands remain available
+//! for replay. An unavailable scalar view does not make an exact vector invalid.
+//! Unresolved decisions remain classified; no parameter interval is sampled as
+//! a coordinate.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, sync::Arc};
 
 use crate::classify::compare_reals;
 use crate::{Classification, CurveContext, RationalBezierAlgebraicTangentImage2};
@@ -21,41 +19,69 @@ use hypersolve::{
     AlgebraicRootRepresentation,
 };
 
-/// A represented algebraic tangent vector with exact coordinate evidence.
+/// An exact tangent vector with represented coordinate roots or a shared
+/// selected-source derivative image. Coordinate projection is optional.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierAlgebraicTangentVector2 {
-    dx: AlgebraicRootRepresentation,
-    dy: AlgebraicRootRepresentation,
+    definition: TangentVectorDefinition,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum TangentVectorDefinition {
+    Coordinates(Arc<(AlgebraicRootRepresentation, AlgebraicRootRepresentation)>),
+    Image(RationalBezierAlgebraicTangentImage2),
 }
 
 impl BezierAlgebraicTangentVector2 {
-    /// Constructs a tangent vector from represented x/y derivative images.
-    pub const fn new(
-        dx: AlgebraicRootRepresentation,
-        dy: AlgebraicRootRepresentation,
-    ) -> BezierAlgebraicTangentVector2 {
-        Self { dx, dy }
+    /// Constructs a vector from exact represented coordinate roots.
+    pub fn new(dx: AlgebraicRootRepresentation, dy: AlgebraicRootRepresentation) -> Self {
+        Self {
+            definition: TangentVectorDefinition::Coordinates(Arc::new((dx, dy))),
+        }
     }
 
-    /// Extracts coordinate roots already materialized by this exact tangent image.
-    ///
-    /// Returns `None` when the image retains its source expression instead.
-    /// This does not request coordinate projection or discard that exact expression.
-    pub fn from_image(image: &RationalBezierAlgebraicTangentImage2) -> Option<Self> {
+    /// Retains an exact derivative image, including its selected source when
+    /// independent coordinate roots are unavailable. This does not project it.
+    pub fn from_image(image: &RationalBezierAlgebraicTangentImage2) -> Self {
+        Self {
+            definition: TangentVectorDefinition::Image(image.clone()),
+        }
+    }
+
+    /// Borrows both coordinate roots when already represented.
+    /// An absent Cartesian view does not make the vector inexact.
+    pub fn represented_coordinates(
+        &self,
+    ) -> Option<(&AlgebraicRootRepresentation, &AlgebraicRootRepresentation)> {
+        match &self.definition {
+            TangentVectorDefinition::Coordinates(coordinates) => {
+                Some((&coordinates.0, &coordinates.1))
+            }
+            TangentVectorDefinition::Image(image) => {
+                Some((image.dx()?.representation()?, image.dy()?.representation()?))
+            }
+        }
+    }
+
+    fn image(&self) -> Option<&RationalBezierAlgebraicTangentImage2> {
+        match &self.definition {
+            TangentVectorDefinition::Image(image) => Some(image),
+            TangentVectorDefinition::Coordinates(_) => None,
+        }
+    }
+
+    pub(crate) fn negated(&self, policy: &CurveContext) -> Option<Self> {
+        if let Some(image) = self
+            .image()
+            .and_then(RationalBezierAlgebraicTangentImage2::negated_retained_expression)
+        {
+            return Some(Self::from_image(&image));
+        }
+        let (x, y) = self.represented_coordinates()?;
         Some(Self::new(
-            image.dx()?.representation()?.clone(),
-            image.dy()?.representation()?.clone(),
+            negate_algebraic_root(x, policy)?,
+            negate_algebraic_root(y, policy)?,
         ))
-    }
-
-    /// Returns the represented x derivative coordinate.
-    pub const fn dx(&self) -> &AlgebraicRootRepresentation {
-        &self.dx
-    }
-
-    /// Returns the represented y derivative coordinate.
-    pub const fn dy(&self) -> &AlgebraicRootRepresentation {
-        &self.dy
     }
 }
 
@@ -73,7 +99,7 @@ pub enum BezierTangentTurnOrdering2 {
 pub enum BezierAlgebraicTangentOrderStatus {
     /// The two candidate turns were ordered.
     Ordered,
-    /// The candidates have the same represented direction.
+    /// The candidates have the same exact direction.
     SameDirection,
     /// One of the input tangent vectors was certified zero.
     ZeroTangent,
@@ -103,12 +129,22 @@ pub enum BezierAlgebraicSameTangentOrderStatus {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BezierAlgebraicScalarSignEvidence {
     arithmetic: Vec<AlgebraicRootArithmeticReport>,
-    /// Represented scalar when construction succeeds.
+    // Keep exact inputs and the operation for selected-source sign replay.
+    source: Option<Box<RetainedTangentBilinear>>,
+    /// Represented scalar when that view is available; retained-source sign
+    /// replay does not require independent coordinate roots.
     pub scalar: Option<AlgebraicRootRepresentation>,
     /// Certified sign relative to zero.
     pub sign: Option<Ordering>,
     /// Compact diagnostic for construction or sign failure.
     pub message: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct RetainedTangentBilinear {
+    first: BezierAlgebraicTangentVector2,
+    second: BezierAlgebraicTangentVector2,
+    dot: bool,
 }
 
 /// Evidence for a certified algebraic tangent-order predicate.
@@ -151,8 +187,10 @@ pub struct BezierAlgebraicSameTangentOrderEvidence {
 /// The result matches the native branch-order predicate: first classify each
 /// candidate into the positive or negative half-turn from `base` using cross
 /// and dot signs, then order candidates in the same half by the sign of
-/// `first x second`.  Every scalar is represented exactly through
-/// `hypersolve` arithmetic; no isolating interval is sampled as a coordinate.
+/// `first x second`. Represented roots use exact `hypersolve` arithmetic or
+/// certified interval bounds. Retained images can use a proved common selected
+/// parameter or an exact constant operand, with their denominator signs checked
+/// separately. No isolating interval is sampled as a coordinate.
 pub fn compare_algebraic_tangent_turn_from_base(
     base: &BezierAlgebraicTangentVector2,
     first: &BezierAlgebraicTangentVector2,
@@ -185,16 +223,8 @@ pub(crate) fn algebraic_endpoint_tangent_cross_sign(
     second: &RationalBezierAlgebraicTangentImage2,
     policy: &CurveContext,
 ) -> Classification<RealSign> {
-    match first.shared_parameter_cross_sign(second, policy) {
-        Ok(Some(sign)) => return sign,
-        Ok(None) => {}
-        Err(_) => return Classification::Uncertain(crate::UncertaintyReason::Unsupported),
-    }
     let first = BezierAlgebraicTangentVector2::from_image(first);
     let second = BezierAlgebraicTangentVector2::from_image(second);
-    let (Some(first), Some(second)) = (first, second) else {
-        return Classification::Uncertain(crate::UncertaintyReason::Boundary);
-    };
     let cross = cross_sign(&first, &second, policy, false);
     match sign_status(&cross) {
         ScalarSignStatus::Positive => Classification::Decided(RealSign::Positive),
@@ -390,15 +420,15 @@ fn compare_algebraic_tangent_turn_from_base_impl(
 
 /// Compares same-direction algebraic tangent branches by second-order evidence.
 ///
-/// This is the represented-root analogue of the native signed-curvature tie
-/// breaker used by retained Bezier traversal. Given two candidates already
+/// This is the exact signed-curvature tie breaker used by retained Bezier traversal. Given two candidates already
 /// known to have the same first-order direction, it compares the signs of
 /// `cross(B'(t), B''(t))`; branches departing on opposite sides are ordered by
 /// that sign. When both depart on the same side it compares
-/// `cross^2 / |B'|^6` by clearing positive speed denominators. Every scalar is
-/// built through `hypersolve` algebraic arithmetic, following the exactness model's exact
-/// geometric computation discipline, and the derivative identities are the
-/// standard Bezier endpoint/Taylor formulas described by the Bernstein curve model.
+/// `cross^2 / |B'|^6` by clearing positive speed denominators. Side witnesses
+/// may be signed directly in their selected source. Same-side normalization
+/// currently requires represented scalar witnesses; an unavailable scalar view
+/// leaves that comparison unresolved. The derivatives are with respect to the
+/// source parameter, and normalization removes positive parameter-speed factors.
 pub fn compare_algebraic_same_tangent_second_order(
     first_tangent: &BezierAlgebraicTangentVector2,
     first_second_derivative: &BezierAlgebraicTangentVector2,
@@ -524,10 +554,9 @@ pub fn compare_algebraic_same_tangent_second_order(
 /// side witnesses have vanished.  For a cubic Bezier branch the next Taylor
 /// witness is `cross(B'(t), B'''(t))`; opposite signs identify the side of
 /// departure, and same-side magnitudes are compared as `cross^2 / |B'|^8` by
-/// clearing positive speed denominators.  The derivative witness is the
-/// standard polynomial Bezier endpoint formula from the Bernstein and de Casteljau curve model, and the predicate follows the exactness model's
-/// exact-geometric-computation rule: construct represented algebraic scalars
-/// first, then branch only on certified signs.
+/// clearing positive speed denominators. Source-side witnesses may be signed
+/// in their selected parameter; same-side magnitude comparison still requires
+/// represented scalar witnesses. Only certified signs determine the order.
 pub fn compare_algebraic_same_tangent_third_order(
     first_tangent: &BezierAlgebraicTangentVector2,
     first_third_derivative: &BezierAlgebraicTangentVector2,
@@ -842,8 +871,10 @@ fn tangent_nonzero(
     tangent: &BezierAlgebraicTangentVector2,
     policy: &CurveContext,
 ) -> AlgebraicTangentNonzero {
-    if [tangent.dx(), tangent.dy()].into_iter().any(|coordinate| {
-        representation_sign(coordinate, policy).is_some_and(|sign| sign != Ordering::Equal)
+    if tangent.represented_coordinates().is_some_and(|(x, y)| {
+        [x, y].into_iter().any(|coordinate| {
+            representation_sign(coordinate, policy).is_some_and(|sign| sign != Ordering::Equal)
+        })
     }) {
         return AlgebraicTangentNonzero::Nonzero;
     }
@@ -891,17 +922,22 @@ fn cross_sign(
     policy: &CurveContext,
     retain_scalar: bool,
 ) -> BezierAlgebraicScalarSignEvidence {
+    let (Some((left_x, left_y)), Some((right_x, right_y))) = (
+        left.represented_coordinates(),
+        right.represented_coordinates(),
+    ) else {
+        return source_bilinear_evidence(left, right, false, policy);
+    };
     if !retain_scalar
-        && let Some(sign) =
-            interval_bilinear_sign(left.dx(), right.dy(), left.dy(), right.dx(), false, policy)
+        && let Some(sign) = interval_bilinear_sign(left_x, right_y, left_y, right_x, false, policy)
     {
         return interval_scalar_sign_evidence(
             sign,
             "cross-product sign certified from rational root enclosures",
         );
     }
-    let left_x_right_y = multiply(left.dx(), right.dy(), policy);
-    let left_y_right_x = multiply(left.dy(), right.dx(), policy);
+    let left_x_right_y = multiply(left_x, right_y, policy);
+    let left_y_right_x = multiply(left_y, right_x, policy);
     let scalar = subtract(
         left_x_right_y.result_representation.as_ref(),
         left_x_right_y.exact_result.as_ref(),
@@ -911,8 +947,7 @@ fn cross_sign(
     );
     let mut evidence = scalar_sign_evidence(vec![left_x_right_y, left_y_right_x, scalar], policy);
     if evidence.sign.is_none() {
-        evidence.sign =
-            interval_bilinear_sign(left.dx(), right.dy(), left.dy(), right.dx(), false, policy);
+        evidence.sign = interval_bilinear_sign(left_x, right_y, left_y, right_x, false, policy);
         if evidence.sign.is_some() {
             evidence.message =
                 Some("cross-product sign certified from rational root enclosures".to_owned());
@@ -927,17 +962,22 @@ fn dot_sign(
     policy: &CurveContext,
     retain_scalar: bool,
 ) -> BezierAlgebraicScalarSignEvidence {
+    let (Some((left_x, left_y)), Some((right_x, right_y))) = (
+        left.represented_coordinates(),
+        right.represented_coordinates(),
+    ) else {
+        return source_bilinear_evidence(left, right, true, policy);
+    };
     if !retain_scalar
-        && let Some(sign) =
-            interval_bilinear_sign(left.dx(), right.dx(), left.dy(), right.dy(), true, policy)
+        && let Some(sign) = interval_bilinear_sign(left_x, right_x, left_y, right_y, true, policy)
     {
         return interval_scalar_sign_evidence(
             sign,
             "dot-product sign certified from rational root enclosures",
         );
     }
-    let left_x_right_x = multiply(left.dx(), right.dx(), policy);
-    let left_y_right_y = multiply(left.dy(), right.dy(), policy);
+    let left_x_right_x = multiply(left_x, right_x, policy);
+    let left_y_right_y = multiply(left_y, right_y, policy);
     let scalar = add(
         left_x_right_x.result_representation.as_ref(),
         left_x_right_x.exact_result.as_ref(),
@@ -947,8 +987,7 @@ fn dot_sign(
     );
     let mut evidence = scalar_sign_evidence(vec![left_x_right_x, left_y_right_y, scalar], policy);
     if evidence.sign.is_none() {
-        evidence.sign =
-            interval_bilinear_sign(left.dx(), right.dx(), left.dy(), right.dy(), true, policy);
+        evidence.sign = interval_bilinear_sign(left_x, right_x, left_y, right_y, true, policy);
         if evidence.sign.is_some() {
             evidence.message =
                 Some("dot-product sign certified from rational root enclosures".to_owned());
@@ -961,8 +1000,11 @@ fn norm_squared_sign(
     vector: &BezierAlgebraicTangentVector2,
     policy: &CurveContext,
 ) -> BezierAlgebraicScalarSignEvidence {
-    let dx_squared = multiply(vector.dx(), vector.dx(), policy);
-    let dy_squared = multiply(vector.dy(), vector.dy(), policy);
+    let Some((x, y)) = vector.represented_coordinates() else {
+        return source_bilinear_evidence(vector, vector, true, policy);
+    };
+    let dx_squared = multiply(x, x, policy);
+    let dy_squared = multiply(y, y, policy);
     let scalar = add(
         dx_squared.result_representation.as_ref(),
         dx_squared.exact_result.as_ref(),
@@ -972,14 +1014,7 @@ fn norm_squared_sign(
     );
     let mut evidence = scalar_sign_evidence(vec![dx_squared, dy_squared, scalar], policy);
     if evidence.sign.is_none() {
-        evidence.sign = interval_bilinear_sign(
-            vector.dx(),
-            vector.dx(),
-            vector.dy(),
-            vector.dy(),
-            true,
-            policy,
-        );
+        evidence.sign = interval_bilinear_sign(x, x, y, y, true, policy);
         if evidence.sign.is_some() {
             evidence.message =
                 Some("squared-norm sign certified from rational root enclosures".to_owned());
@@ -988,12 +1023,91 @@ fn norm_squared_sign(
     evidence
 }
 
+fn source_bilinear_sign(
+    first: &BezierAlgebraicTangentVector2,
+    second: &BezierAlgebraicTangentVector2,
+    dot: bool,
+    policy: &CurveContext,
+) -> crate::CurveResult<Option<Classification<RealSign>>> {
+    if let (Some(first), Some(second)) = (first.image(), second.image())
+        && let Some(sign) = first.shared_parameter_bilinear_sign(second, dot, policy)?
+    {
+        return Ok(Some(sign));
+    }
+    let exact = |vector: &BezierAlgebraicTangentVector2| {
+        vector.represented_coordinates().and_then(|(x, y)| {
+            Some((
+                x.exact_point_witness()?.clone(),
+                y.exact_point_witness()?.clone(),
+            ))
+        })
+    };
+    if let (Some(image), Some((x, y))) = (first.image(), exact(second)) {
+        return if dot {
+            image.constant_linear_combination_sign(&x, &y, policy)
+        } else {
+            image.constant_linear_combination_sign(&y, &-x, policy)
+        };
+    }
+    if let (Some((x, y)), Some(image)) = (exact(first), second.image()) {
+        return if dot {
+            image.constant_linear_combination_sign(&x, &y, policy)
+        } else {
+            image.constant_linear_combination_sign(&-y, &x, policy)
+        };
+    }
+    Ok(None)
+}
+
+fn source_bilinear_evidence(
+    first: &BezierAlgebraicTangentVector2,
+    second: &BezierAlgebraicTangentVector2,
+    dot: bool,
+    policy: &CurveContext,
+) -> BezierAlgebraicScalarSignEvidence {
+    let (sign, message) = match source_bilinear_sign(first, second, dot, policy) {
+        Ok(Some(Classification::Decided(sign))) => (
+            Some(match sign {
+                RealSign::Negative => Ordering::Less,
+                RealSign::Zero => Ordering::Equal,
+                RealSign::Positive => Ordering::Greater,
+            }),
+            None,
+        ),
+        Ok(Some(Classification::Uncertain(reason))) => (
+            None,
+            Some(format!("selected-source sign is unresolved: {reason:?}")),
+        ),
+        Ok(None) => (
+            None,
+            Some("no certified common selected parameter or exact constant operand".to_owned()),
+        ),
+        Err(error) => (
+            None,
+            Some(format!("selected-source sign construction failed: {error}")),
+        ),
+    };
+    BezierAlgebraicScalarSignEvidence {
+        arithmetic: Vec::new(),
+        source: Some(Box::new(RetainedTangentBilinear {
+            first: first.clone(),
+            second: second.clone(),
+            dot,
+        })),
+        scalar: (sign == Some(Ordering::Equal))
+            .then(|| AlgebraicRootRepresentation::from_exact_value(&Real::zero())),
+        sign,
+        message,
+    }
+}
+
 fn interval_scalar_sign_evidence(
     sign: Ordering,
     message: &'static str,
 ) -> BezierAlgebraicScalarSignEvidence {
     BezierAlgebraicScalarSignEvidence {
         arithmetic: Vec::new(),
+        source: None,
         scalar: None,
         sign: Some(sign),
         message: Some(message.to_owned()),
@@ -1308,6 +1422,27 @@ fn multiply_evidence_results(
     )
 }
 
+pub(crate) fn negate_algebraic_root(
+    value: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
+) -> Option<AlgebraicRootRepresentation> {
+    let evidence = crate::bezier_algebraic_image::arithmetic_algebraic_representations_with_policy(
+        value,
+        None,
+        AlgebraicRootArithmeticOp::Negate,
+        policy,
+    );
+    if !crate::bezier_algebraic_image::algebraic_arithmetic_succeeded(&evidence.status) {
+        return None;
+    }
+    if let Some(result) = evidence.result_representation {
+        return Some(result);
+    }
+    evidence
+        .exact_result
+        .map(|value| AlgebraicRootRepresentation::from_exact_value(&value))
+}
+
 fn multiply(
     left: &AlgebraicRootRepresentation,
     right: &AlgebraicRootRepresentation,
@@ -1408,6 +1543,7 @@ fn scalar_sign_evidence(
     let Some(last) = arithmetic.last() else {
         return BezierAlgebraicScalarSignEvidence {
             arithmetic,
+            source: None,
             scalar: None,
             sign: None,
             message: Some("scalar construction produced no arithmetic evidence".to_owned()),
@@ -1417,6 +1553,7 @@ fn scalar_sign_evidence(
         return BezierAlgebraicScalarSignEvidence {
             message: last.message.clone(),
             arithmetic,
+            source: None,
             scalar: None,
             sign: None,
         };
@@ -1429,6 +1566,7 @@ fn scalar_sign_evidence(
         None => {
             return BezierAlgebraicScalarSignEvidence {
                 arithmetic,
+                source: None,
                 scalar: None,
                 sign: None,
                 message: Some("scalar arithmetic omitted represented result".to_owned()),
@@ -1441,6 +1579,7 @@ fn scalar_sign_evidence(
     });
     BezierAlgebraicScalarSignEvidence {
         arithmetic,
+        source: None,
         scalar: Some(scalar),
         sign,
         message,
@@ -1480,7 +1619,9 @@ fn sign_status(evidence: &BezierAlgebraicScalarSignEvidence) -> ScalarSignStatus
         Some(Ordering::Greater) => ScalarSignStatus::Positive,
         Some(Ordering::Less) => ScalarSignStatus::Negative,
         Some(Ordering::Equal) => ScalarSignStatus::Zero,
-        None if evidence.scalar.is_none() => ScalarSignStatus::ArithmeticFailed,
+        None if evidence.scalar.is_none() && evidence.source.is_none() => {
+            ScalarSignStatus::ArithmeticFailed
+        }
         None => ScalarSignStatus::Undecided,
     }
 }
@@ -1558,6 +1699,120 @@ mod exact_real_status_tests {
             point(q(2, 3), Real::zero()),
             point(Real::one(), Real::one()),
         )
+    }
+
+    #[test]
+    fn source_tangent_angles_retain_replay_and_reversal() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let parameter = selected_parameter(
+                vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
+                Real::zero(),
+                Real::one(),
+                &policy,
+            );
+            let vector = |rotate, scale| {
+                BezierAlgebraicTangentVector2::from_image(&crate::tests::decided(
+                    cubic_power_curve(rotate, scale)
+                        .tangent_at_algebraic_parameter(&parameter, &policy)
+                        .unwrap(),
+                ))
+            };
+            let first = vector(false, 1);
+            let rotated = vector(true, 1);
+            let scaled = vector(false, 2);
+            let negated = first.negated(&policy).expect("exact retained reversal");
+            for v in [&first, &rotated, &scaled, &negated] {
+                assert!(v.represented_coordinates().is_none());
+            }
+            let exact = |x: Real, y: Real| {
+                BezierAlgebraicTangentVector2::new(
+                    AlgebraicRootRepresentation::from_exact_value(&x),
+                    AlgebraicRootRepresentation::from_exact_value(&y),
+                )
+            };
+            let axis = exact(Real::one(), Real::zero());
+            let pi_axis = exact(Real::pi(), Real::zero());
+            let diagonal = exact(Real::one(), Real::one());
+            let up = exact(Real::zero(), Real::one());
+            // u=(1,3*alpha^2), Ru=(-3*alpha^2,1), alpha in (0,1).
+            // Rotation gives cross(u,Ru)>0. Scaling preserves its ray;
+            // negation changes the cross-zero dot sign and angular half.
+            for (base, a, b, expected) in [
+                (
+                    &axis,
+                    &first,
+                    &rotated,
+                    BezierTangentTurnOrdering2::FirstBeforeSecond,
+                ),
+                (
+                    &pi_axis,
+                    &first,
+                    &rotated,
+                    BezierTangentTurnOrdering2::FirstBeforeSecond,
+                ),
+                (
+                    &first,
+                    &scaled,
+                    &rotated,
+                    BezierTangentTurnOrdering2::FirstBeforeSecond,
+                ),
+                (
+                    &first,
+                    &negated,
+                    &rotated,
+                    BezierTangentTurnOrdering2::SecondBeforeFirst,
+                ),
+                (
+                    &axis,
+                    &negated,
+                    &rotated,
+                    BezierTangentTurnOrdering2::SecondBeforeFirst,
+                ),
+                (
+                    &up,
+                    &first,
+                    &diagonal,
+                    BezierTangentTurnOrdering2::SecondBeforeFirst,
+                ),
+                (
+                    &axis,
+                    &rotated,
+                    &first,
+                    BezierTangentTurnOrdering2::SecondBeforeFirst,
+                ),
+            ] {
+                let evidence = crate::tests::decided(compare_algebraic_tangent_turn_from_base(
+                    base, a, b, &policy,
+                ));
+                assert_eq!(evidence.status, BezierAlgebraicTangentOrderStatus::Ordered);
+                assert_eq!(evidence.ordering, Some(expected));
+                if let Some(witness) = evidence
+                    .first_second_cross
+                    .as_ref()
+                    .and_then(|e| e.source.as_ref())
+                {
+                    let replay =
+                        source_bilinear_sign(&witness.first, &witness.second, witness.dot, &policy)
+                            .unwrap();
+                    let sign = match replay {
+                        Some(Classification::Decided(RealSign::Positive)) => Ordering::Greater,
+                        Some(Classification::Decided(RealSign::Negative)) => Ordering::Less,
+                        Some(Classification::Decided(RealSign::Zero)) => Ordering::Equal,
+                        _ => panic!("source sign replay lost its selected root"),
+                    };
+                    assert_eq!(
+                        evidence.first_second_cross.as_ref().unwrap().sign,
+                        Some(sign)
+                    );
+                }
+            }
+            let restored = negated.negated(&policy).unwrap();
+            let cross = cross_sign(&first, &restored, &policy, true);
+            let dot = dot_sign(&first, &restored, &policy, true);
+            assert_eq!(cross.sign, Some(Ordering::Equal));
+            assert_eq!(dot.sign, Some(Ordering::Greater));
+            assert!(cross.source.is_some() && dot.source.is_some());
+        }
     }
 
     #[test]

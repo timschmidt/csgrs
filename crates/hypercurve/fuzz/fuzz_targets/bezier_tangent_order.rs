@@ -27,7 +27,7 @@ fn vector_from_curve(
     else {
         return None;
     };
-    BezierAlgebraicTangentVector2::from_image(&tangent)
+    Some(BezierAlgebraicTangentVector2::from_image(&tangent))
 }
 
 fn second_vector_from_curve(
@@ -41,7 +41,7 @@ fn second_vector_from_curve(
     else {
         return None;
     };
-    BezierAlgebraicTangentVector2::from_image(&tangent)
+    Some(BezierAlgebraicTangentVector2::from_image(&tangent))
 }
 
 fn second_vector_from_rational_curve(
@@ -55,7 +55,7 @@ fn second_vector_from_rational_curve(
     else {
         return None;
     };
-    BezierAlgebraicTangentVector2::from_image(&tangent)
+    Some(BezierAlgebraicTangentVector2::from_image(&tangent))
 }
 
 fuzz_target!(|data: &[u8]| {

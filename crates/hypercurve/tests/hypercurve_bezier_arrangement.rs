@@ -2546,3 +2546,135 @@ fn mixed_native_and_selected_endpoints_share_tangent_ordering() {
         }
     }
 }
+
+#[test]
+fn retained_source_tangents_order_without_coordinate_projection() {
+    use hypercurve::{
+        BezierAlgebraicTangentVector2, BezierArrangementFragment2, HomogeneousControl2,
+    };
+    fn line(index: usize, start: Point2, end: Point2) -> BezierArrangementFragment2 {
+        let two = Real::from(2);
+        let mid = Point2::new(
+            ((start.x() + end.x()) / &two).unwrap(),
+            ((start.y() + end.y()) / two).unwrap(),
+        );
+        BezierArrangementFragment2::new(
+            index,
+            0,
+            BezierSplitFragment2::Materialized {
+                start: BezierParameter2::Exact(Real::zero()),
+                end: BezierParameter2::Exact(Real::one()),
+                curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(start, mid, end)),
+            },
+        )
+    }
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let parameter = decided(
+            BezierAlgebraicParameter2::try_isolate(
+                decided(
+                    BezierParameterPolynomial::try_new_power_basis(
+                        vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)],
+                        &policy,
+                    )
+                    .unwrap(),
+                ),
+                decided(
+                    BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap(),
+                ),
+                &policy,
+            )
+            .unwrap(),
+        );
+        // C(t)=(P(t),t*P(t)), P(t)=4*t^3-pi. At P(alpha)=0 its point is zero
+        // and its nonzero tangent has slope alpha in (0,1).
+        let xs = [
+            -Real::pi(),
+            -Real::pi(),
+            -Real::pi(),
+            Real::one() - Real::pi(),
+            Real::from(4) - Real::pi(),
+        ];
+        let ys = [
+            Real::zero(),
+            (-Real::pi() / Real::from(4)).unwrap(),
+            (-Real::pi() / Real::from(2)).unwrap(),
+            (-Real::from(3) * Real::pi() / Real::from(4)).unwrap(),
+            Real::from(4) - Real::pi(),
+        ];
+        let curve = decided(
+            RationalBezier2::from_homogeneous_controls(
+                xs.into_iter()
+                    .zip(ys)
+                    .map(|(x, y)| HomogeneousControl2::new(x, y, Real::one()))
+                    .collect(),
+                &policy,
+            )
+            .unwrap(),
+        );
+        let source = BezierSubcurve2::Rational(curve);
+        let image = decided(
+            BezierAlgebraicEndpointImage2::from_source_curve(&source, &parameter, &policy).unwrap(),
+        );
+        let point = decided(image.point().unwrap());
+        let represented_point = point.x().and_then(|c| c.representation()).is_some()
+            && point.y().and_then(|c| c.representation()).is_some();
+        let tangent = decided(image.tangent().unwrap());
+        let retained = tangent.retained_parameter().is_some();
+        let represented_vector = BezierAlgebraicTangentVector2::from_image(tangent)
+            .represented_coordinates()
+            .is_some();
+        assert!(represented_point && retained && !represented_vector);
+        for reversed in [false, true] {
+            for swapped in [false, true] {
+                let candidate = |index| {
+                    BezierArrangementFragment2::new(
+                        index,
+                        0,
+                        BezierSplitFragment2::RetainedBezier {
+                            reversed,
+                            start: if reversed {
+                                BezierParameter2::Exact(Real::zero())
+                            } else {
+                                BezierParameter2::Algebraic(parameter.clone())
+                            },
+                            end: if reversed {
+                                BezierParameter2::Algebraic(parameter.clone())
+                            } else {
+                                BezierParameter2::Exact(Real::one())
+                            },
+                            source_curve: source.clone(),
+                            start_image: (!reversed).then(|| image.clone()),
+                            end_image: reversed.then(|| image.clone()),
+                        },
+                    )
+                };
+                let diagonal = |index| {
+                    let end = if reversed {
+                        -Real::pi()
+                    } else {
+                        Real::from(4) - Real::pi()
+                    };
+                    line(
+                        index,
+                        Point2::from_values(0, 0),
+                        Point2::new(end.clone(), end),
+                    )
+                };
+                let graph = BezierArrangementGraph2::new(vec![
+                    line(
+                        0,
+                        Point2::from_values(if reversed { 1 } else { -1 }, 0),
+                        Point2::from_values(0, 0),
+                    ),
+                    if swapped { diagonal(1) } else { candidate(1) },
+                    if swapped { candidate(2) } else { diagonal(2) },
+                ])
+                .unwrap();
+                let traversal = decided(graph.traverse_retained_with_tangent_order(&policy));
+                let chosen = if swapped { 2 } else { 1 };
+                assert_eq!(traversal.chains()[0].fragment_indices(), [0, chosen]);
+                assert_eq!(traversal.chains()[1].fragment_indices(), [3 - chosen]);
+            }
+        }
+    }
+}

@@ -88,7 +88,7 @@ fn tangent_vector_at(
             .tangent_at_algebraic_parameter(parameter, &policy())
             .unwrap(),
     );
-    BezierAlgebraicTangentVector2::from_image(&tangent).expect("represented tangent coordinates")
+    BezierAlgebraicTangentVector2::from_image(&tangent)
 }
 
 fn rising() -> QuadraticBezier2 {
@@ -107,13 +107,11 @@ fn rational_endpoint_vectors(
         .unwrap(),
     );
     let tangent = BezierAlgebraicTangentVector2::from_image(decided(image.tangent().unwrap()));
-    let tangent = tangent.expect("represented first derivative coordinates");
     let second_derivative = BezierAlgebraicTangentVector2::from_image(
         image
             .second_derivative()
             .expect("rational conic endpoint should retain second derivative evidence"),
     );
-    let second_derivative = second_derivative.expect("represented second derivative coordinates");
     (tangent, second_derivative)
 }
 
@@ -196,10 +194,14 @@ fn algebraic_tangent_order_handles_distinct_generators_with_disjoint_enclosures(
     let curve = rising();
     let first_source = tangent_vector_at(&curve, &sqrt_half_parameter());
     let second_source = tangent_vector_at(&curve, &sqrt_three_quarters_parameter());
-    let first =
-        BezierAlgebraicTangentVector2::new(first_source.dy().clone(), first_source.dx().clone());
-    let second =
-        BezierAlgebraicTangentVector2::new(second_source.dx().clone(), second_source.dy().clone());
+    let first = BezierAlgebraicTangentVector2::new(
+        first_source.represented_coordinates().unwrap().1.clone(),
+        first_source.represented_coordinates().unwrap().0.clone(),
+    );
+    let second = BezierAlgebraicTangentVector2::new(
+        second_source.represented_coordinates().unwrap().0.clone(),
+        second_source.represented_coordinates().unwrap().1.clone(),
+    );
 
     let evidence = decided(compare_algebraic_tangent_turn_from_base(
         &base,
@@ -261,12 +263,20 @@ fn algebraic_tangent_order_rejects_zero_tangent() {
 fn algebraic_same_tangent_order_uses_second_derivative_side_witness() {
     let tangent = tangent_vector(&horizontal());
     let upward_second = BezierAlgebraicTangentVector2::new(
-        tangent.dx().clone(),
-        tangent_vector(&upward()).dy().clone(),
+        tangent.represented_coordinates().unwrap().0.clone(),
+        tangent_vector(&upward())
+            .represented_coordinates()
+            .unwrap()
+            .1
+            .clone(),
     );
     let downward_second = BezierAlgebraicTangentVector2::new(
-        tangent.dx().clone(),
-        tangent_vector(&downward()).dy().clone(),
+        tangent.represented_coordinates().unwrap().0.clone(),
+        tangent_vector(&downward())
+            .represented_coordinates()
+            .unwrap()
+            .1
+            .clone(),
     );
 
     let evidence = decided(compare_algebraic_same_tangent_second_order(
@@ -320,8 +330,12 @@ fn rational_algebraic_same_tangent_order_uses_second_derivative_side_witness() {
 fn algebraic_same_tangent_order_rejects_equal_second_order_evidence() {
     let tangent = tangent_vector(&horizontal());
     let upward_second = BezierAlgebraicTangentVector2::new(
-        tangent.dx().clone(),
-        tangent_vector(&upward()).dy().clone(),
+        tangent.represented_coordinates().unwrap().0.clone(),
+        tangent_vector(&upward())
+            .represented_coordinates()
+            .unwrap()
+            .1
+            .clone(),
     );
 
     let evidence = decided(compare_algebraic_same_tangent_second_order(
@@ -343,16 +357,40 @@ fn algebraic_same_tangent_order_rejects_equal_second_order_evidence() {
 fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
     let tangent = tangent_vector(&horizontal());
     let zero_second = BezierAlgebraicTangentVector2::new(
-        tangent_vector(&upward()).dx().clone(),
-        tangent_vector(&upward()).dx().clone(),
+        tangent_vector(&upward())
+            .represented_coordinates()
+            .unwrap()
+            .0
+            .clone(),
+        tangent_vector(&upward())
+            .represented_coordinates()
+            .unwrap()
+            .0
+            .clone(),
     );
     let upward_third = BezierAlgebraicTangentVector2::new(
-        tangent_vector(&upward()).dx().clone(),
-        tangent_vector(&upward()).dy().clone(),
+        tangent_vector(&upward())
+            .represented_coordinates()
+            .unwrap()
+            .0
+            .clone(),
+        tangent_vector(&upward())
+            .represented_coordinates()
+            .unwrap()
+            .1
+            .clone(),
     );
     let downward_third = BezierAlgebraicTangentVector2::new(
-        tangent_vector(&downward()).dx().clone(),
-        tangent_vector(&downward()).dy().clone(),
+        tangent_vector(&downward())
+            .represented_coordinates()
+            .unwrap()
+            .0
+            .clone(),
+        tangent_vector(&downward())
+            .represented_coordinates()
+            .unwrap()
+            .1
+            .clone(),
     );
 
     let second_evidence = decided(compare_algebraic_same_tangent_second_order(

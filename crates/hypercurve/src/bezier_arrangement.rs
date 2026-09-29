@@ -6,9 +6,9 @@
 //! connects materialized Bezier/conic fragments by exact endpoint equality,
 //! follows branch-free chains, and can optionally resolve simple branch
 //! vertices by exact tangent angle order. A retained traversal variant also
-//! consumes algebraic endpoint-image fragments whose represented point and
-//! tangent evidence is present, while still refusing unresolved fragments,
-//! overlaps, coincident tangents, and zero tangents.
+//! consumes algebraic endpoint-image fragments with certified connectivity and
+//! exact tangent evidence, including retained source expressions. Unresolved
+//! overlaps and branches whose local order is uncertified remain classified.
 //!
 //! That boundary is exact-computation discipline: topology code may retain unresolved exact objects, but it must
 //! not invent a floating successor. The branch-free chain walk mirrors the
@@ -36,7 +36,7 @@ use crate::{
     compare_algebraic_same_tangent_second_order, compare_algebraic_same_tangent_third_order,
 };
 use hyperreal::{Rational, Real, RealSign};
-use hypersolve::{AlgebraicRootArithmeticOp, AlgebraicRootRepresentation};
+use hypersolve::AlgebraicRootRepresentation;
 
 /// One retained Bezier arrangement fragment with source provenance.
 #[derive(Clone, Debug, PartialEq)]
@@ -1411,18 +1411,11 @@ fn retained_endpoint_side_data(
             Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
             Err(_) => return Classification::Uncertain(UncertaintyReason::Boundary),
         };
-        let Some(tangent) = retained_algebraic_tangent(tangent_image) else {
-            return Classification::Uncertain(UncertaintyReason::Boundary);
-        };
-        // Higher derivatives are optional projected coordinates here. Exact
-        // source expressions stay on the endpoint image; ordering requests
-        // only the additional derivative evidence it actually needs.
-        let second_derivative = image
-            .second_derivative()
-            .and_then(retained_algebraic_tangent);
-        let third_derivative = image
-            .third_derivative()
-            .and_then(retained_algebraic_tangent);
+        let tangent = retained_algebraic_tangent(tangent_image);
+        // Retain every available exact derivative image. Ordering requests
+        // missing higher derivatives only when their evidence is needed.
+        let second_derivative = image.second_derivative().map(retained_algebraic_tangent);
+        let third_derivative = image.third_derivative().map(retained_algebraic_tangent);
         return Classification::Decided(Some(RetainedEndpointSideData {
             point: Some(point),
             tangent: Some(tangent),
@@ -1577,10 +1570,8 @@ fn retained_algebraic_point_key(
 
 fn retained_algebraic_tangent(
     tangent: &RationalBezierAlgebraicTangentImage2,
-) -> Option<RetainedTangentVector> {
-    BezierAlgebraicTangentVector2::from_image(tangent)
-        .map(Box::new)
-        .map(RetainedTangentVector::Algebraic)
+) -> RetainedTangentVector {
+    RetainedTangentVector::Algebraic(Box::new(BezierAlgebraicTangentVector2::from_image(tangent)))
 }
 
 fn negate_retained_tangent(
@@ -1596,36 +1587,10 @@ fn negate_retained_tangent(
             })))
         }
         RetainedTangentVector::Algebraic(tangent) => Some(RetainedTangentVector::Algebraic(
-            Box::new(BezierAlgebraicTangentVector2::new(
-                negate_algebraic_root(tangent.dx(), policy)?,
-                negate_algebraic_root(tangent.dy(), policy)?,
-            )),
+            Box::new(tangent.negated(policy)?),
         )),
     }
 }
-
-fn negate_algebraic_root(
-    value: &AlgebraicRootRepresentation,
-    policy: &CurveContext,
-) -> Option<AlgebraicRootRepresentation> {
-    let evidence = crate::bezier_algebraic_image::arithmetic_algebraic_representations_with_policy(
-        value,
-        None,
-        AlgebraicRootArithmeticOp::Negate,
-        policy,
-    );
-    if !crate::bezier_algebraic_image::algebraic_arithmetic_succeeded(&evidence.status) {
-        return None;
-    }
-    if let Some(result) = evidence.result_representation {
-        return Some(result);
-    }
-    evidence
-        .exact_result
-        .map(|value| AlgebraicRootRepresentation::from_exact_value(&value))
-}
-
-type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
 
 fn endpoint_adjacency(
     endpoints: &[(Point2, Point2)],
@@ -1744,6 +1709,8 @@ fn tangent_adjacency(
     Classification::Decided((outgoing, predecessors))
 }
 
+type EndpointAdjacency = (Vec<Option<usize>>, Vec<Option<usize>>);
+
 fn retained_tangent_adjacency(
     endpoints: &[RetainedEndpointData],
     policy: &CurveContext,
@@ -1848,7 +1815,10 @@ mod endpoint_adjacency_tests {
                         else {
                             panic!("a degree-certified zero derivative was lost");
                         };
-                        for coordinate in [zero.dx(), zero.dy()] {
+                        let (x, y) = zero
+                            .represented_coordinates()
+                            .expect("represented polynomial zero");
+                        for coordinate in [x, y] {
                             assert!(coordinate.exact_point_witness() == Some(&Real::zero()));
                         }
                     }
@@ -2049,8 +2019,9 @@ mod endpoint_adjacency_tests {
     #[test]
     fn represented_tangent_negation_accepts_an_exact_real_result() {
         let value = AlgebraicRootRepresentation::from_exact_value(&Real::pi());
-        let negated = negate_algebraic_root(&value, &CurveContext::STRICT)
-            .expect("exact Real negation remains represented");
+        let negated =
+            crate::bezier_tangent_order::negate_algebraic_root(&value, &CurveContext::STRICT)
+                .expect("exact Real negation remains represented");
 
         assert_eq!(negated.exact_point_witness(), Some(&-Real::pi()));
     }
@@ -2173,7 +2144,7 @@ mod endpoint_adjacency_tests {
                 panic!("unused higher-derivative projection blocked endpoint evidence");
             };
             assert!(side.point.is_some() && side.tangent.is_some());
-            assert!(side.second_derivative.is_none());
+            assert!(side.second_derivative.is_some());
             assert!(side.derivative_source.is_some());
         }
     }
@@ -2216,7 +2187,7 @@ mod endpoint_adjacency_tests {
             else {
                 panic!("lazy derivative {order} should construct exactly");
             };
-            let expected = expected.and_then(retained_algebraic_tangent);
+            let expected = expected.map(retained_algebraic_tangent);
             assert_eq!(
                 Some(retained_tangent_as_algebraic(&actual)),
                 expected.as_ref().map(retained_tangent_as_algebraic)
@@ -3018,7 +2989,7 @@ fn retained_algebraic_derivative(
     };
     let mut derivative = match derivative {
         Ok(Classification::Decided(derivative)) => {
-            derivative.as_ref().and_then(retained_algebraic_tangent)
+            derivative.as_ref().map(retained_algebraic_tangent)
         }
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),

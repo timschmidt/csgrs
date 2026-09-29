@@ -1628,13 +1628,14 @@ impl RationalBezierAlgebraicTangentImage2 {
         }
     }
 
-    /// Signs a determinant in one certified selected parameter, preserving
+    /// Signs a cross or dot product in one certified selected parameter, preserving
     /// correlations that separate coordinate-root images would discard.
     /// Returns None when there is no proved common selected parameter; that
     /// case still uses the represented-coordinate arithmetic path.
-    pub(crate) fn shared_parameter_cross_sign(
+    pub(crate) fn shared_parameter_bilinear_sign(
         &self,
         other: &Self,
+        dot: bool,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<RealSign>>> {
         let strict = policy.strict_counterpart();
@@ -1666,10 +1667,20 @@ impl RationalBezierAlgebraicTangentImage2 {
         }
         let determinant = reduce_algebraic_image_polynomial(
             parameter,
-            subtract_polynomials(
-                &multiply_polynomials(first_x, second_y),
-                &multiply_polynomials(first_y, second_x),
-            ),
+            if dot {
+                let mut product = multiply_polynomials(first_x, second_x);
+                let other = multiply_polynomials(first_y, second_y);
+                product.resize(product.len().max(other.len()), Real::zero());
+                for (coefficient, term) in product.iter_mut().zip(other) {
+                    *coefficient = &*coefficient + term;
+                }
+                product
+            } else {
+                subtract_polynomials(
+                    &multiply_polynomials(first_x, second_y),
+                    &multiply_polynomials(first_y, second_x),
+                )
+            },
             &strict,
         )?;
         Ok(Some(
@@ -1680,6 +1691,66 @@ impl RationalBezierAlgebraicTangentImage2 {
                 (RealSign::Positive, true) => RealSign::Negative,
                 (RealSign::Negative, true) => RealSign::Positive,
                 _ => sign,
+            }),
+        ))
+    }
+
+    /// Signs a linear combination against arbitrary exact constant coordinates.
+    /// The selected root and the denominator domain remain authoritative.
+    pub(crate) fn constant_linear_combination_sign(
+        &self,
+        x: &Real,
+        y: &Real,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<RealSign>>> {
+        let Some(expression) = self.retained_expression() else {
+            return Ok(None);
+        };
+        let strict = policy.strict_counterpart();
+        let selected = BezierParameter2::Algebraic(expression.parameter.clone());
+        let denominator =
+            match signed_coefficients_at_parameter(&expression.denominator, &selected, &strict)? {
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+        let zero = Real::zero();
+        let numerator = (0..expression
+            .dx_numerator
+            .len()
+            .max(expression.dy_numerator.len()))
+            .map(|i| {
+                x * expression.dx_numerator.get(i).unwrap_or(&zero)
+                    + y * expression.dy_numerator.get(i).unwrap_or(&zero)
+            })
+            .collect();
+        let numerator =
+            reduce_algebraic_image_polynomial(&expression.parameter, numerator, &strict)?;
+        Ok(Some(
+            signed_coefficients_at_parameter(&numerator, &selected, &strict)?.map(|sign| {
+                match (sign, denominator) {
+                    (RealSign::Zero, _) => RealSign::Zero,
+                    (first, second) if first == second => RealSign::Positive,
+                    _ => RealSign::Negative,
+                }
+            }),
+        ))
+    }
+
+    /// Negates an unprojected derivative while retaining its selected source.
+    pub(crate) fn negated_retained_expression(&self) -> Option<Self> {
+        let expression = self.retained_expression()?;
+        Some(Self::new(
+            self.data.parameter.clone(),
+            RationalTangentDefinition::Expression(RetainedRationalTangentExpression {
+                parameter: expression.parameter.clone(),
+                dx_numerator: expression.dx_numerator.iter().map(|value| -value).collect(),
+                dy_numerator: expression.dy_numerator.iter().map(|value| -value).collect(),
+                denominator: expression.denominator.clone(),
             }),
         ))
     }
