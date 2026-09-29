@@ -62,14 +62,21 @@ fuzz_target!(|data: &[u8]| {
         r(data[8] as i32 - 128),
         r(data[9] as i32 - 128),
     ));
-    let first_location = first
+    // Rectangles with rational corners must always classify, and every
+    // Boolean between them must complete with certified topology: an error
+    // or blocker here is a completeness regression, not a skipped case.
+    let decided_location = |region: &CurveRegion2| match region
         .classify_point(&query, &policy)
         .expect("rectangle classification must be valid")
-        .into_value();
-    let second_location = second
-        .classify_point(&query, &policy)
-        .expect("rectangle classification must be valid")
-        .into_value();
+        .into_value()
+    {
+        Classification::Decided(location) => location,
+        Classification::Uncertain(reason) => {
+            panic!("rational rectangle classification stayed uncertain: {reason:?}")
+        }
+    };
+    let first_location = decided_location(&first);
+    let second_location = decided_location(&second);
 
     for op in [
         BooleanOp::Union,
@@ -77,34 +84,22 @@ fuzz_target!(|data: &[u8]| {
         BooleanOp::Difference,
         BooleanOp::Xor,
     ] {
-        let direct = first.boolean_region(&second, op, &policy);
-        if let (
-            Ok(result),
-            Classification::Decided(first_location),
-            Classification::Decided(second_location),
-        ) = (&direct, first_location, second_location)
-            && let Some(expected_inside) = boolean_membership(op, first_location, second_location)
-        {
+        let result = first
+            .boolean_region(&second, op, &policy)
+            .unwrap_or_else(|error| panic!("{op:?} of rectangles must complete: {error:?}"));
+        assert_eq!(result.certainty, hypercurve::CurveCertainty::Certified);
+        if let Some(expected_inside) = boolean_membership(op, first_location, second_location) {
             assert_eq!(
-                result
-                    .value
-                    .classify_point(&query, &policy)
-                    .expect("Boolean output classification must be valid")
-                    .into_value(),
-                Classification::Decided(if expected_inside {
+                decided_location(&result.value),
+                if expected_inside {
                     RegionPointLocation::Inside
                 } else {
                     RegionPointLocation::Outside
-                }),
+                },
+                "{op:?}"
             );
         }
     }
 
-    assert_eq!(
-        first
-            .classify_point(&query, &policy)
-            .expect("repeated rectangle classification must be valid")
-            .into_value(),
-        first_location
-    );
+    assert_eq!(decided_location(&first), first_location);
 });
