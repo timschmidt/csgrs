@@ -185,6 +185,11 @@ pub(crate) fn algebraic_endpoint_tangent_cross_sign(
     second: &RationalBezierAlgebraicTangentImage2,
     policy: &CurveContext,
 ) -> Classification<RealSign> {
+    match first.shared_parameter_cross_sign(second, policy) {
+        Ok(Some(sign)) => return sign,
+        Ok(None) => {}
+        Err(_) => return Classification::Uncertain(crate::UncertaintyReason::Unsupported),
+    }
     let first = BezierAlgebraicTangentVector2::from_image(first);
     let second = BezierAlgebraicTangentVector2::from_image(second);
     let (Some(first), Some(second)) = (first, second) else {
@@ -1341,6 +1346,203 @@ fn same_tangent_evidence(
 #[cfg(test)]
 mod exact_real_status_tests {
     use super::*;
+
+    fn selected_parameter(
+        coefficients: Vec<Real>,
+        lower: Real,
+        upper: Real,
+        policy: &CurveContext,
+    ) -> crate::BezierAlgebraicParameter2 {
+        let polynomial = crate::tests::decided(
+            crate::BezierParameterPolynomial::try_new_power_basis(coefficients, policy).unwrap(),
+        );
+        let interval = crate::tests::decided(
+            crate::BezierParameterInterval::try_new(lower, upper, policy).unwrap(),
+        );
+        crate::tests::decided(
+            crate::BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+        )
+    }
+
+    fn cubic_power_curve(rotate: bool, scale: i32) -> crate::CubicBezier2 {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        let point = |x: Real, y: Real| {
+            if rotate {
+                crate::Point2::new(-Real::from(scale) * y, Real::from(scale) * x)
+            } else {
+                crate::Point2::new(Real::from(scale) * x, Real::from(scale) * y)
+            }
+        };
+        // (t,t^3), optionally rotated counter-clockwise and scaled.
+        crate::CubicBezier2::new(
+            point(Real::zero(), Real::zero()),
+            point(q(1, 3), Real::zero()),
+            point(q(2, 3), Real::zero()),
+            point(Real::one(), Real::one()),
+        )
+    }
+
+    #[test]
+    fn retained_tangent_determinants_use_selected_source_signs() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let coefficients = vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(4)];
+            let parameter =
+                selected_parameter(coefficients.clone(), Real::zero(), Real::one(), &policy);
+            let tighter = selected_parameter(coefficients, q(9, 10), q(19, 20), &policy);
+            let tangent = |curve: &crate::CubicBezier2,
+                           parameter: &crate::BezierAlgebraicParameter2| {
+                crate::tests::decided(
+                    curve
+                        .tangent_at_algebraic_parameter(parameter, &policy)
+                        .unwrap(),
+                )
+            };
+            let first = tangent(&cubic_power_curve(false, 1), &parameter);
+            let rotated = tangent(&cubic_power_curve(true, 1), &parameter);
+            let scaled = tangent(&cubic_power_curve(false, 2), &parameter);
+            let refined = tangent(&cubic_power_curve(true, 1), &tighter);
+            for image in [&first, &rotated, &scaled, &refined] {
+                assert_eq!(
+                    image.status(),
+                    crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+                );
+            }
+            // u=(1,3a^2), Ru=(-3a^2,1): cross(u,Ru)=1+9a^4>0.
+            for (left, right, expected) in [
+                (&first, &rotated, RealSign::Positive),
+                (&rotated, &first, RealSign::Negative),
+                (&first, &scaled, RealSign::Zero),
+                (&first, &refined, RealSign::Positive),
+            ] {
+                assert_eq!(
+                    algebraic_endpoint_tangent_cross_sign(left, right, &policy),
+                    Classification::Decided(expected)
+                );
+            }
+            // Mix a retained tangent with materialized coordinate roots.
+            let point = |x: Real| crate::Point2::new(x, Real::zero());
+            for stationary in [false, true] {
+                let endpoint = if stationary {
+                    Real::zero()
+                } else {
+                    Real::one()
+                };
+                let curve = crate::QuadraticBezier2::new(
+                    point(Real::zero()),
+                    point((&endpoint / Real::from(2)).unwrap()),
+                    point(endpoint),
+                );
+                let axis = crate::tests::decided(
+                    curve
+                        .tangent_at_algebraic_parameter(&parameter, &policy)
+                        .unwrap(),
+                );
+                assert_eq!(
+                    axis.status(),
+                    crate::BezierAlgebraicImageStatus::Transformed
+                );
+                assert_eq!(
+                    algebraic_endpoint_tangent_cross_sign(&first, &axis, &policy),
+                    Classification::Decided(if stationary {
+                        RealSign::Zero
+                    } else {
+                        RealSign::Negative
+                    })
+                );
+                assert_eq!(
+                    algebraic_endpoint_tangent_cross_sign(&axis, &first, &policy),
+                    Classification::Decided(if stationary {
+                        RealSign::Zero
+                    } else {
+                        RealSign::Positive
+                    })
+                );
+            }
+            // For C=(1/(1+t),t/(1+t)), C''=(2,-2)/(1+t)^3.
+            // Negating every homogeneous weight preserves C but changes the
+            // sign of the retained odd denominator power. Both must give
+            // cross(u,C'')=-2*(1+3a^2)/(1+a)^3<0.
+            for scale in [Real::one(), -Real::one()] {
+                let curve = crate::RationalQuadraticBezier2::try_new(
+                    crate::Point2::from_values(1, 0),
+                    crate::Point2::new(q(2, 3), q(1, 3)),
+                    crate::Point2::new(q(1, 2), q(1, 2)),
+                    scale.clone(),
+                    &scale * q(3, 2),
+                    &scale * Real::from(2),
+                )
+                .unwrap();
+                let second = crate::tests::decided(
+                    curve
+                        .derivatives_at_algebraic_parameter(&parameter, 2, &policy)
+                        .unwrap(),
+                )
+                .pop()
+                .unwrap();
+                assert_eq!(
+                    second.status(),
+                    crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+                );
+                assert_eq!(
+                    algebraic_endpoint_tangent_cross_sign(&first, &second, &policy),
+                    Classification::Decided(RealSign::Negative)
+                );
+                assert_eq!(
+                    algebraic_endpoint_tangent_cross_sign(&second, &first, &policy),
+                    Classification::Decided(RealSign::Positive)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn tangent_determinants_do_not_merge_distinct_selected_roots() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // P=16(t-1/2)^4-pi/16 has one root in each half of [0,1].
+            let coefficients = vec![
+                Real::one() - (Real::pi() / Real::from(16)).unwrap(),
+                Real::from(-8),
+                Real::from(24),
+                Real::from(-32),
+                Real::from(16),
+            ];
+            let first_parameter =
+                selected_parameter(coefficients.clone(), Real::zero(), q(1, 2), &policy);
+            let second_parameter = selected_parameter(coefficients, q(1, 2), Real::one(), &policy);
+            let curve = cubic_power_curve(false, 1);
+            let first = crate::tests::decided(
+                curve
+                    .tangent_at_algebraic_parameter(&first_parameter, &policy)
+                    .unwrap(),
+            );
+            let second = crate::tests::decided(
+                curve
+                    .tangent_at_algebraic_parameter(&second_parameter, &policy)
+                    .unwrap(),
+            );
+            assert_eq!(
+                first.status(),
+                crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+            );
+            assert_eq!(
+                second.status(),
+                crate::BezierAlgebraicImageStatus::RetainedRationalExpression
+            );
+            // cross((1,3a^2),(1,3b^2))=3(b^2-a^2)>0. Sharing P alone
+            // must never make these two derivatives appear equal. The general
+            // independent-source path may certify the sign or remain blocked.
+            assert!(matches!(
+                algebraic_endpoint_tangent_cross_sign(&first, &second, &policy),
+                Classification::Decided(RealSign::Positive) | Classification::Uncertain(_)
+            ));
+            assert!(matches!(
+                algebraic_endpoint_tangent_cross_sign(&second, &first, &policy),
+                Classification::Decided(RealSign::Negative) | Classification::Uncertain(_)
+            ));
+        }
+    }
 
     #[test]
     fn scalar_sign_accepts_an_exact_real_arithmetic_result() {

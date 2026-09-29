@@ -1007,47 +1007,15 @@ impl RationalBezierAlgebraicPointImage2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Option<Classification<bool>>> {
-        let first_parameter = self.retained_parameter();
-        let second_parameter = other.retained_parameter();
-        let parameter = match (first_parameter, second_parameter) {
-            (Some(first), Some(second)) => {
-                if first != second {
-                    match BezierParameter2::Algebraic(first.clone())
-                        .same_value(&BezierParameter2::Algebraic(second.clone()), policy)?
-                    {
-                        Classification::Decided(true) => {}
-                        Classification::Decided(false) | Classification::Uncertain(_) => {
-                            return Ok(None);
-                        }
-                    }
-                }
-                first
-            }
-            (Some(first), None) => {
-                let representation = parameter_representation(first, policy);
-                if crate::bezier_arrangement::represented_roots_equal(
-                    &representation,
-                    &other.data.parameter,
-                    policy,
-                ) != Some(true)
-                {
-                    return Ok(None);
-                }
-                first
-            }
-            (None, Some(second)) => {
-                let representation = parameter_representation(second, policy);
-                if crate::bezier_arrangement::represented_roots_equal(
-                    &self.data.parameter,
-                    &representation,
-                    policy,
-                ) != Some(true)
-                {
-                    return Ok(None);
-                }
-                second
-            }
-            (None, None) => return Ok(None),
+        let Some(parameter) = shared_image_parameter(
+            self.retained_parameter(),
+            &self.data.parameter,
+            other.retained_parameter(),
+            &other.data.parameter,
+            policy,
+        )?
+        else {
+            return Ok(None);
         };
         let (
             Some((first_x, first_y, first_denominator)),
@@ -1490,6 +1458,56 @@ impl RationalBezierAlgebraicPointPredicate2<'_> {
     }
 }
 
+fn shared_image_parameter<'a>(
+    first_parameter: Option<&'a BezierAlgebraicParameter2>,
+    first_root: &AlgebraicRootRepresentation,
+    second_parameter: Option<&'a BezierAlgebraicParameter2>,
+    second_root: &AlgebraicRootRepresentation,
+    policy: &CurveContext,
+) -> CurveResult<Option<&'a BezierAlgebraicParameter2>> {
+    let parameter = match (first_parameter, second_parameter) {
+        (Some(first), Some(second)) => {
+            if first != second {
+                match BezierParameter2::Algebraic(first.clone())
+                    .same_value(&BezierParameter2::Algebraic(second.clone()), policy)?
+                {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) | Classification::Uncertain(_) => {
+                        return Ok(None);
+                    }
+                }
+            }
+            first
+        }
+        (Some(first), None) => {
+            let representation = parameter_representation(first, policy);
+            if crate::bezier_arrangement::represented_roots_equal(
+                &representation,
+                second_root,
+                policy,
+            ) != Some(true)
+            {
+                return Ok(None);
+            }
+            first
+        }
+        (None, Some(second)) => {
+            let representation = parameter_representation(second, policy);
+            if crate::bezier_arrangement::represented_roots_equal(
+                first_root,
+                &representation,
+                policy,
+            ) != Some(true)
+            {
+                return Ok(None);
+            }
+            second
+        }
+        (None, None) => return Ok(None),
+    };
+    Ok(Some(parameter))
+}
+
 /// Exact finite image of a polynomial or rational Bezier derivative vector.
 ///
 /// A value always contains either two exact coordinate images or a retained
@@ -1589,13 +1607,81 @@ impl RationalBezierAlgebraicTangentImage2 {
     /// Returns exact derivative numerators and their certified nonzero denominator
     /// when the tangent retains its source expression.
     pub fn retained_coordinate_polynomials(&self) -> Option<(&[Real], &[Real], &[Real])> {
-        self.retained_expression().map(|expression| {
-            (
-                expression.dx_numerator.as_slice(),
-                expression.dy_numerator.as_slice(),
-                expression.denominator.as_slice(),
-            )
-        })
+        self.retained_expression()
+            .map(|_| self.coordinate_polynomials())
+    }
+
+    fn coordinate_polynomials(&self) -> (&[Real], &[Real], &[Real]) {
+        match &self.data.definition {
+            // The coordinate-pair constructor retains the same source
+            // denominator for both coordinates.
+            RationalTangentDefinition::Coordinates { dx, dy } => (
+                dx.numerator_coefficients(),
+                dy.numerator_coefficients(),
+                dx.denominator_coefficients(),
+            ),
+            RationalTangentDefinition::Expression(expression) => (
+                &expression.dx_numerator,
+                &expression.dy_numerator,
+                &expression.denominator,
+            ),
+        }
+    }
+
+    /// Signs a determinant in one certified selected parameter, preserving
+    /// correlations that separate coordinate-root images would discard.
+    /// Returns None when there is no proved common selected parameter; that
+    /// case still uses the represented-coordinate arithmetic path.
+    pub(crate) fn shared_parameter_cross_sign(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<RealSign>>> {
+        let strict = policy.strict_counterpart();
+        let Some(parameter) = shared_image_parameter(
+            self.retained_parameter(),
+            &self.data.parameter,
+            other.retained_parameter(),
+            &other.data.parameter,
+            &strict,
+        )?
+        else {
+            return Ok(None);
+        };
+        let (first_x, first_y, first_denominator) = self.coordinate_polynomials();
+        let (second_x, second_y, second_denominator) = other.coordinate_polynomials();
+        let selected = BezierParameter2::Algebraic(parameter.clone());
+        let mut reverse_sign = false;
+        for denominator in [first_denominator, second_denominator] {
+            match signed_coefficients_at_parameter(denominator, &selected, &strict)? {
+                Classification::Decided(RealSign::Positive) => {}
+                Classification::Decided(RealSign::Negative) => reverse_sign = !reverse_sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::InvalidBezierAlgebraicParameter);
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            }
+        }
+        let determinant = reduce_algebraic_image_polynomial(
+            parameter,
+            subtract_polynomials(
+                &multiply_polynomials(first_x, second_y),
+                &multiply_polynomials(first_y, second_x),
+            ),
+            &strict,
+        )?;
+        Ok(Some(
+            signed_coefficients_at_parameter(&determinant, &selected, &strict)?.map(|sign| match (
+                sign,
+                reverse_sign,
+            ) {
+                (RealSign::Positive, true) => RealSign::Negative,
+                (RealSign::Negative, true) => RealSign::Positive,
+                _ => sign,
+            }),
+        ))
     }
 
     pub(crate) fn coordinate_sign(
@@ -2506,6 +2592,9 @@ fn rational_second_derivative_numerator(
 }
 
 fn multiply_polynomials(left: &[Real], right: &[Real]) -> Vec<Real> {
+    if left.is_empty() || right.is_empty() {
+        return Vec::new();
+    }
     let mut result = vec![Real::zero(); left.len() + right.len() - 1];
     for (left_degree, left_coefficient) in left.iter().enumerate() {
         for (right_degree, right_coefficient) in right.iter().enumerate() {
