@@ -7360,7 +7360,7 @@ fn represented_affine_coordinate(
                 offset: Real::zero(),
             })
         } else {
-            algebraic_root_affine_relation(base, source, hypersolve::PredicatePolicy::STRICT)
+            algebraic_root_affine_relation(base, source)
         };
         let Some(relation) = relation else {
             all_affine = false;
@@ -8578,11 +8578,7 @@ fn represented_affine_tensor_basis(
                     scale: Real::one(),
                     offset: Real::zero(),
                 }
-            } else if let Some(relation) = algebraic_root_affine_relation(
-                source,
-                coordinate,
-                hypersolve::PredicatePolicy::STRICT,
-            ) {
+            } else if let Some(relation) = algebraic_root_affine_relation(source, coordinate) {
                 relation
             } else if represented_roots_strictly_equal(source, coordinate) {
                 hypersolve::AlgebraicRootAffineRelation {
@@ -9657,8 +9653,7 @@ fn represented_zero_offset_unit_scales(
         return scales;
     }
 
-    if let Some(relation) =
-        algebraic_root_affine_relation(left, right, hypersolve::PredicatePolicy::STRICT)
+    if let Some(relation) = algebraic_root_affine_relation(left, right)
         && compare_reals(&relation.offset, &Real::zero(), &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Equal)
     {
@@ -33303,11 +33298,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     scale: Real::one(),
                     offset: Real::zero(),
                 }
-            } else if let Some(relation) = algebraic_root_affine_relation(
-                &first_center[axis],
-                &second_center[axis],
-                hypersolve::PredicatePolicy::STRICT,
-            ) {
+            } else if let Some(relation) =
+                algebraic_root_affine_relation(&first_center[axis], &second_center[axis])
+            {
                 relation
             } else if represented_roots_strictly_equal(&first_center[axis], &second_center[axis]) {
                 hypersolve::AlgebraicRootAffineRelation {
@@ -33348,11 +33341,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     scale: Real::one(),
                     offset: Real::zero(),
                 }
-            } else if let Some(relation) = algebraic_root_affine_relation(
-                &first.center[axis],
-                &second.center[axis],
-                hypersolve::PredicatePolicy::STRICT,
-            ) {
+            } else if let Some(relation) =
+                algebraic_root_affine_relation(&first.center[axis], &second.center[axis])
+            {
                 relation
             } else if represented_roots_strictly_equal(&first.center[axis], &second.center[axis]) {
                 hypersolve::AlgebraicRootAffineRelation {
@@ -35021,11 +35012,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                             scale: Real::one(),
                             offset: Real::zero(),
                         }
-                    } else if let Some(relation) = algebraic_root_affine_relation(
-                        candidate,
-                        &source,
-                        hypersolve::PredicatePolicy::STRICT,
-                    ) {
+                    } else if let Some(relation) =
+                        algebraic_root_affine_relation(candidate, &source)
+                    {
                         relation
                     } else if represented_roots_strictly_equal(candidate, &source) {
                         hypersolve::AlgebraicRootAffineRelation {
@@ -67241,11 +67230,7 @@ fn exact_parameter_affine_relation(
             ) {
                 return Some((Real::one(), -difference));
             }
-            let relation = hypersolve::algebraic_root_affine_relation(
-                &first,
-                &second,
-                hypersolve::PredicatePolicy::STRICT,
-            )?;
+            let relation = hypersolve::algebraic_root_affine_relation(&first, &second)?;
             Some((relation.scale, relation.offset))
         }
         (BezierParameter2::Exact(_), BezierParameter2::Algebraic(_))
@@ -69953,11 +69938,7 @@ fn dense_substitute_affinely_related_sources(
                         offset: Real::zero(),
                     })
                 } else {
-                    algebraic_root_affine_relation(
-                        &sources[retained],
-                        &sources[removed],
-                        hypersolve::PredicatePolicy::STRICT,
-                    )
+                    algebraic_root_affine_relation(&sources[retained], &sources[removed])
                 };
                 let Some(relation) = relation else {
                     continue;
@@ -182232,9 +182213,14 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         };
         let first = parameter_representation(&first_parameter, &CurveContext::STRICT);
         let second = parameter_representation(&second_parameter, &CurveContext::STRICT);
+        // These axes have no rational affine relation. A proved relation over
+        // the richer exact Real coefficient field does not make them equal.
         assert!(
-            algebraic_root_affine_relation(&first, &second, hypersolve::PredicatePolicy::STRICT,)
-                .is_none()
+            !algebraic_root_affine_relation(&first, &second).is_some_and(|relation| relation
+                .scale
+                .exact_rational_ref()
+                .is_some()
+                && relation.offset.exact_rational_ref().is_some())
         );
 
         let selected_axis =
@@ -182405,7 +182391,7 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
         };
         assert!(ratio.is_valid());
         assert!(nested_ratio.is_valid());
-        let comparison = compare_algebraic_root_representations_with_refinement(
+        let comparison = compare_algebraic_root_representations_by_difference(
             &dense,
             &affine,
             AlgebraicRootRefinementComparisonConfig {
@@ -182440,13 +182426,14 @@ assert!(unexpected_contacts.is_empty(), "unexpected contacts");
                 ) >= 1,
                 "the dense image must refine beyond 256 steps: {trace:?}",
             );
-            assert!(
+            assert_eq!(
                 trace.path_count(
                     "hypercurve",
                     "represented-affine-image-separation",
                     "unbounded-cold-continuation",
-                ) >= 1,
-                "the affine image must refine beyond 256 steps: {trace:?}",
+                ),
+                0,
+                "the proved exact Real affine relation avoids image separation",
             );
             assert!(
                 trace.path_count(

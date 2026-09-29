@@ -4,6 +4,8 @@
 //! ordering. Represented coordinate roots use Hypersolve arithmetic and certified
 //! interval signs. Exact derivative images can instead retain a selected source;
 //! their signs are evaluated in that source without coordinate projection.
+//! Proved affine parameter relations transport foreign source expressions into
+//! the same field; distinct selected roots are never treated as equal.
 //! Source identity and denominator domains remain available for replay. Scalar
 //! normalization reuses reduced Hypersolve field values in scoped arithmetic
 //! batches, preserving correlation without retaining growing expression trees.
@@ -1134,7 +1136,7 @@ fn source_bilinear_evidence(
             Some(format!("selected-source sign construction failed: {error}")),
         ),
     };
-    BezierAlgebraicScalarSignEvidence {
+    let evidence = BezierAlgebraicScalarSignEvidence {
         arithmetic: Vec::new(),
         value: Some(TangentScalar::Bilinear(Box::new(RetainedTangentBilinear {
             first: first.clone(),
@@ -1143,7 +1145,15 @@ fn source_bilinear_evidence(
         }))),
         sign,
         message,
+    };
+    if evidence.sign.is_none()
+        && let Some(transported) =
+            selected_scalar_calculation(&[&evidence], |_, values| Ok(values[0].clone()))
+        && transported.value.is_some()
+    {
+        return transported;
     }
+    evidence
 }
 
 fn selected_scalar_calculation(
@@ -1903,10 +1913,16 @@ mod exact_real_status_tests {
                 Real::one(),
                 &policy,
             );
-            let vector = |x, y| {
+            let other_parameter = selected_parameter(
+                vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(32)],
+                Real::zero(),
+                (Real::one() / Real::from(2)).unwrap(),
+                &policy,
+            );
+            let vector = |parameter: &crate::BezierAlgebraicParameter2, x, y| {
                 BezierAlgebraicTangentVector2::from_image(&crate::tests::decided(
                     crate::bezier_algebraic_image::rational_tangent_image_from_power_basis(
-                        &parameter,
+                        parameter,
                         x,
                         y,
                         vec![Real::one()],
@@ -1915,16 +1931,23 @@ mod exact_real_status_tests {
                     .unwrap(),
                 ))
             };
-            let jet = |s: i32, a: i32, c: i32, d: i32| {
+            let jet = |retimed: bool, s: i32, a: i32, c: i32, d: i32| {
+                let parameter = if retimed {
+                    &other_parameter
+                } else {
+                    &parameter
+                };
                 // y=c*x^2+d*x^3, with x'=s*alpha^2 and x''=a*pi.
                 // Thus a_y=2*c*x'^2 and j_y=6*c*x'*x''+6*d*x'^3.
                 // The graph derivatives are exactly 2*c and 6*d.
                 let tangent = vector(
+                    parameter,
                     vec![Real::zero(), Real::zero(), Real::from(s)],
                     vec![Real::zero()],
                 );
                 assert!(tangent.represented_coordinates().is_none());
                 let acceleration = vector(
+                    parameter,
                     vec![Real::from(a) * Real::pi()],
                     vec![
                         Real::zero(),
@@ -1935,6 +1958,7 @@ mod exact_real_status_tests {
                     ],
                 );
                 let jerk = vector(
+                    parameter,
                     vec![Real::one()],
                     vec![
                         Real::zero(),
@@ -1948,77 +1972,80 @@ mod exact_real_status_tests {
                 );
                 [tangent, acceleration, jerk]
             };
-            for side in [-1, 1] {
-                for (first_speed, second_speed) in [(1, 2), (3, 1)] {
-                    let first = jet(first_speed, -2, side, side);
-                    let second = jet(second_speed, 3, 2 * side, 2 * side);
-                    let comparison =
-                        crate::tests::decided(compare_algebraic_same_tangent_second_order(
-                            &first[0], &first[1], &second[0], &second[1], &policy,
-                        ));
-                    assert_eq!(
-                        comparison.status,
-                        BezierAlgebraicSameTangentOrderStatus::Ordered
-                    );
-                    // Negative rays are ordered by the angular cut at zero.
-                    let expected = if side > 0 {
-                        BezierTangentTurnOrdering2::FirstBeforeSecond
-                    } else {
-                        BezierTangentTurnOrdering2::SecondBeforeFirst
-                    };
-                    assert_eq!(comparison.ordering, Some(expected));
-                    let difference = comparison.normalized_difference.unwrap();
-                    let value = difference.selected_scalar().unwrap();
-                    let mut replay = AlgebraicField::from_value(value);
-                    assert_eq!(replay.sign(value).ok(), difference.sign);
-                    assert!(
-                        value.coefficients().0.len()
-                            < value.selected_root().polynomial_coefficients.len()
-                    );
+            for retimed in [false, true] {
+                for side in [-1, 1] {
+                    for (first_speed, second_speed) in [(1, 2), (3, 1)] {
+                        let first = jet(false, first_speed, -2, side, side);
+                        let second = jet(retimed, second_speed, 3, 2 * side, 2 * side);
+                        let comparison =
+                            crate::tests::decided(compare_algebraic_same_tangent_second_order(
+                                &first[0], &first[1], &second[0], &second[1], &policy,
+                            ));
+                        assert_eq!(
+                            comparison.status,
+                            BezierAlgebraicSameTangentOrderStatus::Ordered
+                        );
+                        // Negative rays are ordered by the angular cut at zero.
+                        let expected = if side > 0 {
+                            BezierTangentTurnOrdering2::FirstBeforeSecond
+                        } else {
+                            BezierTangentTurnOrdering2::SecondBeforeFirst
+                        };
+                        assert_eq!(comparison.ordering, Some(expected));
+                        let difference = comparison.normalized_difference.unwrap();
+                        let value = difference.selected_scalar().unwrap();
+                        let mut replay = AlgebraicField::from_value(value);
+                        assert_eq!(replay.sign(value).ok(), difference.sign);
+                        assert!(
+                            value.coefficients().0.len()
+                                < value.selected_root().polynomial_coefficients.len()
+                        );
 
-                    let second = jet(second_speed, 3, side, 2 * side);
-                    let curvature =
-                        crate::tests::decided(compare_algebraic_same_tangent_second_order(
-                            &first[0], &first[1], &second[0], &second[1], &policy,
-                        ));
-                    assert_eq!(
-                        curvature.status,
-                        BezierAlgebraicSameTangentOrderStatus::SameDirection
-                    );
-                    let third =
-                        crate::tests::decided(compare_algebraic_equal_curvature_third_order(
-                            first.each_ref(),
-                            second.each_ref(),
-                            &policy,
-                        ));
-                    assert_eq!(third.status, BezierAlgebraicSameTangentOrderStatus::Ordered);
-                    assert_eq!(third.ordering, Some(expected));
-                    let value = third
-                        .normalized_difference
-                        .as_ref()
-                        .unwrap()
-                        .selected_scalar()
-                        .unwrap();
-                    assert!(
-                        value.coefficients().0.len()
-                            < value.selected_root().polynomial_coefficients.len()
-                    );
-
-                    let first = jet(first_speed, -2, 0, side);
-                    let second = jet(second_speed, 3, 0, 2 * side);
-                    let third = crate::tests::decided(compare_algebraic_same_tangent_third_order(
-                        &first[0], &first[2], &second[0], &second[2], &policy,
-                    ));
-                    assert_eq!(third.status, BezierAlgebraicSameTangentOrderStatus::Ordered);
-                    assert_eq!(third.ordering, Some(expected));
-                    assert!(
-                        third
+                        let second = jet(retimed, second_speed, 3, side, 2 * side);
+                        let curvature =
+                            crate::tests::decided(compare_algebraic_same_tangent_second_order(
+                                &first[0], &first[1], &second[0], &second[1], &policy,
+                            ));
+                        assert_eq!(
+                            curvature.status,
+                            BezierAlgebraicSameTangentOrderStatus::SameDirection
+                        );
+                        let third =
+                            crate::tests::decided(compare_algebraic_equal_curvature_third_order(
+                                first.each_ref(),
+                                second.each_ref(),
+                                &policy,
+                            ));
+                        assert_eq!(third.status, BezierAlgebraicSameTangentOrderStatus::Ordered);
+                        assert_eq!(third.ordering, Some(expected));
+                        let value = third
                             .normalized_difference
                             .as_ref()
                             .unwrap()
                             .selected_scalar()
-                            .is_some()
-                    );
+                            .unwrap();
+                        assert!(
+                            value.coefficients().0.len()
+                                < value.selected_root().polynomial_coefficients.len()
+                        );
+
+                        let first = jet(false, first_speed, -2, 0, side);
+                        let second = jet(retimed, second_speed, 3, 0, 2 * side);
+                        let third =
+                            crate::tests::decided(compare_algebraic_same_tangent_third_order(
+                                &first[0], &first[2], &second[0], &second[2], &policy,
+                            ));
+                        assert_eq!(third.status, BezierAlgebraicSameTangentOrderStatus::Ordered);
+                        assert_eq!(third.ordering, Some(expected));
+                        assert!(
+                            third
+                                .normalized_difference
+                                .as_ref()
+                                .unwrap()
+                                .selected_scalar()
+                                .is_some()
+                        );
+                    }
                 }
             }
         }
