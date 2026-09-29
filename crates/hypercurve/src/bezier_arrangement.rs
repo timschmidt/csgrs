@@ -1806,6 +1806,83 @@ mod endpoint_adjacency_tests {
     use super::*;
 
     #[test]
+    fn native_third_order_comparison_is_invariant_under_parameter_speed() {
+        let vector = |x: i32, y: i32| TangentVector {
+            dx: Real::from(x),
+            dy: Real::from(y),
+        };
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for first_speed in [1_i32, 2, 3] {
+                for second_speed in [1_i32, 2, 3] {
+                    // Independent graph oracle: (s*u,k*(s*u)^3) is y=k*x^3.
+                    for (first_k, second_k, expected) in [
+                        (1, 1, TurnOrdering::SameDirection),
+                        (1, 2, TurnOrdering::FirstBeforeSecond),
+                        (2, 1, TurnOrdering::SecondBeforeFirst),
+                    ] {
+                        assert_eq!(
+                            compare_same_tangent_third_order(
+                                &vector(first_speed, 0),
+                                Some(&vector(0, 6 * first_k * first_speed.pow(3))),
+                                &vector(second_speed, 0),
+                                Some(&vector(0, 6 * second_k * second_speed.pow(3))),
+                                &policy,
+                            ),
+                            Classification::Decided(expected)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn retained_third_order_fallback_requires_zero_curvature() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for algebraic in [false, true] {
+                let vector = |x: i32, y: i32| {
+                    if algebraic {
+                        RetainedTangentVector::Algebraic(Box::new(
+                            BezierAlgebraicTangentVector2::new(
+                                AlgebraicRootRepresentation::from_exact_value(&Real::from(x)),
+                                AlgebraicRootRepresentation::from_exact_value(&Real::from(y)),
+                            ),
+                        ))
+                    } else {
+                        RetainedTangentVector::Native(Box::new(TangentVector {
+                            dx: Real::from(x),
+                            dy: Real::from(y),
+                        }))
+                    }
+                };
+                for second_y in [0, 2] {
+                    let mut first = endpoint(0);
+                    let mut second = endpoint(1);
+                    first.start_tangent = Some(vector(1, 0));
+                    second.start_tangent = Some(vector(1, 0));
+                    first.start_second_derivative = Some(vector(2, second_y));
+                    second.start_second_derivative = Some(vector(4, second_y));
+                    first.start_third_derivative = Some(vector(0, 12));
+                    second.start_third_derivative = Some(vector(0, 24));
+                    // For second_y=2 these are the jets of
+                    // C_a(u)=(u+a*u^2,(u+a*u^2)^2), a=1,2: one parabola.
+                    // Their unequal third derivatives must not order them.
+                    // With second_y=0, the normal cubic coefficients are 2
+                    // and 4, so the zero-curvature fallback must still order.
+                    assert_eq!(
+                        compare_retained_same_tangent_second_order(&first, &second, &policy),
+                        Classification::Decided(if second_y == 0 {
+                            TurnOrdering::FirstBeforeSecond
+                        } else {
+                            TurnOrdering::SameDirection
+                        })
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn represented_tangent_negation_accepts_an_exact_real_result() {
         let value = AlgebraicRootRepresentation::from_exact_value(&Real::pi());
         let negated = negate_algebraic_root(&value, &CurveContext::STRICT)
@@ -2598,8 +2675,19 @@ fn compare_retained_same_tangent_second_order(
                         policy,
                     ) {
                         Classification::Decided(evidence) => {
+                            // This third-order witness requires zero curvature
+                            // on both branches. Equal nonzero curvature needs a
+                            // different, acceleration-corrected Taylor witness.
                             if evidence.status
                                 == BezierAlgebraicSameTangentOrderStatus::SameDirection
+                                && evidence
+                                    .first_curvature_cross
+                                    .as_ref()
+                                    .is_some_and(|cross| cross.sign == Some(Ordering::Equal))
+                                && evidence
+                                    .second_curvature_cross
+                                    .as_ref()
+                                    .is_some_and(|cross| cross.sign == Some(Ordering::Equal))
                             {
                                 return compare_retained_algebraic_same_tangent_third_order(
                                     first,
@@ -2943,8 +3031,11 @@ fn compare_same_side_third_order_magnitude(
         return Classification::Uncertain(UncertaintyReason::RealSign);
     }
 
-    let first_scaled = first_cross * first_cross * square(&second_speed_sq);
-    let second_scaled = second_cross * second_cross * square(&first_speed_sq);
+    // With zero curvature, cross(v, B^(3)) / |v|^4 is the normal
+    // third derivative with respect to tangent distance. Squaring this
+    // witness requires the fourth power of speed squared.
+    let first_scaled = first_cross * first_cross * square(&square(&second_speed_sq));
+    let second_scaled = second_cross * second_cross * square(&square(&first_speed_sq));
     match real_sign(&(first_scaled - second_scaled), policy) {
         Some(RealSign::Negative) => Classification::Decided(TurnOrdering::FirstBeforeSecond),
         Some(RealSign::Positive) => Classification::Decided(TurnOrdering::SecondBeforeFirst),

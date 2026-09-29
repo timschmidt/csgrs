@@ -428,3 +428,44 @@ fn algebraic_same_tangent_order_uses_third_derivative_after_zero_curvature() {
             .is_lt()
     );
 }
+
+#[test]
+fn algebraic_third_order_comparison_is_invariant_under_parameter_speed() {
+    let vector = |x: i32, y: i32| {
+        BezierAlgebraicTangentVector2::new(
+            hypersolve::AlgebraicRootRepresentation::from_exact_value(&r(x)),
+            hypersolve::AlgebraicRootRepresentation::from_exact_value(&r(y)),
+        )
+    };
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        for first_speed in [1_i32, 2, 3] {
+            for second_speed in [1_i32, 2, 3] {
+                // C(u)=(s*u,k*(s*u)^3) always has graph y=k*x^3.
+                // At x>0, the smaller positive k is encountered first in
+                // counter-clockwise order, regardless of either speed.
+                for (first_k, second_k, expected) in [
+                    (1, 1, None),
+                    (1, 2, Some(BezierTangentTurnOrdering2::FirstBeforeSecond)),
+                    (2, 1, Some(BezierTangentTurnOrdering2::SecondBeforeFirst)),
+                ] {
+                    let evidence = decided(compare_algebraic_same_tangent_third_order(
+                        &vector(first_speed, 0),
+                        &vector(0, 6 * first_k * first_speed.pow(3)),
+                        &vector(second_speed, 0),
+                        &vector(0, 6 * second_k * second_speed.pow(3)),
+                        &policy,
+                    ));
+                    assert_eq!(evidence.ordering, expected);
+                    assert_eq!(
+                        evidence.status,
+                        if expected.is_some() {
+                            BezierAlgebraicSameTangentOrderStatus::Ordered
+                        } else {
+                            BezierAlgebraicSameTangentOrderStatus::SameDirection
+                        }
+                    );
+                }
+            }
+        }
+    }
+}

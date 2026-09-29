@@ -523,7 +523,7 @@ pub fn compare_algebraic_same_tangent_second_order(
 /// This is used only after first-order tangents agree and both second-order
 /// side witnesses have vanished.  For a cubic Bezier branch the next Taylor
 /// witness is `cross(B'(t), B'''(t))`; opposite signs identify the side of
-/// departure, and same-side magnitudes are compared as `cross^2 / |B'|^4` by
+/// departure, and same-side magnitudes are compared as `cross^2 / |B'|^8` by
 /// clearing positive speed denominators.  The derivative witness is the
 /// standard polynomial Bezier endpoint formula from the Bernstein and de Casteljau curve model, and the predicate follows the exactness model's
 /// exact-geometric-computation rule: construct represented algebraic scalars
@@ -631,7 +631,7 @@ pub fn compare_algebraic_same_tangent_third_order(
                 first_cross,
                 second_tangent,
                 second_cross,
-                2,
+                4,
                 "third-order",
                 policy,
             )
