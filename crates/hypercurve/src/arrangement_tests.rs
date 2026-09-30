@@ -220,7 +220,8 @@ fn tangent_ordered_traversal_resolves_equal_nonzero_curvature() {
     // The graphs y=x^2+x^3 and y=x^2+2x^3 have equal nonzero
     // curvature. At x>0, the first outgoing ray has the smaller angle.
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        for traversal in [graph.traverse_retained_with_tangent_order(&policy)] {
+        {
+            let traversal = graph.traverse_retained_with_tangent_order(&policy);
             let traversal = decided(traversal);
             assert_eq!(traversal.chains()[0].fragment_indices(), [0, 1]);
             assert_eq!(traversal.chains()[1].fragment_indices(), [2]);

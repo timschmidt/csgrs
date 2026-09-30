@@ -854,9 +854,7 @@ mod finite_fixed_distance_domains {
             )
             .unwrap(),
         );
-        Curve2::from(exact(
-            Curve2::try_analytic_parallel(parallel, range, policy).unwrap(),
-        ))
+        exact(Curve2::try_analytic_parallel(parallel, range, policy).unwrap())
     }
     fn run(chart: usize, repeat: bool) {
         let (mut cases, mut successes, mut replays, mut failures) = (0, 0, 0, 0);
@@ -1074,9 +1072,7 @@ mod finite_selected_point_domains {
             )
             .unwrap(),
         );
-        Curve2::from(exact(
-            Curve2::try_analytic_parallel(parallel, range, policy).unwrap(),
-        ))
+        exact(Curve2::try_analytic_parallel(parallel, range, policy).unwrap())
     }
     fn run(chart: usize) {
         let (mut cases, mut successes, mut replays, mut failures) = (0, 0, 0, 0);

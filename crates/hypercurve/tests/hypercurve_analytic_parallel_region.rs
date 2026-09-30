@@ -107,11 +107,7 @@ fn analytic_square(min_x: i64, max_x: i64, policy: &CurveContext) -> CurveRegion
     ];
     let fragments = edges
         .into_iter()
-        .map(|(start, midpoint, end)| {
-            Curve2::from(line_parallel_fragment(
-                start, midpoint, end, 0, 0, 1, policy,
-            ))
-        })
+        .map(|(start, midpoint, end)| line_parallel_fragment(start, midpoint, end, 0, 0, 1, policy))
         .collect();
     CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new_with_policy(fragments, policy)
@@ -175,7 +171,7 @@ fn curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 {
     };
     let analytic =
         match Curve2::try_analytic_parallel(parallel, range(1, 0, policy), policy).unwrap() {
-            Classification::Decided(fragment) => Curve2::from(fragment),
+            Classification::Decided(fragment) => fragment,
             Classification::Uncertain(reason) => panic!("curved parallel cap: {reason:?}"),
         };
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
@@ -210,7 +206,7 @@ fn analytic_rational_arc_corner_region(
         .unwrap();
     let analytic =
         match Curve2::try_analytic_parallel(analytic, range(0, 1, policy), policy).unwrap() {
-            Classification::Decided(fragment) => Curve2::from(fragment),
+            Classification::Decided(fragment) => fragment,
             Classification::Uncertain(reason) => panic!("analytic arc fixture: {reason:?}"),
         };
     let arc = if unit_end_weights {
@@ -408,7 +404,7 @@ fn rational_endpoint_curved_parallel_cap(policy: &CurveContext) -> CurveRegion2 
     };
     let analytic =
         match Curve2::try_analytic_parallel(parallel, range(1, 0, policy), policy).unwrap() {
-            Classification::Decided(fragment) => Curve2::from(fragment),
+            Classification::Decided(fragment) => fragment,
             Classification::Uncertain(reason) => panic!("curved parallel cap: {reason:?}"),
         };
     let lower_left = Point2::new(left.x().clone(), Real::from(-2));
@@ -622,15 +618,9 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
         Classification::Uncertain(reason) => panic!("parallel end: {reason:?}"),
     };
 
-    let boundary = CurvePath2::try_new_with_policy(
-        vec![
-            Curve2::from(first),
-            Curve2::from(second),
-            quadratic_line(end, start),
-        ],
-        policy,
-    )
-    .expect("the shared analytic carrier and cusp parameter certify connectivity");
+    let boundary =
+        CurvePath2::try_new_with_policy(vec![first, second, quadratic_line(end, start)], policy)
+            .expect("the shared analytic carrier and cusp parameter certify connectivity");
     assert_eq!(boundary.value.curves().len(), 3);
     CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[boundary.into_value()],
@@ -674,7 +664,7 @@ fn self_crossing_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegio
                     Classification::Uncertain(reason) => panic!("parallel span: {reason:?}"),
                 };
             match Curve2::try_analytic_parallel(parallel.clone(), range, policy).unwrap() {
-                Classification::Decided(fragment) => Curve2::from(fragment),
+                Classification::Decided(fragment) => fragment,
                 Classification::Uncertain(reason) => {
                     panic!("analytic parallel span: {reason:?}")
                 }

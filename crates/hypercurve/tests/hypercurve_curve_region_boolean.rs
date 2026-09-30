@@ -103,8 +103,7 @@ fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {
                         .unwrap(),
                     );
                     let path = certified(
-                        CurvePath2::try_new_with_policy(vec![curve, chord.into()], &policy)
-                            .unwrap(),
+                        CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap(),
                     );
                     let region = certified(
                         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -191,9 +190,8 @@ fn native_chart_poles_do_not_block_finite_region_queries() {
                 )
                 .unwrap(),
             );
-            let path = certified(
-                CurvePath2::try_new_with_policy(vec![curve, chord.into()], &policy).unwrap(),
-            );
+            let path =
+                certified(CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap());
             let region = certified(
                 CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                     &[path],
@@ -524,9 +522,8 @@ fn selected_fillet_region_intersection_closes_through_exterior_cap_booleans() {
             else {
                 panic!("exact chord");
             };
-            let cap_path = certified(
-                CurvePath2::try_new_with_policy(vec![curve, chord.into()], &policy).unwrap(),
-            );
+            let cap_path =
+                certified(CurvePath2::try_new_with_policy(vec![curve, chord], &policy).unwrap());
             let cap = certified(
                 CurveRegion2::try_from_boundary_paths_with_loop_semantics(
                     &[cap_path],

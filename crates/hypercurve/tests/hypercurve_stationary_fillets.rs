@@ -626,7 +626,7 @@ mod retained_domains {
         let fragment = decided(Curve2::try_analytic_parallel(parallel, range, &policy).unwrap());
         let line =
             LineSeg2::try_new(Point2::new(start.x().clone(), Real::from(-2)), start).unwrap();
-        let path = CurvePath2::try_new(vec![line.into(), fragment.into()]).unwrap();
+        let path = CurvePath2::try_new(vec![line.into(), fragment]).unwrap();
         let path = if reversed {
             path.reversed(&policy).unwrap().into_value()
         } else {

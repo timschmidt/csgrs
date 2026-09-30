@@ -624,10 +624,10 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
     let top_left = CurvePoint2::from(Point2::new(Real::zero(), Real::one()));
     let chord = |start, end| {
         let chord = Curve2::try_line(start, end, &policy).expect("valid benchmark chord");
-        Curve2::from(match chord {
+        match chord {
             Classification::Decided(chord) => chord,
             Classification::Uncertain(reason) => panic!("benchmark chord: {reason:?}"),
-        })
+        }
     };
     let boundary = CurvePath2::try_new_with_policy(
         vec![

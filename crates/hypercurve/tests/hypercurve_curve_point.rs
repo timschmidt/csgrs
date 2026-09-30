@@ -51,7 +51,7 @@ fn selected_point(reversed: bool) -> CurvePoint2 {
     hypercurve::Curve2::from(curve)
         .point_at(
             &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
-                (&parameter).clone(),
+                parameter.clone(),
             )),
             &policy,
         )

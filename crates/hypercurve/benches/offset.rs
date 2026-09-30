@@ -797,7 +797,7 @@ fn curve_region_algebraic_partition_fixture(
                 else {
                     panic!("the benchmark parallel fragment must be decided");
                 };
-                Ok(Curve2::from(fragment))
+                Ok(fragment)
             })
             .collect::<CurveResult<Vec<_>>>()?
     } else {
@@ -810,7 +810,7 @@ fn curve_region_algebraic_partition_fixture(
         else {
             panic!("the benchmark full parallel fragment must be decided");
         };
-        vec![Curve2::from(fragment)]
+        vec![fragment]
     };
     curves.push(QuadraticBezier2::new(p(2, 0), p(1, 0), p(0, 0)).into());
     if cyclic_seam {

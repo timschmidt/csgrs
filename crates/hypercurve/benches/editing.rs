@@ -787,7 +787,7 @@ fn source_related_algebraic_chord_region() -> Result<CurveRegion2, Box<dyn std::
         "source-related algebraic chord must remain exact",
     );
     let closure = QuadraticBezier2::from_line_segment(line(0, 0, 1, 0));
-    let path = CurvePath2::try_new(vec![source_curve, chord.into(), closure.into()])?;
+    let path = CurvePath2::try_new(vec![source_curve, chord, closure.into()])?;
     Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[path],
         &[CurveRegionLoopRole::Material],
@@ -818,7 +818,7 @@ fn independent_field_algebraic_chord_regions()
         Curve2::try_line(x_curve.end(), y_curve.start(), &policy)?,
         "independent-field chord must remain exact",
     );
-    let chord_path = CurvePath2::try_new(vec![chord.into(), y_curve, x_curve])?;
+    let chord_path = CurvePath2::try_new(vec![chord, y_curve, x_curve])?;
     let chord_region = CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[chord_path],
         &[CurveRegionLoopRole::Material],
@@ -853,10 +853,8 @@ fn noninjective_collinear_algebraic_chord_paths()
         Curve2::try_line(first_endpoint, second_endpoint, &policy)?,
         "independent-field benchmark chord must remain exact",
     );
-    let chord_path = CurvePath2::try_new(vec![
-        chord.clone().into(),
-        chord.reversed(&policy)?.into_value(),
-    ])?;
+    let chord_path =
+        CurvePath2::try_new(vec![chord.clone(), chord.reversed(&policy)?.into_value()])?;
     let source_path = CurvePath2::try_new(vec![
         QuadraticBezier2::new(p(0, 0), p(2, 0), p(0, 0)).into(),
     ])?;
@@ -891,14 +889,14 @@ fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dy
     let first_apex = CurvePoint2::from(Point2::new(q(16, 25), Real::from(-1_i8)));
     let second_apex = CurvePoint2::from(Point2::new(Real::one(), q(1, 20)));
     let first_path = CurvePath2::try_new(vec![
-        first.into(),
-        chord(first_end, first_apex.clone())?.into(),
-        chord(first_apex, first_start)?.into(),
+        first,
+        chord(first_end, first_apex.clone())?,
+        chord(first_apex, first_start)?,
     ])?;
     let second_path = CurvePath2::try_new(vec![
-        second.into(),
-        chord(second_end, second_apex.clone())?.into(),
-        chord(second_apex, second_start)?.into(),
+        second,
+        chord(second_end, second_apex.clone())?,
+        chord(second_apex, second_start)?,
     ])?;
     let region = |path| {
         CurveRegion2::try_from_boundary_paths_with_loop_semantics(
@@ -929,12 +927,8 @@ fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::e
     let bottom_left = CurvePoint2::from(p(0, 0));
     let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
-        Curve2::try_line(start, end, &policy).map(|chord| {
-            Curve2::from(expect_decided(
-                chord,
-                "axis-aligned benchmark chord must remain exact",
-            ))
-        })
+        Curve2::try_line(start, end, &policy)
+            .map(|chord| expect_decided(chord, "axis-aligned benchmark chord must remain exact"))
     };
     let path = CurvePath2::try_new_with_policy(
         vec![
@@ -985,14 +979,14 @@ fn axis_aligned_algebraic_dumbbell_offset_region()
     ];
     let mut fragments = Vec::with_capacity(points.len());
     for index in 0..points.len() {
-        fragments.push(Curve2::from(expect_decided(
+        fragments.push(expect_decided(
             Curve2::try_line(
                 points[index].clone(),
                 points[(index + 1) % points.len()].clone(),
                 &policy,
             )?,
             "axis-aligned dumbbell chord must remain exact",
-        )));
+        ));
     }
     Ok(CurveRegion2::try_from_boundary_paths_with_loop_semantics(
         &[CurvePath2::try_new(fragments)?],

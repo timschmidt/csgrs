@@ -118,11 +118,11 @@ fn algebraic_polynomial_parameter(
 }
 
 fn algebraic_chord(start: Point2, end: Point2, policy: &CurveContext) -> CurveResult<Curve2> {
-    Ok(Curve2::from(decided(Curve2::try_line(
+    Ok(decided(Curve2::try_line(
         CurvePoint2::from(start),
         CurvePoint2::from(end),
         policy,
-    )?)))
+    )?))
 }
 
 fn benchmark_measurements(region: &CurveRegion2, policy: &CurveContext) -> CurveResult<()> {

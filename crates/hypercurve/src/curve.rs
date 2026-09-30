@@ -1605,7 +1605,7 @@ impl Curve2 {
             };
             let images = decided(
                 evaluator
-                    .derivatives_at_algebraic_parameter(&local, max_order, policy)
+                    .derivatives_at_algebraic_parameter(local, max_order, policy)
                     .map_err(invalid)?,
                 family,
             )?;

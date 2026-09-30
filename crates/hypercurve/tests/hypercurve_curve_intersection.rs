@@ -3694,9 +3694,7 @@ mod finite_selected_circle_domains {
             )
             .unwrap(),
         );
-        Curve2::from(exact(
-            Curve2::try_analytic_parallel(parallel, range, policy).unwrap(),
-        ))
+        exact(Curve2::try_analytic_parallel(parallel, range, policy).unwrap())
     }
     fn oriented(curve: &Curve2, reverse: bool, policy: &CurveContext) -> Curve2 {
         if reverse {
