@@ -543,12 +543,84 @@ enum RegularizedWindingJump {
     Aggregate(Box<[(usize, i32)]>),
 }
 
+/// Per-loop winding numbers of one arrangement face, stored sparsely.
+///
+/// A face lies inside few of a region's loops, while dense vectors cost the
+/// loop count per face for every clone and comparison during propagation.
+/// Entries are nonzero and sorted by loop, so equality is structural.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct LoopWindings {
+    loop_count: usize,
+    entries: Vec<(usize, i32)>,
+}
+
+impl LoopWindings {
+    pub(crate) fn from_dense(windings: &[i32]) -> Self {
+        Self {
+            loop_count: windings.len(),
+            entries: windings
+                .iter()
+                .copied()
+                .enumerate()
+                .filter(|(_, winding)| *winding != 0)
+                .collect(),
+        }
+    }
+
+    #[cfg(test)]
+    fn to_dense(&self) -> Vec<i32> {
+        let mut dense = vec![0; self.loop_count];
+        for &(loop_index, winding) in &self.entries {
+            dense[loop_index] = winding;
+        }
+        dense
+    }
+
+    pub(crate) const fn loop_count(&self) -> usize {
+        self.loop_count
+    }
+
+    /// Nonzero `(loop, winding)` entries in loop order.
+    pub(crate) fn entries(&self) -> &[(usize, i32)] {
+        &self.entries
+    }
+
+    fn add(&mut self, loop_index: usize, delta: i32) -> Result<(), CurveError> {
+        if loop_index >= self.loop_count {
+            return Err(CurveError::Topology(
+                "regularized arrangement edge references a missing loop".into(),
+            ));
+        }
+        match self
+            .entries
+            .binary_search_by_key(&loop_index, |&(index, _)| index)
+        {
+            Ok(position) => {
+                let winding = self.entries[position].1.checked_add(delta).ok_or_else(|| {
+                    CurveError::Topology("regularized arrangement winding overflowed i32".into())
+                })?;
+                if winding == 0 {
+                    self.entries.remove(position);
+                } else {
+                    self.entries[position].1 = winding;
+                }
+            }
+            Err(position) => {
+                if delta != 0 {
+                    self.entries.insert(position, (loop_index, delta));
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 fn propagate_regularized_face_windings(
-    face_windings: &mut [Option<Vec<i32>>],
+    face_windings: &mut [Option<LoopWindings>],
     equation_faces_valid: &[bool],
     adjacency: &[Vec<RegularizedFaceAdjacency>],
     jumps: &[RegularizedWindingJump],
-    seeds: impl IntoIterator<Item = (usize, Vec<i32>)>,
+    seeds: impl IntoIterator<Item = (usize, LoopWindings)>,
 ) -> Result<Option<usize>, CurveError> {
     // Stage a complete propagation before publishing it. These sparse
     // equations are an accelerator over the authoritative geometric side
@@ -599,20 +671,8 @@ fn propagate_regularized_face_windings(
             let jump = jumps.get(edge.jump).ok_or_else(|| {
                 CurveError::Topology("regularized arrangement references a missing jump".into())
             })?;
-            let mut apply = |loop_index: usize, delta: i32| -> Result<(), CurveError> {
-                let Some(component) = target.get_mut(loop_index) else {
-                    return Err(CurveError::Topology(
-                        "regularized arrangement edge references a missing loop".into(),
-                    ));
-                };
-                *component = component
-                    .checked_add(delta.saturating_mul(i32::from(edge.direction)))
-                    .ok_or_else(|| {
-                        CurveError::Topology(
-                            "regularized arrangement winding overflowed i32".into(),
-                        )
-                    })?;
-                Ok(())
+            let mut apply = |loop_index: usize, delta: i32| {
+                target.add(loop_index, delta.saturating_mul(i32::from(edge.direction)))
             };
             match jump {
                 RegularizedWindingJump::Zero => {}
@@ -645,13 +705,16 @@ fn propagate_regularized_face_windings(
 }
 
 fn seed_regularized_face_windings(
-    face_windings: &mut [Option<Vec<i32>>],
+    face_windings: &mut [Option<LoopWindings>],
     equation_faces_valid: &mut [bool],
     adjacency: &[Vec<RegularizedFaceAdjacency>],
     jumps: &[RegularizedWindingJump],
     seeds: impl IntoIterator<Item = (usize, Vec<i32>)>,
 ) -> Result<bool, CurveError> {
-    let seeds = seeds.into_iter().collect::<Vec<_>>();
+    let seeds = seeds
+        .into_iter()
+        .map(|(face, windings)| (face, LoopWindings::from_dense(&windings)))
+        .collect::<Vec<_>>();
     let mut disabled_component = false;
     while let Some(conflicting_face) = propagate_regularized_face_windings(
         face_windings,
@@ -699,9 +762,23 @@ fn seed_regularized_face_windings(
 #[cfg(test)]
 mod regularized_face_winding_tests {
     use super::{
-        RegularizedFaceAdjacency, RegularizedWindingJump, propagate_regularized_face_windings,
-        seed_regularized_face_windings,
+        LoopWindings, RegularizedFaceAdjacency, RegularizedWindingJump,
+        propagate_regularized_face_windings, seed_regularized_face_windings,
     };
+
+    fn sparse(windings: Vec<Option<Vec<i32>>>) -> Vec<Option<LoopWindings>> {
+        windings
+            .into_iter()
+            .map(|windings| windings.map(|windings| LoopWindings::from_dense(&windings)))
+            .collect()
+    }
+
+    fn dense(windings: &[Option<LoopWindings>]) -> Vec<Option<Vec<i32>>> {
+        windings
+            .iter()
+            .map(|windings| windings.as_ref().map(LoopWindings::to_dense))
+            .collect()
+    }
 
     fn one_boundary_adjacency() -> (
         Vec<Vec<RegularizedFaceAdjacency>>,
@@ -727,7 +804,7 @@ mod regularized_face_winding_tests {
     #[test]
     fn winding_propagation_publishes_only_a_consistent_component() {
         let (adjacency, jumps) = one_boundary_adjacency();
-        let mut windings = vec![None, None];
+        let mut windings = sparse(vec![None, None]);
         let valid = vec![true; 2];
         assert_eq!(
             propagate_regularized_face_windings(
@@ -735,18 +812,18 @@ mod regularized_face_winding_tests {
                 &valid,
                 &adjacency,
                 &jumps,
-                [(1, vec![0])],
+                [(1, LoopWindings::from_dense(&[0]))],
             )
             .unwrap(),
             None,
         );
-        assert_eq!(windings, vec![Some(vec![1]), Some(vec![0])]);
+        assert_eq!(dense(&windings), vec![Some(vec![1]), Some(vec![0])]);
     }
 
     #[test]
     fn contradictory_winding_propagation_is_transactional() {
         let (adjacency, jumps) = one_boundary_adjacency();
-        let mut windings = vec![None, None];
+        let mut windings = sparse(vec![None, None]);
         let valid = vec![true; 2];
         assert_eq!(
             propagate_regularized_face_windings(
@@ -754,18 +831,21 @@ mod regularized_face_winding_tests {
                 &valid,
                 &adjacency,
                 &jumps,
-                [(0, vec![0]), (1, vec![0])],
+                [
+                    (0, LoopWindings::from_dense(&[0])),
+                    (1, LoopWindings::from_dense(&[0])),
+                ],
             )
             .unwrap(),
             Some(1),
         );
-        assert_eq!(windings, vec![None, None]);
+        assert_eq!(dense(&windings), vec![None, None]);
     }
 
     #[test]
     fn contradictory_winding_accelerator_is_disabled() {
         let (adjacency, jumps) = one_boundary_adjacency();
-        let mut windings = vec![Some(vec![1]), Some(vec![0])];
+        let mut windings = sparse(vec![Some(vec![1]), Some(vec![0])]);
         let mut valid = vec![true; 2];
         assert!(
             seed_regularized_face_windings(
@@ -778,7 +858,7 @@ mod regularized_face_winding_tests {
             .unwrap()
         );
         assert_eq!(valid, vec![false, false]);
-        assert_eq!(windings, vec![None, None]);
+        assert_eq!(dense(&windings), vec![None, None]);
     }
 
     #[test]
@@ -796,7 +876,7 @@ mod regularized_face_winding_tests {
                 direction: 1,
             }],
         ]);
-        let mut windings = vec![Some(vec![1]), Some(vec![0]), None, None];
+        let mut windings = sparse(vec![Some(vec![1]), Some(vec![0]), None, None]);
         let mut valid = vec![true; 4];
         assert!(
             seed_regularized_face_windings(
@@ -809,7 +889,10 @@ mod regularized_face_winding_tests {
             .unwrap()
         );
         assert_eq!(valid, vec![false, false, true, true]);
-        assert_eq!(windings, vec![None, None, Some(vec![4]), Some(vec![3])]);
+        assert_eq!(
+            dense(&windings),
+            vec![None, None, Some(vec![4]), Some(vec![3])]
+        );
     }
 }
 
@@ -7961,7 +8044,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let mut transverse_face_equation_faces_valid = vec![true; edge_count.saturating_mul(2)];
         let action_from_windings = |carrier_index: usize,
                                     split_index: usize,
-                                    windings: &[Option<Vec<i32>>],
+                                    windings: &[Option<LoopWindings>],
                                     reject_invalid_roots: bool|
          -> ExactCurveResult<Option<RegionFragmentAction>> {
             let [left_face, right_face] = face_roots[carrier_index][split_index];
@@ -7976,10 +8059,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Ok(None);
             };
             let left = self
-                .location_from_windings(self.data.first, left)
+                .location_from_loop_windings(self.data.first, left)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             let right = self
-                .location_from_windings(self.data.first, right)
+                .location_from_loop_windings(self.data.first, right)
                 .map_err(|cause| self.invalid(carrier_index, cause))?;
             Ok(Some(action_from_result_sides(
                 left == RegionPointLocation::Inside,
@@ -8406,8 +8489,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
 
         let update_actions_from_faces = |actions: &mut Vec<Vec<Option<RegionFragmentAction>>>,
-                                         face_windings: &[Option<Vec<i32>>],
-                                         transverse_face_windings: &[Option<Vec<i32>>],
+                                         face_windings: &[Option<LoopWindings>],
+                                         transverse_face_windings: &[Option<LoopWindings>],
                                          _blockers: &[Vec<Option<ExactCurveError>>]|
          -> ExactCurveResult<()> {
             for (derived_carrier_index, roots) in face_roots.iter().enumerate() {
@@ -10299,6 +10382,40 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         Err(self.blocked(carrier_index, last_reason))
+    }
+
+    fn location_from_loop_windings(
+        &self,
+        region: &CurveRegion2,
+        windings: &LoopWindings,
+    ) -> CurveResult<RegionPointLocation> {
+        let Some(fill_rule) = self.data.regularization_fill_rule else {
+            return region.region_location_from_loop_winding_entries(
+                windings.loop_count(),
+                windings.entries().iter().copied(),
+            );
+        };
+        if windings.loop_count() != region.boundary_loops().len() {
+            return Err(CurveError::Topology(
+                "compound winding vector is inconsistent with boundary loops".into(),
+            ));
+        }
+        let winding = windings
+            .entries()
+            .iter()
+            .try_fold(0_i64, |sum, &(_, value)| {
+                sum.checked_add(i64::from(value))
+                    .ok_or_else(|| CurveError::Topology("compound winding overflowed i64".into()))
+            })?;
+        let inside = match fill_rule {
+            FillRule::NonZero => winding != 0,
+            FillRule::EvenOdd => winding.rem_euclid(2) != 0,
+        };
+        Ok(if inside {
+            RegionPointLocation::Inside
+        } else {
+            RegionPointLocation::Outside
+        })
     }
 
     fn location_from_windings(

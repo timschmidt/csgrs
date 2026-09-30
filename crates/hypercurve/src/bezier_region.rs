@@ -12999,17 +12999,35 @@ impl CurveRegion2 {
         &self,
         windings: &[i32],
     ) -> CurveResult<RegionPointLocation> {
-        if windings.len() != self.data.boundary_loops.len()
+        self.region_location_from_loop_winding_entries(
+            windings.len(),
+            windings
+                .iter()
+                .copied()
+                .enumerate()
+                .filter(|(_, winding)| *winding != 0),
+        )
+    }
+
+    /// Classifies from `(loop, winding)` entries; omitted loops have zero
+    /// winding, which is outside under every loop fill rule.
+    pub(crate) fn region_location_from_loop_winding_entries(
+        &self,
+        loop_count: usize,
+        entries: impl IntoIterator<Item = (usize, i32)>,
+    ) -> CurveResult<RegionPointLocation> {
+        let windings_len = loop_count;
+        if windings_len != self.data.boundary_loops.len()
             || self
                 .data
                 .certified_loop_roles
                 .as_ref()
-                .is_some_and(|roles| roles.len() != windings.len())
+                .is_some_and(|roles| roles.len() != windings_len)
             || self
                 .data
                 .certified_loop_fill_rules
                 .as_ref()
-                .is_some_and(|rules| rules.len() != windings.len())
+                .is_some_and(|rules| rules.len() != windings_len)
         {
             return Err(CurveError::Topology(
                 "curve-region winding vector is inconsistent with boundary loops".into(),
@@ -13017,7 +13035,7 @@ impl CurveRegion2 {
         }
         let mut inside = false;
         let mut signed_depth = 0_i32;
-        for (loop_index, winding) in windings.iter().copied().enumerate() {
+        for (loop_index, winding) in entries {
             let fill_rule = self
                 .data
                 .certified_loop_fill_rules
