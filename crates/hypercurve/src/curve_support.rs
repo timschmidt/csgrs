@@ -683,11 +683,15 @@ mod tests {
                 .iter()
                 .zip([Real::from(2) - &delta, Real::from(2) + delta])
             {
-                let parameter = cusp.scalar().expect("represented quadratic cusp");
+                // The isolated cusp stays a selected root; it equals the
+                // independently derived radical exactly.
                 assert_eq!(
-                    crate::classify::is_zero(&(parameter - expected), &policy),
-                    Some(true)
+                    crate::CurveParameter2::from(cusp.clone())
+                        .same_value(&expected.clone().into(), &policy)
+                        .unwrap(),
+                    Classification::Decided(true)
                 );
+                let parameter = &expected;
                 for reversed in [false, true] {
                     let (support, parameter) = if reversed {
                         (parallel.reversed(), Real::one() - parameter)

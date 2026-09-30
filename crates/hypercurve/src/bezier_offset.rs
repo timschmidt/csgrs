@@ -123053,44 +123053,14 @@ impl BezierParallel2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let represented_candidates = if matches!(self.source(), BezierParallelSource2::Quadratic(_))
-            && weight.is_none()
-        {
-            match exact_quadratic_parallel_cusp_candidates(
-                &speed_squared,
-                &signed_curvature_term,
-                policy,
-            )? {
-                Some(candidates) => {
-                    let mut roots = Vec::with_capacity(candidates.len());
-                    let mut complete = true;
-                    for candidate in candidates {
-                        match domain.contains_finite_parameter(&candidate.clone().into(), policy)? {
-                            Classification::Decided(true) => {
-                                roots.push(BezierParameter2::Exact(candidate))
-                            }
-                            Classification::Decided(false) => {}
-                            Classification::Uncertain(_) => {
-                                complete = false;
-                                break;
-                            }
-                        }
-                    }
-                    complete.then_some(roots)
-                }
-                None => None,
+        // Cusps stay selected roots of the cusp polynomial. Closed-form
+        // radicals would defeat later exact sign and equality decisions at
+        // cusp-split domain boundaries.
+        let candidates = match domain.finite_roots(&cusp_polynomial, policy)? {
+            Classification::Decided(roots) => roots,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
             }
-        } else {
-            None
-        };
-        let candidates = match represented_candidates {
-            Some(candidates) => candidates,
-            None => match domain.finite_roots(&cusp_polynomial, policy)? {
-                Classification::Decided(roots) => roots,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
         };
         let mut parallel_cusps = Vec::new();
         for candidate in candidates {

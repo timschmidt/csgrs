@@ -5341,33 +5341,7 @@ fn exact_offset_span_from_regular_parallel_range(
         .map(|range| range.start().clone())
         .chain(std::iter::once(range.end().clone()))
         .collect::<Vec<_>>();
-    let (start_index, end_index, start_range, end_range) = if reversed {
-        (1, 0, ranges.last().unwrap(), ranges.first().unwrap())
-    } else {
-        (0, 1, ranges.first().unwrap(), ranges.last().unwrap())
-    };
-    let scale = |range: &CurveParameterRange2| -> CurveResult<Classification<RealSign>> {
-        Ok(
-            match retained_parallel_range_scale_sign(&composed, range, policy)? {
-                Classification::Decided(RealSign::Zero) => {
-                    Classification::Uncertain(UncertaintyReason::Boundary)
-                }
-                result => result,
-            },
-        )
-    };
-    let start_scale = match scale(start_range)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end_scale = if ranges.len() == 1 {
-        start_scale
-    } else {
-        match scale(end_range)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-    };
+    let (start_index, end_index) = if reversed { (1, 0) } else { (0, 1) };
     let endpoint = |index: usize,
                     scale: RealSign|
      -> CurveResult<Classification<(CurvePoint2, CurveTangent2)>> {
@@ -5412,11 +5386,15 @@ fn exact_offset_span_from_regular_parallel_range(
         )?
         .map(|tangent| (point, tangent)))
     };
-    let (offset_start, start_tangent) = match endpoint(start_index, start_scale)? {
+    // Join tangents belong to the unoffset corner. On this regular source
+    // range the boundary keeps one derivative-scale sign; the composed
+    // parallel's sign can differ beside a boundary cusp, where the offset
+    // crosses the curvature radius, and must not orient the corner.
+    let (offset_start, start_tangent) = match endpoint(start_index, source_scale)? {
         Classification::Decided(endpoint) => endpoint,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let (offset_end, end_tangent) = match endpoint(end_index, end_scale)? {
+    let (offset_end, end_tangent) = match endpoint(end_index, source_scale)? {
         Classification::Decided(endpoint) => endpoint,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };

@@ -3,9 +3,10 @@ mod support;
 use hypercurve::{
     BezierAreaMomentPrefixSums2, BezierAreaPrefixSums2, BezierLineImageFitRelation,
     BezierParallelApproximationCurve2, BezierParallelVerificationOptions, BezierParameter2,
-    Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurveParameterRange2,
-    CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, OffsetCornerStyle2, Point2,
-    QuadraticBezier2, Rational, RationalBezier2, RationalQuadraticBezier2, Real,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveError, CurveParameter2,
+    CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, Rational, RationalBezier2,
+    RationalQuadraticBezier2, Real,
 };
 use num::bigint::{BigInt, BigUint};
 use proptest::prelude::*;
@@ -444,7 +445,7 @@ fn quadratic_parallel_isolates_distance_dependent_interior_cusp() {
 }
 
 #[test]
-fn quadratic_parallel_materializes_radical_cusp_parameter() {
+fn quadratic_parallel_cusp_matches_its_radical_parameter() {
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(q(1, 2), r(0)), p(1, 1));
     let parallel = source.parallel_left(r(1)).unwrap();
     let target_speed_squared = r(4).root_n(3).unwrap();
@@ -468,10 +469,19 @@ fn quadratic_parallel_materializes_radical_cusp_parameter() {
             }
         };
         assert!(analysis.source_is_regular());
-        let [BezierParameter2::Exact(cusp)] = analysis.parallel_cusps() else {
-            panic!("the polynomial-quadratic cusp must use the exact Real radical tower");
+        let [cusp] = analysis.parallel_cusps() else {
+            panic!("the polynomial-quadratic parallel has one cusp");
         };
-        assert_eq!(cusp, &expected);
+        // The isolated cusp stays a selected root of the cusp polynomial and
+        // equals the independently derived radical exactly.
+        assert_eq!(
+            CurveParameter2::from(cusp.clone())
+                .compare(&expected.clone().into(), &policy)
+                .unwrap()
+                .value,
+            Classification::Decided(std::cmp::Ordering::Equal)
+        );
+        let cusp = &expected;
         let derivative = match parallel.derivative_at(cusp, &policy).unwrap() {
             Classification::Decided(derivative) => derivative,
             Classification::Uncertain(reason) => {

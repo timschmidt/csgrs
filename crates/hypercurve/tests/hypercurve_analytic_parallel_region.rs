@@ -581,7 +581,6 @@ fn radical_cusp_split_parallel_region(policy: &CurveContext) -> CurveRegion2 {
     let [cusp] = analysis.parallel_cusps() else {
         panic!("expected one radical parallel cusp");
     };
-    assert!(cusp.scalar().is_some());
 
     let zero = BezierParameter2::Exact(Real::from(0));
     let one = BezierParameter2::Exact(Real::from(1));
