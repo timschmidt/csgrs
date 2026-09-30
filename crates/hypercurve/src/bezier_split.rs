@@ -2463,8 +2463,15 @@ where
     for (pair, image_pair) in boundaries.windows(2).zip(endpoint_images.windows(2)) {
         let start = pair[0].clone();
         let end = pair[1].clone();
+        // Rational cuts materialize compactly. An irrational cut would give
+        // the piece nested-surd controls, so the piece keeps its unchanged
+        // source chart instead: later incidence then works on the source's
+        // own exact data and compares parameters in their fields.
         match (start.scalar(), end.scalar()) {
-            (Some(start_exact), Some(end_exact)) => {
+            (Some(start_exact), Some(end_exact))
+                if start_exact.exact_rational_ref().is_some()
+                    && end_exact.exact_rational_ref().is_some() =>
+            {
                 let curve = match materialize(start_exact, end_exact)? {
                     Classification::Decided(curve) => curve,
                     Classification::Uncertain(reason) => {

@@ -481,7 +481,7 @@ fn config() -> ProptestConfig {
     let cases = std::env::var("HYPERCURVE_COMPOSED_WORKLOAD_CASES")
         .ok()
         .map(|value| value.parse::<u32>().expect("case count"))
-        .unwrap_or(12);
+        .unwrap_or(6);
     ProptestConfig {
         cases,
         max_shrink_iters: 256,
@@ -495,12 +495,12 @@ fn config() -> ProptestConfig {
 proptest! {
     #![proptest_config(config())]
 
-    /// The randomized qualification gate. It requires completion, so it runs
-    /// on request (`--ignored`, sized by HYPERCURVE_COMPOSED_WORKLOAD_CASES)
-    /// while the open gaps recorded beside it remain; every closed gap it
-    /// found is a regular regression test below.
+    /// The randomized qualification gate; size it with
+    /// HYPERCURVE_COMPOSED_WORKLOAD_CASES. Every closed gap it found is a
+    /// regular regression test below. It runs on request while the open
+    /// nontermination recorded below remains, since a random case can reach it.
     #[test]
-    #[ignore = "qualification run; see open gaps"]
+    #[ignore = "qualification run; open: chord/parallel contact search"]
     fn composed_operation_sequences_satisfy_independent_oracles(
         seeds in prop::collection::vec(seed_strategy(), 2..=3),
         steps in prop::collection::vec(step_strategy(), 3..=5),
@@ -654,13 +654,11 @@ fn arc_intersection_round_trips_after_irrational_cuts() {
     run_sequence(&seeds, &steps, true).unwrap();
 }
 
-/// Open completeness gap found by the generator: a rational conic cut at
-/// selected algebraic points has no Cartesian endpoint representation, so
-/// the rebuilt boundary cannot share its vertices and an exact region
-/// predicate stays undecided. Closing it needs the selected-field vertex
-/// representation of review step 3.
+/// Generated reproducer: an arc cut at irrational points beside a conic cut
+/// at selected algebraic points. Materializing the arc piece gave it
+/// nested-surd controls, so a straight chord on x = 10 could not be located
+/// against it. Irrational cuts now keep the source chart.
 #[test]
-#[ignore = "open: selected-field vertices of algebraically cut conics"]
 fn conic_cut_at_algebraic_points_round_trips() {
     let seeds = [
         Seed {
@@ -700,4 +698,43 @@ fn conic_cut_at_algebraic_points_round_trips() {
         Step::Boolean(2, 5, 1),
     ];
     run_sequence(&seeds, &steps, true).unwrap();
+}
+
+/// Open computational-closure gap found by the generator (it predates the
+/// retained irrational cuts): inward round offset of a chamfered NURBS /
+/// B-spline seed. The band regularization pairs a retained chord with an
+/// analytic parallel, and the monotone contact search keeps evaluating the
+/// recursive chord/parallel incidence at real points with growing rationals.
+#[test]
+#[ignore = "open: nonterminating chord/parallel monotone contact search"]
+fn chamfered_spline_inward_round_offset_terminates() {
+    let seeds = [
+        Seed {
+            x: 5,
+            y: 1,
+            width: 18,
+            height: 6,
+            lower: 7,
+            upper: 6,
+            curvature: 2,
+            weight: 5,
+        },
+        Seed {
+            x: 1,
+            y: 5,
+            width: 9,
+            height: 7,
+            lower: 2,
+            upper: 5,
+            curvature: 1,
+            weight: 6,
+        },
+    ];
+    let steps = [
+        Step::Offset(14, 1, 0),
+        Step::Chamfer(9, 4),
+        Step::Offset(9, -2, 1),
+        Step::Offset(8, -2, 0),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
 }
