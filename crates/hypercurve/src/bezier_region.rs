@@ -991,12 +991,13 @@ impl CurveRegionBoundaryLoop2 {
     }
 
     fn from_certified_arrangement_chain(
-        fragments: Vec<BezierSplitFragment2>,
+        mut fragments: Vec<BezierSplitFragment2>,
         arrangement_sources: Vec<CurveRegionFragmentSource2>,
         policy: &CurveContext,
     ) -> Self {
         debug_assert!(!fragments.is_empty());
         debug_assert_eq!(fragments.len(), arrangement_sources.len());
+        share_line_image_vertices(&mut fragments, policy);
         Self {
             fragments,
             arrangement_sources: Some(arrangement_sources),
@@ -1017,7 +1018,7 @@ impl CurveRegionBoundaryLoop2 {
     /// and optional source records remain validated locally; the caller must
     /// have decided every cyclic join before invoking this constructor.
     pub(crate) fn try_new_from_certified_connected_chain(
-        fragments: Vec<BezierSplitFragment2>,
+        mut fragments: Vec<BezierSplitFragment2>,
         arrangement_sources: Option<Vec<CurveRegionFragmentSource2>>,
         policy: &CurveContext,
     ) -> CurveResult<Self> {
@@ -1037,6 +1038,7 @@ impl CurveRegionBoundaryLoop2 {
             }
             validate_retained_boundary_loop_sources(sources)?;
         }
+        share_line_image_vertices(&mut fragments, policy);
         Ok(Self {
             fragments,
             arrangement_sources,
@@ -1404,6 +1406,135 @@ fn validate_retained_boundary_loop_connectivity(
         }
     }
     Ok(())
+}
+
+/// Gives each certified loop vertex one exact representation where a
+/// straight fragment meets another materialized fragment.
+///
+/// Arrangement connectivity proves that consecutive fragments meet, but the
+/// incident curves can still carry different exact expressions for the vertex,
+/// for example a conic cut at an irrational point beside a line whose endpoint
+/// is the line/circle contact itself. A later operation pairing either curve
+/// with a copy of the other must then re-prove that coincidence by a zero test
+/// on nested surds. The line's endpoint is the contact representation, so the
+/// curved neighbour adopts it as its endpoint control, which changes no value
+/// and keeps its weights, interior controls and retained evidence. Only
+/// strictly certified connectivity proves equality; an approximate join may
+/// rest on a decided coincidence of unequal values and is left unchanged.
+fn share_line_image_vertices(fragments: &mut [BezierSplitFragment2], policy: &CurveContext) {
+    if policy.permits_approximate_512() || policy.is_edge_preview() {
+        return;
+    }
+    fn is_line(fragment: &BezierSplitFragment2) -> bool {
+        matches!(
+            fragment,
+            BezierSplitFragment2::Materialized {
+                curve: BezierSubcurve2::Quadratic(curve),
+                ..
+            } if curve.retained_exact_line_image().is_some()
+        )
+    }
+    fn endpoint(fragment: &BezierSplitFragment2, at_end: bool) -> Option<&Point2> {
+        let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+            return None;
+        };
+        let (start, end) = match curve {
+            BezierSubcurve2::Quadratic(curve) => (curve.start(), curve.end()),
+            BezierSubcurve2::Cubic(curve) => (curve.start(), curve.end()),
+            BezierSubcurve2::RationalQuadratic(curve) => (curve.start(), curve.end()),
+            // General rational endpoints are projected, not stored points.
+            BezierSubcurve2::Rational(_) => return None,
+        };
+        Some(if at_end { end } else { start })
+    }
+    fn with_endpoint(
+        fragment: &BezierSplitFragment2,
+        point: &Point2,
+        at_end: bool,
+    ) -> Option<BezierSplitFragment2> {
+        let BezierSplitFragment2::Materialized { start, end, curve } = fragment else {
+            return None;
+        };
+        let replace = |first: &Point2, last: &Point2| {
+            if at_end {
+                (first.clone(), point.clone())
+            } else {
+                (point.clone(), last.clone())
+            }
+        };
+        let curve = match curve {
+            BezierSubcurve2::Quadratic(curve) => {
+                let (first, last) = replace(curve.start(), curve.end());
+                if curve.retained_exact_line_image().is_some() {
+                    if !curve.retained_parallel_line_tangent_contacts().is_empty() {
+                        return None;
+                    }
+                    BezierSubcurve2::Quadratic(
+                        QuadraticBezier2::with_retained_exact_line_image(
+                            first,
+                            curve.control().clone(),
+                            last,
+                        )
+                        .ok()?,
+                    )
+                } else {
+                    BezierSubcurve2::Quadratic(QuadraticBezier2::new(
+                        first,
+                        curve.control().clone(),
+                        last,
+                    ))
+                }
+            }
+            BezierSubcurve2::Cubic(curve) => {
+                let (first, last) = replace(curve.start(), curve.end());
+                let [_, first_control, second_control, _] = curve.control_points();
+                BezierSubcurve2::Cubic(CubicBezier2::new(
+                    first,
+                    first_control.clone(),
+                    second_control.clone(),
+                    last,
+                ))
+            }
+            BezierSubcurve2::RationalQuadratic(curve) => {
+                let (first, last) = replace(curve.start(), curve.end());
+                BezierSubcurve2::RationalQuadratic(curve.with_equal_endpoints(first, last))
+            }
+            BezierSubcurve2::Rational(_) => return None,
+        };
+        Some(BezierSplitFragment2::Materialized {
+            start: start.clone(),
+            end: end.clone(),
+            curve,
+        })
+    }
+    let count = fragments.len();
+    if count < 2 {
+        return;
+    }
+    for index in 0..count {
+        let next = (index + 1) % count;
+        let (Some(end), Some(start)) = (
+            endpoint(&fragments[index], true).cloned(),
+            endpoint(&fragments[next], false).cloned(),
+        ) else {
+            continue;
+        };
+        if end == start {
+            continue;
+        }
+        // The curved side adopts the line's contact representation; between
+        // two lines the later one adopts the earlier endpoint.
+        let replaced = if is_line(&fragments[next]) && !is_line(&fragments[index]) {
+            with_endpoint(&fragments[index], &start, true).map(|fragment| (index, fragment))
+        } else if is_line(&fragments[index]) {
+            with_endpoint(&fragments[next], &end, false).map(|fragment| (next, fragment))
+        } else {
+            None
+        };
+        if let Some((slot, fragment)) = replaced {
+            fragments[slot] = fragment;
+        }
+    }
 }
 
 fn validate_retained_arrangement_chain_connectivity(

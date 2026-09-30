@@ -4513,6 +4513,68 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .collect())
     }
 
+    /// Publishes the identity overlap of two carriers on one analytic
+    /// parallel whose parameter ranges are nested.
+    ///
+    /// On an injective range, distinct parameters have distinct points, so a
+    /// nested range meets the containing one exactly on itself, with no other
+    /// contact. A binary Boolean's carriers are fragments of regularized,
+    /// noncrossing operand boundaries and are therefore injective; other
+    /// contexts need the containing carrier's certified injective image.
+    /// This avoids saturating the identity component out of the parallel's
+    /// self-intersection system. Partially overlapping ranges decline.
+    fn nested_same_parallel_overlap(
+        &self,
+        pair: &RegionCarrierPair,
+    ) -> ExactCurveResult<Option<RationalBezierIntersectionOverlap2>> {
+        let first = &self.data.carriers[pair.first_carrier_index];
+        let second = &self.data.carriers[pair.second_carrier_index];
+        let (Some(first_start), Some(first_end), Some(second_start), Some(second_end)) = (
+            first.start.as_bezier_parameter(),
+            first.end.as_bezier_parameter(),
+            second.start.as_bezier_parameter(),
+            second.end.as_bezier_parameter(),
+        ) else {
+            return Ok(None);
+        };
+        let strict = self.data.policy.strict_counterpart();
+        let not_after = |left: &CurveParameter2, right: &CurveParameter2| match left
+            .cmp_by_refinement(right, &strict)
+            .map_err(|cause| self.invalid(pair.first_carrier_index, cause))?
+        {
+            Classification::Decided(order) => Ok(Some(order != std::cmp::Ordering::Greater)),
+            Classification::Uncertain(_) => Ok(None),
+        };
+        let contains = |outer: &RegionCarrier, inner: &RegionCarrier| {
+            Ok::<_, ExactCurveError>(
+                not_after(&outer.start, &inner.start)? == Some(true)
+                    && not_after(&inner.end, &outer.end)? == Some(true),
+            )
+        };
+        let (outer, inner_start, inner_end) = if contains(first, second)? {
+            (first, second_start, second_end)
+        } else if contains(second, first)? {
+            (second, first_start, first_end)
+        } else {
+            return Ok(None);
+        };
+        let structurally_injective =
+            self.data.regularization_fill_rule.is_none() && first.operand != second.operand;
+        if !structurally_injective && !carrier_has_certified_injective_image(outer, &strict) {
+            return Ok(None);
+        }
+        Ok(Some(
+            RationalBezierIntersectionOverlap2::from_certified_parameters(
+                inner_start.clone(),
+                inner_end.clone(),
+                inner_start.clone(),
+                inner_end.clone(),
+                CurveOverlapOrientation2::Same,
+                [true, true],
+            ),
+        ))
+    }
+
     fn pair_result(&self, pair: &RegionCarrierPair) -> ExactCurveResult<RegionPairResult> {
         let first = &self.data.carriers[pair.first_carrier_index];
         let second = &self.data.carriers[pair.second_carrier_index];
@@ -4667,6 +4729,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Ok(RegionPairResult {
                         contacts: Vec::new(),
                         overlaps: Vec::new(),
+                        blockers: Vec::new(),
+                    });
+                }
+                if matches!(pair.context, RegionCarrierPairContext::ParallelSameImage)
+                    && let Some(overlap) = self.nested_same_parallel_overlap(pair)?
+                {
+                    return Ok(RegionPairResult {
+                        contacts: Vec::new(),
+                        overlaps: self.analytic_component_overlaps(pair, &[], &overlap, false)?,
                         blockers: Vec::new(),
                     });
                 }

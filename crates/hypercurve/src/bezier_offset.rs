@@ -33951,6 +33951,16 @@ fn bivariate_pair_may_have_component(
     for retained_value in [Real::from(2_i8), Real::from(3_i8), Real::from(5_i8)] {
         let first = bivariate_specialize_first(first_equation, &retained_value);
         let second = bivariate_specialize_first(second_equation, &retained_value);
+        // A modular gcd certifies coprimality cheaply. When it instead finds
+        // a likely common factor, this conservative filter may answer "may
+        // have a component" without the exact chain, whose rational
+        // coefficients can grow far past the inputs; callers certify any
+        // component independently.
+        match hypersolve::univariate_polynomials_modular_coprimality(&first, &second) {
+            hypersolve::ModularCoprimality::Coprime => return false,
+            hypersolve::ModularCoprimality::CommonFactorLikely => continue,
+            hypersolve::ModularCoprimality::Inconclusive => {}
+        }
         let Ok(report) = subresultant_chain_univariate_polynomials(
             &first,
             &second,

@@ -716,6 +716,30 @@ impl Curve2 {
 
     pub(crate) fn from_retained_fragment(fragment: crate::BezierSplitFragment2) -> Self {
         if let crate::BezierSplitFragment2::Materialized { curve, .. } = fragment {
+            // Region topology carries straight pieces as degree-elevated
+            // quadratics. With a midpoint control the quadratic chart is the
+            // line's own chart, so the line is the faithful public curve.
+            // Parallel-tangency evidence lives on the quadratic; keep it there.
+            if let crate::BezierSubcurve2::Quadratic(quadratic) = &curve
+                && quadratic.retained_parallel_line_tangent_contacts().is_empty()
+                && quadratic.retained_exact_line_image().is_some()
+                && [
+                    Real::from(2_i8) * quadratic.control().x()
+                        - quadratic.start().x()
+                        - quadratic.end().x(),
+                    Real::from(2_i8) * quadratic.control().y()
+                        - quadratic.start().y()
+                        - quadratic.end().y(),
+                ]
+                .iter()
+                .all(|offset| offset.zero_status() == hyperreal::ZeroKnowledge::Zero)
+                // The fragment's own endpoints are the loop's shared vertex
+                // representations; a cached image may hold equal copies.
+                && let Ok(line) =
+                    crate::LineSeg2::try_new(quadratic.start().clone(), quadratic.end().clone())
+            {
+                return Self::from(line);
+            }
             return Self::from(curve);
         }
         Self {

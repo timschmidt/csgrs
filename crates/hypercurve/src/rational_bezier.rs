@@ -151,6 +151,17 @@ impl RationalQuadraticBezier2 {
         })
     }
 
+    /// Replaces the endpoint controls with equal-valued representations,
+    /// keeping the weights, interior control and retained conic evidence.
+    /// The caller certifies that each new point equals the old one.
+    pub(crate) fn with_equal_endpoints(&self, start: Point2, end: Point2) -> Self {
+        Self {
+            start,
+            end,
+            ..self.clone()
+        }
+    }
+
     pub(crate) fn retained_implicit_quadratic_conic(&self) -> Option<&Arc<[Real; 6]>> {
         self.implicit_quadratic_conic.as_ref()
     }

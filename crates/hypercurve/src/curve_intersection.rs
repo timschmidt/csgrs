@@ -2095,6 +2095,124 @@ impl Curve2 {
     }
 }
 
+/// Intersects two curves with identical native single-span Bezier geometry.
+///
+/// Equal exact definitions are the same point set in the same chart, so they
+/// meet in the identity overlap of the whole domain and in the curve's own
+/// off-diagonal self contacts. This is a positive certificate from shared
+/// definition: it needs no implicitization, whose coefficients can be nested
+/// surds (for example a conic cut at irrational parameters) that refinement
+/// cannot decide. A quadratic, or a positive-weight rational quadratic, with a
+/// nondegenerate control triangle is an injective conic arc and has no self
+/// contacts; other geometries take their self-intersection query. Distinct
+/// definitions decline and keep the general dispatch.
+fn identical_native_bezier_intersection(
+    first: &Curve2,
+    second: &Curve2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CurveIntersectionResult2>> {
+    let (Some(geometry), Some(other)) = (first.geometry(), second.geometry()) else {
+        return Ok(None);
+    };
+    let conic_controls = match geometry {
+        CurveGeometry2::QuadraticBezier(curve) => Some(curve.control_points()),
+        CurveGeometry2::RationalQuadraticBezier(curve) => curve
+            .weights()
+            .iter()
+            .all(|weight| {
+                crate::classify::real_sign(weight, &policy.strict_counterpart())
+                    == Some(hyperreal::RealSign::Positive)
+            })
+            .then(|| curve.control_points()),
+        CurveGeometry2::CubicBezier(_) | CurveGeometry2::RationalBezier(_) => None,
+        CurveGeometry2::Line(_)
+        | CurveGeometry2::CircularArc(_)
+        | CurveGeometry2::PolynomialBSpline(_)
+        | CurveGeometry2::Nurbs(_) => return Ok(None),
+    };
+    // A constant image meets itself in a whole parameter fiber, not an
+    // overlap; its point-image dispatch owns that result.
+    if geometry != other || has_native_point_image_span(first, policy)? {
+        return Ok(None);
+    }
+    let injective_conic = conic_controls.is_some_and(|[start, control, end]| {
+        let cross = (control.x() - start.x()) * (end.y() - start.y())
+            - (control.y() - start.y()) * (end.x() - start.x());
+        matches!(
+            crate::classify::real_sign(&cross, &policy.strict_counterpart()),
+            Some(hyperreal::RealSign::Positive | hyperreal::RealSign::Negative)
+        )
+    });
+    let (contacts, mut overlaps, blockers, parameter_components) = if injective_conic {
+        (Arc::from([]), Vec::new(), Arc::from([]), None)
+    } else {
+        let own = CurveIntersectionContext::new_self(
+            first,
+            policy,
+            &mut CurveIntersectionBatchCache::default(),
+        )
+        .result()?;
+        // Retracing self overlaps would need their correspondence transported
+        // to both orders; leave those curves to the general dispatch.
+        if !own.data.overlaps.is_empty() {
+            return Ok(None);
+        }
+        // A self contact is unordered; a pair reports both ordered visits.
+        let contacts = own
+            .data
+            .contacts
+            .iter()
+            .flat_map(|contact| {
+                let swapped = CurveIntersectionContact2 {
+                    first: contact.second.clone(),
+                    second: contact.first.clone(),
+                    point: contact.point.clone(),
+                    certified_transverse: contact.certified_transverse,
+                    tangent_cross_sign: contact.tangent_cross_sign.map(|sign| match sign {
+                        hyperreal::RealSign::Positive => hyperreal::RealSign::Negative,
+                        hyperreal::RealSign::Negative => hyperreal::RealSign::Positive,
+                        hyperreal::RealSign::Zero => hyperreal::RealSign::Zero,
+                    }),
+                };
+                [contact.clone(), swapped]
+            })
+            .collect::<Vec<_>>();
+        (
+            Arc::from(contacts),
+            Vec::new(),
+            own.data.blockers.clone(),
+            own.data.parameter_components.clone(),
+        )
+    };
+    let domain = ParamRange::new(Real::zero(), Real::one());
+    overlaps.push(CurveIntersectionOverlap2 {
+        first_span_index: 0,
+        second_span_index: 0,
+        first_range: CurveParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
+            BezierParameter2::Exact(Real::zero()),
+            BezierParameter2::Exact(Real::one()),
+        )),
+        second_range: CurveParameterRange2::from_bezier_range(
+            BezierParameterRange2::new_validated(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+            ),
+        ),
+        orientation: crate::CurveOverlapOrientation2::Same,
+        endpoint_inclusion: [true, true],
+        parameter_correspondence: CurveOverlapCorrespondence2::affine(&domain, &domain),
+    });
+    Ok(Some(CurveIntersectionResult2 {
+        data: Arc::new(CurveIntersectionResultData {
+            span_pair_count: 1,
+            contacts,
+            overlaps: overlaps.into(),
+            blockers,
+            parameter_components,
+        }),
+    }))
+}
+
 impl CurveIntersectionContext {
     pub(crate) fn try_new(
         first: &Curve2,
@@ -2147,6 +2265,18 @@ impl CurveIntersectionContext {
     ) -> ExactCurveResult<Self> {
         if first.geometry().is_none() || second.geometry().is_none() {
             let result = curve_support_intersection::intersect(first, second, policy, None)?;
+            return Ok(Self {
+                data: CurveIntersectionContextData {
+                    first: first.clone(),
+                    second: second.clone(),
+                    policy: *policy,
+                    span_pair_count: result.span_pair_count(),
+                    dispatch: CurveIntersectionDispatch::SupportEvidence(result),
+                    result: OnceLock::new(),
+                },
+            });
+        }
+        if let Some(result) = identical_native_bezier_intersection(first, second, policy)? {
             return Ok(Self {
                 data: CurveIntersectionContextData {
                     first: first.clone(),
