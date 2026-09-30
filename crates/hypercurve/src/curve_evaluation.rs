@@ -164,6 +164,90 @@ impl Curve2 {
         Ok(point)
     }
 
+    /// Derivatives of a generated carrier in its retained source chart.
+    ///
+    /// The public parameter of a generated carrier is its source chart, so no
+    /// chain-rule factor applies. Rational sources evaluate every order at
+    /// represented and selected parameters; analytic parallels and exact
+    /// chords give first derivatives at represented parameters. Other
+    /// carriers report the unsupported capability rather than a guess.
+    pub(super) fn retained_derivatives_at(
+        &self,
+        parameter: &CurveParameter2,
+        max_order: usize,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<CurveVector2>> {
+        let family = self.family();
+        let unsupported = || {
+            ExactCurveError::blocked(
+                CurveOperation2::Evaluation,
+                family,
+                UncertaintyReason::Unsupported,
+            )
+        };
+        let fragment = self.retained_fragment().expect("retained curve");
+        if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
+            chord
+                .validate_policy(policy)
+                .map_err(|cause| evaluation_error(family, cause))?;
+            let line = chord.exact_line().ok_or_else(unsupported)?;
+            // A chord is affine in its parameter: constant first derivative.
+            let first = CurveDerivative2::new(
+                line.end().x() - line.start().x(),
+                line.end().y() - line.start().y(),
+            );
+            return Ok((1..=max_order)
+                .map(|order| {
+                    CurveVector2::represented(if order == 1 {
+                        first.clone()
+                    } else {
+                        CurveDerivative2::new(Real::zero(), Real::zero())
+                    })
+                })
+                .collect());
+        }
+        let range = self.parameter_domain();
+        let compare = |boundary| {
+            decided(
+                parameter
+                    .cmp_by_refinement(boundary, policy)
+                    .map_err(|cause| evaluation_error(family, cause))?,
+                family,
+            )
+        };
+        if compare(range.start())? == Ordering::Less || compare(range.end())? == Ordering::Greater {
+            return Err(evaluation_error(family, CurveError::InvalidCurveParameter));
+        }
+        let parallel = match fragment {
+            BezierSplitFragment2::RetainedBezier { source_curve, .. } => {
+                let source = RationalBezier2::try_from_subcurve(source_curve)
+                    .map_err(|cause| evaluation_error(family, cause))?;
+                return rational_derivatives(&source, parameter, max_order, family, policy);
+            }
+            BezierSplitFragment2::SelectedFiber(fragment) => {
+                if let Some(source) = fragment.rational_curve() {
+                    return rational_derivatives(source, parameter, max_order, family, policy);
+                }
+                fragment.analytic_parallel().ok_or_else(unsupported)?
+            }
+            BezierSplitFragment2::AnalyticParallel(fragment) => fragment.parallel(),
+            BezierSplitFragment2::AlgebraicCuspSemicircle(_) => return Err(unsupported()),
+            BezierSplitFragment2::Materialized { .. } | BezierSplitFragment2::AlgebraicChord(_) => {
+                unreachable!("native curves and chords are handled above")
+            }
+        };
+        let (Some(scalar), 1) = (parameter.scalar(), max_order) else {
+            return Err(unsupported());
+        };
+        let derivative = decided(
+            parallel
+                .derivative_at(scalar, policy)
+                .map_err(|cause| evaluation_error(family, cause))?,
+            family,
+        )?;
+        Ok(vec![CurveVector2::represented(derivative)])
+    }
+
     fn point_at_selected_native_parameter(
         &self,
         parameter: &CurveParameter2,
@@ -298,6 +382,44 @@ pub(super) fn rational_point(
             UncertaintyReason::Unsupported,
         )
     })
+}
+
+fn rational_derivatives(
+    source: &RationalBezier2,
+    parameter: &CurveParameter2,
+    max_order: usize,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<CurveVector2>> {
+    validate_rational_point(source, parameter, family, policy)?;
+    if let Some(scalar) = parameter.scalar() {
+        return Ok(decided(
+            source.derivatives_at_classified(scalar, max_order, policy),
+            family,
+        )?
+        .into_iter()
+        .map(CurveVector2::represented)
+        .collect());
+    }
+    let Some(BezierParameter2::Algebraic(local)) = parameter.as_bezier_parameter() else {
+        return Err(ExactCurveError::blocked(
+            CurveOperation2::Evaluation,
+            family,
+            UncertaintyReason::Unsupported,
+        ));
+    };
+    let images = decided(
+        source
+            .derivatives_at_algebraic_parameter(local, max_order, policy)
+            .map_err(|cause| evaluation_error(family, cause))?,
+        family,
+    )?;
+    Ok(images
+        .iter()
+        .map(|image| {
+            CurveVector2::selected(crate::BezierAlgebraicTangentVector2::from_image(image))
+        })
+        .collect())
 }
 
 fn parallel_point(

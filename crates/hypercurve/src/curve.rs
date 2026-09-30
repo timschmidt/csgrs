@@ -137,6 +137,15 @@ impl CurveVector2 {
         }
     }
 
+    fn selected(vector: crate::BezierAlgebraicTangentVector2) -> Self {
+        Self {
+            data: CurveVectorData2::Selected {
+                vector,
+                chart_factor: Real::one(),
+            },
+        }
+    }
+
     fn represented(derivative: CurveDerivative2) -> Self {
         Self {
             data: CurveVectorData2::Represented(derivative),
@@ -1451,13 +1460,19 @@ impl Curve2 {
 
     /// Dispatches represented parameters to the scalar kernel and selected
     /// parameters to the authored span's algebraic derivative images.
-    fn general_derivatives_at_side(
+    pub(super) fn general_derivatives_at_side(
         &self,
         parameter: &CurveParameter2,
         max_order: usize,
         side: CurveParameterSide2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveVector2>> {
+        if self.source_range().is_some() {
+            return self.source_range_derivatives_at(parameter, max_order, side, policy);
+        }
+        if self.geometry().is_none() {
+            return self.retained_derivatives_at(parameter, max_order, policy);
+        }
         if let Some(scalar) = parameter.scalar() {
             return Ok(self
                 .derivatives_at_side_with_policy(scalar, max_order, side, policy)?
@@ -1488,11 +1503,6 @@ impl Curve2 {
                     reason,
                 )),
             }
-        }
-        if self.geometry().is_none() {
-            // Generated carriers keep their own selected-root evidence; their
-            // general derivative route is not yet shared here.
-            return Err(blocked(crate::UncertaintyReason::Unsupported));
         }
         let fragments =
             self.native_bezier_fragments_for_operation(policy, CurveOperation2::Evaluation)?;

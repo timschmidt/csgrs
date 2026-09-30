@@ -545,6 +545,36 @@ impl Curve2 {
             .point_at_parameter_with_policy(parameter, side, policy)
     }
 
+    /// Derivatives of an authored source restricted to a subrange. The public
+    /// parameter is the source chart, so the source derivatives apply
+    /// unchanged; at a range endpoint the side interior to the range is used.
+    pub(super) fn source_range_derivatives_at(
+        &self,
+        parameter: &CurveParameter2,
+        max_order: usize,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<crate::CurveVector2>> {
+        let range = self.source_range().expect("source range");
+        range.validate(policy)?;
+        let family = self.family();
+        let start_order = compare(parameter, range.range.start(), family, policy)?;
+        let end_order = compare(parameter, range.range.end(), family, policy)?;
+        if start_order.is_lt() || end_order.is_gt() {
+            return Err(subdivision_error(family, CurveError::InvalidCurveParameter));
+        }
+        let side = if start_order.is_eq() {
+            CurveParameterSide2::Right
+        } else if end_order.is_eq() {
+            CurveParameterSide2::Left
+        } else {
+            side
+        };
+        range
+            .source
+            .general_derivatives_at_side(parameter, max_order, side, policy)
+    }
+
     pub(super) fn transform_source_range(
         &self,
         transform: &Similarity2,

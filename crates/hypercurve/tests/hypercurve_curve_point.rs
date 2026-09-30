@@ -136,3 +136,130 @@ fn coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty() {
         Classification::Uncertain(_),
     ));
 }
+
+mod generated_derivatives {
+    use hypercurve::{
+        Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+        BezierParameterPolynomial, BezierParameterRange2, Classification, Curve2, CurveContext,
+        CurveParameter2, ExactCurveError, Point2, QuadraticBezier2, Real, UncertaintyReason,
+    };
+
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("exact fixture: {reason:?}"),
+        }
+    }
+
+    fn q(numerator: i32, denominator: i32) -> Real {
+        (Real::from(numerator) / Real::from(denominator)).unwrap()
+    }
+
+    /// The root of `a t^2 - 1` in `[lower, upper]`.
+    fn inverse_root(a: i32, lower: Real, upper: Real, policy: &CurveContext) -> CurveParameter2 {
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![Real::from(-1), Real::zero(), Real::from(a)],
+                policy,
+            )
+            .unwrap(),
+        );
+        let interval = decided(BezierParameterInterval::try_new(lower, upper, policy).unwrap());
+        CurveParameter2::from(BezierParameter2::Algebraic(decided(
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap(),
+        )))
+    }
+
+    fn arch() -> QuadraticBezier2 {
+        QuadraticBezier2::new(
+            Point2::new(Real::zero(), Real::zero()),
+            Point2::new(Real::one(), Real::from(2)),
+            Point2::new(Real::from(2), Real::zero()),
+        )
+    }
+
+    #[test]
+    fn zero_distance_generated_parallel_matches_its_source_derivative() {
+        let policy = CurveContext::STRICT;
+        let unit = decided(
+            BezierParameterRange2::try_new(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+                &policy,
+            )
+            .unwrap(),
+        );
+        let generated = decided(
+            Curve2::try_analytic_parallel(
+                arch().parallel_left(Real::zero()).unwrap(),
+                unit,
+                &policy,
+            )
+            .unwrap(),
+        );
+        assert!(generated.geometry().is_none());
+        let parameter = CurveParameter2::from(q(1, 3));
+        let expected = Curve2::from(arch())
+            .derivative_at(&parameter, &policy)
+            .unwrap()
+            .value;
+        let actual = generated.derivative_at(&parameter, &policy).unwrap().value;
+        assert_eq!(
+            actual.represented_coordinates(),
+            expected.represented_coordinates()
+        );
+    }
+
+    #[test]
+    fn retained_bezier_pieces_evaluate_selected_derivatives() {
+        let policy = CurveContext::STRICT;
+        let curve = Curve2::from(arch());
+        // Split at 1/sqrt(2); the left piece keeps the source chart [0, 1/sqrt(2)].
+        let cut = inverse_root(2, q(1, 2), q(3, 4), &policy);
+        let (left, _) = curve.split_at(cut, &policy).unwrap().into_value();
+        assert!(left.geometry().is_none());
+        // 1/sqrt(3) lies inside the left piece; y' = 4 - 8t < 0 there, x' = 2.
+        let inside = inverse_root(3, q(1, 2), q(2, 3), &policy);
+        for derivative in [
+            left.derivative_at(&inside, &policy).unwrap().value,
+            curve.derivative_at(&inside, &policy).unwrap().value,
+        ] {
+            assert!(derivative.represented_coordinates().is_none());
+            assert_eq!(
+                derivative.coordinate_sign(Axis2::X, &policy).unwrap(),
+                Classification::Decided(hyperreal::RealSign::Positive)
+            );
+            assert_eq!(
+                derivative.coordinate_sign(Axis2::Y, &policy).unwrap(),
+                Classification::Decided(hyperreal::RealSign::Negative)
+            );
+        }
+    }
+
+    #[test]
+    fn selected_parallel_derivatives_report_the_capability_boundary() {
+        let policy = CurveContext::STRICT;
+        let unit = decided(
+            BezierParameterRange2::try_new(
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+                &policy,
+            )
+            .unwrap(),
+        );
+        let generated = decided(
+            Curve2::try_analytic_parallel(
+                arch().parallel_left(Real::one()).unwrap(),
+                unit,
+                &policy,
+            )
+            .unwrap(),
+        );
+        let selected = inverse_root(3, q(1, 2), q(2, 3), &policy);
+        assert!(matches!(
+            generated.derivative_at(&selected, &policy),
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Unsupported
+        ));
+    }
+}
