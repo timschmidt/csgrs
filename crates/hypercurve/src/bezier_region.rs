@@ -12083,6 +12083,15 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
+        if matches!(corner_style, OffsetCornerStyle2::Round)
+            && !self.data.boundary_loops.is_empty()
+            && real_sign(&distance, policy) == Some(RealSign::Negative)
+            && self.boundary_fits_strip_narrower_than(&(Real::zero() - &distance), policy)
+        {
+            // No disk of the erosion radius fits in the filled set, so its
+            // round erosion is empty; skip the offset arrangement entirely.
+            return Ok(Classification::Decided(Self::empty()));
+        }
         // Offsets act on the regularized filled set. Obtain its boundary
         // ownership from the arrangement before asking for incident sides;
         // authored Green integrals are neither necessary nor sufficient for
@@ -12091,6 +12100,79 @@ impl CurveRegion2 {
         self.regularized_region_raw(policy)
             .map_err(|error| error.with_operation(CurveOperation2::Offset))?
             .offset_exact_general_raw(distance, corner_style, policy)
+    }
+
+    /// Certifies that the filled set lies between two parallel lines closer
+    /// than `2 * radius`, so no disk of `radius` fits inside it.
+    ///
+    /// Every polynomial Bezier fragment lies in the convex hull of its exact
+    /// control points, which therefore contains the filled set. Candidate
+    /// strip directions are the fragments' first-to-last control chords; any
+    /// direction is sound. With `e` a chord, the hull's extent across `e` is
+    /// `(max - min) / |e|` of `cross(e, p)` over control points `p`, compared
+    /// squared without roots. Other carriers, unrepresented coordinates or
+    /// large boundaries decline.
+    fn boundary_fits_strip_narrower_than(&self, radius: &Real, policy: &CurveContext) -> bool {
+        const MAX_STRIP_FRAGMENTS: usize = 256;
+        let mut points = Vec::new();
+        let mut chords = Vec::new();
+        for boundary_loop in &self.data.boundary_loops {
+            for fragment in boundary_loop.fragments() {
+                let BezierSplitFragment2::Materialized { curve, .. } = fragment else {
+                    return false;
+                };
+                let controls: Vec<&Point2> = match curve {
+                    BezierSubcurve2::Quadratic(curve) => curve.control_points().to_vec(),
+                    BezierSubcurve2::Cubic(curve) => curve.control_points().to_vec(),
+                    BezierSubcurve2::RationalQuadratic(_) | BezierSubcurve2::Rational(_) => {
+                        return false;
+                    }
+                };
+                chords.push((controls[0].clone(), controls[controls.len() - 1].clone()));
+                points.extend(controls.into_iter().cloned());
+                if chords.len() > MAX_STRIP_FRAGMENTS {
+                    return false;
+                }
+            }
+        }
+        if chords.is_empty() {
+            return false;
+        }
+        let four_radius_squared = Real::from(4) * radius * radius;
+        chords.iter().any(|(start, end)| {
+            let dx = end.x() - start.x();
+            let dy = end.y() - start.y();
+            let length_squared = &dx * &dx + &dy * &dy;
+            if real_sign(&length_squared, policy) != Some(RealSign::Positive) {
+                return false;
+            }
+            let mut extent: Option<(Real, Real)> = None;
+            for point in &points {
+                let cross = &dx * (point.y() - start.y()) - &dy * (point.x() - start.x());
+                extent = Some(match extent {
+                    None => (cross.clone(), cross),
+                    Some((low, high)) => {
+                        let below = compare_reals(&cross, &low, policy);
+                        let above = compare_reals(&cross, &high, policy);
+                        let (Some(below), Some(above)) = (below, above) else {
+                            return false;
+                        };
+                        (
+                            if below.is_lt() { cross.clone() } else { low },
+                            if above.is_gt() { cross } else { high },
+                        )
+                    }
+                });
+            }
+            let Some((low, high)) = extent else {
+                return false;
+            };
+            let width = high - low;
+            real_sign(
+                &(&width * &width - &four_radius_squared * &length_squared),
+                policy,
+            ) == Some(RealSign::Negative)
+        })
     }
 
     fn offset_exact_boundary_walk_raw(

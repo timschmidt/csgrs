@@ -1197,3 +1197,38 @@ fn unordered_native_regions_reenter_operations_without_summary_queries() {
         }
     }
 }
+
+#[test]
+fn round_erosion_of_regions_narrower_than_its_diameter_is_empty() {
+    use crate::OffsetCornerStyle2;
+    // A diagonal strip of width sqrt(2): a disk of radius 1 cannot fit, while
+    // one of radius 1/2 can, so only the smaller erosion keeps material.
+    let strip = region(
+        vec![
+            Contour2::from_bulge_vertices(&[
+                vertex(0, 0),
+                vertex(10, 10),
+                vertex(9, 11),
+                vertex(-1, 1),
+            ])
+            .unwrap(),
+        ],
+        Vec::new(),
+    );
+    for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+        let collapsed = strip
+            .offset(Real::from(-1), &OffsetCornerStyle2::Round, &policy)
+            .unwrap();
+        assert_eq!(collapsed.certainty, CurveCertainty::Certified);
+        assert!(collapsed.value.is_empty());
+        let retained = strip
+            .offset(
+                (Real::from(-1) / Real::from(2)).unwrap(),
+                &OffsetCornerStyle2::Round,
+                &policy,
+            )
+            .unwrap()
+            .into_value();
+        assert!(!retained.is_empty());
+    }
+}
