@@ -5746,6 +5746,15 @@ impl BezierAlgebraicChord2 {
             } else {
                 strict
             };
+            // Each step keeps an exact bracket, but only a scalar endpoint can
+            // be replaced. When the retained algebraic endpoint itself is the
+            // incidence, every midpoint keeps the scalar side's sign and the
+            // bracket closes on that endpoint without ever replacing it. A
+            // strict opposite-side certificate excludes that case, so a stall
+            // means the side evidence and this incidence disagree: report it
+            // instead of refining without end.
+            const MAX_SCALAR_BRACKET_STEPS: usize = 128;
+            let mut scalar_bracket_steps = 0;
             let parameter = loop {
                 if let (Some(lower), Some(upper)) = (&lower_real, &upper_real) {
                     let parameter = match BezierRecursiveProjectiveParameter2::new_monotone(
@@ -5764,6 +5773,10 @@ impl BezierAlgebraicChord2 {
                         }
                     };
                     break CurveParameter2::from_recursive_projective(parameter);
+                }
+                scalar_bracket_steps += 1;
+                if scalar_bracket_steps > MAX_SCALAR_BRACKET_STEPS {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                 }
                 let midpoint = match CurveParameterRange2::new_validated(
                     lower_parameter.clone(),
