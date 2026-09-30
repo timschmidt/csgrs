@@ -9005,8 +9005,12 @@ impl BezierAlgebraicChord2 {
         // blocker and an APPROXIMATE_512 endpoint-incidence terminal. The
         // bounded speculative pass leaves this cold refinement to its
         // complete caller.
+        // This is an optional rejection filter. Boxes of chords that really
+        // meet never separate, and each deeper level of a selected-fiber
+        // endpoint costs a larger local Sturm refinement, so the ladder stops
+        // where the exact support relation below is cheaper.
         if !policy.has_bounded_exact_predicate_budget() {
-            for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
+            for refinement_steps in [0, 2, 4, 8, 16, 32, 64] {
                 let (Classification::Decided(first), Classification::Decided(second)) = (
                     self.conservative_bounds_refined(refinement_steps, policy)?,
                     other.conservative_bounds_refined(refinement_steps, policy)?,

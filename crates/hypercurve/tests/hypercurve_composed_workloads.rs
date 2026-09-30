@@ -742,14 +742,12 @@ fn chamfered_spline_inward_round_offset_terminates() {
     run_sequence(&seeds, &steps, false).unwrap();
 }
 
-/// Open computational-closure gap found by the generator: rebuilding an
-/// inward bevel offset of a chamfered rational-cubic / B-spline seed from its
-/// exported boundary. Regularization's ray probe refines the bounds of
-/// algebraic chord-pair points, and each refinement runs a local Sturm
-/// sequence in the selected fiber whose bivariate pseudo-remainders grow
-/// without bound in practice (no result after 15 minutes).
+/// Generated reproducer: rebuilding an inward bevel offset of a chamfered
+/// rational-cubic / B-spline seed from its exported boundary. The chord-pair
+/// rejection filter refined selected-fiber endpoint bounds to 512 steps for
+/// chords that really meet, each level a larger local Sturm refinement (no
+/// result in 15 minutes); the filter now stops at 64 steps.
 #[test]
-#[ignore = "open: fiber Sturm refinement of chord-pair probe bounds"]
 fn chamfered_rational_cubic_bevel_offset_round_trips() {
     let seeds = [
         Seed {
