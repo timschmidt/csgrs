@@ -148,10 +148,15 @@ struct FragmentQueryBounds {
     approximate: Option<[f64; 4]>,
 }
 
-/// Certified outward f64 bounds of an exact rational `Real`; irrational or
+/// Certified outward f64 bounds of a `Real`: exact rationals directly, other
+/// values through a certified rational interval. Aborted evaluation or
 /// out-of-range values have none and stay on the exact path.
 pub(crate) fn certified_f64_enclosure(value: &Real) -> Option<[f64; 2]> {
-    value.exact_rational_ref()?.to_f64_enclosure()
+    if let Some(exact) = value.exact_rational_ref() {
+        return exact.to_f64_enclosure();
+    }
+    let [lower, upper] = value.certified_rational_interval(-64)?;
+    Some([lower.to_f64_enclosure()?[0], upper.to_f64_enclosure()?[1]])
 }
 
 fn f64_box(bounds: &Aabb2) -> Option<[f64; 4]> {
@@ -172,11 +177,20 @@ fn f64_box(bounds: &Aabb2) -> Option<[f64; 4]> {
 /// magnitude. Inconclusive results fall back to the exact test.
 fn f64_box_certainly_misses_forward_ray(
     bounds: [f64; 4],
-    origin: [f64; 2],
-    direction: [f64; 2],
+    origin: [[f64; 2]; 2],
+    direction: [[f64; 2]; 2],
 ) -> bool {
     const MARGIN: f64 = 1.0e-9;
-    let [dx, dy] = direction;
+    // Midpoints and radii of the certified origin and direction intervals.
+    let mid_radius = |[low, high]: [f64; 2]| ((low + high) * 0.5, (high - low) * 0.5);
+    let (origin_x, origin_x_radius) = mid_radius(origin[0]);
+    let (origin_y, origin_y_radius) = mid_radius(origin[1]);
+    let (dx, dx_radius) = mid_radius(direction[0]);
+    let (dy, dy_radius) = mid_radius(direction[1]);
+    // |ab - a'b'| <= |a'| r_b + |b'| r_a + r_a r_b for a in a' +- r_a.
+    let product_error = |a: f64, a_radius: f64, b: f64, b_radius: f64| {
+        a.abs() * b_radius + b.abs() * a_radius + a_radius * b_radius
+    };
     let mut side_signs = [true, true];
     let mut all_behind = true;
     for (x, y) in [
@@ -185,11 +199,15 @@ fn f64_box_certainly_misses_forward_ray(
         (bounds[1], bounds[2]),
         (bounds[1], bounds[3]),
     ] {
-        let delta_x = x - origin[0];
-        let delta_y = y - origin[1];
-        let scale = (x.abs() + origin[0].abs()) * (dx.abs() + dy.abs())
-            + (y.abs() + origin[1].abs()) * (dx.abs() + dy.abs());
-        let error = MARGIN * scale + 1.0e-300;
+        let delta_x = x - origin_x;
+        let delta_y = y - origin_y;
+        let scale = (x.abs() + origin_x.abs()) * (dx.abs() + dy.abs())
+            + (y.abs() + origin_y.abs()) * (dx.abs() + dy.abs());
+        let input_error = product_error(dy, dy_radius, delta_x, origin_x_radius)
+            + product_error(dx, dx_radius, delta_y, origin_y_radius)
+            + product_error(dx, dx_radius, delta_x, origin_x_radius)
+            + product_error(dy, dy_radius, delta_y, origin_y_radius);
+        let error = MARGIN * (scale + input_error) + input_error + 1.0e-300;
         let side = -dy * delta_x + dx * delta_y;
         let forward = dx * delta_x + dy * delta_y;
         if side >= -error {
@@ -15943,7 +15961,7 @@ fn classify_point_with_retained_ray_skipping_origin(
         certified_f64_enclosure(direction_x),
         certified_f64_enclosure(direction_y),
     ) {
-        (Some([x, _]), Some([y, _]), Some([dx, _]), Some([dy, _])) => Some(([x, y], [dx, dy])),
+        (Some(x), Some(y), Some(dx), Some(dy)) => Some(([x, y], [dx, dy])),
         _ => None,
     };
     for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
