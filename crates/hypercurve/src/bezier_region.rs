@@ -3549,12 +3549,34 @@ impl CurveTangent2 {
                 );
             }
             BezierSplitFragment2::Materialized { curve, .. } => {
-                let curve = RationalBezier2::try_from_subcurve(curve)?;
-                let parameter = if at_start { Real::zero() } else { Real::one() };
-                let derivative = match curve.derivative_at_classified(&parameter, policy) {
-                    Classification::Decided(derivative) => derivative,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
+                // A polynomial Bezier's endpoint derivative is n times its
+                // first or last control difference; no power basis is needed.
+                let polynomial_endpoint = |controls: &[&Point2]| {
+                    let degree = Real::from(controls.len() as i64 - 1);
+                    let (from, to) = if at_start {
+                        (controls[0], controls[1])
+                    } else {
+                        (controls[controls.len() - 2], controls[controls.len() - 1])
+                    };
+                    crate::CurveDerivative2::new(
+                        (to.x() - from.x()) * &degree,
+                        (to.y() - from.y()) * &degree,
+                    )
+                };
+                let derivative = match curve {
+                    BezierSubcurve2::Quadratic(curve) => {
+                        polynomial_endpoint(&curve.control_points())
+                    }
+                    BezierSubcurve2::Cubic(curve) => polynomial_endpoint(&curve.control_points()),
+                    BezierSubcurve2::RationalQuadratic(_) | BezierSubcurve2::Rational(_) => {
+                        let curve = RationalBezier2::try_from_subcurve(curve)?;
+                        let parameter = if at_start { Real::zero() } else { Real::one() };
+                        match curve.derivative_at_classified(&parameter, policy) {
+                            Classification::Decided(derivative) => derivative,
+                            Classification::Uncertain(reason) => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
                     }
                 };
                 if derivative.zero_status() != hyperreal::ZeroKnowledge::NonZero
