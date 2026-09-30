@@ -3164,6 +3164,33 @@ fn count_common_fiber_roots(
             sequence_length: 1,
         });
     }
+    // Most queried fibers share no root. A modular image at a prime-field
+    // root of the retained minimal polynomial certifies that cheaply, before
+    // the exact local gcd whose subresultant coefficients can grow sharply.
+    let polynomial_coefficients = |polynomial: &[LocalFieldElement]| {
+        polynomial
+            .iter()
+            .map(|coefficient| {
+                coefficient
+                    .denominator
+                    .is_none()
+                    .then(|| coefficient.numerator.clone())
+            })
+            .collect::<Option<Vec<_>>>()
+    };
+    if let (Some(first_coefficients), Some(second_coefficients)) = (
+        polynomial_coefficients(&first),
+        polynomial_coefficients(&second),
+    ) && crate::modular_gcd::algebraic_extension_polynomials_certainly_coprime(
+        &first_coefficients,
+        &second_coefficients,
+        &field.root.polynomial_coefficients,
+    ) {
+        return Ok(LocalRootCountOutcome::Counted {
+            count: 0,
+            sequence_length: 1,
+        });
+    }
     let gcd = local_polynomial_greatest_common_divisor(first, second, field)?;
     count_local_polynomial_roots(gcd, fiber_lower, fiber_upper, endpoints, field)
 }
