@@ -79,7 +79,6 @@ mod region;
 mod region_nesting;
 #[cfg(test)]
 mod region_pipeline_tests;
-mod retained_status;
 mod segment;
 mod self_intersect;
 mod spline_periodic;
@@ -234,7 +233,6 @@ pub(crate) use rational_bezier_general::{
 };
 pub use reconstruct::PolylineReconstructionOptions;
 pub use region::RegionPointLocation;
-pub use retained_status::RetainedTopologyStatus;
 pub use segment::{CircularArc2, LineSeg2, Segment2};
 pub use spline_periodic::SplinePeriodicity2;
 pub use split::{ContourSplitMap, ContourSplitMarkers, SegmentSplitMarker, SegmentSplitPoint};
