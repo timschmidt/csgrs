@@ -774,3 +774,42 @@ fn chamfered_rational_cubic_bevel_offset_round_trips() {
     let steps = [Step::Chamfer(8, 2), Step::Offset(12, -1, 0)];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// Generated reproducer: a rectangle-and-arc seed unioned with a translate
+/// of itself. Rebuilding the union pairs a retained arc piece with a chord
+/// from the other operand that ends exactly at the piece's endpoint; the
+/// kernel re-derived that vertex as a selected root and could not order it
+/// against the chord's own endpoint. A certified equal endpoint is owned.
+#[test]
+fn translated_arc_union_round_trips() {
+    let seeds = [
+        Seed {
+            x: 0,
+            y: 0,
+            width: 13,
+            height: 14,
+            lower: 0,
+            upper: 0,
+            curvature: 1,
+            weight: 1,
+        },
+        Seed {
+            x: 0,
+            y: 0,
+            width: 16,
+            height: 6,
+            lower: 0,
+            upper: 1,
+            curvature: 1,
+            weight: 1,
+        },
+    ];
+    let steps = [
+        Step::Translate(1, 0, 1),
+        Step::Boolean(9, 0, 0),
+        Step::Boolean(9, 3, 0),
+        Step::Boolean(0, 0, 0),
+        Step::Boolean(10, 8, 0),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}

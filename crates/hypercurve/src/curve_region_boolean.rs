@@ -3112,6 +3112,33 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             pair.first_carrier_index
         };
+        // Carriers from different operands can still share an exact vertex,
+        // for example a boundary rebuilt from its own exported curves. The
+        // kernel would rediscover that contact as a selected root and then
+        // have to order it against an independently constructed endpoint.
+        // A certified equal endpoint is owned here instead.
+        let discovered_owned_contact;
+        let mut owned_contact = None;
+        let shared_source_parameter = match shared_source_parameter {
+            Some(parameter) => Some(parameter),
+            None if self.data.carriers[chord_index].operand
+                != self.data.carriers[other_index].operand =>
+            {
+                discovered_owned_contact = self.cross_operand_chord_endpoint_contact(
+                    pair,
+                    chord,
+                    chord_index,
+                    other_index,
+                )?;
+                discovered_owned_contact
+                    .as_ref()
+                    .map(|(parameter, contact)| {
+                        owned_contact = Some(contact.clone());
+                        parameter
+                    })
+            }
+            None => None,
+        };
         let collinear_support = if let Some(line) =
             regular_component.and_then(BezierParallelRationalComponent2::support_line)
         {
@@ -3304,11 +3331,72 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             })
             .collect();
+        let mut contacts: Vec<RegionPairContactEvidence> = contacts;
+        contacts.extend(owned_contact);
         Ok(Some(RegionPairResult {
             contacts,
             overlaps,
             blockers: Vec::new(),
         }))
+    }
+
+    /// Finds a chord endpoint that exactly equals an endpoint of a carrier from
+    /// the other operand, returning that carrier parameter and the contact.
+    /// Equality is decided coordinate by coordinate under STRICT; the contact
+    /// makes no transversality claim, leaving local topology to the arrangement.
+    fn cross_operand_chord_endpoint_contact(
+        &self,
+        pair: &RegionCarrierPair,
+        chord: &crate::BezierAlgebraicChord2,
+        chord_index: usize,
+        other_index: usize,
+    ) -> ExactCurveResult<Option<(CurveParameter2, RegionPairContactEvidence)>> {
+        let strict = self.data.policy.strict_counterpart();
+        let other = &self.data.carriers[other_index];
+        for parameter in [&other.start, &other.end] {
+            let Some(point) = exact_carrier_point(other, parameter, &self.data.policy) else {
+                continue;
+            };
+            for chord_end in [chord.start(), chord.end()] {
+                let Some(end) = chord_end.coordinates() else {
+                    continue;
+                };
+                let equal = |left: &Real, right: &Real| {
+                    strict.strict_predicate_pass(|| {
+                        crate::classify::compare_reals(left, right, &strict)
+                            == Some(std::cmp::Ordering::Equal)
+                    })
+                };
+                if !equal(point.x(), end.x()) || !equal(point.y(), end.y()) {
+                    continue;
+                }
+                let shared = CurvePoint2::from(end.clone());
+                let Classification::Decided(Some(chord_parameter)) = chord
+                    .parameter_at_certified_point(shared.clone(), &self.data.policy)
+                    .map_err(|cause| self.invalid(chord_index, cause))?
+                else {
+                    continue;
+                };
+                let chord_parameter = CurveParameter2::from_algebraic_chord(chord_parameter);
+                let (first_parameter, second_parameter) = if chord_index == pair.first_carrier_index
+                {
+                    (chord_parameter, parameter.clone())
+                } else {
+                    (parameter.clone(), chord_parameter)
+                };
+                return Ok(Some((
+                    parameter.clone(),
+                    RegionPairContactEvidence::direct(
+                        first_parameter,
+                        second_parameter,
+                        Some(shared),
+                        false,
+                        None,
+                    ),
+                )));
+            }
+        }
+        Ok(None)
     }
 
     fn algebraic_chord_parallel_pair_result(
