@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Axis2, BezierParameter2, Classification, CurveContext, CurveIntersectionCandidates2, Point2,
-    RationalBezier2, RationalBezierIntersectionContacts2, Real,
+    Axis2, Classification, Curve2, CurveCertainty, CurveContext, CurveIntersectionResult2, Point2,
+    RationalBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -23,6 +23,25 @@ fn decided<T>(classification: Classification<T>) -> T {
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => panic!("benchmark unexpectedly uncertain: {reason:?}"),
     }
+}
+
+/// Exact contact and overlap evidence through the public curve interface.
+fn contacts(
+    first: &RationalBezier2,
+    second: &RationalBezier2,
+    policy: &CurveContext,
+) -> CurveIntersectionResult2 {
+    let evidence = Curve2::from(first.clone())
+        .intersect_curve(&Curve2::from(second.clone()), policy)
+        .expect("benchmark contacts are exact");
+    assert_eq!(evidence.certainty, CurveCertainty::Certified);
+    let evidence = evidence.value;
+    assert!(evidence.is_complete(), "benchmark contacts are complete");
+    evidence
+}
+
+fn evidence_count(evidence: &CurveIntersectionResult2) -> usize {
+    evidence.contacts().len() + evidence.overlaps().len()
 }
 
 fn large_rational_control_count() -> usize {
@@ -259,13 +278,8 @@ fn main() {
     let started = Instant::now();
     let mut lineage_count = 0_usize;
     for _ in 0..lineage_iterations {
-        let contacts = related_first
-            .intersection_contacts(&related_second, &policy)
-            .expect("benchmark lineage contacts are exact");
-        lineage_count = lineage_count.wrapping_add(black_box(match contacts {
-            RationalBezierIntersectionContacts2::Overlap(_) => 1,
-            _ => 0,
-        }));
+        let contacts = contacts(&related_first, &related_second, &policy);
+        lineage_count = lineage_count.wrapping_add(black_box(contacts.overlaps().len()));
     }
     let elapsed = started.elapsed();
     println!(
@@ -285,20 +299,14 @@ fn main() {
     let started = Instant::now();
     let mut algebraic_overlap_count = 0_usize;
     for _ in 0..algebraic_overlap_iterations {
-        let contacts = nonlinear_line
-            .intersection_contacts(&partial_line, &policy)
-            .expect("benchmark line-image contacts are exact");
-        algebraic_overlap_count = algebraic_overlap_count.wrapping_add(black_box(match contacts {
-            RationalBezierIntersectionContacts2::Overlap(overlap)
-                if matches!(
-                    overlap.first_range().start(),
-                    BezierParameter2::Algebraic(_)
-                ) =>
-            {
-                1
-            }
-            _ => 0,
-        }));
+        let contacts = contacts(&nonlinear_line, &partial_line, &policy);
+        algebraic_overlap_count = algebraic_overlap_count.wrapping_add(black_box(
+            contacts
+                .overlaps()
+                .iter()
+                .filter(|overlap| overlap.first_range().start().scalar().is_none())
+                .count(),
+        ));
     }
     let elapsed = started.elapsed();
     println!(
@@ -330,20 +338,14 @@ fn main() {
     let started = Instant::now();
     let mut graph_overlap_count = 0_usize;
     for _ in 0..graph_overlap_iterations {
-        let contacts = partial_parabola
-            .intersection_contacts(&nonlinear_parabola, &policy)
-            .expect("benchmark graph contacts are exact");
-        graph_overlap_count = graph_overlap_count.wrapping_add(black_box(match contacts {
-            RationalBezierIntersectionContacts2::Overlap(overlap)
-                if matches!(
-                    overlap.second_range().start(),
-                    BezierParameter2::Algebraic(_)
-                ) =>
-            {
-                1
-            }
-            _ => 0,
-        }));
+        let contacts = contacts(&partial_parabola, &nonlinear_parabola, &policy);
+        graph_overlap_count = graph_overlap_count.wrapping_add(black_box(
+            contacts
+                .overlaps()
+                .iter()
+                .filter(|overlap| overlap.second_range().start().scalar().is_none())
+                .count(),
+        ));
     }
     let elapsed = started.elapsed();
     println!(
@@ -361,58 +363,19 @@ fn main() {
         vec![r(1), r(1)],
     )
     .expect("benchmark line is valid");
-    let algebraic_parameter = match parabola
-        .intersection_candidates(&horizontal, &policy)
-        .expect("benchmark resultant candidates are exact")
-    {
-        CurveIntersectionCandidates2::Candidates {
-            first_parameters, ..
-        } => match &first_parameters[0] {
-            BezierParameter2::Algebraic(parameter) => parameter.clone(),
-            BezierParameter2::Exact(_) => panic!("benchmark expected an algebraic parameter"),
-        },
-        other => panic!("benchmark expected candidates, got {other:?}"),
-    };
-
-    let resultant_iterations = 500_u32;
-    let started = Instant::now();
-    let mut resultant_count = 0_usize;
-    for _ in 0..resultant_iterations {
-        let candidates = parabola
-            .intersection_candidates(&horizontal, &policy)
-            .expect("benchmark resultant candidates are exact");
-        resultant_count = resultant_count.wrapping_add(black_box(match candidates {
-            CurveIntersectionCandidates2::NoIntersection => 0,
-            CurveIntersectionCandidates2::Candidates {
-                first_parameters,
-                second_parameters,
-            } => first_parameters.len() + second_parameters.len(),
-            CurveIntersectionCandidates2::DegenerateResultant => 1,
-        }));
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "rational_bezier_cached_basis_resultant: {resultant_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={resultant_count}",
-        elapsed / resultant_iterations
+    let crossing = contacts(&parabola, &horizontal, &policy);
+    let selected_parameter = crossing.contacts()[0].first().local_parameter().clone();
+    assert!(
+        selected_parameter.scalar().is_none(),
+        "benchmark expected an algebraic parameter"
     );
 
     let contact_iterations = 250_u32;
     let started = Instant::now();
     let mut contact_count = 0_usize;
     for _ in 0..contact_iterations {
-        let contacts = parabola
-            .intersection_contacts(&horizontal, &policy)
-            .expect("benchmark contacts are exact");
-        contact_count = contact_count.wrapping_add(black_box(match contacts {
-            RationalBezierIntersectionContacts2::NoIntersection => 0,
-            RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
-            RationalBezierIntersectionContacts2::Overlap(_) => 1,
-            RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => {
-                contacts.len() + 1
-            }
-            RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
-            RationalBezierIntersectionContacts2::DegenerateResultant => 1,
-        }));
+        let contacts = contacts(&parabola, &horizontal, &policy);
+        contact_count = contact_count.wrapping_add(black_box(evidence_count(&contacts)));
     }
     let elapsed = started.elapsed();
     println!(
@@ -439,19 +402,9 @@ fn main() {
     let started = Instant::now();
     let mut pi_conic_contact_count = 0_usize;
     for _ in 0..pi_conic_contact_iterations {
-        let contacts = pi_conic
-            .intersection_contacts(&elevated_horizontal, &policy)
-            .expect("benchmark pi-weight conic contacts are exact");
-        pi_conic_contact_count = pi_conic_contact_count.wrapping_add(black_box(match contacts {
-            RationalBezierIntersectionContacts2::NoIntersection => 0,
-            RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
-            RationalBezierIntersectionContacts2::Overlap(_) => 1,
-            RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => {
-                contacts.len() + 1
-            }
-            RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
-            RationalBezierIntersectionContacts2::DegenerateResultant => 1,
-        }));
+        let contacts = contacts(&pi_conic, &elevated_horizontal, &policy);
+        pi_conic_contact_count =
+            pi_conic_contact_count.wrapping_add(black_box(evidence_count(&contacts)));
     }
     let elapsed = started.elapsed();
     println!(
@@ -460,9 +413,6 @@ fn main() {
     );
 
     let general_parabola = hypercurve::Curve2::from(parabola.clone());
-    let selected_parameter = hypercurve::CurveParameter2::from(
-        hypercurve::BezierParameter2::Algebraic(algebraic_parameter.clone()),
-    );
     let derivative_iterations = 250_u32;
     let started = Instant::now();
     let mut derivative_count = 0_usize;
@@ -500,35 +450,17 @@ fn main() {
             .expect("benchmark disjoint cubic is valid");
     let conic = RationalBezier2::try_new(vec![p(1, 0), p(1, 1), p(0, 1)], vec![r(1), r(1), r(2)])
         .expect("benchmark conic is valid");
-    let disjoint_candidate_iterations = 2_000_u32;
-    let started = Instant::now();
-    let mut disjoint_candidate_count = 0_usize;
-    for _ in 0..disjoint_candidate_iterations {
-        let candidates = black_box(&conic)
-            .intersection_candidates(black_box(&disjoint_cubic), black_box(&policy))
-            .expect("disjoint conic/cubic candidates are exact");
-        disjoint_candidate_count = disjoint_candidate_count.wrapping_add(black_box(usize::from(
-            matches!(candidates, CurveIntersectionCandidates2::NoIntersection),
-        )));
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "rational_bezier_disjoint_conic_cubic_candidates: {disjoint_candidate_iterations} iterations in {elapsed:?} ({:?}/iter), checksum={disjoint_candidate_count}",
-        elapsed / disjoint_candidate_iterations
-    );
-
     let disjoint_contacts_iterations = 2_000_u32;
     let started = Instant::now();
     let mut disjoint_contacts_count = 0_usize;
     for _ in 0..disjoint_contacts_iterations {
-        let contacts = black_box(&conic)
-            .intersection_contacts(black_box(&disjoint_cubic), black_box(&policy))
-            .expect("disjoint conic/cubic contacts are exact");
+        let contacts = contacts(
+            black_box(&conic),
+            black_box(&disjoint_cubic),
+            black_box(&policy),
+        );
         disjoint_contacts_count =
-            disjoint_contacts_count.wrapping_add(black_box(usize::from(matches!(
-                contacts,
-                RationalBezierIntersectionContacts2::NoIntersection
-            ))));
+            disjoint_contacts_count.wrapping_add(black_box(usize::from(contacts.is_disjoint())));
     }
     let elapsed = started.elapsed();
     println!(
@@ -540,19 +472,12 @@ fn main() {
     let started = Instant::now();
     let mut immediate_count = 0_usize;
     for _ in 0..immediate_iterations {
-        let contacts = black_box(&parabola)
-            .intersection_contacts(black_box(&horizontal), black_box(&policy))
-            .unwrap();
-        immediate_count = immediate_count.wrapping_add(black_box(match contacts {
-            RationalBezierIntersectionContacts2::NoIntersection => 0,
-            RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
-            RationalBezierIntersectionContacts2::Overlap(_) => 1,
-            RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => {
-                contacts.len() + 1
-            }
-            RationalBezierIntersectionContacts2::Incomplete { contacts, .. } => contacts.len(),
-            RationalBezierIntersectionContacts2::DegenerateResultant => 1,
-        }));
+        let contacts = contacts(
+            black_box(&parabola),
+            black_box(&horizontal),
+            black_box(&policy),
+        );
+        immediate_count = immediate_count.wrapping_add(black_box(evidence_count(&contacts)));
     }
     let elapsed = started.elapsed();
     println!(

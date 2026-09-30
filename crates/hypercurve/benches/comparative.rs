@@ -20,9 +20,9 @@ use hypercurve::{
 };
 use hypercurve::{
     BezierParallelVerificationOptions, BooleanOp, BulgeVertex2, Classification, Contour2,
-    CubicBezier2, Curve2, CurveContext, CurvePath2, CurveRegion2, CurveRegionLoopRole, FillRule,
-    LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2, RationalBezier2,
-    RationalBezierIntersectionContacts2, Real,
+    CubicBezier2, Curve2, CurveContext, CurveIntersectionResult2, CurveOutcome, CurvePath2,
+    CurveRegion2, CurveRegionLoopRole, FillRule, LineSeg2, NurbsCurve2, OffsetCornerStyle2, Point2,
+    RationalBezier2, Real,
 };
 use i_overlay::core::fill_rule::FillRule as OverlayFillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
@@ -1761,17 +1761,13 @@ fn benchmark_bezier_offset(runner: &Runner) {
     });
 }
 
-fn exact_rational_bezier_contact_count(result: RationalBezierIntersectionContacts2) -> usize {
-    match result {
-        RationalBezierIntersectionContacts2::NoIntersection => 0,
-        RationalBezierIntersectionContacts2::Contacts(contacts) => contacts.len(),
-        RationalBezierIntersectionContacts2::ContactsAndOverlap { contacts, .. } => contacts.len(),
-        RationalBezierIntersectionContacts2::Overlap(_)
-        | RationalBezierIntersectionContacts2::Incomplete { .. }
-        | RationalBezierIntersectionContacts2::DegenerateResultant => {
-            panic!("isolated-loop benchmark did not produce a complete contact set")
-        }
-    }
+fn exact_curve_contact_count(result: CurveOutcome<CurveIntersectionResult2>) -> usize {
+    let result = result.value;
+    assert!(
+        result.is_complete() && result.overlaps().is_empty(),
+        "isolated-loop benchmark did not produce a complete contact set"
+    );
+    result.contacts().len()
 }
 
 fn benchmark_rational_bezier_self_contact_case(
@@ -1828,6 +1824,7 @@ fn benchmark_rational_bezier_self_contact_case(
     // a single midpoint split. Fixture construction stays outside timing.
     let lower_cut = real(0.49);
     let upper_cut = real(0.51);
+    let hypercurve_carrier = Curve2::from(hypercurve_curve.clone());
     let Classification::Decided((hypercurve_left, _)) = hypercurve_curve
         .split_at_exact(&lower_cut, &policy)
         .expect("exact lower benchmark split completes")
@@ -1840,6 +1837,10 @@ fn benchmark_rational_bezier_self_contact_case(
     else {
         panic!("exact upper benchmark split became uncertain");
     };
+    let (hypercurve_left, hypercurve_right) = (
+        Curve2::from(hypercurve_left),
+        Curve2::from(hypercurve_right),
+    );
     let (curvo_left, _) = curvo_curve
         .try_split(0.49)
         .expect("finite lower benchmark split completes");
@@ -1848,17 +1849,17 @@ fn benchmark_rational_bezier_self_contact_case(
         .expect("finite upper benchmark split completes");
 
     assert_eq!(
-        exact_rational_bezier_contact_count(
-            hypercurve_curve
-                .self_intersection_contacts(&policy)
+        exact_curve_contact_count(
+            hypercurve_carrier
+                .self_intersections(&policy)
                 .expect("exact whole-carrier self contact completes"),
         ),
         1,
     );
     assert_eq!(
-        exact_rational_bezier_contact_count(
+        exact_curve_contact_count(
             hypercurve_left
-                .intersection_contacts(&hypercurve_right, &policy)
+                .intersect_curve(&hypercurve_right, &policy)
                 .expect("exact disjoint-pair contact completes"),
         ),
         1,
@@ -1881,16 +1882,16 @@ fn benchmark_rational_bezier_self_contact_case(
     );
 
     runner.measure(name, "hypercurve_exact_self", || {
-        exact_rational_bezier_contact_count(
-            hypercurve_curve
-                .self_intersection_contacts(black_box(&policy))
+        exact_curve_contact_count(
+            hypercurve_carrier
+                .self_intersections(black_box(&policy))
                 .expect("exact whole-carrier self contact replays"),
         )
     });
     runner.measure(name, "hypercurve_exact_pair", || {
-        exact_rational_bezier_contact_count(
+        exact_curve_contact_count(
             hypercurve_left
-                .intersection_contacts(black_box(&hypercurve_right), black_box(&policy))
+                .intersect_curve(black_box(&hypercurve_right), black_box(&policy))
                 .expect("exact disjoint-pair contact replays"),
         )
     });

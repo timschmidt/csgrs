@@ -141,7 +141,7 @@ pub(crate) enum RationalBezierPointIncidence2 {
 
 /// One exactly replayed parameter pair shared by two rational Bezier images.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RationalBezierIntersectionContact2 {
+pub(crate) struct RationalBezierIntersectionContact2 {
     first_parameter: BezierParameter2,
     second_parameter: BezierParameter2,
     point: CurvePoint2,
@@ -155,7 +155,7 @@ pub struct RationalBezierIntersectionContact2 {
 /// inclusion flags distinguish ordinary closed shared images from strict
 /// branch selections that exclude one or both paired boundary points.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RationalBezierIntersectionOverlap2 {
+pub(crate) struct RationalBezierIntersectionOverlap2 {
     first_range: BezierParameterRange2,
     second_range: BezierParameterRange2,
     orientation: CurveOverlapOrientation2,
@@ -727,7 +727,7 @@ impl RationalBezierIntersectionContact2 {
 
 /// Exact replay status for rational Bezier resultant candidates.
 #[derive(Clone, Debug, PartialEq)]
-pub enum RationalBezierIntersectionContacts2 {
+pub(crate) enum RationalBezierIntersectionContacts2 {
     /// Replay certified that the finite curve images do not meet.
     NoIntersection,
     /// Every resultant candidate pair was decided and these contacts remain.
@@ -2648,13 +2648,14 @@ impl RationalBezier2 {
         }
     }
 
+    #[cfg(test)]
     /// Returns exact resultant candidates for all finite curve contacts.
     ///
     /// Homogeneous coordinate equations are eliminated in each parameter
     /// direction. Roots are retained as represented or algebraically isolated
     /// [`BezierParameter2`] values. The two projections are not paired or
     /// accepted as contacts until a later exact replay proves equal images.
-    pub fn intersection_candidates(
+    pub(crate) fn intersection_candidates(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -3071,12 +3072,13 @@ impl RationalBezier2 {
         })
     }
 
+    #[cfg(test)]
     /// Replays all resultant projections into exact paired contacts.
     ///
     /// The result distinguishes complete contact sets from partial algebraic
     /// replay. No raw resultant root is accepted as a contact without exact
     /// equality of both constructed affine coordinates.
-    pub fn intersection_contacts(
+    pub(crate) fn intersection_contacts(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -3192,6 +3194,7 @@ impl RationalBezier2 {
         self.replay_intersection_candidate_set(other, &candidates, policy)
     }
 
+    #[cfg(test)]
     /// Returns every unordered off-diagonal self-contact of this curve.
     ///
     /// Both homogeneous coordinate-equality equations contain the universal
@@ -3200,7 +3203,7 @@ impl RationalBezier2 {
     /// system once, and reuses ordinary affine contact replay. A remaining
     /// positive-dimensional correspondence is reported as a degenerate
     /// resultant instead of being mistaken for isolated contacts.
-    pub fn self_intersection_contacts(
+    pub(crate) fn self_intersection_contacts(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<RationalBezierIntersectionContacts2> {
@@ -4175,6 +4178,22 @@ impl RationalBezier2 {
                     Classification::Decided(RationalBezierSharedComponentReplay::Contacts(
                         contacts,
                     )) => {
+                        // Endpoint replay is complete only when the shared
+                        // component cannot cross itself between the arcs: a
+                        // nondegenerate conic is smooth, and otherwise the
+                        // union must be injective. Both branches through a
+                        // node may lie on different individually injective
+                        // arcs.
+                        let node_free = self.has_certified_injective_union(other, true, policy)
+                            || matches!(
+                                self.shares_implicit_quadratic_conic(other, policy),
+                                Classification::Decided(true)
+                            );
+                        if !node_free {
+                            return Ok(Classification::Decided(
+                                RationalBezierIntersectionContacts2::DegenerateResultant,
+                            ));
+                        }
                         let mut replayed = Vec::with_capacity(contacts.len());
                         for (first_parameter, second_parameter) in contacts {
                             let point = match self.point_at_classified(&first_parameter, policy) {
@@ -6159,6 +6178,62 @@ impl RationalBezier2 {
         // A one-signed Bernstein derivative with distinct endpoint coordinates
         // is strictly monotone on the open domain.
         compare_reals(start, end, policy).is_some_and(|ordering| !ordering.is_eq())
+    }
+
+    /// Certifies that the union of two arcs is injective, so a shared
+    /// algebraic component meets them only along their parameter
+    /// correspondence.
+    ///
+    /// Individually injective arcs do not suffice: both branches through a
+    /// node of the shared component may lie on different arcs. Pieces of one
+    /// injective root chart qualify directly. Otherwise both arcs must be
+    /// strictly monotone on one common axis, which makes a connected union
+    /// through a positive-length overlap injective. Without an overlap
+    /// (`meet_at_most_once`), their closed axis intervals must also meet in
+    /// at most one value.
+    pub(crate) fn has_certified_injective_union(
+        &self,
+        other: &Self,
+        meet_at_most_once: bool,
+        policy: &CurveContext,
+    ) -> bool {
+        if Arc::ptr_eq(&self.data.lineage.root, &other.data.lineage.root)
+            && self.has_injective_root_chart(policy)
+            && other.has_injective_root_chart(policy)
+        {
+            return true;
+        }
+        let coordinate = |point: &Point2, axis| match axis {
+            Axis2::X => point.x().clone(),
+            Axis2::Y => point.y().clone(),
+        };
+        let interval = |curve: &Self, axis| {
+            let (start, end) = (
+                coordinate(curve.start(), axis),
+                coordinate(curve.end(), axis),
+            );
+            match compare_reals(&start, &end, policy)? {
+                Ordering::Greater => Some((end, start)),
+                _ => Some((start, end)),
+            }
+        };
+        [Axis2::X, Axis2::Y].into_iter().any(|axis| {
+            if !(self.has_certified_injective_axis_on(axis, policy)
+                && other.has_certified_injective_axis_on(axis, policy))
+            {
+                return false;
+            }
+            if !meet_at_most_once {
+                return true;
+            }
+            let (Some((first_low, first_high)), Some((second_low, second_high))) =
+                (interval(self, axis), interval(other, axis))
+            else {
+                return false;
+            };
+            compare_reals(&first_high, &second_low, policy).is_some_and(Ordering::is_le)
+                || compare_reals(&second_high, &first_low, policy).is_some_and(Ordering::is_le)
+        })
     }
 
     fn control_polygon_certifies_axis_monotone(&self, axis: Axis2, policy: &CurveContext) -> bool {

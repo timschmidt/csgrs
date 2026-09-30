@@ -3810,8 +3810,8 @@ mod point_locations {
     use super::{p, q, r};
     use hypercurve::{
         Classification, CubicBezier2, Curve2, CurveContext, CurveParameter2, CurvePoint2,
-        CurvePointLocations2, ExactCurveError, Point2, QuadraticBezier2, RationalBezier2,
-        RationalBezierIntersectionContacts2, Real, UncertaintyReason,
+        CurvePointLocations2, ExactCurveError, Point2, QuadraticBezier2, RationalBezier2, Real,
+        UncertaintyReason,
     };
 
     fn locations(curve: &Curve2, point: Point2, policy: &CurveContext) -> Vec<CurveParameter2> {
@@ -3906,13 +3906,12 @@ mod point_locations {
             vec![r(1); 2],
         )
         .unwrap();
-        let RationalBezierIntersectionContacts2::Contacts(contacts) = parabola
-            .intersection_contacts(&horizontal, &policy)
+        let crossing = Curve2::from(parabola.clone())
+            .intersect_curve(&Curve2::from(horizontal), &policy)
             .unwrap()
-        else {
-            panic!("the crossing is a complete contact");
-        };
-        let point = contacts[0].point();
+            .value;
+        assert!(crossing.is_complete() && crossing.contacts().len() == 1);
+        let point = crossing.contacts()[0].point();
         assert!(point.coordinates().is_none());
         assert!(matches!(
             Curve2::from(parabola).point_locations(point, &policy),
@@ -3996,5 +3995,166 @@ mod point_locations {
             }
             assert!(checked > 0);
         }
+    }
+}
+
+mod self_intersections {
+    use super::{p, q, r};
+    use hypercurve::{
+        Classification, CubicBezier2, Curve2, CurveCertainty, CurveContext,
+        CurveIntersectionResult2, LineSeg2, NurbsCurve2, Point2, Real,
+    };
+
+    fn self_contacts(curve: &Curve2, policy: &CurveContext) -> CurveIntersectionResult2 {
+        let outcome = curve.self_intersections(policy).unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        assert!(outcome.value.is_complete(), "{:?}", outcome.value);
+        assert!(outcome.value.overlaps().is_empty());
+        outcome.value
+    }
+
+    /// The same cubic image refined at interior knots, so joints become span
+    /// boundaries that must not be reported as contacts.
+    fn refined(controls: [Point2; 4], knots: Vec<Real>, policy: &CurveContext) -> Curve2 {
+        let zero = Real::zero;
+        let one = Real::one;
+        let nurbs = NurbsCurve2::try_new(
+            3,
+            controls.to_vec(),
+            vec![r(1); 4],
+            vec![zero(), zero(), zero(), zero(), one(), one(), one(), one()],
+            policy,
+        )
+        .unwrap()
+        .into_value()
+        .insert_knots(knots, policy)
+        .unwrap()
+        .into_value();
+        Curve2::from(nurbs)
+    }
+
+    /// `x = 14t^3 - 21t^2 + 9t - 1` is odd about the apex `t = 1/2`; the loop
+    /// closes at the irrational pair `t = (1 +/- sqrt(3/7)) / 2`.
+    fn loop_controls() -> [Point2; 4] {
+        [p(-1, 0), p(2, 3), p(-2, 3), p(1, 0)]
+    }
+
+    #[test]
+    fn authored_loop_reports_one_unordered_crossing() {
+        let policy = CurveContext::STRICT;
+        let [a, b, c, d] = loop_controls();
+        let curve = Curve2::from(CubicBezier2::new(a, b, c, d));
+        let result = self_contacts(&curve, &policy);
+        assert_eq!(result.contacts().len(), 1);
+        let contact = &result.contacts()[0];
+        assert!(contact.is_certified_transverse());
+        assert!(contact.first().local_parameter().scalar().is_none());
+        assert!(contact.point().coordinates().is_none());
+    }
+
+    #[test]
+    fn span_joints_are_the_identity_not_contacts() {
+        let policy = CurveContext::STRICT;
+        for knots in [vec![q(1, 2)], vec![q(1, 4), q(1, 2), q(3, 4)]] {
+            let spans = knots.len() + 1;
+            let curve = refined(loop_controls(), knots, &policy);
+            let result = self_contacts(&curve, &policy);
+            assert_eq!(result.contacts().len(), 1, "{spans} spans: {result:?}");
+            let contact = &result.contacts()[0];
+            assert!(contact.first().span_index() < contact.second().span_index());
+            assert!(contact.is_certified_transverse());
+        }
+    }
+
+    #[test]
+    fn closed_seams_join_distinct_parameters() {
+        let policy = CurveContext::STRICT;
+        let controls = [p(0, 0), p(2, 2), p(-2, 2), p(0, 0)];
+        let [a, b, c, d] = controls.clone();
+        let authored = self_contacts(&Curve2::from(CubicBezier2::new(a, b, c, d)), &policy);
+        let refined = self_contacts(&refined(controls, vec![q(1, 3)], &policy), &policy);
+        for result in [authored, refined] {
+            assert_eq!(result.contacts().len(), 1, "{result:?}");
+            let contact = &result.contacts()[0];
+            let parameter = |location: &hypercurve::CurveLocation2| {
+                let Classification::Decided(parameter) = location.parameter(&policy).unwrap()
+                else {
+                    panic!("seam parameters are exact");
+                };
+                parameter.scalar().cloned()
+            };
+            assert_eq!(
+                (parameter(contact.first()), parameter(contact.second())),
+                (Some(r(0)), Some(r(1)))
+            );
+        }
+    }
+
+    #[test]
+    fn injective_curves_are_disjoint() {
+        let policy = CurveContext::STRICT;
+        let line = Curve2::from(LineSeg2::try_new(p(0, 0), p(1, 2)).unwrap());
+        assert!(self_contacts(&line, &policy).is_disjoint());
+        let arch = refined([p(0, 0), p(1, 2), p(2, 2), p(3, 0)], vec![q(1, 2)], &policy);
+        assert!(self_contacts(&arch, &policy).is_disjoint());
+    }
+
+    /// Arcs of one nodal cubic share an algebraic component. Each loop half is
+    /// monotone in `y`, yet the halves cross at the node away from their
+    /// parameter correspondence, which only the shared joint satisfies.
+    #[test]
+    fn shared_component_arcs_retain_their_node_crossing() {
+        let policy = CurveContext::STRICT;
+        let [a, b, c, d] = loop_controls();
+        let curve = Curve2::from(CubicBezier2::new(a, b, c, d));
+        let (left, right) = curve
+            .split_at(q(1, 2).into(), &policy)
+            .unwrap()
+            .into_value();
+        for (first, second) in [(&left, &right), (&right, &left)] {
+            let result = first.intersect_curve(second, &policy).unwrap();
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+            let result = result.value;
+            assert!(result.is_complete() && result.overlaps().is_empty());
+            assert_eq!(result.contacts().len(), 2, "{result:?}");
+            assert_eq!(
+                result
+                    .contacts()
+                    .iter()
+                    .filter(|contact| contact.is_certified_transverse())
+                    .count(),
+                1
+            );
+        }
+
+        // Overlapping arcs keep both the shared piece and the node crossing.
+        let (early, _) = curve
+            .split_at(q(11, 20).into(), &policy)
+            .unwrap()
+            .into_value();
+        let (_, early) = early
+            .split_at(q(3, 11).into(), &policy)
+            .unwrap()
+            .into_value();
+        let (_, late) = curve
+            .split_at(q(9, 20).into(), &policy)
+            .unwrap()
+            .into_value();
+        let (late, _) = late
+            .split_at(q(8, 11).into(), &policy)
+            .unwrap()
+            .into_value();
+        let result = early.intersect_curve(&late, &policy).unwrap().value;
+        assert!(result.is_complete(), "{result:?}");
+        assert_eq!(result.overlaps().len(), 1, "{result:?}");
+        assert_eq!(
+            result
+                .contacts()
+                .iter()
+                .filter(|contact| contact.is_certified_transverse())
+                .count(),
+            1,
+            "{result:?}"
+        );
     }
 }

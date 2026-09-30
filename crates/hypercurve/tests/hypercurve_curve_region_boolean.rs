@@ -7,7 +7,7 @@ use hypercurve::{
 };
 use hypercurve::{
     CircularArc2, CubicBezier2, CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
-    QuadraticBezier2, RationalBezier2, RationalBezierIntersectionContacts2, UncertaintyReason,
+    QuadraticBezier2, RationalBezier2, UncertaintyReason,
 };
 
 fn point(x: i64, y: i64) -> Point2 {
@@ -2066,12 +2066,15 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
         ],
     )
     .unwrap();
-    assert!(matches!(
-        polynomial_rational
-            .intersection_contacts(&projective_rational, &CurveContext::STRICT)
-            .unwrap(),
-        RationalBezierIntersectionContacts2::Overlap(_)
-    ));
+    let shared = Curve2::from(polynomial_rational.clone())
+        .intersect_curve(
+            &Curve2::from(projective_rational.clone()),
+            &CurveContext::STRICT,
+        )
+        .unwrap()
+        .value;
+    assert!(shared.is_complete() && shared.contacts().is_empty());
+    assert_eq!(shared.overlaps().len(), 1);
 
     let narrow_clip = square_path(-20, -10, 20, -1);
     let wide_clip = square_path(-20, -10, 20, 0);

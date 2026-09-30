@@ -2048,6 +2048,27 @@ impl Curve2 {
         resolve_certified_operation(policy, |attempt| self.intersect_curve_raw(other, attempt))
     }
 
+    /// Computes exact off-diagonal self-contact, retracing, and blocker
+    /// evidence immediately.
+    ///
+    /// Both sides of the result address this curve. Each unordered contact
+    /// and retracing component is reported once; shared span joints are the
+    /// identity, not contacts, while a closed seam joins distinct parameters
+    /// and is reported.
+    pub fn self_intersections(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<CurveIntersectionResult2>> {
+        resolve_certified_operation(policy, |attempt| {
+            CurveIntersectionContext::new_self(
+                self,
+                attempt,
+                &mut CurveIntersectionBatchCache::default(),
+            )
+            .result()
+        })
+    }
+
     pub(crate) fn intersect_curve_raw(
         &self,
         other: &Self,

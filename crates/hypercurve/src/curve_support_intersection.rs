@@ -1201,15 +1201,16 @@ impl Pair<'_> {
         let [first, second] = context.curves();
         let evidence = context.try_contacts()?;
         // The scalar context is a cheap complete authority for isolated
-        // contacts and injective correspondences. Shared non-injective images
-        // need every component and off-diagonal pair on the active domains.
+        // contacts and correspondences with an injective union. Otherwise a
+        // shared image can cross itself at a node away from the overlap, so
+        // every component and off-diagonal pair on the active domains is
+        // needed.
         if matches!(
             evidence,
             RationalBezierIntersectionContacts2::Incomplete { .. }
                 | RationalBezierIntersectionContacts2::DegenerateResultant
         ) || (evidence.overlap().is_some()
-            && !(first.has_certified_injective_axis(self.policy)
-                && second.has_certified_injective_axis(self.policy)))
+            && !first.has_certified_injective_union(second, false, self.policy))
         {
             return self.finite_rational(first, second, false, result);
         }
@@ -2120,22 +2121,68 @@ impl Pair<'_> {
     }
 }
 
-/// Self-incidence for one prepared rational or analytic carrier, excluding the identity
-/// diagonal before projection. Publication shares ordinary pair evidence;
-/// retain one order of each off-diagonal contact and retracing component.
+/// Self-incidence for one curve, excluding the identity diagonal.
+///
+/// Each span's own incidence divides the diagonal before projection and
+/// retains one order of each off-diagonal contact and retracing component.
+/// Distinct spans are ordinary pairs; only a contact at one common curve
+/// parameter, a shared span joint, lies on the diagonal. Closed seams join
+/// distinct parameters and remain contacts.
 pub(super) fn self_intersections(
     curve: &Curve2,
     policy: &CurveContext,
     unit_parallel: Option<&UnitParallelSelfIntersections>,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
     let spans = spans(curve, policy)?;
-    let [span] = spans.as_slice() else {
-        unreachable!("a prepared self carrier owns one support span")
-    };
+    let family = curve.family();
+    let mut result = Evidence::default();
+    for (index, span) in spans.iter().enumerate() {
+        span_self_intersections(
+            span,
+            index,
+            policy,
+            unit_parallel.filter(|_| spans.len() == 1),
+            &mut result,
+        )?;
+    }
+    for (first_index, first) in spans.iter().enumerate() {
+        for (offset, second) in spans[first_index + 1..].iter().enumerate() {
+            let mut pair_result = Evidence::default();
+            Pair {
+                first,
+                second,
+                indices: [first_index, first_index + 1 + offset],
+                policy,
+            }
+            .evidence(None, &mut pair_result)?;
+            for contact in pair_result.contacts {
+                let [first, second] = [contact.first(), contact.second()]
+                    .map(|location| decided(location.parameter(policy), family));
+                if !decided(first?.same_value(&second?, policy), family)? {
+                    result.contacts.push(contact);
+                }
+            }
+            result.overlaps.extend(pair_result.overlaps);
+            result.blockers.extend(pair_result.blockers);
+            result
+                .parameter_components
+                .extend(pair_result.parameter_components);
+        }
+    }
+    Ok(result.publish(spans.len() * (spans.len() + 1) / 2))
+}
+
+fn span_self_intersections(
+    span: &Span,
+    index: usize,
+    policy: &CurveContext,
+    unit_parallel: Option<&UnitParallelSelfIntersections>,
+    evidence: &mut Evidence,
+) -> ExactCurveResult<()> {
     let pair = Pair {
         first: span,
         second: span,
-        indices: [0, 0],
+        indices: [index, index],
         policy,
     };
     let mut result = Evidence::default();
@@ -2151,9 +2198,8 @@ pub(super) fn self_intersections(
             pair.rational_self(&source, &mut result)
         }
         CurveSupport2::Parallel(source) => pair.parallel_self(source, unit_parallel, &mut result),
-        CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
-            unreachable!("intrinsically injective supports need no self-incidence")
-        }
+        // Lines and circular arcs are intrinsically injective.
+        CurveSupport2::Line(_) | CurveSupport2::Circle(_) => return Ok(()),
     };
     match incidence {
         Ok(()) => {}
@@ -2163,7 +2209,6 @@ pub(super) fn self_intersections(
         ),
         Err(error) => return Err(error),
     }
-    let mut contacts = Vec::with_capacity(result.contacts.len());
     for contact in result.contacts {
         if decided(
             contact
@@ -2174,10 +2219,9 @@ pub(super) fn self_intersections(
         )?
         .is_lt()
         {
-            contacts.push(contact);
+            evidence.contacts.push(contact);
         }
     }
-    let mut overlaps = Vec::with_capacity(result.overlaps.len());
     for overlap in result.overlaps {
         let mut order = decided(
             overlap
@@ -2196,19 +2240,132 @@ pub(super) fn self_intersections(
             )?;
         }
         if order.is_lt() {
-            overlaps.push(overlap);
+            evidence.overlaps.push(overlap);
         }
     }
-    Ok(CurveIntersectionResult2 {
-        data: Arc::new(CurveIntersectionResultData {
-            span_pair_count: 1,
-            contacts: contacts.into(),
-            overlaps: overlaps.into(),
-            blockers: result.blockers.into(),
-            parameter_components: (!result.parameter_components.is_empty())
-                .then(|| result.parameter_components.into()),
-        }),
-    })
+    evidence.blockers.extend(result.blockers);
+    evidence
+        .parameter_components
+        .extend(result.parameter_components);
+    Ok(())
+}
+
+impl Pair<'_> {
+    /// Publishes one span pair's evidence, recording certification failures
+    /// as pair blockers.
+    fn evidence(
+        &self,
+        prepared: Option<&PreparedRationalPair>,
+        result: &mut Evidence,
+    ) -> ExactCurveResult<()> {
+        let pair = self;
+        let rational = |curve: &BezierSubcurve2| {
+            RationalBezier2::try_from_subcurve(curve).map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    CurveFamily2::RationalBezier,
+                    cause,
+                )
+            })
+        };
+        // Native scheduling may retain a shared circle certificate or an
+        // injective lineage map. Publication still uses the same authority
+        // as restricted and generated supports, including every parameter
+        // component and residual contact of non-injective rational images.
+        let outcome = match prepared {
+            Some(PreparedRationalPair::Rational(context)) => pair.rational_context(context, result),
+            Some(PreparedRationalPair::RetainedLineageOverlap {
+                first_range,
+                second_range,
+                orientation,
+            }) => {
+                result.overlaps.push(pair.overlap(
+                    [
+                        CurveParameterRange2::new_validated(
+                            first_range.start().clone().into(),
+                            first_range.end().clone().into(),
+                        ),
+                        CurveParameterRange2::new_validated(
+                            second_range.start().clone().into(),
+                            second_range.end().clone().into(),
+                        ),
+                    ],
+                    *orientation,
+                    [true, true],
+                    CurveOverlapCorrespondence2::affine(first_range, second_range),
+                )?);
+                Ok(())
+            }
+            Some(PreparedRationalPair::Blocked(reason)) => {
+                pair.blocker(
+                    result,
+                    CurveIntersectionPairBlockerKind2::Uncertain(*reason),
+                );
+                Ok(())
+            }
+            None => match (&pair.first.support, &pair.second.support) {
+                (CurveSupport2::Bezier(first), CurveSupport2::Bezier(second)) => {
+                    pair.rational(&rational(first)?, &rational(second)?, result)
+                }
+                (CurveSupport2::Line(first), CurveSupport2::Line(second)) => {
+                    pair.chords(first, second, result)
+                }
+                (CurveSupport2::Line(chord), CurveSupport2::Bezier(source)) => {
+                    pair.chord_rational(chord, &rational(source)?, true, result)
+                }
+                (CurveSupport2::Bezier(source), CurveSupport2::Line(chord)) => {
+                    pair.chord_rational(chord, &rational(source)?, false, result)
+                }
+                (CurveSupport2::Circle(first), CurveSupport2::Circle(second)) => {
+                    pair.circles(first, second, result)
+                }
+                (CurveSupport2::Circle(circle), CurveSupport2::Line(chord)) => {
+                    pair.circle_chord(circle, chord, true, result)
+                }
+                (CurveSupport2::Line(chord), CurveSupport2::Circle(circle)) => {
+                    pair.circle_chord(circle, chord, false, result)
+                }
+                (CurveSupport2::Circle(circle), CurveSupport2::Bezier(source)) => {
+                    pair.circle_rational(circle, &rational(source)?, true, result)
+                }
+                (CurveSupport2::Bezier(source), CurveSupport2::Circle(circle)) => {
+                    pair.circle_rational(circle, &rational(source)?, false, result)
+                }
+                (CurveSupport2::Circle(circle), CurveSupport2::Parallel(parallel)) => {
+                    pair.circle_parallel(circle, parallel, true, result)
+                }
+                (CurveSupport2::Parallel(parallel), CurveSupport2::Circle(circle)) => {
+                    pair.circle_parallel(circle, parallel, false, result)
+                }
+                (CurveSupport2::Parallel(parallel), CurveSupport2::Bezier(source)) => {
+                    pair.parallel_rational(parallel, &rational(source)?, true, result)
+                }
+                (CurveSupport2::Bezier(source), CurveSupport2::Parallel(parallel)) => {
+                    pair.parallel_rational(parallel, &rational(source)?, false, result)
+                }
+                (CurveSupport2::Parallel(first), CurveSupport2::Parallel(second)) => {
+                    pair.parallels(first, second, result)
+                }
+                (CurveSupport2::Line(chord), CurveSupport2::Parallel(parallel)) => {
+                    pair.chord_parallel(chord, parallel, true, result)
+                }
+                (CurveSupport2::Parallel(parallel), CurveSupport2::Line(chord)) => {
+                    pair.chord_parallel(chord, parallel, false, result)
+                }
+            },
+        };
+        match outcome {
+            Ok(()) => Ok(()),
+            Err(ExactCurveError::Blocked(blocker)) => {
+                pair.blocker(
+                    result,
+                    CurveIntersectionPairBlockerKind2::Uncertain(blocker.reason()),
+                );
+                Ok(())
+            }
+            Err(error) => Err(error),
+        }
+    }
 }
 
 pub(super) fn intersect(
@@ -2225,131 +2382,34 @@ pub(super) fn intersect(
     let mut result = Evidence::default();
     for (first_index, first) in first_spans.iter().enumerate() {
         for (second_index, second) in second_spans.iter().enumerate() {
-            let pair = Pair {
+            Pair {
                 first,
                 second,
                 indices: [first_index, second_index],
                 policy,
-            };
-            let rational = |curve: &BezierSubcurve2| {
-                RationalBezier2::try_from_subcurve(curve).map_err(|cause| {
-                    ExactCurveError::invalid(
-                        CurveOperation2::Intersection,
-                        CurveFamily2::RationalBezier,
-                        cause,
-                    )
-                })
-            };
-            // Native scheduling may retain a shared circle certificate or an
-            // injective lineage map. Publication still uses the same authority
-            // as restricted and generated supports, including every parameter
-            // component and residual contact of non-injective rational images.
-            let outcome = match prepared
-                .map(|pairs| &pairs[first_index * second_spans.len() + second_index])
-            {
-                Some(PreparedRationalPair::Rational(context)) => {
-                    pair.rational_context(context, &mut result)
-                }
-                Some(PreparedRationalPair::RetainedLineageOverlap {
-                    first_range,
-                    second_range,
-                    orientation,
-                }) => {
-                    result.overlaps.push(pair.overlap(
-                        [
-                            CurveParameterRange2::new_validated(
-                                first_range.start().clone().into(),
-                                first_range.end().clone().into(),
-                            ),
-                            CurveParameterRange2::new_validated(
-                                second_range.start().clone().into(),
-                                second_range.end().clone().into(),
-                            ),
-                        ],
-                        *orientation,
-                        [true, true],
-                        CurveOverlapCorrespondence2::affine(first_range, second_range),
-                    )?);
-                    Ok(())
-                }
-                Some(PreparedRationalPair::Blocked(reason)) => {
-                    pair.blocker(
-                        &mut result,
-                        CurveIntersectionPairBlockerKind2::Uncertain(*reason),
-                    );
-                    Ok(())
-                }
-                None => match (&first.support, &second.support) {
-                    (CurveSupport2::Bezier(first), CurveSupport2::Bezier(second)) => {
-                        pair.rational(&rational(first)?, &rational(second)?, &mut result)
-                    }
-                    (CurveSupport2::Line(first), CurveSupport2::Line(second)) => {
-                        pair.chords(first, second, &mut result)
-                    }
-                    (CurveSupport2::Line(chord), CurveSupport2::Bezier(source)) => {
-                        pair.chord_rational(chord, &rational(source)?, true, &mut result)
-                    }
-                    (CurveSupport2::Bezier(source), CurveSupport2::Line(chord)) => {
-                        pair.chord_rational(chord, &rational(source)?, false, &mut result)
-                    }
-                    (CurveSupport2::Circle(first), CurveSupport2::Circle(second)) => {
-                        pair.circles(first, second, &mut result)
-                    }
-                    (CurveSupport2::Circle(circle), CurveSupport2::Line(chord)) => {
-                        pair.circle_chord(circle, chord, true, &mut result)
-                    }
-                    (CurveSupport2::Line(chord), CurveSupport2::Circle(circle)) => {
-                        pair.circle_chord(circle, chord, false, &mut result)
-                    }
-                    (CurveSupport2::Circle(circle), CurveSupport2::Bezier(source)) => {
-                        pair.circle_rational(circle, &rational(source)?, true, &mut result)
-                    }
-                    (CurveSupport2::Bezier(source), CurveSupport2::Circle(circle)) => {
-                        pair.circle_rational(circle, &rational(source)?, false, &mut result)
-                    }
-                    (CurveSupport2::Circle(circle), CurveSupport2::Parallel(parallel)) => {
-                        pair.circle_parallel(circle, parallel, true, &mut result)
-                    }
-                    (CurveSupport2::Parallel(parallel), CurveSupport2::Circle(circle)) => {
-                        pair.circle_parallel(circle, parallel, false, &mut result)
-                    }
-                    (CurveSupport2::Parallel(parallel), CurveSupport2::Bezier(source)) => {
-                        pair.parallel_rational(parallel, &rational(source)?, true, &mut result)
-                    }
-                    (CurveSupport2::Bezier(source), CurveSupport2::Parallel(parallel)) => {
-                        pair.parallel_rational(parallel, &rational(source)?, false, &mut result)
-                    }
-                    (CurveSupport2::Parallel(first), CurveSupport2::Parallel(second)) => {
-                        pair.parallels(first, second, &mut result)
-                    }
-                    (CurveSupport2::Line(chord), CurveSupport2::Parallel(parallel)) => {
-                        pair.chord_parallel(chord, parallel, true, &mut result)
-                    }
-                    (CurveSupport2::Parallel(parallel), CurveSupport2::Line(chord)) => {
-                        pair.chord_parallel(chord, parallel, false, &mut result)
-                    }
-                },
-            };
-            match outcome {
-                Ok(()) => {}
-                Err(ExactCurveError::Blocked(blocker)) => pair.blocker(
-                    &mut result,
-                    CurveIntersectionPairBlockerKind2::Uncertain(blocker.reason()),
-                ),
-                Err(error) => return Err(error),
             }
+            .evidence(
+                prepared.map(|pairs| &pairs[first_index * second_spans.len() + second_index]),
+                &mut result,
+            )?;
         }
     }
-    Ok(CurveIntersectionResult2 {
-        data: Arc::new(CurveIntersectionResultData {
-            span_pair_count: first_spans.len() * second_spans.len(),
-            contacts: result.contacts.into(),
-            overlaps: result.overlaps.into(),
-            blockers: result.blockers.into(),
-            parameter_components: (!result.parameter_components.is_empty())
-                .then(|| result.parameter_components.into()),
-        }),
-    })
+    Ok(result.publish(first_spans.len() * second_spans.len()))
+}
+
+impl Evidence {
+    fn publish(self, span_pair_count: usize) -> CurveIntersectionResult2 {
+        CurveIntersectionResult2 {
+            data: Arc::new(CurveIntersectionResultData {
+                span_pair_count,
+                contacts: self.contacts.into(),
+                overlaps: self.overlaps.into(),
+                blockers: self.blockers.into(),
+                parameter_components: (!self.parameter_components.is_empty())
+                    .then(|| self.parameter_components.into()),
+            }),
+        }
+    }
 }
 
 #[cfg(test)]

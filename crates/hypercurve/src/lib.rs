@@ -72,6 +72,8 @@ mod polynomial_spline;
 mod prepared;
 mod rational_bezier;
 mod rational_bezier_general;
+#[cfg(test)]
+mod rational_bezier_tests;
 mod reconstruct;
 mod region;
 mod region_nesting;
@@ -226,10 +228,10 @@ pub use point::Point2;
 pub use policy::{CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions};
 pub use polynomial_spline::PolynomialSplineCurve2;
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
-pub(crate) use rational_bezier_general::RationalBezierPointIncidence2;
-pub use rational_bezier_general::{
-    HomogeneousControl2, RationalBezier2, RationalBezierIntersectionContact2,
-    RationalBezierIntersectionContacts2, RationalBezierIntersectionOverlap2,
+pub use rational_bezier_general::{HomogeneousControl2, RationalBezier2};
+pub(crate) use rational_bezier_general::{
+    RationalBezierIntersectionContact2, RationalBezierIntersectionContacts2,
+    RationalBezierIntersectionOverlap2, RationalBezierPointIncidence2,
 };
 pub use reconstruct::PolylineReconstructionOptions;
 pub use region::RegionPointLocation;
