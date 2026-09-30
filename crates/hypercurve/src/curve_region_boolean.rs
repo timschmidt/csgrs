@@ -6040,6 +6040,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn build_split_topology(&self) -> ExactCurveResult<CurveRegionSplitTopology> {
         let mut events = vec![Vec::new(); self.data.carriers.len()];
         let mut contact_points = Vec::<ContactVertex>::new();
+        let mut contact_lookup = ContactPointIndex::default();
         let mut deferred_contact_matches = Vec::<(usize, usize, UncertaintyReason)>::new();
         let mut merge_vertices = Vec::new();
         let mut uncertain_contact_matches = Vec::new();
@@ -6230,22 +6231,43 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 uncertain_contact_matches.clear();
                 let mut matching_contact_index = None;
-                for (existing_index, existing) in contact_points.iter().enumerate() {
+                // Distinctness from the current endpoint vertex depends only on
+                // the existing contact's vertex. Group incidences by vertex once
+                // and decide each vertex pair once, instead of rescanning every
+                // contact for every contact.
+                let mut distinct_vertices: Vec<Option<bool>> = Vec::new();
+                let mut distinct_current_vertex = None;
+                let candidates = contact_lookup.candidates(contact.point());
+                let candidates: Box<dyn Iterator<Item = usize>> = match &candidates {
+                    Some(candidates) => Box::new(candidates.iter().copied()),
+                    None => Box::new(0..contact_points.len()),
+                };
+                for existing_index in candidates {
+                    let existing = &contact_points[existing_index];
                     if topology_vertex == Some(existing.topology_vertex) {
                         matching_contact_index.get_or_insert(existing_index);
                         continue;
                     }
                     if let Some(current_vertex) = topology_vertex
-                        && contact_points.iter().any(|incidence| {
-                            incidence.topology_vertex == existing.topology_vertex
-                                && contact_decided_distinct_from_carrier_endpoint_vertex(
-                                    incidence,
-                                    current_vertex,
-                                    &events,
-                                    &self.data.carriers,
-                                    &self.data.policy,
-                                )
-                        })
+                        && {
+                            if distinct_current_vertex != Some(current_vertex) {
+                                distinct_current_vertex = Some(current_vertex);
+                                distinct_vertices.clear();
+                                distinct_vertices.resize(next_topology_vertex, None);
+                            }
+                            let vertex = existing.topology_vertex;
+                            *distinct_vertices[vertex].get_or_insert_with(|| {
+                                contact_lookup.incidences(vertex).iter().any(|&index| {
+                                    contact_decided_distinct_from_carrier_endpoint_vertex(
+                                        &contact_points[index],
+                                        current_vertex,
+                                        &events,
+                                        &self.data.carriers,
+                                        &self.data.policy,
+                                    )
+                                })
+                            })
+                        }
                     {
                         continue;
                     }
@@ -6377,6 +6399,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         previous_vertex,
                         topology_vertex,
                     );
+                    contact_lookup.merge_vertex(previous_vertex, topology_vertex);
                     for overlap in &mut overlaps {
                         overlap.replace_topology_vertex(previous_vertex, topology_vertex);
                     }
@@ -6441,6 +6464,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     carrier_indices: [pair.first_carrier_index, pair.second_carrier_index],
                     parameters: retained_parameters.clone(),
                 });
+                // A matched record stores no point, but the contact's own
+                // point is the same certified point and supplies its box.
+                contact_lookup.push(contact_index, contact.point(), topology_vertex);
                 for &(existing_index, reason) in &uncertain_contact_matches {
                     deferred_contact_matches.push((existing_index, contact_index, reason));
                 }
@@ -6534,6 +6560,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             previous_vertex,
                             topology_vertex,
                         );
+                        contact_lookup.merge_vertex(previous_vertex, topology_vertex);
                         for retained_overlap in &mut overlaps {
                             retained_overlap
                                 .replace_topology_vertex(previous_vertex, topology_vertex);
@@ -6593,6 +6620,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                                     return Err(self.blocked(pair.first_carrier_index, reason));
                                 }
                             };
+                            contact_lookup.push(
+                                contact_points.len(),
+                                Some(&point),
+                                topology_vertex,
+                            );
                             contact_points.push(ContactVertex {
                                 point: Some(point),
                                 topology_vertex,
@@ -14853,6 +14885,117 @@ fn validate_carrier_event_separation(
         }
     }
     Ok(())
+}
+
+/// Conservative f64 box around an exactly represented contact point.
+fn exact_contact_point_box(point: &CurvePoint2) -> Option<[f64; 4]> {
+    let point = point.coordinates()?;
+    let widen = |value: &Real| {
+        let value = value.to_f64_lossy().filter(|value| value.is_finite())?;
+        // Well beyond the rounding of one exact rational to f64.
+        let pad = value.abs() * 1.0e-9 + 1.0e-300;
+        Some((value - pad, value + pad))
+    };
+    let (x_low, x_high) = widen(point.x())?;
+    let (y_low, y_high) = widen(point.y())?;
+    Some([x_low, x_high, y_low, y_high])
+}
+
+/// Spatial candidates for contact deduplication.
+///
+/// Every branch of the contact matcher that changes state requires the two
+/// contacts to be one point. Contacts whose certified boxes are disjoint are
+/// therefore never observable there and are skipped. Contacts without a box
+/// (selected or unrepresented points) are always candidates.
+#[derive(Default)]
+struct ContactPointIndex {
+    by_x_low: std::collections::BTreeMap<u64, Vec<usize>>,
+    boxes: Vec<Option<[f64; 4]>>,
+    unboxed: Vec<usize>,
+    max_width: f64,
+    vertex_boxes: Vec<Option<[f64; 4]>>,
+    vertex_incidences: Vec<Vec<usize>>,
+}
+
+impl ContactPointIndex {
+    /// Order-preserving key for finite f64 values.
+    fn key(value: f64) -> u64 {
+        let bits = value.to_bits();
+        if bits >> 63 == 0 {
+            bits | (1 << 63)
+        } else {
+            !bits
+        }
+    }
+
+    fn ensure_vertex(&mut self, vertex: usize) {
+        if self.vertex_boxes.len() <= vertex {
+            self.vertex_boxes.resize(vertex + 1, None);
+            self.vertex_incidences.resize_with(vertex + 1, Vec::new);
+        }
+    }
+
+    fn push(&mut self, index: usize, point: Option<&CurvePoint2>, vertex: usize) {
+        debug_assert_eq!(index, self.boxes.len());
+        self.ensure_vertex(vertex);
+        // A contact without its own point shares its vertex representative.
+        let bounds = point
+            .and_then(exact_contact_point_box)
+            .or(self.vertex_boxes[vertex]);
+        self.boxes.push(bounds);
+        self.vertex_incidences[vertex].push(index);
+        match bounds {
+            Some(bounds) => {
+                self.by_x_low
+                    .entry(Self::key(bounds[0]))
+                    .or_default()
+                    .push(index);
+                self.max_width = self.max_width.max(bounds[1] - bounds[0]);
+                if self.vertex_boxes[vertex].is_none() {
+                    self.vertex_boxes[vertex] = Some(bounds);
+                }
+            }
+            None => self.unboxed.push(index),
+        }
+    }
+
+    fn merge_vertex(&mut self, from: usize, to: usize) {
+        self.ensure_vertex(from.max(to));
+        let moved = std::mem::take(&mut self.vertex_incidences[from]);
+        self.vertex_incidences[to].extend(moved);
+        if self.vertex_boxes[to].is_none() {
+            self.vertex_boxes[to] = self.vertex_boxes[from];
+        }
+    }
+
+    fn incidences(&self, vertex: usize) -> &[usize] {
+        self.vertex_incidences
+            .get(vertex)
+            .map_or(&[], Vec::as_slice)
+    }
+
+    /// Ascending candidate indices, or `None` when every contact must be
+    /// examined because the new contact has no exact box.
+    fn candidates(&self, point: Option<&CurvePoint2>) -> Option<Vec<usize>> {
+        let bounds = point.and_then(exact_contact_point_box)?;
+        let low = Self::key(bounds[0] - self.max_width);
+        let high = Self::key(bounds[1]);
+        let mut candidates = self.unboxed.clone();
+        for indices in self.by_x_low.range(low..=high).map(|(_, indices)| indices) {
+            for &index in indices {
+                let other = self.boxes[index].expect("indexed contacts have boxes");
+                if other[1] >= bounds[0]
+                    && other[0] <= bounds[1]
+                    && other[3] >= bounds[2]
+                    && other[2] <= bounds[3]
+                {
+                    candidates.push(index);
+                }
+            }
+        }
+        candidates.sort_unstable();
+        Some(candidates)
+    }
 }
 
 fn replace_topology_vertex(
