@@ -632,7 +632,9 @@ fn propagate_regularized_face_windings(
             "regularized arrangement face storage is inconsistent".into(),
         ));
     }
-    let mut staged = vec![None; face_windings.len()];
+    // Stage only the faces this propagation reaches; the arrangement can hold
+    // far more faces than one seed's component.
+    let mut staged = HashMap::<usize, LoopWindings>::new();
     let mut queue = std::collections::VecDeque::new();
     for (face, winding) in seeds {
         let Some(published) = face_windings.get(face) else {
@@ -643,18 +645,18 @@ fn propagate_regularized_face_windings(
         if !equation_faces_valid[face] {
             continue;
         }
-        match staged[face].as_ref().or(published.as_ref()) {
+        match staged.get(&face).or(published.as_ref()) {
             Some(existing) if existing != &winding => return Ok(Some(face)),
             Some(_) => {}
             None => {
-                staged[face] = Some(winding);
+                staged.insert(face, winding);
                 queue.push_back(face);
             }
         }
     }
     while let Some(face) = queue.pop_front() {
-        let source = staged[face]
-            .as_ref()
+        let source = staged
+            .get(&face)
             .or(face_windings[face].as_ref())
             .expect("queued regularized face has a staged winding vector")
             .clone();
@@ -683,22 +685,20 @@ fn propagate_regularized_face_windings(
                     }
                 }
             }
-            match staged[edge.face]
-                .as_ref()
-                .or(face_windings[edge.face].as_ref())
-            {
+            match staged.get(&edge.face).or(face_windings[edge.face].as_ref()) {
                 Some(existing) if existing != &target => return Ok(Some(edge.face)),
                 Some(_) => {}
                 None => {
-                    staged[edge.face] = Some(target);
+                    staged.insert(edge.face, target);
                     queue.push_back(edge.face);
                 }
             }
         }
     }
-    for (published, staged) in face_windings.iter_mut().zip(staged) {
+    for (face, staged) in staged {
+        let published = &mut face_windings[face];
         if published.is_none() {
-            *published = staged;
+            *published = Some(staged);
         }
     }
     Ok(None)
