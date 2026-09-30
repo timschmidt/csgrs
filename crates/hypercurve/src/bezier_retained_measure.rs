@@ -46,13 +46,68 @@ impl CurveRegion2 {
     }
 
     pub(crate) fn bounds_raw(&self, policy: &CurveContext) -> CurveResult<Classification<Aabb2>> {
-        match self.native_line_arc_region(policy)? {
-            Classification::Decided(native) => Aabb2::from_region(native),
-            Classification::Uncertain(_) => {
-                Ok(BezierRetainedCurveEnvelope2::from_region(self, policy)
-                    .map(|envelope| envelope.envelope().clone()))
+        let certified = match self.native_line_arc_region(policy)? {
+            Classification::Decided(native) => Aabb2::from_region(native)?,
+            Classification::Uncertain(_) => BezierRetainedCurveEnvelope2::from_region(self, policy)
+                .map(|envelope| envelope.envelope().clone()),
+        };
+        match certified {
+            Classification::Uncertain(UncertaintyReason::Ordering)
+                if policy.permits_approximate_512() =>
+            {
+                Ok(self.boundary_curve_bounds_ordered_by(policy))
+            }
+            certified => Ok(certified),
+        }
+    }
+
+    /// Merges the certified boxes of every boundary curve, ordering their
+    /// corners under `policy`.
+    ///
+    /// Box construction itself orders only by certified decisions. An
+    /// approximate region query may still decide the order of coordinates that
+    /// approximate coincidence left in different exact representations; the
+    /// policy observes that consumption.
+    fn boundary_curve_bounds_ordered_by(&self, policy: &CurveContext) -> Classification<Aabb2> {
+        let mut corners: Option<[Real; 4]> = None;
+        for boundary_loop in self.boundary_loops() {
+            for curve in boundary_loop.curves() {
+                let Ok(bounds) = curve.bounds() else {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
+                };
+                let next = [
+                    bounds.min_x().clone(),
+                    bounds.min_y().clone(),
+                    bounds.max_x().clone(),
+                    bounds.max_y().clone(),
+                ];
+                let Some(current) = corners.as_mut() else {
+                    corners = Some(next);
+                    continue;
+                };
+                for (index, value) in next.into_iter().enumerate() {
+                    let Some(order) = compare_reals(&value, &current[index], policy) else {
+                        return Classification::Uncertain(UncertaintyReason::Ordering);
+                    };
+                    let extends = if index < 2 {
+                        order.is_lt()
+                    } else {
+                        order.is_gt()
+                    };
+                    if extends {
+                        current[index] = value;
+                    }
+                }
             }
         }
+        let Some([min_x, min_y, max_x, max_y]) = corners else {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
+        };
+        // Each curve box is ordered, so the merged extremes are too.
+        Classification::Decided(Aabb2::new_unchecked(
+            Point2::new(min_x, min_y),
+            Point2::new(max_x, max_y),
+        ))
     }
 }
 

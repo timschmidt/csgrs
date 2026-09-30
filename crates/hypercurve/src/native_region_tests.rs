@@ -1232,3 +1232,56 @@ fn round_erosion_of_regions_narrower_than_its_diameter_is_empty() {
         assert!(!retained.is_empty());
     }
 }
+
+#[test]
+fn approximate_region_bounds_order_approximately_coincident_representations() {
+    use crate::BooleanOp;
+    // The clip's sides pass through the diamond's exact vertices (±1, 0), and
+    // its bottom lies at an exact zero that refinement cannot certify. The
+    // approximate Boolean joins the cut edge's own endpoint expressions to
+    // those exact vertices.
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    let height = &sine * &sine + &cosine * &cosine - Real::one();
+    let diamond = region(
+        vec![
+            Contour2::from_bulge_vertices(&[
+                vertex(1, 0),
+                vertex(0, 1),
+                vertex(-1, 0),
+                vertex(0, -1),
+            ])
+            .unwrap(),
+        ],
+        Vec::new(),
+    );
+    let upper = region(
+        vec![
+            Contour2::from_bulge_vertices(&[
+                BulgeVertex2::new(crate::Point2::new(s(-1), Real::zero() - &height), s(0)),
+                BulgeVertex2::new(crate::Point2::new(s(1), Real::zero() - &height), s(0)),
+                vertex(1, 2),
+                vertex(-1, 2),
+            ])
+            .unwrap(),
+        ],
+        Vec::new(),
+    );
+    let policy = CurveContext::APPROXIMATE_512;
+    let clipped = diamond
+        .boolean_region(&upper, BooleanOp::Intersection, &policy)
+        .unwrap()
+        .into_value();
+    let bounds = clipped.bounds(&policy).unwrap();
+    assert_eq!(bounds.certainty, CurveCertainty::Approximate512Consumed);
+    let Classification::Decided(bounds) = bounds.value else {
+        panic!(
+            "approximate bounds must decide the ordering: {:?}",
+            bounds.value
+        );
+    };
+    assert_eq!(bounds.max_y(), &Real::one());
+    assert_eq!(bounds.min_x().to_f64_lossy(), Some(-1.0));
+    assert_eq!(bounds.max_x().to_f64_lossy(), Some(1.0));
+    assert_eq!(bounds.min_y().to_f64_lossy().map(f64::abs), Some(0.0));
+}
