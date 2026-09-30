@@ -132,13 +132,13 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     );
 
     let spans = evaluation_curve
-        .bezier_spans(&CurveContext::APPROXIMATE_512)
+        .bezier_decomposition(&CurveContext::APPROXIMATE_512)
         .expect("the retained decomposition must preserve approximate ownership");
     assert_eq!(
         spans.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(spans.into_value().len(), 2);
+    assert_eq!(spans.value.spans().len(), 2);
     let native = evaluation_curve
         .native_subcurves(&CurveContext::APPROXIMATE_512)
         .expect("native promotion must use the same terminal policy");
@@ -147,14 +147,6 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         hypercurve::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(native.value.len(), 2);
-    let native_spans = evaluation_curve
-        .native_spans(&CurveContext::APPROXIMATE_512)
-        .expect("native span views must preserve terminal consumption");
-    assert_eq!(
-        native_spans.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
-    );
-    assert_eq!(native_spans.into_value().len(), 2);
 
     assert!(matches!(
         evaluation_curve.point_at(&symbolic_half, &CurveContext::STRICT),
@@ -521,14 +513,17 @@ fn linear_nurbs_evaluates_and_promotes_with_source_provenance() {
             .into_value(),
         derivative
     );
-    let spans = curve
-        .native_spans(&CurveContext::STRICT)
+    let decomposition = curve
+        .bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
-        .into_value()
-        .collect::<Vec<_>>();
-    assert_eq!(spans.len(), 1);
-    assert_eq!(spans[0].source_span().knot_interval(), (&r(0), &r(1)));
-    let CurveGeometry2::RationalBezier(span) = spans[0].curve() else {
+        .into_value();
+    assert_eq!(decomposition.spans().len(), 1);
+    assert_eq!(decomposition.spans()[0].knot_interval(), (&r(0), &r(1)));
+    let native = curve
+        .native_subcurves(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    let CurveGeometry2::RationalBezier(span) = &native[0] else {
         panic!("linear NURBS must keep its original rational degree");
     };
     assert_eq!(span.degree(), 1);
@@ -1371,32 +1366,12 @@ fn native_nurbs_spans_are_cached_and_borrowed() {
     );
 
     let retained = curve
-        .bezier_spans(&CurveContext::STRICT)
+        .bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
-        .into_value()
-        .collect::<Vec<_>>();
-    let promoted = curve
-        .native_spans(&CurveContext::STRICT)
-        .unwrap()
-        .into_value()
-        .collect::<Vec<_>>();
-    assert_eq!(retained.len(), 2);
-    assert_eq!(retained[0].span_index(), 0);
-    assert_eq!(retained[1].span_index(), 1);
-    assert_eq!(retained[0].knot_interval(), (&r(0), &r(1)));
-    assert_eq!(retained[1].knot_interval(), (&r(1), &r(2)));
-    assert!(std::ptr::eq(
-        retained[0].retained_span(),
-        curve
-            .bezier_decomposition(&CurveContext::STRICT)
-            .unwrap()
-            .into_value()
-            .spans()
-            .first()
-            .unwrap()
-    ));
-    assert_eq!(promoted[1].source_span().span_index(), 1);
-    assert_eq!(promoted[0].curve(), first[0]);
+        .into_value();
+    assert_eq!(retained.spans().len(), 2);
+    assert_eq!(retained.spans()[0].knot_interval(), (&r(0), &r(1)));
+    assert_eq!(retained.spans()[1].knot_interval(), (&r(1), &r(2)));
 }
 
 #[test]
@@ -1478,10 +1453,9 @@ fn unequal_weight_cubic_nurbs_promotes_once_with_provenance() {
     );
 
     let spans = curve
-        .native_spans(&CurveContext::STRICT)
+        .native_subcurves(&CurveContext::STRICT)
         .unwrap()
-        .into_value()
-        .collect::<Vec<_>>();
+        .into_value();
     assert_eq!(spans.len(), 2);
 }
 
@@ -1505,17 +1479,17 @@ fn higher_degree_nurbs_promotes_evaluates_and_splits_exactly() {
             .into_value(),
         p(2, 2)
     );
-    let spans = curve
-        .native_spans(&CurveContext::STRICT)
+    let decomposition = curve
+        .bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
-        .into_value()
-        .collect::<Vec<_>>();
-    assert_eq!(spans.len(), 1);
-    assert_eq!(spans[0].source_span().curve().degree(), 4);
-    assert!(matches!(
-        spans[0].curve(),
-        CurveGeometry2::RationalBezier(_)
-    ));
+        .into_value();
+    assert_eq!(decomposition.spans().len(), 1);
+    assert_eq!(decomposition.spans()[0].curve().degree(), 4);
+    let native = curve
+        .native_subcurves(&CurveContext::STRICT)
+        .unwrap()
+        .into_value();
+    assert!(matches!(native[0], CurveGeometry2::RationalBezier(_)));
 
     let (left, right) = curve
         .split_at(q(1, 2), &CurveContext::STRICT)
@@ -1933,9 +1907,10 @@ fn nonuniform_weighted_periodic_nurbs_supports_repeated_interior_knots() {
     );
     assert!(
         curve
-            .bezier_spans(&CurveContext::STRICT)
+            .bezier_decomposition(&CurveContext::STRICT)
             .unwrap()
             .into_value()
+            .spans()
             .len()
             >= 4
     );

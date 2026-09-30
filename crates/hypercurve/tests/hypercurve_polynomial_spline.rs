@@ -123,13 +123,13 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
             .any(|knot| knot == &symbolic_half)
     );
     let spans = evaluation_curve
-        .bezier_spans(&CurveContext::APPROXIMATE_512)
+        .bezier_decomposition(&CurveContext::APPROXIMATE_512)
         .expect("borrowed spans must preserve terminal decomposition ownership");
     assert_eq!(
         spans.certainty,
         hypercurve::CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(spans.into_value().len(), 2);
+    assert_eq!(spans.value.spans().len(), 2);
 
     assert!(matches!(
         evaluation_curve.point_at(&symbolic_half, &CurveContext::STRICT),
@@ -368,18 +368,6 @@ fn polynomial_spline_clones_share_one_decomposition() {
     assert_eq!(first.spans().len(), 2);
     assert_eq!(first.intervals(), &[(r(0), r(1)), (r(1), r(2))]);
     assert_eq!(first.intervals().len(), first.spans().len());
-
-    let spans = curve
-        .bezier_spans(&CurveContext::STRICT)
-        .unwrap()
-        .into_value()
-        .collect::<Vec<_>>();
-    assert_eq!(spans.len(), 2);
-    assert_eq!(spans[0].span_index(), 0);
-    assert_eq!(spans[1].span_index(), 1);
-    assert_eq!(spans[0].knot_interval(), (&r(0), &r(1)));
-    assert_eq!(spans[1].knot_interval(), (&r(1), &r(2)));
-    assert_eq!(spans[0].curve(), first.spans()[0]);
 }
 #[test]
 fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
@@ -401,12 +389,12 @@ fn higher_degree_polynomial_spline_uses_exact_unit_weight_bezier_spans() {
         p(2, 2)
     );
     let spans = curve
-        .bezier_spans(&CurveContext::STRICT)
+        .bezier_decomposition(&CurveContext::STRICT)
         .unwrap()
         .into_value()
-        .collect::<Vec<_>>();
+        .spans();
     assert_eq!(spans.len(), 1);
-    let CurveGeometry2::RationalBezier(span) = spans[0].curve() else {
+    let CurveGeometry2::RationalBezier(span) = &spans[0] else {
         panic!("degree-four polynomial span did not use the general exact carrier");
     };
     assert_eq!(span.degree(), 4);

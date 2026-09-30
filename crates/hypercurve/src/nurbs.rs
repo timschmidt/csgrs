@@ -43,20 +43,6 @@ pub struct NurbsCurve2 {
     data: Arc<NurbsData2>,
 }
 
-/// Borrowed exact NURBS Bezier span and its knot-span index.
-#[derive(Clone, Copy, Debug)]
-pub struct NurbsBezierSpanView2<'a> {
-    span_index: usize,
-    span: &'a RationalBezierSpan2,
-}
-
-/// Borrowed native topology promoted from one exact NURBS span.
-#[derive(Clone, Copy, Debug)]
-pub struct NurbsNativeSpanView2<'a> {
-    source_span: NurbsBezierSpanView2<'a>,
-    curve: &'a BezierSubcurve2,
-}
-
 /// Clone-shared exact degree elevation of every NURBS knot span.
 #[derive(Clone, Debug, PartialEq)]
 pub struct NurbsDegreeElevation2 {
@@ -1001,22 +987,6 @@ impl NurbsCurve2 {
         )
     }
 
-    /// Iterates exact retained Bezier spans with indices and knot intervals.
-    pub fn bezier_spans(
-        &self,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<impl ExactSizeIterator<Item = NurbsBezierSpanView2<'_>>>>
-    {
-        resolve_certified_operation(policy, |attempt| {
-            Ok(self
-                .bezier_decomposition_for_operation(attempt, CurveOperation2::BezierDecomposition)?
-                .spans()
-                .iter()
-                .enumerate()
-                .map(move |(span_index, span)| NurbsBezierSpanView2 { span_index, span }))
-        })
-    }
-
     /// Returns native conic/polynomial Bezier spans when every span supports them.
     ///
     /// Linear rational spans are elevated exactly in homogeneous coordinates,
@@ -1070,27 +1040,6 @@ impl NurbsCurve2 {
                 .map_err(|error| remap_nurbs_operation(error, operation))?,
             operation,
         )
-    }
-
-    /// Iterates native promoted spans without losing their rational source span.
-    pub fn native_spans(
-        &self,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<impl ExactSizeIterator<Item = NurbsNativeSpanView2<'_>>>>
-    {
-        resolve_certified_operation(policy, |attempt| {
-            let decomposition =
-                self.bezier_decomposition_for_operation(attempt, CurveOperation2::NativeTopology)?;
-            let native =
-                self.native_subcurves_for_operation(attempt, CurveOperation2::NativeTopology)?;
-            debug_assert_eq!(decomposition.spans().len(), native.len());
-            Ok(decomposition.spans().iter().zip(native).enumerate().map(
-                move |(span_index, (span, curve))| NurbsNativeSpanView2 {
-                    source_span: NurbsBezierSpanView2 { span_index, span },
-                    curve,
-                },
-            ))
-        })
     }
 
     /// Evaluates the NURBS at an exact source-domain parameter.
@@ -1510,39 +1459,7 @@ impl PartialEq for NurbsCurve2 {
     }
 }
 
-impl<'a> NurbsBezierSpanView2<'a> {
-    /// Returns this span's stable index in source-parameter order.
-    pub const fn span_index(self) -> usize {
-        self.span_index
-    }
 
-    /// Returns this span's shared exact rational Bezier evaluator.
-    pub const fn curve(self) -> &'a RationalBezier2 {
-        self.span.curve()
-    }
-
-    /// Returns the exact source knot interval.
-    pub fn knot_interval(self) -> (&'a Real, &'a Real) {
-        self.span.knot_interval()
-    }
-
-    /// Returns the retained low-level rational span evidence.
-    pub const fn retained_span(self) -> &'a RationalBezierSpan2 {
-        self.span
-    }
-}
-
-impl<'a> NurbsNativeSpanView2<'a> {
-    /// Returns the NURBS span from which the native curve was promoted.
-    pub const fn source_span(self) -> NurbsBezierSpanView2<'a> {
-        self.source_span
-    }
-
-    /// Returns the exact promoted native Bezier/conic curve geometry.
-    pub fn curve(self) -> crate::CurveGeometry2 {
-        crate::CurveGeometry2::from_bezier(self.curve.clone())
-    }
-}
 
 impl NurbsDegreeElevation2 {
     /// Returns the source NURBS degree.

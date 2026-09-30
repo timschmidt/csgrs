@@ -218,14 +218,11 @@ pub use intersect::{
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineCircleRelation,
     LineLineIntersection, ParamRange, SegmentIntersection,
 };
-pub use nurbs::{
-    NurbsBezierSpanView2, NurbsCurve2, NurbsDegreeElevation2, NurbsElevatedBezierSpan2,
-    NurbsNativeSpanView2,
-};
+pub use nurbs::{NurbsCurve2, NurbsDegreeElevation2, NurbsElevatedBezierSpan2};
 pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
 pub use policy::{CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions};
-pub use polynomial_spline::{PolynomialSplineBezierSpanView2, PolynomialSplineCurve2};
+pub use polynomial_spline::PolynomialSplineCurve2;
 pub use rational_bezier::{RationalQuadraticBezier2, RationalQuadraticConicKind};
 pub(crate) use rational_bezier_general::RationalBezierPointIncidence2;
 pub use rational_bezier_general::{

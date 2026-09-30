@@ -41,14 +41,6 @@ pub struct PolynomialSplineCurve2 {
     data: Arc<PolynomialSplineData2>,
 }
 
-/// Borrowed polynomial Bezier span with source provenance.
-#[derive(Clone, Copy, Debug)]
-pub struct PolynomialSplineBezierSpanView2<'a> {
-    span_index: usize,
-    curve: &'a BezierSubcurve2,
-    interval: &'a (Real, Real),
-}
-
 impl PolynomialSplineCurve2 {
     /// Constructs a polynomial B-spline of any positive degree.
     ///
@@ -453,33 +445,6 @@ impl PolynomialSplineCurve2 {
                 .map_err(|error| remap_spline_operation(error, operation))?,
             operation,
         )
-    }
-
-    /// Iterates exact Bezier spans with source identity and knot intervals.
-    pub fn bezier_spans(
-        &self,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<
-        CurveOutcome<impl ExactSizeIterator<Item = PolynomialSplineBezierSpanView2<'_>>>,
-    > {
-        resolve_certified_operation(policy, |attempt| {
-            let decomposition = self.bezier_decomposition_for_operation(
-                attempt,
-                CurveOperation2::BezierDecomposition,
-            )?;
-            Ok(decomposition
-                .native_spans()
-                .iter()
-                .zip(decomposition.intervals())
-                .enumerate()
-                .map(
-                    move |(span_index, (curve, interval))| PolynomialSplineBezierSpanView2 {
-                        span_index,
-                        curve,
-                        interval,
-                    },
-                ))
-        })
     }
 
     /// Evaluates the spline at an exact source-domain parameter.
@@ -969,22 +934,6 @@ impl PartialEq for PolynomialSplineCurve2 {
     }
 }
 
-impl<'a> PolynomialSplineBezierSpanView2<'a> {
-    /// Returns this span's stable index in source-parameter order.
-    pub const fn span_index(self) -> usize {
-        self.span_index
-    }
-
-    /// Returns the exact native polynomial Bezier curve geometry.
-    pub fn curve(self) -> crate::CurveGeometry2 {
-        crate::CurveGeometry2::from_bezier(self.curve.clone())
-    }
-
-    /// Returns the exact source knot interval.
-    pub fn knot_interval(self) -> (&'a Real, &'a Real) {
-        (&self.interval.0, &self.interval.1)
-    }
-}
 
 fn has_clamped_endpoints(
     knots: &[Real],
