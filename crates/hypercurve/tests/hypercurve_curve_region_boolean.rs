@@ -2314,3 +2314,73 @@ fn collinear_retraced_quadratic_loop_regularizes_to_empty() {
         }
     }
 }
+
+/// Four overlapping pieces of one 45-degree PCB track (exact f64 inputs).
+/// Their shared collinear edges meet at vertices with co-directed straight
+/// rays; regularization must still union them into one exact loop.
+#[test]
+fn overlapping_diagonal_track_pieces_regularize_to_one_loop() {
+    let policy = CurveContext::STRICT;
+    let loops: [[[f64; 2]; 4]; 4] = [
+        [
+            [209.33765244648185, 66.40234855351814],
+            [209.34765144648185, 66.41234755351813],
+            [209.29376990975544, 66.46622909024454],
+            [209.28377090975545, 66.45623009024455],
+        ],
+        [
+            [209.34765144648185, 66.46622909024454],
+            [209.20623009024456, 66.60765044648186],
+            [209.15234855351815, 66.55376890975545],
+            [209.29376990975544, 66.41234755351813],
+        ],
+        [
+            [209.15234855351815, 66.60765044648186],
+            [209.14234955351816, 66.59765144648186],
+            [209.19623109024457, 66.54376990975545],
+            [209.20623009024456, 66.55376890975545],
+        ],
+        [
+            [209.14234955351816, 66.54376990975545],
+            [209.28377090975545, 66.40234855351814],
+            [209.33765244648185, 66.45623009024455],
+            [209.19623109024457, 66.59765144648186],
+        ],
+    ];
+    let point =
+        |[x, y]: [f64; 2]| Point2::new(Real::try_from(x).unwrap(), Real::try_from(y).unwrap());
+    let paths = loops
+        .iter()
+        .map(|points| {
+            CurvePath2::try_new(
+                (0..4)
+                    .map(|i| {
+                        Curve2::from(
+                            LineSeg2::try_new(point(points[i]), point(points[(i + 1) % 4]))
+                                .unwrap(),
+                        )
+                    })
+                    .collect(),
+            )
+            .unwrap()
+        })
+        .collect::<Vec<_>>();
+    let region = CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero, &policy)
+        .unwrap()
+        .into_value();
+    assert_eq!(region.boundary_loops().len(), 1);
+    for (sample, expected) in [
+        ([209.25, 66.51], RegionPointLocation::Inside),
+        ([209.0, 66.0], RegionPointLocation::Outside),
+        ([209.4, 66.7], RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            region
+                .classify_point(&point(sample).into(), &policy)
+                .unwrap()
+                .value,
+            Classification::Decided(expected),
+            "{sample:?}"
+        );
+    }
+}

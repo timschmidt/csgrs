@@ -501,22 +501,37 @@ fn record_regularized_vertex_sectors(
     vertex_sector_links.extend(pairs.iter().map(|&(first, second)| (vertex, first, second)));
 }
 
+/// Face sectors at one vertex, plus side equalities of coincident rays.
+struct RegularizedVertexSectors {
+    /// Certified cyclic sectors, published only when no rays coincide.
+    sectors: Option<Vec<(usize, usize)>>,
+    /// Zero-jump face equations: every sector pair and, for coincident
+    /// straight rays, their equal left and right sides.
+    winding_links: Vec<(usize, usize)>,
+}
+
 /// Orders the actual rays at an authored corner. A support's crossing or
 /// tangency certificate does not describe a different carrier joined to it.
-/// Co-directed rays need higher-order contact evidence and decline this path.
+/// Co-directed curved rays need higher-order contact evidence and decline
+/// this path. Co-directed straight rays coincide near the vertex, so their
+/// sides are the same local faces: they are merged into one ray and their
+/// side equalities published as winding links only, leaving successor
+/// selection at such a vertex to the other exact routes.
 fn regularized_incident_ray_sectors(
     incident: &[(usize, usize, bool)],
     topology: &CurveRegionSplitTopology,
     edge_offsets: &[usize],
     policy: &CurveContext,
-) -> Option<Vec<(usize, usize)>> {
+) -> Option<RegularizedVertexSectors> {
     use crate::bezier_region::CurveTangent2;
 
     policy.strict_predicate_pass(|| {
         let reference = CurveTangent2::RepresentedDirection((Real::one(), Real::zero()));
-        let mut rays: Vec<(CurveTangent2, usize, usize)> = Vec::with_capacity(incident.len());
+        let mut rays: Vec<(CurveTangent2, usize, usize, bool)> = Vec::with_capacity(incident.len());
+        let mut coincident = Vec::new();
         for &(carrier, split, outgoing) in incident {
             let fragment = &topology.split_fragments[carrier][split].fragment;
+            let straight = split_fragment_is_affine_line(fragment);
             let reversed;
             let ray = if outgoing {
                 fragment
@@ -529,19 +544,6 @@ fn regularized_incident_ray_sectors(
             else {
                 return None;
             };
-            let mut position = rays.len();
-            for (index, (other, _, _)) in rays.iter().enumerate() {
-                match reference.compare_filled_left_turn(&tangent, other, policy) {
-                    Classification::Decided(Ordering::Less) => {
-                        position = index;
-                        break;
-                    }
-                    Classification::Decided(Ordering::Greater) => {}
-                    Classification::Decided(Ordering::Equal) | Classification::Uncertain(_) => {
-                        return None;
-                    }
-                }
-            }
             let edge = edge_offsets[carrier] + split;
             let left = 2 * edge;
             let right = left + 1;
@@ -550,16 +552,43 @@ fn regularized_incident_ray_sectors(
             } else {
                 (right, left)
             };
-            rays.insert(position, (tangent, left, right));
+            let mut position = rays.len();
+            let mut merged = false;
+            for (index, (other, other_left, other_right, other_straight)) in rays.iter().enumerate()
+            {
+                match reference.compare_filled_left_turn(&tangent, other, policy) {
+                    Classification::Decided(Ordering::Less) => {
+                        position = index;
+                        break;
+                    }
+                    Classification::Decided(Ordering::Greater) => {}
+                    Classification::Decided(Ordering::Equal) if straight && *other_straight => {
+                        coincident.push((left, *other_left));
+                        coincident.push((right, *other_right));
+                        merged = true;
+                        break;
+                    }
+                    Classification::Decided(Ordering::Equal) | Classification::Uncertain(_) => {
+                        return None;
+                    }
+                }
+            }
+            if !merged {
+                rays.insert(position, (tangent, left, right, straight));
+            }
         }
         // The turn comparator orders clockwise. The sector between adjacent
         // rays is right of the first and left of the second, including the
         // wraparound sector. Publish only a completely certified ordering.
-        Some(
-            (0..rays.len())
-                .map(|index| (rays[index].2, rays[(index + 1) % rays.len()].1))
-                .collect(),
-        )
+        let sectors = (0..rays.len())
+            .map(|index| (rays[index].2, rays[(index + 1) % rays.len()].1))
+            .collect::<Vec<_>>();
+        let mut winding_links = sectors.clone();
+        winding_links.extend(coincident.iter().copied());
+        Some(RegularizedVertexSectors {
+            sectors: coincident.is_empty().then_some(sectors),
+            winding_links,
+        })
     })
 }
 
@@ -7435,16 +7464,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
             // continuation theorem then owns the complete cyclic order.
             if incident.len() > 2
                 && !topology.contact_candidates.contains_key(&vertex)
-                && let Some(sectors) = regularized_incident_ray_sectors(
+                && let Some(vertex_sectors) = regularized_incident_ray_sectors(
                     incident,
                     topology,
                     &edge_offsets,
                     &self.data.policy,
                 )
             {
-                record_regularized_vertex_sectors(&mut vertex_sector_links, vertex, &sectors);
-                winding_sector_links.extend_from_slice(&sectors);
-                transverse_winding_sector_links.extend(sectors);
+                if let Some(sectors) = &vertex_sectors.sectors {
+                    record_regularized_vertex_sectors(&mut vertex_sector_links, vertex, sectors);
+                }
+                winding_sector_links.extend_from_slice(&vertex_sectors.winding_links);
+                transverse_winding_sector_links.extend(vertex_sectors.winding_links);
             }
             if incident.len() != 2
                 || topology
@@ -7577,15 +7608,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
             }
             if incident.len() != 4 || branches.iter().any(Option::is_none) {
-                if let Some(sectors) = regularized_incident_ray_sectors(
+                if let Some(vertex_sectors) = regularized_incident_ray_sectors(
                     incident,
                     topology,
                     &edge_offsets,
                     &self.data.policy,
                 ) {
-                    record_regularized_vertex_sectors(&mut vertex_sector_links, vertex, &sectors);
-                    winding_sector_links.extend_from_slice(&sectors);
-                    transverse_winding_sector_links.extend(sectors);
+                    if let Some(sectors) = &vertex_sectors.sectors {
+                        record_regularized_vertex_sectors(
+                            &mut vertex_sector_links,
+                            vertex,
+                            sectors,
+                        );
+                    }
+                    winding_sector_links.extend_from_slice(&vertex_sectors.winding_links);
+                    transverse_winding_sector_links.extend(vertex_sectors.winding_links);
                 }
                 continue;
             }
@@ -7956,6 +7993,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 for &(member, _) in &members {
                     let (carrier_index, split_index) = edge_sources[member];
                     actions[carrier_index][split_index] = Some(RegionFragmentAction::Discard);
+                }
+                // Crossing a cancelling coincident group changes no loop's
+                // winding, so its two sides carry equal winding vectors. Link
+                // them exactly; otherwise every shared internal edge splits the
+                // face equations and asks for another geometric seed.
+                let [left, right] =
+                    face_roots[edge_sources[members[0].0].0][edge_sources[members[0].0].1];
+                if left != right {
+                    let jump = winding_jumps.len();
+                    winding_jumps.push(RegularizedWindingJump::Zero);
+                    face_adjacency[right].push(RegularizedFaceAdjacency {
+                        face: left,
+                        jump,
+                        direction: 0,
+                    });
+                    face_adjacency[left].push(RegularizedFaceAdjacency {
+                        face: right,
+                        jump,
+                        direction: 0,
+                    });
                 }
                 continue;
             }
