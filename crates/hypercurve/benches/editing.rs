@@ -14,6 +14,23 @@ use hypercurve::{
     BezierParameterPolynomial, CubicBezier2, CurvePoint2,
 };
 
+/// Evaluates an authored curve at a selected algebraic parameter as a general point.
+fn selected_point(
+    curve: &RationalBezier2,
+    parameter: &BezierAlgebraicParameter2,
+    policy: &CurveContext,
+) -> CurvePoint2 {
+    Curve2::from(curve.clone())
+        .point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                parameter.clone(),
+            )),
+            policy,
+        )
+        .expect("the selected benchmark endpoint must remain exact")
+        .into_value()
+}
+
 fn s(value: i32) -> Real {
     value.into()
 }
@@ -830,13 +847,8 @@ fn noninjective_collinear_algebraic_chord_paths()
     let first_parameter = positive_reciprocal_sqrt_parameter(2, &policy)?;
     let second_parameter = positive_reciprocal_sqrt_parameter(3, &policy)?;
     let horizontal = RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(); 2])?;
-    let endpoint = |parameter: &BezierAlgebraicParameter2| {
-        horizontal
-            .point_at_algebraic_parameter(parameter, &policy)
-            .map(|image| CurvePoint2::from(expect_decided(image, "exact benchmark endpoint")))
-    };
-    let first_endpoint = endpoint(&first_parameter)?;
-    let second_endpoint = endpoint(&second_parameter)?;
+    let first_endpoint = selected_point(&horizontal, &first_parameter, &policy);
+    let second_endpoint = selected_point(&horizontal, &second_parameter, &policy);
     let chord = expect_decided(
         Curve2::try_line(first_endpoint, second_endpoint, &policy)?,
         "independent-field benchmark chord must remain exact",
@@ -864,9 +876,7 @@ fn strict_interior_algebraic_chord_regions() -> Result<[CurveRegion2; 2], Box<dy
     )?;
     let endpoint = |source: &RationalBezier2, numerator, denominator| {
         let parameter = positive_sqrt_ratio_parameter(numerator, denominator, &policy)?;
-        source
-            .point_at_algebraic_parameter(&parameter, &policy)
-            .map(|image| CurvePoint2::from(expect_decided(image, "exact benchmark endpoint")))
+        Ok::<_, Box<dyn std::error::Error>>(selected_point(source, &parameter, &policy))
     };
     let first_start = endpoint(&horizontal, 1, 2)?;
     let first_end = endpoint(&horizontal, 1, 3)?;
@@ -914,14 +924,8 @@ fn axis_aligned_algebraic_offset_region() -> Result<CurveRegion2, Box<dyn std::e
             vec![Real::one(); 2],
         )
     };
-    let bottom_right = CurvePoint2::from(expect_decided(
-        horizontal(Real::zero())?.point_at_algebraic_parameter(&parameter, &policy)?,
-        "exact benchmark endpoint",
-    ));
-    let top_right = CurvePoint2::from(expect_decided(
-        horizontal(Real::one())?.point_at_algebraic_parameter(&parameter, &policy)?,
-        "exact benchmark endpoint",
-    ));
+    let bottom_right = selected_point(&horizontal(Real::zero())?, &parameter, &policy);
+    let top_right = selected_point(&horizontal(Real::one())?, &parameter, &policy);
     let bottom_left = CurvePoint2::from(p(0, 0));
     let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| {
@@ -962,14 +966,7 @@ fn axis_aligned_algebraic_dumbbell_offset_region()
             ],
             vec![Real::one(); 2],
         )
-        .map(|curve| {
-            CurvePoint2::from(expect_decided(
-                curve
-                    .point_at_algebraic_parameter(&parameter, &policy)
-                    .expect("algebraic dumbbell endpoint must remain selected"),
-                "exact benchmark endpoint",
-            ))
-        })
+        .map(|curve| selected_point(&curve, &parameter, &policy))
     };
     let exact = |x, y| CurvePoint2::from(p(x, y));
     let points = [

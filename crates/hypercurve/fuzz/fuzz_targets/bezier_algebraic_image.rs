@@ -1,9 +1,9 @@
 #![no_main]
 
 use hypercurve::{
-    BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, CurveContext, CurveError, Point2, QuadraticBezier2,
-    RationalQuadraticBezier2, Real,
+    Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+    BezierParameterPolynomial, Classification, Curve2, CurveContext, CurveError, CurveParameter2,
+    CurvePoint2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -83,71 +83,67 @@ fuzz_target!(|data: &[u8]| {
         Err(_) => return,
     };
 
-    let point = match curve
-        .point_at_algebraic_parameter(&parameter, &policy)
-        .expect("valid algebraic parameter should produce point evidence")
-    {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => panic!("finite polynomial point blocked: {reason:?}"),
-    };
-    let Classification::Decided(tangent) = curve
-        .tangent_at_algebraic_parameter(&parameter, &policy)
-        .expect("valid algebraic parameter should produce tangent evidence")
-    else {
-        panic!("finite polynomial tangent must be certified");
-    };
+    let selected = CurveParameter2::from(BezierParameter2::Algebraic(parameter));
+    let general = Curve2::from(curve.clone());
+    let point = general
+        .point_at(&selected, &policy)
+        .expect("a finite polynomial point at a selected parameter must complete")
+        .into_value();
+    let tangent = general
+        .derivative_at(&selected, &policy)
+        .expect("a finite polynomial tangent at a selected parameter must complete")
+        .into_value();
 
     if mode == 0 {
-        assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
-        assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
-        assert!(point.x().unwrap().representation().is_some());
-        assert!(point.y().unwrap().representation().is_some());
+        // 2t - 1 selects t = 1/2 exactly: the selected point and tangent must
+        // agree with the represented evaluation.
+        let half = CurveParameter2::from(q(1, 2));
+        let represented = general.point_at(&half, &policy).unwrap().into_value();
+        assert_eq!(
+            point.coincides_with(&represented, &policy).value,
+            Classification::Decided(true)
+        );
+        let represented_tangent = general.derivative_at(&half, &policy).unwrap().into_value();
+        for axis in [Axis2::X, Axis2::Y] {
+            assert_eq!(
+                tangent.coordinate_sign(axis, &policy).unwrap(),
+                represented_tangent.coordinate_sign(axis, &policy).unwrap()
+            );
+        }
     } else if mode == 1 {
-        assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
-        assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
-        let x = point.x().unwrap();
-        assert_eq!(x.numerator_coefficients(), &[q(9, 16), q(-3, 2), r(1)]);
+        // x(t) = (t - 3/4)^2 at t = sqrt(1/2) lies strictly in (0, 1/16).
         for (bound, ordering) in [
             (Real::zero(), std::cmp::Ordering::Greater),
             (q(1, 16), std::cmp::Ordering::Less),
         ] {
+            let bound = CurvePoint2::from(Point2::new(bound, Real::zero()));
             assert_eq!(
-                x.compare_to_real(&bound, &policy),
+                point
+                    .compare_coordinate(&bound, Axis2::X, &policy)
+                    .unwrap()
+                    .value,
                 Classification::Decided(ordering)
             );
         }
     }
 
     if let Some(conic) = conic {
-        let rational_point = conic
-            .point_at_algebraic_parameter(&parameter, &policy)
-            .expect("valid algebraic parameter should produce a rational point evidence");
-        let rational_tangent = conic
-            .tangent_at_algebraic_parameter(&parameter, &policy)
-            .expect("valid algebraic parameter should produce a rational tangent evidence");
+        let general = Curve2::from(conic.clone());
+        let rational_point = general.point_at(&selected, &policy);
         if mode == 2 {
-            assert!(matches!(
-                rational_point,
-                Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
-            ));
-            assert!(matches!(
-                rational_tangent,
-                Classification::Uncertain(hypercurve::UncertaintyReason::Boundary)
-            ));
+            // Weights (1, -1, 1) put a projective pole at t = 1/2.
+            assert!(rational_point.is_err());
         } else if mode == 0 {
-            let Classification::Decided(rational_point) = rational_point else {
-                panic!("finite rational image must be certified");
-            };
-            let Classification::Decided(rational_tangent) = rational_tangent else {
-                panic!("finite rational tangent must be certified");
-            };
+            let rational_point = rational_point
+                .expect("a finite rational point must complete")
+                .into_value();
+            let represented = general
+                .point_at(&CurveParameter2::from(q(1, 2)), &policy)
+                .unwrap()
+                .into_value();
             assert_eq!(
-                rational_point.status(),
-                BezierAlgebraicImageStatus::Transformed
-            );
-            assert_eq!(
-                rational_tangent.status(),
-                BezierAlgebraicImageStatus::Transformed
+                rational_point.coincides_with(&represented, &policy).value,
+                Classification::Decided(true)
             );
         }
     }

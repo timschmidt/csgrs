@@ -1987,7 +1987,7 @@ impl RationalBezier2 {
     /// parameter interval. A proved pole returns a boundary blocker; an
     /// unresolved denominator preserves its predicate reason without creating
     /// an affine point image.
-    pub fn point_at_algebraic_parameter(
+    pub(crate) fn point_at_algebraic_parameter(
         &self,
         parameter: &crate::BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -2013,21 +2013,6 @@ impl RationalBezier2 {
         Ok(image)
     }
 
-    /// Evaluates the affine tangent at an isolated algebraic parameter.
-    pub fn tangent_at_algebraic_parameter(
-        &self,
-        parameter: &crate::BezierAlgebraicParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RationalBezierAlgebraicTangentImage2>> {
-        Ok(self
-            .derivatives_at_algebraic_parameter(parameter, 1, policy)?
-            .map(|mut images| {
-                images
-                    .pop()
-                    .expect("one requested rational derivative image")
-            }))
-    }
-
     /// Evaluates exact affine derivative images through `max_order` at an
     /// isolated algebraic parameter.
     ///
@@ -2035,7 +2020,7 @@ impl RationalBezier2 {
     /// constructed in one quotient-recurrence pass, reusing each preceding
     /// numerator and denominator power rather than rebuilding lower-order
     /// derivatives. An order-`k` coordinate is represented as `A_k/D^(k+1)`.
-    pub fn derivatives_at_algebraic_parameter(
+    pub(crate) fn derivatives_at_algebraic_parameter(
         &self,
         parameter: &crate::BezierAlgebraicParameter2,
         max_order: usize,

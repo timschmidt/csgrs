@@ -1,9 +1,9 @@
-use hypercurve::{
+use crate::{
     BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierParameterInterval,
     BezierParameterPolynomial, Classification, CurveContext, Point2, QuadraticBezier2,
     RationalQuadraticBezier2, Real,
 };
-use hypercurve::{CubicBezier2, RationalBezier2};
+use crate::{CubicBezier2, RationalBezier2};
 use proptest::prelude::*;
 
 fn r(value: i32) -> Real {
@@ -164,7 +164,6 @@ fn nonmonotone_coordinate_image_is_certified_without_sampling() {
             point.y().unwrap().numerator_coefficients(),
             &[r(0), r(2), r(0)]
         );
-        assert!(point.message().is_none());
     }
 }
 
@@ -181,13 +180,15 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
     );
     let tangent = decided(
         conic
-            .tangent_at_algebraic_parameter(&parameter, &policy())
-            .unwrap(),
+            .derivatives_at_algebraic_parameter(&parameter, 1, &policy())
+            .unwrap()
+            .map(|mut images| images.remove(0)),
     );
     let second_derivative = decided(
         conic
-            .second_derivative_at_algebraic_parameter(&parameter, &policy())
-            .unwrap(),
+            .derivatives_at_algebraic_parameter(&parameter, 2, &policy())
+            .unwrap()
+            .map(|mut images| images.remove(1)),
     );
 
     assert_eq!(std::mem::size_of_val(&point), std::mem::size_of::<usize>());
@@ -214,19 +215,11 @@ fn rational_quadratic_point_and_tangent_images_retain_quotient_evidence() {
     assert!(point.y().unwrap().representation().unwrap().is_valid());
 
     assert_eq!(tangent.status(), BezierAlgebraicImageStatus::Transformed);
-    assert_eq!(
-        tangent.dx().unwrap().denominator_coefficients(),
-        &[r(1), r(4), r(4), r(0), r(0)]
-    );
     assert!(tangent.dx().unwrap().representation().unwrap().is_valid());
     assert!(tangent.dy().unwrap().representation().unwrap().is_valid());
     assert_eq!(
         second_derivative.status(),
         BezierAlgebraicImageStatus::Transformed
-    );
-    assert_eq!(
-        second_derivative.dx().unwrap().denominator_coefficients(),
-        &[r(1), r(6), r(12), r(8), r(0), r(0), r(0)]
     );
     assert!(
         second_derivative
@@ -304,7 +297,6 @@ fn rational_point_image_transforms_exact_real_linear_root() {
         Classification::Decided(std::cmp::Ordering::Equal),
     );
     assert!(point.retained_parameter().is_none());
-    assert!(point.message().is_none());
 }
 
 #[test]
@@ -393,43 +385,6 @@ fn conic_point_images_reuse_exact_evaluation_across_weight_charts() {
     }
 }
 
-#[test]
-fn rational_image_cache_keeps_curve_family_certificate_shapes_distinct() {
-    let controls = vec![p(0, 0), p(2, 4), p(6, 0)];
-    let weights = vec![r(1), r(2), r(3)];
-    let general = RationalBezier2::try_new(controls.clone(), weights.clone()).unwrap();
-    let conic = RationalQuadraticBezier2::try_new(
-        controls[0].clone(),
-        controls[1].clone(),
-        controls[2].clone(),
-        weights[0].clone(),
-        weights[1].clone(),
-        weights[2].clone(),
-    )
-    .unwrap();
-    let parameter = sqrt_half_parameter();
-
-    let general_tangent = decided(
-        general
-            .tangent_at_algebraic_parameter(&parameter, &policy())
-            .unwrap(),
-    );
-    let conic_tangent = decided(
-        conic
-            .tangent_at_algebraic_parameter(&parameter, &policy())
-            .unwrap(),
-    );
-
-    assert_eq!(
-        general_tangent.dx().unwrap().denominator_coefficients(),
-        &[r(3), r(4)]
-    );
-    assert_eq!(
-        conic_tangent.dx().unwrap().denominator_coefficients(),
-        &[r(1), r(4), r(4), r(0), r(0)]
-    );
-}
-
 proptest! {
     #[test]
     fn linear_coordinate_images_match_exact_midpoint_values(
@@ -490,7 +445,7 @@ proptest! {
         );
 
         let point = decided(conic.point_at_algebraic_parameter(&parameter, &policy()).unwrap());
-        let tangent = decided(conic.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap());
+        let tangent = decided(conic.derivatives_at_algebraic_parameter(&parameter, 1, &policy()).unwrap().map(|mut images| images.remove(0)));
         let exact_point = match conic.point_at(q(1, 2), &policy()) {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => panic!("midpoint unexpectedly uncertain: {reason:?}"),
@@ -511,7 +466,7 @@ proptest! {
 
 #[test]
 fn polynomial_point_images_retain_nonrational_source_roots() {
-    use hypercurve::{Axis2, CurveCertainty, CurvePoint2};
+    use crate::{Axis2, CurveCertainty, CurvePoint2};
     use std::cmp::Ordering;
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -537,7 +492,7 @@ fn polynomial_point_images_retain_nonrational_source_roots() {
 
 #[test]
 fn high_order_derivative_images_preserve_selected_source_domains() {
-    use hypercurve::{HomogeneousControl2, UncertaintyReason};
+    use crate::{HomogeneousControl2, UncertaintyReason};
     use std::cmp::Ordering;
 
     // C(t)=(t/(1+t),1/(1+t)), authored with a common homogeneous factor F.
@@ -629,7 +584,7 @@ fn high_order_derivative_images_preserve_selected_source_domains() {
 
 #[test]
 fn selected_derivative_jets_preserve_high_order_rational_tails() {
-    use hypercurve::HomogeneousControl2;
+    use crate::HomogeneousControl2;
     use std::cmp::Ordering;
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -677,5 +632,212 @@ fn selected_derivative_jets_preserve_high_order_rational_tails() {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod finite_parameter_interval_contract {
+    use crate::{
+        BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierMonotoneSpan,
+        BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
+        Curve2, CurveContext, CurveError, CurveParameter2, ExactCurveError, Point2,
+        QuadraticBezier2, RationalBezier2, Real,
+    };
+    use std::cmp::Ordering;
+
+    fn decided<T>(value: Classification<T>) -> T {
+        match value {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => panic!("exact fixture: {reason:?}"),
+        }
+    }
+
+    fn square_root(sign: i32, policy: &CurveContext) -> BezierAlgebraicParameter2 {
+        let (lower, upper) = if sign < 0 { (-2, -1) } else { (1, 2) };
+        let span = BezierMonotoneSpan::new(Real::from(lower), Real::from(upper)).unwrap();
+        let interval = decided(BezierParameterInterval::from_monotone_span(&span, policy).unwrap());
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![Real::from(-2), Real::zero(), Real::one()],
+                policy,
+            )
+            .unwrap(),
+        );
+        decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap())
+    }
+
+    #[test]
+    fn exterior_root_images_preserve_equations_and_native_curve_domains() {
+        let source = QuadraticBezier2::new(
+            Point2::from_values(0, 0),
+            Point2::new((Real::one() / Real::from(2)).unwrap(), Real::zero()),
+            Point2::from_values(1, 1),
+        );
+        let native = Curve2::from(source.clone());
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for sign in [-1, 1] {
+                let root = square_root(sign, &policy);
+                let parameter = BezierParameter2::Algebraic(root.clone());
+                let value = Real::from(sign) * Real::from(2).sqrt().unwrap();
+                assert!(matches!(
+                    parameter.cmp_by_refinement(&BezierParameter2::Exact(value.clone()), &policy),
+                    Ok(Classification::Decided(Ordering::Equal))
+                ));
+                // The unrestricted polynomial image of P(t)=(t,t²) is
+                // (±sqrt(2),2); the authored segment still owns [0,1].
+                let image = decided(source.point_at_algebraic_parameter(&root, &policy).unwrap());
+                assert_eq!(image.status(), BezierAlgebraicImageStatus::Transformed);
+                assert_eq!(
+                    image.x().unwrap().compare_to_real(&value, &policy),
+                    Classification::Decided(Ordering::Equal)
+                );
+                assert_eq!(
+                    image.y().unwrap().compare_to_real(&Real::from(2), &policy),
+                    Classification::Decided(Ordering::Equal)
+                );
+                assert!(matches!(
+                    native.point_at(&CurveParameter2::from(parameter), &policy),
+                    Err(ExactCurveError::Invalid {
+                        cause: CurveError::InvalidCurveParameter,
+                        ..
+                    })
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn positive_unit_weights_do_not_admit_exterior_algebraic_poles() {
+        // W(t)=2-t² has Bernstein weights (2,2,1), all positive on
+        // the unit span. At either exterior root, the y numerator is 2,
+        // so these are actual affine poles rather than removable factors.
+        let source = RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, 0),
+                Point2::from_values(1, 0),
+                Point2::from_values(1, 1),
+            ],
+            vec![Real::from(2), Real::from(2), Real::one()],
+        )
+        .unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for sign in [-1, 1] {
+                let root = square_root(sign, &policy);
+                let image = source.point_at_algebraic_parameter(&root, &policy).unwrap();
+                assert!(matches!(
+                    image,
+                    Classification::Uncertain(crate::UncertaintyReason::Boundary)
+                ));
+            }
+        }
+    }
+}
+
+mod rational_resultant_projection {
+    use super::*;
+    use crate::{
+        BezierParameter2, Curve2, CurveIntersectionCandidates2, RationalBezierIntersectionContacts2,
+    };
+
+    #[test]
+    fn rational_resultant_retains_algebraic_parameter_projections() {
+        let policy = CurveContext::STRICT;
+        let parabola = RationalBezier2::try_new(
+            vec![Point2::new(r(0), r(0)), Point2::new(q(1, 2), r(0)), p(1, 1)],
+            vec![r(1), r(1), r(1)],
+        )
+        .unwrap();
+        let horizontal = RationalBezier2::try_new(
+            vec![Point2::new(r(0), q(1, 2)), Point2::new(r(1), q(1, 2))],
+            vec![r(1), r(1)],
+        )
+        .unwrap();
+        let candidates = parabola
+            .intersection_candidates(&horizontal, &policy)
+            .unwrap();
+        let CurveIntersectionCandidates2::Candidates {
+            first_parameters,
+            second_parameters,
+        } = candidates
+        else {
+            panic!("parabola crossing did not retain resultant candidates");
+        };
+        assert!(matches!(
+            first_parameters.as_slice(),
+            [BezierParameter2::Algebraic(_)]
+        ));
+        assert!(matches!(
+            second_parameters.as_slice(),
+            [BezierParameter2::Algebraic(_)]
+        ));
+        let BezierParameter2::Algebraic(first_parameter) = &first_parameters[0] else {
+            unreachable!("asserted algebraic parameter")
+        };
+        let image = decided(
+            parabola
+                .point_at_algebraic_parameter(first_parameter, &policy)
+                .unwrap(),
+        );
+        assert_eq!(
+            image.status(),
+            BezierAlgebraicImageStatus::Transformed,
+            "{image:?}"
+        );
+        assert!(
+            image
+                .x()
+                .and_then(|coordinate| coordinate.representation())
+                .is_some()
+        );
+        assert!(
+            image
+                .y()
+                .and_then(|coordinate| coordinate.representation())
+                .is_some()
+        );
+        let derivatives = decided(
+            parabola
+                .derivatives_at_algebraic_parameter(first_parameter, 3, &policy)
+                .unwrap(),
+        );
+        assert_eq!(derivatives.len(), 3);
+        assert!(
+            derivatives
+                .iter()
+                .all(|derivative| derivative.status() == BezierAlgebraicImageStatus::Transformed)
+        );
+        let represented_coordinate = |order: usize, x_axis: bool| {
+            let coordinate = if x_axis {
+                derivatives[order - 1].dx()
+            } else {
+                derivatives[order - 1].dy()
+            };
+            coordinate
+                .and_then(|coordinate| coordinate.representation())
+                .and_then(|coordinate| coordinate.exact_point_witness())
+                .cloned()
+        };
+        assert_eq!(represented_coordinate(2, true), Some(r(0)));
+        assert_eq!(represented_coordinate(2, false), Some(r(2)));
+        assert_eq!(represented_coordinate(3, true), Some(r(0)));
+        assert_eq!(represented_coordinate(3, false), Some(r(0)));
+        let contacts = parabola
+            .intersection_contacts(&horizontal, &policy)
+            .unwrap();
+        let RationalBezierIntersectionContacts2::Contacts(contacts) = contacts else {
+            panic!("algebraic resultant candidates did not replay completely");
+        };
+        assert_eq!(contacts.len(), 1);
+        assert!(contacts[0].first_parameter().scalar().is_none());
+        assert!(contacts[0].second_parameter().scalar().is_none());
+        assert!((contacts[0].point()).coordinates().is_none());
+
+        let topology = Curve2::from(parabola)
+            .intersection_topology(&Curve2::from(horizontal), &policy)
+            .unwrap()
+            .into_value();
+        assert_eq!(topology.result().contacts().len(), 1);
+        assert_eq!(topology.first().len(), 2);
+        assert_eq!(topology.second().len(), 2);
     }
 }

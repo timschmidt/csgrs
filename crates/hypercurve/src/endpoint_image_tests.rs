@@ -266,9 +266,15 @@ fn rational_derivative_images_require_finite_affine_domain() {
         let pole = isolate(polynomial(vec![r(-1), r(2)]), interval(r(0), r(1)));
         for _ in 0..2 {
             for image in [
-                conic.tangent_at_algebraic_parameter(&pole, &policy),
-                general.tangent_at_algebraic_parameter(&pole, &policy),
-                conic.second_derivative_at_algebraic_parameter(&pole, &policy),
+                conic
+                    .derivatives_at_algebraic_parameter(&pole, 1, &policy)
+                    .map(|c| c.map(|mut images| images.remove(0))),
+                general
+                    .derivatives_at_algebraic_parameter(&pole, 1, &policy)
+                    .map(|c| c.map(|mut images| images.remove(0))),
+                conic
+                    .derivatives_at_algebraic_parameter(&pole, 2, &policy)
+                    .map(|c| c.map(|mut images| images.remove(1))),
             ] {
                 assert!(matches!(
                     image,
@@ -319,15 +325,20 @@ fn rational_derivative_images_require_finite_affine_domain() {
                     }
                 }
                 for image in [
-                    conic.tangent_at_algebraic_parameter(&parameter, &policy),
-                    general.tangent_at_algebraic_parameter(&parameter, &policy),
+                    conic
+                        .derivatives_at_algebraic_parameter(&parameter, 1, &policy)
+                        .map(|c| c.map(|mut images| images.remove(0))),
+                    general
+                        .derivatives_at_algebraic_parameter(&parameter, 1, &policy)
+                        .map(|c| c.map(|mut images| images.remove(0))),
                 ] {
                     check(&decided(image.unwrap()), 1);
                 }
                 check(
                     &decided(
                         conic
-                            .second_derivative_at_algebraic_parameter(&parameter, &policy)
+                            .derivatives_at_algebraic_parameter(&parameter, 2, &policy)
+                            .map(|c| c.map(|mut images| images.remove(1)))
                             .unwrap(),
                     ),
                     2,

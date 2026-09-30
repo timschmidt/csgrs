@@ -934,7 +934,6 @@ impl PartialEq for PolynomialSplineCurve2 {
     }
 }
 
-
 fn has_clamped_endpoints(
     knots: &[Real],
     degree: usize,

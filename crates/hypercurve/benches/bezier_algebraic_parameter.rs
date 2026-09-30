@@ -244,10 +244,21 @@ fn main() -> CurveResult<()> {
 
     let started = Instant::now();
     let mut transformed = 0_usize;
+    let selected = hypercurve::CurveParameter2::from(BezierParameter2::Algebraic(midpoint.clone()));
+    let general = hypercurve::Curve2::from(curve.clone());
     for _ in 0..iterations {
-        let point = decided(curve.point_at_algebraic_parameter(&midpoint, &policy)?);
-        let tangent = decided(curve.tangent_at_algebraic_parameter(&midpoint, &policy)?);
-        transformed += black_box(point.x().is_some() as usize + tangent.dx().is_some() as usize);
+        let point = general
+            .point_at(black_box(&selected), &policy)
+            .expect("the selected point remains exact")
+            .into_value();
+        let tangent = general
+            .derivative_at(black_box(&selected), &policy)
+            .expect("the selected tangent remains exact")
+            .into_value();
+        transformed += black_box(
+            point.coordinates().is_none() as usize
+                + tangent.represented_coordinates().is_none() as usize,
+        );
     }
     let elapsed = started.elapsed();
     println!(
@@ -265,11 +276,20 @@ fn main() -> CurveResult<()> {
     )?;
     let started = Instant::now();
     let mut rational_transformed = 0_usize;
+    let general_conic = hypercurve::Curve2::from(conic.clone());
     for _ in 0..iterations {
-        let point = decided(conic.point_at_algebraic_parameter(&midpoint, &policy)?);
-        let tangent = decided(conic.tangent_at_algebraic_parameter(&midpoint, &policy)?);
-        rational_transformed +=
-            black_box(point.x().is_some() as usize + tangent.dx().is_some() as usize);
+        let point = general_conic
+            .point_at(black_box(&selected), &policy)
+            .expect("the selected conic point remains exact")
+            .into_value();
+        let tangent = general_conic
+            .derivative_at(black_box(&selected), &policy)
+            .expect("the selected conic tangent remains exact")
+            .into_value();
+        rational_transformed += black_box(
+            point.coordinates().is_none() as usize
+                + tangent.represented_coordinates().is_none() as usize,
+        );
     }
     let elapsed = started.elapsed();
     println!(

@@ -1459,8 +1459,6 @@ impl PartialEq for NurbsCurve2 {
     }
 }
 
-
-
 impl NurbsDegreeElevation2 {
     /// Returns the source NURBS degree.
     pub const fn source_degree(&self) -> usize {

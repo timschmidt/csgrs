@@ -40,7 +40,7 @@ use std::sync::OnceLock;
 
 /// Exact representation used by a Bezier algebraic point or tangent image.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BezierAlgebraicImageStatus {
+pub(crate) enum BezierAlgebraicImageStatus {
     /// Both coordinate images were represented exactly.
     Transformed,
     /// The exact rational-coordinate expressions and their certified
@@ -52,7 +52,7 @@ pub enum BezierAlgebraicImageStatus {
 
 /// One exact rational-function coordinate image at an algebraic parameter.
 #[derive(Clone, Debug, PartialEq)]
-pub struct BezierAlgebraicRationalCoordinateImage {
+pub(crate) struct BezierAlgebraicRationalCoordinateImage {
     numerator_coefficients: Vec<Real>,
     denominator_coefficients: Vec<Real>,
     evidence: AlgebraicRootRationalImageReport,
@@ -541,7 +541,7 @@ pub(crate) fn algebraic_arithmetic_succeeded(status: &AlgebraicRootArithmeticSta
 
 /// Exact affine point of a polynomial or rational Bezier at one selected algebraic parameter.
 #[derive(Clone, Debug)]
-pub struct RationalBezierAlgebraicPointImage2 {
+pub(crate) struct RationalBezierAlgebraicPointImage2 {
     data: Arc<RationalBezierAlgebraicPointImageData>,
 }
 
@@ -1262,14 +1262,6 @@ impl RationalBezierAlgebraicPointImage2 {
             },
         ))
     }
-
-    /// Describes a retained expression when coordinate projection is deferred.
-    pub fn message(&self) -> Option<&str> {
-        match &self.data.definition {
-            RationalPointDefinition::Expression { message, .. } => Some(message),
-            _ => None,
-        }
-    }
 }
 
 impl RationalBezierAlgebraicPointPredicate2<'_> {
@@ -1514,7 +1506,7 @@ fn shared_image_parameter<'a>(
 /// source expression whose denominator is certified nonzero. Construction
 /// blockers remain in [`Classification`] instead of becoming tangent values.
 #[derive(Clone, Debug)]
-pub struct RationalBezierAlgebraicTangentImage2 {
+pub(crate) struct RationalBezierAlgebraicTangentImage2 {
     data: Arc<RationalBezierAlgebraicTangentImageData>,
 }
 
@@ -1604,9 +1596,8 @@ impl RationalBezierAlgebraicTangentImage2 {
             .map(|expression| &expression.parameter)
     }
 
-    /// Returns exact derivative numerators and their certified nonzero denominator
-    /// when the tangent retains its source expression.
-    pub fn retained_coordinate_polynomials(&self) -> Option<(&[Real], &[Real], &[Real])> {
+    #[cfg(test)]
+    pub(crate) fn retained_coordinate_polynomials(&self) -> Option<(&[Real], &[Real], &[Real])> {
         self.retained_expression()
             .map(|_| self.coordinate_polynomials())
     }
@@ -1843,7 +1834,7 @@ impl QuadraticBezier2 {
     /// `P0 + 2(P1-P0)t + (P0-2P1+P2)t^2`. Polynomial and rational
     /// curves share the same exact point carrier; a unit denominator preserves
     /// arbitrary exact coefficients when coordinate projection is unavailable.
-    pub fn point_at_algebraic_parameter(
+    pub(crate) fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -1856,7 +1847,7 @@ impl QuadraticBezier2 {
     ///
     /// The derivative coordinate polynomial is
     /// `2(P1-P0) + 2(P0-2P1+P2)t`, again retained as represented-root evidence.
-    pub fn tangent_at_algebraic_parameter(
+    pub(crate) fn tangent_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -1871,7 +1862,7 @@ impl QuadraticBezier2 {
     /// it is still returned as a represented coordinate image so arrangement
     /// predicates can combine it with represented endpoint tangents without
     /// crossing the exactness model's construction/decision boundary.
-    pub fn second_derivative_at_algebraic_parameter(
+    pub(crate) fn second_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -1891,7 +1882,7 @@ impl CubicBezier2 {
     /// `P0 + 3(P1-P0)t + 3(P0-2P1+P2)t^2`
     /// `+ (-P0+3P1-3P2+P3)t^3`, represented through `hypersolve` polynomial
     /// images rather than sampled into finite coordinates.
-    pub fn point_at_algebraic_parameter(
+    pub(crate) fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -1901,7 +1892,7 @@ impl CubicBezier2 {
 
     /// Evaluates this cubic's first derivative at an isolated algebraic
     /// parameter as exact represented coordinate images.
-    pub fn tangent_at_algebraic_parameter(
+    pub(crate) fn tangent_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -1916,7 +1907,7 @@ impl CubicBezier2 {
     /// tangent polynomial. Keeping the image represented lets local branch
     /// order compare signed curvature exactly instead of sampling the
     /// isolating interval; see the exactness model and the Bernstein curve model.
-    pub fn second_derivative_at_algebraic_parameter(
+    pub(crate) fn second_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -1934,7 +1925,7 @@ impl CubicBezier2 {
     /// Cubic third derivatives are constant. The represented image is retained
     /// for the same reason as the second derivative: arrangement code can
     /// consume exact evidence and explicitly defer unresolved signs.
-    pub fn third_derivative_at_algebraic_parameter(
+    pub(crate) fn third_derivative_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -1960,7 +1951,7 @@ impl RationalQuadraticBezier2 {
     /// become an exact curve point; a pole returns a boundary blocker and an
     /// unresolved denominator retains its predicate reason. See the exactness model for the exact-object
     /// boundary and the Bernstein curve model for the homogeneous conic equations.
-    pub fn point_at_algebraic_parameter(
+    pub(crate) fn point_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
@@ -1979,62 +1970,12 @@ impl RationalQuadraticBezier2 {
         Ok(image)
     }
 
-    /// Evaluates this rational quadratic's affine derivative vector at an
-    /// isolated algebraic parameter.
-    ///
-    /// The derivative coordinate is `(N'D - ND') / D^2`.  The squared
-    /// denominator preserves tangent direction while giving the exact rational
-    /// image package a domain predicate that rejects denominator-zero
-    /// projective boundaries explicitly.
-    pub fn tangent_at_algebraic_parameter(
-        &self,
-        parameter: &BezierAlgebraicParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RationalBezierAlgebraicTangentImage2>> {
-        if let Some(images) = parameter.cached_rational_quadratic_derivative_images(self, 1) {
-            return Ok(Classification::Decided(
-                images
-                    .into_iter()
-                    .next()
-                    .expect("one retained derivative image was requested"),
-            ));
-        }
-        let image = rational_tangent_image(parameter, rational_tangent_coefficients(self), policy)?;
-        if let Classification::Decided(image) = &image
-            && image.status() == BezierAlgebraicImageStatus::Transformed
-        {
-            // Retained expressions own this parameter and must not form a cache cycle.
-            parameter.retain_rational_quadratic_derivative_images(self, vec![image.clone()]);
-        }
-        Ok(image)
-    }
-
-    /// Evaluates this rational quadratic's affine second derivative vector.
-    ///
-    /// For one coordinate `R(t) = N(t)/D(t)`, the retained numerator is
-    /// `(A'(t)D(t) - 2A(t)D'(t))` over `D(t)^3`, where
-    /// `A(t) = N'(t)D(t) - N(t)D'(t)`.  This is the differentiated quotient
-    /// identity for homogeneous rational Beziers described by the Bernstein and de Casteljau curve model.  The result remains a
-    /// represented rational image of the algebraic parameter, preserving
-    /// the exactness model's construction/decision boundary instead of sampling the conic.
-    pub fn second_derivative_at_algebraic_parameter(
-        &self,
-        parameter: &BezierAlgebraicParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RationalBezierAlgebraicTangentImage2>> {
-        rational_tangent_image(
-            parameter,
-            rational_second_derivative_coefficients(self),
-            policy,
-        )
-    }
-
     /// Evaluates exact affine derivative images through `max_order` in one
     /// quotient-recurrence pass.
     ///
     /// The returned vector stores orders `1..=max_order`; order `k` is retained
     /// as a rational image with denominator `D^(k+1)`.
-    pub fn derivatives_at_algebraic_parameter(
+    pub(crate) fn derivatives_at_algebraic_parameter(
         &self,
         parameter: &BezierAlgebraicParameter2,
         max_order: usize,
@@ -2550,61 +2491,6 @@ fn rational_point_coefficients(curve: &RationalQuadraticBezier2) -> RationalCoor
     }
 }
 
-fn rational_tangent_coefficients(curve: &RationalQuadraticBezier2) -> RationalTangentPolynomials {
-    let point = rational_point_coefficients(curve);
-    let denominator_derivative = derivative_coefficients(&point.denominator);
-    let denominator_squared = multiply_polynomials(&point.denominator, &point.denominator);
-    let dx_numerator = rational_derivative_numerator(
-        &point.x_numerator,
-        &point.denominator,
-        &denominator_derivative,
-    );
-    let dy_numerator = rational_derivative_numerator(
-        &point.y_numerator,
-        &point.denominator,
-        &denominator_derivative,
-    );
-    RationalTangentPolynomials {
-        dx_numerator,
-        dy_numerator,
-        denominator: denominator_squared,
-    }
-}
-
-fn rational_second_derivative_coefficients(
-    curve: &RationalQuadraticBezier2,
-) -> RationalTangentPolynomials {
-    let point = rational_point_coefficients(curve);
-    let denominator_derivative = derivative_coefficients(&point.denominator);
-    let denominator_squared = multiply_polynomials(&point.denominator, &point.denominator);
-    let denominator_cubed = multiply_polynomials(&denominator_squared, &point.denominator);
-    let dx_first_numerator = rational_derivative_numerator(
-        &point.x_numerator,
-        &point.denominator,
-        &denominator_derivative,
-    );
-    let dy_first_numerator = rational_derivative_numerator(
-        &point.y_numerator,
-        &point.denominator,
-        &denominator_derivative,
-    );
-    let dx_numerator = rational_second_derivative_numerator(
-        &dx_first_numerator,
-        &point.denominator,
-        &denominator_derivative,
-    );
-    let dy_numerator = rational_second_derivative_numerator(
-        &dy_first_numerator,
-        &point.denominator,
-        &denominator_derivative,
-    );
-    RationalTangentPolynomials {
-        dx_numerator,
-        dy_numerator,
-        denominator: denominator_cubed,
-    }
-}
-
 fn quadratic_derivative_coefficients(p0: &Real, p1: &Real, p2: &Real, two: &Real) -> Vec<Real> {
     vec![two * &(p1 - p0), two * &(p0 - &(two * p1) + p2)]
 }
@@ -2632,34 +2518,6 @@ fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
         .skip(1)
         .map(|(degree, coefficient)| coefficient * &Real::from(degree as i64))
         .collect()
-}
-
-fn rational_derivative_numerator(
-    numerator: &[Real],
-    denominator: &[Real],
-    denominator_derivative: &[Real],
-) -> Vec<Real> {
-    subtract_polynomials(
-        &multiply_polynomials(&derivative_coefficients(numerator), denominator),
-        &multiply_polynomials(numerator, denominator_derivative),
-    )
-}
-
-fn rational_second_derivative_numerator(
-    first_derivative_numerator: &[Real],
-    denominator: &[Real],
-    denominator_derivative: &[Real],
-) -> Vec<Real> {
-    subtract_polynomials(
-        &multiply_polynomials(
-            &derivative_coefficients(first_derivative_numerator),
-            denominator,
-        ),
-        &scale_polynomial(
-            &multiply_polynomials(first_derivative_numerator, denominator_derivative),
-            Real::from(2_i8),
-        ),
-    )
 }
 
 fn multiply_polynomials(left: &[Real], right: &[Real]) -> Vec<Real> {

@@ -12,6 +12,8 @@
 //! follows the robust-computation principle of deciding predicates before
 //! branching.
 
+#[cfg(test)]
+mod algebraic_image_tests;
 mod arc_bezier;
 #[cfg(test)]
 mod arrangement_tests;
@@ -95,7 +97,7 @@ mod triangulation;
 pub use arc_bezier::{CircularArcBezierDecomposition2, CircularArcBezierSpan2};
 pub use bbox::Aabb2;
 pub use bezier::{BezierEndpoint, CubicBezier2, EndpointTangent2, QuadraticBezier2};
-pub use bezier_algebraic_image::{
+pub(crate) use bezier_algebraic_image::{
     BezierAlgebraicImageStatus, BezierAlgebraicRationalCoordinateImage,
     RationalBezierAlgebraicPointImage2, RationalBezierAlgebraicTangentImage2,
 };

@@ -419,16 +419,24 @@ fn axis_aligned_algebraic_rectangle(policy: &CurveContext) -> CurveRegion2 {
         )
         .unwrap()
     };
-    let bottom_right = CurvePoint2::from(decided(
-        horizontal(Real::zero())
-            .point_at_algebraic_parameter(&parameter, policy)
-            .unwrap(),
-    ));
-    let top_right = CurvePoint2::from(decided(
-        horizontal(Real::one())
-            .point_at_algebraic_parameter(&parameter, policy)
-            .unwrap(),
-    ));
+    let bottom_right = hypercurve::Curve2::from(horizontal(Real::zero()))
+        .point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                (&parameter).clone(),
+            )),
+            policy,
+        )
+        .unwrap()
+        .into_value();
+    let top_right = hypercurve::Curve2::from(horizontal(Real::one()))
+        .point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                (&parameter).clone(),
+            )),
+            policy,
+        )
+        .unwrap()
+        .into_value();
     let bottom_left = CurvePoint2::from(p(0, 0));
     let top_left = CurvePoint2::from(p(0, 1));
     let chord = |start, end| Curve2::from(decided(Curve2::try_line(start, end, policy).unwrap()));
@@ -612,12 +620,17 @@ fn shifted_algebraic_rectangle_boundary(
     policy: &CurveContext,
 ) -> CurvePath2 {
     let point = |x: i64, y: i64| {
-        CurvePoint2::from(decided(
-            RationalBezier2::try_new(vec![p(x, y), p(x + 1, y)], vec![Real::one(); 2])
-                .unwrap()
-                .point_at_algebraic_parameter(parameter, policy)
-                .unwrap(),
-        ))
+        hypercurve::Curve2::from(
+            RationalBezier2::try_new(vec![p(x, y), p(x + 1, y)], vec![Real::one(); 2]).unwrap(),
+        )
+        .point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                (parameter).clone(),
+            )),
+            policy,
+        )
+        .unwrap()
+        .into_value()
     };
     let points = [
         point(min_x, min_y),
@@ -785,7 +798,7 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
     let parameter =
         decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
     let selected = |height: Real| {
-        CurvePoint2::from(decided(
+        hypercurve::Curve2::from(
             RationalBezier2::try_new(
                 vec![
                     Point2::new(Real::zero(), height.clone()),
@@ -793,10 +806,16 @@ fn axis_aligned_algebraic_l_region(policy: &CurveContext) -> CurveRegion2 {
                 ],
                 vec![Real::one(); 2],
             )
-            .unwrap()
-            .point_at_algebraic_parameter(&parameter, policy)
             .unwrap(),
-        ))
+        )
+        .point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                (&parameter).clone(),
+            )),
+            policy,
+        )
+        .unwrap()
+        .into_value()
     };
     let exact = |x, y| CurvePoint2::from(Point2::new(x, y));
     let points = [
@@ -849,7 +868,7 @@ fn axis_aligned_algebraic_dumbbell_region(
     let parameter =
         decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
     let selected = |height: Real| {
-        CurvePoint2::from(decided(
+        hypercurve::Curve2::from(
             RationalBezier2::try_new(
                 vec![
                     Point2::new(Real::from(12), height.clone()),
@@ -857,10 +876,16 @@ fn axis_aligned_algebraic_dumbbell_region(
                 ],
                 vec![Real::one(); 2],
             )
-            .unwrap()
-            .point_at_algebraic_parameter(&parameter, policy)
             .unwrap(),
-        ))
+        )
+        .point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                (&parameter).clone(),
+            )),
+            policy,
+        )
+        .unwrap()
+        .into_value()
     };
     let exact = |x, y| CurvePoint2::from(p(x, y));
     let points = [
@@ -2919,12 +2944,18 @@ fn selected_algebraic_round_join_retains_a_general_minor_cut() {
             decided(BezierParameterInterval::try_new(Real::zero(), Real::one(), &policy).unwrap());
         let parameter =
             decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap());
-        let selected = CurvePoint2::from(decided(
+        let selected = hypercurve::Curve2::from(
             RationalBezier2::try_new(vec![p(0, 0), p(1, 0)], vec![Real::one(), Real::one()])
-                .unwrap()
-                .point_at_algebraic_parameter(&parameter, &policy)
                 .unwrap(),
-        ));
+        )
+        .point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                (&parameter).clone(),
+            )),
+            &policy,
+        )
+        .unwrap()
+        .into_value();
         let origin = CurvePoint2::from(p(0, 0));
         let top = CurvePoint2::from(p(0, 1));
         let chord =
@@ -4154,12 +4185,17 @@ fn selected_endpoint_chord_pairs_share_the_linear_fillet_kernel() {
         let parameter =
             decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
         let selected = |start: Point2, end: Point2| {
-            CurvePoint2::from(decided(
-                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
-                    .unwrap()
-                    .point_at_algebraic_parameter(&parameter, policy)
-                    .unwrap(),
-            ))
+            hypercurve::Curve2::from(
+                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap(),
+            )
+            .point_at(
+                &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                    (&parameter).clone(),
+                )),
+                policy,
+            )
+            .unwrap()
+            .into_value()
         };
         let corner = CurvePoint2::from(p(0, 0));
         let incoming = selected(p(-5, 0), p(-4, 0));
@@ -4262,12 +4298,17 @@ fn selected_endpoint_chords_share_linear_arc_fillet_incidence() {
         let parameter =
             decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
         let selected = |start: Point2, end: Point2| {
-            CurvePoint2::from(decided(
-                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
-                    .unwrap()
-                    .point_at_algebraic_parameter(&parameter, policy)
-                    .unwrap(),
-            ))
+            hypercurve::Curve2::from(
+                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap(),
+            )
+            .point_at(
+                &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                    (&parameter).clone(),
+                )),
+                policy,
+            )
+            .unwrap()
+            .into_value()
         };
         let lower_left = selected(p(-3, 0), p(-2, 0));
         let upper_left = selected(p(-3, 1), p(-2, 1));
@@ -4661,12 +4702,17 @@ fn selected_endpoint_chords_share_linear_bezier_fillet_incidence() {
         let parameter =
             decided(BezierAlgebraicParameter2::try_isolate(polynomial, interval, policy).unwrap());
         let selected = |start: Point2, end: Point2| {
-            CurvePoint2::from(decided(
-                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2])
-                    .unwrap()
-                    .point_at_algebraic_parameter(&parameter, policy)
-                    .unwrap(),
-            ))
+            hypercurve::Curve2::from(
+                RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap(),
+            )
+            .point_at(
+                &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                    (&parameter).clone(),
+                )),
+                policy,
+            )
+            .unwrap()
+            .into_value()
         };
         let lower_left = selected(p(-5, 0), p(-4, 0));
         let upper_left = selected(p(-5, 2), p(-4, 2));

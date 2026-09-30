@@ -48,11 +48,15 @@ fn selected_point(reversed: bool) -> CurvePoint2 {
         controls.reverse();
     }
     let curve = RationalBezier2::try_new(controls, vec![Real::one(); 2]).unwrap();
-    CurvePoint2::from(decided(
-        curve
-            .point_at_algebraic_parameter(&parameter, &policy)
-            .unwrap(),
-    ))
+    hypercurve::Curve2::from(curve)
+        .point_at(
+            &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                (&parameter).clone(),
+            )),
+            &policy,
+        )
+        .unwrap()
+        .into_value()
 }
 
 #[test]

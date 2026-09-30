@@ -459,19 +459,18 @@ fn main() {
         elapsed / pi_conic_contact_iterations
     );
 
+    let general_parabola = hypercurve::Curve2::from(parabola.clone());
+    let selected_parameter = hypercurve::CurveParameter2::from(
+        hypercurve::BezierParameter2::Algebraic(algebraic_parameter.clone()),
+    );
     let derivative_iterations = 250_u32;
     let started = Instant::now();
     let mut derivative_count = 0_usize;
     for _ in 0..derivative_iterations {
-        let derivatives = decided(
-            parabola
-                .derivatives_at_algebraic_parameter(
-                    black_box(&algebraic_parameter),
-                    black_box(3),
-                    &policy,
-                )
-                .expect("algebraic derivatives remain represented"),
-        );
+        let derivatives = general_parabola
+            .derivatives_at(black_box(&selected_parameter), black_box(3), &policy)
+            .expect("algebraic derivatives remain exact")
+            .into_value();
         derivative_count = derivative_count.wrapping_add(black_box(derivatives.len()));
     }
     let elapsed = started.elapsed();

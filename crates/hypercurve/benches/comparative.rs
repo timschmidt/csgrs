@@ -43,13 +43,6 @@ enum CommonBooleanOp {
     Xor,
 }
 
-fn decided<T>(value: Classification<T>) -> T {
-    match value {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("expected exact benchmark fixture: {reason:?}"),
-    }
-}
-
 impl CommonBooleanOp {
     const fn hypercurve(self) -> BooleanOp {
         match self {
@@ -614,16 +607,19 @@ fn benchmark_algebraic_round_offset(runner: &Runner) {
         )
         .expect("valid benchmark line image")
     };
-    let bottom_right = CurvePoint2::from(decided(
-        horizontal(Real::zero())
-            .point_at_algebraic_parameter(&parameter, &policy)
-            .expect("selected benchmark endpoint"),
-    ));
-    let top_right = CurvePoint2::from(decided(
-        horizontal(Real::one())
-            .point_at_algebraic_parameter(&parameter, &policy)
-            .expect("selected benchmark endpoint"),
-    ));
+    let selected = |curve: RationalBezier2| {
+        Curve2::from(curve)
+            .point_at(
+                &hypercurve::CurveParameter2::from(hypercurve::BezierParameter2::Algebraic(
+                    parameter.clone(),
+                )),
+                &policy,
+            )
+            .expect("selected benchmark endpoint")
+            .into_value()
+    };
+    let bottom_right = selected(horizontal(Real::zero()));
+    let top_right = selected(horizontal(Real::one()));
     let bottom_left = CurvePoint2::from(Point2::new(Real::zero(), Real::zero()));
     let top_left = CurvePoint2::from(Point2::new(Real::zero(), Real::one()));
     let chord = |start, end| {
