@@ -813,3 +813,56 @@ fn translated_arc_union_round_trips() {
     ];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// Open computational-closure gap found by the generator: rebuilding a round
+/// dilation of a thrice-filleted union from its exported boundary. Unary
+/// regularization pairs a round-join arc with the adjacent analytic parallel
+/// it touches tangentially; with no chord-style adjacency certificate, the
+/// circle/parallel kernel counts common fiber roots over the selected
+/// parameter, whose local subresultant gcds grow without bound in practice
+/// (no result after 20 minutes). A number-field modular gcd would be the
+/// Hypersolve-level remedy.
+#[test]
+#[ignore = "open: fiber gcd growth in adjacent join-arc/parallel regularization"]
+fn filleted_union_round_dilation_round_trips() {
+    let seeds = [
+        Seed {
+            x: 3,
+            y: -7,
+            width: 10,
+            height: 14,
+            lower: 2,
+            upper: 4,
+            curvature: 1,
+            weight: 4,
+        },
+        Seed {
+            x: 0,
+            y: -7,
+            width: 19,
+            height: 7,
+            lower: 0,
+            upper: 6,
+            curvature: 1,
+            weight: 1,
+        },
+        Seed {
+            x: -6,
+            y: -2,
+            width: 17,
+            height: 14,
+            lower: 6,
+            upper: 2,
+            curvature: 3,
+            weight: 6,
+        },
+    ];
+    let steps = [
+        Step::Boolean(12, 12, 0),
+        Step::Fillet(13, 4),
+        Step::Fillet(9, 6),
+        Step::Fillet(13, 7),
+        Step::Offset(5, 1, 0),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
