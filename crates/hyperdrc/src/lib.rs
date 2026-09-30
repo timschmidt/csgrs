@@ -124,7 +124,7 @@ pub use test_intent::{
     NativeTestRequirement, native_testpoint_coverage, native_testpoint_coverage_readiness,
 };
 
-use csgrs::curve::{self, CurveRegionExt};
+use csgrs::curve;
 use geometry::{Coord, LineString, MultiPolygon, Polygon, Rect};
 use hypercurve::{CurveContext, CurveRegion2, OffsetCornerStyle2};
 use hyperlattice::Aabb;
@@ -316,7 +316,11 @@ impl PcbRegion {
         self.ensure_binary_exact_geometry(other, "profile-difference")?;
         let mut result = Self::new(
             self.region
-                .try_difference(&other.region, &CurveContext::STRICT)
+                .boolean_region(
+                    &other.region,
+                    hypercurve::BooleanOp::Difference,
+                    &CurveContext::STRICT,
+                )
                 .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| self.boolean_uncertainty("profile-difference", error))?,
             self.metadata.clone(),
@@ -331,7 +335,11 @@ impl PcbRegion {
         self.ensure_binary_exact_geometry(other, "profile-union")?;
         let mut result = Self::new(
             self.region
-                .try_union(&other.region, &CurveContext::STRICT)
+                .boolean_region(
+                    &other.region,
+                    hypercurve::BooleanOp::Union,
+                    &CurveContext::STRICT,
+                )
                 .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| self.boolean_uncertainty("profile-union", error))?,
             self.metadata.clone(),
@@ -346,7 +354,11 @@ impl PcbRegion {
         self.ensure_binary_exact_geometry(other, "profile-intersection")?;
         let mut result = Self::new(
             self.region
-                .try_intersection(&other.region, &CurveContext::STRICT)
+                .boolean_region(
+                    &other.region,
+                    hypercurve::BooleanOp::Intersection,
+                    &CurveContext::STRICT,
+                )
                 .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| self.boolean_uncertainty("profile-intersection", error))?,
             self.metadata.clone(),
@@ -361,7 +373,11 @@ impl PcbRegion {
         self.ensure_binary_exact_geometry(other, "profile-xor")?;
         let mut result = Self::new(
             self.region
-                .try_xor(&other.region, &CurveContext::STRICT)
+                .boolean_region(
+                    &other.region,
+                    hypercurve::BooleanOp::Xor,
+                    &CurveContext::STRICT,
+                )
                 .map(hypercurve::CurveOutcome::into_value)
                 .map_err(|error| self.boolean_uncertainty("profile-xor", error))?,
             self.metadata.clone(),
