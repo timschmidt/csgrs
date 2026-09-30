@@ -360,12 +360,14 @@ fn nano_full_fidelity_aggregate_obeys_the_selected_predicate_policy() {
             MaterializationOptions::default(),
         )
         .expect("full-fidelity Nano materialization must complete");
+    // Regularized aggregation no longer needs the symbolic ordering that once
+    // blocked this board, so every strict copper aggregate completes.
     assert!(
         strict
             .copper_layers
             .iter()
-            .any(|layer| layer.blocker.is_some()),
-        "strict aggregation must retain its undecidable symbolic ordering"
+            .all(|layer| layer.blocker.is_none() && layer.copper.is_some()),
+        "strict aggregation must complete without an approximate decision"
     );
     assert_eq!(
         strict.predicate_certainty,
@@ -379,11 +381,34 @@ fn nano_full_fidelity_aggregate_obeys_the_selected_predicate_policy() {
             MaterializationOptions::default(),
         )
         .expect("policy-authorized Nano materialization must complete");
+    // Permission to approximate is not consumption: nothing needed it.
     assert_eq!(
         materialized.predicate_certainty,
-        csgrs::GeometryCertainty::Approximate512Consumed
+        csgrs::GeometryCertainty::Certified
     );
     assert!(materialized.layer_images_aggregated);
+    for (strict_layer, approximate_layer) in
+        strict.copper_layers.iter().zip(&materialized.copper_layers)
+    {
+        let (Some(strict_copper), Some(approximate_copper)) =
+            (&strict_layer.copper, &approximate_layer.copper)
+        else {
+            panic!("both policies must aggregate {:?}", strict_layer.layer);
+        };
+        assert!(
+            strict_copper
+                .boolean_region(
+                    approximate_copper,
+                    hypercurve::BooleanOp::Xor,
+                    &hypercurve::CurveContext::STRICT,
+                )
+                .unwrap()
+                .into_value()
+                .is_empty(),
+            "both policies must aggregate the same copper on {:?}",
+            strict_layer.layer
+        );
+    }
     assert_eq!(strict.copper_layers.len(), materialized.copper_layers.len());
     for (strict_layer, approximate_layer) in
         strict.copper_layers.iter().zip(&materialized.copper_layers)

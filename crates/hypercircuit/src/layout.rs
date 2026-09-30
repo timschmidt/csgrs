@@ -426,7 +426,7 @@ impl BoardBoundaryGeometry {
         policy: &CurveContext,
     ) -> Result<Classification<RegionPointLocation>, BoardBoundaryGeometryError> {
         self.region
-            .classify_point(&curve_point(point), policy)
+            .classify_point(&hypercurve::CurvePoint2::from(curve_point(point)), policy)
             .map(|outcome| outcome.into_value())
             .map_err(|error| {
                 BoardBoundaryGeometryError::new(format!(

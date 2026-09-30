@@ -7,7 +7,7 @@
 use crate::predicate::RealPredicateExt as _;
 use std::collections::{BTreeMap, BTreeSet};
 
-use csgrs::curve::{self, CurveRegionExt};
+use csgrs::curve;
 use hypercurve::{CurveRegion2, Point2 as CurvePoint2};
 use hyperdrc::authoring_intent::{
     AuthoredComponentEnvelope, AuthoredComponentEnvelopeKind, AuthoredComponentSide,
@@ -1472,7 +1472,11 @@ fn union_component_profiles(profiles: Vec<CurveRegion2>) -> Result<Option<CurveR
     };
     for profile in profiles {
         combined = combined
-            .try_union(&profile, &hypercurve::CurveContext::STRICT)
+            .boolean_region(
+                &profile,
+                hypercurve::BooleanOp::Union,
+                &hypercurve::CurveContext::STRICT,
+            )
             .map(hypercurve::CurveOutcome::into_value)
             .map_err(|error| format!("{error:?}"))?;
     }

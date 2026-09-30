@@ -10,7 +10,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 use std::io::{BufReader, Cursor};
 
-use csgrs::curve::{self, CurveRegionExt};
+use csgrs::curve;
 use csgrs::solid::{self, SolidExt};
 use csgrs::{AttributedMesh, GeometryCertainty, GeometryContext, GeometryOutcome};
 use hypercurve::{
@@ -1114,7 +1114,11 @@ fn materialize_zone(
         &source,
         "clip to substrate",
         decisions,
-        boundary.try_intersection(substrate, decisions.curve_policy()),
+        boundary.boolean_region(
+            substrate,
+            hypercurve::BooleanOp::Intersection,
+            decisions.curve_policy(),
+        ),
     )?;
     let profile = match &zone.fill {
         CopperZoneFill::Solid => boundary.clone(),
@@ -1220,7 +1224,11 @@ fn materialize_zone(
                             &source,
                             &format!("clip thermal spokes to boundary for {}", feature.source),
                             decisions,
-                            spokes.try_intersection(&boundary, decisions.curve_policy()),
+                            spokes.boolean_region(
+                                &boundary,
+                                hypercurve::BooleanOp::Intersection,
+                                decisions.curve_policy(),
+                            ),
                         )?
                     };
                 if let MaterializedCopperIdentity::Via(via_id) = &feature.identity
@@ -1480,7 +1488,11 @@ fn apply_zone_island_policy(
                     source,
                     &format!("classify island {index} connection to {}", feature.source),
                     decisions,
-                    component_profile.try_intersection(&feature.profile, decisions.curve_policy()),
+                    component_profile.boolean_region(
+                        &feature.profile,
+                        hypercurve::BooleanOp::Intersection,
+                        decisions.curve_policy(),
+                    ),
                 )?;
                 if !intersection.is_empty() {
                     connected = true;
@@ -1510,7 +1522,11 @@ fn apply_zone_island_policy(
                 source,
                 &format!("merge retained island {index}"),
                 decisions,
-                current.try_union(&component_profile, decisions.curve_policy()),
+                current.boolean_region(
+                    &component_profile,
+                    hypercurve::BooleanOp::Union,
+                    decisions.curve_policy(),
+                ),
             )?,
             None => component_profile,
         });
@@ -1556,7 +1572,11 @@ fn hatch_zone(
                 source,
                 "merge hatch stripes",
                 decisions,
-                existing.try_union(&stripe, decisions.curve_policy()),
+                existing.boolean_region(
+                    &stripe,
+                    hypercurve::BooleanOp::Union,
+                    decisions.curve_policy(),
+                ),
             )?,
         });
         offset += pitch.clone();
@@ -1568,7 +1588,11 @@ fn hatch_zone(
         source,
         "clip hatch to boundary",
         decisions,
-        stripes.try_intersection(boundary, decisions.curve_policy()),
+        stripes.boolean_region(
+            boundary,
+            hypercurve::BooleanOp::Intersection,
+            decisions.curve_policy(),
+        ),
     )
 }
 
@@ -1597,7 +1621,11 @@ fn thermal_spoke_mask(
             "thermal-spokes",
             "merge exact orthogonal spoke masks",
             decisions,
-            horizontal.try_union(&vertical, decisions.curve_policy()),
+            horizontal.boolean_region(
+                &vertical,
+                hypercurve::BooleanOp::Union,
+                decisions.curve_policy(),
+            ),
         )?
     } else {
         let step = (Real::from(360) / Real::from(count))
@@ -1613,7 +1641,11 @@ fn thermal_spoke_mask(
                     "thermal-spokes",
                     "merge spoke masks",
                     decisions,
-                    existing.try_union(&spoke, decisions.curve_policy()),
+                    existing.boolean_region(
+                        &spoke,
+                        hypercurve::BooleanOp::Union,
+                        decisions.curve_policy(),
+                    ),
                 )?,
             });
         }
@@ -1638,7 +1670,11 @@ fn thermal_spoke_mask(
         "thermal-spokes",
         "clip spoke masks to land clearance bounds",
         decisions,
-        spokes.try_intersection(&clip, decisions.curve_policy()),
+        spokes.boolean_region(
+            &clip,
+            hypercurve::BooleanOp::Intersection,
+            decisions.curve_policy(),
+        ),
     )
 }
 
@@ -1763,7 +1799,11 @@ fn profiles_may_intersect(
     decisions: &MaterializationDecisions,
 ) -> bool {
     decisions
-        .consume(left.try_intersection(right, decisions.curve_policy()))
+        .consume(left.boolean_region(
+            right,
+            hypercurve::BooleanOp::Intersection,
+            decisions.curve_policy(),
+        ))
         .map(|intersection| !intersection.is_empty())
         .unwrap_or(true)
 }
@@ -1791,7 +1831,7 @@ fn zone_boolean(
     source: &str,
     operation: &str,
     decisions: &MaterializationDecisions,
-    result: Result<CurveOutcome<CurveRegion2>, csgrs::errors::CurveBooleanError>,
+    result: hypercurve::ExactCurveResult<CurveOutcome<CurveRegion2>>,
 ) -> Result<CurveRegion2, GeometryMaterializationError> {
     decisions.consume(result).map_err(|error| {
         GeometryMaterializationError::Boolean(format!("{source} {operation}: {error:?}"))
@@ -1825,7 +1865,11 @@ fn regularized_zone_composition(
             source,
             &format!("regularize thermal gap {index}"),
             decisions,
-            profile.try_difference(gap, decisions.curve_policy()),
+            profile.boolean_region(
+                gap,
+                hypercurve::BooleanOp::Difference,
+                decisions.curve_policy(),
+            ),
         )?;
     }
     for (index, addition) in positive_additions.iter().enumerate() {
@@ -1833,7 +1877,11 @@ fn regularized_zone_composition(
             source,
             &format!("regularize positive addition {index}"),
             decisions,
-            profile.try_union(addition, decisions.curve_policy()),
+            profile.boolean_region(
+                addition,
+                hypercurve::BooleanOp::Union,
+                decisions.curve_policy(),
+            ),
         )?;
     }
     for (index, cut) in hard_cuts.iter().enumerate() {
@@ -1841,7 +1889,11 @@ fn regularized_zone_composition(
             source,
             &format!("regularize hard cut {index}"),
             decisions,
-            profile.try_difference(cut, decisions.curve_policy()),
+            profile.boolean_region(
+                cut,
+                hypercurve::BooleanOp::Difference,
+                decisions.curve_policy(),
+            ),
         )?;
     }
     Ok(profile)
@@ -1981,9 +2033,11 @@ impl PcbMaterializationReport {
                                 blocker: blocker.clone(),
                             });
                         } else if let Some(openings) = &image.image {
-                            match decisions
-                                .consume(profile.try_difference(openings, decisions.curve_policy()))
-                            {
+                            match decisions.consume(profile.boolean_region(
+                                openings,
+                                hypercurve::BooleanOp::Difference,
+                                decisions.curve_policy(),
+                            )) {
                                 Ok(realized) => {
                                     profile = realized;
                                     subtractions.push(Pcb3dSubtractionEvidence {
@@ -2053,8 +2107,9 @@ impl PcbMaterializationReport {
                                         rebuilt = rebuilt.and_then(|aggregate| {
                                             drilled.and_then(|drilled| match aggregate {
                                                 Some(aggregate) => decisions
-                                                    .consume(aggregate.try_union(
+                                                    .consume(aggregate.boolean_region(
                                                         &drilled,
+                                                        hypercurve::BooleanOp::Union,
                                                         decisions.curve_policy(),
                                                     ))
                                                     .map(Some)
@@ -2497,7 +2552,11 @@ fn subtract_drill_exact(
     cutter: &CurveRegion2,
     decisions: &MaterializationDecisions,
 ) -> Result<CurveRegion2, String> {
-    match decisions.consume(profile.try_difference(cutter, decisions.curve_policy())) {
+    match decisions.consume(profile.boolean_region(
+        cutter,
+        hypercurve::BooleanOp::Difference,
+        decisions.curve_policy(),
+    )) {
         Ok(realized) => Ok(realized),
         Err(whole_error) if matches!(drill.shape, DrillShape::Round { .. }) => {
             let sectors = exact_round_drill_sectors(drill, decisions).map_err(|sector_error| {
@@ -2506,7 +2565,11 @@ fn subtract_drill_exact(
             let mut realized = profile.clone();
             for (index, sector) in sectors.iter().enumerate() {
                 realized = decisions
-                    .consume(realized.try_difference(sector, decisions.curve_policy()))
+                    .consume(realized.boolean_region(
+                        sector,
+                        hypercurve::BooleanOp::Difference,
+                        decisions.curve_policy(),
+                    ))
                     .map_err(|sector_error| {
                         format!(
                             "whole cutter: {whole_error:?}; exact sector {index}: {sector_error:?}"
@@ -2576,7 +2639,13 @@ fn exact_round_drill_sectors(
                 ))
             })?;
             decisions
-                .curve_operation(|policy| CurveRegion2::try_from_boundary_paths(&[path], policy))
+                .curve_operation(|policy| {
+                    CurveRegion2::try_from_boundary_paths(
+                        &[path],
+                        hypercurve::FillRule::EvenOdd,
+                        policy,
+                    )
+                })
                 .map_err(|error| {
                     GeometryMaterializationError::InvalidRoute(format!(
                         "{} drill sector: {error}",
@@ -2916,7 +2985,11 @@ fn graphic_profile(
                 Some(Ordering::Greater) => {
                     let inner = exact_circle_profile(&inner_radius, source, decisions)?;
                     decisions
-                        .consume(outer.try_difference(&inner, decisions.curve_policy()))
+                        .consume(outer.boolean_region(
+                            &inner,
+                            hypercurve::BooleanOp::Difference,
+                            decisions.curve_policy(),
+                        ))
                         .map_err(|error| {
                             GeometryMaterializationError::Boolean(format!("{source}: {error:?}"))
                         })?
@@ -3142,7 +3215,11 @@ fn stroked_polygon_profile(
         )?;
         outline = Some(match outline {
             Some(existing) => decisions
-                .consume(existing.try_union(&edge, decisions.curve_policy()))
+                .consume(existing.boolean_region(
+                    &edge,
+                    hypercurve::BooleanOp::Union,
+                    decisions.curve_policy(),
+                ))
                 .map_err(|error| {
                     GeometryMaterializationError::Boolean(format!("{source}: {error:?}"))
                 })?,
@@ -3268,7 +3345,9 @@ fn exact_rounded_rectangle_profile(
     let path = CurvePath2::try_new(curves)
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
     let region = decisions
-        .curve_operation(|policy| CurveRegion2::try_from_boundary_paths(&[path], policy))
+        .curve_operation(|policy| {
+            CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, policy)
+        })
         .map_err(|_| GeometryMaterializationError::InvalidPolygon(source.to_owned()))?;
     center_pad_profile(region, width, height)
 }
@@ -3438,7 +3517,11 @@ fn route_profile(
             )?;
             profile = Some(match profile {
                 Some(existing) => decisions
-                    .consume(existing.try_union(&swept, decisions.curve_policy()))
+                    .consume(existing.boolean_region(
+                        &swept,
+                        hypercurve::BooleanOp::Union,
+                        decisions.curve_policy(),
+                    ))
                     .map_err(|error| {
                         GeometryMaterializationError::Boolean(format!(
                             "{source} merge segment {index}: {error:?}"
@@ -3807,7 +3890,11 @@ fn finite_swept_polyline_profile(
         |profile: CurveRegion2, description: &str| -> Result<(), GeometryMaterializationError> {
             swept = Some(match swept.take() {
                 Some(existing) => decisions
-                    .consume(existing.try_union(&profile, decisions.curve_policy()))
+                    .consume(existing.boolean_region(
+                        &profile,
+                        hypercurve::BooleanOp::Union,
+                        decisions.curve_policy(),
+                    ))
                     .map_err(|error| {
                         GeometryMaterializationError::Boolean(format!(
                             "{source} swept-polyline {description}: {error:?}"
@@ -4027,7 +4114,7 @@ mod tests {
         PcbPlacement, Plating,
     };
     use csgrs::GeometryCertainty;
-    use csgrs::curve::{self, CurveRegionExt};
+    use csgrs::curve;
     use hypercurve::{
         BooleanOp, Classification, Curve2, CurveContext, CurveFamily2, CurvePath2, CurveRegion2,
         LineSeg2, OffsetCap, OffsetCornerStyle2, Point2 as CurvePoint2,
@@ -4100,7 +4187,11 @@ mod tests {
             )
         }));
         let union: CurveRegion2 = first
-            .try_union(&second, decisions.curve_policy())
+            .boolean_region(
+                &second,
+                hypercurve::BooleanOp::Union,
+                decisions.curve_policy(),
+            )
             .expect("overlapping exact rounded pads must union")
             .into_value();
         assert!(!union.is_empty());

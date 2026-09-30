@@ -1215,7 +1215,7 @@ fn realized_zone_intrusion_probe(
             for probe in probes {
                 let probe = hypercurve::Point2::new(probe.x, probe.y);
                 match zone
-                    .classify_point(&probe, &CurveContext::STRICT)
+                    .classify_point(&hypercurve::CurvePoint2::from(probe), &CurveContext::STRICT)
                     .ok()?
                     .into_value()
                 {

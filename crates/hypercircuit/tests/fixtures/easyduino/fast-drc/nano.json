@@ -1694,7 +1694,7 @@
       {
         "check": "net-constraint-readiness",
         "check_version": 1,
-        "finding_count": 183,
+        "finding_count": 184,
         "normalized_input_digests": [],
         "policy_digest": "sha256:ce89cd9f42dbb3747384661c4a1104104fa565da158aa7791fad06f5e1669577",
         "status": "failed",
@@ -1757,7 +1757,7 @@
   },
   "finding_counts": {
     "authored-component-readiness": 31,
-    "net-constraint-readiness": 183,
+    "net-constraint-readiness": 184,
     "stackup-readiness": 9
   },
   "handoff_omissions": [
@@ -2079,6 +2079,12 @@
     {
       "check": "net-constraint-readiness",
       "evidence_id": "sha256:68f33fd1f949b91cce2db15f7b19e1f6ded76188d121e9dbfdb4c09ae3dfa329",
+      "severity": "error",
+      "subjects": []
+    },
+    {
+      "check": "net-constraint-readiness",
+      "evidence_id": "sha256:255953764d963c0df20832d83adeea185e042bae3ea62d090b584c0d60d46652",
       "severity": "error",
       "subjects": []
     },
