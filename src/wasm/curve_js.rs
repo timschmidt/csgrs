@@ -1,6 +1,6 @@
 //! JavaScript wrapper around native [`hypercurve::CurveRegion2`].
 
-use crate::curve::{self, CurveRegionExt};
+use crate::curve;
 use crate::wasm::{
     context_js::{GeometryBoolResultJs, GeometryBoundsResultJs},
     geometry_context,
@@ -265,7 +265,7 @@ impl CurveRegionJs {
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let policy = boolean_policy(approximate_512);
         self.inner
-            .try_union(&other.inner, &policy)
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Union, &policy)
             .map(Into::into)
             .map_err(js_error)
     }
@@ -277,7 +277,7 @@ impl CurveRegionJs {
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let policy = boolean_policy(approximate_512);
         self.inner
-            .try_difference(&other.inner, &policy)
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Difference, &policy)
             .map(Into::into)
             .map_err(js_error)
     }
@@ -289,7 +289,7 @@ impl CurveRegionJs {
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let policy = boolean_policy(approximate_512);
         self.inner
-            .try_intersection(&other.inner, &policy)
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Intersection, &policy)
             .map(Into::into)
             .map_err(js_error)
     }
@@ -301,7 +301,7 @@ impl CurveRegionJs {
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let policy = boolean_policy(approximate_512);
         self.inner
-            .try_xor(&other.inner, &policy)
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Xor, &policy)
             .map(Into::into)
             .map_err(js_error)
     }

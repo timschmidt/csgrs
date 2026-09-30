@@ -14,7 +14,6 @@ use csgrs::parts::{
 use csgrs::solid::MetaBall;
 use csgrs::{
     AttributedMesh, GeometryContext, Real, TriangleMesh, curve,
-    curve::CurveRegionExt,
     solid::{self, SolidExt},
 };
 use hypercurve::{CurveContext, CurveRegion2, Point2};
@@ -226,19 +225,35 @@ fn main() {
     config.run("feature", "profile_boolean", "all_operations", 2, || {
         let results = [
             curve_left
-                .try_union(&curve_right, &CurveContext::STRICT)
+                .boolean_region(
+                    &curve_right,
+                    hypercurve::BooleanOp::Union,
+                    &CurveContext::STRICT,
+                )
                 .expect("union")
                 .into_value(),
             curve_left
-                .try_difference(&curve_right, &CurveContext::STRICT)
+                .boolean_region(
+                    &curve_right,
+                    hypercurve::BooleanOp::Difference,
+                    &CurveContext::STRICT,
+                )
                 .expect("difference")
                 .into_value(),
             curve_left
-                .try_intersection(&curve_right, &CurveContext::STRICT)
+                .boolean_region(
+                    &curve_right,
+                    hypercurve::BooleanOp::Intersection,
+                    &CurveContext::STRICT,
+                )
                 .expect("intersection")
                 .into_value(),
             curve_left
-                .try_xor(&curve_right, &CurveContext::STRICT)
+                .boolean_region(
+                    &curve_right,
+                    hypercurve::BooleanOp::Xor,
+                    &CurveContext::STRICT,
+                )
                 .expect("xor")
                 .into_value(),
         ];
@@ -283,7 +298,7 @@ fn main() {
                 &Matrix4::affine_translation([Real::from(3), Real::from(-2), Real::zero()]),
             ),
             source
-                .transformed_affine(
+                .transform_affine(
                     &Real::zero(),
                     &Real::from(-1),
                     &Real::one(),
@@ -295,7 +310,7 @@ fn main() {
                 .expect("rotation")
                 .into_value(),
             source
-                .transformed_affine(
+                .transform_affine(
                     &Real::from(2),
                     &Real::zero(),
                     &Real::zero(),

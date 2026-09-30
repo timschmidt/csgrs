@@ -6,7 +6,7 @@
 //! filled shapes. Linear and circular aperture-stroked traces are imported for
 //! standard apertures by constructing the swept aperture area.
 
-use crate::curve::{self, CurveRegionExt};
+use crate::curve;
 use crate::{GeometryContext, GeometryOutcome, context::GeometryDecisions};
 use gerber_types::{
     Aperture, ApertureDefinition, AxisSelect, Circle, Command, CommentContent,
@@ -467,7 +467,11 @@ impl<'a> ImportState<'a> {
                     self.flush_pending_dark()?;
                     self.curve = self
                         .curve
-                        .try_difference(&curve, self.decisions.curve_policy())
+                        .boolean_region(
+                            &curve,
+                            hypercurve::BooleanOp::Difference,
+                            self.decisions.curve_policy(),
+                        )
                         .map(|outcome| self.decisions.consume_curve(outcome))
                         .map_err(|error| IoError::Geometry {
                             format: "Gerber",
@@ -499,12 +503,16 @@ impl<'a> ImportState<'a> {
                     break;
                 };
                 next.push(
-                    left.try_union(&right, self.decisions.curve_policy())
-                        .map(|outcome| self.decisions.consume_curve(outcome))
-                        .map_err(|error| IoError::Geometry {
-                            format: "Gerber",
-                            detail: error.to_string(),
-                        })?,
+                    left.boolean_region(
+                        &right,
+                        hypercurve::BooleanOp::Union,
+                        self.decisions.curve_policy(),
+                    )
+                    .map(|outcome| self.decisions.consume_curve(outcome))
+                    .map_err(|error| IoError::Geometry {
+                        format: "Gerber",
+                        detail: error.to_string(),
+                    })?,
                 );
             }
             level = next;
@@ -516,7 +524,11 @@ impl<'a> ImportState<'a> {
             dark
         } else {
             self.curve
-                .try_union(&dark, self.decisions.curve_policy())
+                .boolean_region(
+                    &dark,
+                    hypercurve::BooleanOp::Union,
+                    self.decisions.curve_policy(),
+                )
                 .map(|outcome| self.decisions.consume_curve(outcome))
                 .map_err(|error| IoError::Geometry {
                     format: "Gerber",
@@ -1173,7 +1185,11 @@ fn add_aperture_hole(
     decisions: &GeometryDecisions,
 ) -> Result<CurveRegion2, IoError> {
     outer
-        .try_difference(&hole, decisions.curve_policy())
+        .boolean_region(
+            &hole,
+            hypercurve::BooleanOp::Difference,
+            decisions.curve_policy(),
+        )
         .map(|outcome| decisions.consume_curve(outcome))
         .map_err(|error| IoError::Geometry {
             format: "Gerber",

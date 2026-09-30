@@ -4,9 +4,9 @@
 
 mod support;
 
-use csgrs::curve::{self, CurveRegionExt};
-use csgrs::solid;
 use csgrs::GeometryContext;
+use csgrs::curve;
+use csgrs::solid;
 use hyperlattice::{Point3, Real, Vector3};
 use hyperlimit::PredicatePolicy;
 use hypermesh::TriangleMesh;
@@ -85,7 +85,7 @@ fuzz_target!(|bytes: &[u8]| {
             let angle = clamp_real(decode_real(bytes, &mut idx), -720.0, 720.0);
             let segments = (bytes[idx % bytes.len()] as usize % 16) + 2;
             let translated = region
-                .transformed_affine(
+                .transform_affine(
                     &Real::one(),
                     &Real::zero(),
                     &Real::zero(),
@@ -146,16 +146,9 @@ fuzz_target!(|bytes: &[u8]| {
                 at_least_tolerance(decode_real(bytes, &mut idx).abs()),
             ];
             let slices = usize::from(bytes[idx % bytes.len()] % 16) + 1;
-            curve::extrude_twisted(
-                &region,
-                extrusion_height,
-                twist,
-                scale,
-                slices,
-                &context,
-            )
-            .map(csgrs::GeometryOutcome::into_value)
-            .unwrap_or_else(|_| solid::empty())
+            curve::extrude_twisted(&region, extrusion_height, twist, scale, slices, &context)
+                .map(csgrs::GeometryOutcome::into_value)
+                .unwrap_or_else(|_| solid::empty())
         },
     };
 

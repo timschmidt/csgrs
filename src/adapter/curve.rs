@@ -4,7 +4,7 @@ use super::scalar::{
     AdapterError, AdapterResult, F32, F64, I128, RawReal, ScalarAdapter, real2_to_scalar,
     scalar2_to_real, scalar3_to_real,
 };
-use crate::curve::{self, CurveRegionExt};
+use crate::curve;
 use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{CurveContext, CurveOutcome, CurveRegion2};
 use hyperlattice::{Matrix4, Vector3};
@@ -82,7 +82,7 @@ where
         policy: &CurveContext,
     ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
-            .try_union(&other.inner, policy)
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Union, policy)
             .map(|outcome| outcome.map(Self::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
@@ -93,7 +93,7 @@ where
         policy: &CurveContext,
     ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
-            .try_difference(&other.inner, policy)
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Difference, policy)
             .map(|outcome| outcome.map(Self::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
@@ -104,7 +104,7 @@ where
         policy: &CurveContext,
     ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
-            .try_intersection(&other.inner, policy)
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Intersection, policy)
             .map(|outcome| outcome.map(Self::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }
@@ -115,7 +115,7 @@ where
         policy: &CurveContext,
     ) -> AdapterResult<CurveOutcome<Self>> {
         self.inner
-            .try_xor(&other.inner, policy)
+            .boolean_region(&other.inner, hypercurve::BooleanOp::Xor, policy)
             .map(|outcome| outcome.map(Self::from_native))
             .map_err(|error| AdapterError::Validation(error.to_string()))
     }

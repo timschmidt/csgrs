@@ -5,7 +5,7 @@ mod support;
 
 use std::hint::black_box;
 
-use csgrs::{GeometryContext, Real, curve, curve::CurveRegionExt};
+use csgrs::{GeometryContext, Real, curve};
 use hypercurve::{CurveContext, CurvePath2, CurveRegion2, FiniteProjectionOptions, Point2};
 use hyperlattice::Matrix4;
 use support::{Config, Measurement, print_header};
@@ -274,7 +274,11 @@ fn main() {
         || {
             let result = black_box(
                 curved_region
-                    .try_union(&disjoint, &CurveContext::STRICT)
+                    .boolean_region(
+                        &disjoint,
+                        hypercurve::BooleanOp::Union,
+                        &CurveContext::STRICT,
+                    )
                     .unwrap()
                     .into_value(),
             );
