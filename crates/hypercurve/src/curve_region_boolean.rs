@@ -15004,12 +15004,24 @@ fn validate_carrier_event_separation(
     Ok(())
 }
 
-/// Certified outward f64 box of an exact rational contact point.
+/// Certified outward f64 box of a contact point: its exact rational
+/// coordinates, or else its certified bounds when their corners are rational.
 fn exact_contact_point_box(point: &CurvePoint2) -> Option<[f64; 4]> {
-    let point = point.coordinates()?;
-    let [x_low, x_high] = crate::bezier_region::certified_f64_enclosure(point.x())?;
-    let [y_low, y_high] = crate::bezier_region::certified_f64_enclosure(point.y())?;
-    Some([x_low, x_high, y_low, y_high])
+    use crate::bezier_region::certified_f64_enclosure;
+    if let Some(point) = point.coordinates() {
+        let [x_low, x_high] = certified_f64_enclosure(point.x())?;
+        let [y_low, y_high] = certified_f64_enclosure(point.y())?;
+        return Some([x_low, x_high, y_low, y_high]);
+    }
+    let Classification::Decided(bounds) = point.bounds(&CurveContext::STRICT).value else {
+        return None;
+    };
+    Some([
+        certified_f64_enclosure(bounds.min().x())?[0],
+        certified_f64_enclosure(bounds.max().x())?[1],
+        certified_f64_enclosure(bounds.min().y())?[0],
+        certified_f64_enclosure(bounds.max().y())?[1],
+    ])
 }
 
 /// Spatial candidates for contact deduplication.
