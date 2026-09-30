@@ -86,7 +86,99 @@ pub struct CurveRegionBoundaryLoop2 {
     connectivity_policy: Option<CurveContext>,
     curves: OnceLock<Arc<[Curve2]>>,
     rational_evaluators: OnceLock<CurveResult<Vec<Option<RationalBezier2>>>>,
+    /// Certified query bounds of every fragment under the first policy that
+    /// asked. Point queries otherwise rebuild each box per query.
+    query_bounds: OnceLock<(CurveContext, Arc<[FragmentQueryBounds]>)>,
     arrangement_sources: Option<Vec<CurveRegionFragmentSource2>>,
+}
+
+impl CurveRegionBoundaryLoop2 {
+    /// Certified query bounds for every fragment, shared by all point
+    /// queries under the cached policy. Other policies compute their own.
+    fn fragment_query_bounds(&self, policy: &CurveContext) -> Option<&[FragmentQueryBounds]> {
+        let (cached_policy, bounds) = self.query_bounds.get_or_init(|| {
+            (
+                *policy,
+                self.fragments
+                    .iter()
+                    .map(|fragment| {
+                        let exact = retained_fragment_query_bounds(fragment, policy);
+                        let approximate = match &exact {
+                            Classification::Decided(bounds) => f64_box(bounds),
+                            Classification::Uncertain(_) => None,
+                        };
+                        FragmentQueryBounds { exact, approximate }
+                    })
+                    .collect(),
+            )
+        });
+        (cached_policy == policy).then_some(bounds)
+    }
+}
+
+/// Certified fragment bounds plus an f64 image used only for conservative
+/// rejection before the exact predicate.
+#[derive(Clone, Debug)]
+struct FragmentQueryBounds {
+    exact: Classification<Aabb2>,
+    approximate: Option<[f64; 4]>,
+}
+
+/// Certified outward f64 bounds of an exact rational `Real`; irrational or
+/// out-of-range values have none and stay on the exact path.
+pub(crate) fn certified_f64_enclosure(value: &Real) -> Option<[f64; 2]> {
+    value.exact_rational_ref()?.to_f64_enclosure()
+}
+
+fn f64_box(bounds: &Aabb2) -> Option<[f64; 4]> {
+    Some([
+        certified_f64_enclosure(bounds.min().x())?[0],
+        certified_f64_enclosure(bounds.max().x())?[1],
+        certified_f64_enclosure(bounds.min().y())?[0],
+        certified_f64_enclosure(bounds.max().y())?[1],
+    ])
+}
+
+/// Returns true only when an f64 evaluation proves the box misses the
+/// forward ray: every corner lies strictly on one side of the supporting
+/// line or strictly behind the origin, which is the exact test's pruning
+/// condition. Inputs are certified enclosures (within one ulp) and each
+/// projection takes a few roundings, so its forward error is a small multiple
+/// of the unit roundoff times `scale`; the margin exceeds that by orders of
+/// magnitude. Inconclusive results fall back to the exact test.
+fn f64_box_certainly_misses_forward_ray(
+    bounds: [f64; 4],
+    origin: [f64; 2],
+    direction: [f64; 2],
+) -> bool {
+    const MARGIN: f64 = 1.0e-9;
+    let [dx, dy] = direction;
+    let mut side_signs = [true, true];
+    let mut all_behind = true;
+    for (x, y) in [
+        (bounds[0], bounds[2]),
+        (bounds[0], bounds[3]),
+        (bounds[1], bounds[2]),
+        (bounds[1], bounds[3]),
+    ] {
+        let delta_x = x - origin[0];
+        let delta_y = y - origin[1];
+        let scale = (x.abs() + origin[0].abs()) * (dx.abs() + dy.abs())
+            + (y.abs() + origin[1].abs()) * (dx.abs() + dy.abs());
+        let error = MARGIN * scale + 1.0e-300;
+        let side = -dy * delta_x + dx * delta_y;
+        let forward = dx * delta_x + dy * delta_y;
+        if side >= -error {
+            side_signs[0] = false;
+        }
+        if side <= error {
+            side_signs[1] = false;
+        }
+        if forward >= -error {
+            all_behind = false;
+        }
+    }
+    side_signs[0] || side_signs[1] || all_behind
 }
 
 impl PartialEq for CurveRegionBoundaryLoop2 {
@@ -567,6 +659,7 @@ impl From<BezierBoundaryLoop2> for CurveRegionBoundaryLoop2 {
             connectivity_policy: None,
             curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
+            query_bounds: OnceLock::new(),
         }
     }
 }
@@ -830,6 +923,7 @@ impl CurveRegionBoundaryLoop2 {
             connectivity_policy: Some(policy.retained_object_policy()),
             curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
+            query_bounds: OnceLock::new(),
         })
     }
 
@@ -867,6 +961,7 @@ impl CurveRegionBoundaryLoop2 {
             connectivity_policy: Some(policy.retained_object_policy()),
             curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
+            query_bounds: OnceLock::new(),
         }
     }
 
@@ -906,6 +1001,7 @@ impl CurveRegionBoundaryLoop2 {
             connectivity_policy: Some(policy.retained_object_policy()),
             curves: OnceLock::new(),
             rational_evaluators: OnceLock::new(),
+            query_bounds: OnceLock::new(),
         })
     }
 
@@ -9887,6 +9983,7 @@ impl CurveRegion2 {
                 connectivity_policy: Some(policy.retained_object_policy()),
                 curves: OnceLock::new(),
                 rational_evaluators: OnceLock::new(),
+                query_bounds: OnceLock::new(),
             });
         }
 
@@ -15758,11 +15855,36 @@ fn classify_point_with_retained_ray_skipping_origin(
     let direction_y = &ray.direction_y;
     let mut winding = 0_i32;
     let mut source_origin_contact_was_skipped = false;
+    let cached_bounds = boundary_loop.fragment_query_bounds(policy);
+    let approximate_ray = match (
+        certified_f64_enclosure(point.x()),
+        certified_f64_enclosure(point.y()),
+        certified_f64_enclosure(direction_x),
+        certified_f64_enclosure(direction_y),
+    ) {
+        (Some([x, _]), Some([y, _]), Some([dx, _]), Some([dy, _])) => Some(([x, y], [dx, dy])),
+        _ => None,
+    };
     for (fragment_index, fragment) in boundary_loop.fragments().iter().enumerate() {
         let is_source_fragment =
             skipped_origin.is_some_and(|origin| origin.fragment_index == Some(fragment_index));
-        if let Classification::Decided(bounds) = retained_fragment_query_bounds(fragment, policy)
-            && !retained_bounds_may_intersect_forward_ray(&bounds, point, direction_x, direction_y)
+        if !is_source_fragment
+            && let (Some(bounds), Some((origin, direction))) = (cached_bounds, approximate_ray)
+            && let Some(approximate) = bounds[fragment_index].approximate
+            && f64_box_certainly_misses_forward_ray(approximate, origin, direction)
+        {
+            continue;
+        }
+        let computed;
+        let bounds = match cached_bounds {
+            Some(bounds) => &bounds[fragment_index].exact,
+            None => {
+                computed = retained_fragment_query_bounds(fragment, policy);
+                &computed
+            }
+        };
+        if let Classification::Decided(bounds) = bounds
+            && !retained_bounds_may_intersect_forward_ray(bounds, point, direction_x, direction_y)
             && !is_source_fragment
         {
             continue;

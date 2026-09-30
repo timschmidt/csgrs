@@ -14887,17 +14887,11 @@ fn validate_carrier_event_separation(
     Ok(())
 }
 
-/// Conservative f64 box around an exactly represented contact point.
+/// Certified outward f64 box of an exact rational contact point.
 fn exact_contact_point_box(point: &CurvePoint2) -> Option<[f64; 4]> {
     let point = point.coordinates()?;
-    let widen = |value: &Real| {
-        let value = value.to_f64_lossy().filter(|value| value.is_finite())?;
-        // Well beyond the rounding of one exact rational to f64.
-        let pad = value.abs() * 1.0e-9 + 1.0e-300;
-        Some((value - pad, value + pad))
-    };
-    let (x_low, x_high) = widen(point.x())?;
-    let (y_low, y_high) = widen(point.y())?;
+    let [x_low, x_high] = crate::bezier_region::certified_f64_enclosure(point.x())?;
+    let [y_low, y_high] = crate::bezier_region::certified_f64_enclosure(point.y())?;
     Some([x_low, x_high, y_low, y_high])
 }
 
