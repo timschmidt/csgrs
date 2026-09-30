@@ -123,7 +123,15 @@ mod tests {
 
     #[test]
     fn scalar_guard_honors_the_callers_certainty_policy() {
-        let unresolved_zero = (Real::pi() + Real::e()) - (Real::e() + Real::pi());
+        // cos(pi/5) = (1 + sqrt 5)/4 is a trigonometric identity that no
+        // structural rule proves: strict refinement cannot certify the zero,
+        // while the approximate policy accepts it below 2^-512. (Cancelling
+        // sums such as (pi + e) - (e + pi) are now proved zero structurally
+        // and no longer exercise this guard.)
+        let fifth_pi = (Real::pi() / Real::from(5_i32)).unwrap();
+        let golden_quarter =
+            ((Real::one() + Real::from(5_i32).sqrt().unwrap()) / Real::from(4_i32)).unwrap();
+        let unresolved_zero = fifth_pi.cos() - golden_quarter;
 
         assert_eq!(real_sign(&unresolved_zero, PredicatePolicy::STRICT), None);
         assert_eq!(

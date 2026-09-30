@@ -1435,6 +1435,12 @@ pub fn silkscreen_min_width(
     let mut shapes = Vec::new();
 
     for polygon in polygons {
+        // A convex island has no feature narrower than its minimum support
+        // width. Exact opening would otherwise report the rounded-off convex
+        // corners of any wide stroke, which are not thin features.
+        if convex_polygon_width_at_least(&polygon, min_width) {
+            continue;
+        }
         // Apply morphological opening to one disconnected legend island at a
         // time. Whole-layer opening can create pathological boolean operations
         // on dense Gerber packages, while island-local opening is equivalent
