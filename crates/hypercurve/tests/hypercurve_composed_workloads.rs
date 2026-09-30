@@ -817,11 +817,11 @@ fn translated_arc_union_round_trips() {
 /// Open computational-closure gap found by the generator: rebuilding a round
 /// dilation of a thrice-filleted union from its exported boundary. Unary
 /// regularization pairs a round-join arc with the adjacent analytic parallel
-/// it touches tangentially; with no chord-style adjacency certificate, the
-/// circle/parallel kernel counts common fiber roots over the selected
-/// parameter, whose local subresultant gcds grow without bound in practice
-/// (no result after 20 minutes). A number-field modular gcd would be the
-/// Hypersolve-level remedy.
+/// it touches tangentially. Common-root counting is now certified modularly
+/// (Hypersolve c88abc6), but isolating the tangential double root in the
+/// selected fiber falls back from Bernstein subdivision to a local Sturm
+/// sequence whose subresultant coefficients grow without bound in practice.
+/// Modular/CRT subresultants over the extension would be the remedy.
 #[test]
 #[ignore = "open: fiber gcd growth in adjacent join-arc/parallel regularization"]
 fn filleted_union_round_dilation_round_trips() {
