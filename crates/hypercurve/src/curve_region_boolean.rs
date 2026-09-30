@@ -501,6 +501,86 @@ fn record_regularized_vertex_sectors(
     vertex_sector_links.extend(pairs.iter().map(|&(first, second)| (vertex, first, second)));
 }
 
+/// Orders two co-directed rays leaving one vertex by exact signed curvature
+/// `kappa = (T x A) / |T|^3`, in the clockwise sector convention: the ray
+/// departing further left (larger signed curvature) comes first. Returns
+/// whether `first` precedes `second`, or `None` when the curvatures are equal
+/// or unavailable. Only materialized Bezier rays and exact chords carry the
+/// needed derivatives; other carriers decline.
+fn co_directed_ray_precedes(
+    first: &BezierSplitFragment2,
+    second: &BezierSplitFragment2,
+    policy: &CurveContext,
+) -> Option<bool> {
+    let derivatives = |ray: &BezierSplitFragment2| -> Option<[(Real, Real); 2]> {
+        match ray {
+            BezierSplitFragment2::Materialized { curve, .. } => {
+                let curve = RationalBezier2::try_from_subcurve(curve).ok()?;
+                let Classification::Decided(values) =
+                    curve.derivatives_at_classified(&Real::zero(), 2, policy)
+                else {
+                    return None;
+                };
+                let [first, second] = values.as_slice() else {
+                    return None;
+                };
+                Some([
+                    (first.dx().clone(), first.dy().clone()),
+                    (second.dx().clone(), second.dy().clone()),
+                ])
+            }
+            BezierSplitFragment2::AlgebraicChord(chord) => {
+                let line = chord.exact_line()?;
+                Some([
+                    (
+                        line.end().x() - line.start().x(),
+                        line.end().y() - line.start().y(),
+                    ),
+                    (Real::zero(), Real::zero()),
+                ])
+            }
+            _ => None,
+        }
+    };
+    let curvature_parts = |[(tx, ty), (ax, ay)]: [(Real, Real); 2]| {
+        let cross = &tx * &ay - &ty * &ax;
+        let speed_squared = &tx * &tx + &ty * &ty;
+        (cross, speed_squared)
+    };
+    let (first_cross, first_speed) = curvature_parts(derivatives(first)?);
+    let (second_cross, second_speed) = curvature_parts(derivatives(second)?);
+    if real_sign(&first_speed, policy)? != RealSign::Positive
+        || real_sign(&second_speed, policy)? != RealSign::Positive
+    {
+        return None;
+    }
+    let first_sign = real_sign(&first_cross, policy)?;
+    let second_sign = real_sign(&second_cross, policy)?;
+    let rank = |sign: RealSign| match sign {
+        RealSign::Negative => 0,
+        RealSign::Zero => 1,
+        RealSign::Positive => 2,
+    };
+    if first_sign != second_sign {
+        return Some(rank(first_sign) > rank(second_sign));
+    }
+    if first_sign == RealSign::Zero {
+        return None;
+    }
+    // Same side: |kappa_1| vs |kappa_2| through
+    // cross_1^2 |T_2|^6 vs cross_2^2 |T_1|^6.
+    let cube = |value: &Real| value * value * value;
+    let first_magnitude = &first_cross * &first_cross * cube(&second_speed);
+    let second_magnitude = &second_cross * &second_cross * cube(&first_speed);
+    let first_tighter = match real_sign(&(first_magnitude - second_magnitude), policy)? {
+        RealSign::Positive => true,
+        RealSign::Negative => false,
+        RealSign::Zero => return None,
+    };
+    // A tighter left turn departs further left; a tighter right turn further right.
+    Some(first_tighter == (first_sign == RealSign::Positive))
+}
+
 /// Face sectors at one vertex, plus side equalities of coincident rays.
 struct RegularizedVertexSectors {
     /// Certified cyclic sectors, published only when no rays coincide.
@@ -527,20 +607,19 @@ fn regularized_incident_ray_sectors(
 
     policy.strict_predicate_pass(|| {
         let reference = CurveTangent2::RepresentedDirection((Real::one(), Real::zero()));
-        let mut rays: Vec<(CurveTangent2, usize, usize, bool)> = Vec::with_capacity(incident.len());
+        let mut rays: Vec<(CurveTangent2, usize, usize, bool, BezierSplitFragment2)> =
+            Vec::with_capacity(incident.len());
         let mut coincident = Vec::new();
         for &(carrier, split, outgoing) in incident {
             let fragment = &topology.split_fragments[carrier][split].fragment;
             let straight = split_fragment_is_affine_line(fragment);
-            let reversed;
             let ray = if outgoing {
-                fragment
+                fragment.clone()
             } else {
-                reversed = fragment.reversed().ok()?;
-                &reversed
+                fragment.reversed().ok()?
             };
             let Classification::Decided(tangent) =
-                CurveTangent2::at_boundary_endpoint(ray, true, policy).ok()?
+                CurveTangent2::at_boundary_endpoint(&ray, true, policy).ok()?
             else {
                 return None;
             };
@@ -554,7 +633,8 @@ fn regularized_incident_ray_sectors(
             };
             let mut position = rays.len();
             let mut merged = false;
-            for (index, (other, other_left, other_right, other_straight)) in rays.iter().enumerate()
+            for (index, (other, other_left, other_right, other_straight, other_ray)) in
+                rays.iter().enumerate()
             {
                 match reference.compare_filled_left_turn(&tangent, other, policy) {
                     Classification::Decided(Ordering::Less) => {
@@ -568,13 +648,19 @@ fn regularized_incident_ray_sectors(
                         merged = true;
                         break;
                     }
-                    Classification::Decided(Ordering::Equal) | Classification::Uncertain(_) => {
-                        return None;
+                    Classification::Decided(Ordering::Equal) => {
+                        // Co-directed but not both straight: order by exact
+                        // curvature (then third order) of the departing rays.
+                        if co_directed_ray_precedes(&ray, other_ray, policy)? {
+                            position = index;
+                            break;
+                        }
                     }
+                    Classification::Uncertain(_) => return None,
                 }
             }
             if !merged {
-                rays.insert(position, (tangent, left, right, straight));
+                rays.insert(position, (tangent, left, right, straight, ray));
             }
         }
         // The turn comparator orders clockwise. The sector between adjacent
