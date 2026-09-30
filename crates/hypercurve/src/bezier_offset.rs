@@ -8565,6 +8565,14 @@ fn represented_roots_strictly_equal(
 /// scalars. Exact point coordinates become constants, while roots proved
 /// affine images of an earlier source reuse that axis. Every relation is
 /// certified under STRICT before it can change the tensor rank.
+/// Returns `value` as an exact rational tensor constant, when it is one.
+fn rational_tensor_constant(value: &Real) -> Option<Real> {
+    if value.exact_rational_ref().is_some() {
+        return Some(value.clone());
+    }
+    value.exact_rational_normal_form().map(Real::new)
+}
+
 fn represented_affine_tensor_basis(
     coordinates: &[AlgebraicRootRepresentation],
 ) -> Option<(Vec<AlgebraicRootRepresentation>, Vec<DenseTensorPolynomial>)> {
@@ -8581,8 +8589,16 @@ fn represented_affine_tensor_basis(
                     scale: Real::one(),
                     offset: Real::zero(),
                 }
-            } else if let Some(relation) = algebraic_root_affine_relation(source, coordinate) {
-                relation
+            } else if let Some(relation) = algebraic_root_affine_relation(source, coordinate)
+                && let (Some(scale), Some(offset)) = (
+                    rational_tensor_constant(&relation.scale),
+                    rational_tensor_constant(&relation.offset),
+                )
+            {
+                // An irrational relation (for example sqrt(1/3) as
+                // sqrt(2/3) * sqrt(1/2)) would move a field generator into
+                // tensor coefficients; give that root its own axis instead.
+                hypersolve::AlgebraicRootAffineRelation { scale, offset }
             } else if represented_roots_strictly_equal(source, coordinate) {
                 hypersolve::AlgebraicRootAffineRelation {
                     scale: Real::one(),
