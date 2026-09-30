@@ -34,6 +34,7 @@ pub mod interval;
 pub mod jacobian;
 pub mod linalg;
 pub mod model;
+pub mod modular_gcd;
 pub mod ordered_field_roots;
 mod policy_division;
 pub mod polynomial;
@@ -277,6 +278,7 @@ pub use linalg::{
     LinearSolveReport,
 };
 pub use model::{Constraint, ConstraintKind, Problem, Variable, VariableId};
+pub use modular_gcd::{ModularCoprimality, univariate_polynomials_modular_coprimality};
 pub use ordered_field_roots::{
     OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
     OrderedFieldRootIsolationReport, OrderedFieldRootIsolationStatus,
