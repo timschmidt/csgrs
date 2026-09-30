@@ -8092,6 +8092,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     continue;
                 }
+                // Earlier seeds may already have propagated both side windings
+                // to this fragment. Leave its action to the derivation passes
+                // below, which rebuild derived actions if a later seed
+                // disables a contradictory component; a geometric ray probe
+                // here would only rediscover the same face action.
+                if action_from_windings(
+                    carrier_index,
+                    split_index,
+                    &transverse_face_windings,
+                    false,
+                )?
+                .is_some()
+                    || action_from_windings(carrier_index, split_index, &face_windings, true)?
+                        .is_some()
+                {
+                    continue;
+                }
                 let decision = self.regularized_fragment_geometric_decision(
                     carrier_index,
                     &split.fragment,
