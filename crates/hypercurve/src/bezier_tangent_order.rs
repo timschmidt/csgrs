@@ -1088,6 +1088,60 @@ fn norm_squared_sign(
     evidence
 }
 
+/// Certifies the sign of a parallel's speed ratio
+/// `1 - d cross(v, a) / |v|^3` at one selected source parameter, where `v`
+/// and `a` are the source velocity and acceleration and `d` is the signed
+/// left-normal distance. The ratio scales `v` into the parallel derivative;
+/// it is geometric, so a rational source's own chart applies. Its sign equals
+/// that of `|v|^3 - c` with `c = d cross(v, a)`: positive when `c <= 0`, and
+/// otherwise the sign of `|v|^6 - c^2`, so no square root enters the field.
+pub(crate) fn parallel_speed_ratio_sign(
+    velocity: &BezierAlgebraicTangentVector2,
+    acceleration: &BezierAlgebraicTangentVector2,
+    distance: &Real,
+) -> Classification<RealSign> {
+    use crate::UncertaintyReason;
+    let Some(image) = velocity.image() else {
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
+    };
+    let sign = |ordering: Ordering| match ordering {
+        Ordering::Less => RealSign::Negative,
+        Ordering::Equal => RealSign::Zero,
+        Ordering::Greater => RealSign::Positive,
+    };
+    let result = (|| {
+        let mut field = AlgebraicField::new(image.parameter())?;
+        let [velocity_x, velocity_y] = vector_in_field(velocity, &mut field)?;
+        let [acceleration_x, acceleration_y] = vector_in_field(acceleration, &mut field)?;
+        let speed_squared = field.add(
+            &field.multiply(&velocity_x, &velocity_x)?,
+            &field.multiply(&velocity_y, &velocity_y)?,
+        )?;
+        if sign(field.sign(&speed_squared)?) != RealSign::Positive {
+            return Ok(None);
+        }
+        let cross = field.subtract(
+            &field.multiply(&velocity_x, &acceleration_y)?,
+            &field.multiply(&velocity_y, &acceleration_x)?,
+        )?;
+        let offset_curvature = field.multiply(&field.constant(distance.clone()), &cross)?;
+        if sign(field.sign(&offset_curvature)?) != RealSign::Positive {
+            return Ok(Some(RealSign::Positive));
+        }
+        let difference = field.subtract(
+            &field.pow(&speed_squared, 3)?,
+            &field.pow(&offset_curvature, 2)?,
+        )?;
+        Ok::<_, AlgebraicFieldError>(Some(sign(field.sign(&difference)?)))
+    })();
+    match result {
+        Ok(Some(sign)) => Classification::Decided(sign),
+        // A singular source velocity has no normal: a boundary, not a cusp.
+        Ok(None) => Classification::Uncertain(UncertaintyReason::Boundary),
+        Err(_) => Classification::Uncertain(UncertaintyReason::RealSign),
+    }
+}
+
 fn source_bilinear_sign(
     first: &BezierAlgebraicTangentVector2,
     second: &BezierAlgebraicTangentVector2,

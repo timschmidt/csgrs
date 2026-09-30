@@ -168,9 +168,10 @@ impl Curve2 {
     ///
     /// The public parameter of a generated carrier is its source chart, so no
     /// chain-rule factor applies. Rational sources evaluate every order at
-    /// represented and selected parameters; analytic parallels and exact
-    /// chords give first derivatives at represented parameters. Other
-    /// carriers report the unsupported capability rather than a guess.
+    /// represented and selected parameters; analytic parallels give first
+    /// derivatives at represented and selected source parameters, and exact
+    /// chords their constant first derivative. Other carriers and orders
+    /// report the unsupported capability rather than a guess.
     pub(super) fn retained_derivatives_at(
         &self,
         parameter: &CurveParameter2,
@@ -236,8 +237,11 @@ impl Curve2 {
                 unreachable!("native curves and chords are handled above")
             }
         };
-        let (Some(scalar), 1) = (parameter.scalar(), max_order) else {
+        if max_order != 1 {
             return Err(unsupported());
+        }
+        let Some(scalar) = parameter.scalar() else {
+            return selected_parallel_derivative(parallel, parameter, family, policy);
         };
         let derivative = decided(
             parallel
@@ -382,6 +386,64 @@ pub(super) fn rational_point(
             UncertaintyReason::Unsupported,
         )
     })
+}
+
+/// First derivative of an analytic parallel at a selected source parameter.
+///
+/// The parallel shares its source's chart, and its derivative is the source
+/// velocity scaled by the exact speed ratio whose sign the selected field
+/// certifies. Other parameter families remain unsupported.
+fn selected_parallel_derivative(
+    parallel: &crate::BezierParallel2,
+    parameter: &CurveParameter2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<CurveVector2>> {
+    let unsupported = || {
+        ExactCurveError::blocked(
+            CurveOperation2::Evaluation,
+            family,
+            UncertaintyReason::Unsupported,
+        )
+    };
+    let Some(BezierParameter2::Algebraic(local)) = parameter.as_bezier_parameter() else {
+        return Err(unsupported());
+    };
+    let source = match parallel.source() {
+        crate::BezierParallelSource2::Quadratic(source) => RationalBezier2::try_new(
+            source.control_points().map(Clone::clone).to_vec(),
+            vec![Real::one(); 3],
+        ),
+        crate::BezierParallelSource2::Cubic(source) => RationalBezier2::try_new(
+            source.control_points().map(Clone::clone).to_vec(),
+            vec![Real::one(); 4],
+        ),
+        crate::BezierParallelSource2::Rational(source) => Ok(source.clone()),
+    }
+    .map_err(|cause| evaluation_error(family, cause))?;
+    validate_rational_point(&source, parameter, family, policy)?;
+    let images = decided(
+        source
+            .derivatives_at_algebraic_parameter(local, 2, policy)
+            .map_err(|cause| evaluation_error(family, cause))?,
+        family,
+    )?;
+    let velocity = crate::BezierAlgebraicTangentVector2::from_image(&images[0]);
+    let acceleration = crate::BezierAlgebraicTangentVector2::from_image(&images[1]);
+    let ratio_sign = decided(
+        crate::bezier_tangent_order::parallel_speed_ratio_sign(
+            &velocity,
+            &acceleration,
+            parallel.distance(),
+        ),
+        family,
+    )?;
+    Ok(vec![CurveVector2::selected_parallel(
+        velocity,
+        acceleration,
+        parallel.distance().clone(),
+        ratio_sign,
+    )])
 }
 
 fn rational_derivatives(

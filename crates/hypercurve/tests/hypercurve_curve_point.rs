@@ -236,28 +236,103 @@ mod generated_derivatives {
         }
     }
 
+    fn arch_parallel(
+        distance: Real,
+        start: BezierParameter2,
+        end: BezierParameter2,
+        policy: &CurveContext,
+    ) -> Curve2 {
+        let range = decided(BezierParameterRange2::try_new(start, end, policy).unwrap());
+        decided(
+            Curve2::try_analytic_parallel(arch().parallel_left(distance).unwrap(), range, policy)
+                .unwrap(),
+        )
+    }
+
+    fn signs(
+        derivative: &hypercurve::CurveVector2,
+        policy: &CurveContext,
+    ) -> (hyperreal::RealSign, hyperreal::RealSign) {
+        (
+            decided(derivative.coordinate_sign(Axis2::X, policy).unwrap()),
+            decided(derivative.coordinate_sign(Axis2::Y, policy).unwrap()),
+        )
+    }
+
     #[test]
-    fn selected_parallel_derivatives_report_the_capability_boundary() {
+    fn selected_parallel_derivatives_orient_by_the_exact_speed_ratio() {
+        use hyperreal::RealSign::{Negative, Positive};
+        // The arch has v = (2, 4 - 8t) and cross(v, a) = -16, so its left
+        // parallel at distance d moves along v * (1 + 16 d / |v|^3). At
+        // t = 1/sqrt(3), |v|^6 is about 84.2: d = -1 passes the curvature
+        // centre and reverses the tangent; d = -1/2 and d = 1 do not.
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let selected = inverse_root(3, q(1, 2), q(2, 3), &policy);
+            let nearby = CurveParameter2::from(q(4, 7));
+            for (distance, expected) in [
+                (Real::one(), (Positive, Negative)),
+                (q(-1, 2), (Positive, Negative)),
+                (Real::from(-1), (Negative, Positive)),
+            ] {
+                // [11/20, 2/3] avoids every parallel cusp for these distances.
+                let parallel = arch_parallel(
+                    distance,
+                    BezierParameter2::Exact(q(11, 20)),
+                    BezierParameter2::Exact(q(2, 3)),
+                    &policy,
+                );
+                let derivative = parallel.derivative_at(&selected, &policy).unwrap().value;
+                assert!(derivative.represented_coordinates().is_none());
+                assert_eq!(signs(&derivative, &policy), expected);
+                // An independent represented evaluation nearby agrees.
+                let represented = parallel.derivative_at(&nearby, &policy).unwrap().value;
+                assert!(represented.represented_coordinates().is_some());
+                assert_eq!(signs(&represented, &policy), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn selected_parallel_cusps_have_an_exact_zero_derivative() {
         let policy = CurveContext::STRICT;
-        let unit = decided(
-            BezierParameterRange2::try_new(
-                BezierParameter2::Exact(Real::zero()),
-                BezierParameter2::Exact(Real::one()),
+        // 64 t^2 - 64 t + 14 = 0 gives (4 - 8t)^2 = 2 and |v|^2 = 6, so the
+        // speed ratio 1 + 16 d / 6^(3/2) vanishes at d = -3 sqrt(6) / 8.
+        let polynomial = decided(
+            BezierParameterPolynomial::try_new_power_basis(
+                vec![Real::from(14), Real::from(-64), Real::from(64)],
                 &policy,
             )
             .unwrap(),
         );
-        let generated = decided(
-            Curve2::try_analytic_parallel(
-                arch().parallel_left(Real::one()).unwrap(),
-                unit,
-                &policy,
-            )
-            .unwrap(),
-        );
+        let interval =
+            decided(BezierParameterInterval::try_new(q(3, 10), q(7, 20), &policy).unwrap());
+        let cusp = BezierParameter2::Algebraic(decided(
+            BezierAlgebraicParameter2::try_isolate(polynomial, interval, &policy).unwrap(),
+        ));
+        let selected = CurveParameter2::from(cusp.clone());
+        let distance =
+            Real::zero() - (Real::from(3) * Real::from(6).sqrt().unwrap() / Real::from(8)).unwrap();
+        // The parallel may end at its cusp, but not contain it.
+        let derivative = arch_parallel(distance, cusp, BezierParameter2::Exact(q(1, 2)), &policy)
+            .derivative_at(&selected, &policy)
+            .unwrap()
+            .value;
+        let zero = Real::zero();
+        assert_eq!(derivative.represented_coordinates(), Some((&zero, &zero)));
+    }
+
+    #[test]
+    fn selected_parallel_higher_derivatives_report_the_capability_boundary() {
+        let policy = CurveContext::STRICT;
         let selected = inverse_root(3, q(1, 2), q(2, 3), &policy);
         assert!(matches!(
-            generated.derivative_at(&selected, &policy),
+            arch_parallel(
+                Real::one(),
+                BezierParameter2::Exact(Real::zero()),
+                BezierParameter2::Exact(Real::one()),
+                &policy
+            )
+            .derivatives_at(&selected, 2, &policy),
             Err(ExactCurveError::Blocked(blocker))
                 if blocker.reason() == UncertaintyReason::Unsupported
         ));

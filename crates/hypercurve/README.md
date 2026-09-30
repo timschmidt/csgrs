@@ -243,8 +243,11 @@ exact signatures.
   Derivatives are `CurveVector2`: represented coordinates when the parameter
   is a plain real, otherwise a selected-field vector with an exact chart
   factor whose coordinate signs are decided without rounding. Selected
-  parameters are supported on authored spans; generated carriers report an
-  explicit unsupported blocker there. Exact
+  parameters are supported on authored spans, retained rational pieces and,
+  to first order, analytic parallels: the source velocity scaled by the
+  exact speed ratio `1 - d cross(v, a) / |v|^3`, whose sign (including the
+  exact zero at a parallel cusp) is decided in the selected field. Other
+  generated carriers and orders report an explicit unsupported blocker. Exact
   region trimming returns reusable `Curve2` pieces from authored and generated
   supports. The parameter-retaining form reports their oriented source
   locations as `CurveLocation2`, exact parameter ranges and boundary contacts.

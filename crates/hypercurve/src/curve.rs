@@ -94,6 +94,18 @@ enum CurveVectorData2 {
         vector: crate::BezierAlgebraicTangentVector2,
         chart_factor: Real,
     },
+    /// A selected source velocity `v` times its parallel's speed ratio
+    /// `1 - d cross(v, a) / |v|^3` at distance `d`, whose nonzero sign is
+    /// certified at construction.
+    SelectedParallel(Box<SelectedParallelVector2>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct SelectedParallelVector2 {
+    velocity: crate::BezierAlgebraicTangentVector2,
+    acceleration: crate::BezierAlgebraicTangentVector2,
+    distance: Real,
+    ratio_sign: RealSign,
 }
 
 impl CurveVector2 {
@@ -101,7 +113,7 @@ impl CurveVector2 {
     pub fn represented_coordinates(&self) -> Option<(&Real, &Real)> {
         match &self.data {
             CurveVectorData2::Represented(derivative) => Some((derivative.dx(), derivative.dy())),
-            CurveVectorData2::Selected { .. } => None,
+            CurveVectorData2::Selected { .. } | CurveVectorData2::SelectedParallel(_) => None,
         }
     }
 
@@ -134,6 +146,42 @@ impl CurveVector2 {
                     )
                 })
             }
+            CurveVectorData2::SelectedParallel(parallel) => Ok(parallel
+                .velocity
+                .coordinate_sign(use_x, policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Evaluation,
+                        CurveFamily2::RationalBezier,
+                        cause,
+                    )
+                })?
+                .map(|sign| match (sign, parallel.ratio_sign) {
+                    (RealSign::Zero, _) | (_, RealSign::Positive) => sign,
+                    (RealSign::Positive, _) => RealSign::Negative,
+                    (RealSign::Negative, _) => RealSign::Positive,
+                })),
+        }
+    }
+
+    /// Scales a selected source velocity into its parallel's derivative.
+    /// A zero speed ratio is the exact zero derivative of a parallel cusp.
+    fn selected_parallel(
+        velocity: crate::BezierAlgebraicTangentVector2,
+        acceleration: crate::BezierAlgebraicTangentVector2,
+        distance: Real,
+        ratio_sign: RealSign,
+    ) -> Self {
+        if ratio_sign == RealSign::Zero {
+            return Self::represented(CurveDerivative2::new(Real::zero(), Real::zero()));
+        }
+        Self {
+            data: CurveVectorData2::SelectedParallel(Box::new(SelectedParallelVector2 {
+                velocity,
+                acceleration,
+                distance,
+                ratio_sign,
+            })),
         }
     }
 
