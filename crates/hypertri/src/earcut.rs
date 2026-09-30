@@ -130,11 +130,10 @@ fn triangulate_report_inner(
     }
 
     let triangles = clip_ring(evaluator, vertices, ring, winding, &mut diagnostics)?;
-    let triangles = if holes.is_empty() {
-        triangles
-    } else {
-        ensure_input_conformity(evaluator, vertices, &rings, triangles)?
-    };
+    // Normalization drops duplicate and collinear boundary vertices with or
+    // without holes. Every input vertex must remain a triangle vertex so the
+    // result conforms to adjacent geometry sharing the same boundary edges.
+    let triangles = ensure_input_conformity(evaluator, vertices, &rings, triangles)?;
     Ok(EarcutReport {
         triangles,
         diagnostics,
@@ -2099,7 +2098,7 @@ mod tests {
     }
 
     #[test]
-    fn filters_collinear_chain_without_losing_area() {
+    fn collinear_chain_vertices_remain_triangle_vertices() {
         let vertices = vec![
             exact_point(0, 0),
             exact_point(1, 0),
@@ -2110,7 +2109,10 @@ mod tests {
 
         let triangles = triangulate(&APPROX, &vertices, &[]).unwrap().value;
 
-        assert_eq!(triangles.len(), 6);
+        // Ear clipping skips the collinear vertex; conformity reinserts it so
+        // an extruded side wall split there shares every cap edge.
+        assert_eq!(triangles.len(), 9);
+        assert!((0..vertices.len()).all(|vertex| triangles.contains(&vertex)));
     }
 
     #[test]
