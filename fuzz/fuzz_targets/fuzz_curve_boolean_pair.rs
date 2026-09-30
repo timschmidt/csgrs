@@ -2,7 +2,7 @@
 
 #![no_main]
 
-use csgrs::curve::{self, CurveRegionExt};
+use csgrs::curve;
 use hypercurve::{CurveContext, CurveRegion2};
 use hyperlattice::Real;
 use hyperlimit::PredicatePolicy;
@@ -35,8 +35,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
 }
 
 fn assert_curve_finite(curve: &CurveRegion2) {
-    let Ok(profiles) =
-        curve::try_finite_profiles(curve, &csgrs::GeometryContext::STRICT)
+    let Ok(profiles) = curve::try_finite_profiles(curve, &csgrs::GeometryContext::STRICT)
     else {
         return;
     };
@@ -65,7 +64,7 @@ fuzz_target!(|bytes: &[u8]| {
         at_least_tolerance(decode_real(bytes, &mut idx).abs()),
         (bytes[idx % bytes.len()] as usize % 32) + 3,
     )
-    .transformed_affine(
+    .transform_affine(
         &Real::one(),
         &Real::zero(),
         &Real::zero(),
@@ -77,10 +76,10 @@ fuzz_target!(|bytes: &[u8]| {
     .map(|outcome| outcome.into_value())
     .unwrap_or_else(|_| curve::empty());
     let result = match bytes[idx % bytes.len()] % 4 {
-        0 => a.try_union(&b, &CurveContext::STRICT),
-        1 => a.try_difference(&b, &CurveContext::STRICT),
-        2 => a.try_intersection(&b, &CurveContext::STRICT),
-        _ => a.try_xor(&b, &CurveContext::STRICT),
+        0 => a.boolean_region(&b, hypercurve::BooleanOp::Union, &CurveContext::STRICT),
+        1 => a.boolean_region(&b, hypercurve::BooleanOp::Difference, &CurveContext::STRICT),
+        2 => a.boolean_region(&b, hypercurve::BooleanOp::Intersection, &CurveContext::STRICT),
+        _ => a.boolean_region(&b, hypercurve::BooleanOp::Xor, &CurveContext::STRICT),
     };
     if let Ok(result) = result {
         assert_curve_finite(&result.into_value());

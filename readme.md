@@ -161,7 +161,8 @@ The Hershey catalog is compiled into Hypercurve and exposed as
 
 Planar operations:
 
-- `CurveRegionExt::{try_union, try_difference, try_intersection, try_xor}`;
+- `CurveRegion2::boolean_region(&other, BooleanOp::{Union, Difference, Intersection, Xor}, policy)`
+  from Hypercurve, or `boolean_regions` for all four sharing one arrangement;
 - `offset` and `offset_rounded`;
 - `transformed`, `translated`, `rotated`, and `scaled`;
 - `contains_xy`, `bounding_box`, `finite_profiles`, and `triangulate`.

@@ -757,8 +757,11 @@ pub fn keyhole(
         &decisions,
     )?;
     let region = decisions.consume_curve(
-        circle_with(circle_radius, segments, &decisions)?
-            .try_union(&handle, decisions.curve_policy())?,
+        circle_with(circle_radius, segments, &decisions)?.boolean_region(
+            &handle,
+            BooleanOp::Union,
+            decisions.curve_policy(),
+        )?,
     );
     Ok(decisions.finish(region))
 }
@@ -802,8 +805,11 @@ pub fn reuleaux(
         )?;
         result = Some(match result {
             None => disk,
-            Some(current) => decisions
-                .consume_curve(current.try_intersection(&disk, decisions.curve_policy())?),
+            Some(current) => decisions.consume_curve(current.boolean_region(
+                &disk,
+                BooleanOp::Intersection,
+                decisions.curve_policy(),
+            )?),
         });
     }
     Ok(decisions.finish(result.unwrap_or_else(empty)))
@@ -828,8 +834,11 @@ pub fn ring(
     };
     let inner = circle_with(inner_radius.clone(), segments, &decisions)?;
     let region = decisions.consume_curve(
-        circle_with(inner_radius + thickness, segments, &decisions)?
-            .try_difference(&inner, decisions.curve_policy())?,
+        circle_with(inner_radius + thickness, segments, &decisions)?.boolean_region(
+            &inner,
+            BooleanOp::Difference,
+            decisions.curve_policy(),
+        )?,
     );
     Ok(decisions.finish(region))
 }
@@ -957,8 +966,11 @@ pub fn crescent(
         Real::zero(),
         &decisions,
     )?;
-    let region =
-        decisions.consume_curve(outer.try_difference(&inner, decisions.curve_policy())?);
+    let region = decisions.consume_curve(outer.boolean_region(
+        &inner,
+        BooleanOp::Difference,
+        decisions.curve_policy(),
+    )?);
     Ok(decisions.finish(region))
 }
 
@@ -1026,10 +1038,12 @@ pub fn circle_with_keyway(
         key_y,
         &decisions,
     )?;
-    let region = decisions.consume_curve(
-        circle_with(radius, segments, &decisions)?
-            .try_difference(&cutter, decisions.curve_policy())?,
-    );
+    let region =
+        decisions.consume_curve(circle_with(radius, segments, &decisions)?.boolean_region(
+            &cutter,
+            BooleanOp::Difference,
+            decisions.curve_policy(),
+        )?);
     Ok(decisions.finish(region))
 }
 
@@ -1055,10 +1069,12 @@ pub fn circle_with_flat(
         -flat_distance,
         &decisions,
     )?;
-    let region = decisions.consume_curve(
-        circle_with(radius, segments, &decisions)?
-            .try_intersection(&clip, decisions.curve_policy())?,
-    );
+    let region =
+        decisions.consume_curve(circle_with(radius, segments, &decisions)?.boolean_region(
+            &clip,
+            BooleanOp::Intersection,
+            decisions.curve_policy(),
+        )?);
     Ok(decisions.finish(region))
 }
 
@@ -1087,10 +1103,12 @@ pub fn circle_with_two_flats(
         -flat_distance,
         &decisions,
     )?;
-    let region = decisions.consume_curve(
-        circle_with(radius, segments, &decisions)?
-            .try_intersection(&clip, decisions.curve_policy())?,
-    );
+    let region =
+        decisions.consume_curve(circle_with(radius, segments, &decisions)?.boolean_region(
+            &clip,
+            BooleanOp::Intersection,
+            decisions.curve_policy(),
+        )?);
     Ok(decisions.finish(region))
 }
 
@@ -2823,96 +2841,6 @@ pub fn hershey_strings(
         .collect()
 }
 
-/// Convenience CSG and construction operations on native filled regions.
-pub trait CurveRegionExt: Sized {
-    /// Exact regularized union.
-    fn try_union(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Result<CurveOutcome<Self>, CurveBooleanError>;
-    /// Exact regularized difference.
-    fn try_difference(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Result<CurveOutcome<Self>, CurveBooleanError>;
-    /// Exact regularized intersection.
-    fn try_intersection(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Result<CurveOutcome<Self>, CurveBooleanError>;
-    /// Exact regularized symmetric difference.
-    fn try_xor(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Result<CurveOutcome<Self>, CurveBooleanError>;
-    /// Exact planar affine transform.
-    fn transformed_affine(
-        &self,
-        m00: &Real,
-        m01: &Real,
-        m10: &Real,
-        m11: &Real,
-        tx: &Real,
-        ty: &Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Self>>;
-}
-
-impl CurveRegionExt for CurveRegion2 {
-    fn try_union(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Result<CurveOutcome<Self>, CurveBooleanError> {
-        self.boolean_region(other, BooleanOp::Union, policy)
-            .map_err(CurveBooleanError::from)
-    }
-
-    fn try_difference(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Result<CurveOutcome<Self>, CurveBooleanError> {
-        self.boolean_region(other, BooleanOp::Difference, policy)
-            .map_err(CurveBooleanError::from)
-    }
-
-    fn try_intersection(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Result<CurveOutcome<Self>, CurveBooleanError> {
-        self.boolean_region(other, BooleanOp::Intersection, policy)
-            .map_err(CurveBooleanError::from)
-    }
-
-    fn try_xor(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> Result<CurveOutcome<Self>, CurveBooleanError> {
-        self.boolean_region(other, BooleanOp::Xor, policy)
-            .map_err(CurveBooleanError::from)
-    }
-
-    fn transformed_affine(
-        &self,
-        m00: &Real,
-        m01: &Real,
-        m10: &Real,
-        m11: &Real,
-        tx: &Real,
-        ty: &Real,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<Self>> {
-        self.transform_affine(m00, m01, m10, m11, tx, ty, policy)
-    }
-}
-
 /// Applies a 3D homogeneous transform through the established curve lifting
 /// boundary and returns only native filled topology.
 pub fn try_transformed(
@@ -3362,7 +3290,7 @@ mod tests {
         let left = square(Real::from(2_u8));
         let right = rectangle(Real::from(1_u8), Real::from(3_u8));
         let union: CurveRegion2 = left
-            .try_union(&right, &CurveContext::STRICT)
+            .boolean_region(&right, BooleanOp::Union, &CurveContext::STRICT)
             .expect("region union")
             .into_value();
         assert!(!union.is_empty());
