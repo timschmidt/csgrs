@@ -88,31 +88,55 @@ pub struct CurveRegionBoundaryLoop2 {
     rational_evaluators: OnceLock<CurveResult<Vec<Option<RationalBezier2>>>>,
     /// Certified query bounds of every fragment under the first policy that
     /// asked. Point queries otherwise rebuild each box per query.
-    query_bounds: OnceLock<(CurveContext, Arc<[FragmentQueryBounds]>)>,
+    query_bounds: OnceLock<(CurveContext, Arc<[FragmentQueryBounds]>, Option<[f64; 4]>)>,
     arrangement_sources: Option<Vec<CurveRegionFragmentSource2>>,
 }
 
 impl CurveRegionBoundaryLoop2 {
     /// Certified query bounds for every fragment, shared by all point
     /// queries under the cached policy. Other policies compute their own.
-    fn fragment_query_bounds(&self, policy: &CurveContext) -> Option<&[FragmentQueryBounds]> {
-        let (cached_policy, bounds) = self.query_bounds.get_or_init(|| {
+    fn fragment_query_bounds(
+        &self,
+        policy: &CurveContext,
+    ) -> Option<(&[FragmentQueryBounds], Option<[f64; 4]>)> {
+        let (cached_policy, bounds, loop_box) = self.query_bounds.get_or_init(|| {
+            let bounds = self
+                .fragments
+                .iter()
+                .map(|fragment| {
+                    let exact = retained_fragment_query_bounds(fragment, policy);
+                    let approximate = match &exact {
+                        Classification::Decided(bounds) => f64_box(bounds),
+                        Classification::Uncertain(_) => None,
+                    };
+                    FragmentQueryBounds { exact, approximate }
+                })
+                .collect::<Arc<[_]>>();
+            // Certified union of every fragment box, when each has one.
+            let loop_box = bounds.iter().try_fold(
+                [
+                    f64::INFINITY,
+                    f64::NEG_INFINITY,
+                    f64::INFINITY,
+                    f64::NEG_INFINITY,
+                ],
+                |union, fragment| {
+                    let bounds = fragment.approximate?;
+                    Some([
+                        union[0].min(bounds[0]),
+                        union[1].max(bounds[1]),
+                        union[2].min(bounds[2]),
+                        union[3].max(bounds[3]),
+                    ])
+                },
+            );
             (
                 *policy,
-                self.fragments
-                    .iter()
-                    .map(|fragment| {
-                        let exact = retained_fragment_query_bounds(fragment, policy);
-                        let approximate = match &exact {
-                            Classification::Decided(bounds) => f64_box(bounds),
-                            Classification::Uncertain(_) => None,
-                        };
-                        FragmentQueryBounds { exact, approximate }
-                    })
-                    .collect(),
+                bounds,
+                loop_box.filter(|_| !self.fragments.is_empty()),
             )
         });
-        (cached_policy == policy).then_some(bounds)
+        (cached_policy == policy).then_some((bounds, *loop_box))
     }
 }
 
@@ -15855,7 +15879,24 @@ fn classify_point_with_retained_ray_skipping_origin(
     let direction_y = &ray.direction_y;
     let mut winding = 0_i32;
     let mut source_origin_contact_was_skipped = false;
-    let cached_bounds = boundary_loop.fragment_query_bounds(policy);
+    let cached = boundary_loop.fragment_query_bounds(policy);
+    let cached_bounds = cached.map(|(bounds, _)| bounds);
+    // A closed loop has zero winding at any point strictly outside its
+    // certified bounding box, so its fragments need no ray query. The source
+    // loop is excluded because the origin lies on it.
+    if skipped_origin.is_none_or(|origin| origin.fragment_index.is_none())
+        && let Some((_, Some(loop_box))) = cached
+        && let (Some([x_low, x_high]), Some([y_low, y_high])) = (
+            certified_f64_enclosure(point.x()),
+            certified_f64_enclosure(point.y()),
+        )
+        && (x_high < loop_box[0]
+            || x_low > loop_box[1]
+            || y_high < loop_box[2]
+            || y_low > loop_box[3])
+    {
+        return Ok(Classification::Decided(RetainedRayWinding::Winding(0)));
+    }
     let approximate_ray = match (
         certified_f64_enclosure(point.x()),
         certified_f64_enclosure(point.y()),
