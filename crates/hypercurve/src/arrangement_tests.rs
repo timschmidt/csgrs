@@ -1,9 +1,9 @@
 use crate::{
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierArrangementGraph2,
-    BezierGraphContact, BezierLineContact, BezierLineContactKind, BezierMonotoneSpan,
-    BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, BezierSplitFragment2,
-    BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveError, Point2,
-    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
+    BezierLineContact, BezierLineContactKind, BezierMonotoneSpan, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, BezierSplitFragment2, BezierSubcurve2,
+    Classification, CubicBezier2, CurveContext, CurveError, Point2, QuadraticBezier2,
+    RationalBezier2, RationalQuadraticBezier2, Real, UncertaintyReason,
 };
 use proptest::prelude::*;
 
@@ -45,10 +45,6 @@ fn monotone_span_rejects_reversed_parameter_evidence() {
 
 #[test]
 fn contact_parameters_follow_their_carrier_domains() {
-    assert_topology_error(BezierGraphContact::new(
-        r(-1),
-        BezierLineContactKind::Crossing,
-    ));
     for value in [r(-1), r(2)] {
         let parameter = BezierParameter2::Exact(value);
         let contact = BezierLineContact::new(parameter.clone(), BezierLineContactKind::Tangent);

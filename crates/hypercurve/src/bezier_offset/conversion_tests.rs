@@ -4113,25 +4113,25 @@ fn rational_parallel_endpoint_uses_transverse_tangent_before_exterior_germs() {
         endpoint.translated(Real::from(3_i8), Real::from(2_i8)),
     )
     .unwrap();
-    let relation = match parallel
-        .relation_to_supporting_line_with_contacts(&normal_line, &policy)
+    let Classification::Decided(parallel) = crate::Curve2::try_analytic_parallel(
+        parallel,
+        BezierParameterRange2::from_exact(Real::zero(), Real::one()),
+        &policy,
+    )
+    .unwrap() else {
+        panic!("the regular parallel is admitted");
+    };
+    let evidence = parallel
+        .intersect_curve(&crate::Curve2::from(normal_line), &policy)
         .unwrap()
-    {
-        Classification::Decided(relation) => relation,
-        Classification::Uncertain(reason) => panic!("support relation: {reason:?}"),
-    };
-    let BezierLineContactRelation::Contacts { contacts } = relation else {
-        panic!("endpoint normal must meet the retained parallel");
-    };
-    let contact = contacts
+        .value;
+    assert!(evidence.is_complete());
+    let contact = evidence
+        .contacts()
         .iter()
-        .find(|contact| contact.parameter().scalar() == Some(&Real::one()))
+        .find(|contact| contact.first().local_parameter().scalar() == Some(&Real::one()))
         .expect("the exact endpoint contact must be retained");
-    assert_eq!(contact.kind(), BezierLineContactKind::Crossing);
-    assert_eq!(
-        contact.crossing_direction(),
-        Some(BezierLineCrossingDirection::PositiveToNegative)
-    );
+    assert!(contact.is_certified_transverse());
 }
 
 fn algebraic_parameters(coefficients: Vec<Real>) -> Vec<BezierParameter2> {

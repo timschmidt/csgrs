@@ -51,9 +51,10 @@ impl BezierArcLengthParameterRegion2 {
         &self.target_length
     }
 
-    /// Returns the certified parameter span that contains the inverse query.
-    pub const fn parameter_span(&self) -> &BezierMonotoneSpan {
-        &self.parameter_span
+    /// Returns the certified parameter span `(start, end)` that contains the
+    /// inverse query.
+    pub fn parameter_span(&self) -> (&Real, &Real) {
+        (self.parameter_span.start(), self.parameter_span.end())
     }
 
     /// Returns prefix length bounds at the span end parameter.
@@ -602,8 +603,8 @@ mod tests {
                 .unwrap(),
         );
 
-        assert_eq!(region.parameter_span().start(), &Real::zero());
-        assert_eq!(region.parameter_span().end(), &Real::zero());
+        assert_eq!(region.parameter_span().0, &Real::zero());
+        assert_eq!(region.parameter_span().1, &Real::zero());
         assert!(region.prefix_bounds_at_span_end().is_exact());
     }
 
@@ -617,8 +618,8 @@ mod tests {
                 .unwrap(),
         );
 
-        assert_eq!(region.parameter_span().start(), &half);
-        assert_eq!(region.parameter_span().end(), &half);
+        assert_eq!(region.parameter_span().0, &half);
+        assert_eq!(region.parameter_span().1, &half);
         assert_eq!(region.prefix_bounds_at_span_end().lower(), &Real::one());
         assert_eq!(region.prefix_bounds_at_span_end().upper(), &Real::one());
     }

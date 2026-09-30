@@ -2231,7 +2231,7 @@ impl RationalBezier2 {
     /// denominator has no affine pole. Every finite root remains a
     /// [`BezierParameter2`], including isolated irrational roots, and contact
     /// kind is certified from exact root-multiplicity parity.
-    pub fn relation_to_line_with_contacts(
+    pub(crate) fn relation_to_line_with_contacts(
         &self,
         line: &LineSeg2,
         policy: &CurveContext,

@@ -1,13 +1,39 @@
 use hypercurve::{
-    BezierLineContactKind, BezierLineContactRelation, BezierLineCrossingDirection,
     BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, Curve2, CurveCertainty,
     CurveContext, CurveFamily2, CurveParameterRange2, CurvePath2, CurveRegion2,
-    CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2, LineSide, OffsetCornerStyle2,
-    Point2, QuadraticBezier2, Real, RegionPointLocation,
+    CurveRegionLoopRole, FillRule, FiniteProjectionOptions, LineSeg2, OffsetCornerStyle2, Point2,
+    QuadraticBezier2, Real, RegionPointLocation,
 };
 use hypercurve::{
     CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, RationalQuadraticBezier2,
 };
+
+/// Contacts of one unit-domain analytic parallel with a line segment.
+fn line_contacts(
+    parallel: hypercurve::BezierParallel2,
+    line: LineSeg2,
+    policy: &CurveContext,
+) -> Vec<hypercurve::CurveIntersectionContact2> {
+    let Classification::Decided(range) = BezierParameterRange2::try_new(
+        BezierParameter2::Exact(Real::zero()),
+        BezierParameter2::Exact(Real::one()),
+        policy,
+    )
+    .unwrap() else {
+        panic!("the unit range is exact");
+    };
+    let Classification::Decided(parallel) =
+        Curve2::try_analytic_parallel(parallel, range, policy).unwrap()
+    else {
+        panic!("the regular parallel is admitted");
+    };
+    let evidence = parallel
+        .intersect_curve(&Curve2::from(line), policy)
+        .unwrap()
+        .value;
+    assert!(evidence.is_complete());
+    evidence.contacts().to_vec()
+}
 
 fn point(x: i64, y: i64) -> Point2 {
     Point2::new(Real::from(x), Real::from(y))
@@ -468,45 +494,21 @@ fn check_policy(policy: CurveContext) {
         .parallel_left(Real::one())
         .unwrap();
     let vertical = LineSeg2::try_new(point(2, 0), point(2, 2)).unwrap();
-    let relation = match crossing_parallel
-        .relation_to_supporting_line_with_contacts(&vertical, &policy)
-        .unwrap()
-    {
-        Classification::Decided(relation) => relation,
-        Classification::Uncertain(reason) => {
-            panic!("unexpected parallel-line uncertainty: {reason:?}")
-        }
-    };
-    let BezierLineContactRelation::Contacts { contacts } = relation else {
-        panic!("expected one exact parallel-line contact, got {relation:?}");
-    };
+    let contacts = line_contacts(crossing_parallel, vertical, &policy);
     assert_eq!(contacts.len(), 1);
-    assert_eq!(contacts[0].kind(), BezierLineContactKind::Crossing);
+    assert!(contacts[0].is_certified_transverse());
     assert_eq!(
-        contacts[0].crossing_direction(),
-        Some(BezierLineCrossingDirection::PositiveToNegative)
+        contacts[0].tangent_cross_sign(),
+        Some(hyperreal::RealSign::Positive)
     );
 
     let endpoint_tangent = QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 1))
         .parallel_left(Real::zero())
         .unwrap();
     let horizontal = LineSeg2::try_new(point(-1, 0), point(3, 0)).unwrap();
-    let relation = match endpoint_tangent
-        .relation_to_supporting_line_with_contacts(&horizontal, &policy)
-        .unwrap()
-    {
-        Classification::Decided(relation) => relation,
-        Classification::Uncertain(reason) => {
-            panic!("unexpected endpoint-tangent uncertainty: {reason:?}")
-        }
-    };
-    let BezierLineContactRelation::Contacts { contacts } = relation else {
-        panic!("expected an endpoint tangent, got {relation:?}");
-    };
+    let contacts = line_contacts(endpoint_tangent, horizontal, &policy);
     assert_eq!(contacts.len(), 1);
-    assert_eq!(contacts[0].kind(), BezierLineContactKind::Tangent);
-    assert_eq!(contacts[0].crossing_direction(), None);
-    assert_eq!(contacts[0].tangent_side(), Some(LineSide::Left));
+    assert!(!contacts[0].is_certified_transverse());
 
     let shifted = analytic_square(2, 6, &policy);
     let evidence = region.intersect_region(&shifted, &policy).unwrap().value;

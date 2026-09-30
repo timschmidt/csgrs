@@ -638,10 +638,10 @@ fn selected_derivative_jets_preserve_high_order_rational_tails() {
 #[cfg(test)]
 mod finite_parameter_interval_contract {
     use crate::{
-        BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierMonotoneSpan,
-        BezierParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
-        Curve2, CurveContext, CurveError, CurveParameter2, ExactCurveError, Point2,
-        QuadraticBezier2, RationalBezier2, Real,
+        BezierAlgebraicImageStatus, BezierAlgebraicParameter2, BezierParameter2,
+        BezierParameterInterval, BezierParameterPolynomial, Classification, Curve2, CurveContext,
+        CurveError, CurveParameter2, ExactCurveError, Point2, QuadraticBezier2, RationalBezier2,
+        Real,
     };
     use std::cmp::Ordering;
 
@@ -654,8 +654,9 @@ mod finite_parameter_interval_contract {
 
     fn square_root(sign: i32, policy: &CurveContext) -> BezierAlgebraicParameter2 {
         let (lower, upper) = if sign < 0 { (-2, -1) } else { (1, 2) };
-        let span = BezierMonotoneSpan::new(Real::from(lower), Real::from(upper)).unwrap();
-        let interval = decided(BezierParameterInterval::from_monotone_span(&span, policy).unwrap());
+        let interval = decided(
+            BezierParameterInterval::try_new(Real::from(lower), Real::from(upper), policy).unwrap(),
+        );
         let polynomial = decided(
             BezierParameterPolynomial::try_new_power_basis(
                 vec![Real::from(-2), Real::zero(), Real::one()],

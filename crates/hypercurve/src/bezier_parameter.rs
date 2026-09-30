@@ -38,9 +38,7 @@ use hypersolve::{
 use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
-use crate::{
-    BezierMonotoneSpan, Classification, CurveContext, CurveError, CurveResult, UncertaintyReason,
-};
+use crate::{Classification, CurveContext, CurveError, CurveResult, UncertaintyReason};
 
 /// Power-basis polynomial used to define an algebraic Bezier parameter.
 ///
@@ -951,14 +949,6 @@ impl BezierParameterInterval {
             Some(_) => Ok(Classification::Decided(Self { start, end })),
             None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
         }
-    }
-
-    /// Converts an existing monotone span into a validated parameter interval.
-    pub fn from_monotone_span(
-        span: &BezierMonotoneSpan,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        Self::try_new(span.start().clone(), span.end().clone(), policy)
     }
 
     /// Returns the interval start.

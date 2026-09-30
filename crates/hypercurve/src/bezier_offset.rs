@@ -117550,32 +117550,6 @@ impl BezierParallel2 {
         }
     }
 
-    /// Returns complete supporting-line contacts with exact crossing direction.
-    ///
-    /// Incidence is first isolated by [`Self::supporting_line_incidence`]. The
-    /// selected radical branch is then evaluated on each adjacent parameter
-    /// interval. Opposite exact side signs certify a crossing; equal signs
-    /// certify tangency. Endpoint roots use the analytic continuation of the
-    /// same polynomial/radical expression, so half-open winding ownership does
-    /// not guess from a sampled endpoint coordinate.
-    pub fn relation_to_supporting_line_with_contacts(
-        &self,
-        line: &LineSeg2,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierLineContactRelation>> {
-        self.relation_to_supporting_line_with_certified_contacts(
-            line,
-            None,
-            None,
-            &[],
-            false,
-            None,
-            None,
-            None,
-            policy,
-        )
-    }
-
     /// Uses a caller-certified direction plus one exact transverse contact
     /// and any exact tangencies on the same supporting line.  The certified
     /// crossing is divided from the squared incidence before isolation and
