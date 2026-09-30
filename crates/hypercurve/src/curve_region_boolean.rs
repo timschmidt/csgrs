@@ -189,6 +189,10 @@ struct RegionCarrier {
     selected_fiber_endpoint_points: Option<Arc<[CurvePoint2; 2]>>,
     image_is_injective: OnceLock<bool>,
     bounds: OnceLock<Classification<Aabb2>>,
+    /// Refined envelopes, one per [`CARRIER_BOUND_REFINEMENTS`] level. Each
+    /// is requested for every fragment of the carrier that the coarser
+    /// levels could not separate.
+    refined_bounds: [OnceLock<Classification<Aabb2>>; CARRIER_BOUND_REFINEMENTS.len()],
 }
 
 impl RegionCarrier {
@@ -1752,6 +1756,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
+            refined_bounds: Default::default(),
         });
         carriers.extend(boundary_carriers.iter().cloned().map(|mut carrier| {
             carrier.operand = CurveRegionBooleanOperand2::Second;
@@ -12643,6 +12648,24 @@ fn carrier_optional_outer_bounds_refined(
     refinement_steps: usize,
     policy: &CurveContext,
 ) -> Classification<Aabb2> {
+    let compute = || carrier_optional_outer_bounds_uncached(carrier, refinement_steps, policy);
+    // Level zero already shares `carrier.bounds`; cache only the refinements.
+    match CARRIER_BOUND_REFINEMENTS
+        .iter()
+        .position(|&steps| steps == refinement_steps)
+    {
+        Some(level) if refinement_steps != 0 => {
+            carrier.refined_bounds[level].get_or_init(compute).clone()
+        }
+        _ => compute(),
+    }
+}
+
+fn carrier_optional_outer_bounds_uncached(
+    carrier: &RegionCarrier,
+    refinement_steps: usize,
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
     let bounds = match &carrier.geometry {
         CurveSupport2::Line(chord) if chord.exact_line().is_none() => chord
             .conservative_local_bounds_refined(refinement_steps, policy)
@@ -12747,6 +12770,7 @@ fn build_parameterized_carrier(
         selected_fiber_endpoint_points,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
+        refined_bounds: Default::default(),
     }
 }
 

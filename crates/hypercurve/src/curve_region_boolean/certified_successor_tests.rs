@@ -188,6 +188,7 @@ fn selected_parameter_component_overlap_clips_in_both_boolean_orders() {
                     selected_fiber_endpoint_points: None,
                     image_is_injective: OnceLock::new(),
                     bounds: OnceLock::new(),
+                    refined_bounds: Default::default(),
                 }
             };
             let empty_first = CurveRegion2::empty();
@@ -330,6 +331,7 @@ fn selected_projective_overlap_clips_without_global_parameter_projection() {
                 selected_fiber_endpoint_points: None,
                 image_is_injective: OnceLock::new(),
                 bounds: OnceLock::new(),
+                refined_bounds: Default::default(),
             }
         };
         for correspondence in [
@@ -439,6 +441,7 @@ fn selected_general_overlap_clips_through_exact_projection() {
                 selected_fiber_endpoint_points: None,
                 image_is_injective: OnceLock::new(),
                 bounds: OnceLock::new(),
+                refined_bounds: Default::default(),
             }
         };
         let first_carrier = carrier(
@@ -590,6 +593,7 @@ fn boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts() {
                             selected_fiber_endpoint_points: None,
                             image_is_injective: OnceLock::new(),
                             bounds: OnceLock::new(),
+                            refined_bounds: Default::default(),
                         }],
                         first_carrier_count: 1,
                         authored_carrier_pair_count: 0,
@@ -664,6 +668,7 @@ fn algebraic_chord_carrier(
         selected_fiber_endpoint_points: None,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
+        refined_bounds: Default::default(),
     }
 }
 
@@ -1497,6 +1502,7 @@ fn algebraic_chord_carrier_retains_ordered_interior_splits() {
         selected_fiber_endpoint_points: None,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
+        refined_bounds: Default::default(),
     };
     let cut = |x, vertex| CarrierEvent {
         parameter: CurveParameter2::from_algebraic_chord(
@@ -2272,6 +2278,7 @@ fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {
                 selected_fiber_endpoint_points: None,
                 image_is_injective: OnceLock::new(),
                 bounds: OnceLock::new(),
+                refined_bounds: Default::default(),
             },
             RegionCarrier {
                 operand: CurveRegionBooleanOperand2::Second,
@@ -2286,6 +2293,7 @@ fn independent_field_collinear_chord_overlap_enters_all_boolean_topology() {
                 selected_fiber_endpoint_points: None,
                 image_is_injective: OnceLock::new(),
                 bounds: OnceLock::new(),
+                refined_bounds: Default::default(),
             },
         ];
         let empty_first = CurveRegion2::empty();
@@ -2480,6 +2488,7 @@ fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {
             selected_fiber_endpoint_points: None,
             image_is_injective: OnceLock::new(),
             bounds: OnceLock::new(),
+            refined_bounds: Default::default(),
         };
         let empty_first = CurveRegion2::empty();
         let empty_second = CurveRegion2::empty();
@@ -2641,6 +2650,7 @@ fn algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations() {
                             selected_fiber_endpoint_points: None,
                             image_is_injective: OnceLock::new(),
                             bounds: OnceLock::new(),
+                            refined_bounds: Default::default(),
                         },
                         RegionCarrier {
                             operand: CurveRegionBooleanOperand2::Second,
@@ -2655,6 +2665,7 @@ fn algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations() {
                             selected_fiber_endpoint_points: None,
                             image_is_injective: OnceLock::new(),
                             bounds: OnceLock::new(),
+                            refined_bounds: Default::default(),
                         },
                     ],
                     first_carrier_count: 1,
@@ -3289,6 +3300,7 @@ fn chord_parallel_pair_evidence(
                     selected_fiber_endpoint_points: None,
                     image_is_injective: OnceLock::new(),
                     bounds: OnceLock::new(),
+                    refined_bounds: Default::default(),
                 },
                 build_parameterized_carrier(
                     &fragment,
@@ -5227,6 +5239,7 @@ fn noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps() {
                         selected_fiber_endpoint_points: None,
                         image_is_injective: OnceLock::new(),
                         bounds: OnceLock::new(),
+                        refined_bounds: Default::default(),
                     },
                     RegionCarrier {
                         operand: CurveRegionBooleanOperand2::Second,
@@ -5241,6 +5254,7 @@ fn noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps() {
                         selected_fiber_endpoint_points: None,
                         image_is_injective: OnceLock::new(),
                         bounds: OnceLock::new(),
+                        refined_bounds: Default::default(),
                     },
                 ],
                 first_carrier_count: 1,
@@ -5449,6 +5463,7 @@ fn injective_test_carrier() -> RegionCarrier {
         selected_fiber_endpoint_points: None,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
+        refined_bounds: Default::default(),
     }
 }
 
@@ -5470,6 +5485,7 @@ fn noninjective_test_carrier() -> RegionCarrier {
         selected_fiber_endpoint_points: None,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
+        refined_bounds: Default::default(),
     }
 }
 
@@ -5530,6 +5546,7 @@ fn cusp_test_carrier(
         selected_fiber_endpoint_points: None,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
+        refined_bounds: Default::default(),
     }
 }
 
@@ -6449,6 +6466,7 @@ fn cusp_separated_parallel_contacts_are_not_declared_distinct() {
         selected_fiber_endpoint_points: None,
         image_is_injective: OnceLock::new(),
         bounds: OnceLock::new(),
+        refined_bounds: Default::default(),
     };
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for parameter in [&left, &right] {
