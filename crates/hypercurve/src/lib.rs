@@ -174,11 +174,12 @@ pub use curve::{
     CurveFamily2, CurveFillet2, CurveFilletContact2, CurveGeometry2, CurveParameterSide2,
     CurvePath2, CurveSpanRange2, CurveVector2, NativeBezierFragment2,
 };
+pub(crate) use curve_intersection::CurveIntersectionCandidates2;
 pub use curve_intersection::{
-    CurveIntersectionCandidates2, CurveIntersectionContact2, CurveIntersectionOverlap2,
-    CurveIntersectionPairBlocker2, CurveIntersectionPairBlockerKind2,
-    CurveIntersectionParameterComponent2, CurveIntersectionResult2, CurveIntersectionTopology2,
-    CurveLocation2, CurveOverlapOrientation2, CurveParameterSet2, CurvePointLocations2,
+    CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
+    CurveIntersectionPairBlockerKind2, CurveIntersectionParameterComponent2,
+    CurveIntersectionResult2, CurveIntersectionTopology2, CurveLocation2, CurveOverlapOrientation2,
+    CurveParameterSet2, CurvePointLocations2,
 };
 pub use curve_path_intersection::{
     CurvePathIntersectionBlocker2, CurvePathIntersectionContact2, CurvePathIntersectionOverlap2,

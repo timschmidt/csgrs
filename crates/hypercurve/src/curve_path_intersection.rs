@@ -260,9 +260,7 @@ impl<'a> CurvePathIntersectionContext<'a> {
         if let Some(blocker) = result.blockers().first() {
             let reason = match blocker.blocker().kind() {
                 CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-                CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
-                    UncertaintyReason::Predicate
-                }
+                CurveIntersectionPairBlockerKind2::IncompleteReplay => UncertaintyReason::Predicate,
                 CurveIntersectionPairBlockerKind2::SharedComponent => UncertaintyReason::Boundary,
             };
             return Err(ExactCurveError::blocked(

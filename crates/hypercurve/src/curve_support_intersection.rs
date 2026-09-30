@@ -1771,17 +1771,8 @@ impl Pair<'_> {
                 result,
             )?;
         }
-        if let Some(candidates) = evidence.incomplete_candidates() {
-            self.blocker(
-                result,
-                CurveIntersectionPairBlockerKind2::IncompleteReplay {
-                    candidates: if parallel_first {
-                        candidates.clone()
-                    } else {
-                        candidates.clone().swapped()
-                    },
-                },
-            );
+        if evidence.incomplete_candidates().is_some() {
+            self.blocker(result, CurveIntersectionPairBlockerKind2::IncompleteReplay);
         }
         Ok(())
     }
@@ -1825,13 +1816,8 @@ impl Pair<'_> {
                 result,
             )?;
         }
-        if let Some(candidates) = evidence.incomplete_candidates() {
-            self.blocker(
-                result,
-                CurveIntersectionPairBlockerKind2::IncompleteReplay {
-                    candidates: candidates.clone(),
-                },
-            );
+        if evidence.incomplete_candidates().is_some() {
+            self.blocker(result, CurveIntersectionPairBlockerKind2::IncompleteReplay);
         }
         Ok(())
     }

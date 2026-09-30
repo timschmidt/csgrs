@@ -998,7 +998,7 @@ impl CurveRegionIntersectionBlocker2 {
             RegionPairBlocker::IncompleteReplay => true,
             RegionPairBlocker::Common(blocker) => matches!(
                 blocker.kind(),
-                CurveIntersectionPairBlockerKind2::IncompleteReplay { .. }
+                CurveIntersectionPairBlockerKind2::IncompleteReplay
             ),
             _ => false,
         }
@@ -6157,7 +6157,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 let reason = match blocker {
                     RegionPairBlocker::Common(blocker) => match blocker.kind() {
                         crate::CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-                        crate::CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                        crate::CurveIntersectionPairBlockerKind2::IncompleteReplay => {
                             UncertaintyReason::Predicate
                         }
                         crate::CurveIntersectionPairBlockerKind2::SharedComponent => {

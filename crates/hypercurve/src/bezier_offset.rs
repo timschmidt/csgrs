@@ -117960,6 +117960,7 @@ impl BezierParallel2 {
         }))
     }
 
+    #[cfg(test)]
     /// Constructs complete polynomial parameter projections against another parallel.
     ///
     /// Let `Delta=Q-P`, homogeneous tangent numerators be `Hp,Hq`, squared
@@ -117978,7 +117979,7 @@ impl BezierParallel2 {
     /// an independent fallback basis. Projection remains unsigned candidate
     /// evidence; [`Self::parallel_intersections`] replays all three radical
     /// equations and their selected normal branches.
-    pub fn parallel_intersection_candidates(
+    pub(crate) fn parallel_intersection_candidates(
         &self,
         other: &Self,
         policy: &CurveContext,
@@ -120987,6 +120988,7 @@ impl BezierParallel2 {
         )
     }
 
+    #[cfg(test)]
     /// Constructs complete parameter projections for intersections with a rational Bezier.
     ///
     /// For target `Q(u)=A(u)/B(u)`, source `P(t)=(X(t)/W(t),Y(t)/W(t))`,
@@ -120997,7 +120999,7 @@ impl BezierParallel2 {
     /// projections are candidate evidence: exact contact replay must still
     /// pair roots and reject the opposite normal branch introduced by the
     /// squared distance equation.
-    pub fn intersection_candidates(
+    pub(crate) fn intersection_candidates(
         &self,
         other: &RationalBezier2,
         policy: &CurveContext,
@@ -121018,6 +121020,7 @@ impl BezierParallel2 {
             }))
     }
 
+    #[cfg(test)]
     fn intersection_candidate_system(
         &self,
         other: &RationalBezier2,

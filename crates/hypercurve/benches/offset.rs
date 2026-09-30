@@ -4,10 +4,9 @@ use std::time::Instant;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParallelVerificationOptions, BezierParameter2,
     BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2, CircularArc2,
-    Classification, CubicBezier2, Curve2, CurveContext, CurveIntersectionCandidates2,
-    CurveParameterRange2, CurvePath2, CurveRegion2, CurveRegionLoopRole, CurveResult, FillRule,
-    LineSeg2, OffsetCap, OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real,
-    Segment2, Similarity2,
+    Classification, CubicBezier2, Curve2, CurveContext, CurveParameterRange2, CurvePath2,
+    CurveRegion2, CurveRegionLoopRole, CurveResult, FillRule, LineSeg2, OffsetCap,
+    OffsetCornerStyle2, Point2, QuadraticBezier2, RationalBezier2, Real, Segment2, Similarity2,
 };
 
 fn s(value: i32) -> Real {
@@ -232,29 +231,6 @@ fn bench_bezier_parallel_intersections(
     iterations: u32,
 ) -> CurveResult<()> {
     let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut candidate_count = 0_usize;
-    for _ in 0..iterations {
-        let Classification::Decided(candidates) =
-            parallel.intersection_candidates(black_box(other), black_box(&policy))?
-        else {
-            panic!("{name} candidate projection became uncertain");
-        };
-        candidate_count += black_box(match candidates {
-            CurveIntersectionCandidates2::NoIntersection => 0,
-            CurveIntersectionCandidates2::Candidates {
-                first_parameters: parallel_parameters,
-                second_parameters: other_parameters,
-            } => parallel_parameters.len() + other_parameters.len(),
-            CurveIntersectionCandidates2::DegenerateResultant => 1,
-        });
-    }
-    let candidate_elapsed = started.elapsed();
-    println!(
-        "{name}_candidates: {iterations} iterations in {candidate_elapsed:?} ({:?}/iter), checksum={candidate_count}",
-        candidate_elapsed / iterations
-    );
-
     let parallel_curve = unit_parallel_curve(parallel)?;
     let other_curve = Curve2::from(other.clone());
     let started = Instant::now();
@@ -285,29 +261,6 @@ fn bench_bezier_parallel_pair_intersections(
     iterations: u32,
 ) -> CurveResult<()> {
     let policy = CurveContext::STRICT;
-    let started = Instant::now();
-    let mut candidate_count = 0_usize;
-    for _ in 0..iterations {
-        let Classification::Decided(candidates) =
-            first.parallel_intersection_candidates(black_box(second), black_box(&policy))?
-        else {
-            panic!("{name} candidate projection became uncertain");
-        };
-        candidate_count += black_box(match candidates {
-            CurveIntersectionCandidates2::NoIntersection => 0,
-            CurveIntersectionCandidates2::Candidates {
-                first_parameters,
-                second_parameters,
-            } => first_parameters.len() + second_parameters.len(),
-            CurveIntersectionCandidates2::DegenerateResultant => 1,
-        });
-    }
-    let candidate_elapsed = started.elapsed();
-    println!(
-        "{name}_candidates: {iterations} iterations in {candidate_elapsed:?} ({:?}/iter), checksum={candidate_count}",
-        candidate_elapsed / iterations
-    );
-
     let first_curve = unit_parallel_curve(first)?;
     let second_curve = unit_parallel_curve(second)?;
     let started = Instant::now();
@@ -490,25 +443,6 @@ fn bench_bezier_parallel_boundary_parameter_fiber(iterations: u32) -> CurveResul
     let parallel = QuadraticBezier2::new(p(0, 0), p(1, 0), p(2, 0)).parallel_left(s(1))?;
     let constant = RationalBezier2::try_new(vec![p(0, 1); 5], vec![s(1); 5])?;
     let policy = CurveContext::STRICT;
-
-    let started = Instant::now();
-    let mut candidate_count = 0_usize;
-    for _ in 0..iterations {
-        let Classification::Decided(candidates) =
-            parallel.intersection_candidates(black_box(&constant), black_box(&policy))?
-        else {
-            panic!("boundary parameter-fiber candidate projection became uncertain");
-        };
-        candidate_count += black_box(usize::from(matches!(
-            candidates,
-            CurveIntersectionCandidates2::DegenerateResultant
-        )));
-    }
-    let candidate_elapsed = started.elapsed();
-    println!(
-        "bezier_parallel_boundary_parameter_fiber_candidates: {iterations} iterations in {candidate_elapsed:?} ({:?}/iter), checksum={candidate_count}",
-        candidate_elapsed / iterations
-    );
 
     let parallel_curve = unit_parallel_curve(&parallel)?;
     let constant_curve = Curve2::from(constant.clone());

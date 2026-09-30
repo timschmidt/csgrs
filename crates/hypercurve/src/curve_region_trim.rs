@@ -369,7 +369,7 @@ impl<'a> PreparedTrimSource<'a> {
             let reason = if let Some(blocker) = blocker.pair_blocker() {
                 match blocker.kind() {
                     CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-                    CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                    CurveIntersectionPairBlockerKind2::IncompleteReplay => {
                         UncertaintyReason::Predicate
                     }
                     CurveIntersectionPairBlockerKind2::SharedComponent => {

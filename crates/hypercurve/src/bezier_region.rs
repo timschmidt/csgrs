@@ -10757,7 +10757,7 @@ impl CurveRegion2 {
                 if let Some(blocker) = intersections.blockers().first() {
                     let reason = match blocker.blocker().kind() {
                         CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-                        CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
+                        CurveIntersectionPairBlockerKind2::IncompleteReplay => {
                             UncertaintyReason::Predicate
                         }
                         CurveIntersectionPairBlockerKind2::SharedComponent => {
@@ -13253,9 +13253,7 @@ fn represented_boundary_loop_is_simple(
     {
         let reason = match blocker.blocker().kind() {
             CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-            CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
-                UncertaintyReason::Predicate
-            }
+            CurveIntersectionPairBlockerKind2::IncompleteReplay => UncertaintyReason::Predicate,
             CurveIntersectionPairBlockerKind2::SharedComponent => UncertaintyReason::Boundary,
         };
         return Ok(Classification::Uncertain(reason));

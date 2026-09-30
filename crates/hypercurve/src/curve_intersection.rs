@@ -557,7 +557,7 @@ impl PartialEq for CurveIntersectionOverlap2 {
 /// operand chart. Projection alone does not prove incidence: replay must pair
 /// roots, reject excluded poles and select the intended geometric branches.
 #[derive(Clone, Debug, PartialEq)]
-pub enum CurveIntersectionCandidates2 {
+pub(crate) enum CurveIntersectionCandidates2 {
     /// At least one projection has no root in the queried parameter domains.
     NoIntersection,
     /// Both projections contain every possible isolated contact parameter.
@@ -590,10 +590,7 @@ pub enum CurveIntersectionPairBlockerKind2 {
     /// A required predicate remained undecided under the active policy.
     Uncertain(UncertaintyReason),
     /// Candidate replay retained some contacts but not a complete pairing.
-    IncompleteReplay {
-        /// Complete unpaired resultant projections available for later replay.
-        candidates: CurveIntersectionCandidates2,
-    },
+    IncompleteReplay,
     /// Elimination found a shared algebraic component requiring overlap ownership.
     SharedComponent,
 }
@@ -2389,9 +2386,7 @@ impl CurveIntersectionContext {
         if let Some(blocker) = result.blockers().first() {
             let reason = match blocker.kind() {
                 CurveIntersectionPairBlockerKind2::Uncertain(reason) => *reason,
-                CurveIntersectionPairBlockerKind2::IncompleteReplay { .. } => {
-                    UncertaintyReason::Predicate
-                }
+                CurveIntersectionPairBlockerKind2::IncompleteReplay => UncertaintyReason::Predicate,
                 CurveIntersectionPairBlockerKind2::SharedComponent => UncertaintyReason::Boundary,
             };
             return Err(ExactCurveError::blocked(
