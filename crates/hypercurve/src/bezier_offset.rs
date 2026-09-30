@@ -83253,6 +83253,18 @@ impl BezierAlgebraicChord2 {
 }
 
 impl BezierAlgebraicChordParameter2 {
+    /// Returns which endpoint of this identical chord the parameter is, if
+    /// it is one.
+    pub(crate) fn endpoint_of(&self, chord: &BezierAlgebraicChord2) -> Option<bool> {
+        match &self.data {
+            BezierAlgebraicChordParameterStorage2::Endpoint {
+                chord: endpoint_chord,
+                at_end,
+            } if Arc::ptr_eq(&endpoint_chord.data, &chord.data) => Some(*at_end),
+            _ => None,
+        }
+    }
+
     /// Returns whether this is the named traversal endpoint of `chord` by
     /// retained identity. No coordinate equality or policy-terminal
     /// approximation participates in this topology query.

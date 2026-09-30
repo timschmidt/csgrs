@@ -6770,17 +6770,14 @@ fn operand_bounds_are_lazy_shared_and_policy_neutral() {
         let context = CurveRegionBooleanContext::try_new(&first, &intersecting, &policy).unwrap();
         // The right edge intersects the other operand's exact envelope at
         // every refinement. Replaying it cannot become an absence proof.
+        // Both operands are exact straight chords, so refinement cannot
+        // tighten either envelope after the decided level-zero overlap.
         for _ in 0..2 {
             assert!(!context.carrier_bounds_are_outside_other_region(1));
         }
-        assert!(
-            context.data.operand_bounds[1]
-                .get()
-                .unwrap()
-                .refinements
-                .iter()
-                .all(|bounds| { matches!(bounds.get(), Some(Some(_))) })
-        );
+        let refinements = &context.data.operand_bounds[1].get().unwrap().refinements;
+        assert!(matches!(refinements[0].get(), Some(Some(_))));
+        assert!(refinements[1..].iter().all(|bounds| bounds.get().is_none()));
 
         let empty = CurveRegion2::default();
         let context = CurveRegionBooleanContext::try_new(&first, &empty, &policy).unwrap();

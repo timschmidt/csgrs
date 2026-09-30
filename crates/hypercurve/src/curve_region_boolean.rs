@@ -167,6 +167,36 @@ const CARRIER_BOUND_REFINEMENTS: [usize; 10] = [0, 2, 4, 8, 16, 32, 64, 128, 256
 #[derive(Debug, Default)]
 struct RegionOperandBounds {
     refinements: [OnceLock<Option<Aabb2>>; CARRIER_BOUND_REFINEMENTS.len()],
+    /// Whether every carrier of this operand has an exact level-zero
+    /// envelope that refinement cannot tighten.
+    refinement_invariant: OnceLock<bool>,
+}
+
+/// An exactly straight carrier spanning its own exact endpoints (or exact
+/// scalar parameters of an exact line image) has its endpoint hull as the
+/// level-zero envelope; refinement cannot tighten it. Algebraic interior
+/// endpoints keep conservative boxes and do not qualify.
+fn carrier_bounds_refinement_invariant(carrier: &RegionCarrier) -> bool {
+    match &carrier.geometry {
+        CurveSupport2::Line(chord) => {
+            let endpoint = |parameter: &CurveParameter2| {
+                parameter
+                    .as_algebraic_chord()
+                    .and_then(|parameter| parameter.endpoint_of(chord))
+            };
+            chord.exact_line().is_some()
+                && matches!(
+                    (endpoint(&carrier.start), endpoint(&carrier.end)),
+                    (Some(start), Some(end)) if start != end
+                )
+        }
+        CurveSupport2::Bezier(BezierSubcurve2::Quadratic(curve)) => {
+            carrier.start.scalar().is_some()
+                && carrier.end.scalar().is_some()
+                && curve.retained_exact_line_image().is_some()
+        }
+        _ => false,
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -11787,10 +11817,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
             // union for every fragment is another Cartesian scan, even after
             // the pair broad phase has discarded all distant components.
             let other_bounds = self.data.operand_bounds[other_operand].get_or_init(Box::default);
+            // When both sides' envelopes are exact at level zero, refined
+            // levels repeat the same boxes; this optional shortcut stops there.
+            let invariant = carrier_bounds_refinement_invariant(carrier)
+                && *other_bounds.refinement_invariant.get_or_init(|| {
+                    self.data
+                        .carriers
+                        .iter()
+                        .filter(|other| other.operand != carrier.operand)
+                        .all(carrier_bounds_refinement_invariant)
+                });
+            // Set once a decided comparison has overlapped; refined levels of
+            // invariant envelopes would repeat it.
+            let mut decided_overlap = false;
             CARRIER_BOUND_REFINEMENTS
                 .into_iter()
                 .enumerate()
                 .any(|(level, refinement_steps)| {
+                    if invariant && decided_overlap {
+                        return false;
+                    }
                     let Classification::Decided(carrier_bounds) =
                         carrier_optional_outer_bounds_refined(
                             carrier,
@@ -11834,10 +11880,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         let _ = cell.set(accumulated);
                         cell.get().expect("the exact operand envelope was retained")
                     };
-                    other_bounds.as_ref().is_none_or(|other_bounds| {
+                    let disjoint = other_bounds.as_ref().is_none_or(|other_bounds| {
                         carrier_bounds.overlaps(other_bounds, &self.data.policy)
                             == Classification::Decided(false)
-                    })
+                    });
+                    decided_overlap = !disjoint;
+                    disjoint
                 })
         })
     }
