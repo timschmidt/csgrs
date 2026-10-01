@@ -580,7 +580,7 @@ pub fn bivariate_bilinear_factorizations_bounded(
 }
 
 /// Returns the four coefficients of a bilinear polynomial.
-pub fn bivariate_bilinear_coefficients(polynomial: &BivariatePolynomial) -> Option<[Real; 4]> {
+fn bivariate_bilinear_coefficients(polynomial: &BivariatePolynomial) -> Option<[Real; 4]> {
     if polynomial.coefficients.len() > 2
         || polynomial
             .coefficients
@@ -741,6 +741,277 @@ fn positive_divisors(value: u64) -> Vec<u64> {
     high.reverse();
     low.extend(high);
     low
+}
+
+/// Returns one `(axis, retained)` bivariate coefficient slice at a fixed power
+/// of the other coefficient coordinate.
+pub fn trivariate_axis_lift_power_slice(
+    coefficients: &[BivariatePolynomial],
+    lift_coordinate: usize,
+    lift_power: usize,
+) -> Option<BivariatePolynomial> {
+    if lift_coordinate >= 2 {
+        return None;
+    }
+    let retained_count = if lift_coordinate == 0 {
+        coefficients
+            .iter()
+            .flat_map(|coefficient| &coefficient.coefficients)
+            .map(Vec::len)
+            .max()?
+    } else {
+        coefficients
+            .iter()
+            .map(|coefficient| coefficient.coefficients.len())
+            .max()?
+    };
+    let mut slice = vec![vec![Real::zero(); retained_count]; coefficients.len()];
+    for (coefficient, target_row) in coefficients.iter().zip(&mut slice) {
+        for (retained_power, target) in target_row.iter_mut().enumerate() {
+            let value = if lift_coordinate == 0 {
+                coefficient
+                    .coefficients
+                    .get(lift_power)
+                    .and_then(|row| row.get(retained_power))
+            } else {
+                coefficient
+                    .coefficients
+                    .get(retained_power)
+                    .and_then(|row| row.get(lift_power))
+            };
+            if let Some(value) = value {
+                *target = value.clone();
+            }
+        }
+    }
+    Some(BivariatePolynomial::new(slice))
+}
+
+/// Returns the degree of an axis lift.
+pub fn trivariate_axis_lift_degree(
+    coefficients: &[BivariatePolynomial],
+    lift_coordinate: usize,
+) -> Option<usize> {
+    let count = if lift_coordinate == 0 {
+        coefficients
+            .iter()
+            .map(|coefficient| coefficient.coefficients.len())
+            .max()?
+    } else {
+        coefficients
+            .iter()
+            .flat_map(|coefficient| &coefficient.coefficients)
+            .map(Vec::len)
+            .max()?
+    };
+    (0..count).rev().find(|power| {
+        trivariate_axis_lift_power_slice(coefficients, lift_coordinate, *power)
+            .and_then(|slice| bivariate_exact_nonzero_metadata(&slice))
+            .is_some_and(|metadata| metadata.is_some())
+    })
+}
+
+/// Returns the constant or first-order Taylor slice after translating the lift
+/// coordinate by `anchor`.
+pub fn trivariate_axis_lift_taylor_slice(
+    coefficients: &[BivariatePolynomial],
+    lift_coordinate: usize,
+    anchor: &Real,
+    derivative: bool,
+) -> Option<BivariatePolynomial> {
+    let retained_count = if lift_coordinate == 0 {
+        coefficients
+            .iter()
+            .flat_map(|coefficient| &coefficient.coefficients)
+            .map(Vec::len)
+            .max()?
+    } else {
+        coefficients
+            .iter()
+            .map(|coefficient| coefficient.coefficients.len())
+            .max()?
+    };
+    let lift_count = if lift_coordinate == 0 {
+        coefficients
+            .iter()
+            .map(|coefficient| coefficient.coefficients.len())
+            .max()?
+    } else {
+        coefficients
+            .iter()
+            .flat_map(|coefficient| &coefficient.coefficients)
+            .map(Vec::len)
+            .max()?
+    };
+    let mut slice = vec![vec![Real::zero(); retained_count]; coefficients.len()];
+    for (coefficient, target_row) in coefficients.iter().zip(&mut slice) {
+        for (retained_power, target) in target_row.iter_mut().enumerate() {
+            let mut fiber = Vec::with_capacity(lift_count);
+            for lift_power in 0..lift_count {
+                let value = if lift_coordinate == 0 {
+                    coefficient
+                        .coefficients
+                        .get(lift_power)
+                        .and_then(|row| row.get(retained_power))
+                } else {
+                    coefficient
+                        .coefficients
+                        .get(retained_power)
+                        .and_then(|row| row.get(lift_power))
+                };
+                fiber.push(value.cloned().unwrap_or_else(Real::zero));
+            }
+            if derivative {
+                fiber = fiber
+                    .into_iter()
+                    .enumerate()
+                    .skip(1)
+                    .map(|(power, coefficient)| {
+                        Some(coefficient * Real::from(i64::try_from(power).ok()?))
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+            }
+            *target = Real::eval_poly(&fiber, anchor);
+        }
+    }
+    Some(BivariatePolynomial::new(slice))
+}
+
+/// Returns the rational scale of a multi-affine lift.
+pub fn rational_multi_affine_lift_scale(
+    first_taylor_slice: &BivariatePolynomial,
+    anchor_factor: &BivariatePolynomial,
+    top_factor: &BivariatePolynomial,
+    anchor_quotient: &BivariatePolynomial,
+) -> Option<Real> {
+    let base = try_bivariate_multiply(top_factor, anchor_quotient)?;
+    for retained in [0_i8, 1, -1, 2, -2, 3, -3].map(Real::from) {
+        let constant = Real::eval_poly(&anchor_factor.coefficients[0], &retained);
+        let linear = Real::eval_poly(&anchor_factor.coefficients[1], &retained);
+        if !matches!(
+            strict_real_sign(&linear),
+            Some(RealSign::Negative | RealSign::Positive)
+        ) {
+            continue;
+        }
+        let Some(root) = (-constant / &linear).ok() else {
+            continue;
+        };
+        let denominator = bivariate_evaluate_exact(&base, &root, &retained);
+        if !matches!(
+            strict_real_sign(&denominator),
+            Some(RealSign::Negative | RealSign::Positive)
+        ) {
+            continue;
+        }
+        let numerator = bivariate_evaluate_exact(first_taylor_slice, &root, &retained);
+        let Some(scale) = (numerator / denominator).ok() else {
+            continue;
+        };
+        if matches!(
+            strict_real_sign(&scale),
+            Some(RealSign::Negative | RealSign::Positive)
+        ) {
+            return Some(scale);
+        }
+    }
+    None
+}
+
+/// Returns the factor coefficients of a multi-affine lift.
+pub fn rational_multi_affine_lift_factor_coefficients(
+    anchor_factor: &BivariatePolynomial,
+    top_factor: &BivariatePolynomial,
+    scale: &Real,
+    anchor: &Real,
+    lift_coordinate: usize,
+) -> Option<[BivariatePolynomial; 2]> {
+    let mut result =
+        std::array::from_fn(|_| BivariatePolynomial::new(vec![vec![Real::zero(); 2]; 2]));
+    for (axis_power, target) in result.iter_mut().enumerate() {
+        for retained_power in 0..2 {
+            let at_anchor = anchor_factor
+                .coefficients
+                .get(axis_power)
+                .and_then(|row| row.get(retained_power))
+                .cloned()
+                .unwrap_or_else(Real::zero);
+            let lift = top_factor
+                .coefficients
+                .get(axis_power)
+                .and_then(|row| row.get(retained_power))
+                .cloned()
+                .unwrap_or_else(Real::zero)
+                * scale;
+            let constant = at_anchor - anchor * &lift;
+            if lift_coordinate == 0 {
+                target.coefficients[0][retained_power] = constant;
+                target.coefficients[1][retained_power] = lift;
+            } else if lift_coordinate == 1 {
+                target.coefficients[retained_power][0] = constant;
+                target.coefficients[retained_power][1] = lift;
+            } else {
+                return None;
+            }
+        }
+    }
+    Some(result)
+}
+
+/// Aligns three projective slice factors exactly. If `A`, `B`, and `T` are
+/// factors at two lift anchors and at the highest lift coefficient, then
+/// `s_b*B-s_a*A-(b-a)*s_t*T=0`. A nonzero right null vector gives the exact
+/// lift scale `s_t/s_a`; complete tensor division remains the authority.
+pub fn rational_multi_affine_lift_scale_from_anchor_pair(
+    anchor_factor: &BivariatePolynomial,
+    other_factor: &BivariatePolynomial,
+    top_factor: &BivariatePolynomial,
+    anchor_delta: &Real,
+) -> Option<Real> {
+    let anchor = bivariate_bilinear_coefficients(anchor_factor)?;
+    let other = bivariate_bilinear_coefficients(other_factor)?;
+    let top = bivariate_bilinear_coefficients(top_factor)?;
+    let rows: [[Real; 3]; 4] = std::array::from_fn(|index| {
+        [
+            other[index].clone(),
+            -anchor[index].clone(),
+            -(anchor_delta * &top[index]),
+        ]
+    });
+    for first in 0..rows.len() {
+        for second in first + 1..rows.len() {
+            let scales = [
+                &rows[first][1] * &rows[second][2] - &rows[first][2] * &rows[second][1],
+                &rows[first][2] * &rows[second][0] - &rows[first][0] * &rows[second][2],
+                &rows[first][0] * &rows[second][1] - &rows[first][1] * &rows[second][0],
+            ];
+            if scales
+                .iter()
+                .all(|scale| strict_real_sign(scale) == Some(RealSign::Zero))
+            {
+                continue;
+            }
+            let relation_holds = rows.iter().all(|row| {
+                strict_real_sign(
+                    &(&row[0] * &scales[0] + &row[1] * &scales[1] + &row[2] * &scales[2]),
+                ) == Some(RealSign::Zero)
+            });
+            if !relation_holds
+                || strict_real_sign(&scales[1]) == Some(RealSign::Zero)
+                || strict_real_sign(&scales[2]) == Some(RealSign::Zero)
+            {
+                continue;
+            }
+            let scale = (&scales[2] / &scales[1]).ok()?;
+            if matches!(
+                strict_real_sign(&scale),
+                Some(RealSign::Negative | RealSign::Positive)
+            ) {
+                return Some(scale);
+            }
+        }
+    }
+    None
 }
 
 #[cfg(test)]

@@ -70,6 +70,7 @@ pub mod solver_block;
 pub mod sparse_pattern;
 pub mod symbolic;
 pub mod tensor_resultant;
+pub mod tensor_support;
 #[cfg(test)]
 mod test_support;
 
