@@ -84,6 +84,18 @@ use hypersolve::exact_factor::{
     rational_multi_affine_lift_scale_from_anchor_pair, trivariate_axis_lift_degree,
     trivariate_axis_lift_power_slice, trivariate_axis_lift_taylor_slice,
 };
+use hypersolve::represented_root::{
+    NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, dense_tensor_interval,
+    dense_tensor_interval_with_coefficient_precision,
+    dense_tensor_interval_with_coefficient_precision_and_source_witnesses,
+    refined_represented_root, represented_affine_coordinate, represented_affine_tensor_basis,
+    represented_dense_value_refined, represented_dense_value_with_coefficient_precision,
+    represented_ratio, represented_roots_strictly_equal, represented_strict_order,
+    represented_strict_sign, represented_tensor_coordinate, represented_tensor_coordinate_refined,
+    represented_tensor_nested_interval, represented_tensor_nested_value_refined,
+    represented_univariate_coordinate, represented_vector_dot_cross,
+    represented_zero_offset_unit_scales,
+};
 use hypersolve::tensor_support::{
     bivariate_dense_tensor, bivariate_tensor_with_output_axis,
     dense_reduce_selected_tuple_relations, dense_tensor_with_output_axis, try_clone_dense_tensor,
@@ -91,7 +103,6 @@ use hypersolve::tensor_support::{
 use hypersolve::tensor_support::{
     dense_last_axis_coefficient, dense_last_axis_derivative, dense_reduce_selected_root_relations,
     dense_specialize_last_axis, dense_tensor_embed_axes, dense_tensor_from_polynomial_coefficients,
-    rational_tensor_constant,
 };
 use std::borrow::Cow;
 use std::ops::ControlFlow;
@@ -151,16 +162,14 @@ use hypersolve::{
     reduce_bivariate_rational_function_at_algebraic_parameter,
 };
 use hypersolve::{
-    AlgebraicRootAffineTransformStatus, AlgebraicRootComparisonStatus,
-    AlgebraicRootMobiusTransformStatus, AlgebraicRootRefinementComparisonConfig,
-    AlgebraicRootRepresentation, AlgebraicRootSquareRootStatus, AlgebraicTensorImageStatus,
-    DenseTensorPolynomial, IsolatedRootInterval, OrderedFieldPolynomialContext,
-    OrderedFieldRootIsolationConfig, OrderedFieldRootIsolationStatus,
-    algebraic_root_affine_relation, compare_algebraic_root_representations_by_difference,
+    AlgebraicRootComparisonStatus, AlgebraicRootMobiusTransformStatus,
+    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
+    AlgebraicRootSquareRootStatus, DenseTensorPolynomial, IsolatedRootInterval,
+    OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
+    OrderedFieldRootIsolationStatus, algebraic_root_affine_relation,
     compare_algebraic_root_representations_with_refinement, divide_univariate_polynomial_exact,
     greatest_common_divisor_univariate_polynomials_exact, isolate_ordered_field_polynomial_roots,
-    project_selected_tensor_fiber_via_tagged_norm, represent_algebraic_tensor_image,
-    square_root_algebraic_root_representation, transform_algebraic_root_affine,
+    project_selected_tensor_fiber_via_tagged_norm, square_root_algebraic_root_representation,
     transform_algebraic_root_mobius, validate_algebraic_root_representation,
 };
 use hypersolve::{
@@ -168,11 +177,10 @@ use hypersolve::{
     BivariatePolynomialComponentStatus, CurveIntersectionParameterLiftMap,
     CurveIntersectionParameterLiftReport, CurveIntersectionParameterLiftStatus,
     CurveIntersectionResultantConfig, CurveIntersectionResultantStatus, CurveResultantParameter,
-    RationalParametricCurve2, RootIsolationConfig, divide_bivariate_polynomial_exact,
+    RationalParametricCurve2, divide_bivariate_polynomial_exact,
     extract_bivariate_polynomial_system_axis_factors,
     linear_parameter_lifts_bivariate_polynomial_system,
-    parameter_component_bivariate_polynomial_system,
-    refine_isolated_univariate_polynomial_interval, resultant_bivariate_polynomial_system,
+    parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
     subresultant_chain_univariate_polynomials,
 };
 use hypersolve::{
@@ -3727,8 +3735,12 @@ fn represented_biaffine_ratio(
         let Some(interval) = numerator.divide(&denominator) else {
             continue;
         };
-        match represented_univariate_coordinate(&coefficients, &interval.lower, &interval.upper, &x)
-        {
+        match Classification::from(represented_univariate_coordinate(
+            &coefficients,
+            &interval.lower,
+            &interval.upper,
+            &x,
+        )) {
             Classification::Decided(parameter) => return Classification::Decided(parameter),
             Classification::Uncertain(reason) => last_reason = reason,
         }
@@ -3750,13 +3762,13 @@ impl BezierRepresentedQuadraticConicInverse2 {
         for endpoint_sign in [Real::one(), Real::from(-1_i8)] {
             let radial_scale = &self.signed_radius * &endpoint_sign;
             let coordinate = |axis: usize| {
-                represented_affine_coordinate(
+                Classification::from(represented_affine_coordinate(
                     &[
                         (&self.center[axis], &Real::one()),
                         (&self.unit_radial[axis], &radial_scale),
                     ],
                     &Real::zero(),
-                )
+                ))
             };
             let (x, y) = match (coordinate(0), coordinate(1)) {
                 (Classification::Decided(x), Classification::Decided(y)) => (x, y),
@@ -11609,13 +11621,15 @@ fn algebraic_chord_point_coordinate_order_fallback(
         represented_point_evidence_coordinates(second, policy),
     ) {
         let coordinate_index = usize::from(axis == Axis2::Y);
-        if let Classification::Decided(difference) = represented_affine_coordinate(
-            &[
-                (&first_coordinates[coordinate_index], &Real::one()),
-                (&second_coordinates[coordinate_index], &Real::from(-1_i8)),
-            ],
-            &Real::zero(),
-        ) && let Some(sign) = represented_strict_sign(&difference)
+        if let Classification::Decided(difference) =
+            Classification::from(represented_affine_coordinate(
+                &[
+                    (&first_coordinates[coordinate_index], &Real::one()),
+                    (&second_coordinates[coordinate_index], &Real::from(-1_i8)),
+                ],
+                &Real::zero(),
+            ))
+            && let Some(sign) = represented_strict_sign(&difference)
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -11907,8 +11921,8 @@ fn represented_chord_parameter_coordinates(
     let (Some(x), Some(y)) = (coordinate(0, 2), coordinate(1, 3)) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let x = represented_dense_value_refined(&x, &sources);
-    let y = represented_dense_value_refined(&y, &sources);
+    let x = Classification::from(represented_dense_value_refined(&x, &sources));
+    let y = Classification::from(represented_dense_value_refined(&y, &sources));
     Ok(match (x, y) {
         (Classification::Decided(x), Classification::Decided(y)) => {
             Classification::Decided([x, y].map(|coordinate| {
@@ -12056,10 +12070,10 @@ fn represented_chord_direction_speed(
         }
     };
     let difference = |end: &AlgebraicRootRepresentation, start: &AlgebraicRootRepresentation| {
-        represented_affine_coordinate(
+        Classification::from(represented_affine_coordinate(
             &[(end, &Real::one()), (start, &Real::from(-1_i8))],
             &Real::zero(),
-        )
+        ))
     };
     let dx = match difference(&end[0], &start[0]) {
         Classification::Decided(dx) => dx,
@@ -12085,19 +12099,21 @@ fn represented_chord_direction_speed(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let norm_squared =
-        match represented_vector_dot_cross(&[dx.clone(), dy.clone()], &[dx.clone(), dy.clone()]) {
-            Classification::Decided([norm_squared, _]) => norm_squared,
-            Classification::Uncertain(reason) => {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "represented-chord-direction-speed-blocker",
-                    "norm-squared",
-                );
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let norm_squared = match Classification::from(represented_vector_dot_cross(
+        &[dx.clone(), dy.clone()],
+        &[dx.clone(), dy.clone()],
+    )) {
+        Classification::Decided([norm_squared, _]) => norm_squared,
+        Classification::Uncertain(reason) => {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "represented-chord-direction-speed-blocker",
+                "norm-squared",
+            );
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
     let speed = square_root_algebraic_root_representation(&norm_squared, 1);
     let speed = match speed.status {
         AlgebraicRootSquareRootStatus::Transformed => speed
@@ -12157,7 +12173,10 @@ fn represented_chord_support_direction_speed(
     if !Arc::ptr_eq(&support.data, &chord.data) && chord.retained_support_orientation_is_reversed()
     {
         let negate = |coordinate: &AlgebraicRootRepresentation| {
-            represented_affine_coordinate(&[(coordinate, &Real::from(-1_i8))], &Real::zero())
+            Classification::from(represented_affine_coordinate(
+                &[(coordinate, &Real::from(-1_i8))],
+                &Real::zero(),
+            ))
         };
         dx = match negate(&dx) {
             Classification::Decided(dx) => dx,
@@ -12373,25 +12392,27 @@ fn represented_chord_unit_direction(
     };
     let (direction_x, direction_y) = match direction {
         BezierAlgebraicChordUnitDisplacement2::LeftNormal => {
-            let direction_x =
-                match represented_affine_coordinate(&[(&dy, &Real::from(-1_i8))], &Real::zero()) {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        #[cfg(feature = "dispatch-trace")]
-                        hyperreal::dispatch_trace::record(
-                            "hypercurve",
-                            "represented-chord-unit-direction-blocker",
-                            "normal-negation",
-                        );
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let direction_x = match Classification::from(represented_affine_coordinate(
+                &[(&dy, &Real::from(-1_i8))],
+                &Real::zero(),
+            )) {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "represented-chord-unit-direction-blocker",
+                        "normal-negation",
+                    );
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             (direction_x, dx)
         }
         BezierAlgebraicChordUnitDisplacement2::Tangent => (dx, dy),
     };
-    let x = represented_ratio(&direction_x, &speed);
-    let y = represented_ratio(&direction_y, &speed);
+    let x = Classification::from(represented_ratio(&direction_x, &speed));
+    let y = Classification::from(represented_ratio(&direction_y, &speed));
     let independent = match (x, y) {
         (Classification::Decided(x), Classification::Decided(y)) => {
             Classification::Decided([x, y].map(|coordinate| {
@@ -14688,9 +14709,9 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
             .strict_predicate_pass(|| represented_point_evidence_coordinates(point, policy))?
     {
         let offset = -(coefficient_x * origin.x() + coefficient_y * origin.y());
-        if let Classification::Decided(projection) =
-            represented_affine_coordinate(&[(&x, coefficient_x), (&y, coefficient_y)], &offset)
-            && let Some(sign) = represented_strict_sign(&projection)
+        if let Classification::Decided(projection) = Classification::from(
+            represented_affine_coordinate(&[(&x, coefficient_x), (&y, coefficient_y)], &offset),
+        ) && let Some(sign) = represented_strict_sign(&projection)
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -16028,7 +16049,7 @@ fn represented_point_evidence_oriented_side(
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let cross = dense_reduce_selected_root_relations(cross.clone(), &sources).unwrap_or(cross);
-    let cross = match represented_dense_value_refined(&cross, &sources) {
+    let cross = match Classification::from(represented_dense_value_refined(&cross, &sources)) {
         Classification::Decided(cross) => cross,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));

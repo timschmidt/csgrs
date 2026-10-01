@@ -345,3 +345,17 @@ pub(crate) fn at_unit_interval_endpoint(value: &Real, policy: &CurveContext) -> 
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x().clone(), point.y().clone())
 }
+
+impl<T> From<hypersolve::RepresentedOutcome<T>> for Classification<T> {
+    fn from(outcome: hypersolve::RepresentedOutcome<T>) -> Self {
+        match outcome {
+            hypersolve::RepresentedOutcome::Decided(value) => Self::Decided(value),
+            hypersolve::RepresentedOutcome::Unsupported => {
+                Self::Uncertain(UncertaintyReason::Unsupported)
+            }
+            hypersolve::RepresentedOutcome::Undecided => {
+                Self::Uncertain(UncertaintyReason::Predicate)
+            }
+        }
+    }
+}

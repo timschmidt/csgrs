@@ -31,7 +31,7 @@ proptest = "1"
 
 [features]
 default = []
-dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace"]
+dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace", "hypersolve/dispatch-trace"]
 triangulation = ["dep:hypertri"]
 svg = ["dep:svg", "dep:svgtypes", "hyperreal/serde"]
 hershey = []

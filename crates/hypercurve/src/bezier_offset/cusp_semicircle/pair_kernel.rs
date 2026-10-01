@@ -681,17 +681,17 @@ impl BezierAlgebraicCuspSemicircle2 {
                 * Real::from(radial_cross_orientation)
                 * &source_metric_scale
                 / two_turn_product)?;
-            let dot = match represented_affine_coordinate(
+            let dot = match Classification::from(represented_affine_coordinate(
                 &[(&source_data.tangent_dot, &dot_scale)],
                 &Real::zero(),
-            ) {
+            )) {
                 Classification::Decided(dot) => dot,
                 Classification::Uncertain(_) => return Ok(None),
             };
-            let oriented_cross = match represented_affine_coordinate(
+            let oriented_cross = match Classification::from(represented_affine_coordinate(
                 &[(&source_data.tangent_cross, &oriented_cross_scale)],
                 &Real::zero(),
-            ) {
+            )) {
                 Classification::Decided(cross) => cross,
                 Classification::Uncertain(_) => return Ok(None),
             };
@@ -1017,19 +1017,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                 &first_contact_radial[1] - &dy,
             ];
             let point = [
-                match represented_affine_coordinate(
+                match Classification::from(represented_affine_coordinate(
                     &[(&first_frame.center[0], &Real::one())],
                     &first_contact_radial[0],
-                ) {
+                )) {
                     Classification::Decided(value) => value,
                     Classification::Uncertain(reason) => {
                         return Ok(Some(Classification::Uncertain(reason)));
                     }
                 },
-                match represented_affine_coordinate(
+                match Classification::from(represented_affine_coordinate(
                     &[(&first_frame.center[1], &Real::one())],
                     &first_contact_radial[1],
-                ) {
+                )) {
                     Classification::Decided(value) => value,
                     Classification::Uncertain(reason) => {
                         return Ok(Some(Classification::Uncertain(reason)));
@@ -1307,7 +1307,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let q_value = match represented_dense_value_refined(&q, &sources) {
+        let q_value = match Classification::from(represented_dense_value_refined(&q, &sources)) {
             Classification::Decided(value) => value,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -1335,12 +1335,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         }
-        let discriminant_value = match represented_dense_value_refined(&discriminant, &sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let discriminant_value =
+            match Classification::from(represented_dense_value_refined(&discriminant, &sources)) {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let discriminant_sign = represented_strict_sign(&discriminant_value);
         let branches: &[i8] = match discriminant_sign {
             Some(RealSign::Negative) => {
@@ -1354,12 +1355,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         };
-        let radial_dot_value = match represented_dense_value_refined(&radial_dot, &sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let radial_dot_value =
+            match Classification::from(represented_dense_value_refined(&radial_dot, &sources)) {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let turn_product = self.turn_sign() * other.turn_sign();
         let zero = constant(&Real::zero())
             .expect("a represented circle-pair tensor has its zero polynomial");
@@ -1571,19 +1573,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                     ),
                 )
             } else {
-                let tangent_cross = match represented_affine_coordinate(
+                let tangent_cross = match Classification::from(represented_affine_coordinate(
                     &[(&signed_radical, &turn_product)],
                     &Real::zero(),
-                ) {
+                )) {
                     Classification::Decided(value) => value,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let tangent_dot = match represented_affine_coordinate(
+                let tangent_dot = match Classification::from(represented_affine_coordinate(
                     &[(&radial_dot_value, &turn_product)],
                     &Real::zero(),
-                ) {
+                )) {
                     Classification::Decided(value) => value,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));

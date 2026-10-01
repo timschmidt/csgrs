@@ -237,11 +237,11 @@ pub(super) fn dense_polynomial_tuple_sign_owned(
                     policy.permits_approximate_512(),
                 );
             }
-            represented_dense_value_with_coefficient_precision(
+            Classification::from(represented_dense_value_with_coefficient_precision(
                 &value,
                 &refined,
                 coefficient_precision,
-            )
+            ))
         };
         if let Classification::Decided(represented) = &represented
             && let Some(sign) = represented_strict_sign(represented)

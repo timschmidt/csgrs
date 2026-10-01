@@ -3003,10 +3003,10 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let difference = |point: &AlgebraicRootRepresentation,
                           center: &AlgebraicRootRepresentation| {
-            represented_affine_coordinate(
+            Classification::from(represented_affine_coordinate(
                 &[(point, &Real::one()), (center, &Real::from(-1_i8))],
                 &Real::zero(),
-            )
+            ))
         };
         let (Classification::Decided(dx), Classification::Decided(dy)) = (
             difference(&point[0], &frame.center[0]),
@@ -3014,24 +3014,28 @@ impl BezierAlgebraicCuspSemicircle2 {
         ) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         };
-        let [dot, cross] = match represented_vector_dot_cross(&frame.unit_radial, &[dx, dy]) {
-            Classification::Decided(products) => products,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let dot =
-            match represented_affine_coordinate(&[(&dot, &frame.signed_radius)], &Real::zero()) {
-                Classification::Decided(dot) => dot,
+        let [dot, cross] =
+            match Classification::from(represented_vector_dot_cross(&frame.unit_radial, &[dx, dy]))
+            {
+                Classification::Decided(products) => products,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
+        let dot = match Classification::from(represented_affine_coordinate(
+            &[(&dot, &frame.signed_radius)],
+            &Real::zero(),
+        )) {
+            Classification::Decided(dot) => dot,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         let oriented_cross_scale = &frame.signed_radius * self.turn_sign();
-        let oriented_cross = match represented_affine_coordinate(
+        let oriented_cross = match Classification::from(represented_affine_coordinate(
             &[(&cross, &oriented_cross_scale)],
             &Real::zero(),
-        ) {
+        )) {
             Classification::Decided(cross) => cross,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));

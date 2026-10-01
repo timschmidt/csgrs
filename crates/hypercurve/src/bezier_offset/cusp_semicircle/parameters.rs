@@ -121,7 +121,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let data = self.represented_oblique_contact(contact)?;
         let center_scale = Real::one() - radial_scale;
         let negative_perpendicular = -perpendicular_scale.clone();
-        let x = represented_affine_coordinate(
+        let x = Classification::from(represented_affine_coordinate(
             &[
                 (&data.point[0], radial_scale),
                 (&data.point[1], &negative_perpendicular),
@@ -129,8 +129,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 (&system.center[1], perpendicular_scale),
             ],
             translation_x,
-        );
-        let y = represented_affine_coordinate(
+        ));
+        let y = Classification::from(represented_affine_coordinate(
             &[
                 (&data.point[0], perpendicular_scale),
                 (&data.point[1], radial_scale),
@@ -138,7 +138,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 (&system.center[1], &center_scale),
             ],
             translation_y,
-        );
+        ));
         Ok(match (x, y) {
             (Classification::Decided(x), Classification::Decided(y)) => {
                 Classification::Decided([x, y].map(|coordinate| {
@@ -180,12 +180,13 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let discriminant_value = match represented_dense_value_refined(&discriminant, &sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let discriminant_value =
+            match Classification::from(represented_dense_value_refined(&discriminant, &sources)) {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let radical =
             square_root_algebraic_root_representation(&discriminant_value, contact.branch);
         let signed_radical = match radical.status {
@@ -343,13 +344,13 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     ) -> CurveResult<Classification<RealSign>> {
         let data = self.represented_oblique_contact(contact)?;
         Ok(
-            match represented_affine_coordinate(
+            match Classification::from(represented_affine_coordinate(
                 &[
                     (&data.tangent_cross, cross_scale),
                     (&data.tangent_dot, dot_scale),
                 ],
                 &Real::zero(),
-            ) {
+            )) {
                 Classification::Decided(value) => represented_policy_sign(&value, policy),
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
@@ -382,12 +383,13 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let Some(discriminant) = bivariate_tensor_with_output_axis(&system.discriminant) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let discriminant_value = match represented_dense_value_refined(&discriminant, &sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let discriminant_value =
+            match Classification::from(represented_dense_value_refined(&discriminant, &sources)) {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         let radical =
             square_root_algebraic_root_representation(&discriminant_value, contact.branch);
         let radical = match radical.status {
@@ -1821,7 +1823,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign))
         } else if let Some(system) = self.represented_oblique_system() {
             let point = &self.represented_oblique_contact(contact)?.point;
-            match represented_affine_coordinate(
+            match Classification::from(represented_affine_coordinate(
                 &[
                     (&point[0], px),
                     (&point[1], py),
@@ -1829,7 +1831,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     (&system.center[1], cy),
                 ],
                 offset,
-            ) {
+            )) {
                 Classification::Decided(predicate) => represented_policy_sign(&predicate, policy),
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             }
@@ -7473,13 +7475,13 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             ));
         };
         Ok(
-            match represented_affine_coordinate(
+            match Classification::from(represented_affine_coordinate(
                 &[
                     (&data.tangent_cross, cross_scale),
                     (&data.tangent_dot, dot_scale),
                 ],
                 &Real::zero(),
-            ) {
+            )) {
                 Classification::Decided(value) => represented_policy_sign(&value, policy),
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
@@ -7598,14 +7600,14 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             {
                 let delta_x = radial_scale * &radial[0] - perpendicular_scale * &radial[1];
                 let delta_y = perpendicular_scale * &radial[0] + radial_scale * &radial[1];
-                let x = represented_affine_coordinate(
+                let x = Classification::from(represented_affine_coordinate(
                     &[(&center[0], center_bias)],
                     &(translation_x + delta_x),
-                );
-                let y = represented_affine_coordinate(
+                ));
+                let y = Classification::from(represented_affine_coordinate(
                     &[(&center[1], center_bias)],
                     &(translation_y + delta_y),
-                );
+                ));
                 return Ok(match (x, y) {
                     (Classification::Decided(x), Classification::Decided(y)) => {
                         Classification::Decided([x, y])
@@ -7619,7 +7621,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             }
             let center_scale = center_bias - radial_scale;
             let negative_perpendicular = -perpendicular_scale.clone();
-            let x = represented_affine_coordinate(
+            let x = Classification::from(represented_affine_coordinate(
                 &[
                     (&data.point[0], radial_scale),
                     (&data.point[1], &negative_perpendicular),
@@ -7627,8 +7629,8 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     (&center[1], perpendicular_scale),
                 ],
                 translation_x,
-            );
-            let y = represented_affine_coordinate(
+            ));
+            let y = Classification::from(represented_affine_coordinate(
                 &[
                     (&data.point[0], perpendicular_scale),
                     (&data.point[1], radial_scale),
@@ -7636,7 +7638,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     (&center[1], &center_scale),
                 ],
                 translation_y,
-            );
+            ));
             return Ok(match (x, y) {
                 (Classification::Decided(x), Classification::Decided(y)) => {
                     Classification::Decided([x, y])
@@ -8012,13 +8014,13 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 let one_minus = Real::one() - parameter;
                 let cross_scale = oriented_cross_scale * one_minus;
                 let dot_scale = -(dot_scale * parameter);
-                let predicate = match represented_affine_coordinate(
+                let predicate = match Classification::from(represented_affine_coordinate(
                     &[
                         (&source.tangent_cross, &cross_scale),
                         (&source.tangent_dot, &dot_scale),
                     ],
                     &(-parameter * radius_squared),
-                ) {
+                )) {
                     Classification::Decided(predicate) => predicate,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -8068,10 +8070,10 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let predicate = match represented_affine_coordinate(
+                let predicate = match Classification::from(represented_affine_coordinate(
                     &[(&cross, &one_minus), (&dot, &negative_parameter)],
                     &offset,
-                ) {
+                )) {
                     Classification::Decided(predicate) => predicate,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));

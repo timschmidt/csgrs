@@ -519,12 +519,13 @@ pub(super) fn selected_dense_last_axis_active_degree(
         let Some(coefficient) = dense_last_axis_coefficient(polynomial, target_power) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let value = match represented_dense_value_refined(&coefficient, sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let value =
+            match Classification::from(represented_dense_value_refined(&coefficient, sources)) {
+                Classification::Decided(value) => value,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         match represented_policy_sign(&value, &strict) {
             Classification::Decided(RealSign::Zero) => {}
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {

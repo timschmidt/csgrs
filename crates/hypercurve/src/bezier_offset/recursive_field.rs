@@ -6547,14 +6547,14 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
             relation = with_dummy_axis;
             sources.push(AlgebraicRootRepresentation::from_exact_value(&Real::zero()));
         }
-        Ok(represented_tensor_coordinate_refined(
+        Ok(Classification::from(represented_tensor_coordinate_refined(
             &relation,
             &sources,
             8,
             512,
             "recursive-projective-scalar-image",
             |_, refinement_steps| self.interval(refinement_steps),
-        )
+        ))
         .map(|value| {
             hypersolve::compact_algebraic_root_low_degree_witness(&value).unwrap_or(value)
         }))
