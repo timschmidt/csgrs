@@ -28762,15 +28762,32 @@ fn dense_tuple_point_sources_keep_their_algebraic_relations() {
     );
 }
 
+/// A dense four-axis tensor with the given extents and nonzero terms.
+fn dense_tensor_from_terms(
+    dimensions: [usize; 4],
+    terms: impl IntoIterator<Item = ([usize; 4], Real)>,
+) -> DenseTensorPolynomial {
+    let shape = DenseTensorPolynomial::zero(dimensions.to_vec())
+        .expect("a host-representable exact tensor must not hit an artificial control cap");
+    let mut coefficients = shape.coefficients().to_vec();
+    for (exponents, coefficient) in terms {
+        coefficients[shape
+            .storage_index(&exponents)
+            .expect("term within extents")] = coefficient;
+    }
+    DenseTensorPolynomial::try_new(dimensions.to_vec(), coefficients).unwrap()
+}
+
 #[test]
 fn quadrivariate_selected_tuple_sign_reduces_axis_relations_exactly() {
     let parameters = four_selected_square_root_parameters();
-    let mut polynomial = QuadrivariatePolynomial2::zero([3, 1, 1, 1]).unwrap();
-    polynomial.coefficients
-        [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, [2, 0, 0, 0])] = Real::one();
-    polynomial.coefficients
-        [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, [0, 0, 0, 0])] =
-        -(Real::one() / Real::from(2_i8)).unwrap();
+    let polynomial = dense_tensor_from_terms(
+        [3, 1, 1, 1],
+        [
+            ([2, 0, 0, 0], Real::one()),
+            ([0, 0, 0, 0], -(Real::one() / Real::from(2_i8)).unwrap()),
+        ],
+    );
     assert_eq!(
         quadrivariate_parameter_tuple_sign_by_refinement(
             &polynomial,
@@ -28790,13 +28807,14 @@ fn quadrivariate_selected_tuple_sign_reduces_axis_relations_exactly() {
 #[test]
 fn quadrivariate_selected_tuple_sign_separates_an_ordinary_nonzero_value() {
     let parameters = four_selected_square_root_parameters();
-    let mut polynomial = QuadrivariatePolynomial2::zero([2, 2, 2, 2]).unwrap();
-    for axis in 0..4 {
-        let mut exponents = [0; 4];
-        exponents[axis] = 1;
-        polynomial.coefficients
-            [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, exponents)] = Real::one();
-    }
+    let polynomial = dense_tensor_from_terms(
+        [2, 2, 2, 2],
+        (0..4).map(|axis| {
+            let mut exponents = [0; 4];
+            exponents[axis] = 1;
+            (exponents, Real::one())
+        }),
+    );
     assert_eq!(
         quadrivariate_parameter_tuple_sign_by_refinement(
             &polynomial,
@@ -28820,15 +28838,14 @@ fn quadrivariate_selected_tuple_sign_recovers_an_even_correlated_root() {
     // reduction.  The exact fourth-axis resultant/subresultant authority
     // must correlate the repeated root retained in the first and fourth
     // isolators.
-    let mut polynomial = QuadrivariatePolynomial2::zero([3, 1, 1, 3]).unwrap();
-    for (exponents, coefficient) in [
-        ([2, 0, 0, 0], Real::one()),
-        ([1, 0, 0, 1], Real::from(-2_i8)),
-        ([0, 0, 0, 2], Real::one()),
-    ] {
-        polynomial.coefficients
-            [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, exponents)] = coefficient;
-    }
+    let polynomial = dense_tensor_from_terms(
+        [3, 1, 1, 3],
+        [
+            ([2, 0, 0, 0], Real::one()),
+            ([1, 0, 0, 1], Real::from(-2_i8)),
+            ([0, 0, 0, 2], Real::one()),
+        ],
+    );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
             quadrivariate_parameter_tuple_sign_by_refinement(
@@ -28866,18 +28883,16 @@ fn rank_independent_quadrivariate_projection_crosses_the_old_dense_boundary_exac
     // dimensions above the former 131,072-control ceiling, while the
     // selected first and fourth roots are independently retained copies
     // of the same exact algebraic number.
-    let mut polynomial = QuadrivariatePolynomial2::zero([21; 4])
-        .expect("a host-representable exact tensor must not hit an artificial control cap");
-    for (exponents, coefficient) in [
-        ([1, 0, 0, 0], Real::one()),
-        ([0, 0, 0, 1], -Real::one()),
-        ([20, 20, 20, 19], Real::one()),
-        ([19, 20, 20, 20], -Real::one()),
-    ] {
-        polynomial.coefficients
-            [QuadrivariatePolynomial2::flat_index(polynomial.dimensions, exponents)] = coefficient;
-    }
-    assert!(polynomial.coefficients.len() > 131_072);
+    let polynomial = dense_tensor_from_terms(
+        [21; 4],
+        [
+            ([1, 0, 0, 0], Real::one()),
+            ([0, 0, 0, 1], -Real::one()),
+            ([20, 20, 20, 19], Real::one()),
+            ([19, 20, 20, 20], -Real::one()),
+        ],
+    );
+    assert!(polynomial.coefficients().len() > 131_072);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {

@@ -793,8 +793,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .iter()
             .map(bezier_parameter_root_representation)
             .collect::<Vec<_>>();
-        let dense = |polynomial: &QuadrivariatePolynomial2| {
-            dense_reduce_selected_tuple_relations(polynomial.to_dense_polynomial()?, &sources)
+        let dense = |polynomial: &DenseTensorPolynomial| {
+            dense_reduce_selected_tuple_relations(polynomial.clone(), &sources)
         };
         let field = if let Some(field) = self.data.recursive_import_field.get() {
             field.clone()
@@ -859,7 +859,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 system.pair_branch,
             )
         };
-        let rational = |polynomial: &QuadrivariatePolynomial2| {
+        let rational = |polynomial: &DenseTensorPolynomial| {
             recursive_quadratic_rational_value(&base, dense(polynomial)?)
         };
         let nested = |expression: &BezierSelectedRadialCircleChordNestedExpression2| {
@@ -2410,7 +2410,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     .refined_isolating_interval(refinement_steps, &self.data.policy),
             )
         });
-        let evaluate = |polynomial: &QuadrivariatePolynomial2| {
+        let evaluate = |polynomial: &DenseTensorPolynomial| {
             quadrivariate_power_basis_interval(
                 polynomial,
                 [

@@ -651,10 +651,10 @@ impl BezierAlgebraicCuspSemicircle2 {
         } = frame;
         let system = (|| {
             let axis = |coefficients: &[Real], axis| {
-                QuadrivariatePolynomial2::from_axis_polynomial(coefficients, axis)
+                DenseTensorPolynomial::from_axis_polynomial(4, axis, coefficients)
             };
             let lift = |polynomial: &TrivariatePolynomial| {
-                QuadrivariatePolynomial2::lift_trivariate(polynomial, [0, 1, 2])
+                DenseTensorPolynomial::from_trivariate(polynomial, 4, [0, 1, 2])
             };
             let pair = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
                 Some(BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
@@ -662,7 +662,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     radical: lift(&expression.radical)?,
                 })
             };
-            let rational_pair = |polynomial: QuadrivariatePolynomial2| {
+            let rational_pair = |polynomial: DenseTensorPolynomial| {
                 BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(polynomial)
             };
             let ax = axis(&start.x, 2)?;
@@ -677,14 +677,12 @@ impl BezierAlgebraicCuspSemicircle2 {
             let center_y = pair(&center_y)?;
             let radial_x = pair(&radial_x)?;
             let radial_y = pair(&radial_y)?;
-            let one = QuadrivariatePolynomial2::from_axis_polynomial(&[Real::one()], 0)?;
+            let one = DenseTensorPolynomial::from_axis_polynomial(4, 0, &[Real::one()])?;
 
-            let dx =
-                QuadrivariatePolynomial2::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
-            let dy =
-                QuadrivariatePolynomial2::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
+            let dx = DenseTensorPolynomial::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
+            let dy = DenseTensorPolynomial::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
             let d_squared =
-                QuadrivariatePolynomial2::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
+                DenseTensorPolynomial::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
             let start_x = ax.multiply(&contact_denominator)?;
             let start_y = ay.multiply(&contact_denominator)?;
             let vx = rational_pair(start_x)?.subtract(&center_x.multiply_rational(&aw)?)?;

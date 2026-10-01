@@ -1484,18 +1484,21 @@ pub(super) fn trivariate_parameter_triple_sign_by_refinement(
     }
 }
 
-pub(super) fn quadrivariate_structurally_zero(polynomial: &QuadrivariatePolynomial2) -> bool {
+pub(super) fn quadrivariate_structurally_zero(polynomial: &DenseTensorPolynomial) -> bool {
     polynomial
-        .coefficients
+        .coefficients()
         .iter()
         .all(|coefficient| real_sign(coefficient, &CurveContext::STRICT) == Some(RealSign::Zero))
 }
 
 pub(super) fn quadrivariate_specialize_axis_trivariate(
-    polynomial: &QuadrivariatePolynomial2,
+    polynomial: &DenseTensorPolynomial,
     axis: usize,
     value: &Real,
 ) -> Option<(TrivariatePolynomial, [usize; 3])> {
+    let &[_, _, _, _] = polynomial.dimensions() else {
+        return None;
+    };
     if axis >= 4 {
         return None;
     }
@@ -1506,16 +1509,18 @@ pub(super) fn quadrivariate_specialize_axis_trivariate(
         3 => [0, 1, 2],
         _ => unreachable!(),
     };
-    let dimensions = remaining.map(|remaining| polynomial.dimensions[remaining]);
+    let dimensions = remaining.map(|remaining| polynomial.dimensions()[remaining]);
     let mut coefficients = try_zero_trivariate_coefficients(dimensions)?;
     let mut fiber = Vec::new();
-    fiber.try_reserve_exact(polynomial.dimensions[axis]).ok()?;
+    fiber
+        .try_reserve_exact(polynomial.dimensions()[axis])
+        .ok()?;
     for (first, planes) in coefficients.iter_mut().enumerate() {
         for (second, row) in planes.iter_mut().enumerate() {
             for (third, coefficient) in row.iter_mut().enumerate() {
                 let retained = [first, second, third];
                 fiber.clear();
-                for power in 0..polynomial.dimensions[axis] {
+                for power in 0..polynomial.dimensions()[axis] {
                     let mut exponents = [0; 4];
                     exponents[axis] = power;
                     for retained_axis in 0..3 {
@@ -1523,7 +1528,7 @@ pub(super) fn quadrivariate_specialize_axis_trivariate(
                     }
                     fiber.push(
                         polynomial
-                            .coefficient(exponents)
+                            .coefficient(&exponents)
                             .cloned()
                             .unwrap_or_else(Real::zero),
                     );
@@ -1536,7 +1541,7 @@ pub(super) fn quadrivariate_specialize_axis_trivariate(
 }
 
 pub(super) fn quadrivariate_parameter_tuple_sign_by_refinement(
-    polynomial: &QuadrivariatePolynomial2,
+    polynomial: &DenseTensorPolynomial,
     parameters: [&BezierParameter2; 4],
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
@@ -1560,9 +1565,6 @@ pub(super) fn quadrivariate_parameter_tuple_sign_by_refinement(
             policy,
         );
     }
-    let Some(polynomial) = polynomial.to_dense_polynomial() else {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    };
     let sources = selected_parameter_representations(parameters);
-    dense_polynomial_tuple_sign_owned(polynomial, &sources, policy)
+    dense_polynomial_tuple_sign_owned(polynomial.clone(), &sources, policy)
 }

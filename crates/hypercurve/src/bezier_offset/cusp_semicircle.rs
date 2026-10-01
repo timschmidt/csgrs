@@ -3083,8 +3083,8 @@ impl BezierAlgebraicCuspNormalizedCircleFrame2 {
 }
 
 impl BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
-    pub(super) fn from_rational(rational: QuadrivariatePolynomial2) -> Option<Self> {
-        let radical = QuadrivariatePolynomial2::zero([1; 4])?;
+    pub(super) fn from_rational(rational: DenseTensorPolynomial) -> Option<Self> {
+        let radical = DenseTensorPolynomial::zero(vec![1; 4])?;
         Some(Self { rational, radical })
     }
 
@@ -3119,12 +3119,12 @@ impl BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
             .map(|(expression, scale)| (&expression.radical, *scale))
             .collect::<Vec<_>>();
         Some(Self {
-            rational: QuadrivariatePolynomial2::linear_combination(&rational_terms)?,
-            radical: QuadrivariatePolynomial2::linear_combination(&radical_terms)?,
+            rational: DenseTensorPolynomial::linear_combination(&rational_terms)?,
+            radical: DenseTensorPolynomial::linear_combination(&radical_terms)?,
         })
     }
 
-    pub(super) fn multiply_rational(&self, other: &QuadrivariatePolynomial2) -> Option<Self> {
+    pub(super) fn multiply_rational(&self, other: &DenseTensorPolynomial) -> Option<Self> {
         Some(Self {
             rational: self.rational.multiply(other)?,
             radical: self.radical.multiply(other)?,
@@ -3134,22 +3134,22 @@ impl BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
     pub(super) fn multiply(
         &self,
         other: &Self,
-        pair_discriminant: &QuadrivariatePolynomial2,
+        pair_discriminant: &DenseTensorPolynomial,
     ) -> Option<Self> {
         let radical_product = self.radical.multiply(&other.radical)?;
         Some(Self {
-            rational: QuadrivariatePolynomial2::sum_products(&[
+            rational: DenseTensorPolynomial::sum_products(&[
                 (&self.rational, &other.rational, false),
                 (&radical_product, pair_discriminant, false),
             ])?,
-            radical: QuadrivariatePolynomial2::sum_products(&[
+            radical: DenseTensorPolynomial::sum_products(&[
                 (&self.rational, &other.radical, false),
                 (&self.radical, &other.rational, false),
             ])?,
         })
     }
 
-    pub(super) fn square(&self, pair_discriminant: &QuadrivariatePolynomial2) -> Option<Self> {
+    pub(super) fn square(&self, pair_discriminant: &DenseTensorPolynomial) -> Option<Self> {
         self.multiply(self, pair_discriminant)
     }
 }

@@ -4506,8 +4506,8 @@ impl BezierChordNormalDenseMapSystem2 {
 /// circle and an independent algebraic chord.
 #[derive(Clone, Debug)]
 struct BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
-    rational: QuadrivariatePolynomial2,
-    radical: QuadrivariatePolynomial2,
+    rational: DenseTensorPolynomial,
+    radical: DenseTensorPolynomial,
 }
 
 /// One nested value `X + branch*Y*sqrt(S)` where `X`, `Y`, and the
@@ -4527,12 +4527,12 @@ impl BezierSelectedRadialCircleChordNestedExpression2 {
         Some(Self {
             retained,
             candidate: BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(
-                QuadrivariatePolynomial2::zero([1; 4])?,
+                DenseTensorPolynomial::zero(vec![1; 4])?,
             )?,
         })
     }
 
-    fn from_rational(rational: QuadrivariatePolynomial2) -> Option<Self> {
+    fn from_rational(rational: DenseTensorPolynomial) -> Option<Self> {
         Self::from_retained(
             BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(rational)?,
         )
@@ -4552,7 +4552,7 @@ impl BezierSelectedRadialCircleChordNestedExpression2 {
         })
     }
 
-    fn multiply_rational(&self, polynomial: &QuadrivariatePolynomial2) -> Option<Self> {
+    fn multiply_rational(&self, polynomial: &DenseTensorPolynomial) -> Option<Self> {
         Some(Self {
             retained: self.retained.multiply_rational(polynomial)?,
             candidate: self.candidate.multiply_rational(polynomial)?,
@@ -4593,11 +4593,11 @@ struct BezierSelectedRadialCircleChordSystem2 {
 struct BezierSelectedRadialCircleChordParameterMapSystem2 {
     pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
     pair_branch: i8,
-    pair_discriminant: QuadrivariatePolynomial2,
+    pair_discriminant: DenseTensorPolynomial,
     chord_discriminant: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
     diameter: BezierSelectedRadialCircleChordNestedExpression2,
-    radius_squared_denominator: QuadrivariatePolynomial2,
-    common_denominator: QuadrivariatePolynomial2,
+    radius_squared_denominator: DenseTensorPolynomial,
+    common_denominator: DenseTensorPolynomial,
     center_x: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
     center_y: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
     point_x: BezierSelectedRadialCircleChordNestedExpression2,
@@ -7530,212 +7530,6 @@ const MAX_FIRST_BILINEAR_FACTOR_PROPOSALS: usize = 64;
 /// exactness.
 const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
 
-/// Compact dense polynomial on four independently selected scalar roots.
-///
-/// Coefficients are flat and row-major, with the fourth axis contiguous.  The
-/// only symbolic elimination exposed for this tensor constrains that fourth
-/// axis and returns trivariate coefficients; all other operations are the
-/// small affine/product vocabulary needed by the pair-radial chord kernel.
-#[derive(Clone, Debug)]
-struct QuadrivariatePolynomial2 {
-    dimensions: [usize; 4],
-    coefficients: Vec<Real>,
-}
-
-impl QuadrivariatePolynomial2 {
-    fn try_new(dimensions: [usize; 4], coefficients: Vec<Real>) -> Option<Self> {
-        let count = dimensions
-            .into_iter()
-            .try_fold(1_usize, usize::checked_mul)?;
-        if dimensions.contains(&0) || count == 0 || coefficients.len() != count {
-            return None;
-        }
-        Some(Self {
-            dimensions,
-            coefficients,
-        })
-    }
-
-    fn zero(dimensions: [usize; 4]) -> Option<Self> {
-        let count = dimensions
-            .into_iter()
-            .try_fold(1_usize, usize::checked_mul)?;
-        let mut coefficients = Vec::new();
-        coefficients.try_reserve_exact(count).ok()?;
-        coefficients.resize_with(count, Real::zero);
-        Self::try_new(dimensions, coefficients)
-    }
-
-    fn flat_index(dimensions: [usize; 4], exponents: [usize; 4]) -> usize {
-        (((exponents[0] * dimensions[1] + exponents[1]) * dimensions[2] + exponents[2])
-            * dimensions[3])
-            + exponents[3]
-    }
-
-    fn exponents(dimensions: [usize; 4], mut index: usize) -> [usize; 4] {
-        let fourth = index % dimensions[3];
-        index /= dimensions[3];
-        let third = index % dimensions[2];
-        index /= dimensions[2];
-        let second = index % dimensions[1];
-        index /= dimensions[1];
-        [index, second, third, fourth]
-    }
-
-    fn coefficient(&self, exponents: [usize; 4]) -> Option<&Real> {
-        exponents
-            .into_iter()
-            .zip(self.dimensions)
-            .all(|(exponent, count)| exponent < count)
-            .then(|| &self.coefficients[Self::flat_index(self.dimensions, exponents)])
-    }
-
-    fn from_axis_polynomial(coefficients: &[Real], axis: usize) -> Option<Self> {
-        if coefficients.is_empty() || axis >= 4 {
-            return None;
-        }
-        let mut dimensions = [1; 4];
-        dimensions[axis] = coefficients.len();
-        let mut polynomial = Self::zero(dimensions)?;
-        for (power, coefficient) in coefficients.iter().enumerate() {
-            let mut exponents = [0; 4];
-            exponents[axis] = power;
-            polynomial.coefficients[Self::flat_index(dimensions, exponents)] = coefficient.clone();
-        }
-        Some(polynomial)
-    }
-
-    fn lift_trivariate(polynomial: &TrivariatePolynomial, axes: [usize; 3]) -> Option<Self> {
-        if axes.into_iter().any(|axis| axis >= 4)
-            || axes[0] == axes[1]
-            || axes[0] == axes[2]
-            || axes[1] == axes[2]
-        {
-            return None;
-        }
-        let source = polynomial.dimensions();
-        let mut dimensions = [1; 4];
-        for (source_axis, target_axis) in axes.into_iter().enumerate() {
-            dimensions[target_axis] = [source.0, source.1, source.2][source_axis];
-        }
-        let mut lifted = Self::zero(dimensions)?;
-        for (first, rows) in polynomial.coefficients.iter().enumerate() {
-            for (second, row) in rows.iter().enumerate() {
-                for (third, coefficient) in row.iter().enumerate() {
-                    let source_exponents = [first, second, third];
-                    let mut target_exponents = [0; 4];
-                    for source_axis in 0..3 {
-                        target_exponents[axes[source_axis]] = source_exponents[source_axis];
-                    }
-                    lifted.coefficients[Self::flat_index(dimensions, target_exponents)] =
-                        coefficient.clone();
-                }
-            }
-        }
-        Some(lifted)
-    }
-
-    fn combine(&self, other: &Self, subtract: bool) -> Option<Self> {
-        let dimensions =
-            std::array::from_fn(|axis| self.dimensions[axis].max(other.dimensions[axis]));
-        let mut result = Self::zero(dimensions)?;
-        for (source, subtract_source) in [(self, false), (other, subtract)] {
-            for (index, coefficient) in source.coefficients.iter().enumerate() {
-                let target =
-                    Self::flat_index(dimensions, Self::exponents(source.dimensions, index));
-                if subtract_source {
-                    result.coefficients[target] -= coefficient;
-                } else {
-                    result.coefficients[target] += coefficient;
-                }
-            }
-        }
-        Some(result)
-    }
-
-    fn add(&self, other: &Self) -> Option<Self> {
-        self.combine(other, false)
-    }
-
-    fn subtract(&self, other: &Self) -> Option<Self> {
-        self.combine(other, true)
-    }
-
-    fn scale(&self, scale: &Real) -> Option<Self> {
-        let mut result = Self::zero(self.dimensions)?;
-        for (target, source) in result.coefficients.iter_mut().zip(&self.coefficients) {
-            *target = source * scale;
-        }
-        Some(result)
-    }
-
-    fn linear_combination(terms: &[(&Self, &Real)]) -> Option<Self> {
-        let dimensions = terms.iter().fold([0; 4], |mut dimensions, (term, _)| {
-            for (axis, count) in term.dimensions.into_iter().enumerate() {
-                dimensions[axis] = dimensions[axis].max(count);
-            }
-            dimensions
-        });
-        let mut result = Self::zero(dimensions)?;
-        for (term, scale) in terms {
-            if scale.zero_status() == ZeroKnowledge::Zero {
-                continue;
-            }
-            for (index, coefficient) in term.coefficients.iter().enumerate() {
-                let target = Self::flat_index(dimensions, Self::exponents(term.dimensions, index));
-                result.coefficients[target] += coefficient * *scale;
-            }
-        }
-        Some(result)
-    }
-
-    fn multiply(&self, other: &Self) -> Option<Self> {
-        Self::sum_products(&[(self, other, false)])
-    }
-
-    fn sum_products(terms: &[(&Self, &Self, bool)]) -> Option<Self> {
-        let dimensions = terms
-            .iter()
-            .try_fold([0; 4], |mut dimensions, (left, right, _)| {
-                for (axis, dimension) in dimensions.iter_mut().enumerate() {
-                    *dimension = (*dimension).max(
-                        left.dimensions[axis]
-                            .checked_add(right.dimensions[axis])?
-                            .checked_sub(1)?,
-                    );
-                }
-                Some(dimensions)
-            })?;
-        let mut result = Self::zero(dimensions)?;
-        for (left, right, subtract) in terms {
-            for (left_index, left_coefficient) in left.coefficients.iter().enumerate() {
-                let left_exponents = Self::exponents(left.dimensions, left_index);
-                for (right_index, right_coefficient) in right.coefficients.iter().enumerate() {
-                    let right_exponents = Self::exponents(right.dimensions, right_index);
-                    let exponents =
-                        std::array::from_fn(|axis| left_exponents[axis] + right_exponents[axis]);
-                    let target = Self::flat_index(dimensions, exponents);
-                    if *subtract {
-                        result.coefficients[target] -= left_coefficient * right_coefficient;
-                    } else {
-                        result.coefficients[target] += left_coefficient * right_coefficient;
-                    }
-                }
-            }
-        }
-        Some(result)
-    }
-
-    fn to_dense_polynomial(&self) -> Option<DenseTensorPolynomial> {
-        let mut coefficients = Vec::new();
-        coefficients
-            .try_reserve_exact(self.coefficients.len())
-            .ok()?;
-        coefficients.extend(self.coefficients.iter().cloned());
-        DenseTensorPolynomial::try_new(self.dimensions.to_vec(), coefficients)
-    }
-}
-
 impl BezierDenseTwoSquareRootExpression2 {
     fn zero(rank: usize) -> Option<DenseTensorPolynomial> {
         DenseTensorPolynomial::zero(vec![1; rank])
@@ -9598,7 +9392,7 @@ fn selected_radial_chord_pair_expression_sign(
         .ok_or_else(|| {
             CurveError::Topology("a pair-radical magnitude exceeded its tensor budget".into())
         })?;
-    let Some(magnitude) = QuadrivariatePolynomial2::sum_products(&[
+    let Some(magnitude) = DenseTensorPolynomial::sum_products(&[
         (&expression.rational, &expression.rational, false),
         (&radical_squared, &system.pair_discriminant, true),
     ]) else {
@@ -15127,11 +14921,13 @@ fn trivariate_power_basis_interval(
 
 /// Encloses a quadrivariate power-basis polynomial over a parameter box.
 fn quadrivariate_power_basis_interval(
-    polynomial: &QuadrivariatePolynomial2,
+    polynomial: &DenseTensorPolynomial,
     parameters: [&RealInterval; 4],
 ) -> Option<RealInterval> {
     let [first, second, third, fourth] = parameters;
-    let [first_count, second_count, third_count, fourth_count] = polynomial.dimensions;
+    let &[first_count, second_count, third_count, fourth_count] = polynomial.dimensions() else {
+        return None;
+    };
     let zero = || RealInterval {
         lower: Real::zero(),
         upper: Real::zero(),
@@ -15145,12 +14941,10 @@ fn quadrivariate_power_basis_interval(
             let mut second_slice = zero();
             for third_power in (0..third_count).rev() {
                 second_slice = second_slice.multiply(third)?;
-                let start = QuadrivariatePolynomial2::flat_index(
-                    polynomial.dimensions,
-                    [first_power, second_power, third_power, 0],
-                );
+                let start =
+                    polynomial.storage_index(&[first_power, second_power, third_power, 0])?;
                 second_slice = second_slice.add(&RealInterval::evaluate_power_basis(
-                    &polynomial.coefficients[start..start + fourth_count],
+                    &polynomial.coefficients()[start..start + fourth_count],
                     fourth,
                 )?);
             }
