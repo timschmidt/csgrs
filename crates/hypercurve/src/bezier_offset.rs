@@ -61,7 +61,6 @@ use hypersolve::bivariate_arithmetic::{
     bivariate_substitute_second_equal_one_minus_first, bivariate_subtract,
     bivariate_swap_parameters, polynomial_add, polynomial_multiply, polynomial_power,
     polynomial_powers, polynomial_scale, polynomial_subtract, try_bivariate_multiply,
-    try_zero_bivariate_coefficients,
 };
 use hypersolve::bivariate_arithmetic::{
     bivariate_complement_second_parameter, bivariate_first_active_degree,
@@ -77,7 +76,6 @@ use hypersolve::exact_factor::{
     bivariate_evaluate_exact, bivariate_exact_nonzero_metadata, bivariate_exact_square_root,
     bivariate_linear_root_resultant, bivariate_quadratic_constraint_resultant,
     bivariate_trim_exact, cubic_specialization_rejects_repeated_factor,
-    polynomial_restrict_to_interval,
 };
 use hypersolve::exact_factor::{
     rational_multi_affine_lift_factor_coefficients, rational_multi_affine_lift_scale,
@@ -104,7 +102,15 @@ use hypersolve::tensor_support::{
     dense_last_axis_coefficient, dense_last_axis_derivative, dense_reduce_selected_root_relations,
     dense_specialize_last_axis, dense_tensor_embed_axes, dense_tensor_from_polynomial_coefficients,
 };
-use hypersolve::trivariate_arithmetic::try_zero_trivariate_coefficients;
+use hypersolve::trivariate_arithmetic::{
+    trivariate_axis_bivariate_coefficients, trivariate_axis_content,
+    trivariate_divide_axis_content, trivariate_divide_linear_axis_factor,
+    trivariate_from_axis_bivariate_coefficients, trivariate_from_bivariate_axes,
+    trivariate_linear_axis_coefficients, trivariate_reduce_axis_mod_defining,
+    trivariate_restrict_to_box_bounds, trivariate_specialize_axis_bivariate,
+    trivariate_substitute_affine_axis, trivariate_substitute_product_axis,
+    trivariate_substitute_sum_axis, try_zero_trivariate_coefficients,
+};
 use std::borrow::Cow;
 use std::ops::ControlFlow;
 use std::sync::{Arc, Mutex, OnceLock, Weak};

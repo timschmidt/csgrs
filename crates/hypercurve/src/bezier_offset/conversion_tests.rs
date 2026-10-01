@@ -34,6 +34,13 @@ fn contact_fallback_never_replaces_a_certified_pole() {
 }
 
 use crate::BezierAlgebraicImageStatus;
+
+fn bivariate_bilinear_factorizations(
+    polynomial: &BivariatePolynomial,
+) -> Vec<(BivariatePolynomial, BivariatePolynomial)> {
+    bivariate_bilinear_factorizations_bounded(polynomial, usize::MAX, usize::MAX)
+}
+
 #[test]
 fn independent_oblique_chords_support_constrained_fillet_families() {
     use crate::{Curve2, CurveFillet2, CurveFilletContact2, CurvePath2};
