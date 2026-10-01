@@ -64,11 +64,20 @@ use hypersolve::bivariate_arithmetic::{
 #[cfg(test)]
 use hypersolve::exact_factor::bivariate_bilinear_factor_from_roots;
 use hypersolve::exact_factor::{
-    bivariate_add_scaled_assign, bivariate_bilinear_coefficients,
-    bivariate_bilinear_factorizations_bounded, bivariate_evaluate_exact,
-    bivariate_exact_nonzero_metadata, bivariate_exact_square_root, bivariate_linear_root_resultant,
-    bivariate_quadratic_constraint_resultant, bivariate_trim_exact,
-    cubic_specialization_rejects_repeated_factor, polynomial_restrict_to_interval,
+    bivariate_add_scaled_assign, bivariate_bilinear_factorizations_bounded,
+    bivariate_evaluate_exact, bivariate_exact_nonzero_metadata, bivariate_exact_square_root,
+    bivariate_linear_root_resultant, bivariate_quadratic_constraint_resultant,
+    bivariate_trim_exact, cubic_specialization_rejects_repeated_factor,
+    polynomial_restrict_to_interval,
+};
+use hypersolve::exact_factor::{
+    rational_multi_affine_lift_factor_coefficients, rational_multi_affine_lift_scale,
+    rational_multi_affine_lift_scale_from_anchor_pair, trivariate_axis_lift_degree,
+    trivariate_axis_lift_power_slice, trivariate_axis_lift_taylor_slice,
+};
+use hypersolve::tensor_support::{
+    bivariate_dense_tensor, bivariate_tensor_with_output_axis,
+    dense_reduce_selected_tuple_relations, dense_tensor_with_output_axis, try_clone_dense_tensor,
 };
 use std::borrow::Cow;
 use std::ops::ControlFlow;

@@ -3,68 +3,6 @@
 
 use super::*;
 
-pub(super) fn dense_tensor_with_output_axis(
-    polynomial: &DenseTensorPolynomial,
-) -> Option<DenseTensorPolynomial> {
-    let mut dimensions = Vec::new();
-    dimensions
-        .try_reserve_exact(polynomial.dimensions().len().checked_add(1)?)
-        .ok()?;
-    dimensions.extend_from_slice(polynomial.dimensions());
-    dimensions.push(1);
-    let mut coefficients = Vec::new();
-    coefficients
-        .try_reserve_exact(polynomial.coefficients().len())
-        .ok()?;
-    coefficients.extend(polynomial.coefficients().iter().cloned());
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
-}
-
-pub(super) fn bivariate_dense_tensor(
-    polynomial: &BivariatePolynomial,
-) -> Option<DenseTensorPolynomial> {
-    let first_count = polynomial.coefficients.len().max(1);
-    let second_count = polynomial
-        .coefficients
-        .iter()
-        .map(Vec::len)
-        .max()
-        .unwrap_or(1)
-        .max(1);
-    let coefficient_count = first_count.checked_mul(second_count)?;
-    let mut coefficients = Vec::new();
-    coefficients.try_reserve_exact(coefficient_count).ok()?;
-    coefficients.resize_with(coefficient_count, Real::zero);
-    for (first, row) in polynomial.coefficients.iter().enumerate() {
-        for (second, coefficient) in row.iter().enumerate() {
-            coefficients[first * second_count + second] = coefficient.clone();
-        }
-    }
-    DenseTensorPolynomial::try_new(vec![first_count, second_count], coefficients)
-}
-
-pub(super) fn bivariate_tensor_with_output_axis(
-    polynomial: &BivariatePolynomial,
-) -> Option<DenseTensorPolynomial> {
-    dense_tensor_with_output_axis(&bivariate_dense_tensor(polynomial)?)
-}
-
-pub(super) fn try_clone_dense_tensor(
-    polynomial: &DenseTensorPolynomial,
-) -> Option<DenseTensorPolynomial> {
-    let mut dimensions = Vec::new();
-    dimensions
-        .try_reserve_exact(polynomial.dimensions().len())
-        .ok()?;
-    dimensions.extend_from_slice(polynomial.dimensions());
-    let mut coefficients = Vec::new();
-    coefficients
-        .try_reserve_exact(polynomial.coefficients().len())
-        .ok()?;
-    coefficients.extend(polynomial.coefficients().iter().cloned());
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
-}
-
 /// Collapses affine-related selected tensor axes before quotient reduction
 /// or image projection, preserving their root correlation.
 pub(super) fn dense_substitute_affinely_related_sources(
@@ -104,28 +42,6 @@ pub(super) fn dense_substitute_affinely_related_sources(
         break;
     }
     Some((polynomial, sources))
-}
-
-pub(super) fn dense_reduce_selected_tuple_relations(
-    mut polynomial: DenseTensorPolynomial,
-    sources: &[AlgebraicRootRepresentation],
-) -> Option<DenseTensorPolynomial> {
-    if polynomial.dimensions().len() != sources.len() {
-        return None;
-    }
-    for (axis, source) in sources.iter().enumerate() {
-        let count = *polynomial.dimensions().get(axis)?;
-        let degree = source.polynomial_coefficients.len().checked_sub(1)?;
-        if count > degree {
-            let reduced = polynomial.reduce_axis_modulo(
-                axis,
-                &source.polynomial_coefficients,
-                hypersolve::PredicatePolicy::STRICT,
-            )?;
-            polynomial = reduced;
-        }
-    }
-    Some(polynomial)
 }
 
 pub(super) fn dense_strict_interval_sign(value: &RealInterval) -> Option<RealSign> {
