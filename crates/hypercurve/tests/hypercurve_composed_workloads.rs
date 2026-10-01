@@ -878,16 +878,9 @@ fn filleted_union_round_dilation_round_trips() {
 /// from the other operand whose endpoint lies exactly on the chord; the
 /// monotone kernel accepted only strictly opposite endpoint sides and
 /// reported Boundary. That endpoint is now the certified unique contact.
-///
-/// Still open, so this runs on request:
-/// - it takes about 290 s, isolating a high-degree rational dense
-///   elimination with a Sturm sequence (Bernstein subdivision is used only for
-///   non-rational coefficients);
-/// - erosion composition (two quarter erosions equal one half erosion) cannot
-///   yet be compared: clipping the same-parallel overlap compares equal
-///   vertex parameters held in different algebraic representations.
+/// It now completes in about 20 s (formerly about 290 s) after the local
+/// singleton promotion, gcd vanishing test and adaptive enclosure filter.
 #[test]
-#[ignore = "slow (290 s) and the composition oracle is undecided; see notes"]
 fn repeated_inward_round_offset_of_a_quadratic_seed_completes() {
     let seed = Seed {
         x: 0,
@@ -912,6 +905,44 @@ fn repeated_inward_round_offset_of_a_quadratic_seed_completes() {
     assert!(
         twice
             .boolean_region(&once, BooleanOp::Difference, &STRICT)
+            .unwrap()
+            .into_value()
+            .is_empty()
+    );
+}
+
+/// Open evidentiary-closure gap: round erosion composes, so two quarter
+/// erosions of a quadratic seed equal one half erosion. The symmetric
+/// difference of the two results is blocked by `Ordering`: clipping their
+/// same-parallel overlap compares equal vertex parameters held in different
+/// algebraic representations (selected-field equality, review step 3).
+#[test]
+#[ignore = "open: equal vertex parameters in different algebraic representations"]
+fn repeated_round_erosion_composes_with_a_single_erosion() {
+    let region = seed_region(&Seed {
+        x: 0,
+        y: 0,
+        width: 8,
+        height: 6,
+        lower: 2,
+        upper: 2,
+        curvature: 1,
+        weight: 1,
+    });
+    let quarter = |region: &CurveRegion2| {
+        region
+            .offset(fraction(-1, 4), &OffsetCornerStyle2::Round, &STRICT)
+            .unwrap()
+            .into_value()
+    };
+    let twice = quarter(&quarter(&region));
+    let half = region
+        .offset(fraction(-1, 2), &OffsetCornerStyle2::Round, &STRICT)
+        .unwrap()
+        .into_value();
+    assert!(
+        twice
+            .boolean_region(&half, BooleanOp::Xor, &STRICT)
             .unwrap()
             .into_value()
             .is_empty()
