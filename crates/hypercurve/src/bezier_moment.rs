@@ -29,6 +29,7 @@
 
 use std::ops::Range;
 
+use crate::bezier_metric::subdivide_controls_at;
 use hyperreal::Real;
 use hypersolve::bivariate_arithmetic::{polynomial_multiply, polynomial_power};
 use hypersolve::exact_factor::exact_rational_polynomial_root;
@@ -2424,36 +2425,6 @@ fn derivative_coefficients(coefficients: &[Real]) -> CurveResult<Vec<Real>> {
             Ok(coefficient * &Real::from(degree))
         })
         .collect()
-}
-
-fn subdivide_controls_at(controls: &[Point2], t: Real) -> CurveResult<(Vec<Point2>, Vec<Point2>)> {
-    if controls.is_empty() {
-        return Err(CurveError::InvalidBezierRange);
-    }
-
-    let one_minus_t = Real::one() - &t;
-    let mut levels = vec![controls.to_vec()];
-    while levels.last().map(|level| level.len()).unwrap_or(0) > 1 {
-        let Some(previous) = levels.last() else {
-            return Err(CurveError::InvalidBezierRange);
-        };
-        let next = previous
-            .windows(2)
-            .map(|pair| pair[0].lerp_with_weights(&pair[1], &one_minus_t, &t))
-            .collect::<Vec<_>>();
-        levels.push(next);
-    }
-
-    let left = levels
-        .iter()
-        .map(|level| level[0].clone())
-        .collect::<Vec<_>>();
-    let right = levels
-        .iter()
-        .rev()
-        .map(|level| level[level.len() - 1].clone())
-        .collect::<Vec<_>>();
-    Ok((left, right))
 }
 
 fn binomial(n: usize, k: usize) -> CurveResult<usize> {

@@ -3794,9 +3794,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             };
                             let circle_parameter = CurveParameter2::from_algebraic_cusp(parameter);
                             let curve_parameter = if curve_at_start {
-                                carrier_traversal_start_parameter(curve_carrier)
+                                carrier_traversal_start(curve_carrier)
                             } else {
-                                carrier_traversal_end_parameter(curve_carrier)
+                                carrier_traversal_end(curve_carrier)
                             }
                             .clone();
                             let (first_parameter, second_parameter) = if *cusp_is_first {
@@ -4201,28 +4201,28 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         let Some(first_start) = exact_carrier_point(
             first,
-            carrier_traversal_start_parameter(first),
+            carrier_traversal_start(first),
             &self.data.policy,
         ) else {
             return false;
         };
         let Some(first_end) = exact_carrier_point(
             first,
-            carrier_traversal_end_parameter(first),
+            carrier_traversal_end(first),
             &self.data.policy,
         ) else {
             return false;
         };
         let Some(second_start) = exact_carrier_point(
             second,
-            carrier_traversal_start_parameter(second),
+            carrier_traversal_start(second),
             &self.data.policy,
         ) else {
             return false;
         };
         let Some(second_end) = exact_carrier_point(
             second,
-            carrier_traversal_end_parameter(second),
+            carrier_traversal_end(second),
             &self.data.policy,
         ) else {
             return false;
@@ -4302,10 +4302,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return false;
         };
         let fragment_count = boundary.fragments().len();
-        let first_start = carrier_traversal_start_parameter(first);
-        let first_end = carrier_traversal_end_parameter(first);
-        let second_start = carrier_traversal_start_parameter(second);
-        let second_end = carrier_traversal_end_parameter(second);
+        let first_start = carrier_traversal_start(first);
+        let first_end = carrier_traversal_end(first);
+        let second_start = carrier_traversal_start(second);
+        let second_end = carrier_traversal_end(second);
         let (first_other, first_shared, second_shared, second_other) =
             if first.fragment_index.checked_add(1) == Some(second.fragment_index) {
                 (first_start, first_end, second_start, second_end)

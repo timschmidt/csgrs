@@ -6576,7 +6576,7 @@ fn seed_loop_topology_vertices(
     }
 }
 
-fn carrier_traversal_start(carrier: &RegionCarrier) -> &CurveParameter2 {
+const fn carrier_traversal_start(carrier: &RegionCarrier) -> &CurveParameter2 {
     if carrier.reversed {
         &carrier.end
     } else {
@@ -6584,7 +6584,7 @@ fn carrier_traversal_start(carrier: &RegionCarrier) -> &CurveParameter2 {
     }
 }
 
-fn carrier_traversal_end(carrier: &RegionCarrier) -> &CurveParameter2 {
+const fn carrier_traversal_end(carrier: &RegionCarrier) -> &CurveParameter2 {
     if carrier.reversed {
         &carrier.start
     } else {
@@ -7680,22 +7680,6 @@ const fn action_from_result_sides(left: bool, right: bool) -> RegionFragmentActi
         (true, false) => RegionFragmentAction::Keep,
         (false, true) => RegionFragmentAction::KeepReversed,
         (false, false) | (true, true) => RegionFragmentAction::Discard,
-    }
-}
-
-const fn carrier_traversal_start_parameter(carrier: &RegionCarrier) -> &CurveParameter2 {
-    if carrier.reversed {
-        &carrier.end
-    } else {
-        &carrier.start
-    }
-}
-
-const fn carrier_traversal_end_parameter(carrier: &RegionCarrier) -> &CurveParameter2 {
-    if carrier.reversed {
-        &carrier.start
-    } else {
-        &carrier.end
     }
 }
 

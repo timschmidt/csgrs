@@ -26,6 +26,7 @@ use offset_joins::*;
 pub(crate) use offset_spans::*;
 
 use crate::CurvePointData2;
+use crate::classify::product_sign;
 use std::sync::Arc;
 use std::sync::OnceLock;
 
@@ -7562,7 +7563,7 @@ fn algebraic_point_retained_rational_curve_ray_winding(
         direction_x,
         direction_y,
     )?;
-    let denominator_sign = multiply_algebraic_ray_signs(point.denominator_sign(), weight_sign);
+    let denominator_sign = product_sign(point.denominator_sign(), weight_sign);
     let mut winding = 0_i32;
     for parameter in parameters {
         let [start, end] = match retained_curve_region_parameter_orders(&parameter, range, policy)?
@@ -7584,7 +7585,7 @@ fn algebraic_point_retained_rational_curve_ray_winding(
             &parameter,
             policy,
         )? {
-            Classification::Decided(sign) => multiply_algebraic_ray_signs(sign, denominator_sign),
+            Classification::Decided(sign) => product_sign(sign, denominator_sign),
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
             }
@@ -7619,8 +7620,7 @@ fn algebraic_point_retained_rational_curve_ray_winding(
             };
             if derivative_sign != RealSign::Zero {
                 let after_positive =
-                    multiply_algebraic_ray_signs(derivative_sign, denominator_sign)
-                        == RealSign::Positive;
+                    product_sign(derivative_sign, denominator_sign) == RealSign::Positive;
                 let before_positive = if derivative_order.is_multiple_of(2) {
                     after_positive
                 } else {
@@ -7676,18 +7676,6 @@ fn algebraic_ray_bivariate_second_derivative(
             })
             .collect(),
     )
-}
-
-const fn multiply_algebraic_ray_signs(first: RealSign, second: RealSign) -> RealSign {
-    match (first, second) {
-        (RealSign::Zero, _) | (_, RealSign::Zero) => RealSign::Zero,
-        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
-            RealSign::Positive
-        }
-        (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
-            RealSign::Negative
-        }
-    }
 }
 
 fn algebraic_ray_control_sign_hull(

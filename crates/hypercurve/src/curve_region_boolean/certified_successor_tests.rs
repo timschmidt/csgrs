@@ -6323,15 +6323,15 @@ fn assert_monotone_parallel_pair_proofs_match_complete_solver(
                 .len();
             let expected = if first.fragment_index.checked_add(1) == Some(second.fragment_index) {
                 (
-                    carrier_traversal_end_parameter(first),
-                    carrier_traversal_start_parameter(second),
+                    carrier_traversal_end(first),
+                    carrier_traversal_start(second),
                 )
             } else {
                 assert_eq!(first.fragment_index, 0);
                 assert_eq!(second.fragment_index.checked_add(1), Some(fragment_count));
                 (
-                    carrier_traversal_start_parameter(first),
-                    carrier_traversal_end_parameter(second),
+                    carrier_traversal_start(first),
+                    carrier_traversal_end(second),
                 )
             };
             assert!(retained_contacts.len() <= 1, "{retained_contacts:?}");

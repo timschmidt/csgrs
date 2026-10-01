@@ -153,6 +153,19 @@ pub(crate) fn orient2_real_expr(from: &Point2, to: &Point2, point: &Point2) -> R
 }
 
 #[track_caller]
+/// Exact sign of a product of two values with the given signs.
+pub(crate) const fn product_sign(first: RealSign, second: RealSign) -> RealSign {
+    match (first, second) {
+        (RealSign::Zero, _) | (_, RealSign::Zero) => RealSign::Zero,
+        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
+            RealSign::Positive
+        }
+        (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
+            RealSign::Negative
+        }
+    }
+}
+
 pub(crate) fn real_sign(value: &Real, policy: &CurveContext) -> Option<RealSign> {
     if value.zero_status() == ZeroKnowledge::Zero {
         return Some(RealSign::Zero);

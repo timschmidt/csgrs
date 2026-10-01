@@ -51,6 +51,7 @@ use represented::*;
 use selected_dense::*;
 
 use crate::CurvePointData2;
+use crate::classify::product_sign;
 use hypersolve::bivariate_arithmetic::{
     bivariate_add, bivariate_multiply, bivariate_multiply_first_parameter, bivariate_outer_product,
     bivariate_parameter_difference, bivariate_scale, bivariate_scaled_difference,
@@ -18101,18 +18102,6 @@ fn signed_parallel_linear_projection_at_parameter(
         radical_sum_sign,
         weight_sign,
     )))
-}
-
-const fn product_sign(first: RealSign, second: RealSign) -> RealSign {
-    match (first, second) {
-        (RealSign::Zero, _) | (_, RealSign::Zero) => RealSign::Zero,
-        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
-            RealSign::Positive
-        }
-        (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
-            RealSign::Negative
-        }
-    }
 }
 
 /// The derivative of a positive-leading circle/line quadratic has the root

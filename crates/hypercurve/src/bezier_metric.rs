@@ -531,7 +531,10 @@ fn subdivide_controls_half(controls: &[Point2]) -> CurveResult<(Vec<Point2>, Vec
     Ok((left, right))
 }
 
-fn subdivide_controls_at(controls: &[Point2], t: Real) -> CurveResult<(Vec<Point2>, Vec<Point2>)> {
+pub(crate) fn subdivide_controls_at(
+    controls: &[Point2],
+    t: Real,
+) -> CurveResult<(Vec<Point2>, Vec<Point2>)> {
     if controls.is_empty() {
         return Err(CurveError::InvalidBezierRange);
     }
