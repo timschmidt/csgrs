@@ -30,7 +30,7 @@
 use std::ops::Range;
 
 use hyperreal::Real;
-use num::{BigInt, BigUint, Integer, One, Signed, ToPrimitive};
+use hypersolve::exact_factor::exact_rational_polynomial_root;
 
 use crate::classify::{compare_reals, in_closed_unit_interval};
 use crate::{
@@ -1993,93 +1993,6 @@ fn irreducible_quadratic_pair_from_resolvent_root(
             multiplicity: 1,
         },
     ]))
-}
-
-pub(crate) fn exact_rational_polynomial_root(polynomial: &[Real]) -> Option<Real> {
-    const MAX_RATIONAL_ROOT_FACTOR: u64 = 1_000_000_000;
-
-    if polynomial.len() < 2 {
-        return None;
-    }
-    let coefficients = polynomial
-        .iter()
-        .map(Real::exact_rational)
-        .collect::<Option<Vec<_>>>()?;
-    let common_denominator = coefficients
-        .iter()
-        .fold(BigUint::one(), |common, coefficient| {
-            common.lcm(coefficient.denominator())
-        });
-    let mut integer_coefficients = coefficients
-        .iter()
-        .map(|coefficient| {
-            let scale = &common_denominator / coefficient.denominator();
-            let magnitude = BigInt::from(coefficient.numerator().clone()) * BigInt::from(scale);
-            if coefficient.is_negative() {
-                -magnitude
-            } else {
-                magnitude
-            }
-        })
-        .collect::<Vec<_>>();
-    let content = integer_coefficients
-        .iter()
-        .fold(BigInt::from(0_i8), |content, coefficient| {
-            content.gcd(coefficient)
-        })
-        .abs();
-    if content != BigInt::from(0_i8) && content != BigInt::from(1_i8) {
-        for coefficient in &mut integer_coefficients {
-            *coefficient /= &content;
-        }
-    }
-    let constant = integer_coefficients[0].abs().to_u64()?;
-    let leading = integer_coefficients.last()?.abs().to_u64()?;
-    if constant == 0
-        || leading == 0
-        || constant > MAX_RATIONAL_ROOT_FACTOR
-        || leading > MAX_RATIONAL_ROOT_FACTOR
-    {
-        return None;
-    }
-    let numerators = positive_divisors(constant);
-    let denominators = positive_divisors(leading);
-    for numerator in numerators {
-        for factor_denominator in &denominators {
-            if numerator.gcd(factor_denominator) != 1 {
-                continue;
-            }
-            let numerator = i64::try_from(numerator).ok()?;
-            for signed_numerator in [numerator, -numerator] {
-                let candidate = Real::new(
-                    hyperreal::Rational::fraction(signed_numerator, *factor_denominator).ok()?,
-                );
-                if Real::eval_poly(polynomial, &candidate).definitely_zero() {
-                    return Some(candidate);
-                }
-            }
-        }
-    }
-    None
-}
-
-fn positive_divisors(value: u64) -> Vec<u64> {
-    let mut low = Vec::new();
-    let mut high = Vec::new();
-    let mut divisor = 1_u64;
-    while divisor <= value / divisor {
-        if value.is_multiple_of(divisor) {
-            low.push(divisor);
-            let paired = value / divisor;
-            if paired != divisor {
-                high.push(paired);
-            }
-        }
-        divisor += 1;
-    }
-    high.reverse();
-    low.extend(high);
-    low
 }
 
 fn integrate_quadratic_over_linear_quadratic_factor(

@@ -1245,41 +1245,6 @@ pub(super) fn polynomial_trim_structural_zeros(mut coefficients: Vec<Real>) -> V
     coefficients
 }
 
-pub(super) fn polynomial_add(first: &[Real], second: &[Real]) -> Vec<Real> {
-    let length = first.len().max(second.len());
-    (0..length)
-        .map(|index| {
-            first.get(index).cloned().unwrap_or_else(Real::zero)
-                + second.get(index).cloned().unwrap_or_else(Real::zero)
-        })
-        .collect()
-}
-
-pub(super) fn polynomial_subtract(first: &[Real], second: &[Real]) -> Vec<Real> {
-    let length = first.len().max(second.len());
-    (0..length)
-        .map(|index| {
-            first.get(index).cloned().unwrap_or_else(Real::zero)
-                - second.get(index).cloned().unwrap_or_else(Real::zero)
-        })
-        .collect()
-}
-
-pub(super) fn polynomial_scale(coefficients: &[Real], scale: &Real) -> Vec<Real> {
-    coefficients
-        .iter()
-        .map(|coefficient| coefficient * scale)
-        .collect()
-}
-
-pub(super) fn polynomial_power(coefficients: &[Real], exponent: usize) -> Vec<Real> {
-    let mut result = vec![Real::one()];
-    for _ in 0..exponent {
-        result = polynomial_multiply(&result, coefficients);
-    }
-    result
-}
-
 /// Builds the squared image equation for
 /// `z = translated/weight + frame/sqrt(speed_squared)`.
 ///

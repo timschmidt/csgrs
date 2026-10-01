@@ -57,8 +57,18 @@ use hypersolve::bivariate_arithmetic::{
     bivariate_specialize_first, bivariate_specialize_second,
     bivariate_substitute_second_equal_affine_first, bivariate_substitute_second_equal_first,
     bivariate_substitute_second_equal_one_minus_first, bivariate_subtract,
-    bivariate_swap_parameters, polynomial_multiply, polynomial_powers, try_bivariate_multiply,
+    bivariate_swap_parameters, polynomial_add, polynomial_multiply, polynomial_power,
+    polynomial_powers, polynomial_scale, polynomial_subtract, try_bivariate_multiply,
     try_zero_bivariate_coefficients,
+};
+#[cfg(test)]
+use hypersolve::exact_factor::bivariate_bilinear_factor_from_roots;
+use hypersolve::exact_factor::{
+    bivariate_add_scaled_assign, bivariate_bilinear_coefficients,
+    bivariate_bilinear_factorizations_bounded, bivariate_evaluate_exact,
+    bivariate_exact_nonzero_metadata, bivariate_exact_square_root, bivariate_linear_root_resultant,
+    bivariate_quadratic_constraint_resultant, bivariate_trim_exact,
+    cubic_specialization_rejects_repeated_factor, polynomial_restrict_to_interval,
 };
 use std::borrow::Cow;
 use std::ops::ControlFlow;
@@ -71,7 +81,6 @@ use crate::bezier_algebraic_image::{
     certified_parameter_representation, parameter_representation,
     rational_point_image_from_power_basis, rational_tangent_image_from_power_basis,
 };
-use crate::bezier_moment::exact_rational_polynomial_root;
 use crate::bezier_parameter::{
     BezierParameterRay2, BezierParameterRefinement2, bernstein_to_power_coefficients,
     coefficients_value_interval_on_parameter_interval,
