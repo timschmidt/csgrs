@@ -2290,50 +2290,6 @@ pub(super) fn reduce_implicit_parameter_component_multiplicity(
     }
 }
 
-pub(super) fn bivariate_storage_bidegree_sum(polynomial: &BivariatePolynomial) -> usize {
-    polynomial
-        .coefficients
-        .len()
-        .saturating_sub(1)
-        .saturating_add(
-            polynomial
-                .coefficients
-                .iter()
-                .map(Vec::len)
-                .max()
-                .unwrap_or_default()
-                .saturating_sub(1),
-        )
-}
-
-/// Removes every exact factor of `first_parameter - second_parameter`.
-///
-/// This coefficient-level path is intentionally independent of an algebraic
-/// fiber representation: a geometric construction can own the full diagonal
-/// even when its coefficients do not fit in one rational local field.
-pub(super) fn deflate_bivariate_parameter_diagonal_exact(
-    polynomial: &BivariatePolynomial,
-) -> Option<BivariatePolynomial> {
-    let diagonal = BivariatePolynomial::new(vec![
-        vec![Real::zero(), Real::from(-1_i8)],
-        vec![Real::one()],
-    ]);
-    let mut reduced = polynomial.clone();
-    let mut changed = false;
-    loop {
-        let degree = bivariate_storage_bidegree_sum(&reduced);
-        let Some(next) = divide_bivariate_polynomial_exact(&reduced, &diagonal) else {
-            break;
-        };
-        if bivariate_storage_bidegree_sum(&next) >= degree {
-            break;
-        }
-        reduced = next;
-        changed = true;
-    }
-    changed.then_some(reduced)
-}
-
 pub(super) fn certify_implicit_parameter_component_once(
     component: &BivariatePolynomial,
     branch: &BivariatePolynomial,
@@ -3971,36 +3927,6 @@ pub(super) fn lifted_boundary_roots_are_turning_events(
         }
     }
     Ok(Classification::Decided(true))
-}
-
-pub(super) fn bivariate_parameter_derivative(
-    polynomial: &BivariatePolynomial,
-    parameter: CurveResultantParameter,
-) -> BivariatePolynomial {
-    let coefficients = match parameter {
-        CurveResultantParameter::First => polynomial
-            .coefficients
-            .iter()
-            .enumerate()
-            .skip(1)
-            .map(|(power, row)| {
-                let scale = Real::from(power as u64);
-                row.iter().map(|coefficient| coefficient * &scale).collect()
-            })
-            .collect(),
-        CurveResultantParameter::Second => polynomial
-            .coefficients
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .enumerate()
-                    .skip(1)
-                    .map(|(power, coefficient)| coefficient * Real::from(power as u64))
-                    .collect()
-            })
-            .collect(),
-    };
-    BivariatePolynomial::new(coefficients)
 }
 
 pub(super) fn bivariate_polynomial_is_independent_of_parameter(

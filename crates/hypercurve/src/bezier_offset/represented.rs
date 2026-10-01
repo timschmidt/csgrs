@@ -758,18 +758,6 @@ pub(super) fn represented_roots_strictly_equal(
     represented_strict_order(left, right) == Some(std::cmp::Ordering::Equal)
 }
 
-/// Builds one minimal affine tensor basis for independently represented
-/// scalars. Exact point coordinates become constants, while roots proved
-/// affine images of an earlier source reuse that axis. Every relation is
-/// certified under STRICT before it can change the tensor rank.
-/// Returns `value` as an exact rational tensor constant, when it is one.
-pub(super) fn rational_tensor_constant(value: &Real) -> Option<Real> {
-    if value.exact_rational_ref().is_some() {
-        return Some(value.clone());
-    }
-    value.exact_rational_normal_form().map(Real::new)
-}
-
 pub(super) fn represented_affine_tensor_basis(
     coordinates: &[AlgebraicRootRepresentation],
 ) -> Option<(Vec<AlgebraicRootRepresentation>, Vec<DenseTensorPolynomial>)> {

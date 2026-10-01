@@ -76,45 +76,6 @@ pub(super) fn selected_dense_last_axis_projection(
     Ok(Classification::Decided(projection))
 }
 
-pub(super) fn dense_specialize_last_axis(
-    polynomial: &DenseTensorPolynomial,
-    parameter: &Real,
-) -> Option<DenseTensorPolynomial> {
-    let target_count = *polynomial.dimensions().last()?;
-    let mut dimensions = polynomial.dimensions().to_vec();
-    *dimensions.last_mut()? = 1;
-    let fiber_count = polynomial.coefficients().len().checked_div(target_count)?;
-    let mut coefficients = Vec::new();
-    coefficients.try_reserve_exact(fiber_count).ok()?;
-    for fiber in polynomial.coefficients().chunks_exact(target_count) {
-        coefficients.push(Real::eval_poly(fiber, parameter));
-    }
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
-}
-
-pub(super) fn dense_last_axis_derivative(
-    polynomial: &DenseTensorPolynomial,
-) -> Option<DenseTensorPolynomial> {
-    let target_count = *polynomial.dimensions().last()?;
-    let derivative_count = target_count.saturating_sub(1).max(1);
-    let mut dimensions = polynomial.dimensions().to_vec();
-    *dimensions.last_mut()? = derivative_count;
-    let fiber_count = polynomial.coefficients().len().checked_div(target_count)?;
-    let coefficient_count = fiber_count.checked_mul(derivative_count)?;
-    let mut coefficients = Vec::new();
-    coefficients.try_reserve_exact(coefficient_count).ok()?;
-    for fiber in polynomial.coefficients().chunks_exact(target_count) {
-        if target_count == 1 {
-            coefficients.push(Real::zero());
-            continue;
-        }
-        for (power, coefficient) in fiber.iter().enumerate().skip(1) {
-            coefficients.push(coefficient * Real::from(u64::try_from(power).ok()?));
-        }
-    }
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
-}
-
 /// Certifies that one projected last-axis candidate belongs to the selected
 /// represented source tuple rather than to conjugates introduced by
 /// sequential resultants.

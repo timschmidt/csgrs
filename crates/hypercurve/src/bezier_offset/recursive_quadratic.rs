@@ -47,45 +47,6 @@ pub(super) fn recursive_quadratic_bases_equivalent(
         && first.second_speed_squared == second.second_speed_squared
 }
 
-pub(super) fn dense_tensor_embed_axes(
-    polynomial: &DenseTensorPolynomial,
-    target_rank: usize,
-    axes: &[usize],
-) -> Option<DenseTensorPolynomial> {
-    if polynomial.dimensions().len() != axes.len() || axes.iter().any(|axis| *axis >= target_rank) {
-        return None;
-    }
-    let mut dimensions = vec![1_usize; target_rank];
-    for (dimension, axis) in polynomial.dimensions().iter().zip(axes) {
-        dimensions[*axis] = dimensions[*axis].checked_add(dimension.checked_sub(1)?)?;
-    }
-    let coefficient_count = dimensions
-        .iter()
-        .try_fold(1_usize, |count, dimension| count.checked_mul(*dimension))?;
-    let mut coefficients = Vec::new();
-    coefficients.try_reserve_exact(coefficient_count).ok()?;
-    coefficients.resize_with(coefficient_count, Real::zero);
-    for (source_index, coefficient) in polynomial.coefficients().iter().enumerate() {
-        let mut remaining = source_index;
-        let mut target_exponents = vec![0_usize; target_rank];
-        for source_axis in (0..polynomial.dimensions().len()).rev() {
-            let dimension = polynomial.dimensions()[source_axis];
-            let exponent = remaining % dimension;
-            remaining /= dimension;
-            target_exponents[axes[source_axis]] =
-                target_exponents[axes[source_axis]].checked_add(exponent)?;
-        }
-        let target_index = target_exponents
-            .iter()
-            .zip(&dimensions)
-            .try_fold(0_usize, |index, (exponent, dimension)| {
-                index.checked_mul(*dimension)?.checked_add(*exponent)
-            })?;
-        coefficients[target_index] += coefficient;
-    }
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
-}
-
 pub(super) fn recursive_quadratic_source_union(
     first: &[AlgebraicRootRepresentation],
     second: &[AlgebraicRootRepresentation],
@@ -797,56 +758,6 @@ pub(super) fn recursive_quadratic_polynomial_multiply(
         }
     }
     Some(result)
-}
-
-/// Packs coefficient-field tensors into a dense polynomial whose final axis
-/// is the later curve parameter. Source axes retain their existing order.
-pub(super) fn dense_tensor_from_polynomial_coefficients(
-    coefficients: &[&DenseTensorPolynomial],
-) -> Option<DenseTensorPolynomial> {
-    let first = coefficients.first()?;
-    let source_rank = first.dimensions().len();
-    if coefficients
-        .iter()
-        .any(|coefficient| coefficient.dimensions().len() != source_rank)
-    {
-        return None;
-    }
-    let mut dimensions = vec![1_usize; source_rank];
-    for coefficient in coefficients {
-        for (dimension, candidate) in dimensions.iter_mut().zip(coefficient.dimensions()) {
-            *dimension = (*dimension).max(*candidate);
-        }
-    }
-    dimensions.push(coefficients.len());
-    let coefficient_count = dimensions
-        .iter()
-        .try_fold(1_usize, |count, dimension| count.checked_mul(*dimension))?;
-    let mut packed = Vec::new();
-    packed.try_reserve_exact(coefficient_count).ok()?;
-    packed.resize_with(coefficient_count, Real::zero);
-    for (power, coefficient) in coefficients.iter().enumerate() {
-        for (flat_index, value) in coefficient.coefficients().iter().enumerate() {
-            let mut remaining = flat_index;
-            let mut exponents = vec![0_usize; source_rank];
-            for axis in (0..source_rank).rev() {
-                let dimension = coefficient.dimensions()[axis];
-                exponents[axis] = remaining % dimension;
-                remaining /= dimension;
-            }
-            let mut target_index = 0_usize;
-            for (exponent, dimension) in exponents.iter().zip(&dimensions[..source_rank]) {
-                target_index = target_index
-                    .checked_mul(*dimension)?
-                    .checked_add(*exponent)?;
-            }
-            target_index = target_index
-                .checked_mul(coefficients.len())?
-                .checked_add(power)?;
-            packed[target_index] = value.clone();
-        }
-    }
-    DenseTensorPolynomial::try_new(dimensions, packed)
 }
 
 /// Eliminates every recursively retained positive quadratic generator from a
@@ -2091,17 +2002,6 @@ pub(super) fn recursive_projective_polynomial_value(
             .add(&field.lift(coefficient)?.multiply(&denominator_power)?)?;
     }
     Some(value)
-}
-
-pub(super) fn bivariate_first_active_degree(polynomial: &BivariatePolynomial) -> usize {
-    polynomial
-        .coefficients
-        .iter()
-        .rposition(|row| {
-            row.iter()
-                .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
-        })
-        .unwrap_or(0)
 }
 
 /// Substitutes one recursive projective scalar for the first axis while

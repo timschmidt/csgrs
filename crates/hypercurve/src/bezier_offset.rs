@@ -61,6 +61,13 @@ use hypersolve::bivariate_arithmetic::{
     polynomial_powers, polynomial_scale, polynomial_subtract, try_bivariate_multiply,
     try_zero_bivariate_coefficients,
 };
+use hypersolve::bivariate_arithmetic::{
+    bivariate_complement_second_parameter, bivariate_first_active_degree,
+    bivariate_parameter_derivative, bivariate_projective_second_parameter,
+    bivariate_second_parameter_coefficient, bivariate_storage_bidegree_sum,
+    bivariate_tensor_product, deflate_bivariate_parameter_diagonal_exact, polynomial_derivative,
+    polynomial_trim_structural_zeros,
+};
 #[cfg(test)]
 use hypersolve::exact_factor::bivariate_bilinear_factor_from_roots;
 use hypersolve::exact_factor::{
@@ -78,6 +85,11 @@ use hypersolve::exact_factor::{
 use hypersolve::tensor_support::{
     bivariate_dense_tensor, bivariate_tensor_with_output_axis,
     dense_reduce_selected_tuple_relations, dense_tensor_with_output_axis, try_clone_dense_tensor,
+};
+use hypersolve::tensor_support::{
+    dense_last_axis_coefficient, dense_last_axis_derivative, dense_reduce_selected_root_relations,
+    dense_specialize_last_axis, dense_tensor_embed_axes, dense_tensor_from_polynomial_coefficients,
+    rational_tensor_constant,
 };
 use std::borrow::Cow;
 use std::ops::ControlFlow;
@@ -2443,73 +2455,6 @@ fn bivariate_orient_second_parameter<'a>(
     } else {
         Cow::Owned(bivariate_complement_second_parameter(polynomial))
     }
-}
-
-fn bivariate_complement_second_parameter(polynomial: &BivariatePolynomial) -> BivariatePolynomial {
-    polynomial.substitute_affine(
-        &Real::one(),
-        &Real::zero(),
-        &Real::from(-1_i8),
-        &Real::one(),
-    )
-}
-
-/// Substitutes one linear-fractional second-parameter chart and clears its
-/// common denominator at the original second-axis degree.
-///
-/// `numerator / denominator` is the inverse chart: the returned polynomial
-/// vanishes at `v` exactly when the source polynomial vanishes at that finite
-/// inverse image.  A caller must separately prove that the denominator does
-/// not vanish on its retained isolating interval.
-fn bivariate_projective_second_parameter(
-    polynomial: &BivariatePolynomial,
-    numerator: &[Real; 2],
-    denominator: &[Real; 2],
-) -> BivariatePolynomial {
-    let degree = polynomial
-        .coefficients
-        .iter()
-        .map(|row| row.len().saturating_sub(1))
-        .max()
-        .unwrap_or(0);
-    let powers = |linear: &[Real; 2]| {
-        let mut powers = Vec::with_capacity(degree + 1);
-        powers.push(vec![Real::one()]);
-        for power in 1..=degree {
-            powers.push(polynomial_multiply(&powers[power - 1], linear));
-        }
-        powers
-    };
-    let numerator_powers = powers(numerator);
-    let denominator_powers = powers(denominator);
-    BivariatePolynomial::new(
-        polynomial
-            .coefficients
-            .iter()
-            .map(|row| {
-                let mut transformed = vec![Real::zero(); degree + 1];
-                for (source_power, coefficient) in row.iter().enumerate() {
-                    let term = polynomial_multiply(
-                        &numerator_powers[source_power],
-                        &denominator_powers[degree - source_power],
-                    );
-                    for (target, factor) in transformed.iter_mut().zip(term) {
-                        *target += coefficient * factor;
-                    }
-                }
-                transformed
-            })
-            .collect(),
-    )
-}
-
-fn bivariate_tensor_product(first: &[Real], second: &[Real]) -> BivariatePolynomial {
-    BivariatePolynomial::new(
-        first
-            .iter()
-            .map(|first| second.iter().map(|second| first * second).collect())
-            .collect(),
-    )
 }
 
 fn retain_unique_overlap_parameter<F>(
@@ -8119,28 +8064,6 @@ impl QuadrivariatePolynomial2 {
     }
 }
 
-fn dense_reduce_selected_root_relations(
-    mut polynomial: DenseTensorPolynomial,
-    sources: &[AlgebraicRootRepresentation],
-) -> Option<DenseTensorPolynomial> {
-    if polynomial.dimensions().len() != sources.len() + 1 {
-        return None;
-    }
-    for (axis, source) in sources.iter().enumerate() {
-        let count = *polynomial.dimensions().get(axis)?;
-        let degree = source.polynomial_coefficients.len().checked_sub(1)?;
-        if count > degree {
-            let reduced = polynomial.reduce_axis_modulo(
-                axis,
-                &source.polynomial_coefficients,
-                hypersolve::PredicatePolicy::STRICT,
-            )?;
-            polynomial = reduced;
-        }
-    }
-    Some(polynomial)
-}
-
 impl BezierDenseTwoSquareRootExpression2 {
     fn zero(rank: usize) -> Option<DenseTensorPolynomial> {
         DenseTensorPolynomial::zero(vec![1; rank])
@@ -9642,25 +9565,6 @@ impl BezierChordNormalDenseMapSystem2 {
             policy,
         )
     }
-}
-
-fn dense_last_axis_coefficient(
-    polynomial: &DenseTensorPolynomial,
-    power: usize,
-) -> Option<DenseTensorPolynomial> {
-    let target_count = *polynomial.dimensions().last()?;
-    if power >= target_count {
-        let mut dimensions = polynomial.dimensions().to_vec();
-        *dimensions.last_mut()? = 1;
-        return DenseTensorPolynomial::zero(dimensions);
-    }
-    let mut dimensions = polynomial.dimensions().to_vec();
-    *dimensions.last_mut()? = 1;
-    let fiber_count = polynomial.coefficients().len() / target_count;
-    let coefficients = (0..fiber_count)
-        .map(|fiber| polynomial.coefficients()[fiber * target_count + power].clone())
-        .collect();
-    DenseTensorPolynomial::try_new(dimensions, coefficients)
 }
 
 fn dense_expression_last_axis_degree(
@@ -16534,17 +16438,6 @@ fn reduce_two_normal_expression_in_selected_parameter(
             rational,
         },
     ))
-}
-
-fn bivariate_second_parameter_coefficient(
-    polynomial: &BivariatePolynomial,
-    power: usize,
-) -> Vec<Real> {
-    polynomial
-        .coefficients
-        .iter()
-        .map(|row| row.get(power).cloned().unwrap_or_else(Real::zero))
-        .collect()
 }
 
 /// Proves whether every target-parameter coefficient of

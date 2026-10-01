@@ -884,15 +884,6 @@ pub(super) fn strict_interior_unit_parameter(
     }
 }
 
-pub(super) fn polynomial_derivative(coefficients: &[Real]) -> Vec<Real> {
-    coefficients
-        .iter()
-        .enumerate()
-        .skip(1)
-        .map(|(degree, coefficient)| coefficient * Real::from(degree as u64))
-        .collect()
-}
-
 /// The first nonzero Taylor coefficient determines the exact local sign.
 /// Reuse the parameter's existing field/root authority without scalar images
 /// or root isolation; an identically zero polynomial stays zero.
@@ -1232,17 +1223,6 @@ pub(super) fn construct_cubic_reduced_half(
         depth,
         trace,
     )
-}
-
-pub(super) fn polynomial_trim_structural_zeros(mut coefficients: Vec<Real>) -> Vec<Real> {
-    while coefficients.len() > 1
-        && coefficients
-            .last()
-            .is_some_and(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
-    {
-        coefficients.pop();
-    }
-    coefficients
 }
 
 /// Builds the squared image equation for
