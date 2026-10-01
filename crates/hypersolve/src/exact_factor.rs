@@ -1,7 +1,7 @@
 //! Exact rational roots, bivariate square roots, bilinear factorizations and
 //! constraint resultants for parameter polynomials.
 
-use hyperreal::{Real, RealSign, ZeroKnowledge};
+use hyperreal::{Real, RealSign};
 use num::{BigInt, BigUint, Integer, One, Signed, ToPrimitive};
 
 use crate::bivariate_arithmetic::*;
@@ -9,18 +9,7 @@ use crate::curve_resultant::{
     BivariatePolynomial, divide_bivariate_polynomial_exact, divide_univariate_polynomial_exact,
     greatest_common_divisor_univariate_polynomials_exact,
 };
-
-/// Exact STRICT sign: a structural zero, else a certified predicate sign.
-fn strict_real_sign(value: &Real) -> Option<RealSign> {
-    if value.zero_status() == ZeroKnowledge::Zero {
-        return Some(RealSign::Zero);
-    }
-    match crate::classify_real_sign_predicate(value, hyperlimit::PredicatePolicy::STRICT).value()? {
-        crate::PredicateSign::Negative => Some(RealSign::Negative),
-        crate::PredicateSign::Zero => Some(RealSign::Zero),
-        crate::PredicateSign::Positive => Some(RealSign::Positive),
-    }
-}
+use crate::real_interval::strict_real_sign;
 
 /// Returns a rational root of an exact rational polynomial, if a bounded rational-root search finds one.
 pub fn exact_rational_polynomial_root(polynomial: &[Real]) -> Option<Real> {
