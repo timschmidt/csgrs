@@ -955,6 +955,10 @@ fn repeated_round_erosion_composes_with_a_single_erosion() {
 /// in its recursive field first (no result after 40 minutes became 426 s), but
 /// ordering a derived cusp/chord point's axis coordinate against an equal real
 /// still materializes explicit coordinates through tensor-image resultants.
+/// That derived point is `C + a (P - C) + T` with an analytic-parallel center
+/// `C` and a chord/parallel source `P` displaced from `C` along an
+/// axis-aligned chord normal; the equality needs that shared provenance, not
+/// either point's coordinate alone.
 #[test]
 #[ignore = "slow (426 s): represented coordinates for equal axis orders"]
 fn chamfered_filleted_pool_inward_miter_offset_completes() {
