@@ -3679,6 +3679,61 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     );
                     return Ok(RegionPairResult::empty());
                 }
+                // A strictly monotone incidence vanishes at most once. With
+                // one endpoint exactly on the support and the other strictly
+                // off it, that endpoint is the only possible contact; it is a
+                // contact exactly when it also lies on the finite chord.
+                let on_endpoint = match sides {
+                    [
+                        Classification::Decided(LineSide::On),
+                        Classification::Decided(LineSide::Left | LineSide::Right),
+                    ] => Some(retained_range.start()),
+                    [
+                        Classification::Decided(LineSide::Left | LineSide::Right),
+                        Classification::Decided(LineSide::On),
+                    ] => Some(retained_range.end()),
+                    _ => None,
+                };
+                if let Some(parameter) = on_endpoint
+                    && let Classification::Decided(point) = parallel
+                        .point_evidence_on_regular_range(
+                            parameter,
+                            &retained_range,
+                            &self.data.policy,
+                        )
+                        .map_err(|cause| self.invalid(parallel_index, cause))?
+                    && let Classification::Decided(chord_parameter) = chord
+                        .parameter_at_certified_point(point.clone(), &self.data.policy)
+                        .map_err(|cause| self.invalid(chord_index, cause))?
+                {
+                    let Some(chord_parameter) = chord_parameter else {
+                        return Ok(RegionPairResult::empty());
+                    };
+                    let chord_parameter = CurveParameter2::from_algebraic_chord(chord_parameter);
+                    let (first_parameter, second_parameter) =
+                        if chord_index == pair.first_carrier_index {
+                            (chord_parameter, parameter.clone())
+                        } else {
+                            (parameter.clone(), chord_parameter)
+                        };
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "algebraic-chord-pair",
+                        "parallel-monotone-endpoint-incidence",
+                    );
+                    return Ok(RegionPairResult {
+                        contacts: vec![RegionPairContactEvidence::direct(
+                            first_parameter,
+                            second_parameter,
+                            Some(point),
+                            false,
+                            None,
+                        )],
+                        overlaps: Vec::new(),
+                        blockers: Vec::new(),
+                    });
+                }
                 if let [
                     Classification::Decided(first @ (LineSide::Left | LineSide::Right)),
                     Classification::Decided(second @ (LineSide::Left | LineSide::Right)),
