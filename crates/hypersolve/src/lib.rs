@@ -29,6 +29,7 @@ pub mod direct;
 pub mod domain;
 pub mod domain_certification;
 pub mod eval;
+pub mod exact_factor;
 pub mod failed_constraints;
 mod integer_interpolation;
 pub mod interval;

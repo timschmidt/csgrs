@@ -384,6 +384,45 @@ pub fn try_zero_bivariate_coefficients(
     Some(coefficients)
 }
 
+/// Exact univariate sum in ascending power coefficients.
+pub fn polynomial_add(first: &[Real], second: &[Real]) -> Vec<Real> {
+    let length = first.len().max(second.len());
+    (0..length)
+        .map(|index| {
+            first.get(index).cloned().unwrap_or_else(Real::zero)
+                + second.get(index).cloned().unwrap_or_else(Real::zero)
+        })
+        .collect()
+}
+
+/// Exact univariate difference in ascending power coefficients.
+pub fn polynomial_subtract(first: &[Real], second: &[Real]) -> Vec<Real> {
+    let length = first.len().max(second.len());
+    (0..length)
+        .map(|index| {
+            first.get(index).cloned().unwrap_or_else(Real::zero)
+                - second.get(index).cloned().unwrap_or_else(Real::zero)
+        })
+        .collect()
+}
+
+/// Multiplies every univariate coefficient by one exact scalar.
+pub fn polynomial_scale(coefficients: &[Real], scale: &Real) -> Vec<Real> {
+    coefficients
+        .iter()
+        .map(|coefficient| coefficient * scale)
+        .collect()
+}
+
+/// Exact univariate power by repeated multiplication.
+pub fn polynomial_power(coefficients: &[Real], exponent: usize) -> Vec<Real> {
+    let mut result = vec![Real::one()];
+    for _ in 0..exponent {
+        result = polynomial_multiply(&result, coefficients);
+    }
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
