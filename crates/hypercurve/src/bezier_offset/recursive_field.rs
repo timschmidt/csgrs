@@ -725,6 +725,103 @@ impl BezierRecursiveLineParameterIdentity2 {
 }
 
 impl BezierRecursiveMonotoneParameter2 {
+    /// Decides whether a real polynomial vanishes at this mapped monotone
+    /// root without bracketing it further.
+    ///
+    /// The source root is the unique zero of the authored incidence
+    /// `f = a + b*sqrt(S)` in its bracket, and a root of `R = a^2 - b^2*S`
+    /// over the retained field. A strict interval sign of the conjugate sheet
+    /// `a - b*sqrt(S)` on the bracket proves `R` has no other root there, so
+    /// the gcd of `R` and the query composed with the projective map decides
+    /// vanishing exactly. `None` leaves the comparison to its fallbacks.
+    pub(super) fn polynomial_vanishes(
+        &self,
+        coefficients: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Option<bool>> {
+        let Some(degree) = coefficients
+            .iter()
+            .rposition(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
+        else {
+            return Ok(Some(true));
+        };
+        let coefficients = &coefficients[..=degree];
+        if let Some(source) = self.exact_source_value() {
+            let mapped = self.map_value(source)?;
+            return Ok(real_sign(
+                &Real::eval_poly(coefficients, &mapped),
+                &policy.strict_counterpart(),
+            )
+            .map(|sign| sign == RealSign::Zero));
+        }
+        let Some(defining) = self.system.incidence_polynomial() else {
+            return Ok(None);
+        };
+        let interval = RealInterval {
+            lower: self.source_lower.clone(),
+            upper: self.source_upper.clone(),
+        };
+        if !self
+            .system
+            .incidence
+            .radical
+            .iter()
+            .all(BezierRecursiveQuadraticValue2::is_structurally_zero)
+        {
+            let conjugate_is_separated = [(0_usize, -128_i32), (8, -256), (32, -512)]
+                .into_iter()
+                .any(|(steps, precision)| {
+                    matches!(
+                        self.system
+                            .conjugate_incidence_interval_sign(&interval, steps, precision),
+                        Some(RealSign::Positive | RealSign::Negative)
+                    )
+                });
+            if !conjugate_is_separated {
+                return Ok(None);
+            }
+        }
+        // Q(t) = d(t)^n P(n(t)/d(t)) for the projective map n/d.
+        let numerator = [self.map_numerator[0].clone(), self.map_numerator[1].clone()];
+        let denominator = [
+            self.map_denominator[0].clone(),
+            self.map_denominator[1].clone(),
+        ];
+        let mut composed = vec![Real::zero()];
+        for (power, coefficient) in coefficients.iter().enumerate() {
+            let term = polynomial_scale(
+                &polynomial_multiply(
+                    &polynomial_power(&numerator, power),
+                    &polynomial_power(&denominator, degree - power),
+                ),
+                coefficient,
+            );
+            composed = polynomial_add(&composed, &term);
+        }
+        let Some(query) = recursive_quadratic_real_polynomial(&self.system.field, &composed) else {
+            return Ok(None);
+        };
+        let mut context = BezierRecursiveOrderedFieldContext2 {
+            field: self.system.field.clone(),
+            policy: *policy,
+        };
+        match hypersolve::ordered_field_vanishes_at_selected_root(
+            defining,
+            &query,
+            &hypersolve::IsolatedRootInterval {
+                lower: interval.lower,
+                upper: interval.upper,
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            &mut context,
+        ) {
+            Ok(vanishes) => Ok(vanishes),
+            Err(BezierRecursiveOrderedFieldError2::Uncertain) => Ok(None),
+            Err(BezierRecursiveOrderedFieldError2::Curve(error)) => Err(error),
+        }
+    }
+
     pub(super) fn exact_source_value(&self) -> Option<&Real> {
         (self.source_lower_sign == RealSign::Zero && self.source_upper_sign == RealSign::Zero)
             .then_some(&self.source_lower)
@@ -2498,6 +2595,42 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         dense_strict_interval_sign(&incidence)
     }
 
+    /// Signs the conjugate sheet `a - b*sqrt(S)` of the incidence over a
+    /// target parameter interval, with the same enclosures as the authored
+    /// sheet. A strict sign proves the squared incidence has no conjugate
+    /// root in the interval.
+    pub(super) fn conjugate_incidence_interval_sign(
+        &self,
+        parameter: &RealInterval,
+        refinement_steps: usize,
+        coefficient_precision: i32,
+    ) -> Option<RealSign> {
+        let rational = self.polynomial_interval_on_real_interval(
+            &self.incidence.rational,
+            parameter,
+            refinement_steps,
+            coefficient_precision,
+        )?;
+        let radical = self.polynomial_interval_on_real_interval(
+            &self.incidence.radical,
+            parameter,
+            refinement_steps,
+            coefficient_precision,
+        )?;
+        let speed = self
+            .polynomial_interval_on_real_interval(
+                &self.incidence.speed_squared,
+                parameter,
+                refinement_steps,
+                coefficient_precision,
+            )?
+            .nonnegative_square_root(Some(coefficient_precision))?;
+        let conjugate = radical
+            .multiply(&speed)
+            .map(|radical| rational.subtract(&radical))?;
+        dense_strict_interval_sign(&conjugate)
+    }
+
     pub(super) fn oriented_incidence_interval_sign(
         &self,
         parameter: &RealInterval,
@@ -3457,6 +3590,9 @@ impl BezierRecursiveProjectiveParameter2 {
         policy: &CurveContext,
     ) -> CurveResult<Option<bool>> {
         self.validate_policy(policy)?;
+        if let Some(authority) = self.monotone_authority() {
+            return authority.polynomial_vanishes(coefficients, policy);
+        }
         let Some(authority) = self.polynomial_authority() else {
             return Ok(None);
         };
