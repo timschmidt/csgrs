@@ -921,13 +921,12 @@ fn repeated_inward_round_offset_of_a_quadratic_seed_completes() {
 /// Open computational-closure gap found by the generator: inward miter
 /// offset of a chamfered, thrice-filleted nested pool. Band regularization
 /// asks whether a round-join arc meets an adjacent chord only at their shared
-/// endpoint; for an algebraic chord/parallel point the circle-incidence sign
-/// is proved by materializing an explicit circle frame through tensor-image
-/// resultants and Sturm refinement (no result after 40 minutes). A selected
-/// field incidence replay, without coordinate materialization, is the remedy
-/// recommended by the review.
+/// endpoint. The circle incidence of a chord/parallel point is now replayed
+/// in its recursive field first (no result after 40 minutes became 426 s), but
+/// ordering a derived cusp/chord point's axis coordinate against an equal real
+/// still materializes explicit coordinates through tensor-image resultants.
 #[test]
-#[ignore = "open: represented circle frame in join-arc/chord endpoint certificate"]
+#[ignore = "slow (426 s): represented coordinates for equal axis orders"]
 fn chamfered_filleted_pool_inward_miter_offset_completes() {
     let seeds = [
         Seed {

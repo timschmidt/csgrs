@@ -2172,6 +2172,19 @@ impl BezierAlgebraicCuspSemicircle2 {
             point,
             CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         ) {
+            // The chord/parallel point's own recursive field can replay the
+            // circle residual without materializing a coordinate frame.
+            if let Classification::Decided(center) = self.center_point_evidence(policy)?
+                && let Classification::Decided(Some(sign)) =
+                    recursive_projective_point_evidence_circle_residual_sign(
+                        point,
+                        &center,
+                        &(self.radial_distance() * self.radial_distance()),
+                        policy,
+                    )?
+            {
+                return Ok(Classification::Decided(sign));
+            }
             match self.represented_point_incidence_sign(point, policy, policy)? {
                 decided @ Classification::Decided(_) => return Ok(decided),
                 Classification::Uncertain(_) => {}
