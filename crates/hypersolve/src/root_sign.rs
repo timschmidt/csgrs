@@ -150,6 +150,77 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
     }
 }
 
+/// Decides whether `predicate` vanishes at the unique selected root of
+/// `defining` in `interval`, over an exact ordered field.
+///
+/// The selected root vanishes `predicate` exactly when it is a root of
+/// `gcd(defining, predicate)`. A Euclidean remainder sequence of the two
+/// polynomials (positive pseudo-remainder scales; exact leading-coefficient
+/// signs) finds that gcd without forming `defining' * predicate` or signing
+/// any chain member at the interval endpoints. A constant gcd proves a
+/// nonzero value. Because the gcd divides `defining`, a gcd sign change
+/// across the interval proves zero at any degree; a linear gcd without one
+/// proves a nonzero value. Other gcds, endpoint roots and invalid intervals
+/// return `None`; callers keep the complete Sturm-Tarski sign query.
+pub fn ordered_field_vanishes_at_selected_root<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    defining: &[C],
+    predicate: &[C],
+    interval: &IsolatedRootInterval,
+    field: &mut F,
+) -> Result<Option<bool>, F::Error> {
+    if interval.distinct_root_count != 1
+        || sign(&(&interval.upper - &interval.lower)) != Some(Ordering::Greater)
+    {
+        return Ok(None);
+    }
+    let mut first = defining.to_vec();
+    field.normalize_positive_scale(&mut first);
+    trim_polynomial(&mut first, field)?;
+    if first.len() < 2 {
+        return Ok(None);
+    }
+    let mut second = predicate.to_vec();
+    field.normalize_positive_scale(&mut second);
+    trim_polynomial(&mut second, field)?;
+    if second.len() == 1 && field.sign(&second[0])? == Ordering::Equal {
+        second.clear();
+    }
+    if second.is_empty() {
+        return Ok(Some(true));
+    }
+    let gcd = loop {
+        if second.len() == 1 {
+            // A nonzero constant shares no root with the defining relation.
+            return Ok(Some(false));
+        }
+        let Some(mut remainder) = ordered_field_polynomial_sign_remainder(&first, &second, field)?
+        else {
+            return Ok(None);
+        };
+        field.normalize_positive_scale(&mut remainder);
+        trim_polynomial(&mut remainder, field)?;
+        if remainder.is_empty()
+            || (remainder.len() == 1 && field.sign(&remainder[0])? == Ordering::Equal)
+        {
+            break second;
+        }
+        first = second;
+        second = remainder;
+    };
+    // The gcd divides `defining`, whose only root in the interval is the
+    // selected one. Any gcd root there is therefore that root, so opposite
+    // nonzero endpoint signs prove vanishing at every gcd degree. A linear
+    // gcd with equal endpoint signs has its only root outside.
+    let lower = field_polynomial_sign(&gcd, &interval.lower, field)?;
+    let upper = field_polynomial_sign(&gcd, &interval.upper, field)?;
+    Ok(match (lower, upper) {
+        (Ordering::Equal, _) | (_, Ordering::Equal) => None,
+        (lower, upper) if lower != upper => Some(true),
+        _ if gcd.len() == 2 => Some(false),
+        _ => None,
+    })
+}
+
 fn field_polynomial_sign<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     polynomial: &[C],
     point: &Real,
@@ -165,6 +236,10 @@ fn field_polynomial_sign<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     }
     field.sign(&value)
 }
+
+/// Rational predicate coefficients above this size try the enclosure filter
+/// before an exact primitive remainder chain.
+const LARGE_RATIONAL_PREDICATE_COEFFICIENT_BITS: u64 = 1024;
 
 /// Signs `predicate` at the unique selected root of `defining` in `interval`.
 ///
@@ -209,11 +284,23 @@ pub fn sign_at_selected_root(
     // Primitive integer remainder chains are already cheap for rational
     // coefficients, especially exact-zero queries. Preserve that fast path;
     // a general Real field can avoid costly inverses through an enclosure.
+    // Rational remainder chains slow down with coefficient size, because
+    // each step extracts content with big-integer gcds. A long rational
+    // predicate therefore tries the same certified enclosure filter first.
+    let large_rational_predicate = || {
+        predicate.iter().any(|coefficient| {
+            coefficient.exact_rational_ref().is_some_and(|value| {
+                value.numerator().bits() + value.denominator().bits()
+                    > LARGE_RATIONAL_PREDICATE_COEFFICIENT_BITS
+            })
+        })
+    };
     if endpoints_decided
-        && defining
+        && (defining
             .iter()
             .chain(predicate)
             .any(|coefficient| coefficient.exact_rational_ref().is_none())
+            || large_rational_predicate())
         && let Some(result) = sign_on_refined_singleton(defining, predicate, interval)
     {
         return Some(result);
@@ -238,6 +325,9 @@ pub fn sign_at_selected_root(
     };
     selected_sign.or_else(|| sign_with_coarser_singleton(defining, &chain, interval))
 }
+
+/// Finest dyadic precision the refined-singleton filter may reach.
+const REFINED_SINGLETON_MAX_PRECISION_BITS: u64 = 1 << 20;
 
 /// Every box contains the caller's selected root. Interval Newton intersects
 /// that box with m - P(m)/P'(box); the mean value theorem preserves ownership.
@@ -282,7 +372,23 @@ fn sign_on_refined_singleton(
 
     let mut retained: Option<[Rational; 2]> = None;
     // A bounded proof filter; inseparable values still use the exact chain.
-    for precision in [-64, -128, -256, -512, -1024, -2048] {
+    // Cancellation in a query scales with its coefficient size, so long
+    // rational queries extend the doubling schedule in proportion.
+    let coefficient_bits = predicate
+        .iter()
+        .filter_map(|coefficient| coefficient.exact_rational_ref())
+        .map(|value| value.numerator().bits() + value.denominator().bits())
+        .max()
+        .unwrap_or(0);
+    let finest = coefficient_bits
+        .saturating_mul(4)
+        .saturating_add(1024)
+        .clamp(2048, REFINED_SINGLETON_MAX_PRECISION_BITS);
+    let precisions = std::iter::successors(Some(64_u64), |bits| {
+        (*bits < finest).then(|| (bits * 2).min(finest))
+    });
+    for precision in precisions {
+        let precision = -i32::try_from(precision).ok()?;
         let mut bounds = [
             interval.lower.certified_dyadic_interval(precision)?[0].clone(),
             interval.upper.certified_dyadic_interval(precision)?[1].clone(),
@@ -553,9 +659,11 @@ mod tests {
             distinct_root_count: 1,
         };
         for orientation in [-1, 1] {
+            // A nonrational coefficient receives no size-based precision
+            // extension, so the filter stops at its fixed budget.
             let predicate = [
                 Real::zero(),
-                Real::from(orientation) * Real::from(2).powi_i64(-4096).unwrap(),
+                Real::from(orientation) * Real::from(2).powi_i64(-4096).unwrap() * &unit,
             ];
             assert_eq!(
                 sign_on_refined_singleton(&defining, &predicate, &interval),
@@ -563,6 +671,27 @@ mod tests {
             );
             assert_eq!(
                 sign_at_selected_root(&defining, &predicate, &interval),
+                Some(orientation.cmp(&0))
+            );
+        }
+    }
+
+    #[test]
+    fn long_rational_queries_extend_the_filter_precision() {
+        let defining = [-2, 0, 0, 1].map(Real::from);
+        let interval = IsolatedRootInterval {
+            lower: Real::one(),
+            upper: Real::from(2),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        for orientation in [-1, 1] {
+            let predicate = [
+                Real::zero(),
+                Real::from(orientation) * Real::from(2).powi_i64(-4096).unwrap(),
+            ];
+            assert_eq!(
+                sign_on_refined_singleton(&defining, &predicate, &interval),
                 Some(orientation.cmp(&0))
             );
         }
@@ -745,6 +874,63 @@ mod tests {
         fn sign_if_separated(&mut self, value: &Real) -> Result<Option<Ordering>, Self::Error> {
             Ok(sign(value))
         }
+    }
+
+    fn integer_polynomial_from_roots(roots: &[i32]) -> Vec<Real> {
+        let mut polynomial = vec![Real::one()];
+        for root in roots {
+            let mut next = vec![Real::zero(); polynomial.len() + 1];
+            for (power, coefficient) in polynomial.iter().enumerate() {
+                next[power + 1] = &next[power + 1] + coefficient;
+                next[power] = &next[power] - coefficient * Real::from(*root);
+            }
+            polynomial = next;
+        }
+        polynomial
+    }
+
+    #[test]
+    fn selected_root_vanishing_uses_the_common_divisor() {
+        // (t - 1)(t - 3)(t^2 - 2), selected root 1 in (1/2, 5/4).
+        let mut defining = integer_polynomial_from_roots(&[1, 3]);
+        let quadratic = [Real::from(-2), Real::zero(), Real::one()];
+        let mut product = vec![Real::zero(); defining.len() + 2];
+        for (power, coefficient) in defining.iter().enumerate() {
+            for (other_power, other) in quadratic.iter().enumerate() {
+                product[power + other_power] = &product[power + other_power] + coefficient * other;
+            }
+        }
+        defining = product;
+        let interval = IsolatedRootInterval {
+            lower: (Real::from(1) / Real::from(2)).unwrap(),
+            upper: (Real::from(5) / Real::from(4)).unwrap(),
+            exact_root: None,
+            distinct_root_count: 1,
+        };
+        let query = |predicate: &[Real]| {
+            ordered_field_vanishes_at_selected_root(
+                &defining,
+                predicate,
+                &interval,
+                &mut RealContext,
+            )
+            .unwrap()
+        };
+        // Shares the selected root.
+        assert_eq!(query(&integer_polynomial_from_roots(&[1, -4])), Some(true));
+        // Shares only an unselected root of the defining relation.
+        assert_eq!(query(&integer_polynomial_from_roots(&[3, 5])), Some(false));
+        // Coprime with the defining relation.
+        assert_eq!(query(&integer_polynomial_from_roots(&[2, 7])), Some(false));
+        // Shares only the quadratic factor, whose roots lie outside.
+        assert_eq!(query(&quadratic), None);
+        // Shares the selected root through a quadratic common divisor.
+        assert_eq!(
+            query(&integer_polynomial_from_roots(&[1, 3, 9])),
+            Some(true)
+        );
+        // The zero polynomial vanishes everywhere.
+        assert_eq!(query(&[]), Some(true));
     }
 
     proptest! {

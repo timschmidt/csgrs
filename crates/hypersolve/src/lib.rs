@@ -325,7 +325,8 @@ pub use root_isolation::{
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
 pub use root_sign::{
-    ordered_field_sign_at_selected_root, sign_at_selected_root, sign_at_selected_tuple,
+    ordered_field_sign_at_selected_root, ordered_field_vanishes_at_selected_root,
+    sign_at_selected_root, sign_at_selected_tuple,
 };
 pub use simplex_projection::{
     SimplexProjectionConfig, SimplexProjectionError, SimplexProjectionReport,
