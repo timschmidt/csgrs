@@ -1265,20 +1265,6 @@ pub(super) fn polynomial_subtract(first: &[Real], second: &[Real]) -> Vec<Real> 
         .collect()
 }
 
-pub(super) fn polynomial_multiply(first: &[Real], second: &[Real]) -> Vec<Real> {
-    if first.is_empty() || second.is_empty() {
-        return Vec::new();
-    }
-    let mut product = vec![Real::zero(); first.len() + second.len() - 1];
-    for (first_degree, first_coefficient) in first.iter().enumerate() {
-        for (second_degree, second_coefficient) in second.iter().enumerate() {
-            let term = first_coefficient * second_coefficient;
-            product[first_degree + second_degree] = &product[first_degree + second_degree] + term;
-        }
-    }
-    product
-}
-
 pub(super) fn polynomial_scale(coefficients: &[Real], scale: &Real) -> Vec<Real> {
     coefficients
         .iter()

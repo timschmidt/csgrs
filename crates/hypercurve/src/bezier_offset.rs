@@ -51,6 +51,15 @@ use represented::*;
 use selected_dense::*;
 
 use crate::CurvePointData2;
+use hypersolve::bivariate_arithmetic::{
+    bivariate_add, bivariate_multiply, bivariate_multiply_first_parameter, bivariate_outer_product,
+    bivariate_parameter_difference, bivariate_scale, bivariate_scaled_difference,
+    bivariate_specialize_first, bivariate_specialize_second,
+    bivariate_substitute_second_equal_affine_first, bivariate_substitute_second_equal_first,
+    bivariate_substitute_second_equal_one_minus_first, bivariate_subtract,
+    bivariate_swap_parameters, polynomial_multiply, polynomial_powers, try_bivariate_multiply,
+    try_zero_bivariate_coefficients,
+};
 use std::borrow::Cow;
 use std::ops::ControlFlow;
 use std::sync::{Arc, Mutex, OnceLock, Weak};
@@ -7541,22 +7550,6 @@ const MAX_FIRST_BILINEAR_FACTOR_PROPOSALS: usize = 64;
 /// be accepted by exact division, so exhaustion loses capability rather than
 /// exactness.
 const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
-
-fn try_zero_bivariate_coefficients(
-    first_count: usize,
-    second_count: usize,
-) -> Option<Vec<Vec<Real>>> {
-    first_count.checked_mul(second_count)?;
-    let mut coefficients = Vec::new();
-    coefficients.try_reserve_exact(first_count).ok()?;
-    for _ in 0..first_count {
-        let mut row = Vec::new();
-        row.try_reserve_exact(second_count).ok()?;
-        row.resize_with(second_count, Real::zero);
-        coefficients.push(row);
-    }
-    Some(coefficients)
-}
 
 fn try_zero_trivariate_coefficients(dimensions: [usize; 3]) -> Option<Vec<Vec<Vec<Real>>>> {
     dimensions[0]
