@@ -10417,6 +10417,16 @@ impl CurveRegion2 {
         ty: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        // The identity keeps every retained carrier and its evidence; wrapping
+        // them as transformed images would only hide that shared identity.
+        let structurally_zero =
+            |value: &Real| value.zero_status() == hyperreal::ZeroKnowledge::Zero;
+        if structurally_zero(&(m00 - Real::one()))
+            && structurally_zero(&(m11 - Real::one()))
+            && [m01, m10, tx, ty].into_iter().all(structurally_zero)
+        {
+            return Ok(self.clone());
+        }
         let determinant = m00 * m11 - m01 * m10;
         let orientation_reversing = match real_sign(&determinant, policy) {
             Some(RealSign::Positive) => false,

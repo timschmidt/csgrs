@@ -3083,6 +3083,17 @@ impl BezierAlgebraicChord2 {
                 ))))
             }
             CurvePoint2(CurvePointData2::Algebraic(point)) => {
+                // An axis-aligned map keeps a coordinate image's represented
+                // roots, so equality against other carriers' contacts stays
+                // decidable without the retained-expression fallback below.
+                let structurally_zero =
+                    |value: &Real| value.zero_status() == hyperreal::ZeroKnowledge::Zero;
+                if structurally_zero(m01)
+                    && structurally_zero(m10)
+                    && let Some(image) = point.axis_affine_image(m00, tx, m11, ty)
+                {
+                    return Ok(Classification::Decided(CurvePoint2::from(image)));
+                }
                 let parameter = match algebraic_chord_image_parameter(point, policy)? {
                     Classification::Decided(parameter) => parameter,
                     Classification::Uncertain(reason) => {

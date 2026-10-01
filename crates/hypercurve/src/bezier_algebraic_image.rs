@@ -71,6 +71,43 @@ impl BezierAlgebraicRationalCoordinateImage {
         &self.denominator_coefficients
     }
 
+    /// Returns the exact image `scale * value + offset` with its map and
+    /// represented root transformed together.
+    fn affine_image(&self, scale: &Real, offset: &Real) -> Option<Self> {
+        let representation = self.representation()?;
+        let report = hypersolve::transform_algebraic_root_affine(
+            representation,
+            scale.clone(),
+            offset.clone(),
+            hypersolve::PredicatePolicy::STRICT,
+        );
+        let transformed = report.representation?;
+        let scale_by = |coefficients: &[Real], factor: &Real| {
+            coefficients
+                .iter()
+                .map(|value| value * factor)
+                .collect::<Vec<_>>()
+        };
+        let mut numerator = scale_by(&self.numerator_coefficients, scale);
+        let shifted = scale_by(&self.denominator_coefficients, offset);
+        if numerator.len() < shifted.len() {
+            numerator.resize(shifted.len(), Real::zero());
+        }
+        for (target, value) in numerator.iter_mut().zip(shifted) {
+            *target = &*target + value;
+        }
+        let mut evidence = self.evidence.clone();
+        evidence.numerator_coefficients = numerator.clone();
+        evidence.numerator_image = None;
+        evidence.quotient = None;
+        evidence.representation = Some(transformed);
+        Some(Self {
+            numerator_coefficients: numerator,
+            denominator_coefficients: self.denominator_coefficients.clone(),
+            evidence,
+        })
+    }
+
     /// Returns the represented coordinate when the image was constructed.
     pub fn representation(&self) -> Option<&AlgebraicRootRepresentation> {
         self.evidence.representation.as_ref()
@@ -767,6 +804,25 @@ impl RationalBezierAlgebraicPointImage2 {
         } else {
             None
         }
+    }
+
+    /// Applies an exact axis-aligned affine map `(x, y) -> (sx x + tx, sy y + ty)`
+    /// to a coordinate image, keeping both represented coordinates. Each
+    /// coordinate stays a rational map of the unchanged source root, so later
+    /// equality and order queries need no retained-expression fallback.
+    pub(crate) fn axis_affine_image(
+        &self,
+        x_scale: &Real,
+        x_offset: &Real,
+        y_scale: &Real,
+        y_offset: &Real,
+    ) -> Option<Self> {
+        let RationalPointDefinition::Coordinates { x, y } = &self.data.definition else {
+            return None;
+        };
+        let x = x.affine_image(x_scale, x_offset)?;
+        let y = y.affine_image(y_scale, y_offset)?;
+        Some(Self::from_coordinates(self.data.parameter.clone(), x, y))
     }
 
     pub(crate) fn same_injective_parametric_source_point(

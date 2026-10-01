@@ -959,3 +959,53 @@ fn chamfered_filleted_pool_inward_miter_offset_completes() {
     ];
     run_sequence(&seeds, &steps, true).unwrap();
 }
+
+/// A union whose contacts are coordinate-represented algebraic points must
+/// round-trip after an identity map and after a pure translation. Translating
+/// such a contact previously dropped its represented coordinates, leaving
+/// later equality against another carrier's contact unsupported.
+#[test]
+fn translated_union_with_algebraic_contacts_round_trips() {
+    let seeds = [
+        Seed {
+            x: 1,
+            y: 0,
+            width: 8,
+            height: 9,
+            lower: 0,
+            upper: 1,
+            curvature: 2,
+            weight: 1,
+        },
+        Seed {
+            x: -10,
+            y: -7,
+            width: 14,
+            height: 6,
+            lower: 0,
+            upper: 5,
+            curvature: 3,
+            weight: 1,
+        },
+    ];
+    let union = seed_region(&seeds[0])
+        .boolean_region(&seed_region(&seeds[1]), BooleanOp::Union, &STRICT)
+        .unwrap()
+        .into_value();
+    assert_round_trip("union", &union).unwrap();
+    for (label, tx) in [("identity", Real::zero()), ("shifted", fraction(1, 2))] {
+        let moved = union
+            .transform_affine(
+                &Real::one(),
+                &Real::zero(),
+                &Real::zero(),
+                &Real::one(),
+                &tx,
+                &Real::zero(),
+                &STRICT,
+            )
+            .unwrap()
+            .into_value();
+        assert_round_trip(label, &moved).unwrap();
+    }
+}
