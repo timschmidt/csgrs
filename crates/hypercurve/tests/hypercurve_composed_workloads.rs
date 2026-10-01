@@ -917,3 +917,46 @@ fn repeated_inward_round_offset_of_a_quadratic_seed_completes() {
             .is_empty()
     );
 }
+
+/// Open computational-closure gap found by the generator: inward miter
+/// offset of a chamfered, thrice-filleted nested pool. Band regularization
+/// asks whether a round-join arc meets an adjacent chord only at their shared
+/// endpoint; for an algebraic chord/parallel point the circle-incidence sign
+/// is proved by materializing an explicit circle frame through tensor-image
+/// resultants and Sturm refinement (no result after 40 minutes). A selected
+/// field incidence replay, without coordinate materialization, is the remedy
+/// recommended by the review.
+#[test]
+#[ignore = "open: represented circle frame in join-arc/chord endpoint certificate"]
+fn chamfered_filleted_pool_inward_miter_offset_completes() {
+    let seeds = [
+        Seed {
+            x: 2,
+            y: -4,
+            width: 9,
+            height: 14,
+            lower: 2,
+            upper: 4,
+            curvature: 2,
+            weight: 2,
+        },
+        Seed {
+            x: -8,
+            y: -11,
+            width: 9,
+            height: 14,
+            lower: 3,
+            upper: 2,
+            curvature: 1,
+            weight: 6,
+        },
+    ];
+    let steps = [
+        Step::Chamfer(13, 3),
+        Step::Fillet(13, 5),
+        Step::Fillet(5, 1),
+        Step::Fillet(0, 4),
+        Step::Offset(4, -2, 2),
+    ];
+    run_sequence(&seeds, &steps, true).unwrap();
+}
