@@ -277,6 +277,15 @@ pub fn dense_specialize_last_axis(
     DenseTensorPolynomial::try_new(dimensions, coefficients)
 }
 
+/// Whether every stored coefficient is the exact rational zero.
+pub fn dense_tensor_is_stored_zero(polynomial: &DenseTensorPolynomial) -> bool {
+    polynomial.coefficients().iter().all(|coefficient| {
+        coefficient
+            .exact_rational_ref()
+            .is_some_and(|value| value.is_zero())
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -43,6 +43,7 @@ pub mod polynomial;
 pub mod predicates;
 pub mod rank;
 pub mod real_interval;
+pub mod represented_root;
 pub mod residual_replay;
 pub mod resultant;
 pub mod root_isolation;
@@ -295,6 +296,7 @@ pub use polynomial::{
 pub use predicates::{Classification, PredicateBackend, PredicateReport};
 pub use rank::{ExactAffineRankReport, ExactAffineRankStatus, analyze_exact_affine_rank};
 pub use real_interval::RealInterval;
+pub use represented_root::*;
 pub use residual_replay::{
     DenseResidualReplayError, DenseResidualReplayReport, SparseLinearSystem,
     SparseResidualBatchReplay, SparseResidualBatchReport, SparseResidualBatchStatus,

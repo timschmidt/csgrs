@@ -1,0 +1,1132 @@
+//! Exact values, intervals, ratios and tensor images built from isolated
+//! algebraic roots.
+//!
+//! Every decision uses certified STRICT predicates. An outcome is either a
+//! decided exact value, an unsupported construction (the representation or
+//! elimination cannot be built), or an undecided predicate.
+
+use std::cmp::Ordering;
+
+use hyperreal::{Real, RealSign, ZeroKnowledge};
+
+use crate::bivariate_arithmetic::polynomial_derivative;
+use crate::real_interval::{RealInterval, strict_compare_reals, strict_real_sign};
+use crate::tensor_support::*;
+use crate::*;
+
+/// Outcome of an exact construction over represented algebraic roots.
+#[derive(Clone, Debug, PartialEq)]
+pub enum RepresentedOutcome<T> {
+    /// The exact value was constructed and certified.
+    Decided(T),
+    /// The representation or elimination needed for the value is unavailable.
+    Unsupported,
+    /// A required STRICT predicate was not decided.
+    Undecided,
+}
+
+/// Exact represented coordinate interval over represented algebraic roots.
+fn represented_coordinate_interval(lower: &Real, upper: &Real) -> Option<IsolatedRootInterval> {
+    match strict_compare_reals(lower, upper)? {
+        Ordering::Greater => None,
+        Ordering::Equal => Some(IsolatedRootInterval {
+            lower: lower.clone(),
+            upper: upper.clone(),
+            exact_root: Some(lower.clone()),
+            distinct_root_count: 1,
+        }),
+        Ordering::Less => Some(IsolatedRootInterval {
+            lower: lower.clone(),
+            upper: upper.clone(),
+            exact_root: None,
+            distinct_root_count: 1,
+        }),
+    }
+}
+
+/// Exact represented univariate coordinate over represented algebraic roots.
+pub fn represented_univariate_coordinate(
+    coefficients: &[Real],
+    lower: &Real,
+    upper: &Real,
+    provenance: &AlgebraicRootRepresentation,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    if coefficients.len() <= 1 {
+        return RepresentedOutcome::Unsupported;
+    }
+    let Some(interval) = represented_coordinate_interval(lower, upper) else {
+        return RepresentedOutcome::Undecided;
+    };
+    let coefficients = if let Some(root) = interval.exact_root.as_ref() {
+        if strict_real_sign(&Real::eval_poly(coefficients, root)) != Some(RealSign::Zero) {
+            return RepresentedOutcome::Undecided;
+        }
+        vec![-root.clone(), Real::one()]
+    } else {
+        // The exact retained-fiber construction and conservative point box
+        // prove that at least one authored coordinate root lies here. A
+        // strictly signed derivative enclosure proves that the global image
+        // eliminant has at most one root here, completing the singleton proof
+        // without a degree-sized Sturm chain. Multiple-root images decline
+        // this path and retain the complete global construction fallback.
+        let derivative = polynomial_derivative(coefficients);
+        let parameter_interval = RealInterval {
+            lower: interval.lower.clone(),
+            upper: interval.upper.clone(),
+        };
+        let Some(derivative_bounds) =
+            RealInterval::evaluate_power_basis(&derivative, &parameter_interval)
+        else {
+            return RepresentedOutcome::Undecided;
+        };
+        let derivative_nonzero = strict_compare_reals(&derivative_bounds.lower, &Real::zero())
+            == Some(Ordering::Greater)
+            || strict_compare_reals(&derivative_bounds.upper, &Real::zero())
+                == Some(Ordering::Less);
+        if !derivative_nonzero {
+            return RepresentedOutcome::Undecided;
+        }
+        coefficients.to_vec()
+    };
+    let mut representation = AlgebraicRootRepresentation {
+        constraint_index: provenance.constraint_index,
+        symbol: provenance.symbol,
+        interval_index: provenance.interval_index,
+        polynomial_coefficients: coefficients,
+        interval,
+        validation: provenance.validation.clone(),
+    };
+    representation.validation =
+        validate_algebraic_root_representation(&representation, crate::PredicatePolicy::STRICT);
+    if representation.is_valid() {
+        RepresentedOutcome::Decided(representation)
+    } else {
+        RepresentedOutcome::Unsupported
+    }
+}
+
+/// Exact represented tensor coordinate over represented algebraic roots.
+pub fn represented_tensor_coordinate(
+    relation: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    lower: &Real,
+    upper: &Real,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    let Some(interval) = represented_coordinate_interval(lower, upper) else {
+        return RepresentedOutcome::Undecided;
+    };
+    if sources.is_empty() {
+        if relation.dimensions().len() != 1 {
+            return RepresentedOutcome::Unsupported;
+        }
+        let Some(root) = interval.exact_root.as_ref() else {
+            return RepresentedOutcome::Undecided;
+        };
+        return match strict_real_sign(&Real::eval_poly(relation.coefficients(), root)) {
+            Some(RealSign::Zero) => {
+                RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(root))
+            }
+            Some(RealSign::Negative | RealSign::Positive) => RepresentedOutcome::Unsupported,
+            None => RepresentedOutcome::Undecided,
+        };
+    }
+    #[cfg(test)]
+    if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
+        eprintln!(
+            "tensor image begin dimensions={:?} sources={}",
+            relation.dimensions(),
+            sources.len()
+        );
+    }
+    let report = represent_algebraic_tensor_image(relation, sources, &interval);
+    #[cfg(test)]
+    if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
+        eprintln!("tensor image end status={:?}", report.status);
+    }
+    match report.status {
+        AlgebraicTensorImageStatus::Transformed => RepresentedOutcome::Decided(
+            report
+                .representation
+                .expect("a transformed tensor image retains its representation"),
+        ),
+        AlgebraicTensorImageStatus::NonIsolatingImageInterval
+        | AlgebraicTensorImageStatus::Undecided => RepresentedOutcome::Undecided,
+        AlgebraicTensorImageStatus::InvalidSourceEvidence
+        | AlgebraicTensorImageStatus::InvalidRelationShape
+        | AlgebraicTensorImageStatus::SourceSquareFreeFailed
+        | AlgebraicTensorImageStatus::EliminationFailed
+        | AlgebraicTensorImageStatus::ImageSquareFreeFailed
+        | AlgebraicTensorImageStatus::InvalidTransformedEvidence => RepresentedOutcome::Unsupported,
+    }
+}
+
+/// Refines selected source isolators until one exact tensor-image root is
+/// separated. A repeated source/image state proves that further subdivision
+/// cannot add evidence and remains an explicit predicate blocker; otherwise
+/// no resource-shaped refinement ceiling changes the mathematical result.
+pub fn represented_tensor_coordinate_refined(
+    relation: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    initial_refinement_steps: usize,
+    _hot_refinement_limit: usize,
+    _trace_operation: &'static str,
+    mut image_interval: impl FnMut(&[AlgebraicRootRepresentation], usize) -> Option<RealInterval>,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    let mut refinement_steps = initial_refinement_steps;
+    let mut previous = None;
+    #[cfg(feature = "dispatch-trace")]
+    if initial_refinement_steps > _hot_refinement_limit {
+        hyperreal::dispatch_trace::record(
+            "hypersolve",
+            _trace_operation,
+            "unbounded-cold-continuation",
+        );
+    }
+    loop {
+        let refined_sources = sources
+            .iter()
+            .map(|source| refined_represented_root(source, refinement_steps))
+            .collect::<Vec<_>>();
+        if let Some(mut interval) = image_interval(&refined_sources, refinement_steps) {
+            // A retained exact `Real` expression can collapse interval
+            // arithmetic to one non-rational endpoint before its canonical
+            // univariate polynomial has been replayed. Replaying that endpoint
+            // against the eliminant asks Hyperreal to rediscover a deep
+            // eliminant cancellation and can reject otherwise valid evidence.
+            // Replace only this degenerate non-rational enclosure with certified
+            // dyadic bounds. The tensor-image authority still proves singleton
+            // isolation under STRICT; no approximation selects the root.
+            if strict_compare_reals(&interval.lower, &interval.upper) == Some(Ordering::Equal)
+                && interval.lower.exact_rational_normal_form().is_none()
+            {
+                let precision = refinement_steps.max(64).min(i32::MAX as usize) as i32;
+                if let Some([lower, upper]) = interval.lower.certified_rational_interval(-precision)
+                {
+                    interval = RealInterval {
+                        lower: Real::new(lower),
+                        upper: Real::new(upper),
+                    };
+                }
+            }
+            let unchanged = previous
+                .as_ref()
+                .is_some_and(|(old_sources, old_interval)| {
+                    old_sources == &refined_sources && old_interval == &interval
+                });
+            #[cfg(test)]
+            if relation.dimensions().len() == 4
+                && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
+            {
+                eprintln!(
+                    "tensor coordinate refinement operation={_trace_operation} steps={refinement_steps} unchanged={unchanged}"
+                );
+            }
+            match represented_tensor_coordinate(
+                relation,
+                &refined_sources,
+                &interval.lower,
+                &interval.upper,
+            ) {
+                decided @ RepresentedOutcome::Decided(_) => return decided,
+                RepresentedOutcome::Unsupported => {
+                    return RepresentedOutcome::Unsupported;
+                }
+                RepresentedOutcome::Undecided if unchanged => {
+                    return RepresentedOutcome::Undecided;
+                }
+                RepresentedOutcome::Undecided => {}
+            }
+            previous = Some((refined_sources, interval));
+        }
+        let Some(next_steps) = (if refinement_steps == 0 {
+            Some(4)
+        } else {
+            refinement_steps.checked_mul(2)
+        }) else {
+            return RepresentedOutcome::Undecided;
+        };
+        #[cfg(feature = "dispatch-trace")]
+        if refinement_steps <= _hot_refinement_limit && next_steps > _hot_refinement_limit {
+            hyperreal::dispatch_trace::record(
+                "hypersolve",
+                _trace_operation,
+                "unbounded-cold-continuation",
+            );
+        }
+        refinement_steps = next_steps;
+    }
+}
+
+/// Constructs one exact affine image of already selected algebraic numbers.
+/// Exact point witnesses and certified affine-related sources collapse before
+/// elimination. Any remaining selected roots retain their exact isolators as
+/// tensor axes; no rounded coordinate or approximate sheet choice is used.
+pub fn represented_affine_coordinate(
+    terms: &[(&AlgebraicRootRepresentation, &Real)],
+    offset: &Real,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    let mut affine_offset = offset.clone();
+    let active = terms
+        .iter()
+        .filter_map(|(source, scale)| {
+            if scale.zero_status() == ZeroKnowledge::Zero {
+                return None;
+            }
+            if let Some(value) = source.exact_point_witness() {
+                affine_offset = affine_offset.clone() + *scale * value;
+                return None;
+            }
+            Some((*source, *scale))
+        })
+        .collect::<Vec<_>>();
+    if active.is_empty() {
+        return RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(
+            &affine_offset,
+        ));
+    }
+    let affine_image = |source: &AlgebraicRootRepresentation, scale: &Real, offset: &Real| {
+        if scale.zero_status() == ZeroKnowledge::Zero {
+            return RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(
+                offset,
+            ));
+        }
+        if scale == &Real::one() && offset.zero_status() == ZeroKnowledge::Zero {
+            return RepresentedOutcome::Decided(source.clone());
+        }
+        let report = transform_algebraic_root_affine(
+            source,
+            scale.clone(),
+            offset.clone(),
+            crate::PredicatePolicy::STRICT,
+        );
+        match report.status {
+            AlgebraicRootAffineTransformStatus::Transformed => RepresentedOutcome::Decided(
+                report
+                    .representation
+                    .expect("a transformed affine root retains its representation"),
+            ),
+            AlgebraicRootAffineTransformStatus::Undecided => RepresentedOutcome::Undecided,
+            AlgebraicRootAffineTransformStatus::InvalidEvidence
+            | AlgebraicRootAffineTransformStatus::ZeroScale
+            | AlgebraicRootAffineTransformStatus::InvalidTransformedEvidence => {
+                RepresentedOutcome::Unsupported
+            }
+        }
+    };
+    if active.len() == 1 {
+        return affine_image(active[0].0, active[0].1, &affine_offset);
+    }
+    let base = active[0].0;
+    let mut combined_scale = active[0].1.clone();
+    let mut combined_offset = affine_offset.clone();
+    let mut all_affine = true;
+    for (source, coefficient) in active.iter().skip(1) {
+        let relation = if *source == base {
+            Some(crate::AlgebraicRootAffineRelation {
+                scale: Real::one(),
+                offset: Real::zero(),
+            })
+        } else {
+            algebraic_root_affine_relation(base, source)
+        };
+        let Some(relation) = relation else {
+            all_affine = false;
+            break;
+        };
+        combined_scale += *coefficient * relation.scale;
+        combined_offset += *coefficient * relation.offset;
+    }
+    if all_affine {
+        return affine_image(base, &combined_scale, &combined_offset);
+    }
+    let rank = active.len() + 1;
+    let output_axis = rank - 1;
+    let Some(mut relation) = DenseTensorPolynomial::from_axis_polynomial(
+        rank,
+        output_axis,
+        &[(-affine_offset.clone()), Real::one()],
+    ) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let mut sources = Vec::with_capacity(active.len());
+    let mut scales = Vec::with_capacity(active.len());
+    for (axis, (source, scale)) in active.iter().enumerate() {
+        let Some(term) = DenseTensorPolynomial::from_axis_polynomial(
+            rank,
+            axis,
+            &[Real::zero(), (*scale).clone()],
+        ) else {
+            return RepresentedOutcome::Unsupported;
+        };
+        let Some(next_relation) = relation.subtract(&term) else {
+            return RepresentedOutcome::Unsupported;
+        };
+        relation = next_relation;
+        sources.push((*source).clone());
+        scales.push((*scale).clone());
+    }
+    represented_tensor_coordinate_refined(
+        &relation,
+        &sources,
+        0,
+        256,
+        "represented-affine-image-separation",
+        |refined_sources, _| {
+            let mut interval = RealInterval {
+                lower: affine_offset.clone(),
+                upper: affine_offset.clone(),
+            };
+            for (source, scale) in refined_sources.iter().zip(&scales) {
+                let source_interval = RealInterval {
+                    lower: source.interval.lower.clone(),
+                    upper: source.interval.upper.clone(),
+                };
+                let scale_interval = RealInterval {
+                    lower: scale.clone(),
+                    upper: scale.clone(),
+                };
+                let term_interval = source_interval.multiply(&scale_interval)?;
+                interval = interval.add(&term_interval);
+            }
+            Some(interval)
+        },
+    )
+}
+
+/// Exact dense tensor interval with coefficient precision over represented algebraic roots.
+pub fn dense_tensor_interval_with_coefficient_precision(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    coefficient_precision: Option<i32>,
+) -> Option<RealInterval> {
+    dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
+        polynomial,
+        sources,
+        None,
+        coefficient_precision,
+    )
+}
+
+/// Exact dense tensor interval with coefficient precision and source witnesses over represented algebraic roots.
+pub fn dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    source_real_witnesses: Option<&[Option<Real>]>,
+    coefficient_precision: Option<i32>,
+) -> Option<RealInterval> {
+    let dimensions = polynomial.dimensions();
+    if dimensions.len() != sources.len() + 1
+        || dimensions.last() != Some(&1)
+        || source_real_witnesses.is_some_and(|witnesses| witnesses.len() != sources.len())
+    {
+        return None;
+    }
+    if dense_tensor_is_stored_zero(polynomial) {
+        return Some(RealInterval {
+            lower: Real::zero(),
+            upper: Real::zero(),
+        });
+    }
+    let source_intervals = sources
+        .iter()
+        .enumerate()
+        .map(|(index, source)| {
+            let (lower, upper) = if let Some(value) =
+                source_real_witnesses.and_then(|witnesses| witnesses[index].as_ref())
+            {
+                (value, value)
+            } else {
+                (&source.interval.lower, &source.interval.upper)
+            };
+            if let Some(precision) = coefficient_precision.filter(|_| dimensions[index] > 1) {
+                // Keep the entire filtering calculation dyadic. Source charts
+                // can have arbitrary rational endpoints or exact scalar
+                // witnesses; multiplying them through a tensor needlessly
+                // grows denominators or scalar expressions. Outward bounds
+                // preserve every source value and leave exact replay intact.
+                return Some(RealInterval {
+                    lower: Real::new(lower.certified_dyadic_interval(precision)?[0].clone()),
+                    upper: Real::new(upper.certified_dyadic_interval(precision)?[1].clone()),
+                });
+            }
+            Some(RealInterval {
+                lower: lower.clone(),
+                upper: upper.clone(),
+            })
+        })
+        .collect::<Option<Vec<_>>>()?;
+    fn evaluate(
+        polynomial: &DenseTensorPolynomial,
+        dimensions: &[usize],
+        source_intervals: &[RealInterval],
+        coefficient_precision: Option<i32>,
+        axis: usize,
+        flat_prefix: usize,
+    ) -> Option<RealInterval> {
+        if axis == source_intervals.len() {
+            let coefficient = polynomial.coefficients().get(flat_prefix)?;
+            if coefficient
+                .exact_rational_ref()
+                .is_some_and(|value| value.is_zero())
+            {
+                return Some(RealInterval {
+                    lower: Real::zero(),
+                    upper: Real::zero(),
+                });
+            }
+            if let Some(precision) = coefficient_precision {
+                // A coefficient can be an exact but structurally opaque
+                // cancellation. Requiring its sign would block the entire tensor
+                // even when its certified magnitude is far too small to affect
+                // the result. Dyadic bounds are exact enclosures, not an
+                // approximate equality decision.
+                let [lower, upper] = coefficient.certified_dyadic_interval(precision)?;
+                return Some(RealInterval {
+                    lower: Real::new(lower),
+                    upper: Real::new(upper),
+                });
+            }
+            return Some(RealInterval {
+                lower: coefficient.clone(),
+                upper: coefficient.clone(),
+            });
+        }
+        let stride = dimensions[axis + 1..]
+            .iter()
+            .try_fold(1_usize, |stride, dimension| stride.checked_mul(*dimension))?;
+        let degree = dimensions[axis].checked_sub(1)?;
+        let mut value = evaluate(
+            polynomial,
+            dimensions,
+            source_intervals,
+            coefficient_precision,
+            axis + 1,
+            flat_prefix.checked_add(degree.checked_mul(stride)?)?,
+        )?;
+        for exponent in (0..degree).rev() {
+            let coefficient = evaluate(
+                polynomial,
+                dimensions,
+                source_intervals,
+                coefficient_precision,
+                axis + 1,
+                flat_prefix.checked_add(exponent.checked_mul(stride)?)?,
+            )?;
+            value = value.multiply(&source_intervals[axis])?.add(&coefficient);
+        }
+        Some(value)
+    }
+    evaluate(
+        polynomial,
+        dimensions,
+        &source_intervals,
+        coefficient_precision,
+        0,
+        0,
+    )
+}
+
+/// Exact dense tensor interval over represented algebraic roots.
+pub fn dense_tensor_interval(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<RealInterval> {
+    dense_tensor_interval_with_coefficient_precision(polynomial, sources, None)
+}
+
+/// Exact refined represented root over represented algebraic roots.
+pub fn refined_represented_root(
+    source: &AlgebraicRootRepresentation,
+    refinement_steps: usize,
+) -> AlgebraicRootRepresentation {
+    if refinement_steps == 0 || source.interval.exact_root.is_some() {
+        return source.clone();
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record("hypersolve", "represented-root-bounds", "refine");
+    let report = refine_isolated_univariate_polynomial_interval(
+        &source.polynomial_coefficients,
+        &source.interval,
+        RootIsolationConfig {
+            policy: crate::PredicatePolicy::STRICT,
+            max_interval_width: None,
+            max_refinement_steps: refinement_steps,
+        },
+    );
+    let Some(interval) = report.refined_interval else {
+        return source.clone();
+    };
+    let mut refined = source.clone();
+    refined.interval = interval;
+    refined.validation =
+        validate_algebraic_root_representation(&refined, crate::PredicatePolicy::STRICT);
+    if refined.is_valid() {
+        refined
+    } else {
+        source.clone()
+    }
+}
+
+fn represented_dense_value_with_optional_coefficient_precision(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    coefficient_precision: Option<i32>,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    let dimensions = polynomial.dimensions();
+    if dimensions.len() != sources.len() + 1 || dimensions.last() != Some(&1) {
+        return RepresentedOutcome::Unsupported;
+    }
+    let output_axis = dimensions.len() - 1;
+    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
+        dimensions.len(),
+        output_axis,
+        &[Real::zero(), Real::one()],
+    ) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(relation) = output.subtract(polynomial) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(interval) = dense_tensor_interval_with_coefficient_precision(
+        polynomial,
+        sources,
+        coefficient_precision,
+    ) else {
+        return RepresentedOutcome::Undecided;
+    };
+    #[cfg(test)]
+    if relation.dimensions().len() == 4
+        && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
+    {
+        eprintln!("tensor coordinate direct operation=represented-dense-value");
+    }
+    represented_tensor_coordinate(&relation, sources, &interval.lower, &interval.upper)
+}
+
+/// Exact represented dense value with coefficient precision over represented algebraic roots.
+pub fn represented_dense_value_with_coefficient_precision(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    coefficient_precision: i32,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    #[cfg(test)]
+    if polynomial.dimensions().len() == 4
+        && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
+    {
+        eprintln!(
+            "represented dense value caller=tuple-sign coefficient-precision={coefficient_precision}"
+        );
+    }
+    represented_dense_value_with_optional_coefficient_precision(
+        polynomial,
+        sources,
+        Some(coefficient_precision),
+    )
+}
+
+fn represented_dense_value(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    #[cfg(test)]
+    if polynomial.dimensions().len() == 4
+        && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
+    {
+        eprintln!("represented dense value caller=vector-dot-cross");
+    }
+    represented_dense_value_with_optional_coefficient_precision(polynomial, sources, None)
+}
+
+/// Exact represented dense value refined over represented algebraic roots.
+pub fn represented_dense_value_refined(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    let dimensions = polynomial.dimensions();
+    if dimensions.len() != sources.len() + 1 || dimensions.last() != Some(&1) {
+        return RepresentedOutcome::Unsupported;
+    }
+    if sources.is_empty() {
+        return RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(
+            &polynomial.coefficients()[0],
+        ));
+    }
+    let output_axis = dimensions.len() - 1;
+    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
+        dimensions.len(),
+        output_axis,
+        &[Real::zero(), Real::one()],
+    ) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(relation) = output.subtract(polynomial) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    represented_tensor_coordinate_refined(
+        &relation,
+        sources,
+        0,
+        256,
+        "represented-dense-image-separation",
+        |refined, refinement_steps| {
+            let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
+            dense_tensor_interval_with_coefficient_precision(
+                polynomial,
+                refined,
+                Some(-coefficient_bits),
+            )
+        },
+    )
+}
+
+/// Proves equality of two selected algebraic numbers even when their defining
+/// eliminants differ. This is STRICT construction evidence: a shared isolated
+/// polynomial root or an exactly signed algebraic difference is required.
+pub fn represented_roots_strictly_equal(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+) -> bool {
+    represented_strict_order(left, right) == Some(Ordering::Equal)
+}
+
+/// Exact represented affine tensor basis over represented algebraic roots.
+pub fn represented_affine_tensor_basis(
+    coordinates: &[AlgebraicRootRepresentation],
+) -> Option<(Vec<AlgebraicRootRepresentation>, Vec<DenseTensorPolynomial>)> {
+    let mut sources = Vec::<AlgebraicRootRepresentation>::new();
+    let mut descriptions = Vec::with_capacity(coordinates.len());
+    for coordinate in coordinates {
+        if let Some(value) = coordinate.exact_point_witness() {
+            descriptions.push((None, Real::zero(), value.clone()));
+            continue;
+        }
+        let relation = sources.iter().enumerate().find_map(|(axis, source)| {
+            let relation = if source == coordinate {
+                crate::AlgebraicRootAffineRelation {
+                    scale: Real::one(),
+                    offset: Real::zero(),
+                }
+            } else if let Some(relation) = algebraic_root_affine_relation(source, coordinate)
+                && let (Some(scale), Some(offset)) = (
+                    rational_tensor_constant(&relation.scale),
+                    rational_tensor_constant(&relation.offset),
+                )
+            {
+                // An irrational relation (for example sqrt(1/3) as
+                // sqrt(2/3) * sqrt(1/2)) would move a field generator into
+                // tensor coefficients; give that root its own axis instead.
+                crate::AlgebraicRootAffineRelation { scale, offset }
+            } else if represented_roots_strictly_equal(source, coordinate) {
+                crate::AlgebraicRootAffineRelation {
+                    scale: Real::one(),
+                    offset: Real::zero(),
+                }
+            } else {
+                return None;
+            };
+            Some((axis, relation))
+        });
+        if let Some((axis, relation)) = relation {
+            descriptions.push((Some(axis), relation.scale, relation.offset));
+        } else {
+            let axis = sources.len();
+            sources.push(coordinate.clone());
+            descriptions.push((Some(axis), Real::one(), Real::zero()));
+        }
+    }
+
+    let rank = sources.len() + 1;
+    let constant = |value: &Real| {
+        DenseTensorPolynomial::from_axis_polynomial(rank, 0, std::slice::from_ref(value))
+    };
+    let mut polynomials = Vec::with_capacity(descriptions.len());
+    for (source, scale, offset) in descriptions {
+        let polynomial = if let Some(axis) = source {
+            DenseTensorPolynomial::from_axis_polynomial(rank, axis, &[offset, scale])?
+        } else {
+            constant(&offset)?
+        };
+        polynomials.push(polynomial);
+    }
+    Some((sources, polynomials))
+}
+
+/// Exact represented tensor nested interval over represented algebraic roots.
+pub fn represented_tensor_nested_interval(
+    retained: &DenseTensorPolynomial,
+    candidate: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    signed_radical: &AlgebraicRootRepresentation,
+) -> Option<RealInterval> {
+    let retained = dense_tensor_interval(retained, sources)?;
+    let candidate = dense_tensor_interval(candidate, sources)?;
+    let radical = RealInterval {
+        lower: signed_radical.interval.lower.clone(),
+        upper: signed_radical.interval.upper.clone(),
+    };
+    Some(retained.add(&candidate.multiply(&radical)?))
+}
+
+/// Exact represented tensor nested value refined over represented algebraic roots.
+#[allow(clippy::too_many_arguments)]
+pub fn represented_tensor_nested_value_refined(
+    retained: &DenseTensorPolynomial,
+    candidate: &DenseTensorPolynomial,
+    discriminant: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    signed_radical: &AlgebraicRootRepresentation,
+    initial_refinement_steps: usize,
+    hot_refinement_limit: usize,
+    trace_operation: &'static str,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    if candidate
+        .coefficients()
+        .iter()
+        .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+    {
+        return represented_dense_value_refined(retained, sources);
+    }
+    let rank = sources.len() + 1;
+    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
+        rank,
+        sources.len(),
+        &[Real::zero(), Real::one()],
+    ) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(relation) = output.subtract(retained).and_then(|residual| {
+        residual
+            .multiply(&residual)?
+            .subtract(&candidate.multiply(candidate)?.multiply(discriminant)?)
+    }) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    represented_tensor_coordinate_refined(
+        &relation,
+        sources,
+        initial_refinement_steps,
+        hot_refinement_limit,
+        trace_operation,
+        |refined_sources, refinement_steps| {
+            let refined_radical = refined_represented_root(signed_radical, refinement_steps);
+            represented_tensor_nested_interval(
+                retained,
+                candidate,
+                refined_sources,
+                &refined_radical,
+            )
+        },
+    )
+}
+
+/// Exact represented strict order over represented algebraic roots.
+pub fn represented_strict_order(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+) -> Option<Ordering> {
+    let report = compare_algebraic_root_representations_by_difference(
+        left,
+        right,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: crate::PredicatePolicy::STRICT,
+            ..AlgebraicRootRefinementComparisonConfig::default()
+        },
+    );
+    matches!(
+        report.comparison.status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    )
+    .then_some(report.comparison.ordering)
+    .flatten()
+}
+
+/// Exact represented strict sign over represented algebraic roots.
+pub fn represented_strict_sign(value: &AlgebraicRootRepresentation) -> Option<RealSign> {
+    if strict_compare_reals(&value.interval.upper, &Real::zero()) == Some(Ordering::Less) {
+        return Some(RealSign::Negative);
+    }
+    if strict_compare_reals(&value.interval.lower, &Real::zero()) == Some(Ordering::Greater) {
+        return Some(RealSign::Positive);
+    }
+    represented_strict_order(
+        value,
+        &AlgebraicRootRepresentation::from_exact_value(&Real::zero()),
+    )
+    .map(|order| match order {
+        Ordering::Less => RealSign::Negative,
+        Ordering::Equal => RealSign::Zero,
+        Ordering::Greater => RealSign::Positive,
+    })
+}
+
+/// Exact represented ratio over represented algebraic roots.
+pub fn represented_ratio(
+    numerator: &AlgebraicRootRepresentation,
+    denominator: &AlgebraicRootRepresentation,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    let numerator_interval = RealInterval {
+        lower: numerator.interval.lower.clone(),
+        upper: numerator.interval.upper.clone(),
+    };
+    let denominator_interval = RealInterval {
+        lower: denominator.interval.lower.clone(),
+        upper: denominator.interval.upper.clone(),
+    };
+    let Some(interval) = numerator_interval.divide(&denominator_interval) else {
+        return RepresentedOutcome::Undecided;
+    };
+    let Some(numerator_axis) =
+        DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
+    else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(denominator_axis) =
+        DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
+    else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(output) =
+        DenseTensorPolynomial::from_axis_polynomial(3, 2, &[Real::zero(), Real::one()])
+    else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(relation) = denominator_axis
+        .multiply(&output)
+        .and_then(|product| product.subtract(&numerator_axis))
+    else {
+        return RepresentedOutcome::Unsupported;
+    };
+    #[cfg(test)]
+    if relation.dimensions().len() == 4
+        && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
+    {
+        eprintln!("tensor coordinate direct operation=represented-ratio");
+    }
+    represented_tensor_coordinate(
+        &relation,
+        &[numerator.clone(), denominator.clone()],
+        &interval.lower,
+        &interval.upper,
+    )
+}
+
+/// Materializes the exact dot and oriented-area products of two represented
+/// vectors through one four-source tensor authority. Affine-related component
+/// axes collapse in Hypersolve before any remaining resultant elimination.
+pub fn represented_vector_dot_cross(
+    first: &[AlgebraicRootRepresentation; 2],
+    second: &[AlgebraicRootRepresentation; 2],
+) -> RepresentedOutcome<[AlgebraicRootRepresentation; 2]> {
+    let combine = |dot, cross| match (dot, cross) {
+        (RepresentedOutcome::Decided(dot), RepresentedOutcome::Decided(cross)) => {
+            RepresentedOutcome::Decided([dot, cross])
+        }
+        (RepresentedOutcome::Unsupported, _) | (_, RepresentedOutcome::Unsupported) => {
+            RepresentedOutcome::Unsupported
+        }
+        _ => RepresentedOutcome::Undecided,
+    };
+    let exact_products = |first: &[AlgebraicRootRepresentation; 2],
+                          second: &[AlgebraicRootRepresentation; 2]| {
+        let [Some(first_x), Some(first_y), Some(second_x), Some(second_y)] = [
+            first[0].exact_point_witness(),
+            first[1].exact_point_witness(),
+            second[0].exact_point_witness(),
+            second[1].exact_point_witness(),
+        ] else {
+            return None;
+        };
+        Some([
+            AlgebraicRootRepresentation::from_exact_value(
+                &(first_x * second_x + first_y * second_y),
+            ),
+            AlgebraicRootRepresentation::from_exact_value(
+                &(first_x * second_y - first_y * second_x),
+            ),
+        ])
+    };
+    if let Some(products) = exact_products(first, second) {
+        return RepresentedOutcome::Decided(products);
+    }
+    if let [Some(second_x), Some(second_y)] = [
+        second[0].exact_point_witness(),
+        second[1].exact_point_witness(),
+    ] {
+        let negative_x = -second_x;
+        return combine(
+            represented_affine_coordinate(
+                &[(&first[0], second_x), (&first[1], second_y)],
+                &Real::zero(),
+            ),
+            represented_affine_coordinate(
+                &[(&first[0], second_y), (&first[1], &negative_x)],
+                &Real::zero(),
+            ),
+        );
+    }
+    if let [Some(first_x), Some(first_y)] = [
+        first[0].exact_point_witness(),
+        first[1].exact_point_witness(),
+    ] {
+        let negative_y = -first_y;
+        return combine(
+            represented_affine_coordinate(
+                &[(&second[0], first_x), (&second[1], first_y)],
+                &Real::zero(),
+            ),
+            represented_affine_coordinate(
+                &[(&second[0], &negative_y), (&second[1], first_x)],
+                &Real::zero(),
+            ),
+        );
+    }
+    let coordinates = [
+        first[0].clone(),
+        first[1].clone(),
+        second[0].clone(),
+        second[1].clone(),
+    ];
+    let Some((sources, coordinates)) = represented_affine_tensor_basis(&coordinates) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let [first_x, first_y, second_x, second_y]: [DenseTensorPolynomial; 4] = coordinates
+        .try_into()
+        .expect("the represented vector basis retains all four coordinates");
+    let Some((dot, cross)) = (|| {
+        Some((
+            first_x
+                .multiply(&second_x)?
+                .add(&first_y.multiply(&second_y)?)?,
+            first_x
+                .multiply(&second_y)?
+                .subtract(&first_y.multiply(&second_x)?)?,
+        ))
+    })() else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let dot = represented_dense_value(&dot, &sources);
+    let cross = represented_dense_value(&cross, &sources);
+    combine(dot, cross)
+}
+
+/// `represented_zero_offset_unit_scales` bit: the scale is `+1`.
+pub const POSITIVE_UNIT_SCALE: u8 = 1;
+/// `represented_zero_offset_unit_scales` bit: the scale is `-1`.
+pub const NEGATIVE_UNIT_SCALE: u8 = 2;
+
+/// Proves `right = sign * left` directly from already validated polynomial
+/// and isolator evidence. Proportional defining polynomials describe the same
+/// root set, while the equal or reflected one-root intervals select the same
+/// sheet. This avoids rerunning a Sturm common-root proof for representations
+/// produced by an exact identity or negation.
+fn represented_structural_unit_scale(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+    sign: i8,
+) -> bool {
+    if !left.is_valid()
+        || !right.is_valid()
+        || left.interval.distinct_root_count != 1
+        || right.interval.distinct_root_count != 1
+        || left.polynomial_coefficients.len() != right.polynomial_coefficients.len()
+        || left.polynomial_coefficients.len() < 2
+    {
+        return false;
+    }
+    let (expected_lower, expected_upper) = if sign > 0 {
+        (left.interval.lower.clone(), left.interval.upper.clone())
+    } else {
+        (-left.interval.upper.clone(), -left.interval.lower.clone())
+    };
+    if strict_compare_reals(&expected_lower, &right.interval.lower) != Some(Ordering::Equal)
+        || strict_compare_reals(&expected_upper, &right.interval.upper) != Some(Ordering::Equal)
+    {
+        return false;
+    }
+
+    let left_leading = left.polynomial_coefficients.last().unwrap();
+    let right_leading = right.polynomial_coefficients.last().unwrap();
+    let degree = left.polynomial_coefficients.len() - 1;
+    let transformed_leading = if sign < 0 && !degree.is_multiple_of(2) {
+        -left_leading
+    } else {
+        left_leading.clone()
+    };
+    left.polynomial_coefficients
+        .iter()
+        .zip(&right.polynomial_coefficients)
+        .enumerate()
+        .all(|(power, (left_coefficient, right_coefficient))| {
+            let transformed = if sign < 0 && !power.is_multiple_of(2) {
+                -left_coefficient
+            } else {
+                left_coefficient.clone()
+            };
+            strict_compare_reals(
+                &(transformed * right_leading),
+                &(right_coefficient * &transformed_leading),
+            ) == Some(Ordering::Equal)
+        })
+}
+
+/// Returns every unit scale exactly certified by `right = scale * left`.
+/// Zero admits both signs; retaining that ambiguity is necessary for axial
+/// quarter turns, where either signed relation describes the zero component.
+pub fn represented_zero_offset_unit_scales(
+    left: &AlgebraicRootRepresentation,
+    right: &AlgebraicRootRepresentation,
+) -> u8 {
+    if let (Some(left), Some(right)) = (left.exact_point_witness(), right.exact_point_witness()) {
+        let mut scales = 0;
+        if strict_compare_reals(left, right) == Some(Ordering::Equal) {
+            scales |= POSITIVE_UNIT_SCALE;
+        }
+        if strict_compare_reals(&(-left), right) == Some(Ordering::Equal) {
+            scales |= NEGATIVE_UNIT_SCALE;
+        }
+        return scales;
+    }
+
+    let mut scales = 0;
+    if left == right || represented_structural_unit_scale(left, right, 1) {
+        scales |= POSITIVE_UNIT_SCALE;
+    }
+    if represented_structural_unit_scale(left, right, -1) {
+        scales |= NEGATIVE_UNIT_SCALE;
+    }
+    if scales != 0 {
+        return scales;
+    }
+
+    if represented_roots_strictly_equal(left, right) {
+        scales |= POSITIVE_UNIT_SCALE;
+    }
+    let reflected = crate::transform_algebraic_root_affine(
+        left,
+        Real::from(-1_i8),
+        Real::zero(),
+        crate::PredicatePolicy::STRICT,
+    );
+    if reflected
+        .representation
+        .as_ref()
+        .is_some_and(|reflected| represented_roots_strictly_equal(reflected, right))
+    {
+        scales |= NEGATIVE_UNIT_SCALE;
+    }
+    if scales != 0 {
+        return scales;
+    }
+
+    if let Some(relation) = algebraic_root_affine_relation(left, right)
+        && strict_compare_reals(&relation.offset, &Real::zero()) == Some(Ordering::Equal)
+    {
+        if strict_compare_reals(&relation.scale, &Real::one()) == Some(Ordering::Equal) {
+            scales |= POSITIVE_UNIT_SCALE;
+        }
+        if strict_compare_reals(&relation.scale, &Real::from(-1_i8)) == Some(Ordering::Equal) {
+            scales |= NEGATIVE_UNIT_SCALE;
+        }
+    }
+    scales
+}
