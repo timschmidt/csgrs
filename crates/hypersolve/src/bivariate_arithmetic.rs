@@ -4,9 +4,11 @@
 //! multiplies `s^i * t^j`, and rows may be ragged. Every operation is exact
 //! and performs no sign decisions.
 
-use hyperreal::Real;
+use hyperreal::{Real, ZeroKnowledge};
 
-use crate::curve_resultant::BivariatePolynomial;
+use crate::curve_resultant::{
+    BivariatePolynomial, CurveResultantParameter, divide_bivariate_polynomial_exact,
+};
 
 /// Swaps the two parameters of a bivariate polynomial.
 pub fn bivariate_swap_parameters(polynomial: &BivariatePolynomial) -> BivariatePolynomial {
@@ -423,6 +425,199 @@ pub fn polynomial_power(coefficients: &[Real], exponent: usize) -> Vec<Real> {
     result
 }
 
+/// Substitutes `t -> 1 - t` in the second parameter.
+pub fn bivariate_complement_second_parameter(
+    polynomial: &BivariatePolynomial,
+) -> BivariatePolynomial {
+    polynomial.substitute_affine(
+        &Real::one(),
+        &Real::zero(),
+        &Real::from(-1_i8),
+        &Real::one(),
+    )
+}
+
+/// Substitutes one linear-fractional second-parameter chart and clears its
+/// common denominator at the original second-axis degree.
+///
+/// `numerator / denominator` is the inverse chart: the returned polynomial
+/// vanishes at `v` exactly when the source polynomial vanishes at that finite
+/// inverse image.  A caller must separately prove that the denominator does
+/// not vanish on its retained isolating interval.
+pub fn bivariate_projective_second_parameter(
+    polynomial: &BivariatePolynomial,
+    numerator: &[Real; 2],
+    denominator: &[Real; 2],
+) -> BivariatePolynomial {
+    let degree = polynomial
+        .coefficients
+        .iter()
+        .map(|row| row.len().saturating_sub(1))
+        .max()
+        .unwrap_or(0);
+    let powers = |linear: &[Real; 2]| {
+        let mut powers = Vec::with_capacity(degree + 1);
+        powers.push(vec![Real::one()]);
+        for power in 1..=degree {
+            powers.push(polynomial_multiply(&powers[power - 1], linear));
+        }
+        powers
+    };
+    let numerator_powers = powers(numerator);
+    let denominator_powers = powers(denominator);
+    BivariatePolynomial::new(
+        polynomial
+            .coefficients
+            .iter()
+            .map(|row| {
+                let mut transformed = vec![Real::zero(); degree + 1];
+                for (source_power, coefficient) in row.iter().enumerate() {
+                    let term = polynomial_multiply(
+                        &numerator_powers[source_power],
+                        &denominator_powers[degree - source_power],
+                    );
+                    for (target, factor) in transformed.iter_mut().zip(term) {
+                        *target += coefficient * factor;
+                    }
+                }
+                transformed
+            })
+            .collect(),
+    )
+}
+
+/// Returns the univariate coefficient of one power of the second parameter.
+pub fn bivariate_second_parameter_coefficient(
+    polynomial: &BivariatePolynomial,
+    power: usize,
+) -> Vec<Real> {
+    polynomial
+        .coefficients
+        .iter()
+        .map(|row| row.get(power).cloned().unwrap_or_else(Real::zero))
+        .collect()
+}
+
+/// Returns the separable product of two bivariate factors in disjoint parameters.
+pub fn bivariate_tensor_product(first: &[Real], second: &[Real]) -> BivariatePolynomial {
+    BivariatePolynomial::new(
+        first
+            .iter()
+            .map(|first| second.iter().map(|second| first * second).collect())
+            .collect(),
+    )
+}
+
+/// Returns the exact partial derivative with respect to one parameter.
+pub fn bivariate_parameter_derivative(
+    polynomial: &BivariatePolynomial,
+    parameter: CurveResultantParameter,
+) -> BivariatePolynomial {
+    let coefficients = match parameter {
+        CurveResultantParameter::First => polynomial
+            .coefficients
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(power, row)| {
+                let scale = Real::from(power as u64);
+                row.iter().map(|coefficient| coefficient * &scale).collect()
+            })
+            .collect(),
+        CurveResultantParameter::Second => polynomial
+            .coefficients
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .enumerate()
+                    .skip(1)
+                    .map(|(power, coefficient)| coefficient * Real::from(power as u64))
+                    .collect()
+            })
+            .collect(),
+    };
+    BivariatePolynomial::new(coefficients)
+}
+
+/// Returns the sum of the stored degrees in both parameters.
+pub fn bivariate_storage_bidegree_sum(polynomial: &BivariatePolynomial) -> usize {
+    polynomial
+        .coefficients
+        .len()
+        .saturating_sub(1)
+        .saturating_add(
+            polynomial
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or_default()
+                .saturating_sub(1),
+        )
+}
+
+/// Returns the highest first-parameter power with a structurally nonzero row.
+pub fn bivariate_first_active_degree(polynomial: &BivariatePolynomial) -> usize {
+    polynomial
+        .coefficients
+        .iter()
+        .rposition(|row| {
+            row.iter()
+                .any(|coefficient| coefficient.zero_status() != ZeroKnowledge::Zero)
+        })
+        .unwrap_or(0)
+}
+
+/// Removes every exact factor of `first_parameter - second_parameter`.
+///
+/// This coefficient-level path is intentionally independent of an algebraic
+/// fiber representation: a geometric construction can own the full diagonal
+/// even when its coefficients do not fit in one rational local field.
+pub fn deflate_bivariate_parameter_diagonal_exact(
+    polynomial: &BivariatePolynomial,
+) -> Option<BivariatePolynomial> {
+    let diagonal = BivariatePolynomial::new(vec![
+        vec![Real::zero(), Real::from(-1_i8)],
+        vec![Real::one()],
+    ]);
+    let mut reduced = polynomial.clone();
+    let mut changed = false;
+    loop {
+        let degree = bivariate_storage_bidegree_sum(&reduced);
+        let Some(next) = divide_bivariate_polynomial_exact(&reduced, &diagonal) else {
+            break;
+        };
+        if bivariate_storage_bidegree_sum(&next) >= degree {
+            break;
+        }
+        reduced = next;
+        changed = true;
+    }
+    changed.then_some(reduced)
+}
+
+/// Exact univariate derivative in ascending power coefficients.
+pub fn polynomial_derivative(coefficients: &[Real]) -> Vec<Real> {
+    coefficients
+        .iter()
+        .enumerate()
+        .skip(1)
+        .map(|(degree, coefficient)| coefficient * Real::from(degree as u64))
+        .collect()
+}
+
+/// Drops structurally zero leading coefficients, keeping the constant term.
+pub fn polynomial_trim_structural_zeros(mut coefficients: Vec<Real>) -> Vec<Real> {
+    while coefficients.len() > 1
+        && coefficients
+            .last()
+            .is_some_and(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+    {
+        coefficients.pop();
+    }
+    coefficients
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -499,5 +694,23 @@ mod tests {
             polynomial_multiply(&[r(1), r(1)], &[r(-1), r(1)]),
             vec![r(-1), r(0), r(1)]
         );
+    }
+
+    #[test]
+    fn derivatives_and_complements_are_exact() {
+        // p = 1 + 2s + 3t + 4st.
+        let p = BivariatePolynomial::new(vec![vec![r(1), r(3)], vec![r(2), r(4)]]);
+        let (s, t) = (r(5), r(-2));
+        // d/ds p = 2 + 4t and d/dt p = 3 + 4s.
+        let ds = bivariate_parameter_derivative(&p, CurveResultantParameter::First);
+        let dt = bivariate_parameter_derivative(&p, CurveResultantParameter::Second);
+        assert_eq!(evaluate(&ds, &s, &t), r(2) + r(4) * &t);
+        assert_eq!(evaluate(&dt, &s, &t), r(3) + r(4) * &s);
+        let complement = bivariate_complement_second_parameter(&p);
+        assert_eq!(
+            evaluate(&complement, &s, &t),
+            evaluate(&p, &s, &(Real::one() - &t))
+        );
+        assert_eq!(polynomial_derivative(&[r(1), r(2), r(3)]), vec![r(2), r(6)]);
     }
 }
