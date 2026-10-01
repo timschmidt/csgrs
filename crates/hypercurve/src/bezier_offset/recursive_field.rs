@@ -1421,6 +1421,42 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         ))
     }
 
+    /// Decides whether a polynomial vanishes at this selected root through
+    /// the gcd of the defining relation and the query in the retained field.
+    /// `None` leaves the complete sign query to the caller.
+    pub(super) fn polynomial_vanishes_at_parameter(
+        &self,
+        parameter: &BezierRecursiveProjectiveParameter2,
+        coefficients: &[BezierRecursiveQuadraticValue2],
+        policy: &CurveContext,
+    ) -> CurveResult<Option<bool>> {
+        if coefficients
+            .iter()
+            .any(|coefficient| !self.field.same_field(&coefficient.field()))
+        {
+            return Ok(None);
+        }
+        let mut context = BezierRecursiveOrderedFieldContext2 {
+            field: self.field.clone(),
+            policy: *policy,
+        };
+        match hypersolve::ordered_field_vanishes_at_selected_root(
+            &self.coefficients,
+            coefficients,
+            &hypersolve::IsolatedRootInterval {
+                lower: parameter.data.lower.clone(),
+                upper: parameter.data.upper.clone(),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            &mut context,
+        ) {
+            Ok(vanishes) => Ok(vanishes),
+            Err(BezierRecursiveOrderedFieldError2::Uncertain) => Ok(None),
+            Err(BezierRecursiveOrderedFieldError2::Curve(error)) => Err(error),
+        }
+    }
+
     pub(super) fn polynomial_sign_at_parameter(
         &self,
         parameter: &BezierRecursiveProjectiveParameter2,
@@ -3412,6 +3448,26 @@ impl BezierRecursiveProjectiveParameter2 {
         value.sign(policy)
     }
 
+    /// Decides whether a real polynomial vanishes at this parameter without
+    /// signing it, when a polynomial authority's field can find the common
+    /// divisor of the query and the defining relation.
+    pub(crate) fn polynomial_vanishes(
+        &self,
+        coefficients: &[Real],
+        policy: &CurveContext,
+    ) -> CurveResult<Option<bool>> {
+        self.validate_policy(policy)?;
+        let Some(authority) = self.polynomial_authority() else {
+            return Ok(None);
+        };
+        let Some(coefficients) =
+            recursive_quadratic_real_polynomial(&authority.field, coefficients)
+        else {
+            return Ok(None);
+        };
+        authority.polynomial_vanishes_at_parameter(self, &coefficients, policy)
+    }
+
     /// Signs a polynomial over retained recursive coefficients. Polynomial
     /// roots reuse their defining coefficient field; projective parameters
     /// also lift ancestor coefficients through homogeneous Horner evaluation.
@@ -4277,12 +4333,20 @@ impl BezierRecursiveProjectiveParameter2 {
                 // authority, even when they equal this native endpoint.
                 // Replay its defining relation in the retained field before
                 // trying to separate equal values through deeper refinement.
-                is_other_root = matches!(
-                    policy.bounded_exact_predicate_pass(|| {
-                        selected.polynomial_sign(selection.polynomial().coefficients(), policy)
-                    })?,
-                    Classification::Decided(RealSign::Zero),
-                );
+                // A common divisor of the two defining relations decides
+                // equality without the Sturm-Tarski sign chain of their
+                // product, whose field coefficients grow at each remainder.
+                is_other_root = match policy.bounded_exact_predicate_pass(|| {
+                    selected.polynomial_vanishes(selection.polynomial().coefficients(), policy)
+                })? {
+                    Some(vanishes) => vanishes,
+                    None => matches!(
+                        policy.bounded_exact_predicate_pass(|| {
+                            selected.polynomial_sign(selection.polynomial().coefficients(), policy)
+                        })?,
+                        Classification::Decided(RealSign::Zero),
+                    ),
+                };
             }
             if is_other_root
                 && compare_reals(
