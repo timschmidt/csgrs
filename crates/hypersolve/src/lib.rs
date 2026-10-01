@@ -19,6 +19,7 @@ pub mod alpha;
 pub mod analysis;
 pub mod bareiss;
 pub mod batch;
+pub mod bivariate_arithmetic;
 pub mod branches;
 pub mod certification;
 pub mod curve_resultant;
