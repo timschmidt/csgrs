@@ -914,8 +914,11 @@ fn repeated_inward_round_offset_of_a_quadratic_seed_completes() {
 /// Open evidentiary-closure gap: round erosion composes, so two quarter
 /// erosions of a quadratic seed equal one half erosion. The symmetric
 /// difference of the two results is blocked by `Ordering`: clipping their
-/// same-parallel overlap compares equal vertex parameters held in different
-/// algebraic representations (selected-field equality, review step 3).
+/// same-parallel overlap compares a carrier endpoint of the repeated offset,
+/// a recursive parameter with a monotone chord/parallel authority (bracketed
+/// only, with no retained algebraic relation), with the equal algebraic
+/// Bezier endpoint of the single offset. Deciding that equality needs the
+/// monotone system's algebraic relation (selected-field equality, step 3).
 #[test]
 #[ignore = "open: equal vertex parameters in different algebraic representations"]
 fn repeated_round_erosion_composes_with_a_single_erosion() {
