@@ -1031,3 +1031,28 @@ fn chamfered_spline_round_dilation_round_trips() {
     let steps = [Step::Chamfer(0, 1), Step::Offset(1, 1, 0)];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// Open computational-closure gap found by the generator: filleting a
+/// fillet-adjacent corner of a weighted cubic spline seed. The second fillet
+/// meets the first fillet's selected parallel contact; locating its center
+/// and contact signs dense recursive-field polynomials at an algebraic
+/// parameter (selected-fiber Sturm subresultants and
+/// `sign_at_selected_root`) whose coefficients grow without completing in
+/// 38 minutes. The selected-field equality and sign replay without dense
+/// elimination (review step 3) is the remedy.
+#[test]
+#[ignore = "open: dense recursive-field signs in fillet of a fillet-adjacent corner"]
+fn refilleted_weighted_spline_corner_completes() {
+    let seeds = [Seed {
+        x: 6,
+        y: -3,
+        width: 18,
+        height: 9,
+        lower: 7,
+        upper: 7,
+        curvature: 3,
+        weight: 2,
+    }];
+    let steps = [Step::Fillet(0, 5), Step::Fillet(1, 6)];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
