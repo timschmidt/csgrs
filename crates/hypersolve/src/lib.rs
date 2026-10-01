@@ -75,6 +75,7 @@ pub mod tensor_resultant;
 pub mod tensor_support;
 #[cfg(test)]
 mod test_support;
+pub mod trivariate_arithmetic;
 
 pub use active_set::{
     ActiveSetAffineRegenerationReport, ActiveSetAffineRegenerationStatus, ActiveSetAuditReport,
