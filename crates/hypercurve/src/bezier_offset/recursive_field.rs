@@ -1690,9 +1690,73 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                 "a recursive local promotion changed its retained base".into(),
             ));
         }
-        let candidates = match selected_dense_last_axis_parameters(
+        let univariate = match selected_dense_last_axis_univariate(
             &projection,
             &base.sources,
+            &policy.strict_counterpart(),
+        )? {
+            Classification::Decided(univariate) => univariate,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        // The eliminant contains every root of this local relation. When it
+        // has exactly one root inside the selected bracket, that root is this
+        // parameter. A local monotonicity or Bernstein certificate on the
+        // bracket avoids a global Sturm sequence of a dense eliminant whose
+        // other roots are irrelevant here.
+        if let BezierSelectedDenseLastAxisUnivariate2::Polynomial { polynomial, .. } = &univariate {
+            let mut refined = parameter.clone();
+            for steps in [0_usize, 4, 8, 16] {
+                refined = match self.refined_parameter(&refined, steps, policy)? {
+                    Classification::Decided(refined) => refined,
+                    Classification::Uncertain(_) => break,
+                };
+                let (lower, upper) = (&refined.data.lower, &refined.data.upper);
+                let coefficients = polynomial.coefficients();
+                let endpoint_sign = |value: &Real| {
+                    real_sign(&Real::eval_poly(coefficients, value), &CurveContext::STRICT)
+                };
+                if !matches!(
+                    (endpoint_sign(lower), endpoint_sign(upper)),
+                    (Some(RealSign::Negative), Some(RealSign::Positive))
+                        | (Some(RealSign::Positive), Some(RealSign::Negative))
+                ) {
+                    continue;
+                }
+                if hypersolve::polynomial_has_one_distinct_root_in_open_interval(
+                    coefficients,
+                    lower,
+                    upper,
+                    hypersolve::PredicatePolicy::STRICT,
+                ) != Some(true)
+                {
+                    continue;
+                }
+                let interval = match BezierParameterInterval::try_new(
+                    lower.clone(),
+                    upper.clone(),
+                    &CurveContext::STRICT,
+                )? {
+                    Classification::Decided(interval) => interval,
+                    Classification::Uncertain(_) => continue,
+                };
+                if let Some(local) = BezierAlgebraicParameter2::from_certified_simple_power_basis(
+                    coefficients.to_vec(),
+                    interval,
+                ) {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "recursive-parameter-promotion",
+                        "local-singleton",
+                    );
+                    return Ok(Classification::Decided(BezierParameter2::Algebraic(local)));
+                }
+            }
+        }
+        let candidates = match isolate_selected_dense_last_axis_univariate(
+            &univariate,
             SelectedThirdAxisDomain2::AffineLine,
             &policy.strict_counterpart(),
         )? {
