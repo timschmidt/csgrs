@@ -1369,86 +1369,22 @@ fn apply_zone_island_policy(
             },
         ));
     }
-    let components = match decisions
-        .classify(|attempt| region.boundary_profiles(attempt))
+    // Normalized components keep their selected boundaries and certified hole
+    // ownership; no component is reconstructed or re-intersected here.
+    let components = decisions
+        .curve_operation(|policy| region.material_components(policy))
         .map_err(|error| {
             GeometryMaterializationError::ZoneIsland(format!(
-                "{source} boundary profile extraction: {error}"
+                "{source} material component extraction: {error}"
             ))
-        })? {
-        Classification::Decided(components) => components
-            .iter()
-            .map(|component| {
-                (
-                    component.material_loop_index(),
-                    component.hole_loop_indices().to_vec(),
-                )
-            })
-            .collect::<Vec<_>>(),
-        Classification::Uncertain(reason) => {
-            return Err(GeometryMaterializationError::ZoneIsland(format!(
-                "{source} boundary profile extraction: {reason:?}"
-            )));
-        }
-    };
-    let paths = match decisions
-        .consume(region.boundary_paths(decisions.curve_policy()))
-        .map_err(|error| {
-            GeometryMaterializationError::ZoneIsland(format!(
-                "{source} boundary materialization: {error}"
-            ))
-        })? {
-        Classification::Decided(paths) => paths,
-        Classification::Uncertain(reason) => {
-            return Err(GeometryMaterializationError::ZoneIsland(format!(
-                "{source} boundary materialization: {reason:?}"
-            )));
-        }
-    };
-    let fill_rules = region.loop_fill_rules();
+        })?;
     let mut realization = ZoneIslandRealization {
         initial: components.len(),
         ..ZoneIslandRealization::default()
     };
 
     let mut retained = None::<CurveRegion2>;
-    for (index, (material_index, hole_indices)) in components.iter().enumerate() {
-        let mut component_paths = Vec::with_capacity(1 + hole_indices.len());
-        component_paths.push(paths[*material_index].clone());
-        component_paths.extend(hole_indices.iter().map(|hole| paths[*hole].clone()));
-        let mut roles = Vec::with_capacity(component_paths.len());
-        roles.push(CurveRegionLoopRole::Material);
-        roles.extend(std::iter::repeat_n(
-            CurveRegionLoopRole::Hole,
-            hole_indices.len(),
-        ));
-        let mut rules = Vec::with_capacity(component_paths.len());
-        rules.push(
-            fill_rules
-                .and_then(|rules| rules.get(*material_index))
-                .copied()
-                .unwrap_or(FillRule::NonZero),
-        );
-        rules.extend(hole_indices.iter().map(|hole| {
-            fill_rules
-                .and_then(|rules| rules.get(*hole))
-                .copied()
-                .unwrap_or(FillRule::NonZero)
-        }));
-        let region = decisions
-            .curve_operation(|policy| {
-                CurveRegion2::try_from_boundary_paths_with_loop_semantics(
-                    &component_paths,
-                    &roles,
-                    &rules,
-                    policy,
-                )
-            })
-            .map_err(|error| {
-                GeometryMaterializationError::ZoneIsland(format!(
-                    "{source} component {index} reconstruction: {error}"
-                ))
-            })?;
+    for (index, region) in components.into_iter().enumerate() {
         let area = match decisions
             .classify(|attempt| region.filled_area(attempt))
             .map_err(|error| {
@@ -4080,10 +4016,9 @@ fn exact_compound_composition(
                 role
             }
         });
-        let profile_rules = region
-            .loop_fill_rules()
-            .map(<[FillRule]>::to_vec)
-            .unwrap_or_else(|| vec![FillRule::NonZero; profile_paths.len()]);
+        // Normalized loops are simple, so every per-loop fill rule selects
+        // the same interior; the composed winding comes from the roles.
+        let profile_rules = vec![FillRule::NonZero; profile_paths.len()];
         paths.append(&mut profile_paths);
         roles.extend(profile_roles);
         rules.extend(profile_rules);
