@@ -4199,32 +4199,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
         else {
             return false;
         };
-        let Some(first_start) = exact_carrier_point(
-            first,
-            carrier_traversal_start(first),
-            &self.data.policy,
-        ) else {
+        let Some(first_start) =
+            exact_carrier_point(first, carrier_traversal_start(first), &self.data.policy)
+        else {
             return false;
         };
-        let Some(first_end) = exact_carrier_point(
-            first,
-            carrier_traversal_end(first),
-            &self.data.policy,
-        ) else {
+        let Some(first_end) =
+            exact_carrier_point(first, carrier_traversal_end(first), &self.data.policy)
+        else {
             return false;
         };
-        let Some(second_start) = exact_carrier_point(
-            second,
-            carrier_traversal_start(second),
-            &self.data.policy,
-        ) else {
+        let Some(second_start) =
+            exact_carrier_point(second, carrier_traversal_start(second), &self.data.policy)
+        else {
             return false;
         };
-        let Some(second_end) = exact_carrier_point(
-            second,
-            carrier_traversal_end(second),
-            &self.data.policy,
-        ) else {
+        let Some(second_end) =
+            exact_carrier_point(second, carrier_traversal_end(second), &self.data.policy)
+        else {
             return false;
         };
 

@@ -1,7 +1,7 @@
-mod support;
+use crate::test_support as support;
 
-use hypercurve::{Curve2, CurveParameterSide2, Similarity2};
-use hypercurve::{
+use crate::{Curve2, CurveParameterSide2, Similarity2};
+use crate::{
     CurveContext, CurveError, CurveFamily2, CurveGeometry2, CurveOperation2, ExactCurveError,
     Point2, PolynomialSplineCurve2, Real, SplinePeriodicity2,
 };
@@ -68,7 +68,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
         ),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Construction
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
     let constructed =
@@ -76,7 +76,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
             .expect("the terminal policy must validate the symbolic clamped knot");
     assert_eq!(
         constructed.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(constructed.value.knots(), knots);
     assert_eq!(constructed.value.parameter_domain().1, &symbolic_end);
@@ -105,14 +105,14 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
         evaluation_curve.bezier_decomposition(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::BezierDecomposition
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let decomposition = evaluation_curve
         .bezier_decomposition(&CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must decompose the exact symbolic carrier");
     assert_eq!(
         decomposition.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(decomposition.value.spans().len(), 2);
     assert!(
@@ -127,7 +127,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
         .expect("borrowed spans must preserve terminal decomposition ownership");
     assert_eq!(
         spans.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(spans.value.spans().len(), 2);
 
@@ -135,14 +135,14 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
         evaluation_curve.point_at(&symbolic_half, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let point = evaluation_curve
         .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must evaluate the exact symbolic knot");
     assert_eq!(
         point.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(point.value, p(2, 0));
     let derivatives = evaluation_curve
@@ -155,7 +155,7 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
         .expect("higher derivatives must use the selected terminal policy");
     assert_eq!(
         derivatives.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(derivatives.value.len(), 2);
 
@@ -168,14 +168,14 @@ fn polynomial_spline_construction_obeys_terminal_policy_without_replacing_knots(
         .expect("Curve2 must preserve spline evaluation certainty");
     assert_eq!(
         top_level_point.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(top_level_point.value, p(2, 0).into());
     assert!(matches!(
         top_level.point_at(&symbolic_half.clone().into(), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 }
 
@@ -189,7 +189,7 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
         curve.split_at(parameter.clone(), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Subdivision
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
     let split = curve
@@ -197,7 +197,7 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
         .expect("the terminal policy must reach the unit-weight NURBS kernel");
     assert_eq!(
         split.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     let (left, right) = split.into_value();
     assert_eq!(left.parameter_domain(), (&r(0), &parameter));
@@ -209,7 +209,7 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
         .expect("terminal policy must reach clamped polynomial reconstruction");
     assert_eq!(
         clamped.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(clamped.value.parameter_domain(), (&parameter, &r(2)));
 
@@ -217,7 +217,7 @@ fn polynomial_subdivision_reconstruction_obeys_terminal_policy() {
         curve.subcurve(parameter, r(2), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Subdivision
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 }
 
@@ -240,7 +240,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
         .expect("the terminal policy must refine the polynomial carrier");
     assert_eq!(
         inserted.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(inserted.value.control_points().len(), 6);
     assert!(
@@ -268,7 +268,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
         .expect("the terminal policy must validate reflected polynomial knots");
     assert_eq!(
         reversed.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(reversed.value.start(), curve.end());
     assert_eq!(reversed.value.end(), curve.start());
@@ -293,7 +293,7 @@ fn polynomial_exact_edits_obey_terminal_policy_through_unit_weight_nurbs() {
         .expect("Curve2 must propagate the policy through polynomial reconstruction");
     assert_eq!(
         transformed.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert!(matches!(
         Curve2::from(curve).reversed(&CurveContext::STRICT),
@@ -479,12 +479,12 @@ fn polynomial_spline_corner_requires_explicit_derivative_side() {
     assert!(matches!(
         curve.derivative_at(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
-            if blocker.reason() == hypercurve::UncertaintyReason::Boundary
+            if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
     let left = curve
         .derivative_at_side(
             &r(1),
-            hypercurve::CurveParameterSide2::Left,
+            crate::CurveParameterSide2::Left,
             &CurveContext::STRICT,
         )
         .unwrap()
@@ -492,7 +492,7 @@ fn polynomial_spline_corner_requires_explicit_derivative_side() {
     let right = curve
         .derivative_at_side(
             &r(1),
-            hypercurve::CurveParameterSide2::Right,
+            crate::CurveParameterSide2::Right,
             &CurveContext::STRICT,
         )
         .unwrap()
@@ -515,13 +515,13 @@ fn discontinuous_polynomial_knot_requires_explicit_point_side() {
     assert!(matches!(
         curve.point_at(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
-            if blocker.reason() == hypercurve::UncertaintyReason::Boundary
+            if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
     assert_eq!(
         curve
             .point_at_side(
                 &r(1),
-                hypercurve::CurveParameterSide2::Left,
+                crate::CurveParameterSide2::Left,
                 &CurveContext::STRICT
             )
             .unwrap()
@@ -532,7 +532,7 @@ fn discontinuous_polynomial_knot_requires_explicit_point_side() {
         curve
             .point_at_side(
                 &r(1),
-                hypercurve::CurveParameterSide2::Right,
+                crate::CurveParameterSide2::Right,
                 &CurveContext::STRICT
             )
             .unwrap()
@@ -771,14 +771,14 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
         curve.point_at_wrapped(&wrapped_seam, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let point = curve
         .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must resolve an undecidable periodic seam");
     assert_eq!(
         point.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(point.value, curve.start().clone());
 
@@ -791,7 +791,7 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
         .expect("wrapped derivative selection must share the terminal policy");
     assert_eq!(
         derivative.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(
         derivative.value,
@@ -807,7 +807,7 @@ fn periodic_polynomial_wrapping_obeys_terminal_policy() {
         .expect("Curve2 must preserve wrapped terminal certainty");
     assert_eq!(
         top_level_point.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(
         Some(&top_level_point.value),

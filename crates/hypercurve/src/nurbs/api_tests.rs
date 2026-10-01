@@ -1,7 +1,7 @@
-mod support;
+use crate::test_support as support;
 
-use hypercurve::Similarity2;
-use hypercurve::{
+use crate::Similarity2;
+use crate::{
     Curve2, CurveContext, CurveError, CurveFamily2, CurveGeometry2, CurveOperation2,
     CurveParameterSide2, ExactCurveError, NurbsCurve2, Point2, Real, SplinePeriodicity2,
 };
@@ -72,7 +72,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         ),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Construction
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
     let constructed = NurbsCurve2::try_new(
@@ -85,7 +85,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     .expect("the terminal policy must validate the symbolic clamped knot");
     assert_eq!(
         constructed.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(constructed.value.knots(), knots);
     assert_eq!(constructed.value.parameter_domain().1, &symbolic_end);
@@ -114,14 +114,14 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         evaluation_curve.bezier_decomposition(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::BezierDecomposition
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let decomposition = evaluation_curve
         .bezier_decomposition(&CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must decompose the exact symbolic carrier");
     assert_eq!(
         decomposition.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert!(
         decomposition
@@ -136,7 +136,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         .expect("the retained decomposition must preserve approximate ownership");
     assert_eq!(
         spans.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(spans.value.spans().len(), 2);
     let native = evaluation_curve
@@ -144,7 +144,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         .expect("native promotion must use the same terminal policy");
     assert_eq!(
         native.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(native.value.len(), 2);
 
@@ -152,14 +152,14 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         evaluation_curve.point_at(&symbolic_half, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let point = evaluation_curve
         .point_at(&symbolic_half, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must evaluate the exact symbolic knot");
     assert_eq!(
         point.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(point.value, p(2, 0));
     let derivative = evaluation_curve
@@ -171,7 +171,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         .expect("the terminal policy must evaluate the exact symbolic derivative");
     assert_eq!(
         derivative.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(derivative.value.dx(), &r(4));
     assert_eq!(derivative.value.dy(), &r(-8));
@@ -185,7 +185,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         .expect("higher derivatives must use the selected terminal policy");
     assert_eq!(
         derivatives.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(derivatives.value.len(), 2);
     assert_eq!(derivatives.value[0], derivative.value);
@@ -199,27 +199,27 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
         .expect("Curve2 must preserve NURBS evaluation certainty");
     assert_eq!(
         top_level_point.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(top_level_point.value, p(2, 0).into());
     assert!(matches!(
         evaluation_top_level.point_at(&symbolic_half.clone().into(), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
     assert!(matches!(
         evaluation_curve.bezier_decomposition(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::BezierDecomposition
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     assert!(matches!(
         evaluation_curve.native_subcurves(&CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::NativeTopology
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 
     let top_level = Curve2::try_nurbs(
@@ -232,7 +232,7 @@ fn nurbs_construction_obeys_terminal_policy_without_replacing_knots() {
     .expect("Curve2 must preserve construction certainty");
     assert_eq!(
         top_level.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
 }
 
@@ -250,7 +250,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
             &strict,
             ExactCurveError::Blocked(blocker)
                 if blocker.operation() == CurveOperation2::Subdivision
-                    && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                    && blocker.reason() == crate::UncertaintyReason::Ordering
         ),
         "{strict:?}"
     );
@@ -260,7 +260,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
         .expect("the terminal policy must resolve the symbolically equal knot");
     assert_eq!(
         split.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     let (left, right) = split.into_value();
     assert_eq!(left.parameter_domain(), (&r(0), &parameter));
@@ -272,7 +272,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
         .expect("terminal policy must propagate through reconstructed subcurves");
     assert_eq!(
         subcurve.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(subcurve.value.parameter_domain(), (&r(0), &parameter));
 
@@ -282,7 +282,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
         .expect("Curve2 must propagate the selected policy into its NURBS carrier");
     assert_eq!(
         top_level_split.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert!(
         top_level_split
@@ -299,7 +299,7 @@ fn nurbs_subdivision_reconstruction_obeys_terminal_policy() {
         curve.split_at(parameter, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Subdivision
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
 }
 
@@ -321,7 +321,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .expect("the terminal policy must refine the exact symbolic carrier");
     assert_eq!(
         inserted.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(inserted.value.homogeneous_controls().len(), 6);
     assert!(
@@ -336,7 +336,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .expect("the retained terminal refinement must replay");
     assert_eq!(
         inserted_replay.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert!(std::ptr::eq(
         inserted.value.homogeneous_controls(),
@@ -357,7 +357,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .expect("an approximate-first cache entry must preserve its strict blocker");
     assert_eq!(
         approximate_first.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert!(matches!(
         curve.insert_knot(approximate_first_knot, &CurveContext::STRICT),
@@ -375,7 +375,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .expect("the terminal policy must certify inverse knot removal");
     assert_eq!(
         removed.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     let removed_curve = removed
         .value
@@ -401,7 +401,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .expect("the terminal policy must elevate every exact symbolic span");
     assert_eq!(
         spans.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     let span_replay = curve
         .degree_elevation(3, &CurveContext::APPROXIMATE_512)
@@ -425,7 +425,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .expect("the terminal policy must reconstruct the elevated carrier");
     assert_eq!(
         elevated.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(elevated.value.degree(), 3);
     let elevated_replay = curve
@@ -447,7 +447,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .expect("reversal must validate exact reflected symbolic knots");
     assert_eq!(
         reversed.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert!(matches!(
         curve.reversed(&CurveContext::STRICT),
@@ -469,7 +469,7 @@ fn nurbs_exact_edits_isolate_terminal_policy_and_replay_retained_proofs() {
         .expect("Curve2 transformation must preserve the terminal policy");
     assert_eq!(
         transformed.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert!(matches!(
         Curve2::from(curve).transform_similarity(&transform, &CurveContext::STRICT),
@@ -616,7 +616,7 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
     assert!(matches!(
         error,
         ExactCurveError::Blocked(blocker)
-            if blocker.reason() == hypercurve::UncertaintyReason::Boundary
+            if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
     let left = curve
         .derivative_at_side(&r(1), CurveParameterSide2::Left, &CurveContext::STRICT)
@@ -644,7 +644,7 @@ fn nurbs_internal_corner_requires_explicit_derivative_side() {
             )
             .unwrap()
             .into_value(),
-        hypercurve::CurveVector2::from(right)
+        crate::CurveVector2::from(right)
     );
 }
 
@@ -663,7 +663,7 @@ fn discontinuous_nurbs_knot_requires_explicit_point_side() {
     assert!(matches!(
         curve.point_at(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
-            if blocker.reason() == hypercurve::UncertaintyReason::Boundary
+            if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
     assert_eq!(
         curve
@@ -1108,7 +1108,7 @@ fn nurbs_elevated_carrier_preserves_discontinuous_knot_sides() {
     assert!(matches!(
         elevated.point_at(&r(1), &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
-            if blocker.reason() == hypercurve::UncertaintyReason::Boundary
+            if blocker.reason() == crate::UncertaintyReason::Boundary
     ));
 }
 
@@ -1418,7 +1418,7 @@ fn out_of_domain_nurbs_evaluation_has_contextual_error() {
     assert!(matches!(
         error,
         ExactCurveError::Invalid {
-            cause: hypercurve::CurveError::InvalidCurveParameter,
+            cause: crate::CurveError::InvalidCurveParameter,
             ..
         }
     ));
@@ -1617,7 +1617,7 @@ fn invalid_nurbs_construction_returns_contextual_error() {
     assert!(matches!(
         error,
         ExactCurveError::Invalid {
-            cause: hypercurve::CurveError::InvalidBSpline,
+            cause: crate::CurveError::InvalidBSpline,
             ..
         }
     ));
@@ -1712,14 +1712,14 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
         curve.point_at_wrapped(&wrapped_seam, &CurveContext::STRICT),
         Err(ExactCurveError::Blocked(blocker))
             if blocker.operation() == CurveOperation2::Evaluation
-                && blocker.reason() == hypercurve::UncertaintyReason::Ordering
+                && blocker.reason() == crate::UncertaintyReason::Ordering
     ));
     let point = curve
         .point_at_wrapped(&wrapped_seam, &CurveContext::APPROXIMATE_512)
         .expect("the terminal policy must resolve an undecidable NURBS seam");
     assert_eq!(
         point.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(point.value, curve.start().clone());
 
@@ -1733,7 +1733,7 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
         .expect("wrapped NURBS derivatives must share the terminal policy");
     assert_eq!(
         derivatives.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(
         derivatives.value,
@@ -1749,7 +1749,7 @@ fn periodic_nurbs_wrapping_obeys_terminal_policy() {
         .expect("Curve2 must preserve wrapped NURBS certainty");
     assert_eq!(
         top_level_point.certainty,
-        hypercurve::CurveCertainty::Approximate512Consumed
+        crate::CurveCertainty::Approximate512Consumed
     );
     assert_eq!(
         top_level_point.value,
@@ -1965,7 +1965,7 @@ fn homogeneous_nurbs_elevation_remains_recomposable_and_refinable() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let source = finite_mixed_weight_nurbs(&policy);
         let elevated = source.elevated_to_degree(3, &policy).unwrap();
-        assert_eq!(elevated.certainty, hypercurve::CurveCertainty::Certified);
+        assert_eq!(elevated.certainty, crate::CurveCertainty::Certified);
         let elevated = elevated.into_value();
         assert_eq!(elevated.degree(), 3);
         assert_eq!(elevated.weights(), &[r(1), r(0), r(0), r(1)]);
@@ -2013,7 +2013,7 @@ fn homogeneous_nurbs_knot_insertion_retains_infinite_controls() {
 
 #[test]
 fn homogeneous_nurbs_unclamped_and_discontinuous_edits_preserve_parameterization() {
-    use hypercurve::HomogeneousControl2;
+    use crate::HomogeneousControl2;
     let h = |x, y, w| HomogeneousControl2::new(r(x), r(y), r(w));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let unclamped = NurbsCurve2::from_homogeneous_controls(
@@ -2101,14 +2101,10 @@ fn spline_parameter_search_preserves_every_discontinuous_knot_side() {
         .collect();
     let knots: Vec<_> = (0..=SPANS).flat_map(|i| [r(i * i), r(i * i)]).collect();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let polynomial = hypercurve::PolynomialSplineCurve2::try_new(
-            1,
-            controls.clone(),
-            knots.clone(),
-            &policy,
-        )
-        .unwrap()
-        .into_value();
+        let polynomial =
+            crate::PolynomialSplineCurve2::try_new(1, controls.clone(), knots.clone(), &policy)
+                .unwrap()
+                .into_value();
         let rational = NurbsCurve2::try_new(
             1,
             controls.clone(),
@@ -2126,7 +2122,7 @@ fn spline_parameter_search_preserves_every_discontinuous_knot_side() {
                 let width = r(2 * i + 1);
                 let parameter = r(i * i) + &width * q(1, 4);
                 let point = curve.point_at(&parameter.clone().into(), &policy).unwrap();
-                assert_eq!(point.certainty, hypercurve::CurveCertainty::Certified);
+                assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(
                     point.value.coordinates(),
                     Some(&Point2::new(r(2 * i) + &local_x, r(0)))
@@ -2134,7 +2130,7 @@ fn spline_parameter_search_preserves_every_discontinuous_knot_side() {
                 let derivative = curve
                     .derivative_at(&parameter.clone().into(), &policy)
                     .unwrap();
-                assert_eq!(derivative.certainty, hypercurve::CurveCertainty::Certified);
+                assert_eq!(derivative.certainty, crate::CurveCertainty::Certified);
                 assert_eq!(
                     derivative
                         .value
@@ -2165,12 +2161,12 @@ fn spline_parameter_search_preserves_every_discontinuous_knot_side() {
                     ),
                 ] {
                     let point = curve.point_at_side(&parameter, side, &policy).unwrap();
-                    assert_eq!(point.certainty, hypercurve::CurveCertainty::Certified);
+                    assert_eq!(point.certainty, crate::CurveCertainty::Certified);
                     assert_eq!(point.value.coordinates(), Some(&p(expected_x, 0)));
                 }
                 if i > 0 && i < SPANS {
                     assert!(
-                        matches!(curve.point_at(&parameter, &policy), Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == hypercurve::UncertaintyReason::Boundary)
+                        matches!(curve.point_at(&parameter, &policy), Err(ExactCurveError::Blocked(blocker)) if blocker.reason() == crate::UncertaintyReason::Boundary)
                     );
                 }
             }

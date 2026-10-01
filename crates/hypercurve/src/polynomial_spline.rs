@@ -4,6 +4,7 @@ use crate::bspline::{PolynomialBSplineCurve2, SpanParameterLocation, select_span
 use std::cmp::Ordering;
 use std::sync::Arc;
 
+use crate::bspline::PolynomialBSplineBezierExtraction2;
 use crate::policy::{
     PolicyEvaluationCache, resolve_cached_evaluation, resolve_certified_operation,
 };
@@ -11,8 +12,7 @@ use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
     BezierSubcurve2, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
     CurveOperation2, CurveOutcome, CurveParameterSide2, ExactCurveError, ExactCurveResult,
-    NurbsCurve2, Point2, PolynomialBSplineBezierExtraction2, RationalBezier2, Real, Similarity2,
-    SplinePeriodicity2, UncertaintyReason,
+    NurbsCurve2, Point2, RationalBezier2, Real, Similarity2, SplinePeriodicity2, UncertaintyReason,
 };
 
 type Cached<T> = Result<T, ExactCurveError>;
@@ -414,7 +414,8 @@ impl PolynomialSplineCurve2 {
     }
 
     /// Returns the shared exact Bezier decomposition and source intervals.
-    pub fn bezier_decomposition(
+    #[cfg(test)]
+    pub(crate) fn bezier_decomposition(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<&PolynomialBSplineBezierExtraction2>> {
@@ -1178,3 +1179,6 @@ mod layout_tests {
         assert_eq!(core::mem::size_of::<PolynomialSplineData2>(), 288);
     }
 }
+
+#[cfg(test)]
+mod api_tests;

@@ -90,6 +90,8 @@ mod straight_skeleton;
 mod svg;
 #[cfg(test)]
 mod tangent_order_tests;
+#[cfg(test)]
+mod test_support;
 mod transform;
 mod translation_obstacle;
 #[cfg(feature = "triangulation")]
@@ -159,10 +161,6 @@ pub(crate) use bezier_topology::{
     BezierLineCrossingDirection, BezierMonotoneSpan,
 };
 pub use boolean_op::BooleanOp;
-pub use bspline::{
-    PolynomialBSplineBezierExtraction2, RationalBSplineBezierExtraction2, RationalBezierSpan2,
-    RetainedBSplineSpanFactEvidence2, RetainedBSplineSpanFacts2, RetainedSpanAxisMonotonicity,
-};
 pub use bulge::BulgeVertex2;
 pub use classify::{Classification, LineSide, UncertaintyReason};
 pub use contour::{Contour2, ContourPointLocation, FillRule};
@@ -220,7 +218,7 @@ pub use intersect::{
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineCircleRelation,
     LineLineIntersection, ParamRange, SegmentIntersection,
 };
-pub use nurbs::{NurbsCurve2, NurbsDegreeElevation2, NurbsElevatedBezierSpan2};
+pub use nurbs::NurbsCurve2;
 pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
 pub use policy::{CurveCertainty, CurveContext, CurveOutcome, CurvePreviewOptions};

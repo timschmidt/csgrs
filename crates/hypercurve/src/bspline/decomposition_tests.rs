@@ -1,7 +1,8 @@
-use hypercurve::{
+//! Exact Bezier extraction of polynomial and rational B-splines.
+
+use crate::{
     Classification, Curve2, CurveContext, CurveError, CurveGeometry2, CurvePath2, CurveRegion2,
-    ExactCurveError, NurbsCurve2, Point2, PolynomialSplineCurve2, Real,
-    RetainedSpanAxisMonotonicity, UncertaintyReason,
+    ExactCurveError, NurbsCurve2, Point2, PolynomialSplineCurve2, Real, UncertaintyReason,
 };
 
 fn r(value: i32) -> Real {
@@ -229,11 +230,6 @@ fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
     assert!(first.start() == &Point2::new(r(1), r(2)));
     assert!(second.end() == &Point2::new(r(5), r(2)));
 
-    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
-    assert_eq!(facts.span_facts().len(), 2);
-    assert!(facts.span_facts()[0].knot_interval() == (&r(2), &r(3)));
-    assert!(facts.span_facts()[1].knot_interval() == (&r(3), &r(4)));
-
     let rational = NurbsCurve2::try_new(
         2,
         vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
@@ -247,10 +243,9 @@ fn unclamped_uniform_bspline_refines_active_domain_endpoints_exactly() {
         .bezier_decomposition(&policy())
         .unwrap()
         .into_value();
-    let rational_facts = decided(rational_extraction.span_fact_evidence(&policy()).unwrap());
-    assert_eq!(rational_facts.span_facts().len(), 2);
-    assert!(rational_facts.span_facts()[0].knot_interval() == (&r(2), &r(3)));
-    assert!(rational_facts.span_facts()[1].knot_interval() == (&r(3), &r(4)));
+    assert_eq!(rational_extraction.spans().len(), 2);
+    assert!(rational_extraction.spans()[0].knot_interval() == (&r(2), &r(3)));
+    assert!(rational_extraction.spans()[1].knot_interval() == (&r(3), &r(4)));
 }
 
 #[test]
@@ -290,7 +285,7 @@ fn extracted_bspline_spans_feed_unified_region_area() {
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
     let region =
-        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy())
+        CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy())
             .unwrap()
             .into_value();
 
@@ -524,7 +519,7 @@ fn equal_weight_retained_rational_cubic_spans_feed_unified_region_area() {
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
     let region =
-        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy())
+        CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy())
             .unwrap()
             .into_value();
 
@@ -578,133 +573,6 @@ fn equal_weight_rational_cubic_spans_specialize_to_polynomial_cubics() {
     );
     assert!(extraction.spans()[0].knot_interval() == (&r(0), &r(1)));
     assert!(extraction.spans()[1].knot_interval() == (&r(1), &r(2)));
-}
-
-#[test]
-fn retained_bspline_span_facts_evidence_native_bounds_and_monotonicity() {
-    let spline = PolynomialSplineCurve2::try_new(
-        2,
-        vec![p(0, 0), p(1, 0), p(2, 0)],
-        vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-        &policy(),
-    )
-    .unwrap()
-    .into_value();
-    let extraction = spline.bezier_decomposition(&policy()).unwrap().into_value();
-    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
-
-    assert_eq!(facts.span_facts().len(), 1);
-    let span = &facts.span_facts()[0];
-    assert!(span.knot_interval() == (&r(0), &r(1)));
-    assert!(span.bounds().min() == &p(0, 0));
-    assert!(span.bounds().max() == &p(2, 0));
-    assert_eq!(
-        span.x_monotonicity(),
-        RetainedSpanAxisMonotonicity::CertifiedMonotone
-    );
-    assert_eq!(
-        span.y_monotonicity(),
-        RetainedSpanAxisMonotonicity::CertifiedMonotone
-    );
-}
-
-#[test]
-fn rational_quadratic_span_facts_certify_bounds_and_extrema() {
-    let spline = NurbsCurve2::try_new(
-        2,
-        vec![p(0, 0), p(1, 1), p(2, 0)],
-        vec![r(1), r(2), r(3)],
-        vec![r(0), r(0), r(0), r(1), r(1), r(1)],
-        &policy(),
-    )
-    .unwrap()
-    .into_value();
-    let extraction = spline.bezier_decomposition(&policy()).unwrap().into_value();
-    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
-    let span = &facts.span_facts()[0];
-    assert!(span.bounds().min() == &p(0, 0));
-    assert!(span.bounds().max() == &p(2, 1));
-    assert_eq!(
-        span.x_monotonicity(),
-        RetainedSpanAxisMonotonicity::CertifiedMonotone
-    );
-    assert_eq!(
-        span.y_monotonicity(),
-        RetainedSpanAxisMonotonicity::HasInteriorExtrema
-    );
-}
-
-#[test]
-fn retained_rational_quadratic_span_facts_follow_refined_knot_windows() {
-    let spline = NurbsCurve2::try_new(
-        2,
-        vec![p(0, 0), p(2, 4), p(4, 4), p(6, 0)],
-        vec![r(1), r(2), r(4), r(1)],
-        vec![r(0), r(0), r(0), r(1), r(2), r(2), r(2)],
-        &policy(),
-    )
-    .unwrap()
-    .into_value();
-    let extraction = spline.bezier_decomposition(&policy()).unwrap().into_value();
-    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
-
-    assert_eq!(facts.span_facts().len(), 2);
-    assert!(facts.span_facts()[0].knot_interval() == (&r(0), &r(1)));
-    assert!(facts.span_facts()[1].knot_interval() == (&r(1), &r(2)));
-}
-
-#[test]
-fn retained_rational_cubic_span_facts_certify_control_hull_and_monotonicity() {
-    let spline = NurbsCurve2::try_new(
-        3,
-        vec![p(0, 0), p(1, 3), p(3, 3), p(5, 3), p(6, 0)],
-        vec![r(1), r(2), r(4), r(8), r(16)],
-        vec![r(0), r(0), r(0), r(0), r(1), r(2), r(2), r(2), r(2)],
-        &policy(),
-    )
-    .unwrap()
-    .into_value();
-    let extraction = spline.bezier_decomposition(&policy()).unwrap().into_value();
-    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
-
-    assert_eq!(facts.span_facts().len(), 2);
-    assert!(facts.span_facts().iter().all(|span| {
-        span.x_monotonicity() == RetainedSpanAxisMonotonicity::CertifiedMonotone
-            && span.y_monotonicity() == RetainedSpanAxisMonotonicity::CertifiedMonotone
-    }));
-    assert!(facts.span_facts()[0].bounds().min() == &p(0, 0));
-    assert!(facts.span_facts()[0].bounds().max() == &Point2::new(q(11, 3), r(3)));
-}
-
-#[test]
-fn retained_degree_four_nurbs_span_certifies_stationary_monotone_axis() {
-    let spline = NurbsCurve2::try_new(
-        4,
-        vec![
-            p(0, 0),
-            Point2::new(q(3, 4), r(0)),
-            Point2::new(q(1, 2), r(0)),
-            Point2::new(q(1, 4), r(0)),
-            p(1, 0),
-        ],
-        vec![r(1); 5],
-        vec![r(0), r(0), r(0), r(0), r(0), r(1), r(1), r(1), r(1), r(1)],
-        &policy(),
-    )
-    .unwrap()
-    .into_value();
-    let extraction = spline.bezier_decomposition(&policy()).unwrap().into_value();
-    let facts = decided(extraction.span_fact_evidence(&policy()).unwrap());
-
-    assert_eq!(extraction.spans()[0].curve().degree(), 4);
-    assert_eq!(
-        facts.span_facts()[0].x_monotonicity(),
-        RetainedSpanAxisMonotonicity::CertifiedMonotone
-    );
-    assert_eq!(
-        facts.span_facts()[0].y_monotonicity(),
-        RetainedSpanAxisMonotonicity::CertifiedMonotone
-    );
 }
 
 #[test]
@@ -805,7 +673,7 @@ fn extracted_rational_bspline_spans_feed_conic_region_area() {
     );
     let path = CurvePath2::try_new(fragments.into_iter().map(Curve2::from).collect()).unwrap();
     let region =
-        CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd, &policy())
+        CurveRegion2::try_from_boundary_paths(&[path], crate::FillRule::EvenOdd, &policy())
             .unwrap()
             .into_value();
 

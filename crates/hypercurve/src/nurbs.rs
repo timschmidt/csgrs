@@ -4,6 +4,7 @@ use crate::HomogeneousControl2;
 use crate::bspline::{RationalBSplineCurve2, SpanParameterLocation, select_span_indices};
 use std::sync::{Arc, OnceLock};
 
+use crate::bspline::{RationalBSplineBezierExtraction2, RationalBezierSpan2};
 use crate::policy::{
     BoundedPolicyResultCache, PolicyEvaluationCache, resolve_bounded_cached_result,
     resolve_cached_evaluation, resolve_certified_operation,
@@ -12,8 +13,7 @@ use crate::spline_periodic::{expand_periodic_spline, wrap_periodic_parameter};
 use crate::{
     BezierSubcurve2, Classification, CurveContext, CurveDerivative2, CurveError, CurveFamily2,
     CurveOperation2, CurveOutcome, CurveParameterSide2, ExactCurveError, ExactCurveResult, Point2,
-    RationalBSplineBezierExtraction2, RationalBezier2, RationalBezierSpan2, Real, Similarity2,
-    SplinePeriodicity2, UncertaintyReason,
+    RationalBezier2, Real, Similarity2, SplinePeriodicity2, UncertaintyReason,
 };
 
 const MAX_RETAINED_KNOT_REFINEMENTS: usize = 8;
@@ -45,7 +45,7 @@ pub struct NurbsCurve2 {
 
 /// Clone-shared exact degree elevation of every NURBS knot span.
 #[derive(Clone, Debug, PartialEq)]
-pub struct NurbsDegreeElevation2 {
+pub(crate) struct NurbsDegreeElevation2 {
     source_degree: usize,
     target_degree: usize,
     spans: Arc<[NurbsElevatedBezierSpan2]>,
@@ -53,7 +53,7 @@ pub struct NurbsDegreeElevation2 {
 
 /// One exact elevated rational Bezier span with its original knot interval.
 #[derive(Clone, Debug, PartialEq)]
-pub struct NurbsElevatedBezierSpan2 {
+pub(crate) struct NurbsElevatedBezierSpan2 {
     span_index: usize,
     parameter_start: Real,
     parameter_end: Real,
@@ -61,6 +61,23 @@ pub struct NurbsElevatedBezierSpan2 {
 }
 
 impl NurbsCurve2 {
+    /// Elevates every exact rational Bezier knot span to `target_degree`.
+    ///
+    /// The result retains the original knot intervals so callers can consume
+    /// elevated homogeneous spans without changing the
+    /// NURBS parameterization or inventing a less-continuous replacement knot
+    /// vector. Equal requests and blockers are retained across clones.
+    #[cfg(test)]
+    pub(crate) fn degree_elevation(
+        &self,
+        target_degree: usize,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<NurbsDegreeElevation2>> {
+        resolve_certified_operation(policy, |attempt| {
+            self.degree_elevation_with_policy(target_degree, attempt)
+        })
+    }
+
     /// Constructs a degree-one-or-higher NURBS curve over its active knot domain.
     ///
     /// The outcome records any terminal decision consumed while validating
@@ -396,22 +413,6 @@ impl NurbsCurve2 {
                 self.remove_knot_uncached_with_policy(retained_knot.clone(), attempt)
             },
         )
-    }
-
-    /// Elevates every exact rational Bezier knot span to `target_degree`.
-    ///
-    /// The result retains the original knot intervals so callers can consume
-    /// elevated homogeneous spans without changing the
-    /// NURBS parameterization or inventing a less-continuous replacement knot
-    /// vector. Equal requests and blockers are retained across clones.
-    pub fn degree_elevation(
-        &self,
-        target_degree: usize,
-        policy: &CurveContext,
-    ) -> ExactCurveResult<CurveOutcome<NurbsDegreeElevation2>> {
-        resolve_certified_operation(policy, |attempt| {
-            self.degree_elevation_with_policy(target_degree, attempt)
-        })
     }
 
     fn degree_elevation_with_policy(
@@ -954,7 +955,8 @@ impl NurbsCurve2 {
     }
 
     /// Returns the shared exact homogeneous Bezier decomposition.
-    pub fn bezier_decomposition(
+    #[cfg(test)]
+    pub(crate) fn bezier_decomposition(
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<&RationalBSplineBezierExtraction2>> {
@@ -1461,12 +1463,14 @@ impl PartialEq for NurbsCurve2 {
 
 impl NurbsDegreeElevation2 {
     /// Returns the source NURBS degree.
-    pub const fn source_degree(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) const fn source_degree(&self) -> usize {
         self.source_degree
     }
 
     /// Returns the exact elevated degree shared by every span.
-    pub const fn target_degree(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) const fn target_degree(&self) -> usize {
         self.target_degree
     }
 
@@ -1477,13 +1481,9 @@ impl NurbsDegreeElevation2 {
 }
 
 impl NurbsElevatedBezierSpan2 {
-    /// Returns the stable source span index.
-    pub const fn span_index(&self) -> usize {
-        self.span_index
-    }
-
     /// Returns the exact source knot interval.
-    pub fn parameter_interval(&self) -> (&Real, &Real) {
+    #[cfg(test)]
+    pub(crate) fn parameter_interval(&self) -> (&Real, &Real) {
         (&self.parameter_start, &self.parameter_end)
     }
 
@@ -1790,3 +1790,6 @@ mod native_span_cache_tests {
         assert!(std::ptr::eq(first, second));
     }
 }
+
+#[cfg(test)]
+mod api_tests;

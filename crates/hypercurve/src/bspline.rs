@@ -14,9 +14,9 @@ use hyperreal::Real;
 
 use crate::classify::{compare_reals, is_zero};
 use crate::{
-    Aabb2, Axis2, BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveError,
-    CurveResult, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
-    SplinePeriodicity2, UncertaintyReason,
+    BezierSubcurve2, Classification, CubicBezier2, CurveContext, CurveError, CurveResult, Point2,
+    QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, SplinePeriodicity2,
+    UncertaintyReason,
 };
 
 /// Exact polynomial B-spline curve in the plane.
@@ -38,7 +38,7 @@ pub(crate) struct PolynomialBSplineCurve2 {
 /// spans so callers can audit the exact knot-insertion construction rather than
 /// treating span conversion as an opaque adapter.
 #[derive(Clone, Debug, PartialEq)]
-pub struct PolynomialBSplineBezierExtraction2 {
+pub(crate) struct PolynomialBSplineBezierExtraction2 {
     degree: usize,
     refined_control_points: Vec<Point2>,
     refined_knots: Vec<Real>,
@@ -78,7 +78,7 @@ impl PartialEq for RationalBSplineCurve2 {
 /// Each extracted span retains a shared rational Bezier evaluator and its source
 /// knot interval; specialization to a conic or polynomial is optional.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RationalBSplineBezierExtraction2 {
+pub(crate) struct RationalBSplineBezierExtraction2 {
     degree: usize,
     refined_homogeneous_controls: Vec<HomogeneousControl2>,
     refined_knots: Vec<Real>,
@@ -86,43 +86,12 @@ pub struct RationalBSplineBezierExtraction2 {
     inserted_knot_count: usize,
 }
 
-/// Certified or retained monotonicity evidence for one extracted spline span.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum RetainedSpanAxisMonotonicity {
-    /// The span is certified monotone along this axis.
-    CertifiedMonotone,
-    /// Exact topology found interior extrema, so the span is not monotone.
-    HasInteriorExtrema,
-}
-
-/// Span-local facts produced from B-spline/NURBS Bezier extraction.
-///
-/// Bounds and axis monotonicity are certified from the actual extracted curve.
-/// Control-weight signs alone cannot certify the denominator domain. These
-/// facts are produced only by extraction analysis, with uncertainty propagated
-/// through the supplied context.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RetainedBSplineSpanFacts2 {
-    span_index: usize,
-    knot_start: Real,
-    knot_end: Real,
-    bounds: Aabb2,
-    x_monotonicity: RetainedSpanAxisMonotonicity,
-    y_monotonicity: RetainedSpanAxisMonotonicity,
-}
-
-/// Span-local fact evidence for one B-spline/NURBS extraction.
-#[derive(Clone, Debug, PartialEq)]
-pub struct RetainedBSplineSpanFactEvidence2 {
-    span_facts: Vec<RetainedBSplineSpanFacts2>,
-}
-
 /// One exact rational Bezier span extracted from a retained NURBS curve.
 ///
 /// The evaluator owns homogeneous controls and reusable exact decisions. Its
 /// local unit parameter maps to the retained source knot interval.
 #[derive(Clone, Debug, PartialEq)]
-pub struct RationalBezierSpan2 {
+pub(crate) struct RationalBezierSpan2 {
     curve: RationalBezier2,
     knot_start: Real,
     knot_end: Real,
@@ -235,18 +204,9 @@ impl PolynomialBSplineCurve2 {
 }
 
 impl PolynomialBSplineBezierExtraction2 {
-    /// Returns the source spline degree.
-    pub const fn degree(&self) -> usize {
-        self.degree
-    }
-
-    /// Returns the exact refined control net after knot insertion.
-    pub fn refined_control_points(&self) -> &[Point2] {
-        &self.refined_control_points
-    }
-
     /// Returns the exact refined knot vector after knot insertion.
-    pub fn refined_knots(&self) -> &[Real] {
+    #[cfg(test)]
+    pub(crate) fn refined_knots(&self) -> &[Real] {
         &self.refined_knots
     }
 
@@ -268,17 +228,16 @@ impl PolynomialBSplineBezierExtraction2 {
         &self.intervals
     }
 
-    /// Returns how many knots were inserted to produce the Bezier form.
-    pub const fn inserted_knot_count(&self) -> usize {
-        self.inserted_knot_count
+    /// Returns the source spline degree.
+    #[cfg(test)]
+    pub(crate) const fn degree(&self) -> usize {
+        self.degree
     }
 
-    /// Returns span-local bounds and monotonicity facts for extracted Bezier spans.
-    pub fn span_fact_evidence(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RetainedBSplineSpanFactEvidence2>> {
-        native_span_fact_evidence(&self.spans, &self.refined_knots, self.degree, policy)
+    /// Returns how many knots were inserted to produce the Bezier form.
+    #[cfg(test)]
+    pub(crate) const fn inserted_knot_count(&self) -> usize {
+        self.inserted_knot_count
     }
 }
 
@@ -597,32 +556,15 @@ impl RationalBSplineCurve2 {
 }
 
 impl RationalBSplineBezierExtraction2 {
-    /// Returns the retained source degree.
-    pub const fn degree(&self) -> usize {
-        self.degree
-    }
-
-    /// Returns the exact refined homogeneous control net.
-    pub fn refined_homogeneous_controls(&self) -> &[HomogeneousControl2] {
-        &self.refined_homogeneous_controls
-    }
-
     /// Returns the exact refined knot vector.
-    pub fn refined_knots(&self) -> &[Real] {
+    #[cfg(test)]
+    pub(crate) fn refined_knots(&self) -> &[Real] {
         &self.refined_knots
     }
 
     /// Returns exact rational Bezier spans in parameter order.
     pub fn spans(&self) -> &[RationalBezierSpan2] {
         &self.spans
-    }
-
-    /// Returns exact native span geometry, sharing the general rational evaluator.
-    pub fn native_subcurves(&self, policy: &CurveContext) -> Vec<crate::CurveGeometry2> {
-        self.spans
-            .iter()
-            .map(|span| span.native_subcurve(policy))
-            .collect()
     }
 
     pub(crate) fn native_beziers(&self, policy: &CurveContext) -> Vec<BezierSubcurve2> {
@@ -632,198 +574,31 @@ impl RationalBSplineBezierExtraction2 {
             .collect()
     }
 
+    /// Returns the retained source degree.
+    #[cfg(test)]
+    pub(crate) const fn degree(&self) -> usize {
+        self.degree
+    }
+
+    /// Returns the exact refined homogeneous control net.
+    #[cfg(test)]
+    pub(crate) fn refined_homogeneous_controls(&self) -> &[HomogeneousControl2] {
+        &self.refined_homogeneous_controls
+    }
+
+    /// Returns exact native span geometry, sharing the general rational evaluator.
+    #[cfg(test)]
+    pub(crate) fn native_subcurves(&self, policy: &CurveContext) -> Vec<crate::CurveGeometry2> {
+        self.spans
+            .iter()
+            .map(|span| span.native_subcurve(policy))
+            .collect()
+    }
+
     /// Returns the number of knots inserted during extraction.
-    pub const fn inserted_knot_count(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) const fn inserted_knot_count(&self) -> usize {
         self.inserted_knot_count
-    }
-
-    /// Certifies bounds and monotonicity on every finite extracted span.
-    pub fn span_fact_evidence(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RetainedBSplineSpanFactEvidence2>> {
-        let mut facts = Vec::with_capacity(self.spans.len());
-        for (span_index, span) in self.spans.iter().enumerate() {
-            let native = span.native_bezier(policy);
-            let bounds = match subcurve_certified_bounds(&native) {
-                Classification::Decided(bounds) => bounds,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let monotone = |axis| subcurve_axis_monotonicity(&native, axis, policy);
-            let x = match monotone(Axis2::X) {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let y = match monotone(Axis2::Y) {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let fact = match RetainedBSplineSpanFacts2::new(
-                span_index,
-                span.knot_start.clone(),
-                span.knot_end.clone(),
-                bounds,
-                x,
-                y,
-                policy,
-            )? {
-                Classification::Decided(fact) => fact,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            facts.push(fact);
-        }
-        RetainedBSplineSpanFactEvidence2::new(facts, policy)
-    }
-}
-
-impl RetainedBSplineSpanFacts2 {
-    /// Constructs one span-local facts record.
-    #[allow(clippy::too_many_arguments)]
-    fn new(
-        span_index: usize,
-        knot_start: Real,
-        knot_end: Real,
-        bounds: Aabb2,
-        x_monotonicity: RetainedSpanAxisMonotonicity,
-        y_monotonicity: RetainedSpanAxisMonotonicity,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        match validate_span_fact_evidence(&knot_start, &knot_end, &bounds, policy)? {
-            Classification::Decided(()) => {}
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
-        Ok(Classification::Decided(Self {
-            span_index,
-            knot_start,
-            knot_end,
-            bounds,
-            x_monotonicity,
-            y_monotonicity,
-        }))
-    }
-
-    /// Returns the span index in extraction order.
-    pub const fn span_index(&self) -> usize {
-        self.span_index
-    }
-
-    /// Returns the source knot interval.
-    pub fn knot_interval(&self) -> (&Real, &Real) {
-        (&self.knot_start, &self.knot_end)
-    }
-
-    /// Returns the certified or conservative span AABB.
-    pub const fn bounds(&self) -> &Aabb2 {
-        &self.bounds
-    }
-
-    /// Returns x-axis monotonicity evidence.
-    pub const fn x_monotonicity(&self) -> RetainedSpanAxisMonotonicity {
-        self.x_monotonicity
-    }
-
-    /// Returns y-axis monotonicity evidence.
-    pub const fn y_monotonicity(&self) -> RetainedSpanAxisMonotonicity {
-        self.y_monotonicity
-    }
-}
-
-impl RetainedBSplineSpanFactEvidence2 {
-    /// Constructs a span-local fact evidence.
-    fn new(
-        span_facts: Vec<RetainedBSplineSpanFacts2>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Self>> {
-        match validate_span_fact_evidence_evidence(&span_facts, policy)? {
-            Classification::Decided(()) => Ok(Classification::Decided(Self { span_facts })),
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        }
-    }
-
-    /// Returns facts in extraction order.
-    pub fn span_facts(&self) -> &[RetainedBSplineSpanFacts2] {
-        &self.span_facts
-    }
-}
-
-fn validate_span_fact_evidence(
-    knot_start: &Real,
-    knot_end: &Real,
-    bounds: &Aabb2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<()>> {
-    match validate_positive_knot_interval(knot_start, knot_end, policy)? {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    match bounds.has_valid_ordering() {
-        Classification::Decided(true) => Ok(Classification::Decided(())),
-        Classification::Decided(false) => Err(CurveError::Topology(
-            "spline span bounds must be ordered".into(),
-        )),
-        Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-    }
-}
-
-fn validate_span_fact_evidence_evidence(
-    span_facts: &[RetainedBSplineSpanFacts2],
-    policy: &CurveContext,
-) -> CurveResult<Classification<()>> {
-    if span_facts.is_empty() {
-        return Err(CurveError::Topology(
-            "retained span fact evidence must carry at least one span".into(),
-        ));
-    }
-    for (expected_index, fact) in span_facts.iter().enumerate() {
-        if fact.span_index() != expected_index {
-            return Err(CurveError::Topology(
-                "retained span fact evidence indices must be contiguous".into(),
-            ));
-        }
-        if let Some(previous) = expected_index
-            .checked_sub(1)
-            .and_then(|index| span_facts.get(index))
-        {
-            match validate_adjacent_knot_windows(
-                previous.knot_interval().1,
-                fact.knot_interval().0,
-                policy,
-                "retained span fact evidence knot intervals must be contiguous",
-            )? {
-                Classification::Decided(()) => {}
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
-        }
-    }
-    Ok(Classification::Decided(()))
-}
-
-fn validate_positive_knot_interval(
-    knot_start: &Real,
-    knot_end: &Real,
-    policy: &CurveContext,
-) -> CurveResult<Classification<()>> {
-    match compare_reals(knot_start, knot_end, policy) {
-        Some(Ordering::Less) => Ok(Classification::Decided(())),
-        Some(Ordering::Equal | Ordering::Greater) => Err(CurveError::Topology(
-            "retained B-spline span evidence must carry certified positive knot interval".into(),
-        )),
-        None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-    }
-}
-
-fn validate_adjacent_knot_windows(
-    previous_end: &Real,
-    next_start: &Real,
-    policy: &CurveContext,
-    message: &str,
-) -> CurveResult<Classification<()>> {
-    match compare_reals(previous_end, next_start, policy) {
-        Some(Ordering::Equal) => Ok(Classification::Decided(())),
-        Some(Ordering::Less | Ordering::Greater) => Err(CurveError::Topology(message.into())),
-        None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
     }
 }
 
@@ -836,12 +611,6 @@ impl RationalBezierSpan2 {
     /// Returns the source knot interval covered by this Bezier span.
     pub fn knot_interval(&self) -> (&Real, &Real) {
         (&self.knot_start, &self.knot_end)
-    }
-
-    /// Selects an exact polynomial/conic specialization when available.
-    /// Every remaining span retains its original rational carrier and degree.
-    pub fn native_subcurve(&self, policy: &CurveContext) -> crate::CurveGeometry2 {
-        crate::CurveGeometry2::from_bezier(self.native_bezier(policy))
     }
 
     pub(crate) fn native_bezier(&self, policy: &CurveContext) -> BezierSubcurve2 {
@@ -871,6 +640,13 @@ impl RationalBezierSpan2 {
             }
         }
         BezierSubcurve2::Rational(self.curve.clone())
+    }
+
+    /// Selects an exact polynomial/conic specialization when available.
+    /// Every remaining span retains its original rational carrier and degree.
+    #[cfg(test)]
+    pub(crate) fn native_subcurve(&self, policy: &CurveContext) -> crate::CurveGeometry2 {
+        crate::CurveGeometry2::from_bezier(self.native_bezier(policy))
     }
 }
 
@@ -1161,107 +937,6 @@ fn validate_spline_periodicity(
         Some(Ordering::Equal) => Ok(Classification::Decided(())),
         Some(_) => Err(CurveError::InvalidPeriodicSpline),
         None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
-    }
-}
-
-fn native_span_fact_evidence(
-    spans: &[BezierSubcurve2],
-    refined_knots: &[Real],
-    degree: usize,
-    policy: &CurveContext,
-) -> CurveResult<Classification<RetainedBSplineSpanFactEvidence2>> {
-    let mut facts = Vec::with_capacity(spans.len());
-    let mut span_index = 0_usize;
-    let refined_control_count = refined_knots.len().saturating_sub(degree + 1);
-    for knot_index in degree..refined_control_count {
-        match compare_reals(
-            &refined_knots[knot_index],
-            &refined_knots[knot_index + 1],
-            policy,
-        ) {
-            Some(Ordering::Less) => {}
-            Some(Ordering::Equal) => continue,
-            Some(Ordering::Greater) => return Err(CurveError::InvalidBSpline),
-            None => {
-                return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
-            }
-        }
-        let Some(span) = spans.get(span_index) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let bounds = match subcurve_certified_bounds(span) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let fact = match RetainedBSplineSpanFacts2::new(
-            span_index,
-            refined_knots[knot_index].clone(),
-            refined_knots[knot_index + 1].clone(),
-            bounds,
-            match subcurve_axis_monotonicity(span, Axis2::X, policy) {
-                Classification::Decided(monotonicity) => monotonicity,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            },
-            match subcurve_axis_monotonicity(span, Axis2::Y, policy) {
-                Classification::Decided(monotonicity) => monotonicity,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            },
-            policy,
-        )? {
-            Classification::Decided(fact) => fact,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        facts.push(fact);
-        span_index += 1;
-    }
-    if span_index != spans.len() {
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-    }
-    RetainedBSplineSpanFactEvidence2::new(facts, policy)
-}
-
-fn subcurve_certified_bounds(curve: &BezierSubcurve2) -> Classification<Aabb2> {
-    match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.certified_bounds(),
-        BezierSubcurve2::Cubic(curve) => curve.certified_bounds(),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.certified_bounds(),
-        BezierSubcurve2::Rational(curve) => curve.certified_bounds_classified(),
-    }
-}
-
-fn subcurve_axis_monotonicity(
-    curve: &BezierSubcurve2,
-    axis: Axis2,
-    policy: &CurveContext,
-) -> Classification<RetainedSpanAxisMonotonicity> {
-    let roots = match curve {
-        BezierSubcurve2::Quadratic(curve) => curve.axis_monotone_parameters(axis, policy),
-        BezierSubcurve2::Cubic(curve) => curve.axis_monotone_parameters(axis, policy),
-        BezierSubcurve2::RationalQuadratic(curve) => curve.axis_monotone_parameters(axis, policy),
-        BezierSubcurve2::Rational(curve) => {
-            return match curve.axis_monotonicity_classified(axis, policy) {
-                Ok(Classification::Decided(true)) => {
-                    Classification::Decided(RetainedSpanAxisMonotonicity::CertifiedMonotone)
-                }
-                Ok(Classification::Decided(false)) => {
-                    Classification::Decided(RetainedSpanAxisMonotonicity::HasInteriorExtrema)
-                }
-                Ok(Classification::Uncertain(reason)) => Classification::Uncertain(reason),
-                Err(CurveError::Real(_)) => Classification::Uncertain(UncertaintyReason::RealSign),
-                Err(_) => Classification::Uncertain(UncertaintyReason::Unsupported),
-            };
-        }
-    };
-    match roots {
-        Classification::Decided(roots) if roots.is_empty() => {
-            Classification::Decided(RetainedSpanAxisMonotonicity::CertifiedMonotone)
-        }
-        Classification::Decided(_) => {
-            Classification::Decided(RetainedSpanAxisMonotonicity::HasInteriorExtrema)
-        }
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
     }
 }
 
@@ -1685,3 +1360,6 @@ mod tests {
         assert_eq!(result.unwrap_err(), CurveError::InvalidPeriodicSpline);
     }
 }
+
+#[cfg(test)]
+mod decomposition_tests;

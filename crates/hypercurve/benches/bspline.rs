@@ -2,8 +2,8 @@ use std::hint::black_box;
 use std::time::Instant;
 
 use hypercurve::{
-    Classification, Curve2, CurveCertainty, CurveContext, CurveResult, NurbsCurve2, Point2,
-    PolynomialSplineCurve2, Real,
+    Curve2, CurveCertainty, CurveContext, CurveResult, NurbsCurve2, Point2, PolynomialSplineCurve2,
+    Real,
 };
 
 fn r(value: i32) -> Real {
@@ -18,11 +18,14 @@ fn q(numerator: i32, denominator: i32) -> Real {
     (r(numerator) / r(denominator)).expect("benchmark denominator is nonzero")
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("benchmark unexpectedly uncertain: {reason:?}"),
-    }
+/// Counts the exact Bezier spans of a spline through the unified curve API.
+fn fragment_count(curve: impl Into<Curve2>, policy: &CurveContext) -> usize {
+    curve
+        .into()
+        .native_bezier_fragments(policy)
+        .expect("benchmark spline decomposition remains exact")
+        .into_value()
+        .len()
 }
 
 fn large_nurbs_control_count() -> usize {
@@ -77,14 +80,7 @@ fn bench_large_nurbs() {
         )
         .unwrap()
         .into_value();
-        cold_checksum ^= black_box(
-            curve
-                .bezier_decomposition(&CurveContext::STRICT)
-                .unwrap()
-                .into_value()
-                .spans()
-                .len(),
-        );
+        cold_checksum ^= black_box(fragment_count(curve, &CurveContext::STRICT));
     }
     let elapsed = started.elapsed();
     println!(
@@ -140,18 +136,11 @@ fn main() -> CurveResult<()> {
     let mut checksum = 0_usize;
     for _ in 0..iterations {
         let curve = spline();
-        let extraction = curve
-            .bezier_decomposition(&policy)
-            .expect("benchmark spline operation remains exact")
-            .into_value();
-        let facts = decided(extraction.span_fact_evidence(&policy)?);
-        checksum ^= black_box(
-            extraction.spans().len() + extraction.inserted_knot_count() + facts.span_facts().len(),
-        );
+        checksum ^= black_box(fragment_count(curve, &policy));
     }
     let elapsed = started.elapsed();
     println!(
-        "polynomial_spline_cold_construction_decomposition_and_facts: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
+        "polynomial_spline_cold_construction_and_decomposition: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={checksum}",
         elapsed / iterations
     );
 
@@ -166,15 +155,10 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut cached_polynomial_checksum = 0_usize;
     for _ in 0..iterations {
-        let decomposition = cached_polynomial
-            .bezier_decomposition(&CurveContext::STRICT)
-            .expect("benchmark decomposition remains exact")
-            .into_value();
-        cached_polynomial_checksum ^= black_box(
-            decomposition.spans().len()
-                + decomposition.intervals().len()
-                + decomposition.inserted_knot_count(),
-        );
+        cached_polynomial_checksum ^= black_box(fragment_count(
+            cached_polynomial.clone(),
+            &CurveContext::STRICT,
+        ));
     }
     let elapsed = started.elapsed();
     println!(
@@ -215,18 +199,11 @@ fn main() -> CurveResult<()> {
     let mut rational_checksum = 0_usize;
     for _ in 0..iterations {
         let curve = rational();
-        let extraction = curve
-            .bezier_decomposition(&policy)
-            .expect("benchmark spline operation remains exact")
-            .into_value();
-        let facts = decided(extraction.span_fact_evidence(&policy)?);
-        rational_checksum ^= black_box(
-            extraction.spans().len() + extraction.inserted_knot_count() + facts.span_facts().len(),
-        );
+        rational_checksum ^= black_box(fragment_count(curve, &policy));
     }
     let elapsed = started.elapsed();
     println!(
-        "nurbs_quadratic_cold_construction_decomposition_and_facts: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_checksum}",
+        "nurbs_quadratic_cold_construction_and_decomposition: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_checksum}",
         elapsed / iterations
     );
 
@@ -245,21 +222,11 @@ fn main() -> CurveResult<()> {
     let mut rational_cubic_checksum = 0_usize;
     for _ in 0..iterations {
         let curve = rational_cubic();
-        let extraction = curve
-            .bezier_decomposition(&policy)
-            .expect("benchmark spline operation remains exact")
-            .into_value();
-        let facts = decided(extraction.span_fact_evidence(&policy)?);
-        rational_cubic_checksum ^= black_box(
-            extraction.spans().len()
-                + extraction.inserted_knot_count()
-                + extraction.refined_homogeneous_controls().len()
-                + facts.span_facts().len(),
-        );
+        rational_cubic_checksum ^= black_box(fragment_count(curve, &policy));
     }
     let elapsed = started.elapsed();
     println!(
-        "nurbs_cubic_cold_construction_decomposition_and_facts: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_cubic_checksum}",
+        "nurbs_cubic_cold_construction_and_decomposition: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={rational_cubic_checksum}",
         elapsed / iterations
     );
 
@@ -278,12 +245,7 @@ fn main() -> CurveResult<()> {
     let mut native_checksum = 0_usize;
     for _ in 0..iterations {
         let curve = equal_weight_rational_cubic();
-        let extraction = curve
-            .bezier_decomposition(&policy)
-            .expect("benchmark spline operation remains exact")
-            .into_value();
-        let native = extraction.native_subcurves(&policy);
-        native_checksum ^= black_box(native.len() + extraction.inserted_knot_count());
+        native_checksum ^= black_box(fragment_count(curve, &policy));
     }
     let elapsed = started.elapsed();
     println!(
@@ -295,11 +257,7 @@ fn main() -> CurveResult<()> {
     let mut general_native_checksum = 0_usize;
     for _ in 0..iterations {
         let curve = rational_cubic();
-        let extraction = curve
-            .bezier_decomposition(&policy)
-            .expect("benchmark spline operation remains exact")
-            .into_value();
-        general_native_checksum ^= black_box(extraction.native_subcurves(&policy).len());
+        general_native_checksum ^= black_box(fragment_count(curve, &policy));
     }
     let elapsed = started.elapsed();
     println!(
@@ -319,17 +277,11 @@ fn main() -> CurveResult<()> {
     let started = Instant::now();
     let mut cached_checksum = 0_usize;
     for _ in 0..iterations {
-        let decomposition = cached_nurbs
-            .bezier_decomposition(&CurveContext::STRICT)
-            .expect("benchmark decomposition remains exact")
-            .into_value();
         let native = cached_nurbs
             .native_subcurves(&CurveContext::STRICT)
             .expect("general rational cubic remains native")
             .into_value();
-        cached_checksum ^= black_box(
-            decomposition.spans().len() + decomposition.inserted_knot_count() + native.len(),
-        );
+        cached_checksum ^= black_box(native.len());
     }
     let elapsed = started.elapsed();
     println!(
@@ -591,37 +543,6 @@ fn main() -> CurveResult<()> {
         .expect("degree-elevation benchmark NURBS is valid")
         .into_value()
     };
-    let elevation_inputs = (0..1_000).map(|_| elevation_source()).collect::<Vec<_>>();
-    let started = Instant::now();
-    let mut elevation_checksum = 0_usize;
-    for curve in &elevation_inputs {
-        let elevated = curve.degree_elevation(6, &policy).unwrap().into_value();
-        elevation_checksum ^= black_box(elevated.spans().len() + elevated.target_degree());
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "nurbs_exact_span_degree_elevation: {} curves in {elapsed:?} ({:?}/curve), checksum={elevation_checksum}",
-        elevation_inputs.len(),
-        elapsed / u32::try_from(elevation_inputs.len()).unwrap()
-    );
-
-    let retained_elevation = elevation_source();
-    retained_elevation.degree_elevation(6, &policy).unwrap();
-    let started = Instant::now();
-    let mut retained_elevation_checksum = 0_usize;
-    for _ in 0..iterations {
-        let elevated = retained_elevation
-            .degree_elevation(6, &policy)
-            .unwrap()
-            .into_value();
-        retained_elevation_checksum ^= black_box(elevated.spans().len() + elevated.target_degree());
-    }
-    let elapsed = started.elapsed();
-    println!(
-        "nurbs_retained_span_degree_elevation: {iterations} iterations in {elapsed:?} ({:?}/iter), checksum={retained_elevation_checksum}",
-        elapsed / iterations
-    );
-
     let elevated_curve_inputs = (0..1_000).map(|_| elevation_source()).collect::<Vec<_>>();
     let started = Instant::now();
     let mut elevated_curve_checksum = 0_usize;

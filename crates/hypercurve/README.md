@@ -206,15 +206,15 @@ exact signatures.
 
 - `PolynomialSplineCurve2::{try_new, try_new_periodic, point_at,
   derivative_at, insert_knot, split_at, subcurve, clamped_subcurve, reversed,
-  transform_similarity, bezier_decomposition}`.
+  transform_similarity}`.
 - `NurbsCurve2::{try_new, try_new_periodic, from_homogeneous_controls,
-  point_at, derivative_at,
-  insert_knot, insert_knots, remove_knot, degree_elevation,
+  point_at, derivative_at, insert_knot, insert_knots, remove_knot,
   elevated_to_degree, split_at, subcurve, clamped_subcurve, reversed,
-  transform_similarity, bezier_decomposition, native_subcurves}`. A
-  decomposition pairs each extracted span with its exact knot interval.
-  Extracted polynomial spans and native Bézier fragments are reported as
-  `CurveGeometry2`, the same authored-family vocabulary used by `Curve2::new`.
+  transform_similarity, native_subcurves}`.
+- Exact Bézier spans of any spline come from the unified curve:
+  `Curve2::from(spline).native_bezier_fragments(policy)` returns each span as
+  `CurveGeometry2`, the same authored-family vocabulary used by `Curve2::new`,
+  with its exact source parameter interval.
 - NURBS and rational Bézier spans share `HomogeneousControl2` coefficients.
   Extraction, knot insertion/removal, and degree recomposition preserve zero
   and mixed control weights without affine projection. `homogeneous_controls`

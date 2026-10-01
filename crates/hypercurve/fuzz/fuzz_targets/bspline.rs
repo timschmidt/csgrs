@@ -1,8 +1,8 @@
 #![no_main]
 
 use hypercurve::{
-    Classification, CurveContext, HomogeneousControl2, NurbsCurve2, Point2, PolynomialSplineCurve2,
-    Real, RetainedBSplineSpanFactEvidence2, SplinePeriodicity2,
+    Curve2, CurveContext, HomogeneousControl2, NurbsCurve2, Point2, PolynomialSplineCurve2, Real,
+    SplinePeriodicity2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -14,13 +14,13 @@ fn point(x: u8, y: u8) -> Point2 {
     Point2::new(r(x as i32 - 128), r(y as i32 - 128))
 }
 
-fn touch_span_fact_evidence(evidence: &RetainedBSplineSpanFactEvidence2) {
-    for span in evidence.span_facts() {
-        let _ = span.span_index();
-        let _ = span.knot_interval();
-        let _ = span.bounds();
-        let _ = span.x_monotonicity();
-        let _ = span.y_monotonicity();
+/// Exercises the unified exact Bezier decomposition of one spline curve.
+fn touch_native_fragments(curve: Curve2, policy: &CurveContext) {
+    if let Ok(fragments) = curve.native_bezier_fragments(policy) {
+        for fragment in fragments.into_value() {
+            let _ = fragment.parameter_range();
+            let _ = fragment.curve();
+        }
     }
 }
 
@@ -45,14 +45,7 @@ fuzz_target!(|data: &[u8]| {
     if let Ok(spline) =
         PolynomialSplineCurve2::try_new(degree, controls.clone(), knots.clone(), &policy)
     {
-        let spline = spline.into_value();
-        if let Ok(extraction) = spline.bezier_decomposition(&policy) {
-            if let Ok(Classification::Decided(evidence)) =
-                extraction.into_value().span_fact_evidence(&policy)
-            {
-                touch_span_fact_evidence(&evidence);
-            }
-        }
+        touch_native_fragments(Curve2::from(spline.into_value()), &policy);
     }
     let weights = controls
         .iter()
@@ -83,20 +76,7 @@ fuzz_target!(|data: &[u8]| {
             continue;
         };
         let spline = spline.into_value();
-        if let Ok(extraction) = spline.bezier_decomposition(&policy) {
-            let extraction = extraction.into_value();
-            if let Ok(Classification::Decided(facts)) = extraction.span_fact_evidence(&policy) {
-                touch_span_fact_evidence(&facts);
-            }
-            for span in extraction.spans() {
-                let _ = span.knot_interval();
-                let _ = span.curve().homogeneous_controls();
-                let _ = span
-                    .curve()
-                    .point_at(&((Real::one() / r(2)).unwrap()), &policy);
-            }
-            let _ = extraction.native_subcurves(&policy);
-        }
+        touch_native_fragments(Curve2::from(spline.clone()), &policy);
         if let Ok(refined) = spline.insert_knot(Real::one(), &policy) {
             let _ = refined.into_value().remove_knot(Real::one(), &policy);
         }

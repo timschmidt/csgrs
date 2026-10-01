@@ -2114,19 +2114,18 @@ fn benchmark_nurbs_editing(runner: &Runner) {
 
     if runner.group_enabled(elevation_name) {
         let elevated = hypercurve_curve
-            .degree_elevation(6, &CurveContext::STRICT)
+            .elevated_to_degree(6, &CurveContext::STRICT)
             .expect("exact retained elevation fixture is valid")
             .into_value();
-        assert_eq!(elevated.target_degree(), 6);
+        assert_eq!(elevated.degree(), 6);
         runner.measure(elevation_name, "hypercurve_exact_retained", || {
             black_box(
                 hypercurve_curve
-                    .degree_elevation(6, &CurveContext::STRICT)
+                    .elevated_to_degree(6, &CurveContext::STRICT)
                     .expect("exact retained elevation replays")
                     .into_value(),
             )
-            .spans()
-            .len()
+            .degree()
         });
         runner.measure(elevation_name, "curvo_f64_recomputed", || {
             black_box(
