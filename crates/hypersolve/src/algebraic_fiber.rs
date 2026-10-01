@@ -3986,6 +3986,19 @@ fn is_valid_local_algebraic_field_evidence(root: &AlgebraicRootRepresentation) -
         && algebraic_root_payload_replays_strictly(root)
 }
 
+/// Drops structurally zero leading coefficients, keeping the constant term.
+/// They carry no value, and the local field's reduced-form invariant and
+/// sign cache keys require a canonical degree.
+fn trim_structural_leading_zeros(polynomial: &[Real]) -> &[Real] {
+    let zeros = polynomial
+        .iter()
+        .skip(1)
+        .rev()
+        .take_while(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
+        .count();
+    &polynomial[..polynomial.len() - zeros]
+}
+
 impl LocalAlgebraicField {
     fn new(
         root: &AlgebraicRootRepresentation,
@@ -4235,6 +4248,7 @@ impl LocalAlgebraicField {
     }
 
     fn sign_polynomial(&mut self, polynomial: &[Real]) -> Result<Ordering, LocalFieldError> {
+        let polynomial = trim_structural_leading_zeros(polynomial);
         // A prior inverse may have removed a foreign modulus factor.
         if polynomial.len() >= self.modulus().len() {
             let reduced = self.reduce(polynomial.to_vec())?;
@@ -4253,6 +4267,7 @@ impl LocalAlgebraicField {
         &mut self,
         polynomial: &[Real],
     ) -> Result<Option<Ordering>, LocalFieldError> {
+        let polynomial = trim_structural_leading_zeros(polynomial);
         // A prior inverse may have removed a foreign modulus factor.
         if polynomial.len() >= self.modulus().len() {
             let reduced = self.reduce(polynomial.to_vec())?;
@@ -4299,6 +4314,7 @@ impl LocalAlgebraicField {
     }
 
     fn is_zero_polynomial(&mut self, polynomial: &[Real]) -> Result<bool, LocalFieldError> {
+        let polynomial = trim_structural_leading_zeros(polynomial);
         // A prior inverse may have removed a foreign modulus factor.
         if polynomial.len() >= self.modulus().len() {
             let reduced = self.reduce(polynomial.to_vec())?;
