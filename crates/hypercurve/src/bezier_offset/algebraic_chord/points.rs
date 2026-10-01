@@ -4668,6 +4668,30 @@ impl BezierAlgebraicChordParallelPoint2 {
         Some(shift)
     }
 
+    /// Returns this point's exact displacement from its source endpoint along
+    /// one axis when the source chord retains an exact unit tangent.
+    pub(in crate::bezier_offset) fn exact_axis_shift(
+        &self,
+        axis: Axis2,
+        policy: &CurveContext,
+    ) -> Option<Real> {
+        if !policy.accepts_retained_policy(self.data.policy) {
+            return None;
+        }
+        let (tangent_x, tangent_y) = self.data.source.certified_unit_tangent()?;
+        let component = match (self.data.direction, axis) {
+            (BezierAlgebraicChordUnitDisplacement2::Tangent, Axis2::X) => tangent_x,
+            (BezierAlgebraicChordUnitDisplacement2::Tangent, Axis2::Y) => tangent_y,
+            (BezierAlgebraicChordUnitDisplacement2::LeftNormal, Axis2::X) => -tangent_y,
+            (BezierAlgebraicChordUnitDisplacement2::LeftNormal, Axis2::Y) => tangent_x,
+        };
+        let translation = match axis {
+            Axis2::X => &self.data.translation_x,
+            Axis2::Y => &self.data.translation_y,
+        };
+        Some(translation + &self.data.distance * component)
+    }
+
     pub(in crate::bezier_offset) fn strict_cardinal_shifts(
         &self,
         policy: &CurveContext,
@@ -5942,6 +5966,30 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         })?;
         if matches!(order, Classification::Decided(_)) {
             return Ok(order);
+        }
+        // With no perpendicular term, Q = C + a (P - C) + T. When the source
+        // P is its own source endpoint E displaced by an exact vector and E is
+        // the circle center C, then Q.axis = C.axis + a * shift + T.axis, so
+        // the comparison moves to the center's own exact axis order.
+        if self.data.perpendicular_scale.zero_status() == ZeroKnowledge::Zero
+            && let Some(CurvePoint2(CurvePointData2::AlgebraicChordParallel(source))) =
+                self.data.source.retained_point()
+            && let Some(shift) = source.exact_axis_shift(axis, policy)
+            && let Ok(Classification::Decided(center)) =
+                self.data.source.semicircle().center_point_evidence(policy)
+            && center.same_point(source.source_endpoint(), &CurveContext::STRICT)
+                == Classification::Decided(true)
+        {
+            let translation = match axis {
+                Axis2::X => &self.data.translation_x,
+                Axis2::Y => &self.data.translation_y,
+            };
+            let target = value - &self.data.radial_scale * &shift - translation;
+            if let Classification::Decided(center_order) = policy.strict_predicate_pass(|| {
+                BezierAlgebraicChord2::point_axis_order_to_real(&center, axis, &target, policy)
+            })? {
+                return Ok(Classification::Decided(center_order));
+            }
         }
         if !policy.has_bounded_exact_predicate_budget()
             && let Classification::Decided(Some(coordinates)) =

@@ -948,19 +948,15 @@ fn repeated_round_erosion_composes_with_a_single_erosion() {
     );
 }
 
-/// Open computational-closure gap found by the generator: inward miter
-/// offset of a chamfered, thrice-filleted nested pool. Band regularization
-/// asks whether a round-join arc meets an adjacent chord only at their shared
-/// endpoint. The circle incidence of a chord/parallel point is now replayed
-/// in its recursive field first (no result after 40 minutes became 426 s), but
-/// ordering a derived cusp/chord point's axis coordinate against an equal real
-/// still materializes explicit coordinates through tensor-image resultants.
-/// That derived point is `C + a (P - C) + T` with an analytic-parallel center
-/// `C` and a chord/parallel source `P` displaced from `C` along an
-/// axis-aligned chord normal; the equality needs that shared provenance, not
-/// either point's coordinate alone.
+/// Inward miter offset of a chamfered, thrice-filleted nested pool, found by
+/// the generator. Band regularization asks whether a round-join arc meets an
+/// adjacent chord only at their shared endpoint. Two exact reductions keep it
+/// off coordinate materialization: the chord/parallel circle incidence is
+/// replayed in its recursive field, and a derived join point
+/// `C + a (P - C) + T`, whose source `P` is the circle center `C` displaced by
+/// an exact vector, compares on an axis through the center's own order.
+/// No result after 40 minutes became about 33 s.
 #[test]
-#[ignore = "slow (426 s): represented coordinates for equal axis orders"]
 fn chamfered_filleted_pool_inward_miter_offset_completes() {
     let seeds = [
         Seed {

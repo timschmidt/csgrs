@@ -913,6 +913,17 @@ impl BezierAlgebraicCuspDerivedPointSource2 {
     /// rational contact carrier. The two selected-fiber parameters may be
     /// unrelated algebraic roots; the rational Bernstein control net proves
     /// the coordinate identity without comparing either root.
+    /// Returns the retained exact source point evidence, if any.
+    pub(in crate::bezier_offset) fn retained_point(&self) -> Option<CurvePoint2> {
+        match self {
+            Self::Chord(point) => Some(CurvePoint2::from(point.clone())),
+            Self::Mapped {
+                point: Some(point), ..
+            } => Some(point.clone()),
+            Self::Mapped { parameter, .. } => parameter.retained_point_evidence().cloned(),
+        }
+    }
+
     pub(in crate::bezier_offset) fn common_rational_constant_axis(
         &self,
         other: &Self,
