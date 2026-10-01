@@ -1056,3 +1056,27 @@ fn refilleted_weighted_spline_corner_completes() {
     let steps = [Step::Fillet(0, 5), Step::Fillet(1, 6)];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// Open computational-closure gap found by the generator: a second inward
+/// miter offset of a weight-4 quadratic seed. Regularizing the band orders a
+/// chord/parallel contact's recursive projective parameter against a carrier
+/// range; the complete fallback promotes that parameter to a scalar Bezier
+/// parameter through a dense last-axis elimination and Sturm sequence, which
+/// does not finish within 50 minutes. Ordering in the selected field without
+/// scalar promotion (review step 3) is the remedy.
+#[test]
+#[ignore = "open: scalar promotion of a recursive projective parameter in repeated miter offset"]
+fn repeated_inward_miter_offset_of_a_weighted_quadratic_completes() {
+    let seeds = [Seed {
+        x: -12,
+        y: 8,
+        width: 17,
+        height: 6,
+        lower: 6,
+        upper: 4,
+        curvature: 1,
+        weight: 4,
+    }];
+    let steps = [Step::Offset(0, -1, 2), Step::Offset(1, -1, 2)];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
