@@ -2568,8 +2568,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             terminal_refined |= refinement_steps == 512;
             let delta = |axis| {
-                RealInterval::from_axis(&point, axis)
-                    .subtract(&RealInterval::from_axis(&center, axis))
+                real_interval_from_axis(&point, axis)
+                    .subtract(&real_interval_from_axis(&center, axis))
             };
             let delta_x = delta(Axis2::X);
             let delta_y = delta(Axis2::Y);

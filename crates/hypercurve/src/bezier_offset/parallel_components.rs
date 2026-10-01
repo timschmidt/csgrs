@@ -1220,8 +1220,8 @@ pub(super) fn bivariate_restrict_to_parameter_box(
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
 ) -> BivariatePolynomial {
-    let first = RealInterval::from_parameter(first_parameter);
-    let second = RealInterval::from_parameter(second_parameter);
+    let first = real_interval_from_parameter(first_parameter);
+    let second = real_interval_from_parameter(second_parameter);
     polynomial.substitute_affine(
         &(&first.upper - &first.lower),
         &first.lower,
@@ -1515,8 +1515,8 @@ pub(super) fn bivariate_parameter_box_strict_sign(
     if let Some(sign) = policy.bounded_exact_predicate_pass(|| {
         RealInterval::evaluate_bivariate_power_basis(
             polynomial,
-            &RealInterval::from_parameter(first_parameter),
-            &RealInterval::from_parameter(second_parameter),
+            &real_interval_from_parameter(first_parameter),
+            &real_interval_from_parameter(second_parameter),
         )
         .and_then(|interval| interval.strict_nonzero_sign())
     }) {

@@ -2325,11 +2325,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .cusp_parameter
             .clone()
             .refined_isolating_interval(refinement_steps, &self.data.policy);
-        let first = RealInterval::from_parameter(&first);
-        let second = RealInterval::from_parameter(&second);
-        let cusp = RealInterval::from_parameter(&cusp);
+        let first = real_interval_from_parameter(&first);
+        let second = real_interval_from_parameter(&second);
+        let cusp = real_interval_from_parameter(&cusp);
         let evaluate = |polynomial: &TrivariatePolynomial2| {
-            RealInterval::evaluate_trivariate_power_basis(polynomial, &first, &second, &cusp)
+            trivariate_power_basis_interval(polynomial, &first, &second, &cusp)
         };
         let Some(speed) =
             evaluate(&system.speed_squared).and_then(|value| value.nonnegative_square_root(None))
@@ -2402,14 +2402,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             &system.second_parameter,
         ]
         .map(|parameter| {
-            RealInterval::from_parameter(
+            real_interval_from_parameter(
                 &parameter
                     .clone()
                     .refined_isolating_interval(refinement_steps, &self.data.policy),
             )
         });
         let evaluate = |polynomial: &QuadrivariatePolynomial2| {
-            RealInterval::evaluate_quadrivariate_power_basis(
+            quadrivariate_power_basis_interval(
                 polynomial,
                 [
                     &parameters[0],
@@ -2486,8 +2486,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .support_parameter
             .clone()
             .refined_isolating_interval(refinement_steps, &self.data.policy);
-        let cusp = RealInterval::from_parameter(&cusp);
-        let support = RealInterval::from_parameter(&support);
+        let cusp = real_interval_from_parameter(&cusp);
+        let support = real_interval_from_parameter(&support);
         let evaluate = |polynomial: &BivariatePolynomial| {
             RealInterval::evaluate_bivariate_power_basis(polynomial, &cusp, &support)
         };
@@ -2548,11 +2548,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             .cusp_parameter
             .clone()
             .refined_isolating_interval(refinement_steps, &self.data.policy);
-        let first = RealInterval::from_parameter(&first);
-        let second = RealInterval::from_parameter(&second);
-        let cusp = RealInterval::from_parameter(&cusp);
+        let first = real_interval_from_parameter(&first);
+        let second = real_interval_from_parameter(&second);
+        let cusp = real_interval_from_parameter(&cusp);
         let evaluate = |polynomial: &TrivariatePolynomial2| {
-            RealInterval::evaluate_trivariate_power_basis(polynomial, &first, &second, &cusp)
+            trivariate_power_basis_interval(polynomial, &first, &second, &cusp)
         };
         let Some(discriminant) =
             evaluate(&system.discriminant).and_then(|value| value.nonnegative_square_root(None))

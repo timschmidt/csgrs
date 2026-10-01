@@ -52,6 +52,7 @@ use selected_dense::*;
 
 use crate::CurvePointData2;
 use crate::classify::product_sign;
+use hypersolve::RealInterval;
 use hypersolve::bivariate_arithmetic::{
     bivariate_add, bivariate_multiply, bivariate_multiply_first_parameter, bivariate_outer_product,
     bivariate_parameter_difference, bivariate_scale, bivariate_scaled_difference,
@@ -5432,7 +5433,7 @@ fn analytic_parallel_point_bounds_refined(
     let parameter = parameter
         .clone()
         .refined_isolating_interval(refinement_steps, policy);
-    let parameter = RealInterval::from_parameter(&parameter);
+    let parameter = real_interval_from_parameter(&parameter);
     analytic_parallel_point_bounds_over_interval(
         parallel,
         &parameter,
@@ -5448,7 +5449,7 @@ fn retained_analytic_parallel_point_bounds_at_bezier_parameter(
 ) -> Classification<Aabb2> {
     analytic_parallel_point_bounds_over_interval_with_tangent(
         &point.data.parallel,
-        &RealInterval::from_parameter(parameter),
+        &real_interval_from_parameter(parameter),
         point
             .data
             .frame_tangent
@@ -5469,7 +5470,7 @@ fn rational_bezier_point_bounds_refined(
     let parameter = parameter
         .clone()
         .refined_isolating_interval(refinement_steps, policy);
-    rational_bezier_point_bounds_over_interval(curve, &RealInterval::from_parameter(&parameter))
+    rational_bezier_point_bounds_over_interval(curve, &real_interval_from_parameter(&parameter))
 }
 
 fn rational_bezier_point_bounds_over_interval(
@@ -13379,7 +13380,7 @@ fn algebraic_chord_endpoint_bounds_refined_impl(
                 },
             }
             .refined_isolating_interval(refinement_steps, policy);
-            let parameter = RealInterval::from_parameter(&parameter);
+            let parameter = real_interval_from_parameter(&parameter);
             let denominator = RealInterval::evaluate_power_basis(denominator, &parameter);
             let x = RealInterval::evaluate_power_basis(x, &parameter);
             let y = RealInterval::evaluate_power_basis(y, &parameter);
@@ -13591,7 +13592,7 @@ pub(crate) fn retained_point_circle_incidence_sign(
         };
         terminal_refined |= refinement_steps == 512;
         let delta =
-            |axis, coordinate| RealInterval::from_axis(&bounds, axis).subtract(&exact(coordinate));
+            |axis, coordinate| real_interval_from_axis(&bounds, axis).subtract(&exact(coordinate));
         let Some(residual) = delta(Axis2::X, center.x()).square().and_then(|x| {
             delta(Axis2::Y, center.y())
                 .square()
@@ -13663,10 +13664,10 @@ pub(crate) fn retained_point_linear_difference_to_algebraic_sign(
             continue;
         };
         terminal_refined |= refinement_steps == 512;
-        let Some(projection) = RealInterval::from_axis(&bounds, Axis2::X)
+        let Some(projection) = real_interval_from_axis(&bounds, Axis2::X)
             .multiply(&coefficient_x)
             .and_then(|x| {
-                RealInterval::from_axis(&bounds, Axis2::Y)
+                real_interval_from_axis(&bounds, Axis2::Y)
                     .multiply(&coefficient_y)
                     .map(|y| x.add(&y))
             })
@@ -14615,8 +14616,8 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
         else {
             return None;
         };
-        let delta_x = RealInterval::from_axis(&bounds, Axis2::X).subtract(&origin_x);
-        let delta_y = RealInterval::from_axis(&bounds, Axis2::Y).subtract(&origin_y);
+        let delta_x = real_interval_from_axis(&bounds, Axis2::X).subtract(&origin_x);
+        let delta_y = real_interval_from_axis(&bounds, Axis2::Y).subtract(&origin_y);
         let Some(value) = delta_x
             .multiply(&coefficient_x_interval)
             .and_then(|x| delta_y.multiply(&coefficient_y_interval).map(|y| x.add(&y)))
@@ -14760,10 +14761,10 @@ pub(crate) fn algebraic_chord_points_linear_order(
         ) else {
             return None;
         };
-        let delta_x = RealInterval::from_axis(&first, Axis2::X)
-            .subtract(&RealInterval::from_axis(&second, Axis2::X));
-        let delta_y = RealInterval::from_axis(&first, Axis2::Y)
-            .subtract(&RealInterval::from_axis(&second, Axis2::Y));
+        let delta_x = real_interval_from_axis(&first, Axis2::X)
+            .subtract(&real_interval_from_axis(&second, Axis2::X));
+        let delta_y = real_interval_from_axis(&first, Axis2::Y)
+            .subtract(&real_interval_from_axis(&second, Axis2::Y));
         let Some(value) = delta_x
             .multiply(&coefficient_x_interval)
             .and_then(|x| delta_y.multiply(&coefficient_y_interval).map(|y| x.add(&y)))
@@ -15391,366 +15392,96 @@ impl BezierAlgebraicChordSupportPredicate2 {
     }
 }
 
-/// Conservative interval over arbitrary exact scalar endpoints.
-///
-/// Returned enclosures use only certified sign and order decisions. An
-/// unresolved optional enclosure returns `None`; terminal approximation
-/// belongs to the consuming geometry predicate, never interval arithmetic.
-#[derive(Clone, Debug, PartialEq)]
-struct RealInterval {
-    lower: Real,
-    upper: Real,
+/// Encloses a retained Bezier parameter by its exact value or isolating interval.
+fn real_interval_from_parameter(parameter: &BezierParameter2) -> RealInterval {
+    match parameter {
+        BezierParameter2::Exact(parameter) => RealInterval {
+            lower: parameter.clone(),
+            upper: parameter.clone(),
+        },
+        BezierParameter2::Algebraic(parameter) => RealInterval {
+            lower: parameter.interval().start().clone(),
+            upper: parameter.interval().end().clone(),
+        },
+    }
 }
 
-impl RealInterval {
-    #[inline]
-    fn strict_nonzero_sign(&self) -> Option<RealSign> {
-        if Self::compare_to_zero(&self.lower) == Some(std::cmp::Ordering::Greater) {
-            Some(RealSign::Positive)
-        } else if Self::compare_to_zero(&self.upper) == Some(std::cmp::Ordering::Less) {
-            Some(RealSign::Negative)
-        } else {
-            None
+/// Encloses one coordinate of certified bounds.
+fn real_interval_from_axis(bounds: &Aabb2, axis: Axis2) -> RealInterval {
+    RealInterval {
+        lower: match axis {
+            Axis2::X => bounds.min().x(),
+            Axis2::Y => bounds.min().y(),
         }
+        .clone(),
+        upper: match axis {
+            Axis2::X => bounds.max().x(),
+            Axis2::Y => bounds.max().y(),
+        }
+        .clone(),
     }
+}
 
-    fn compare_to_zero(value: &Real) -> Option<std::cmp::Ordering> {
-        value
-            .immediate_sign()
-            .map(|sign| match sign {
-                RealSign::Negative => std::cmp::Ordering::Less,
-                RealSign::Zero => std::cmp::Ordering::Equal,
-                RealSign::Positive => std::cmp::Ordering::Greater,
-            })
-            .or_else(|| compare_reals(value, &Real::zero(), &CurveContext::STRICT))
-    }
-
-    fn from_parameter(parameter: &BezierParameter2) -> Self {
-        match parameter {
-            BezierParameter2::Exact(parameter) => Self {
-                lower: parameter.clone(),
-                upper: parameter.clone(),
-            },
-            BezierParameter2::Algebraic(parameter) => Self {
-                lower: parameter.interval().start().clone(),
-                upper: parameter.interval().end().clone(),
-            },
-        }
-    }
-
-    fn from_axis(bounds: &Aabb2, axis: Axis2) -> Self {
-        Self {
-            lower: match axis {
-                Axis2::X => bounds.min().x(),
-                Axis2::Y => bounds.min().y(),
-            }
-            .clone(),
-            upper: match axis {
-                Axis2::X => bounds.max().x(),
-                Axis2::Y => bounds.max().y(),
-            }
-            .clone(),
-        }
-    }
-
-    fn add(&self, other: &Self) -> Self {
-        Self {
-            lower: &self.lower + &other.lower,
-            upper: &self.upper + &other.upper,
-        }
-    }
-
-    fn subtract(&self, other: &Self) -> Self {
-        Self {
-            lower: &self.lower - &other.upper,
-            upper: &self.upper - &other.lower,
-        }
-    }
-
-    fn multiply(&self, other: &Self) -> Option<Self> {
-        let first_lower = Self::compare_to_zero(&self.lower);
-        let first_upper = Self::compare_to_zero(&self.upper);
-        let second_lower = Self::compare_to_zero(&other.lower);
-        let second_upper = Self::compare_to_zero(&other.upper);
-        let first_nonnegative = matches!(
-            first_lower,
-            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
-        );
-        let first_nonpositive = matches!(
-            first_upper,
-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-        );
-        let second_nonnegative = matches!(
-            second_lower,
-            Some(std::cmp::Ordering::Equal | std::cmp::Ordering::Greater)
-        );
-        let second_nonpositive = matches!(
-            second_upper,
-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
-        );
-        let first_spans_zero = first_lower == Some(std::cmp::Ordering::Less)
-            && first_upper == Some(std::cmp::Ordering::Greater);
-        let second_spans_zero = second_lower == Some(std::cmp::Ordering::Less)
-            && second_upper == Some(std::cmp::Ordering::Greater);
-        if first_nonnegative {
-            if second_nonnegative {
-                return Some(Self {
-                    lower: &self.lower * &other.lower,
-                    upper: &self.upper * &other.upper,
-                });
-            } else if second_nonpositive {
-                return Some(Self {
-                    lower: &self.upper * &other.lower,
-                    upper: &self.lower * &other.upper,
-                });
-            } else if second_spans_zero {
-                return Some(Self {
-                    lower: &self.upper * &other.lower,
-                    upper: &self.upper * &other.upper,
-                });
-            }
-        }
-        if first_nonpositive {
-            if second_nonnegative {
-                return Some(Self {
-                    lower: &self.lower * &other.upper,
-                    upper: &self.upper * &other.lower,
-                });
-            } else if second_nonpositive {
-                return Some(Self {
-                    lower: &self.upper * &other.upper,
-                    upper: &self.lower * &other.lower,
-                });
-            } else if second_spans_zero {
-                return Some(Self {
-                    lower: &self.lower * &other.upper,
-                    upper: &self.lower * &other.lower,
-                });
-            }
-        }
-        if first_spans_zero && second_nonnegative {
-            return Some(Self {
-                lower: &self.lower * &other.upper,
-                upper: &self.upper * &other.upper,
-            });
-        }
-        if first_spans_zero && second_nonpositive {
-            return Some(Self {
-                lower: &self.upper * &other.lower,
-                upper: &self.lower * &other.lower,
-            });
-        }
-
-        // Both intervals cross zero. The sums are conservative exact bounds:
-        // each lower product is nonpositive and each upper product is
-        // nonnegative, so no comparison between deep exact expressions is
-        // required merely to select a corner.
-        if first_spans_zero && second_spans_zero {
-            return Some(Self {
-                lower: &self.lower * &other.upper + &self.upper * &other.lower,
-                upper: &self.lower * &other.lower + &self.upper * &other.upper,
-            });
-        }
-
-        let products = [
-            &self.lower * &other.lower,
-            &self.lower * &other.upper,
-            &self.upper * &other.lower,
-            &self.upper * &other.upper,
-        ];
-        Self::from_values(products)
-    }
-
-    /// Squares an interval without introducing the dependent cross-products
-    /// of generic interval multiplication.
-    fn square(&self) -> Option<Self> {
-        let zero = Real::zero();
-        let lower_sign = Self::compare_to_zero(&self.lower)?;
-        let upper_sign = Self::compare_to_zero(&self.upper)?;
-        if lower_sign != std::cmp::Ordering::Less {
-            return Some(Self {
-                lower: &self.lower * &self.lower,
-                upper: &self.upper * &self.upper,
-            });
-        }
-        if upper_sign != std::cmp::Ordering::Greater {
-            return Some(Self {
-                lower: &self.upper * &self.upper,
-                upper: &self.lower * &self.lower,
-            });
-        }
-        let lower_magnitude = -self.lower.clone();
-        let lower_square = &self.lower * &self.lower;
-        let upper_square = &self.upper * &self.upper;
-        let upper = match compare_reals(&lower_magnitude, &self.upper, &CurveContext::STRICT) {
-            Some(std::cmp::Ordering::Greater) => lower_square,
-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => upper_square,
-            None => lower_square + upper_square,
-        };
-        Some(Self { lower: zero, upper })
-    }
-
-    fn divide(&self, other: &Self) -> Option<Self> {
-        let denominator_is_positive =
-            Self::compare_to_zero(&other.lower) == Some(std::cmp::Ordering::Greater);
-        let denominator_is_negative =
-            Self::compare_to_zero(&other.upper) == Some(std::cmp::Ordering::Less);
-        if !denominator_is_positive && !denominator_is_negative {
-            return None;
-        }
-        // Reciprocal is strictly decreasing on either side of zero.  Once the
-        // denominator interval is certified not to cross zero, its endpoint
-        // order therefore supplies the reciprocal bounds directly; asking the
-        // generic exact comparator to rediscover that order only replays the
-        // denominator DAG and can turn a proved division into uncertainty.
-        let reciprocal = Self {
-            lower: (Real::one() / &other.upper).ok()?,
-            upper: (Real::one() / &other.lower).ok()?,
-        };
-        self.multiply(&reciprocal)
-    }
-
-    fn evaluate_power_basis(coefficients: &[Real], parameter: &Self) -> Option<Self> {
-        let mut value = Self {
+/// Encloses a trivariate power-basis polynomial over a parameter box.
+fn trivariate_power_basis_interval(
+    polynomial: &TrivariatePolynomial2,
+    first: &RealInterval,
+    second: &RealInterval,
+    third: &RealInterval,
+) -> Option<RealInterval> {
+    let mut value = RealInterval {
+        lower: Real::zero(),
+        upper: Real::zero(),
+    };
+    for rows in polynomial.coefficients.iter().rev() {
+        value = value.multiply(first)?;
+        let mut slice = RealInterval {
             lower: Real::zero(),
             upper: Real::zero(),
         };
-        for coefficient in coefficients.iter().rev() {
-            value = value.multiply(parameter)?;
-            value.lower += coefficient;
-            value.upper += coefficient;
+        for row in rows.iter().rev() {
+            slice = slice.multiply(second)?;
+            slice = slice.add(&RealInterval::evaluate_power_basis(row, third)?);
         }
-        Some(value)
+        value = value.add(&slice);
     }
+    Some(value)
+}
 
-    fn evaluate_bivariate_power_basis(
-        polynomial: &BivariatePolynomial,
-        first: &Self,
-        second: &Self,
-    ) -> Option<Self> {
-        let mut value = Self {
-            lower: Real::zero(),
-            upper: Real::zero(),
-        };
-        for row in polynomial.coefficients.iter().rev() {
-            value = value.multiply(first)?;
-            value = value.add(&Self::evaluate_power_basis(row, second)?);
-        }
-        Some(value)
-    }
-
-    fn evaluate_trivariate_power_basis(
-        polynomial: &TrivariatePolynomial2,
-        first: &Self,
-        second: &Self,
-        third: &Self,
-    ) -> Option<Self> {
-        let mut value = Self {
-            lower: Real::zero(),
-            upper: Real::zero(),
-        };
-        for rows in polynomial.coefficients.iter().rev() {
-            value = value.multiply(first)?;
-            let mut slice = Self {
-                lower: Real::zero(),
-                upper: Real::zero(),
-            };
-            for row in rows.iter().rev() {
-                slice = slice.multiply(second)?;
-                slice = slice.add(&Self::evaluate_power_basis(row, third)?);
+/// Encloses a quadrivariate power-basis polynomial over a parameter box.
+fn quadrivariate_power_basis_interval(
+    polynomial: &QuadrivariatePolynomial2,
+    parameters: [&RealInterval; 4],
+) -> Option<RealInterval> {
+    let [first, second, third, fourth] = parameters;
+    let [first_count, second_count, third_count, fourth_count] = polynomial.dimensions;
+    let zero = || RealInterval {
+        lower: Real::zero(),
+        upper: Real::zero(),
+    };
+    let mut value = zero();
+    for first_power in (0..first_count).rev() {
+        value = value.multiply(first)?;
+        let mut first_slice = zero();
+        for second_power in (0..second_count).rev() {
+            first_slice = first_slice.multiply(second)?;
+            let mut second_slice = zero();
+            for third_power in (0..third_count).rev() {
+                second_slice = second_slice.multiply(third)?;
+                let start = QuadrivariatePolynomial2::flat_index(
+                    polynomial.dimensions,
+                    [first_power, second_power, third_power, 0],
+                );
+                second_slice = second_slice.add(&RealInterval::evaluate_power_basis(
+                    &polynomial.coefficients[start..start + fourth_count],
+                    fourth,
+                )?);
             }
-            value = value.add(&slice);
+            first_slice = first_slice.add(&second_slice);
         }
-        Some(value)
+        value = value.add(&first_slice);
     }
-
-    fn evaluate_quadrivariate_power_basis(
-        polynomial: &QuadrivariatePolynomial2,
-        parameters: [&Self; 4],
-    ) -> Option<Self> {
-        let [first, second, third, fourth] = parameters;
-        let [first_count, second_count, third_count, fourth_count] = polynomial.dimensions;
-        let zero = || Self {
-            lower: Real::zero(),
-            upper: Real::zero(),
-        };
-        let mut value = zero();
-        for first_power in (0..first_count).rev() {
-            value = value.multiply(first)?;
-            let mut first_slice = zero();
-            for second_power in (0..second_count).rev() {
-                first_slice = first_slice.multiply(second)?;
-                let mut second_slice = zero();
-                for third_power in (0..third_count).rev() {
-                    second_slice = second_slice.multiply(third)?;
-                    let start = QuadrivariatePolynomial2::flat_index(
-                        polynomial.dimensions,
-                        [first_power, second_power, third_power, 0],
-                    );
-                    second_slice = second_slice.add(&Self::evaluate_power_basis(
-                        &polynomial.coefficients[start..start + fourth_count],
-                        fourth,
-                    )?);
-                }
-                first_slice = first_slice.add(&second_slice);
-            }
-            value = value.add(&first_slice);
-        }
-        Some(value)
-    }
-
-    /// Encloses the nonnegative square root, optionally replacing symbolic
-    /// root endpoints by certified dyadic rationals at `precision`.
-    ///
-    /// Interval arithmetic needs only outward bounds.  Retaining an exact
-    /// `sqrt(Real)` endpoint causes every later product and comparison to
-    /// replay that radical DAG; a certified dyadic enclosure carries the
-    /// identical proof obligation with substantially smaller arithmetic.
-    fn nonnegative_square_root(&self, precision: Option<i32>) -> Option<Self> {
-        let zero = Real::zero();
-        if Self::compare_to_zero(&self.upper)? == std::cmp::Ordering::Less {
-            return None;
-        }
-        let endpoint = |value: &Real, lower: bool| {
-            let root = value.clone().sqrt().ok()?;
-            let Some(precision) = precision else {
-                return Some(root);
-            };
-            let bounds = root.certified_dyadic_interval(precision)?;
-            Some(Real::new(if lower {
-                bounds[0].clone()
-            } else {
-                bounds[1].clone()
-            }))
-        };
-        let lower = match Self::compare_to_zero(&self.lower)? {
-            std::cmp::Ordering::Greater => endpoint(&self.lower, true)?,
-            std::cmp::Ordering::Equal | std::cmp::Ordering::Less => zero,
-        };
-        let upper = match Self::compare_to_zero(&self.upper)? {
-            std::cmp::Ordering::Greater => endpoint(&self.upper, false)?,
-            std::cmp::Ordering::Equal => Real::zero(),
-            std::cmp::Ordering::Less => return None,
-        };
-        Some(Self { lower, upper })
-    }
-
-    fn from_values<const N: usize>(values: [Real; N]) -> Option<Self> {
-        let mut values = values.into_iter();
-        let first = values.next()?;
-        let mut lower = first.clone();
-        let mut upper = first;
-        for value in values {
-            if compare_reals(&value, &lower, &CurveContext::STRICT)? == std::cmp::Ordering::Less {
-                lower = value.clone();
-            }
-            if compare_reals(&value, &upper, &CurveContext::STRICT)? == std::cmp::Ordering::Greater
-            {
-                upper = value;
-            }
-        }
-        Some(Self { lower, upper })
-    }
+    Some(value)
 }
 
 fn retained_bounds_axis_order_to_real(
@@ -15768,7 +15499,7 @@ fn retained_bounds_axis_order_to_real(
             continue;
         };
         terminal_refined |= refinement_steps == 512;
-        let coordinate = RealInterval::from_axis(&bounds, axis);
+        let coordinate = real_interval_from_axis(&bounds, axis);
         if compare_reals(&coordinate.upper, value, &CurveContext::STRICT)
             == Some(std::cmp::Ordering::Less)
         {

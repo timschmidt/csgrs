@@ -2012,14 +2012,14 @@ impl BezierAlgebraicChord2 {
             else {
                 continue;
             };
-            let start_x = RealInterval::from_axis(&start, Axis2::X);
-            let start_y = RealInterval::from_axis(&start, Axis2::Y);
-            let direction_x = RealInterval::from_axis(&end, Axis2::X).subtract(&start_x);
-            let direction_y = RealInterval::from_axis(&end, Axis2::Y).subtract(&start_y);
-            let point_x = RealInterval::from_axis(&point, Axis2::X)
+            let start_x = real_interval_from_axis(&start, Axis2::X);
+            let start_y = real_interval_from_axis(&start, Axis2::Y);
+            let direction_x = real_interval_from_axis(&end, Axis2::X).subtract(&start_x);
+            let direction_y = real_interval_from_axis(&end, Axis2::Y).subtract(&start_y);
+            let point_x = real_interval_from_axis(&point, Axis2::X)
                 .subtract(&start_x)
                 .subtract(&exact(&support.translation_x));
-            let point_y = RealInterval::from_axis(&point, Axis2::Y)
+            let point_y = real_interval_from_axis(&point, Axis2::Y)
                 .subtract(&start_y)
                 .subtract(&exact(&support.translation_y));
             let Some(cross) = direction_x.multiply(&point_y).and_then(|first| {
@@ -2449,10 +2449,10 @@ impl BezierAlgebraicChord2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let delta_x = RealInterval::from_axis(&point, Axis2::X)
-                .subtract(&RealInterval::from_axis(&origin, Axis2::X));
-            let delta_y = RealInterval::from_axis(&point, Axis2::Y)
-                .subtract(&RealInterval::from_axis(&origin, Axis2::Y));
+            let delta_x = real_interval_from_axis(&point, Axis2::X)
+                .subtract(&real_interval_from_axis(&origin, Axis2::X));
+            let delta_y = real_interval_from_axis(&point, Axis2::Y)
+                .subtract(&real_interval_from_axis(&origin, Axis2::Y));
             let Some(cross) = tangent_x.multiply(&delta_y).and_then(|first| {
                 tangent_y
                     .multiply(&delta_x)

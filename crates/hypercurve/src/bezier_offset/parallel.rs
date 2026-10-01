@@ -7384,7 +7384,7 @@ impl BezierAnalyticParallelPoint2 {
                     let parameter = parameter
                         .clone()
                         .refined_isolating_interval(refinement_steps, policy);
-                    RealInterval::from_parameter(&parameter)
+                    real_interval_from_parameter(&parameter)
                 }
                 BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
                     let parameter = match parameter.refined(refinement_steps, policy)? {
@@ -7638,10 +7638,10 @@ impl BezierAnalyticParallelPoint2 {
             else {
                 continue;
             };
-            let delta_x = RealInterval::from_axis(&point, Axis2::X)
-                .subtract(&RealInterval::from_axis(&origin, Axis2::X));
-            let delta_y = RealInterval::from_axis(&point, Axis2::Y)
-                .subtract(&RealInterval::from_axis(&origin, Axis2::Y));
+            let delta_x = real_interval_from_axis(&point, Axis2::X)
+                .subtract(&real_interval_from_axis(&origin, Axis2::X));
+            let delta_y = real_interval_from_axis(&point, Axis2::Y)
+                .subtract(&real_interval_from_axis(&origin, Axis2::Y));
             let Some(cross) = tangent_x.multiply(&delta_y).and_then(|first| {
                 tangent_y
                     .multiply(&delta_x)
@@ -7676,7 +7676,7 @@ impl BezierAnalyticParallelPoint2 {
                 let (lower, upper) = match parameter {
                     BezierAnalyticParallelPointParameter2::Bezier(parameter) => {
                         let parameter = parameter.clone().refined_isolating_interval(512, policy);
-                        let interval = RealInterval::from_parameter(&parameter);
+                        let interval = real_interval_from_parameter(&parameter);
                         (interval.lower, interval.upper)
                     }
                     BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {

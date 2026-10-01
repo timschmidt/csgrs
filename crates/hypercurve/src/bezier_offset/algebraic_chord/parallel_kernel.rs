@@ -385,13 +385,13 @@ impl BezierAlgebraicChord2 {
                         continue;
                     };
                     Some((
-                        RealInterval::from_axis(&end_bounds, Axis2::X)
-                            .subtract(&RealInterval::from_axis(
+                        real_interval_from_axis(&end_bounds, Axis2::X)
+                            .subtract(&real_interval_from_axis(
                                 &start_bounds,
                                 Axis2::X,
                             )),
-                        RealInterval::from_axis(&end_bounds, Axis2::Y)
-                            .subtract(&RealInterval::from_axis(
+                        real_interval_from_axis(&end_bounds, Axis2::Y)
+                            .subtract(&real_interval_from_axis(
                                 &start_bounds,
                                 Axis2::Y,
                             )),

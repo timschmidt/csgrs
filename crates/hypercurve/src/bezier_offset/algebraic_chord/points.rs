@@ -1806,7 +1806,7 @@ impl BezierAlgebraicChordPairPoint2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let coordinate = |bounds: &Aabb2, axis| RealInterval::from_axis(bounds, axis);
+            let coordinate = |bounds: &Aabb2, axis| real_interval_from_axis(bounds, axis);
             let start_x = coordinate(&start, Axis2::X);
             let start_y = coordinate(&start, Axis2::Y);
             let delta_x = coordinate(&end, Axis2::X).subtract(&start_x);
@@ -1918,7 +1918,7 @@ impl BezierAlgebraicChordPairPoint2 {
         {
             let constant_coordinate = |chord: &BezierAlgebraicChord2, axis: Axis2| {
                 let bounds = endpoint_bounds(chord.start())?;
-                Some(RealInterval::from_axis(&bounds, axis))
+                Some(real_interval_from_axis(&bounds, axis))
             };
             let vertical = if first_direction.axis() == Axis2::Y {
                 first
@@ -1941,7 +1941,7 @@ impl BezierAlgebraicChordPairPoint2 {
         let first_end = endpoint_bounds(first.end())?;
         let second_start = endpoint_bounds(second.start())?;
         let second_end = endpoint_bounds(second.end())?;
-        let coordinate = |bounds: &Aabb2, axis| RealInterval::from_axis(bounds, axis);
+        let coordinate = |bounds: &Aabb2, axis| real_interval_from_axis(bounds, axis);
         let first_start_x = coordinate(&first_start, Axis2::X);
         let first_start_y = coordinate(&first_start, Axis2::Y);
         let first_delta_x = coordinate(&first_end, Axis2::X).subtract(&first_start_x);
@@ -3326,7 +3326,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                     let parameter = parameter
                         .clone()
                         .refined_isolating_interval(refinement_steps, policy);
-                    RealInterval::from_parameter(&parameter)
+                    real_interval_from_parameter(&parameter)
                 }
                 BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
                     let parameter = match parameter.refined(refinement_steps, policy)? {
@@ -3397,10 +3397,10 @@ impl BezierAlgebraicChordParallelPoint2 {
             else {
                 continue;
             };
-            let direction_x = RealInterval::from_axis(&direction_end, Axis2::X)
-                .subtract(&RealInterval::from_axis(&direction_start, Axis2::X));
-            let direction_y = RealInterval::from_axis(&direction_end, Axis2::Y)
-                .subtract(&RealInterval::from_axis(&direction_start, Axis2::Y));
+            let direction_x = real_interval_from_axis(&direction_end, Axis2::X)
+                .subtract(&real_interval_from_axis(&direction_start, Axis2::X));
+            let direction_y = real_interval_from_axis(&direction_end, Axis2::Y)
+                .subtract(&real_interval_from_axis(&direction_start, Axis2::Y));
             let (Some(v_x), Some(v_y)) = (
                 RealInterval::evaluate_power_basis(tangent_x_coefficients, &parameter),
                 RealInterval::evaluate_power_basis(tangent_y_coefficients, &parameter),
@@ -3440,10 +3440,10 @@ impl BezierAlgebraicChordParallelPoint2 {
                 else {
                     continue;
                 };
-                let physical_x = RealInterval::from_axis(&end, Axis2::X)
-                    .subtract(&RealInterval::from_axis(&start, Axis2::X));
-                let physical_y = RealInterval::from_axis(&end, Axis2::Y)
-                    .subtract(&RealInterval::from_axis(&start, Axis2::Y));
+                let physical_x = real_interval_from_axis(&end, Axis2::X)
+                    .subtract(&real_interval_from_axis(&start, Axis2::X));
+                let physical_y = real_interval_from_axis(&end, Axis2::Y)
+                    .subtract(&real_interval_from_axis(&start, Axis2::Y));
                 let Some(physical_cross) = physical_x.multiply(&v_y).and_then(|first| {
                     physical_y
                         .multiply(&v_x)
@@ -4398,10 +4398,10 @@ impl BezierAlgebraicChordParallelPoint2 {
                 (start, end)
             }
         };
-        let delta_x = RealInterval::from_axis(&end, Axis2::X)
-            .subtract(&RealInterval::from_axis(&start, Axis2::X));
-        let delta_y = RealInterval::from_axis(&end, Axis2::Y)
-            .subtract(&RealInterval::from_axis(&start, Axis2::Y));
+        let delta_x = real_interval_from_axis(&end, Axis2::X)
+            .subtract(&real_interval_from_axis(&start, Axis2::X));
+        let delta_y = real_interval_from_axis(&end, Axis2::Y)
+            .subtract(&real_interval_from_axis(&start, Axis2::Y));
         let Some(speed) = delta_x
             .square()
             .and_then(|x| delta_y.square().map(|y| x.add(&y)))
@@ -4463,13 +4463,13 @@ impl BezierAlgebraicChordParallelPoint2 {
                 }
             }
         };
-        let x = RealInterval::from_axis(&origin, Axis2::X)
+        let x = real_interval_from_axis(&origin, Axis2::X)
             .add(&offset_x)
             .add(&RealInterval {
                 lower: self.data.translation_x.clone(),
                 upper: self.data.translation_x.clone(),
             });
-        let y = RealInterval::from_axis(&origin, Axis2::Y)
+        let y = real_interval_from_axis(&origin, Axis2::Y)
             .add(&offset_y)
             .add(&RealInterval {
                 lower: self.data.translation_y.clone(),
@@ -4613,14 +4613,14 @@ impl BezierAlgebraicChordParallelPoint2 {
             else {
                 continue;
             };
-            let radial_x = RealInterval::from_axis(&point, Axis2::X)
-                .subtract(&RealInterval::from_axis(&center, Axis2::X));
-            let radial_y = RealInterval::from_axis(&point, Axis2::Y)
-                .subtract(&RealInterval::from_axis(&center, Axis2::Y));
-            let chord_x = RealInterval::from_axis(&chord_end, Axis2::X)
-                .subtract(&RealInterval::from_axis(&chord_start, Axis2::X));
-            let chord_y = RealInterval::from_axis(&chord_end, Axis2::Y)
-                .subtract(&RealInterval::from_axis(&chord_start, Axis2::Y));
+            let radial_x = real_interval_from_axis(&point, Axis2::X)
+                .subtract(&real_interval_from_axis(&center, Axis2::X));
+            let radial_y = real_interval_from_axis(&point, Axis2::Y)
+                .subtract(&real_interval_from_axis(&center, Axis2::Y));
+            let chord_x = real_interval_from_axis(&chord_end, Axis2::X)
+                .subtract(&real_interval_from_axis(&chord_start, Axis2::X));
+            let chord_y = real_interval_from_axis(&chord_end, Axis2::Y)
+                .subtract(&real_interval_from_axis(&chord_start, Axis2::Y));
             let Some(projection) = radial_x
                 .multiply(&chord_x)
                 .and_then(|x| radial_y.multiply(&chord_y).map(|y| x.add(&y)))
@@ -5767,10 +5767,10 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             }
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
         };
-        let point_x = RealInterval::from_axis(&point, Axis2::X);
-        let point_y = RealInterval::from_axis(&point, Axis2::Y);
-        let center_x = RealInterval::from_axis(&center, Axis2::X);
-        let center_y = RealInterval::from_axis(&center, Axis2::Y);
+        let point_x = real_interval_from_axis(&point, Axis2::X);
+        let point_y = real_interval_from_axis(&point, Axis2::Y);
+        let center_x = real_interval_from_axis(&center, Axis2::X);
+        let center_y = real_interval_from_axis(&center, Axis2::Y);
         let multiply = |value: &RealInterval, coefficient: Real| {
             value.multiply(&RealInterval {
                 lower: coefficient.clone(),
@@ -5826,8 +5826,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let x = RealInterval::from_axis(&bounds, Axis2::X);
-            let y = RealInterval::from_axis(&bounds, Axis2::Y);
+            let x = real_interval_from_axis(&bounds, Axis2::X);
+            let y = real_interval_from_axis(&bounds, Axis2::Y);
             let x_factor = RealInterval {
                 lower: x_factor.clone(),
                 upper: x_factor.clone(),

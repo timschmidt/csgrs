@@ -2398,14 +2398,14 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let radial_x = RealInterval::from_axis(&point, Axis2::X)
-                .subtract(&RealInterval::from_axis(&center, Axis2::X));
-            let radial_y = RealInterval::from_axis(&point, Axis2::Y)
-                .subtract(&RealInterval::from_axis(&center, Axis2::Y));
-            let chord_x = RealInterval::from_axis(&chord_end, Axis2::X)
-                .subtract(&RealInterval::from_axis(&chord_start, Axis2::X));
-            let chord_y = RealInterval::from_axis(&chord_end, Axis2::Y)
-                .subtract(&RealInterval::from_axis(&chord_start, Axis2::Y));
+            let radial_x = real_interval_from_axis(&point, Axis2::X)
+                .subtract(&real_interval_from_axis(&center, Axis2::X));
+            let radial_y = real_interval_from_axis(&point, Axis2::Y)
+                .subtract(&real_interval_from_axis(&center, Axis2::Y));
+            let chord_x = real_interval_from_axis(&chord_end, Axis2::X)
+                .subtract(&real_interval_from_axis(&chord_start, Axis2::X));
+            let chord_y = real_interval_from_axis(&chord_end, Axis2::Y)
+                .subtract(&real_interval_from_axis(&chord_start, Axis2::Y));
             let strict = &CurveContext::STRICT;
             let Some(projection) = radial_x
                 .multiply(&chord_x)

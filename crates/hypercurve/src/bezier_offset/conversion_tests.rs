@@ -5244,7 +5244,7 @@ fn assert_retained_chord_affine_bounds_oracle(
             );
         };
         let [x, y] = [Axis2::X, Axis2::Y].map(|axis| {
-            let interval = RealInterval::from_axis(&bounds, axis);
+            let interval = real_interval_from_axis(&bounds, axis);
             [
                 Real::new(interval.lower.certified_rational_interval(-16).unwrap()[0].clone()),
                 Real::new(interval.upper.certified_rational_interval(-16).unwrap()[1].clone()),
@@ -57188,7 +57188,7 @@ fn bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback() {
             vec![Real::from(-3_i8)],
             vec![Real::from(2_i8)],
         ]);
-        let unit = RealInterval::from_parameter(&parameter);
+        let unit = real_interval_from_parameter(&parameter);
         assert_eq!(
             RealInterval::evaluate_bivariate_power_basis(&bernstein_only, &unit, &unit)
                 .and_then(|interval| interval.strict_nonzero_sign()),

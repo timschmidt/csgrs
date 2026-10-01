@@ -761,7 +761,7 @@ impl BezierAlgebraicChord2 {
             };
             terminal_refined |= refinement_steps == 512;
             let delta = |start: &Aabb2, end: &Aabb2, axis| {
-                RealInterval::from_axis(end, axis).subtract(&RealInterval::from_axis(start, axis))
+                real_interval_from_axis(end, axis).subtract(&real_interval_from_axis(start, axis))
             };
             let first_x = delta(&first_start, &first_end, Axis2::X);
             let first_y = delta(&first_start, &first_end, Axis2::Y);
@@ -1128,10 +1128,10 @@ impl BezierAlgebraicChord2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let delta_x = RealInterval::from_axis(&end, Axis2::X)
-                .subtract(&RealInterval::from_axis(&start, Axis2::X));
-            let delta_y = RealInterval::from_axis(&end, Axis2::Y)
-                .subtract(&RealInterval::from_axis(&start, Axis2::Y));
+            let delta_x = real_interval_from_axis(&end, Axis2::X)
+                .subtract(&real_interval_from_axis(&start, Axis2::X));
+            let delta_y = real_interval_from_axis(&end, Axis2::Y)
+                .subtract(&real_interval_from_axis(&start, Axis2::Y));
             let coefficient_x = RealInterval {
                 lower: coefficient_x.clone(),
                 upper: coefficient_x.clone(),
@@ -1920,12 +1920,12 @@ impl BezierAlgebraicChord2 {
             };
             terminal_refined |= refinement_steps == 512;
             let strict = &CurveContext::STRICT;
-            let start_x = RealInterval::from_axis(&start, Axis2::X);
-            let start_y = RealInterval::from_axis(&start, Axis2::Y);
-            let delta_x = RealInterval::from_axis(&end, Axis2::X).subtract(&start_x);
-            let delta_y = RealInterval::from_axis(&end, Axis2::Y).subtract(&start_y);
-            let point_x = RealInterval::from_axis(&point, Axis2::X).subtract(&start_x);
-            let point_y = RealInterval::from_axis(&point, Axis2::Y).subtract(&start_y);
+            let start_x = real_interval_from_axis(&start, Axis2::X);
+            let start_y = real_interval_from_axis(&start, Axis2::Y);
+            let delta_x = real_interval_from_axis(&end, Axis2::X).subtract(&start_x);
+            let delta_y = real_interval_from_axis(&end, Axis2::Y).subtract(&start_y);
+            let point_x = real_interval_from_axis(&point, Axis2::X).subtract(&start_x);
+            let point_y = real_interval_from_axis(&point, Axis2::Y).subtract(&start_y);
             let Some(cross) = delta_x.multiply(&point_y).and_then(|first| {
                 delta_y
                     .multiply(&point_x)
@@ -2834,12 +2834,12 @@ impl BezierAlgebraicChord2 {
             Ok(())
         };
         let interval_side = |start: &Aabb2, end: &Aabb2, point: &Aabb2| {
-            let start_x = RealInterval::from_axis(start, Axis2::X);
-            let start_y = RealInterval::from_axis(start, Axis2::Y);
-            let delta_x = RealInterval::from_axis(end, Axis2::X).subtract(&start_x);
-            let delta_y = RealInterval::from_axis(end, Axis2::Y).subtract(&start_y);
-            let point_x = RealInterval::from_axis(point, Axis2::X).subtract(&start_x);
-            let point_y = RealInterval::from_axis(point, Axis2::Y).subtract(&start_y);
+            let start_x = real_interval_from_axis(start, Axis2::X);
+            let start_y = real_interval_from_axis(start, Axis2::Y);
+            let delta_x = real_interval_from_axis(end, Axis2::X).subtract(&start_x);
+            let delta_y = real_interval_from_axis(end, Axis2::Y).subtract(&start_y);
+            let point_x = real_interval_from_axis(point, Axis2::X).subtract(&start_x);
+            let point_y = real_interval_from_axis(point, Axis2::Y).subtract(&start_y);
             let cross = delta_x.multiply(&point_y).and_then(|first| {
                 delta_y
                     .multiply(&point_x)

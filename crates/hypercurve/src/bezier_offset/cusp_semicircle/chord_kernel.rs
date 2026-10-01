@@ -5079,16 +5079,16 @@ impl BezierAlgebraicCuspSemicircle2 {
                     continue;
                 };
                 let start = [
-                    RealInterval::from_axis(&start_bounds, Axis2::X),
-                    RealInterval::from_axis(&start_bounds, Axis2::Y),
+                    real_interval_from_axis(&start_bounds, Axis2::X),
+                    real_interval_from_axis(&start_bounds, Axis2::Y),
                 ];
                 let end = [
-                    RealInterval::from_axis(&end_bounds, Axis2::X),
-                    RealInterval::from_axis(&end_bounds, Axis2::Y),
+                    real_interval_from_axis(&end_bounds, Axis2::X),
+                    real_interval_from_axis(&end_bounds, Axis2::Y),
                 ];
                 let center = [
-                    RealInterval::from_axis(&center_bounds, Axis2::X),
-                    RealInterval::from_axis(&center_bounds, Axis2::Y),
+                    real_interval_from_axis(&center_bounds, Axis2::X),
+                    real_interval_from_axis(&center_bounds, Axis2::Y),
                 ];
                 let direction = [end[0].subtract(&start[0]), end[1].subtract(&start[1])];
                 let radial = [start[0].subtract(&center[0]), start[1].subtract(&center[1])];

@@ -2954,7 +2954,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             Classification::Decided(bounds) => bounds,
             Classification::Uncertain(_) => return Ok(None),
         };
-        let source_interval = RealInterval::from_axis(&source_bounds, axis);
+        let source_interval = real_interval_from_axis(&source_bounds, axis);
         let endpoint_numerator = match axis {
             Axis2::X => &endpoint.x,
             Axis2::Y => &endpoint.y,
@@ -5582,10 +5582,10 @@ impl BezierRecursiveQuadraticLineParameterMapSystem2 {
                 continue;
             };
             terminal_refined |= refinement_steps == 512;
-            let center_x = RealInterval::from_axis(&center_bounds, Axis2::X);
-            let center_y = RealInterval::from_axis(&center_bounds, Axis2::Y);
-            let radial_x = RealInterval::from_axis(&contact_bounds, Axis2::X).subtract(&center_x);
-            let radial_y = RealInterval::from_axis(&contact_bounds, Axis2::Y).subtract(&center_y);
+            let center_x = real_interval_from_axis(&center_bounds, Axis2::X);
+            let center_y = real_interval_from_axis(&center_bounds, Axis2::Y);
+            let radial_x = real_interval_from_axis(&contact_bounds, Axis2::X).subtract(&center_x);
+            let radial_y = real_interval_from_axis(&contact_bounds, Axis2::Y).subtract(&center_y);
             let target_x = exact_x.subtract(&center_x);
             let target_y = exact_y.subtract(&center_y);
             let Some(cross) = radial_x.multiply(&target_y).and_then(|first| {
