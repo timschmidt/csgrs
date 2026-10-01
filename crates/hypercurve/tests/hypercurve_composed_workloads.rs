@@ -191,6 +191,8 @@ enum Step {
     Fillet(usize, u8),
     Chamfer(usize, u8),
     Translate(usize, i16, i16),
+    /// Quarter turns, scale index into {1, 3/2, 2}, and an optional mirror.
+    Similarity(usize, u8, u8, bool),
 }
 
 fn step_strategy() -> impl Strategy<Value = Step> {
@@ -200,6 +202,8 @@ fn step_strategy() -> impl Strategy<Value = Step> {
         1 => (0_usize..16, 0_u8..8).prop_map(|(a, vertex)| Step::Fillet(a, vertex)),
         1 => (0_usize..16, 0_u8..8).prop_map(|(a, vertex)| Step::Chamfer(a, vertex)),
         1 => (0_usize..16, -9_i16..=9, -9_i16..=9).prop_map(|(a, x, y)| Step::Translate(a, x, y)),
+        1 => (0_usize..16, 0_u8..4, 0_u8..3, any::<bool>())
+            .prop_map(|(a, turns, scale, mirror)| Step::Similarity(a, turns, scale, mirror)),
     ]
 }
 
@@ -462,6 +466,56 @@ fn run_sequence(seeds: &[Seed], steps: &[Step], nested: bool) -> Result<(), Test
                 }
                 result
             }
+            Step::Similarity(a, turns, scale, mirror) => {
+                let source = pick(a);
+                let scale = match scale {
+                    0 => integer(1),
+                    1 => fraction(3, 2),
+                    _ => integer(2),
+                };
+                let (cos, sin) = match turns % 4 {
+                    0 => (1, 0),
+                    1 => (0, 1),
+                    2 => (-1, 0),
+                    _ => (0, -1),
+                };
+                // [m00 m01; m10 m11] = scale * R(turns) * diag(mirror ? -1 : 1, 1).
+                let flip = if mirror { -1 } else { 1 };
+                let m00 = &scale * integer(cos * flip);
+                let m01 = &scale * integer(-sin);
+                let m10 = &scale * integer(sin * flip);
+                let m11 = &scale * integer(cos);
+                let result = required(
+                    &label,
+                    source.transform_affine(
+                        &m00,
+                        &m01,
+                        &m10,
+                        &m11,
+                        &Real::zero(),
+                        &Real::zero(),
+                        &STRICT,
+                    ),
+                )?
+                .into_value();
+                for point in points.iter().take(27) {
+                    let (x, y) = point
+                        .coordinates()
+                        .map(|p| (p.x().clone(), p.y().clone()))
+                        .unwrap();
+                    let mapped = CurvePoint2::from(Point2::new(
+                        &m00 * &x + &m01 * &y,
+                        &m10 * &x + &m11 * &y,
+                    ));
+                    let (Some(before), Some(after)) =
+                        (inside(&source, point)?, inside(&result, &mapped)?)
+                    else {
+                        continue;
+                    };
+                    prop_assert_eq!(before, after, "{}: similarity moved membership", label);
+                }
+                result
+            }
         };
         let operated = started.elapsed();
         assert_round_trip(&label, &result)?;
@@ -475,6 +529,38 @@ fn run_sequence(seeds: &[Seed], steps: &[Step], nested: bool) -> Result<(), Test
         pool.push(result);
     }
     Ok(())
+}
+
+/// An inward round offset of a chamfered weighted-conic corner.
+///
+/// Ignored: completeness gap, not an exactness violation. The chamfer's
+/// cut vertex `V = A(t*)` on the conic `A` is retained as represented
+/// coordinates. The offset's two band connectors pass through `V`, and the
+/// band arrangement splits them at a recomputed line/line crossing `V'`. Its
+/// coordinates equal `V` but share no expression structure with it. The
+/// Boolean then meets the cross-operand pair (`A`, connector half from `V'`).
+/// The line-image kernel finds the crossing `A(t_root)` but cannot decide
+/// whether it lies in the segment's closed unit range, because it is exactly
+/// the endpoint. The fallback tensor resultant then overestimates its degree
+/// and cannot certify that the vanishing top coefficients are zero. Closing
+/// this needs the vertex identity carried across operands: connectors split
+/// at the retained source vertex, plus a known-root deflation of the line
+/// contact at a retained curve point.
+#[test]
+#[ignore = "cross-operand coincident vertex needs retained identity; see doc comment"]
+fn chamfered_conic_inward_round_offset_completes() {
+    let seeds = [Seed {
+        x: 0,
+        y: 0,
+        width: 10,
+        height: 6,
+        lower: 1,
+        upper: 0,
+        curvature: 3,
+        weight: 1,
+    }];
+    let steps = [Step::Chamfer(0, 5), Step::Offset(1, -1, 0)];
+    run_sequence(&seeds, &steps, false).unwrap();
 }
 
 /// The regular suite replays a fixed seed so it is deterministic; setting
