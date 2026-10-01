@@ -1644,3 +1644,1014 @@ impl BezierAlgebraicCuspSemicircle2 {
         ))
     }
 }
+
+impl BezierAlgebraicCuspSemicircle2 {
+    pub(in crate::bezier_offset) fn recursive_pair_frame_authorities(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<[BezierRecursiveCircleFrame2; 2]>>> {
+        let first = match self.recursive_circle_frame_authority(policy)? {
+            Classification::Decided(Some(authority)) => authority,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second = match other.recursive_circle_frame_authority(policy)? {
+            Classification::Decided(Some(authority)) => authority,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if self.data.frame.rational().is_some()
+            && let Classification::Decided(Some(first)) =
+                self.recursive_rational_circle_frame_authority_in_field(&second.field, policy)?
+        {
+            return Ok(Classification::Decided(Some([first, second])));
+        }
+        if other.data.frame.rational().is_some()
+            && let Classification::Decided(Some(second)) =
+                other.recursive_rational_circle_frame_authority_in_field(&first.field, policy)?
+        {
+            return Ok(Classification::Decided(Some([first, second])));
+        }
+        if let Some(second) = second.lifted_to(&first.field) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-circle-pair-frame-join",
+                "second-to-first-ancestor",
+            );
+            return Ok(Classification::Decided(Some([first, second])));
+        }
+        if let Some(first) = first.lifted_to(&second.field) {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-circle-pair-frame-join",
+                "first-to-second-ancestor",
+            );
+            return Ok(Classification::Decided(Some([first, second])));
+        }
+        let joined = match first.field.joined_with(&second.field, policy)? {
+            Classification::Decided(joined) => joined,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        if let Some((field, embeddings)) = joined {
+            let Some((first, second)) = (|| {
+                Some((
+                    first.lifted_to(&field)?,
+                    BezierRecursiveCircleFrame2 {
+                        center: second.center.embedded_to(&field, &embeddings)?,
+                        support_center: second.support_center.embedded_to(&field, &embeddings)?,
+                        field: field.clone(),
+                        normal_denominator: second.normal_denominator,
+                    },
+                ))
+            })() else {
+                return Ok(Classification::Decided(None));
+            };
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "recursive-circle-pair-frame-join",
+                "retained-field-join",
+            );
+            return Ok(Classification::Decided(Some([first, second])));
+        }
+        let represented = [first.center.clone(), first.support_center.clone()];
+        let (field, mut represented, second_center) = match recursive_merge_projective_point_fields(
+            &first.field,
+            &represented,
+            &second.center,
+            policy,
+        )? {
+            Classification::Decided(Some(joined)) => joined,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        represented.push(second_center);
+        let (field, represented, second_support) =
+            if let Some(second_support) = second.support_center.lifted_to(&field) {
+                (field, represented, second_support)
+            } else {
+                match recursive_merge_projective_point_fields(
+                    &field,
+                    &represented,
+                    &second.support_center,
+                    policy,
+                )? {
+                    Classification::Decided(Some(joined)) => joined,
+                    Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            };
+        let [first_center, first_support, second_center]: [BezierRecursiveQuadraticProjectivePoint2;
+            3] = represented
+            .try_into()
+            .expect("a joined recursive circle pair retains three imported points");
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "recursive-circle-pair-frame-join",
+            "projective-field-merge",
+        );
+        Ok(Classification::Decided(Some([
+            BezierRecursiveCircleFrame2 {
+                field: field.clone(),
+                center: first_center,
+                support_center: first_support,
+                normal_denominator: first.normal_denominator,
+            },
+            BezierRecursiveCircleFrame2 {
+                field,
+                center: second_center,
+                support_center: second_support,
+                normal_denominator: second.normal_denominator,
+            },
+        ])))
+    }
+
+    pub(in crate::bezier_offset) fn recursive_pair_contact_side(
+        &self,
+        center: &BezierRecursiveQuadraticProjectivePoint2,
+        support_center: &BezierRecursiveQuadraticProjectivePoint2,
+        normal_denominator: &Real,
+        radial: &[BezierRecursiveQuadraticValue2; 2],
+        radial_denominator: &BezierRecursiveQuadraticValue2,
+        certified_location: Option<BezierAlgebraicCuspSemicircleContactLocation2>,
+    ) -> CurveResult<Classification<Option<BezierRecursiveCirclePairContactSide2>>> {
+        let Some((anchor_x, anchor_y, anchor_denominator)) =
+            center.difference_numerators(support_center)
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let [radial_x, radial_y] = radial;
+        let Some((selected_half_plane, diameter, radius_squared_denominator)) = (|| {
+            let radial_scale = self.radial_distance() * normal_denominator;
+            let selected_half_plane = anchor_x
+                .multiply(radial_y)?
+                .subtract(&anchor_y.multiply(radial_x)?)?
+                .scale(&(self.turn_sign() * &radial_scale))?;
+            let diameter = anchor_x
+                .multiply(radial_x)?
+                .add(&anchor_y.multiply(radial_y)?)?
+                .scale(&radial_scale)?;
+            let radius_squared_denominator =
+                anchor_denominator.multiply(radial_denominator)?.scale(
+                    &(self.radial_distance()
+                        * self.radial_distance()
+                        * normal_denominator
+                        * normal_denominator),
+                )?;
+            Some((selected_half_plane, diameter, radius_squared_denominator))
+        })() else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let location = if let Some(location) = certified_location {
+            location
+        } else {
+            match selected_half_plane.sign(&CurveContext::STRICT)? {
+                Classification::Decided(RealSign::Negative) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Decided(RealSign::Positive) => {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior
+                }
+                Classification::Decided(RealSign::Zero) => {
+                    match diameter.sign(&CurveContext::STRICT)? {
+                        Classification::Decided(RealSign::Positive) => {
+                            BezierAlgebraicCuspSemicircleContactLocation2::Start
+                        }
+                        Classification::Decided(RealSign::Negative) => {
+                            BezierAlgebraicCuspSemicircleContactLocation2::End
+                        }
+                        Classification::Decided(RealSign::Zero) => {
+                            return Err(CurveError::Topology(
+                                "a nonzero recursive circle-pair contact had zero local diameter"
+                                    .into(),
+                            ));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        };
+        Ok(Classification::Decided(Some(
+            BezierRecursiveCirclePairContactSide2 {
+                location,
+                angular: BezierRecursiveCirclePairAngularData2 {
+                    diameter,
+                    radius_squared_denominator,
+                },
+            },
+        )))
+    }
+
+    /// Finds a retained diameter endpoint shared by two tangent selected
+    /// semicircles.  Once the full-circle discriminant is exactly zero and
+    /// the centers are distinct, such a point is necessarily the unique
+    /// support contact.  This certificate avoids asking a deep recursive
+    /// field to rediscover that its selected-half cross product is zero.
+    pub(in crate::bezier_offset) fn recursive_pair_shared_tangent_endpoint_locations(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<[BezierAlgebraicCuspSemicircleContactLocation2; 2]>>>
+    {
+        let endpoints = |circle: &Self| -> CurveResult<Option<[CurvePoint2; 2]>> {
+            let start = match circle.start_point_evidence(policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let end = match circle.end_point_evidence(policy)? {
+                Classification::Decided(point) => point,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            Ok(Some([start, end]))
+        };
+        let (Some(first), Some(second)) = (endpoints(self)?, endpoints(other)?) else {
+            return Ok(Classification::Decided(None));
+        };
+        let locations = [
+            BezierAlgebraicCuspSemicircleContactLocation2::Start,
+            BezierAlgebraicCuspSemicircleContactLocation2::End,
+        ];
+        for first_index in 0..2 {
+            for second_index in 0..2 {
+                if first[first_index].same_point(&second[second_index], policy)
+                    == Classification::Decided(true)
+                {
+                    return Ok(Classification::Decided(Some([
+                        locations[first_index],
+                        locations[second_index],
+                    ])));
+                }
+            }
+        }
+        Ok(Classification::Decided(None))
+    }
+
+    pub(in crate::bezier_offset) fn recursive_pair_support_relation_from_centers(
+        &self,
+        other: &Self,
+        first: &BezierRecursiveQuadraticProjectivePoint2,
+        second: &BezierRecursiveQuadraticProjectivePoint2,
+        center_equality: Option<bool>,
+    ) -> CurveResult<Classification<Option<BezierRecursiveCirclePairSupportRelation2>>> {
+        if !first
+            .denominator
+            .field()
+            .same_field(&second.denominator.field())
+        {
+            return Err(CurveError::Topology(
+                "a recursive circle-pair relation crossed retained coefficient fields".into(),
+            ));
+        }
+        if center_equality == Some(true) {
+            return Ok(Classification::Decided(Some(
+                BezierRecursiveCirclePairSupportRelation2::Concentric,
+            )));
+        }
+        let normalize = |point: &BezierRecursiveQuadraticProjectivePoint2| {
+            let mut coordinates = [point.x.clone(), point.y.clone(), point.denominator.clone()];
+            BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut coordinates);
+            let [x, y, denominator] = coordinates;
+            BezierRecursiveQuadraticProjectivePoint2 { x, y, denominator }
+        };
+        let first = normalize(first);
+        let second = normalize(second);
+        let Some((common_denominator, q)) = (|| {
+            let common_denominator = first.denominator.multiply(&second.denominator)?;
+            let dx = second
+                .x
+                .multiply(&first.denominator)?
+                .subtract(&first.x.multiply(&second.denominator)?)?;
+            let dy = second
+                .y
+                .multiply(&first.denominator)?
+                .subtract(&first.y.multiply(&second.denominator)?)?;
+            Some((common_denominator, dx.square()?.add(&dy.square()?)?))
+        })() else {
+            return Ok(Classification::Decided(None));
+        };
+        let mut q_sign = match center_equality {
+            Some(true) => Classification::Decided(RealSign::Zero),
+            // `q` is a sum of two squares after cross-multiplying nonzero
+            // projective denominators. Exact center inequality proves it
+            // strictly positive without a second algebraic sign solve.
+            Some(false) => Classification::Decided(RealSign::Positive),
+            None => q.sign(&CurveContext::STRICT)?,
+        };
+        if matches!(q_sign, Classification::Uncertain(_)) {
+            for refinement_steps in [128_usize, 256, 512] {
+                let coefficient_bits = refinement_steps.min(i32::MAX as usize) as i32;
+                let Some(interval) = q
+                    .interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))
+                else {
+                    continue;
+                };
+                if let Some(sign) = dense_strict_interval_sign(&interval) {
+                    q_sign = Classification::Decided(sign);
+                    break;
+                }
+            }
+        }
+        match q_sign {
+            Classification::Decided(RealSign::Positive) => {}
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Decided(Some(
+                    BezierRecursiveCirclePairSupportRelation2::Concentric,
+                )));
+            }
+            Classification::Decided(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a recursive circle-pair center distance squared was negative".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        }
+        let first_radius_squared = self.radial_distance() * self.radial_distance();
+        let second_radius_squared = other.radial_distance() * other.radial_distance();
+        let Some(discriminant) = (|| {
+            let denominator_squared = common_denominator.square()?;
+            let line = q.add(
+                &denominator_squared.scale(&(&first_radius_squared - &second_radius_squared))?,
+            )?;
+            q.multiply(&denominator_squared)?
+                .scale(&(Real::from(4_i8) * &first_radius_squared))?
+                .subtract(&line.square()?)
+        })() else {
+            return Ok(Classification::Decided(None));
+        };
+        let mut discriminant_sign = discriminant.sign(&CurveContext::STRICT)?;
+        if matches!(discriminant_sign, Classification::Uncertain(_)) {
+            for refinement_steps in [128_usize, 256, 512] {
+                let coefficient_bits = refinement_steps.min(i32::MAX as usize) as i32;
+                let Some(interval) = discriminant
+                    .interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))
+                else {
+                    continue;
+                };
+                if let Some(sign) = dense_strict_interval_sign(&interval) {
+                    discriminant_sign = Classification::Decided(sign);
+                    break;
+                }
+            }
+        }
+        Ok(discriminant_sign.map(|sign| {
+            Some(BezierRecursiveCirclePairSupportRelation2::Discriminant(
+                sign,
+            ))
+        }))
+    }
+
+    /// Classifies the two full supporting circles in the least shared
+    /// recursive field of their authored centers.  This is the compact
+    /// authority for later selected-radial generations whose line-contact
+    /// centers do not have useful standalone Cartesian primitive elements.
+    pub(in crate::bezier_offset) fn recursive_pair_support_relation(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<BezierRecursiveCirclePairSupportRelation2>>> {
+        let selected_center_distance_squared =
+            |candidate: &Self, parent: &Self| -> CurveResult<Option<Real>> {
+                let Some(frame) = candidate.data.frame.selected_radial() else {
+                    return Ok(None);
+                };
+                if !policy.accepts_retained_policy(frame.policy) {
+                    return Err(CurveError::Topology(
+                        "a recursive circle-pair relation crossed selected-radial policies".into(),
+                    ));
+                }
+                let support = frame.center_parameter.semicircle_carrier();
+                Ok((support.data.frame == parent.data.frame)
+                    .then(|| support.radial_distance() * support.radial_distance()))
+            };
+        let structural_distance_squared =
+            if let Some(distance) = selected_center_distance_squared(self, other)? {
+                Some(distance)
+            } else {
+                selected_center_distance_squared(other, self)?
+            };
+        if let Some(q) = structural_distance_squared {
+            match real_sign(&q, &CurveContext::STRICT) {
+                Some(RealSign::Positive) => {}
+                Some(RealSign::Zero) => {
+                    return Ok(Classification::Decided(Some(
+                        BezierRecursiveCirclePairSupportRelation2::Concentric,
+                    )));
+                }
+                Some(RealSign::Negative) => {
+                    return Err(CurveError::Topology(
+                        "an authored circle-pair center distance squared was negative".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            let first_radius_squared = self.radial_distance() * self.radial_distance();
+            let second_radius_squared = other.radial_distance() * other.radial_distance();
+            let line = &q + &first_radius_squared - &second_radius_squared;
+            let discriminant = Real::from(4_i8) * &q * &first_radius_squared - &line * &line;
+            return Ok(match real_sign(&discriminant, &CurveContext::STRICT) {
+                Some(sign) => Classification::Decided(Some(
+                    BezierRecursiveCirclePairSupportRelation2::Discriminant(sign),
+                )),
+                None => Classification::Uncertain(UncertaintyReason::RealSign),
+            });
+        }
+        let first_center_evidence = self.center_point_evidence(policy)?;
+        let second_center_evidence = other.center_point_evidence(policy)?;
+        let frame_center_equality = match (&first_center_evidence, &second_center_evidence) {
+            (Classification::Decided(first), Classification::Decided(second)) => {
+                match policy.strict_predicate_pass(|| {
+                    retained_point_evidence_equality_by_refinement(first, second, policy)
+                }) {
+                    Classification::Decided(equal) => Some(equal),
+                    Classification::Uncertain(_) => None,
+                }
+            }
+            (Classification::Decided(_), Classification::Uncertain(_))
+            | (Classification::Uncertain(_), Classification::Decided(_))
+            | (Classification::Uncertain(_), Classification::Uncertain(_)) => None,
+        };
+        match self.recursive_pair_frame_authorities(other, policy)? {
+            Classification::Decided(Some([first, second])) => {
+                return self.recursive_pair_support_relation_from_centers(
+                    other,
+                    &first.center,
+                    &second.center,
+                    frame_center_equality,
+                );
+            }
+            Classification::Decided(None) | Classification::Uncertain(_) => {}
+        }
+        let first_center = match first_center_evidence {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second_center = match second_center_evidence {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let centers =
+            match recursive_projective_evidence_points(&[&first_center, &second_center], policy)? {
+                Classification::Decided(Some(centers)) => centers,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+        let [first, second]: [BezierRecursiveQuadraticProjectivePoint2; 2] = centers
+            .try_into()
+            .expect("a recursive circle-pair relation retains two centers");
+        let first = match positive_recursive_projective_point(first)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let second = match positive_recursive_projective_point(second)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        let center_equality = match policy.strict_predicate_pass(|| {
+            retained_point_evidence_equality_by_refinement(&first_center, &second_center, policy)
+        }) {
+            Classification::Decided(equal) => Some(equal),
+            Classification::Uncertain(_) => None,
+        };
+        self.recursive_pair_support_relation_from_centers(other, &first, &second, center_equality)
+    }
+
+    /// Publishes tangent or transverse full-circle contacts directly in the
+    /// least shared recursive field, then applies both selected-half
+    /// predicates before retaining topology.  The point and both angular
+    /// parameter predicates share one quadratic extension of the center
+    /// field; no Cartesian primitive element is formed.
+    pub(in crate::bezier_offset) fn recursive_pair_contact_intersections(
+        &self,
+        other: &Self,
+        discriminant_sign: RealSign,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>>> {
+        let branches: &[i8] = match discriminant_sign {
+            RealSign::Zero => &[0],
+            RealSign::Positive => &[-1, 1],
+            RealSign::Negative => return Ok(None),
+        };
+        let [first_frame, second_frame] =
+            match self.recursive_pair_frame_authorities(other, policy)? {
+                Classification::Decided(Some(frames)) => frames,
+                Classification::Decided(None) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "recursive-circle-pair-contact-blocker",
+                        "missing-frame-authority",
+                    );
+                    return Ok(None);
+                }
+                Classification::Uncertain(_) => {
+                    #[cfg(feature = "dispatch-trace")]
+                    hyperreal::dispatch_trace::record(
+                        "hypercurve",
+                        "recursive-circle-pair-contact-blocker",
+                        "uncertain-frame-authority",
+                    );
+                    return Ok(None);
+                }
+            };
+        let tangent_endpoint_locations = if discriminant_sign == RealSign::Zero {
+            match self.recursive_pair_shared_tangent_endpoint_locations(other, policy)? {
+                Classification::Decided(locations) => locations,
+                Classification::Uncertain(_) => None,
+            }
+        } else {
+            None
+        };
+        let first_center = first_frame.center;
+        let first_support = first_frame.support_center;
+        let first_normal_denominator = first_frame.normal_denominator;
+        let second_center = second_frame.center;
+        let second_support = second_frame.support_center;
+        let second_normal_denominator = second_frame.normal_denominator;
+        let parent = first_center.denominator.field();
+        if [&second_center, &first_support, &second_support]
+            .iter()
+            .any(|point| !parent.same_field(&point.denominator.field()))
+        {
+            return Err(CurveError::Topology(
+                "a recursive circle-pair contact crossed retained coefficient fields".into(),
+            ));
+        }
+        let first_radius_squared = self.radial_distance() * self.radial_distance();
+        let second_radius_squared = other.radial_distance() * other.radial_distance();
+        let Some((common_denominator, dx, dy, q, line, discriminant)) = (|| {
+            let common_denominator = first_center
+                .denominator
+                .multiply(&second_center.denominator)?;
+            let dx = second_center
+                .x
+                .multiply(&first_center.denominator)?
+                .subtract(&first_center.x.multiply(&second_center.denominator)?)?;
+            let dy = second_center
+                .y
+                .multiply(&first_center.denominator)?
+                .subtract(&first_center.y.multiply(&second_center.denominator)?)?;
+            let q = dx.square()?.add(&dy.square()?)?;
+            let denominator_squared = common_denominator.square()?;
+            let line = q.add(
+                &denominator_squared.scale(&(&first_radius_squared - &second_radius_squared))?,
+            )?;
+            let discriminant = q
+                .multiply(&denominator_squared)?
+                .scale(&(Real::from(4_i8) * &first_radius_squared))?
+                .subtract(&line.square()?)?;
+            Some((common_denominator, dx, dy, q, line, discriminant))
+        })() else {
+            return Ok(None);
+        };
+        let field = if discriminant_sign == RealSign::Positive {
+            let Some(field) = parent.extension(discriminant.clone()) else {
+                return Ok(None);
+            };
+            field
+        } else {
+            parent.clone()
+        };
+        let Some((first_center, second_center, first_support, second_support)) = (|| {
+            Some((
+                first_center.lifted_to(&field)?,
+                second_center.lifted_to(&field)?,
+                first_support.lifted_to(&field)?,
+                second_support.lifted_to(&field)?,
+            ))
+        })() else {
+            return Ok(None);
+        };
+        let Some((common_denominator, dx, dy, q, line)) = (|| {
+            Some((
+                field.lift(&common_denominator)?,
+                field.lift(&dx)?,
+                field.lift(&dy)?,
+                field.lift(&q)?,
+                field.lift(&line)?,
+            ))
+        })() else {
+            return Ok(None);
+        };
+        let turn_product = self.turn_sign() * other.turn_sign();
+        let tangent_cross_sign = |branch: i8| {
+            if branch == 0 {
+                RealSign::Zero
+            } else {
+                let branch_sign = if branch < 0 {
+                    RealSign::Negative
+                } else {
+                    RealSign::Positive
+                };
+                let turn_sign = if self.is_clockwise() == other.is_clockwise() {
+                    RealSign::Positive
+                } else {
+                    RealSign::Negative
+                };
+                product_sign(branch_sign, turn_sign)
+            }
+        };
+        let turn_product_sign = if self.is_clockwise() == other.is_clockwise() {
+            RealSign::Positive
+        } else {
+            RealSign::Negative
+        };
+        let Some(second_line) = q
+            .scale(&Real::from(2_i8))
+            .and_then(|twice_q| line.subtract(&twice_q))
+        else {
+            return Ok(None);
+        };
+        let tangent_dot_sign = if discriminant_sign == RealSign::Zero {
+            let line_sign = match line.sign(&CurveContext::STRICT)? {
+                Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a tangent circle pair retained a zero first radial line factor".into(),
+                    ));
+                }
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let second_line_sign = match second_line.sign(&CurveContext::STRICT)? {
+                Classification::Decided(sign @ (RealSign::Negative | RealSign::Positive)) => sign,
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a tangent circle pair retained a zero second radial line factor".into(),
+                    ));
+                }
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            Some(product_sign(
+                product_sign(line_sign, second_line_sign),
+                turn_product_sign,
+            ))
+        } else {
+            None
+        };
+        let mut contacts = Vec::with_capacity(branches.len());
+        let mut retained_contacts = Vec::with_capacity(branches.len());
+        for &branch in branches {
+            let signed_root = if branch == 0 {
+                let Some(zero) = field.constant(Real::zero()) else {
+                    return Ok(None);
+                };
+                zero
+            } else {
+                let Some(root) = field.element(
+                    parent.constant(Real::zero()).ok_or_else(|| {
+                        CurveError::Topology(
+                            "a recursive pair discriminant lost its zero coefficient".into(),
+                        )
+                    })?,
+                    parent.constant(Real::from(branch)).ok_or_else(|| {
+                        CurveError::Topology(
+                            "a recursive pair discriminant lost its branch coefficient".into(),
+                        )
+                    })?,
+                ) else {
+                    return Ok(None);
+                };
+                root
+            };
+            let Some((point, first_radial, second_radial, radial_denominator)) = (|| {
+                // Subtracting either center from the full projective point
+                // introduces a large term that cancels identically.  Retain
+                // the analytic radial numerators directly instead.  The
+                // omitted factor is that center's certified-positive
+                // denominator, so signs are unchanged and pairing each
+                // numerator with `2 Q common_denominator` preserves the exact
+                // angular ratio used by the parameter map.
+                let first_radial = [
+                    line.multiply(&dx)?.subtract(&signed_root.multiply(&dy)?)?,
+                    line.multiply(&dy)?.add(&signed_root.multiply(&dx)?)?,
+                ];
+                let second_line = line.subtract(&q.scale(&Real::from(2_i8))?)?;
+                let second_radial = [
+                    second_line
+                        .multiply(&dx)?
+                        .subtract(&signed_root.multiply(&dy)?)?,
+                    second_line
+                        .multiply(&dy)?
+                        .add(&signed_root.multiply(&dx)?)?,
+                ];
+                let first_x = q
+                    .multiply(&second_center.denominator)?
+                    .multiply(&first_center.x)?
+                    .scale(&Real::from(2_i8))?;
+                let first_y = q
+                    .multiply(&second_center.denominator)?
+                    .multiply(&first_center.y)?
+                    .scale(&Real::from(2_i8))?;
+                let radial_denominator =
+                    q.multiply(&common_denominator)?.scale(&Real::from(2_i8))?;
+                Some((
+                    BezierRecursiveQuadraticProjectivePoint2 {
+                        x: first_x.add(&first_radial[0])?,
+                        y: first_y.add(&first_radial[1])?,
+                        denominator: radial_denominator.clone(),
+                    },
+                    first_radial,
+                    second_radial,
+                    radial_denominator,
+                ))
+            })() else {
+                return Ok(None);
+            };
+            let first = match self.recursive_pair_contact_side(
+                &first_center,
+                &first_support,
+                &first_normal_denominator,
+                &first_radial,
+                &radial_denominator,
+                tangent_endpoint_locations.map(|locations| locations[0]),
+            )? {
+                Classification::Decided(Some(side)) => side,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let second = match other.recursive_pair_contact_side(
+                &second_center,
+                &second_support,
+                &second_normal_denominator,
+                &second_radial,
+                &radial_denominator,
+                tangent_endpoint_locations.map(|locations| locations[1]),
+            )? {
+                Classification::Decided(Some(side)) => side,
+                Classification::Decided(None) => continue,
+                Classification::Uncertain(_) => return Ok(None),
+            };
+            let Some((tangent_cross, tangent_dot)) = (|| {
+                // With `D=C2-C1`, `q=D·D`, `a=line`, `b=line-2q`, and
+                // `s=branch*sqrt(discriminant)`, the two radial numerators
+                // above are `aD+sJ(D)` and `bD+sJ(D)`.  Keep their cross and
+                // dot in that factored frame:
+                //
+                //   cross = 2 s q²
+                //   dot   = q (a b + s²)
+                //
+                // Expanding the Cartesian components first asks a deep
+                // recursive coefficient tower to rediscover both exact
+                // cancellations.  In particular, a tangent (`s=0`) could be
+                // simplified to a false zero dot even though both radii are
+                // certified nonzero.
+                let tangent_cross = if branch == 0 {
+                    field.constant(Real::zero())?
+                } else {
+                    signed_root
+                        .multiply(&q.square()?)?
+                        .scale(&(Real::from(2_i8) * &turn_product))?
+                };
+                let tangent_dot = line
+                    .multiply(&second_line)?
+                    .add(&signed_root.square()?)?
+                    .multiply(&q)?
+                    .scale(&turn_product)?;
+                Some((tangent_cross, tangent_dot))
+            })() else {
+                return Ok(None);
+            };
+            let cross_sign = tangent_cross_sign(branch);
+            contacts.push(BezierAlgebraicCuspSemicirclePairContact2 {
+                branch,
+                first_location: first.location,
+                second_location: second.location,
+                tangent_cross_sign: cross_sign,
+            });
+            retained_contacts.push(BezierRecursiveCirclePairContactData2 {
+                branch,
+                frame: BezierRecursiveQuadraticPairContactFrame2 {
+                    field: field.clone(),
+                    point,
+                    centers: [first_center.clone(), second_center.clone()],
+                },
+                angular: [first.angular, second.angular],
+                tangent_cross,
+                tangent_dot,
+                tangent_dot_sign,
+            });
+        }
+        if contacts.is_empty() {
+            return Ok(Some(Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+            )));
+        }
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "algebraic-circle-pair-kernel",
+            "recursive-contact-publisher",
+        );
+        let parameter_map = BezierAlgebraicCuspSemicirclePairParameterMap2 {
+            data: Arc::new(BezierAlgebraicCuspSemicirclePairParameterMapData2 {
+                first_semicircle: self.clone(),
+                second_semicircle: other.clone(),
+                system: BezierCirclePairParameterMapSystem2::Recursive(
+                    BezierRecursiveCirclePairParameterMapSystem2 {
+                        contacts: retained_contacts,
+                    },
+                ),
+                recursive_field: OnceLock::new(),
+                policy: policy.retained_object_policy_with_dependencies(
+                    self.data
+                        .frame
+                        .evidence_policy()
+                        .into_iter()
+                        .chain(other.data.frame.evidence_policy()),
+                ),
+            }),
+        };
+        Ok(Some(Classification::Decided(
+            BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                contacts,
+                parameter_map,
+            },
+        )))
+    }
+
+    /// Resolves a circle pair directly from its recursive support relation.
+    /// A negative full-circle discriminant (or concentric unequal radii)
+    /// proves disjointness; tangent and transverse supports continue through
+    /// the recursive contact publisher when their center fields can be joined.
+    pub(in crate::bezier_offset) fn recursive_pair_intersections(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>>> {
+        let relation = match self.recursive_pair_support_relation(other, policy)? {
+            Classification::Decided(relation) => relation,
+            Classification::Uncertain(_) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "recursive-circle-pair-contact-blocker",
+                    "uncertain-support-relation",
+                );
+                return Ok(None);
+            }
+        };
+        match relation {
+            Some(BezierRecursiveCirclePairSupportRelation2::Discriminant(RealSign::Negative)) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-circle-pair-kernel",
+                    "recursive-full-circle-disjoint",
+                );
+                Ok(Some(Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                )))
+            }
+            Some(BezierRecursiveCirclePairSupportRelation2::Concentric) => {
+                let radius_squared_difference = self.radial_distance() * self.radial_distance()
+                    - other.radial_distance() * other.radial_distance();
+                match real_sign(&radius_squared_difference, &CurveContext::STRICT) {
+                    Some(RealSign::Positive | RealSign::Negative) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-circle-pair-kernel",
+                            "recursive-concentric-distinct",
+                        );
+                        Ok(Some(Classification::Decided(
+                            BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                        )))
+                    }
+                    Some(RealSign::Zero) => {
+                        let first_frame = match self.represented_circle_frame(policy)? {
+                            Classification::Decided(frame) => frame,
+                            Classification::Uncertain(_) => return Ok(None),
+                        };
+                        let second_frame = match other.represented_circle_frame(policy)? {
+                            Classification::Decided(frame) => frame,
+                            Classification::Uncertain(_) => return Ok(None),
+                        };
+                        let first_radius_squared = self.radial_distance() * self.radial_distance();
+                        let second_radius_squared =
+                            other.radial_distance() * other.radial_distance();
+                        Ok(Some(self.represented_coincident_pair_intersections(
+                            other,
+                            &first_frame,
+                            &second_frame,
+                            &first_radius_squared,
+                            &second_radius_squared,
+                            policy,
+                        )?))
+                    }
+                    None => Ok(None),
+                }
+            }
+            Some(BezierRecursiveCirclePairSupportRelation2::Discriminant(
+                sign @ (RealSign::Zero | RealSign::Positive),
+            )) => self.recursive_pair_contact_intersections(other, sign, policy),
+            None => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "recursive-circle-pair-contact-blocker",
+                    "missing-support-relation",
+                );
+                Ok(None)
+            }
+        }
+    }
+
+    /// Intersects two selected algebraic cusp semicircles through the exact
+    /// circle-circle discriminant. Each of the at most two support branches is
+    /// replayed against both oriented half-circle predicates.
+    pub(crate) fn pair_intersections(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>> {
+        // Equal selected frames prove equal centers without materializing any
+        // algebraic coordinates. Radius and radial signs then enter the same
+        // coincident-support topology publisher as every represented frame.
+        if self.data.frame == other.data.frame {
+            let radius_squared_difference = self.radial_distance() * self.radial_distance()
+                - other.radial_distance() * other.radial_distance();
+            match real_sign(&radius_squared_difference, policy) {
+                Some(RealSign::Positive | RealSign::Negative) => {
+                    return Ok(Classification::Decided(
+                        BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                Some(RealSign::Zero) => {}
+            }
+            let radial_dot =
+                match real_sign(&(self.radial_distance() * other.radial_distance()), policy) {
+                    Some(RealSign::Positive) => RealSign::Positive,
+                    Some(RealSign::Negative) => RealSign::Negative,
+                    Some(RealSign::Zero) => {
+                        return Err(CurveError::Topology(
+                            "a selected circle retained a zero signed radius".into(),
+                        ));
+                    }
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+                };
+            return self.coincident_pair_intersections_from_radial_signs(
+                other,
+                RealSign::Zero,
+                Some(radial_dot),
+                None,
+                policy,
+            );
+        }
+        let center_relation = self.represented_structural_center_relation(other, policy)?;
+        let translation = self.represented_structural_translation(other, policy)?;
+        let represented = || {
+            self.represented_pair_intersections(
+                other,
+                center_relation.as_ref(),
+                translation.as_ref(),
+                policy,
+            )
+        };
+        // An exact translation keeps the circle formula in Real arithmetic.
+        // A center-distance certificate alone does not bound the cost of
+        // reconstructing angular coordinates, so prefer shared fields there.
+        if translation.is_some()
+            && let Classification::Decided(intersections) =
+                policy.strict_predicate_pass(represented)?
+        {
+            return Ok(Classification::Decided(intersections));
+        }
+        if let Some(Classification::Decided(intersections)) =
+            policy.strict_predicate_pass(|| self.recursive_pair_intersections(other, policy))?
+        {
+            return Ok(Classification::Decided(intersections));
+        }
+        represented()
+    }
+}
