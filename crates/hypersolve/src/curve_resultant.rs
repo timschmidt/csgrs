@@ -832,13 +832,16 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
                 value: resultant,
             });
         }
-        let Some(interpolated) = interpolate_samples(&second_samples, config.min_precision) else {
-            return report(
-                TrivariateConstraintResultantStatus::InterpolationDivisionFailed,
-                degree_bounds,
-                None,
-                None,
-            );
+        let interpolated = match interpolate_samples(&second_samples, config.min_precision) {
+            Ok(interpolated) => interpolated,
+            Err(failure) => {
+                return report(
+                    trivariate_interpolation_status(failure),
+                    degree_bounds,
+                    None,
+                    None,
+                );
+            }
         };
         second_axis_polynomials.push(interpolated);
     }
@@ -856,13 +859,16 @@ pub fn resultant_trivariate_polynomial_univariate_constraint(
                     .unwrap_or_else(Real::zero),
             })
             .collect::<Vec<_>>();
-        let Some(interpolated) = interpolate_samples(&first_samples, config.min_precision) else {
-            return report(
-                TrivariateConstraintResultantStatus::InterpolationDivisionFailed,
-                degree_bounds,
-                None,
-                None,
-            );
+        let interpolated = match interpolate_samples(&first_samples, config.min_precision) {
+            Ok(interpolated) => interpolated,
+            Err(failure) => {
+                return report(
+                    trivariate_interpolation_status(failure),
+                    degree_bounds,
+                    None,
+                    None,
+                );
+            }
         };
         interpolated_columns.push(interpolated);
     }
@@ -1718,7 +1724,7 @@ fn interpolate_rectangular_tensor_grid(
                     value: value.clone(),
                 })
                 .collect::<Vec<_>>();
-            interpolate_samples(&samples, min_precision)
+            interpolate_samples(&samples, min_precision).ok()
         })
         .collect::<Option<Vec<_>>>()?;
     let mut columns = Vec::with_capacity(second_count);
@@ -1734,7 +1740,7 @@ fn interpolate_rectangular_tensor_grid(
                     .unwrap_or_else(Real::zero),
             })
             .collect::<Vec<_>>();
-        columns.push(interpolate_samples(&samples, min_precision)?);
+        columns.push(interpolate_samples(&samples, min_precision).ok()?);
     }
     let mut coefficients = vec![vec![Real::zero(); second_count]; first_count];
     for (second_power, column) in columns.into_iter().enumerate() {
@@ -1781,7 +1787,7 @@ fn interpolate_rectangular_tensor_cube(
                         .unwrap_or_else(Real::zero),
                 })
                 .collect::<Vec<_>>();
-            let first_polynomial = interpolate_samples(&first_samples, min_precision)?;
+            let first_polynomial = interpolate_samples(&first_samples, min_precision).ok()?;
             for (first_power, coefficient) in first_polynomial.into_iter().enumerate() {
                 coefficients[first_power][second_power][third_power] = coefficient;
             }
@@ -2137,15 +2143,25 @@ pub fn resultant_bivariate_polynomial_system(
         });
     }
 
-    let Some(resultant_coefficients) = interpolate_samples(&samples, config.min_precision) else {
-        return curve_resultant_report(
-            CurveIntersectionResultantStatus::InterpolationDivisionFailed,
-            retained_parameter,
-            eliminated_parameter,
-            degree_bound,
-            Vec::new(),
-            None,
-        );
+    let resultant_coefficients = match interpolate_samples(&samples, config.min_precision) {
+        Ok(coefficients) => coefficients,
+        Err(failure) => {
+            return curve_resultant_report(
+                match failure {
+                    InterpolationFailure::Division => {
+                        CurveIntersectionResultantStatus::InterpolationDivisionFailed
+                    }
+                    InterpolationFailure::UndecidedCoefficient => {
+                        CurveIntersectionResultantStatus::UndecidedCoefficient
+                    }
+                },
+                retained_parameter,
+                eliminated_parameter,
+                degree_bound,
+                Vec::new(),
+                None,
+            );
+        }
     };
     let Ok(resultant_coefficients) =
         trim_trailing_zeroes(resultant_coefficients, config.min_precision)
@@ -3967,8 +3983,7 @@ fn interpolate_parameter_values(
             value: resultant.clone(),
         })
         .collect::<Vec<_>>();
-    let coefficients = interpolate_samples(&samples, min_precision)?;
-    trim_trailing_zeroes(coefficients, min_precision).ok()
+    interpolate_samples(&samples, min_precision).ok()
 }
 
 fn undecided_report(
@@ -4734,7 +4749,33 @@ fn eval_univariate(coefficients: &[Real], value: &Real) -> Real {
     result
 }
 
-fn interpolate_samples(samples: &[PolynomialSample], min_precision: i32) -> Option<Vec<Real>> {
+/// Why exact interpolation could not publish a trimmed polynomial.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum InterpolationFailure {
+    /// A divided difference had no exact quotient.
+    Division,
+    /// The interpolant exists, but a trailing coefficient's zero status is
+    /// undecided, so its degree cannot be certified.
+    UndecidedCoefficient,
+}
+
+const fn trivariate_interpolation_status(
+    failure: InterpolationFailure,
+) -> TrivariateConstraintResultantStatus {
+    match failure {
+        InterpolationFailure::Division => {
+            TrivariateConstraintResultantStatus::InterpolationDivisionFailed
+        }
+        InterpolationFailure::UndecidedCoefficient => {
+            TrivariateConstraintResultantStatus::UndecidedCoefficient
+        }
+    }
+}
+
+fn interpolate_samples(
+    samples: &[PolynomialSample],
+    min_precision: i32,
+) -> Result<Vec<Real>, InterpolationFailure> {
     // Divided differences retain the exact sampled polynomial on arbitrary
     // distinct nodes, including grids with omitted degree-drop fibers. Unlike
     // rebuilding every Lagrange basis, construction takes quadratic work and
@@ -4771,7 +4812,7 @@ fn interpolate_samples(samples: &[PolynomialSample], min_precision: i32) -> Opti
         for index in (order..samples.len()).rev() {
             differences[index] = ((&differences[index] - &differences[index - 1])
                 / (&samples[index].parameter_value - &samples[index - order].parameter_value))
-                .ok()?;
+                .map_err(|_| InterpolationFailure::Division)?;
         }
     }
     let mut result = Vec::new();
@@ -4784,7 +4825,8 @@ fn interpolate_samples(samples: &[PolynomialSample], min_precision: i32) -> Opti
             *coefficient *= &scale;
         }
     }
-    trim_trailing_zeroes(result, min_precision).ok()
+    trim_trailing_zeroes(result, min_precision)
+        .map_err(|_| InterpolationFailure::UndecidedCoefficient)
 }
 
 fn multiply_by_linear_factor(polynomial: Vec<Real>, constant: Real) -> Vec<Real> {
@@ -4891,7 +4933,10 @@ mod tests {
                 value: real(3),
             },
         ];
-        assert!(interpolate_samples(&duplicate, -512).is_none());
+        assert_eq!(
+            interpolate_samples(&duplicate, -512),
+            Err(InterpolationFailure::Division)
+        );
         assert!(interpolate_samples(&[], -512).unwrap() == vec![real(0)]);
     }
 
