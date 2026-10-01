@@ -2117,14 +2117,8 @@ impl CurveRegion2 {
                 hole_contours.len(),
             ))
             .collect::<Arc<[_]>>();
-        let fill_rules = material_contours
-            .iter()
-            .chain(&hole_contours)
-            .map(Contour2::fill_rule)
-            .collect::<Arc<[_]>>();
         let mut data = CurveRegionData2::new(boundary_loops);
         data.certified_loop_roles = Some(roles);
-        data.certified_loop_fill_rules = Some(fill_rules);
         // The caller's arrangement already certified these oriented, merged
         // line contours. Preserve that proof when choosing the compact native
         // representation, so the next operation does not normalize again.
@@ -2567,6 +2561,10 @@ impl CurveRegion2 {
         if loop_count == 1 && data.certified_loop_roles.is_none() {
             data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(1));
         }
+        // Filled-left normalized loops have winding 0 or +/-1 everywhere, so
+        // every per-loop fill rule selects the same set. Authored rules are
+        // construction input and are not retained on the normalized result.
+        data.certified_loop_fill_rules = None;
         data.regularized_filled_left_policy = Some(retained);
         Ok(self)
     }
@@ -3265,17 +3263,6 @@ impl CurveRegion2 {
                 .map(|profile| {
                     let indices = std::iter::once(profile.material_loop_index)
                         .chain(profile.hole_loop_indices.iter().copied());
-                    let fill_rules =
-                        normalized
-                            .data
-                            .certified_loop_fill_rules
-                            .as_deref()
-                            .map(|rules| {
-                                indices
-                                    .clone()
-                                    .map(|index| rules[index])
-                                    .collect::<Arc<[_]>>()
-                            });
                     let boundaries = indices
                         .map(|index| normalized.data.boundary_loops[index].clone())
                         .collect::<Vec<_>>();
@@ -3289,7 +3276,6 @@ impl CurveRegion2 {
                             ))
                             .collect(),
                     );
-                    data.certified_loop_fill_rules = fill_rules;
                     // Removing other complete material components preserves
                     // this component's regularized boundary. Ownership and
                     // the source normalization remain decision dependencies.
