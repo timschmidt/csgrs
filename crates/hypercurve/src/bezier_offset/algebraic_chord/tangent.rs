@@ -1364,22 +1364,22 @@ impl BezierAlgebraicChord2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let Some(tangent_x) =
-            TrivariatePolynomial2::from_axis_polynomial_or_zero(&differential.tangent_x, 2)
+            TrivariatePolynomial::from_axis_polynomial_or_zero(&differential.tangent_x, 2)
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let Some(tangent_y) =
-            TrivariatePolynomial2::from_axis_polynomial_or_zero(&differential.tangent_y, 2)
+            TrivariatePolynomial::from_axis_polynomial_or_zero(&differential.tangent_y, 2)
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let Some(cross) = TrivariatePolynomial2::sum_products(&[
+        let Some(cross) = TrivariatePolynomial::sum_products(&[
             (&line_x, &tangent_y, false),
             (&line_y, &tangent_x, true),
         ]) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let Some(dot) = TrivariatePolynomial2::sum_products(&[
+        let Some(dot) = TrivariatePolynomial::sum_products(&[
             (&line_x, &tangent_x, false),
             (&line_y, &tangent_y, false),
         ]) else {

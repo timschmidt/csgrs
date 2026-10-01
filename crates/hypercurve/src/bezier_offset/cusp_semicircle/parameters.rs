@@ -172,7 +172,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             bezier_parameter_root_representation(&system.second_parameter),
             bezier_parameter_root_representation(&system.cusp_parameter),
         ];
-        let dense = |polynomial: &TrivariatePolynomial2| {
+        let dense = |polynomial: &TrivariatePolynomial| {
             dense_reduce_selected_tuple_relations(polynomial.to_dense_polynomial()?, &sources)
         };
         let Some(discriminant) = dense(&system.discriminant)
@@ -599,7 +599,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             bezier_parameter_root_representation(&system.second_parameter),
             bezier_parameter_root_representation(&system.cusp_parameter),
         ];
-        let dense = |polynomial: &TrivariatePolynomial2| {
+        let dense = |polynomial: &TrivariatePolynomial| {
             dense_reduce_selected_tuple_relations(polynomial.to_dense_polynomial()?, &sources)
         };
         let field = if let Some(field) = self.data.recursive_import_field.get() {
@@ -617,7 +617,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 "an oblique chord map retained a nonbase recursive import field".into(),
             ));
         };
-        let rational = |polynomial: &TrivariatePolynomial2| {
+        let rational = |polynomial: &TrivariatePolynomial| {
             recursive_quadratic_rational_value(base, dense(polynomial)?)
         };
         let value = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
@@ -669,7 +669,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             bezier_parameter_root_representation(&system.second_parameter),
             bezier_parameter_root_representation(&system.cusp_parameter),
         ];
-        let dense = |polynomial: &TrivariatePolynomial2| {
+        let dense = |polynomial: &TrivariatePolynomial| {
             dense_reduce_selected_tuple_relations(polynomial.to_dense_polynomial()?, &sources)
         };
         let field = if let Some(field) = self.data.recursive_import_field.get() {
@@ -733,7 +733,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 1,
             )
         };
-        let rational = |polynomial: &TrivariatePolynomial2| {
+        let rational = |polynomial: &TrivariatePolynomial| {
             recursive_quadratic_rational_value(&base, dense(polynomial)?)
         };
         let nested = |expression: &BezierAlgebraicCuspRetainedOffsetChordNestedExpression2| {
@@ -1239,8 +1239,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
 
     pub(in crate::bezier_offset) fn trivariate_radical_components_sign(
         &self,
-        rational: &TrivariatePolynomial2,
-        radical: &TrivariatePolynomial2,
+        rational: &TrivariatePolynomial,
+        radical: &TrivariatePolynomial,
         branch: i8,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -1404,7 +1404,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             1_i8
         });
         let Some(candidate) =
-            TrivariatePolynomial2::from_axis_polynomial(&[(-turn * cross_scale)], 0)
+            TrivariatePolynomial::from_axis_polynomial(&[(-turn * cross_scale)], 0)
                 .and_then(BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational)
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -1903,7 +1903,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     BezierAlgebraicCuspRetainedOffsetChordNestedExpression2::linear_combination(
                         &[(&system.point_x, px), (&system.point_y, py)],
                     )?;
-                predicate.retained.rational = TrivariatePolynomial2::linear_combination(&[
+                predicate.retained.rational = TrivariatePolynomial::linear_combination(&[
                     (&predicate.retained.rational, &one),
                     (&system.center_x, cx),
                     (&system.center_y, cy),
@@ -1916,14 +1916,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             self.retained_offset_nested_sign(&predicate, contact.branch, policy)?
         } else if let Some(system) = self.oblique_system() {
-            let rational = TrivariatePolynomial2::linear_combination(&[
+            let rational = TrivariatePolynomial::linear_combination(&[
                 (&system.point_x.rational, px),
                 (&system.point_y.rational, py),
                 (&system.center_x, cx),
                 (&system.center_y, cy),
                 (&system.common_denominator, offset),
             ]);
-            let radical = TrivariatePolynomial2::linear_combination(&[
+            let radical = TrivariatePolynomial::linear_combination(&[
                 (&system.point_x.radical, px),
                 (&system.point_y.radical, py),
             ]);
@@ -1999,7 +1999,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             Axis2::Y => (&system.point_y, &system.center_y),
         };
         let one_minus_scale = Real::one() - radial_scale;
-        let rational = TrivariatePolynomial2::linear_combination(&[
+        let rational = TrivariatePolynomial::linear_combination(&[
             (&point.rational, radial_scale),
             (center, &one_minus_scale),
             (&system.common_denominator, translation),
@@ -2330,7 +2330,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let first = real_interval_from_parameter(&first);
         let second = real_interval_from_parameter(&second);
         let cusp = real_interval_from_parameter(&cusp);
-        let evaluate = |polynomial: &TrivariatePolynomial2| {
+        let evaluate = |polynomial: &TrivariatePolynomial| {
             trivariate_power_basis_interval(polynomial, &first, &second, &cusp)
         };
         let Some(speed) =
@@ -2553,7 +2553,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let first = real_interval_from_parameter(&first);
         let second = real_interval_from_parameter(&second);
         let cusp = real_interval_from_parameter(&cusp);
-        let evaluate = |polynomial: &TrivariatePolynomial2| {
+        let evaluate = |polynomial: &TrivariatePolynomial| {
             trivariate_power_basis_interval(polynomial, &first, &second, &cusp)
         };
         let Some(discriminant) =

@@ -70,7 +70,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let second_cusp_parameter = second_cusp_parameter.clone();
         let system = (|| {
             let axis = |coefficients: &[Real], axis| {
-                TrivariatePolynomial2::from_axis_polynomial(coefficients, axis)
+                TrivariatePolynomial::from_axis_polynomial(coefficients, axis)
             };
             let x = axis(&target_x, 2)?;
             let y = axis(&target_y, 2)?;
@@ -79,11 +79,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             let tangent_y = axis(&target_tangent_y, 2)?;
 
             // S=Q-P over the positive denominator W*(2*q*D).
-            let source_x_rational = TrivariatePolynomial2::sum_products(&[
+            let source_x_rational = TrivariatePolynomial::sum_products(&[
                 (&x, &contact_denominator, false),
                 (&weight, &center_x.rational, true),
             ])?;
-            let source_y_rational = TrivariatePolynomial2::sum_products(&[
+            let source_y_rational = TrivariatePolynomial::sum_products(&[
                 (&y, &contact_denominator, false),
                 (&weight, &center_y.rational, true),
             ])?;
@@ -95,11 +95,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 .scale(&Real::from(-1_i8))?;
             let source_common_denominator = weight.multiply(&contact_denominator)?;
 
-            let source_rational_squared = TrivariatePolynomial2::sum_products(&[
+            let source_rational_squared = TrivariatePolynomial::sum_products(&[
                 (&source_x_rational, &source_x_rational, false),
                 (&source_y_rational, &source_y_rational, false),
             ])?;
-            let source_radical_squared = TrivariatePolynomial2::sum_products(&[
+            let source_radical_squared = TrivariatePolynomial::sum_products(&[
                 (&source_x_radical, &source_x_radical, false),
                 (&source_y_radical, &source_y_radical, false),
             ])?;
@@ -110,7 +110,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         .multiply(&source_common_denominator)?
                         .scale(&(&radial_distance * &radial_distance))?,
                 )?;
-            let incidence_radical = TrivariatePolynomial2::sum_products(&[
+            let incidence_radical = TrivariatePolynomial::sum_products(&[
                 (&source_x_rational, &source_x_radical, false),
                 (&source_y_rational, &source_y_radical, false),
             ])?
@@ -126,35 +126,35 @@ impl BezierAlgebraicCuspSemicircle2 {
             let radial_x_radical = &radial_x.radical;
             let radial_y_radical = &radial_y.radical;
 
-            let cross_rational = TrivariatePolynomial2::sum_products(&[
+            let cross_rational = TrivariatePolynomial::sum_products(&[
                 (radial_x_rational, &source_y_rational, false),
                 (radial_y_rational, &source_x_rational, true),
             ])?
             .add(
-                &TrivariatePolynomial2::sum_products(&[
+                &TrivariatePolynomial::sum_products(&[
                     (radial_x_radical, &source_y_radical, false),
                     (radial_y_radical, &source_x_radical, true),
                 ])?
                 .multiply(&discriminant)?,
             )?;
-            let cross_radical = TrivariatePolynomial2::sum_products(&[
+            let cross_radical = TrivariatePolynomial::sum_products(&[
                 (radial_x_rational, &source_y_radical, false),
                 (radial_y_rational, &source_x_radical, true),
                 (radial_x_radical, &source_y_rational, false),
                 (radial_y_radical, &source_x_rational, true),
             ])?;
-            let dot_rational = TrivariatePolynomial2::sum_products(&[
+            let dot_rational = TrivariatePolynomial::sum_products(&[
                 (radial_x_rational, &source_x_rational, false),
                 (radial_y_rational, &source_y_rational, false),
             ])?
             .add(
-                &TrivariatePolynomial2::sum_products(&[
+                &TrivariatePolynomial::sum_products(&[
                     (radial_x_radical, &source_x_radical, false),
                     (radial_y_radical, &source_y_radical, false),
                 ])?
                 .multiply(&discriminant)?,
             )?;
-            let dot_radical = TrivariatePolynomial2::sum_products(&[
+            let dot_radical = TrivariatePolynomial::sum_products(&[
                 (radial_x_rational, &source_x_radical, false),
                 (radial_y_rational, &source_y_radical, false),
                 (radial_x_radical, &source_x_rational, false),
@@ -185,28 +185,28 @@ impl BezierAlgebraicCuspSemicircle2 {
             // denominators are positive after weight normalization.
             let tangent_scale = -self.turn_sign();
             let tangent_cross = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                rational: TrivariatePolynomial2::sum_products(&[
+                rational: TrivariatePolynomial::sum_products(&[
                     (&source_x_rational, &tangent_x, false),
                     (&source_y_rational, &tangent_y, false),
                 ])?
                 .scale(&tangent_scale)?,
-                radical: TrivariatePolynomial2::sum_products(&[
+                radical: TrivariatePolynomial::sum_products(&[
                     (&source_x_radical, &tangent_x, false),
                     (&source_y_radical, &tangent_y, false),
                 ])?
                 .scale(&tangent_scale)?,
             };
             let angular_tangent = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                rational: TrivariatePolynomial2::sum_products(&[
+                rational: TrivariatePolynomial::sum_products(&[
                     (&source_x_rational, &tangent_y, false),
                     (&source_y_rational, &tangent_x, true),
                 ])?,
-                radical: TrivariatePolynomial2::sum_products(&[
+                radical: TrivariatePolynomial::sum_products(&[
                     (&source_x_radical, &tangent_y, false),
                     (&source_y_radical, &tangent_x, true),
                 ])?,
             };
-            let reduce = |polynomial: TrivariatePolynomial2| {
+            let reduce = |polynomial: TrivariatePolynomial| {
                 trivariate_reduce_parameter_pair_relations(
                     &polynomial,
                     &first_cusp_parameter,
@@ -309,9 +309,9 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let system = (|| {
             let axis = |coefficients: &[Real]| {
-                TrivariatePolynomial2::from_axis_polynomial_or_zero(coefficients, 2)
+                TrivariatePolynomial::from_axis_polynomial_or_zero(coefficients, 2)
             };
-            let zero = || TrivariatePolynomial2::from_axis_polynomial(&[Real::zero()], 2);
+            let zero = || TrivariatePolynomial::from_axis_polynomial(&[Real::zero()], 2);
             let x = axis(source.x_numerator)?;
             let y = axis(source.y_numerator)?;
             let weight = axis(&target_weight)?;
@@ -377,7 +377,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         .multiply(second_x, &pair_discriminant)?
                         .add(&first_y.multiply(second_y, &pair_discriminant)?)
                 };
-            let rational_pair = |polynomial: TrivariatePolynomial2| {
+            let rational_pair = |polynomial: TrivariatePolynomial| {
                 BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational(polynomial)
             };
             let normal_common_x_pair = rational_pair(normal_common_x.clone())?;
@@ -436,7 +436,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 .scale(&(-&turn))?;
             let source_cross_tangent =
                 pair_cross(&source_x, &source_y, &tangent_x_pair, &tangent_y_pair)?;
-            let normal_cross_tangent = TrivariatePolynomial2::sum_products(&[
+            let normal_cross_tangent = TrivariatePolynomial::sum_products(&[
                 (&normal_common_x, &tangent_y, false),
                 (&normal_common_y, &tangent_x, true),
             ])?;
@@ -453,7 +453,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 rational: normal_cross_tangent.multiply(&weight)?.scale(&turn)?,
             };
 
-            let reduce = |polynomial: TrivariatePolynomial2| {
+            let reduce = |polynomial: TrivariatePolynomial| {
                 trivariate_reduce_parameter_pair_relations(
                     &polynomial,
                     &first_parameter,

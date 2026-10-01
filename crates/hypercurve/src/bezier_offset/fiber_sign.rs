@@ -2387,7 +2387,7 @@ pub(super) fn selected_fiber_simple_parameter(
 pub(super) fn algebraic_selected_fiber_pair_trivariate_root(
     source: &BezierAlgebraicSelectedFiberParameter2,
     image: &BezierAlgebraicSelectedFiberParameter2,
-    incidence: &TrivariatePolynomial2,
+    incidence: &TrivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let strict = *policy;
@@ -2584,8 +2584,8 @@ pub(super) fn algebraic_selected_fiber_pair_projected_root_via_subresultants_str
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let specialize_degree = |polynomial: &TrivariatePolynomial2|
-     -> CurveResult<Classification<Option<TrivariatePolynomial2>>> {
+    let specialize_degree = |polynomial: &TrivariatePolynomial|
+     -> CurveResult<Classification<Option<TrivariatePolynomial>>> {
         let Some((mut coefficients, [0, 1])) =
             trivariate_axis_bivariate_coefficients(polynomial, 2)
         else {

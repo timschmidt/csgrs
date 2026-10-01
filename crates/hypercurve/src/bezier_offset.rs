@@ -104,6 +104,7 @@ use hypersolve::tensor_support::{
     dense_last_axis_coefficient, dense_last_axis_derivative, dense_reduce_selected_root_relations,
     dense_specialize_last_axis, dense_tensor_embed_axes, dense_tensor_from_polynomial_coefficients,
 };
+use hypersolve::trivariate_arithmetic::try_zero_trivariate_coefficients;
 use std::borrow::Cow;
 use std::ops::ControlFlow;
 use std::sync::{Arc, Mutex, OnceLock, Weak};
@@ -185,7 +186,7 @@ use hypersolve::{
 };
 use hypersolve::{
     TrivariateConstraintResultantStatus, TrivariateConstraintSubresultantStatus,
-    TrivariatePolynomial as SolverTrivariatePolynomial, TrivariatePolynomialAxis,
+    TrivariatePolynomial, TrivariatePolynomialAxis,
     resultant_trivariate_polynomial_univariate_constraint,
     subresultant_trivariate_polynomial_univariate_constraint,
 };
@@ -750,9 +751,9 @@ enum BezierAlgebraicCuspSemicircleRationalParameterMapSystem2 {
     SelectedRadial {
         pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
         branch: i8,
-        discriminant: TrivariatePolynomial2,
+        discriminant: TrivariatePolynomial,
         diameter: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-        radius_squared_denominator: TrivariatePolynomial2,
+        radius_squared_denominator: TrivariatePolynomial,
         tangent_cross: BezierAlgebraicCuspTrivariateSquareRootExpression2,
         angular_tangent: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     },
@@ -1368,7 +1369,7 @@ fn rational_overlap_parameter_for_exact_cusp(
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         let radial_coefficient = Real::one() - Real::from(2_i8) * parameter;
-        let Some(rational) = TrivariatePolynomial2::linear_combination(&[
+        let Some(rational) = TrivariatePolynomial::linear_combination(&[
             (&diameter.rational, &denominator),
             (radius_squared_denominator, &(-radial_coefficient)),
         ]) else {
@@ -3296,8 +3297,8 @@ struct BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2 {
 
 #[derive(Clone, Debug)]
 struct BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-    rational: TrivariatePolynomial2,
-    radical: TrivariatePolynomial2,
+    rational: TrivariatePolynomial,
+    radical: TrivariatePolynomial,
 }
 
 /// Exact expression in the retained circle-pair radical and one analytic
@@ -3308,10 +3309,10 @@ struct BezierAlgebraicCuspTrivariateSquareRootExpression2 {
 /// `product*k*s + pair*k + candidate*s + rational`.
 #[derive(Clone, Debug)]
 struct BezierAlgebraicCuspTrivariateTwoSquareRootExpression2 {
-    product: TrivariatePolynomial2,
-    pair: TrivariatePolynomial2,
-    candidate: TrivariatePolynomial2,
-    rational: TrivariatePolynomial2,
+    product: TrivariatePolynomial,
+    pair: TrivariatePolynomial,
+    candidate: TrivariatePolynomial,
+    rational: TrivariatePolynomial,
 }
 
 /// Target-independent pair-field geometry of a selected-radial circle.
@@ -3329,8 +3330,8 @@ struct BezierSelectedRadialCircleFrameSystem2 {
     /// therefore must retain a distinct base allocation.
     canonical_pair_field: bool,
     branch: i8,
-    discriminant: TrivariatePolynomial2,
-    denominator: TrivariatePolynomial2,
+    discriminant: TrivariatePolynomial,
+    denominator: TrivariatePolynomial,
     center_x: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     center_y: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     radial_x: BezierAlgebraicCuspTrivariateSquareRootExpression2,
@@ -3400,12 +3401,12 @@ struct BezierSelectedRadialCircleFrameSource2<'a> {
 struct BezierSelectedRadialCircleRationalSystem2 {
     pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
     branch: i8,
-    discriminant: TrivariatePolynomial2,
+    discriminant: TrivariatePolynomial,
     incidence: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    incidence_projection: TrivariatePolynomial2,
+    incidence_projection: TrivariatePolynomial,
     selected_half_plane: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     diameter: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radius_squared_denominator: TrivariatePolynomial2,
+    radius_squared_denominator: TrivariatePolynomial,
     tangent_cross: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     /// Signed angular velocity `cross(Q-C,Q')`. Its exact zeros partition a
     /// coincident rational-circle component into monotone parameter cells.
@@ -3420,11 +3421,11 @@ struct BezierSelectedRadialCircleRationalSystem2 {
 struct BezierDirectPairRadialParallelFastPath2 {
     pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
     branch: i8,
-    pair_discriminant: TrivariatePolynomial2,
-    candidate_speed_squared: TrivariatePolynomial2,
+    pair_discriminant: TrivariatePolynomial,
+    candidate_speed_squared: TrivariatePolynomial,
     incidence: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
     incidence_candidate_norm: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    incidence_projection: TrivariatePolynomial2,
+    incidence_projection: TrivariatePolynomial,
     selected_half_plane: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
     diameter: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
     radius_squared_denominator: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
@@ -4614,12 +4615,12 @@ struct BezierAlgebraicCuspSemicircleObliqueChordSystem2 {
 
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2 {
-    discriminant: TrivariatePolynomial2,
+    discriminant: TrivariatePolynomial,
     diameter_side: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radius_squared_denominator: TrivariatePolynomial2,
-    common_denominator: TrivariatePolynomial2,
-    center_x: TrivariatePolynomial2,
-    center_y: TrivariatePolynomial2,
+    radius_squared_denominator: TrivariatePolynomial,
+    common_denominator: TrivariatePolynomial,
+    center_x: TrivariatePolynomial,
+    center_y: TrivariatePolynomial,
     point_x: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     point_y: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     first_parameter: BezierParameter2,
@@ -4648,14 +4649,14 @@ struct BezierAlgebraicCuspSemicircleRetainedOffsetChordSystem2 {
 
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleRetainedOffsetChordParameterMapSystem2 {
-    speed_squared: TrivariatePolynomial2,
+    speed_squared: TrivariatePolynomial,
     contact_discriminant: BezierAlgebraicCuspTrivariateSquareRootExpression2,
     diameter_side: BezierAlgebraicCuspRetainedOffsetChordNestedExpression2,
     tangent_dot: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radius_squared_denominator: TrivariatePolynomial2,
-    common_denominator: TrivariatePolynomial2,
-    center_x: TrivariatePolynomial2,
-    center_y: TrivariatePolynomial2,
+    radius_squared_denominator: TrivariatePolynomial,
+    common_denominator: TrivariatePolynomial,
+    center_x: TrivariatePolynomial,
+    center_y: TrivariatePolynomial,
     point_x: BezierAlgebraicCuspRetainedOffsetChordNestedExpression2,
     point_y: BezierAlgebraicCuspRetainedOffsetChordNestedExpression2,
     first_parameter: BezierParameter2,
@@ -7500,11 +7501,6 @@ fn algebraic_point_linear_order(
     )
 }
 
-#[derive(Clone, Debug)]
-struct TrivariatePolynomial2 {
-    coefficients: Vec<Vec<Vec<Real>>>,
-}
-
 /// The specialized symbolic factor replay remains a bounded fast path. Larger
 /// tensors continue through the rank-independent Hypersolve image authority;
 /// this threshold is never a construction or correctness limit.
@@ -7527,350 +7523,6 @@ const MAX_FIRST_BILINEAR_FACTOR_PROPOSALS: usize = 64;
 /// be accepted by exact division, so exhaustion loses capability rather than
 /// exactness.
 const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
-
-fn try_zero_trivariate_coefficients(dimensions: [usize; 3]) -> Option<Vec<Vec<Vec<Real>>>> {
-    dimensions[0]
-        .checked_mul(dimensions[1])?
-        .checked_mul(dimensions[2])?;
-    let mut coefficients = Vec::new();
-    coefficients.try_reserve_exact(dimensions[0]).ok()?;
-    for _ in 0..dimensions[0] {
-        let mut rows = Vec::new();
-        rows.try_reserve_exact(dimensions[1]).ok()?;
-        for _ in 0..dimensions[1] {
-            let mut row = Vec::new();
-            row.try_reserve_exact(dimensions[2]).ok()?;
-            row.resize_with(dimensions[2], Real::zero);
-            rows.push(row);
-        }
-        coefficients.push(rows);
-    }
-    Some(coefficients)
-}
-
-impl TrivariatePolynomial2 {
-    fn ab_ac_determinant(
-        positive_ab: &BivariatePolynomial,
-        positive_ac: &BivariatePolynomial,
-        negative_ab: &BivariatePolynomial,
-        negative_ac: &BivariatePolynomial,
-    ) -> Option<Self> {
-        let a_count = [(positive_ab, positive_ac), (negative_ab, negative_ac)]
-            .into_iter()
-            .map(|(ab, ac)| {
-                ab.coefficients
-                    .len()
-                    .saturating_add(ac.coefficients.len())
-                    .saturating_sub(1)
-            })
-            .max()
-            .unwrap_or(0);
-        let b_count = positive_ab
-            .coefficients
-            .iter()
-            .chain(&negative_ab.coefficients)
-            .map(Vec::len)
-            .max()
-            .unwrap_or(0);
-        let c_count = positive_ac
-            .coefficients
-            .iter()
-            .chain(&negative_ac.coefficients)
-            .map(Vec::len)
-            .max()
-            .unwrap_or(0);
-        let mut coefficients = try_zero_trivariate_coefficients([a_count, b_count, c_count])?;
-        for (ab, ac, sign) in [
-            (positive_ab, positive_ac, 1_i8),
-            (negative_ab, negative_ac, -1_i8),
-        ] {
-            let sign = Real::from(sign);
-            for (ab_a, row) in ab.coefficients.iter().enumerate() {
-                for (b, ab_coefficient) in row.iter().enumerate() {
-                    for (ac_a, column) in ac.coefficients.iter().enumerate() {
-                        for (c, ac_coefficient) in column.iter().enumerate() {
-                            coefficients[ab_a + ac_a][b][c] +=
-                                &sign * ab_coefficient * ac_coefficient;
-                        }
-                    }
-                }
-            }
-        }
-        Some(Self { coefficients })
-    }
-
-    fn dimensions(&self) -> (usize, usize, usize) {
-        (
-            self.coefficients.len(),
-            self.coefficients.iter().map(Vec::len).max().unwrap_or(0),
-            self.coefficients
-                .iter()
-                .flat_map(|rows| rows.iter())
-                .map(Vec::len)
-                .max()
-                .unwrap_or(0),
-        )
-    }
-
-    fn from_axis_polynomial(coefficients: &[Real], axis: usize) -> Option<Self> {
-        if axis > 2 || coefficients.is_empty() {
-            return None;
-        }
-        let dimensions: [usize; 3] =
-            std::array::from_fn(|index| if index == axis { coefficients.len() } else { 1 });
-        let mut tensor = try_zero_trivariate_coefficients(dimensions)?;
-        for (power, coefficient) in coefficients.iter().enumerate() {
-            let mut index = [0; 3];
-            index[axis] = power;
-            tensor[index[0]][index[1]][index[2]] = coefficient.clone();
-        }
-        Self::from_coefficients(tensor)
-    }
-
-    /// Lifts a univariate polynomial while preserving the conventional empty
-    /// coefficient vector as the exact zero polynomial.
-    fn from_axis_polynomial_or_zero(coefficients: &[Real], axis: usize) -> Option<Self> {
-        if coefficients.is_empty() {
-            Self::from_axis_polynomial(&[Real::zero()], axis)
-        } else {
-            Self::from_axis_polynomial(coefficients, axis)
-        }
-    }
-
-    fn from_coefficients(mut coefficients: Vec<Vec<Vec<Real>>>) -> Option<Self> {
-        let mut second_count = coefficients.iter().map(Vec::len).max().unwrap_or(0);
-        let mut third_count = coefficients
-            .iter()
-            .flat_map(|rows| rows.iter())
-            .map(Vec::len)
-            .max()
-            .unwrap_or(0);
-        if coefficients.is_empty() || second_count == 0 || third_count == 0 {
-            return None;
-        }
-        for rows in &mut coefficients {
-            rows.try_reserve(second_count.saturating_sub(rows.len()))
-                .ok()?;
-            while rows.len() < second_count {
-                let mut row = Vec::new();
-                row.try_reserve_exact(third_count).ok()?;
-                row.resize_with(third_count, Real::zero);
-                rows.push(row);
-            }
-            for row in rows.iter_mut() {
-                row.try_reserve(third_count.saturating_sub(row.len()))
-                    .ok()?;
-                row.resize(third_count, Real::zero());
-            }
-        }
-        while coefficients.len() > 1
-            && coefficients.last().is_some_and(|rows| {
-                rows.iter()
-                    .flatten()
-                    .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
-            })
-        {
-            coefficients.pop();
-        }
-        while second_count > 1
-            && coefficients.iter().all(|rows| {
-                rows[second_count - 1]
-                    .iter()
-                    .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
-            })
-        {
-            second_count -= 1;
-        }
-        while third_count > 1
-            && coefficients.iter().all(|rows| {
-                rows.iter()
-                    .all(|row| row[third_count - 1].zero_status() == ZeroKnowledge::Zero)
-            })
-        {
-            third_count -= 1;
-        }
-        for rows in &mut coefficients {
-            rows.truncate(second_count);
-            for row in rows {
-                row.truncate(third_count);
-            }
-        }
-        coefficients
-            .len()
-            .checked_mul(second_count)?
-            .checked_mul(third_count)?;
-        Some(Self { coefficients })
-    }
-
-    fn coefficient(&self, first: usize, second: usize, third: usize) -> Option<&Real> {
-        self.coefficients
-            .get(first)
-            .and_then(|rows| rows.get(second))
-            .and_then(|row| row.get(third))
-    }
-
-    fn add(&self, other: &Self) -> Option<Self> {
-        self.combine(other, false)
-    }
-
-    fn subtract(&self, other: &Self) -> Option<Self> {
-        self.combine(other, true)
-    }
-
-    fn combine(&self, other: &Self, subtract: bool) -> Option<Self> {
-        let first = self.dimensions();
-        let second = other.dimensions();
-        let dimensions = (
-            first.0.max(second.0),
-            first.1.max(second.1),
-            first.2.max(second.2),
-        );
-        let mut coefficients =
-            try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
-        for (first_index, rows) in coefficients.iter_mut().enumerate() {
-            for (second_index, row) in rows.iter_mut().enumerate() {
-                for (third_index, coefficient) in row.iter_mut().enumerate() {
-                    if let Some(value) = self.coefficient(first_index, second_index, third_index) {
-                        *coefficient += value;
-                    }
-                    if let Some(value) = other.coefficient(first_index, second_index, third_index) {
-                        if subtract {
-                            *coefficient -= value;
-                        } else {
-                            *coefficient += value;
-                        }
-                    }
-                }
-            }
-        }
-        Self::from_coefficients(coefficients)
-    }
-
-    fn scale(&self, scale: &Real) -> Option<Self> {
-        let dimensions = self.dimensions();
-        let mut coefficients =
-            try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
-        for (target_rows, source_rows) in coefficients.iter_mut().zip(&self.coefficients) {
-            for (target_row, source_row) in target_rows.iter_mut().zip(source_rows) {
-                for (target, source) in target_row.iter_mut().zip(source_row) {
-                    *target = source * scale;
-                }
-            }
-        }
-        Self::from_coefficients(coefficients)
-    }
-
-    /// Forms an exact weighted sum with one rectangular tensor allocation.
-    ///
-    /// Predicate replay frequently needs a short affine combination of the
-    /// retained contact polynomials.  Building each scaled term and then
-    /// combining them materializes several dense temporary tensors; direct
-    /// accumulation keeps the same coefficient arithmetic while
-    /// allocating only the result.
-    fn linear_combination(terms: &[(&Self, &Real)]) -> Option<Self> {
-        let dimensions = terms.iter().fold((0, 0, 0), |dimensions, (term, _)| {
-            let term = term.dimensions();
-            (
-                dimensions.0.max(term.0),
-                dimensions.1.max(term.1),
-                dimensions.2.max(term.2),
-            )
-        });
-        if dimensions.0 == 0 || dimensions.1 == 0 || dimensions.2 == 0 {
-            return None;
-        }
-        let mut coefficients =
-            try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
-        for (term, scale) in terms {
-            if scale.zero_status() == ZeroKnowledge::Zero {
-                continue;
-            }
-            for (first, rows) in term.coefficients.iter().enumerate() {
-                for (second, row) in rows.iter().enumerate() {
-                    for (third, coefficient) in row.iter().enumerate() {
-                        coefficients[first][second][third] += coefficient * *scale;
-                    }
-                }
-            }
-        }
-        Self::from_coefficients(coefficients)
-    }
-
-    fn multiply(&self, other: &Self) -> Option<Self> {
-        Self::sum_products(&[(self, other, false)])
-    }
-
-    /// Forms a signed sum of polynomial products in one result tensor.
-    /// Exact convolution order within each product is unchanged; only the
-    /// dense product and subsequent add/subtract temporaries are elided.
-    fn sum_products(terms: &[(&Self, &Self, bool)]) -> Option<Self> {
-        let dimensions = terms.iter().try_fold(
-            (0_usize, 0_usize, 0_usize),
-            |dimensions, (first, second, _)| {
-                let first = first.dimensions();
-                let second = second.dimensions();
-                Some((
-                    dimensions
-                        .0
-                        .max(first.0.checked_add(second.0)?.checked_sub(1)?),
-                    dimensions
-                        .1
-                        .max(first.1.checked_add(second.1)?.checked_sub(1)?),
-                    dimensions
-                        .2
-                        .max(first.2.checked_add(second.2)?.checked_sub(1)?),
-                ))
-            },
-        )?;
-        if dimensions.0 == 0 || dimensions.1 == 0 || dimensions.2 == 0 {
-            return None;
-        }
-        let mut coefficients =
-            try_zero_trivariate_coefficients([dimensions.0, dimensions.1, dimensions.2])?;
-        for (first, second, subtract) in terms {
-            for (first_a, first_rows) in first.coefficients.iter().enumerate() {
-                for (second_a, first_row) in first_rows.iter().enumerate() {
-                    for (third_a, first_coefficient) in first_row.iter().enumerate() {
-                        for (first_b, second_rows) in second.coefficients.iter().enumerate() {
-                            for (second_b, second_row) in second_rows.iter().enumerate() {
-                                for (third_b, second_coefficient) in second_row.iter().enumerate() {
-                                    let target = &mut coefficients[first_a + first_b]
-                                        [second_a + second_b][third_a + third_b];
-                                    if *subtract {
-                                        *target -= first_coefficient * second_coefficient;
-                                    } else {
-                                        *target += first_coefficient * second_coefficient;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Self::from_coefficients(coefficients)
-    }
-
-    fn to_dense_polynomial(&self) -> Option<DenseTensorPolynomial> {
-        let dimensions = self.dimensions();
-        let counts = [dimensions.0, dimensions.1, dimensions.2];
-        let coefficient_count = counts.into_iter().try_fold(1_usize, usize::checked_mul)?;
-        let mut coefficients = Vec::new();
-        coefficients.try_reserve_exact(coefficient_count).ok()?;
-        for first in 0..counts[0] {
-            for second in 0..counts[1] {
-                for third in 0..counts[2] {
-                    coefficients.push(
-                        self.coefficient(first, second, third)
-                            .cloned()
-                            .unwrap_or_else(Real::zero),
-                    );
-                }
-            }
-        }
-        DenseTensorPolynomial::try_new(counts.to_vec(), coefficients)
-    }
-}
 
 /// Compact dense polynomial on four independently selected scalar roots.
 ///
@@ -7947,7 +7599,7 @@ impl QuadrivariatePolynomial2 {
         Some(polynomial)
     }
 
-    fn lift_trivariate(polynomial: &TrivariatePolynomial2, axes: [usize; 3]) -> Option<Self> {
+    fn lift_trivariate(polynomial: &TrivariatePolynomial, axes: [usize; 3]) -> Option<Self> {
         if axes.into_iter().any(|axis| axis >= 4)
             || axes[0] == axes[1]
             || axes[0] == axes[2]
@@ -8410,7 +8062,7 @@ impl BezierDenseTwoSquareRootExpression2 {
 /// conjugate or opposite-branch norm root by exact unsquared replay.
 fn selected_pair_square_root_expression_third_axis_parameters(
     expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radicand: &TrivariatePolynomial2,
+    radicand: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     branch: i8,
@@ -8438,8 +8090,8 @@ fn selected_pair_square_root_expression_third_axis_parameters(
 #[allow(clippy::too_many_arguments)]
 fn selected_pair_square_root_expression_third_axis_parameters_from_projection(
     expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radicand: &TrivariatePolynomial2,
-    projection: &TrivariatePolynomial2,
+    radicand: &TrivariatePolynomial,
+    projection: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     branch: i8,
@@ -8481,7 +8133,7 @@ fn selected_pair_square_root_expression_third_axis_parameters_from_projection(
 /// a division-free fast authority for transverse roots; multiple roots fall
 /// through to the general exact signer.
 fn projected_selected_trivariate_candidate_has_box_root(
-    incidence: &TrivariatePolynomial2,
+    incidence: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -8778,7 +8430,7 @@ fn selected_parameter_reduced_by_constraint(
 /// exact projection or isolation uncertainty leaves the caller's existing
 /// carrier unchanged.
 fn selected_trivariate_third_axis_constraint(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
 ) -> CurveResult<Option<Vec<Real>>> {
@@ -8834,7 +8486,7 @@ fn independent_parameter_pair_incidence(second: &BezierParameter2) -> BivariateP
 /// has even multiplicity; the existing product-box authority can therefore
 /// correlate the exact root tuple.
 fn projected_selected_trivariate_candidate_has_subresultant_root(
-    projected_incidence: &TrivariatePolynomial2,
+    projected_incidence: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -8851,7 +8503,7 @@ fn projected_selected_trivariate_candidate_has_subresultant_root(
 }
 
 fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_limit(
-    projected_incidence: &TrivariatePolynomial2,
+    projected_incidence: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -8907,10 +8559,8 @@ fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_
         min_precision: hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
         max_resultant_degree,
     };
-    let solver_polynomial =
-        SolverTrivariatePolynomial::new(projected_incidence.coefficients.clone());
     let mut resultant = resultant_trivariate_polynomial_univariate_constraint(
-        &solver_polynomial,
+        &projected_incidence,
         &constraint,
         TrivariatePolynomialAxis::Third,
         config,
@@ -8926,7 +8576,7 @@ fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_
         );
         config.max_resultant_degree = usize::MAX;
         resultant = resultant_trivariate_polynomial_univariate_constraint(
-            &solver_polynomial,
+            &projected_incidence,
             &constraint,
             TrivariatePolynomialAxis::Third,
             config,
@@ -8963,7 +8613,7 @@ fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_
         .min(constraint.len().saturating_sub(1));
     for order in 1..=maximum_order {
         let mut report = subresultant_trivariate_polynomial_univariate_constraint(
-            &solver_polynomial,
+            &projected_incidence,
             &constraint,
             TrivariatePolynomialAxis::Third,
             order,
@@ -8980,7 +8630,7 @@ fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_
             );
             config.max_resultant_degree = usize::MAX;
             report = subresultant_trivariate_polynomial_univariate_constraint(
-                &solver_polynomial,
+                &projected_incidence,
                 &constraint,
                 TrivariatePolynomialAxis::Third,
                 order,
@@ -9292,12 +8942,12 @@ impl BezierDirectPairRadialParallelFastPath2 {
     ) -> CurveResult<Classification<RealSign>> {
         let Some(expression) = (|| {
             Some(BezierAlgebraicCuspTrivariateTwoSquareRootExpression2 {
-                product: TrivariatePolynomial2::linear_combination(&[
+                product: TrivariatePolynomial::linear_combination(&[
                     (&self.tangent_cross_source.radical, cross_scale),
                     (&self.tangent_dot_source.product, dot_scale),
                 ])?,
                 pair: self.tangent_dot_source.pair.scale(dot_scale)?,
-                candidate: TrivariatePolynomial2::linear_combination(&[
+                candidate: TrivariatePolynomial::linear_combination(&[
                     (&self.tangent_cross_source.rational, cross_scale),
                     (&self.tangent_dot_source.candidate, dot_scale),
                 ])?,
@@ -10138,7 +9788,7 @@ fn algebraic_point_oriented_line_side_distinct_fields(
         &bivariate_outer_product(start_y, point_denominator),
     );
     let Some(determinant) =
-        TrivariatePolynomial2::ab_ac_determinant(&line_x, &point_delta_y, &line_y, &point_delta_x)
+        TrivariatePolynomial::ab_ac_determinant(&line_x, &point_delta_y, &line_y, &point_delta_x)
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
@@ -15445,7 +15095,7 @@ fn real_interval_from_axis(bounds: &Aabb2, axis: Axis2) -> RealInterval {
 
 /// Encloses a trivariate power-basis polynomial over a parameter box.
 fn trivariate_power_basis_interval(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &RealInterval,
     second: &RealInterval,
     third: &RealInterval,
@@ -16412,7 +16062,7 @@ fn algebraic_cusp_correlated_square_root_sum_sign_impl(
 /// STRICT/APPROXIMATE_512 terminal decision.
 fn algebraic_cusp_trivariate_square_root_sum_sign(
     expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radicand: &TrivariatePolynomial2,
+    radicand: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -16437,8 +16087,8 @@ fn algebraic_cusp_trivariate_square_root_sum_sign(
 /// rediscover the resultant correlation by factorization.
 fn algebraic_cusp_projected_trivariate_square_root_sum_sign(
     expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radicand: &TrivariatePolynomial2,
-    projected_incidence: &TrivariatePolynomial2,
+    radicand: &TrivariatePolynomial,
+    projected_incidence: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -16461,9 +16111,9 @@ fn algebraic_cusp_projected_trivariate_square_root_sum_sign(
 }
 
 fn algebraic_cusp_trivariate_square_root_components_sign(
-    rational_term: &TrivariatePolynomial2,
-    radical_term: &TrivariatePolynomial2,
-    radicand: &TrivariatePolynomial2,
+    rational_term: &TrivariatePolynomial,
+    radical_term: &TrivariatePolynomial,
+    radicand: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -16486,10 +16136,10 @@ fn algebraic_cusp_trivariate_square_root_components_sign(
 
 #[allow(clippy::too_many_arguments)]
 fn algebraic_cusp_trivariate_square_root_components_sign_internal(
-    rational_term: &TrivariatePolynomial2,
-    radical_term: &TrivariatePolynomial2,
-    radicand: &TrivariatePolynomial2,
-    projected_incidence: Option<&TrivariatePolynomial2>,
+    rational_term: &TrivariatePolynomial,
+    radical_term: &TrivariatePolynomial,
+    radicand: &TrivariatePolynomial,
+    projected_incidence: Option<&TrivariatePolynomial>,
     projected_root_certified: bool,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
@@ -16554,7 +16204,7 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
             let Some(radical_squared) = radical_term.multiply(radical_term) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let Some(magnitude) = TrivariatePolynomial2::sum_products(&[
+            let Some(magnitude) = TrivariatePolynomial::sum_products(&[
                 (rational_term, rational_term, false),
                 (&radical_squared, radicand, true),
             ]) else {
@@ -16632,7 +16282,7 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
             }
         }
     }
-    let sign = |polynomial: &TrivariatePolynomial2| {
+    let sign = |polynomial: &TrivariatePolynomial| {
         trivariate_parameter_triple_sign_by_refinement(
             polynomial,
             first_parameter,
@@ -16738,7 +16388,7 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
     let Some(radical_squared) = radical_term.multiply(radical_term) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let Some(magnitude) = TrivariatePolynomial2::sum_products(&[
+    let Some(magnitude) = TrivariatePolynomial::sum_products(&[
         (rational_term, rational_term, false),
         (&radical_squared, radicand, true),
     ]) else {
@@ -16779,9 +16429,9 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
 fn algebraic_cusp_projected_trivariate_two_square_root_sum_sign(
     expression: &BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
     candidate_norm: Option<&BezierAlgebraicCuspTrivariateSquareRootExpression2>,
-    pair_discriminant: &TrivariatePolynomial2,
-    candidate_speed_squared: &TrivariatePolynomial2,
-    projected_incidence: &TrivariatePolynomial2,
+    pair_discriminant: &TrivariatePolynomial,
+    candidate_speed_squared: &TrivariatePolynomial,
+    projected_incidence: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -16807,8 +16457,8 @@ fn algebraic_cusp_projected_trivariate_two_square_root_sum_sign(
 #[allow(clippy::too_many_arguments)]
 fn algebraic_cusp_trivariate_two_square_root_sum_sign(
     expression: &BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
-    pair_discriminant: &TrivariatePolynomial2,
-    candidate_speed_squared: &TrivariatePolynomial2,
+    pair_discriminant: &TrivariatePolynomial,
+    candidate_speed_squared: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -16834,9 +16484,9 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign(
 fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
     expression: &BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
     candidate_norm: Option<&BezierAlgebraicCuspTrivariateSquareRootExpression2>,
-    pair_discriminant: &TrivariatePolynomial2,
-    candidate_speed_squared: &TrivariatePolynomial2,
-    projected_incidence: Option<&TrivariatePolynomial2>,
+    pair_discriminant: &TrivariatePolynomial,
+    candidate_speed_squared: &TrivariatePolynomial,
+    projected_incidence: Option<&TrivariatePolynomial>,
     projected_root_certified: bool,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
@@ -16844,7 +16494,7 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
     branch: i8,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    let pair_sign = |rational: &TrivariatePolynomial2, radical: &TrivariatePolynomial2| {
+    let pair_sign = |rational: &TrivariatePolynomial, radical: &TrivariatePolynomial| {
         algebraic_cusp_trivariate_square_root_components_sign(
             rational,
             radical,

@@ -3055,7 +3055,7 @@ pub(super) fn positive_recursive_projective_point(
 }
 
 pub(super) fn selected_trivariate_third_axis_is_identically_zero(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     policy: &CurveContext,
@@ -3283,7 +3283,7 @@ pub(super) fn strict_sample_for_parallel_domain(
 /// must replay their unsquared authored predicate at each returned triple
 /// before admitting topology.
 pub(super) fn selected_trivariate_third_axis_parameters(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     domain: SelectedThirdAxisDomain2<'_>,
@@ -3300,7 +3300,7 @@ pub(super) fn selected_trivariate_third_axis_parameters(
 }
 
 pub(super) fn selected_trivariate_third_axis_parameters_with_resultant_limit(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     domain: SelectedThirdAxisDomain2<'_>,
@@ -3335,7 +3335,7 @@ pub(super) fn selected_trivariate_third_axis_parameters_with_resultant_limit(
 }
 
 pub(super) fn selected_trivariate_third_axis_parameters_bounded(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     domain: SelectedThirdAxisDomain2<'_>,
@@ -3401,7 +3401,7 @@ pub(super) fn selected_trivariate_third_axis_parameters_bounded(
         projection
     } else {
         let report = resultant_trivariate_polynomial_univariate_constraint(
-            &SolverTrivariatePolynomial::new(polynomial.coefficients.clone()),
+            polynomial,
             &first_defining,
             TrivariatePolynomialAxis::First,
             config,
@@ -3539,7 +3539,7 @@ pub(super) fn selected_trivariate_third_axis_parameters_bounded(
 /// Gives an ordinary nonzero selected tuple a small exact-box opportunity to
 /// separate before correlation machinery is constructed.
 pub(super) fn trivariate_parameter_triple_bounded_box_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     third_parameter: &BezierParameter2,
@@ -3580,7 +3580,7 @@ pub(super) fn trivariate_parameter_triple_bounded_box_sign(
 /// one- and two-radical selected-pair kernels so candidate correlation,
 /// transverse box certification, and even-root subresultants have one owner.
 pub(super) fn selected_projected_trivariate_third_axis_parameters(
-    projection: &TrivariatePolynomial2,
+    projection: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
     domain: SelectedThirdAxisDomain2<'_>,

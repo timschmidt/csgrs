@@ -6484,7 +6484,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             // quotient-ring substitution at the same three selected roots.
             let negative_translation_x = -self.data.translation_x.clone();
             let negative_translation_y = -self.data.translation_y.clone();
-            let Some(rational_dot) = TrivariatePolynomial2::linear_combination(&[
+            let Some(rational_dot) = TrivariatePolynomial::linear_combination(&[
                 (&system.point_x.rational, &self.data.translation_x),
                 (&system.center_x, &negative_translation_x),
                 (&system.point_y.rational, &self.data.translation_y),
@@ -6492,7 +6492,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             ]) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let Some(radical_dot) = TrivariatePolynomial2::linear_combination(&[
+            let Some(radical_dot) = TrivariatePolynomial::linear_combination(&[
                 (&system.point_x.radical, &self.data.translation_x),
                 (&system.point_y.radical, &self.data.translation_y),
             ]) else {

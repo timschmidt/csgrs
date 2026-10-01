@@ -5,7 +5,7 @@ use super::*;
 
 #[inline]
 pub(super) fn trivariate_structurally_zero(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     policy: &CurveContext,
 ) -> bool {
     for rows in &polynomial.coefficients {
@@ -26,10 +26,10 @@ pub(super) fn trivariate_structurally_zero(
 /// in descending order. Each source slice is moved rather than cloned, keeping
 /// the cold quotient-ring simplification bounded by the tensor itself.
 pub(super) fn trivariate_reduce_axis_mod_defining(
-    mut polynomial: TrivariatePolynomial2,
+    mut polynomial: TrivariatePolynomial,
     axis: usize,
     defining: &[Real],
-) -> Option<TrivariatePolynomial2> {
+) -> Option<TrivariatePolynomial> {
     let degree = defining.len().checked_sub(1)?;
     if axis >= 3 || degree == 0 {
         return None;
@@ -111,10 +111,10 @@ pub(super) fn trivariate_reduce_axis_mod_defining(
 /// This is exact for every value of the untouched third axis and is therefore
 /// suitable for maps that must later evaluate many target parameters.
 pub(super) fn trivariate_reduce_parameter_pair_relations(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
-) -> Option<TrivariatePolynomial2> {
+) -> Option<TrivariatePolynomial> {
     let parameters = [first, second];
     let dimensions = polynomial.dimensions();
     let counts = [dimensions.0, dimensions.1];
@@ -151,11 +151,11 @@ pub(super) fn trivariate_reduce_parameter_pair_relations(
 /// Returns a smaller tensor only when at least one selected-root relation
 /// removes powers. Sequential reductions commute at the selected root tuple.
 pub(super) fn trivariate_reduce_selected_root_relations(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
-) -> Option<TrivariatePolynomial2> {
+) -> Option<TrivariatePolynomial> {
     let parameters = [first, second, third];
     let dimensions = polynomial.dimensions();
     let counts = [dimensions.0, dimensions.1, dimensions.2];
@@ -190,7 +190,7 @@ pub(super) fn trivariate_reduce_selected_root_relations(
 }
 
 pub(super) fn trivariate_axis_fiber(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
     first_other: usize,
     second_other: usize,
@@ -236,7 +236,7 @@ pub(super) fn trivariate_axis_fiber(
 /// Returns the nonconstant univariate content shared by every tensor fiber
 /// along one axis.
 pub(super) fn trivariate_axis_content(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
 ) -> Option<Vec<Real>> {
     let dimensions = polynomial.dimensions();
@@ -269,10 +269,10 @@ pub(super) fn trivariate_axis_content(
 }
 
 pub(super) fn trivariate_divide_axis_content(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
     content: &[Real],
-) -> Option<TrivariatePolynomial2> {
+) -> Option<TrivariatePolynomial> {
     let dimensions = polynomial.dimensions();
     let mut counts = [dimensions.0, dimensions.1, dimensions.2];
     if axis >= 3 || content.len() <= 1 || content.len() > counts[axis] {
@@ -305,17 +305,17 @@ pub(super) fn trivariate_divide_axis_content(
             }
         }
     }
-    Some(TrivariatePolynomial2 { coefficients })
+    Some(TrivariatePolynomial { coefficients })
 }
 
 /// Removes separable univariate tensor content and returns its selected sign.
 /// A zero content factor proves the original tensor zero immediately.
 pub(super) fn trivariate_strip_axis_contents(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
-) -> CurveResult<Option<(TrivariatePolynomial2, Option<RealSign>)>> {
+) -> CurveResult<Option<(TrivariatePolynomial, Option<RealSign>)>> {
     let parameters = [first, second, third];
     let mut reduced = polynomial.clone();
     let mut factor_sign = Some(RealSign::Positive);
@@ -490,7 +490,7 @@ pub(super) fn parameter_binary_relation_may_overlap(
 /// Substitutes `sum = left + right`, leaving a bivariate polynomial in
 /// `(left, right)`.
 pub(super) fn trivariate_substitute_sum_axis(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     left_axis: usize,
     right_axis: usize,
     sum_axis: usize,
@@ -539,7 +539,7 @@ pub(super) fn trivariate_substitute_sum_axis(
 /// Substitutes `product = left * right`, leaving a bivariate polynomial in
 /// `(left, right)`.
 pub(super) fn trivariate_substitute_product_axis(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     left_axis: usize,
     right_axis: usize,
     product_axis: usize,
@@ -574,7 +574,7 @@ pub(super) fn trivariate_substitute_product_axis(
 }
 
 pub(super) fn trivariate_binary_related_parameter_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -640,7 +640,7 @@ pub(super) fn trivariate_binary_related_parameter_sign(
 }
 
 pub(super) fn trivariate_substitute_affine_axis(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     retained_axis: usize,
     substituted_axis: usize,
     scale: &Real,
@@ -685,7 +685,7 @@ pub(super) fn trivariate_substitute_affine_axis(
 }
 
 pub(super) fn trivariate_affinely_related_parameter_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -722,7 +722,7 @@ pub(super) fn trivariate_affinely_related_parameter_sign(
 }
 
 pub(super) fn trivariate_axis_bivariate_coefficients(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
 ) -> Option<(Vec<BivariatePolynomial>, [usize; 2])> {
     if axis >= 3 {
@@ -768,7 +768,7 @@ pub(super) fn trivariate_axis_bivariate_coefficients(
 }
 
 pub(super) fn trivariate_specialize_axis_bivariate(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
     parameter: &Real,
 ) -> Option<(BivariatePolynomial, [usize; 2])> {
@@ -781,7 +781,7 @@ pub(super) fn trivariate_specialize_axis_bivariate(
 }
 
 pub(super) fn trivariate_linear_axis_coefficients(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
 ) -> Option<(BivariatePolynomial, BivariatePolynomial, [usize; 2])> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
@@ -847,7 +847,7 @@ pub(super) fn bivariate_remove_common_factors(
 pub(super) fn trivariate_from_bivariate_axes(
     polynomial: &BivariatePolynomial,
     axes: [usize; 2],
-) -> Option<TrivariatePolynomial2> {
+) -> Option<TrivariatePolynomial> {
     if axes[0] >= 3 || axes[1] >= 3 || axes[0] == axes[1] {
         return None;
     }
@@ -871,7 +871,7 @@ pub(super) fn trivariate_from_bivariate_axes(
             coefficients[exponents[0]][exponents[1]][exponents[2]] = value.clone();
         }
     }
-    TrivariatePolynomial2::from_coefficients(coefficients)
+    TrivariatePolynomial::from_coefficients(coefficients)
 }
 
 #[cold]
@@ -880,7 +880,7 @@ pub(super) fn trivariate_from_axis_bivariate_coefficients(
     coefficients: &[BivariatePolynomial],
     axis: usize,
     remaining: [usize; 2],
-) -> Option<TrivariatePolynomial2> {
+) -> Option<TrivariatePolynomial> {
     let mut axes = [axis, remaining[0], remaining[1]];
     axes.sort_unstable();
     if coefficients.is_empty() || axes != [0, 1, 2] {
@@ -911,7 +911,7 @@ pub(super) fn trivariate_from_axis_bivariate_coefficients(
             }
         }
     }
-    Some(TrivariatePolynomial2 {
+    Some(TrivariatePolynomial {
         coefficients: result,
     })
 }
@@ -919,10 +919,10 @@ pub(super) fn trivariate_from_axis_bivariate_coefficients(
 #[cold]
 #[inline(never)]
 pub(super) fn trivariate_divide_linear_axis_factor(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
     factor: &[BivariatePolynomial; 2],
-) -> Option<TrivariatePolynomial2> {
+) -> Option<TrivariatePolynomial> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
     let degree = coefficients.len().checked_sub(1)?;
     if degree == 0 || bivariate_exact_nonzero_metadata(&factor[1])?.is_none() {
@@ -957,10 +957,10 @@ pub(super) fn trivariate_divide_linear_axis_factor(
 #[cold]
 #[inline(never)]
 pub(super) fn trivariate_normalize_and_divide_linear_axis_factor(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
     raw: [BivariatePolynomial; 2],
-) -> Option<([BivariatePolynomial; 2], TrivariatePolynomial2)> {
+) -> Option<([BivariatePolynomial; 2], TrivariatePolynomial)> {
     if let Some(quotient) = trivariate_divide_linear_axis_factor(polynomial, axis, &raw) {
         return Some((raw, quotient));
     }
@@ -974,9 +974,9 @@ pub(super) fn trivariate_normalize_and_divide_linear_axis_factor(
 #[cold]
 #[inline(never)]
 pub(super) fn trivariate_quadratic_axis_factorizations(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
-) -> Option<Vec<(TrivariatePolynomial2, TrivariatePolynomial2)>> {
+) -> Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
     let [constant, linear, quadratic]: [BivariatePolynomial; 3] = coefficients.try_into().ok()?;
     let linear_square = try_bivariate_multiply(&linear, &linear)?;
@@ -987,7 +987,7 @@ pub(super) fn trivariate_quadratic_axis_factorizations(
     );
     let square_root = bivariate_exact_square_root(&discriminant)?;
     let doubled_quadratic = bivariate_scale(quadratic, &Real::from(2_i8));
-    let mut factorizations: Vec<(TrivariatePolynomial2, TrivariatePolynomial2)> =
+    let mut factorizations: Vec<(TrivariatePolynomial, TrivariatePolynomial)> =
         Vec::with_capacity(2);
     for constant in [
         bivariate_add(&linear, &square_root),
@@ -1024,9 +1024,9 @@ pub(super) fn trivariate_quadratic_axis_factorizations(
 #[cold]
 #[inline(never)]
 pub(super) fn trivariate_repeated_cubic_axis_factorizations(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
-) -> Option<Vec<(TrivariatePolynomial2, TrivariatePolynomial2)>> {
+) -> Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
     let [constant, linear, quadratic, cubic]: [BivariatePolynomial; 4] =
         coefficients.try_into().ok()?;
@@ -1105,7 +1105,7 @@ pub(super) fn trivariate_repeated_cubic_axis_factorizations(
 }
 
 pub(super) fn trivariate_rational_multi_affine_factor_from_scale(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
     remaining: [usize; 2],
     anchor_factor: &BivariatePolynomial,
@@ -1113,7 +1113,7 @@ pub(super) fn trivariate_rational_multi_affine_factor_from_scale(
     scale: &Real,
     anchor: &Real,
     lift_coordinate: usize,
-) -> Option<(TrivariatePolynomial2, TrivariatePolynomial2)> {
+) -> Option<(TrivariatePolynomial, TrivariatePolynomial)> {
     let raw = rational_multi_affine_lift_factor_coefficients(
         anchor_factor,
         top_factor,
@@ -1140,9 +1140,9 @@ pub(super) fn trivariate_rational_multi_affine_factor_from_scale(
 #[cold]
 #[inline(never)]
 pub(super) fn trivariate_rational_multi_affine_axis_factorizations(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     axis: usize,
-) -> Option<Vec<(TrivariatePolynomial2, TrivariatePolynomial2)>> {
+) -> Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>> {
     let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
     if !(4..=MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS).contains(&coefficients.len()) {
         return None;
@@ -1316,7 +1316,7 @@ pub(super) fn signed_bivariate_at_parameter_pair_refinement_first(
 }
 
 pub(super) fn trivariate_linear_axis_resultant_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -1421,11 +1421,11 @@ pub(super) fn trivariate_linear_axis_resultant_sign(
 }
 
 pub(super) fn trivariate_restrict_to_parameter_box(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
-) -> TrivariatePolynomial2 {
+) -> TrivariatePolynomial {
     let (first_start, first_end) = parameter_bounds(first);
     let (second_start, second_end) = parameter_bounds(second);
     let (third_start, third_end) = parameter_bounds(third);
@@ -1441,9 +1441,9 @@ pub(super) fn trivariate_restrict_to_parameter_box(
 }
 
 pub(super) fn trivariate_restrict_to_box_bounds(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     bounds: [(&Real, &Real); 3],
-) -> TrivariatePolynomial2 {
+) -> TrivariatePolynomial {
     let mut restricted = polynomial.coefficients.clone();
     for rows in &mut restricted {
         for row in rows {
@@ -1479,13 +1479,13 @@ pub(super) fn trivariate_restrict_to_box_bounds(
             }
         }
     }
-    TrivariatePolynomial2 {
+    TrivariatePolynomial {
         coefficients: restricted,
     }
 }
 
 pub(super) fn trivariate_unit_cube_strict_bernstein_sign(
-    polynomial: TrivariatePolynomial2,
+    polynomial: TrivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Option<RealSign>> {
     let (a_count, b_count, c_count) = polynomial.dimensions();
@@ -1534,7 +1534,7 @@ pub(super) fn trivariate_unit_cube_strict_bernstein_sign(
 }
 
 pub(super) fn trivariate_multi_affine_parameter_box_strict_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -1610,7 +1610,7 @@ pub(super) fn trivariate_multi_affine_parameter_box_strict_sign(
 }
 
 pub(super) fn trivariate_existing_symbolic_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -1639,7 +1639,7 @@ pub(super) fn trivariate_existing_symbolic_sign(
 }
 
 pub(super) fn trivariate_factored_component_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -1655,7 +1655,7 @@ pub(super) fn trivariate_factored_component_sign(
 }
 
 pub(super) fn trivariate_bounded_factor_sign_with_budget(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -1736,7 +1736,7 @@ pub(super) fn trivariate_bounded_factor_sign_with_budget(
 #[cold]
 #[inline(never)]
 pub(super) fn trivariate_bounded_factor_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -1763,7 +1763,7 @@ pub(super) fn trivariate_bounded_factor_sign(
 #[cold]
 #[inline(never)]
 pub(super) fn trivariate_content_and_bounded_factor_sign(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -1791,7 +1791,7 @@ pub(super) fn trivariate_content_and_bounded_factor_sign(
 }
 
 pub(super) fn trivariate_exceeds_bounded_symbolic_schedule(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
 ) -> bool {
     let dimensions = polynomial.dimensions();
     [dimensions.0, dimensions.1, dimensions.2]
@@ -1818,7 +1818,7 @@ pub(super) fn selected_parameter_representations<const N: usize>(
 
 #[cold]
 pub(super) fn trivariate_parameter_triple_sign_by_refinement(
-    polynomial: &TrivariatePolynomial2,
+    polynomial: &TrivariatePolynomial,
     first: &BezierParameter2,
     second: &BezierParameter2,
     third: &BezierParameter2,
@@ -2053,7 +2053,7 @@ pub(super) fn quadrivariate_specialize_axis_trivariate(
     polynomial: &QuadrivariatePolynomial2,
     axis: usize,
     value: &Real,
-) -> Option<(TrivariatePolynomial2, [usize; 3])> {
+) -> Option<(TrivariatePolynomial, [usize; 3])> {
     if axis >= 4 {
         return None;
     }
@@ -2090,7 +2090,7 @@ pub(super) fn quadrivariate_specialize_axis_trivariate(
             }
         }
     }
-    Some((TrivariatePolynomial2 { coefficients }, remaining))
+    Some((TrivariatePolynomial { coefficients }, remaining))
 }
 
 pub(super) fn quadrivariate_parameter_tuple_sign_by_refinement(

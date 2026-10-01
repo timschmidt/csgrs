@@ -23276,7 +23276,7 @@ fn independent_field_collinear_chord_side(
 
 #[test]
 fn trivariate_affine_axis_substitution_preserves_all_axis_orders() {
-    let polynomial = TrivariatePolynomial2 {
+    let polynomial = TrivariatePolynomial {
         coefficients: (0..3)
             .map(|first| {
                 (0..4)
@@ -23333,7 +23333,7 @@ fn trivariate_affine_axis_substitution_preserves_all_axis_orders() {
 
 #[test]
 fn trivariate_binary_axis_substitutions_preserve_all_axis_orders() {
-    let polynomial = TrivariatePolynomial2 {
+    let polynomial = TrivariatePolynomial {
         coefficients: (0..3)
             .map(|first| {
                 (0..4)
@@ -23416,7 +23416,7 @@ fn multi_affine_box_sign_matches_generic_bernstein_conversion() {
             Real::one(),
         ]),
     ];
-    let tensor = |values: [[[i8; 2]; 2]; 2]| TrivariatePolynomial2 {
+    let tensor = |values: [[[i8; 2]; 2]; 2]| TrivariatePolynomial {
         coefficients: values
             .into_iter()
             .map(|rows| {
@@ -23430,7 +23430,7 @@ fn multi_affine_box_sign_matches_generic_bernstein_conversion() {
         tensor([[[1, 2], [3, 4]], [[5, 6], [7, 8]]]),
         tensor([[[-1, -2], [-3, -4]], [[-5, -6], [-7, -8]]]),
         tensor([[[-1, 0], [0, 0]], [[2, 0], [0, 0]]]),
-        TrivariatePolynomial2 {
+        TrivariatePolynomial {
             coefficients: vec![
                 vec![vec![Real::one()], vec![Real::from(2_i8)]],
                 vec![vec![Real::from(3_i8)], vec![Real::from(4_i8)]],
@@ -23468,7 +23468,7 @@ fn multi_affine_box_sign_matches_generic_bernstein_conversion() {
     }
 }
 
-fn nonaffine_three_field_chord_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
+fn nonaffine_three_field_chord_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial) {
     let half = (Real::one() / Real::from(2_i8)).unwrap();
     let third = (Real::one() / Real::from(3_i8)).unwrap();
     let parameters = [
@@ -23487,7 +23487,7 @@ fn nonaffine_three_field_chord_fixture() -> ([BezierParameter2; 3], TrivariatePo
     coefficients[1][1][0] = Real::one();
     coefficients[1][0][1] = -Real::one();
     coefficients[0][1][1] = -Real::one();
-    (parameters, TrivariatePolynomial2 { coefficients })
+    (parameters, TrivariatePolynomial { coefficients })
 }
 
 fn four_selected_square_root_parameters() -> [BezierParameter2; 4] {
@@ -28892,11 +28892,11 @@ fn rank_independent_quadrivariate_projection_crosses_the_old_dense_boundary_exac
 }
 
 fn trivariate_multiply_axis_linear(
-    polynomial: TrivariatePolynomial2,
+    polynomial: TrivariatePolynomial,
     axis: usize,
     constant: &Real,
     linear: &Real,
-) -> TrivariatePolynomial2 {
+) -> TrivariatePolynomial {
     let dimensions = polynomial.dimensions();
     let mut counts = [dimensions.0, dimensions.1, dimensions.2];
     counts[axis] += 1;
@@ -28913,13 +28913,13 @@ fn trivariate_multiply_axis_linear(
             }
         }
     }
-    TrivariatePolynomial2 { coefficients }
+    TrivariatePolynomial { coefficients }
 }
 
 fn trivariate_multiply(
-    left: &TrivariatePolynomial2,
-    right: &TrivariatePolynomial2,
-) -> TrivariatePolynomial2 {
+    left: &TrivariatePolynomial,
+    right: &TrivariatePolynomial,
+) -> TrivariatePolynomial {
     let left_dimensions = left.dimensions();
     let right_dimensions = right.dimensions();
     let counts = [
@@ -28942,11 +28942,11 @@ fn trivariate_multiply(
             }
         }
     }
-    TrivariatePolynomial2 { coefficients }
+    TrivariatePolynomial { coefficients }
 }
 
-fn trivariate_multi_affine(coefficients: [i8; 8]) -> TrivariatePolynomial2 {
-    TrivariatePolynomial2 {
+fn trivariate_multi_affine(coefficients: [i8; 8]) -> TrivariatePolynomial {
+    TrivariatePolynomial {
         coefficients: (0..2)
             .map(|first| {
                 (0..2)
@@ -28961,7 +28961,7 @@ fn trivariate_multi_affine(coefficients: [i8; 8]) -> TrivariatePolynomial2 {
     }
 }
 
-fn trivariate_multi_affine_product<const N: usize>(factors: [[i8; 8]; N]) -> TrivariatePolynomial2 {
+fn trivariate_multi_affine_product<const N: usize>(factors: [[i8; 8]; N]) -> TrivariatePolynomial {
     factors
         .map(trivariate_multi_affine)
         .into_iter()
@@ -28970,7 +28970,7 @@ fn trivariate_multi_affine_product<const N: usize>(factors: [[i8; 8]; N]) -> Tri
 }
 
 fn assert_rational_multi_affine_factor_on_every_axis(
-    product: &TrivariatePolynomial2,
+    product: &TrivariatePolynomial,
     message: &str,
 ) {
     for axis in 0..3 {
@@ -29023,7 +29023,7 @@ fn repeated_cubic_axis_factorization_replays_double_and_triple_factors() {
 
 #[test]
 fn repeated_cubic_axis_factorization_rejects_a_square_free_cubic() {
-    let mut polynomial = TrivariatePolynomial2 {
+    let mut polynomial = TrivariatePolynomial {
         coefficients: vec![vec![vec![Real::one()]]],
     };
     // This arithmetic-progression cubic makes the repeated-root formula
@@ -29035,7 +29035,7 @@ fn repeated_cubic_axis_factorization_rejects_a_square_free_cubic() {
 
     // Delta-zero alone is insufficient: x^3+1 has no repeated root, and
     // its nonzero delta-one must reject the triple-root candidate.
-    let delta_zero_only = TrivariatePolynomial2 {
+    let delta_zero_only = TrivariatePolynomial {
         coefficients: vec![
             vec![vec![Real::one()]],
             vec![vec![Real::zero()]],
@@ -29310,7 +29310,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_cubic_factor() {
     quadratic_coefficients[0][0][2] = Real::one();
     let product = trivariate_multiply(
         &factor,
-        &TrivariatePolynomial2 {
+        &TrivariatePolynomial {
             coefficients: quadratic_coefficients,
         },
     );
@@ -29333,7 +29333,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_quartic_factor() {
     cubic_coefficients[0][0][3] = Real::one();
     let product = trivariate_multiply(
         &factor,
-        &TrivariatePolynomial2 {
+        &TrivariatePolynomial {
             coefficients: cubic_coefficients,
         },
     );
@@ -29356,7 +29356,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_quintic_factor() {
     quartic_coefficients[0][0][4] = Real::one();
     let product = trivariate_multiply(
         &factor,
-        &TrivariatePolynomial2 {
+        &TrivariatePolynomial {
             coefficients: quartic_coefficients,
         },
     );
@@ -29379,7 +29379,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_sextic_factor() {
     quintic_coefficients[0][0][5] = Real::one();
     let product = trivariate_multiply(
         &factor,
-        &TrivariatePolynomial2 {
+        &TrivariatePolynomial {
             coefficients: quintic_coefficients,
         },
     );
@@ -29402,7 +29402,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_septic_factor() {
     sextic_coefficients[0][0][6] = Real::one();
     let product = trivariate_multiply(
         &factor,
-        &TrivariatePolynomial2 {
+        &TrivariatePolynomial {
             coefficients: sextic_coefficients,
         },
     );
@@ -29425,7 +29425,7 @@ fn rational_multi_affine_axis_factorization_recovers_one_octic_factor() {
     septic_coefficients[0][0][7] = Real::one();
     let product = trivariate_multiply(
         &factor,
-        &TrivariatePolynomial2 {
+        &TrivariatePolynomial {
             coefficients: septic_coefficients,
         },
     );
@@ -29443,7 +29443,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_cubic() {
     coefficients[0][3][0] = Real::one();
     coefficients[0][0][3] = Real::one();
     coefficients[1][1][1] = Real::one();
-    let polynomial = TrivariatePolynomial2 { coefficients };
+    let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
         assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
     }
@@ -29457,7 +29457,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_quartic() {
     coefficients[0][4][0] = Real::one();
     coefficients[0][0][4] = Real::one();
     coefficients[1][1][1] = Real::one();
-    let polynomial = TrivariatePolynomial2 { coefficients };
+    let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
         assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
     }
@@ -29471,7 +29471,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_quintic() {
     coefficients[0][5][0] = Real::one();
     coefficients[0][0][5] = Real::one();
     coefficients[1][1][1] = Real::one();
-    let polynomial = TrivariatePolynomial2 { coefficients };
+    let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
         assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
     }
@@ -29485,7 +29485,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_sextic() {
     coefficients[0][6][0] = Real::one();
     coefficients[0][0][6] = Real::one();
     coefficients[1][1][1] = Real::one();
-    let polynomial = TrivariatePolynomial2 { coefficients };
+    let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
         assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
     }
@@ -29499,7 +29499,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_septic() {
     coefficients[0][7][0] = Real::one();
     coefficients[0][0][7] = Real::one();
     coefficients[1][1][1] = Real::one();
-    let polynomial = TrivariatePolynomial2 { coefficients };
+    let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
         assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
     }
@@ -29513,7 +29513,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_octic() {
     coefficients[0][8][0] = Real::one();
     coefficients[0][0][8] = Real::one();
     coefficients[1][1][1] = Real::one();
-    let polynomial = TrivariatePolynomial2 { coefficients };
+    let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
         assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
     }
@@ -29527,7 +29527,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_bounded_nonic(
     coefficients[0][9][0] = Real::one();
     coefficients[0][0][9] = Real::one();
     coefficients[1][1][1] = Real::one();
-    let polynomial = TrivariatePolynomial2 { coefficients };
+    let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
         assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
     }
@@ -29535,7 +29535,7 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_bounded_nonic(
 
 #[test]
 fn quadratic_axis_factorization_rejects_a_nonsquare_discriminant() {
-    let polynomial = TrivariatePolynomial2 {
+    let polynomial = TrivariatePolynomial {
         coefficients: vec![
             vec![vec![Real::one()]],
             vec![vec![Real::zero()]],
@@ -29547,7 +29547,7 @@ fn quadratic_axis_factorization_rejects_a_nonsquare_discriminant() {
 
 #[test]
 fn quadratic_factor_sign_multiplies_exact_nonzero_factor_signs() {
-    let negative = TrivariatePolynomial2 {
+    let negative = TrivariatePolynomial {
         coefficients: vec![
             vec![
                 vec![-Real::one(), -Real::one()],
@@ -29559,7 +29559,7 @@ fn quadratic_factor_sign_multiplies_exact_nonzero_factor_signs() {
             ],
         ],
     };
-    let positive = TrivariatePolynomial2 {
+    let positive = TrivariatePolynomial {
         coefficients: vec![
             vec![
                 vec![Real::from(2_i8), Real::zero()],
@@ -29584,7 +29584,7 @@ fn quadratic_factor_sign_multiplies_exact_nonzero_factor_signs() {
 fn trivariate_linear_resultant_certifies_every_axis_order() {
     let (parameters, base) = nonaffine_three_field_chord_fixture();
     for linear_axis in 0..3 {
-        let mut polynomial = TrivariatePolynomial2 {
+        let mut polynomial = TrivariatePolynomial {
             coefficients: base.coefficients.clone(),
         };
         for nonlinear_axis in (0..3).filter(|axis| *axis != linear_axis) {
@@ -29678,7 +29678,7 @@ fn trivariate_linear_resultant_rejects_a_foreign_conjugate() {
 
 #[test]
 fn trivariate_quotient_reduction_preserves_every_axis() {
-    let polynomial = TrivariatePolynomial2 {
+    let polynomial = TrivariatePolynomial {
         coefficients: (0..4)
             .map(|first| {
                 (0..3)
@@ -29692,7 +29692,7 @@ fn trivariate_quotient_reduction_preserves_every_axis() {
             .collect(),
     };
     let defining = [Real::zero(), -Real::one(), Real::one()];
-    let evaluate = |polynomial: &TrivariatePolynomial2, values: &[Real; 3]| {
+    let evaluate = |polynomial: &TrivariatePolynomial, values: &[Real; 3]| {
         polynomial
             .coefficients
             .iter()
@@ -29779,7 +29779,7 @@ fn multiplicative_cubic_three_field_zero_is_exact_in_every_axis_order() {
         product_exponents[product_axis] = 1;
         coefficients[product_exponents[0]][product_exponents[1]][product_exponents[2]] =
             -Real::one();
-        let mut polynomial = TrivariatePolynomial2 { coefficients };
+        let mut polynomial = TrivariatePolynomial { coefficients };
         for axis in 0..3 {
             polynomial =
                 trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
@@ -29861,7 +29861,7 @@ fn square_free_cubic_lift_retains_top_slice_content() {
     quadratic_coefficients[0][0][2] = Real::one();
     let product = trivariate_multiply(
         &factor,
-        &TrivariatePolynomial2 {
+        &TrivariatePolynomial {
             coefficients: quadratic_coefficients,
         },
     );
@@ -29924,7 +29924,7 @@ fn additive_cubic_three_field_zero_is_exact_in_every_axis_order() {
         let mut sum_exponents = [0; 3];
         sum_exponents[sum_axis] = 1;
         coefficients[sum_exponents[0]][sum_exponents[1]][sum_exponents[2]] = -Real::one();
-        let mut polynomial = TrivariatePolynomial2 { coefficients };
+        let mut polynomial = TrivariatePolynomial { coefficients };
         for axis in 0..3 {
             polynomial =
                 trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
@@ -29988,7 +29988,7 @@ fn projected_three_field_candidate_retains_selected_root_correlation() {
     coefficients[1][1][0] = Real::one();
     coefficients[1][0][1] = -Real::one();
     coefficients[0][1][1] = -Real::one();
-    let incidence = TrivariatePolynomial2 { coefficients };
+    let incidence = TrivariatePolynomial { coefficients };
     assert!(
         projected_selected_trivariate_candidate_has_box_root(
             &incidence,
@@ -30069,7 +30069,7 @@ fn selected_pair_subresultant_certifies_an_even_root_after_selected_degree_drop(
     coefficients[2][0][0] = Real::one();
     coefficients[0][0][3] = -third;
     coefficients[0][2][3] = Real::one();
-    let projected = TrivariatePolynomial2 { coefficients };
+    let projected = TrivariatePolynomial { coefficients };
     assert!(
         !projected_selected_trivariate_candidate_has_box_root(
             &projected, &alpha, &beta, &alpha, 8,
@@ -34668,7 +34668,7 @@ fn separable_axis_content_exposes_rational_three_field_zero_exactly() {
     coefficients[1][1][0] = Real::one();
     coefficients[1][0][1] = -Real::one();
     coefficients[0][1][1] = -Real::one();
-    let primitive = TrivariatePolynomial2 { coefficients };
+    let primitive = TrivariatePolynomial { coefficients };
     let mut polynomial = primitive.clone();
     for axis in 0..3 {
         polynomial = trivariate_multiply_axis_linear(polynomial, axis, &Real::one(), &Real::one());
@@ -34721,7 +34721,7 @@ fn quadratic_coupled_factor_rational_three_field_zero_is_exact() {
     primitive_coefficients[1][1][0] = Real::one();
     primitive_coefficients[1][0][1] = -Real::one();
     primitive_coefficients[0][1][1] = -Real::one();
-    let primitive = TrivariatePolynomial2 {
+    let primitive = TrivariatePolynomial {
         coefficients: primitive_coefficients,
     };
     // 1+a*b+a*c+b*c is strictly positive on the parameter cube but is
@@ -34734,7 +34734,7 @@ fn quadratic_coupled_factor_rational_three_field_zero_is_exact() {
     cofactor_coefficients[0][1][1] = Real::one();
     let polynomial = trivariate_multiply(
         &primitive,
-        &TrivariatePolynomial2 {
+        &TrivariatePolynomial {
             coefficients: cofactor_coefficients,
         },
     );
@@ -34780,7 +34780,7 @@ fn repeated_cubic_coupled_factor_rational_three_field_zero_is_exact() {
     primitive_coefficients[1][1][0] = Real::one();
     primitive_coefficients[1][0][1] = -Real::one();
     primitive_coefficients[0][1][1] = -Real::one();
-    let primitive = TrivariatePolynomial2 {
+    let primitive = TrivariatePolynomial {
         coefficients: primitive_coefficients,
     };
     let mut cofactor_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
@@ -34788,7 +34788,7 @@ fn repeated_cubic_coupled_factor_rational_three_field_zero_is_exact() {
     cofactor_coefficients[1][1][0] = Real::one();
     cofactor_coefficients[1][0][1] = Real::one();
     cofactor_coefficients[0][1][1] = Real::one();
-    let cofactor = TrivariatePolynomial2 {
+    let cofactor = TrivariatePolynomial {
         coefficients: cofactor_coefficients,
     };
     let polynomial = trivariate_multiply(&primitive, &trivariate_multiply(&cofactor, &cofactor));
@@ -34828,13 +34828,13 @@ fn repeated_cubic_coupled_factor_rational_three_field_zero_is_exact() {
     }
 }
 
-fn square_free_cubic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
+fn square_free_cubic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial) {
     let parameters = nonlinear_rational_three_field_parameters();
     let mut primitive_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
     primitive_coefficients[1][1][0] = Real::one();
     primitive_coefficients[1][0][1] = -Real::one();
     primitive_coefficients[0][1][1] = -Real::one();
-    let primitive = TrivariatePolynomial2 {
+    let primitive = TrivariatePolynomial {
         coefficients: primitive_coefficients,
     };
     let mut first_coefficients = vec![vec![vec![Real::zero(); 2]; 2]; 2];
@@ -34851,10 +34851,10 @@ fn square_free_cubic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePoly
     let polynomial = trivariate_multiply(
         &primitive,
         &trivariate_multiply(
-            &TrivariatePolynomial2 {
+            &TrivariatePolynomial {
                 coefficients: first_coefficients,
             },
-            &TrivariatePolynomial2 {
+            &TrivariatePolynomial {
                 coefficients: second_coefficients,
             },
         ),
@@ -34891,7 +34891,7 @@ fn square_free_cubic_coupled_factor_rational_three_field_zero_is_exact() {
     }
 }
 
-fn quartic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
+fn quartic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial) {
     let (parameters, cubic) = square_free_cubic_coupled_fixture();
     let positive = trivariate_multi_affine([3, 1, 2, 1, 2, 1, 1, 1]);
     (parameters, trivariate_multiply(&cubic, &positive))
@@ -34957,7 +34957,7 @@ fn quintic_coupled_factor_rational_three_field_zero_is_exact() {
     }
 }
 
-fn sextic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
+fn sextic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial) {
     let (parameters, quartic) = quartic_coupled_fixture();
     let first = trivariate_multi_affine([4, 2, 1, 1, 1, 2, 1, 1]);
     let second = trivariate_multi_affine([5, 1, 2, 1, 1, 2, 2, 1]);
@@ -34996,7 +34996,7 @@ fn sextic_coupled_factor_rational_three_field_zero_is_exact() {
     }
 }
 
-fn septic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
+fn septic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial) {
     let (parameters, sextic) = sextic_coupled_fixture();
     let positive = trivariate_multi_affine([6, 1, 1, 2, 1, 2, 1, 1]);
     (parameters, trivariate_multiply(&sextic, &positive))
@@ -35031,7 +35031,7 @@ fn septic_coupled_factor_rational_three_field_zero_is_exact() {
     }
 }
 
-fn octic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial2) {
+fn octic_coupled_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial) {
     let (parameters, septic) = septic_coupled_fixture();
     let positive = trivariate_multi_affine([7, 1, 2, 1, 2, 1, 1, 2]);
     (parameters, trivariate_multiply(&septic, &positive))
@@ -35116,7 +35116,7 @@ fn rank_independent_projection_crosses_the_dense_trivariate_boundary_exactly() {
     let mut primitive_coefficients = vec![vec![vec![Real::zero(); 1]; 2]; 2];
     primitive_coefficients[1][0][0] = Real::one();
     primitive_coefficients[0][1][0] = -Real::one();
-    let primitive = TrivariatePolynomial2 {
+    let primitive = TrivariatePolynomial {
         coefficients: primitive_coefficients,
     };
     let mut positive_coefficients = try_zero_trivariate_coefficients([26, 26, 26]).unwrap();
@@ -35124,14 +35124,14 @@ fn rank_independent_projection_crosses_the_dense_trivariate_boundary_exactly() {
     positive_coefficients[25][0][0] = Real::one();
     positive_coefficients[0][25][0] = Real::one();
     positive_coefficients[0][0][25] = Real::one();
-    let positive = TrivariatePolynomial2 {
+    let positive = TrivariatePolynomial {
         coefficients: positive_coefficients,
     };
     let polynomial = trivariate_multiply(&primitive, &positive);
     let dimensions = polynomial.dimensions();
     assert_eq!(dimensions, (27, 27, 26));
     assert!(dimensions.0 * dimensions.1 * dimensions.2 > MAX_TRIVARIATE_BOUNDED_FAST_PATH_CONTROLS);
-    let polynomial = TrivariatePolynomial2::from_coefficients(polynomial.coefficients)
+    let polynomial = TrivariatePolynomial::from_coefficients(polynomial.coefficients)
         .expect("a host-representable exact tensor must not hit an artificial control cap");
     let reduced = trivariate_reduce_selected_root_relations(
         &polynomial,
@@ -35168,7 +35168,7 @@ fn selected_trivariate_projection_cold_continuation_removes_degree_cap() {
     // t - x^2 = 0 at x^3 = 1/2. Eliminating x has target degree three,
     // so a deliberately smaller hot schedule must decline while the
     // rank-independent tensor continuation retains t = x^2 exactly.
-    let polynomial = TrivariatePolynomial2::from_coefficients(vec![
+    let polynomial = TrivariatePolynomial::from_coefficients(vec![
         vec![vec![Real::zero(), Real::one()]],
         vec![vec![Real::zero()]],
         vec![vec![-Real::one()]],

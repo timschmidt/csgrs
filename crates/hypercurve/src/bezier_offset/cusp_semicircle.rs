@@ -2961,7 +2961,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let normal_denominator = frame.normal_denominator.clone();
         let system = (|| {
             let axis = |coefficients: &[Real], axis| {
-                TrivariatePolynomial2::from_axis_polynomial(coefficients, axis)
+                TrivariatePolynomial::from_axis_polynomial(coefficients, axis)
             };
             let ax = axis(&first_frame.center_x, 0)?;
             let ay = axis(&first_frame.center_y, 0)?;
@@ -2971,12 +2971,12 @@ impl BezierAlgebraicCuspSemicircle2 {
             let bw = axis(&second_frame.denominator, 1)?;
 
             // With positive selected denominators, delta=(dx,dy)/D is C2-C1.
-            let dx = TrivariatePolynomial2::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
-            let dy = TrivariatePolynomial2::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
+            let dx = TrivariatePolynomial::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
+            let dy = TrivariatePolynomial::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
             let common_denominator = aw.multiply(&bw)?;
             let common_denominator_squared = common_denominator.multiply(&common_denominator)?;
             let center_distance_squared =
-                TrivariatePolynomial2::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
+                TrivariatePolynomial::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
             let center_line = center_distance_squared.add(
                 &common_denominator_squared
                     .scale(&(&first_radius_squared - &second_radius_squared))?,
@@ -2991,11 +2991,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             // P=C1+R1, where R1=(L*delta + branch*sqrt(K)*J(delta))/(2*q*D).
             let first_center_x = ax.multiply(&bw)?;
             let first_center_y = ay.multiply(&bw)?;
-            let center_x_rational = TrivariatePolynomial2::sum_products(&[
+            let center_x_rational = TrivariatePolynomial::sum_products(&[
                 (&twice_center_distance, &first_center_x, false),
                 (&center_line, &dx, false),
             ])?;
-            let center_y_rational = TrivariatePolynomial2::sum_products(&[
+            let center_y_rational = TrivariatePolynomial::sum_products(&[
                 (&twice_center_distance, &first_center_y, false),
                 (&center_line, &dy, false),
             ])?;
@@ -3012,7 +3012,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let radial_x_rational = support_line.multiply(&dx)?;
             let radial_y_rational = support_line.multiply(&dy)?;
 
-            let reduce = |polynomial: TrivariatePolynomial2| {
+            let reduce = |polynomial: TrivariatePolynomial| {
                 trivariate_reduce_parameter_pair_relations(
                     &polynomial,
                     &first_cusp_parameter,
@@ -3161,12 +3161,12 @@ impl BezierAlgebraicCuspRetainedOffsetChordNestedExpression2 {
         Some(Self {
             retained,
             candidate: BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational(
-                TrivariatePolynomial2::from_axis_polynomial(&[Real::zero()], 0)?,
+                TrivariatePolynomial::from_axis_polynomial(&[Real::zero()], 0)?,
             )?,
         })
     }
 
-    pub(super) fn from_rational(rational: TrivariatePolynomial2) -> Option<Self> {
+    pub(super) fn from_rational(rational: TrivariatePolynomial) -> Option<Self> {
         Self::from_retained(
             BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational(rational)?,
         )
@@ -3193,7 +3193,7 @@ impl BezierAlgebraicCuspRetainedOffsetChordNestedExpression2 {
         })
     }
 
-    pub(super) fn multiply_rational(&self, polynomial: &TrivariatePolynomial2) -> Option<Self> {
+    pub(super) fn multiply_rational(&self, polynomial: &TrivariatePolynomial) -> Option<Self> {
         Some(Self {
             retained: self.retained.multiply_rational(polynomial)?,
             candidate: self.candidate.multiply_rational(polynomial)?,
@@ -6134,13 +6134,13 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         // semicircle's traversal, dot(turn*J(Q-C), Q') is turn times this
         // expression, matching the contact's published tangent dot.
         let tangent_dot_scale = dot_scale * self.data.semicircle.turn_sign();
-        let Some(rational) = TrivariatePolynomial2::linear_combination(&[
+        let Some(rational) = TrivariatePolynomial::linear_combination(&[
             (&tangent_cross.rational, cross_scale),
             (&angular_tangent.rational, &tangent_dot_scale),
         ]) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let Some(radical) = TrivariatePolynomial2::linear_combination(&[
+        let Some(radical) = TrivariatePolynomial::linear_combination(&[
             (&tangent_cross.radical, cross_scale),
             (&angular_tangent.radical, &tangent_dot_scale),
         ]) else {
@@ -6444,7 +6444,7 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 ..
             } => {
                 let negative_radial = -radial_coefficient;
-                let Some(rational) = TrivariatePolynomial2::linear_combination(&[
+                let Some(rational) = TrivariatePolynomial::linear_combination(&[
                     (&diameter.rational, &denominator),
                     (radius_squared_denominator, &negative_radial),
                 ]) else {
@@ -8349,10 +8349,10 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
 }
 
 impl BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-    pub(super) fn from_rational(rational: TrivariatePolynomial2) -> Option<Self> {
+    pub(super) fn from_rational(rational: TrivariatePolynomial) -> Option<Self> {
         Some(Self {
             rational,
-            radical: TrivariatePolynomial2::from_axis_polynomial(&[Real::zero()], 0)?,
+            radical: TrivariatePolynomial::from_axis_polynomial(&[Real::zero()], 0)?,
         })
     }
 
@@ -8377,14 +8377,14 @@ impl BezierAlgebraicCuspTrivariateSquareRootExpression2 {
         })
     }
 
-    pub(super) fn multiply_rational(&self, polynomial: &TrivariatePolynomial2) -> Option<Self> {
+    pub(super) fn multiply_rational(&self, polynomial: &TrivariatePolynomial) -> Option<Self> {
         Some(Self {
             rational: self.rational.multiply(polynomial)?,
             radical: self.radical.multiply(polynomial)?,
         })
     }
 
-    pub(super) fn multiply(&self, other: &Self, radicand: &TrivariatePolynomial2) -> Option<Self> {
+    pub(super) fn multiply(&self, other: &Self, radicand: &TrivariatePolynomial) -> Option<Self> {
         Some(Self {
             rational: self
                 .rational
@@ -8397,7 +8397,7 @@ impl BezierAlgebraicCuspTrivariateSquareRootExpression2 {
         })
     }
 
-    pub(super) fn square(&self, radicand: &TrivariatePolynomial2) -> Option<Self> {
+    pub(super) fn square(&self, radicand: &TrivariatePolynomial) -> Option<Self> {
         self.multiply(self, radicand)
     }
 
@@ -8411,8 +8411,8 @@ impl BezierAlgebraicCuspTrivariateSquareRootExpression2 {
             .map(|(expression, scale)| (&expression.radical, *scale))
             .collect::<Vec<_>>();
         Some(Self {
-            rational: TrivariatePolynomial2::linear_combination(&rational)?,
-            radical: TrivariatePolynomial2::linear_combination(&radical)?,
+            rational: TrivariatePolynomial::linear_combination(&rational)?,
+            radical: TrivariatePolynomial::linear_combination(&radical)?,
         })
     }
 
@@ -8420,8 +8420,8 @@ impl BezierAlgebraicCuspTrivariateSquareRootExpression2 {
     /// `rational + branch * radical * sqrt(radicand)`.
     pub(super) fn projection(
         &self,
-        radicand: &TrivariatePolynomial2,
-    ) -> Option<TrivariatePolynomial2> {
+        radicand: &TrivariatePolynomial,
+    ) -> Option<TrivariatePolynomial> {
         let rational_squared = self.rational.multiply(&self.rational)?;
         let radical_squared = self.radical.multiply(&self.radical)?;
         rational_squared.subtract(&radical_squared.multiply(radicand)?)
@@ -8451,8 +8451,8 @@ impl BezierAlgebraicCuspTrivariateTwoSquareRootExpression2 {
     /// pair radical: `(R+B*k)^2-S*(T+P*k)^2`.
     pub(super) fn candidate_norm(
         &self,
-        pair_discriminant: &TrivariatePolynomial2,
-        candidate_speed_squared: &TrivariatePolynomial2,
+        pair_discriminant: &TrivariatePolynomial,
+        candidate_speed_squared: &TrivariatePolynomial,
     ) -> Option<BezierAlgebraicCuspTrivariateSquareRootExpression2> {
         let pair_squared = self.pair.multiply(&self.pair)?;
         let product_squared = self.product.multiply(&self.product)?;
@@ -8468,7 +8468,7 @@ impl BezierAlgebraicCuspTrivariateTwoSquareRootExpression2 {
                         .add(&product_squared.multiply(pair_discriminant)?)?,
                 )?,
             )?;
-        let radical = TrivariatePolynomial2::sum_products(&[
+        let radical = TrivariatePolynomial::sum_products(&[
             (&self.rational, &self.pair, false),
             (
                 candidate_speed_squared,

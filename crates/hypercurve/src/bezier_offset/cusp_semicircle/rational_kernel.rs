@@ -4138,7 +4138,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                             .radical
                             .multiply(&system.tangent_cross.radical)
                             .and_then(|radical_squared| {
-                                TrivariatePolynomial2::sum_products(&[
+                                TrivariatePolynomial::sum_products(&[
                                     (
                                         &system.tangent_cross.rational,
                                         &system.tangent_cross.rational,

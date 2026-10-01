@@ -243,7 +243,7 @@ impl BezierAlgebraicCuspSemicircle2 {
 
         let system = (|| {
             let axis = |coefficients: &[Real], axis| {
-                TrivariatePolynomial2::from_axis_polynomial(coefficients, axis)
+                TrivariatePolynomial::from_axis_polynomial(coefficients, axis)
             };
             let ax = axis(&start.x, 0)?;
             let ay = axis(&start.y, 0)?;
@@ -256,32 +256,32 @@ impl BezierAlgebraicCuspSemicircle2 {
             let cw = axis(&frame.denominator, 2)?;
             let nx = axis(&frame.normal_x, 2)?;
             let ny = axis(&frame.normal_y, 2)?;
-            let one = TrivariatePolynomial2::from_axis_polynomial(&[Real::one()], 0)?;
+            let one = TrivariatePolynomial::from_axis_polynomial(&[Real::one()], 0)?;
 
-            let dx = TrivariatePolynomial2::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
-            let dy = TrivariatePolynomial2::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
-            let vx = TrivariatePolynomial2::sum_products(&[(&ax, &cw, false), (&cx, &aw, true)])?;
-            let vy = TrivariatePolynomial2::sum_products(&[(&ay, &cw, false), (&cy, &aw, true)])?;
+            let dx = TrivariatePolynomial::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
+            let dy = TrivariatePolynomial::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
+            let vx = TrivariatePolynomial::sum_products(&[(&ax, &cw, false), (&cx, &aw, true)])?;
+            let vy = TrivariatePolynomial::sum_products(&[(&ay, &cw, false), (&cy, &aw, true)])?;
             let d_squared =
-                TrivariatePolynomial2::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
+                TrivariatePolynomial::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
             let v_dot_d =
-                TrivariatePolynomial2::sum_products(&[(&vx, &dx, false), (&vy, &dy, false)])?;
+                TrivariatePolynomial::sum_products(&[(&vx, &dx, false), (&vy, &dy, false)])?;
             let aw_cw = aw.multiply(&cw)?;
             let radius_squared = self.radial_distance() * self.radial_distance();
             let v_squared =
-                TrivariatePolynomial2::sum_products(&[(&vx, &vx, false), (&vy, &vy, false)])?;
+                TrivariatePolynomial::sum_products(&[(&vx, &vx, false), (&vy, &vy, false)])?;
             let radius_term = aw_cw.multiply(&aw_cw)?.scale(&radius_squared)?;
             let v_squared_minus_radius = v_squared.subtract(&radius_term)?;
-            let discriminant = TrivariatePolynomial2::sum_products(&[
+            let discriminant = TrivariatePolynomial::sum_products(&[
                 (&v_dot_d, &v_dot_d, false),
                 (&d_squared, &v_squared_minus_radius, true),
             ])?;
 
-            let radial_x_rational = TrivariatePolynomial2::sum_products(&[
+            let radial_x_rational = TrivariatePolynomial::sum_products(&[
                 (&vx, &d_squared, false),
                 (&dx, &v_dot_d, true),
             ])?;
-            let radial_y_rational = TrivariatePolynomial2::sum_products(&[
+            let radial_y_rational = TrivariatePolynomial::sum_products(&[
                 (&vy, &d_squared, false),
                 (&dy, &v_dot_d, true),
             ])?;
@@ -299,24 +299,24 @@ impl BezierAlgebraicCuspSemicircle2 {
 
             let turn_radius = self.turn_sign() * self.radial_distance();
             let selected_half_plane = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                rational: TrivariatePolynomial2::sum_products(&[
+                rational: TrivariatePolynomial::sum_products(&[
                     (&nx, &radial_y_rational, false),
                     (&ny, &radial_x_rational, true),
                 ])?
                 .scale(&turn_radius)?,
-                radical: TrivariatePolynomial2::sum_products(&[
+                radical: TrivariatePolynomial::sum_products(&[
                     (&nx, &dy, false),
                     (&ny, &dx, true),
                 ])?
                 .scale(&turn_radius)?,
             };
             let diameter_side = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                rational: TrivariatePolynomial2::sum_products(&[
+                rational: TrivariatePolynomial::sum_products(&[
                     (&nx, &radial_x_rational, false),
                     (&ny, &radial_y_rational, false),
                 ])?
                 .scale(self.radial_distance())?,
-                radical: TrivariatePolynomial2::sum_products(&[
+                radical: TrivariatePolynomial::sum_products(&[
                     (&nx, &dx, false),
                     (&ny, &dy, false),
                 ])?
@@ -329,7 +329,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 radical: one,
             };
             let point_minus_end = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-                rational: TrivariatePolynomial2::sum_products(&[
+                rational: TrivariatePolynomial::sum_products(&[
                     (&bw, &v_dot_d, true),
                     (&cw, &d_squared, true),
                 ])?,
@@ -444,7 +444,7 @@ impl BezierAlgebraicCuspSemicircle2 {
 
         let system = (|| {
             let axis = |coefficients: &[Real], axis| {
-                TrivariatePolynomial2::from_axis_polynomial(coefficients, axis)
+                TrivariatePolynomial::from_axis_polynomial(coefficients, axis)
             };
             let ax = axis(&start.x, 0)?;
             let ay = axis(&start.y, 0)?;
@@ -459,24 +459,24 @@ impl BezierAlgebraicCuspSemicircle2 {
             let ny = axis(&frame.normal_y, 2)?;
             let one = axis(&[Real::one()], 0)?;
 
-            let dx = TrivariatePolynomial2::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
-            let dy = TrivariatePolynomial2::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
+            let dx = TrivariatePolynomial::sum_products(&[(&bx, &aw, false), (&ax, &bw, true)])?;
+            let dy = TrivariatePolynomial::sum_products(&[(&by, &aw, false), (&ay, &bw, true)])?;
             let speed_squared =
-                TrivariatePolynomial2::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
+                TrivariatePolynomial::sum_products(&[(&dx, &dx, false), (&dy, &dy, false)])?;
             let translated_ax = ax.add(&aw.scale(&translation_x)?)?;
             let translated_ay = ay.add(&aw.scale(&translation_y)?)?;
-            let vx = TrivariatePolynomial2::sum_products(&[
+            let vx = TrivariatePolynomial::sum_products(&[
                 (&translated_ax, &cw, false),
                 (&cx, &aw, true),
             ])?;
-            let vy = TrivariatePolynomial2::sum_products(&[
+            let vy = TrivariatePolynomial::sum_products(&[
                 (&translated_ay, &cw, false),
                 (&cy, &aw, true),
             ])?;
             let line_cross =
-                TrivariatePolynomial2::sum_products(&[(&dx, &vy, false), (&dy, &vx, true)])?;
+                TrivariatePolynomial::sum_products(&[(&dx, &vy, false), (&dy, &vx, true)])?;
             let line_dot =
-                TrivariatePolynomial2::sum_products(&[(&dx, &vx, false), (&dy, &vy, false)])?;
+                TrivariatePolynomial::sum_products(&[(&dx, &vx, false), (&dy, &vy, false)])?;
             let support_denominator = aw.multiply(&bw)?;
             let center_denominator = aw.multiply(&cw)?;
             let denominator_squared_speed = center_denominator
@@ -653,7 +653,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let axis = |coefficients: &[Real], axis| {
                 QuadrivariatePolynomial2::from_axis_polynomial(coefficients, axis)
             };
-            let lift = |polynomial: &TrivariatePolynomial2| {
+            let lift = |polynomial: &TrivariatePolynomial| {
                 QuadrivariatePolynomial2::lift_trivariate(polynomial, [0, 1, 2])
             };
             let pair = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
@@ -1000,7 +1000,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             .iter()
             .map(bezier_parameter_root_representation)
             .collect::<Vec<_>>();
-        let dense = |polynomial: &TrivariatePolynomial2| {
+        let dense = |polynomial: &TrivariatePolynomial| {
             let polynomial = polynomial.to_dense_polynomial()?;
             let polynomial = polynomial.remove_certified_independent_axis(
                 2,
@@ -3274,7 +3274,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         };
         let retained = &system.retained;
-        let sign = |polynomial: &TrivariatePolynomial2| {
+        let sign = |polynomial: &TrivariatePolynomial| {
             trivariate_parameter_triple_sign_by_refinement(
                 polynomial,
                 &retained.first_parameter,
