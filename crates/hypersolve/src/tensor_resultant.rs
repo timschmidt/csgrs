@@ -140,6 +140,124 @@ impl DenseTensorPolynomial {
         Self::try_new(self.dimensions.clone(), coefficients)
     }
 
+    /// Forms an exact weighted sum of same-rank tensors in one allocation whose
+    /// extents are the axis-wise maxima. Terms with a structurally zero scale
+    /// are skipped.
+    pub fn linear_combination(terms: &[(&Self, &Real)]) -> Option<Self> {
+        let rank = terms.first()?.0.dimensions.len();
+        if terms.iter().any(|(term, _)| term.dimensions.len() != rank) {
+            return None;
+        }
+        let dimensions = (0..rank)
+            .map(|axis| {
+                terms
+                    .iter()
+                    .map(|(term, _)| term.dimensions[axis])
+                    .max()
+                    .unwrap_or(1)
+            })
+            .collect::<Vec<_>>();
+        let target_strides = row_major_strides(&dimensions)?;
+        let mut result = Self::zero(dimensions)?;
+        for (term, scale) in terms {
+            if scale.zero_status() == hyperreal::ZeroKnowledge::Zero {
+                continue;
+            }
+            for (target, coefficient) in embedded_nonzero_terms(term, &target_strides)? {
+                result.coefficients[target] += coefficient * *scale;
+            }
+        }
+        Some(result)
+    }
+
+    /// Forms a signed sum of same-rank tensor products in one result tensor,
+    /// subtracting each product whose flag is set.
+    pub fn sum_products(terms: &[(&Self, &Self, bool)]) -> Option<Self> {
+        let rank = terms.first()?.0.dimensions.len();
+        if terms
+            .iter()
+            .any(|(left, right, _)| left.dimensions.len() != rank || right.dimensions.len() != rank)
+        {
+            return None;
+        }
+        let mut dimensions = vec![1_usize; rank];
+        for (left, right, _) in terms {
+            for (axis, dimension) in dimensions.iter_mut().enumerate() {
+                *dimension = (*dimension).max(
+                    left.dimensions[axis]
+                        .checked_add(right.dimensions[axis])?
+                        .checked_sub(1)?,
+                );
+            }
+        }
+        let target_strides = row_major_strides(&dimensions)?;
+        let mut result = Self::zero(dimensions)?;
+        for (left, right, subtract) in terms {
+            let left_terms = embedded_nonzero_terms(left, &target_strides)?;
+            let right_terms = embedded_nonzero_terms(right, &target_strides)?;
+            for (left_index, left_coefficient) in &left_terms {
+                for (right_index, right_coefficient) in &right_terms {
+                    let target = left_index.checked_add(*right_index)?;
+                    let product = *left_coefficient * *right_coefficient;
+                    if *subtract {
+                        result.coefficients[target] -= product;
+                    } else {
+                        result.coefficients[target] += product;
+                    }
+                }
+            }
+        }
+        Some(result)
+    }
+
+    /// Embeds a trivariate polynomial in a tensor of `rank`, sending its three
+    /// axes to the distinct target `axes`; every other axis has degree zero.
+    pub fn from_trivariate(
+        polynomial: &crate::curve_resultant::TrivariatePolynomial,
+        rank: usize,
+        axes: [usize; 3],
+    ) -> Option<Self> {
+        if axes.iter().any(|axis| *axis >= rank)
+            || axes[0] == axes[1]
+            || axes[0] == axes[2]
+            || axes[1] == axes[2]
+        {
+            return None;
+        }
+        let (first, second, third) = polynomial.dimensions();
+        let mut dimensions = vec![1_usize; rank];
+        for (source_axis, count) in [first, second, third].into_iter().enumerate() {
+            dimensions[axes[source_axis]] = count.max(1);
+        }
+        let strides = row_major_strides(&dimensions)?;
+        let mut result = Self::zero(dimensions)?;
+        for (first, rows) in polynomial.coefficients.iter().enumerate() {
+            for (second, row) in rows.iter().enumerate() {
+                for (third, coefficient) in row.iter().enumerate() {
+                    let target = [first, second, third].into_iter().zip(axes).try_fold(
+                        0_usize,
+                        |index, (exponent, axis)| {
+                            index.checked_add(exponent.checked_mul(strides[axis])?)
+                        },
+                    )?;
+                    result.coefficients[target] = coefficient.clone();
+                }
+            }
+        }
+        Some(result)
+    }
+
+    /// Returns the flat row-major storage index of an exponent tuple, if it is
+    /// within the tensor's extents.
+    pub fn storage_index(&self, exponents: &[usize]) -> Option<usize> {
+        (exponents.len() == self.dimensions.len()
+            && exponents
+                .iter()
+                .zip(&self.dimensions)
+                .all(|(exponent, dimension)| exponent < dimension))
+        .then(|| flat_index(&self.dimensions, exponents))
+    }
+
     /// Multiplies two tensors by exact multidimensional convolution.
     pub fn multiply(&self, other: &Self) -> Option<Self> {
         if self.dimensions.len() != other.dimensions.len() {
