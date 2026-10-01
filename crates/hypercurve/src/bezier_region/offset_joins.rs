@@ -228,7 +228,7 @@ pub(super) fn regularized_exact_offset_band_arrangement(
     {
         let data = band.data_mut_for_construction();
         data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(band_count));
-        data.authored_loop_fill_rules = Some(Arc::from(vec![FillRule::NonZero; band_count]));
+        data.state = CurveRegionState2::Authored(Arc::from(vec![FillRule::NonZero; band_count]));
     }
     band = band
         .with_certified_filled_side_is_left(filled_sides_are_left)

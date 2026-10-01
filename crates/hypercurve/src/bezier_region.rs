@@ -296,11 +296,7 @@ pub struct CurveRegion2 {
 struct CurveRegionData2 {
     boundary_loops: Vec<CurveRegionBoundaryLoop2>,
     certified_loop_roles: Option<Arc<[CurveRegionLoopRole]>>,
-    /// Per-loop fill rules of an authored, not yet normalized, loop set.
-    /// Construction input only: a region certified as normalized has
-    /// filled-left loops with winding 0 or +/-1 and never retains them.
-    authored_loop_fill_rules: Option<Arc<[FillRule]>>,
-    regularized_filled_left_policy: Option<CurveContext>,
+    state: CurveRegionState2,
     certified_regularization: OnceLock<CurveRegion2>,
     strict_materialized_connectivity_certified: bool,
     filled_side_is_left: PolicyClassificationCache<Arc<[bool]>>,
@@ -310,15 +306,44 @@ struct CurveRegionData2 {
     signed_area_cache: PolicyEvaluationCache<Option<Real>>,
 }
 
+/// The semantic state of a region's boundary loops.
+///
+/// A normalized region has filled-left loops with winding 0 or +/-1, so no
+/// per-loop fill rule can change its set; authored fill rules exist only on
+/// a raw loop set still being evaluated. One state makes the two exclusive.
+#[derive(Clone, Debug, PartialEq)]
+enum CurveRegionState2 {
+    /// Retained loops with no authored winding semantics.
+    Raw,
+    /// Authored loops whose per-loop fill rules define the set until
+    /// regularization evaluates them.
+    Authored(Arc<[FillRule]>),
+    /// A certified regularized, filled-left boundary under this policy.
+    Normalized(CurveContext),
+}
+
 impl CurveRegionData2 {
+    fn authored_fill_rules(&self) -> Option<&[FillRule]> {
+        match &self.state {
+            CurveRegionState2::Authored(rules) => Some(rules),
+            CurveRegionState2::Raw | CurveRegionState2::Normalized(_) => None,
+        }
+    }
+
+    const fn normalized_policy(&self) -> Option<CurveContext> {
+        match self.state {
+            CurveRegionState2::Normalized(policy) => Some(policy),
+            CurveRegionState2::Raw | CurveRegionState2::Authored(_) => None,
+        }
+    }
+
     fn new(boundary_loops: Vec<CurveRegionBoundaryLoop2>) -> Self {
         let strict_materialized_connectivity_certified =
             retained_region_has_strict_materialized_connectivity(&boundary_loops);
         Self {
             boundary_loops,
             certified_loop_roles: None,
-            authored_loop_fill_rules: None,
-            regularized_filled_left_policy: None,
+            state: CurveRegionState2::Raw,
             certified_regularization: OnceLock::new(),
             strict_materialized_connectivity_certified,
             filled_side_is_left: PolicyClassificationCache::new(),
@@ -360,7 +385,7 @@ fn shared_empty_curve_region_data() -> Arc<CurveRegionData2> {
     static EMPTY: OnceLock<Arc<CurveRegionData2>> = OnceLock::new();
     Arc::clone(EMPTY.get_or_init(|| {
         let mut data = CurveRegionData2::new(Vec::new());
-        data.regularized_filled_left_policy = Some(CurveContext::STRICT);
+        data.state = CurveRegionState2::Normalized(CurveContext::STRICT);
         data.certified_loop_roles = Some(Arc::from(Vec::new()));
         data.filled_side_is_left.certify(Arc::from(Vec::new()));
         data.line_image_region
@@ -513,14 +538,7 @@ impl std::fmt::Debug for CurveRegion2 {
             .debug_struct("CurveRegion2")
             .field("boundary_loops", &self.data.boundary_loops)
             .field("certified_loop_roles", &self.data.certified_loop_roles)
-            .field(
-                "authored_loop_fill_rules",
-                &self.data.authored_loop_fill_rules,
-            )
-            .field(
-                "regularized_filled_left_policy",
-                &self.data.regularized_filled_left_policy,
-            )
+            .field("state", &self.data.state)
             .finish()
     }
 }
@@ -530,9 +548,7 @@ impl PartialEq for CurveRegion2 {
         Arc::ptr_eq(&self.data, &other.data)
             || (self.data.boundary_loops == other.data.boundary_loops
                 && self.data.certified_loop_roles == other.data.certified_loop_roles
-                && self.data.authored_loop_fill_rules == other.data.authored_loop_fill_rules
-                && self.data.regularized_filled_left_policy
-                    == other.data.regularized_filled_left_policy)
+                && self.data.state == other.data.state)
     }
 }
 
@@ -1939,8 +1955,8 @@ fn arrange_unordered_native_segments_raw(
         .collect::<Vec<_>>();
     let mut raw = CurveRegion2::try_from_boundary_paths_raw(&paths, policy)?;
     if !raw.is_empty() {
-        raw.data_mut_for_construction().authored_loop_fill_rules =
-            Some(Arc::from(vec![fill_rule; paths.len()]));
+        raw.data_mut_for_construction().state =
+            CurveRegionState2::Authored(Arc::from(vec![fill_rule; paths.len()]));
     }
     raw.finish_construction(policy)
 }
@@ -1967,8 +1983,7 @@ impl CurveRegion2 {
             );
             let mut data = CurveRegionData2::new(Vec::new());
             data.certified_loop_roles = self.data.certified_loop_roles.clone();
-            data.authored_loop_fill_rules = self.data.authored_loop_fill_rules.clone();
-            data.regularized_filled_left_policy = self.data.regularized_filled_left_policy;
+            data.state = self.data.state.clone();
             self.data = Arc::new(data);
         }
         Arc::get_mut(&mut self.data).expect("CurveRegion2 construction data is uniquely owned")
@@ -2125,7 +2140,7 @@ impl CurveRegion2 {
         // The caller's arrangement already certified these oriented, merged
         // line contours. Preserve that proof when choosing the compact native
         // representation, so the next operation does not normalize again.
-        data.regularized_filled_left_policy = Some(policy.retained_object_policy());
+        data.state = CurveRegionState2::Normalized(policy.retained_object_policy());
         data.filled_side_is_left
             .certify(Arc::from(vec![true; loop_count]));
         data.line_image_region
@@ -2239,7 +2254,7 @@ impl CurveRegion2 {
         {
             let data = region.data_mut_for_construction();
             data.certified_loop_roles = Some(Arc::from(roles));
-            data.authored_loop_fill_rules = Some(Arc::from(fill_rules));
+            data.state = CurveRegionState2::Authored(Arc::from(fill_rules));
         }
         if let Some(native) = native_region_from_curve_paths(paths, roles, fill_rules)
             .map_err(curve_region_promotion_error)?
@@ -2429,9 +2444,18 @@ impl CurveRegion2 {
         {
             let data = transformed.data_mut_for_construction();
             data.certified_loop_roles = self.data.certified_loop_roles.clone();
-            data.authored_loop_fill_rules = self.data.authored_loop_fill_rules.clone();
-            data.regularized_filled_left_policy =
-                retained_regularized_topology.then(|| policy.retained_object_policy());
+            data.state = if retained_regularized_topology {
+                CurveRegionState2::Normalized(policy.retained_object_policy())
+            } else {
+                match &self.data.state {
+                    CurveRegionState2::Authored(rules) => {
+                        CurveRegionState2::Authored(rules.clone())
+                    }
+                    CurveRegionState2::Raw | CurveRegionState2::Normalized(_) => {
+                        CurveRegionState2::Raw
+                    }
+                }
+            };
         }
         let sides = match self
             .filled_side_is_left_raw(policy)
@@ -2500,7 +2524,7 @@ impl CurveRegion2 {
         {
             let data = region.data_mut_for_construction();
             data.certified_loop_roles = Some(Arc::from(roles));
-            data.authored_loop_fill_rules = Some(Arc::from(fill_rules));
+            data.state = CurveRegionState2::Authored(Arc::from(fill_rules));
         }
         region.with_certified_filled_side_is_left(
             interior_sides
@@ -2556,8 +2580,8 @@ impl CurveRegion2 {
             ));
         }
         let loop_count = self.data.boundary_loops.len();
-        let retained = policy
-            .retained_object_policy_with_dependencies(self.data.regularized_filled_left_policy);
+        let retained =
+            policy.retained_object_policy_with_dependencies(self.data.normalized_policy());
         let data = self.data_mut_for_construction();
         data.filled_side_is_left
             .certify(Arc::from(vec![true; loop_count]));
@@ -2567,19 +2591,14 @@ impl CurveRegion2 {
         // Filled-left normalized loops have winding 0 or +/-1 everywhere, so
         // every per-loop fill rule selects the same set. Authored rules are
         // construction input and are not retained on the normalized result.
-        data.authored_loop_fill_rules = None;
-        data.regularized_filled_left_policy = Some(retained);
+        data.state = CurveRegionState2::Normalized(retained);
         Ok(self)
     }
 
     pub(crate) fn has_regularized_filled_left_topology(&self, policy: &CurveContext) -> bool {
-        let Some(retained) = self.data.regularized_filled_left_policy else {
+        let Some(retained) = self.data.normalized_policy() else {
             return false;
         };
-        debug_assert!(
-            self.data.authored_loop_fill_rules.is_none(),
-            "a normalized region retained authored fill rules"
-        );
         if !policy.accepts_retained_policy(retained) {
             return false;
         }
@@ -3262,9 +3281,8 @@ impl CurveRegion2 {
             {
                 return Ok(vec![normalized]);
             }
-            let retained_policy = attempt.retained_object_policy_with_dependencies(
-                normalized.data.regularized_filled_left_policy,
-            );
+            let retained_policy = attempt
+                .retained_object_policy_with_dependencies(normalized.data.normalized_policy());
             Ok(profiles
                 .into_iter()
                 .map(|profile| {
@@ -3286,7 +3304,7 @@ impl CurveRegion2 {
                     // Removing other complete material components preserves
                     // this component's regularized boundary. Ownership and
                     // the source normalization remain decision dependencies.
-                    data.regularized_filled_left_policy = Some(retained_policy);
+                    data.state = CurveRegionState2::Normalized(retained_policy);
                     data.filled_side_is_left
                         .certify(Arc::from(vec![true; loop_count]));
                     Self {
@@ -3651,7 +3669,7 @@ impl CurveRegion2 {
                 ));
             }
         };
-        let fill_rules = self.data.authored_loop_fill_rules.as_deref().map_or_else(
+        let fill_rules = self.data.authored_fill_rules().map_or_else(
             || vec![FillRule::EvenOdd; self.data.boundary_loops.len()],
             <[_]>::to_vec,
         );
@@ -3696,7 +3714,7 @@ impl CurveRegion2 {
             let curves = boundary_loop.curves().to_vec();
             let retained_policy = boundary_loop
                 .connectivity_policy
-                .or(self.data.regularized_filled_left_policy)
+                .or(self.data.normalized_policy())
                 .filter(|retained| policy.accepts_retained_policy(*retained));
             let path = if let Some(retained) = retained_policy {
                 CurvePath2::from_certified_closed_curves(curves, retained)
@@ -3772,8 +3790,7 @@ impl CurveRegion2 {
         };
         let fill_rules = self
             .data
-            .authored_loop_fill_rules
-            .as_deref()
+            .authored_fill_rules()
             .map_or_else(|| vec![FillRule::EvenOdd; paths.len()], <[_]>::to_vec);
         if paths.len() != roles.len() || paths.len() != fill_rules.len() {
             return Err(curve_region_edit_error(
@@ -4394,7 +4411,7 @@ impl CurveRegion2 {
         {
             let data = raw.data_mut_for_construction();
             data.certified_loop_roles = Some(Arc::from(roles));
-            data.authored_loop_fill_rules = Some(Arc::from(fill_rules));
+            data.state = CurveRegionState2::Authored(Arc::from(fill_rules));
         }
         raw = raw
             .with_certified_filled_side_is_left(filled_sides.to_vec())
@@ -4413,7 +4430,6 @@ impl CurveRegion2 {
             data.certified_loop_roles = Some(shared_all_material_curve_region_loop_roles(
                 data.boundary_loops.len(),
             ));
-            data.authored_loop_fill_rules = None;
             return Ok(Classification::Decided(raw));
         }
         let regularized = raw.regularized_region_raw(policy);
@@ -4661,8 +4677,7 @@ impl CurveRegion2 {
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
             let fill_rule = self
                 .data
-                .authored_loop_fill_rules
-                .as_deref()
+                .authored_fill_rules()
                 .and_then(|rules| rules.get(loop_index))
                 .copied()
                 .unwrap_or(FillRule::NonZero);
@@ -4695,8 +4710,7 @@ impl CurveRegion2 {
         }
         if self
             .data
-            .authored_loop_fill_rules
-            .as_ref()
+            .authored_fill_rules()
             .is_some_and(|rules| rules.len() != contours.len())
         {
             return Err(CurveError::Topology(
@@ -4707,7 +4721,7 @@ impl CurveRegion2 {
         let mut material = Vec::new();
         let mut holes = Vec::new();
         for (index, (contour, role)) in contours.iter().zip(roles).enumerate() {
-            let contour = match &self.data.authored_loop_fill_rules {
+            let contour = match self.data.authored_fill_rules() {
                 Some(fill_rules) if contour.fill_rule() != fill_rules[index] => {
                     Contour2::try_new_with_fill_rule(
                         contour.segments().to_vec(),
@@ -4842,8 +4856,7 @@ impl CurveRegion2 {
             .is_some_and(|roles| roles.len() != self.data.boundary_loops.len())
             || self
                 .data
-                .authored_loop_fill_rules
-                .as_ref()
+                .authored_fill_rules()
                 .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
         {
             return Err(CurveError::Topology(
@@ -4870,8 +4883,7 @@ impl CurveRegion2 {
             }
             let fill_rule = self
                 .data
-                .authored_loop_fill_rules
-                .as_ref()
+                .authored_fill_rules()
                 .map_or(FillRule::EvenOdd, |rules| rules[loop_index]);
             match classify_algebraic_point_against_retained_loop(
                 boundary_loop,
@@ -4932,7 +4944,7 @@ impl CurveRegion2 {
                         point,
                         policy,
                         self.data.certified_loop_roles.as_deref(),
-                        self.data.authored_loop_fill_rules.as_deref(),
+                        self.data.authored_fill_rules(),
                     );
                 }
                 // Native lowering is only a specialization. Any undecided
@@ -4948,7 +4960,7 @@ impl CurveRegion2 {
                 point,
                 policy,
                 self.data.certified_loop_roles.as_deref(),
-                self.data.authored_loop_fill_rules.as_deref(),
+                self.data.authored_fill_rules(),
             );
         };
         if self
@@ -4958,8 +4970,7 @@ impl CurveRegion2 {
             .is_some_and(|roles| roles.len() != native_loops.len())
             || self
                 .data
-                .authored_loop_fill_rules
-                .as_ref()
+                .authored_fill_rules()
                 .is_some_and(|rules| rules.len() != native_loops.len())
         {
             return Err(CurveError::Topology(
@@ -4980,8 +4991,7 @@ impl CurveRegion2 {
             }
             let fill_rule = self
                 .data
-                .authored_loop_fill_rules
-                .as_ref()
+                .authored_fill_rules()
                 .map_or(FillRule::EvenOdd, |rules| rules[index]);
             match classify_point_against_native_loop_after_bounds_with_fill_rule(
                 boundary_loop,
@@ -5207,8 +5217,7 @@ impl CurveRegion2 {
                 .is_some_and(|roles| roles.len() != windings_len)
             || self
                 .data
-                .authored_loop_fill_rules
-                .as_ref()
+                .authored_fill_rules()
                 .is_some_and(|rules| rules.len() != windings_len)
         {
             return Err(CurveError::Topology(
@@ -5220,8 +5229,7 @@ impl CurveRegion2 {
         for (loop_index, winding) in entries {
             let fill_rule = self
                 .data
-                .authored_loop_fill_rules
-                .as_ref()
+                .authored_fill_rules()
                 .map_or(FillRule::EvenOdd, |rules| rules[loop_index]);
             if winding_location(winding, fill_rule) != ContourPointLocation::Inside {
                 continue;
@@ -5328,8 +5336,7 @@ impl CurveRegion2 {
         let mut magnitudes = Vec::with_capacity(self.data.boundary_loops.len());
         if self
             .data
-            .authored_loop_fill_rules
-            .as_ref()
+            .authored_fill_rules()
             .is_some_and(|rules| rules.len() != self.data.boundary_loops.len())
         {
             return Err(CurveError::Topology(
@@ -5346,8 +5353,7 @@ impl CurveRegion2 {
             };
             let fill_rule = self
                 .data
-                .authored_loop_fill_rules
-                .as_ref()
+                .authored_fill_rules()
                 .map_or(FillRule::EvenOdd, |rules| rules[index]);
             let magnitude = match if self.has_regularized_filled_left_topology(policy) {
                 absolute_nonzero_area(area, policy).map(|area| area.map(Some))?
