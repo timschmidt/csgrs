@@ -30,6 +30,7 @@
 use std::ops::Range;
 
 use hyperreal::Real;
+use hypersolve::bivariate_arithmetic::{polynomial_multiply, polynomial_power};
 use hypersolve::exact_factor::exact_rational_polynomial_root;
 
 use crate::classify::{compare_reals, in_closed_unit_interval};
@@ -480,12 +481,16 @@ impl RationalQuadraticBezier2 {
         let dnx = derivative_coefficients(&nx)?;
         let dny = derivative_coefficients(&ny)?;
         let dw = derivative_coefficients(&w)?;
-        let dx_numerator =
-            polynomial_difference(&polynomial_product(&dnx, &w), &polynomial_product(&nx, &dw));
-        let dy_numerator =
-            polynomial_difference(&polynomial_product(&dny, &w), &polynomial_product(&ny, &dw));
-        let x_numerator = polynomial_product(&polynomial_product(&nx, &nx), &dy_numerator);
-        let y_numerator = polynomial_product(&polynomial_product(&ny, &ny), &dx_numerator);
+        let dx_numerator = polynomial_difference(
+            &polynomial_multiply(&dnx, &w),
+            &polynomial_multiply(&nx, &dw),
+        );
+        let dy_numerator = polynomial_difference(
+            &polynomial_multiply(&dny, &w),
+            &polynomial_multiply(&ny, &dw),
+        );
+        let x_numerator = polynomial_multiply(&polynomial_multiply(&nx, &nx), &dy_numerator);
+        let y_numerator = polynomial_multiply(&polynomial_multiply(&ny, &ny), &dx_numerator);
         let mut cache = RationalQuadraticAreaIntegralCache::default();
         let Some(signed_area) =
             rational_quadratic_signed_area_contribution(self, Some(&mut cache))?
@@ -596,8 +601,8 @@ fn rational_bezier_quadratic_weight_signed_area(
     let dnx = derivative_coefficients(&nx)?;
     let dny = derivative_coefficients(&ny)?;
     let numerator = polynomial_difference(
-        &polynomial_product(&nx, &dny),
-        &polynomial_product(&ny, &dnx),
+        &polynomial_multiply(&nx, &dny),
+        &polynomial_multiply(&ny, &dnx),
     );
     let mut cache = RationalQuadraticAreaIntegralCache::default();
     let Some(integral) =
@@ -619,16 +624,20 @@ fn rational_bezier_quadratic_weight_area_moments(
     let dnx = derivative_coefficients(&nx)?;
     let dny = derivative_coefficients(&ny)?;
     let dw = derivative_coefficients(&w)?;
-    let dx_numerator =
-        polynomial_difference(&polynomial_product(&dnx, &w), &polynomial_product(&nx, &dw));
-    let dy_numerator =
-        polynomial_difference(&polynomial_product(&dny, &w), &polynomial_product(&ny, &dw));
-    let area_numerator = polynomial_difference(
-        &polynomial_product(&nx, &dny),
-        &polynomial_product(&ny, &dnx),
+    let dx_numerator = polynomial_difference(
+        &polynomial_multiply(&dnx, &w),
+        &polynomial_multiply(&nx, &dw),
     );
-    let x_numerator = polynomial_product(&polynomial_product(&nx, &nx), &dy_numerator);
-    let y_numerator = polynomial_product(&polynomial_product(&ny, &ny), &dx_numerator);
+    let dy_numerator = polynomial_difference(
+        &polynomial_multiply(&dny, &w),
+        &polynomial_multiply(&ny, &dw),
+    );
+    let area_numerator = polynomial_difference(
+        &polynomial_multiply(&nx, &dny),
+        &polynomial_multiply(&ny, &dnx),
+    );
+    let x_numerator = polynomial_multiply(&polynomial_multiply(&nx, &nx), &dy_numerator);
+    let y_numerator = polynomial_multiply(&polynomial_multiply(&ny, &ny), &dx_numerator);
     let mut cache = RationalQuadraticAreaIntegralCache::default();
     let Some(area_integral) = integrate_polynomial_over_low_degree_weight_power(
         &area_numerator,
@@ -740,10 +749,10 @@ fn prefix_area_moments_for_controls(
 fn area_moments_for_controls(controls: &[&Point2]) -> CurveResult<BezierAreaMoments2> {
     let (x, y, dx, dy) = coordinate_power_derivatives(controls)?;
     let signed_area = signed_area_for_power_coordinates(&x, &y, &dx, &dy)?;
-    let x_squared = polynomial_product(&x, &x);
-    let y_squared = polynomial_product(&y, &y);
-    let x_moment_integral = integrate_polynomial(&polynomial_product(&x_squared, &dy))?;
-    let y_moment_integral = integrate_polynomial(&polynomial_product(&y_squared, &dx))?;
+    let x_squared = polynomial_multiply(&x, &x);
+    let y_squared = polynomial_multiply(&y, &y);
+    let x_moment_integral = integrate_polynomial(&polynomial_multiply(&x_squared, &dy))?;
+    let y_moment_integral = integrate_polynomial(&polynomial_multiply(&y_squared, &dx))?;
 
     Ok(BezierAreaMoments2 {
         signed_area,
@@ -806,8 +815,8 @@ fn signed_area_for_power_coordinates(
     dx: &[Real],
     dy: &[Real],
 ) -> CurveResult<Real> {
-    let first = polynomial_product(x, dy);
-    let second = polynomial_product(y, dx);
+    let first = polynomial_multiply(x, dy);
+    let second = polynomial_multiply(y, dx);
     let signed_area_integral = integrate_polynomial_difference(&first, &second)?;
     Ok((signed_area_integral / Real::from(2_i8))?)
 }
@@ -1100,7 +1109,7 @@ fn integrate_polynomial_over_square_free_quadratic_square(
 ) -> CurveResult<Option<Real>> {
     let q = denominator.to_vec();
     let dq = vec![q[1].clone(), Real::from(2_i8) * &q[2]];
-    let q2 = polynomial_product(&q, &q);
+    let q2 = polynomial_multiply(&q, &q);
     let Some((quotient, remainder)) = polynomial_division(numerator, &q2, policy)? else {
         return Ok(None);
     };
@@ -1109,12 +1118,12 @@ fn integrate_polynomial_over_square_free_quadratic_square(
     let mut basis = Vec::with_capacity(4);
     for linear in &linear_basis {
         basis.push(polynomial_difference(
-            &polynomial_product(&derivative_coefficients(linear)?, &q),
-            &polynomial_product(linear, &dq),
+            &polynomial_multiply(&derivative_coefficients(linear)?, &q),
+            &polynomial_multiply(linear, &dq),
         ));
     }
     for linear in &linear_basis {
-        basis.push(polynomial_product(linear, &q));
+        basis.push(polynomial_multiply(linear, &q));
     }
     let mut augmented = vec![vec![Real::zero(); 5]; 4];
     for (row, values) in augmented.iter_mut().enumerate() {
@@ -1203,9 +1212,9 @@ fn integrate_polynomial_over_square_free_quadratic_fourth(
 ) -> CurveResult<Option<Real>> {
     let q = denominator.to_vec();
     let dq = vec![q[1].clone(), Real::from(2_i8) * &q[2]];
-    let q2 = polynomial_product(&q, &q);
-    let q3 = polynomial_product(&q2, &q);
-    let q4 = polynomial_product(&q3, &q);
+    let q2 = polynomial_multiply(&q, &q);
+    let q3 = polynomial_multiply(&q2, &q);
+    let q4 = polynomial_multiply(&q3, &q);
     let Some((quotient, remainder)) = polynomial_division(numerator, &q4, policy)? else {
         return Ok(None);
     };
@@ -1214,30 +1223,30 @@ fn integrate_polynomial_over_square_free_quadratic_fourth(
     let mut basis = Vec::with_capacity(8);
     for linear in &linear_basis {
         basis.push(polynomial_difference(
-            &polynomial_product(&derivative_coefficients(linear)?, &q),
-            &polynomial_scaled(&polynomial_product(linear, &dq), &Real::from(3_i8)),
+            &polynomial_multiply(&derivative_coefficients(linear)?, &q),
+            &polynomial_scaled(&polynomial_multiply(linear, &dq), &Real::from(3_i8)),
         ));
     }
     for linear in &linear_basis {
-        basis.push(polynomial_product(
+        basis.push(polynomial_multiply(
             &polynomial_difference(
-                &polynomial_product(&derivative_coefficients(linear)?, &q),
-                &polynomial_scaled(&polynomial_product(linear, &dq), &Real::from(2_i8)),
+                &polynomial_multiply(&derivative_coefficients(linear)?, &q),
+                &polynomial_scaled(&polynomial_multiply(linear, &dq), &Real::from(2_i8)),
             ),
             &q,
         ));
     }
     for linear in &linear_basis {
-        basis.push(polynomial_product(
+        basis.push(polynomial_multiply(
             &polynomial_difference(
-                &polynomial_product(&derivative_coefficients(linear)?, &q),
-                &polynomial_product(linear, &dq),
+                &polynomial_multiply(&derivative_coefficients(linear)?, &q),
+                &polynomial_multiply(linear, &dq),
             ),
             &q2,
         ));
     }
     for linear in &linear_basis {
-        basis.push(polynomial_product(linear, &q3));
+        basis.push(polynomial_multiply(linear, &q3));
     }
 
     let mut augmented = vec![vec![Real::zero(); 9]; 8];
@@ -1333,7 +1342,7 @@ fn integrate_polynomial_over_cubic_power(
         Some(_) => {}
         None => return Ok(None),
     }
-    let denominator_power = polynomial_integer_power(denominator, power);
+    let denominator_power = polynomial_power(denominator, power);
     let Some((quotient, remainder)) = polynomial_division(numerator, &denominator_power, policy)?
     else {
         return Ok(None);
@@ -1348,24 +1357,24 @@ fn integrate_polynomial_over_cubic_power(
     let dimension = 3 * power;
     let mut basis = Vec::with_capacity(dimension);
     for denominator_exponent in (1..power).rev() {
-        let multiplier = polynomial_integer_power(denominator, power - denominator_exponent - 1);
+        let multiplier = polynomial_power(denominator, power - denominator_exponent - 1);
         for polynomial in &monomials {
             let derivative_numerator = polynomial_difference(
-                &polynomial_product(&derivative_coefficients(polynomial)?, denominator),
+                &polynomial_multiply(&derivative_coefficients(polynomial)?, denominator),
                 &polynomial_scaled(
-                    &polynomial_product(polynomial, &derivative),
+                    &polynomial_multiply(polynomial, &derivative),
                     &Real::from(
                         i32::try_from(denominator_exponent)
                             .map_err(|_| CurveError::InvalidBezierPolynomial)?,
                     ),
                 ),
             );
-            basis.push(polynomial_product(&derivative_numerator, &multiplier));
+            basis.push(polynomial_multiply(&derivative_numerator, &multiplier));
         }
     }
-    let final_multiplier = polynomial_integer_power(denominator, power - 1);
+    let final_multiplier = polynomial_power(denominator, power - 1);
     for polynomial in &monomials {
-        basis.push(polynomial_product(polynomial, &final_multiplier));
+        basis.push(polynomial_multiply(polynomial, &final_multiplier));
     }
     let mut augmented = vec![vec![Real::zero(); dimension + 1]; dimension];
     for (row, values) in augmented.iter_mut().enumerate() {
@@ -1561,7 +1570,7 @@ fn integrate_polynomial_over_factored_power(
     {
         return Err(CurveError::InvalidBezierPolynomial);
     }
-    let denominator_power = polynomial_integer_power(denominator, power);
+    let denominator_power = polynomial_power(denominator, power);
     let Some((quotient, remainder)) = polynomial_division(numerator, &denominator_power, policy)?
     else {
         return Ok(None);
@@ -1578,7 +1587,7 @@ fn integrate_polynomial_over_factored_power(
                     .ok_or(CurveError::InvalidBezierPolynomial)?;
                 for exponent in 1..=maximum_exponent {
                     let factor = [Real::zero() - root, Real::one()];
-                    let factor_power = polynomial_integer_power(&factor, exponent);
+                    let factor_power = polynomial_power(&factor, exponent);
                     let Some((basis, factor_remainder)) =
                         polynomial_division(&denominator_power, &factor_power, policy)?
                     else {
@@ -1605,7 +1614,7 @@ fn integrate_polynomial_over_factored_power(
                     .checked_mul(power)
                     .ok_or(CurveError::InvalidBezierPolynomial)?;
                 for exponent in 1..=maximum_exponent {
-                    let factor_power = polynomial_integer_power(denominator, exponent);
+                    let factor_power = polynomial_power(denominator, exponent);
                     let Some((basis, factor_remainder)) =
                         polynomial_division(&denominator_power, &factor_power, policy)?
                     else {
@@ -1626,7 +1635,7 @@ fn integrate_polynomial_over_factored_power(
                             denominator: denominator.clone(),
                             power: exponent,
                         },
-                        polynomial_product(&basis, &[Real::zero(), Real::one()]),
+                        polynomial_multiply(&basis, &[Real::zero(), Real::one()]),
                     ));
                 }
             }
@@ -1863,10 +1872,7 @@ fn exact_repeated_irreducible_quadratic_factor(
     );
     let constant = ((normalized_next - pair_count * &linear * &linear) / &multiplicity_real)?;
     let denominator = [constant, linear, Real::one()];
-    let reconstructed = polynomial_scaled(
-        &polynomial_integer_power(&denominator, multiplicity),
-        leading,
-    );
+    let reconstructed = polynomial_scaled(&polynomial_power(&denominator, multiplicity), leading);
     if !polynomial_is_certified_zero(&polynomial_difference(polynomial, &reconstructed), policy) {
         return Ok(None);
     }
@@ -1979,7 +1985,7 @@ fn irreducible_quadratic_pair_from_resolvent_root(
             return Ok(None);
         }
     }
-    let reconstructed = polynomial_scaled(&polynomial_product(&first, &second), leading);
+    let reconstructed = polynomial_scaled(&polynomial_multiply(&first, &second), leading);
     if !polynomial_is_certified_zero(&polynomial_difference(polynomial, &reconstructed), policy) {
         return Ok(None);
     }
@@ -2418,27 +2424,6 @@ fn derivative_coefficients(coefficients: &[Real]) -> CurveResult<Vec<Real>> {
             Ok(coefficient * &Real::from(degree))
         })
         .collect()
-}
-
-fn polynomial_product(first: &[Real], second: &[Real]) -> Vec<Real> {
-    if first.is_empty() || second.is_empty() {
-        return Vec::new();
-    }
-    let mut product = vec![Real::zero(); first.len() + second.len() - 1];
-    for (i, a) in first.iter().enumerate() {
-        for (j, b) in second.iter().enumerate() {
-            product[i + j] = &product[i + j] + &(a * b);
-        }
-    }
-    product
-}
-
-fn polynomial_integer_power(polynomial: &[Real], exponent: usize) -> Vec<Real> {
-    let mut result = vec![Real::one()];
-    for _ in 0..exponent {
-        result = polynomial_product(&result, polynomial);
-    }
-    result
 }
 
 fn subdivide_controls_at(controls: &[Point2], t: Real) -> CurveResult<(Vec<Point2>, Vec<Point2>)> {

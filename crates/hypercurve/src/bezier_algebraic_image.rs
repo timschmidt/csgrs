@@ -12,6 +12,9 @@
 //! standard Bernstein-to-power identities for Bezier curves; see the Bernstein and de Casteljau curve model.
 
 use hyperreal::{Real, RealSign};
+use hypersolve::bivariate_arithmetic::{
+    polynomial_derivative, polynomial_multiply, polynomial_subtract,
+};
 use hypersolve::{
     AlgebraicRootArithmeticOp, AlgebraicRootArithmeticReport, AlgebraicRootArithmeticStatus,
     AlgebraicRootRationalImageReport, AlgebraicRootRepresentation, AlgebraicRootValidationReport,
@@ -1715,17 +1718,17 @@ impl RationalBezierAlgebraicTangentImage2 {
         let determinant = reduce_algebraic_image_polynomial(
             parameter,
             if dot {
-                let mut product = multiply_polynomials(first_x, second_x);
-                let other = multiply_polynomials(first_y, second_y);
+                let mut product = polynomial_multiply(first_x, second_x);
+                let other = polynomial_multiply(first_y, second_y);
                 product.resize(product.len().max(other.len()), Real::zero());
                 for (coefficient, term) in product.iter_mut().zip(other) {
                     *coefficient = &*coefficient + term;
                 }
                 product
             } else {
-                subtract_polynomials(
-                    &multiply_polynomials(first_x, second_y),
-                    &multiply_polynomials(first_y, second_x),
+                polynomial_subtract(
+                    &polynomial_multiply(first_x, second_y),
+                    &polynomial_multiply(first_y, second_x),
                 )
             },
             &strict,
@@ -2191,23 +2194,23 @@ pub(crate) fn rational_derivative_images_from_power_basis(
     for order in 1..=max_order {
         // Differentiate only the original source polynomials. Congruence at
         // the selected root does not preserve their derivatives.
-        x_numerator = derivative_coefficients(&x_numerator);
-        y_numerator = derivative_coefficients(&y_numerator);
+        x_numerator = polynomial_derivative(&x_numerator);
+        y_numerator = polynomial_derivative(&y_numerator);
         if order <= denominator_degree {
-            denominator = derivative_coefficients(&denominator);
+            denominator = polynomial_derivative(&denominator);
             let derivative =
                 reduce_algebraic_image_polynomial(parameter, denominator.clone(), &strict)?;
             denominator_derivatives.push(reduce_algebraic_image_polynomial(
                 parameter,
-                multiply_polynomials(&derivative, &previous_denominator_power),
+                polynomial_multiply(&derivative, &previous_denominator_power),
                 &strict,
             )?);
         }
-        let mut dx_numerator = multiply_polynomials(
+        let mut dx_numerator = polynomial_multiply(
             &reduce_algebraic_image_polynomial(parameter, x_numerator.clone(), &strict)?,
             &denominator_power,
         );
-        let mut dy_numerator = multiply_polynomials(
+        let mut dy_numerator = polynomial_multiply(
             &reduce_algebraic_image_polynomial(parameter, y_numerator.clone(), &strict)?,
             &denominator_power,
         );
@@ -2228,16 +2231,16 @@ pub(crate) fn rational_derivative_images_from_power_basis(
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             let (previous_x, previous_y) = &numerators[order - denominator_order];
-            dx_numerator = subtract_polynomials(
+            dx_numerator = polynomial_subtract(
                 &dx_numerator,
                 &scale_polynomial(
-                    &multiply_polynomials(derivative, previous_x),
+                    &polynomial_multiply(derivative, previous_x),
                     coefficient.clone(),
                 ),
             );
-            dy_numerator = subtract_polynomials(
+            dy_numerator = polynomial_subtract(
                 &dy_numerator,
-                &scale_polynomial(&multiply_polynomials(derivative, previous_y), coefficient),
+                &scale_polynomial(&polynomial_multiply(derivative, previous_y), coefficient),
             );
         }
         let dx_numerator = reduce_algebraic_image_polynomial(parameter, dx_numerator, &strict)?;
@@ -2246,7 +2249,7 @@ pub(crate) fn rational_derivative_images_from_power_basis(
         previous_denominator_power = denominator_power;
         denominator_power = reduce_algebraic_image_polynomial(
             parameter,
-            multiply_polynomials(&previous_denominator_power, &denominator_image),
+            polynomial_multiply(&previous_denominator_power, &denominator_image),
             &strict,
         )?;
         match rational_tangent_image(
@@ -2562,43 +2565,9 @@ fn cubic_power_coefficients(p0: &Real, p1: &Real, p2: &Real, p3: &Real, three: &
 
 fn derivative_polynomials(polynomials: CoordinatePolynomials) -> CoordinatePolynomials {
     CoordinatePolynomials {
-        x: derivative_coefficients(&polynomials.x),
-        y: derivative_coefficients(&polynomials.y),
+        x: polynomial_derivative(&polynomials.x),
+        y: polynomial_derivative(&polynomials.y),
     }
-}
-
-fn derivative_coefficients(coefficients: &[Real]) -> Vec<Real> {
-    coefficients
-        .iter()
-        .enumerate()
-        .skip(1)
-        .map(|(degree, coefficient)| coefficient * &Real::from(degree as i64))
-        .collect()
-}
-
-fn multiply_polynomials(left: &[Real], right: &[Real]) -> Vec<Real> {
-    if left.is_empty() || right.is_empty() {
-        return Vec::new();
-    }
-    let mut result = vec![Real::zero(); left.len() + right.len() - 1];
-    for (left_degree, left_coefficient) in left.iter().enumerate() {
-        for (right_degree, right_coefficient) in right.iter().enumerate() {
-            result[left_degree + right_degree] =
-                result[left_degree + right_degree].clone() + left_coefficient * right_coefficient;
-        }
-    }
-    result
-}
-
-fn subtract_polynomials(left: &[Real], right: &[Real]) -> Vec<Real> {
-    let mut result = vec![Real::zero(); left.len().max(right.len())];
-    for (index, coefficient) in left.iter().enumerate() {
-        result[index] = result[index].clone() + coefficient;
-    }
-    for (index, coefficient) in right.iter().enumerate() {
-        result[index] = result[index].clone() - coefficient;
-    }
-    result
 }
 
 fn scale_polynomial(coefficients: &[Real], scale: Real) -> Vec<Real> {
