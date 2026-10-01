@@ -3206,15 +3206,6 @@ impl CurveRegion2 {
         })
     }
 
-    /// Returns authoritative per-loop fill rules when retained by construction.
-    ///
-    /// Region promotion preserves the source contour rules. Curved regions
-    /// built only from boundary paths currently return `None`, meaning their
-    /// simple-loop topology uses the kernel's default parity behavior.
-    pub fn loop_fill_rules(&self) -> Option<&[FillRule]> {
-        self.data.certified_loop_fill_rules.as_deref()
-    }
-
     /// Groups retained material loops with their exact owned hole loops.
     ///
     /// Roles come from [`Self::loop_roles`]. Each hole contributes exact
@@ -3274,12 +3265,17 @@ impl CurveRegion2 {
                 .map(|profile| {
                     let indices = std::iter::once(profile.material_loop_index)
                         .chain(profile.hole_loop_indices.iter().copied());
-                    let fill_rules = normalized.loop_fill_rules().map(|rules| {
-                        indices
-                            .clone()
-                            .map(|index| rules[index])
-                            .collect::<Arc<[_]>>()
-                    });
+                    let fill_rules =
+                        normalized
+                            .data
+                            .certified_loop_fill_rules
+                            .as_deref()
+                            .map(|rules| {
+                                indices
+                                    .clone()
+                                    .map(|index| rules[index])
+                                    .collect::<Arc<[_]>>()
+                            });
                     let boundaries = indices
                         .map(|index| normalized.data.boundary_loops[index].clone())
                         .collect::<Vec<_>>();
@@ -3662,7 +3658,7 @@ impl CurveRegion2 {
                 ));
             }
         };
-        let fill_rules = self.loop_fill_rules().map_or_else(
+        let fill_rules = self.data.certified_loop_fill_rules.as_deref().map_or_else(
             || vec![FillRule::EvenOdd; self.data.boundary_loops.len()],
             <[_]>::to_vec,
         );
@@ -3782,7 +3778,9 @@ impl CurveRegion2 {
             }
         };
         let fill_rules = self
-            .loop_fill_rules()
+            .data
+            .certified_loop_fill_rules
+            .as_deref()
             .map_or_else(|| vec![FillRule::EvenOdd; paths.len()], <[_]>::to_vec);
         if paths.len() != roles.len() || paths.len() != fill_rules.len() {
             return Err(curve_region_edit_error(

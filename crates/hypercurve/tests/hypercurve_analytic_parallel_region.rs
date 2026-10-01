@@ -988,11 +988,7 @@ fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
             Classification::Decided(roles) => roles,
             Classification::Uncertain(reason) => panic!("offset loop roles: {reason:?}"),
         };
-        let signature = (
-            fragment_kinds,
-            roles,
-            offset.value.loop_fill_rules().map(<[_]>::to_vec),
-        );
+        let signature = (fragment_kinds, roles);
         if let Some(strict_signature) = &strict_signature {
             assert_eq!(&signature, strict_signature);
         } else {
