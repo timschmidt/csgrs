@@ -22348,6 +22348,75 @@ fn represented_chord_parameter_coordinates(
     })
 }
 
+/// Represents a chord direction and speed in one source field when one
+/// endpoint is exact and the other is a rational map `(X, Y) / W` of one
+/// algebraic parameter. Then `dx = (e_x W - X) / W`, `dy` likewise, and
+/// `dx^2 + dy^2 = (D_x^2 + D_y^2) / W^2` are all rational images of that one
+/// root. Independent coordinate roots would instead need a two-root
+/// resultant to recover the identity that couples them.
+fn represented_single_field_chord_direction_speed(
+    chord: &BezierAlgebraicChord2,
+) -> Option<(
+    [AlgebraicRootRepresentation; 2],
+    AlgebraicRootRepresentation,
+)> {
+    let (exact, algebraic, sign) = match (chord.start(), chord.end()) {
+        (
+            CurvePoint2(CurvePointData2::Algebraic(start)),
+            CurvePoint2(CurvePointData2::Exact(end)),
+        ) => (end, start, Real::one()),
+        (
+            CurvePoint2(CurvePointData2::Exact(start)),
+            CurvePoint2(CurvePointData2::Algebraic(end)),
+        ) => (start, end, Real::from(-1_i8)),
+        _ => return None,
+    };
+    let (x, y, weight) = algebraic.retained_coordinate_polynomials()?;
+    let root = algebraic.parameter();
+    // Orient as end - start: `sign * (exact * W - X)`.
+    let difference = |coordinate: &[Real], value: &Real| {
+        let length = coordinate.len().max(weight.len());
+        (0..length)
+            .map(|index| {
+                let scaled = weight.get(index).map_or_else(Real::zero, |w| w * value);
+                let source = coordinate.get(index).cloned().unwrap_or_else(Real::zero);
+                (scaled - source) * &sign
+            })
+            .collect::<Vec<_>>()
+    };
+    let dx = difference(x, exact.x());
+    let dy = difference(y, exact.y());
+    let norm_squared = polynomial_add(
+        &polynomial_multiply(&dx, &dx),
+        &polynomial_multiply(&dy, &dy),
+    );
+    let weight_squared = polynomial_multiply(weight, weight);
+    let strict = hypersolve::PredicatePolicy::STRICT;
+    let [dx, dy] =
+        hypersolve::transform_algebraic_root_rational_images(root, [&dx, &dy], weight, strict);
+    let [norm_squared] = hypersolve::transform_algebraic_root_rational_images(
+        root,
+        [&norm_squared],
+        &weight_squared,
+        strict,
+    );
+    let transformed = |report: hypersolve::AlgebraicRootRationalImageReport| {
+        (report.status == hypersolve::AlgebraicRootRationalImageStatus::Transformed)
+            .then_some(report.representation)
+            .flatten()
+    };
+    let (dx, dy, norm_squared) = (
+        transformed(dx)?,
+        transformed(dy)?,
+        transformed(norm_squared)?,
+    );
+    let speed = square_root_algebraic_root_representation(&norm_squared, 1);
+    (speed.status == AlgebraicRootSquareRootStatus::Transformed)
+        .then_some(speed.representation)
+        .flatten()
+        .map(|speed| ([dx, dy], speed))
+}
+
 fn represented_chord_direction_speed(
     chord: &BezierAlgebraicChord2,
     policy: &CurveContext,
@@ -22369,6 +22438,9 @@ fn represented_chord_direction_speed(
         CurvePoint2(CurvePointData2::AnalyticParallel(_)) => "analytic-parallel",
         CurvePoint2(CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)) => "similarity",
     };
+    if let Some(direction_speed) = represented_single_field_chord_direction_speed(chord) {
+        return Ok(Classification::Decided(direction_speed));
+    }
     let start = match represented_point_evidence_coordinates(chord.start(), policy)? {
         Classification::Decided(start) => start,
         Classification::Uncertain(reason) => {

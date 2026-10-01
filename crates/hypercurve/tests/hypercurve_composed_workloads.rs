@@ -1009,3 +1009,25 @@ fn translated_union_with_algebraic_contacts_round_trips() {
         assert_round_trip(label, &moved).unwrap();
     }
 }
+
+/// A round dilation of a chamfered spline joins the chamfer chord's offset
+/// with an arc framed by the chord normal. Reconstructing the result asks
+/// that arc to meet a nonadjacent parallel, which needs the chord's exact
+/// unit normal. With one exact endpoint and one rational-map endpoint, the
+/// direction and speed are represented in the single source field instead of
+/// through a resultant of two independent coordinate roots.
+#[test]
+fn chamfered_spline_round_dilation_round_trips() {
+    let seeds = [Seed {
+        x: 0,
+        y: 0,
+        width: 8,
+        height: 6,
+        lower: 2,
+        upper: 0,
+        curvature: 1,
+        weight: 1,
+    }];
+    let steps = [Step::Chamfer(0, 1), Step::Offset(1, 1, 0)];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
