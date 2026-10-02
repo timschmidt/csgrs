@@ -24,6 +24,31 @@ pub enum RepresentedOutcome<T> {
     Unsupported,
     /// A required STRICT predicate was not decided.
     Undecided,
+    /// A value required to be nonzero, such as a denominator, is certified zero.
+    Vanishes,
+}
+
+impl<T> RepresentedOutcome<T> {
+    /// Applies `map` to a decided value.
+    pub fn map<U>(self, map: impl FnOnce(T) -> U) -> RepresentedOutcome<U> {
+        match self {
+            Self::Decided(value) => RepresentedOutcome::Decided(map(value)),
+            Self::Unsupported => RepresentedOutcome::Unsupported,
+            Self::Undecided => RepresentedOutcome::Undecided,
+            Self::Vanishes => RepresentedOutcome::Vanishes,
+        }
+    }
+
+    /// Returns the same non-decided outcome for another value type, or `None`
+    /// when the value is decided.
+    pub fn uncertain<U>(self) -> Option<RepresentedOutcome<U>> {
+        match self {
+            Self::Decided(_) => None,
+            Self::Unsupported => Some(RepresentedOutcome::Unsupported),
+            Self::Undecided => Some(RepresentedOutcome::Undecided),
+            Self::Vanishes => Some(RepresentedOutcome::Vanishes),
+        }
+    }
 }
 
 /// Exact represented coordinate interval over represented algebraic roots.
@@ -107,7 +132,7 @@ pub fn represented_univariate_coordinate(
 }
 
 /// Exact represented tensor coordinate over represented algebraic roots.
-pub fn represented_tensor_coordinate(
+fn represented_tensor_coordinate(
     relation: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     lower: &Real,
@@ -232,10 +257,10 @@ pub fn represented_tensor_coordinate_refined(
                 RepresentedOutcome::Unsupported => {
                     return RepresentedOutcome::Unsupported;
                 }
-                RepresentedOutcome::Undecided if unchanged => {
+                RepresentedOutcome::Undecided | RepresentedOutcome::Vanishes if unchanged => {
                     return RepresentedOutcome::Undecided;
                 }
-                RepresentedOutcome::Undecided => {}
+                RepresentedOutcome::Undecided | RepresentedOutcome::Vanishes => {}
             }
             previous = Some((refined_sources, interval));
         }
@@ -770,7 +795,7 @@ pub fn represented_tensor_nested_interval(
 
 /// Exact represented tensor nested value refined over represented algebraic roots.
 #[allow(clippy::too_many_arguments)]
-pub fn represented_tensor_nested_value_refined(
+fn represented_tensor_nested_value_refined(
     retained: &DenseTensorPolynomial,
     candidate: &DenseTensorPolynomial,
     discriminant: &DenseTensorPolynomial,
@@ -1475,7 +1500,9 @@ pub fn dense_tuple_sign_by_refinement(
                 RepresentedOutcome::Decided(represented) => {
                     represented_policy_sign(&represented, policy)
                 }
-                RepresentedOutcome::Unsupported | RepresentedOutcome::Undecided => {
+                RepresentedOutcome::Unsupported
+                | RepresentedOutcome::Undecided
+                | RepresentedOutcome::Vanishes => {
                     policy.observe_approximate_512();
                     RepresentedOutcome::Decided(RealSign::Zero)
                 }
@@ -1496,5 +1523,327 @@ pub fn dense_tuple_sign_by_refinement(
             !(policy.selects_approximate_512() && refinement_steps > 512),
             "APPROXIMATE_512 cannot refine past its terminal"
         );
+    }
+}
+
+/// Certifies that a represented value is nonzero.
+fn represented_value_nonzero(
+    value: RepresentedOutcome<AlgebraicRootRepresentation>,
+) -> RepresentedOutcome<()> {
+    let value = match value {
+        RepresentedOutcome::Decided(value) => value,
+        uncertain => return uncertain.map(|_| ()),
+    };
+    match represented_strict_sign(&value) {
+        Some(RealSign::Positive | RealSign::Negative) => RepresentedOutcome::Decided(()),
+        Some(RealSign::Zero) => RepresentedOutcome::Vanishes,
+        None => RepresentedOutcome::Undecided,
+    }
+}
+
+/// Certifies that a dense tensor value is nonzero at a represented root tuple.
+fn represented_dense_nonzero(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> RepresentedOutcome<()> {
+    represented_value_nonzero(represented_dense_value_refined(polynomial, sources))
+}
+
+/// Materializes `(A + branch*B*sqrt(S)) / (C + branch*D*sqrt(S))`
+/// from one retained tensor authority. The supplied signed radical interval
+/// selects the authored square-root sheet; the exact squared relation remains
+/// independent of that procedural branch choice.
+pub fn represented_tensor_nested_ratio(
+    numerator_retained: &DenseTensorPolynomial,
+    numerator_candidate: &DenseTensorPolynomial,
+    denominator_retained: &DenseTensorPolynomial,
+    denominator_candidate: &DenseTensorPolynomial,
+    discriminant: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    signed_radical: &AlgebraicRootRepresentation,
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    let rank = sources.len() + 1;
+    if [
+        numerator_retained,
+        numerator_candidate,
+        denominator_retained,
+        denominator_candidate,
+        discriminant,
+    ]
+    .into_iter()
+    .any(|polynomial| {
+        polynomial.dimensions().len() != rank || polynomial.dimensions().last() != Some(&1)
+    }) {
+        return RepresentedOutcome::Unsupported;
+    }
+    // With no retained tensor axes this is exactly an ordinary Mobius image
+    // of the already represented signed radical. Reuse the complete quotient
+    // authority instead of maintaining a second transform loop.
+    if sources.is_empty() {
+        let (Some(numerator), Some(denominator)) = (
+            DenseTensorPolynomial::from_axis_polynomial(
+                2,
+                0,
+                &[
+                    numerator_retained.coefficients()[0].clone(),
+                    numerator_candidate.coefficients()[0].clone(),
+                ],
+            ),
+            DenseTensorPolynomial::from_axis_polynomial(
+                2,
+                0,
+                &[
+                    denominator_retained.coefficients()[0].clone(),
+                    denominator_candidate.coefficients()[0].clone(),
+                ],
+            ),
+        ) else {
+            return RepresentedOutcome::Unsupported;
+        };
+        return represented_tensor_ratio(
+            &numerator,
+            &denominator,
+            std::slice::from_ref(signed_radical),
+        );
+    }
+    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
+        rank,
+        sources.len(),
+        &[Real::zero(), Real::one()],
+    ) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(relation) = (|| {
+        let retained = denominator_retained
+            .multiply(&output)?
+            .subtract(numerator_retained)?;
+        let candidate = denominator_candidate
+            .multiply(&output)?
+            .subtract(numerator_candidate)?;
+        retained
+            .multiply(&retained)?
+            .subtract(&candidate.multiply(&candidate)?.multiply(discriminant)?)
+    })() else {
+        return RepresentedOutcome::Unsupported;
+    };
+    for refinement_steps in [0, 4, 8, 16, 32, 64] {
+        let refined_sources = sources
+            .iter()
+            .map(|source| refined_represented_root(source, refinement_steps))
+            .collect::<Vec<_>>();
+        let refined_radical = refined_represented_root(signed_radical, refinement_steps);
+        let (Some(numerator), Some(denominator)) = (
+            represented_tensor_nested_interval(
+                numerator_retained,
+                numerator_candidate,
+                &refined_sources,
+                &refined_radical,
+            ),
+            represented_tensor_nested_interval(
+                denominator_retained,
+                denominator_candidate,
+                &refined_sources,
+                &refined_radical,
+            ),
+        ) else {
+            continue;
+        };
+        let Some(interval) = numerator.divide(&denominator) else {
+            continue;
+        };
+        match represented_tensor_coordinate(
+            &relation,
+            &refined_sources,
+            &interval.lower,
+            &interval.upper,
+        ) {
+            decided @ RepresentedOutcome::Decided(_) => return decided,
+            RepresentedOutcome::Unsupported => return RepresentedOutcome::Unsupported,
+            RepresentedOutcome::Undecided | RepresentedOutcome::Vanishes => {}
+        }
+    }
+    if let Some(uncertain) = represented_value_nonzero(represented_tensor_nested_value_refined(
+        denominator_retained,
+        denominator_candidate,
+        discriminant,
+        sources,
+        signed_radical,
+        128,
+        64,
+        "represented-nested-denominator-separation",
+    ))
+    .uncertain()
+    {
+        return uncertain;
+    }
+    represented_tensor_coordinate_refined(
+        &relation,
+        sources,
+        128,
+        64,
+        "represented-nested-ratio-image-separation",
+        |refined_sources, refinement_steps| {
+            let refined_radical = refined_represented_root(signed_radical, refinement_steps);
+            let numerator = represented_tensor_nested_interval(
+                numerator_retained,
+                numerator_candidate,
+                refined_sources,
+                &refined_radical,
+            )?;
+            let denominator = represented_tensor_nested_interval(
+                denominator_retained,
+                denominator_candidate,
+                refined_sources,
+                &refined_radical,
+            )?;
+            numerator.divide(&denominator)
+        },
+    )
+}
+
+/// Materializes one exact quotient of two retained tensor values.
+///
+/// The numerator and denominator stay in their common selected-root tensor
+/// until the output relation is constructed.  This is important for
+/// projective constructions such as a retained line-line intersection: first
+/// eliminating the two values independently can discard the cancellation
+/// which proves that the denominator is nonzero on the authored tuple.
+pub fn represented_tensor_ratio(
+    numerator: &DenseTensorPolynomial,
+    denominator: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+    let rank = sources.len() + 1;
+    if [numerator, denominator].into_iter().any(|polynomial| {
+        polynomial.dimensions().len() != rank || polynomial.dimensions().last() != Some(&1)
+    }) {
+        return RepresentedOutcome::Unsupported;
+    }
+    // A rank-one tensor quotient is an ordinary rational function of one
+    // selected algebraic root. Cancel its exact polynomial content before
+    // invoking the general tensor-image eliminator. Recursive procedural
+    // geometry commonly arrives as `L(alpha) * H(alpha) / H(alpha)`; exposing
+    // the affine/Mobius image avoids manufacturing a high-degree resultant
+    // for a value already carried by the source field.
+    if sources.len() == 1
+        && numerator.dimensions().len() == 2
+        && numerator.dimensions()[1] == 1
+        && denominator.dimensions().len() == 2
+        && denominator.dimensions()[1] == 1
+        && let Some(common) = greatest_common_divisor_univariate_polynomials_exact(
+            numerator.coefficients(),
+            denominator.coefficients(),
+        )
+        && let (Some(numerator), Some(denominator)) = (
+            divide_univariate_polynomial_exact(numerator.coefficients(), &common),
+            divide_univariate_polynomial_exact(denominator.coefficients(), &common),
+        )
+    {
+        if common.len() > 1 {
+            let Some(common) = DenseTensorPolynomial::from_axis_polynomial(2, 0, &common) else {
+                return RepresentedOutcome::Unsupported;
+            };
+            if let Some(uncertain) = represented_dense_nonzero(&common, sources).uncertain() {
+                return uncertain;
+            }
+        }
+        if numerator.len() == 1
+            && denominator.len() == 1
+            && let Ok(value) = &numerator[0] / &denominator[0]
+        {
+            return RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(
+                &value,
+            ));
+        }
+        if numerator.len() <= 2 && denominator.len() <= 2 {
+            let report = transform_algebraic_root_mobius(
+                &sources[0],
+                numerator.get(1).cloned().unwrap_or_else(Real::zero),
+                numerator.first().cloned().unwrap_or_else(Real::zero),
+                denominator.get(1).cloned().unwrap_or_else(Real::zero),
+                denominator.first().cloned().unwrap_or_else(Real::zero),
+                PredicatePolicy::STRICT,
+            );
+            if report.status == AlgebraicRootMobiusTransformStatus::Transformed
+                && let Some(representation) = report.representation
+            {
+                return RepresentedOutcome::Decided(representation);
+            }
+        }
+    }
+    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
+        rank,
+        sources.len(),
+        &[Real::zero(), Real::one()],
+    ) else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let Some(relation) = denominator
+        .multiply(&output)
+        .and_then(|product| product.subtract(numerator))
+    else {
+        return RepresentedOutcome::Unsupported;
+    };
+    for refinement_steps in [0, 4, 8, 16, 32, 64, 128] {
+        let refined_sources = sources
+            .iter()
+            .map(|source| refined_represented_root(source, refinement_steps))
+            .collect::<Vec<_>>();
+        let (Some(numerator), Some(denominator)) = (
+            dense_tensor_interval(numerator, &refined_sources),
+            dense_tensor_interval(denominator, &refined_sources),
+        ) else {
+            continue;
+        };
+        let Some(interval) = numerator.divide(&denominator) else {
+            continue;
+        };
+        if let RepresentedOutcome::Decided(value) = represented_tensor_coordinate(
+            &relation,
+            &refined_sources,
+            &interval.lower,
+            &interval.upper,
+        ) {
+            return RepresentedOutcome::Decided(value);
+        }
+    }
+    if let Some(uncertain) = represented_dense_nonzero(denominator, sources).uncertain() {
+        return uncertain;
+    }
+    represented_tensor_coordinate_refined(
+        &relation,
+        sources,
+        256,
+        128,
+        "represented-ratio-image-separation",
+        |refined_sources, _| {
+            let numerator = dense_tensor_interval(numerator, refined_sources)?;
+            let denominator = dense_tensor_interval(denominator, refined_sources)?;
+            numerator.divide(&denominator)
+        },
+    )
+}
+
+/// Orders a represented value against an exact real: a certified STRICT
+/// order, else the policy sign of their exact difference.
+pub fn represented_order_to_real(
+    value: &AlgebraicRootRepresentation,
+    target: &Real,
+    policy: &impl ApproximationPolicy,
+) -> RepresentedOutcome<Ordering> {
+    if let Some(order) = represented_strict_order(
+        value,
+        &AlgebraicRootRepresentation::from_exact_value(target),
+    ) {
+        return RepresentedOutcome::Decided(order);
+    }
+    match represented_affine_coordinate(&[(value, &Real::one())], &(-target)) {
+        RepresentedOutcome::Decided(difference) => represented_policy_sign(&difference, policy)
+            .map(|sign| match sign {
+                RealSign::Negative => Ordering::Less,
+                RealSign::Zero => Ordering::Equal,
+                RealSign::Positive => Ordering::Greater,
+            }),
+        uncertain => uncertain.map(|_| unreachable!("only a decided outcome maps its value")),
     }
 }
