@@ -1161,11 +1161,13 @@ fn refilleted_weighted_spline_corner_completes() {
 /// Open computational-closure gap found by the generator: a second inward
 /// miter offset of a weight-4 quadratic seed. Regularizing the band orders a
 /// chord/parallel contact's recursive projective parameter against an equal
-/// carrier range endpoint held in another representation. The bounded
-/// equality probe replays a field Sturm sequence whose coefficients grow (0.4 s,
-/// 2 s, then 14 s per sign), and the complete fallback then projects the
-/// recursive relation through a Bareiss resultant. The selected-field equality
-/// of review step 3, without scalar elimination, is the remedy.
+/// carrier range endpoint held in another representation. Bounded field
+/// replays now decline within their elimination budget, so each equality
+/// falls to the complete promotion, which projects the recursive relation
+/// through a Bareiss resultant: successive pairs of candidates take 0.25 s,
+/// 1.7 s and then 356 s each. Carriers that retain the trim vertex as one
+/// exact shared point, instead of a promoted scalar endpoint the Boolean
+/// recomputes, are the remedy.
 #[test]
 #[ignore = "open: scalar promotion of a recursive projective parameter in repeated miter offset"]
 fn repeated_inward_miter_offset_of_a_weighted_quadratic_completes() {
