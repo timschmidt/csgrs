@@ -897,16 +897,13 @@ fn translated_arc_union_round_trips() {
     run_sequence(&seeds, &steps, false).unwrap();
 }
 
-/// Open computational-closure gap found by the generator: rebuilding a round
-/// dilation of a thrice-filleted union from its exported boundary. Unary
-/// regularization pairs a round-join arc with the adjacent analytic parallel
-/// it touches tangentially. Common-root counting is now certified modularly
-/// (Hypersolve c88abc6), but isolating the tangential double root in the
-/// selected fiber falls back from Bernstein subdivision to a local Sturm
-/// sequence whose subresultant coefficients grow without bound in practice.
-/// Modular/CRT subresultants over the extension would be the remedy.
+/// Rebuilding a round dilation of a thrice-filleted union from its exported
+/// boundary. Unary regularization pairs a round-join arc with the adjacent
+/// analytic parallel it touches tangentially, a repeated diagonal root of
+/// their selected incidence. The kernel isolates the deflated residual, which
+/// is certified nonzero at the diagonal, plus the simple diagonal root; the
+/// full incidence's local Sturm subresultants grew without completing.
 #[test]
-#[ignore = "open: fiber gcd growth in adjacent join-arc/parallel regularization"]
 fn filleted_union_round_dilation_round_trips() {
     let seeds = [
         Seed {
@@ -1139,16 +1136,13 @@ fn chamfered_spline_round_dilation_round_trips() {
     run_sequence(&seeds, &steps, false).unwrap();
 }
 
-/// Open computational-closure gap found by the generator: filleting a
-/// fillet-adjacent corner of a weighted cubic spline seed. The second fillet
-/// meets the first fillet's selected parallel contact; locating its center
-/// and contact signs dense recursive-field polynomials at an algebraic
-/// parameter (selected-fiber Sturm subresultants and
-/// `sign_at_selected_root`) whose coefficients grow without completing in
-/// 38 minutes. The selected-field equality and sign replay without dense
-/// elimination (review step 3) is the remedy.
+/// Filleting a fillet-adjacent corner of a weighted cubic spline seed. The
+/// second fillet meets the first fillet's selected parallel contact, where
+/// a round join touches its adjacent parallel along a repeated diagonal
+/// root. Isolating the deflated residual plus the simple diagonal root
+/// replaces the full incidence's selected-fiber Sturm subresultants, which
+/// did not complete in 38 minutes.
 #[test]
-#[ignore = "open: dense recursive-field signs in fillet of a fillet-adjacent corner"]
 fn refilleted_weighted_spline_corner_completes() {
     let seeds = [Seed {
         x: 6,
