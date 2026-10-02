@@ -1,55 +1,22 @@
 //! Exact values, intervals, ratios and tensor images built from isolated
 //! algebraic roots.
 //!
-//! Every decision uses certified STRICT predicates. An outcome is either a
-//! decided exact value, an unsupported construction (the representation or
-//! elimination cannot be built), or an undecided predicate.
+//! Every decision uses certified STRICT predicates unless an
+//! [`ApproximationPolicy`] permits and records an approximate terminal.
+//! An undecided result is `Unsupported` when the representation or
+//! elimination cannot be built, `Predicate` when a sign stays undecided, and
+//! `Boundary` when a value required to be nonzero is certified zero.
 
 use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::bivariate_arithmetic::polynomial_derivative;
+use crate::classification::{Classification, UncertaintyReason};
 use crate::radical_expression::TwoSquareRootExpression;
 use crate::real_interval::{RealInterval, strict_compare_reals, strict_real_sign};
 use crate::tensor_support::*;
 use crate::*;
-
-/// Outcome of an exact construction over represented algebraic roots.
-#[derive(Clone, Debug, PartialEq)]
-pub enum RepresentedOutcome<T> {
-    /// The exact value was constructed and certified.
-    Decided(T),
-    /// The representation or elimination needed for the value is unavailable.
-    Unsupported,
-    /// A required STRICT predicate was not decided.
-    Undecided,
-    /// A value required to be nonzero, such as a denominator, is certified zero.
-    Vanishes,
-}
-
-impl<T> RepresentedOutcome<T> {
-    /// Applies `map` to a decided value.
-    pub fn map<U>(self, map: impl FnOnce(T) -> U) -> RepresentedOutcome<U> {
-        match self {
-            Self::Decided(value) => RepresentedOutcome::Decided(map(value)),
-            Self::Unsupported => RepresentedOutcome::Unsupported,
-            Self::Undecided => RepresentedOutcome::Undecided,
-            Self::Vanishes => RepresentedOutcome::Vanishes,
-        }
-    }
-
-    /// Returns the same non-decided outcome for another value type, or `None`
-    /// when the value is decided.
-    pub fn uncertain<U>(self) -> Option<RepresentedOutcome<U>> {
-        match self {
-            Self::Decided(_) => None,
-            Self::Unsupported => Some(RepresentedOutcome::Unsupported),
-            Self::Undecided => Some(RepresentedOutcome::Undecided),
-            Self::Vanishes => Some(RepresentedOutcome::Vanishes),
-        }
-    }
-}
 
 /// Exact represented coordinate interval over represented algebraic roots.
 fn represented_coordinate_interval(lower: &Real, upper: &Real) -> Option<IsolatedRootInterval> {
@@ -76,16 +43,16 @@ pub fn represented_univariate_coordinate(
     lower: &Real,
     upper: &Real,
     provenance: &AlgebraicRootRepresentation,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     if coefficients.len() <= 1 {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     }
     let Some(interval) = represented_coordinate_interval(lower, upper) else {
-        return RepresentedOutcome::Undecided;
+        return Classification::Uncertain(UncertaintyReason::Predicate);
     };
     let coefficients = if let Some(root) = interval.exact_root.as_ref() {
         if strict_real_sign(&Real::eval_poly(coefficients, root)) != Some(RealSign::Zero) {
-            return RepresentedOutcome::Undecided;
+            return Classification::Uncertain(UncertaintyReason::Predicate);
         }
         vec![-root.clone(), Real::one()]
     } else {
@@ -103,14 +70,14 @@ pub fn represented_univariate_coordinate(
         let Some(derivative_bounds) =
             RealInterval::evaluate_power_basis(&derivative, &parameter_interval)
         else {
-            return RepresentedOutcome::Undecided;
+            return Classification::Uncertain(UncertaintyReason::Predicate);
         };
         let derivative_nonzero = strict_compare_reals(&derivative_bounds.lower, &Real::zero())
             == Some(Ordering::Greater)
             || strict_compare_reals(&derivative_bounds.upper, &Real::zero())
                 == Some(Ordering::Less);
         if !derivative_nonzero {
-            return RepresentedOutcome::Undecided;
+            return Classification::Uncertain(UncertaintyReason::Predicate);
         }
         coefficients.to_vec()
     };
@@ -125,9 +92,9 @@ pub fn represented_univariate_coordinate(
     representation.validation =
         validate_algebraic_root_representation(&representation, crate::PredicatePolicy::STRICT);
     if representation.is_valid() {
-        RepresentedOutcome::Decided(representation)
+        Classification::Decided(representation)
     } else {
-        RepresentedOutcome::Unsupported
+        Classification::Uncertain(UncertaintyReason::Unsupported)
     }
 }
 
@@ -137,23 +104,25 @@ fn represented_tensor_coordinate(
     sources: &[AlgebraicRootRepresentation],
     lower: &Real,
     upper: &Real,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     let Some(interval) = represented_coordinate_interval(lower, upper) else {
-        return RepresentedOutcome::Undecided;
+        return Classification::Uncertain(UncertaintyReason::Predicate);
     };
     if sources.is_empty() {
         if relation.dimensions().len() != 1 {
-            return RepresentedOutcome::Unsupported;
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
         let Some(root) = interval.exact_root.as_ref() else {
-            return RepresentedOutcome::Undecided;
+            return Classification::Uncertain(UncertaintyReason::Predicate);
         };
         return match strict_real_sign(&Real::eval_poly(relation.coefficients(), root)) {
             Some(RealSign::Zero) => {
-                RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(root))
+                Classification::Decided(AlgebraicRootRepresentation::from_exact_value(root))
             }
-            Some(RealSign::Negative | RealSign::Positive) => RepresentedOutcome::Unsupported,
-            None => RepresentedOutcome::Undecided,
+            Some(RealSign::Negative | RealSign::Positive) => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+            None => Classification::Uncertain(UncertaintyReason::Predicate),
         };
     }
     #[cfg(test)]
@@ -170,19 +139,23 @@ fn represented_tensor_coordinate(
         eprintln!("tensor image end status={:?}", report.status);
     }
     match report.status {
-        AlgebraicTensorImageStatus::Transformed => RepresentedOutcome::Decided(
+        AlgebraicTensorImageStatus::Transformed => Classification::Decided(
             report
                 .representation
                 .expect("a transformed tensor image retains its representation"),
         ),
         AlgebraicTensorImageStatus::NonIsolatingImageInterval
-        | AlgebraicTensorImageStatus::Undecided => RepresentedOutcome::Undecided,
+        | AlgebraicTensorImageStatus::Undecided => {
+            Classification::Uncertain(UncertaintyReason::Predicate)
+        }
         AlgebraicTensorImageStatus::InvalidSourceEvidence
         | AlgebraicTensorImageStatus::InvalidRelationShape
         | AlgebraicTensorImageStatus::SourceSquareFreeFailed
         | AlgebraicTensorImageStatus::EliminationFailed
         | AlgebraicTensorImageStatus::ImageSquareFreeFailed
-        | AlgebraicTensorImageStatus::InvalidTransformedEvidence => RepresentedOutcome::Unsupported,
+        | AlgebraicTensorImageStatus::InvalidTransformedEvidence => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        }
     }
 }
 
@@ -197,7 +170,7 @@ pub fn represented_tensor_coordinate_refined(
     _hot_refinement_limit: usize,
     _trace_operation: &'static str,
     mut image_interval: impl FnMut(&[AlgebraicRootRepresentation], usize) -> Option<RealInterval>,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     let mut refinement_steps = initial_refinement_steps;
     let mut previous = None;
     #[cfg(feature = "dispatch-trace")]
@@ -253,14 +226,14 @@ pub fn represented_tensor_coordinate_refined(
                 &interval.lower,
                 &interval.upper,
             ) {
-                decided @ RepresentedOutcome::Decided(_) => return decided,
-                RepresentedOutcome::Unsupported => {
-                    return RepresentedOutcome::Unsupported;
+                decided @ Classification::Decided(_) => return decided,
+                Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                    return Classification::Uncertain(UncertaintyReason::Unsupported);
                 }
-                RepresentedOutcome::Undecided | RepresentedOutcome::Vanishes if unchanged => {
-                    return RepresentedOutcome::Undecided;
+                Classification::Uncertain(_) if unchanged => {
+                    return Classification::Uncertain(UncertaintyReason::Predicate);
                 }
-                RepresentedOutcome::Undecided | RepresentedOutcome::Vanishes => {}
+                Classification::Uncertain(_) => {}
             }
             previous = Some((refined_sources, interval));
         }
@@ -269,7 +242,7 @@ pub fn represented_tensor_coordinate_refined(
         } else {
             refinement_steps.checked_mul(2)
         }) else {
-            return RepresentedOutcome::Undecided;
+            return Classification::Uncertain(UncertaintyReason::Predicate);
         };
         #[cfg(feature = "dispatch-trace")]
         if refinement_steps <= _hot_refinement_limit && next_steps > _hot_refinement_limit {
@@ -290,7 +263,7 @@ pub fn represented_tensor_coordinate_refined(
 pub fn represented_affine_coordinate(
     terms: &[(&AlgebraicRootRepresentation, &Real)],
     offset: &Real,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     let mut affine_offset = offset.clone();
     let active = terms
         .iter()
@@ -306,18 +279,16 @@ pub fn represented_affine_coordinate(
         })
         .collect::<Vec<_>>();
     if active.is_empty() {
-        return RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(
+        return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(
             &affine_offset,
         ));
     }
     let affine_image = |source: &AlgebraicRootRepresentation, scale: &Real, offset: &Real| {
         if scale.zero_status() == ZeroKnowledge::Zero {
-            return RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(
-                offset,
-            ));
+            return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(offset));
         }
         if scale == &Real::one() && offset.zero_status() == ZeroKnowledge::Zero {
-            return RepresentedOutcome::Decided(source.clone());
+            return Classification::Decided(source.clone());
         }
         let report = transform_algebraic_root_affine(
             source,
@@ -326,16 +297,18 @@ pub fn represented_affine_coordinate(
             crate::PredicatePolicy::STRICT,
         );
         match report.status {
-            AlgebraicRootAffineTransformStatus::Transformed => RepresentedOutcome::Decided(
+            AlgebraicRootAffineTransformStatus::Transformed => Classification::Decided(
                 report
                     .representation
                     .expect("a transformed affine root retains its representation"),
             ),
-            AlgebraicRootAffineTransformStatus::Undecided => RepresentedOutcome::Undecided,
+            AlgebraicRootAffineTransformStatus::Undecided => {
+                Classification::Uncertain(UncertaintyReason::Predicate)
+            }
             AlgebraicRootAffineTransformStatus::InvalidEvidence
             | AlgebraicRootAffineTransformStatus::ZeroScale
             | AlgebraicRootAffineTransformStatus::InvalidTransformedEvidence => {
-                RepresentedOutcome::Unsupported
+                Classification::Uncertain(UncertaintyReason::Unsupported)
             }
         }
     };
@@ -372,7 +345,7 @@ pub fn represented_affine_coordinate(
         output_axis,
         &[(-affine_offset.clone()), Real::one()],
     ) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let mut sources = Vec::with_capacity(active.len());
     let mut scales = Vec::with_capacity(active.len());
@@ -382,10 +355,10 @@ pub fn represented_affine_coordinate(
             axis,
             &[Real::zero(), (*scale).clone()],
         ) else {
-            return RepresentedOutcome::Unsupported;
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
         let Some(next_relation) = relation.subtract(&term) else {
-            return RepresentedOutcome::Unsupported;
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
         relation = next_relation;
         sources.push((*source).clone());
@@ -597,10 +570,10 @@ fn represented_dense_value_with_optional_coefficient_precision(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     coefficient_precision: Option<i32>,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     let dimensions = polynomial.dimensions();
     if dimensions.len() != sources.len() + 1 || dimensions.last() != Some(&1) {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     }
     let output_axis = dimensions.len() - 1;
     let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
@@ -608,17 +581,17 @@ fn represented_dense_value_with_optional_coefficient_precision(
         output_axis,
         &[Real::zero(), Real::one()],
     ) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(relation) = output.subtract(polynomial) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(interval) = dense_tensor_interval_with_coefficient_precision(
         polynomial,
         sources,
         coefficient_precision,
     ) else {
-        return RepresentedOutcome::Undecided;
+        return Classification::Uncertain(UncertaintyReason::Predicate);
     };
     #[cfg(test)]
     if relation.dimensions().len() == 4
@@ -634,7 +607,7 @@ pub fn represented_dense_value_with_coefficient_precision(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     coefficient_precision: i32,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     #[cfg(test)]
     if polynomial.dimensions().len() == 4
         && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
@@ -653,7 +626,7 @@ pub fn represented_dense_value_with_coefficient_precision(
 fn represented_dense_value(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     #[cfg(test)]
     if polynomial.dimensions().len() == 4
         && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
@@ -667,13 +640,13 @@ fn represented_dense_value(
 pub fn represented_dense_value_refined(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     let dimensions = polynomial.dimensions();
     if dimensions.len() != sources.len() + 1 || dimensions.last() != Some(&1) {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     }
     if sources.is_empty() {
-        return RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(
+        return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(
             &polynomial.coefficients()[0],
         ));
     }
@@ -683,10 +656,10 @@ pub fn represented_dense_value_refined(
         output_axis,
         &[Real::zero(), Real::one()],
     ) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(relation) = output.subtract(polynomial) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     represented_tensor_coordinate_refined(
         &relation,
@@ -804,7 +777,7 @@ fn represented_tensor_nested_value_refined(
     initial_refinement_steps: usize,
     hot_refinement_limit: usize,
     trace_operation: &'static str,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     if candidate
         .coefficients()
         .iter()
@@ -818,14 +791,14 @@ fn represented_tensor_nested_value_refined(
         sources.len(),
         &[Real::zero(), Real::one()],
     ) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(relation) = output.subtract(retained).and_then(|residual| {
         residual
             .multiply(&residual)?
             .subtract(&candidate.multiply(candidate)?.multiply(discriminant)?)
     }) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     represented_tensor_coordinate_refined(
         &relation,
@@ -889,7 +862,7 @@ pub fn represented_strict_sign(value: &AlgebraicRootRepresentation) -> Option<Re
 pub fn represented_ratio(
     numerator: &AlgebraicRootRepresentation,
     denominator: &AlgebraicRootRepresentation,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     let numerator_interval = RealInterval {
         lower: numerator.interval.lower.clone(),
         upper: numerator.interval.upper.clone(),
@@ -899,28 +872,28 @@ pub fn represented_ratio(
         upper: denominator.interval.upper.clone(),
     };
     let Some(interval) = numerator_interval.divide(&denominator_interval) else {
-        return RepresentedOutcome::Undecided;
+        return Classification::Uncertain(UncertaintyReason::Predicate);
     };
     let Some(numerator_axis) =
         DenseTensorPolynomial::from_axis_polynomial(3, 0, &[Real::zero(), Real::one()])
     else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(denominator_axis) =
         DenseTensorPolynomial::from_axis_polynomial(3, 1, &[Real::zero(), Real::one()])
     else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(output) =
         DenseTensorPolynomial::from_axis_polynomial(3, 2, &[Real::zero(), Real::one()])
     else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(relation) = denominator_axis
         .multiply(&output)
         .and_then(|product| product.subtract(&numerator_axis))
     else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     #[cfg(test)]
     if relation.dimensions().len() == 4
@@ -942,15 +915,16 @@ pub fn represented_ratio(
 pub fn represented_vector_dot_cross(
     first: &[AlgebraicRootRepresentation; 2],
     second: &[AlgebraicRootRepresentation; 2],
-) -> RepresentedOutcome<[AlgebraicRootRepresentation; 2]> {
+) -> Classification<[AlgebraicRootRepresentation; 2]> {
     let combine = |dot, cross| match (dot, cross) {
-        (RepresentedOutcome::Decided(dot), RepresentedOutcome::Decided(cross)) => {
-            RepresentedOutcome::Decided([dot, cross])
+        (Classification::Decided(dot), Classification::Decided(cross)) => {
+            Classification::Decided([dot, cross])
         }
-        (RepresentedOutcome::Unsupported, _) | (_, RepresentedOutcome::Unsupported) => {
-            RepresentedOutcome::Unsupported
+        (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+        | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
         }
-        _ => RepresentedOutcome::Undecided,
+        _ => Classification::Uncertain(UncertaintyReason::Predicate),
     };
     let exact_products = |first: &[AlgebraicRootRepresentation; 2],
                           second: &[AlgebraicRootRepresentation; 2]| {
@@ -972,7 +946,7 @@ pub fn represented_vector_dot_cross(
         ])
     };
     if let Some(products) = exact_products(first, second) {
-        return RepresentedOutcome::Decided(products);
+        return Classification::Decided(products);
     }
     if let [Some(second_x), Some(second_y)] = [
         second[0].exact_point_witness(),
@@ -1013,7 +987,7 @@ pub fn represented_vector_dot_cross(
         second[1].clone(),
     ];
     let Some((sources, coordinates)) = represented_affine_tensor_basis(&coordinates) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let [first_x, first_y, second_x, second_y]: [DenseTensorPolynomial; 4] = coordinates
         .try_into()
@@ -1028,7 +1002,7 @@ pub fn represented_vector_dot_cross(
                 .subtract(&first_y.multiply(&second_x)?)?,
         ))
     })() else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let dot = represented_dense_value(&dot, &sources);
     let cross = represented_dense_value(&cross, &sources);
@@ -1383,12 +1357,12 @@ pub trait ApproximationPolicy {
 pub fn represented_policy_sign(
     value: &AlgebraicRootRepresentation,
     policy: &impl ApproximationPolicy,
-) -> RepresentedOutcome<RealSign> {
+) -> Classification<RealSign> {
     if let Some(sign) = represented_strict_sign(value) {
-        return RepresentedOutcome::Decided(sign);
+        return Classification::Decided(sign);
     }
     if !policy.permits_approximate_512() {
-        return RepresentedOutcome::Undecided;
+        return Classification::Uncertain(UncertaintyReason::Predicate);
     }
     let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
     let report = compare_algebraic_root_representations_with_refinement(
@@ -1405,10 +1379,10 @@ pub fn represented_policy_sign(
     )
     .then_some(report.comparison.ordering)
     .flatten() else {
-        return RepresentedOutcome::Undecided;
+        return Classification::Uncertain(UncertaintyReason::Predicate);
     };
     policy.observe_approximate_512();
-    RepresentedOutcome::Decided(match order {
+    Classification::Decided(match order {
         Ordering::Less => RealSign::Negative,
         Ordering::Equal => RealSign::Zero,
         Ordering::Greater => RealSign::Positive,
@@ -1429,7 +1403,7 @@ pub fn dense_tuple_sign_by_refinement(
     value: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     policy: &impl ApproximationPolicy,
-) -> RepresentedOutcome<RealSign> {
+) -> Classification<RealSign> {
     let mut previous = None;
     let mut refinement_steps = 0_usize;
     let next_refinement_steps = |steps: usize| match steps {
@@ -1456,7 +1430,7 @@ pub fn dense_tuple_sign_by_refinement(
             continue;
         }
         if !progressed && !policy.permits_approximate_512() {
-            return RepresentedOutcome::Undecided;
+            return Classification::Uncertain(UncertaintyReason::Predicate);
         }
         let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
         let coefficient_precision = -coefficient_bits;
@@ -1468,7 +1442,7 @@ pub fn dense_tuple_sign_by_refinement(
         .as_ref()
         .and_then(dense_strict_interval_sign)
         {
-            return RepresentedOutcome::Decided(sign);
+            return Classification::Decided(sign);
         }
         let bounded_terminal = policy.selects_approximate_512() && refinement_steps == 512;
         let approximate_terminal = policy.permits_approximate_512() && bounded_terminal;
@@ -1479,7 +1453,7 @@ pub fn dense_tuple_sign_by_refinement(
         // both the preliminary strict pass and the outer approximate replay.
         // STRICT alone retains the complete algebraic-image authority.
         let represented = if policy.selects_approximate_512() {
-            RepresentedOutcome::Undecided
+            Classification::Uncertain(UncertaintyReason::Predicate)
         } else {
             represented_dense_value_with_coefficient_precision(
                 value,
@@ -1487,24 +1461,22 @@ pub fn dense_tuple_sign_by_refinement(
                 coefficient_precision,
             )
         };
-        if let RepresentedOutcome::Decided(represented) = &represented
+        if let Classification::Decided(represented) = &represented
             && let Some(sign) = represented_strict_sign(represented)
         {
-            return RepresentedOutcome::Decided(sign);
+            return Classification::Decided(sign);
         }
-        if represented == RepresentedOutcome::Unsupported {
-            return RepresentedOutcome::Unsupported;
+        if represented == Classification::Uncertain(UncertaintyReason::Unsupported) {
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
         if approximate_terminal {
             return match represented {
-                RepresentedOutcome::Decided(represented) => {
+                Classification::Decided(represented) => {
                     represented_policy_sign(&represented, policy)
                 }
-                RepresentedOutcome::Unsupported
-                | RepresentedOutcome::Undecided
-                | RepresentedOutcome::Vanishes => {
+                Classification::Uncertain(_) => {
                     policy.observe_approximate_512();
-                    RepresentedOutcome::Decided(RealSign::Zero)
+                    Classification::Decided(RealSign::Zero)
                 }
             };
         }
@@ -1513,11 +1485,11 @@ pub fn dense_tuple_sign_by_refinement(
             // operation. Preserve its strict uncertainty so the outer policy
             // replay can consume the terminal; never continue this selected
             // policy into an unbounded exact promotion.
-            return RepresentedOutcome::Undecided;
+            return Classification::Uncertain(UncertaintyReason::Predicate);
         }
         refinement_steps = match next_refinement_steps(refinement_steps) {
             Some(next) => next,
-            None => return RepresentedOutcome::Unsupported,
+            None => return Classification::Uncertain(UncertaintyReason::Unsupported),
         };
         assert!(
             !(policy.selects_approximate_512() && refinement_steps > 512),
@@ -1528,16 +1500,16 @@ pub fn dense_tuple_sign_by_refinement(
 
 /// Certifies that a represented value is nonzero.
 fn represented_value_nonzero(
-    value: RepresentedOutcome<AlgebraicRootRepresentation>,
-) -> RepresentedOutcome<()> {
+    value: Classification<AlgebraicRootRepresentation>,
+) -> Classification<()> {
     let value = match value {
-        RepresentedOutcome::Decided(value) => value,
+        Classification::Decided(value) => value,
         uncertain => return uncertain.map(|_| ()),
     };
     match represented_strict_sign(&value) {
-        Some(RealSign::Positive | RealSign::Negative) => RepresentedOutcome::Decided(()),
-        Some(RealSign::Zero) => RepresentedOutcome::Vanishes,
-        None => RepresentedOutcome::Undecided,
+        Some(RealSign::Positive | RealSign::Negative) => Classification::Decided(()),
+        Some(RealSign::Zero) => Classification::Uncertain(UncertaintyReason::Boundary),
+        None => Classification::Uncertain(UncertaintyReason::Predicate),
     }
 }
 
@@ -1545,7 +1517,7 @@ fn represented_value_nonzero(
 fn represented_dense_nonzero(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
-) -> RepresentedOutcome<()> {
+) -> Classification<()> {
     represented_value_nonzero(represented_dense_value_refined(polynomial, sources))
 }
 
@@ -1561,7 +1533,7 @@ pub fn represented_tensor_nested_ratio(
     discriminant: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     signed_radical: &AlgebraicRootRepresentation,
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     let rank = sources.len() + 1;
     if [
         numerator_retained,
@@ -1574,7 +1546,7 @@ pub fn represented_tensor_nested_ratio(
     .any(|polynomial| {
         polynomial.dimensions().len() != rank || polynomial.dimensions().last() != Some(&1)
     }) {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     }
     // With no retained tensor axes this is exactly an ordinary Mobius image
     // of the already represented signed radical. Reuse the complete quotient
@@ -1598,7 +1570,7 @@ pub fn represented_tensor_nested_ratio(
                 ],
             ),
         ) else {
-            return RepresentedOutcome::Unsupported;
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
         return represented_tensor_ratio(
             &numerator,
@@ -1611,7 +1583,7 @@ pub fn represented_tensor_nested_ratio(
         sources.len(),
         &[Real::zero(), Real::one()],
     ) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(relation) = (|| {
         let retained = denominator_retained
@@ -1624,7 +1596,7 @@ pub fn represented_tensor_nested_ratio(
             .multiply(&retained)?
             .subtract(&candidate.multiply(&candidate)?.multiply(discriminant)?)
     })() else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     for refinement_steps in [0, 4, 8, 16, 32, 64] {
         let refined_sources = sources
@@ -1657,24 +1629,26 @@ pub fn represented_tensor_nested_ratio(
             &interval.lower,
             &interval.upper,
         ) {
-            decided @ RepresentedOutcome::Decided(_) => return decided,
-            RepresentedOutcome::Unsupported => return RepresentedOutcome::Unsupported,
-            RepresentedOutcome::Undecided | RepresentedOutcome::Vanishes => {}
+            decided @ Classification::Decided(_) => return decided,
+            Classification::Uncertain(UncertaintyReason::Unsupported) => {
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
+            }
+            Classification::Uncertain(_) => {}
         }
     }
-    if let Some(uncertain) = represented_value_nonzero(represented_tensor_nested_value_refined(
-        denominator_retained,
-        denominator_candidate,
-        discriminant,
-        sources,
-        signed_radical,
-        128,
-        64,
-        "represented-nested-denominator-separation",
-    ))
-    .uncertain()
+    if let Classification::Uncertain(reason) =
+        represented_value_nonzero(represented_tensor_nested_value_refined(
+            denominator_retained,
+            denominator_candidate,
+            discriminant,
+            sources,
+            signed_radical,
+            128,
+            64,
+            "represented-nested-denominator-separation",
+        ))
     {
-        return uncertain;
+        return Classification::Uncertain(reason);
     }
     represented_tensor_coordinate_refined(
         &relation,
@@ -1712,12 +1686,12 @@ pub fn represented_tensor_ratio(
     numerator: &DenseTensorPolynomial,
     denominator: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
-) -> RepresentedOutcome<AlgebraicRootRepresentation> {
+) -> Classification<AlgebraicRootRepresentation> {
     let rank = sources.len() + 1;
     if [numerator, denominator].into_iter().any(|polynomial| {
         polynomial.dimensions().len() != rank || polynomial.dimensions().last() != Some(&1)
     }) {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     }
     // A rank-one tensor quotient is an ordinary rational function of one
     // selected algebraic root. Cancel its exact polynomial content before
@@ -1741,19 +1715,17 @@ pub fn represented_tensor_ratio(
     {
         if common.len() > 1 {
             let Some(common) = DenseTensorPolynomial::from_axis_polynomial(2, 0, &common) else {
-                return RepresentedOutcome::Unsupported;
+                return Classification::Uncertain(UncertaintyReason::Unsupported);
             };
-            if let Some(uncertain) = represented_dense_nonzero(&common, sources).uncertain() {
-                return uncertain;
+            if let Classification::Uncertain(reason) = represented_dense_nonzero(&common, sources) {
+                return Classification::Uncertain(reason);
             }
         }
         if numerator.len() == 1
             && denominator.len() == 1
             && let Ok(value) = &numerator[0] / &denominator[0]
         {
-            return RepresentedOutcome::Decided(AlgebraicRootRepresentation::from_exact_value(
-                &value,
-            ));
+            return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(&value));
         }
         if numerator.len() <= 2 && denominator.len() <= 2 {
             let report = transform_algebraic_root_mobius(
@@ -1767,7 +1739,7 @@ pub fn represented_tensor_ratio(
             if report.status == AlgebraicRootMobiusTransformStatus::Transformed
                 && let Some(representation) = report.representation
             {
-                return RepresentedOutcome::Decided(representation);
+                return Classification::Decided(representation);
             }
         }
     }
@@ -1776,13 +1748,13 @@ pub fn represented_tensor_ratio(
         sources.len(),
         &[Real::zero(), Real::one()],
     ) else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let Some(relation) = denominator
         .multiply(&output)
         .and_then(|product| product.subtract(numerator))
     else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     for refinement_steps in [0, 4, 8, 16, 32, 64, 128] {
         let refined_sources = sources
@@ -1798,17 +1770,17 @@ pub fn represented_tensor_ratio(
         let Some(interval) = numerator.divide(&denominator) else {
             continue;
         };
-        if let RepresentedOutcome::Decided(value) = represented_tensor_coordinate(
+        if let Classification::Decided(value) = represented_tensor_coordinate(
             &relation,
             &refined_sources,
             &interval.lower,
             &interval.upper,
         ) {
-            return RepresentedOutcome::Decided(value);
+            return Classification::Decided(value);
         }
     }
-    if let Some(uncertain) = represented_dense_nonzero(denominator, sources).uncertain() {
-        return uncertain;
+    if let Classification::Uncertain(reason) = represented_dense_nonzero(denominator, sources) {
+        return Classification::Uncertain(reason);
     }
     represented_tensor_coordinate_refined(
         &relation,
@@ -1830,20 +1802,21 @@ pub fn represented_order_to_real(
     value: &AlgebraicRootRepresentation,
     target: &Real,
     policy: &impl ApproximationPolicy,
-) -> RepresentedOutcome<Ordering> {
+) -> Classification<Ordering> {
     if let Some(order) = represented_strict_order(
         value,
         &AlgebraicRootRepresentation::from_exact_value(target),
     ) {
-        return RepresentedOutcome::Decided(order);
+        return Classification::Decided(order);
     }
     match represented_affine_coordinate(&[(value, &Real::one())], &(-target)) {
-        RepresentedOutcome::Decided(difference) => represented_policy_sign(&difference, policy)
-            .map(|sign| match sign {
+        Classification::Decided(difference) => {
+            represented_policy_sign(&difference, policy).map(|sign| match sign {
                 RealSign::Negative => Ordering::Less,
                 RealSign::Zero => Ordering::Equal,
                 RealSign::Positive => Ordering::Greater,
-            }),
+            })
+        }
         uncertain => uncertain.map(|_| unreachable!("only a decided outcome maps its value")),
     }
 }
@@ -1856,7 +1829,7 @@ pub fn represented_projective_line_intersection(
     first: [DenseTensorPolynomial; 3],
     second: [DenseTensorPolynomial; 3],
     sources: &[AlgebraicRootRepresentation],
-) -> RepresentedOutcome<[AlgebraicRootRepresentation; 2]> {
+) -> Classification<[AlgebraicRootRepresentation; 2]> {
     let [first_a, first_b, first_c] = first;
     let [second_a, second_b, second_c] = second;
     let Some((x_numerator, y_numerator, denominator)) = (|| {
@@ -1871,19 +1844,20 @@ pub fn represented_projective_line_intersection(
             .subtract(&second_c.multiply(&first_a)?)?;
         Some((x_numerator, y_numerator, denominator))
     })() else {
-        return RepresentedOutcome::Unsupported;
+        return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
     let x = represented_tensor_ratio(&x_numerator, &denominator, sources);
     let y = represented_tensor_ratio(&y_numerator, &denominator, sources);
     match (x, y) {
-        (RepresentedOutcome::Decided(x), RepresentedOutcome::Decided(y)) => {
-            RepresentedOutcome::Decided([x, y].map(|coordinate| {
+        (Classification::Decided(x), Classification::Decided(y)) => {
+            Classification::Decided([x, y].map(|coordinate| {
                 compact_algebraic_root_low_degree_witness(&coordinate).unwrap_or(coordinate)
             }))
         }
-        (RepresentedOutcome::Unsupported, _) | (_, RepresentedOutcome::Unsupported) => {
-            RepresentedOutcome::Unsupported
+        (Classification::Uncertain(UncertaintyReason::Unsupported), _)
+        | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
+            Classification::Uncertain(UncertaintyReason::Unsupported)
         }
-        _ => RepresentedOutcome::Undecided,
+        _ => Classification::Uncertain(UncertaintyReason::Predicate),
     }
 }

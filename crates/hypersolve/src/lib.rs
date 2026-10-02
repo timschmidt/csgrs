@@ -22,6 +22,7 @@ pub mod batch;
 pub mod bivariate_arithmetic;
 pub mod branches;
 pub mod certification;
+pub mod classification;
 pub mod curve_resultant;
 pub mod curve_substitution;
 pub mod diagnostics;
