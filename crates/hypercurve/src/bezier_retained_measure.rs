@@ -23,6 +23,7 @@
 
 use hyperreal::Real;
 use hypersolve::AlgebraicRootRepresentation;
+use hypersolve::RealInterval;
 
 use crate::classify::compare_reals;
 use crate::{
@@ -170,15 +171,9 @@ pub(crate) struct BezierRetainedEndpointEnvelope2 {
 }
 
 #[derive(Clone, Debug)]
-struct CoordinateInterval {
-    lower: Real,
-    upper: Real,
-}
-
-#[derive(Clone, Debug)]
 struct EndpointInterval {
-    x: CoordinateInterval,
-    y: CoordinateInterval,
+    x: RealInterval,
+    y: RealInterval,
     kind: BezierRetainedEnvelopeSourceKind,
 }
 
@@ -600,11 +595,11 @@ impl EndpointEnvelopeAccumulator {
 
 fn native_endpoint_interval(point: &Point2) -> EndpointInterval {
     EndpointInterval {
-        x: CoordinateInterval {
+        x: RealInterval {
             lower: point.x().clone(),
             upper: point.x().clone(),
         },
-        y: CoordinateInterval {
+        y: RealInterval {
             lower: point.y().clone(),
             upper: point.y().clone(),
         },
@@ -635,14 +630,14 @@ fn algebraic_endpoint_interval(
 fn algebraic_coordinate_interval(
     coordinate: &crate::BezierAlgebraicRationalCoordinateImage,
     parameter_polynomial: &[Real],
-) -> Option<CoordinateInterval> {
+) -> Option<RealInterval> {
     if coordinate.denominator_coefficients() == [Real::one()]
         && let Some(exact) = polynomial_image_constant_remainder(
             coordinate.numerator_coefficients(),
             parameter_polynomial,
         )
     {
-        return Some(CoordinateInterval {
+        return Some(RealInterval {
             lower: exact.clone(),
             upper: exact,
         });
@@ -696,14 +691,14 @@ fn trim_polynomial_in_place(coefficients: &mut Vec<Real>) -> Option<()> {
     Some(())
 }
 
-fn represented_coordinate_interval(root: &AlgebraicRootRepresentation) -> CoordinateInterval {
+fn represented_coordinate_interval(root: &AlgebraicRootRepresentation) -> RealInterval {
     if let Some(witness) = root.exact_point_witness() {
-        return CoordinateInterval {
+        return RealInterval {
             lower: witness.clone(),
             upper: witness.clone(),
         };
     }
-    CoordinateInterval {
+    RealInterval {
         lower: root.interval.lower.clone(),
         upper: root.interval.upper.clone(),
     }

@@ -8,6 +8,7 @@ use std::sync::{Mutex, OnceLock};
 
 use hyperreal::Rational as HyperRational;
 use hyperreal::{Real, RealSign, ZeroKnowledge};
+use hypersolve::RealInterval;
 use hypersolve::{
     AlgebraicPolynomialValueInterval, AlgebraicRootRationalImageStatus, AlgebraicRootRationalMap,
     resultant_univariate_polynomials,
@@ -6457,7 +6458,7 @@ fn locally_certified_rational_image_parameter(
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256] {
         let refined = refinement.refine_to(refinement_steps);
         let source_interval = match refined.known_interval(policy)? {
-            Classification::Decided(interval) => ExactRealInterval {
+            Classification::Decided(interval) => RealInterval {
                 lower: interval.start().clone(),
                 upper: interval.end().clone(),
             },
@@ -6467,7 +6468,6 @@ fn locally_certified_rational_image_parameter(
             &candidate.numerator,
             &candidate.denominator,
             &source_interval,
-            policy,
         ) else {
             continue;
         };
@@ -6667,7 +6667,7 @@ fn real_coefficient_rational_image_parameter(
     loop {
         let refined = refinement.refine_to(refinement_steps);
         let source_interval = match refined.known_interval(&strict)? {
-            Classification::Decided(interval) => ExactRealInterval {
+            Classification::Decided(interval) => RealInterval {
                 lower: interval.start().clone(),
                 upper: interval.end().clone(),
             },
@@ -6679,7 +6679,6 @@ fn real_coefficient_rational_image_parameter(
             &candidate.numerator,
             &candidate.denominator,
             &source_interval,
-            &strict,
         );
         if let Some(image_interval) = image_interval {
             if compare_reals(&image_interval.upper, &Real::zero(), &strict) == Some(Ordering::Less)
@@ -6793,7 +6792,7 @@ fn real_coefficient_rational_image_parameter(
 
 fn image_parameter_may_meet_map_interval(
     parameter: &BezierParameter2,
-    image_interval: &ExactRealInterval,
+    image_interval: &RealInterval,
     policy: &CurveContext,
 ) -> bool {
     // Both a retained isolator and a learned scalar enclose the same root.
@@ -6821,91 +6820,16 @@ fn next_rational_image_refinement(current: usize) -> CurveResult<usize> {
     }
 }
 
-#[derive(Clone)]
-struct ExactRealInterval {
-    lower: Real,
-    upper: Real,
-}
-
+/// Encloses a rational map `numerator / denominator` over a parameter
+/// interval. Enclosures use only certified STRICT order decisions; the
+/// consuming predicate applies the caller's policy.
 fn evaluate_rational_map_interval(
     numerator: &[Real],
     denominator: &[Real],
-    parameter: &ExactRealInterval,
-    policy: &CurveContext,
-) -> Option<ExactRealInterval> {
-    let numerator = evaluate_power_polynomial_interval(numerator, parameter, policy)?;
-    let denominator = evaluate_power_polynomial_interval(denominator, parameter, policy)?;
-    let reciprocal = reciprocal_interval(&denominator, policy)?;
-    multiply_intervals(&numerator, &reciprocal, policy)
-}
-
-fn evaluate_power_polynomial_interval(
-    coefficients: &[Real],
-    parameter: &ExactRealInterval,
-    policy: &CurveContext,
-) -> Option<ExactRealInterval> {
-    let mut value = ExactRealInterval {
-        lower: Real::zero(),
-        upper: Real::zero(),
-    };
-    for coefficient in coefficients.iter().rev() {
-        value = multiply_intervals(&value, parameter, policy)?;
-        value.lower += coefficient;
-        value.upper += coefficient;
-    }
-    Some(value)
-}
-
-fn reciprocal_interval(
-    interval: &ExactRealInterval,
-    policy: &CurveContext,
-) -> Option<ExactRealInterval> {
-    let lower_sign = compare_reals(&interval.lower, &Real::zero(), policy)?;
-    let upper_sign = compare_reals(&interval.upper, &Real::zero(), policy)?;
-    if lower_sign != Ordering::Greater && upper_sign != Ordering::Less {
-        return None;
-    }
-    let mut endpoints = [
-        (Real::one() / &interval.lower).ok()?,
-        (Real::one() / &interval.upper).ok()?,
-    ];
-    sort_reals(&mut endpoints, policy)?;
-    Some(ExactRealInterval {
-        lower: endpoints[0].clone(),
-        upper: endpoints[1].clone(),
-    })
-}
-
-fn multiply_intervals(
-    left: &ExactRealInterval,
-    right: &ExactRealInterval,
-    policy: &CurveContext,
-) -> Option<ExactRealInterval> {
-    let mut products = [
-        &left.lower * &right.lower,
-        &left.lower * &right.upper,
-        &left.upper * &right.lower,
-        &left.upper * &right.upper,
-    ];
-    sort_reals(&mut products, policy)?;
-    Some(ExactRealInterval {
-        lower: products[0].clone(),
-        upper: products[3].clone(),
-    })
-}
-
-fn sort_reals(values: &mut [Real], policy: &CurveContext) -> Option<()> {
-    for index in 1..values.len() {
-        let mut cursor = index;
-        while cursor > 0 {
-            if compare_reals(&values[cursor], &values[cursor - 1], policy)? != Ordering::Less {
-                break;
-            }
-            values.swap(cursor, cursor - 1);
-            cursor -= 1;
-        }
-    }
-    Some(())
+    parameter: &RealInterval,
+) -> Option<RealInterval> {
+    RealInterval::evaluate_power_basis(numerator, parameter)?
+        .divide(&RealInterval::evaluate_power_basis(denominator, parameter)?)
 }
 
 /// Retains the exact affine contact point or its construction blocker.
@@ -10461,7 +10385,7 @@ mod tests {
                 let parameter = BezierParameter2::Algebraic(root);
                 let retained = parameter.clone();
                 assert!(parameter.scalar().is_none());
-                let image_interval = ExactRealInterval {
+                let image_interval = RealInterval {
                     lower: &value - &margin,
                     upper: &value + &margin,
                 };
@@ -10477,7 +10401,7 @@ mod tests {
                 );
                 assert!(matches!(retained, BezierParameter2::Algebraic(_)));
                 assert!(retained.scalar().is_some());
-                let foreign = ExactRealInterval {
+                let foreign = RealInterval {
                     lower: Real::zero(),
                     upper: quarter.clone(),
                 };
@@ -10728,17 +10652,13 @@ mod tests {
         else {
             panic!("the selected source did not retain an exact interval");
         };
-        let old_interval = ExactRealInterval {
+        let old_interval = RealInterval {
             lower: old_interval.start().clone(),
             upper: old_interval.end().clone(),
         };
-        let old_image_interval = evaluate_rational_map_interval(
-            &numerator,
-            std::slice::from_ref(&one),
-            &old_interval,
-            &strict,
-        )
-        .expect("the regular rational image must have exact interval bounds");
+        let old_image_interval =
+            evaluate_rational_map_interval(&numerator, std::slice::from_ref(&one), &old_interval)
+                .expect("the regular rational image must have exact interval bounds");
         assert_ne!(
             image_parameters
                 .iter()
