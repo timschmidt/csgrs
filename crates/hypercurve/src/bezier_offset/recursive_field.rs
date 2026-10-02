@@ -5304,7 +5304,7 @@ impl BezierRecursiveQuadraticField2 {
                 Some(BezierRecursiveQuadraticValue2 {
                     data: Arc::new(BezierRecursiveQuadraticValueData2::Base {
                         field: field.clone(),
-                        expression: BezierDenseTwoSquareRootExpression2::from_rational(polynomial)?,
+                        expression: DenseTwoSquareRootExpression::from_rational(polynomial)?,
                         real_witness: std::sync::OnceLock::new(),
                     }),
                 })
@@ -5425,7 +5425,7 @@ impl BezierRecursiveQuadraticForeignBaseEmbedding2 {
 
     pub(super) fn base_expression(
         &self,
-        expression: &BezierDenseTwoSquareRootExpression2,
+        expression: &DenseTwoSquareRootExpression,
         target_field: &BezierRecursiveQuadraticField2,
     ) -> Option<BezierRecursiveQuadraticValue2> {
         let rational = target_field.lift(&self.base_polynomial(&expression.rational)?)?;
@@ -6687,7 +6687,7 @@ impl BezierRecursiveQuadraticValue2 {
                     // quotient reduction; no new polynomial replay is needed.
                     BezierRecursiveQuadraticValueData2::Base {
                         field: field.clone(),
-                        expression: BezierDenseTwoSquareRootExpression2 {
+                        expression: DenseTwoSquareRootExpression {
                             rational: polynomial(&expression.rational)?,
                             first: polynomial(&expression.first)?,
                             second: polynomial(&expression.second)?,
@@ -6751,7 +6751,7 @@ impl BezierRecursiveQuadraticValue2 {
 
     pub(super) fn from_base(
         field: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-        expression: BezierDenseTwoSquareRootExpression2,
+        expression: DenseTwoSquareRootExpression,
     ) -> Option<Self> {
         let rank = field.sources.len();
         if ![
@@ -7253,7 +7253,7 @@ impl BezierRecursiveQuadraticValue2 {
                     (&expression.second, [false, true]),
                     (&expression.product, [true, true]),
                 ] {
-                    if BezierDenseTwoSquareRootExpression2::polynomial_is_stored_zero(coefficient) {
+                    if dense_tensor_is_stored_zero(coefficient) {
                         continue;
                     }
                     let mut term = evaluate(coefficient)?;

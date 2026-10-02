@@ -284,7 +284,7 @@ pub(super) fn dense_polynomial_tuple_sign_owned(
 }
 
 pub(super) fn dense_two_positive_square_root_interval_with_coefficient_precision(
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
@@ -307,7 +307,7 @@ pub(super) fn dense_two_positive_square_root_interval_with_coefficient_precision
         (&expression.second, 2),
         (&expression.product, 3),
     ] {
-        if BezierDenseTwoSquareRootExpression2::polynomial_is_stored_zero(coefficient) {
+        if dense_tensor_is_stored_zero(coefficient) {
             continue;
         }
         let mut term = interval(coefficient)?;
@@ -328,7 +328,7 @@ pub(super) fn dense_two_positive_square_root_interval_with_coefficient_precision
 }
 
 pub(super) fn dense_two_positive_square_root_interval(
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
@@ -477,7 +477,7 @@ pub(super) fn dense_positive_square_root_sum_sign(
 
 #[track_caller]
 pub(super) fn dense_two_positive_square_root_sum_sign(
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
@@ -500,7 +500,7 @@ pub(super) fn dense_two_positive_square_root_sum_sign(
             }
         };
     }
-    let expression = BezierDenseTwoSquareRootExpression2 {
+    let expression = DenseTwoSquareRootExpression {
         rational: reduce_input!(expression.rational.clone(), "rational-input-reduction"),
         first: reduce_input!(expression.first.clone(), "first-input-reduction"),
         second: reduce_input!(expression.second.clone(), "second-input-reduction"),
@@ -600,7 +600,7 @@ pub(super) fn dense_two_positive_square_root_sum_sign(
 /// problem, so its two polynomial component signs decide exact equality
 /// without reconstructing the eliminated tensor coordinate.
 pub(super) fn dense_two_positive_square_root_sum_sign_at_projected_zero(
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
@@ -609,7 +609,7 @@ pub(super) fn dense_two_positive_square_root_sum_sign_at_projected_zero(
     let reduce = |polynomial| dense_reduce_selected_tuple_relations(polynomial, sources);
     let Some((expression, first_speed_squared, second_speed_squared)) = (|| {
         Some((
-            BezierDenseTwoSquareRootExpression2 {
+            DenseTwoSquareRootExpression {
                 rational: reduce(expression.rational.clone())?,
                 first: reduce(expression.first.clone())?,
                 second: reduce(expression.second.clone())?,

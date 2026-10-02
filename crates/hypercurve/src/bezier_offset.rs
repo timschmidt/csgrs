@@ -94,6 +94,7 @@ use hypersolve::represented_root::{
     represented_univariate_coordinate, represented_vector_dot_cross,
     represented_zero_offset_unit_scales,
 };
+use hypersolve::tensor_support::dense_tensor_is_stored_zero;
 use hypersolve::tensor_support::{
     bivariate_dense_tensor, bivariate_tensor_with_output_axis,
     dense_reduce_selected_tuple_relations, dense_tensor_with_output_axis, try_clone_dense_tensor,
@@ -111,6 +112,7 @@ use hypersolve::trivariate_arithmetic::{
     trivariate_substitute_affine_axis, trivariate_substitute_product_axis,
     trivariate_substitute_sum_axis, try_zero_trivariate_coefficients,
 };
+use hypersolve::two_square_root::DenseTwoSquareRootExpression;
 use std::borrow::Cow;
 use std::ops::ControlFlow;
 use std::sync::{Arc, Mutex, OnceLock, Weak};
@@ -4026,17 +4028,17 @@ struct BezierChordNormalDenseMapSystem2 {
     source_representations: Vec<AlgebraicRootRepresentation>,
     first_speed_squared: DenseTensorPolynomial,
     second_speed_squared: DenseTensorPolynomial,
-    diameter: BezierDenseTwoSquareRootExpression2,
-    radius_squared_denominator: BezierDenseTwoSquareRootExpression2,
+    diameter: DenseTwoSquareRootExpression,
+    radius_squared_denominator: DenseTwoSquareRootExpression,
 }
 
 #[derive(Debug)]
 struct BezierChordNormalDenseIntersectionSystem2 {
     map: Arc<BezierChordNormalDenseMapSystem2>,
-    incidence: BezierDenseTwoSquareRootExpression2,
-    selected_half_plane: BezierDenseTwoSquareRootExpression2,
-    tangent_cross: BezierDenseTwoSquareRootExpression2,
-    angular_tangent: Option<BezierDenseTwoSquareRootExpression2>,
+    incidence: DenseTwoSquareRootExpression,
+    selected_half_plane: DenseTwoSquareRootExpression,
+    tangent_cross: DenseTwoSquareRootExpression,
+    angular_tangent: Option<DenseTwoSquareRootExpression>,
     geometry: Option<BezierChordNormalDenseTargetGeometry2>,
 }
 
@@ -4052,17 +4054,9 @@ struct BezierChordNormalProjectiveFrameSource2 {
 struct BezierChordNormalDenseChordParameterMapSystem2 {
     projective: Arc<BezierChordNormalDenseMapSystem2>,
     geometry: BezierChordNormalDenseTargetGeometry2,
-    tangent_cross: BezierDenseTwoSquareRootExpression2,
-    angular_tangent: BezierDenseTwoSquareRootExpression2,
+    tangent_cross: DenseTwoSquareRootExpression,
+    angular_tangent: DenseTwoSquareRootExpression,
     recursive_contact_fields: [std::sync::OnceLock<BezierRecursiveQuadraticField2>; 3],
-}
-
-#[derive(Clone, Debug)]
-struct BezierDenseTwoSquareRootExpression2 {
-    rational: DenseTensorPolynomial,
-    first: DenseTensorPolynomial,
-    second: DenseTensorPolynomial,
-    product: DenseTensorPolynomial,
 }
 
 /// One exact coefficient field retained by recursively composed line/circle
@@ -4124,7 +4118,7 @@ struct BezierRecursiveQuadraticValue2 {
 enum BezierRecursiveQuadraticValueData2 {
     Base {
         field: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-        expression: BezierDenseTwoSquareRootExpression2,
+        expression: DenseTwoSquareRootExpression,
         real_witness: std::sync::OnceLock<Real>,
     },
     Extension {
@@ -4373,10 +4367,10 @@ struct BezierChordNormalDenseTarget2 {
 
 #[derive(Clone, Debug)]
 struct BezierChordNormalDenseTargetGeometry2 {
-    point_x: BezierDenseTwoSquareRootExpression2,
-    point_y: BezierDenseTwoSquareRootExpression2,
-    center_x: BezierDenseTwoSquareRootExpression2,
-    center_y: BezierDenseTwoSquareRootExpression2,
+    point_x: DenseTwoSquareRootExpression,
+    point_y: DenseTwoSquareRootExpression,
+    center_x: DenseTwoSquareRootExpression,
+    center_y: DenseTwoSquareRootExpression,
     common_denominator: DenseTensorPolynomial,
 }
 
@@ -4479,7 +4473,7 @@ impl BezierChordNormalDenseMapSystem2 {
         &self,
         denominator: &Real,
         radial_coefficient: &Real,
-    ) -> Option<BezierDenseTwoSquareRootExpression2> {
+    ) -> Option<DenseTwoSquareRootExpression> {
         self.diameter.scale(denominator).and_then(|diameter| {
             self.radius_squared_denominator
                 .scale(radial_coefficient)
@@ -7530,333 +7524,6 @@ const MAX_FIRST_BILINEAR_FACTOR_PROPOSALS: usize = 64;
 /// exactness.
 const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
 
-impl BezierDenseTwoSquareRootExpression2 {
-    fn zero(rank: usize) -> Option<DenseTensorPolynomial> {
-        DenseTensorPolynomial::zero(vec![1; rank])
-    }
-
-    fn from_rational(rational: DenseTensorPolynomial) -> Option<Self> {
-        let zero = Self::zero(rational.dimensions().len())?;
-        Some(Self {
-            rational,
-            first: zero.clone(),
-            second: zero.clone(),
-            product: zero,
-        })
-    }
-
-    fn from_first_radical(first: DenseTensorPolynomial) -> Option<Self> {
-        let zero = Self::zero(first.dimensions().len())?;
-        Some(Self {
-            rational: zero.clone(),
-            first,
-            second: zero.clone(),
-            product: zero,
-        })
-    }
-
-    fn from_second_radical(second: DenseTensorPolynomial) -> Option<Self> {
-        let zero = Self::zero(second.dimensions().len())?;
-        Some(Self {
-            rational: zero.clone(),
-            first: zero.clone(),
-            second,
-            product: zero,
-        })
-    }
-
-    fn polynomial_is_stored_zero(polynomial: &DenseTensorPolynomial) -> bool {
-        polynomial.coefficients().iter().all(|coefficient| {
-            coefficient
-                .exact_rational_ref()
-                .is_some_and(|value| value.is_zero())
-        })
-    }
-
-    fn is_stored_zero(&self) -> bool {
-        [&self.rational, &self.first, &self.second, &self.product]
-            .into_iter()
-            .all(Self::polynomial_is_stored_zero)
-    }
-
-    fn is_stored_one(&self) -> bool {
-        let Some((constant, remainder)) = self.rational.coefficients().split_first() else {
-            return false;
-        };
-        constant
-            .exact_rational_ref()
-            .is_some_and(|value| value.is_one())
-            && remainder.iter().all(|value| {
-                value
-                    .exact_rational_ref()
-                    .is_some_and(|value| value.is_zero())
-            })
-            && [&self.first, &self.second, &self.product]
-                .into_iter()
-                .all(Self::polynomial_is_stored_zero)
-    }
-
-    fn combine(&self, other: &Self, subtract: bool) -> Option<Self> {
-        let combine = |first: &DenseTensorPolynomial, second: &DenseTensorPolynomial| {
-            if subtract {
-                first.subtract(second)
-            } else {
-                first.add(second)
-            }
-        };
-        Some(Self {
-            rational: combine(&self.rational, &other.rational)?,
-            first: combine(&self.first, &other.first)?,
-            second: combine(&self.second, &other.second)?,
-            product: combine(&self.product, &other.product)?,
-        })
-    }
-
-    fn add(&self, other: &Self) -> Option<Self> {
-        self.combine(other, false)
-    }
-
-    fn subtract(&self, other: &Self) -> Option<Self> {
-        self.combine(other, true)
-    }
-
-    fn scale(&self, scale: &Real) -> Option<Self> {
-        Some(Self {
-            rational: self.rational.scale(scale)?,
-            first: self.first.scale(scale)?,
-            second: self.second.scale(scale)?,
-            product: self.product.scale(scale)?,
-        })
-    }
-
-    fn multiply_rational(&self, polynomial: &DenseTensorPolynomial) -> Option<Self> {
-        Some(Self {
-            rational: self.rational.multiply(polynomial)?,
-            first: self.first.multiply(polynomial)?,
-            second: self.second.multiply(polynomial)?,
-            product: self.product.multiply(polynomial)?,
-        })
-    }
-
-    fn multiply(
-        &self,
-        other: &Self,
-        first_speed_squared: &DenseTensorPolynomial,
-        second_speed_squared: &DenseTensorPolynomial,
-    ) -> Option<Self> {
-        let speed_product = first_speed_squared.multiply(second_speed_squared)?;
-        let rational = self
-            .rational
-            .multiply(&other.rational)?
-            .add(
-                &self
-                    .first
-                    .multiply(&other.first)?
-                    .multiply(first_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .second
-                    .multiply(&other.second)?
-                    .multiply(second_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .product
-                    .multiply(&other.product)?
-                    .multiply(&speed_product)?,
-            )?;
-        let first = self
-            .rational
-            .multiply(&other.first)?
-            .add(&self.first.multiply(&other.rational)?)?
-            .add(
-                &self
-                    .second
-                    .multiply(&other.product)?
-                    .multiply(second_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .product
-                    .multiply(&other.second)?
-                    .multiply(second_speed_squared)?,
-            )?;
-        let second = self
-            .rational
-            .multiply(&other.second)?
-            .add(&self.second.multiply(&other.rational)?)?
-            .add(
-                &self
-                    .first
-                    .multiply(&other.product)?
-                    .multiply(first_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .product
-                    .multiply(&other.first)?
-                    .multiply(first_speed_squared)?,
-            )?;
-        let product = self
-            .rational
-            .multiply(&other.product)?
-            .add(&self.product.multiply(&other.rational)?)?
-            .add(&self.first.multiply(&other.second)?)?
-            .add(&self.second.multiply(&other.first)?)?;
-        Some(Self {
-            rational,
-            first,
-            second,
-            product,
-        })
-    }
-
-    fn square(
-        &self,
-        first_speed_squared: &DenseTensorPolynomial,
-        second_speed_squared: &DenseTensorPolynomial,
-    ) -> Option<Self> {
-        let speed_product = first_speed_squared.multiply(second_speed_squared)?;
-        let rational = self
-            .rational
-            .multiply(&self.rational)?
-            .add(
-                &self
-                    .first
-                    .multiply(&self.first)?
-                    .multiply(first_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .second
-                    .multiply(&self.second)?
-                    .multiply(second_speed_squared)?,
-            )?
-            .add(
-                &self
-                    .product
-                    .multiply(&self.product)?
-                    .multiply(&speed_product)?,
-            )?;
-        let two = Real::from(2_i8);
-        let first = self
-            .rational
-            .multiply(&self.first)?
-            .add(
-                &self
-                    .second
-                    .multiply(&self.product)?
-                    .multiply(second_speed_squared)?,
-            )?
-            .scale(&two)?;
-        let second = self
-            .rational
-            .multiply(&self.second)?
-            .add(
-                &self
-                    .first
-                    .multiply(&self.product)?
-                    .multiply(first_speed_squared)?,
-            )?
-            .scale(&two)?;
-        let product = self
-            .rational
-            .multiply(&self.product)?
-            .add(&self.first.multiply(&self.second)?)?
-            .scale(&two)?;
-        Some(Self {
-            rational,
-            first,
-            second,
-            product,
-        })
-    }
-
-    fn reduced(&self, sources: &[AlgebraicRootRepresentation]) -> Option<Self> {
-        Some(Self {
-            rational: dense_reduce_selected_root_relations(self.rational.clone(), sources)?,
-            first: dense_reduce_selected_root_relations(self.first.clone(), sources)?,
-            second: dense_reduce_selected_root_relations(self.second.clone(), sources)?,
-            product: dense_reduce_selected_root_relations(self.product.clone(), sources)?,
-        })
-    }
-
-    /// Canonicalizes a coefficient-field value at the retained source tuple.
-    /// Unlike [`Self::reduced`], these tensors have no free output axis.
-    fn reduced_at_source_tuple(&self, sources: &[AlgebraicRootRepresentation]) -> Option<Self> {
-        Some(Self {
-            rational: dense_reduce_selected_tuple_relations(self.rational.clone(), sources)?,
-            first: dense_reduce_selected_tuple_relations(self.first.clone(), sources)?,
-            second: dense_reduce_selected_tuple_relations(self.second.clone(), sources)?,
-            product: dense_reduce_selected_tuple_relations(self.product.clone(), sources)?,
-        })
-    }
-
-    /// Enumerates conjugate-sheet zeros without multiplicities introduced only
-    /// by absent generators. Callers must still replay the authored sheet.
-    fn projection(
-        &self,
-        first_speed_squared: &DenseTensorPolynomial,
-        second_speed_squared: &DenseTensorPolynomial,
-        sources: &[AlgebraicRootRepresentation],
-    ) -> Option<DenseTensorPolynomial> {
-        let expression = self.reduced(sources)?;
-        let first_speed_squared =
-            dense_reduce_selected_root_relations(first_speed_squared.clone(), sources)?;
-        let second_speed_squared =
-            dense_reduce_selected_root_relations(second_speed_squared.clone(), sources)?;
-        let reduce = |polynomial| dense_reduce_selected_root_relations(polynomial, sources);
-        let (retained_rational, retained_radical) =
-            if Self::polynomial_is_stored_zero(&expression.second)
-                && Self::polynomial_is_stored_zero(&expression.product)
-            {
-                // An absent second generator would only square the retained
-                // first-generator equation, doubling its eventual norm degree.
-                (expression.rational, expression.first)
-            } else {
-                let rational_squared = reduce(expression.rational.multiply(&expression.rational)?)?;
-                let first_squared = reduce(expression.first.multiply(&expression.first)?)?;
-                let second_squared = reduce(expression.second.multiply(&expression.second)?)?;
-                let product_squared = reduce(expression.product.multiply(&expression.product)?)?;
-                let retained_rational = reduce(
-                    rational_squared
-                        .add(&reduce(first_squared.multiply(&first_speed_squared)?)?)?
-                        .subtract(&reduce(
-                            second_speed_squared.multiply(&second_squared.add(&reduce(
-                                product_squared.multiply(&first_speed_squared)?,
-                            )?)?)?,
-                        )?)?,
-                )?;
-                let retained_radical = reduce(
-                    expression
-                        .rational
-                        .multiply(&expression.first)?
-                        .subtract(&reduce(
-                            second_speed_squared
-                                .multiply(&expression.second.multiply(&expression.product)?)?,
-                        )?)?
-                        .scale(&Real::from(2_i8))?,
-                )?;
-                (retained_rational, retained_radical)
-            };
-        if Self::polynomial_is_stored_zero(&retained_radical) {
-            // The final norm would be a square. Keep its base, including any
-            // radicand factors: their zeros have not been proved absent.
-            return Some(retained_rational);
-        }
-        reduce(
-            retained_rational
-                .multiply(&retained_rational)?
-                .subtract(&reduce(
-                    retained_radical
-                        .multiply(&retained_radical)?
-                        .multiply(&first_speed_squared)?,
-                )?)?,
-        )
-    }
-}
-
 /// Projects the third-axis zeros of one exact `A + branch*B*sqrt(K)`
 /// expression at a retained pair of selected source roots, then rejects every
 /// conjugate or opposite-branch norm root by exact unsquared replay.
@@ -8992,7 +8659,7 @@ impl BezierChordNormalDenseMapSystem2 {
 
     fn expression_sign(
         &self,
-        expression: &BezierDenseTwoSquareRootExpression2,
+        expression: &DenseTwoSquareRootExpression,
         target_parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -9031,9 +8698,7 @@ impl BezierChordNormalDenseMapSystem2 {
     }
 }
 
-fn dense_expression_last_axis_degree(
-    expression: &BezierDenseTwoSquareRootExpression2,
-) -> Option<usize> {
+fn dense_expression_last_axis_degree(expression: &DenseTwoSquareRootExpression) -> Option<usize> {
     [
         &expression.rational,
         &expression.first,
@@ -9052,7 +8717,7 @@ fn dense_expression_last_axis_degree(
 /// existing retained two-radical base field. The unit final axis is removed
 /// structurally; no source root is eliminated or materialized.
 fn recursive_quadratic_base_expression_coefficient(
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     power: usize,
     base: &Arc<BezierRecursiveQuadraticBaseFieldData2>,
 ) -> Option<BezierRecursiveQuadraticValue2> {
@@ -9066,7 +8731,7 @@ fn recursive_quadratic_base_expression_coefficient(
     };
     BezierRecursiveQuadraticValue2::from_base(
         base.clone(),
-        BezierDenseTwoSquareRootExpression2 {
+        DenseTwoSquareRootExpression {
             rational: coefficient(&expression.rational)?,
             first: coefficient(&expression.first)?,
             second: coefficient(&expression.second)?,
@@ -9079,7 +8744,7 @@ fn recursive_quadratic_base_expression_coefficient(
 /// recursive field. The caller supplies one common degree when expressions
 /// must later be added, so their positive projective scales remain identical.
 fn recursive_quadratic_expression_projective_numerator(
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     base: &Arc<BezierRecursiveQuadraticBaseFieldData2>,
     field: &BezierRecursiveQuadraticField2,
     numerator: &BezierRecursiveQuadraticValue2,
@@ -9104,7 +8769,7 @@ fn recursive_quadratic_expression_projective_numerator(
 
 fn chord_normal_dense_expression_is_identically_zero(
     map: &BezierChordNormalDenseMapSystem2,
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let target_count = [
@@ -9123,7 +8788,7 @@ fn chord_normal_dense_expression_is_identically_zero(
     .unwrap_or(1);
     for power in 0..target_count {
         let Some(coefficient) = (|| {
-            Some(BezierDenseTwoSquareRootExpression2 {
+            Some(DenseTwoSquareRootExpression {
                 rational: dense_last_axis_coefficient(&expression.rational, power)?,
                 first: dense_last_axis_coefficient(&expression.first, power)?,
                 second: dense_last_axis_coefficient(&expression.second, power)?,
@@ -9146,7 +8811,7 @@ fn chord_normal_dense_expression_is_identically_zero(
 }
 
 fn dense_two_positive_square_root_transverse_root(
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
     source_representations: &[AlgebraicRootRepresentation],
@@ -9252,7 +8917,7 @@ fn dense_positive_square_root_transverse_root(
 
 fn chord_normal_dense_expression_parameters(
     map: &BezierChordNormalDenseMapSystem2,
-    expression: &BezierDenseTwoSquareRootExpression2,
+    expression: &DenseTwoSquareRootExpression,
     domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
@@ -12125,7 +11790,7 @@ fn represented_chord_normal_line_angular_system(
         unreachable!("a represented chord-normal angular field begins at its dense base")
     };
     let rational = |polynomial| {
-        BezierDenseTwoSquareRootExpression2::from_rational(polynomial).and_then(|expression| {
+        DenseTwoSquareRootExpression::from_rational(polynomial).and_then(|expression| {
             BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
         })
     };
@@ -12146,9 +11811,9 @@ fn represented_chord_normal_line_angular_system(
             rational(direction_squared)?,
             [rational(radial_x)?, rational(radial_y)?],
             rational(discriminant)?,
-            BezierDenseTwoSquareRootExpression2::from_first_radical(one).and_then(
-                |expression| BezierRecursiveQuadraticValue2::from_base(base.clone(), expression),
-            )?,
+            DenseTwoSquareRootExpression::from_first_radical(one).and_then(|expression| {
+                BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
+            })?,
         ))
     })()
     else {

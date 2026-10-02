@@ -910,11 +910,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 "a chord-normal contact retained a nonbase import field".into(),
             ));
         };
-        let value = |expression: &BezierDenseTwoSquareRootExpression2| {
+        let value = |expression: &DenseTwoSquareRootExpression| {
             BezierRecursiveQuadraticValue2::from_base(base.clone(), expression.clone())
         };
         let Some(frame) = (|| {
-            let denominator = BezierDenseTwoSquareRootExpression2::from_rational(
+            let denominator = DenseTwoSquareRootExpression::from_rational(
                 system.geometry.common_denominator.clone(),
             )
             .and_then(|expression| {
@@ -1081,7 +1081,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     pub(in crate::bezier_offset) fn chord_normal_dense_expression_sign(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        expression: &BezierDenseTwoSquareRootExpression2,
+        expression: &DenseTwoSquareRootExpression,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let system = self.chord_normal_projective_system().ok_or_else(|| {
@@ -1101,13 +1101,13 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         axis: Axis2,
         radial_scale: &Real,
         translation: &Real,
-    ) -> Option<BezierDenseTwoSquareRootExpression2> {
+    ) -> Option<DenseTwoSquareRootExpression> {
         let system = self.chord_normal_projective_system()?;
         let (point, center) = match axis {
             Axis2::X => (&system.geometry.point_x, &system.geometry.center_x),
             Axis2::Y => (&system.geometry.point_y, &system.geometry.center_y),
         };
-        let translated = BezierDenseTwoSquareRootExpression2::from_rational(
+        let translated = DenseTwoSquareRootExpression::from_rational(
             system.geometry.common_denominator.scale(translation)?,
         )?;
         point
@@ -1882,10 +1882,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     numerator = numerator.add(&expression.scale(scale)?)?;
                 }
                 if offset.zero_status() != ZeroKnowledge::Zero {
-                    numerator =
-                        numerator.add(&BezierDenseTwoSquareRootExpression2::from_rational(
-                            system.geometry.common_denominator.scale(offset)?,
-                        )?)?;
+                    numerator = numerator.add(&DenseTwoSquareRootExpression::from_rational(
+                        system.geometry.common_denominator.scale(offset)?,
+                    )?)?;
                 }
                 // The dense denominator need not be positive: N/D has the
                 // same sign as N*D, never just the sign of N.
@@ -2068,8 +2067,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     pub(in crate::bezier_offset) fn chord_normal_dense_expressions_bounds_refined(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        point_x: &BezierDenseTwoSquareRootExpression2,
-        point_y: &BezierDenseTwoSquareRootExpression2,
+        point_x: &DenseTwoSquareRootExpression,
+        point_y: &DenseTwoSquareRootExpression,
         refinement_steps: usize,
     ) -> Classification<Aabb2> {
         let Some(system) = self.chord_normal_projective_system() else {

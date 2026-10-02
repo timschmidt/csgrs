@@ -19,7 +19,7 @@ pub(super) fn recursive_quadratic_pair_value(
     let zero = DenseTensorPolynomial::zero(vec![1; base.sources.len()])?;
     BezierRecursiveQuadraticValue2::from_base(
         base.clone(),
-        BezierDenseTwoSquareRootExpression2 {
+        DenseTwoSquareRootExpression {
             rational,
             first: radical.scale(&Real::from(branch))?,
             second: zero.clone(),
@@ -34,7 +34,7 @@ pub(super) fn recursive_quadratic_rational_value(
 ) -> Option<BezierRecursiveQuadraticValue2> {
     BezierRecursiveQuadraticValue2::from_base(
         base.clone(),
-        BezierDenseTwoSquareRootExpression2::from_rational(rational)?,
+        DenseTwoSquareRootExpression::from_rational(rational)?,
     )
 }
 
@@ -103,7 +103,7 @@ pub(super) fn recursive_rebase_value_preserving_base(
             };
             BezierRecursiveQuadraticValue2::from_base(
                 target_base.clone(),
-                BezierDenseTwoSquareRootExpression2 {
+                DenseTwoSquareRootExpression {
                     rational: embed(&expression.rational)?,
                     first: embed(&expression.first)?,
                     second: embed(&expression.second)?,
@@ -221,7 +221,7 @@ pub(super) fn recursive_quadratic_base_generator(
     let one = DenseTensorPolynomial::try_new(dimensions, vec![Real::one()])?;
     BezierRecursiveQuadraticValue2::from_base(
         base.clone(),
-        BezierDenseTwoSquareRootExpression2 {
+        DenseTwoSquareRootExpression {
             rational: zero.clone(),
             first: if first { one.clone() } else { zero.clone() },
             second: if first { zero.clone() } else { one },
@@ -845,7 +845,7 @@ pub(super) fn recursive_quadratic_polynomial_projection(
                     expressions.push(expression);
                 }
                 let component_is_zero =
-                    |select: fn(&BezierDenseTwoSquareRootExpression2) -> &DenseTensorPolynomial| {
+                    |select: fn(&DenseTwoSquareRootExpression) -> &DenseTensorPolynomial| {
                         expressions.iter().all(|expression| {
                             select(expression)
                                 .coefficients()
@@ -854,7 +854,7 @@ pub(super) fn recursive_quadratic_polynomial_projection(
                         })
                     };
                 let component =
-                    |select: fn(&BezierDenseTwoSquareRootExpression2) -> &DenseTensorPolynomial| {
+                    |select: fn(&DenseTwoSquareRootExpression) -> &DenseTensorPolynomial| {
                         let coefficients = expressions
                             .iter()
                             .map(|expression| select(expression))
@@ -882,7 +882,7 @@ pub(super) fn recursive_quadratic_polynomial_projection(
                     }?;
                     return Some((field.clone(), selected));
                 }
-                let expression = BezierDenseTwoSquareRootExpression2 {
+                let expression = DenseTwoSquareRootExpression {
                     rational: component(|expression| &expression.rational)?,
                     first: component(|expression| &expression.first)?,
                     second: component(|expression| &expression.second)?,
@@ -1514,7 +1514,7 @@ pub(super) fn recursive_projective_point_source_in_field(
                 )?;
                 BezierRecursiveQuadraticValue2::from_base(
                     base.clone(),
-                    BezierDenseTwoSquareRootExpression2::from_rational(polynomial)?,
+                    DenseTwoSquareRootExpression::from_rational(polynomial)?,
                 )
             };
             BezierRecursiveQuadraticProjectivePoint2 {

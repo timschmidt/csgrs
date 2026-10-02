@@ -2041,7 +2041,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         .add(&dy.scale(&support.translation_x)?)?
                         .subtract(&dx.scale(&support.translation_y)?)?,
                 )?;
-                let mut expression = BezierDenseTwoSquareRootExpression2::from_rational(rational)?;
+                let mut expression = DenseTwoSquareRootExpression::from_rational(rational)?;
                 if support.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal {
                     let coefficient = DenseTensorPolynomial::from_axis_polynomial(
                         rank,
@@ -2049,9 +2049,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                         &[-support.distance.clone()],
                     )?;
                     let radical = if speed_index == 0 {
-                        BezierDenseTwoSquareRootExpression2::from_first_radical(coefficient)?
+                        DenseTwoSquareRootExpression::from_first_radical(coefficient)?
                     } else {
-                        BezierDenseTwoSquareRootExpression2::from_second_radical(coefficient)?
+                        DenseTwoSquareRootExpression::from_second_radical(coefficient)?
                     };
                     expression = expression.add(&radical)?;
                 }
@@ -2090,14 +2090,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 .reduced(&sources)?;
 
             let common_denominator = reduce(weight.multiply(&denominator)?)?;
-            let point_x = BezierDenseTwoSquareRootExpression2::from_rational(reduce(
-                x.multiply(&denominator)?,
-            )?)?
-            .reduced(&sources)?;
-            let point_y = BezierDenseTwoSquareRootExpression2::from_rational(reduce(
-                y.multiply(&denominator)?,
-            )?)?
-            .reduced(&sources)?;
+            let point_x =
+                DenseTwoSquareRootExpression::from_rational(reduce(x.multiply(&denominator)?)?)?
+                    .reduced(&sources)?;
+            let point_y =
+                DenseTwoSquareRootExpression::from_rational(reduce(y.multiply(&denominator)?)?)?
+                    .reduced(&sources)?;
             let center_x = center_x.multiply_rational(&weight)?.reduced(&sources)?;
             let center_y = center_y.multiply_rational(&weight)?.reduced(&sources)?;
             let radial_x = point_x.subtract(&center_x)?.reduced(&sources)?;
@@ -2107,13 +2105,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             let incidence = radial_x
                 .square(&first_speed_squared, &second_speed_squared)?
                 .add(&radial_y.square(&first_speed_squared, &second_speed_squared)?)?
-                .subtract(&BezierDenseTwoSquareRootExpression2::from_rational(
-                    reduce(
-                        common_denominator
-                            .multiply(&common_denominator)?
-                            .scale(&radius_squared)?,
-                    )?,
-                )?)?
+                .subtract(&DenseTwoSquareRootExpression::from_rational(reduce(
+                    common_denominator
+                        .multiply(&common_denominator)?
+                        .scale(&radius_squared)?,
+                )?)?)?
                 .reduced(&sources)?;
 
             let dot_anchor = radial_x
@@ -2136,9 +2132,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     .scale(&radius_squared)?,
             )?;
             let radius_squared_denominator = if anchor_speed == 0 {
-                BezierDenseTwoSquareRootExpression2::from_first_radical(radius_scale)?
+                DenseTwoSquareRootExpression::from_first_radical(radius_scale)?
             } else {
-                BezierDenseTwoSquareRootExpression2::from_second_radical(radius_scale)?
+                DenseTwoSquareRootExpression::from_second_radical(radius_scale)?
             }
             .reduced(&sources)?;
             let tangent_dot = radial_x
