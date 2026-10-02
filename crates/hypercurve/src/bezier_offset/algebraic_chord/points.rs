@@ -4402,10 +4402,17 @@ impl BezierAlgebraicChordParallelPoint2 {
             .subtract(&real_interval_from_axis(&start, Axis2::X));
         let delta_y = real_interval_from_axis(&end, Axis2::Y)
             .subtract(&real_interval_from_axis(&start, Axis2::Y));
+        // An outward dyadic speed enclosure is all this box needs; exact
+        // radical endpoints would replay a symbolic square root at every
+        // refinement.
+        let speed_precision = i32::try_from(refinement_steps)
+            .ok()
+            .and_then(|steps| steps.checked_add(128))
+            .map_or(i32::MIN, |bits| -bits);
         let Some(speed) = delta_x
             .square()
             .and_then(|x| delta_y.square().map(|y| x.add(&y)))
-            .and_then(|speed_squared| speed_squared.nonnegative_square_root(None))
+            .and_then(|speed_squared| speed_squared.nonnegative_square_root(Some(speed_precision)))
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
