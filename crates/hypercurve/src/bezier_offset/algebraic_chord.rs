@@ -1074,9 +1074,18 @@ impl BezierAlgebraicChord2 {
     /// Translated descendants deliberately decline this construction proof;
     /// their complete coordinate predicate remains the fallback.
     pub(super) fn retained_normal_offset_distance_to(&self, other: &Self) -> Option<Real> {
-        self.retained_normal_offset_distance_with_tangent_reversal(
-            self.retained_normal_offset_tangent_reversal_to(other)?,
-        )
+        let reversal = self.retained_normal_offset_tangent_reversal_to(other)?;
+        let own = self.retained_normal_offset_distance_with_tangent_reversal(reversal)?;
+        let (base, _) = self.retained_normal_offset_base_orientation()?;
+        if other.shares_retained_support(base) || other.retained_support() == base {
+            return Some(own);
+        }
+        // `other` is itself a normal offset of the same base. Both signed
+        // displacements are measured from that base in `other`'s left-normal
+        // frame, so the separation is their difference, not `self`'s
+        // displacement alone.
+        let other_own = other.retained_normal_offset_distance_with_tangent_reversal(false)?;
+        Some(own - other_own)
     }
 
     /// Recovers the signed procedural displacement after an exact tangent

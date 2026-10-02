@@ -1321,3 +1321,54 @@ fn chamfered_conic_round_then_miter_inward_offset_completes() {
     ];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+fn miter_bevel_bevel_offsets(seed: Seed) -> Result<(), TestCaseError> {
+    let steps = [
+        Step::Offset(0, -1, 2),
+        Step::Offset(1, 1, 1),
+        Step::Offset(2, -1, 1),
+    ];
+    run_sequence(&[seed], &steps, false)
+}
+
+/// An inward miter, outward bevel and inward bevel offset of a weighted
+/// conic seed. The final band Boolean classifies a chord sample against a
+/// band whose parallel sides are two left-normal offsets of one base chord.
+/// Treating one sibling offset as the base certified the two sides collinear,
+/// put the sample on the boundary and blocked the offset. The separation is
+/// now the difference of their displacements; the operation completes but
+/// takes about two minutes.
+#[test]
+#[ignore = "slow: about two minutes in the final bevel offset"]
+fn weighted_conic_miter_bevel_bevel_offsets_complete() {
+    miter_bevel_bevel_offsets(Seed {
+        x: 5,
+        y: -10,
+        width: 8,
+        height: 9,
+        lower: 3,
+        upper: 2,
+        curvature: 3,
+        weight: 5,
+    })
+    .unwrap();
+}
+
+/// The same miter, bevel and bevel offsets of a wider weighted conic seed.
+/// The final band Boolean's chord-pair side test signs a two-radical dense
+/// expression through a Sturm-based tensor image without completing.
+#[test]
+#[ignore = "open: chord-pair side test of a correlated pair point in a bevel band"]
+fn wide_weighted_conic_miter_bevel_bevel_offsets_complete() {
+    miter_bevel_bevel_offsets(Seed {
+        x: -2,
+        y: 2,
+        width: 19,
+        height: 8,
+        lower: 6,
+        upper: 7,
+        curvature: 2,
+        weight: 5,
+    })
+    .unwrap();
+}

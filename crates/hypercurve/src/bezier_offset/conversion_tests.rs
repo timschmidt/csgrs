@@ -57711,3 +57711,45 @@ fn specialized_common_fiber_replays_degree_drops_in_either_orientation() {
         );
     }
 }
+
+#[test]
+fn sibling_normal_offsets_of_one_chord_keep_their_separation() {
+    // Two procedural left-normal offsets of one base chord are parallel but
+    // distinct. Their retained relation must report the difference of their
+    // displacements, never one displacement alone as if the other were the
+    // base, which would certify a false collinearity.
+    let policy = CurveContext::STRICT;
+    let point = |x: i64, y: i64| CurvePoint2::from(Point2::new(Real::from(x), Real::from(y)));
+    let quarter = |n: i64| Real::new(hyperreal::Rational::new(n) / hyperreal::Rational::new(4));
+    let Classification::Decided(base) =
+        BezierAlgebraicChord2::try_new(point(0, 0), point(0, 8), &policy).unwrap()
+    else {
+        panic!("a nondegenerate base chord is decided");
+    };
+    let near = base.parallel_left_retained(quarter(1), &policy).unwrap();
+    let far = base.parallel_left_retained(quarter(2), &policy).unwrap();
+    let equal = |value: Option<Real>, expected: Real| {
+        let value = value.expect("sibling offsets retain a procedural relation");
+        compare_reals(&value, &expected, &policy) == Some(std::cmp::Ordering::Equal)
+    };
+    assert!(equal(
+        near.retained_normal_offset_distance_to(&base),
+        quarter(1)
+    ));
+    assert!(equal(
+        far.retained_normal_offset_distance_to(&near),
+        quarter(1)
+    ));
+    assert!(equal(
+        near.retained_normal_offset_distance_to(&far),
+        quarter(-1)
+    ));
+    assert_eq!(
+        near.support_collinearity(&far, &policy).unwrap(),
+        Classification::Decided(false)
+    );
+    assert_eq!(
+        near.support_collinearity(&near, &policy).unwrap(),
+        Classification::Decided(true)
+    );
+}
