@@ -268,6 +268,25 @@ impl RealInterval {
             return None;
         }
         let endpoint = |value: &Real, lower: bool| {
+            if let Some(precision) = precision {
+                // Round the radicand outward first when it is not already
+                // rational; the integer root of that bound stays outward.
+                let enclosed;
+                let radicand = match value.exact_rational_ref() {
+                    Some(rational) => rational,
+                    None => {
+                        let [low, high] = value.certified_dyadic_interval(precision)?;
+                        enclosed = if lower { low } else { high };
+                        &enclosed
+                    }
+                };
+                if radicand.sign() == num::bigint::Sign::Minus {
+                    return lower.then(Real::zero);
+                }
+                if let Some(bound) = rational_dyadic_square_root_bound(radicand, precision, lower) {
+                    return Some(Real::new(bound));
+                }
+            }
             let root = value.clone().sqrt().ok()?;
             let Some(precision) = precision else {
                 return Some(root);
@@ -375,4 +394,74 @@ pub fn strict_signs_are_opposite(first: Option<RealSign>, second: Option<RealSig
         (Some(RealSign::Positive), Some(RealSign::Negative))
             | (Some(RealSign::Negative), Some(RealSign::Positive))
     )
+}
+
+/// Rounds `sqrt(value)` outward to the dyadic grid `2^precision` for a
+/// nonnegative exact rational, using one integer square root instead of a
+/// symbolic radical whose structural analysis dominates repeated interval
+/// refinement. Returns `None` for a negative value or a positive exponent.
+fn rational_dyadic_square_root_bound(
+    value: &HyperRational,
+    precision: i32,
+    lower: bool,
+) -> Option<HyperRational> {
+    use num::bigint::{BigInt, BigUint, Sign};
+    use num::{Integer, One, Zero};
+    if value.sign() == Sign::Minus || precision > 0 {
+        return None;
+    }
+    let shift = usize::try_from(precision.unsigned_abs()).ok()?;
+    // floor(sqrt(n / d) * 2^shift) = floor(sqrt(floor(n * 4^shift / d))).
+    let scaled = value.numerator() << shift.checked_mul(2)?;
+    let (quotient, remainder) = scaled.div_rem(value.denominator());
+    let root = quotient.sqrt();
+    let exact = remainder.is_zero() && &root * &root == quotient;
+    let grid = if lower || exact {
+        root
+    } else {
+        root + BigUint::one()
+    };
+    HyperRational::from_bigint_fraction(
+        BigInt::from_biguint(Sign::Plus, grid),
+        BigUint::one() << shift,
+    )
+    .ok()
+}
+
+#[cfg(test)]
+mod square_root_tests {
+    use super::*;
+
+    #[test]
+    fn rational_square_root_bounds_are_outward_dyadic_and_exact_on_squares() {
+        let quarter_nine = HyperRational::new(9) / HyperRational::new(4);
+        for lower in [true, false] {
+            assert_eq!(
+                rational_dyadic_square_root_bound(&quarter_nine, -8, lower),
+                Some(HyperRational::new(3) / HyperRational::new(2))
+            );
+        }
+        let two = HyperRational::new(2);
+        let low = rational_dyadic_square_root_bound(&two, -20, true).unwrap();
+        let high = rational_dyadic_square_root_bound(&two, -20, false).unwrap();
+        assert!(&low * &low < two && two < &high * &high);
+        assert_eq!(
+            &high - &low,
+            HyperRational::new(1) / HyperRational::new(1 << 20)
+        );
+        assert_eq!(
+            rational_dyadic_square_root_bound(&HyperRational::new(-1), -4, true),
+            None
+        );
+        let interval = RealInterval {
+            lower: Real::new(two.clone()),
+            upper: Real::new(quarter_nine),
+        };
+        let root = interval.nonnegative_square_root(Some(-20)).unwrap();
+        assert_eq!(root.lower, Real::new(low));
+        assert_eq!(
+            root.upper,
+            Real::new(HyperRational::new(3) / HyperRational::new(2))
+        );
+    }
 }
