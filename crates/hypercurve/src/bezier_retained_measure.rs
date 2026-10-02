@@ -452,7 +452,7 @@ fn retained_curve_monotone_parameters(
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };
         for parameter in axis_parameters {
-            if push_unique_real(&mut parameters, parameter, policy).is_none() {
+            if push_unique_real(&mut parameters, parameter).is_none() {
                 return Classification::Uncertain(UncertaintyReason::Ordering);
             }
         }
@@ -498,12 +498,13 @@ fn source_curve_point_at(
     }
 }
 
-/// Pushes an exact parameter unless an equal one is already present.
-fn push_unique_real(values: &mut Vec<Real>, value: Real, policy: &CurveContext) -> Option<()> {
-    if values
-        .iter()
-        .any(|existing| compare_reals(existing, &value, policy) == Some(std::cmp::Ordering::Equal))
-    {
+/// Pushes an exact parameter unless a certified-equal one is already present.
+/// Envelope candidates are deduplicated only on STRICT equality: an
+/// approximate merge could drop a distinct extremum.
+fn push_unique_real(values: &mut Vec<Real>, value: Real) -> Option<()> {
+    if values.iter().any(|existing| {
+        compare_reals(existing, &value, &CurveContext::STRICT) == Some(std::cmp::Ordering::Equal)
+    }) {
         return Some(());
     }
     values.push(value);
@@ -526,21 +527,24 @@ fn parameter_interval_hull(
         Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
     };
 
-    let lower = match compare_reals(start_interval.start(), end_interval.start(), policy) {
+    // The hull is an enclosure, so its endpoints are chosen by certified
+    // STRICT order only; the caller's policy governs predicates on it.
+    let strict = &CurveContext::STRICT;
+    let lower = match compare_reals(start_interval.start(), end_interval.start(), strict) {
         Some(std::cmp::Ordering::Greater) => end_interval.start().clone(),
         Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal) => {
             start_interval.start().clone()
         }
         None => return Classification::Uncertain(UncertaintyReason::Ordering),
     };
-    let upper = match compare_reals(start_interval.end(), end_interval.end(), policy) {
+    let upper = match compare_reals(start_interval.end(), end_interval.end(), strict) {
         Some(std::cmp::Ordering::Less) => end_interval.end().clone(),
         Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => {
             start_interval.end().clone()
         }
         None => return Classification::Uncertain(UncertaintyReason::Ordering),
     };
-    if compare_reals(&lower, &upper, policy) == Some(std::cmp::Ordering::Greater) {
+    if compare_reals(&lower, &upper, strict) == Some(std::cmp::Ordering::Greater) {
         return Classification::Uncertain(UncertaintyReason::Ordering);
     }
     Classification::Decided((lower, upper))

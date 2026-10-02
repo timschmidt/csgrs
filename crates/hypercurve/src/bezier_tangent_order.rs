@@ -13,6 +13,7 @@
 //! Unresolved decisions remain classified; no parameter interval is sampled as
 //! a coordinate.
 
+use hypersolve::RealInterval;
 use std::{cmp::Ordering, sync::Arc};
 
 use crate::classify::compare_reals;
@@ -1405,38 +1406,25 @@ fn interval_bilinear_sign(
     {
         return None;
     }
-    let first = interval_product(first_left, first_right, policy)?;
-    let second = interval_product(second_left, second_right, policy)?;
+    // Enclosures use certified STRICT order; the sign test below applies the
+    // caller's policy to the finished enclosure.
+    let first =
+        representation_interval(first_left).multiply(&representation_interval(first_right))?;
+    let second =
+        representation_interval(second_left).multiply(&representation_interval(second_right))?;
     let interval = if add_products {
-        (&first.0 + &second.0, &first.1 + &second.1)
+        first.add(&second)
     } else {
-        (&first.0 - &second.1, &first.1 - &second.0)
+        first.subtract(&second)
     };
-    interval_sign(&interval.0, &interval.1, policy)
+    interval_sign(&interval.lower, &interval.upper, policy)
 }
 
-fn interval_product(
-    left: &AlgebraicRootRepresentation,
-    right: &AlgebraicRootRepresentation,
-    policy: &CurveContext,
-) -> Option<(Real, Real)> {
-    let products = [
-        &left.interval.lower * &right.interval.lower,
-        &left.interval.lower * &right.interval.upper,
-        &left.interval.upper * &right.interval.lower,
-        &left.interval.upper * &right.interval.upper,
-    ];
-    let mut lower = products[0].clone();
-    let mut upper = products[0].clone();
-    for product in &products[1..] {
-        if compare_reals(product, &lower, policy)? == Ordering::Less {
-            lower = product.clone();
-        }
-        if compare_reals(product, &upper, policy)? == Ordering::Greater {
-            upper = product.clone();
-        }
+fn representation_interval(representation: &AlgebraicRootRepresentation) -> RealInterval {
+    RealInterval {
+        lower: representation.interval.lower.clone(),
+        upper: representation.interval.upper.clone(),
     }
-    Some((lower, upper))
 }
 
 fn interval_sign(lower: &Real, upper: &Real, policy: &CurveContext) -> Option<Ordering> {
