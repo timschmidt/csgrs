@@ -3053,8 +3053,8 @@ fn recursive_bounds_refine_each_shared_source_once() {
             #[cfg(feature = "dispatch-trace")]
             assert_eq!(
                 hyperreal::dispatch_trace::take_trace().path_count(
-                    "hypercurve",
-                    "bezier-parameter-refinement",
+                    "hypersolve",
+                    "represented-root-refinement",
                     "advance",
                 ),
                 u64::from(depth == 1),

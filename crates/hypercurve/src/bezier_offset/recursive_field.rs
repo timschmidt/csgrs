@@ -4920,7 +4920,7 @@ impl BezierRecursiveQuadraticBaseFieldData2 {
         } else {
             Some(self.source_refinement.get_or_init(|| {
                 Mutex::new(BezierRecursiveQuadraticSourceRefinement2 {
-                    parameters: (0..self.sources.len()).map(|_| None).collect(),
+                    sources: (0..self.sources.len()).map(|_| None).collect(),
                 })
             }))
         };
@@ -4939,44 +4939,12 @@ impl BezierRecursiveQuadraticBaseFieldData2 {
                         distinct_root_count: 1,
                     };
                 } else if let Some(cache) = cache.as_mut() {
-                    let parameter = &mut cache.parameters[axis];
-                    // An unavailable import is not a permanent negative cache.
-                    // Later requests may have gained an exact scalar witness.
-                    if refinement_steps != 0
-                        && parameter.is_none()
-                        && let Ok(Classification::Decided(selected)) =
-                            BezierParameter2::from_algebraic_root_representation_unbounded(
-                                &source,
-                                &CurveContext::STRICT,
-                            )
-                    {
-                        *parameter = Some(BezierParameterRefinement2::new(
-                            &selected,
-                            &CurveContext::STRICT,
-                        ));
-                    }
-                    if let Some(parameter) = parameter {
-                        let refined = parameter.refine_to(refinement_steps);
-                        // Refinement changes only the bracket. Preserve the
-                        // defining polynomial, symbol, ordinal and validation
-                        // authority, including when a midpoint becomes exact.
-                        source.interval = match refined {
-                            BezierParameter2::Exact(value) => IsolatedRootInterval {
-                                lower: value.clone(),
-                                upper: value.clone(),
-                                exact_root: Some(value.clone()),
-                                distinct_root_count: 1,
-                            },
-                            BezierParameter2::Algebraic(value) => IsolatedRootInterval {
-                                lower: value.interval().start().clone(),
-                                upper: value.interval().end().clone(),
-                                exact_root: None,
-                                distinct_root_count: 1,
-                            },
-                        };
-                    } else {
-                        source = refined_represented_root(&source, refinement_steps);
-                    }
+                    // Refinement changes only the bracket. Preserve the
+                    // defining polynomial, symbol, ordinal and validation
+                    // authority, including when a midpoint becomes exact.
+                    let refinement = cache.sources[axis]
+                        .get_or_insert_with(|| RepresentedRootRefinement::new(&source));
+                    source.interval = refinement.refine_to(refinement_steps).interval.clone();
                 }
                 source
             })

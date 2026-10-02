@@ -91,8 +91,8 @@ use hypersolve::real_interval::{
     rational_interval_bernstein_strict_sign, strict_signs_are_opposite,
 };
 use hypersolve::represented_root::{
-    NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, dense_polynomial_value_interval,
-    dense_polynomial_value_interval_with_coefficient_precision,
+    NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, RepresentedRootRefinement,
+    dense_polynomial_value_interval, dense_polynomial_value_interval_with_coefficient_precision,
     dense_positive_square_root_interval, dense_strict_interval_sign,
     dense_substitute_affinely_related_sources, dense_tensor_interval_with_coefficient_precision,
     dense_tuple_sign_by_refinement, dense_two_positive_square_root_interval,
@@ -4063,14 +4063,14 @@ struct BezierRecursiveQuadraticBaseFieldData2 {
 }
 
 struct BezierRecursiveQuadraticSourceRefinement2 {
-    parameters: Vec<Option<BezierParameterRefinement2<'static>>>,
+    sources: Vec<Option<RepresentedRootRefinement>>,
 }
 
 impl std::fmt::Debug for BezierRecursiveQuadraticSourceRefinement2 {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter
             .debug_struct("BezierRecursiveQuadraticSourceRefinement2")
-            .field("axes", &self.parameters.len())
+            .field("axes", &self.sources.len())
             .finish_non_exhaustive()
     }
 }
