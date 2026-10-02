@@ -9,7 +9,9 @@ use std::sync::{Mutex, OnceLock};
 use hyperreal::Rational as HyperRational;
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 use hypersolve::RealInterval;
-use hypersolve::curve_resultant::continue_resultant_after_degree_bound;
+use hypersolve::curve_resultant::{
+    continue_resultant_after_degree_bound, resultant_bivariate_polynomial_system_complete,
+};
 use hypersolve::exact_factor::checked_binomial;
 use hypersolve::quotient_ring::{
     QuotientRingRationalMapMatrices, determinant_local_bernstein_signs_from_enclosures,
@@ -23,8 +25,7 @@ use hypersolve::{
     AlgebraicRootRepresentation, BivariatePolynomial, CurveIntersectionResultantConfig,
     CurveIntersectionResultantReport, CurveIntersectionResultantStatus, CurveResultantParameter,
     RationalParametricCurve2, compose_univariate_polynomial_linear_fractional,
-    divide_bivariate_polynomial_exact, resultant_bivariate_polynomial_system,
-    resultant_rational_parametric_curve_intersection,
+    divide_bivariate_polynomial_exact, resultant_rational_parametric_curve_intersection,
 };
 
 use crate::bezier_algebraic_image::{
@@ -913,28 +914,6 @@ pub(crate) enum ResultantParameterProjection {
 const MAX_RATIONAL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
 const RATIONAL_INTERSECTION_RESULTANT_PRECISION: i32 = -128;
 const MAX_RETAINED_EVALUATION_POWER_DEGREE: usize = 256;
-
-pub(crate) fn resultant_bivariate_polynomial_system_complete(
-    first_equation: &BivariatePolynomial,
-    second_equation: &BivariatePolynomial,
-    retained_parameter: CurveResultantParameter,
-    config: CurveIntersectionResultantConfig,
-) -> CurveIntersectionResultantReport {
-    let report = resultant_bivariate_polynomial_system(
-        first_equation,
-        second_equation,
-        retained_parameter,
-        config,
-    );
-    continue_resultant_after_degree_bound(report, config, |config| {
-        resultant_bivariate_polynomial_system(
-            first_equation,
-            second_equation,
-            retained_parameter,
-            config,
-        )
-    })
-}
 
 fn resultant_rational_parametric_curve_intersection_complete(
     first: &RationalParametricCurve2,
@@ -8196,7 +8175,7 @@ mod tests {
             max_resultant_degree: 2,
         };
         assert_eq!(
-            resultant_bivariate_polynomial_system(
+            hypersolve::resultant_bivariate_polynomial_system(
                 &first_equation,
                 &second_equation,
                 CurveResultantParameter::First,

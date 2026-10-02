@@ -80,7 +80,10 @@ use hypersolve::bivariate_components::{
     merge_parameter_component_support, parameter_component_bivariate_polynomial_system_complete,
     rational_parameter_component_support,
 };
-use hypersolve::curve_resultant::linear_parameter_lifts_bivariate_polynomial_system_complete;
+use hypersolve::curve_resultant::{
+    linear_parameter_lifts_bivariate_polynomial_system_complete,
+    resultant_bivariate_polynomial_system_complete,
+};
 #[cfg(test)]
 use hypersolve::exact_factor::bivariate_bilinear_factor_from_roots;
 use hypersolve::exact_factor::{
@@ -151,8 +154,7 @@ use crate::bezier_split::CurveParameterDomain2;
 use crate::classify::{classify_oriented_line, compare_reals, in_closed_unit_interval, real_sign};
 use crate::rational_bezier_general::{
     RationalBezierOverlapParameterCorrespondence2, RationalParameterImageMap2,
-    ResultantParameterProjection, exact_contact_point_evidence,
-    resultant_bivariate_polynomial_system_complete, resultant_parameter_polynomial,
+    ResultantParameterProjection, exact_contact_point_evidence, resultant_parameter_polynomial,
     resultant_parameter_projection,
 };
 use crate::{
