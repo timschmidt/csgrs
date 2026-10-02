@@ -4885,6 +4885,43 @@ pub fn continue_resultant_after_degree_bound(
     })
 }
 
+/// Keeps bounded cofactor interpolation on the hot path while ensuring that
+/// its degree budget cannot discard an otherwise exact parameter pairing.
+#[inline]
+pub fn linear_parameter_lifts_bivariate_polynomial_system_complete(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> CurveIntersectionParameterLiftReport {
+    let report = linear_parameter_lifts_bivariate_polynomial_system(
+        first_equation,
+        second_equation,
+        retained_parameter,
+        config,
+    );
+    if report.status != CurveIntersectionParameterLiftStatus::DegreeBoundExceeded
+        || config.max_resultant_degree == usize::MAX
+    {
+        return report;
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypersolve",
+        "bivariate-parameter-lift",
+        "unbounded-cold-continuation",
+    );
+    linear_parameter_lifts_bivariate_polynomial_system(
+        first_equation,
+        second_equation,
+        retained_parameter,
+        CurveIntersectionResultantConfig {
+            max_resultant_degree: usize::MAX,
+            ..config
+        },
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use proptest::prelude::*;

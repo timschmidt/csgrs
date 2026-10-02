@@ -675,6 +675,52 @@ pub fn parameter_component_union_support(
         .reduce(|support, component| bivariate_multiply(&support, &component))
 }
 
+/// Substitutes the lifted parameter `numerator(t)/denominator(t)` into a
+/// bivariate polynomial on the retained axis `t` and clears denominators,
+/// returning the univariate result and the denominator power cleared.
+pub fn bivariate_on_parameter_lift_cleared(
+    polynomial: &BivariatePolynomial,
+    retained_axis: CurveResultantParameter,
+    map: &crate::curve_resultant::CurveIntersectionParameterLiftMap,
+) -> (Vec<Real>, usize) {
+    let swapped;
+    let polynomial = match retained_axis {
+        CurveResultantParameter::First => polynomial,
+        CurveResultantParameter::Second => {
+            swapped = bivariate_swap_parameters(polynomial);
+            &swapped
+        }
+    };
+    let lifted_degree = polynomial
+        .coefficients
+        .iter()
+        .map(|row| row.len().saturating_sub(1))
+        .max()
+        .unwrap_or(0);
+    let numerator_powers = polynomial_powers(&map.numerator_coefficients, lifted_degree);
+    let denominator_powers = polynomial_powers(&map.denominator_coefficients, lifted_degree);
+    let retained_degree = polynomial.coefficients.len().saturating_sub(1);
+    let map_degree = map
+        .numerator_coefficients
+        .len()
+        .max(map.denominator_coefficients.len())
+        .saturating_sub(1);
+    let mut cleared =
+        vec![Real::zero(); retained_degree + lifted_degree.saturating_mul(map_degree) + 1];
+    for (retained_power, row) in polynomial.coefficients.iter().enumerate() {
+        for (lifted_power, coefficient) in row.iter().enumerate() {
+            let factor = polynomial_multiply(
+                &numerator_powers[lifted_power],
+                &denominator_powers[lifted_degree - lifted_power],
+            );
+            for (power, factor) in factor.iter().enumerate() {
+                cleared[retained_power + power] += coefficient * factor;
+            }
+        }
+    }
+    (cleared, lifted_degree)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

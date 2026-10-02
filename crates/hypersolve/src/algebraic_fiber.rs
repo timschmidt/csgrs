@@ -4689,6 +4689,52 @@ fn fiber_root_count_report(
     }
 }
 
+/// Preserves a bounded selected-fiber isolator as the hot schedule without
+/// treating dyadic root separation depth as a mathematical boundary.
+#[inline]
+pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
+    polynomial: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    retained_root: &AlgebraicRootRepresentation,
+    fiber_lower: &Real,
+    fiber_upper: &Real,
+    config: AlgebraicFiberRootIsolationConfig,
+    predicate_policy: crate::PredicatePolicy,
+) -> AlgebraicFiberRootIsolationReport {
+    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        polynomial,
+        retained_parameter,
+        retained_root,
+        fiber_lower,
+        fiber_upper,
+        config,
+        predicate_policy,
+    );
+    if report.status != AlgebraicFiberRootIsolationStatus::DepthLimit
+        || config.max_subdivision_depth == usize::MAX
+    {
+        return report;
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypersolve",
+        "selected-fiber-root-isolation",
+        "unbounded-cold-continuation",
+    );
+    isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        polynomial,
+        retained_parameter,
+        retained_root,
+        fiber_lower,
+        fiber_upper,
+        AlgebraicFiberRootIsolationConfig {
+            max_subdivision_depth: usize::MAX,
+            ..config
+        },
+        predicate_policy,
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
