@@ -10,6 +10,7 @@ use std::cmp::Ordering;
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::bivariate_arithmetic::polynomial_derivative;
+use crate::radical_expression::TwoSquareRootExpression;
 use crate::real_interval::{RealInterval, strict_compare_reals, strict_real_sign};
 use crate::tensor_support::*;
 use crate::*;
@@ -1129,4 +1130,210 @@ pub fn represented_zero_offset_unit_scales(
         }
     }
     scales
+}
+
+/// Collapses affine-related selected tensor axes before quotient reduction
+/// or image projection, preserving their root correlation.
+pub fn dense_substitute_affinely_related_sources(
+    mut polynomial: DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<(DenseTensorPolynomial, Vec<AlgebraicRootRepresentation>)> {
+    if polynomial.dimensions().len() != sources.len() {
+        return None;
+    }
+    let mut sources = sources.to_vec();
+    'next_relation: loop {
+        for retained in 0..sources.len() {
+            for removed in retained + 1..sources.len() {
+                let relation = if sources[retained] == sources[removed]
+                    || represented_roots_strictly_equal(&sources[retained], &sources[removed])
+                {
+                    Some(crate::AlgebraicRootAffineRelation {
+                        scale: Real::one(),
+                        offset: Real::zero(),
+                    })
+                } else {
+                    algebraic_root_affine_relation(&sources[retained], &sources[removed])
+                };
+                let Some(relation) = relation else {
+                    continue;
+                };
+                polynomial = polynomial.substitute_affine_axis(
+                    retained,
+                    removed,
+                    &relation.scale,
+                    &relation.offset,
+                )?;
+                sources.remove(removed);
+                continue 'next_relation;
+            }
+        }
+        break;
+    }
+    Some((polynomial, sources))
+}
+
+/// Returns the sign of every value in an interval when certified by STRICT
+/// predicates or by more precision on a structurally nonzero endpoint.
+pub fn dense_strict_interval_sign(value: &RealInterval) -> Option<RealSign> {
+    // Hyperlimit's ordinary STRICT scalar predicate deliberately stops at its
+    // fixed refinement budget. Interval endpoints can independently carry a
+    // structural nonzero certificate, however, so asking Hyperreal for more
+    // precision is still an exact sign proof rather than an equality policy.
+    // This is substantially smaller than projecting a recursive algebraic
+    // norm for tiny but already-known-nonzero endpoint values.
+    let certified_nonzero_sign = |value: &Real| {
+        (value.zero_status() == ZeroKnowledge::NonZero)
+            .then(|| {
+                value
+                    .immediate_sign()
+                    .or_else(|| value.certified_sign_until(-4096).sign())
+            })
+            .flatten()
+            .filter(|sign| *sign != RealSign::Zero)
+    };
+    let upper_sign =
+        strict_real_sign(&value.upper).or_else(|| certified_nonzero_sign(&value.upper));
+    let lower_sign =
+        strict_real_sign(&value.lower).or_else(|| certified_nonzero_sign(&value.lower));
+    if upper_sign == Some(RealSign::Negative) {
+        Some(RealSign::Negative)
+    } else if lower_sign == Some(RealSign::Positive) {
+        Some(RealSign::Positive)
+    } else if value.lower.zero_status() == ZeroKnowledge::Zero
+        && value.upper.zero_status() == ZeroKnowledge::Zero
+    {
+        Some(RealSign::Zero)
+    } else {
+        None
+    }
+}
+
+/// Encloses a dense tensor polynomial at a represented root tuple.
+pub fn dense_polynomial_value_interval(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<RealInterval> {
+    dense_tensor_interval(&dense_tensor_with_output_axis(polynomial)?, sources)
+}
+
+/// Encloses a dense tensor polynomial at a represented root tuple, rounding
+/// coefficient endpoints outward at `coefficient_precision`.
+pub fn dense_polynomial_value_interval_with_coefficient_precision(
+    polynomial: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    coefficient_precision: i32,
+) -> Option<RealInterval> {
+    dense_tensor_interval_with_coefficient_precision(
+        &dense_tensor_with_output_axis(polynomial)?,
+        sources,
+        Some(coefficient_precision),
+    )
+}
+
+/// Encloses a two-radical expression on its positive square-root branches at
+/// a represented root tuple, with optional real witnesses for the sources and
+/// outward coefficient rounding at `coefficient_precision`.
+pub fn dense_two_positive_square_root_interval_with_coefficient_precision(
+    expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
+    first_speed_squared: &DenseTensorPolynomial,
+    second_speed_squared: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    source_real_witnesses: Option<&[Option<Real>]>,
+    coefficient_precision: Option<i32>,
+) -> Option<RealInterval> {
+    let interval = |polynomial: &DenseTensorPolynomial| {
+        dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
+            &dense_tensor_with_output_axis(polynomial)?,
+            sources,
+            source_real_witnesses,
+            coefficient_precision,
+        )
+    };
+    let radicands = [first_speed_squared, second_speed_squared];
+    let mut roots: [Option<RealInterval>; 2] = [None, None];
+    let mut value = interval(&expression.rational)?;
+    for (coefficient, mask) in [
+        (&expression.first, 1),
+        (&expression.second, 2),
+        (&expression.product, 3),
+    ] {
+        if dense_tensor_is_stored_zero(coefficient) {
+            continue;
+        }
+        let mut term = interval(coefficient)?;
+        for (index, radicand) in radicands.iter().enumerate() {
+            if mask & (1 << index) != 0 {
+                let root = match &roots[index] {
+                    Some(root) => root,
+                    None => roots[index].insert(
+                        interval(radicand)?.nonnegative_square_root(coefficient_precision)?,
+                    ),
+                };
+                term = term.multiply(root)?;
+            }
+        }
+        value = value.add(&term);
+    }
+    Some(value)
+}
+
+/// Encloses a two-radical expression on its positive square-root branches at
+/// a represented root tuple.
+pub fn dense_two_positive_square_root_interval(
+    expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
+    first_speed_squared: &DenseTensorPolynomial,
+    second_speed_squared: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<RealInterval> {
+    dense_two_positive_square_root_interval_with_coefficient_precision(
+        expression,
+        first_speed_squared,
+        second_speed_squared,
+        sources,
+        None,
+        None,
+    )
+}
+
+/// Encloses `rational + radical*sqrt(radicand)` on the positive branch at a
+/// represented root tuple, rounding coefficients outward at the given precision.
+fn dense_positive_square_root_interval_with_coefficient_precision(
+    rational: &DenseTensorPolynomial,
+    radical: &DenseTensorPolynomial,
+    radicand: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    coefficient_precision: Option<i32>,
+) -> Option<RealInterval> {
+    let interval = |polynomial: &DenseTensorPolynomial| match coefficient_precision {
+        Some(precision) => dense_polynomial_value_interval_with_coefficient_precision(
+            polynomial, sources, precision,
+        ),
+        None => dense_polynomial_value_interval(polynomial, sources),
+    };
+    let speed = interval(radicand)?.nonnegative_square_root(coefficient_precision)?;
+    Some(interval(rational)?.add(&interval(radical)?.multiply(&speed)?))
+}
+
+/// Encloses `rational + radical*sqrt(radicand)` on the positive branch at a
+/// represented root tuple.
+pub fn dense_positive_square_root_interval(
+    rational: &DenseTensorPolynomial,
+    radical: &DenseTensorPolynomial,
+    radicand: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+) -> Option<RealInterval> {
+    dense_positive_square_root_interval_with_coefficient_precision(
+        rational, radical, radicand, sources, None,
+    )
+}
+
+/// Combines the signs of two terms on the same positive-root sheet: a zero
+/// term defers to the other, equal signs agree, and opposite signs are undecided.
+pub fn same_positive_root_sheet_signs(first: RealSign, second: RealSign) -> Option<RealSign> {
+    match (first, second) {
+        (RealSign::Zero, sign) | (sign, RealSign::Zero) => Some(sign),
+        (first, second) if first == second => Some(first),
+        _ => None,
+    }
 }
