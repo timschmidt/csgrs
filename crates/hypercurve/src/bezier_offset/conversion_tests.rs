@@ -38,7 +38,11 @@ use crate::BezierAlgebraicImageStatus;
 fn bivariate_bilinear_factorizations(
     polynomial: &BivariatePolynomial,
 ) -> Vec<(BivariatePolynomial, BivariatePolynomial)> {
-    bivariate_bilinear_factorizations_bounded(polynomial, usize::MAX, usize::MAX)
+    hypersolve::exact_factor::bivariate_bilinear_factorizations_bounded(
+        polynomial,
+        usize::MAX,
+        usize::MAX,
+    )
 }
 
 #[test]
@@ -29001,8 +29005,12 @@ fn assert_rational_multi_affine_factor_on_every_axis(
     message: &str,
 ) {
     for axis in 0..3 {
-        let factorizations = trivariate_rational_multi_affine_axis_factorizations(product, axis)
-            .unwrap_or_else(|| panic!("{message}"));
+        let factorizations = trivariate_rational_multi_affine_axis_factorizations(
+            product,
+            axis,
+            PARALLEL_FACTOR_RESULTANT_CONFIG,
+        )
+        .unwrap_or_else(|| panic!("{message}"));
         assert!(factorizations.iter().all(|(factor, quotient)| {
             trivariate_multiply(factor, quotient).coefficients == product.coefficients
         }));
@@ -29020,8 +29028,12 @@ fn quadratic_axis_factorization_replays_dense_multi_affine_products() {
             &trivariate_multi_affine(right),
         );
         for axis in 0..3 {
-            let factorizations = trivariate_quadratic_axis_factorizations(&product, axis)
-                .expect("every authored linear-axis product must split exactly");
+            let factorizations = trivariate_quadratic_axis_factorizations(
+                &product,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG,
+            )
+            .expect("every authored linear-axis product must split exactly");
             assert!(factorizations.iter().all(|(factor, quotient)| {
                 trivariate_multiply(factor, quotient).coefficients == product.coefficients
             }));
@@ -29268,8 +29280,12 @@ fn rational_multi_affine_axis_factorization_reaches_the_balanced_resource_bounda
     let repeated = [1, 1, 1, 0, 1, 0, 0, 1];
     let product = trivariate_multi_affine_product([repeated; MAX_TRIVARIATE_EXACT_FACTOR_SPLITS]);
     assert_eq!(product.dimensions(), (25, 25, 25));
-    let factorizations = trivariate_rational_multi_affine_axis_factorizations(&product, 0)
-        .expect("the degree-24 balanced resource boundary must retain its repeated factor");
+    let factorizations = trivariate_rational_multi_affine_axis_factorizations(
+        &product,
+        0,
+        PARALLEL_FACTOR_RESULTANT_CONFIG,
+    )
+    .expect("the degree-24 balanced resource boundary must retain its repeated factor");
     assert!(factorizations.iter().any(|(factor, quotient)| {
         trivariate_multiply(factor, quotient).coefficients == product.coefficients
     }));
@@ -29342,8 +29358,12 @@ fn rational_multi_affine_axis_factorization_recovers_one_cubic_factor() {
         },
     );
     for axis in 0..3 {
-        let factorizations = trivariate_rational_multi_affine_axis_factorizations(&product, axis)
-            .expect("one rational multi-affine factor must be retained");
+        let factorizations = trivariate_rational_multi_affine_axis_factorizations(
+            &product,
+            axis,
+            PARALLEL_FACTOR_RESULTANT_CONFIG,
+        )
+        .expect("one rational multi-affine factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
         }));
@@ -29365,8 +29385,12 @@ fn rational_multi_affine_axis_factorization_recovers_one_quartic_factor() {
         },
     );
     for axis in 0..3 {
-        let factorizations = trivariate_rational_multi_affine_axis_factorizations(&product, axis)
-            .expect("one rational multi-affine quartic factor must be retained");
+        let factorizations = trivariate_rational_multi_affine_axis_factorizations(
+            &product,
+            axis,
+            PARALLEL_FACTOR_RESULTANT_CONFIG,
+        )
+        .expect("one rational multi-affine quartic factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
         }));
@@ -29388,8 +29412,12 @@ fn rational_multi_affine_axis_factorization_recovers_one_quintic_factor() {
         },
     );
     for axis in 0..3 {
-        let factorizations = trivariate_rational_multi_affine_axis_factorizations(&product, axis)
-            .expect("one rational multi-affine quintic factor must be retained");
+        let factorizations = trivariate_rational_multi_affine_axis_factorizations(
+            &product,
+            axis,
+            PARALLEL_FACTOR_RESULTANT_CONFIG,
+        )
+        .expect("one rational multi-affine quintic factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
         }));
@@ -29411,8 +29439,12 @@ fn rational_multi_affine_axis_factorization_recovers_one_sextic_factor() {
         },
     );
     for axis in 0..3 {
-        let factorizations = trivariate_rational_multi_affine_axis_factorizations(&product, axis)
-            .expect("one rational multi-affine sextic factor must be retained");
+        let factorizations = trivariate_rational_multi_affine_axis_factorizations(
+            &product,
+            axis,
+            PARALLEL_FACTOR_RESULTANT_CONFIG,
+        )
+        .expect("one rational multi-affine sextic factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
         }));
@@ -29434,8 +29466,12 @@ fn rational_multi_affine_axis_factorization_recovers_one_septic_factor() {
         },
     );
     for axis in 0..3 {
-        let factorizations = trivariate_rational_multi_affine_axis_factorizations(&product, axis)
-            .expect("one rational multi-affine septic factor must be retained");
+        let factorizations = trivariate_rational_multi_affine_axis_factorizations(
+            &product,
+            axis,
+            PARALLEL_FACTOR_RESULTANT_CONFIG,
+        )
+        .expect("one rational multi-affine septic factor must be retained");
         assert!(factorizations.iter().all(|(recovered, quotient)| {
             trivariate_multiply(recovered, quotient).coefficients == product.coefficients
         }));
@@ -29472,7 +29508,14 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_cubic() {
     coefficients[1][1][1] = Real::one();
     let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
-        assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
+        assert!(
+            trivariate_rational_multi_affine_axis_factorizations(
+                &polynomial,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG
+            )
+            .is_none()
+        );
     }
 }
 
@@ -29486,7 +29529,14 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_quartic() {
     coefficients[1][1][1] = Real::one();
     let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
-        assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
+        assert!(
+            trivariate_rational_multi_affine_axis_factorizations(
+                &polynomial,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG
+            )
+            .is_none()
+        );
     }
 }
 
@@ -29500,7 +29550,14 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_quintic() {
     coefficients[1][1][1] = Real::one();
     let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
-        assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
+        assert!(
+            trivariate_rational_multi_affine_axis_factorizations(
+                &polynomial,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG
+            )
+            .is_none()
+        );
     }
 }
 
@@ -29514,7 +29571,14 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_sextic() {
     coefficients[1][1][1] = Real::one();
     let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
-        assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
+        assert!(
+            trivariate_rational_multi_affine_axis_factorizations(
+                &polynomial,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG
+            )
+            .is_none()
+        );
     }
 }
 
@@ -29528,7 +29592,14 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_septic() {
     coefficients[1][1][1] = Real::one();
     let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
-        assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
+        assert!(
+            trivariate_rational_multi_affine_axis_factorizations(
+                &polynomial,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG
+            )
+            .is_none()
+        );
     }
 }
 
@@ -29542,7 +29613,14 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_octic() {
     coefficients[1][1][1] = Real::one();
     let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
-        assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
+        assert!(
+            trivariate_rational_multi_affine_axis_factorizations(
+                &polynomial,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG
+            )
+            .is_none()
+        );
     }
 }
 
@@ -29556,7 +29634,14 @@ fn rational_multi_affine_axis_factorization_rejects_an_unfactored_bounded_nonic(
     coefficients[1][1][1] = Real::one();
     let polynomial = TrivariatePolynomial { coefficients };
     for axis in 0..3 {
-        assert!(trivariate_rational_multi_affine_axis_factorizations(&polynomial, axis).is_none());
+        assert!(
+            trivariate_rational_multi_affine_axis_factorizations(
+                &polynomial,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG
+            )
+            .is_none()
+        );
     }
 }
 
@@ -29569,7 +29654,10 @@ fn quadratic_axis_factorization_rejects_a_nonsquare_discriminant() {
             vec![vec![Real::one()]],
         ],
     };
-    assert!(trivariate_quadratic_axis_factorizations(&polynomial, 0).is_none());
+    assert!(
+        trivariate_quadratic_axis_factorizations(&polynomial, 0, PARALLEL_FACTOR_RESULTANT_CONFIG)
+            .is_none()
+    );
 }
 
 #[test]
@@ -29892,8 +29980,12 @@ fn square_free_cubic_lift_retains_top_slice_content() {
             coefficients: quadratic_coefficients,
         },
     );
-    let factorizations = trivariate_rational_multi_affine_axis_factorizations(&product, 0)
-        .expect("linear top-slice content must remain attached to its factor");
+    let factorizations = trivariate_rational_multi_affine_axis_factorizations(
+        &product,
+        0,
+        PARALLEL_FACTOR_RESULTANT_CONFIG,
+    )
+    .expect("linear top-slice content must remain attached to its factor");
     assert!(factorizations.iter().all(|(recovered, quotient)| {
         trivariate_multiply(recovered, quotient).coefficients == product.coefficients
     }));

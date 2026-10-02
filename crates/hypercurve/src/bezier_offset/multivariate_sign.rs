@@ -384,120 +384,6 @@ pub(super) fn trivariate_affinely_related_parameter_sign(
     Ok(None)
 }
 
-#[cold]
-#[inline(never)]
-pub(super) fn bivariate_remove_common_factors(
-    mut equations: [BivariatePolynomial; 2],
-) -> [BivariatePolynomial; 2] {
-    let axis_report =
-        extract_bivariate_polynomial_system_axis_factors(&equations[0], &equations[1]);
-    if axis_report.status == BivariatePolynomialAxisFactorStatus::Reduced
-        && let Some(reduced) = axis_report.reduced_equations
-    {
-        equations = reduced;
-    }
-    loop {
-        let degree = bivariate_storage_bidegree_sum(&equations[0])
-            .saturating_add(bivariate_storage_bidegree_sum(&equations[1]));
-        let mut next = None;
-        for retained in [
-            CurveResultantParameter::First,
-            CurveResultantParameter::Second,
-        ] {
-            let report = parameter_component_bivariate_polynomial_system_complete(
-                &equations[0],
-                &equations[1],
-                retained,
-                CurveIntersectionResultantConfig {
-                    min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
-                    max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-                },
-            );
-            if !matches!(
-                report.status,
-                BivariatePolynomialComponentStatus::Rational
-                    | BivariatePolynomialComponentStatus::Implicit
-            ) {
-                continue;
-            }
-            let Some(candidate) = report.reduced_equations else {
-                continue;
-            };
-            let candidate_degree = bivariate_storage_bidegree_sum(&candidate[0])
-                .saturating_add(bivariate_storage_bidegree_sum(&candidate[1]));
-            if candidate_degree < degree {
-                next = Some(candidate);
-                break;
-            }
-        }
-        let Some(reduced) = next else {
-            return equations;
-        };
-        equations = reduced;
-    }
-}
-
-/// Removes coefficient content only when the raw rational-function factor is
-/// not already an exact polynomial divisor. Whole-tensor division remains the
-/// authority in either case.
-#[cold]
-#[inline(never)]
-pub(super) fn trivariate_normalize_and_divide_linear_axis_factor(
-    polynomial: &TrivariatePolynomial,
-    axis: usize,
-    raw: [BivariatePolynomial; 2],
-) -> Option<([BivariatePolynomial; 2], TrivariatePolynomial)> {
-    if let Some(quotient) = trivariate_divide_linear_axis_factor(polynomial, axis, &raw) {
-        return Some((raw, quotient));
-    }
-    let primitive = bivariate_remove_common_factors(raw);
-    let quotient = trivariate_divide_linear_axis_factor(polynomial, axis, &primitive)?;
-    Some((primitive, quotient))
-}
-
-/// Splits a quadratic tensor axis when its bivariate discriminant is an exact
-/// square, then verifies each recovered factor by exact tensor division.
-#[cold]
-#[inline(never)]
-pub(super) fn trivariate_quadratic_axis_factorizations(
-    polynomial: &TrivariatePolynomial,
-    axis: usize,
-) -> Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>> {
-    let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
-    let [constant, linear, quadratic]: [BivariatePolynomial; 3] = coefficients.try_into().ok()?;
-    let linear_square = try_bivariate_multiply(&linear, &linear)?;
-    let constant_quadratic = try_bivariate_multiply(&constant, &quadratic)?;
-    let discriminant = bivariate_subtract(
-        &linear_square,
-        &bivariate_scale(constant_quadratic, &Real::from(4_i8)),
-    );
-    let square_root = bivariate_exact_square_root(&discriminant)?;
-    let doubled_quadratic = bivariate_scale(quadratic, &Real::from(2_i8));
-    let mut factorizations: Vec<(TrivariatePolynomial, TrivariatePolynomial)> =
-        Vec::with_capacity(2);
-    for constant in [
-        bivariate_add(&linear, &square_root),
-        bivariate_subtract(&linear, &square_root),
-    ] {
-        let raw = [constant, doubled_quadratic.clone()];
-        let Some((factor_coefficients, quotient)) =
-            trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw)
-        else {
-            continue;
-        };
-        let factor =
-            trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)?;
-        if factorizations.iter().any(|(existing, _)| {
-            existing.coefficients == factor.coefficients
-                || existing.coefficients == quotient.coefficients
-        }) {
-            continue;
-        }
-        factorizations.push((factor, quotient));
-    }
-    (!factorizations.is_empty()).then_some(factorizations)
-}
-
 /// Splits a cubic tensor axis when the cubic has a repeated linear factor over
 /// the exact bivariate fraction field.
 ///
@@ -582,185 +468,16 @@ pub(super) fn trivariate_repeated_cubic_axis_factorizations(
         [factor_constant, factor_linear]
     };
     drop((quadratic_square, cubic_linear));
-    let (factor_coefficients, quotient) =
-        trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw)?;
+    let (factor_coefficients, quotient) = trivariate_normalize_and_divide_linear_axis_factor(
+        polynomial,
+        axis,
+        raw,
+        PARALLEL_FACTOR_RESULTANT_CONFIG,
+    )?;
     trivariate_divide_linear_axis_factor(&quotient, axis, &factor_coefficients)?;
     let factor =
         trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)?;
     Some(vec![(factor, quotient)])
-}
-
-pub(super) fn trivariate_rational_multi_affine_factor_from_scale(
-    polynomial: &TrivariatePolynomial,
-    axis: usize,
-    remaining: [usize; 2],
-    anchor_factor: &BivariatePolynomial,
-    top_factor: &BivariatePolynomial,
-    scale: &Real,
-    anchor: &Real,
-    lift_coordinate: usize,
-) -> Option<(TrivariatePolynomial, TrivariatePolynomial)> {
-    let raw = rational_multi_affine_lift_factor_coefficients(
-        anchor_factor,
-        top_factor,
-        scale,
-        anchor,
-        lift_coordinate,
-    )?;
-    let (factor_coefficients, quotient) =
-        trivariate_normalize_and_divide_linear_axis_factor(polynomial, axis, raw)?;
-    let factor =
-        trivariate_from_axis_bivariate_coefficients(&factor_coefficients, axis, remaining)?;
-    Some((factor, quotient))
-}
-
-/// Recovers one exact rational multi-affine factor from a resource-bounded
-/// tensor in `axis`. Specializations only propose bilinear slice factors.
-/// Hypersolve exact division proves each slice, derives the inter-slice scale
-/// from the translated first-order coefficient or an exact two-anchor
-/// projective alignment for repeated factors, and finally proves the complete
-/// trivariate factor. Cubic through octic tensors retain exhaustive proposal
-/// enumeration; higher degrees receive bounded first-factor passes. Unsupported
-/// coefficient towers, exhausted proposal budgets, or degenerate slices make
-/// no claim.
-#[cold]
-#[inline(never)]
-pub(super) fn trivariate_rational_multi_affine_axis_factorizations(
-    polynomial: &TrivariatePolynomial,
-    axis: usize,
-) -> Option<Vec<(TrivariatePolynomial, TrivariatePolynomial)>> {
-    let (coefficients, remaining) = trivariate_axis_bivariate_coefficients(polynomial, axis)?;
-    if !(4..=MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS).contains(&coefficients.len()) {
-        return None;
-    }
-    let exhaustive = coefficients.len() <= MAX_EXHAUSTIVE_MULTI_AFFINE_COEFFICIENTS;
-    // Try the first proved slice factors before enumerating every divisor. The
-    // exhaustive pass remains authoritative in its measured-safe envelope.
-    // Higher degrees get a capped first-Taylor pass and, when needed, a capped
-    // repeated-factor alignment pass.
-    for (maximum_factorizations, maximum_proposals, align_anchors, enabled) in [
-        (1, MAX_FIRST_BILINEAR_FACTOR_PROPOSALS, false, true),
-        (
-            MAX_BOUNDED_BILINEAR_FACTORIZATIONS,
-            MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS,
-            false,
-            !exhaustive,
-        ),
-        (usize::MAX, usize::MAX, false, exhaustive),
-        (
-            MAX_BOUNDED_BILINEAR_FACTORIZATIONS,
-            MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS,
-            true,
-            !exhaustive,
-        ),
-        (usize::MAX, usize::MAX, true, exhaustive),
-    ] {
-        if !enabled {
-            continue;
-        }
-        for lift_coordinate in 0..2 {
-            let lift_degree = trivariate_axis_lift_degree(&coefficients, lift_coordinate)?;
-            if lift_degree == 0 {
-                continue;
-            }
-            let top_slice =
-                trivariate_axis_lift_power_slice(&coefficients, lift_coordinate, lift_degree)?;
-            let top_factorizations = bivariate_bilinear_factorizations_bounded(
-                &top_slice,
-                maximum_factorizations,
-                maximum_proposals,
-            );
-            if top_factorizations.is_empty() {
-                continue;
-            }
-            for anchor in [1_i8, 0, -1, 2].map(Real::from) {
-                let anchor_slice = trivariate_axis_lift_taylor_slice(
-                    &coefficients,
-                    lift_coordinate,
-                    &anchor,
-                    false,
-                )?;
-                let first_taylor_slice = trivariate_axis_lift_taylor_slice(
-                    &coefficients,
-                    lift_coordinate,
-                    &anchor,
-                    true,
-                )?;
-                for (anchor_factor, anchor_quotient) in bivariate_bilinear_factorizations_bounded(
-                    &anchor_slice,
-                    maximum_factorizations,
-                    maximum_proposals,
-                ) {
-                    for (top_factor, _) in &top_factorizations {
-                        if !align_anchors {
-                            if let Some(scale) = rational_multi_affine_lift_scale(
-                                &first_taylor_slice,
-                                &anchor_factor,
-                                top_factor,
-                                &anchor_quotient,
-                            ) && let Some(factorization) =
-                                trivariate_rational_multi_affine_factor_from_scale(
-                                    polynomial,
-                                    axis,
-                                    remaining,
-                                    &anchor_factor,
-                                    top_factor,
-                                    &scale,
-                                    &anchor,
-                                    lift_coordinate,
-                                )
-                            {
-                                return Some(vec![factorization]);
-                            }
-                            continue;
-                        }
-                        for other_anchor in [1_i8, 0, -1, 2].map(Real::from) {
-                            if other_anchor == anchor {
-                                continue;
-                            }
-                            let other_slice = trivariate_axis_lift_taylor_slice(
-                                &coefficients,
-                                lift_coordinate,
-                                &other_anchor,
-                                false,
-                            )?;
-                            let anchor_delta = &other_anchor - &anchor;
-                            for (other_factor, _) in bivariate_bilinear_factorizations_bounded(
-                                &other_slice,
-                                maximum_factorizations,
-                                maximum_proposals,
-                            ) {
-                                let Some(scale) = rational_multi_affine_lift_scale_from_anchor_pair(
-                                    &anchor_factor,
-                                    &other_factor,
-                                    top_factor,
-                                    &anchor_delta,
-                                ) else {
-                                    continue;
-                                };
-                                let Some(factorization) =
-                                    trivariate_rational_multi_affine_factor_from_scale(
-                                        polynomial,
-                                        axis,
-                                        remaining,
-                                        &anchor_factor,
-                                        top_factor,
-                                        &scale,
-                                        &anchor,
-                                        lift_coordinate,
-                                    )
-                                else {
-                                    continue;
-                                };
-                                return Some(vec![factorization]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    None
 }
 
 pub(super) fn signed_bivariate_at_parameter_pair_exact_first(
@@ -1140,11 +857,24 @@ pub(super) fn trivariate_bounded_factor_sign_with_budget(
     });
     for axis in axes {
         let factorizations = match counts[axis] {
-            3 => trivariate_quadratic_axis_factorizations(polynomial, axis),
-            4 => trivariate_repeated_cubic_axis_factorizations(polynomial, axis)
-                .or_else(|| trivariate_rational_multi_affine_axis_factorizations(polynomial, axis)),
+            3 => trivariate_quadratic_axis_factorizations(
+                polynomial,
+                axis,
+                PARALLEL_FACTOR_RESULTANT_CONFIG,
+            ),
+            4 => trivariate_repeated_cubic_axis_factorizations(polynomial, axis).or_else(|| {
+                trivariate_rational_multi_affine_axis_factorizations(
+                    polynomial,
+                    axis,
+                    PARALLEL_FACTOR_RESULTANT_CONFIG,
+                )
+            }),
             5..=MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS => {
-                trivariate_rational_multi_affine_axis_factorizations(polynomial, axis)
+                trivariate_rational_multi_affine_axis_factorizations(
+                    polynomial,
+                    axis,
+                    PARALLEL_FACTOR_RESULTANT_CONFIG,
+                )
             }
             _ => None,
         };

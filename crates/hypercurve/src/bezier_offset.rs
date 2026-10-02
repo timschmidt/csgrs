@@ -81,15 +81,10 @@ use hypersolve::bivariate_components::{
 #[cfg(test)]
 use hypersolve::exact_factor::bivariate_bilinear_factor_from_roots;
 use hypersolve::exact_factor::{
-    bivariate_add_scaled_assign, bivariate_bilinear_factorizations_bounded,
-    bivariate_evaluate_exact, bivariate_exact_nonzero_metadata, bivariate_exact_square_root,
-    bivariate_linear_root_resultant, bivariate_quadratic_constraint_resultant,
-    bivariate_trim_exact, cubic_specialization_rejects_repeated_factor,
-};
-use hypersolve::exact_factor::{
-    rational_multi_affine_lift_factor_coefficients, rational_multi_affine_lift_scale,
-    rational_multi_affine_lift_scale_from_anchor_pair, trivariate_axis_lift_degree,
-    trivariate_axis_lift_power_slice, trivariate_axis_lift_taylor_slice,
+    bivariate_add_scaled_assign, bivariate_evaluate_exact, bivariate_exact_nonzero_metadata,
+    bivariate_exact_square_root, bivariate_linear_root_resultant,
+    bivariate_quadratic_constraint_resultant, bivariate_trim_exact,
+    cubic_specialization_rejects_repeated_factor,
 };
 use hypersolve::radical_expression::{SquareRootExpression, TwoSquareRootExpression};
 use hypersolve::real_interval::{
@@ -120,13 +115,16 @@ use hypersolve::tensor_support::{
     dense_specialize_last_axis, dense_tensor_embed_axes, dense_tensor_from_polynomial_coefficients,
 };
 use hypersolve::trivariate_arithmetic::{
+    MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS, MAX_TRIVARIATE_EXACT_FACTOR_SPLITS,
     trivariate_axis_bivariate_coefficients, trivariate_axis_content,
     trivariate_divide_axis_content, trivariate_divide_linear_axis_factor,
     trivariate_from_axis_bivariate_coefficients, trivariate_from_bivariate_axes,
-    trivariate_linear_axis_coefficients, trivariate_reduce_axis_mod_defining,
-    trivariate_restrict_to_box_bounds, trivariate_specialize_axis_bivariate,
-    trivariate_substitute_affine_axis, trivariate_substitute_product_axis,
-    trivariate_substitute_sum_axis, try_zero_trivariate_coefficients,
+    trivariate_linear_axis_coefficients, trivariate_normalize_and_divide_linear_axis_factor,
+    trivariate_quadratic_axis_factorizations, trivariate_rational_multi_affine_axis_factorizations,
+    trivariate_reduce_axis_mod_defining, trivariate_restrict_to_box_bounds,
+    trivariate_specialize_axis_bivariate, trivariate_substitute_affine_axis,
+    trivariate_substitute_product_axis, trivariate_substitute_sum_axis,
+    try_zero_trivariate_coefficients,
 };
 use std::borrow::Cow;
 use std::ops::ControlFlow;
@@ -7476,24 +7474,6 @@ fn algebraic_point_linear_order(
 /// tensors continue through the rank-independent Hypersolve image authority;
 /// this threshold is never a construction or correctness limit.
 const MAX_TRIVARIATE_BOUNDED_FAST_PATH_CONTROLS: usize = 16_384;
-
-/// A balanced product of 24 multi-affine factors occupies 25^3 controls. Keep
-/// that measured-safe symbolic recursion envelope while sending larger exact
-/// products to the complete rank-independent projection below.
-const MAX_TRIVARIATE_EXACT_FACTOR_SPLITS: usize = 24;
-
-const MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS: usize = MAX_TRIVARIATE_EXACT_FACTOR_SPLITS + 1;
-
-const MAX_EXHAUSTIVE_MULTI_AFFINE_COEFFICIENTS: usize = 9;
-
-const MAX_BOUNDED_BILINEAR_FACTORIZATIONS: usize = MAX_TRIVARIATE_EXACT_FACTOR_SPLITS;
-
-const MAX_FIRST_BILINEAR_FACTOR_PROPOSALS: usize = 64;
-
-/// Higher-degree slices receive a bounded proposal pass. A proposal can only
-/// be accepted by exact division, so exhaustion loses capability rather than
-/// exactness.
-const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
 
 /// Projects the third-axis zeros of one exact `A + branch*B*sqrt(K)`
 /// expression at a retained pair of selected source roots, then rejects every
@@ -16064,6 +16044,14 @@ impl PartialEq for BezierParallel2 {
 }
 
 const MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE: usize = 128;
+
+/// Resultant settings for exact common-factor removal inside parallel-pair
+/// factor searches.
+const PARALLEL_FACTOR_RESULTANT_CONFIG: CurveIntersectionResultantConfig =
+    CurveIntersectionResultantConfig {
+        min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
+        max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+    };
 const MAX_FIXED_DISTANCE_RESULTANT_DEGREE: usize = 256;
 const MAX_SELECTED_FIBER_QUOTIENT_DEGREE: usize = 8;
 const MAX_FIXED_DISTANCE_QUOTIENT_DEGREE: usize = 10;
