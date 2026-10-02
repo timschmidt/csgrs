@@ -3983,7 +3983,7 @@ impl CurveRegion2 {
         let mut band_loops = Vec::with_capacity(band_capacity);
         let mut band_filled_sides = Vec::with_capacity(band_capacity);
         for (right, left) in right_spans.iter().zip(&left_spans) {
-            let boundary = match exact_offset_span_band_loop(right, left, policy)
+            let boundary = match exact_offset_span_band_loop(right, left, None, None, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
             {
                 Classification::Decided(boundary) => boundary,
@@ -4571,9 +4571,50 @@ impl CurveRegion2 {
             }
 
             for span_index in 0..spans.len() {
+                let previous_index = (span_index + spans.len() - 1) % spans.len();
+                let next_index = (span_index + 1) % spans.len();
+                // A certified corner has non-parallel adjacent tangents, so the
+                // adjacent connectors cross transversally at the vertex. A
+                // tangent-continuous or reversing vertex shares one connector
+                // line and is left to the arrangement.
+                // Straight spans meet at crossings exact arithmetic already
+                // decides; retained identity matters where a curved span's
+                // vertex has no cheaply recomputable form.
+                let straight = |span: &ExactOffsetSpan2| {
+                    span.fragments.iter().all(|fragment| match fragment {
+                        BezierSplitFragment2::AlgebraicChord(_) => true,
+                        BezierSplitFragment2::Materialized {
+                            curve: BezierSubcurve2::Quadratic(curve),
+                            ..
+                        } => curve.retained_exact_line_image().is_some(),
+                        _ => false,
+                    })
+                };
+                let is_corner = |previous: &ExactOffsetSpan2, next: &ExactOffsetSpan2| {
+                    spans.len() > 1
+                        && !(straight(previous) && straight(next))
+                        && previous
+                            .end_tangent
+                            .as_ref()
+                            .zip(next.start_tangent.as_ref())
+                            .is_some_and(|(previous, next)| {
+                                matches!(
+                                    curve_tangent_cross_sign(previous, next, policy),
+                                    Classification::Decided(
+                                        RealSign::Positive | RealSign::Negative
+                                    )
+                                )
+                            })
+                };
+                let start_vertex = is_corner(&spans[previous_index], &spans[span_index])
+                    .then_some(&spans[previous_index].source_end);
+                let end_vertex = is_corner(&spans[span_index], &spans[next_index])
+                    .then_some(&spans[span_index].source_end);
                 let band = match exact_offset_span_band_loop(
                     &opposite_spans[span_index],
                     &spans[span_index],
+                    start_vertex,
+                    end_vertex,
                     policy,
                 )
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?

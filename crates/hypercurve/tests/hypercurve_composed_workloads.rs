@@ -533,21 +533,12 @@ fn run_sequence(seeds: &[Seed], steps: &[Step], nested: bool) -> Result<(), Test
 
 /// An inward round offset of a chamfered weighted-conic corner.
 ///
-/// Ignored: completeness gap, not an exactness violation. The chamfer's
-/// cut vertex `V = A(t*)` on the conic `A` is retained as represented
-/// coordinates. The offset's two band connectors pass through `V`, and the
-/// band arrangement splits them at a recomputed line/line crossing `V'`. Its
-/// coordinates equal `V` but share no expression structure with it. The
-/// Boolean then meets the cross-operand pair (`A`, connector half from `V'`).
-/// The line-image kernel finds the crossing `A(t_root)` but cannot decide
-/// whether it lies in the segment's closed unit range, because it is exactly
-/// the endpoint. The fallback tensor resultant then overestimates its degree
-/// and cannot certify that the vanishing top coefficients are zero. Closing
-/// this needs the vertex identity carried across operands: connectors split
-/// at the retained source vertex, plus a known-root deflation of the line
-/// contact at a retained curve point.
+/// The chamfer's cut vertex lies on a retained rational circular arc with
+/// coordinates in a quadratic field. The offset's band connectors pass
+/// through that vertex; they are split at the retained vertex itself, so the
+/// Boolean sees the same point the region boundary uses rather than a
+/// recomputed connector crossing whose equality it could not certify.
 #[test]
-#[ignore = "cross-operand coincident vertex needs retained identity; see doc comment"]
 fn chamfered_conic_inward_round_offset_completes() {
     let seeds = [Seed {
         x: 0,

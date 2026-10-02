@@ -77,11 +77,36 @@ pub(super) fn exact_offset_band_connector(
     append_exact_algebraic_line_join(fragments, from, to, None, None, true, [false; 2], policy)
 }
 
+/// Builds the band between one source span's two parallel offsets.
+///
+/// A supplied start or end vertex splits that end connector at the retained
+/// source vertex: the connector joins `vertex - s*n` to `vertex + s*n`, so the
+/// vertex is its exact midpoint. Callers supply only certified corners, where
+/// the adjacent bands' connectors cross transversally; keeping the retained
+/// vertex there, rather than a recomputed crossing, preserves its identity
+/// with the region boundary.
 pub(super) fn exact_offset_span_band_loop(
     opposite: &ExactOffsetSpan2,
     span: &ExactOffsetSpan2,
+    start_vertex: Option<&CurvePoint2>,
+    end_vertex: Option<&CurvePoint2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurveRegionBoundaryLoop2>> {
+    // Both halves of a split connector must be native lines through
+    // represented points: algebraic halves would be collinear chords whose
+    // continuation through the vertex the arrangement cannot certify.
+    let split_at_vertices = !opposite.fragments.is_empty() && !span.fragments.is_empty();
+    let represented = |points: [&CurvePoint2; 3]| {
+        points
+            .into_iter()
+            .all(|point| point.coordinates().is_some())
+    };
+    let start_vertex = start_vertex.filter(|vertex| {
+        split_at_vertices && represented([&span.offset_start, vertex, &opposite.offset_start])
+    });
+    let end_vertex = end_vertex.filter(|vertex| {
+        split_at_vertices && represented([&opposite.offset_end, vertex, &span.offset_end])
+    });
     let mut fragments = Vec::with_capacity(
         opposite
             .fragments
@@ -90,29 +115,31 @@ pub(super) fn exact_offset_span_band_loop(
             .saturating_add(2),
     );
     fragments.extend(opposite.fragments.iter().cloned());
-    match exact_offset_band_connector(
-        &mut fragments,
-        &opposite.offset_end,
-        &span.offset_end,
-        policy,
-    )? {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
+    let end_vertices: Vec<&CurvePoint2> = match end_vertex {
+        Some(vertex) => vec![&opposite.offset_end, vertex, &span.offset_end],
+        None => vec![&opposite.offset_end, &span.offset_end],
+    };
+    for pair in end_vertices.windows(2) {
+        match exact_offset_band_connector(&mut fragments, pair[0], pair[1], policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
     }
     for fragment in span.fragments.iter().rev() {
         fragments.push(fragment.reversed()?);
     }
-    match exact_offset_band_connector(
-        &mut fragments,
-        &span.offset_start,
-        &opposite.offset_start,
-        policy,
-    )? {
-        Classification::Decided(()) => {}
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
+    let start_vertices: Vec<&CurvePoint2> = match start_vertex {
+        Some(vertex) => vec![&span.offset_start, vertex, &opposite.offset_start],
+        None => vec![&span.offset_start, &opposite.offset_start],
+    };
+    for pair in start_vertices.windows(2) {
+        match exact_offset_band_connector(&mut fragments, pair[0], pair[1], policy)? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
         }
     }
     CurveRegionBoundaryLoop2::try_new_from_certified_connected_chain(fragments, None, policy)
@@ -373,7 +400,7 @@ pub(super) fn exact_line_stroke_band(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let boundary = match exact_offset_span_band_loop(&right, &left, policy)
+    let boundary = match exact_offset_span_band_loop(&right, &left, None, None, policy)
         .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
     {
         Classification::Decided(boundary) => boundary,
