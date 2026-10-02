@@ -109,6 +109,12 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
     let Some(product_len) = (first.len() - 1).checked_add(predicate.len() - 1) else {
         return Ok(None);
     };
+    // The chain's first division, `defining' * predicate mod defining`, has
+    // a known elimination count; decline before forming its product.
+    let mut budget = RemainderBudget::new(field.remainder_elimination_budget());
+    if !budget.covers(product_len.saturating_sub(first.len() - 1)) {
+        return Ok(None);
+    }
     let mut second = vec![field.constant(&Real::zero())?; product_len];
     for (power, coefficient) in first.iter().enumerate().skip(1) {
         let derivative = field.scale(coefficient, &Real::from(power as u128))?;
@@ -137,6 +143,9 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
         // A constant, including the retained zero coefficient, ends the chain.
         if second.len() == 1 {
             return Ok(query_sign_from_variations(variations[0], variations[1]));
+        }
+        if !budget.spend(&first, &second) {
+            return Ok(None);
         }
         let Some(remainder) = ordered_field_polynomial_sign_remainder(&first, &second, field)?
         else {
@@ -188,10 +197,14 @@ pub fn ordered_field_vanishes_at_selected_root<C: Clone, F: OrderedFieldPolynomi
     if second.is_empty() {
         return Ok(Some(true));
     }
+    let mut budget = RemainderBudget::new(field.remainder_elimination_budget());
     let gcd = loop {
         if second.len() == 1 {
             // A nonzero constant shares no root with the defining relation.
             return Ok(Some(false));
+        }
+        if !budget.spend(&first, &second) {
+            return Ok(None);
         }
         let Some(mut remainder) = ordered_field_polynomial_sign_remainder(&first, &second, field)?
         else {
@@ -219,6 +232,37 @@ pub fn ordered_field_vanishes_at_selected_root<C: Clone, F: OrderedFieldPolynomi
         _ if gcd.len() == 2 => Some(false),
         _ => None,
     })
+}
+
+/// Leading-term eliminations left for one selected-root replay.
+struct RemainderBudget(Option<usize>);
+
+impl RemainderBudget {
+    const fn new(limit: Option<usize>) -> Self {
+        Self(limit)
+    }
+
+    /// Whether the remaining budget covers `eliminations` more, without
+    /// charging them.
+    fn covers(&self, eliminations: usize) -> bool {
+        self.0.is_none_or(|remaining| eliminations <= remaining)
+    }
+
+    /// Charges the eliminations of `dividend mod divisor` for a trimmed
+    /// nonconstant divisor; returns whether the budget still covers them.
+    fn spend<C>(&mut self, dividend: &[C], divisor: &[C]) -> bool {
+        let Some(remaining) = &mut self.0 else {
+            return true;
+        };
+        let eliminations = dividend.len().saturating_sub(divisor.len() - 1);
+        match remaining.checked_sub(eliminations) {
+            Some(left) => {
+                *remaining = left;
+                true
+            }
+            None => false,
+        }
+    }
 }
 
 fn field_polynomial_sign<C: Clone, F: OrderedFieldPolynomialContext<C>>(

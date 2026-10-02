@@ -46,6 +46,20 @@ pub trait OrderedFieldPolynomialContext<C> {
 
     /// Cheap sign when exact interval separation is already available.
     fn sign_if_separated(&mut self, value: &C) -> Result<Option<Ordering>, Self::Error>;
+
+    /// Maximum leading-term eliminations a selected-root replay may spend
+    /// across its pseudo-remainder sequence before declining, or `None` for a
+    /// complete replay.
+    ///
+    /// Each division-free elimination multiplies every coefficient by the
+    /// divisor's leading coefficient, so coefficient size compounds per
+    /// elimination; over an extension field one more can cost more than all
+    /// earlier ones. A bounded caller sets this so a replay that would not
+    /// finish cheaply declines to its complete route instead of running
+    /// unbounded.
+    fn remainder_elimination_budget(&self) -> Option<usize> {
+        None
+    }
 }
 
 /// Work limits for division-free ordered-field Bernstein isolation.
