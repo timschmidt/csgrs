@@ -1214,3 +1214,29 @@ fn chamfered_conic_miter_then_round_offset_completes() {
     ];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// A second inward miter offset of a beveled offset of a rational seed.
+///
+/// Band connectors meet the second offset's trimmed curves exactly at their
+/// retained endpoints. The Boolean recomputes each meeting as a connector and
+/// parallel-curve intersection, then must prove it equals the degree-14 native
+/// endpoint parameter. Bounded remainder replays over the recursive tower now
+/// decline instead of running for hours, and the complete promotion decides
+/// equality, but six such promotions still take over a minute. Retaining the
+/// endpoint identity in the pair kernel would remove the equality proofs.
+#[test]
+#[ignore = "endpoint identity: six recursive promotions take over a minute"]
+fn beveled_rational_seed_double_inward_offset_completes() {
+    let seeds = [Seed {
+        x: -5,
+        y: 7,
+        width: 20,
+        height: 9,
+        lower: 2,
+        upper: 7,
+        curvature: 1,
+        weight: 1,
+    }];
+    let steps = [Step::Offset(0, -1, 1), Step::Offset(1, -2, 2)];
+    run_sequence(&seeds, &steps, false).unwrap();
+}

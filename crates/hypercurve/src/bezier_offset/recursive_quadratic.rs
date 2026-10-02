@@ -1744,6 +1744,13 @@ pub(super) enum BezierRecursiveOrderedFieldError2 {
     Uncertain,
 }
 
+/// Leading-term eliminations a bounded pass spends on one recursive-field
+/// selected-root replay. A gcd of two quartic-scale relations needs about
+/// ten; degree-twelve tower relations against degree-fourteen queries, whose
+/// coefficients grow several-fold per elimination, decline to the complete
+/// promotion route.
+const BOUNDED_RECURSIVE_REMAINDER_ELIMINATIONS: usize = 10;
+
 pub(super) struct BezierRecursiveOrderedFieldContext2 {
     pub(super) field: RecursiveQuadraticField,
     pub(super) policy: CurveContext,
@@ -1815,6 +1822,14 @@ impl OrderedFieldPolynomialContext<RecursiveQuadraticValue>
             Classification::Decided(RealSign::Positive) => Ok(std::cmp::Ordering::Greater),
             Classification::Uncertain(_) => Err(BezierRecursiveOrderedFieldError2::Uncertain),
         }
+    }
+
+    fn remainder_elimination_budget(&self) -> Option<usize> {
+        // Tower coefficients compound at every elimination; a bounded pass
+        // keeps only replays of low-degree relations.
+        self.policy
+            .has_bounded_exact_predicate_budget()
+            .then_some(BOUNDED_RECURSIVE_REMAINDER_ELIMINATIONS)
     }
 
     fn sign_if_separated(
