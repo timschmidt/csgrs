@@ -871,7 +871,7 @@ fn formula_roots_compare_in_their_existing_native_coefficient_field() {
             q(7, 10),
         );
         let one = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
-        let field = BezierRecursiveQuadraticField2::base(
+        let field = RecursiveQuadraticField::base(
             [&lower, &upper]
                 .map(bezier_parameter_root_representation)
                 .into(),
@@ -880,8 +880,7 @@ fn formula_roots_compare_in_their_existing_native_coefficient_field() {
         )
         .unwrap();
         let roots = [&lower, &upper].map(|parameter| {
-            field
-                .retained_parameter_value(&parameter.clone().into(), &policy)
+            recursive_field_retained_parameter_value(&field, &parameter.clone().into(), &policy)
                 .unwrap()
                 .expect("both roots are existing coefficient generators")
         });
@@ -2099,7 +2098,7 @@ fn recursive_scalar_comparison_replays_exact_equality_before_approximation() {
     let other = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
     assert!(matches!(other, BezierParameter2::Algebraic(_)));
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(parameter) = BezierRecursiveProjectiveParameter2::new(
             BezierRecursiveQuadraticProjectiveScalar2 {
@@ -2154,12 +2153,12 @@ fn recursive_local_root_orders_against_close_coefficient_generators() {
     let native = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
     let source = bezier_parameter_root_representation(&native);
     let one = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
-    let base = BezierRecursiveQuadraticField2::base(vec![source.clone(), source], one.clone(), one)
-        .unwrap();
+    let base =
+        RecursiveQuadraticField::base(vec![source.clone(), source], one.clone(), one).unwrap();
     let field = base
         .extension(base.constant(Real::from(3_i8)).unwrap())
         .unwrap();
-    let BezierRecursiveQuadraticField2::Base(base_data) = &base else {
+    let RecursiveQuadraticField::Base(base_data) = &base else {
         unreachable!("the fixture begins with a dense base");
     };
     // Use the second copy of the generator in the polynomial; importing
@@ -2276,8 +2275,8 @@ fn retained_parameter_import_keeps_original_axes_and_tower() {
     assert!(foreign.scalar().is_none());
     let source = bezier_parameter_root_representation(&parameter);
     let one = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
-    let base = BezierRecursiveQuadraticField2::base(vec![source.clone(), source], one.clone(), one)
-        .unwrap();
+    let base =
+        RecursiveQuadraticField::base(vec![source.clone(), source], one.clone(), one).unwrap();
     let tower = base
         .extension(base.constant(Real::from(7_i8)).unwrap())
         .unwrap();
@@ -2285,7 +2284,9 @@ fn retained_parameter_import_keeps_original_axes_and_tower() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for field in [&base, &tower] {
             let value = policy
-                .bounded_exact_predicate_pass(|| field.retained_parameter_value(&contact, &policy))
+                .bounded_exact_predicate_pass(|| {
+                    recursive_field_retained_parameter_value(field, &contact, &policy)
+                })
                 .unwrap()
                 .expect("an original selected axis is already in the field");
             assert!(field.same_field(&value.field()));
@@ -2309,8 +2310,7 @@ fn retained_parameter_import_keeps_original_axes_and_tower() {
             // source without changing the union length. It is still not
             // an existing generator and must decline this optional import.
             assert!(
-                field
-                    .retained_parameter_value(&foreign.clone().into(), &policy)
+                recursive_field_retained_parameter_value(field, &foreign.clone().into(), &policy)
                     .unwrap()
                     .is_none()
             );
@@ -2428,7 +2428,7 @@ fn exterior_chord_contact_deflation_preserves_other_contacts() {
 #[test]
 fn recursive_quadratic_endpoint_roots_keep_the_original_field() {
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     for scale in [Real::one(), Real::from(2_i8).sqrt().unwrap(), -Real::pi()] {
         let coefficients =
             [Real::zero(), -scale.clone(), scale].map(|value| field.constant(value).unwrap());
@@ -2462,7 +2462,7 @@ fn recursive_quadratic_endpoint_roots_keep_the_original_field() {
 fn certified_circle_chord_endpoint_factor_preserves_roots_and_field() {
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let base = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let base = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let field = base
         .extension(base.constant(Real::from(2_i8)).unwrap())
         .unwrap();
@@ -2594,7 +2594,7 @@ fn certified_circle_chord_endpoint_factor_preserves_roots_and_field() {
 #[test]
 fn recursive_projective_bounds_reuse_positive_denominator_certificate() {
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     // sin(e)^2 + cos(e)^2 = 1 proves this denominator is 2^-3000.
@@ -2655,8 +2655,8 @@ fn recursive_projective_bounds_enclose_scaled_nested_radicals() {
         Real::one(),
     ]));
     let one = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![source], one.clone(), one).unwrap();
-    let BezierRecursiveQuadraticField2::Base(base) = &field else {
+    let field = RecursiveQuadraticField::base(vec![source], one.clone(), one).unwrap();
+    let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!();
     };
     assert!(base.source_real_witnesses[0].is_some());
@@ -2738,8 +2738,8 @@ fn recursive_projective_bounds_keep_unwitnessed_source_fallback() {
         Real::one(),
     ]));
     let one = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![source], one.clone(), one).unwrap();
-    let BezierRecursiveQuadraticField2::Base(base) = &field else {
+    let field = RecursiveQuadraticField::base(vec![source], one.clone(), one).unwrap();
+    let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!();
     };
     assert!(base.source_real_witnesses[0].is_none());
@@ -2792,12 +2792,11 @@ fn recursive_scalar_native_replay_preserves_selected_source_authority() {
         let rank = sources.len();
         let constant =
             |value| DenseTensorPolynomial::try_new(vec![1; rank], vec![Real::from(value)]).unwrap();
-        let field =
-            BezierRecursiveQuadraticField2::base(sources, constant(2_i8), constant(3_i8)).unwrap();
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let field = RecursiveQuadraticField::base(sources, constant(2_i8), constant(3_i8)).unwrap();
+        let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!();
         };
-        let value = BezierRecursiveQuadraticValue2::from_base(
+        let value = RecursiveQuadraticValue::from_base(
             base.clone(),
             TwoSquareRootExpression {
                 rational: constant(1_i8),
@@ -2834,13 +2833,13 @@ fn recursive_scalar_native_replay_preserves_selected_source_authority() {
 #[test]
 fn recursive_projective_content_normalization_preserves_selected_fields() {
     fn assert_witnesses_scaled(
-        source: &BezierRecursiveQuadraticValue2,
-        normalized: &BezierRecursiveQuadraticValue2,
+        source: &RecursiveQuadraticValue,
+        normalized: &RecursiveQuadraticValue,
         scale: &Real,
     ) {
-        let cached = |value: &BezierRecursiveQuadraticValue2| match value.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { real_witness, .. }
-            | BezierRecursiveQuadraticValueData2::Extension { real_witness, .. } => {
+        let cached = |value: &RecursiveQuadraticValue| match value.data.as_ref() {
+            RecursiveQuadraticValueData::Base { real_witness, .. }
+            | RecursiveQuadraticValueData::Extension { real_witness, .. } => {
                 real_witness.get().cloned()
             }
         };
@@ -2859,10 +2858,10 @@ fn recursive_projective_content_normalization_preserves_selected_fields() {
             }
         }
         if let (
-            BezierRecursiveQuadraticValueData2::Extension {
+            RecursiveQuadraticValueData::Extension {
                 retained, radical, ..
             },
-            BezierRecursiveQuadraticValueData2::Extension {
+            RecursiveQuadraticValueData::Extension {
                 retained: normalized_retained,
                 radical: normalized_radical,
                 ..
@@ -2880,13 +2879,13 @@ fn recursive_projective_content_normalization_preserves_selected_fields() {
         Real::one(),
     ]));
     let constant = |value| DenseTensorPolynomial::try_new(vec![1], vec![value]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(
+    let field = RecursiveQuadraticField::base(
         vec![source],
         constant(Real::from(2_i8)),
         constant(Real::from(3_i8)),
     )
     .unwrap();
-    let BezierRecursiveQuadraticField2::Base(base) = &field else {
+    let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!();
     };
     let value = recursive_quadratic_pair_value(
@@ -2925,7 +2924,7 @@ fn recursive_projective_content_normalization_preserves_selected_fields() {
                 }
             }
             let original = normalized.clone();
-            BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut normalized);
+            RecursiveQuadraticValue::normalize_positive_scale(&mut normalized);
             let positive_scale = (&orientation / &scale).unwrap();
             for (source, normalized) in original.iter().zip(&normalized) {
                 assert_witnesses_scaled(source, normalized, &positive_scale);
@@ -2935,7 +2934,7 @@ fn recursive_projective_content_normalization_preserves_selected_fields() {
                 assert!(actual.is_stored_equivalent_to(&expected.scale(&orientation).unwrap()));
             }
             let mut repeated = normalized.clone();
-            BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut repeated);
+            RecursiveQuadraticValue::normalize_positive_scale(&mut repeated);
             for (first, second) in normalized.iter().zip(&repeated) {
                 assert!(Arc::ptr_eq(&first.data, &second.data));
             }
@@ -2945,11 +2944,11 @@ fn recursive_projective_content_normalization_preserves_selected_fields() {
     let wide_x = x.scale(&large).unwrap();
     let wide_denominator = denominator.scale(&large).unwrap();
     let mut shared = [wide_x.clone(), wide_x.clone(), wide_denominator];
-    BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut shared);
+    RecursiveQuadraticValue::normalize_positive_scale(&mut shared);
     assert!(Arc::ptr_eq(&shared[0].data, &shared[1].data));
     let opaque = extension.constant(Real::pi()).unwrap();
     let mut unnormalized = [wide_x.clone(), denominator.clone(), opaque.clone()];
-    BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut unnormalized);
+    RecursiveQuadraticValue::normalize_positive_scale(&mut unnormalized);
     for (actual, expected) in unnormalized.iter().zip([&wide_x, &denominator, &opaque]) {
         assert!(Arc::ptr_eq(&actual.data, &expected.data));
     }
@@ -2964,13 +2963,13 @@ fn recursive_scalar_publication_accepts_general_exact_witnesses() {
         Real::one(),
     ]));
     let constant = |value| DenseTensorPolynomial::try_new(vec![1], vec![value]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(
+    let field = RecursiveQuadraticField::base(
         vec![source.clone()],
         constant(Real::from(3_i8)),
         constant(Real::one()),
     )
     .unwrap();
-    let BezierRecursiveQuadraticField2::Base(base) = &field else {
+    let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!();
     };
     let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
@@ -3023,9 +3022,8 @@ fn recursive_bounds_refine_each_shared_source_once() {
         &CurveContext::STRICT,
     );
     let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
-    let mut field =
-        BezierRecursiveQuadraticField2::base(vec![source.clone()], one.clone(), one).unwrap();
-    let BezierRecursiveQuadraticField2::Base(base) = &field else {
+    let mut field = RecursiveQuadraticField::base(vec![source.clone()], one.clone(), one).unwrap();
+    let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!();
     };
     assert!(base.source_real_witnesses[0].is_none());
@@ -3124,8 +3122,7 @@ fn recursive_source_refinement_keeps_its_equation_after_an_exact_midpoint() {
         &policy,
     );
     let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
-    let field =
-        BezierRecursiveQuadraticField2::base(vec![source.clone()], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![source.clone()], one.clone(), one).unwrap();
     let (base, _) = field.base_and_extension_path();
     assert!(base.source_real_witnesses[0].is_none());
     let refined = base.source_box(7);
@@ -3162,9 +3159,8 @@ fn recursive_sign_replays_correlated_real_witness_before_deep_intervals() {
     ]));
     let constant = |value| DenseTensorPolynomial::try_new(vec![1], vec![value]).unwrap();
     let field =
-        BezierRecursiveQuadraticField2::base(vec![source], constant(half), constant(Real::one()))
-            .unwrap();
-    let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        RecursiveQuadraticField::base(vec![source], constant(half), constant(Real::one())).unwrap();
+    let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!()
     };
     assert!(base.source_real_witnesses[0].is_some());
@@ -3204,7 +3200,7 @@ fn recursive_sign_replays_correlated_real_witness_before_deep_intervals() {
                 #[cfg(feature = "dispatch-trace")]
                 assert!(
                     hyperreal::dispatch_trace::take_trace().path_count(
-                        "hypercurve",
+                        "hypersolve",
                         "recursive-quadratic-sign",
                         "compact-real-witness",
                     ) > 0
@@ -3228,9 +3224,9 @@ fn recursive_real_witnesses_do_not_require_unused_selected_generators() {
     let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
     let coordinate =
         DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::zero(), Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![source.clone()], coordinate.clone(), one)
-        .unwrap();
-    let BezierRecursiveQuadraticField2::Base(base) = &field else {
+    let field =
+        RecursiveQuadraticField::base(vec![source.clone()], coordinate.clone(), one).unwrap();
+    let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!()
     };
     assert!(base.source_real_witnesses[0].is_none());
@@ -3243,9 +3239,9 @@ fn recursive_real_witnesses_do_not_require_unused_selected_generators() {
     let extension = field.extension(active).unwrap();
     for field in [field, extension] {
         let value = field.constant(Real::pi()).unwrap();
-        let cached = |value: &BezierRecursiveQuadraticValue2| match value.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { real_witness, .. }
-            | BezierRecursiveQuadraticValueData2::Extension { real_witness, .. } => {
+        let cached = |value: &RecursiveQuadraticValue| match value.data.as_ref() {
+            RecursiveQuadraticValueData::Base { real_witness, .. }
+            | RecursiveQuadraticValueData::Extension { real_witness, .. } => {
                 real_witness.get().cloned()
             }
         };
@@ -3292,9 +3288,9 @@ fn retained_real_witnesses_collapse_recursive_source_box_coefficients() {
     let coordinate =
         DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::zero(), Real::one()])
             .expect("the recursive base must retain its selected coordinate");
-    let field = BezierRecursiveQuadraticField2::base(vec![source.clone()], two, one.clone())
+    let field = RecursiveQuadraticField::base(vec![source.clone()], two, one.clone())
         .expect("the recursive base must construct");
-    let BezierRecursiveQuadraticField2::Base(base) = field else {
+    let RecursiveQuadraticField::Base(base) = field else {
         unreachable!("a recursive base begins at its base")
     };
     assert!(base.source_real_witnesses[0].is_some());
@@ -3353,7 +3349,7 @@ fn unused_positive_radicals_do_not_block_recursive_enclosures() {
         let expected = Real::from(if active.is_some() { 7_i8 } else { 1_i8 });
         assert!(interval.lower == expected && interval.upper == expected);
     }
-    let base = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let base = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let field = base
         .extension(base.constant(tiny.clone()).unwrap())
         .unwrap();
@@ -23784,12 +23780,12 @@ fn dense_two_radical_square_matches_general_field_product() {
 fn recursive_field_shares_zero_towers_and_folds_identities() {
     let scalar =
         |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
-    let base = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+    let base = RecursiveQuadraticField::base(Vec::new(), scalar(2), scalar(3)).unwrap();
     let extension = base
         .extension(base.constant(Real::from(5_i8)).unwrap())
         .unwrap();
     let zero = extension.constant(Real::zero()).unwrap();
-    let BezierRecursiveQuadraticValueData2::Extension {
+    let RecursiveQuadraticValueData::Extension {
         retained, radical, ..
     } = zero.data.as_ref()
     else {
@@ -23841,7 +23837,7 @@ fn retained_chord_incidence_replays_independently_allocated_coefficient_fields()
             panic!("the translated endpoints define an exact diagonal chord")
         };
         let one = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()]).unwrap();
-        let field = BezierRecursiveQuadraticField2::base(
+        let field = RecursiveQuadraticField::base(
             vec![bezier_parameter_root_representation(&alpha)],
             one.clone(),
             one,
@@ -23947,8 +23943,7 @@ fn recursive_field_embeddings_do_not_consume_approximate_generator_equalities() 
     assert_eq!(unresolved_positive.zero_status(), ZeroKnowledge::Unknown);
     assert_eq!(real_sign(&unresolved_positive, &CurveContext::STRICT), None);
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let base_field =
-        BezierRecursiveQuadraticField2::base(vec![], one.clone(), one.clone()).unwrap();
+    let base_field = RecursiveQuadraticField::base(vec![], one.clone(), one.clone()).unwrap();
     let first = base_field
         .extension(base_field.constant(Real::from(2_i8)).unwrap())
         .unwrap();
@@ -23959,7 +23954,7 @@ fn recursive_field_embeddings_do_not_consume_approximate_generator_equalities() 
                 .unwrap(),
         )
         .unwrap();
-    let foreign_base = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let foreign_base = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let foreign = foreign_base
         .extension(
             foreign_base
@@ -24023,15 +24018,14 @@ fn retained_polynomial_base_roots_select_the_nonnegative_sheet_on_any_axis() {
             ];
             let one = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
             let target =
-                BezierRecursiveQuadraticField2::base(sources.clone(), one.clone(), one.clone())
-                    .unwrap();
+                RecursiveQuadraticField::base(sources.clone(), one.clone(), one.clone()).unwrap();
             let square = DenseTensorPolynomial::from_axis_polynomial(
                 2,
                 1,
                 &[Real::one(), Real::from(-4_i8), Real::from(4_i8)],
             )
             .unwrap();
-            let source = BezierRecursiveQuadraticField2::base(sources, square, one).unwrap();
+            let source = RecursiveQuadraticField::base(sources, square, one).unwrap();
             let source_base = source.base_and_extension_path().0;
             let point = BezierRecursiveQuadraticProjectivePoint2 {
                 x: recursive_quadratic_base_generator(&source_base, true).unwrap(),
@@ -24641,7 +24635,7 @@ fn analytic_scalar_predicates_distinguish_stationary_points_from_source_poles() 
 fn analytic_axis_predicates_replay_local_polynomial_roots() {
     let scalar =
         |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+    let field = RecursiveQuadraticField::base(Vec::new(), scalar(2), scalar(3)).unwrap();
     let half = (Real::one() / Real::from(2_i8)).unwrap();
     let third = (Real::one() / Real::from(3_i8)).unwrap();
     let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
@@ -25352,7 +25346,7 @@ fn recursive_parallel_expression_signs_reject_poles_and_zero_speed() {
 fn recursive_polynomial_predicates_reuse_the_retained_field_relation() {
     let scalar =
         |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
-    let base = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+    let base = RecursiveQuadraticField::base(Vec::new(), scalar(2), scalar(3)).unwrap();
     let field = base
         .extension(base.constant(Real::from(5_i8)).unwrap())
         .unwrap();
@@ -25451,7 +25445,7 @@ fn recursive_polynomial_predicates_reuse_the_retained_field_relation() {
 fn recursive_polynomial_queries_reuse_a_selected_proper_factor() {
     let scalar =
         |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
-    let base = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+    let base = RecursiveQuadraticField::base(Vec::new(), scalar(2), scalar(3)).unwrap();
     let field = base
         .extension(base.constant(Real::from(5_i8)).unwrap())
         .unwrap();
@@ -25517,7 +25511,7 @@ fn recursive_polynomial_queries_reuse_a_selected_proper_factor() {
 #[test]
 fn recursive_ordered_field_isolation_does_not_guess_polynomial_degree() {
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let epsilon = Real::one() - Real::from(2_i8).powi_i64(-600).unwrap().cos();
     assert_eq!(real_sign(&epsilon, &CurveContext::STRICT), None);
     let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -25551,7 +25545,7 @@ fn recursive_ordered_field_isolation_does_not_guess_polynomial_degree() {
 #[test]
 fn quadratic_crossing_retains_its_root_when_optional_refinement_is_uncertain() {
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let epsilon = Real::one() - Real::from(2_i8).powi_i64(-600).unwrap().cos();
     assert_eq!(real_sign(&epsilon, &CurveContext::STRICT), None);
     let half = (Real::one() / Real::from(2_i8)).unwrap();
@@ -25602,7 +25596,7 @@ fn quadratic_crossing_retains_its_root_when_optional_refinement_is_uncertain() {
 fn recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflation() {
     let scalar =
         |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+    let field = RecursiveQuadraticField::base(Vec::new(), scalar(2), scalar(3)).unwrap();
     let delta = Real::from(2_i8).powi_i64(-29).unwrap();
     let below = Real::from(2_i8).powi_i64(-10).unwrap();
     let above = Real::from(2_i8).powi_i64(-9).unwrap();
@@ -25658,7 +25652,7 @@ fn recursive_polynomial_isolators_keep_the_selected_root_after_endpoint_deflatio
 fn recursive_polynomial_refinement_reuses_certified_bounds_and_identity() {
     let scalar =
         |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(Vec::new(), scalar(2), scalar(3)).unwrap();
+    let field = RecursiveQuadraticField::base(Vec::new(), scalar(2), scalar(3)).unwrap();
     let half = (Real::one() / Real::from(2_i8)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // The unique unit root of t^3-1/2 is not dyadic. Its ordered-field
@@ -25832,7 +25826,7 @@ fn recursive_polynomial_refinement_reuses_certified_bounds_and_identity() {
 #[test]
 fn recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse() {
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let half = (Real::one() / Real::from(2_i8)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for gauge in [Real::one(), Real::from(-1_i8)] {
@@ -31925,7 +31919,7 @@ fn exterior_rational_analytic_points_use_the_selected_denominator_sign() {
     let half = (Real::one() / Real::from(2)).unwrap();
     let quarter = (Real::one() / Real::from(4)).unwrap();
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // Positive unit control weights, but W(3)=1-3/2 is negative.
         let source = RationalBezier2::try_new(
@@ -34177,13 +34171,13 @@ fn selected_frame_import_preserves_every_independent_point() {
                 let parameter = algebraic_parameter(vec![-square, Real::zero(), Real::one()]);
                 let one =
                     DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
-                let field = BezierRecursiveQuadraticField2::base(
+                let field = RecursiveQuadraticField::base(
                     vec![bezier_parameter_root_representation(&parameter)],
                     one.clone(),
                     one,
                 )
                 .unwrap();
-                let BezierRecursiveQuadraticField2::Base(base) = &field else {
+                let RecursiveQuadraticField::Base(base) = &field else {
                     unreachable!("an independent point begins at its base");
                 };
                 let axis =
@@ -34264,13 +34258,13 @@ fn selected_radial_frame_joins_an_equivalent_recursive_point_base() {
             panic!("the pair-radial fixture must retain its recursive frame");
         };
         let (base, _) = authority.field.base_and_extension_path();
-        let independent = BezierRecursiveQuadraticField2::base(
+        let independent = RecursiveQuadraticField::base(
             base.sources.clone(),
             base.first_speed_squared.clone(),
             base.second_speed_squared.clone(),
         )
         .expect("an equivalent recursive base must reconstruct");
-        let BezierRecursiveQuadraticField2::Base(independent_base) = independent else {
+        let RecursiveQuadraticField::Base(independent_base) = independent else {
             unreachable!("the reconstructed field begins at its base");
         };
         let point = authority
@@ -42218,8 +42212,8 @@ fn chord_normal_recursive_frame_retains_center_and_oriented_unit_normal() {
                         .same_field(&frame.support_center.denominator.field())
                 );
                 let check = |label: &str,
-                             actual: &BezierRecursiveQuadraticValue2,
-                             denominator: &BezierRecursiveQuadraticValue2,
+                             actual: &RecursiveQuadraticValue,
+                             denominator: &RecursiveQuadraticValue,
                              expected: &Real| {
                     assert_eq!(
                         actual
@@ -42342,8 +42336,8 @@ fn parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed
                     );
                     assert_eq!(frame.normal_denominator, Real::one());
                     let assert_coordinate =
-                        |actual: &BezierRecursiveQuadraticValue2,
-                         denominator: &BezierRecursiveQuadraticValue2,
+                        |actual: &RecursiveQuadraticValue,
+                         denominator: &RecursiveQuadraticValue,
                          expected: &Real| {
                             assert_eq!(
                                 actual
@@ -46196,7 +46190,7 @@ fn common_scalar_gap_refines_mixed_native_parameters_without_projection() {
     let half = (Real::one() / Real::from(2_i8)).unwrap();
     let radical = half.clone().sqrt().unwrap();
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let selected = degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
         assert!(matches!(
@@ -46781,14 +46775,14 @@ fn local_parallel_endpoint_clipping_reuses_a_coefficient_root() {
         };
         let native = BezierParameter2::Algebraic(native);
         let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
-        let field = BezierRecursiveQuadraticField2::base(
+        let field = RecursiveQuadraticField::base(
             vec![bezier_parameter_root_representation(&native)],
             one.clone(),
             one,
         )
         .unwrap();
         let coefficients = recursive_quadratic_real_polynomial(&field, &polynomial).unwrap();
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!();
         };
         let generator = recursive_quadratic_rational_value(
@@ -46985,8 +46979,7 @@ fn local_parallel_endpoint_clipping_reuses_a_coefficient_root() {
 fn recursive_local_isolation_reuses_exact_signs_below_interval_precision() {
     let scalar = |value| DenseTensorPolynomial::try_new(vec![], vec![value]).unwrap();
     let base =
-        BezierRecursiveQuadraticField2::base(vec![], scalar(Real::one()), scalar(Real::one()))
-            .unwrap();
+        RecursiveQuadraticField::base(vec![], scalar(Real::one()), scalar(Real::one())).unwrap();
     let field = base
         .extension(base.constant(Real::from(2_i8)).unwrap())
         .unwrap();
@@ -47052,7 +47045,7 @@ fn recursive_local_isolation_reuses_exact_signs_below_interval_precision() {
 fn recursive_parameter_projection_preserves_roots_through_refinement_and_charts() {
     let half = (Real::one() / Real::from(2_i8)).unwrap();
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+    let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let large = Real::from(2_i8).powi_i64(1024).unwrap() + Real::from(17_i8);
     let reciprocal = (Real::one() / &large).unwrap();
     let gauges = [
@@ -47247,7 +47240,7 @@ fn retained_parallel_contact_keeps_local_root_through_angular_and_point_queries(
     .parallel_left(Real::zero())
     .unwrap();
     let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
-    let field = BezierRecursiveQuadraticField2::base(
+    let field = RecursiveQuadraticField::base(
         vec![AlgebraicRootRepresentation::from_exact_value(&Real::zero())],
         one.clone(),
         one,
@@ -48424,13 +48417,13 @@ fn recursive_projective_center_projects_complete_nonlinear_fixed_distance() {
             .parallel_left((Real::one() / Real::from(4_i8)).unwrap())
             .unwrap(),
         ] {
-            let field = BezierRecursiveQuadraticField2::base(
+            let field = RecursiveQuadraticField::base(
                 vec![center_source.clone()],
                 one.clone(),
                 one.clone(),
             )
             .expect("the shallow recursive base must construct");
-            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            let RecursiveQuadraticField::Base(base) = &field else {
                 unreachable!("the shallow recursive field begins at its base")
             };
             let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
@@ -54520,13 +54513,13 @@ fn nonlinear_parameter_component_maps_recursive_projective_scalars_locally() {
     };
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let field = BezierRecursiveQuadraticField2::base(
+        let field = RecursiveQuadraticField::base(
             vec![source_representation.clone()],
             one.clone(),
             one.clone(),
         )
         .expect("the recursive component field must construct");
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!("the recursive component field begins at its base")
         };
         let scalar = BezierRecursiveQuadraticProjectiveScalar2 {

@@ -414,3 +414,9 @@ impl From<hyperreal::Problem> for CurveError {
         Self::Real(value.to_string())
     }
 }
+
+impl From<hypersolve::FieldInvariantError> for CurveError {
+    fn from(error: hypersolve::FieldInvariantError) -> Self {
+        Self::Topology(error.0)
+    }
+}

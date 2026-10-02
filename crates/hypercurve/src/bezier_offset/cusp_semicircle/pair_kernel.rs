@@ -1785,8 +1785,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         center: &BezierRecursiveQuadraticProjectivePoint2,
         support_center: &BezierRecursiveQuadraticProjectivePoint2,
         normal_denominator: &Real,
-        radial: &[BezierRecursiveQuadraticValue2; 2],
-        radial_denominator: &BezierRecursiveQuadraticValue2,
+        radial: &[RecursiveQuadraticValue; 2],
+        radial_denominator: &RecursiveQuadraticValue,
         certified_location: Option<BezierAlgebraicCuspSemicircleContactLocation2>,
     ) -> CurveResult<Classification<Option<BezierRecursiveCirclePairContactSide2>>> {
         let Some((anchor_x, anchor_y, anchor_denominator)) =
@@ -1928,7 +1928,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
         let normalize = |point: &BezierRecursiveQuadraticProjectivePoint2| {
             let mut coordinates = [point.x.clone(), point.y.clone(), point.denominator.clone()];
-            BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut coordinates);
+            RecursiveQuadraticValue::normalize_positive_scale(&mut coordinates);
             let [x, y, denominator] = coordinates;
             BezierRecursiveQuadraticProjectivePoint2 { x, y, denominator }
         };

@@ -179,11 +179,10 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             else {
                 return Ok(None);
             };
-            let Some(field) = BezierRecursiveQuadraticField2::base(vec![source], one.clone(), one)
-            else {
+            let Some(field) = RecursiveQuadraticField::base(vec![source], one.clone(), one) else {
                 return Ok(None);
             };
-            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            let RecursiveQuadraticField::Base(base) = &field else {
                 unreachable!("a selected fiber begins at its retained base");
             };
             let coefficients = (0..=degree)

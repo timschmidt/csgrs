@@ -495,8 +495,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
 
     pub(in crate::bezier_offset) fn retain_recursive_import_field(
         &self,
-        field: BezierRecursiveQuadraticField2,
-    ) -> BezierRecursiveQuadraticField2 {
+        field: RecursiveQuadraticField,
+    ) -> RecursiveQuadraticField {
         let _ = self.data.recursive_import_field.set(field);
         self.data
             .recursive_import_field
@@ -537,7 +537,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             self.retain_recursive_import_field(field)
         };
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             return Err(CurveError::Topology(
                 "an axis chord map retained a nonbase recursive import field".into(),
             ));
@@ -606,7 +606,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             };
             self.retain_recursive_import_field(field)
         };
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             return Err(CurveError::Topology(
                 "an oblique chord map retained a nonbase recursive import field".into(),
             ));
@@ -674,7 +674,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             }) else {
                 return Ok(Classification::Decided(None));
             };
-            let BezierRecursiveQuadraticField2::Base(base) = &base_field else {
+            let RecursiveQuadraticField::Base(base) = &base_field else {
                 unreachable!("a retained-offset import begins in its dense base field")
             };
             let speed_value = |expression: &SquareRootExpression<TrivariatePolynomial>| {
@@ -798,7 +798,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             }) else {
                 return Ok(Classification::Decided(None));
             };
-            let BezierRecursiveQuadraticField2::Base(base) = &base_field else {
+            let RecursiveQuadraticField::Base(base) = &base_field else {
                 unreachable!("a selected-radial import begins in its dense base field")
             };
             let pair_value = |expression: &SquareRootExpression<DenseTensorPolynomial>| {
@@ -898,19 +898,19 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let Some(field) = system.recursive_contact_field(contact)? else {
             return Ok(Classification::Decided(None));
         };
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             return Err(CurveError::Topology(
                 "a chord-normal contact retained a nonbase import field".into(),
             ));
         };
         let value = |expression: &TwoSquareRootExpression<DenseTensorPolynomial>| {
-            BezierRecursiveQuadraticValue2::from_base(base.clone(), expression.clone())
+            RecursiveQuadraticValue::from_base(base.clone(), expression.clone())
         };
         let Some(frame) = (|| {
             let denominator =
                 TwoSquareRootExpression::from_rational(system.geometry.common_denominator.clone())
                     .and_then(|expression| {
-                        BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
+                        RecursiveQuadraticValue::from_base(base.clone(), expression)
                     })?;
             Some(BezierRecursiveQuadraticChordContactFrame2 {
                 field: field.clone(),
@@ -953,11 +953,10 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let Some(field) = BezierRecursiveQuadraticField2::base(sources.clone(), one.clone(), one)
-        else {
+        let Some(field) = RecursiveQuadraticField::base(sources.clone(), one.clone(), one) else {
             return Ok(Classification::Decided(None));
         };
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!("a represented contact import begins at its dense base")
         };
         let coordinate = |source: &AlgebraicRootRepresentation| {
@@ -7331,13 +7330,12 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 return Ok(deferred_reason
                     .map_or(Classification::Decided(None), Classification::Uncertain));
             };
-            let Some(field) =
-                BezierRecursiveQuadraticField2::base(sources, one.clone(), one.clone())
+            let Some(field) = RecursiveQuadraticField::base(sources, one.clone(), one.clone())
             else {
                 return Ok(deferred_reason
                     .map_or(Classification::Decided(None), Classification::Uncertain));
             };
-            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            let RecursiveQuadraticField::Base(base) = &field else {
                 unreachable!("a represented pair contact begins in its dense base field")
             };
             let Some((point_x, point_y, first_x, first_y, second_x, second_y, denominator)) =

@@ -1,4 +1,4 @@
-//! Hypercurve's evaluation context for signs at selected root tuples.
+//! Hypercurve's evaluation context for exact selected-algebra constructions.
 //!
 //! Dense tuple signs live in Hypersolve; Hypercurve supplies its policy
 //! protocol and the retained algebraic-parameter sign authority, whose
@@ -6,8 +6,24 @@
 
 use super::*;
 
-impl hypersolve::SelectedRootSignContext for CurveContext {
+impl hypersolve::SelectedAlgebraContext for CurveContext {
     type Error = CurveError;
+
+    fn real_sign(&self, value: &Real) -> Option<RealSign> {
+        real_sign(value, self)
+    }
+
+    fn strict_counterpart(&self) -> Self {
+        Self::strict_counterpart(self)
+    }
+
+    fn strict_predicate_pass<T>(&self, evaluate: impl FnOnce() -> T) -> T {
+        Self::strict_predicate_pass(self, evaluate)
+    }
+
+    fn bounded_exact_predicate_pass<T>(&self, evaluate: impl FnOnce() -> T) -> T {
+        Self::bounded_exact_predicate_pass(self, evaluate)
+    }
 
     fn has_bounded_exact_predicate_budget(&self) -> bool {
         Self::has_bounded_exact_predicate_budget(self)

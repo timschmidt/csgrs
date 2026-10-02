@@ -1032,7 +1032,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             field
         };
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!("a selected pair frame begins in its dense base field")
         };
         let pair_value = |expression: &SquareRootExpression<TrivariatePolynomial>| {
@@ -1942,9 +1942,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                 let (end_x, end_y, end_denominator) = end.difference_numerators(&center)?;
                 let radius_squared = self.radial_distance() * self.radial_distance();
                 let incidence =
-                    |x: &BezierRecursiveQuadraticValue2,
-                     y: &BezierRecursiveQuadraticValue2,
-                     denominator: &BezierRecursiveQuadraticValue2| {
+                    |x: &RecursiveQuadraticValue,
+                     y: &RecursiveQuadraticValue,
+                     denominator: &RecursiveQuadraticValue| {
                         x.square()?
                             .add(&y.square()?)?
                             .subtract(&denominator.square()?.scale(&radius_squared)?)
@@ -6472,18 +6472,17 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let Some(field) = BezierRecursiveQuadraticField2::base(
+        let Some(field) = RecursiveQuadraticField::base(
             map.source_representations.clone(),
             first_speed_squared,
             second_speed_squared,
         ) else {
             return Ok(Classification::Decided(None));
         };
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!("a dense quadratic line solve begins in its retained base field")
         };
-        let strict_sign =
-            |value: &BezierRecursiveQuadraticValue2| value.sign(&CurveContext::STRICT);
+        let strict_sign = |value: &RecursiveQuadraticValue| value.sign(&CurveContext::STRICT);
         if dense_expression_last_axis_degree(incidence) != Some(2) {
             return Ok(Classification::Decided(None));
         }

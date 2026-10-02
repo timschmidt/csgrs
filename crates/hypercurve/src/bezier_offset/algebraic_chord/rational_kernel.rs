@@ -274,16 +274,15 @@ impl BezierAlgebraicChord2 {
                         })
                         .collect::<Vec<_>>()
                 };
-            let subtract = |first: &[BezierRecursiveQuadraticValue2],
-                            second: &[BezierRecursiveQuadraticValue2]| {
+            let subtract = |first: &[RecursiveQuadraticValue],
+                            second: &[RecursiveQuadraticValue]| {
                 recursive_quadratic_polynomial_combine(first, second, true)
             };
-            let add = |first: &[BezierRecursiveQuadraticValue2],
-                       second: &[BezierRecursiveQuadraticValue2]| {
+            let add = |first: &[RecursiveQuadraticValue], second: &[RecursiveQuadraticValue]| {
                 recursive_quadratic_polynomial_combine(first, second, false)
             };
-            let scale = |polynomial: &[BezierRecursiveQuadraticValue2],
-                         value: &BezierRecursiveQuadraticValue2| {
+            let scale = |polynomial: &[RecursiveQuadraticValue],
+                         value: &RecursiveQuadraticValue| {
                 recursive_quadratic_polynomial_scale(polynomial, value)
             };
             let source_x = real(&source_power.x_numerator)?;

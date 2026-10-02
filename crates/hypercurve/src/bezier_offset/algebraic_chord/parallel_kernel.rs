@@ -1170,7 +1170,7 @@ impl BezierAlgebraicChord2 {
                     lower: lower.clone(),
                     upper: upper.clone(),
                 };
-                let polynomial_sign = |polynomial: &[BezierRecursiveQuadraticValue2]| {
+                let polynomial_sign = |polynomial: &[RecursiveQuadraticValue]| {
                     [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512]
                         .into_iter()
                         .find_map(|source_steps| {
@@ -1403,22 +1403,20 @@ impl BezierAlgebraicChord2 {
                 let real = |coefficients: &[Real]| {
                     recursive_quadratic_real_polynomial(&field, coefficients)
                 };
-                let add = |first: &[BezierRecursiveQuadraticValue2],
-                           second: &[BezierRecursiveQuadraticValue2]| {
+                let add = |first: &[RecursiveQuadraticValue],
+                           second: &[RecursiveQuadraticValue]| {
                     recursive_quadratic_polynomial_combine(first, second, false)
                 };
-                let subtract =
-                    |first: &[BezierRecursiveQuadraticValue2],
-                     second: &[BezierRecursiveQuadraticValue2]| {
-                        recursive_quadratic_polynomial_combine(first, second, true)
-                    };
-                let multiply =
-                    |first: &[BezierRecursiveQuadraticValue2],
-                     second: &[BezierRecursiveQuadraticValue2]| {
-                        recursive_quadratic_polynomial_multiply(first, second)
-                    };
-                let scale = |polynomial: &[BezierRecursiveQuadraticValue2],
-                             value: &BezierRecursiveQuadraticValue2| {
+                let subtract = |first: &[RecursiveQuadraticValue],
+                                second: &[RecursiveQuadraticValue]| {
+                    recursive_quadratic_polynomial_combine(first, second, true)
+                };
+                let multiply = |first: &[RecursiveQuadraticValue],
+                                second: &[RecursiveQuadraticValue]| {
+                    recursive_quadratic_polynomial_multiply(first, second)
+                };
+                let scale = |polynomial: &[RecursiveQuadraticValue],
+                             value: &RecursiveQuadraticValue| {
                     recursive_quadratic_polynomial_scale(polynomial, value)
                 };
                 let source_x = real(source.x_numerator)?;
@@ -1476,8 +1474,8 @@ impl BezierAlgebraicChord2 {
                         Axis2::Y => (&source_y, &start.y, &end.y, tangent_x.clone()),
                     };
                 let coordinate_difference =
-                    |endpoint_coordinate: &BezierRecursiveQuadraticValue2,
-                     endpoint_denominator: &BezierRecursiveQuadraticValue2| {
+                    |endpoint_coordinate: &RecursiveQuadraticValue,
+                     endpoint_denominator: &RecursiveQuadraticValue| {
                         let radical = subtract(
                             &scale(source_coordinate, endpoint_denominator)?,
                             &scale(&source_weight, endpoint_coordinate)?,
@@ -1815,7 +1813,7 @@ impl BezierAlgebraicChord2 {
             } else {
                 None
             };
-            let polynomial_sign = |polynomial: &[BezierRecursiveQuadraticValue2]| {
+            let polynomial_sign = |polynomial: &[RecursiveQuadraticValue]| {
                 if let Some(evaluation) = &evaluation {
                     system.polynomial_sign(polynomial, evaluation, policy)
                 } else {
@@ -1860,7 +1858,7 @@ impl BezierAlgebraicChord2 {
                     .incidence
                     .radical
                     .iter()
-                    .all(BezierRecursiveQuadraticValue2::is_structurally_zero)
+                    .all(RecursiveQuadraticValue::is_structurally_zero)
                 {
                     Classification::Decided(RealSign::Zero)
                 } else {

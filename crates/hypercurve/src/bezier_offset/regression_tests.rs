@@ -1359,7 +1359,7 @@ mod regular_parallel_contact_tests {
         let selected =
             BezierAlgebraicSelectedFiberAuthority2::exact_parameter(alpha, value.clone(), policy);
         let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
-        let field = BezierRecursiveQuadraticField2::base(vec![], one.clone(), one).unwrap();
+        let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
         let recursive = decided(
             BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
                 BezierRecursiveQuadraticProjectiveScalar2 {

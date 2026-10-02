@@ -96,19 +96,7 @@ pub(crate) fn orient2_real_expr(from: &Point2, to: &Point2, point: &Point2) -> R
     (&abx * &acy) - (&aby * &acx)
 }
 
-#[track_caller]
-/// Exact sign of a product of two values with the given signs.
-pub(crate) const fn product_sign(first: RealSign, second: RealSign) -> RealSign {
-    match (first, second) {
-        (RealSign::Zero, _) | (_, RealSign::Zero) => RealSign::Zero,
-        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
-            RealSign::Positive
-        }
-        (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
-            RealSign::Negative
-        }
-    }
-}
+pub(crate) use hypersolve::classification::product_sign;
 
 pub(crate) fn real_sign(value: &Real, policy: &CurveContext) -> Option<RealSign> {
     if value.zero_status() == ZeroKnowledge::Zero {

@@ -2287,7 +2287,7 @@ impl BezierAlgebraicChord2 {
                 {
                     value.sign(policy)?
                 } else {
-                    BezierRecursiveQuadraticValue2::affine_positive_root_sign(
+                    RecursiveQuadraticValue::affine_positive_root_sign(
                         &cross,
                         &radical,
                         &speed_squared,

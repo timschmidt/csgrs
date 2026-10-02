@@ -584,12 +584,12 @@ impl BezierAlgebraicCuspSemicircle2 {
         let dense =
             |coefficients: &[Real]| DenseTensorPolynomial::from_axis_polynomial(1, 0, coefficients);
         let Some((field, center, support_center)) = (|| {
-            let field = BezierRecursiveQuadraticField2::base(
+            let field = RecursiveQuadraticField::base(
                 vec![bezier_parameter_root_representation(&center_parameter)],
                 dense(&parallel_speed_squared_polynomial(differential))?,
                 dense(&[Real::one()])?,
             )?;
-            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            let RecursiveQuadraticField::Base(base) = &field else {
                 unreachable!("a parallel-normal frame begins in its source field")
             };
             let value = |coefficients: &[Real]| {
@@ -727,8 +727,8 @@ impl BezierAlgebraicCuspSemicircle2 {
 
     pub(in crate::bezier_offset) fn recursive_rational_circle_frame_authority_with_values(
         &self,
-        field: BezierRecursiveQuadraticField2,
-        mut value: impl FnMut(Vec<Real>) -> Option<BezierRecursiveQuadraticValue2>,
+        field: RecursiveQuadraticField,
+        mut value: impl FnMut(Vec<Real>) -> Option<RecursiveQuadraticValue>,
     ) -> CurveResult<Classification<Option<BezierRecursiveCircleFrame2>>> {
         let Some(frame) = self.data.frame.rational() else {
             return Ok(Classification::Decided(None));
@@ -829,7 +829,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let source = parameter_representation(&frame.data.parameter, policy);
         let Some(field) = (|| {
             let one = DenseTensorPolynomial::try_new(vec![1], vec![Real::one()])?;
-            BezierRecursiveQuadraticField2::base(vec![source], one.clone(), one)
+            RecursiveQuadraticField::base(vec![source], one.clone(), one)
         })() else {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -839,7 +839,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             );
             return Ok(Classification::Decided(None));
         };
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!("a rational recursive circle frame begins in its dense base")
         };
         let base = base.clone();
@@ -863,7 +863,7 @@ impl BezierAlgebraicCuspSemicircle2 {
     /// avoids projecting five coordinates through a foreign-field resultant.
     pub(in crate::bezier_offset) fn recursive_rational_circle_frame_authority_in_field(
         &self,
-        field: &BezierRecursiveQuadraticField2,
+        field: &RecursiveQuadraticField,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierRecursiveCircleFrame2>>> {
         let Some(frame) = self.data.frame.rational() else {

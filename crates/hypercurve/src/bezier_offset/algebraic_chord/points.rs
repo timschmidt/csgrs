@@ -1321,7 +1321,7 @@ impl BezierAlgebraicChordPairPoint2 {
         } else {
             &strict
         };
-        let sign = |value: &BezierRecursiveQuadraticValue2| {
+        let sign = |value: &RecursiveQuadraticValue| {
             value.sign(sign_policy).map(|sign| match sign {
                 Classification::Decided(sign) => Some(sign),
                 Classification::Uncertain(_) => None,
@@ -2825,8 +2825,8 @@ impl BezierAlgebraicChordParallelPoint2 {
         };
         let displaced = |origin: &BezierRecursiveQuadraticProjectivePoint2| {
             let denominator = origin.denominator.multiply(&speed)?;
-            let coordinate = |coordinate_origin: &BezierRecursiveQuadraticValue2,
-                              unit: &BezierRecursiveQuadraticValue2,
+            let coordinate = |coordinate_origin: &RecursiveQuadraticValue,
+                              unit: &RecursiveQuadraticValue,
                               translation: &Real| {
                 coordinate_origin
                     .multiply(&speed)?
@@ -3225,7 +3225,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         ) else {
             return Ok(Classification::Decided(None));
         };
-        let lift = |value: &BezierRecursiveQuadraticValue2| field.lift(value);
+        let lift = |value: &RecursiveQuadraticValue| field.lift(value);
         let (
             Some(u_x),
             Some(u_y),
@@ -3815,7 +3815,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 real_sign(&self.data.distance, &CurveContext::STRICT),
             );
         }
-        let sign = BezierRecursiveQuadraticValue2::nested_positive_root_affine_sign(
+        let sign = RecursiveQuadraticValue::nested_positive_root_affine_sign(
             &retained,
             &radical,
             &analytic_speed_squared,
@@ -4230,7 +4230,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         } else {
             None
         };
-        let sign = match BezierRecursiveQuadraticValue2::nested_positive_root_affine_sign(
+        let sign = match RecursiveQuadraticValue::nested_positive_root_affine_sign(
             &retained,
             &radical,
             &tangent_speed_squared,

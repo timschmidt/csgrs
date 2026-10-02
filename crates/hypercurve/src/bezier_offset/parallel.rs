@@ -8980,19 +8980,18 @@ impl BezierAnalyticParallelPoint2 {
         ) else {
             return Ok(Classification::Decided(None));
         };
-        let Some(field) =
-            BezierRecursiveQuadraticField2::base(vec![source_root], speed_squared, one)
+        let Some(field) = RecursiveQuadraticField::base(vec![source_root], speed_squared, one)
         else {
             return Ok(Classification::Decided(None));
         };
-        let BezierRecursiveQuadraticField2::Base(base) = &field else {
+        let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!("an analytic tangent line begins at its dense base")
         };
         let rational =
             |coefficients: &[Real]| recursive_quadratic_rational_value(base, tensor(coefficients)?);
         let line_with_speed = |rational_coefficients: &[Real], speed_coefficients: &[Real]| {
             let zero = DenseTensorPolynomial::zero(vec![1])?;
-            BezierRecursiveQuadraticValue2::from_base(
+            RecursiveQuadraticValue::from_base(
                 base.clone(),
                 TwoSquareRootExpression {
                     rational: tensor(rational_coefficients)?,
@@ -9357,11 +9356,11 @@ impl BezierAnalyticParallelPoint2 {
         };
         let point = if translation.is_some() {
             let Some(field) =
-                BezierRecursiveQuadraticField2::base(vec![parameter_source], one.clone(), one)
+                RecursiveQuadraticField::base(vec![parameter_source], one.clone(), one)
             else {
                 return Ok(Classification::Decided(None));
             };
-            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            let RecursiveQuadraticField::Base(base) = &field else {
                 unreachable!("an analytic point recursive field begins at its dense base")
             };
             let value = |coefficients: &[Real]| {
@@ -9403,16 +9402,16 @@ impl BezierAnalyticParallelPoint2 {
                 return Ok(Classification::Decided(None));
             };
             let Some(field) =
-                BezierRecursiveQuadraticField2::base(vec![parameter_source], speed_squared, one)
+                RecursiveQuadraticField::base(vec![parameter_source], speed_squared, one)
             else {
                 return Ok(Classification::Decided(None));
             };
-            let BezierRecursiveQuadraticField2::Base(base) = &field else {
+            let RecursiveQuadraticField::Base(base) = &field else {
                 unreachable!("an analytic point recursive field begins at its dense base")
             };
             let expression = |rational: &[Real], first: &[Real]| {
                 let zero = DenseTensorPolynomial::zero(vec![1])?;
-                BezierRecursiveQuadraticValue2::from_base(
+                RecursiveQuadraticValue::from_base(
                     base.clone(),
                     TwoSquareRootExpression {
                         rational: tensor(rational)?,

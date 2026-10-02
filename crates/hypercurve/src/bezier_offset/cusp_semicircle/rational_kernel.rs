@@ -1207,7 +1207,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         other: &RationalBezier2,
         frame: &BezierRecursiveCircleFrame2,
         policy: &CurveContext,
-    ) -> CurveResult<Option<Vec<BezierRecursiveQuadraticValue2>>> {
+    ) -> CurveResult<Option<Vec<RecursiveQuadraticValue>>> {
         let support = match policy.strict_predicate_pass(|| {
             crate::arc_bezier::rational_bezier_circular_arc(other, policy)
         })? {
@@ -2565,26 +2565,24 @@ impl BezierAlgebraicCuspSemicircle2 {
         )) = (|| {
             let real =
                 |coefficients: &[Real]| recursive_quadratic_real_polynomial(&field, coefficients);
-            let add = |first: &[BezierRecursiveQuadraticValue2],
-                       second: &[BezierRecursiveQuadraticValue2]| {
+            let add = |first: &[RecursiveQuadraticValue], second: &[RecursiveQuadraticValue]| {
                 recursive_quadratic_polynomial_combine(first, second, false)
             };
-            let subtract = |first: &[BezierRecursiveQuadraticValue2],
-                            second: &[BezierRecursiveQuadraticValue2]| {
+            let subtract = |first: &[RecursiveQuadraticValue],
+                            second: &[RecursiveQuadraticValue]| {
                 recursive_quadratic_polynomial_combine(first, second, true)
             };
-            let multiply = |first: &[BezierRecursiveQuadraticValue2],
-                            second: &[BezierRecursiveQuadraticValue2]| {
+            let multiply = |first: &[RecursiveQuadraticValue],
+                            second: &[RecursiveQuadraticValue]| {
                 recursive_quadratic_polynomial_multiply(first, second)
             };
-            let scale = |polynomial: &[BezierRecursiveQuadraticValue2], scale: &Real| {
+            let scale = |polynomial: &[RecursiveQuadraticValue], scale: &Real| {
                 recursive_quadratic_polynomial_scale_real(polynomial, scale)
             };
-            let scale_value =
-                |polynomial: &[BezierRecursiveQuadraticValue2],
-                 scale: &BezierRecursiveQuadraticValue2| {
-                    recursive_quadratic_polynomial_scale(polynomial, scale)
-                };
+            let scale_value = |polynomial: &[RecursiveQuadraticValue],
+                               scale: &RecursiveQuadraticValue| {
+                recursive_quadratic_polynomial_scale(polynomial, scale)
+            };
 
             let x = real(source.x_numerator)?;
             let y = real(source.y_numerator)?;

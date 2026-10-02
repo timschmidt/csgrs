@@ -28,6 +28,9 @@ mod parallel_pair_sets;
 #[path = "curve_parameter_component.rs"]
 mod parameter_component;
 mod recursive_field;
+use recursive_field::foreign_embedding_projective_point;
+#[cfg(test)]
+use recursive_field::recursive_field_retained_parameter_value;
 mod recursive_quadratic;
 mod represented;
 mod selected_dense;
@@ -95,16 +98,14 @@ use hypersolve::radical_expression::{SquareRootExpression, TwoSquareRootExpressi
 use hypersolve::real_interval::{
     rational_interval_bernstein_strict_sign, strict_signs_are_opposite,
 };
+use hypersolve::recursive_quadratic_field::*;
 use hypersolve::represented_root::{
-    NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, RepresentedRootRefinement,
-    dense_polynomial_tuple_sign, dense_polynomial_tuple_sign_owned,
-    dense_polynomial_value_interval, dense_polynomial_value_interval_with_coefficient_precision,
+    NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, dense_polynomial_tuple_sign,
+    dense_polynomial_tuple_sign_owned, dense_polynomial_value_interval,
+    dense_polynomial_value_interval_with_coefficient_precision,
     dense_positive_square_root_interval, dense_positive_square_root_sum_sign,
     dense_strict_interval_sign, dense_tensor_interval_with_coefficient_precision,
-    dense_two_positive_square_root_interval,
-    dense_two_positive_square_root_interval_with_coefficient_precision,
-    dense_two_positive_square_root_sum_sign,
-    dense_two_positive_square_root_sum_sign_at_projected_zero,
+    dense_two_positive_square_root_interval, dense_two_positive_square_root_sum_sign,
     positive_root_sum_sign_from_components, refined_represented_root,
     represented_affine_coordinate, represented_affine_tensor_basis,
     represented_dense_value_refined, represented_order_to_real, represented_policy_sign,
@@ -114,14 +115,13 @@ use hypersolve::represented_root::{
     represented_vector_dot_cross, represented_zero_offset_unit_scales,
     same_positive_root_sheet_signs,
 };
-use hypersolve::tensor_support::dense_tensor_is_stored_zero;
 use hypersolve::tensor_support::{
     bivariate_dense_tensor, bivariate_tensor_with_output_axis,
     dense_reduce_selected_tuple_relations, dense_tensor_with_output_axis,
 };
 use hypersolve::tensor_support::{
     dense_last_axis_coefficient, dense_last_axis_derivative, dense_reduce_selected_root_relations,
-    dense_specialize_last_axis, dense_tensor_embed_axes, dense_tensor_from_polynomial_coefficients,
+    dense_specialize_last_axis, dense_tensor_embed_axes,
 };
 use hypersolve::trivariate_arithmetic::{
     MAX_TRIVARIATE_EXACT_FACTOR_COEFFICIENTS, MAX_TRIVARIATE_EXACT_FACTOR_SPLITS,
@@ -173,7 +173,9 @@ use crate::{
     RationalBezierIntersectionOverlap2, RationalQuadraticBezier2, Real, Similarity2,
     UncertaintyReason,
 };
-use hyperreal::{Rational as HyperRational, RealSign, ZeroKnowledge};
+#[cfg(test)]
+use hyperreal::Rational as HyperRational;
+use hyperreal::{RealSign, ZeroKnowledge};
 use hypersolve::{
     AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberPolynomialImageProjectionConfig,
     AlgebraicFiberPolynomialImageProjectionStatus, AlgebraicFiberProjectionStatus,
@@ -2923,7 +2925,7 @@ struct BezierAlgebraicCuspSemicirclePairParameterMapData2 {
     /// allocation so descendant quadratic generators can lift the point as
     /// an ancestor instead of treating an equivalent reconstruction as an
     /// unrelated field.
-    recursive_field: OnceLock<BezierRecursiveQuadraticField2>,
+    recursive_field: OnceLock<RecursiveQuadraticField>,
     policy: CurveContext,
 }
 
@@ -2964,8 +2966,8 @@ struct BezierRecursiveCirclePairContactData2 {
     branch: i8,
     frame: BezierRecursiveQuadraticPairContactFrame2,
     angular: [BezierRecursiveCirclePairAngularData2; 2],
-    tangent_cross: BezierRecursiveQuadraticValue2,
-    tangent_dot: BezierRecursiveQuadraticValue2,
+    tangent_cross: RecursiveQuadraticValue,
+    tangent_dot: RecursiveQuadraticValue,
     /// Independent sign certificate for the zero-discriminant branch.  Its
     /// tangent cross is identically zero, while the two nonzero radial line
     /// factors and positive center-distance square decide the dot sign.
@@ -2974,8 +2976,8 @@ struct BezierRecursiveCirclePairContactData2 {
 
 #[derive(Debug)]
 struct BezierRecursiveCirclePairAngularData2 {
-    diameter: BezierRecursiveQuadraticValue2,
-    radius_squared_denominator: BezierRecursiveQuadraticValue2,
+    diameter: RecursiveQuadraticValue,
+    radius_squared_denominator: RecursiveQuadraticValue,
 }
 
 struct BezierRecursiveCirclePairContactSide2 {
@@ -3065,7 +3067,7 @@ struct BezierAlgebraicCuspSemicircleChordParameterMapData2 {
     /// into the recursive quadratic tower. Retaining the field—not merely
     /// reconstructed coordinates—preserves each positive radical's identity
     /// when several topology paths consume the same contact.
-    recursive_import_field: OnceLock<BezierRecursiveQuadraticField2>,
+    recursive_import_field: OnceLock<RecursiveQuadraticField>,
 }
 
 #[derive(Debug)]
@@ -3870,13 +3872,13 @@ struct BezierRepresentedCenterParallelSystem2 {
 /// authored positive root, independently of that squared equation.
 #[derive(Clone, Debug)]
 struct BezierRecursiveQuadraticParallelExpression2 {
-    rational: Vec<BezierRecursiveQuadraticValue2>,
-    radical: Vec<BezierRecursiveQuadraticValue2>,
+    rational: Vec<RecursiveQuadraticValue>,
+    radical: Vec<RecursiveQuadraticValue>,
     /// The radicand belongs to the expression. Related predicates share it,
     /// so a caller cannot replay the expression with another speed sheet.
-    speed_squared: Arc<[BezierRecursiveQuadraticValue2]>,
+    speed_squared: Arc<[RecursiveQuadraticValue]>,
     /// Successful exact arithmetic only; no policy-dependent sign is cached.
-    squared_magnitude: Arc<OnceLock<Vec<BezierRecursiveQuadraticValue2>>>,
+    squared_magnitude: Arc<OnceLock<Vec<RecursiveQuadraticValue>>>,
 }
 
 /// Arbitrary-depth retained circle/analytic-parallel authority.
@@ -3888,8 +3890,8 @@ struct BezierRecursiveQuadraticParallelExpression2 {
 /// speed sheet without independently materializing Cartesian coordinates.
 #[derive(Debug)]
 struct BezierRecursiveCircleTargetSystem2 {
-    field: BezierRecursiveQuadraticField2,
-    base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
+    field: RecursiveQuadraticField,
+    base: Arc<RecursiveQuadraticBaseField>,
     direct_pair_fast_path: Option<Arc<BezierDirectPairRadialParallelFastPath2>>,
     /// Rational-curve incidence is the zero-distance specialization with an
     /// exact unit procedural speed. It neither adjoins nor divides by the
@@ -3902,9 +3904,9 @@ struct BezierRecursiveCircleTargetSystem2 {
     selected_half_plane: BezierRecursiveQuadraticParallelExpression2,
     diameter: BezierRecursiveQuadraticParallelExpression2,
     radius_squared_denominator: BezierRecursiveQuadraticParallelExpression2,
-    tangent_cross_source: Vec<BezierRecursiveQuadraticValue2>,
+    tangent_cross_source: Vec<RecursiveQuadraticValue>,
     tangent_dot_source: BezierRecursiveQuadraticParallelExpression2,
-    weight: Vec<BezierRecursiveQuadraticValue2>,
+    weight: Vec<RecursiveQuadraticValue>,
 }
 
 /// Embedding of one isolated analytic-curve parameter into the selected
@@ -3913,13 +3915,13 @@ struct BezierRecursiveCircleTargetSystem2 {
 /// order; the target parameter therefore stays independent until the exact
 /// authored-sheet incidence accepts it.
 struct BezierRecursiveQuadraticTargetEmbedding2 {
-    field: BezierRecursiveQuadraticField2,
-    parameter: BezierRecursiveQuadraticValue2,
-    source_base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-    target_base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
+    field: RecursiveQuadraticField,
+    parameter: RecursiveQuadraticValue,
+    source_base: Arc<RecursiveQuadraticBaseField>,
+    target_base: Arc<RecursiveQuadraticBaseField>,
     source_axes: Vec<usize>,
     target_axis: usize,
-    extensions: Vec<BezierRecursiveQuadraticExtensionEmbedding2>,
+    extensions: Vec<RecursiveQuadraticExtensionEmbedding>,
 }
 
 /// One retained chord support and rational target over the endpoints' least
@@ -3930,19 +3932,19 @@ struct BezierRecursiveQuadraticTargetEmbedding2 {
 /// topology evidence.
 #[derive(Debug)]
 struct BezierRecursiveProjectiveChordRationalSystem2 {
-    field: BezierRecursiveQuadraticField2,
+    field: RecursiveQuadraticField,
     /// Finite endpoints are retained only when incidence already uses their
     /// field. A chord with an older authoritative support clips candidates
     /// through its point classifier instead of importing unrelated boundary
     /// fields eagerly.
     start: Option<BezierRecursiveQuadraticProjectivePoint2>,
     end: Option<BezierRecursiveQuadraticProjectivePoint2>,
-    source_x: Vec<BezierRecursiveQuadraticValue2>,
-    source_y: Vec<BezierRecursiveQuadraticValue2>,
-    source_weight: Vec<BezierRecursiveQuadraticValue2>,
+    source_x: Vec<RecursiveQuadraticValue>,
+    source_y: Vec<RecursiveQuadraticValue>,
+    source_weight: Vec<RecursiveQuadraticValue>,
     source_weight_sign: Option<RealSign>,
-    incidence: Vec<BezierRecursiveQuadraticValue2>,
-    tangent_cross: Vec<BezierRecursiveQuadraticValue2>,
+    incidence: Vec<RecursiveQuadraticValue>,
+    tangent_cross: Vec<RecursiveQuadraticValue>,
     affine_preimage_incidence_factor_sign: Option<RealSign>,
     tangent_from_incidence_derivative_sign: Option<RealSign>,
 }
@@ -3954,15 +3956,15 @@ struct BezierRecursiveProjectiveChordRationalSystem2 {
 /// tangent orientation.
 #[derive(Debug)]
 struct BezierRecursiveProjectiveChordParallelSystem2 {
-    field: BezierRecursiveQuadraticField2,
-    base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
+    field: RecursiveQuadraticField,
+    base: Arc<RecursiveQuadraticBaseField>,
     /// Global elimination is a demand-driven fallback. Local roots retain
     /// their selected coefficient field and leave this cache empty.
     projection: OnceLock<DenseTensorPolynomial>,
     incidence: BezierRecursiveQuadraticParallelExpression2,
-    source_weight: Vec<BezierRecursiveQuadraticValue2>,
-    tangent_cross: Vec<BezierRecursiveQuadraticValue2>,
-    tangent_dot: Vec<BezierRecursiveQuadraticValue2>,
+    source_weight: Vec<RecursiveQuadraticValue>,
+    tangent_cross: Vec<RecursiveQuadraticValue>,
+    tangent_dot: Vec<RecursiveQuadraticValue>,
     /// Selected-axis differences from the two finite chord endpoints.  The
     /// monotone root authority first clips through exact geometric envelopes
     /// and constructs these substantially larger expressions only when that
@@ -3994,18 +3996,18 @@ struct BezierRecursiveProjectiveChordParallelIntervalSystem2 {
 /// replayed against the authored candidate-speed sheet.
 #[derive(Debug)]
 struct BezierRecursiveFixedDistanceSystem2 {
-    field: BezierRecursiveQuadraticField2,
-    base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
+    field: RecursiveQuadraticField,
+    base: Arc<RecursiveQuadraticBaseField>,
     projection: DenseTensorPolynomial,
     incidence: BezierRecursiveQuadraticParallelExpression2,
-    source_weight: Vec<BezierRecursiveQuadraticValue2>,
+    source_weight: Vec<RecursiveQuadraticValue>,
     unit_target_speed: bool,
 }
 
 struct BezierRecursiveQuadraticParallelEvaluation2 {
     embedding: BezierRecursiveQuadraticTargetEmbedding2,
-    speed_field: BezierRecursiveQuadraticField2,
-    speed: BezierRecursiveQuadraticValue2,
+    speed_field: RecursiveQuadraticField,
+    speed: RecursiveQuadraticValue,
 }
 
 /// Rank-independent chord-normal projective authority.
@@ -4045,84 +4047,14 @@ struct BezierChordNormalDenseChordParameterMapSystem2 {
     geometry: BezierChordNormalDenseTargetGeometry2,
     tangent_cross: TwoSquareRootExpression<DenseTensorPolynomial>,
     angular_tangent: TwoSquareRootExpression<DenseTensorPolynomial>,
-    recursive_contact_fields: [std::sync::OnceLock<BezierRecursiveQuadraticField2>; 3],
-}
-
-/// One exact coefficient field retained by recursively composed line/circle
-/// contacts.  The base is the existing dense selected-root/two-speed-radical
-/// authority.  Every later contact appends only its positive quadratic
-/// discriminant, so depth grows linearly while each level shares its parent.
-#[derive(Clone, Debug)]
-enum BezierRecursiveQuadraticField2 {
-    Base(Arc<BezierRecursiveQuadraticBaseFieldData2>),
-    Extension(Arc<BezierRecursiveQuadraticExtensionFieldData2>),
-}
-
-#[derive(Debug)]
-struct BezierRecursiveQuadraticBaseFieldData2 {
-    sources: Vec<AlgebraicRootRepresentation>,
-    source_real_witnesses: Vec<Option<Real>>,
-    source_refinement: OnceLock<Mutex<BezierRecursiveQuadraticSourceRefinement2>>,
-    first_speed_squared: DenseTensorPolynomial,
-    second_speed_squared: DenseTensorPolynomial,
-}
-
-struct BezierRecursiveQuadraticSourceRefinement2 {
-    sources: Vec<Option<RepresentedRootRefinement>>,
-}
-
-impl std::fmt::Debug for BezierRecursiveQuadraticSourceRefinement2 {
-    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter
-            .debug_struct("BezierRecursiveQuadraticSourceRefinement2")
-            .field("axes", &self.sources.len())
-            .finish_non_exhaustive()
-    }
-}
-
-#[derive(Debug)]
-struct BezierRecursiveQuadraticExtensionFieldData2 {
-    parent: BezierRecursiveQuadraticField2,
-    /// Strictly positive at the retained parent-field tuple.
-    radicand: BezierRecursiveQuadraticValue2,
-}
-
-/// One exact embedding of a source quadratic generator into a transient
-/// common tower. The target generator has the source radicand embedded in its
-/// own parent, so both name the same positive square root.
-struct BezierRecursiveQuadraticExtensionEmbedding2 {
-    source: Arc<BezierRecursiveQuadraticExtensionFieldData2>,
-    target: Arc<BezierRecursiveQuadraticExtensionFieldData2>,
-}
-
-/// One normalized value in a retained recursive quadratic field.  Extension
-/// values are `retained + radical * sqrt(radicand)` with the positive square
-/// root.  Both coefficients live in the shared parent field.
-#[derive(Clone, Debug)]
-struct BezierRecursiveQuadraticValue2 {
-    data: Arc<BezierRecursiveQuadraticValueData2>,
-}
-
-#[derive(Debug)]
-enum BezierRecursiveQuadraticValueData2 {
-    Base {
-        field: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-        expression: TwoSquareRootExpression<DenseTensorPolynomial>,
-        real_witness: std::sync::OnceLock<Real>,
-    },
-    Extension {
-        field: Arc<BezierRecursiveQuadraticExtensionFieldData2>,
-        retained: BezierRecursiveQuadraticValue2,
-        radical: BezierRecursiveQuadraticValue2,
-        real_witness: std::sync::OnceLock<Real>,
-    },
+    recursive_contact_fields: [std::sync::OnceLock<RecursiveQuadraticField>; 3],
 }
 
 #[derive(Clone, Debug)]
 struct BezierRecursiveQuadraticProjectiveScalar2 {
-    numerator: BezierRecursiveQuadraticValue2,
+    numerator: RecursiveQuadraticValue,
     /// Certified strictly positive by construction.
-    denominator: BezierRecursiveQuadraticValue2,
+    denominator: RecursiveQuadraticValue,
 }
 
 /// Exact root of one strictly monotone authored chord/parallel incidence.
@@ -4176,8 +4108,8 @@ enum BezierRecursiveProjectiveParameterAuthority2 {
 /// complete repeated-root fallback.
 #[derive(Debug)]
 struct BezierRecursivePolynomialParameterAuthority2 {
-    field: BezierRecursiveQuadraticField2,
-    coefficients: Vec<BezierRecursiveQuadraticValue2>,
+    field: RecursiveQuadraticField,
+    coefficients: Vec<RecursiveQuadraticValue>,
 }
 
 /// One exact scalar retained directly in its recursive quadratic field.
@@ -4268,10 +4200,10 @@ impl PartialEq for BezierRecursiveProjectiveParameter2 {
 
 #[derive(Clone, Debug)]
 struct BezierRecursiveQuadraticProjectivePoint2 {
-    x: BezierRecursiveQuadraticValue2,
-    y: BezierRecursiveQuadraticValue2,
+    x: RecursiveQuadraticValue,
+    y: RecursiveQuadraticValue,
     /// Certified strictly positive by construction.
-    denominator: BezierRecursiveQuadraticValue2,
+    denominator: RecursiveQuadraticValue,
 }
 
 /// Circle frame embedded in one recursive coefficient field. The unit
@@ -4280,7 +4212,7 @@ struct BezierRecursiveQuadraticProjectivePoint2 {
 /// anchor retaining the authored normal.
 #[derive(Clone, Debug)]
 struct BezierRecursiveCircleFrame2 {
-    field: BezierRecursiveQuadraticField2,
+    field: RecursiveQuadraticField,
     center: BezierRecursiveQuadraticProjectivePoint2,
     support_center: BezierRecursiveQuadraticProjectivePoint2,
     normal_denominator: Real,
@@ -4291,7 +4223,7 @@ struct BezierRecursiveCircleFrame2 {
 /// positive projective denominator and field.
 #[derive(Clone)]
 struct BezierRecursiveQuadraticChordContactFrame2 {
-    field: BezierRecursiveQuadraticField2,
+    field: RecursiveQuadraticField,
     point: BezierRecursiveQuadraticProjectivePoint2,
     center: BezierRecursiveQuadraticProjectivePoint2,
 }
@@ -4300,7 +4232,7 @@ struct BezierRecursiveQuadraticChordContactFrame2 {
 /// recursive quadratic tower.
 #[derive(Clone, Debug)]
 struct BezierRecursiveQuadraticPairContactFrame2 {
-    field: BezierRecursiveQuadraticField2,
+    field: RecursiveQuadraticField,
     point: BezierRecursiveQuadraticProjectivePoint2,
     centers: [BezierRecursiveQuadraticProjectivePoint2; 2],
 }
@@ -4326,10 +4258,10 @@ struct BezierRecursiveQuadraticLineContactSystem2 {
     /// Dot of the authored parameter-zero radial with this contact radial,
     /// multiplied by the same strictly positive projective scale as
     /// `radius_squared_denominator`.
-    diameter: BezierRecursiveQuadraticValue2,
-    radius_squared_denominator: BezierRecursiveQuadraticValue2,
-    tangent_cross: BezierRecursiveQuadraticValue2,
-    angular_tangent: BezierRecursiveQuadraticValue2,
+    diameter: RecursiveQuadraticValue,
+    radius_squared_denominator: RecursiveQuadraticValue,
+    tangent_cross: RecursiveQuadraticValue,
+    angular_tangent: RecursiveQuadraticValue,
 }
 
 /// Arbitrary-depth retained line/circle map.  It is the recursive continuation
@@ -8570,7 +8502,7 @@ impl BezierChordNormalDenseChordParameterMapSystem2 {
     fn recursive_contact_field(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
-    ) -> CurveResult<Option<BezierRecursiveQuadraticField2>> {
+    ) -> CurveResult<Option<RecursiveQuadraticField>> {
         let index = match contact.branch {
             -1 => 0,
             0 => 1,
@@ -8591,7 +8523,7 @@ impl BezierChordNormalDenseChordParameterMapSystem2 {
                     .into(),
             )
         })?;
-        let Some(field) = BezierRecursiveQuadraticField2::base(
+        let Some(field) = RecursiveQuadraticField::base(
             self.projective.sources_with_target(target),
             self.projective.first_speed_squared.clone(),
             self.projective.second_speed_squared.clone(),
@@ -8677,8 +8609,8 @@ fn dense_expression_last_axis_degree(
 fn recursive_quadratic_base_expression_coefficient(
     expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
     power: usize,
-    base: &Arc<BezierRecursiveQuadraticBaseFieldData2>,
-) -> Option<BezierRecursiveQuadraticValue2> {
+    base: &Arc<RecursiveQuadraticBaseField>,
+) -> Option<RecursiveQuadraticValue> {
     let coefficient = |polynomial: &DenseTensorPolynomial| {
         let coefficient = dense_last_axis_coefficient(polynomial, power)?;
         let axis = coefficient.dimensions().len().checked_sub(1)?;
@@ -8687,7 +8619,7 @@ fn recursive_quadratic_base_expression_coefficient(
             hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
         )
     };
-    BezierRecursiveQuadraticValue2::from_base(
+    RecursiveQuadraticValue::from_base(
         base.clone(),
         TwoSquareRootExpression {
             rational: coefficient(&expression.rational)?,
@@ -8703,12 +8635,12 @@ fn recursive_quadratic_base_expression_coefficient(
 /// must later be added, so their positive projective scales remain identical.
 fn recursive_quadratic_expression_projective_numerator(
     expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
-    base: &Arc<BezierRecursiveQuadraticBaseFieldData2>,
-    field: &BezierRecursiveQuadraticField2,
-    numerator: &BezierRecursiveQuadraticValue2,
-    denominator: &BezierRecursiveQuadraticValue2,
+    base: &Arc<RecursiveQuadraticBaseField>,
+    field: &RecursiveQuadraticField,
+    numerator: &RecursiveQuadraticValue,
+    denominator: &RecursiveQuadraticValue,
     degree: usize,
-) -> Option<BezierRecursiveQuadraticValue2> {
+) -> Option<RecursiveQuadraticValue> {
     let coefficient = |power| {
         field.lift(&recursive_quadratic_base_expression_coefficient(
             expression, power, base,
@@ -11605,13 +11537,13 @@ fn represented_chord_unit_direction(
 /// and Y roots for the same point.
 #[derive(Debug)]
 struct BezierRepresentedChordNormalLineAngularSystem2 {
-    field: BezierRecursiveQuadraticField2,
-    anchor_direction: [BezierRecursiveQuadraticValue2; 2],
-    target_direction: [BezierRecursiveQuadraticValue2; 2],
-    direction_squared: BezierRecursiveQuadraticValue2,
-    radial_retained: [BezierRecursiveQuadraticValue2; 2],
-    discriminant: BezierRecursiveQuadraticValue2,
-    anchor_speed: BezierRecursiveQuadraticValue2,
+    field: RecursiveQuadraticField,
+    anchor_direction: [RecursiveQuadraticValue; 2],
+    target_direction: [RecursiveQuadraticValue; 2],
+    direction_squared: RecursiveQuadraticValue,
+    radial_retained: [RecursiveQuadraticValue; 2],
+    discriminant: RecursiveQuadraticValue,
+    anchor_speed: RecursiveQuadraticValue,
     signed_radius: Real,
     turn: Real,
 }
@@ -11731,17 +11663,15 @@ fn represented_chord_normal_line_angular_system(
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let Some(field) = BezierRecursiveQuadraticField2::base(sources, speed_squared, one.clone())
-    else {
+    let Some(field) = RecursiveQuadraticField::base(sources, speed_squared, one.clone()) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let BezierRecursiveQuadraticField2::Base(base) = &field else {
+    let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!("a represented chord-normal angular field begins at its dense base")
     };
     let rational = |polynomial| {
-        TwoSquareRootExpression::from_rational(polynomial).and_then(|expression| {
-            BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
-        })
+        TwoSquareRootExpression::from_rational(polynomial)
+            .and_then(|expression| RecursiveQuadraticValue::from_base(base.clone(), expression))
     };
     let Some((
         anchor_direction,
@@ -11761,7 +11691,7 @@ fn represented_chord_normal_line_angular_system(
             [rational(radial_x)?, rational(radial_y)?],
             rational(discriminant)?,
             TwoSquareRootExpression::from_first_radical(one).and_then(|expression| {
-                BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
+                RecursiveQuadraticValue::from_base(base.clone(), expression)
             })?,
         ))
     })()
@@ -11858,7 +11788,7 @@ impl BezierRepresentedChordNormalLineAngularSystem2 {
         })() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let [anchor_x, anchor_y]: [BezierRecursiveQuadraticValue2; 2] = anchor_direction;
+        let [anchor_x, anchor_y]: [RecursiveQuadraticValue; 2] = anchor_direction;
         let [radial_x, radial_y] = radial;
         let Some((dot, oriented_cross)) = (|| {
             let dot = anchor_x
@@ -16915,15 +16845,15 @@ const fn recursive_circle_contact_tangent_cross_sign(
 /// exact diameter tangencies structural; the coefficient identity remains
 /// the complete fallback for arbitrary affine predicates.
 fn recursive_quadratic_affine_predicate_root_signs(
-    a: &BezierRecursiveQuadraticValue2,
-    b: &BezierRecursiveQuadraticValue2,
-    c: &BezierRecursiveQuadraticValue2,
+    a: &RecursiveQuadraticValue,
+    b: &RecursiveQuadraticValue,
+    c: &RecursiveQuadraticValue,
     discriminant_sign: RealSign,
-    constant: &BezierRecursiveQuadraticValue2,
-    slope: &BezierRecursiveQuadraticValue2,
-    geometric_product_factors: Option<&[BezierRecursiveQuadraticValue2; 2]>,
+    constant: &RecursiveQuadraticValue,
+    slope: &RecursiveQuadraticValue,
+    geometric_product_factors: Option<&[RecursiveQuadraticValue; 2]>,
 ) -> CurveResult<Option<[RealSign; 2]>> {
-    let decided_sign = |value: &BezierRecursiveQuadraticValue2| -> CurveResult<Option<RealSign>> {
+    let decided_sign = |value: &RecursiveQuadraticValue| -> CurveResult<Option<RealSign>> {
         Ok(match value.sign(&CurveContext::STRICT)? {
             Classification::Decided(sign) => Some(sign),
             Classification::Uncertain(_) => None,
@@ -16964,7 +16894,7 @@ fn recursive_quadratic_affine_predicate_root_signs(
         };
         sign
     };
-    let nonzero_sign = |value: &BezierRecursiveQuadraticValue2| -> CurveResult<Option<RealSign>> {
+    let nonzero_sign = |value: &RecursiveQuadraticValue| -> CurveResult<Option<RealSign>> {
         Ok(match value.sign_with_nonzero_certificate()? {
             Classification::Decided(sign) => Some(sign),
             Classification::Uncertain(_) => None,

@@ -42,7 +42,7 @@ impl BezierRecursiveCircleFrame2 {
         })))
     }
 
-    pub(super) fn lifted_to(&self, field: &BezierRecursiveQuadraticField2) -> Option<Self> {
+    pub(super) fn lifted_to(&self, field: &RecursiveQuadraticField) -> Option<Self> {
         Some(Self {
             field: field.clone(),
             center: self.center.lifted_to(field)?,
@@ -56,7 +56,7 @@ impl BezierRecursiveCircleTargetSystem2 {
     pub(super) fn expression_polynomial(
         &self,
         expression: &BezierRecursiveQuadraticParallelExpression2,
-    ) -> Option<Vec<BezierRecursiveQuadraticValue2>> {
+    ) -> Option<Vec<RecursiveQuadraticValue>> {
         if self.unit_target_speed {
             recursive_quadratic_polynomial_combine(&expression.rational, &expression.radical, false)
         } else {
@@ -66,7 +66,7 @@ impl BezierRecursiveCircleTargetSystem2 {
 
     pub(super) fn projected_polynomial(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
     ) -> Option<DenseTensorPolynomial> {
         let (base, projection) = recursive_quadratic_polynomial_projection(coefficients.to_vec())?;
         (Arc::ptr_eq(&base, &self.base)
@@ -89,8 +89,7 @@ impl BezierRecursiveCircleTargetSystem2 {
         denominator: &Real,
         radial_coefficient: &Real,
     ) -> Option<BezierRecursiveQuadraticParallelExpression2> {
-        let combine = |diameter: &[BezierRecursiveQuadraticValue2],
-                       radius: &[BezierRecursiveQuadraticValue2]| {
+        let combine = |diameter: &[RecursiveQuadraticValue], radius: &[RecursiveQuadraticValue]| {
             let diameter = recursive_quadratic_polynomial_scale_real(diameter, denominator)?;
             let radius = recursive_quadratic_polynomial_scale_real(radius, radial_coefficient)?;
             recursive_quadratic_polynomial_combine(&diameter, &radius, true)
@@ -151,7 +150,7 @@ impl BezierRecursiveCircleTargetSystem2 {
 
     pub(super) fn polynomial_interval_sign(
         &self,
-        polynomial: &[BezierRecursiveQuadraticValue2],
+        polynomial: &[RecursiveQuadraticValue],
         target_parameter: &BezierParameter2,
     ) -> Option<RealSign> {
         recursive_quadratic_parameter_interval_sign(
@@ -243,7 +242,7 @@ impl BezierRecursiveCircleTargetSystem2 {
 
     pub(super) fn polynomial_sign_with_evaluation(
         &self,
-        polynomial: &[BezierRecursiveQuadraticValue2],
+        polynomial: &[RecursiveQuadraticValue],
         evaluation: &BezierRecursiveQuadraticParallelEvaluation2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -257,7 +256,7 @@ impl BezierRecursiveCircleTargetSystem2 {
 
     pub(super) fn polynomial_sign_at_region_parameter(
         &self,
-        polynomial: &[BezierRecursiveQuadraticValue2],
+        polynomial: &[RecursiveQuadraticValue],
         target_parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -627,7 +626,7 @@ impl BezierRecursiveCircleTargetSystem2 {
 impl BezierRecursiveFixedDistanceSystem2 {
     pub(super) fn projected_polynomial(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
     ) -> Option<DenseTensorPolynomial> {
         let (base, projection) = recursive_quadratic_polynomial_projection(coefficients.to_vec())?;
         recursive_quadratic_bases_equivalent(&base, &self.base).then_some(projection)
@@ -766,7 +765,7 @@ impl BezierRecursiveMonotoneParameter2 {
             .incidence
             .radical
             .iter()
-            .all(BezierRecursiveQuadraticValue2::is_structurally_zero)
+            .all(RecursiveQuadraticValue::is_structurally_zero)
         {
             let conjugate_is_separated = [(0_usize, -128_i32), (8, -256), (32, -512)]
                 .into_iter()
@@ -1365,14 +1364,14 @@ impl BezierRecursiveMonotoneParameter2 {
 
 impl BezierRecursivePolynomialParameterAuthority2 {
     pub(super) fn new(
-        field: BezierRecursiveQuadraticField2,
-        mut coefficients: Vec<BezierRecursiveQuadraticValue2>,
+        field: RecursiveQuadraticField,
+        mut coefficients: Vec<RecursiveQuadraticValue>,
     ) -> Self {
         // Isolation and every later refinement retain the same primitive
         // rational gauge. The scale is positive, preserving endpoint signs
         // as well as roots; arbitrary exact coefficients remain unchanged
         // when rational-content normalization is unavailable.
-        BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut coefficients);
+        RecursiveQuadraticValue::normalize_positive_scale(&mut coefficients);
         Self {
             field,
             coefficients,
@@ -1381,9 +1380,9 @@ impl BezierRecursivePolynomialParameterAuthority2 {
 
     pub(super) fn value_at_real(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
         parameter: &Real,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+    ) -> Option<RecursiveQuadraticValue> {
         let mut value = self.field.constant(Real::zero())?;
         for coefficient in coefficients.iter().rev() {
             value = value.scale(parameter)?.add(coefficient)?;
@@ -1393,9 +1392,9 @@ impl BezierRecursivePolynomialParameterAuthority2 {
 
     pub(super) fn value_at_field_element(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
-        parameter: &BezierRecursiveQuadraticValue2,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+        coefficients: &[RecursiveQuadraticValue],
+        parameter: &RecursiveQuadraticValue,
+    ) -> Option<RecursiveQuadraticValue> {
         coefficients
             .iter()
             .rev()
@@ -1406,7 +1405,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
 
     pub(super) fn sign_at_real(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
         parameter: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -1524,7 +1523,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
     pub(super) fn polynomial_vanishes_at_parameter(
         &self,
         parameter: &BezierRecursiveProjectiveParameter2,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
         policy: &CurveContext,
     ) -> CurveResult<Option<bool>> {
         if coefficients
@@ -1557,7 +1556,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
     pub(super) fn polynomial_sign_at_parameter(
         &self,
         parameter: &BezierRecursiveProjectiveParameter2,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         if coefficients.is_empty() {
@@ -1579,7 +1578,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         // positive scale preserves every nonzero predicate sign as well.
         let normalized = (coefficients.len() >= self.coefficients.len()).then(|| {
             let mut normalized = coefficients.to_vec();
-            BezierRecursiveQuadraticValue2::normalize_positive_scale(&mut normalized);
+            RecursiveQuadraticValue::normalize_positive_scale(&mut normalized);
             normalized
         });
         let coefficients = normalized.as_deref().unwrap_or(coefficients);
@@ -1963,7 +1962,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         &self,
         numerator: &[Real; 2],
         denominator: &[Real; 2],
-    ) -> Option<Vec<BezierRecursiveQuadraticValue2>> {
+    ) -> Option<Vec<RecursiveQuadraticValue>> {
         // Inverse of v=(n0+n1*t)/(d0+d1*t):
         // t=(n0-d0*v)/(-n1+d1*v).
         let inverse_numerator = recursive_quadratic_real_polynomial(
@@ -2061,7 +2060,7 @@ impl BezierRecursiveProjectiveChordParallelIntervalSystem2 {
 impl BezierRecursiveProjectiveChordParallelSystem2 {
     pub(super) fn projected_polynomial(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
     ) -> Option<DenseTensorPolynomial> {
         let (base, projection) = recursive_quadratic_polynomial_projection(coefficients.to_vec())?;
         recursive_quadratic_bases_equivalent(&base, &self.base).then_some(projection)
@@ -2089,7 +2088,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         self.projected_parameters(projection, domain, policy)
     }
 
-    pub(super) fn incidence_polynomial(&self) -> Option<&[BezierRecursiveQuadraticValue2]> {
+    pub(super) fn incidence_polynomial(&self) -> Option<&[RecursiveQuadraticValue]> {
         // A source-only incidence has no target-speed radical. Squaring it
         // needlessly doubles multiplicities before each coefficient-field
         // norm, and can obscure selected zero coefficients during projection.
@@ -2097,7 +2096,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
             .incidence
             .radical
             .iter()
-            .all(BezierRecursiveQuadraticValue2::is_structurally_zero)
+            .all(RecursiveQuadraticValue::is_structurally_zero)
         {
             return Some(&self.incidence.rational);
         }
@@ -2148,7 +2147,9 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
             policy: policy.strict_counterpart(),
         };
         'endpoint: for parameter in endpoint_roots.into_iter().flatten() {
-            let Some(root) = self.field.retained_parameter_value(&parameter, policy)? else {
+            let Some(root) =
+                recursive_field_retained_parameter_value(&self.field, &parameter, policy)?
+            else {
                 continue;
             };
             for retained in &owned_roots {
@@ -2251,7 +2252,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        let derivative = |coefficients: &[BezierRecursiveQuadraticValue2]| {
+        let derivative = |coefficients: &[RecursiveQuadraticValue]| {
             coefficients
                 .iter()
                 .enumerate()
@@ -2349,7 +2350,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 "a certified recursive chord/parallel replay exceeded its field budget".into(),
             )
         })?;
-        let mut component_sign = |component: &BezierRecursiveQuadraticValue2| {
+        let mut component_sign = |component: &RecursiveQuadraticValue| {
             self.certified_component_sign(component, evaluation, certificate, policy)
         };
         value.sign_at_projected_zero(&sources, policy, &mut component_sign)
@@ -2357,7 +2358,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
 
     pub(super) fn certified_component_projection(
         &self,
-        value: &BezierRecursiveQuadraticValue2,
+        value: &RecursiveQuadraticValue,
         evaluation: &BezierRecursiveQuadraticParallelEvaluation2,
     ) -> Option<DenseTensorPolynomial> {
         let (base, projection) = recursive_quadratic_polynomial_projection(vec![value.clone()])?;
@@ -2381,7 +2382,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
 
     pub(super) fn certified_component_sign(
         &self,
-        value: &BezierRecursiveQuadraticValue2,
+        value: &RecursiveQuadraticValue,
         evaluation: &BezierRecursiveQuadraticParallelEvaluation2,
         certificate: &BezierDenseSelectedCandidateBox2,
         policy: &CurveContext,
@@ -2427,7 +2428,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                         "a nonzero recursive chord/parallel component lost its source box".into(),
                     )
                 })?;
-                value.sign_with_nonzero_certificate_over_source_box(&sources)
+                Ok(value.sign_with_nonzero_certificate_over_source_box(&sources)?)
             }
             None => value.sign(policy),
         }
@@ -2435,7 +2436,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
 
     pub(super) fn polynomial_sign(
         &self,
-        polynomial: &[BezierRecursiveQuadraticValue2],
+        polynomial: &[RecursiveQuadraticValue],
         evaluation: &BezierRecursiveQuadraticParallelEvaluation2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -2458,7 +2459,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
         parameter: &BezierRecursiveProjectiveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let sign = |polynomial: &[BezierRecursiveQuadraticValue2]| {
+        let sign = |polynomial: &[RecursiveQuadraticValue]| {
             parameter.recursive_polynomial_sign_joined(polynomial, policy)
         };
         let weight_sign = match policy.strict_predicate_pass(|| sign(&self.source_weight))? {
@@ -2478,9 +2479,9 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
 
     pub(super) fn polynomial_value_at_real(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
         target_parameter: &Real,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+    ) -> Option<RecursiveQuadraticValue> {
         let mut value = self.field.constant(Real::zero())?;
         for coefficient in coefficients.iter().rev() {
             value = value.scale(target_parameter)?.add(coefficient)?;
@@ -2494,7 +2495,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
     /// decline, but every returned interval remains exact.
     pub(super) fn polynomial_interval_on_real_interval(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
         parameter: &RealInterval,
         refinement_steps: usize,
         coefficient_precision: i32,
@@ -2540,7 +2541,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 refined
             })
             .collect::<Vec<_>>();
-        let intervals = |coefficients: &[BezierRecursiveQuadraticValue2]| {
+        let intervals = |coefficients: &[RecursiveQuadraticValue]| {
             coefficients
                 .iter()
                 .map(|coefficient| {
@@ -2654,7 +2655,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
 
     pub(super) fn polynomial_sign_at_real(
         &self,
-        polynomial: &[BezierRecursiveQuadraticValue2],
+        polynomial: &[RecursiveQuadraticValue],
         target_parameter: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -2715,7 +2716,7 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        BezierRecursiveQuadraticValue2::affine_positive_root_sign(
+        RecursiveQuadraticValue::affine_positive_root_sign(
             &rational,
             &radical,
             &speed_squared,
@@ -2834,7 +2835,9 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
             .collect::<Vec<_>>();
         let excluded_root = if let Some(contact) = excluded_contact {
             policy.bounded_exact_predicate_pass(|| -> CurveResult<Option<_>> {
-                let Some(value) = self.field.retained_parameter_value(contact, policy)? else {
+                let Some(value) =
+                    recursive_field_retained_parameter_value(&self.field, contact, policy)?
+                else {
                     return Ok(None);
                 };
                 for root in &known_roots {
@@ -3026,11 +3029,11 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
         )?;
         while difference
             .last()
-            .is_some_and(BezierRecursiveQuadraticValue2::is_structurally_zero)
+            .is_some_and(RecursiveQuadraticValue::is_structurally_zero)
         {
             difference.pop();
         }
-        let quick_sign = |value: &BezierRecursiveQuadraticValue2| {
+        let quick_sign = |value: &RecursiveQuadraticValue| {
             if value.is_structurally_zero() {
                 Some(RealSign::Zero)
             } else {
@@ -3516,7 +3519,7 @@ impl BezierRecursiveProjectiveParameter2 {
         &self,
         coefficients: &[Real],
         degree: usize,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+    ) -> Option<RecursiveQuadraticValue> {
         if coefficients
             .iter()
             .skip(degree.saturating_add(1))
@@ -3610,7 +3613,7 @@ impl BezierRecursiveProjectiveParameter2 {
     /// No coefficient projection or primitive element is formed.
     pub(super) fn recursive_polynomial_sign(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         self.validate_policy(policy)?;
@@ -3653,7 +3656,7 @@ impl BezierRecursiveProjectiveParameter2 {
     /// isolating bracket instead.
     pub(super) fn recursive_polynomial_sign_joined(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
+        coefficients: &[RecursiveQuadraticValue],
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         self.validate_policy(policy)?;
@@ -3671,9 +3674,9 @@ impl BezierRecursiveProjectiveParameter2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
 
-        let sign_in_field = |field: BezierRecursiveQuadraticField2,
-                             defining: Vec<BezierRecursiveQuadraticValue2>,
-                             query: Vec<BezierRecursiveQuadraticValue2>|
+        let sign_in_field = |field: RecursiveQuadraticField,
+                             defining: Vec<RecursiveQuadraticValue>,
+                             query: Vec<RecursiveQuadraticValue>|
          -> CurveResult<Classification<RealSign>> {
             let authority = Arc::new(BezierRecursivePolynomialParameterAuthority2::new(
                 field, defining,
@@ -4327,7 +4330,7 @@ impl BezierRecursiveProjectiveParameter2 {
         &self,
         source: &AlgebraicRootRepresentation,
         policy: &CurveContext,
-    ) -> CurveResult<Option<(BezierRecursiveQuadraticValue2, std::cmp::Ordering)>> {
+    ) -> CurveResult<Option<(RecursiveQuadraticValue, std::cmp::Ordering)>> {
         self.validate_policy(policy)?;
         let Some(authority) = self.polynomial_authority() else {
             return Ok(None);
@@ -4400,7 +4403,8 @@ impl BezierRecursiveProjectiveParameter2 {
         }
         if let Some(scalar) = self.projective_scalar() {
             let field = scalar.denominator.field();
-            if let Some(root) = field.retained_parameter_value(&other.clone().into(), policy)?
+            if let Some(root) =
+                recursive_field_retained_parameter_value(&field, &other.clone().into(), policy)?
                 && let Some(difference) = scalar
                     .denominator
                     .multiply(&root)
@@ -4907,558 +4911,6 @@ impl BezierRecursiveProjectiveParameter2 {
     }
 }
 
-impl BezierRecursiveQuadraticBaseFieldData2 {
-    pub(super) fn source_box(&self, refinement_steps: usize) -> Vec<AlgebraicRootRepresentation> {
-        if self.sources.is_empty() {
-            return Vec::new();
-        }
-        // Every value and radical over this field refers to the same selected
-        // tuple. Keep certified refinement at that owner, rather than creating
-        // fresh parameters and repeating their bisections for each value.
-        let cache = if refinement_steps == 0 {
-            self.source_refinement.get()
-        } else {
-            Some(self.source_refinement.get_or_init(|| {
-                Mutex::new(BezierRecursiveQuadraticSourceRefinement2 {
-                    sources: (0..self.sources.len()).map(|_| None).collect(),
-                })
-            }))
-        };
-        let mut cache = cache.map(|cache| cache.lock().unwrap());
-        self.sources
-            .iter()
-            .zip(&self.source_real_witnesses)
-            .enumerate()
-            .map(|(axis, (source, witness))| {
-                let mut source = source.clone();
-                if let Some(witness) = witness {
-                    source.interval = IsolatedRootInterval {
-                        lower: witness.clone(),
-                        upper: witness.clone(),
-                        exact_root: Some(witness.clone()),
-                        distinct_root_count: 1,
-                    };
-                } else if let Some(cache) = cache.as_mut() {
-                    // Refinement changes only the bracket. Preserve the
-                    // defining polynomial, symbol, ordinal and validation
-                    // authority, including when a midpoint becomes exact.
-                    let refinement = cache.sources[axis]
-                        .get_or_insert_with(|| RepresentedRootRefinement::new(&source));
-                    source.interval = refinement.refine_to(refinement_steps).interval.clone();
-                }
-                source
-            })
-            .collect()
-    }
-}
-
-impl BezierRecursiveQuadraticField2 {
-    pub(super) fn base(
-        sources: Vec<AlgebraicRootRepresentation>,
-        first_speed_squared: DenseTensorPolynomial,
-        second_speed_squared: DenseTensorPolynomial,
-    ) -> Option<Self> {
-        let rank = sources.len();
-        (first_speed_squared.dimensions().len() == rank
-            && second_speed_squared.dimensions().len() == rank)
-            .then(|| {
-                let source_real_witnesses = sources
-                    .iter()
-                    .map(|source| {
-                        source.exact_point_witness().cloned().or_else(|| {
-                            // A selected root may arrive through a higher-
-                            // degree eliminant even when its authored factor
-                            // is rational or pure quadratic. Hypersolve's
-                            // compact witness proves that factor by exact
-                            // division before publishing a canonical `Real`,
-                            // so recursive predicates can reuse the scalar
-                            // instead of refining a redundant dense axis.
-                            hypersolve::compact_algebraic_root_low_degree_witness(source)
-                                .and_then(|root| root.exact_point_witness().cloned())
-                        })
-                    })
-                    .collect();
-                Self::Base(Arc::new(BezierRecursiveQuadraticBaseFieldData2 {
-                    sources,
-                    source_real_witnesses,
-                    source_refinement: OnceLock::new(),
-                    first_speed_squared,
-                    second_speed_squared,
-                }))
-            })
-    }
-
-    pub(super) fn extension(&self, radicand: BezierRecursiveQuadraticValue2) -> Option<Self> {
-        self.same_field(&radicand.field()).then(|| {
-            Self::Extension(Arc::new(BezierRecursiveQuadraticExtensionFieldData2 {
-                parent: self.clone(),
-                radicand,
-            }))
-        })
-    }
-
-    /// Recovers an already-authored positive quadratic generator whose
-    /// square is `radicand`. This is intentionally structural: adjoining a
-    /// second copy of the same square root would create a reducible tower and
-    /// lose the construction's selected positive sheet.
-    pub(super) fn retained_positive_square_root(
-        &self,
-        radicand: &BezierRecursiveQuadraticValue2,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
-        let radicand = self.lift(radicand)?;
-        let (_, path) = self.base_and_extension_path();
-        for extension in path {
-            let field = Self::Extension(extension.clone());
-            let generator = field.element(
-                extension.parent.constant(Real::zero())?,
-                extension.parent.constant(Real::one())?,
-            )?;
-            let generator = self.lift(&generator)?;
-            if generator
-                .square()?
-                .subtract(&radicand)?
-                .is_structurally_zero()
-            {
-                return Some(generator);
-            }
-        }
-        None
-    }
-
-    pub(super) fn same_field(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::Base(first), Self::Base(second)) => Arc::ptr_eq(first, second),
-            (Self::Extension(first), Self::Extension(second)) => Arc::ptr_eq(first, second),
-            (Self::Base(_), Self::Extension(_)) | (Self::Extension(_), Self::Base(_)) => false,
-        }
-    }
-
-    pub(super) fn base_and_extension_path(
-        &self,
-    ) -> (
-        Arc<BezierRecursiveQuadraticBaseFieldData2>,
-        Vec<Arc<BezierRecursiveQuadraticExtensionFieldData2>>,
-    ) {
-        let mut extensions = Vec::new();
-        let mut field = self.clone();
-        loop {
-            match field {
-                Self::Base(base) => {
-                    extensions.reverse();
-                    return (base, extensions);
-                }
-                Self::Extension(extension) => {
-                    extensions.push(extension.clone());
-                    field = extension.parent.clone();
-                }
-            }
-        }
-    }
-
-    /// Rebuilds this tower over an independently allocated but structurally
-    /// identical dense base. Every positive extension generator is replayed
-    /// in order, preserving its authored root sheet and correlations.
-    pub(super) fn rebased_to_equivalent_base(
-        &self,
-        target_base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-    ) -> Option<(Self, Vec<BezierRecursiveQuadraticExtensionEmbedding2>)> {
-        let (source_base, source_path) = self.base_and_extension_path();
-        if !recursive_quadratic_bases_equivalent(&source_base, &target_base) {
-            return None;
-        }
-        let mut target = Self::Base(target_base.clone());
-        let mut embeddings = Vec::with_capacity(source_path.len());
-        for source in source_path {
-            let radicand = source
-                .radicand
-                .rebased_to_equivalent_base(target_base.clone(), &embeddings)?;
-            let target_field = target.extension(radicand)?;
-            let Self::Extension(target_extension) = &target_field else {
-                unreachable!("replaying a quadratic generator creates an extension")
-            };
-            embeddings.push(BezierRecursiveQuadraticExtensionEmbedding2 {
-                source,
-                target: target_extension.clone(),
-            });
-            target = target_field;
-        }
-        Some((target, embeddings))
-    }
-
-    /// Maps this tower into an already-existing structurally equivalent
-    /// target tower. Every extension denotes the authored positive square
-    /// root of its radicand, so equal recursively embedded radicands name the
-    /// same generator; adjoining a second copy would introduce a spurious
-    /// negative conjugate and can make a nonzero norm vanish identically.
-    pub(super) fn extension_embeddings_to_equivalent_tower(
-        &self,
-        target: &Self,
-    ) -> Option<(
-        Arc<BezierRecursiveQuadraticBaseFieldData2>,
-        Vec<BezierRecursiveQuadraticExtensionEmbedding2>,
-    )> {
-        let (source_base, source_path) = self.base_and_extension_path();
-        let (target_base, target_path) = target.base_and_extension_path();
-        if !recursive_quadratic_bases_equivalent(&source_base, &target_base)
-            || source_path.len() > target_path.len()
-        {
-            return None;
-        }
-        let mut embeddings = Vec::with_capacity(source_path.len());
-        for (source, target) in source_path.into_iter().zip(target_path) {
-            let mapped_radicand = source
-                .radicand
-                .rebased_to_equivalent_base(target_base.clone(), &embeddings)?;
-            if !mapped_radicand
-                .subtract(&target.radicand)?
-                .is_structurally_zero()
-            {
-                return None;
-            }
-            embeddings.push(BezierRecursiveQuadraticExtensionEmbedding2 { source, target });
-        }
-        Some((target_base, embeddings))
-    }
-
-    /// Embeds a value through the supplied generator correspondence, then
-    /// lifts it through any remaining target descendants.
-    pub(super) fn embed_value(
-        &self,
-        value: &BezierRecursiveQuadraticValue2,
-        embeddings: &[BezierRecursiveQuadraticExtensionEmbedding2],
-    ) -> Option<BezierRecursiveQuadraticValue2> {
-        if let Some(value) = self.lift(value) {
-            return Some(value);
-        }
-        let BezierRecursiveQuadraticValueData2::Extension {
-            field,
-            retained,
-            radical,
-            ..
-        } = value.data.as_ref()
-        else {
-            return None;
-        };
-        let target = embeddings
-            .iter()
-            .rev()
-            .find(|embedding| Arc::ptr_eq(&embedding.source, field))?
-            .target
-            .clone();
-        let retained = target.parent.embed_value(retained, embeddings)?;
-        let radical = target.parent.embed_value(radical, embeddings)?;
-        let mapped =
-            BezierRecursiveQuadraticValue2::from_extension(target.clone(), retained, radical)?;
-        self.lift(&mapped)
-    }
-
-    /// Builds a transient tower containing both fields. Shared ancestors are
-    /// retained by identity; each divergent generator of `other` is appended
-    /// with its radicand embedded in the accumulating target field.
-    #[track_caller]
-    pub(super) fn joined_with(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(Self, Vec<BezierRecursiveQuadraticExtensionEmbedding2>)>>>
-    {
-        let (first_base, first_path) = self.base_and_extension_path();
-        let (second_base, second_path) = other.base_and_extension_path();
-        if !Arc::ptr_eq(&first_base, &second_base) {
-            return Ok(Classification::Decided(None));
-        }
-        let shared = first_path
-            .iter()
-            .zip(&second_path)
-            .take_while(|(first, second)| Arc::ptr_eq(first, second))
-            .count();
-        let mut joined = self.clone();
-        let mut embeddings = Vec::with_capacity(second_path.len().saturating_sub(shared));
-        'source_extensions: for source in second_path.into_iter().skip(shared) {
-            let (_, candidates) = joined.base_and_extension_path();
-            for target in candidates {
-                let Some(radicand) = target.parent.embed_value(&source.radicand, &embeddings)
-                else {
-                    continue;
-                };
-                if radicand.is_stored_equivalent_to(&target.radicand) {
-                    #[cfg(test)]
-                    if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
-                        let caller = std::panic::Location::caller();
-                        eprintln!(
-                            "recursive field join bounded equality caller={}:{} source-depth={} target-depth={}",
-                            caller.file(),
-                            caller.line(),
-                            source.parent.base_and_extension_path().1.len() + 1,
-                            target.parent.base_and_extension_path().1.len() + 1,
-                        );
-                    }
-                    embeddings.push(BezierRecursiveQuadraticExtensionEmbedding2 { source, target });
-                    continue 'source_extensions;
-                }
-                let Some(difference) = radicand.subtract(&target.radicand) else {
-                    continue;
-                };
-                #[cfg(test)]
-                if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
-                    && !difference.is_structurally_zero()
-                {
-                    let caller = std::panic::Location::caller();
-                    let interval = |value: &BezierRecursiveQuadraticValue2| {
-                        value
-                            .interval_with_coefficient_precision(64, Some(-128))
-                            .map(|interval| {
-                                (interval.lower.to_f64_lossy(), interval.upper.to_f64_lossy())
-                            })
-                    };
-                    eprintln!(
-                        "recursive field join equality caller={}:{} source-depth={} target-depth={} source={:?} target={:?} difference={:?}",
-                        caller.file(),
-                        caller.line(),
-                        source.parent.base_and_extension_path().1.len() + 1,
-                        target.parent.base_and_extension_path().1.len() + 1,
-                        interval(&radicand),
-                        interval(&target.radicand),
-                        interval(&difference),
-                    );
-                }
-                // An approximate equality may answer a terminal predicate, but
-                // cannot identify generators in a reusable exact field.
-                let sign = match policy.strict_predicate_pass(|| difference.sign(policy))? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(_) => {
-                        match policy.strict_predicate_pass(|| {
-                            difference.sign_with_projected_zero_fallback(policy)
-                        })? {
-                            Classification::Decided(sign) => sign,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
-                    }
-                };
-                if sign == RealSign::Zero {
-                    embeddings.push(BezierRecursiveQuadraticExtensionEmbedding2 { source, target });
-                    continue 'source_extensions;
-                }
-            }
-            let Some(radicand) = joined.embed_value(&source.radicand, &embeddings) else {
-                return Ok(Classification::Decided(None));
-            };
-            let Some(target_field) = joined.extension(radicand) else {
-                return Ok(Classification::Decided(None));
-            };
-            let Self::Extension(target) = &target_field else {
-                unreachable!("adjoining a quadratic generator returns an extension field")
-            };
-            embeddings.push(BezierRecursiveQuadraticExtensionEmbedding2 {
-                source,
-                target: target.clone(),
-            });
-            joined = target_field;
-        }
-        Ok(Classification::Decided(Some((joined, embeddings))))
-    }
-
-    pub(super) fn constant(&self, value: Real) -> Option<BezierRecursiveQuadraticValue2> {
-        match self {
-            Self::Base(field) => {
-                let polynomial =
-                    DenseTensorPolynomial::try_new(vec![1; field.sources.len()], vec![value])?;
-                // A constant has no selected-axis factor to reduce. Sending
-                // every zero coefficient introduced by a tower lift through
-                // dense tuple reduction can dominate an otherwise linear
-                // recursive predicate without changing its normal form.
-                Some(BezierRecursiveQuadraticValue2 {
-                    data: Arc::new(BezierRecursiveQuadraticValueData2::Base {
-                        field: field.clone(),
-                        expression: TwoSquareRootExpression::from_rational(polynomial)?,
-                        real_witness: std::sync::OnceLock::new(),
-                    }),
-                })
-            }
-            Self::Extension(field) => {
-                let is_zero = value
-                    .exact_rational_ref()
-                    .is_some_and(|value| value.is_zero());
-                let retained = field.parent.constant(value)?;
-                let radical = if is_zero {
-                    retained.clone()
-                } else {
-                    field.parent.constant(Real::zero())?
-                };
-                BezierRecursiveQuadraticValue2::from_extension(field.clone(), retained, radical)
-            }
-        }
-    }
-
-    pub(super) fn lift(
-        &self,
-        value: &BezierRecursiveQuadraticValue2,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
-        if self.same_field(&value.field()) {
-            return Some(value.clone());
-        }
-        let Self::Extension(field) = self else {
-            return None;
-        };
-        let retained = field.parent.lift(value)?;
-        let radical = field.parent.constant(Real::zero())?;
-        BezierRecursiveQuadraticValue2::from_extension(field.clone(), retained, radical)
-    }
-
-    /// Imports only an existing selected axis, preserving this field's
-    /// original axes and radical tower, including duplicate source axes.
-    pub(super) fn retained_root_value(
-        &self,
-        source: &AlgebraicRootRepresentation,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
-        let base = self.base_and_extension_path().0;
-        let (_, source_axes, target_axes) =
-            recursive_quadratic_source_union(&base.sources, std::slice::from_ref(source));
-        let axis = source_axes
-            .iter()
-            .position(|axis| *axis == target_axes[0])?;
-        DenseTensorPolynomial::from_axis_polynomial(
-            base.sources.len(),
-            axis,
-            &[Real::zero(), Real::one()],
-        )
-        .and_then(|polynomial| recursive_quadratic_rational_value(&base, polynomial))
-        .and_then(|value| self.lift(&value))
-    }
-
-    /// Reuses a parameter already represented in this field. This optional
-    /// import never adjoins a generator, rebases coefficients or projects a
-    /// selected root into a new scalar representation.
-    pub(super) fn retained_parameter_value(
-        &self,
-        parameter: &CurveParameter2,
-        policy: &CurveContext,
-    ) -> CurveResult<Option<BezierRecursiveQuadraticValue2>> {
-        let selected = parameter.as_selected_fiber();
-        if let Some(selected) = selected {
-            selected.validate_policy(policy)?;
-        }
-        let retained = selected.and_then(|selected| selected.retained_bezier_parameter());
-        if let Some(native) = parameter.as_bezier_parameter().or(retained.as_ref()) {
-            if matches!(native, BezierParameter2::Algebraic(_)) {
-                return Ok(self.retained_root_value(&bezier_parameter_root_representation(native)));
-            }
-            return Ok(native
-                .scalar()
-                .and_then(|value| self.constant(value.clone())));
-        }
-        let projective = parameter.as_recursive_projective().or_else(|| {
-            selected.and_then(|selected| selected.data.representations.projective.get())
-        });
-        if let Some(projective) = projective {
-            projective.validate_policy(policy)?;
-            return Ok(projective.projective_scalar().and_then(|scalar| {
-                scalar
-                    .denominator
-                    .is_coefficientwise_stored_one()
-                    .then(|| self.lift(&scalar.numerator))
-                    .flatten()
-            }));
-        }
-        Ok(parameter
-            .scalar()
-            .and_then(|value| self.constant(value.clone())))
-    }
-
-    pub(super) fn element(
-        &self,
-        retained: BezierRecursiveQuadraticValue2,
-        radical: BezierRecursiveQuadraticValue2,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
-        let Self::Extension(field) = self else {
-            return None;
-        };
-        BezierRecursiveQuadraticValue2::from_extension(field.clone(), retained, radical)
-    }
-}
-
-impl BezierRecursiveQuadraticForeignBaseEmbedding2 {
-    pub(super) fn base_polynomial(
-        &self,
-        polynomial: &DenseTensorPolynomial,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
-        let polynomial =
-            dense_tensor_embed_axes(polynomial, self.target_base.sources.len(), &self.axes)?;
-        let polynomial =
-            dense_reduce_selected_tuple_relations(polynomial, &self.target_base.sources)?;
-        recursive_quadratic_rational_value(&self.target_base, polynomial)
-    }
-
-    pub(super) fn base_expression(
-        &self,
-        expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
-        target_field: &BezierRecursiveQuadraticField2,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
-        let rational = target_field.lift(&self.base_polynomial(&expression.rational)?)?;
-        let first = target_field
-            .lift(&self.base_polynomial(&expression.first)?)?
-            .multiply(&target_field.lift(&self.first_root)?)?;
-        let second = target_field
-            .lift(&self.base_polynomial(&expression.second)?)?
-            .multiply(&target_field.lift(&self.second_root)?)?;
-        let product_root = target_field
-            .lift(&self.first_root)?
-            .multiply(&target_field.lift(&self.second_root)?)?;
-        let product = target_field
-            .lift(&self.base_polynomial(&expression.product)?)?
-            .multiply(&product_root)?;
-        rational.add(&first)?.add(&second)?.add(&product)
-    }
-
-    pub(super) fn value(
-        &self,
-        value: &BezierRecursiveQuadraticValue2,
-        target_field: &BezierRecursiveQuadraticField2,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
-        match value.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } if Arc::ptr_eq(field, &self.source_base) => {
-                self.base_expression(expression, target_field)
-            }
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => {
-                let target = self
-                    .extensions
-                    .iter()
-                    .find(|embedding| Arc::ptr_eq(&embedding.source, field))?
-                    .target
-                    .clone();
-                let parent = target.parent.clone();
-                let retained = self.value(retained, &parent)?;
-                let radical = self.value(radical, &parent)?;
-                let value =
-                    BezierRecursiveQuadraticValue2::from_extension(target, retained, radical)?;
-                target_field.lift(&value)
-            }
-            BezierRecursiveQuadraticValueData2::Base { .. } => None,
-        }
-    }
-
-    pub(super) fn projective_point(
-        &self,
-        point: &BezierRecursiveQuadraticProjectivePoint2,
-        field: &BezierRecursiveQuadraticField2,
-    ) -> Option<BezierRecursiveQuadraticProjectivePoint2> {
-        Some(BezierRecursiveQuadraticProjectivePoint2 {
-            x: self.value(&point.x, field)?,
-            y: self.value(&point.y, field)?,
-            denominator: self.value(&point.denominator, field)?,
-        })
-    }
-}
-
 impl BezierRecursiveQuadraticLineParameterMapSystem2 {
     pub(super) fn contact(
         &self,
@@ -5645,8 +5097,8 @@ impl BezierRecursiveQuadraticLineParameterMapSystem2 {
 impl BezierRecursiveQuadraticParallelEvaluation2 {
     pub(super) fn polynomial_value(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+        coefficients: &[RecursiveQuadraticValue],
+    ) -> Option<RecursiveQuadraticValue> {
         self.speed_field
             .lift(&self.embedding.polynomial_value(coefficients)?)
     }
@@ -5654,7 +5106,7 @@ impl BezierRecursiveQuadraticParallelEvaluation2 {
     pub(super) fn expression_value(
         &self,
         expression: &BezierRecursiveQuadraticParallelExpression2,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+    ) -> Option<RecursiveQuadraticValue> {
         let rational = self.polynomial_value(&expression.rational)?;
         let radical = self.polynomial_value(&expression.radical)?;
         rational.add(&radical.multiply(&self.speed)?)
@@ -5676,9 +5128,9 @@ impl BezierRecursiveQuadraticParallelEvaluation2 {
 
 impl BezierRecursiveQuadraticParallelExpression2 {
     pub(super) fn new(
-        rational: Vec<BezierRecursiveQuadraticValue2>,
-        radical: Vec<BezierRecursiveQuadraticValue2>,
-        speed_squared: Arc<[BezierRecursiveQuadraticValue2]>,
+        rational: Vec<RecursiveQuadraticValue>,
+        radical: Vec<RecursiveQuadraticValue>,
+        speed_squared: Arc<[RecursiveQuadraticValue]>,
     ) -> Self {
         Self {
             rational,
@@ -5688,7 +5140,7 @@ impl BezierRecursiveQuadraticParallelExpression2 {
         }
     }
 
-    pub(super) fn squared_magnitude_difference(&self) -> Option<&[BezierRecursiveQuadraticValue2]> {
+    pub(super) fn squared_magnitude_difference(&self) -> Option<&[RecursiveQuadraticValue]> {
         if self.squared_magnitude.get().is_none() {
             let rational_squared =
                 recursive_quadratic_polynomial_multiply(&self.rational, &self.rational)?;
@@ -5710,7 +5162,7 @@ impl BezierRecursiveQuadraticParallelExpression2 {
         &self,
         policy: &CurveContext,
         mut polynomial_sign: impl FnMut(
-            &[BezierRecursiveQuadraticValue2],
+            &[RecursiveQuadraticValue],
         ) -> CurveResult<Classification<RealSign>>,
     ) -> CurveResult<Classification<RealSign>> {
         match policy.strict_predicate_pass(|| polynomial_sign(&self.speed_squared))? {
@@ -5769,7 +5221,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
-        let coordinate = |numerator: &BezierRecursiveQuadraticValue2| {
+        let coordinate = |numerator: &RecursiveQuadraticValue| {
             BezierRecursiveQuadraticProjectiveScalar2 {
                 numerator: numerator.clone(),
                 denominator: self.denominator.clone(),
@@ -5793,7 +5245,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
 
     pub(super) fn embedded_to_equivalent_field(
         &self,
-        field: &BezierRecursiveQuadraticField2,
+        field: &RecursiveQuadraticField,
     ) -> Option<Self> {
         let source_field = self.denominator.field();
         let (target_base, embeddings) =
@@ -5814,7 +5266,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
 
     pub(super) fn rebased_to_equivalent_base(
         &self,
-        target_base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
+        target_base: Arc<RecursiveQuadraticBaseField>,
     ) -> Option<Self> {
         let source_field = self.denominator.field();
         let (target_field, embeddings) =
@@ -5833,7 +5285,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
         .lifted_to(&target_field)
     }
 
-    pub(super) fn lifted_to(&self, field: &BezierRecursiveQuadraticField2) -> Option<Self> {
+    pub(super) fn lifted_to(&self, field: &RecursiveQuadraticField) -> Option<Self> {
         Some(Self {
             x: field.lift(&self.x)?,
             y: field.lift(&self.y)?,
@@ -5843,8 +5295,8 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
 
     pub(super) fn embedded_to(
         &self,
-        field: &BezierRecursiveQuadraticField2,
-        embeddings: &[BezierRecursiveQuadraticExtensionEmbedding2],
+        field: &RecursiveQuadraticField,
+        embeddings: &[RecursiveQuadraticExtensionEmbedding],
     ) -> Option<Self> {
         Some(Self {
             x: field.embed_value(&self.x, embeddings)?,
@@ -5860,7 +5312,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
         &self,
         other: &Self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<(BezierRecursiveQuadraticField2, Self, Self)>>> {
+    ) -> CurveResult<Classification<Option<(RecursiveQuadraticField, Self, Self)>>> {
         let first_field = self.denominator.field();
         if let Some(other) = other.lifted_to(&first_field) {
             return Ok(Classification::Decided(Some((
@@ -6100,8 +5552,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
                 break;
             }
             let coordinate_interval =
-                |numerator: &BezierRecursiveQuadraticValue2,
-                 denominator: &BezierRecursiveQuadraticValue2| {
+                |numerator: &RecursiveQuadraticValue, denominator: &RecursiveQuadraticValue| {
                     numerator
                         .interval(refinement_steps)?
                         .divide(&denominator.interval(refinement_steps)?)
@@ -6203,9 +5654,9 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
         &self,
         other: &Self,
     ) -> Option<(
-        BezierRecursiveQuadraticValue2,
-        BezierRecursiveQuadraticValue2,
-        BezierRecursiveQuadraticValue2,
+        RecursiveQuadraticValue,
+        RecursiveQuadraticValue,
+        RecursiveQuadraticValue,
     )> {
         if Arc::ptr_eq(&self.denominator.data, &other.denominator.data) {
             return Some((
@@ -6231,7 +5682,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
         x_factor: &Real,
         y_factor: &Real,
         value: &Real,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+    ) -> Option<RecursiveQuadraticValue> {
         self.x
             .scale(x_factor)?
             .add(&self.y.scale(y_factor)?)?
@@ -6293,7 +5744,7 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         &self,
         other: &Self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticValue2>>> {
+    ) -> CurveResult<Classification<Option<RecursiveQuadraticValue>>> {
         let first_field = self.denominator.field();
         let second_field = other.denominator.field();
         let Some(first_zero) = first_field.constant(Real::zero()) else {
@@ -6355,7 +5806,7 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
         &self,
         other: &Self,
         policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<BezierRecursiveQuadraticValue2>>> {
+    ) -> CurveResult<Classification<Option<RecursiveQuadraticValue>>> {
         let first_field = self.denominator.field();
         let second_field = other.denominator.field();
         let first = BezierRecursiveQuadraticProjectivePoint2 {
@@ -6408,11 +5859,9 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
             let mut field = &field;
             loop {
                 match field {
-                    BezierRecursiveQuadraticField2::Base(base) if base.sources.is_empty() => break,
-                    BezierRecursiveQuadraticField2::Base(_) => return None,
-                    BezierRecursiveQuadraticField2::Extension(extension) => {
-                        field = &extension.parent
-                    }
+                    RecursiveQuadraticField::Base(base) if base.sources.is_empty() => break,
+                    RecursiveQuadraticField::Base(_) => return None,
+                    RecursiveQuadraticField::Extension(extension) => field = &extension.parent,
                 }
             }
         }
@@ -6554,10 +6003,7 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
 }
 
 impl BezierRecursiveQuadraticTargetEmbedding2 {
-    pub(super) fn value(
-        &self,
-        value: &BezierRecursiveQuadraticValue2,
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+    pub(super) fn value(&self, value: &RecursiveQuadraticValue) -> Option<RecursiveQuadraticValue> {
         recursive_rebase_value_preserving_base(
             value,
             &self.source_base,
@@ -6569,8 +6015,8 @@ impl BezierRecursiveQuadraticTargetEmbedding2 {
 
     pub(super) fn polynomial_value(
         &self,
-        coefficients: &[BezierRecursiveQuadraticValue2],
-    ) -> Option<BezierRecursiveQuadraticValue2> {
+        coefficients: &[RecursiveQuadraticValue],
+    ) -> Option<RecursiveQuadraticValue> {
         let mut value = self.field.constant(Real::zero())?;
         for coefficient in coefficients.iter().rev() {
             value = value
@@ -6581,1662 +6027,53 @@ impl BezierRecursiveQuadraticTargetEmbedding2 {
     }
 }
 
-impl BezierRecursiveQuadraticValue2 {
-    /// Removes a positive common rational coefficient scale from a tuple
-    /// used projectively or for signs. Selected fields and radical generators
-    /// remain identical; existing scalar witnesses receive the same scale.
-    /// If normalization is unavailable, every value stays unchanged,
-    /// including its shared identity and cached scalar witness.
-    pub(super) fn normalize_positive_scale(values: &mut [Self]) {
-        fn collect<'a>(
-            value: &'a BezierRecursiveQuadraticValue2,
-            coefficients: &mut Vec<&'a HyperRational>,
-            visited: &mut std::collections::HashSet<usize>,
-        ) -> Option<()> {
-            if !visited.insert(Arc::as_ptr(&value.data) as usize) {
-                return Some(());
-            }
-            match value.data.as_ref() {
-                BezierRecursiveQuadraticValueData2::Base { expression, .. } => {
-                    for polynomial in [
-                        &expression.rational,
-                        &expression.first,
-                        &expression.second,
-                        &expression.product,
-                    ] {
-                        for coefficient in polynomial.coefficients() {
-                            coefficients.push(coefficient.exact_rational_ref()?);
-                        }
-                    }
-                }
-                BezierRecursiveQuadraticValueData2::Extension {
-                    retained, radical, ..
-                } => {
-                    collect(retained, coefficients, visited)?;
-                    collect(radical, coefficients, visited)?;
-                }
-            }
-            Some(())
-        }
-
-        fn rebuild(
-            value: &BezierRecursiveQuadraticValue2,
-            coefficients: &mut impl Iterator<Item = num::BigInt>,
-            scale: &Real,
-            memo: &mut std::collections::HashMap<usize, BezierRecursiveQuadraticValue2>,
-        ) -> Option<BezierRecursiveQuadraticValue2> {
-            let identity = Arc::as_ptr(&value.data) as usize;
-            if let Some(value) = memo.get(&identity) {
-                return Some(value.clone());
-            }
-            // Reuse only an already known scalar projection. Its positive
-            // rescaling preserves selected-root identity and refinements;
-            // absent witnesses remain demand-driven.
-            let real_witness = value
-                .real_witness()
-                .get()
-                .map(|witness| witness * scale)
-                .map_or_else(OnceLock::new, OnceLock::from);
-            let data = match value.data.as_ref() {
-                BezierRecursiveQuadraticValueData2::Base {
-                    field, expression, ..
-                } => {
-                    let mut polynomial = |source: &DenseTensorPolynomial| {
-                        DenseTensorPolynomial::try_new(
-                            source.dimensions().to_vec(),
-                            coefficients
-                                .take(source.coefficients().len())
-                                .map(HyperRational::from_bigint)
-                                .map(Real::new)
-                                .collect(),
-                        )
-                    };
-                    // A scalar multiple preserves every existing source-
-                    // quotient reduction; no new polynomial replay is needed.
-                    BezierRecursiveQuadraticValueData2::Base {
-                        field: field.clone(),
-                        expression: TwoSquareRootExpression {
-                            rational: polynomial(&expression.rational)?,
-                            first: polynomial(&expression.first)?,
-                            second: polynomial(&expression.second)?,
-                            product: polynomial(&expression.product)?,
-                        },
-                        real_witness,
-                    }
-                }
-                BezierRecursiveQuadraticValueData2::Extension {
-                    field,
-                    retained,
-                    radical,
-                    ..
-                } => BezierRecursiveQuadraticValueData2::Extension {
-                    field: field.clone(),
-                    retained: rebuild(retained, coefficients, scale, memo)?,
-                    radical: rebuild(radical, coefficients, scale, memo)?,
-                    real_witness,
-                },
-            };
-            let result = BezierRecursiveQuadraticValue2 {
-                data: Arc::new(data),
-            };
-            memo.insert(identity, result.clone());
-            Some(result)
-        }
-
-        let normalized = (|| {
-            let mut coefficients = Vec::new();
-            let mut visited = std::collections::HashSet::new();
-            for value in values.iter() {
-                collect(value, &mut coefficients, &mut visited)?;
-            }
-            let normalized = HyperRational::primitive_bigint_ratio(&coefficients);
-            // A nonzero coefficient identifies the common scale. An unchanged
-            // tuple keeps every shared value and its retained scalar witness.
-            let (source, target) = coefficients
-                .iter()
-                .zip(&normalized)
-                .find(|(source, _)| !source.is_zero())?;
-            let target = HyperRational::from_bigint(target.clone());
-            if **source == target {
-                return None;
-            }
-            let scale = Real::new(target / *source);
-            let mut normalized = normalized.into_iter();
-            let mut memo = std::collections::HashMap::new();
-            let result = values
-                .iter()
-                .map(|value| rebuild(value, &mut normalized, &scale, &mut memo))
-                .collect::<Option<Vec<_>>>()?;
-            debug_assert!(normalized.next().is_none());
-            Some(result)
-        })();
-        // Optional normalization is atomic: unavailable coefficient payloads
-        // or a declined rebuild leave the original exact tuple untouched.
-        if let Some(normalized) = normalized {
-            values.clone_from_slice(&normalized);
-        }
+/// Reuses a parameter already represented in this field. This optional
+/// import never adjoins a generator, rebases coefficients or projects a
+/// selected root into a new scalar representation.
+pub(super) fn recursive_field_retained_parameter_value(
+    field: &RecursiveQuadraticField,
+    parameter: &CurveParameter2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RecursiveQuadraticValue>> {
+    let selected = parameter.as_selected_fiber();
+    if let Some(selected) = selected {
+        selected.validate_policy(policy)?;
     }
-
-    pub(super) fn from_base(
-        field: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-        expression: TwoSquareRootExpression<DenseTensorPolynomial>,
-    ) -> Option<Self> {
-        let rank = field.sources.len();
-        if ![
-            &expression.rational,
-            &expression.first,
-            &expression.second,
-            &expression.product,
-        ]
-        .iter()
-        .all(|polynomial| polynomial.dimensions().len() == rank)
-        {
-            return None;
+    let retained = selected.and_then(|selected| selected.retained_bezier_parameter());
+    if let Some(native) = parameter.as_bezier_parameter().or(retained.as_ref()) {
+        if matches!(native, BezierParameter2::Algebraic(_)) {
+            return Ok(field.retained_root_value(&bezier_parameter_root_representation(native)));
         }
-        let expression = expression.reduced_at_source_tuple(&field.sources)?;
-        Some(Self {
-            data: Arc::new(BezierRecursiveQuadraticValueData2::Base {
-                field,
-                expression,
-                real_witness: std::sync::OnceLock::new(),
-            }),
-        })
+        return Ok(native
+            .scalar()
+            .and_then(|value| field.constant(value.clone())));
     }
-
-    pub(super) fn from_extension(
-        field: Arc<BezierRecursiveQuadraticExtensionFieldData2>,
-        retained: Self,
-        radical: Self,
-    ) -> Option<Self> {
-        (field.parent.same_field(&retained.field()) && field.parent.same_field(&radical.field()))
-            .then(|| Self {
-                data: Arc::new(BezierRecursiveQuadraticValueData2::Extension {
-                    field,
-                    retained,
-                    radical,
-                    real_witness: std::sync::OnceLock::new(),
-                }),
-            })
+    let projective = parameter
+        .as_recursive_projective()
+        .or_else(|| selected.and_then(|selected| selected.data.representations.projective.get()));
+    if let Some(projective) = projective {
+        projective.validate_policy(policy)?;
+        return Ok(projective.projective_scalar().and_then(|scalar| {
+            scalar
+                .denominator
+                .is_coefficientwise_stored_one()
+                .then(|| field.lift(&scalar.numerator))
+                .flatten()
+        }));
     }
+    Ok(parameter
+        .scalar()
+        .and_then(|value| field.constant(value.clone())))
+}
 
-    pub(super) fn field(&self) -> BezierRecursiveQuadraticField2 {
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { field, .. } => {
-                BezierRecursiveQuadraticField2::Base(field.clone())
-            }
-            BezierRecursiveQuadraticValueData2::Extension { field, .. } => {
-                BezierRecursiveQuadraticField2::Extension(field.clone())
-            }
-        }
-    }
-
-    /// Returns whether both values have the same retained coefficient
-    /// representation in the same recursive field. `Real::PartialEq` is a
-    /// conservative symbolic-basis test, so a positive answer is an exact
-    /// equality certificate while a negative answer merely declines this
-    /// constant-work field-join fast path.
-    pub(super) fn is_stored_equivalent_to(&self, other: &Self) -> bool {
-        if Arc::ptr_eq(&self.data, &other.data) {
-            return true;
-        }
-        let real_is_boundedly_equivalent = |first: &Real, second: &Real| {
-            first == second
-                || match (
-                    first.exact_rational_normal_form(),
-                    second.exact_rational_normal_form(),
-                ) {
-                    (Some(first), Some(second)) => first == second,
-                    _ => (first - second)
-                        .exact_rational_normal_form()
-                        .is_some_and(|difference| difference.is_zero()),
-                }
-        };
-        let polynomial_is_boundedly_equivalent =
-            |first: &DenseTensorPolynomial, second: &DenseTensorPolynomial| {
-                first.dimensions() == second.dimensions()
-                    && first.coefficients().len() == second.coefficients().len()
-                    && first
-                        .coefficients()
-                        .iter()
-                        .zip(second.coefficients())
-                        .all(|(first, second)| real_is_boundedly_equivalent(first, second))
-            };
-        let stored_equivalent = match (self.data.as_ref(), other.data.as_ref()) {
-            (
-                BezierRecursiveQuadraticValueData2::Base {
-                    field, expression, ..
-                },
-                BezierRecursiveQuadraticValueData2::Base {
-                    field: other_field,
-                    expression: other,
-                    ..
-                },
-            ) => {
-                Arc::ptr_eq(field, other_field)
-                    && polynomial_is_boundedly_equivalent(&expression.rational, &other.rational)
-                    && polynomial_is_boundedly_equivalent(&expression.first, &other.first)
-                    && polynomial_is_boundedly_equivalent(&expression.second, &other.second)
-                    && polynomial_is_boundedly_equivalent(&expression.product, &other.product)
-            }
-            (
-                BezierRecursiveQuadraticValueData2::Extension {
-                    field,
-                    retained,
-                    radical,
-                    ..
-                },
-                BezierRecursiveQuadraticValueData2::Extension {
-                    field: other_field,
-                    retained: other_retained,
-                    radical: other_radical,
-                    ..
-                },
-            ) => {
-                Arc::ptr_eq(field, other_field)
-                    && retained.is_stored_equivalent_to(other_retained)
-                    && radical.is_stored_equivalent_to(other_radical)
-            }
-            _ => false,
-        };
-        if stored_equivalent {
-            return true;
-        }
-        let (Some(first), Some(second)) = (
-            self.exact_real_value_with_retained_witnesses(),
-            other.exact_real_value_with_retained_witnesses(),
-        ) else {
-            return false;
-        };
-        let difference = &first - &second;
-        let equivalent = first == second
-            || difference
-                .exact_rational_normal_form()
-                .is_some_and(|difference| difference.is_zero())
-            || difference.zero_status() == ZeroKnowledge::Zero;
-        #[cfg(feature = "dispatch-trace")]
-        if equivalent {
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "recursive-field-generator-equality",
-                "compact-real-witness",
-            );
-        }
-        equivalent
-    }
-
-    pub(super) fn rebased_to_equivalent_base(
-        &self,
-        target_base: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-        embeddings: &[BezierRecursiveQuadraticExtensionEmbedding2],
-    ) -> Option<Self> {
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } => {
-                recursive_quadratic_bases_equivalent(field, &target_base).then_some(())?;
-                Self::from_base(target_base, expression.clone())
-            }
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => {
-                let target = embeddings
-                    .iter()
-                    .find(|embedding| Arc::ptr_eq(&embedding.source, field))?
-                    .target
-                    .clone();
-                Self::from_extension(
-                    target,
-                    retained.rebased_to_equivalent_base(target_base.clone(), embeddings)?,
-                    radical.rebased_to_equivalent_base(target_base, embeddings)?,
-                )
-            }
-        }
-    }
-
-    pub(super) fn add(&self, other: &Self) -> Option<Self> {
-        if !self.field().same_field(&other.field()) {
-            return None;
-        }
-        if self.is_coefficientwise_stored_zero() {
-            return Some(other.clone());
-        }
-        if other.is_coefficientwise_stored_zero() {
-            return Some(self.clone());
-        }
-        match (self.data.as_ref(), other.data.as_ref()) {
-            (
-                BezierRecursiveQuadraticValueData2::Base {
-                    field, expression, ..
-                },
-                BezierRecursiveQuadraticValueData2::Base {
-                    field: other_field,
-                    expression: other,
-                    ..
-                },
-            ) if Arc::ptr_eq(field, other_field) => {
-                Self::from_base(field.clone(), expression.add(other)?)
-            }
-            (
-                BezierRecursiveQuadraticValueData2::Extension {
-                    field,
-                    retained,
-                    radical,
-                    ..
-                },
-                BezierRecursiveQuadraticValueData2::Extension {
-                    field: other_field,
-                    retained: other_retained,
-                    radical: other_radical,
-                    ..
-                },
-            ) if Arc::ptr_eq(field, other_field) => Self::from_extension(
-                field.clone(),
-                retained.add(other_retained)?,
-                radical.add(other_radical)?,
-            ),
-            _ => None,
-        }
-    }
-
-    pub(super) fn subtract(&self, other: &Self) -> Option<Self> {
-        if !self.field().same_field(&other.field()) {
-            return None;
-        }
-        if other.is_coefficientwise_stored_zero() {
-            return Some(self.clone());
-        }
-        self.add(&other.scale(&Real::from(-1_i8))?)
-    }
-
-    pub(super) fn scale(&self, scale: &Real) -> Option<Self> {
-        if scale
-            .exact_rational_ref()
-            .is_some_and(|value| value.is_zero())
-        {
-            return self.field().constant(Real::zero());
-        }
-        if scale
-            .exact_rational_ref()
-            .is_some_and(|value| value.is_one())
-        {
-            return Some(self.clone());
-        }
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } => Self::from_base(field.clone(), expression.scale(scale)?),
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => Self::from_extension(field.clone(), retained.scale(scale)?, radical.scale(scale)?),
-        }
-    }
-
-    pub(super) fn multiply(&self, other: &Self) -> Option<Self> {
-        if !self.field().same_field(&other.field()) {
-            return None;
-        }
-        if self.is_coefficientwise_stored_zero() {
-            return Some(self.clone());
-        }
-        if other.is_coefficientwise_stored_zero() {
-            return Some(other.clone());
-        }
-        if self.is_coefficientwise_stored_one() {
-            return Some(other.clone());
-        }
-        if other.is_coefficientwise_stored_one() {
-            return Some(self.clone());
-        }
-        if Arc::ptr_eq(&self.data, &other.data) {
-            return self.square();
-        }
-        match (self.data.as_ref(), other.data.as_ref()) {
-            (
-                BezierRecursiveQuadraticValueData2::Base {
-                    field, expression, ..
-                },
-                BezierRecursiveQuadraticValueData2::Base {
-                    field: other_field,
-                    expression: other,
-                    ..
-                },
-            ) if Arc::ptr_eq(field, other_field) => Self::from_base(
-                field.clone(),
-                expression.multiply(
-                    other,
-                    &field.first_speed_squared,
-                    &field.second_speed_squared,
-                )?,
-            ),
-            (
-                BezierRecursiveQuadraticValueData2::Extension {
-                    field,
-                    retained,
-                    radical,
-                    ..
-                },
-                BezierRecursiveQuadraticValueData2::Extension {
-                    field: other_field,
-                    retained: other_retained,
-                    radical: other_radical,
-                    ..
-                },
-            ) if Arc::ptr_eq(field, other_field) => {
-                let retained_product = retained.multiply(other_retained)?;
-                let radical_product = radical.multiply(other_radical)?.multiply(&field.radicand)?;
-                let retained = retained_product.add(&radical_product)?;
-                let radical = self.extension_cross_term(other)?;
-                Self::from_extension(field.clone(), retained, radical)
-            }
-            _ => None,
-        }
-    }
-
-    pub(super) fn extension_cross_term(&self, other: &Self) -> Option<Self> {
-        let (
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            },
-            BezierRecursiveQuadraticValueData2::Extension {
-                field: other_field,
-                retained: other_retained,
-                radical: other_radical,
-                ..
-            },
-        ) = (self.data.as_ref(), other.data.as_ref())
-        else {
-            return None;
-        };
-        if !Arc::ptr_eq(field, other_field) {
-            return None;
-        }
-        retained
-            .multiply(other_radical)?
-            .add(&radical.multiply(other_retained)?)
-    }
-
-    pub(super) fn square(&self) -> Option<Self> {
-        if self.is_coefficientwise_stored_zero() || self.is_coefficientwise_stored_one() {
-            return Some(self.clone());
-        }
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } => Self::from_base(
-                field.clone(),
-                expression.square(&field.first_speed_squared, &field.second_speed_squared)?,
-            ),
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => Self::from_extension(
-                field.clone(),
-                retained
-                    .square()?
-                    .add(&radical.square()?.multiply(&field.radicand)?)?,
-                retained.multiply(radical)?.scale(&Real::from(2_i8))?,
-            ),
-        }
-    }
-
-    /// Returns true only when every retained coefficient is structurally the
-    /// exact scalar zero. This deliberately does not attempt a selected-root
-    /// equality predicate: it is used only to avoid adjoining a quadratic
-    /// generator that cannot affect an equation's zero set.
-    pub(super) fn is_structurally_zero(&self) -> bool {
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { expression, .. } => [
-                &expression.rational,
-                &expression.first,
-                &expression.second,
-                &expression.product,
-            ]
-            .into_iter()
-            .all(|polynomial| {
-                polynomial
-                    .coefficients()
-                    .iter()
-                    .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
-            }),
-            BezierRecursiveQuadraticValueData2::Extension {
-                retained, radical, ..
-            } => retained.is_structurally_zero() && radical.is_structurally_zero(),
-        }
-    }
-
-    /// Returns true only for a coefficientwise represented zero.
-    ///
-    /// This is the speculative sign fast path. It deliberately avoids
-    /// `Real::zero_status`: an opaque coefficient may require deep exact-real
-    /// refinement, while returning false merely rejoins the complete retained
-    /// field sign authority below.
-    pub(super) fn is_coefficientwise_stored_zero(&self) -> bool {
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { expression, .. } => {
-                expression.is_stored_zero()
-            }
-            BezierRecursiveQuadraticValueData2::Extension {
-                retained, radical, ..
-            } => {
-                retained.is_coefficientwise_stored_zero()
-                    && radical.is_coefficientwise_stored_zero()
-            }
-        }
-    }
-
-    pub(super) fn is_coefficientwise_stored_one(&self) -> bool {
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { expression, .. } => {
-                expression.is_stored_one()
-            }
-            BezierRecursiveQuadraticValueData2::Extension {
-                retained, radical, ..
-            } => {
-                retained.is_coefficientwise_stored_one() && radical.is_coefficientwise_stored_zero()
-            }
-        }
-    }
-
-    pub(super) fn real_witness(&self) -> &OnceLock<Real> {
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base { real_witness, .. }
-            | BezierRecursiveQuadraticValueData2::Extension { real_witness, .. } => real_witness,
-        }
-    }
-
-    /// Retains a canonical `Real` when every generator used by this value has
-    /// an exact witness. Shared values reuse the same scalar construction and
-    /// its refinements; unused generators impose no reconstruction requirement.
-    /// The complete selected field remains available for algebraic replay.
-    pub(super) fn exact_real_value_with_retained_witnesses(&self) -> Option<Real> {
-        let cache = self.real_witness();
-        if let Some(value) = cache.get() {
-            return Some(value.clone());
-        }
-        let value = self.compute_exact_real_witness()?;
-        let _ = cache.set(value);
-        cache.get().cloned()
-    }
-
-    pub(super) fn compute_exact_real_witness(&self) -> Option<Real> {
-        fn tensor_value(
-            polynomial: &DenseTensorPolynomial,
-            values: &[Option<Real>],
-        ) -> Option<Real> {
-            let dimensions = polynomial.dimensions();
-            if dimensions.len() != values.len() {
-                return None;
-            }
-            fn evaluate_axis(
-                polynomial: &DenseTensorPolynomial,
-                values: &[Option<Real>],
-                axis: usize,
-                base_index: usize,
-            ) -> Option<Real> {
-                if axis == values.len() {
-                    return polynomial.coefficients().get(base_index).cloned();
-                }
-                if polynomial.dimensions()[axis] == 1 {
-                    return evaluate_axis(polynomial, values, axis + 1, base_index);
-                }
-                let stride = polynomial.dimensions()[axis + 1..]
-                    .iter()
-                    .try_fold(1_usize, |stride, dimension| stride.checked_mul(*dimension))?;
-                let value = values[axis].as_ref()?;
-                let mut result = Real::zero();
-                for power in (0..polynomial.dimensions()[axis]).rev() {
-                    result = result * value
-                        + evaluate_axis(
-                            polynomial,
-                            values,
-                            axis + 1,
-                            base_index.checked_add(power.checked_mul(stride)?)?,
-                        )?;
-                }
-                Some(result)
-            }
-            evaluate_axis(polynomial, values, 0, 0)
-        }
-
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } => {
-                let evaluate = |polynomial| tensor_value(polynomial, &field.source_real_witnesses);
-                let mut value = evaluate(&expression.rational)?;
-                let mut roots = [None, None];
-                for (coefficient, generators) in [
-                    (&expression.first, [true, false]),
-                    (&expression.second, [false, true]),
-                    (&expression.product, [true, true]),
-                ] {
-                    if dense_tensor_is_stored_zero(coefficient) {
-                        continue;
-                    }
-                    let mut term = evaluate(coefficient)?;
-                    if term
-                        .exact_rational_ref()
-                        .is_some_and(|value| value.is_zero())
-                    {
-                        continue;
-                    }
-                    for (index, (used, radicand)) in generators
-                        .into_iter()
-                        .zip([&field.first_speed_squared, &field.second_speed_squared])
-                        .enumerate()
-                    {
-                        if used {
-                            let root = match &roots[index] {
-                                Some(root) => root,
-                                None => roots[index].insert(evaluate(radicand)?.sqrt().ok()?),
-                            };
-                            term *= root;
-                        }
-                    }
-                    value += term;
-                }
-                Some(value)
-            }
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => {
-                let retained = retained.exact_real_value_with_retained_witnesses()?;
-                let radical = radical.exact_real_value_with_retained_witnesses()?;
-                if radical
-                    .exact_rational_ref()
-                    .is_some_and(|value| value.is_zero())
-                {
-                    return Some(retained);
-                }
-                Some(
-                    retained
-                        + radical
-                            * field
-                                .radicand
-                                .exact_real_value_with_retained_witnesses()?
-                                .sqrt()
-                                .ok()?,
-                )
-            }
-        }
-    }
-
-    pub(super) fn interval_with_coefficient_precision(
-        &self,
-        refinement_steps: usize,
-        coefficient_precision: Option<i32>,
-    ) -> Option<RealInterval> {
-        // Every component belongs to this same base tuple. Refine it once
-        // before replaying the shared tower, including all nested radicands.
-        // Preserve source-coordinate witnesses as point enclosures. Collapsing
-        // the entire expression to a scalar belongs to its separate replay
-        // path, after these inexpensive component bounds have had a chance.
-        let (base, _) = self.field().base_and_extension_path();
-        let sources = base.source_box(refinement_steps);
-        self.interval_over_source_box_with_witnesses(&sources, coefficient_precision, false)
-    }
-
-    pub(super) fn interval(&self, refinement_steps: usize) -> Option<RealInterval> {
-        self.interval_with_coefficient_precision(refinement_steps, None)
-    }
-
-    /// Bounds this value over an already-refined isolator for its complete
-    /// dense base tuple.  Candidate-correlation replay uses the exact box
-    /// that established its Poincare--Miranda certificate instead of
-    /// repeating high-degree univariate refinement independently for every
-    /// radical component.
-    pub(super) fn interval_over_source_box(
-        &self,
-        sources: &[AlgebraicRootRepresentation],
-        coefficient_precision: Option<i32>,
-    ) -> Option<RealInterval> {
-        self.interval_over_source_box_with_witnesses(sources, coefficient_precision, true)
-    }
-
-    pub(super) fn interval_over_source_box_with_witnesses(
-        &self,
-        sources: &[AlgebraicRootRepresentation],
-        coefficient_precision: Option<i32>,
-        use_real_witnesses: bool,
-    ) -> Option<RealInterval> {
-        if use_real_witnesses {
-            let (base, _) = self.field().base_and_extension_path();
-            if base.sources.len() == sources.len()
-                && let Some(value) = self.exact_real_value_with_retained_witnesses()
-            {
-                // Every selected base axis and positive quadratic generator
-                // already has an exact canonical `Real` witness. Replaying
-                // that retained tower is a point interval, and avoids losing
-                // the correlation to dependency inflation in nested interval
-                // square roots.
-                return Some(RealInterval {
-                    lower: value.clone(),
-                    upper: value,
-                });
-            }
-        }
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } => {
-                (field.sources.len() == sources.len()).then_some(())?;
-                dense_two_positive_square_root_interval_with_coefficient_precision(
-                    expression,
-                    &field.first_speed_squared,
-                    &field.second_speed_squared,
-                    sources,
-                    use_real_witnesses.then_some(field.source_real_witnesses.as_slice()),
-                    coefficient_precision,
-                )
-            }
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => {
-                let retained = retained.interval_over_source_box_with_witnesses(
-                    sources,
-                    coefficient_precision,
-                    use_real_witnesses,
-                )?;
-                if radical.is_coefficientwise_stored_zero() {
-                    return Some(retained);
-                }
-                let radical = radical.interval_over_source_box_with_witnesses(
-                    sources,
-                    coefficient_precision,
-                    use_real_witnesses,
-                )?;
-                let root = field
-                    .radicand
-                    .interval_over_source_box_with_witnesses(
-                        sources,
-                        coefficient_precision,
-                        use_real_witnesses,
-                    )?
-                    .nonnegative_square_root(coefficient_precision)?;
-                Some(retained.add(&radical.multiply(&root)?))
-            }
-        }
-    }
-
-    pub(super) fn sign_over_source_box(
-        &self,
-        sources: &[AlgebraicRootRepresentation],
-    ) -> Option<RealSign> {
-        self.interval_over_source_box(sources, Some(-64))
-            .as_ref()
-            .and_then(dense_strict_interval_sign)
-    }
-
-    pub(super) fn sign_over_progressively_refined_source_box(
-        &self,
-        sources: &[AlgebraicRootRepresentation],
-        refinement_range: std::ops::RangeInclusive<usize>,
-        use_real_witnesses: bool,
-    ) -> CurveResult<Option<RealSign>> {
-        if sources.iter().any(|source| !source.is_valid()) {
-            return Ok(None);
-        }
-        let mut refinements = sources
-            .iter()
-            .map(RepresentedRootRefinement::new)
-            .collect::<Vec<_>>();
-        for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            if !refinement_range.contains(&refinement_steps) {
-                continue;
-            }
-            let refined = refinements
-                .iter_mut()
-                .map(|refinement| refinement.refine_to(refinement_steps).clone())
-                .collect::<Vec<_>>();
-            let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
-            if let Some(sign) = self
-                .interval_over_source_box_with_witnesses(
-                    &refined,
-                    Some(-coefficient_bits),
-                    use_real_witnesses,
-                )
-                .as_ref()
-                .and_then(dense_strict_interval_sign)
-            {
-                return Ok(Some(sign));
-            }
-        }
-        Ok(None)
-    }
-
-    /// Returns only a strict interval-separated sign. This never forms an
-    /// exact norm and is therefore suitable for optional construction-time
-    /// certificates whose complete predicate remains available later.
-    pub(super) fn bounded_interval_sign(
-        &self,
-        refinement_range: std::ops::RangeInclusive<usize>,
-    ) -> Option<RealSign> {
-        for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            if !refinement_range.contains(&refinement_steps) {
-                continue;
-            }
-            let coefficient_bits = refinement_steps.max(64) as i32;
-            if let Some(sign) = self
-                .interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))
-                .as_ref()
-                .and_then(dense_strict_interval_sign)
-            {
-                return Some(sign);
-            }
-        }
-        None
-    }
-
-    /// Replays Hypersolve-certified selected-axis witnesses in canonical
-    /// `Real` arithmetic and returns only an exact zero or a separated sign.
-    /// Reaching `minimum_precision` without separation proves nothing; in
-    /// particular, this helper never applies APPROXIMATE_512 equality.
-    pub(super) fn exact_real_witness_sign_through(
-        &self,
-        minimum_precision: i32,
-    ) -> Option<RealSign> {
-        let value = self.exact_real_value_with_retained_witnesses()?;
-        if value.zero_status() == ZeroKnowledge::Zero {
-            return Some(RealSign::Zero);
-        }
-        value
-            .immediate_sign()
-            .or_else(|| value.certified_sign_until(minimum_precision).sign())
-    }
-
-    /// Cheap exact sign in the retained field. Interval separation remains
-    /// first so the compact scalar replay is paid only for deep or very small
-    /// values whose selected axes already carry exact witnesses.
-    pub(super) fn bounded_or_exact_real_witness_sign(&self) -> Option<RealSign> {
-        if self.is_structurally_zero() {
-            return Some(RealSign::Zero);
-        }
-        self.bounded_interval_sign(0..=16)
-            .or_else(|| self.exact_real_witness_sign_through(-512))
-            .or_else(|| self.bounded_interval_sign(32..=512))
-    }
-
-    /// Signs `retained + radical * sqrt(radicand)` without adjoining the
-    /// already-certified positive square root. Opposite-signed terms reduce
-    /// to one exact squared-magnitude comparison in the retained field.
-    pub(super) fn affine_positive_root_sign(
-        retained: &Self,
-        radical: &Self,
-        radicand: &Self,
-        retained_sign: Option<RealSign>,
-        radical_sign: Option<RealSign>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        let bounded_exact_pass = policy.has_bounded_exact_predicate_budget();
-        let bounded_steps = if bounded_exact_pass { 128 } else { 512 };
-        if let (Some(retained), Some(radical), Some(radicand)) = (
-            retained.exact_real_value_with_retained_witnesses(),
-            radical.exact_real_value_with_retained_witnesses(),
-            radicand.exact_real_value_with_retained_witnesses(),
-        ) && let Ok(root) = radicand.sqrt()
-        {
-            let value = retained + radical * root;
-            let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
-                -128
-            } else {
-                -512
-            };
-            if let Some(sign) = value
-                .immediate_sign()
-                .or_else(|| value.certified_sign_until(minimum_precision).sign())
-            {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "recursive-affine-positive-root-sign",
-                    "compact-real-witness",
-                );
-                return Ok(Classification::Decided(sign));
-            }
-        }
-        // Sign the correlated affine radical directly before expanding its
-        // squared norm.  Rational monotone-root bisection samples are almost
-        // always transverse, so exact interval separation avoids multiplying
-        // an entire recursive coefficient tower merely to compare the two
-        // opposing terms.  An enclosure containing zero proves nothing and
-        // falls through to the complete magnitude authority below.
-        for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 1664] {
-            if bounded_exact_pass && refinement_steps > bounded_steps {
-                break;
-            }
-            let coefficient_bits = if refinement_steps >= 1024 {
-                refinement_steps.saturating_add(256)
-            } else {
-                refinement_steps.max(64)
-            }
-            .min(i32::MAX as usize) as i32;
-            let Some((retained_interval, radical_interval, root_interval)) = (|| {
-                let retained_interval = retained.interval_with_coefficient_precision(
-                    refinement_steps,
-                    Some(-coefficient_bits),
-                )?;
-                let radical_interval = radical.interval_with_coefficient_precision(
-                    refinement_steps,
-                    Some(-coefficient_bits),
-                )?;
-                let root_interval = radicand
-                    .interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))?
-                    .nonnegative_square_root(Some(-coefficient_bits))?;
-                Some((retained_interval, radical_interval, root_interval))
-            })() else {
-                continue;
-            };
-            let Some(value) = radical_interval
-                .multiply(&root_interval)
-                .map(|radical| retained_interval.add(&radical))
-            else {
-                continue;
-            };
-            if let Some(sign) = dense_strict_interval_sign(&value) {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "recursive-affine-positive-root-sign",
-                    "combined-interval",
-                );
-                return Ok(Classification::Decided(sign));
-            }
-        }
-
-        // A combined interval can remain wide because the two terms share
-        // selected source fields.  Before either invoking a complete norm or
-        // consuming APPROXIMATE_512, use independently separated term signs
-        // and one bounded squared-magnitude comparison.  This is still exact:
-        // equal signs decide immediately, while opposing signs are ordered by
-        // `retained^2 - radical^2 * radicand`.  Keeping the reduced scalar in
-        // its recursive field is substantially smaller than adjoining the
-        // positive root and then signing the expanded value.
-        let mut retained_sign = retained_sign.or_else(|| {
-            if retained.is_structurally_zero() {
-                Some(RealSign::Zero)
-            } else {
-                retained.bounded_interval_sign(0..=bounded_steps)
-            }
-        });
-        let mut radical_sign = radical_sign.or_else(|| {
-            if radical.is_structurally_zero() {
-                Some(RealSign::Zero)
-            } else {
-                radical.bounded_interval_sign(0..=bounded_steps)
-            }
-        });
-        let mut magnitude = None;
-        if let (Some(first), Some(second)) = (retained_sign, radical_sign) {
-            match (first, second) {
-                (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-                    return Ok(Classification::Decided(sign));
-                }
-                (first, second) if first == second => {
-                    return Ok(Classification::Decided(first));
-                }
-                _ => {
-                    magnitude = retained.square().and_then(|retained| {
-                        radical
-                            .square()
-                            .and_then(|radical| radical.multiply(radicand))
-                            .and_then(|radical| retained.subtract(&radical))
-                    });
-                    if let Some(sign) = magnitude
-                        .as_ref()
-                        .and_then(|value| value.bounded_interval_sign(0..=bounded_steps))
-                    {
-                        return Ok(Classification::Decided(match sign {
-                            RealSign::Positive => first,
-                            RealSign::Negative => second,
-                            RealSign::Zero => RealSign::Zero,
-                        }));
-                    }
-                }
-            }
-        }
-        if magnitude.is_none() && (retained_sign.is_some() || radical_sign.is_some()) {
-            magnitude = retained.square().and_then(|retained| {
-                radical
-                    .square()
-                    .and_then(|radical| radical.multiply(radicand))
-                    .and_then(|radical| retained.subtract(&radical))
-            });
-        }
-        if let Some(magnitude_sign) = magnitude
-            .as_ref()
-            .and_then(|value| value.bounded_interval_sign(0..=bounded_steps))
-        {
-            match magnitude_sign {
-                RealSign::Positive => {
-                    if let Some(sign @ (RealSign::Positive | RealSign::Negative)) = retained_sign {
-                        return Ok(Classification::Decided(sign));
-                    }
-                }
-                RealSign::Negative => {
-                    if let Some(sign @ (RealSign::Positive | RealSign::Negative)) = radical_sign {
-                        return Ok(Classification::Decided(sign));
-                    }
-                }
-                RealSign::Zero => {
-                    if let (Some(first), Some(second)) = (retained_sign, radical_sign) {
-                        return Ok(Classification::Decided(if first == second {
-                            first
-                        } else {
-                            RealSign::Zero
-                        }));
-                    }
-                }
-            }
-        }
-        if policy.permits_approximate_512() {
-            policy.observe_approximate_512();
-            return Ok(Classification::Decided(RealSign::Zero));
-        }
-        if policy.has_bounded_exact_predicate_budget() {
-            #[cfg(test)]
-            if std::env::var_os("HYPERCURVE_DEBUG_PARALLEL_ENDPOINT_SIDE").is_some() {
-                eprintln!(
-                    "recursive affine terminal retained={retained_sign:?} radical={radical_sign:?} magnitude={:?}",
-                    magnitude
-                        .as_ref()
-                        .and_then(|value| value.bounded_interval_sign(0..=bounded_steps)),
-                );
-            }
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        }
-        retained_sign = Some(match retained_sign {
-            Some(sign) => sign,
-            None => match retained.sign(policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
-        });
-        radical_sign = Some(match radical_sign {
-            Some(sign) => sign,
-            None => match radical.sign(policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
-        });
-        let retained_sign = retained_sign.expect("the retained term was signed above");
-        let radical_sign = radical_sign.expect("the radical term was signed above");
-        match (retained_sign, radical_sign) {
-            (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-                return Ok(Classification::Decided(sign));
-            }
-            (first, second) if first == second => {
-                return Ok(Classification::Decided(first));
-            }
-            _ => {}
-        }
-        let Some(magnitude) = magnitude.or_else(|| {
-            retained.square().and_then(|retained| {
-                radical
-                    .square()
-                    .and_then(|radical| radical.multiply(radicand))
-                    .and_then(|radical| retained.subtract(&radical))
-            })
-        }) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        Ok(match magnitude.sign(policy)? {
-            Classification::Decided(RealSign::Positive) => Classification::Decided(retained_sign),
-            Classification::Decided(RealSign::Negative) => Classification::Decided(radical_sign),
-            Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        })
-    }
-
-    /// Signs `sqrt(outer_radicand) * (retained + radical *
-    /// sqrt(inner_radicand)) + constant` in the common retained field. If the
-    /// outer terms oppose, squaring leaves one more affine expression in the
-    /// inner positive root, so equality and both signs remain exact without
-    /// constructing either extension.
-    pub(super) fn nested_positive_root_affine_sign(
-        retained: &Self,
-        radical: &Self,
-        inner_radicand: &Self,
-        constant: &Self,
-        outer_radicand: &Self,
-        retained_sign: Option<RealSign>,
-        radical_sign: Option<RealSign>,
-        constant_sign: Option<RealSign>,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        // Preserve the authored factorization when every selected axis already
-        // owns a compact exact `Real` witness.  Replaying the final scalar in
-        // this form lets Hyperreal reuse shared radicals and exact cancellation
-        // facts; expanding the two successive squared magnitudes first can
-        // obscure those relations and manufacture a much larger tensor norm.
-        // APPROXIMATE_512 is consumed only for this final predicate, never for
-        // either intermediate affine radical.
-        if let (
-            Some(retained),
-            Some(radical),
-            Some(inner_radicand),
-            Some(constant),
-            Some(outer_radicand),
-        ) = (
-            retained.exact_real_value_with_retained_witnesses(),
-            radical.exact_real_value_with_retained_witnesses(),
-            inner_radicand.exact_real_value_with_retained_witnesses(),
-            constant.exact_real_value_with_retained_witnesses(),
-            outer_radicand.exact_real_value_with_retained_witnesses(),
-        ) && let (Ok(inner_root), Ok(outer_root)) =
-            (inner_radicand.sqrt(), outer_radicand.sqrt())
-        {
-            let value = outer_root * (retained + radical * inner_root) + constant;
-            #[cfg(test)]
-            if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
-                eprintln!(
-                    "nested factored compact value f64={:?} zero={:?} immediate={:?} refined={:?}",
-                    value.to_f64_lossy(),
-                    value.zero_status(),
-                    value.immediate_sign(),
-                    value.certified_sign_until(-512).sign(),
-                );
-            }
-            if value.zero_status() == ZeroKnowledge::Zero {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "recursive-nested-positive-root-sign",
-                    "factored-compact-real-zero",
-                );
-                return Ok(Classification::Decided(RealSign::Zero));
-            }
-            let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
-                -128
-            } else {
-                -512
-            };
-            if let Some(sign) = value
-                .immediate_sign()
-                .or_else(|| value.certified_sign_until(minimum_precision).sign())
-            {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "recursive-nested-positive-root-sign",
-                    "factored-compact-real",
-                );
-                return Ok(Classification::Decided(sign));
-            }
-            if !policy.has_bounded_exact_predicate_budget()
-                && let Some(sign) = real_sign(&value, policy)
-            {
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "recursive-nested-positive-root-sign",
-                    "factored-compact-real-policy",
-                );
-                return Ok(Classification::Decided(sign));
-            }
-        }
-        let inner_sign = match Self::affine_positive_root_sign(
-            retained,
-            radical,
-            inner_radicand,
-            retained_sign,
-            radical_sign,
-            policy,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let constant_sign = match constant_sign {
-            Some(sign) => sign,
-            None => match constant.sign(policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
-        };
-        match (inner_sign, constant_sign) {
-            (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-                return Ok(Classification::Decided(sign));
-            }
-            (first, second) if first == second => {
-                return Ok(Classification::Decided(first));
-            }
-            _ => {}
-        }
-        let Some((magnitude_retained, magnitude_radical)) = (|| {
-            let inner_rational = retained
-                .square()?
-                .add(&radical.square()?.multiply(inner_radicand)?)?;
-            let magnitude_retained = outer_radicand
-                .multiply(&inner_rational)?
-                .subtract(&constant.square()?)?;
-            let magnitude_radical = outer_radicand
-                .multiply(&retained.multiply(radical)?)?
-                .scale(&Real::from(2_i8))?;
-            Some((magnitude_retained, magnitude_radical))
-        })() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        #[cfg(test)]
-        if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
-            let (base, extensions) = magnitude_retained.field().base_and_extension_path();
-            let describe = |value: &Self| {
-                let interval = value.interval_with_coefficient_precision(512, Some(-512));
-                (
-                    value.exact_real_value_with_retained_witnesses().is_some(),
-                    interval
-                        .as_ref()
-                        .and_then(|value| value.lower.to_f64_lossy()),
-                    interval
-                        .as_ref()
-                        .and_then(|value| value.upper.to_f64_lossy()),
-                )
-            };
-            eprintln!(
-                "nested magnitude field sources={} witnesses={:?} extensions={} retained={:?} radical={:?} implied-radical={:?}",
-                base.sources.len(),
-                base.source_real_witnesses
-                    .iter()
-                    .map(Option::is_some)
-                    .collect::<Vec<_>>(),
-                extensions.len(),
-                describe(&magnitude_retained),
-                describe(&magnitude_radical),
-                retained_sign
-                    .zip(radical_sign)
-                    .map(|(retained, radical)| product_sign(retained, radical)),
-            );
-        }
-        Ok(
-            match Self::affine_positive_root_sign(
-                &magnitude_retained,
-                &magnitude_radical,
-                inner_radicand,
-                None,
-                retained_sign
-                    .zip(radical_sign)
-                    .map(|(retained, radical)| product_sign(retained, radical)),
-                policy,
-            )? {
-                Classification::Decided(RealSign::Positive) => Classification::Decided(inner_sign),
-                Classification::Decided(RealSign::Negative) => {
-                    Classification::Decided(constant_sign)
-                }
-                Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        )
-    }
-
-    /// Signs a value after an independent exact certificate has ruled out
-    /// equality. Interval refinement is then complete: it may continue past
-    /// the approximate policy terminal because no equality decision is being
-    /// made at this boundary.
-    pub(super) fn sign_with_nonzero_certificate(&self) -> CurveResult<Classification<RealSign>> {
-        let mut refinement_steps = 64_usize;
-        loop {
-            let coefficient_bits = refinement_steps.min(i32::MAX as usize) as i32;
-            let Some(interval) =
-                self.interval_with_coefficient_precision(refinement_steps, Some(-coefficient_bits))
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            if let Some(sign) = dense_strict_interval_sign(&interval) {
-                return Ok(Classification::Decided(sign));
-            }
-            refinement_steps = match refinement_steps.checked_mul(2) {
-                Some(next) => next,
-                None => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-            };
-        }
-    }
-
-    pub(super) fn sign_with_nonzero_certificate_over_source_box(
-        &self,
-        sources: &[AlgebraicRootRepresentation],
-    ) -> CurveResult<Classification<RealSign>> {
-        if sources.iter().any(|source| !source.is_valid()) {
-            return self.sign_with_nonzero_certificate();
-        }
-        let mut refinements = sources
-            .iter()
-            .map(RepresentedRootRefinement::new)
-            .collect::<Vec<_>>();
-        let mut refinement_steps = 0_usize;
-        loop {
-            let refined = refinements
-                .iter_mut()
-                .map(|refinement| refinement.refine_to(refinement_steps).clone())
-                .collect::<Vec<_>>();
-            let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
-            if let Some(sign) = self
-                .interval_over_source_box(&refined, Some(-coefficient_bits))
-                .as_ref()
-                .and_then(dense_strict_interval_sign)
-            {
-                return Ok(Classification::Decided(sign));
-            }
-            refinement_steps = match refinement_steps {
-                0 => 2,
-                steps => match steps.checked_mul(2) {
-                    Some(next) => next,
-                    None => {
-                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                    }
-                },
-            };
-        }
-    }
-
-    #[track_caller]
-    pub(super) fn sign(&self, policy: &CurveContext) -> CurveResult<Classification<RealSign>> {
-        // Compact scalar evaluation may reach its approximate terminal even
-        // though the retained field still proves equality. Complete that
-        // algebraic replay before permitting approximation of this predicate;
-        // an intermediate compact witness must not preempt its certificate.
-        if policy.permits_approximate_512() {
-            match self.sign(&policy.strict_counterpart())? {
-                decided @ Classification::Decided(_) => return Ok(decided),
-                Classification::Uncertain(_) => {}
-            }
-        }
-        if self.is_coefficientwise_stored_zero() {
-            return Ok(Classification::Decided(RealSign::Zero));
-        }
-        // Most transverse predicates separate with a short interval pass.
-        // Try retained scalar witnesses before deeper tensor refinement: they
-        // preserve correlations that independent coordinate boxes discard.
-        if let Some(sign) = self.bounded_interval_sign(0..=16) {
-            return Ok(Classification::Decided(sign));
-        }
-        // The stored-zero probe above is deliberately cheap, but it is not
-        // complete for an opaque exact cancellation. Once interval
-        // separation has failed, replay coefficient zero facts before
-        // constructing a recursive norm. This preserves the transverse hot
-        // path while restoring exact equality as an authoritative fallback.
-        if self.is_structurally_zero() {
-            return Ok(Classification::Decided(RealSign::Zero));
-        }
-        let minimum_precision = if policy.has_bounded_exact_predicate_budget() {
-            -128
-        } else {
-            -512
-        };
-        if let Some(sign) = self.exact_real_witness_sign_through(minimum_precision) {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "recursive-quadratic-sign",
-                "compact-real-witness",
-            );
-            return Ok(Classification::Decided(sign));
-        }
-        // Recent Hypersolve compact witnesses can collapse every selected
-        // base axis to its canonical `Real` without projection.  A value
-        // which remains too close to separate at the bounded precheck should
-        // therefore finish through Hyperlimit's scalar predicate before we
-        // construct a substantially larger multivariate tensor norm.  The
-        // selected curve policy is passed through unchanged: STRICT remains
-        // exact, while APPROXIMATE_512 can consume its terminal only here in
-        // the complete (non-bounded) pass.
-        if !policy.has_bounded_exact_predicate_budget()
-            && let Some(value) = self.exact_real_value_with_retained_witnesses()
-            && let Some(sign) = real_sign(&value, policy)
-        {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "recursive-quadratic-sign",
-                "complete-compact-real-witness",
-            );
-            return Ok(Classification::Decided(sign));
-        }
-        // One selected source already owns a univariate sign authority.
-        // Its two positive radicals can replay through that authority before
-        // a bounded pass declines or a complete pass refines independent boxes.
-        if let BezierRecursiveQuadraticValueData2::Base {
-            field, expression, ..
-        } = self.data.as_ref()
-            && field.sources.len() == 1
-            && let decided @ Classification::Decided(_) = dense_two_positive_square_root_sum_sign(
-                expression,
-                &field.first_speed_squared,
-                &field.second_speed_squared,
-                &field.source_box(0),
-                policy,
-            )?
-        {
-            return Ok(decided);
-        }
-        if policy.has_bounded_exact_predicate_budget() {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        }
-        if let Some(sign) = self.bounded_interval_sign(32..=512) {
-            return Ok(Classification::Decided(sign));
-        }
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } => dense_two_positive_square_root_sum_sign(
-                expression,
-                &field.first_speed_squared,
-                &field.second_speed_squared,
-                &field.source_box(0),
-                policy,
-            ),
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => {
-                let retained_sign = match retained.sign(policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let radical_sign = match radical.sign(policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                match (retained_sign, radical_sign) {
-                    (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-                        return Ok(Classification::Decided(sign));
-                    }
-                    (first, second) if first == second => {
-                        return Ok(Classification::Decided(first));
-                    }
-                    _ => {}
-                }
-                let magnitude = retained
-                    .square()
-                    .and_then(|retained| {
-                        radical
-                            .square()
-                            .and_then(|radical| radical.multiply(&field.radicand))
-                            .and_then(|radical| retained.subtract(&radical))
-                    })
-                    .ok_or_else(|| {
-                        CurveError::Topology(
-                            "a recursive quadratic sign exceeded its retained field budget".into(),
-                        )
-                    })?;
-                Ok(match magnitude.sign(policy)? {
-                    Classification::Decided(RealSign::Positive) => {
-                        Classification::Decided(retained_sign)
-                    }
-                    Classification::Decided(RealSign::Negative) => {
-                        Classification::Decided(radical_sign)
-                    }
-                    Classification::Decided(RealSign::Zero) => {
-                        Classification::Decided(RealSign::Zero)
-                    }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                })
-            }
-        }
-    }
-
-    /// Completes an equality predicate after ordinary recursive signing could
-    /// not distinguish overlapping intervals. The projected norm is used
-    /// only as a zero certificate; authored-sheet selection is replayed down
-    /// the retained positive-root tower, so a zero on an unrelated conjugate
-    /// cannot authorize equality.
-    #[track_caller]
-    pub(super) fn sign_with_projected_zero_fallback(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<RealSign>> {
-        let Some((base, projection)) =
-            recursive_quadratic_polynomial_projection(vec![self.clone()])
-        else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let Some(output_axis) = projection.dimensions().len().checked_sub(1) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        let Some(projection) = projection.remove_certified_independent_axis(
-            output_axis,
-            hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
-        ) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        #[cfg(test)]
-        if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
-            let caller = std::panic::Location::caller();
-            eprintln!(
-                "projected zero fallback caller={}:{} selects-approximate={} permits-approximate={}",
-                caller.file(),
-                caller.line(),
-                policy.selects_approximate_512(),
-                policy.permits_approximate_512(),
-            );
-        }
-        match dense_polynomial_tuple_sign(&projection, &base.sources, policy)? {
-            Classification::Decided(RealSign::Zero) => {}
-            Classification::Decided(RealSign::Negative | RealSign::Positive) => {
-                return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        let mut component_sign =
-            |component: &BezierRecursiveQuadraticValue2| match component.sign(policy)? {
-                decided @ Classification::Decided(_) => Ok(decided),
-                Classification::Uncertain(_) => component.sign_with_projected_zero_fallback(policy),
-            };
-        self.sign_at_projected_zero(&base.sources, policy, &mut component_sign)
-    }
-
-    /// Selects the authored positive-root sheet after the complete norm of
-    /// this value was independently certified zero at the retained base
-    /// tuple.  Each recursive norm is therefore already zero on some
-    /// conjugate sheet: component signs decide whether that zero belongs to
-    /// the authored sheet, while the same certificate descends through the
-    /// magnitude.  No tensor resultant is reconstructed during replay.
-    pub(super) fn sign_at_projected_zero(
-        &self,
-        sources: &[AlgebraicRootRepresentation],
-        policy: &CurveContext,
-        component_sign: &mut impl FnMut(
-            &BezierRecursiveQuadraticValue2,
-        ) -> CurveResult<Classification<RealSign>>,
-    ) -> CurveResult<Classification<RealSign>> {
-        match self.data.as_ref() {
-            BezierRecursiveQuadraticValueData2::Base {
-                field, expression, ..
-            } => dense_two_positive_square_root_sum_sign_at_projected_zero(
-                expression,
-                &field.first_speed_squared,
-                &field.second_speed_squared,
-                sources,
-                policy,
-            ),
-            BezierRecursiveQuadraticValueData2::Extension {
-                field,
-                retained,
-                radical,
-                ..
-            } => {
-                let retained_sign = match component_sign(retained)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let radical_sign = match component_sign(radical)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                match (retained_sign, radical_sign) {
-                    (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-                        return Ok(Classification::Decided(sign));
-                    }
-                    (first, second) if first == second => {
-                        return Ok(Classification::Decided(first));
-                    }
-                    _ => {}
-                }
-                let magnitude = retained
-                    .square()
-                    .and_then(|retained| {
-                        radical
-                            .square()
-                            .and_then(|radical| radical.multiply(&field.radicand))
-                            .and_then(|radical| retained.subtract(&radical))
-                    })
-                    .ok_or_else(|| {
-                        CurveError::Topology(
-                            "a certified recursive quadratic replay exceeded its field budget"
-                                .into(),
-                        )
-                    })?;
-                let magnitude_sign =
-                    magnitude.sign_at_projected_zero(sources, policy, component_sign)?;
-                Ok(match magnitude_sign {
-                    Classification::Decided(RealSign::Positive) => {
-                        Classification::Decided(retained_sign)
-                    }
-                    Classification::Decided(RealSign::Negative) => {
-                        Classification::Decided(radical_sign)
-                    }
-                    Classification::Decided(RealSign::Zero) => {
-                        Classification::Decided(RealSign::Zero)
-                    }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                })
-            }
-        }
-    }
+pub(super) fn foreign_embedding_projective_point(
+    embedding: &RecursiveQuadraticForeignBaseEmbedding,
+    point: &BezierRecursiveQuadraticProjectivePoint2,
+    field: &RecursiveQuadraticField,
+) -> Option<BezierRecursiveQuadraticProjectivePoint2> {
+    Some(BezierRecursiveQuadraticProjectivePoint2 {
+        x: embedding.value(&point.x, field)?,
+        y: embedding.value(&point.y, field)?,
+        denominator: embedding.value(&point.denominator, field)?,
+    })
 }
