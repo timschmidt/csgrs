@@ -1246,12 +1246,12 @@ fn beveled_rational_seed_double_inward_offset_completes() {
 ///
 /// Rebuilding the exported paths regularizes them from scratch. An exported
 /// round join, a selected circle centered on an earlier parallel, is tangent
-/// to the following parallel at their shared endpoint, so the selected-fiber
-/// system for that adjacent pair has a double root there. Isolating it
-/// through local Sturm subresultants takes over twenty minutes; deflating the
-/// known shared endpoint of adjacent carriers would remove the double root.
+/// to the following parallel at their shared endpoint, so the incidence of
+/// that adjacent pair has a repeated diagonal root. Its deflated residual,
+/// certified nonzero at the diagonal, is isolated instead together with the
+/// simple diagonal root; isolating the full incidence took over twenty
+/// minutes.
 #[test]
-#[ignore = "tangential double root at an adjacent join/parallel endpoint"]
 fn filleted_chamfered_boolean_miter_offset_round_trips() {
     let seeds = [
         Seed {

@@ -1388,6 +1388,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         } else {
             None
         };
+        let mut deflated_candidates = None;
         if let Some(location) = diagonal_location {
             // Equal-source parallels at the authored radial separation meet
             // the circle on the complete parameter diagonal, not merely at
@@ -1490,6 +1491,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                     },
                 ));
             }
+            if incident.is_none() {
+                deflated_candidates = match selected_normal_deflated_diagonal_candidates(
+                    &residual,
+                    &center_parameter,
+                    search_range,
+                    policy,
+                )? {
+                    Classification::Decided(candidates) => candidates,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
+            }
         }
         let center = BezierParameter2::Algebraic(center_parameter.clone());
         let incidence = match reduce_bivariate_in_selected_parameter(incidence, &center, policy)? {
@@ -1575,13 +1589,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let (mut projection_identically_zero, mut candidates) =
-            match selected_fiber_parameters_in_range(&incidence, &center_parameter, range, policy)?
-            {
+        let (mut projection_identically_zero, mut candidates) = match deflated_candidates {
+            Some(candidates) => (false, candidates),
+            None => match selected_fiber_parameters_in_range(
+                &incidence,
+                &center_parameter,
+                range,
+                policy,
+            )? {
                 Classification::Decided(Some(parameters)) => (false, parameters),
                 Classification::Decided(None) => (true, Vec::new()),
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            },
+        };
         if !projection_identically_zero && let Some(incident) = incident {
             match selected_fiber_parameters_on_incident_ray(
                 &incidence,
@@ -4527,4 +4547,84 @@ impl BezierAlgebraicCuspSemicircle2 {
             }),
         }
     }
+}
+
+/// Candidates of a selected-normal circle/parallel incidence from its
+/// diagonal-deflated residual.
+///
+/// The authored diagonal root `candidate == center` is often a tangential,
+/// repeated contact, which makes isolating the full incidence costly. When
+/// the residual is certified nonzero on the diagonal at the center, the
+/// incidence's roots in `range` are exactly the residual's roots there plus
+/// the simple diagonal root, which is retained over the linear diagonal
+/// factor itself. Returns `None` when that certificate is unavailable, so
+/// the caller isolates the full incidence.
+fn selected_normal_deflated_diagonal_candidates(
+    residual: &BivariatePolynomial,
+    center: &BezierAlgebraicParameter2,
+    range: &CurveParameterRange2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<BezierAlgebraicSelectedFiberParameter2>>>> {
+    // residual(s, s), in ascending powers of the shared parameter.
+    let mut on_diagonal = Vec::new();
+    for (row_power, row) in residual.coefficients.iter().enumerate() {
+        for (column_power, coefficient) in row.iter().enumerate() {
+            let power = row_power + column_power;
+            if on_diagonal.len() <= power {
+                on_diagonal.resize(power + 1, Real::zero());
+            }
+            on_diagonal[power] = &on_diagonal[power] + coefficient;
+        }
+    }
+    let center_parameter = BezierParameter2::Algebraic(center.clone());
+    match signed_coefficients_at_parameter(&on_diagonal, &center_parameter, policy)? {
+        Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+        Classification::Decided(RealSign::Zero) | Classification::Uncertain(_) => {
+            return Ok(Classification::Decided(None));
+        }
+    }
+    let mut candidates = match selected_fiber_parameters_in_range(residual, center, range, policy)?
+    {
+        Classification::Decided(Some(candidates)) => candidates,
+        Classification::Decided(None) => return Ok(Classification::Decided(None)),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    match CurveParameterDomain2::new(range, None)
+        .contains_finite_parameter(&center_parameter.into(), policy)?
+    {
+        Classification::Decided(true) => {}
+        Classification::Decided(false) => return Ok(Classification::Decided(Some(candidates))),
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    let diagonal = BivariatePolynomial::new(vec![
+        vec![Real::zero(), Real::from(-1_i8)],
+        vec![Real::one()],
+    ]);
+    let authority = BezierAlgebraicSelectedFiberAuthority2::new(diagonal, center.clone(), policy);
+    let diagonal_root = authority.parameter(IsolatedRootInterval {
+        lower: center.interval().start().clone(),
+        upper: center.interval().end().clone(),
+        exact_root: None,
+        distinct_root_count: 1,
+    });
+    // Keep the isolator's ascending order. The residual is nonzero at the
+    // center, so each comparison separates distinct values.
+    let diagonal_curve_parameter = CurveParameter2::from_selected_fiber(diagonal_root.clone());
+    let mut index = 0;
+    while let Some(candidate) = candidates.get(index) {
+        match CurveParameter2::from_selected_fiber(candidate.clone())
+            .cmp_by_refinement(&diagonal_curve_parameter, policy)?
+        {
+            Classification::Decided(std::cmp::Ordering::Less) => index += 1,
+            Classification::Decided(std::cmp::Ordering::Greater) => break,
+            Classification::Decided(std::cmp::Ordering::Equal) => {
+                return Err(CurveError::Topology(
+                    "a residual root equaled the certified nonzero diagonal root".into(),
+                ));
+            }
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+    candidates.insert(index, diagonal_root);
+    Ok(Classification::Decided(Some(candidates)))
 }
