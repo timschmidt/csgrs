@@ -8,14 +8,8 @@ pub(super) fn represented_similarity_point(
     transform: &Similarity2,
 ) -> Classification<[AlgebraicRootRepresentation; 2]> {
     let (a, b, d, e, xoff, yoff) = transform.affine_components();
-    let x = Classification::from(represented_affine_coordinate(
-        &[(&point[0], a), (&point[1], b)],
-        xoff,
-    ));
-    let y = Classification::from(represented_affine_coordinate(
-        &[(&point[0], d), (&point[1], e)],
-        yoff,
-    ));
+    let x = represented_affine_coordinate(&[(&point[0], a), (&point[1], b)], xoff);
+    let y = represented_affine_coordinate(&[(&point[0], d), (&point[1], e)], yoff);
     match (x, y) {
         (Classification::Decided(x), Classification::Decided(y)) => Classification::Decided([x, y]),
         (Classification::Uncertain(UncertaintyReason::Unsupported), _)
@@ -33,14 +27,8 @@ pub(super) fn represented_similarity_vector(
 ) -> Classification<[AlgebraicRootRepresentation; 2]> {
     let (a, b, d, e, _, _) = transform.affine_components();
     let [a, b, d, e] = [a, b, d, e].map(|coefficient| coefficient * output_scale);
-    let x = Classification::from(represented_affine_coordinate(
-        &[(&vector[0], &a), (&vector[1], &b)],
-        &Real::zero(),
-    ));
-    let y = Classification::from(represented_affine_coordinate(
-        &[(&vector[0], &d), (&vector[1], &e)],
-        &Real::zero(),
-    ));
+    let x = represented_affine_coordinate(&[(&vector[0], &a), (&vector[1], &b)], &Real::zero());
+    let y = represented_affine_coordinate(&[(&vector[0], &d), (&vector[1], &e)], &Real::zero());
     match (x, y) {
         (Classification::Decided(x), Classification::Decided(y)) => Classification::Decided([x, y]),
         (Classification::Uncertain(UncertaintyReason::Unsupported), _)
@@ -113,7 +101,7 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let dot_value = Classification::from(represented_tensor_nested_ratio(
+    let dot_value = represented_tensor_nested_ratio(
         &dot_retained,
         &dot_candidate,
         common_denominator,
@@ -121,8 +109,8 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
         discriminant,
         sources,
         signed_radical,
-    ));
-    let cross_value = Classification::from(represented_tensor_nested_ratio(
+    );
+    let cross_value = represented_tensor_nested_ratio(
         &cross_retained,
         &cross_candidate,
         common_denominator,
@@ -130,7 +118,7 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
         discriminant,
         sources,
         signed_radical,
-    ));
+    );
     let (Classification::Decided(dot_value), Classification::Decided(cross_value)) =
         (dot_value, cross_value)
     else {
@@ -160,15 +148,13 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
             )),
         };
     }
-    let radial_complement = match Classification::from(represented_affine_coordinate(
-        &[(&dot_value, &Real::one())],
-        radius_squared,
-    )) {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let radial_complement =
+        match represented_affine_coordinate(&[(&dot_value, &Real::one())], radius_squared) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
     if represented_strict_sign(&radial_complement) != Some(RealSign::Positive) {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
@@ -183,7 +169,7 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
     })() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let parameter = match Classification::from(represented_tensor_nested_ratio(
+    let parameter = match represented_tensor_nested_ratio(
         &cross_retained,
         &cross_candidate,
         &parameter_denominator_retained,
@@ -191,7 +177,7 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
         discriminant,
         sources,
         signed_radical,
-    )) {
+    ) {
         Classification::Decided(parameter) => parameter,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -280,22 +266,20 @@ pub(super) fn represented_circle_contact_location_parameter_from_dot_cross(
             )),
         };
     }
-    let radial_complement = match Classification::from(represented_affine_coordinate(
-        &[(&dot, &Real::one())],
-        radius_squared,
-    )) {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let radial_complement =
+        match represented_affine_coordinate(&[(&dot, &Real::one())], radius_squared) {
+            Classification::Decided(value) => value,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
     if represented_strict_sign(&radial_complement) != Some(RealSign::Positive) {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
-    let denominator = match Classification::from(represented_affine_coordinate(
+    let denominator = match represented_affine_coordinate(
         &[(&dot, &Real::one()), (&oriented_cross, &Real::one())],
         radius_squared,
-    )) {
+    ) {
         Classification::Decided(denominator) => denominator,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -304,7 +288,7 @@ pub(super) fn represented_circle_contact_location_parameter_from_dot_cross(
     if represented_strict_sign(&denominator) != Some(RealSign::Positive) {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
-    let parameter = match Classification::from(represented_ratio(&oriented_cross, &denominator)) {
+    let parameter = match represented_ratio(&oriented_cross, &denominator) {
         Classification::Decided(parameter) => parameter,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -350,10 +334,10 @@ pub(super) fn represented_circle_diameter_predicate_sign(
         };
         let difference = |point: &AlgebraicRootRepresentation,
                           center: &AlgebraicRootRepresentation| {
-            Classification::from(represented_affine_coordinate(
+            represented_affine_coordinate(
                 &[(point, &Real::one()), (center, &Real::from(-1_i8))],
                 &Real::zero(),
-            ))
+            )
         };
         let (Classification::Decided(dx), Classification::Decided(dy)) = (
             difference(&point[0], &frame.center[0]),
@@ -361,31 +345,27 @@ pub(super) fn represented_circle_diameter_predicate_sign(
         ) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         };
-        let dot =
-            match Classification::from(represented_vector_dot_cross(&frame.unit_radial, &[dx, dy]))
-            {
-                Classification::Decided([dot, _]) => dot,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let dot = match represented_vector_dot_cross(&frame.unit_radial, &[dx, dy]) {
+            Classification::Decided([dot, _]) => dot,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
         cache.retain_represented_diameter_coordinate(curve_parameter.clone(), dot.clone(), policy);
         dot
     };
     let diameter_scale = parameter_denominator * &frame.signed_radius;
     let radius_squared = &frame.signed_radius * &frame.signed_radius;
-    let predicate = match Classification::from(represented_affine_coordinate(
+    let predicate = match represented_affine_coordinate(
         &[(&dot, &diameter_scale)],
         &(-radial_coefficient * radius_squared),
-    )) {
+    ) {
         Classification::Decided(predicate) => predicate,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
-    Ok(Classification::from(represented_policy_sign(
-        &predicate, policy,
-    )))
+    Ok(represented_policy_sign(&predicate, policy))
 }
 
 /// Materializes dot and cross for two scaled unit circle radials while
@@ -432,16 +412,10 @@ pub(super) fn represented_scaled_unit_radial_dot_cross(
             AlgebraicRootRepresentation::from_exact_value(&(-scale_product)),
         ]);
     }
-    match Classification::from(represented_vector_dot_cross(first, second)) {
+    match represented_vector_dot_cross(first, second) {
         Classification::Decided([dot, cross]) => {
-            let dot = Classification::from(represented_affine_coordinate(
-                &[(&dot, scale_product)],
-                &Real::zero(),
-            ));
-            let cross = Classification::from(represented_affine_coordinate(
-                &[(&cross, scale_product)],
-                &Real::zero(),
-            ));
+            let dot = represented_affine_coordinate(&[(&dot, scale_product)], &Real::zero());
+            let cross = represented_affine_coordinate(&[(&cross, scale_product)], &Real::zero());
             match (dot, cross) {
                 (Classification::Decided(dot), Classification::Decided(cross)) => {
                     Classification::Decided([dot, cross])
@@ -464,29 +438,26 @@ pub(super) fn represented_circle_dot_cross_from_exact_radial(
 ) -> Classification<[AlgebraicRootRepresentation; 2]> {
     let x_scale = &frame.signed_radius * contact_radial[0].clone();
     let y_scale = &frame.signed_radius * contact_radial[1].clone();
-    let dot = Classification::from(represented_affine_coordinate(
+    let dot = represented_affine_coordinate(
         &[
             (&frame.unit_radial[0], &x_scale),
             (&frame.unit_radial[1], &y_scale),
         ],
         &Real::zero(),
-    ));
+    );
     let cross_x_scale = &frame.signed_radius * contact_radial[1].clone();
     let cross_y_scale = -(&frame.signed_radius * contact_radial[0].clone());
-    let cross = Classification::from(represented_affine_coordinate(
+    let cross = represented_affine_coordinate(
         &[
             (&frame.unit_radial[0], &cross_x_scale),
             (&frame.unit_radial[1], &cross_y_scale),
         ],
         &Real::zero(),
-    ));
+    );
     let (Classification::Decided(dot), Classification::Decided(cross)) = (dot, cross) else {
         return Classification::Uncertain(UncertaintyReason::Predicate);
     };
-    let oriented_cross = match Classification::from(represented_affine_coordinate(
-        &[(&cross, turn)],
-        &Real::zero(),
-    )) {
+    let oriented_cross = match represented_affine_coordinate(&[(&cross, turn)], &Real::zero()) {
         Classification::Decided(cross) => cross,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };

@@ -9661,14 +9661,10 @@ impl BezierAnalyticParallelPoint2 {
             && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero;
         let translated_coordinates =
             |x: AlgebraicRootRepresentation, y: AlgebraicRootRepresentation| {
-                let x = Classification::from(represented_affine_coordinate(
-                    &[(&x, &Real::one())],
-                    &self.data.translation_x,
-                ));
-                let y = Classification::from(represented_affine_coordinate(
-                    &[(&y, &Real::one())],
-                    &self.data.translation_y,
-                ));
+                let x =
+                    represented_affine_coordinate(&[(&x, &Real::one())], &self.data.translation_x);
+                let y =
+                    represented_affine_coordinate(&[(&y, &Real::one())], &self.data.translation_y);
                 match (x, y) {
                     (Classification::Decided(x), Classification::Decided(y)) => {
                         Classification::Decided([x, y])
@@ -9833,23 +9829,23 @@ impl BezierAnalyticParallelPoint2 {
                                 };
                                 if represented_x.is_none()
                                     && let Classification::Decided(value) =
-                                        Classification::from(represented_univariate_coordinate(
+                                        represented_univariate_coordinate(
                                             &x_coefficients,
                                             bounds.min().x(),
                                             bounds.max().x(),
                                             &provenance,
-                                        ))
+                                        )
                                 {
                                     represented_x = Some(value);
                                 }
                                 if represented_y.is_none()
                                     && let Classification::Decided(value) =
-                                        Classification::from(represented_univariate_coordinate(
+                                        represented_univariate_coordinate(
                                             &y_coefficients,
                                             bounds.min().y(),
                                             bounds.max().y(),
                                             &provenance,
-                                        ))
+                                        )
                                 {
                                     represented_y = Some(value);
                                 }
@@ -9894,16 +9890,8 @@ impl BezierAnalyticParallelPoint2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let selected = std::slice::from_ref(&parameter);
-        let source_x = Classification::from(represented_tensor_ratio(
-            &x_numerator,
-            &weight_tensor,
-            selected,
-        ));
-        let source_y = Classification::from(represented_tensor_ratio(
-            &y_numerator,
-            &weight_tensor,
-            selected,
-        ));
+        let source_x = represented_tensor_ratio(&x_numerator, &weight_tensor, selected);
+        let source_y = represented_tensor_ratio(&y_numerator, &weight_tensor, selected);
         let reason = [&source_x, &source_y]
             .into_iter()
             .find_map(|value| match value {
@@ -9926,8 +9914,8 @@ impl BezierAnalyticParallelPoint2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let tangent_x = Classification::from(represented_dense_value_refined(&tangent_x, selected));
-        let tangent_y = Classification::from(represented_dense_value_refined(&tangent_y, selected));
+        let tangent_x = represented_dense_value_refined(&tangent_x, selected);
+        let tangent_y = represented_dense_value_refined(&tangent_y, selected);
         let reason = [&tangent_x, &tangent_y]
             .into_iter()
             .find_map(|value| match value {
@@ -9941,10 +9929,10 @@ impl BezierAnalyticParallelPoint2 {
                 reason.unwrap_or(UncertaintyReason::Unsupported),
             ));
         };
-        let speed_squared = match Classification::from(represented_vector_dot_cross(
+        let speed_squared = match represented_vector_dot_cross(
             &[tangent_x.clone(), tangent_y.clone()],
             &[tangent_x.clone(), tangent_y.clone()],
-        )) {
+        ) {
             Classification::Decided([speed_squared, _]) => speed_squared,
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -9967,20 +9955,15 @@ impl BezierAnalyticParallelPoint2 {
             }
         };
         let negate = |value: &AlgebraicRootRepresentation| {
-            Classification::from(represented_affine_coordinate(
-                &[(value, &Real::from(-1_i8))],
-                &Real::zero(),
-            ))
+            represented_affine_coordinate(&[(value, &Real::from(-1_i8))], &Real::zero())
         };
         let normal_x = match negate(&tangent_y) {
-            Classification::Decided(value) => {
-                Classification::from(represented_ratio(&value, &speed))
-            }
+            Classification::Decided(value) => represented_ratio(&value, &speed),
             Classification::Uncertain(reason) => Classification::Uncertain(reason),
         };
-        let normal_y = Classification::from(represented_ratio(&tangent_x, &speed));
-        let unit_tangent_x = Classification::from(represented_ratio(&tangent_x, &speed));
-        let unit_tangent_y = Classification::from(represented_ratio(&tangent_y, &speed));
+        let normal_y = represented_ratio(&tangent_x, &speed);
+        let unit_tangent_x = represented_ratio(&tangent_x, &speed);
+        let unit_tangent_y = represented_ratio(&tangent_y, &speed);
         let reason = [&normal_x, &normal_y, &unit_tangent_x, &unit_tangent_y]
             .into_iter()
             .find_map(|value| match value {
@@ -9998,22 +9981,22 @@ impl BezierAnalyticParallelPoint2 {
                 reason.unwrap_or(UncertaintyReason::Unsupported),
             ));
         };
-        let x = Classification::from(represented_affine_coordinate(
+        let x = represented_affine_coordinate(
             &[
                 (&source_x, &Real::one()),
                 (&normal_x, self.data.parallel.distance()),
                 (&unit_tangent_x, &self.data.tangent_distance),
             ],
             &self.data.translation_x,
-        ));
-        let y = Classification::from(represented_affine_coordinate(
+        );
+        let y = represented_affine_coordinate(
             &[
                 (&source_y, &Real::one()),
                 (&normal_y, self.data.parallel.distance()),
                 (&unit_tangent_y, &self.data.tangent_distance),
             ],
             &self.data.translation_y,
-        ));
+        );
         Ok(match (x, y) {
             (Classification::Decided(x), Classification::Decided(y)) => {
                 Classification::Decided([x, y])

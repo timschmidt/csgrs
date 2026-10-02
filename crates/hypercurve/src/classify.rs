@@ -13,63 +13,7 @@ use hyperreal::{Real, RealSign, ZeroKnowledge};
 
 use crate::{CurveContext, Point2};
 
-/// Result of a classification step.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Classification<T> {
-    /// The classification was decided.
-    Decided(T),
-    /// The active policy could not decide the classification.
-    Uncertain(UncertaintyReason),
-}
-
-impl<T> Classification<T> {
-    /// Returns true when this classification contains a decided value.
-    pub const fn is_decided(&self) -> bool {
-        matches!(self, Self::Decided(_))
-    }
-
-    /// Returns true when this classification carries an explicit uncertainty reason.
-    pub const fn is_uncertain(&self) -> bool {
-        matches!(self, Self::Uncertain(_))
-    }
-
-    /// Maps a decided value while preserving uncertainty unchanged.
-    pub fn map<U, F>(self, f: F) -> Classification<U>
-    where
-        F: FnOnce(T) -> U,
-    {
-        match self {
-            Self::Decided(value) => Classification::Decided(f(value)),
-            Self::Uncertain(reason) => Classification::Uncertain(reason),
-        }
-    }
-}
-
-/// Reason an operation could not decide a topology branch.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum UncertaintyReason {
-    /// A Real sign could not be proven under the active policy.
-    RealSign,
-    /// Predicate policy could not decide the branch.
-    Predicate,
-    /// Parameter ordering could not be decided.
-    Ordering,
-    /// The query lies on a boundary where the requested Real result is undefined.
-    Boundary,
-    /// The requested operation is not supported by this slice.
-    Unsupported,
-}
-
-impl UncertaintyReason {
-    /// Distinguish an undefined scalar quotient from an unresolved nonzero proof.
-    pub(crate) fn from_real_division(error: hyperreal::Problem) -> Self {
-        match error {
-            hyperreal::Problem::DivideByZero => Self::Boundary,
-            hyperreal::Problem::UnknownZero => Self::RealSign,
-            _ => Self::Unsupported,
-        }
-    }
-}
+pub use hypersolve::classification::{Classification, UncertaintyReason};
 
 /// Side of an oriented line.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -344,21 +288,4 @@ pub(crate) fn at_unit_interval_endpoint(value: &Real, policy: &CurveContext) -> 
 
 fn predicate_point(point: &Point2) -> hyperlimit::Point2 {
     hyperlimit::Point2::new(point.x().clone(), point.y().clone())
-}
-
-impl<T> From<hypersolve::RepresentedOutcome<T>> for Classification<T> {
-    fn from(outcome: hypersolve::RepresentedOutcome<T>) -> Self {
-        match outcome {
-            hypersolve::RepresentedOutcome::Decided(value) => Self::Decided(value),
-            hypersolve::RepresentedOutcome::Unsupported => {
-                Self::Uncertain(UncertaintyReason::Unsupported)
-            }
-            hypersolve::RepresentedOutcome::Undecided => {
-                Self::Uncertain(UncertaintyReason::Predicate)
-            }
-            hypersolve::RepresentedOutcome::Vanishes => {
-                Self::Uncertain(UncertaintyReason::Boundary)
-            }
-        }
-    }
 }

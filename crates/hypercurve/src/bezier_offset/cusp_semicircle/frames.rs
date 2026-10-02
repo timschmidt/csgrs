@@ -231,20 +231,20 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let inverse_normal_denominator = (Real::one() / &frame.normal_denominator)?;
         let unit_radial = [
-            Classification::from(represented_affine_coordinate(
+            represented_affine_coordinate(
                 &[
                     (&center[0], &inverse_normal_denominator),
                     (&support_center[0], &(-inverse_normal_denominator.clone())),
                 ],
                 &Real::zero(),
-            )),
-            Classification::from(represented_affine_coordinate(
+            ),
+            represented_affine_coordinate(
                 &[
                     (&center[1], &inverse_normal_denominator),
                     (&support_center[1], &(-inverse_normal_denominator.clone())),
                 ],
                 &Real::zero(),
-            )),
+            ),
         ];
         let [
             Classification::Decided(unit_x),
@@ -401,19 +401,19 @@ impl BezierAlgebraicCuspSemicircle2 {
         let center = center.map(compact);
         let start = start.map(compact);
         let radial = [
-            match Classification::from(represented_affine_coordinate(
+            match represented_affine_coordinate(
                 &[(&start[0], &Real::one()), (&center[0], &Real::from(-1_i8))],
                 &Real::zero(),
-            )) {
+            ) {
                 Classification::Decided(radial) => radial,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
                 }
             },
-            match Classification::from(represented_affine_coordinate(
+            match represented_affine_coordinate(
                 &[(&start[1], &Real::one()), (&center[1], &Real::from(-1_i8))],
                 &Real::zero(),
-            )) {
+            ) {
                 Classification::Decided(radial) => radial,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -422,10 +422,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         ];
         let inverse_radius = (Real::one() / self.radial_distance())?;
         let unit_radial = radial.map(|radial| {
-            Classification::from(represented_affine_coordinate(
-                &[(&radial, &inverse_radius)],
-                &Real::zero(),
-            ))
+            represented_affine_coordinate(&[(&radial, &inverse_radius)], &Real::zero())
         });
         let [
             Classification::Decided(unit_x),

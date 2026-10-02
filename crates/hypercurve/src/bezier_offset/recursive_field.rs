@@ -4339,10 +4339,8 @@ impl BezierRecursiveProjectiveParameter2 {
             return Ok(None);
         };
         let strict = policy.strict_counterpart();
-        let lower_order =
-            Classification::from(represented_order_to_real(source, &self.data.lower, &strict));
-        let upper_order =
-            Classification::from(represented_order_to_real(source, &self.data.upper, &strict));
+        let lower_order = represented_order_to_real(source, &self.data.lower, &strict);
+        let upper_order = represented_order_to_real(source, &self.data.upper, &strict);
         let order = if lower_order == Classification::Decided(std::cmp::Ordering::Less) {
             std::cmp::Ordering::Greater
         } else if upper_order == Classification::Decided(std::cmp::Ordering::Greater) {
@@ -6549,14 +6547,14 @@ impl BezierRecursiveQuadraticProjectiveScalar2 {
             relation = with_dummy_axis;
             sources.push(AlgebraicRootRepresentation::from_exact_value(&Real::zero()));
         }
-        Ok(Classification::from(represented_tensor_coordinate_refined(
+        Ok(represented_tensor_coordinate_refined(
             &relation,
             &sources,
             8,
             512,
             "recursive-projective-scalar-image",
             |_, refinement_steps| self.interval(refinement_steps),
-        ))
+        )
         .map(|value| {
             hypersolve::compact_algebraic_root_low_degree_witness(&value).unwrap_or(value)
         }))

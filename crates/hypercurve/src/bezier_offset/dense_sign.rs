@@ -78,12 +78,12 @@ pub(super) fn dense_polynomial_tuple_sign_owned(
     let Some(value) = dense_tensor_with_output_axis(&polynomial) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    Ok(Classification::from(dense_tuple_sign_by_refinement(
+    Ok(dense_tuple_sign_by_refinement(
         &polynomial,
         &value,
         &sources,
         policy,
-    )))
+    ))
 }
 
 pub(super) fn combined_sign_uncertainty(

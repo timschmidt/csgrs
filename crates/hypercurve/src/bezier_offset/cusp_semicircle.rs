@@ -4884,12 +4884,9 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                 };
                 let scale = &denominator * &endpoint_sign;
                 let offset = -(&radial_coefficient * radius_squared);
-                match Classification::from(represented_affine_coordinate(
-                    &[(radial_dot, &scale)],
-                    &offset,
-                )) {
+                match represented_affine_coordinate(&[(radial_dot, &scale)], &offset) {
                     Classification::Decided(predicate) => {
-                        Classification::from(represented_policy_sign(&predicate, policy))
+                        represented_policy_sign(&predicate, policy)
                     }
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 }
@@ -5014,15 +5011,15 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                     first_radius_squared
                 };
                 let offset = -(target_radius_squared * &radius_scale);
-                match Classification::from(represented_affine_coordinate(
+                match represented_affine_coordinate(
                     &[
                         (radial_dot, &radial_dot_scale),
                         (radial_cross, &radial_cross_scale),
                     ],
                     &offset,
-                )) {
+                ) {
                     Classification::Decided(predicate) => {
-                        Classification::from(represented_policy_sign(&predicate, policy))
+                        represented_policy_sign(&predicate, policy)
                     }
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 }

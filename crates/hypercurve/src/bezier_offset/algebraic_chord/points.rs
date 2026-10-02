@@ -879,8 +879,8 @@ impl BezierAlgebraicChordPairPoint2 {
                 ) else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
-                return Ok(Classification::from(
-                    represented_projective_line_intersection(first, second, &sources),
+                return Ok(represented_projective_line_intersection(
+                    first, second, &sources,
                 ));
             }
             (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
@@ -929,8 +929,8 @@ impl BezierAlgebraicChordPairPoint2 {
         })() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        Ok(Classification::from(
-            represented_projective_line_intersection(first, second, &sources),
+        Ok(represented_projective_line_intersection(
+            first, second, &sources,
         ))
     }
 
@@ -3011,14 +3011,14 @@ impl BezierAlgebraicChordParallelPoint2 {
                     return Ok(recursive);
                 }
             };
-        let x = Classification::from(represented_affine_coordinate(
+        let x = represented_affine_coordinate(
             &[(&origin[0], &Real::one()), (&unit[0], &self.data.distance)],
             &self.data.translation_x,
-        ));
-        let y = Classification::from(represented_affine_coordinate(
+        );
+        let y = represented_affine_coordinate(
             &[(&origin[1], &Real::one()), (&unit[1], &self.data.distance)],
             &self.data.translation_y,
-        ));
+        );
         Ok(match (x, y) {
             (Classification::Decided(x), Classification::Decided(y)) => {
                 Classification::Decided([x, y].map(|coordinate| {
@@ -5688,7 +5688,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         let perpendicular = self.data.perpendicular_scale.clone();
         let negative_perpendicular = -perpendicular.clone();
         let one_minus_radial = Real::one() - &radial;
-        let x = Classification::from(represented_affine_coordinate(
+        let x = represented_affine_coordinate(
             &[
                 (&source[0], &radial),
                 (&source[1], &negative_perpendicular),
@@ -5696,8 +5696,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 (&center[1], &perpendicular),
             ],
             &self.data.translation_x,
-        ));
-        let y = Classification::from(represented_affine_coordinate(
+        );
+        let y = represented_affine_coordinate(
             &[
                 (&source[0], &perpendicular),
                 (&source[1], &radial),
@@ -5705,7 +5705,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 (&center[1], &one_minus_radial),
             ],
             &self.data.translation_y,
-        ));
+        );
         Ok(match (x, y) {
             (Classification::Decided(x), Classification::Decided(y)) => {
                 Classification::Decided(Some([x, y].map(|coordinate| {
@@ -5950,9 +5950,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 Axis2::X => &coordinates[0],
                 Axis2::Y => &coordinates[1],
             };
-            return Ok(Classification::from(represented_order_to_real(
-                coordinate, value, policy,
-            )));
+            return Ok(represented_order_to_real(coordinate, value, policy));
         }
         let (x_factor, y_factor) = match axis {
             Axis2::X => (Real::one(), Real::zero()),
@@ -6001,8 +5999,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 Axis2::X => &coordinates[0],
                 Axis2::Y => &coordinates[1],
             };
-            let represented =
-                Classification::from(represented_order_to_real(coordinate, value, policy));
+            let represented = represented_order_to_real(coordinate, value, policy);
             if matches!(represented, Classification::Decided(_)) {
                 return Ok(represented);
             }

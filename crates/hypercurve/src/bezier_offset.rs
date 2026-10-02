@@ -3732,12 +3732,8 @@ fn represented_biaffine_ratio(
         let Some(interval) = numerator.divide(&denominator) else {
             continue;
         };
-        match Classification::from(represented_univariate_coordinate(
-            &coefficients,
-            &interval.lower,
-            &interval.upper,
-            &x,
-        )) {
+        match represented_univariate_coordinate(&coefficients, &interval.lower, &interval.upper, &x)
+        {
             Classification::Decided(parameter) => return Classification::Decided(parameter),
             Classification::Uncertain(reason) => last_reason = reason,
         }
@@ -3759,13 +3755,13 @@ impl BezierRepresentedQuadraticConicInverse2 {
         for endpoint_sign in [Real::one(), Real::from(-1_i8)] {
             let radial_scale = &self.signed_radius * &endpoint_sign;
             let coordinate = |axis: usize| {
-                Classification::from(represented_affine_coordinate(
+                represented_affine_coordinate(
                     &[
                         (&self.center[axis], &Real::one()),
                         (&self.unit_radial[axis], &radial_scale),
                     ],
                     &Real::zero(),
-                ))
+                )
             };
             let (x, y) = match (coordinate(0), coordinate(1)) {
                 (Classification::Decided(x), Classification::Decided(y)) => (x, y),
@@ -10711,15 +10707,13 @@ fn algebraic_chord_point_coordinate_order_fallback(
         represented_point_evidence_coordinates(second, policy),
     ) {
         let coordinate_index = usize::from(axis == Axis2::Y);
-        if let Classification::Decided(difference) =
-            Classification::from(represented_affine_coordinate(
-                &[
-                    (&first_coordinates[coordinate_index], &Real::one()),
-                    (&second_coordinates[coordinate_index], &Real::from(-1_i8)),
-                ],
-                &Real::zero(),
-            ))
-            && let Some(sign) = represented_strict_sign(&difference)
+        if let Classification::Decided(difference) = represented_affine_coordinate(
+            &[
+                (&first_coordinates[coordinate_index], &Real::one()),
+                (&second_coordinates[coordinate_index], &Real::from(-1_i8)),
+            ],
+            &Real::zero(),
+        ) && let Some(sign) = represented_strict_sign(&difference)
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -11011,8 +11005,8 @@ fn represented_chord_parameter_coordinates(
     let (Some(x), Some(y)) = (coordinate(0, 2), coordinate(1, 3)) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let x = Classification::from(represented_dense_value_refined(&x, &sources));
-    let y = Classification::from(represented_dense_value_refined(&y, &sources));
+    let x = represented_dense_value_refined(&x, &sources);
+    let y = represented_dense_value_refined(&y, &sources);
     Ok(match (x, y) {
         (Classification::Decided(x), Classification::Decided(y)) => {
             Classification::Decided([x, y].map(|coordinate| {
@@ -11160,10 +11154,10 @@ fn represented_chord_direction_speed(
         }
     };
     let difference = |end: &AlgebraicRootRepresentation, start: &AlgebraicRootRepresentation| {
-        Classification::from(represented_affine_coordinate(
+        represented_affine_coordinate(
             &[(end, &Real::one()), (start, &Real::from(-1_i8))],
             &Real::zero(),
-        ))
+        )
     };
     let dx = match difference(&end[0], &start[0]) {
         Classification::Decided(dx) => dx,
@@ -11189,21 +11183,19 @@ fn represented_chord_direction_speed(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let norm_squared = match Classification::from(represented_vector_dot_cross(
-        &[dx.clone(), dy.clone()],
-        &[dx.clone(), dy.clone()],
-    )) {
-        Classification::Decided([norm_squared, _]) => norm_squared,
-        Classification::Uncertain(reason) => {
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "represented-chord-direction-speed-blocker",
-                "norm-squared",
-            );
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let norm_squared =
+        match represented_vector_dot_cross(&[dx.clone(), dy.clone()], &[dx.clone(), dy.clone()]) {
+            Classification::Decided([norm_squared, _]) => norm_squared,
+            Classification::Uncertain(reason) => {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "represented-chord-direction-speed-blocker",
+                    "norm-squared",
+                );
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
     let speed = square_root_algebraic_root_representation(&norm_squared, 1);
     let speed = match speed.status {
         AlgebraicRootSquareRootStatus::Transformed => speed
@@ -11263,10 +11255,7 @@ fn represented_chord_support_direction_speed(
     if !Arc::ptr_eq(&support.data, &chord.data) && chord.retained_support_orientation_is_reversed()
     {
         let negate = |coordinate: &AlgebraicRootRepresentation| {
-            Classification::from(represented_affine_coordinate(
-                &[(coordinate, &Real::from(-1_i8))],
-                &Real::zero(),
-            ))
+            represented_affine_coordinate(&[(coordinate, &Real::from(-1_i8))], &Real::zero())
         };
         dx = match negate(&dx) {
             Classification::Decided(dx) => dx,
@@ -11482,27 +11471,25 @@ fn represented_chord_unit_direction(
     };
     let (direction_x, direction_y) = match direction {
         BezierAlgebraicChordUnitDisplacement2::LeftNormal => {
-            let direction_x = match Classification::from(represented_affine_coordinate(
-                &[(&dy, &Real::from(-1_i8))],
-                &Real::zero(),
-            )) {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => {
-                    #[cfg(feature = "dispatch-trace")]
-                    hyperreal::dispatch_trace::record(
-                        "hypercurve",
-                        "represented-chord-unit-direction-blocker",
-                        "normal-negation",
-                    );
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let direction_x =
+                match represented_affine_coordinate(&[(&dy, &Real::from(-1_i8))], &Real::zero()) {
+                    Classification::Decided(value) => value,
+                    Classification::Uncertain(reason) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "represented-chord-unit-direction-blocker",
+                            "normal-negation",
+                        );
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                };
             (direction_x, dx)
         }
         BezierAlgebraicChordUnitDisplacement2::Tangent => (dx, dy),
     };
-    let x = Classification::from(represented_ratio(&direction_x, &speed));
-    let y = Classification::from(represented_ratio(&direction_y, &speed));
+    let x = represented_ratio(&direction_x, &speed);
+    let y = represented_ratio(&direction_y, &speed);
     let independent = match (x, y) {
         (Classification::Decided(x), Classification::Decided(y)) => {
             Classification::Decided([x, y].map(|coordinate| {
@@ -11579,7 +11566,7 @@ fn represented_chord_unit_direction(
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let x = Classification::from(represented_tensor_nested_ratio(
+    let x = represented_tensor_nested_ratio(
         &numerator_x,
         &zero,
         &zero,
@@ -11587,8 +11574,8 @@ fn represented_chord_unit_direction(
         &speed_squared,
         &sources,
         &speed,
-    ));
-    let y = Classification::from(represented_tensor_nested_ratio(
+    );
+    let y = represented_tensor_nested_ratio(
         &numerator_y,
         &zero,
         &zero,
@@ -11596,7 +11583,7 @@ fn represented_chord_unit_direction(
         &speed_squared,
         &sources,
         &speed,
-    ));
+    );
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::record(
         "hypercurve",
@@ -12059,7 +12046,7 @@ fn represented_parallel_chord_parameter_coordinates(
                 return Classification::Decided(representation.clone());
             }
         }
-        Classification::from(represented_tensor_ratio(numerator, &speed, &sources))
+        represented_tensor_ratio(numerator, &speed, &sources)
     };
     let x = materialize(&x_numerator);
     let y = materialize(&y_numerator);
@@ -13761,9 +13748,9 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
             .strict_predicate_pass(|| represented_point_evidence_coordinates(point, policy))?
     {
         let offset = -(coefficient_x * origin.x() + coefficient_y * origin.y());
-        if let Classification::Decided(projection) = Classification::from(
-            represented_affine_coordinate(&[(&x, coefficient_x), (&y, coefficient_y)], &offset),
-        ) && let Some(sign) = represented_strict_sign(&projection)
+        if let Classification::Decided(projection) =
+            represented_affine_coordinate(&[(&x, coefficient_x), (&y, coefficient_y)], &offset)
+            && let Some(sign) = represented_strict_sign(&projection)
         {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
@@ -15101,22 +15088,20 @@ fn represented_point_evidence_oriented_side(
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let cross = dense_reduce_selected_root_relations(cross.clone(), &sources).unwrap_or(cross);
-    let cross = match Classification::from(represented_dense_value_refined(&cross, &sources)) {
+    let cross = match represented_dense_value_refined(&cross, &sources) {
         Classification::Decided(cross) => cross,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
-    Ok(
-        match Classification::from(represented_policy_sign(&cross, policy)) {
-            Classification::Decided(sign) => Classification::Decided(match sign {
-                RealSign::Positive => crate::classify::LineSide::Left,
-                RealSign::Negative => crate::classify::LineSide::Right,
-                RealSign::Zero => crate::classify::LineSide::On,
-            }),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        },
-    )
+    Ok(match represented_policy_sign(&cross, policy) {
+        Classification::Decided(sign) => Classification::Decided(match sign {
+            RealSign::Positive => crate::classify::LineSide::Left,
+            RealSign::Negative => crate::classify::LineSide::Right,
+            RealSign::Zero => crate::classify::LineSide::On,
+        }),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
 }
 
 fn selected_circle_endpoint_chord_side(

@@ -281,14 +281,14 @@ impl BezierAlgebraicCuspChordPoint2 {
             let second = &second_map
                 .represented_oblique_contact(second_contact)?
                 .chord_parameter;
-            let difference = match Classification::from(represented_affine_coordinate(
+            let difference = match represented_affine_coordinate(
                 &[(first, &Real::one()), (second, &Real::from(-1_i8))],
                 &Real::zero(),
-            )) {
+            ) {
                 Classification::Decided(difference) => difference,
                 Classification::Uncertain(_) => return Ok(None),
             };
-            let order = match Classification::from(represented_policy_sign(&difference, policy)) {
+            let order = match represented_policy_sign(&difference, policy) {
                 Classification::Decided(RealSign::Negative) => std::cmp::Ordering::Less,
                 Classification::Decided(RealSign::Zero) => std::cmp::Ordering::Equal,
                 Classification::Decided(RealSign::Positive) => std::cmp::Ordering::Greater,

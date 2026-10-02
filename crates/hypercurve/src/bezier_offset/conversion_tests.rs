@@ -2203,16 +2203,16 @@ fn recursive_local_root_orders_against_close_coefficient_generators() {
                     panic!("the linear relation has exactly one root");
                 };
                 let selected = root.as_recursive_projective().unwrap();
-                let lower_order = Classification::from(represented_order_to_real(
+                let lower_order = represented_order_to_real(
                     &bezier_parameter_root_representation(&native),
                     &selected.data.lower,
                     &CurveContext::STRICT,
-                ));
-                let upper_order = Classification::from(represented_order_to_real(
+                );
+                let upper_order = represented_order_to_real(
                     &bezier_parameter_root_representation(&native),
                     &selected.data.upper,
                     &CurveContext::STRICT,
-                ));
+                );
                 assert_eq!(
                     lower_order == Classification::Decided(std::cmp::Ordering::Greater)
                         && upper_order == Classification::Decided(std::cmp::Ordering::Less),
@@ -28299,7 +28299,7 @@ fn dense_chord_normal_independent_anchor_uses_rank_independent_fallback() {
         // materializing a redundant point carrier.  The infinite radial
         // line meets the selected semicircle at its two authored ends.
         let circle_start = [0, 1].map(|axis| {
-            match Classification::from(represented_affine_coordinate(
+            match represented_affine_coordinate(
                 &[
                     (&represented_frame.center[axis], &Real::one()),
                     (
@@ -28308,7 +28308,7 @@ fn dense_chord_normal_independent_anchor_uses_rank_independent_fallback() {
                     ),
                 ],
                 &Real::zero(),
-            )) {
+            ) {
                 Classification::Decided(coordinate) => coordinate,
                 Classification::Uncertain(reason) => {
                     panic!("the circle start coordinate must be represented: {reason:?}")
@@ -32599,14 +32599,14 @@ fn independently_encoded_scaled_rotated_recursive_circles_intersect_exactly() {
             compare_reals(&frame.signed_radius, &Real::one(), &CurveContext::STRICT,),
             Some(std::cmp::Ordering::Equal),
         );
-        let Classification::Decided([unit_norm, unit_cross]) = Classification::from(
-            represented_vector_dot_cross(&frame.unit_radial, &frame.unit_radial),
-        ) else {
+        let Classification::Decided([unit_norm, unit_cross]) =
+            represented_vector_dot_cross(&frame.unit_radial, &frame.unit_radial)
+        else {
             panic!("the scaled recursive frame must retain its unit radial correlation");
         };
-        let Classification::Decided(unit_norm_residual) = Classification::from(
-            represented_affine_coordinate(&[(&unit_norm, &Real::one())], &Real::from(-1_i8)),
-        ) else {
+        let Classification::Decided(unit_norm_residual) =
+            represented_affine_coordinate(&[(&unit_norm, &Real::one())], &Real::from(-1_i8))
+        else {
             panic!("the transformed unit norm must remain representable");
         };
         assert_eq!(
@@ -45523,9 +45523,7 @@ fn selected_fiber_norm_isolation_refines_past_the_old_limit() {
 #[test]
 fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     let constant = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::pi()]).unwrap();
-    let Classification::Decided(constant) =
-        Classification::from(represented_dense_value_refined(&constant, &[]))
-    else {
+    let Classification::Decided(constant) = represented_dense_value_refined(&constant, &[]) else {
         panic!("a source-free exact Real scalar must not enter root separation");
     };
     assert_eq!(constant.exact_point_witness(), Some(&Real::pi()));
@@ -45533,7 +45531,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
         .expect("an exact point must form a constant affine tensor basis");
     assert!(sources.is_empty());
     let Classification::Decided(folded) =
-        Classification::from(represented_dense_value_refined(&coordinates[0], &sources))
+        represented_dense_value_refined(&coordinates[0], &sources)
     else {
         panic!("an exact point tensor constant must materialize directly");
     };
@@ -45577,22 +45575,22 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     let nonzero_common =
         DenseTensorPolynomial::from_axis_polynomial(2, 0, &[Real::one(), Real::one()]).unwrap();
     let cancellable_numerator = selected_axis.multiply(&nonzero_common).unwrap();
-    let Classification::Decided(canceled) = Classification::from(represented_tensor_ratio(
+    let Classification::Decided(canceled) = represented_tensor_ratio(
         &cancellable_numerator,
         &nonzero_common,
         std::slice::from_ref(&first),
-    )) else {
+    ) else {
         panic!("a nonvanishing exact common factor must remain cancellable");
     };
     assert!(represented_roots_strictly_equal(&canceled, &first));
     let selected_minimal =
         DenseTensorPolynomial::from_axis_polynomial(2, 0, &first.polynomial_coefficients).unwrap();
     assert_eq!(
-        Classification::from(represented_tensor_ratio(
+        represented_tensor_ratio(
             &selected_minimal,
             &selected_minimal,
             std::slice::from_ref(&first),
-        )),
+        ),
         Classification::Uncertain(UncertaintyReason::Boundary),
         "cancellation must not turn an authored algebraic 0/0 into one",
     );
@@ -45643,7 +45641,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     let nested_zero_candidate =
         DenseTensorPolynomial::from_axis_polynomial(3, 0, std::slice::from_ref(&half)).unwrap();
     assert_eq!(
-        Classification::from(represented_tensor_nested_ratio(
+        represented_tensor_nested_ratio(
             &one,
             &zero,
             &nested_zero_retained,
@@ -45651,7 +45649,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
             &discriminant,
             &[first.clone(), second.clone()],
             &signed_radical,
-        )),
+        ),
         Classification::Uncertain(UncertaintyReason::Boundary),
         "the exact correlation -sqrt(1/2)+sqrt(2)/2 must remain undefined",
     );
@@ -45662,17 +45660,15 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
         DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
     let source_free_discriminant =
         DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::from(2_i8)]).unwrap();
-    let Classification::Decided(source_free_nested) =
-        Classification::from(represented_tensor_nested_ratio(
-            &source_free_zero,
-            &source_free_one,
-            &source_free_one,
-            &source_free_zero,
-            &source_free_discriminant,
-            &[],
-            &signed_radical,
-        ))
-    else {
+    let Classification::Decided(source_free_nested) = represented_tensor_nested_ratio(
+        &source_free_zero,
+        &source_free_one,
+        &source_free_one,
+        &source_free_zero,
+        &source_free_discriminant,
+        &[],
+        &signed_radical,
+    ) else {
         panic!("a source-free nested quotient must reuse the ordinary quotient kernel");
     };
     assert!(represented_roots_strictly_equal(
@@ -45699,11 +45695,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
         refined_represented_root(&second, 256),
     ];
     assert!(matches!(
-        Classification::from(represented_dense_value_with_coefficient_precision(
-            &difference,
-            &bounded_sources,
-            -256,
-        )),
+        represented_dense_value_with_coefficient_precision(&difference, &bounded_sources, -256,),
         Classification::Uncertain(_)
     ));
 
@@ -45711,20 +45703,13 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     hyperreal::dispatch_trace::reset();
     let work = || {
         (
-            Classification::from(represented_dense_value_refined(
-                &difference,
-                &[first.clone(), second.clone()],
-            )),
-            Classification::from(represented_affine_coordinate(
+            represented_dense_value_refined(&difference, &[first.clone(), second.clone()]),
+            represented_affine_coordinate(
                 &[(&first, &Real::one()), (&second, &Real::from(-1_i8))],
                 &Real::zero(),
-            )),
-            Classification::from(represented_tensor_ratio(
-                &one,
-                &difference,
-                &[first.clone(), second.clone()],
-            )),
-            Classification::from(represented_tensor_nested_ratio(
+            ),
+            represented_tensor_ratio(&one, &difference, &[first.clone(), second.clone()]),
+            represented_tensor_nested_ratio(
                 &one,
                 &zero,
                 &difference,
@@ -45732,7 +45717,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
                 &discriminant,
                 &[first.clone(), second.clone()],
                 &signed_radical,
-            )),
+            ),
         )
     };
     #[cfg(feature = "dispatch-trace")]
@@ -45771,7 +45756,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for represented in [&dense, &ratio, &nested_ratio] {
             let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
-                Classification::from(represented_policy_sign(represented, attempt))
+                represented_policy_sign(represented, attempt)
             });
             assert_eq!(outcome.value, Classification::Decided(RealSign::Negative));
             assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
@@ -45912,12 +45897,10 @@ fn correlated_degree_fifteen_selected_square_speed_points_reduce_locally() {
             assert_eq!(y.exact_point_witness(), Some(&expected_y));
 
             let expected_x_constant = &(&three_fifths + &tangent_distance) + &translation_x;
-            let Classification::Decided(expected_x) =
-                Classification::from(represented_affine_coordinate(
-                    &[(&retained_root, &Real::one())],
-                    &expected_x_constant,
-                ))
-            else {
+            let Classification::Decided(expected_x) = represented_affine_coordinate(
+                &[(&retained_root, &Real::one())],
+                &expected_x_constant,
+            ) else {
                 panic!("the retained affine image must materialize");
             };
             let equality = compare_algebraic_root_representations_with_refinement(
