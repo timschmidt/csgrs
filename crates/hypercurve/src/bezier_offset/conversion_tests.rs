@@ -54750,7 +54750,7 @@ fn bounded_component_extraction_rejoins_the_uncapped_authority() {
         max_resultant_degree: 2,
     };
     assert_eq!(
-        parameter_component_bivariate_polynomial_system(
+        hypersolve::parameter_component_bivariate_polynomial_system(
             &equations[0],
             &equations[1],
             CurveResultantParameter::First,
@@ -54818,7 +54818,7 @@ fn bounded_component_extraction_rejoins_the_uncapped_authority() {
         #[cfg(feature = "dispatch-trace")]
         assert!(
             trace.path_count(
-                "hypercurve",
+                "hypersolve",
                 "bivariate-component",
                 "unbounded-cold-continuation",
             ) >= 1,

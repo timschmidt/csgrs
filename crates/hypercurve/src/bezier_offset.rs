@@ -73,6 +73,11 @@ use hypersolve::bivariate_arithmetic::{
     divide_bivariate_system_component, parameter_component_union_support,
     proper_parameter_component_split,
 };
+use hypersolve::bivariate_components::{
+    extract_bivariate_axis_components, extract_bivariate_system_components,
+    merge_parameter_component_support, parameter_component_bivariate_polynomial_system_complete,
+    rational_parameter_component_support,
+};
 #[cfg(test)]
 use hypersolve::exact_factor::bivariate_bilinear_factor_from_roots;
 use hypersolve::exact_factor::{
@@ -189,14 +194,12 @@ use hypersolve::{
     transform_algebraic_root_mobius, validate_algebraic_root_representation,
 };
 use hypersolve::{
-    BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentReport,
-    BivariatePolynomialComponentStatus, CurveIntersectionParameterLiftMap,
-    CurveIntersectionParameterLiftReport, CurveIntersectionParameterLiftStatus,
-    CurveIntersectionResultantConfig, CurveIntersectionResultantStatus, CurveResultantParameter,
-    RationalParametricCurve2, divide_bivariate_polynomial_exact,
-    extract_bivariate_polynomial_system_axis_factors,
-    linear_parameter_lifts_bivariate_polynomial_system,
-    parameter_component_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
+    BivariatePolynomial, BivariatePolynomialAxisFactorStatus, BivariatePolynomialComponentStatus,
+    CurveIntersectionParameterLiftMap, CurveIntersectionParameterLiftReport,
+    CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
+    CurveIntersectionResultantStatus, CurveResultantParameter, RationalParametricCurve2,
+    divide_bivariate_polynomial_exact, extract_bivariate_polynomial_system_axis_factors,
+    linear_parameter_lifts_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
     subresultant_chain_univariate_polynomials,
 };
 use hypersolve::{
