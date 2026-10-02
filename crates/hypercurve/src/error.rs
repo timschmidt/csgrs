@@ -56,6 +56,7 @@ pub enum CurveOperation2 {
 pub struct ExactCurveBlocker {
     operation: CurveOperation2,
     family: CurveFamily2,
+    counterpart_family: Option<CurveFamily2>,
     reason: UncertaintyReason,
 }
 
@@ -69,6 +70,7 @@ impl ExactCurveBlocker {
         Self {
             operation,
             family,
+            counterpart_family: None,
             reason,
         }
     }
@@ -81,6 +83,12 @@ impl ExactCurveBlocker {
     /// Returns the curve family involved in the blocked operation.
     pub const fn family(self) -> CurveFamily2 {
         self.family
+    }
+
+    /// Returns the other curve family when the blocked decision concerned a
+    /// pair of supports, such as one Boolean carrier pair.
+    pub const fn counterpart_family(self) -> Option<CurveFamily2> {
+        self.counterpart_family
     }
 
     /// Returns the exact predicate or capability reason.
@@ -128,6 +136,21 @@ impl ExactCurveError {
         Self::Blocked(ExactCurveBlocker::new(operation, family, reason))
     }
 
+    /// Wraps an exact blocker for a decision about two supports.
+    pub(crate) const fn blocked_pair(
+        operation: CurveOperation2,
+        family: CurveFamily2,
+        counterpart_family: CurveFamily2,
+        reason: UncertaintyReason,
+    ) -> Self {
+        Self::Blocked(ExactCurveBlocker {
+            operation,
+            family,
+            counterpart_family: Some(counterpart_family),
+            reason,
+        })
+    }
+
     /// Returns the operation that failed.
     pub const fn operation(&self) -> CurveOperation2 {
         match self {
@@ -147,19 +170,28 @@ impl ExactCurveError {
     pub(crate) fn with_operation(self, operation: CurveOperation2) -> Self {
         match self {
             Self::Invalid { family, cause, .. } => Self::invalid(operation, family, cause),
-            Self::Blocked(blocker) => Self::blocked(operation, blocker.family(), blocker.reason()),
+            Self::Blocked(blocker) => Self::Blocked(ExactCurveBlocker {
+                operation,
+                ..blocker
+            }),
         }
     }
 }
 
 impl fmt::Display for ExactCurveBlocker {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "exact {:?} for {:?} was blocked by {:?}",
-            self.operation, self.family, self.reason
-        )?;
-        Ok(())
+        match self.counterpart_family {
+            Some(counterpart) => write!(
+                f,
+                "exact {:?} for {:?} against {:?} was blocked by {:?}",
+                self.operation, self.family, counterpart, self.reason
+            ),
+            None => write!(
+                f,
+                "exact {:?} for {:?} was blocked by {:?}",
+                self.operation, self.family, self.reason
+            ),
+        }
     }
 }
 
@@ -418,5 +450,40 @@ impl From<hyperreal::Problem> for CurveError {
 impl From<hypersolve::FieldInvariantError> for CurveError {
     fn from(error: hypersolve::FieldInvariantError) -> Self {
         Self::Topology(error.0)
+    }
+}
+
+#[cfg(test)]
+mod blocker_tests {
+    use super::*;
+
+    #[test]
+    fn pair_blocker_names_both_families_through_operation_rewrapping() {
+        let blocked = ExactCurveError::blocked_pair(
+            CurveOperation2::Boolean,
+            CurveFamily2::RationalBezier,
+            CurveFamily2::Line,
+            UncertaintyReason::Predicate,
+        )
+        .with_operation(CurveOperation2::Offset);
+        let ExactCurveError::Blocked(blocker) = blocked else {
+            panic!("a pair blocker stays blocked");
+        };
+        assert_eq!(blocker.operation(), CurveOperation2::Offset);
+        assert_eq!(blocker.family(), CurveFamily2::RationalBezier);
+        assert_eq!(blocker.counterpart_family(), Some(CurveFamily2::Line));
+        assert_eq!(
+            blocker.to_string(),
+            "exact Offset for RationalBezier against Line was blocked by Predicate"
+        );
+        let single = ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            CurveFamily2::Line,
+            UncertaintyReason::RealSign,
+        );
+        assert_eq!(
+            single.to_string(),
+            "exact Boolean for Line was blocked by RealSign"
+        );
     }
 }

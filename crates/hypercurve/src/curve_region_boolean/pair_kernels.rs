@@ -2578,9 +2578,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         &self.data.carriers[pair.first_carrier_index].geometry,
                         &self.data.carriers[pair.second_carrier_index].geometry,
                     ) else {
-                        return Err(
-                            self.blocked(pair.first_carrier_index, UncertaintyReason::Unsupported)
-                        );
+                        return Err(self.blocked_pair(pair, UncertaintyReason::Unsupported));
                     };
                     (
                         first
@@ -4434,9 +4432,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             Classification::Decided(overlap) => {
                 Ok(overlap.map(|overlap| (overlap.first_range, overlap.second_range)))
             }
-            Classification::Uncertain(reason) => {
-                Err(self.blocked(pair.first_carrier_index, reason))
-            }
+            Classification::Uncertain(reason) => Err(self.blocked_pair(pair, reason)),
         }
     }
 }

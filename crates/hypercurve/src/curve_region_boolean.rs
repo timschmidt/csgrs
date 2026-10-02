@@ -2032,7 +2032,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     {
                         Classification::Decided(overlap) => overlap,
                         Classification::Uncertain(reason) => {
-                            return Err(self.blocked(pair.first_carrier_index, reason));
+                            return Err(self.blocked_pair(pair, reason));
                         }
                     },
                 });
@@ -2181,7 +2181,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     RegionPairBlocker::IncompleteReplay => UncertaintyReason::Predicate,
                     RegionPairBlocker::PointImageParameterComponent => UncertaintyReason::Boundary,
                 };
-                return Err(self.blocked(pair.first_carrier_index, reason));
+                return Err(self.blocked_pair(pair, reason));
             }
 
             for contact in &result.contacts {
@@ -2629,7 +2629,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             {
                                 Classification::Decided(point) => point,
                                 Classification::Uncertain(reason) => {
-                                    return Err(self.blocked(pair.first_carrier_index, reason));
+                                    return Err(self.blocked_pair(pair, reason));
                                 }
                             };
                             contact_lookup.push(
@@ -3805,6 +3805,16 @@ impl<'a> CurveRegionBooleanContext<'a> {
     fn blocked(&self, carrier_index: usize, reason: UncertaintyReason) -> ExactCurveError {
         let carrier = &self.data.carriers[carrier_index];
         ExactCurveError::blocked(CurveOperation2::Boolean, carrier.family, reason)
+    }
+
+    /// A blocker for one carrier pair, naming both participating families.
+    fn blocked_pair(&self, pair: &RegionCarrierPair, reason: UncertaintyReason) -> ExactCurveError {
+        ExactCurveError::blocked_pair(
+            CurveOperation2::Boolean,
+            self.data.carriers[pair.first_carrier_index].family,
+            self.data.carriers[pair.second_carrier_index].family,
+            reason,
+        )
     }
 }
 
