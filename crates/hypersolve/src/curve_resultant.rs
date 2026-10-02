@@ -4885,6 +4885,30 @@ pub fn continue_resultant_after_degree_bound(
     })
 }
 
+/// Keeps the bounded bivariate system resultant as the hot schedule while
+/// retrying past its degree budget, which is never a mathematical boundary.
+pub fn resultant_bivariate_polynomial_system_complete(
+    first_equation: &BivariatePolynomial,
+    second_equation: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    config: CurveIntersectionResultantConfig,
+) -> CurveIntersectionResultantReport {
+    let report = resultant_bivariate_polynomial_system(
+        first_equation,
+        second_equation,
+        retained_parameter,
+        config,
+    );
+    continue_resultant_after_degree_bound(report, config, |config| {
+        resultant_bivariate_polynomial_system(
+            first_equation,
+            second_equation,
+            retained_parameter,
+            config,
+        )
+    })
+}
+
 /// Keeps bounded cofactor interpolation on the hot path while ensuring that
 /// its degree budget cannot discard an otherwise exact parameter pairing.
 #[inline]
