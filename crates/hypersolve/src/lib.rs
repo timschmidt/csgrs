@@ -43,6 +43,7 @@ pub mod ordered_field_roots;
 mod policy_division;
 pub mod polynomial;
 pub mod predicates;
+pub mod quotient_ring;
 pub mod radical_expression;
 pub mod rank;
 pub mod real_interval;

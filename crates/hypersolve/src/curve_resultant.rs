@@ -4776,6 +4776,27 @@ fn interpolate_samples(
     samples: &[PolynomialSample],
     min_precision: i32,
 ) -> Result<Vec<Real>, InterpolationFailure> {
+    trim_trailing_zeroes(interpolate_samples_untrimmed(samples)?, min_precision)
+        .map_err(|_| InterpolationFailure::UndecidedCoefficient)
+}
+
+/// Interpolates exact values at the nodes `0, 1, ..., n - 1` by divided
+/// differences, keeping all `n` coefficients including trailing zeros.
+pub fn interpolate_integer_node_samples(values: &[Real]) -> Option<Vec<Real>> {
+    let samples = values
+        .iter()
+        .enumerate()
+        .map(|(node, value)| PolynomialSample {
+            parameter_value: Real::from(node as u64),
+            value: value.clone(),
+        })
+        .collect::<Vec<_>>();
+    interpolate_samples_untrimmed(&samples).ok()
+}
+
+fn interpolate_samples_untrimmed(
+    samples: &[PolynomialSample],
+) -> Result<Vec<Real>, InterpolationFailure> {
     // Divided differences retain the exact sampled polynomial on arbitrary
     // distinct nodes, including grids with omitted degree-drop fibers. Unlike
     // rebuilding every Lagrange basis, construction takes quadratic work and
@@ -4825,8 +4846,7 @@ fn interpolate_samples(
             *coefficient *= &scale;
         }
     }
-    trim_trailing_zeroes(result, min_precision)
-        .map_err(|_| InterpolationFailure::UndecidedCoefficient)
+    Ok(result)
 }
 
 fn multiply_by_linear_factor(polynomial: Vec<Real>, constant: Real) -> Vec<Real> {
@@ -4836,6 +4856,33 @@ fn multiply_by_linear_factor(polynomial: Vec<Real>, constant: Real) -> Vec<Real>
         result[index + 1] += coefficient;
     }
     result
+}
+
+/// Keeps a bounded resultant as the hot schedule while removing its degree
+/// limit as a mathematical boundary. The continuation changes only resource
+/// scheduling: coefficient certification and every later candidate replay
+/// retain their requested exact predicate policy.
+#[inline]
+pub fn continue_resultant_after_degree_bound(
+    report: CurveIntersectionResultantReport,
+    config: CurveIntersectionResultantConfig,
+    continuation: impl FnOnce(CurveIntersectionResultantConfig) -> CurveIntersectionResultantReport,
+) -> CurveIntersectionResultantReport {
+    if report.status != CurveIntersectionResultantStatus::DegreeBoundExceeded
+        || config.max_resultant_degree == usize::MAX
+    {
+        return report;
+    }
+    #[cfg(feature = "dispatch-trace")]
+    hyperreal::dispatch_trace::record(
+        "hypersolve",
+        "bivariate-resultant",
+        "unbounded-cold-continuation",
+    );
+    continuation(CurveIntersectionResultantConfig {
+        max_resultant_degree: usize::MAX,
+        ..config
+    })
 }
 
 #[cfg(test)]

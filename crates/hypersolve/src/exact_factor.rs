@@ -1033,6 +1033,18 @@ pub fn rational_multi_affine_lift_scale_from_anchor_pair(
     None
 }
 
+/// The binomial coefficient `n choose k`, or `None` on overflow or `k > n`.
+pub fn checked_binomial(n: usize, k: usize) -> Option<u64> {
+    let k = k.min(n.checked_sub(k)?);
+    (0..k).try_fold(1_u64, |result, index| {
+        let numerator = u64::try_from(n.checked_sub(index)?).ok()?;
+        let denominator = u64::try_from(index.checked_add(1)?).ok()?;
+        result
+            .checked_mul(numerator)
+            .map(|value| value / denominator)
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
