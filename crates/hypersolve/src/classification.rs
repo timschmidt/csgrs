@@ -61,3 +61,20 @@ impl UncertaintyReason {
         }
     }
 }
+
+/// The sign of a product of two values with the given signs.
+pub const fn product_sign(
+    first: hyperreal::RealSign,
+    second: hyperreal::RealSign,
+) -> hyperreal::RealSign {
+    use hyperreal::RealSign;
+    match (first, second) {
+        (RealSign::Zero, _) | (_, RealSign::Zero) => RealSign::Zero,
+        (RealSign::Positive, RealSign::Positive) | (RealSign::Negative, RealSign::Negative) => {
+            RealSign::Positive
+        }
+        (RealSign::Positive, RealSign::Negative) | (RealSign::Negative, RealSign::Positive) => {
+            RealSign::Negative
+        }
+    }
+}

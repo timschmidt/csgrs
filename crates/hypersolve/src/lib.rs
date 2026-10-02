@@ -47,6 +47,7 @@ pub mod quotient_ring;
 pub mod radical_expression;
 pub mod rank;
 pub mod real_interval;
+pub mod recursive_quadratic_field;
 pub mod represented_root;
 pub mod residual_replay;
 pub mod resultant;

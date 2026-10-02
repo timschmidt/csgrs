@@ -1974,14 +1974,40 @@ pub fn scalar_in_open_interval(lower: &Real, upper: &Real) -> Real {
     Real::average_pair(lower, upper)
 }
 
-/// Evaluation context for signs of polynomials at selected root tuples.
+/// An internal invariant of a selected-algebra construction failed.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FieldInvariantError(pub String);
+
+impl std::fmt::Display for FieldInvariantError {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(&self.0)
+    }
+}
+
+impl std::error::Error for FieldInvariantError {}
+
+/// Evaluation context for exact constructions over selected algebraic roots.
 ///
-/// The context supplies its approximation protocol, whether a bounded exact
-/// predicate pass is active, and its specialized sign authority for one
-/// selected root, which may retain caches of its own.
-pub trait SelectedRootSignContext: ApproximationPolicy {
-    /// Error raised by the context's specialized authorities.
-    type Error;
+/// The context supplies its approximation protocol, its scalar sign policy,
+/// strict and bounded exact predicate passes, and its specialized sign
+/// authority for one selected root, which may retain caches of its own.
+pub trait SelectedAlgebraContext: ApproximationPolicy + Sized {
+    /// Error raised by the context's specialized authorities; construction
+    /// invariant failures convert into it.
+    type Error: From<FieldInvariantError> + From<hyperreal::Problem>;
+
+    /// The sign of a scalar under this context's policy, recording any
+    /// approximate decision it consumes.
+    fn real_sign(&self, value: &Real) -> Option<RealSign>;
+
+    /// The same context restricted to certified STRICT decisions.
+    fn strict_counterpart(&self) -> Self;
+
+    /// Evaluates `evaluate` inside a pass that forbids approximate terminals.
+    fn strict_predicate_pass<T>(&self, evaluate: impl FnOnce() -> T) -> T;
+
+    /// Evaluates `evaluate` inside a bounded exact predicate pass.
+    fn bounded_exact_predicate_pass<T>(&self, evaluate: impl FnOnce() -> T) -> T;
 
     /// Whether a bounded exact predicate pass is active, in which case an
     /// undecided specialized result is reported instead of refined further.
@@ -2016,7 +2042,7 @@ fn strict_coefficients_identically_zero(coefficients: &[Real]) -> Classification
 
 /// The sign of a dense tensor polynomial at a selected root tuple.
 #[track_caller]
-pub fn dense_polynomial_tuple_sign<C: SelectedRootSignContext>(
+pub fn dense_polynomial_tuple_sign<C: SelectedAlgebraContext>(
     polynomial: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     policy: &C,
@@ -2031,7 +2057,7 @@ pub fn dense_polynomial_tuple_sign<C: SelectedRootSignContext>(
 /// affine source collapse and reduction, structural zero, multi-source point
 /// substitution, the context's single-root authority, then refinement.
 #[track_caller]
-pub fn dense_polynomial_tuple_sign_owned<C: SelectedRootSignContext>(
+pub fn dense_polynomial_tuple_sign_owned<C: SelectedAlgebraContext>(
     polynomial: DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     policy: &C,
@@ -2128,7 +2154,7 @@ pub fn positive_root_sum_sign_from_components(
 /// The sign of `rational + radical*sqrt(radicand)` on the positive branch at
 /// a selected root tuple.
 #[track_caller]
-pub fn dense_positive_square_root_sum_sign<C: SelectedRootSignContext>(
+pub fn dense_positive_square_root_sum_sign<C: SelectedAlgebraContext>(
     rational: &DenseTensorPolynomial,
     radical: &DenseTensorPolynomial,
     radicand: &DenseTensorPolynomial,
@@ -2184,7 +2210,7 @@ pub fn dense_positive_square_root_sum_sign<C: SelectedRootSignContext>(
 /// The sign of a two-radical expression on its positive branches at a
 /// selected root tuple.
 #[track_caller]
-pub fn dense_two_positive_square_root_sum_sign<C: SelectedRootSignContext>(
+pub fn dense_two_positive_square_root_sum_sign<C: SelectedAlgebraContext>(
     expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
@@ -2307,7 +2333,7 @@ pub fn dense_two_positive_square_root_sum_sign<C: SelectedRootSignContext>(
 /// certificate makes that magnitude itself a one-root sheet-selection
 /// problem, so its two polynomial component signs decide exact equality
 /// without reconstructing the eliminated tensor coordinate.
-pub fn dense_two_positive_square_root_sum_sign_at_projected_zero<C: SelectedRootSignContext>(
+pub fn dense_two_positive_square_root_sum_sign_at_projected_zero<C: SelectedAlgebraContext>(
     expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
