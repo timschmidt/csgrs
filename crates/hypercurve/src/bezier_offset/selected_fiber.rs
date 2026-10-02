@@ -294,11 +294,11 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             return Ok(Classification::Decided(None));
         };
         Ok(
-            match represented_tensor_ratio(
+            match Classification::from(represented_tensor_ratio(
                 &numerator,
                 &denominator,
                 std::slice::from_ref(&retained_root),
-            ) {
+            )) {
                 Classification::Decided(value) => Classification::Decided(Some(value)),
                 Classification::Uncertain(_) => Classification::Decided(None),
             },

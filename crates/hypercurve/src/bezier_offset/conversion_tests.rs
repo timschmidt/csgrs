@@ -2203,16 +2203,16 @@ fn recursive_local_root_orders_against_close_coefficient_generators() {
                     panic!("the linear relation has exactly one root");
                 };
                 let selected = root.as_recursive_projective().unwrap();
-                let lower_order = represented_order_to_real(
+                let lower_order = Classification::from(represented_order_to_real(
                     &bezier_parameter_root_representation(&native),
                     &selected.data.lower,
                     &CurveContext::STRICT,
-                );
-                let upper_order = represented_order_to_real(
+                ));
+                let upper_order = Classification::from(represented_order_to_real(
                     &bezier_parameter_root_representation(&native),
                     &selected.data.upper,
                     &CurveContext::STRICT,
-                );
+                ));
                 assert_eq!(
                     lower_order == Classification::Decided(std::cmp::Ordering::Greater)
                         && upper_order == Classification::Decided(std::cmp::Ordering::Less),
@@ -45577,22 +45577,22 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     let nonzero_common =
         DenseTensorPolynomial::from_axis_polynomial(2, 0, &[Real::one(), Real::one()]).unwrap();
     let cancellable_numerator = selected_axis.multiply(&nonzero_common).unwrap();
-    let Classification::Decided(canceled) = represented_tensor_ratio(
+    let Classification::Decided(canceled) = Classification::from(represented_tensor_ratio(
         &cancellable_numerator,
         &nonzero_common,
         std::slice::from_ref(&first),
-    ) else {
+    )) else {
         panic!("a nonvanishing exact common factor must remain cancellable");
     };
     assert!(represented_roots_strictly_equal(&canceled, &first));
     let selected_minimal =
         DenseTensorPolynomial::from_axis_polynomial(2, 0, &first.polynomial_coefficients).unwrap();
     assert_eq!(
-        represented_tensor_ratio(
+        Classification::from(represented_tensor_ratio(
             &selected_minimal,
             &selected_minimal,
             std::slice::from_ref(&first),
-        ),
+        )),
         Classification::Uncertain(UncertaintyReason::Boundary),
         "cancellation must not turn an authored algebraic 0/0 into one",
     );
@@ -45623,14 +45623,16 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
         refined_represented_root(&second, 64),
     ];
     let nested_bounded_radical = refined_represented_root(&signed_radical, 64);
-    let nested_bounded_numerator = dense_tensor_interval(&one, &nested_bounded_sources).unwrap();
-    let nested_bounded_denominator = represented_tensor_nested_interval(
-        &difference,
-        &nested_candidate,
-        &nested_bounded_sources,
-        &nested_bounded_radical,
-    )
-    .unwrap();
+    let nested_bounded_numerator =
+        hypersolve::represented_root::dense_tensor_interval(&one, &nested_bounded_sources).unwrap();
+    let nested_bounded_denominator =
+        hypersolve::represented_root::represented_tensor_nested_interval(
+            &difference,
+            &nested_candidate,
+            &nested_bounded_sources,
+            &nested_bounded_radical,
+        )
+        .unwrap();
     assert!(
         nested_bounded_numerator
             .divide(&nested_bounded_denominator)
@@ -45641,7 +45643,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     let nested_zero_candidate =
         DenseTensorPolynomial::from_axis_polynomial(3, 0, std::slice::from_ref(&half)).unwrap();
     assert_eq!(
-        represented_tensor_nested_ratio(
+        Classification::from(represented_tensor_nested_ratio(
             &one,
             &zero,
             &nested_zero_retained,
@@ -45649,7 +45651,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
             &discriminant,
             &[first.clone(), second.clone()],
             &signed_radical,
-        ),
+        )),
         Classification::Uncertain(UncertaintyReason::Boundary),
         "the exact correlation -sqrt(1/2)+sqrt(2)/2 must remain undefined",
     );
@@ -45660,15 +45662,17 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
         DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
     let source_free_discriminant =
         DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::from(2_i8)]).unwrap();
-    let Classification::Decided(source_free_nested) = represented_tensor_nested_ratio(
-        &source_free_zero,
-        &source_free_one,
-        &source_free_one,
-        &source_free_zero,
-        &source_free_discriminant,
-        &[],
-        &signed_radical,
-    ) else {
+    let Classification::Decided(source_free_nested) =
+        Classification::from(represented_tensor_nested_ratio(
+            &source_free_zero,
+            &source_free_one,
+            &source_free_one,
+            &source_free_zero,
+            &source_free_discriminant,
+            &[],
+            &signed_radical,
+        ))
+    else {
         panic!("a source-free nested quotient must reuse the ordinary quotient kernel");
     };
     assert!(represented_roots_strictly_equal(
@@ -45679,9 +45683,11 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
         refined_represented_root(&first, 128),
         refined_represented_root(&second, 128),
     ];
-    let ratio_bounded_numerator = dense_tensor_interval(&one, &ratio_bounded_sources).unwrap();
+    let ratio_bounded_numerator =
+        hypersolve::represented_root::dense_tensor_interval(&one, &ratio_bounded_sources).unwrap();
     let ratio_bounded_denominator =
-        dense_tensor_interval(&difference, &ratio_bounded_sources).unwrap();
+        hypersolve::represented_root::dense_tensor_interval(&difference, &ratio_bounded_sources)
+            .unwrap();
     assert!(
         ratio_bounded_numerator
             .divide(&ratio_bounded_denominator)
@@ -45713,8 +45719,12 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
                 &[(&first, &Real::one()), (&second, &Real::from(-1_i8))],
                 &Real::zero(),
             )),
-            represented_tensor_ratio(&one, &difference, &[first.clone(), second.clone()]),
-            represented_tensor_nested_ratio(
+            Classification::from(represented_tensor_ratio(
+                &one,
+                &difference,
+                &[first.clone(), second.clone()],
+            )),
+            Classification::from(represented_tensor_nested_ratio(
                 &one,
                 &zero,
                 &difference,
@@ -45722,7 +45732,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
                 &discriminant,
                 &[first.clone(), second.clone()],
                 &signed_radical,
-            ),
+            )),
         )
     };
     #[cfg(feature = "dispatch-trace")]

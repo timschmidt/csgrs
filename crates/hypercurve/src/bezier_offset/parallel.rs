@@ -9894,8 +9894,16 @@ impl BezierAnalyticParallelPoint2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let selected = std::slice::from_ref(&parameter);
-        let source_x = represented_tensor_ratio(&x_numerator, &weight_tensor, selected);
-        let source_y = represented_tensor_ratio(&y_numerator, &weight_tensor, selected);
+        let source_x = Classification::from(represented_tensor_ratio(
+            &x_numerator,
+            &weight_tensor,
+            selected,
+        ));
+        let source_y = Classification::from(represented_tensor_ratio(
+            &y_numerator,
+            &weight_tensor,
+            selected,
+        ));
         let reason = [&source_x, &source_y]
             .into_iter()
             .find_map(|value| match value {

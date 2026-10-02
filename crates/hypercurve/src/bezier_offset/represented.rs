@@ -67,325 +67,6 @@ pub(super) fn represented_point_bounds_refined(
     ))
 }
 
-pub(super) fn represented_value_nonzero(
-    value: Classification<AlgebraicRootRepresentation>,
-) -> Classification<()> {
-    let value = match value {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    match Classification::from(represented_policy_sign(&value, &CurveContext::STRICT)) {
-        Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-            Classification::Decided(())
-        }
-        Classification::Decided(RealSign::Zero) => {
-            Classification::Uncertain(UncertaintyReason::Boundary)
-        }
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    }
-}
-
-pub(super) fn represented_dense_nonzero(
-    polynomial: &DenseTensorPolynomial,
-    sources: &[AlgebraicRootRepresentation],
-) -> Classification<()> {
-    represented_value_nonzero(Classification::from(represented_dense_value_refined(
-        polynomial, sources,
-    )))
-}
-
-/// Materializes `(A + branch*B*sqrt(S)) / (C + branch*D*sqrt(S))`
-/// from one retained tensor authority. The supplied signed radical interval
-/// selects the authored square-root sheet; the exact squared relation remains
-/// independent of that procedural branch choice.
-pub(super) fn represented_tensor_nested_ratio(
-    numerator_retained: &DenseTensorPolynomial,
-    numerator_candidate: &DenseTensorPolynomial,
-    denominator_retained: &DenseTensorPolynomial,
-    denominator_candidate: &DenseTensorPolynomial,
-    discriminant: &DenseTensorPolynomial,
-    sources: &[AlgebraicRootRepresentation],
-    signed_radical: &AlgebraicRootRepresentation,
-) -> Classification<AlgebraicRootRepresentation> {
-    let rank = sources.len() + 1;
-    if [
-        numerator_retained,
-        numerator_candidate,
-        denominator_retained,
-        denominator_candidate,
-        discriminant,
-    ]
-    .into_iter()
-    .any(|polynomial| {
-        polynomial.dimensions().len() != rank || polynomial.dimensions().last() != Some(&1)
-    }) {
-        return Classification::Uncertain(UncertaintyReason::Unsupported);
-    }
-    // With no retained tensor axes this is exactly an ordinary Mobius image
-    // of the already represented signed radical. Reuse the complete quotient
-    // authority instead of maintaining a second transform loop.
-    if sources.is_empty() {
-        let (Some(numerator), Some(denominator)) = (
-            DenseTensorPolynomial::from_axis_polynomial(
-                2,
-                0,
-                &[
-                    numerator_retained.coefficients()[0].clone(),
-                    numerator_candidate.coefficients()[0].clone(),
-                ],
-            ),
-            DenseTensorPolynomial::from_axis_polynomial(
-                2,
-                0,
-                &[
-                    denominator_retained.coefficients()[0].clone(),
-                    denominator_candidate.coefficients()[0].clone(),
-                ],
-            ),
-        ) else {
-            return Classification::Uncertain(UncertaintyReason::Unsupported);
-        };
-        return represented_tensor_ratio(
-            &numerator,
-            &denominator,
-            std::slice::from_ref(signed_radical),
-        );
-    }
-    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
-        rank,
-        sources.len(),
-        &[Real::zero(), Real::one()],
-    ) else {
-        return Classification::Uncertain(UncertaintyReason::Unsupported);
-    };
-    let Some(relation) = (|| {
-        let retained = denominator_retained
-            .multiply(&output)?
-            .subtract(numerator_retained)?;
-        let candidate = denominator_candidate
-            .multiply(&output)?
-            .subtract(numerator_candidate)?;
-        retained
-            .multiply(&retained)?
-            .subtract(&candidate.multiply(&candidate)?.multiply(discriminant)?)
-    })() else {
-        return Classification::Uncertain(UncertaintyReason::Unsupported);
-    };
-    for refinement_steps in [0, 4, 8, 16, 32, 64] {
-        let refined_sources = sources
-            .iter()
-            .map(|source| refined_represented_root(source, refinement_steps))
-            .collect::<Vec<_>>();
-        let refined_radical = refined_represented_root(signed_radical, refinement_steps);
-        let (Some(numerator), Some(denominator)) = (
-            represented_tensor_nested_interval(
-                numerator_retained,
-                numerator_candidate,
-                &refined_sources,
-                &refined_radical,
-            ),
-            represented_tensor_nested_interval(
-                denominator_retained,
-                denominator_candidate,
-                &refined_sources,
-                &refined_radical,
-            ),
-        ) else {
-            continue;
-        };
-        let Some(interval) = numerator.divide(&denominator) else {
-            continue;
-        };
-        #[cfg(test)]
-        if relation.dimensions().len() == 4
-            && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
-        {
-            eprintln!(
-                "tensor coordinate direct operation=represented-nested-ratio steps={refinement_steps}"
-            );
-        }
-        match Classification::from(represented_tensor_coordinate(
-            &relation,
-            &refined_sources,
-            &interval.lower,
-            &interval.upper,
-        )) {
-            decided @ Classification::Decided(_) => return decided,
-            Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            }
-            Classification::Uncertain(_) => {}
-        }
-    }
-    if let Classification::Uncertain(reason) = represented_value_nonzero(Classification::from(
-        represented_tensor_nested_value_refined(
-            denominator_retained,
-            denominator_candidate,
-            discriminant,
-            sources,
-            signed_radical,
-            128,
-            64,
-            "represented-nested-denominator-separation",
-        ),
-    )) {
-        return Classification::Uncertain(reason);
-    }
-    Classification::from(represented_tensor_coordinate_refined(
-        &relation,
-        sources,
-        128,
-        64,
-        "represented-nested-ratio-image-separation",
-        |refined_sources, refinement_steps| {
-            let refined_radical = refined_represented_root(signed_radical, refinement_steps);
-            let numerator = represented_tensor_nested_interval(
-                numerator_retained,
-                numerator_candidate,
-                refined_sources,
-                &refined_radical,
-            )?;
-            let denominator = represented_tensor_nested_interval(
-                denominator_retained,
-                denominator_candidate,
-                refined_sources,
-                &refined_radical,
-            )?;
-            numerator.divide(&denominator)
-        },
-    ))
-}
-
-/// Materializes one exact quotient of two retained tensor values.
-///
-/// The numerator and denominator stay in their common selected-root tensor
-/// until the output relation is constructed.  This is important for
-/// projective constructions such as a retained line-line intersection: first
-/// eliminating the two values independently can discard the cancellation
-/// which proves that the denominator is nonzero on the authored tuple.
-pub(super) fn represented_tensor_ratio(
-    numerator: &DenseTensorPolynomial,
-    denominator: &DenseTensorPolynomial,
-    sources: &[AlgebraicRootRepresentation],
-) -> Classification<AlgebraicRootRepresentation> {
-    let rank = sources.len() + 1;
-    if [numerator, denominator].into_iter().any(|polynomial| {
-        polynomial.dimensions().len() != rank || polynomial.dimensions().last() != Some(&1)
-    }) {
-        return Classification::Uncertain(UncertaintyReason::Unsupported);
-    }
-    // A rank-one tensor quotient is an ordinary rational function of one
-    // selected algebraic root. Cancel its exact polynomial content before
-    // invoking the general tensor-image eliminator. Recursive procedural
-    // geometry commonly arrives as `L(alpha) * H(alpha) / H(alpha)`; exposing
-    // the affine/Mobius image avoids manufacturing a high-degree resultant
-    // for a value already carried by the source field.
-    if sources.len() == 1
-        && numerator.dimensions().len() == 2
-        && numerator.dimensions()[1] == 1
-        && denominator.dimensions().len() == 2
-        && denominator.dimensions()[1] == 1
-        && let Some(common) = greatest_common_divisor_univariate_polynomials_exact(
-            numerator.coefficients(),
-            denominator.coefficients(),
-        )
-        && let (Some(numerator), Some(denominator)) = (
-            divide_univariate_polynomial_exact(numerator.coefficients(), &common),
-            divide_univariate_polynomial_exact(denominator.coefficients(), &common),
-        )
-    {
-        if common.len() > 1 {
-            let Some(common) = DenseTensorPolynomial::from_axis_polynomial(2, 0, &common) else {
-                return Classification::Uncertain(UncertaintyReason::Unsupported);
-            };
-            if let Classification::Uncertain(reason) = represented_dense_nonzero(&common, sources) {
-                return Classification::Uncertain(reason);
-            }
-        }
-        if numerator.len() == 1
-            && denominator.len() == 1
-            && let Ok(value) = &numerator[0] / &denominator[0]
-        {
-            return Classification::Decided(AlgebraicRootRepresentation::from_exact_value(&value));
-        }
-        if numerator.len() <= 2 && denominator.len() <= 2 {
-            let report = transform_algebraic_root_mobius(
-                &sources[0],
-                numerator.get(1).cloned().unwrap_or_else(Real::zero),
-                numerator.first().cloned().unwrap_or_else(Real::zero),
-                denominator.get(1).cloned().unwrap_or_else(Real::zero),
-                denominator.first().cloned().unwrap_or_else(Real::zero),
-                hypersolve::PredicatePolicy::STRICT,
-            );
-            if report.status == AlgebraicRootMobiusTransformStatus::Transformed
-                && let Some(representation) = report.representation
-            {
-                return Classification::Decided(representation);
-            }
-        }
-    }
-    let Some(output) = DenseTensorPolynomial::from_axis_polynomial(
-        rank,
-        sources.len(),
-        &[Real::zero(), Real::one()],
-    ) else {
-        return Classification::Uncertain(UncertaintyReason::Unsupported);
-    };
-    let Some(relation) = denominator
-        .multiply(&output)
-        .and_then(|product| product.subtract(numerator))
-    else {
-        return Classification::Uncertain(UncertaintyReason::Unsupported);
-    };
-    for refinement_steps in [0, 4, 8, 16, 32, 64, 128] {
-        let refined_sources = sources
-            .iter()
-            .map(|source| refined_represented_root(source, refinement_steps))
-            .collect::<Vec<_>>();
-        let (Some(numerator), Some(denominator)) = (
-            dense_tensor_interval(numerator, &refined_sources),
-            dense_tensor_interval(denominator, &refined_sources),
-        ) else {
-            continue;
-        };
-        let Some(interval) = numerator.divide(&denominator) else {
-            continue;
-        };
-        #[cfg(test)]
-        if relation.dimensions().len() == 4
-            && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
-        {
-            eprintln!(
-                "tensor coordinate direct operation=represented-tensor-ratio steps={refinement_steps}"
-            );
-        }
-        match Classification::from(represented_tensor_coordinate(
-            &relation,
-            &refined_sources,
-            &interval.lower,
-            &interval.upper,
-        )) {
-            Classification::Decided(value) => return Classification::Decided(value),
-            Classification::Uncertain(_) => {}
-        }
-    }
-    if let Classification::Uncertain(reason) = represented_dense_nonzero(denominator, sources) {
-        return Classification::Uncertain(reason);
-    }
-    Classification::from(represented_tensor_coordinate_refined(
-        &relation,
-        sources,
-        256,
-        128,
-        "represented-ratio-image-separation",
-        |refined_sources, _| {
-            let numerator = dense_tensor_interval(numerator, refined_sources)?;
-            let denominator = dense_tensor_interval(denominator, refined_sources)?;
-            numerator.divide(&denominator)
-        },
-    ))
-}
-
 #[allow(clippy::too_many_arguments)]
 pub(super) fn represented_tensor_circle_contact_location_parameter(
     unit_radial: &[DenseTensorPolynomial; 2],
@@ -432,7 +113,7 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let dot_value = represented_tensor_nested_ratio(
+    let dot_value = Classification::from(represented_tensor_nested_ratio(
         &dot_retained,
         &dot_candidate,
         common_denominator,
@@ -440,8 +121,8 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
         discriminant,
         sources,
         signed_radical,
-    );
-    let cross_value = represented_tensor_nested_ratio(
+    ));
+    let cross_value = Classification::from(represented_tensor_nested_ratio(
         &cross_retained,
         &cross_candidate,
         common_denominator,
@@ -449,7 +130,7 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
         discriminant,
         sources,
         signed_radical,
-    );
+    ));
     let (Classification::Decided(dot_value), Classification::Decided(cross_value)) =
         (dot_value, cross_value)
     else {
@@ -502,7 +183,7 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
     })() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let parameter = match represented_tensor_nested_ratio(
+    let parameter = match Classification::from(represented_tensor_nested_ratio(
         &cross_retained,
         &cross_candidate,
         &parameter_denominator_retained,
@@ -510,7 +191,7 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
         discriminant,
         sources,
         signed_radical,
-    ) {
+    )) {
         Classification::Decided(parameter) => parameter,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -561,34 +242,6 @@ pub(super) fn represented_strict_interior_bezier_parameter(
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
     BezierParameter2::from_algebraic_root_representation(&clipped, &CurveContext::STRICT)
-}
-
-pub(super) fn represented_order_to_real(
-    value: &AlgebraicRootRepresentation,
-    target: &Real,
-    policy: &CurveContext,
-) -> Classification<std::cmp::Ordering> {
-    if let Some(order) = represented_strict_order(
-        value,
-        &AlgebraicRootRepresentation::from_exact_value(target),
-    ) {
-        return Classification::Decided(order);
-    }
-    match Classification::from(represented_affine_coordinate(
-        &[(value, &Real::one())],
-        &(-target),
-    )) {
-        Classification::Decided(difference) => {
-            Classification::from(represented_policy_sign(&difference, policy)).map(
-                |sign| match sign {
-                    RealSign::Negative => std::cmp::Ordering::Less,
-                    RealSign::Zero => std::cmp::Ordering::Equal,
-                    RealSign::Positive => std::cmp::Ordering::Greater,
-                },
-            )
-        }
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    }
 }
 
 pub(super) fn represented_circle_contact_location_parameter_from_dot_cross(

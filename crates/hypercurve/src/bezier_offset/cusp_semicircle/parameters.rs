@@ -218,15 +218,17 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             let candidate = dense(&expression.radical)
                 .and_then(|polynomial| dense_tensor_with_output_axis(&polynomial));
             match (retained, candidate) {
-                (Some(retained), Some(candidate)) => represented_tensor_nested_ratio(
-                    &retained,
-                    &candidate,
-                    &denominator,
-                    &zero,
-                    &discriminant,
-                    &sources,
-                    &signed_radical,
-                ),
+                (Some(retained), Some(candidate)) => {
+                    Classification::from(represented_tensor_nested_ratio(
+                        &retained,
+                        &candidate,
+                        &denominator,
+                        &zero,
+                        &discriminant,
+                        &sources,
+                        &signed_radical,
+                    ))
+                }
                 _ => Classification::Uncertain(UncertaintyReason::Unsupported),
             }
         };
@@ -415,7 +417,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let coordinate = |expression: &BezierAlgebraicCuspTwoTermExpression2| {
             let retained = bivariate_tensor_with_output_axis(&expression.rational)?;
             let candidate = bivariate_tensor_with_output_axis(&expression.radical)?;
-            Some(represented_tensor_nested_ratio(
+            Some(Classification::from(represented_tensor_nested_ratio(
                 &retained,
                 &candidate,
                 &denominator,
@@ -423,7 +425,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 &discriminant,
                 &sources,
                 &radical,
-            ))
+            )))
         };
         let (Some(x), Some(y)) = (coordinate(&system.point_x), coordinate(&system.point_y)) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -1162,7 +1164,11 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         };
         let coordinate = |numerator: &DenseTensorPolynomial| {
             let numerator = dense_tensor_with_output_axis(numerator)?;
-            Some(represented_tensor_ratio(&numerator, &denominator, &sources))
+            Some(Classification::from(represented_tensor_ratio(
+                &numerator,
+                &denominator,
+                &sources,
+            )))
         };
         let (Some(x), Some(y)) = (
             coordinate(&system.geometry.point_x.rational),

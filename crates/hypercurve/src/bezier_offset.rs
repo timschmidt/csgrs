@@ -87,17 +87,16 @@ use hypersolve::represented_root::{
     NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, dense_polynomial_value_interval,
     dense_polynomial_value_interval_with_coefficient_precision,
     dense_positive_square_root_interval, dense_strict_interval_sign,
-    dense_substitute_affinely_related_sources, dense_tensor_interval,
-    dense_tensor_interval_with_coefficient_precision, dense_tuple_sign_by_refinement,
-    dense_two_positive_square_root_interval,
+    dense_substitute_affinely_related_sources, dense_tensor_interval_with_coefficient_precision,
+    dense_tuple_sign_by_refinement, dense_two_positive_square_root_interval,
     dense_two_positive_square_root_interval_with_coefficient_precision, refined_represented_root,
     represented_affine_coordinate, represented_affine_tensor_basis,
-    represented_dense_value_refined, represented_policy_sign, represented_ratio,
-    represented_roots_strictly_equal, represented_strict_order, represented_strict_sign,
-    represented_tensor_coordinate, represented_tensor_coordinate_refined,
-    represented_tensor_nested_interval, represented_tensor_nested_value_refined,
-    represented_univariate_coordinate, represented_vector_dot_cross,
-    represented_zero_offset_unit_scales, same_positive_root_sheet_signs,
+    represented_dense_value_refined, represented_order_to_real, represented_policy_sign,
+    represented_ratio, represented_roots_strictly_equal, represented_strict_order,
+    represented_strict_sign, represented_tensor_coordinate_refined,
+    represented_tensor_nested_ratio, represented_tensor_ratio, represented_univariate_coordinate,
+    represented_vector_dot_cross, represented_zero_offset_unit_scales,
+    same_positive_root_sheet_signs,
 };
 use hypersolve::tensor_support::dense_tensor_is_stored_zero;
 use hypersolve::tensor_support::{
@@ -11573,7 +11572,7 @@ fn represented_chord_unit_direction(
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let x = represented_tensor_nested_ratio(
+    let x = Classification::from(represented_tensor_nested_ratio(
         &numerator_x,
         &zero,
         &zero,
@@ -11581,8 +11580,8 @@ fn represented_chord_unit_direction(
         &speed_squared,
         &sources,
         &speed,
-    );
-    let y = represented_tensor_nested_ratio(
+    ));
+    let y = Classification::from(represented_tensor_nested_ratio(
         &numerator_y,
         &zero,
         &zero,
@@ -11590,7 +11589,7 @@ fn represented_chord_unit_direction(
         &speed_squared,
         &sources,
         &speed,
-    );
+    ));
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::record(
         "hypercurve",
@@ -12053,7 +12052,7 @@ fn represented_parallel_chord_parameter_coordinates(
                 return Classification::Decided(representation.clone());
             }
         }
-        represented_tensor_ratio(numerator, &speed, &sources)
+        Classification::from(represented_tensor_ratio(numerator, &speed, &sources))
     };
     let x = materialize(&x_numerator);
     let y = materialize(&y_numerator);
@@ -12166,8 +12165,16 @@ fn represented_projective_line_intersection(
     })() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
-    let x = represented_tensor_ratio(&x_numerator, &denominator, sources);
-    let y = represented_tensor_ratio(&y_numerator, &denominator, sources);
+    let x = Classification::from(represented_tensor_ratio(
+        &x_numerator,
+        &denominator,
+        sources,
+    ));
+    let y = Classification::from(represented_tensor_ratio(
+        &y_numerator,
+        &denominator,
+        sources,
+    ));
     match (x, y) {
         (Classification::Decided(x), Classification::Decided(y)) => {
             Classification::Decided([x, y].map(|coordinate| {

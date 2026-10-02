@@ -5427,7 +5427,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let negative_projection = center_projection
                 .scale(&Real::from(-1_i8))
                 .expect("a represented line projection remains in its tensor budget");
-            let chord_parameter = match represented_tensor_nested_ratio(
+            let chord_parameter = match Classification::from(represented_tensor_nested_ratio(
                 &negative_projection,
                 &one,
                 &direction_squared,
@@ -5435,7 +5435,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 &discriminant,
                 &sources,
                 &signed_radical,
-            ) {
+            )) {
                 Classification::Decided(parameter) => parameter,
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -5443,7 +5443,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let coordinate = |retained: &DenseTensorPolynomial,
                               candidate: &DenseTensorPolynomial| {
-                represented_tensor_nested_ratio(
+                Classification::from(represented_tensor_nested_ratio(
                     retained,
                     candidate,
                     &direction_squared,
@@ -5451,7 +5451,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     &discriminant,
                     &sources,
                     &signed_radical,
-                )
+                ))
             };
             let point = match (
                 coordinate(&point_retained_x, &dx),

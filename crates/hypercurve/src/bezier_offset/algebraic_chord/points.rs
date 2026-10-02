@@ -5950,7 +5950,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 Axis2::X => &coordinates[0],
                 Axis2::Y => &coordinates[1],
             };
-            return Ok(represented_order_to_real(coordinate, value, policy));
+            return Ok(Classification::from(represented_order_to_real(
+                coordinate, value, policy,
+            )));
         }
         let (x_factor, y_factor) = match axis {
             Axis2::X => (Real::one(), Real::zero()),
@@ -5999,7 +6001,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 Axis2::X => &coordinates[0],
                 Axis2::Y => &coordinates[1],
             };
-            let represented = represented_order_to_real(coordinate, value, policy);
+            let represented =
+                Classification::from(represented_order_to_real(coordinate, value, policy));
             if matches!(represented, Classification::Decided(_)) {
                 return Ok(represented);
             }

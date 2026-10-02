@@ -1449,7 +1449,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 }
             } else {
-                let x = represented_tensor_nested_ratio(
+                let x = Classification::from(represented_tensor_nested_ratio(
                     &point_retained[0],
                     &first_radial_candidate[0],
                     &twice_q,
@@ -1457,8 +1457,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                     &discriminant,
                     &sources,
                     &signed_radical,
-                );
-                let y = represented_tensor_nested_ratio(
+                ));
+                let y = Classification::from(represented_tensor_nested_ratio(
                     &point_retained[1],
                     &first_radial_candidate[1],
                     &twice_q,
@@ -1466,7 +1466,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     &discriminant,
                     &sources,
                     &signed_radical,
-                );
+                ));
                 match (x, y) {
                     (Classification::Decided(x), Classification::Decided(y)) => [x, y],
                     (Classification::Uncertain(UncertaintyReason::Unsupported), _)

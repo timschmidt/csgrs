@@ -356,6 +356,9 @@ impl<T> From<hypersolve::RepresentedOutcome<T>> for Classification<T> {
             hypersolve::RepresentedOutcome::Undecided => {
                 Self::Uncertain(UncertaintyReason::Predicate)
             }
+            hypersolve::RepresentedOutcome::Vanishes => {
+                Self::Uncertain(UncertaintyReason::Boundary)
+            }
         }
     }
 }
