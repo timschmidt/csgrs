@@ -110,10 +110,9 @@ use hypersolve::represented_root::{
     represented_affine_coordinate, represented_affine_tensor_basis,
     represented_dense_value_refined, represented_order_to_real, represented_policy_sign,
     represented_projective_line_intersection, represented_ratio, represented_roots_strictly_equal,
-    represented_strict_order, represented_strict_sign, represented_tensor_coordinate_refined,
-    represented_tensor_nested_ratio, represented_tensor_ratio, represented_univariate_coordinate,
-    represented_vector_dot_cross, represented_zero_offset_unit_scales,
-    same_positive_root_sheet_signs,
+    represented_strict_order, represented_strict_sign, represented_tensor_nested_ratio,
+    represented_tensor_ratio, represented_univariate_coordinate, represented_vector_dot_cross,
+    represented_zero_offset_unit_scales, same_positive_root_sheet_signs,
 };
 use hypersolve::tensor_support::{
     bivariate_dense_tensor, bivariate_tensor_with_output_axis,
@@ -3114,7 +3113,7 @@ struct BezierRepresentedCircleChordContactData2 {
 #[derive(Debug)]
 enum BezierRepresentedCircleChordAngularParameter2 {
     Materialized(BezierParameter2),
-    Recursive(BezierRecursiveQuadraticProjectiveScalar2),
+    Recursive(RecursiveQuadraticProjectiveScalar),
 }
 
 /// Shared exact authority for scalar roots retained directly in one selected
@@ -4050,13 +4049,6 @@ struct BezierChordNormalDenseChordParameterMapSystem2 {
     recursive_contact_fields: [std::sync::OnceLock<RecursiveQuadraticField>; 3],
 }
 
-#[derive(Clone, Debug)]
-struct BezierRecursiveQuadraticProjectiveScalar2 {
-    numerator: RecursiveQuadraticValue,
-    /// Certified strictly positive by construction.
-    denominator: RecursiveQuadraticValue,
-}
-
 /// Exact root of one strictly monotone authored chord/parallel incidence.
 ///
 /// `source_lower` and `source_upper` are represented parameters carrying
@@ -4092,7 +4084,7 @@ struct BezierRecursiveMonotoneRefinementCache2 {
 
 #[derive(Clone, Debug)]
 enum BezierRecursiveProjectiveParameterAuthority2 {
-    Projective(BezierRecursiveQuadraticProjectiveScalar2),
+    Projective(RecursiveQuadraticProjectiveScalar),
     Monotone(BezierRecursiveMonotoneParameter2),
     Polynomial {
         authority: Arc<BezierRecursivePolynomialParameterAuthority2>,
@@ -9976,7 +9968,7 @@ pub(crate) fn affine_line_parameter_at_incident_point(
         denominator = reversed_denominator;
     }
     Ok(BezierRecursiveProjectiveParameter2::new(
-        BezierRecursiveQuadraticProjectiveScalar2 {
+        RecursiveQuadraticProjectiveScalar {
             numerator,
             denominator,
         },
@@ -11356,7 +11348,7 @@ fn represented_chord_unit_direction(
             };
             let mut represented = Vec::with_capacity(2);
             for numerator in [x, y] {
-                match (BezierRecursiveQuadraticProjectiveScalar2 {
+                match (RecursiveQuadraticProjectiveScalar {
                     numerator,
                     denominator: speed.clone(),
                 })
@@ -11859,7 +11851,7 @@ impl BezierRepresentedChordNormalLineAngularSystem2 {
         Ok(Classification::Decided(Some((
             BezierAlgebraicCuspSemicircleContactLocation2::Interior,
             BezierRepresentedCircleChordAngularParameter2::Recursive(
-                BezierRecursiveQuadraticProjectiveScalar2 {
+                RecursiveQuadraticProjectiveScalar {
                     numerator: oriented_cross,
                     denominator,
                 },

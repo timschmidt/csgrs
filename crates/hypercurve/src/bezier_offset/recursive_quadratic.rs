@@ -985,7 +985,7 @@ pub(crate) fn quadratic_conic_parameter_at_incident_point(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let parameter = BezierRecursiveQuadraticProjectiveScalar2 {
+    let parameter = RecursiveQuadraticProjectiveScalar {
         numerator,
         denominator,
     };
@@ -1312,7 +1312,7 @@ pub(super) fn represented_projective_evidence_points(
 
 pub(super) fn recursive_projective_polynomial_value(
     coefficients: &[RecursiveQuadraticValue],
-    scalar: &BezierRecursiveQuadraticProjectiveScalar2,
+    scalar: &RecursiveQuadraticProjectiveScalar,
 ) -> Option<RecursiveQuadraticValue> {
     let field = scalar.denominator.field();
     let mut coefficients = coefficients.iter().rev();
@@ -1512,7 +1512,7 @@ pub(super) fn recursive_quadratic_polynomial_projective_roots(
     coefficients: &[RecursiveQuadraticValue],
     strict_unit_crossing: Option<&BezierRecursiveQuadraticUnitCrossing2>,
     policy: &CurveContext,
-) -> CurveResult<Option<Vec<BezierRecursiveQuadraticProjectiveScalar2>>> {
+) -> CurveResult<Option<Vec<RecursiveQuadraticProjectiveScalar>>> {
     let strict = policy.strict_counterpart();
     match coefficients {
         [constant, linear] => {
@@ -1530,7 +1530,7 @@ pub(super) fn recursive_quadratic_polynomial_projective_roots(
             let (Some(numerator), Some(denominator)) = (numerator, denominator) else {
                 return Ok(None);
             };
-            Ok(Some(vec![BezierRecursiveQuadraticProjectiveScalar2 {
+            Ok(Some(vec![RecursiveQuadraticProjectiveScalar {
                 numerator,
                 denominator,
             }]))
@@ -1575,11 +1575,11 @@ pub(super) fn recursive_quadratic_polynomial_projective_roots(
                 // a*x*(x-1). Keep those exact scalars instead of adjoining
                 // sqrt(a²) and later reconstructing 0 and 1 from that field.
                 return Ok(Some(vec![
-                    BezierRecursiveQuadraticProjectiveScalar2 {
+                    RecursiveQuadraticProjectiveScalar {
                         numerator: zero,
                         denominator: one.clone(),
                     },
-                    BezierRecursiveQuadraticProjectiveScalar2 {
+                    RecursiveQuadraticProjectiveScalar {
                         numerator: one.clone(),
                         denominator: one,
                     },
@@ -1695,7 +1695,7 @@ pub(super) fn recursive_quadratic_polynomial_projective_roots(
                         )
                     })?;
                 }
-                roots.push(BezierRecursiveQuadraticProjectiveScalar2 {
+                roots.push(RecursiveQuadraticProjectiveScalar {
                     numerator,
                     denominator: denominator.clone(),
                 });

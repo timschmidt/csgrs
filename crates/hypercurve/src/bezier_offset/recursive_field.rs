@@ -3062,7 +3062,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
                             } else {
                                 (constant.clone(), linear.scale(&Real::from(-1_i8))?)
                             };
-                            let preimage = BezierRecursiveQuadraticProjectiveScalar2 {
+                            let preimage = RecursiveQuadraticProjectiveScalar {
                                 numerator,
                                 denominator,
                             };
@@ -3130,7 +3130,7 @@ impl BezierRecursiveProjectiveChordRationalSystem2 {
 }
 
 impl BezierRecursiveProjectiveParameter2 {
-    pub(super) fn projective_scalar(&self) -> Option<&BezierRecursiveQuadraticProjectiveScalar2> {
+    pub(super) fn projective_scalar(&self) -> Option<&RecursiveQuadraticProjectiveScalar> {
         match &self.data.authority {
             BezierRecursiveProjectiveParameterAuthority2::Projective(scalar) => Some(scalar),
             BezierRecursiveProjectiveParameterAuthority2::Monotone(_)
@@ -3282,14 +3282,14 @@ impl BezierRecursiveProjectiveParameter2 {
     }
 
     pub(super) fn new(
-        scalar: BezierRecursiveQuadraticProjectiveScalar2,
+        scalar: RecursiveQuadraticProjectiveScalar,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         Self::new_with_certified_bounds(scalar, None, policy)
     }
 
     pub(super) fn new_with_certified_bounds(
-        scalar: BezierRecursiveQuadraticProjectiveScalar2,
+        scalar: RecursiveQuadraticProjectiveScalar,
         certified_bounds: Option<(Real, Real)>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
@@ -4243,7 +4243,7 @@ impl BezierRecursiveProjectiveParameter2 {
                     RealSign::Positive => std::cmp::Ordering::Greater,
                 }));
             }
-            match first.joined_projective_difference(second, policy)? {
+            match projective_scalar_joined_projective_difference(first, second, policy)? {
                 Classification::Decided(Some(difference)) => {
                     let sign = match difference.sign(policy)? {
                         decided @ Classification::Decided(_) => decided,
@@ -4263,7 +4263,7 @@ impl BezierRecursiveProjectiveParameter2 {
                 }
             }
             if let Classification::Decided(Some(difference)) =
-                first.merged_projective_difference(second, policy)?
+                projective_scalar_merged_projective_difference(first, second, policy)?
             {
                 let sign = match difference.sign(policy)? {
                     decided @ Classification::Decided(_) => decided,
@@ -4667,7 +4667,7 @@ impl BezierRecursiveProjectiveParameter2 {
                 CurveError::Topology("a recursive affine parameter crossed retained fields".into())
             })?;
         Self::new(
-            BezierRecursiveQuadraticProjectiveScalar2 {
+            RecursiveQuadraticProjectiveScalar {
                 numerator,
                 denominator: scalar.denominator.clone(),
             },
@@ -4885,7 +4885,7 @@ impl BezierRecursiveProjectiveParameter2 {
             }
         }
         Self::new(
-            BezierRecursiveQuadraticProjectiveScalar2 {
+            RecursiveQuadraticProjectiveScalar {
                 numerator: mapped_numerator,
                 denominator: mapped_denominator,
             },
@@ -5222,7 +5222,7 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
         let coordinate = |numerator: &RecursiveQuadraticValue| {
-            BezierRecursiveQuadraticProjectiveScalar2 {
+            RecursiveQuadraticProjectiveScalar {
                 numerator: numerator.clone(),
                 denominator: self.denominator.clone(),
             }
@@ -5734,274 +5734,6 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
     }
 }
 
-impl BezierRecursiveQuadraticProjectiveScalar2 {
-    /// Forms `self - other` in the least retained common quadratic tower.
-    /// This is the exact comparison path for independently rebuilt contacts:
-    /// interval refinement can separate unequal values, but equal transformed
-    /// roots require their authored positive generators to be joined rather
-    /// than globally projected.
-    pub(super) fn joined_projective_difference(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<RecursiveQuadraticValue>>> {
-        let first_field = self.denominator.field();
-        let second_field = other.denominator.field();
-        let Some(first_zero) = first_field.constant(Real::zero()) else {
-            return Ok(Classification::Decided(None));
-        };
-        let first = BezierRecursiveQuadraticProjectivePoint2 {
-            x: self.numerator.clone(),
-            y: first_zero,
-            denominator: self.denominator.clone(),
-        };
-        let Some(second_zero) = second_field.constant(Real::zero()) else {
-            return Ok(Classification::Decided(None));
-        };
-        let second = BezierRecursiveQuadraticProjectivePoint2 {
-            x: other.numerator.clone(),
-            y: second_zero,
-            denominator: other.denominator.clone(),
-        };
-        let joined = match first.joined_pair(&second, policy)? {
-            Classification::Decided(Some(joined)) => joined,
-            Classification::Decided(None) => {
-                let (first_base, _) = first_field.base_and_extension_path();
-                let Some(second) = second.rebased_to_equivalent_base(first_base) else {
-                    return Ok(Classification::Decided(None));
-                };
-                match first.joined_pair(&second, policy)? {
-                    Classification::Decided(Some(joined)) => joined,
-                    Classification::Decided(None) => {
-                        return Ok(Classification::Decided(None));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let (_, first, second) = joined;
-        let Some(second_product) = second.x.multiply(&first.denominator) else {
-            return Ok(Classification::Decided(None));
-        };
-        let Some(difference) = first
-            .x
-            .multiply(&second.denominator)
-            .and_then(|first| first.subtract(&second_product))
-        else {
-            return Ok(Classification::Decided(None));
-        };
-        Ok(Classification::Decided(Some(difference)))
-    }
-
-    /// General common-field comparison when the two towers were rebuilt over
-    /// different dense base allocations (for example after an exact
-    /// similarity). The merge imports each already-selected positive base
-    /// root and extension; it does not choose a new algebraic sheet.
-    pub(super) fn merged_projective_difference(
-        &self,
-        other: &Self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<Option<RecursiveQuadraticValue>>> {
-        let first_field = self.denominator.field();
-        let second_field = other.denominator.field();
-        let first = BezierRecursiveQuadraticProjectivePoint2 {
-            x: self.numerator.clone(),
-            y: first_field.constant(Real::zero()).ok_or_else(|| {
-                CurveError::Topology("a recursive scalar lost its field zero".into())
-            })?,
-            denominator: self.denominator.clone(),
-        };
-        let second = BezierRecursiveQuadraticProjectivePoint2 {
-            x: other.numerator.clone(),
-            y: second_field.constant(Real::zero()).ok_or_else(|| {
-                CurveError::Topology("a recursive scalar lost its field zero".into())
-            })?,
-            denominator: other.denominator.clone(),
-        };
-        let (_, mut first, second) =
-            match recursive_merge_projective_point_fields(&first_field, &[first], &second, policy)?
-            {
-                Classification::Decided(Some(merged)) => merged,
-                Classification::Decided(None) => return Ok(Classification::Decided(None)),
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let first = first
-            .pop()
-            .expect("one recursive scalar merge preserves its first operand");
-        let difference = first.x.multiply(&second.denominator).and_then(|value| {
-            second
-                .x
-                .multiply(&first.denominator)
-                .and_then(|other| value.subtract(&other))
-        });
-        Ok(Classification::Decided(difference))
-    }
-
-    pub(super) fn interval(&self, refinement_steps: usize) -> Option<RealInterval> {
-        self.numerator
-            .interval(refinement_steps)?
-            .divide(&self.denominator.interval(refinement_steps)?)
-    }
-
-    /// Only source-free parameters may bypass selected-root publication.
-    /// Their arithmetic shares the retained-witness evaluator; witnessing a
-    /// selected axis alone does not permit changing its parameter authority.
-    pub(super) fn exact_real_value(&self) -> Option<Real> {
-        for value in [&self.numerator, &self.denominator] {
-            let field = value.field();
-            let mut field = &field;
-            loop {
-                match field {
-                    RecursiveQuadraticField::Base(base) if base.sources.is_empty() => break,
-                    RecursiveQuadraticField::Base(_) => return None,
-                    RecursiveQuadraticField::Extension(extension) => field = &extension.parent,
-                }
-            }
-        }
-        (self.numerator.exact_real_value_with_retained_witnesses()?
-            / self
-                .denominator
-                .exact_real_value_with_retained_witnesses()?)
-        .ok()
-    }
-
-    /// Publishes this projective scalar as one selected algebraic root.
-    ///
-    /// Already-proved exact scalar witnesses publish directly over their
-    /// coefficient field. Otherwise the linear image equation
-    /// `numerator - z * denominator` is projected through the retained tower.
-    /// Both paths retain selected-root evidence for ordinary fiber replay.
-    pub(super) fn represented_value(
-        &self,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<AlgebraicRootRepresentation>> {
-        if !self.numerator.field().same_field(&self.denominator.field()) {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-        match self.denominator.sign(&policy.strict_counterpart())? {
-            Classification::Decided(RealSign::Positive) => {}
-            Classification::Decided(RealSign::Zero | RealSign::Negative) => {
-                return Err(CurveError::Topology(
-                    "a recursive projective scalar lost its positive denominator".into(),
-                ));
-            }
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
-        let exact_numerator = self.numerator.exact_real_value_with_retained_witnesses();
-        let exact_denominator = self.denominator.exact_real_value_with_retained_witnesses();
-        if let (Some(numerator), Some(denominator)) = (exact_numerator, exact_denominator)
-            && let Ok(inverse) = denominator.inverse_ref_assuming_nonzero()
-        {
-            let representation =
-                AlgebraicRootRepresentation::from_exact_value(&(numerator * inverse));
-            #[cfg(feature = "dispatch-trace")]
-            hyperreal::dispatch_trace::record(
-                "hypercurve",
-                "recursive-projective-scalar-image",
-                "exact-scalar-witness",
-            );
-            return Ok(Classification::Decided(representation));
-        }
-        let Some((base, mut relation)) = recursive_quadratic_polynomial_projection(vec![
-            self.numerator.clone(),
-            self.denominator.scale(&Real::from(-1_i8)).ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive scalar image exceeded its coefficient-field budget".into(),
-                )
-            })?,
-        ]) else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        };
-        // Reuse proved source witnesses before elimination. Rational axes
-        // disappear, and quadratic values keep small rational carriers even
-        // when their original selected roots came from larger eliminants.
-        // General exact coefficient substitution remains available when some
-        // axes are unresolved. The original field still owns source replay.
-        let has_unresolved_source = base.source_real_witnesses.iter().any(Option::is_none);
-        let mut sources = base
-            .sources
-            .iter()
-            .zip(&base.source_real_witnesses)
-            .map(|(source, witness)| {
-                let Some(witness) = witness else {
-                    return source.clone();
-                };
-                let mut compact = AlgebraicRootRepresentation::from_exact_value(witness);
-                if !has_unresolved_source
-                    && !compact
-                        .polynomial_coefficients
-                        .iter()
-                        .all(|coefficient| coefficient.exact_rational_ref().is_some())
-                {
-                    return source.clone();
-                }
-                compact.constraint_index = source.constraint_index;
-                compact.symbol = source.symbol;
-                compact.interval_index = source.interval_index;
-                compact
-            })
-            .collect::<Vec<_>>();
-        if sources.is_empty() {
-            // The tensor-image authority requires at least one selected axis.
-            // A constant exact-zero axis is certified independent and removed
-            // before elimination, so it changes neither the image polynomial
-            // nor its authored root sheet.
-            let dimensions = vec![1, relation.dimensions()[0]];
-            let Some(with_dummy_axis) =
-                DenseTensorPolynomial::try_new(dimensions, relation.coefficients().to_vec())
-            else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            };
-            relation = with_dummy_axis;
-            sources.push(AlgebraicRootRepresentation::from_exact_value(&Real::zero()));
-        }
-        Ok(represented_tensor_coordinate_refined(
-            &relation,
-            &sources,
-            8,
-            512,
-            "recursive-projective-scalar-image",
-            |_, refinement_steps| self.interval(refinement_steps),
-        )
-        .map(|value| {
-            hypersolve::compact_algebraic_root_low_degree_witness(&value).unwrap_or(value)
-        }))
-    }
-
-    pub(super) fn order_to_real(
-        &self,
-        value: &Real,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<std::cmp::Ordering>> {
-        let difference = self
-            .numerator
-            .subtract(&self.denominator.scale(value).ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive parameter comparison exceeded its field budget".into(),
-                )
-            })?)
-            .ok_or_else(|| {
-                CurveError::Topology(
-                    "a recursive parameter comparison crossed retained fields".into(),
-                )
-            })?;
-        Ok(difference.sign(policy)?.map(|sign| match sign {
-            RealSign::Negative => std::cmp::Ordering::Less,
-            RealSign::Zero => std::cmp::Ordering::Equal,
-            RealSign::Positive => std::cmp::Ordering::Greater,
-        }))
-    }
-}
-
 impl BezierRecursiveQuadraticTargetEmbedding2 {
     pub(super) fn value(&self, value: &RecursiveQuadraticValue) -> Option<RecursiveQuadraticValue> {
         recursive_rebase_value_preserving_base(
@@ -6076,4 +5808,112 @@ pub(super) fn foreign_embedding_projective_point(
         y: embedding.value(&point.y, field)?,
         denominator: embedding.value(&point.denominator, field)?,
     })
+}
+
+/// Forms `self - other` in the least retained common quadratic tower.
+/// This is the exact comparison path for independently rebuilt contacts:
+/// interval refinement can separate unequal values, but equal transformed
+/// roots require their authored positive generators to be joined rather
+/// than globally projected.
+pub(super) fn projective_scalar_joined_projective_difference(
+    scalar: &RecursiveQuadraticProjectiveScalar,
+    other: &RecursiveQuadraticProjectiveScalar,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<RecursiveQuadraticValue>>> {
+    let first_field = scalar.denominator.field();
+    let second_field = other.denominator.field();
+    let Some(first_zero) = first_field.constant(Real::zero()) else {
+        return Ok(Classification::Decided(None));
+    };
+    let first = BezierRecursiveQuadraticProjectivePoint2 {
+        x: scalar.numerator.clone(),
+        y: first_zero,
+        denominator: scalar.denominator.clone(),
+    };
+    let Some(second_zero) = second_field.constant(Real::zero()) else {
+        return Ok(Classification::Decided(None));
+    };
+    let second = BezierRecursiveQuadraticProjectivePoint2 {
+        x: other.numerator.clone(),
+        y: second_zero,
+        denominator: other.denominator.clone(),
+    };
+    let joined = match first.joined_pair(&second, policy)? {
+        Classification::Decided(Some(joined)) => joined,
+        Classification::Decided(None) => {
+            let (first_base, _) = first_field.base_and_extension_path();
+            let Some(second) = second.rebased_to_equivalent_base(first_base) else {
+                return Ok(Classification::Decided(None));
+            };
+            match first.joined_pair(&second, policy)? {
+                Classification::Decided(Some(joined)) => joined,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        Classification::Uncertain(reason) => {
+            return Ok(Classification::Uncertain(reason));
+        }
+    };
+    let (_, first, second) = joined;
+    let Some(second_product) = second.x.multiply(&first.denominator) else {
+        return Ok(Classification::Decided(None));
+    };
+    let Some(difference) = first
+        .x
+        .multiply(&second.denominator)
+        .and_then(|first| first.subtract(&second_product))
+    else {
+        return Ok(Classification::Decided(None));
+    };
+    Ok(Classification::Decided(Some(difference)))
+}
+
+/// General common-field comparison when the two towers were rebuilt over
+/// different dense base allocations (for example after an exact
+/// similarity). The merge imports each already-selected positive base
+/// root and extension; it does not choose a new algebraic sheet.
+pub(super) fn projective_scalar_merged_projective_difference(
+    scalar: &RecursiveQuadraticProjectiveScalar,
+    other: &RecursiveQuadraticProjectiveScalar,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<RecursiveQuadraticValue>>> {
+    let first_field = scalar.denominator.field();
+    let second_field = other.denominator.field();
+    let first = BezierRecursiveQuadraticProjectivePoint2 {
+        x: scalar.numerator.clone(),
+        y: first_field
+            .constant(Real::zero())
+            .ok_or_else(|| CurveError::Topology("a recursive scalar lost its field zero".into()))?,
+        denominator: scalar.denominator.clone(),
+    };
+    let second = BezierRecursiveQuadraticProjectivePoint2 {
+        x: other.numerator.clone(),
+        y: second_field
+            .constant(Real::zero())
+            .ok_or_else(|| CurveError::Topology("a recursive scalar lost its field zero".into()))?,
+        denominator: other.denominator.clone(),
+    };
+    let (_, mut first, second) =
+        match recursive_merge_projective_point_fields(&first_field, &[first], &second, policy)? {
+            Classification::Decided(Some(merged)) => merged,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+    let first = first
+        .pop()
+        .expect("one recursive scalar merge preserves its first operand");
+    let difference = first.x.multiply(&second.denominator).and_then(|value| {
+        second
+            .x
+            .multiply(&first.denominator)
+            .and_then(|other| value.subtract(&other))
+    });
+    Ok(Classification::Decided(difference))
 }

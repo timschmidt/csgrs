@@ -6655,7 +6655,7 @@ other => return match other {
     pub(in crate::bezier_offset) fn recursive_cosine(
         &self,
         policy: &CurveContext,
-    ) -> CurveResult<Option<BezierRecursiveQuadraticProjectiveScalar2>> {
+    ) -> CurveResult<Option<RecursiveQuadraticProjectiveScalar>> {
         if let Self::Mapped(data) = self {
             match data.as_ref() {
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Pair {
@@ -6665,7 +6665,7 @@ other => return match other {
                 } => {
                     if let Some(data) = map.recursive_contact_data(contact) {
                         let angular = &data.angular[usize::from(!first)];
-                        return Ok(Some(BezierRecursiveQuadraticProjectiveScalar2 {
+                        return Ok(Some(RecursiveQuadraticProjectiveScalar {
                             numerator: angular.diameter.clone(),
                             denominator: angular.radius_squared_denominator.clone(),
                         }));
@@ -6709,12 +6709,10 @@ other => return match other {
                 &denominator,
                 Some(location),
             )? {
-                Classification::Decided(Some(side)) => {
-                    Some(BezierRecursiveQuadraticProjectiveScalar2 {
-                        numerator: side.angular.diameter,
-                        denominator: side.angular.radius_squared_denominator,
-                    })
-                }
+                Classification::Decided(Some(side)) => Some(RecursiveQuadraticProjectiveScalar {
+                    numerator: side.angular.diameter,
+                    denominator: side.angular.radius_squared_denominator,
+                }),
                 Classification::Decided(None) | Classification::Uncertain(_) => None,
             },
         )
@@ -7686,12 +7684,12 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             })() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
-            let x = BezierRecursiveQuadraticProjectiveScalar2 {
+            let x = RecursiveQuadraticProjectiveScalar {
                 numerator: x,
                 denominator: common_denominator.clone(),
             }
             .represented_value(policy)?;
-            let y = BezierRecursiveQuadraticProjectiveScalar2 {
+            let y = RecursiveQuadraticProjectiveScalar {
                 numerator: y,
                 denominator: common_denominator,
             }

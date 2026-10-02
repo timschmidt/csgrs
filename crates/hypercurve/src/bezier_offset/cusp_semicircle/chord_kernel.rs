@@ -1628,7 +1628,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let certified_bounds =
                 clip_to_finite_chord.then(|| chord_location.certified_unit_bounds());
             let parameter = match BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
-                BezierRecursiveQuadraticProjectiveScalar2 {
+                RecursiveQuadraticProjectiveScalar {
                     numerator: parameter_numerator.clone(),
                     denominator: parameter_denominator.clone(),
                 },
@@ -2147,7 +2147,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let root = parent_field.constant(root).ok_or_else(|| {
                 CurveError::Topology("a certified endpoint lost its coefficient field".into())
             })?;
-            let endpoint_scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+            let endpoint_scalar = RecursiveQuadraticProjectiveScalar {
                 numerator: root.clone(),
                 denominator: parent_field.constant(Real::one()).ok_or_else(|| {
                     CurveError::Topology("a certified endpoint lost its unit denominator".into())
@@ -2180,7 +2180,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 })?;
                 roots.push((
                     -endpoint_branch,
-                    BezierRecursiveQuadraticProjectiveScalar2 {
+                    RecursiveQuadraticProjectiveScalar {
                         numerator,
                         // The circle quadratic has a certified positive leading term.
                         denominator: a.clone(),
@@ -2234,7 +2234,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 };
                 roots.push((
                     branch,
-                    BezierRecursiveQuadraticProjectiveScalar2 {
+                    RecursiveQuadraticProjectiveScalar {
                         numerator,
                         denominator,
                     },
@@ -2467,7 +2467,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let certified_bounds =
                 clip_to_finite_chord.then(|| chord_location.certified_unit_bounds());
             let parameter = match BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
-                BezierRecursiveQuadraticProjectiveScalar2 {
+                RecursiveQuadraticProjectiveScalar {
                     numerator: parameter_numerator.clone(),
                     denominator: parameter_denominator.clone(),
                 },
@@ -6975,7 +6975,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let certified_bounds =
                 clip_to_finite_chord.then(|| chord_location.certified_unit_bounds());
             let parameter = match BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
-                BezierRecursiveQuadraticProjectiveScalar2 {
+                RecursiveQuadraticProjectiveScalar {
                     numerator: parameter_numerator.clone(),
                     denominator: parameter_denominator.clone(),
                 },

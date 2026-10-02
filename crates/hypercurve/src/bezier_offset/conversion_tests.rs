@@ -2101,7 +2101,7 @@ fn recursive_scalar_comparison_replays_exact_equality_before_approximation() {
     let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(parameter) = BezierRecursiveProjectiveParameter2::new(
-            BezierRecursiveQuadraticProjectiveScalar2 {
+            RecursiveQuadraticProjectiveScalar {
                 numerator: field.constant(half.clone().sqrt().unwrap()).unwrap(),
                 denominator: field.constant(Real::one()).unwrap(),
             },
@@ -2807,7 +2807,7 @@ fn recursive_scalar_native_replay_preserves_selected_source_authority() {
         )
         .unwrap();
         let extension = field.extension(value.clone()).unwrap();
-        let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+        let scalar = RecursiveQuadraticProjectiveScalar {
             numerator: extension
                 .element(value, field.constant(Real::one()).unwrap())
                 .unwrap(),
@@ -2972,7 +2972,7 @@ fn recursive_scalar_publication_accepts_general_exact_witnesses() {
     let RecursiveQuadraticField::Base(base) = &field else {
         unreachable!();
     };
-    let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+    let scalar = RecursiveQuadraticProjectiveScalar {
         numerator: recursive_quadratic_pair_value(
             base,
             DenseTensorPolynomial::try_new(vec![2], vec![Real::pi(), Real::one()]).unwrap(),
@@ -3251,7 +3251,7 @@ fn recursive_real_witnesses_do_not_require_unused_selected_generators() {
             Some(Real::pi())
         );
         assert_eq!(cached(&value.clone()), Some(Real::pi()));
-        let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+        let scalar = RecursiveQuadraticProjectiveScalar {
             numerator: value,
             denominator: field.constant(Real::one()).unwrap(),
         };
@@ -31929,7 +31929,7 @@ fn exterior_rational_analytic_points_use_the_selected_denominator_sign() {
         .unwrap();
         let parallel = source.parallel_left(quarter.clone()).unwrap();
         let Classification::Decided(parameter) = BezierRecursiveProjectiveParameter2::new(
-            BezierRecursiveQuadraticProjectiveScalar2 {
+            RecursiveQuadraticProjectiveScalar {
                 numerator: field.constant(Real::from(3)).unwrap(),
                 denominator: field.constant(Real::one()).unwrap(),
             },
@@ -46200,7 +46200,7 @@ fn common_scalar_gap_refines_mixed_native_parameters_without_projection() {
         let recursive = |value| {
             let Classification::Decided(parameter) =
                 BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
-                    BezierRecursiveQuadraticProjectiveScalar2 {
+                    RecursiveQuadraticProjectiveScalar {
                         numerator: field.constant(value).unwrap(),
                         denominator: field.constant(Real::one()).unwrap(),
                     },
@@ -46800,7 +46800,7 @@ fn local_parallel_endpoint_clipping_reuses_a_coefficient_root() {
             (1, Real::zero(), std::cmp::Ordering::Equal),
             (1, q(1, 8), std::cmp::Ordering::Greater),
         ] {
-            let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+            let scalar = RecursiveQuadraticProjectiveScalar {
                 numerator: generator
                     .scale(&Real::from(sign))
                     .unwrap()
@@ -48426,7 +48426,7 @@ fn recursive_projective_center_projects_complete_nonlinear_fixed_distance() {
             let RecursiveQuadraticField::Base(base) = &field else {
                 unreachable!("the shallow recursive field begins at its base")
             };
-            let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+            let scalar = RecursiveQuadraticProjectiveScalar {
                 numerator: recursive_quadratic_rational_value(base, coordinate.clone())
                     .expect("the shallow recursive coordinate must embed"),
                 denominator: field
@@ -54522,7 +54522,7 @@ fn nonlinear_parameter_component_maps_recursive_projective_scalars_locally() {
         let RecursiveQuadraticField::Base(base) = &field else {
             unreachable!("the recursive component field begins at its base")
         };
-        let scalar = BezierRecursiveQuadraticProjectiveScalar2 {
+        let scalar = RecursiveQuadraticProjectiveScalar {
             numerator: recursive_quadratic_rational_value(base, coordinate.clone())
                 .expect("the selected source coordinate must embed"),
             denominator: field
