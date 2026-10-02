@@ -1861,3 +1861,115 @@ pub fn represented_projective_line_intersection(
         _ => Classification::Uncertain(UncertaintyReason::Predicate),
     }
 }
+
+/// Incremental certified refinement of one represented root.
+///
+/// Values over one selected tuple share their source isolators; keeping the
+/// refinement with that owner avoids repeating bisections for every value.
+#[derive(Clone, Debug)]
+pub struct RepresentedRootRefinement {
+    root: AlgebraicRootRepresentation,
+    completed_steps: usize,
+}
+
+impl RepresentedRootRefinement {
+    /// Starts refinement from `root`'s current isolating interval.
+    pub fn new(root: &AlgebraicRootRepresentation) -> Self {
+        Self {
+            root: root.clone(),
+            completed_steps: 0,
+        }
+    }
+
+    /// Refines to at least `target_steps` cumulative steps and returns the
+    /// current root. A refinement that makes no progress keeps the completed
+    /// count, so a later request may retry it.
+    pub fn refine_to(&mut self, target_steps: usize) -> &AlgebraicRootRepresentation {
+        let additional_steps = target_steps.saturating_sub(self.completed_steps);
+        if additional_steps != 0 {
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypersolve",
+                "represented-root-refinement",
+                "advance",
+            );
+            let refined = refine_root_by_sign_change(&self.root, additional_steps)
+                .unwrap_or_else(|| refined_represented_root(&self.root, additional_steps));
+            if refined != self.root {
+                self.root = refined;
+                self.completed_steps = target_steps;
+            }
+        }
+        &self.root
+    }
+}
+
+/// Bisects an isolating interval whose endpoints carry certified opposite
+/// signs of the defining polynomial, using only midpoint signs. A sub-bracket
+/// of an isolating interval still isolates the same root, so the retained
+/// validation stays authoritative. Returns `None` when the endpoint signs are
+/// not certified opposites or a midpoint sign is undecided.
+fn refine_root_by_sign_change(
+    root: &AlgebraicRootRepresentation,
+    steps: usize,
+) -> Option<AlgebraicRootRepresentation> {
+    if root.interval.exact_root.is_some() {
+        return None;
+    }
+    let polynomial = &root.polynomial_coefficients;
+    let mut lower = root.interval.lower.clone();
+    let mut upper = root.interval.upper.clone();
+    let mut lower_sign = strict_real_sign(&Real::eval_poly(polynomial, &lower))?;
+    let upper_sign = strict_real_sign(&Real::eval_poly(polynomial, &upper))?;
+    if lower_sign == RealSign::Zero || upper_sign == RealSign::Zero || lower_sign == upper_sign {
+        return None;
+    }
+    let mut refined = root.clone();
+    for _ in 0..steps {
+        let midpoint = scalar_in_open_interval(&lower, &upper);
+        match strict_real_sign(&Real::eval_poly(polynomial, &midpoint))? {
+            RealSign::Zero => {
+                refined.interval = IsolatedRootInterval {
+                    lower: midpoint.clone(),
+                    upper: midpoint.clone(),
+                    exact_root: Some(midpoint),
+                    distinct_root_count: 1,
+                };
+                return Some(refined);
+            }
+            sign if sign == lower_sign => {
+                lower = midpoint;
+                lower_sign = sign;
+            }
+            _ => upper = midpoint,
+        }
+    }
+    refined.interval.lower = lower;
+    refined.interval.upper = upper;
+    Some(refined)
+}
+
+/// A scalar strictly inside `(lower, upper)`, preferring a short dyadic
+/// rational between certified inner bounds of symbolic endpoints.
+fn scalar_in_open_interval(lower: &Real, upper: &Real) -> Real {
+    if lower.exact_rational_ref().is_some() && upper.exact_rational_ref().is_some() {
+        return Real::average_pair(lower, upper);
+    }
+    let mut precision = -4_i32;
+    loop {
+        let (Some([_, inner_lower]), Some([inner_upper, _])) = (
+            lower.certified_dyadic_interval(precision),
+            upper.certified_dyadic_interval(precision),
+        ) else {
+            break;
+        };
+        if inner_lower < inner_upper {
+            return Real::average_pair(&Real::new(inner_lower), &Real::new(inner_upper));
+        }
+        let Some(next_precision) = precision.checked_mul(2) else {
+            break;
+        };
+        precision = next_precision;
+    }
+    Real::average_pair(lower, upper)
+}
