@@ -163,7 +163,7 @@ fn represented_tensor_coordinate(
 /// separated. A repeated source/image state proves that further subdivision
 /// cannot add evidence and remains an explicit predicate blocker; otherwise
 /// no resource-shaped refinement ceiling changes the mathematical result.
-pub fn represented_tensor_coordinate_refined(
+pub(crate) fn represented_tensor_coordinate_refined(
     relation: &DenseTensorPolynomial,
     sources: &[AlgebraicRootRepresentation],
     initial_refinement_steps: usize,
