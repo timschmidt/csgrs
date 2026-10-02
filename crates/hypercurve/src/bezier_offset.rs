@@ -88,12 +88,13 @@ use hypersolve::represented_root::{
     dense_polynomial_value_interval_with_coefficient_precision,
     dense_positive_square_root_interval, dense_strict_interval_sign,
     dense_substitute_affinely_related_sources, dense_tensor_interval,
-    dense_tensor_interval_with_coefficient_precision, dense_two_positive_square_root_interval,
+    dense_tensor_interval_with_coefficient_precision, dense_tuple_sign_by_refinement,
+    dense_two_positive_square_root_interval,
     dense_two_positive_square_root_interval_with_coefficient_precision, refined_represented_root,
     represented_affine_coordinate, represented_affine_tensor_basis,
-    represented_dense_value_refined, represented_dense_value_with_coefficient_precision,
-    represented_ratio, represented_roots_strictly_equal, represented_strict_order,
-    represented_strict_sign, represented_tensor_coordinate, represented_tensor_coordinate_refined,
+    represented_dense_value_refined, represented_policy_sign, represented_ratio,
+    represented_roots_strictly_equal, represented_strict_order, represented_strict_sign,
+    represented_tensor_coordinate, represented_tensor_coordinate_refined,
     represented_tensor_nested_interval, represented_tensor_nested_value_refined,
     represented_univariate_coordinate, represented_vector_dot_cross,
     represented_zero_offset_unit_scales, same_positive_root_sheet_signs,
@@ -174,12 +175,10 @@ use hypersolve::{
     reduce_bivariate_rational_function_at_algebraic_parameter,
 };
 use hypersolve::{
-    AlgebraicRootComparisonStatus, AlgebraicRootMobiusTransformStatus,
-    AlgebraicRootRefinementComparisonConfig, AlgebraicRootRepresentation,
-    AlgebraicRootSquareRootStatus, DenseTensorPolynomial, IsolatedRootInterval,
-    OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
-    OrderedFieldRootIsolationStatus, algebraic_root_affine_relation,
-    compare_algebraic_root_representations_with_refinement, divide_univariate_polynomial_exact,
+    AlgebraicRootMobiusTransformStatus, AlgebraicRootRepresentation, AlgebraicRootSquareRootStatus,
+    DenseTensorPolynomial, IsolatedRootInterval, OrderedFieldPolynomialContext,
+    OrderedFieldRootIsolationConfig, OrderedFieldRootIsolationStatus,
+    algebraic_root_affine_relation, divide_univariate_polynomial_exact,
     greatest_common_divisor_univariate_polynomials_exact, isolate_ordered_field_polynomial_roots,
     project_selected_tensor_fiber_via_tagged_norm, square_root_algebraic_root_representation,
     transform_algebraic_root_mobius, validate_algebraic_root_representation,
@@ -15140,14 +15139,16 @@ fn represented_point_evidence_oriented_side(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    Ok(match represented_policy_sign(&cross, policy) {
-        Classification::Decided(sign) => Classification::Decided(match sign {
-            RealSign::Positive => crate::classify::LineSide::Left,
-            RealSign::Negative => crate::classify::LineSide::Right,
-            RealSign::Zero => crate::classify::LineSide::On,
-        }),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    })
+    Ok(
+        match Classification::from(represented_policy_sign(&cross, policy)) {
+            Classification::Decided(sign) => Classification::Decided(match sign {
+                RealSign::Positive => crate::classify::LineSide::Left,
+                RealSign::Negative => crate::classify::LineSide::Right,
+                RealSign::Zero => crate::classify::LineSide::On,
+            }),
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
 }
 
 fn selected_circle_endpoint_chord_side(

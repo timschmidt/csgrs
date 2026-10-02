@@ -288,7 +288,7 @@ impl BezierAlgebraicCuspChordPoint2 {
                 Classification::Decided(difference) => difference,
                 Classification::Uncertain(_) => return Ok(None),
             };
-            let order = match represented_policy_sign(&difference, policy) {
+            let order = match Classification::from(represented_policy_sign(&difference, policy)) {
                 Classification::Decided(RealSign::Negative) => std::cmp::Ordering::Less,
                 Classification::Decided(RealSign::Zero) => std::cmp::Ordering::Equal,
                 Classification::Decided(RealSign::Positive) => std::cmp::Ordering::Greater,

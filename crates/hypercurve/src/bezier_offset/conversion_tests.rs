@@ -824,6 +824,11 @@ use crate::{
     CurveCornerMode2, CurveCornerSolutions2, CurveRegion2, CurveRegionBoundaryLoop2,
     CurveRegionLoopRole, FillRule, OffsetCornerStyle2,
 };
+use hypersolve::represented_root::represented_dense_value_with_coefficient_precision;
+use hypersolve::{
+    AlgebraicRootComparisonStatus, AlgebraicRootRefinementComparisonConfig,
+    compare_algebraic_root_representations_with_refinement,
+};
 
 fn region_parameter(parameter: BezierParameter2) -> CurveParameter2 {
     CurveParameter2::from(parameter)
@@ -45756,7 +45761,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for represented in [&dense, &ratio, &nested_ratio] {
             let outcome = crate::policy::resolve_certified_value(&policy, |attempt| {
-                represented_policy_sign(represented, attempt)
+                Classification::from(represented_policy_sign(represented, attempt))
             });
             assert_eq!(outcome.value, Classification::Decided(RealSign::Negative));
             assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);

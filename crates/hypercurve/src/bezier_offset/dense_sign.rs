@@ -78,114 +78,12 @@ pub(super) fn dense_polynomial_tuple_sign_owned(
     let Some(value) = dense_tensor_with_output_axis(&polynomial) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let mut previous = None;
-    let mut refinement_steps = 0_usize;
-    let next_refinement_steps = |steps: usize| match steps {
-        0 => Some(4),
-        4 => Some(8),
-        8 => Some(16),
-        16 => Some(32),
-        32 => Some(64),
-        64 => Some(128),
-        128 => Some(256),
-        256 => Some(512),
-        steps => steps.checked_mul(2),
-    };
-    loop {
-        let refined = sources
-            .iter()
-            .map(|source| refined_represented_root(source, refinement_steps))
-            .collect::<Vec<_>>();
-        let progressed = previous.as_ref() != Some(&refined);
-        previous = Some(refined.clone());
-        if !progressed && refinement_steps < 512 {
-            refinement_steps = next_refinement_steps(refinement_steps)
-                .expect("the bounded refinement schedule cannot overflow");
-            continue;
-        }
-        if !progressed && !policy.permits_approximate_512() {
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        }
-        let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
-        let coefficient_precision = -coefficient_bits;
-        if let Some(sign) = dense_polynomial_value_interval_with_coefficient_precision(
-            &polynomial,
-            &refined,
-            coefficient_precision,
-        )
-        .as_ref()
-        .and_then(dense_strict_interval_sign)
-        {
-            return Ok(Classification::Decided(sign));
-        }
-        let bounded_terminal = policy.selects_approximate_512() && refinement_steps == 512;
-        let approximate_terminal = policy.permits_approximate_512() && bounded_terminal;
-        // APPROXIMATE_512 already performs the certified tensor interval test
-        // above at every refinement, including its 512-bit terminal. Building
-        // a global tensor image cannot strengthen that policy's terminal
-        // equality interpretation and would duplicate an exact elimination in
-        // both the preliminary strict pass and the outer approximate replay.
-        // STRICT alone retains the complete algebraic-image authority.
-        let represented = if policy.selects_approximate_512() {
-            Classification::Uncertain(UncertaintyReason::Predicate)
-        } else {
-            #[cfg(test)]
-            if value.dimensions().len() == 4
-                && std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some()
-            {
-                let caller = std::panic::Location::caller();
-                eprintln!(
-                    "dense tuple image replay caller={}:{} steps={refinement_steps} selects-approximate={} permits-approximate={}",
-                    caller.file(),
-                    caller.line(),
-                    policy.selects_approximate_512(),
-                    policy.permits_approximate_512(),
-                );
-            }
-            Classification::from(represented_dense_value_with_coefficient_precision(
-                &value,
-                &refined,
-                coefficient_precision,
-            ))
-        };
-        if let Classification::Decided(represented) = &represented
-            && let Some(sign) = represented_strict_sign(represented)
-        {
-            return Ok(Classification::Decided(sign));
-        }
-        if matches!(
-            represented,
-            Classification::Uncertain(UncertaintyReason::Unsupported)
-        ) {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-
-        if approximate_terminal {
-            return match represented {
-                Classification::Decided(represented) => {
-                    Ok(represented_policy_sign(&represented, policy))
-                }
-                Classification::Uncertain(_) => {
-                    policy.observe_approximate_512();
-                    Ok(Classification::Decided(RealSign::Zero))
-                }
-            };
-        }
-        if bounded_terminal {
-            // This is the preliminary certified pass of an APPROXIMATE_512
-            // operation.  Preserve its strict uncertainty so the outer policy
-            // replay can consume the terminal; never continue this selected
-            // policy into an unbounded exact promotion.
-            return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
-        }
-        refinement_steps = match next_refinement_steps(refinement_steps) {
-            Some(next) => next,
-            None => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
-        };
-        if policy.selects_approximate_512() && refinement_steps > 512 {
-            unreachable!("APPROXIMATE_512 cannot refine past its terminal")
-        }
-    }
+    Ok(Classification::from(dense_tuple_sign_by_refinement(
+        &polynomial,
+        &value,
+        &sources,
+        policy,
+    )))
 }
 
 pub(super) fn combined_sign_uncertainty(

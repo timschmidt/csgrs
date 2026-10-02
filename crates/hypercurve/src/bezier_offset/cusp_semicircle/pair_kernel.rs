@@ -804,23 +804,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let radial_cross_sign = match represented_policy_sign(&radial_cross, policy) {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                if let Some(radial_dot) = self.coincident_endpoint_radial_dot(other, policy)? {
-                    return self.coincident_pair_intersections_from_radial_signs(
-                        other,
-                        RealSign::Zero,
-                        Some(radial_dot),
-                        None,
-                        policy,
-                    );
-                }
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let radial_dot_sign = if radial_cross_sign == RealSign::Zero {
-            Some(match represented_policy_sign(&radial_dot, policy) {
+        let radial_cross_sign =
+            match Classification::from(represented_policy_sign(&radial_cross, policy)) {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(reason) => {
                     if let Some(radial_dot) = self.coincident_endpoint_radial_dot(other, policy)? {
@@ -834,7 +819,27 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                     return Ok(Classification::Uncertain(reason));
                 }
-            })
+            };
+        let radial_dot_sign = if radial_cross_sign == RealSign::Zero {
+            Some(
+                match Classification::from(represented_policy_sign(&radial_dot, policy)) {
+                    Classification::Decided(sign) => sign,
+                    Classification::Uncertain(reason) => {
+                        if let Some(radial_dot) =
+                            self.coincident_endpoint_radial_dot(other, policy)?
+                        {
+                            return self.coincident_pair_intersections_from_radial_signs(
+                                other,
+                                RealSign::Zero,
+                                Some(radial_dot),
+                                None,
+                                policy,
+                            );
+                        }
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                },
+            )
         } else {
             None
         };

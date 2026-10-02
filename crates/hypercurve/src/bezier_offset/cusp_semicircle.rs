@@ -4889,7 +4889,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                     &offset,
                 )) {
                     Classification::Decided(predicate) => {
-                        represented_policy_sign(&predicate, policy)
+                        Classification::from(represented_policy_sign(&predicate, policy))
                     }
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 }
@@ -5022,7 +5022,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
                     &offset,
                 )) {
                     Classification::Decided(predicate) => {
-                        represented_policy_sign(&predicate, policy)
+                        Classification::from(represented_policy_sign(&predicate, policy))
                     }
                     Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 }

@@ -526,7 +526,7 @@ pub(super) fn selected_dense_last_axis_active_degree(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        match represented_policy_sign(&value, &strict) {
+        match Classification::from(represented_policy_sign(&value, &strict)) {
             Classification::Decided(RealSign::Zero) => {}
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {
                 return Ok(Classification::Decided(Some(target_power)));

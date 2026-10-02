@@ -1153,3 +1153,18 @@ mod tests {
         assert_eq!(repeated.value, Classification::Decided(&7));
     }
 }
+
+impl hypersolve::ApproximationPolicy for CurveContext {
+    fn selects_approximate_512(&self) -> bool {
+        Self::selects_approximate_512(self)
+    }
+
+    fn permits_approximate_512(&self) -> bool {
+        Self::permits_approximate_512(self)
+    }
+
+    #[track_caller]
+    fn observe_approximate_512(&self) {
+        Self::observe_approximate_512(self);
+    }
+}

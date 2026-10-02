@@ -347,7 +347,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 ],
                 &Real::zero(),
             )) {
-                Classification::Decided(value) => represented_policy_sign(&value, policy),
+                Classification::Decided(value) => {
+                    Classification::from(represented_policy_sign(&value, policy))
+                }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
         )
@@ -1826,7 +1828,9 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 ],
                 offset,
             )) {
-                Classification::Decided(predicate) => represented_policy_sign(&predicate, policy),
+                Classification::Decided(predicate) => {
+                    Classification::from(represented_policy_sign(&predicate, policy))
+                }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             }
         } else if self.recursive_quadratic_line_system().is_some()
@@ -7475,7 +7479,9 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 ],
                 &Real::zero(),
             )) {
-                Classification::Decided(value) => represented_policy_sign(&value, policy),
+                Classification::Decided(value) => {
+                    Classification::from(represented_policy_sign(&value, policy))
+                }
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             },
         )
@@ -8020,10 +8026,12 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     }
                 };
                 Ok(
-                    represented_policy_sign(&predicate, policy).map(|sign| match sign {
-                        RealSign::Negative => std::cmp::Ordering::Less,
-                        RealSign::Zero => std::cmp::Ordering::Equal,
-                        RealSign::Positive => std::cmp::Ordering::Greater,
+                    Classification::from(represented_policy_sign(&predicate, policy)).map(|sign| {
+                        match sign {
+                            RealSign::Negative => std::cmp::Ordering::Less,
+                            RealSign::Zero => std::cmp::Ordering::Equal,
+                            RealSign::Positive => std::cmp::Ordering::Greater,
+                        }
                     }),
                 )
             }
@@ -8072,7 +8080,7 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                Ok(represented_policy_sign(&predicate, policy).map(ordering))
+                Ok(Classification::from(represented_policy_sign(&predicate, policy)).map(ordering))
             }
         }
     }

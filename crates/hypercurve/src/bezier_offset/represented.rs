@@ -74,7 +74,7 @@ pub(super) fn represented_value_nonzero(
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     };
-    match represented_policy_sign(&value, &CurveContext::STRICT) {
+    match Classification::from(represented_policy_sign(&value, &CurveContext::STRICT)) {
         Classification::Decided(RealSign::Positive | RealSign::Negative) => {
             Classification::Decided(())
         }
@@ -563,41 +563,6 @@ pub(super) fn represented_strict_interior_bezier_parameter(
     BezierParameter2::from_algebraic_root_representation(&clipped, &CurveContext::STRICT)
 }
 
-pub(super) fn represented_policy_sign(
-    value: &AlgebraicRootRepresentation,
-    policy: &CurveContext,
-) -> Classification<RealSign> {
-    if let Some(sign) = represented_strict_sign(value) {
-        return Classification::Decided(sign);
-    }
-    if !policy.permits_approximate_512() {
-        return Classification::Uncertain(UncertaintyReason::Predicate);
-    }
-    let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
-    let report = compare_algebraic_root_representations_with_refinement(
-        value,
-        &zero,
-        AlgebraicRootRefinementComparisonConfig {
-            policy: hypersolve::PredicatePolicy::APPROXIMATE_512,
-            ..AlgebraicRootRefinementComparisonConfig::default()
-        },
-    );
-    let Some(order) = matches!(
-        report.comparison.status,
-        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
-    )
-    .then_some(report.comparison.ordering)
-    .flatten() else {
-        return Classification::Uncertain(UncertaintyReason::Predicate);
-    };
-    policy.observe_approximate_512();
-    Classification::Decided(match order {
-        std::cmp::Ordering::Less => RealSign::Negative,
-        std::cmp::Ordering::Equal => RealSign::Zero,
-        std::cmp::Ordering::Greater => RealSign::Positive,
-    })
-}
-
 pub(super) fn represented_order_to_real(
     value: &AlgebraicRootRepresentation,
     target: &Real,
@@ -614,11 +579,13 @@ pub(super) fn represented_order_to_real(
         &(-target),
     )) {
         Classification::Decided(difference) => {
-            represented_policy_sign(&difference, policy).map(|sign| match sign {
-                RealSign::Negative => std::cmp::Ordering::Less,
-                RealSign::Zero => std::cmp::Ordering::Equal,
-                RealSign::Positive => std::cmp::Ordering::Greater,
-            })
+            Classification::from(represented_policy_sign(&difference, policy)).map(
+                |sign| match sign {
+                    RealSign::Negative => std::cmp::Ordering::Less,
+                    RealSign::Zero => std::cmp::Ordering::Equal,
+                    RealSign::Positive => std::cmp::Ordering::Greater,
+                },
+            )
         }
         Classification::Uncertain(reason) => Classification::Uncertain(reason),
     }
@@ -763,7 +730,9 @@ pub(super) fn represented_circle_diameter_predicate_sign(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    Ok(represented_policy_sign(&predicate, policy))
+    Ok(Classification::from(represented_policy_sign(
+        &predicate, policy,
+    )))
 }
 
 /// Materializes dot and cross for two scaled unit circle radials while

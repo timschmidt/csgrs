@@ -3037,12 +3037,13 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let cross_sign = match represented_policy_sign(&oriented_cross, policy) {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let cross_sign =
+            match Classification::from(represented_policy_sign(&oriented_cross, policy)) {
+                Classification::Decided(sign) => sign,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
         if cross_sign == RealSign::Negative {
             return Ok(Classification::Decided(None));
         }
@@ -3051,20 +3052,22 @@ impl BezierAlgebraicCuspSemicircle2 {
                 BezierAlgebraicCuspSemicircleContactLocation2::Interior,
             )));
         }
-        Ok(match represented_policy_sign(&dot, policy) {
-            Classification::Decided(RealSign::Positive) => {
-                Classification::Decided(Some(BezierAlgebraicCuspSemicircleContactLocation2::Start))
-            }
-            Classification::Decided(RealSign::Negative) => {
-                Classification::Decided(Some(BezierAlgebraicCuspSemicircleContactLocation2::End))
-            }
-            Classification::Decided(RealSign::Zero) => {
-                return Err(CurveError::Topology(
-                    "a represented nonzero circle contact had zero diameter coordinates".into(),
-                ));
-            }
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
-        })
+        Ok(
+            match Classification::from(represented_policy_sign(&dot, policy)) {
+                Classification::Decided(RealSign::Positive) => Classification::Decided(Some(
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                )),
+                Classification::Decided(RealSign::Negative) => Classification::Decided(Some(
+                    BezierAlgebraicCuspSemicircleContactLocation2::End,
+                )),
+                Classification::Decided(RealSign::Zero) => {
+                    return Err(CurveError::Topology(
+                        "a represented nonzero circle contact had zero diameter coordinates".into(),
+                    ));
+                }
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
     pub(in crate::bezier_offset) fn chord_normal_projective_replay_rational_circle_component(
