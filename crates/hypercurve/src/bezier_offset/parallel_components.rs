@@ -1230,62 +1230,6 @@ pub(super) fn bivariate_restrict_to_parameter_box(
     )
 }
 
-pub(super) fn rational_interval_bernstein_strict_sign(
-    controls: Vec<[HyperRational; 2]>,
-) -> Option<RealSign> {
-    let zero = HyperRational::zero();
-    let mut pending = vec![(controls, 0_u8)];
-    let mut certified_sign = None;
-    let mut visited = 0_usize;
-    while let Some((controls, depth)) = pending.pop() {
-        visited += 1;
-        let first = controls.first()?;
-        let last = controls.last()?;
-        let endpoints_positive = first[0] > zero && last[0] > zero;
-        let endpoints_negative = first[1] < zero && last[1] < zero;
-        let segment_sign =
-            if endpoints_positive && controls.iter().all(|control| control[0] >= zero) {
-                Some(RealSign::Positive)
-            } else if endpoints_negative && controls.iter().all(|control| control[1] <= zero) {
-                Some(RealSign::Negative)
-            } else {
-                None
-            };
-        if let Some(segment_sign) = segment_sign {
-            match certified_sign {
-                Some(previous) if previous != segment_sign => return None,
-                Some(_) => {}
-                None => certified_sign = Some(segment_sign),
-            }
-            continue;
-        }
-        if depth == 10 || visited >= 256 {
-            return None;
-        }
-
-        let mut work = controls;
-        let degree = work.len().saturating_sub(1);
-        let mut left = Vec::with_capacity(work.len());
-        let mut right = Vec::with_capacity(work.len());
-        left.push(work[0].clone());
-        right.push(work[degree].clone());
-        for level in 1..=degree {
-            for index in 0..=degree - level {
-                work[index] = [
-                    HyperRational::average_pair(&work[index][0], &work[index + 1][0]),
-                    HyperRational::average_pair(&work[index][1], &work[index + 1][1]),
-                ];
-            }
-            left.push(work[0].clone());
-            right.push(work[degree - level].clone());
-        }
-        right.reverse();
-        pending.push((right, depth + 1));
-        pending.push((left, depth + 1));
-    }
-    certified_sign
-}
-
 pub(crate) fn bivariate_fiber_strict_sign_on_parameter_range(
     polynomial: &BivariatePolynomial,
     retained: &BezierAlgebraicParameter2,
@@ -1525,14 +1469,6 @@ pub(super) fn bivariate_parameter_box_strict_sign(
     bivariate_unit_square_strict_bernstein_sign(
         &bivariate_restrict_to_parameter_box(polynomial, first_parameter, second_parameter),
         policy,
-    )
-}
-
-pub(super) fn strict_signs_are_opposite(first: Option<RealSign>, second: Option<RealSign>) -> bool {
-    matches!(
-        (first, second),
-        (Some(RealSign::Positive), Some(RealSign::Negative))
-            | (Some(RealSign::Negative), Some(RealSign::Positive))
     )
 }
 
@@ -2067,19 +2003,6 @@ pub(super) fn split_parameter_component_at_selector_boundary(
         }
     }
     None
-}
-
-pub(super) fn proper_parameter_component_split(
-    component_degree: usize,
-    factor: &BivariatePolynomial,
-    quotient: &BivariatePolynomial,
-) -> bool {
-    let factor_degree = bivariate_storage_bidegree_sum(factor);
-    let quotient_degree = bivariate_storage_bidegree_sum(quotient);
-    factor_degree != 0
-        && quotient_degree != 0
-        && factor_degree < component_degree
-        && quotient_degree < component_degree
 }
 
 pub(super) fn certify_regular_implicit_parameter_component(
@@ -5570,37 +5493,6 @@ pub(super) fn structural_parallel_source_parameter_component(
     })
 }
 
-pub(super) fn divide_bivariate_system_component(
-    equations: &[BivariatePolynomial; 2],
-    component: &BivariatePolynomial,
-) -> Option<[BivariatePolynomial; 2]> {
-    let mut residual = equations.clone();
-    let mut removed = false;
-    loop {
-        let (Some(first), Some(second)) = (
-            divide_bivariate_polynomial_exact(&residual[0], component),
-            divide_bivariate_polynomial_exact(&residual[1], component),
-        ) else {
-            break;
-        };
-        let next = [first, second];
-        if next
-            .iter()
-            .map(bivariate_storage_bidegree_sum)
-            .sum::<usize>()
-            >= residual
-                .iter()
-                .map(bivariate_storage_bidegree_sum)
-                .sum::<usize>()
-        {
-            return None;
-        }
-        residual = next;
-        removed = true;
-    }
-    removed.then_some(residual)
-}
-
 pub(super) struct ExtractedBivariateAxisComponents2 {
     pub(super) supports: Vec<BivariatePolynomial>,
     pub(super) residual_equations: [BivariatePolynomial; 2],
@@ -5787,15 +5679,6 @@ pub(super) fn extract_bivariate_system_components(
         });
         residual_equations = reduced;
     }
-}
-
-pub(super) fn parameter_component_union_support(
-    components: &[BivariatePolynomial],
-) -> Option<BivariatePolynomial> {
-    components
-        .iter()
-        .cloned()
-        .reduce(|support, component| bivariate_multiply(&support, &component))
 }
 
 pub(super) fn merge_parameter_component_support(

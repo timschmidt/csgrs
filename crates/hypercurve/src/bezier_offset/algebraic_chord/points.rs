@@ -879,8 +879,8 @@ impl BezierAlgebraicChordPairPoint2 {
                 ) else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
-                return Ok(represented_projective_line_intersection(
-                    first, second, &sources,
+                return Ok(Classification::from(
+                    represented_projective_line_intersection(first, second, &sources),
                 ));
             }
             (Classification::Uncertain(reason), _) | (_, Classification::Uncertain(reason)) => {
@@ -929,8 +929,8 @@ impl BezierAlgebraicChordPairPoint2 {
         })() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        Ok(represented_projective_line_intersection(
-            first, second, &sources,
+        Ok(Classification::from(
+            represented_projective_line_intersection(first, second, &sources),
         ))
     }
 

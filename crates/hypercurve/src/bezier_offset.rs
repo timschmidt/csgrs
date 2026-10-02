@@ -69,6 +69,10 @@ use hypersolve::bivariate_arithmetic::{
     bivariate_tensor_product, deflate_bivariate_parameter_diagonal_exact, polynomial_derivative,
     polynomial_trim_structural_zeros,
 };
+use hypersolve::bivariate_arithmetic::{
+    divide_bivariate_system_component, parameter_component_union_support,
+    proper_parameter_component_split,
+};
 #[cfg(test)]
 use hypersolve::exact_factor::bivariate_bilinear_factor_from_roots;
 use hypersolve::exact_factor::{
@@ -83,6 +87,9 @@ use hypersolve::exact_factor::{
     trivariate_axis_lift_power_slice, trivariate_axis_lift_taylor_slice,
 };
 use hypersolve::radical_expression::{SquareRootExpression, TwoSquareRootExpression};
+use hypersolve::real_interval::{
+    rational_interval_bernstein_strict_sign, strict_signs_are_opposite,
+};
 use hypersolve::represented_root::{
     NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, dense_polynomial_value_interval,
     dense_polynomial_value_interval_with_coefficient_precision,
@@ -92,8 +99,8 @@ use hypersolve::represented_root::{
     dense_two_positive_square_root_interval_with_coefficient_precision, refined_represented_root,
     represented_affine_coordinate, represented_affine_tensor_basis,
     represented_dense_value_refined, represented_order_to_real, represented_policy_sign,
-    represented_ratio, represented_roots_strictly_equal, represented_strict_order,
-    represented_strict_sign, represented_tensor_coordinate_refined,
+    represented_projective_line_intersection, represented_ratio, represented_roots_strictly_equal,
+    represented_strict_order, represented_strict_sign, represented_tensor_coordinate_refined,
     represented_tensor_nested_ratio, represented_tensor_ratio, represented_univariate_coordinate,
     represented_vector_dot_cross, represented_zero_offset_unit_scales,
     same_positive_root_sheet_signs,
@@ -12142,52 +12149,6 @@ fn represented_parallel_chord_support(
             direction: structural.direction,
         },
     )))
-}
-
-fn represented_projective_line_intersection(
-    first: [DenseTensorPolynomial; 3],
-    second: [DenseTensorPolynomial; 3],
-    sources: &[AlgebraicRootRepresentation],
-) -> Classification<[AlgebraicRootRepresentation; 2]> {
-    let [first_a, first_b, first_c] = first;
-    let [second_a, second_b, second_c] = second;
-    let Some((x_numerator, y_numerator, denominator)) = (|| {
-        let denominator = first_a
-            .multiply(&second_b)?
-            .subtract(&second_a.multiply(&first_b)?)?;
-        let x_numerator = first_b
-            .multiply(&second_c)?
-            .subtract(&second_b.multiply(&first_c)?)?;
-        let y_numerator = first_c
-            .multiply(&second_a)?
-            .subtract(&second_c.multiply(&first_a)?)?;
-        Some((x_numerator, y_numerator, denominator))
-    })() else {
-        return Classification::Uncertain(UncertaintyReason::Unsupported);
-    };
-    let x = Classification::from(represented_tensor_ratio(
-        &x_numerator,
-        &denominator,
-        sources,
-    ));
-    let y = Classification::from(represented_tensor_ratio(
-        &y_numerator,
-        &denominator,
-        sources,
-    ));
-    match (x, y) {
-        (Classification::Decided(x), Classification::Decided(y)) => {
-            Classification::Decided([x, y].map(|coordinate| {
-                hypersolve::compact_algebraic_root_low_degree_witness(&coordinate)
-                    .unwrap_or(coordinate)
-            }))
-        }
-        (Classification::Uncertain(UncertaintyReason::Unsupported), _)
-        | (_, Classification::Uncertain(UncertaintyReason::Unsupported)) => {
-            Classification::Uncertain(UncertaintyReason::Unsupported)
-        }
-        _ => Classification::Uncertain(UncertaintyReason::Predicate),
-    }
 }
 
 fn algebraic_chord_strict_coordinate_between(
