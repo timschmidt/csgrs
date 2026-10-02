@@ -442,9 +442,73 @@ pub(super) fn isolate_selected_dense_last_axis_univariate(
             };
             retain_parameters_before_incident_barrier(parameters, barrier, direction, policy)?
         }
+        (true, SelectedThirdAxisDomain2::Finite(range)) => {
+            match square_free_rational_unit_subrange_roots(polynomial, range, policy)? {
+                Some(isolated) => isolated,
+                None => domain.isolate(polynomial, policy)?,
+            }
+        }
         _ => domain.isolate(polynomial, policy)?,
     };
     Ok(isolated.map(BezierAlgebraicFiberProjection2::Parameters))
+}
+
+/// Isolates a square-free rational fiber on a unit-contained subrange.
+///
+/// The general interval isolator replays Sturm sequences, whose pseudo
+/// remainders grow quadratically with degree; selected offset fibers reach
+/// degree in the hundreds. Square-free Bernstein--Descartes subdivision on
+/// `[0, 1]` needs only coefficient signs, keeps the original chart, and the
+/// range's own endpoint authorities then decide membership of each root.
+/// Returns `None` when the polynomial is not exactly rational or the range's
+/// outward envelope is not certified inside the unit interval.
+fn square_free_rational_unit_subrange_roots(
+    polynomial: &BezierParameterPolynomial,
+    range: &CurveParameterRange2,
+    policy: &CurveContext,
+) -> CurveResult<Option<Classification<Vec<BezierParameter2>>>> {
+    if polynomial
+        .coefficients()
+        .iter()
+        .any(|coefficient| coefficient.exact_rational_ref().is_none())
+    {
+        return Ok(None);
+    }
+    let domain = CurveParameterDomain2::new(range, None);
+    let Classification::Decided((_, [outer_lower, outer_upper])) =
+        domain.finite_envelope(policy)?
+    else {
+        return Ok(None);
+    };
+    use std::cmp::Ordering::{Equal, Greater, Less};
+    if !matches!(
+        compare_reals(outer_lower, &Real::zero(), policy),
+        Some(Greater | Equal)
+    ) || !matches!(
+        compare_reals(outer_upper, &Real::one(), policy),
+        Some(Less | Equal)
+    ) || outer_lower.exact_rational_ref().is_none()
+        || outer_upper.exact_rational_ref().is_none()
+    {
+        return Ok(None);
+    }
+    let roots = match polynomial.isolate_square_free_unit_interval_roots(policy)? {
+        Classification::Decided(roots) => roots,
+        Classification::Uncertain(reason) => {
+            return Ok(Some(Classification::Uncertain(reason)));
+        }
+    };
+    let mut retained = Vec::with_capacity(roots.len());
+    for root in roots {
+        match domain.contains_finite_parameter(&root.clone().into(), policy)? {
+            Classification::Decided(true) => retained.push(root),
+            Classification::Decided(false) => {}
+            Classification::Uncertain(reason) => {
+                return Ok(Some(Classification::Uncertain(reason)));
+            }
+        }
+    }
+    Ok(Some(Classification::Decided(retained)))
 }
 
 /// Eliminates every already-selected source axis and isolates all candidates

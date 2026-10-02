@@ -1188,3 +1188,29 @@ fn repeated_inward_miter_offset_of_a_weighted_quadratic_completes() {
     let steps = [Step::Offset(0, -1, 2), Step::Offset(1, -1, 2)];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// A round offset of a mitered offset of a chamfered weighted-conic region.
+///
+/// The second offset selects a square-free rational fiber of degree 320 on
+/// an algebraic subrange of one source curve. Sturm isolation of that fiber
+/// did not finish in an hour; Bernstein subdivision on the unit interval,
+/// clipped by the subrange's own endpoints, isolates it in under a second.
+#[test]
+fn chamfered_conic_miter_then_round_offset_completes() {
+    let seeds = [Seed {
+        x: 4,
+        y: 11,
+        width: 9,
+        height: 10,
+        lower: 7,
+        upper: 2,
+        curvature: 1,
+        weight: 2,
+    }];
+    let steps = [
+        Step::Chamfer(0, 2),
+        Step::Offset(1, 1, 2),
+        Step::Offset(2, 1, 0),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
