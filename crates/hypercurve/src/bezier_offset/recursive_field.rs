@@ -7390,17 +7390,12 @@ impl BezierRecursiveQuadraticValue2 {
         refinement_range: std::ops::RangeInclusive<usize>,
         use_real_witnesses: bool,
     ) -> CurveResult<Option<RealSign>> {
-        let strict = &CurveContext::STRICT;
-        let mut parameters = Vec::with_capacity(sources.len());
-        for source in sources {
-            match BezierParameter2::from_algebraic_root_representation_unbounded(source, strict)? {
-                Classification::Decided(parameter) => parameters.push(parameter),
-                Classification::Uncertain(_) => return Ok(None),
-            }
+        if sources.iter().any(|source| !source.is_valid()) {
+            return Ok(None);
         }
-        let mut refinements = parameters
+        let mut refinements = sources
             .iter()
-            .map(|parameter| BezierParameterRefinement2::new(parameter, strict))
+            .map(RepresentedRootRefinement::new)
             .collect::<Vec<_>>();
         for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
             if !refinement_range.contains(&refinement_steps) {
@@ -7408,9 +7403,7 @@ impl BezierRecursiveQuadraticValue2 {
             }
             let refined = refinements
                 .iter_mut()
-                .map(|refinement| {
-                    bezier_parameter_root_representation(refinement.refine_to(refinement_steps))
-                })
+                .map(|refinement| refinement.refine_to(refinement_steps).clone())
                 .collect::<Vec<_>>();
             let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
             if let Some(sign) = self
@@ -7927,27 +7920,18 @@ impl BezierRecursiveQuadraticValue2 {
         &self,
         sources: &[AlgebraicRootRepresentation],
     ) -> CurveResult<Classification<RealSign>> {
-        let strict = &CurveContext::STRICT;
-        let mut parameters = Vec::with_capacity(sources.len());
-        for source in sources {
-            match BezierParameter2::from_algebraic_root_representation_unbounded(source, strict)? {
-                Classification::Decided(parameter) => parameters.push(parameter),
-                Classification::Uncertain(_) => {
-                    return self.sign_with_nonzero_certificate();
-                }
-            }
+        if sources.iter().any(|source| !source.is_valid()) {
+            return self.sign_with_nonzero_certificate();
         }
-        let mut refinements = parameters
+        let mut refinements = sources
             .iter()
-            .map(|parameter| BezierParameterRefinement2::new(parameter, strict))
+            .map(RepresentedRootRefinement::new)
             .collect::<Vec<_>>();
         let mut refinement_steps = 0_usize;
         loop {
             let refined = refinements
                 .iter_mut()
-                .map(|refinement| {
-                    bezier_parameter_root_representation(refinement.refine_to(refinement_steps))
-                })
+                .map(|refinement| refinement.refine_to(refinement_steps).clone())
                 .collect::<Vec<_>>();
             let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
             if let Some(sign) = self
