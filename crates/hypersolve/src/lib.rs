@@ -41,6 +41,7 @@ pub mod ordered_field_roots;
 mod policy_division;
 pub mod polynomial;
 pub mod predicates;
+pub mod radical_expression;
 pub mod rank;
 pub mod real_interval;
 pub mod represented_root;
@@ -76,7 +77,6 @@ pub mod tensor_support;
 #[cfg(test)]
 mod test_support;
 pub mod trivariate_arithmetic;
-pub mod two_square_root;
 
 pub use active_set::{
     ActiveSetAffineRegenerationReport, ActiveSetAffineRegenerationStatus, ActiveSetAuditReport,
