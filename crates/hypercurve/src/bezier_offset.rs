@@ -53,14 +53,16 @@ use selected_dense::*;
 use crate::CurvePointData2;
 use crate::classify::product_sign;
 use hypersolve::RealInterval;
+use hypersolve::algebraic_fiber::isolate_bivariate_fiber_roots_at_algebraic_parameter_complete;
 use hypersolve::bivariate_arithmetic::{
-    bivariate_add, bivariate_multiply, bivariate_multiply_first_parameter, bivariate_outer_product,
-    bivariate_parameter_difference, bivariate_scale, bivariate_scaled_difference,
-    bivariate_specialize_first, bivariate_specialize_second,
-    bivariate_substitute_second_equal_affine_first, bivariate_substitute_second_equal_first,
-    bivariate_substitute_second_equal_one_minus_first, bivariate_subtract,
-    bivariate_swap_parameters, polynomial_add, polynomial_multiply, polynomial_power,
-    polynomial_powers, polynomial_scale, polynomial_subtract, try_bivariate_multiply,
+    bivariate_add, bivariate_multiply, bivariate_multiply_first_parameter,
+    bivariate_on_parameter_lift_cleared, bivariate_outer_product, bivariate_parameter_difference,
+    bivariate_scale, bivariate_scaled_difference, bivariate_specialize_first,
+    bivariate_specialize_second, bivariate_substitute_second_equal_affine_first,
+    bivariate_substitute_second_equal_first, bivariate_substitute_second_equal_one_minus_first,
+    bivariate_subtract, bivariate_swap_parameters, polynomial_add, polynomial_multiply,
+    polynomial_power, polynomial_powers, polynomial_scale, polynomial_subtract,
+    try_bivariate_multiply,
 };
 use hypersolve::bivariate_arithmetic::{
     bivariate_complement_second_parameter, bivariate_first_active_degree,
@@ -78,6 +80,7 @@ use hypersolve::bivariate_components::{
     merge_parameter_component_support, parameter_component_bivariate_polynomial_system_complete,
     rational_parameter_component_support,
 };
+use hypersolve::curve_resultant::linear_parameter_lifts_bivariate_polynomial_system_complete;
 #[cfg(test)]
 use hypersolve::exact_factor::bivariate_bilinear_factor_from_roots;
 use hypersolve::exact_factor::{
@@ -170,15 +173,13 @@ use hypersolve::{
     AlgebraicFiberDiagonalDeflationStatus, AlgebraicFiberPolynomialImageProjectionConfig,
     AlgebraicFiberPolynomialImageProjectionStatus, AlgebraicFiberProjectionStatus,
     AlgebraicFiberRationalReductionStatus, AlgebraicFiberRootCountStatus,
-    AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationReport,
-    AlgebraicFiberRootIsolationStatus, PredicateCertainty,
+    AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationStatus, PredicateCertainty,
     count_bivariate_common_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter,
     count_bivariate_fiber_roots_at_algebraic_parameter_closed,
     count_bivariate_fiber_roots_at_algebraic_parameter_intervals,
     deflate_bivariate_fiber_diagonal_root_at_algebraic_parameter,
-    isolate_bivariate_fiber_roots_at_algebraic_parameter, project_algebraic_fiber_polynomial_image,
-    project_algebraic_fiber_polynomial_image_relation,
+    project_algebraic_fiber_polynomial_image, project_algebraic_fiber_polynomial_image_relation,
     project_bivariate_fiber_at_algebraic_parameter,
     reduce_bivariate_rational_function_at_algebraic_parameter,
 };
@@ -197,8 +198,7 @@ use hypersolve::{
     CurveIntersectionParameterLiftStatus, CurveIntersectionResultantConfig,
     CurveIntersectionResultantStatus, CurveResultantParameter, RationalParametricCurve2,
     divide_bivariate_polynomial_exact, extract_bivariate_polynomial_system_axis_factors,
-    linear_parameter_lifts_bivariate_polynomial_system, resultant_bivariate_polynomial_system,
-    subresultant_chain_univariate_polynomials,
+    resultant_bivariate_polynomial_system, subresultant_chain_univariate_polynomials,
 };
 use hypersolve::{
     TrivariateConstraintResultantStatus, TrivariateConstraintSubresultantStatus,
@@ -3237,7 +3237,7 @@ pub(crate) fn degree_nine_selected_fiber_parameter_for_test(
     let mut fiber = vec![Real::zero(); 16];
     fiber[15] = Real::from(fiber_scale);
     let incidence = BivariatePolynomial::new(vec![fiber, vec![Real::from(-1_i8)]]);
-    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+    let report = hypersolve::isolate_bivariate_fiber_roots_at_algebraic_parameter(
         &incidence,
         CurveResultantParameter::First,
         &parameter_representation(&retained, policy),

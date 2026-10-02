@@ -529,52 +529,6 @@ pub(super) fn algebraic_selected_fiber_parameters_with_incident_ray(
     ))
 }
 
-/// Preserves a bounded selected-fiber isolator as the hot schedule without
-/// treating dyadic root separation depth as a mathematical boundary.
-#[inline]
-pub(super) fn isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
-    polynomial: &BivariatePolynomial,
-    retained_parameter: CurveResultantParameter,
-    retained_root: &AlgebraicRootRepresentation,
-    fiber_lower: &Real,
-    fiber_upper: &Real,
-    config: AlgebraicFiberRootIsolationConfig,
-    predicate_policy: hypersolve::PredicatePolicy,
-) -> AlgebraicFiberRootIsolationReport {
-    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
-        polynomial,
-        retained_parameter,
-        retained_root,
-        fiber_lower,
-        fiber_upper,
-        config,
-        predicate_policy,
-    );
-    if report.status != AlgebraicFiberRootIsolationStatus::DepthLimit
-        || config.max_subdivision_depth == usize::MAX
-    {
-        return report;
-    }
-    #[cfg(feature = "dispatch-trace")]
-    hyperreal::dispatch_trace::record(
-        "hypercurve",
-        "selected-fiber-root-isolation",
-        "unbounded-cold-continuation",
-    );
-    isolate_bivariate_fiber_roots_at_algebraic_parameter(
-        polynomial,
-        retained_parameter,
-        retained_root,
-        fiber_lower,
-        fiber_upper,
-        AlgebraicFiberRootIsolationConfig {
-            max_subdivision_depth: usize::MAX,
-            ..config
-        },
-        predicate_policy,
-    )
-}
-
 /// Isolates one selected bivariate fiber between represented affine bounds.
 ///
 /// Seeds the finite selected fiber shared by scalar and circle-component

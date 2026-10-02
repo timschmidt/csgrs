@@ -6023,7 +6023,7 @@ fn selected_fiber_quartile_parameters(
         vec![Real::one(), Real::from(-4_i8)],
         vec![Real::one()],
     ]);
-    let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
+    let report = hypersolve::isolate_bivariate_fiber_roots_at_algebraic_parameter(
         &incidence,
         CurveResultantParameter::First,
         &parameter_representation(&retained, policy),
@@ -44655,7 +44655,7 @@ fn selected_fiber_root_isolation_rejoins_uncapped_depth() {
         refinement_steps: 8,
     };
     assert_eq!(
-        isolate_bivariate_fiber_roots_at_algebraic_parameter(
+        hypersolve::isolate_bivariate_fiber_roots_at_algebraic_parameter(
             &incidence,
             CurveResultantParameter::First,
             &retained_root,
@@ -44718,7 +44718,7 @@ fn selected_fiber_root_isolation_rejoins_uncapped_depth() {
         #[cfg(feature = "dispatch-trace")]
         assert!(
             trace.path_count(
-                "hypercurve",
+                "hypersolve",
                 "selected-fiber-root-isolation",
                 "unbounded-cold-continuation",
             ) >= 1,
@@ -57507,7 +57507,7 @@ fn bounded_parameter_lifts_rejoin_the_uncapped_authority() {
         max_resultant_degree: 2,
     };
     assert_eq!(
-        linear_parameter_lifts_bivariate_polynomial_system(
+        hypersolve::linear_parameter_lifts_bivariate_polynomial_system(
             &first,
             &second,
             CurveResultantParameter::First,
@@ -57548,7 +57548,7 @@ fn bounded_parameter_lifts_rejoin_the_uncapped_authority() {
         #[cfg(feature = "dispatch-trace")]
         assert!(
             trace.path_count(
-                "hypercurve",
+                "hypersolve",
                 "bivariate-parameter-lift",
                 "unbounded-cold-continuation",
             ) >= 1,

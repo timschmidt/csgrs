@@ -574,43 +574,6 @@ pub(crate) struct BivariateParameterPairReplayCache {
     pub(in crate::bezier_offset) parameter_lifts: [Option<CurveIntersectionParameterLiftReport>; 2],
 }
 
-/// Keeps bounded cofactor interpolation on the hot path while ensuring that
-/// its degree budget cannot discard an otherwise exact parameter pairing.
-#[inline]
-pub(super) fn linear_parameter_lifts_bivariate_polynomial_system_complete(
-    first_equation: &BivariatePolynomial,
-    second_equation: &BivariatePolynomial,
-    retained_parameter: CurveResultantParameter,
-    config: CurveIntersectionResultantConfig,
-) -> CurveIntersectionParameterLiftReport {
-    let report = linear_parameter_lifts_bivariate_polynomial_system(
-        first_equation,
-        second_equation,
-        retained_parameter,
-        config,
-    );
-    if report.status != CurveIntersectionParameterLiftStatus::DegreeBoundExceeded
-        || config.max_resultant_degree == usize::MAX
-    {
-        return report;
-    }
-    #[cfg(feature = "dispatch-trace")]
-    hyperreal::dispatch_trace::record(
-        "hypercurve",
-        "bivariate-parameter-lift",
-        "unbounded-cold-continuation",
-    );
-    linear_parameter_lifts_bivariate_polynomial_system(
-        first_equation,
-        second_equation,
-        retained_parameter,
-        CurveIntersectionResultantConfig {
-            max_resultant_degree: usize::MAX,
-            ..config
-        },
-    )
-}
-
 pub(super) fn replay_bivariate_parameter_pair(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
@@ -1002,49 +965,6 @@ pub(super) fn signed_bivariate_on_parameter_lift(
             }
         },
     ))
-}
-
-pub(super) fn bivariate_on_parameter_lift_cleared(
-    polynomial: &BivariatePolynomial,
-    retained_axis: CurveResultantParameter,
-    map: &CurveIntersectionParameterLiftMap,
-) -> (Vec<Real>, usize) {
-    let swapped;
-    let polynomial = match retained_axis {
-        CurveResultantParameter::First => polynomial,
-        CurveResultantParameter::Second => {
-            swapped = bivariate_swap_parameters(polynomial);
-            &swapped
-        }
-    };
-    let lifted_degree = polynomial
-        .coefficients
-        .iter()
-        .map(|row| row.len().saturating_sub(1))
-        .max()
-        .unwrap_or(0);
-    let numerator_powers = polynomial_powers(&map.numerator_coefficients, lifted_degree);
-    let denominator_powers = polynomial_powers(&map.denominator_coefficients, lifted_degree);
-    let retained_degree = polynomial.coefficients.len().saturating_sub(1);
-    let map_degree = map
-        .numerator_coefficients
-        .len()
-        .max(map.denominator_coefficients.len())
-        .saturating_sub(1);
-    let mut cleared =
-        vec![Real::zero(); retained_degree + lifted_degree.saturating_mul(map_degree) + 1];
-    for (retained_power, row) in polynomial.coefficients.iter().enumerate() {
-        for (lifted_power, coefficient) in row.iter().enumerate() {
-            let factor = polynomial_multiply(
-                &numerator_powers[lifted_power],
-                &denominator_powers[lifted_degree - lifted_power],
-            );
-            for (power, factor) in factor.iter().enumerate() {
-                cleared[retained_power + power] += coefficient * factor;
-            }
-        }
-    }
-    (cleared, lifted_degree)
 }
 
 pub(super) fn bivariate_parameter_pair_is_exact_common_root(
