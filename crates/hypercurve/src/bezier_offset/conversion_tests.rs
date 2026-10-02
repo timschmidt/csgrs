@@ -3412,7 +3412,7 @@ fn coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds() {
         let source = bezier_parameter_root_representation(&BezierParameter2::Exact(value.clone()));
         let witnesses = [Some(value.clone())];
         for source_witnesses in [None, Some(witnesses.as_slice())] {
-            let interval = dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
+            let interval = hypersolve::represented_root::dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
                 &polynomial,
                 std::slice::from_ref(&source),
                 source_witnesses,
@@ -3420,7 +3420,7 @@ fn coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds() {
             )
             .unwrap();
             enclose(&interval, &expected(&value), &expected(&value));
-            let exact = dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
+            let exact = hypersolve::represented_root::dense_tensor_interval_with_coefficient_precision_and_source_witnesses(
                 &polynomial,
                 std::slice::from_ref(&source),
                 source_witnesses,

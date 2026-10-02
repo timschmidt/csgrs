@@ -84,16 +84,19 @@ use hypersolve::exact_factor::{
 };
 use hypersolve::radical_expression::{SquareRootExpression, TwoSquareRootExpression};
 use hypersolve::represented_root::{
-    NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, dense_tensor_interval,
-    dense_tensor_interval_with_coefficient_precision,
-    dense_tensor_interval_with_coefficient_precision_and_source_witnesses,
-    refined_represented_root, represented_affine_coordinate, represented_affine_tensor_basis,
+    NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, dense_polynomial_value_interval,
+    dense_polynomial_value_interval_with_coefficient_precision,
+    dense_positive_square_root_interval, dense_strict_interval_sign,
+    dense_substitute_affinely_related_sources, dense_tensor_interval,
+    dense_tensor_interval_with_coefficient_precision, dense_two_positive_square_root_interval,
+    dense_two_positive_square_root_interval_with_coefficient_precision, refined_represented_root,
+    represented_affine_coordinate, represented_affine_tensor_basis,
     represented_dense_value_refined, represented_dense_value_with_coefficient_precision,
     represented_ratio, represented_roots_strictly_equal, represented_strict_order,
     represented_strict_sign, represented_tensor_coordinate, represented_tensor_coordinate_refined,
     represented_tensor_nested_interval, represented_tensor_nested_value_refined,
     represented_univariate_coordinate, represented_vector_dot_cross,
-    represented_zero_offset_unit_scales,
+    represented_zero_offset_unit_scales, same_positive_root_sheet_signs,
 };
 use hypersolve::tensor_support::dense_tensor_is_stored_zero;
 use hypersolve::tensor_support::{
