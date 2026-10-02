@@ -869,6 +869,23 @@ impl BezierAlgebraicChord2 {
             let shared_point = first_points[first_index];
             let first_other = first_points[1 - first_index];
             let second_other = second_points[1 - second_index];
+            // Certified enclosures of the three vertices decide a clearly
+            // turning corner before any structural side replay, which can
+            // promote recursive endpoint coordinates at great cost.
+            if let Some(mut sign) =
+                enclosure_orientation_sign(shared_point, first_other, second_other, policy)
+            {
+                if first_index != second_index {
+                    sign = product_sign(sign, RealSign::Negative);
+                }
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "algebraic-chord-tangent-relation",
+                    "shared-endpoint-enclosure",
+                );
+                return Ok(Classification::Decided(sign));
+            }
             let reverse_side = |side| match side {
                 crate::classify::LineSide::Left => crate::classify::LineSide::Right,
                 crate::classify::LineSide::On => crate::classify::LineSide::On,
@@ -3082,4 +3099,52 @@ impl BezierAlgebraicChord2 {
             Ok(Classification::Uncertain(UncertaintyReason::Predicate))
         }
     }
+}
+
+/// Signs `cross(first - shared, second - shared)` from certified vertex
+/// enclosures, refining them a bounded number of times. Returns `None` when
+/// the enclosed cross product still contains zero, including at a genuinely
+/// collinear corner, so callers keep their exact structural routes.
+fn enclosure_orientation_sign(
+    shared: &CurvePoint2,
+    first: &CurvePoint2,
+    second: &CurvePoint2,
+    policy: &CurveContext,
+) -> Option<RealSign> {
+    let strict = policy.strict_counterpart();
+    for refinement_steps in [0_usize, 16] {
+        let bounds = |point: &CurvePoint2| {
+            match crate::bezier_offset::algebraic_chord_endpoint_bounds_refined(
+                point,
+                refinement_steps,
+                &strict,
+            ) {
+                Classification::Decided(bounds) => Some([
+                    RealInterval {
+                        lower: bounds.min_x().clone(),
+                        upper: bounds.max_x().clone(),
+                    },
+                    RealInterval {
+                        lower: bounds.min_y().clone(),
+                        upper: bounds.max_y().clone(),
+                    },
+                ]),
+                Classification::Uncertain(_) => None,
+            }
+        };
+        let (Some([sx, sy]), Some([fx, fy]), Some([tx, ty])) =
+            (bounds(shared), bounds(first), bounds(second))
+        else {
+            continue;
+        };
+        let cross = fx
+            .subtract(&sx)
+            .multiply(&ty.subtract(&sy))
+            .zip(fy.subtract(&sy).multiply(&tx.subtract(&sx)))
+            .map(|(left, right)| left.subtract(&right));
+        if let Some(sign) = cross.and_then(|cross| cross.strict_nonzero_sign()) {
+            return Some(sign);
+        }
+    }
+    None
 }

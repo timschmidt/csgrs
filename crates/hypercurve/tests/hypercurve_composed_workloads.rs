@@ -1290,3 +1290,34 @@ fn filleted_chamfered_boolean_miter_offset_round_trips() {
     ];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// An inward round offset, then an inward miter offset, of a chamfered
+/// weighted-conic seed.
+///
+/// The miter offset's band Boolean pairs a band connector chord with a
+/// parallel of the same source at the opposite distance. The connector's
+/// line meets both parallel sheets at the source vertex, so the
+/// sheet-symmetric squared incidence has a double root there and local
+/// Bernstein isolation over the depth-three tower subdivides without
+/// separating it. The connector's endpoint parameter is not an element of
+/// the incidence field, so the endpoint-root deflation cannot remove it.
+#[test]
+#[ignore = "open: opposite-sheet double root in a chord/parallel band incidence"]
+fn chamfered_conic_round_then_miter_inward_offset_completes() {
+    let seeds = [Seed {
+        x: -1,
+        y: 10,
+        width: 9,
+        height: 10,
+        lower: 2,
+        upper: 3,
+        curvature: 2,
+        weight: 6,
+    }];
+    let steps = [
+        Step::Chamfer(0, 5),
+        Step::Offset(1, -1, 0),
+        Step::Offset(2, -2, 2),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}

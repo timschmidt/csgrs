@@ -2757,25 +2757,51 @@ impl BezierRecursiveProjectiveChordParallelSystem2 {
             let upper = BezierParameter2::Exact(upper.clone());
             let mut selected = None;
             let mut uncertainty = None;
+            let mut bracketed = Vec::new();
+            let mut strictly_inside = 0_usize;
             for candidate in candidates {
                 let after_lower = candidate.cmp_by_refinement(&lower, strict)?;
                 let before_upper = candidate.cmp_by_refinement(&upper, strict)?;
                 match (after_lower, before_upper) {
                     (
                         Classification::Decided(
-                            std::cmp::Ordering::Equal | std::cmp::Ordering::Greater,
+                            after @ (std::cmp::Ordering::Equal | std::cmp::Ordering::Greater),
                         ),
                         Classification::Decided(
-                            std::cmp::Ordering::Equal | std::cmp::Ordering::Less,
+                            before @ (std::cmp::Ordering::Equal | std::cmp::Ordering::Less),
                         ),
-                    ) => {}
-                    (Classification::Decided(_), Classification::Decided(_)) => continue,
+                    ) => {
+                        if after == std::cmp::Ordering::Greater
+                            && before == std::cmp::Ordering::Less
+                        {
+                            strictly_inside += 1;
+                        }
+                        bracketed.push(candidate);
+                    }
+                    (Classification::Decided(_), Classification::Decided(_)) => {}
                     (Classification::Uncertain(reason), _)
                     | (_, Classification::Uncertain(reason)) => {
                         uncertainty = Some(reason);
-                        continue;
                     }
                 }
+            }
+            // The bracket's strict opposite endpoint signs place one root of
+            // the monotone incidence strictly inside it, and the projection
+            // contains every incidence root. A sole projected candidate
+            // strictly inside is therefore that root, without the exact zero
+            // test of the radical incidence at an algebraic candidate.
+            if uncertainty.is_none() && strictly_inside == 1 && bracketed.len() == 1 {
+                #[cfg(feature = "dispatch-trace")]
+                hyperreal::dispatch_trace::record(
+                    "hypercurve",
+                    "recursive-monotone-promotion",
+                    "sole-projected-candidate",
+                );
+                return Ok(Classification::Decided(
+                    bracketed.pop().expect("one bracketed candidate"),
+                ));
+            }
+            for candidate in bracketed {
                 let evaluation = match self.candidate_evaluation(&candidate, strict)? {
                     Classification::Decided(Some(evaluation)) => evaluation,
                     Classification::Decided(None) => continue,
