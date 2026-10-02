@@ -28,7 +28,6 @@ use crate::bezier_offset::{
     BezierAlgebraicSelectedFiberParameter2, BezierRecursiveChordContactLocation2,
     BezierRecursiveProjectiveParameter2,
 };
-use crate::bezier_parameter::scalar_in_open_interval;
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero};
 use crate::rational_bezier_general::project_homogeneous;
 use crate::{
@@ -38,6 +37,7 @@ use crate::{
     CurveError, CurveResult, HomogeneousControl2, LineSeg2, Point2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, Similarity2, UncertaintyReason,
 };
+use hypersolve::represented_root::scalar_in_open_interval;
 
 /// Exact local parameter on any supported curve carrier.
 ///

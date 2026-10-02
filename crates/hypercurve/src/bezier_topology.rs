@@ -9,7 +9,7 @@ use std::cmp::Ordering;
 
 use hyperreal::{Real, RealSign};
 
-use crate::bezier_parameter::{bernstein_to_power_coefficients, divide_by_linear_root};
+use crate::bezier_parameter::bernstein_to_power_coefficients;
 use crate::classify::{
     classify_oriented_line, compare_reals, in_closed_unit_interval, is_zero, orient2_real_expr,
     real_sign,
@@ -18,6 +18,7 @@ use crate::{
     Aabb2, BezierParameter2, BezierParameterPolynomial, Classification, CubicBezier2, CurveContext,
     CurveError, CurveResult, LineSeg2, LineSide, Point2, QuadraticBezier2, UncertaintyReason,
 };
+use hypersolve::exact_factor::divide_by_linear_root;
 
 /// Current finite dyadic frontier for exact same-parameter Bezier candidates.
 ///

@@ -39,6 +39,10 @@ use num::{BigInt, BigRational, BigUint, Integer, One, ToPrimitive, Zero};
 
 use crate::classify::{compare_reals, in_closed_unit_interval, is_zero, real_sign};
 use crate::{Classification, CurveContext, CurveError, CurveResult, UncertaintyReason};
+use hypersolve::exact_factor::divide_by_linear_root;
+use hypersolve::exact_factor::polynomial_restrict_to_interval;
+use hypersolve::exact_factor::quadratic_bernstein_to_power;
+use hypersolve::represented_root::scalar_in_open_interval;
 
 /// Power-basis polynomial used to define an algebraic Bezier parameter.
 ///
@@ -2036,36 +2040,6 @@ fn unit_complement_power_coefficients(coefficients: &[Real]) -> Vec<Real> {
     transformed
 }
 
-/// Chooses a probe inside a strictly proved scalar gap. A probe has no
-/// incidence obligation to either endpoint, so prefer certified rational
-/// bounds to embedding their expressions in every subsequent construction.
-/// In particular, learning an irrational scalar view of a selected root must
-/// not introduce that root into otherwise rational sample coefficients.
-pub(crate) fn scalar_in_open_interval(lower: &Real, upper: &Real) -> Real {
-    if lower.exact_rational_ref().is_some() && upper.exact_rational_ref().is_some() {
-        return Real::average_pair(lower, upper);
-    }
-    let mut precision = -4_i32;
-    loop {
-        let (Some([_, inner_lower]), Some([inner_upper, _])) = (
-            lower.certified_dyadic_interval(precision),
-            upper.certified_dyadic_interval(precision),
-        ) else {
-            break;
-        };
-        if inner_lower < inner_upper {
-            return Real::average_pair(&Real::new(inner_lower), &Real::new(inner_upper));
-        }
-        let Some(next_precision) = precision.checked_mul(2) else {
-            break;
-        };
-        precision = next_precision;
-    }
-    // An aborted enclosure query does not remove the original exact gap or
-    // make rational materialization a requirement on supported endpoints.
-    Real::average_pair(lower, upper)
-}
-
 fn strict_scalar_between_known_order(
     left_parameter: &BezierParameter2,
     right_parameter: &BezierParameter2,
@@ -2862,7 +2836,7 @@ pub(crate) fn deep_exact_coefficients_sign_at_parameter(
             BezierParameter2::Exact(parameter) => {
                 vec![Real::eval_poly(coefficients, parameter)]
             }
-            BezierParameter2::Algebraic(parameter) => restrict_power_basis_to_interval(
+            BezierParameter2::Algebraic(parameter) => polynomial_restrict_to_interval(
                 coefficients,
                 parameter.interval().start(),
                 parameter.interval().end(),
@@ -2919,7 +2893,7 @@ pub(crate) fn strict_coefficients_sign_on_parameter_interval(
     };
     let interval = parameter.interval();
     let restricted =
-        restrict_power_basis_to_interval(coefficients, interval.start(), interval.end());
+        polynomial_restrict_to_interval(coefficients, interval.start(), interval.end());
     univariate_unit_interval_strict_bernstein_sign(&restricted, policy)
 }
 
@@ -2940,7 +2914,7 @@ pub(crate) fn coefficients_value_interval_on_parameter_interval(
     let BezierParameter2::Algebraic(parameter) = parameter else {
         unreachable!("an exact parameter always has a scalar view");
     };
-    let restricted = restrict_power_basis_to_interval(
+    let restricted = polynomial_restrict_to_interval(
         coefficients,
         parameter.interval().start(),
         parameter.interval().end(),
@@ -2960,7 +2934,7 @@ pub(crate) fn coefficients_value_interval_on_real_interval(
     end: &Real,
     precision: i32,
 ) -> CurveResult<Option<[HyperRational; 2]>> {
-    let restricted = restrict_power_basis_to_interval(coefficients, start, end);
+    let restricted = polynomial_restrict_to_interval(coefficients, start, end);
     coefficients_dyadic_convex_hull(&restricted, precision)
 }
 
@@ -3011,31 +2985,6 @@ pub(crate) fn univariate_unit_interval_strict_bernstein_sign(
         }
     }
     Ok(strict_sign)
-}
-
-/// Composes `p(start + u * (end-start))` in power basis. Horner composition
-/// keeps only one degree-sized temporary instead of retaining every affine
-/// power used by the former offset-local implementation.
-pub(crate) fn restrict_power_basis_to_interval(
-    coefficients: &[Real],
-    start: &Real,
-    end: &Real,
-) -> Vec<Real> {
-    let Some((leading, remaining)) = coefficients.split_last() else {
-        return Vec::new();
-    };
-    let extent = end - start;
-    let mut restricted = vec![leading.clone()];
-    for coefficient in remaining.iter().rev() {
-        let mut next = vec![Real::zero(); restricted.len() + 1];
-        for (degree, value) in restricted.iter().enumerate() {
-            next[degree] = &next[degree] + value * start;
-            next[degree + 1] = &next[degree + 1] + value * &extent;
-        }
-        next[0] = &next[0] + coefficient;
-        restricted = next;
-    }
-    restricted
 }
 
 fn refine_algebraic_sign_change(
@@ -4713,27 +4662,6 @@ fn insert_parameter_ordered(
     }
     parameters.insert(insert_at, parameter);
     Ok(())
-}
-
-pub(crate) fn divide_by_linear_root(coefficients: &[Real], root: &Real) -> Vec<Real> {
-    let degree = coefficients.len() - 1;
-    let mut quotient = vec![Real::zero(); degree];
-    quotient[degree - 1] = coefficients[degree].clone();
-    for index in (1..degree).rev() {
-        quotient[index - 1] = &coefficients[index] + root * &quotient[index];
-    }
-    quotient
-}
-
-/// The shared degree-two basis change keeps exact coefficient expressions
-/// identical across primitive evaluation, general curves, and root images.
-pub(crate) fn quadratic_bernstein_to_power([start, control, end]: [&Real; 3]) -> [Real; 3] {
-    let two = Real::from(2_i8);
-    [
-        start.clone(),
-        &two * &(control - start),
-        start - &(&two * control) + end,
-    ]
 }
 
 pub(crate) fn bernstein_to_power_coefficients(values: Vec<Real>) -> CurveResult<Vec<Real>> {

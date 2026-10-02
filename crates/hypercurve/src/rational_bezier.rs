@@ -12,7 +12,6 @@ use std::sync::Arc;
 
 use hyperreal::{Real, RealSign, ZeroKnowledge};
 
-use crate::bezier_parameter::quadratic_bernstein_to_power;
 use crate::bezier_topology::exact_line_contact_relation_from_bernstein_distances;
 use crate::bezier_topology::polynomial_roots_in_unit_interval_with_endpoints;
 use crate::classify::{classify_oriented_line, is_zero, orient2_real_expr, real_sign};
@@ -20,6 +19,7 @@ use crate::{
     Aabb2, Axis2, BezierLineContactRelation, Classification, CubicBezier2, CurveContext,
     CurveError, LineSeg2, LineSide, Point2, QuadraticBezier2, RationalBezier2, UncertaintyReason,
 };
+use hypersolve::exact_factor::quadratic_bernstein_to_power;
 
 /// Coarse conic family represented by a rational quadratic Bezier segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

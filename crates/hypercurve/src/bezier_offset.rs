@@ -138,9 +138,8 @@ use crate::bezier_parameter::{
     BezierParameterRay2, BezierParameterRefinement2, bernstein_to_power_coefficients,
     coefficients_value_interval_on_parameter_interval,
     coefficients_value_interval_on_real_interval, deep_exact_coefficients_sign_at_parameter,
-    divide_by_linear_root, power_to_bernstein_coefficients, restrict_power_basis_to_interval,
-    signed_coefficients_at_parameter, strict_coefficients_sign_on_parameter_interval,
-    univariate_unit_interval_strict_bernstein_sign,
+    power_to_bernstein_coefficients, signed_coefficients_at_parameter,
+    strict_coefficients_sign_on_parameter_interval, univariate_unit_interval_strict_bernstein_sign,
 };
 use crate::bezier_split::CurveParameterDomain2;
 use crate::classify::{classify_oriented_line, compare_reals, in_closed_unit_interval, real_sign};

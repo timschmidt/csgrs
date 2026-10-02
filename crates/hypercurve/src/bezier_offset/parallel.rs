@@ -1,6 +1,8 @@
 //! Exact analytic parallel carrier: construction, evaluation, singularity analysis, incidence and pair intersections.
 
 use super::*;
+use hypersolve::exact_factor::divide_by_linear_root;
+use hypersolve::exact_factor::polynomial_restrict_to_interval;
 
 mod pair_kernel;
 mod rational_kernel;
@@ -5684,7 +5686,7 @@ impl BezierParallel2 {
             let curvature = if native {
                 curvature
             } else {
-                restrict_power_basis_to_interval(&curvature, lower, upper)
+                polynomial_restrict_to_interval(&curvature, lower, upper)
             };
             let positive_turn = if reversed {
                 RealSign::Negative
@@ -5702,7 +5704,7 @@ impl BezierParallel2 {
             }
             for component in [&differential.tangent_x, &differential.tangent_y] {
                 let restricted =
-                    (!native).then(|| restrict_power_basis_to_interval(component, lower, upper));
+                    (!native).then(|| polynomial_restrict_to_interval(component, lower, upper));
                 if univariate_unit_interval_strict_bernstein_sign(
                     restricted.as_deref().unwrap_or(component),
                     policy,
@@ -5716,7 +5718,7 @@ impl BezierParallel2 {
             let speed_squared = if native {
                 speed_squared
             } else {
-                restrict_power_basis_to_interval(&speed_squared, lower, upper)
+                polynomial_restrict_to_interval(&speed_squared, lower, upper)
             };
             Ok(
                 univariate_unit_interval_strict_bernstein_sign(&speed_squared, policy)?

@@ -30,13 +30,14 @@ use hypersolve::{
     transform_algebraic_root_rational_images, validate_algebraic_root_representation,
 };
 
-use crate::bezier_parameter::{quadratic_bernstein_to_power, signed_coefficients_at_parameter};
+use crate::bezier_parameter::signed_coefficients_at_parameter;
 use crate::classify::{compare_reals, real_sign};
 use crate::{
     Aabb2, BezierAlgebraicParameter2, BezierParameter2, Classification, CubicBezier2, CurveContext,
     CurveError, CurveResult, Point2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2,
     UncertaintyReason,
 };
+use hypersolve::exact_factor::quadratic_bernstein_to_power;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use std::sync::OnceLock;
