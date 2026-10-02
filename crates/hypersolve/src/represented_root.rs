@@ -1951,7 +1951,7 @@ fn refine_root_by_sign_change(
 
 /// A scalar strictly inside `(lower, upper)`, preferring a short dyadic
 /// rational between certified inner bounds of symbolic endpoints.
-fn scalar_in_open_interval(lower: &Real, upper: &Real) -> Real {
+pub fn scalar_in_open_interval(lower: &Real, upper: &Real) -> Real {
     if lower.exact_rational_ref().is_some() && upper.exact_rational_ref().is_some() {
         return Real::average_pair(lower, upper);
     }

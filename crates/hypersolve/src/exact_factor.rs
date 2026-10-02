@@ -702,15 +702,45 @@ pub fn polynomial_restrict_to_interval(
     start: &Real,
     end: &Real,
 ) -> Vec<Real> {
-    let degree = coefficients.len().saturating_sub(1);
-    let powers = polynomial_powers(&[start.clone(), end - start], degree);
-    let mut restricted = vec![Real::zero(); degree + 1];
-    for (power, coefficient) in coefficients.iter().enumerate() {
-        for (index, factor) in powers[power].iter().enumerate() {
-            restricted[index] += coefficient * factor;
+    let Some((leading, remaining)) = coefficients.split_last() else {
+        return Vec::new();
+    };
+    let extent = end - start;
+    let mut restricted = vec![leading.clone()];
+    for coefficient in remaining.iter().rev() {
+        let mut next = vec![Real::zero(); restricted.len() + 1];
+        for (degree, value) in restricted.iter().enumerate() {
+            next[degree] = &next[degree] + value * start;
+            next[degree + 1] = &next[degree + 1] + value * &extent;
         }
+        next[0] = &next[0] + coefficient;
+        restricted = next;
     }
     restricted
+}
+
+/// Divides by `x - root`, given that `root` is a root, by synthetic division.
+/// The input must have positive degree.
+pub fn divide_by_linear_root(coefficients: &[Real], root: &Real) -> Vec<Real> {
+    let degree = coefficients.len() - 1;
+    let mut quotient = vec![Real::zero(); degree];
+    quotient[degree - 1] = coefficients[degree].clone();
+    for index in (1..degree).rev() {
+        quotient[index - 1] = &coefficients[index] + root * &quotient[index];
+    }
+    quotient
+}
+
+/// Converts quadratic Bernstein controls to ascending power coefficients.
+/// The shared basis change keeps exact coefficient expressions identical
+/// across every consumer.
+pub fn quadratic_bernstein_to_power([start, control, end]: [&Real; 3]) -> [Real; 3] {
+    let two = Real::from(2_i8);
+    [
+        start.clone(),
+        &two * &(control - start),
+        start - &(&two * control) + end,
+    ]
 }
 
 fn positive_divisors(value: u64) -> Vec<u64> {
