@@ -618,6 +618,63 @@ pub fn polynomial_trim_structural_zeros(mut coefficients: Vec<Real>) -> Vec<Real
     coefficients
 }
 
+/// Whether `factor * quotient` splits a component of total degree
+/// `component_degree` into two nonconstant factors of lower degree.
+pub fn proper_parameter_component_split(
+    component_degree: usize,
+    factor: &BivariatePolynomial,
+    quotient: &BivariatePolynomial,
+) -> bool {
+    let factor_degree = bivariate_storage_bidegree_sum(factor);
+    let quotient_degree = bivariate_storage_bidegree_sum(quotient);
+    factor_degree != 0
+        && quotient_degree != 0
+        && factor_degree < component_degree
+        && quotient_degree < component_degree
+}
+
+/// Divides both equations exactly by a common component, if possible.
+pub fn divide_bivariate_system_component(
+    equations: &[BivariatePolynomial; 2],
+    component: &BivariatePolynomial,
+) -> Option<[BivariatePolynomial; 2]> {
+    let mut residual = equations.clone();
+    let mut removed = false;
+    loop {
+        let (Some(first), Some(second)) = (
+            divide_bivariate_polynomial_exact(&residual[0], component),
+            divide_bivariate_polynomial_exact(&residual[1], component),
+        ) else {
+            break;
+        };
+        let next = [first, second];
+        if next
+            .iter()
+            .map(bivariate_storage_bidegree_sum)
+            .sum::<usize>()
+            >= residual
+                .iter()
+                .map(bivariate_storage_bidegree_sum)
+                .sum::<usize>()
+        {
+            return None;
+        }
+        residual = next;
+        removed = true;
+    }
+    removed.then_some(residual)
+}
+
+/// The product of the components, whose zero set is their union.
+pub fn parameter_component_union_support(
+    components: &[BivariatePolynomial],
+) -> Option<BivariatePolynomial> {
+    components
+        .iter()
+        .cloned()
+        .reduce(|support, component| bivariate_multiply(&support, &component))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

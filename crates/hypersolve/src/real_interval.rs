@@ -6,7 +6,7 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::{Real, RealSign, ZeroKnowledge};
+use hyperreal::{Rational as HyperRational, Real, RealSign, ZeroKnowledge};
 
 use crate::curve_resultant::BivariatePolynomial;
 
@@ -307,4 +307,72 @@ impl RealInterval {
         }
         Some(Self { lower, upper })
     }
+}
+
+/// Certifies one strict sign of a polynomial whose Bernstein controls are
+/// rational intervals `[lower, upper]`, by bounded de Casteljau subdivision.
+/// Returns `None` when subdivision cannot certify a single sign.
+pub fn rational_interval_bernstein_strict_sign(
+    controls: Vec<[HyperRational; 2]>,
+) -> Option<RealSign> {
+    let zero = HyperRational::zero();
+    let mut pending = vec![(controls, 0_u8)];
+    let mut certified_sign = None;
+    let mut visited = 0_usize;
+    while let Some((controls, depth)) = pending.pop() {
+        visited += 1;
+        let first = controls.first()?;
+        let last = controls.last()?;
+        let endpoints_positive = first[0] > zero && last[0] > zero;
+        let endpoints_negative = first[1] < zero && last[1] < zero;
+        let segment_sign =
+            if endpoints_positive && controls.iter().all(|control| control[0] >= zero) {
+                Some(RealSign::Positive)
+            } else if endpoints_negative && controls.iter().all(|control| control[1] <= zero) {
+                Some(RealSign::Negative)
+            } else {
+                None
+            };
+        if let Some(segment_sign) = segment_sign {
+            match certified_sign {
+                Some(previous) if previous != segment_sign => return None,
+                Some(_) => {}
+                None => certified_sign = Some(segment_sign),
+            }
+            continue;
+        }
+        if depth == 10 || visited >= 256 {
+            return None;
+        }
+
+        let mut work = controls;
+        let degree = work.len().saturating_sub(1);
+        let mut left = Vec::with_capacity(work.len());
+        let mut right = Vec::with_capacity(work.len());
+        left.push(work[0].clone());
+        right.push(work[degree].clone());
+        for level in 1..=degree {
+            for index in 0..=degree - level {
+                work[index] = [
+                    HyperRational::average_pair(&work[index][0], &work[index + 1][0]),
+                    HyperRational::average_pair(&work[index][1], &work[index + 1][1]),
+                ];
+            }
+            left.push(work[0].clone());
+            right.push(work[degree - level].clone());
+        }
+        right.reverse();
+        pending.push((right, depth + 1));
+        pending.push((left, depth + 1));
+    }
+    certified_sign
+}
+
+/// Whether two certified signs are strictly positive and strictly negative.
+pub fn strict_signs_are_opposite(first: Option<RealSign>, second: Option<RealSign>) -> bool {
+    matches!(
+        (first, second),
+        (Some(RealSign::Positive), Some(RealSign::Negative))
+            | (Some(RealSign::Negative), Some(RealSign::Positive))
+    )
 }

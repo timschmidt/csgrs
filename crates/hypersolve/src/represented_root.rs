@@ -1847,3 +1847,43 @@ pub fn represented_order_to_real(
         uncertain => uncertain.map(|_| unreachable!("only a decided outcome maps its value")),
     }
 }
+
+/// Intersects the lines `a*x + b*y + c = 0` given by two coefficient triples
+/// at a represented root tuple, keeping both coordinates as exact ratios of
+/// one shared determinant. A vanishing or undecided determinant is reported
+/// as undecided.
+pub fn represented_projective_line_intersection(
+    first: [DenseTensorPolynomial; 3],
+    second: [DenseTensorPolynomial; 3],
+    sources: &[AlgebraicRootRepresentation],
+) -> RepresentedOutcome<[AlgebraicRootRepresentation; 2]> {
+    let [first_a, first_b, first_c] = first;
+    let [second_a, second_b, second_c] = second;
+    let Some((x_numerator, y_numerator, denominator)) = (|| {
+        let denominator = first_a
+            .multiply(&second_b)?
+            .subtract(&second_a.multiply(&first_b)?)?;
+        let x_numerator = first_b
+            .multiply(&second_c)?
+            .subtract(&second_b.multiply(&first_c)?)?;
+        let y_numerator = first_c
+            .multiply(&second_a)?
+            .subtract(&second_c.multiply(&first_a)?)?;
+        Some((x_numerator, y_numerator, denominator))
+    })() else {
+        return RepresentedOutcome::Unsupported;
+    };
+    let x = represented_tensor_ratio(&x_numerator, &denominator, sources);
+    let y = represented_tensor_ratio(&y_numerator, &denominator, sources);
+    match (x, y) {
+        (RepresentedOutcome::Decided(x), RepresentedOutcome::Decided(y)) => {
+            RepresentedOutcome::Decided([x, y].map(|coordinate| {
+                compact_algebraic_root_low_degree_witness(&coordinate).unwrap_or(coordinate)
+            }))
+        }
+        (RepresentedOutcome::Unsupported, _) | (_, RepresentedOutcome::Unsupported) => {
+            RepresentedOutcome::Unsupported
+        }
+        _ => RepresentedOutcome::Undecided,
+    }
+}
