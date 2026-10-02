@@ -1337,3 +1337,164 @@ pub fn same_positive_root_sheet_signs(first: RealSign, second: RealSign) -> Opti
         _ => None,
     }
 }
+
+/// The approximation protocol of a predicate evaluation context.
+///
+/// A context may select the `APPROXIMATE_512` terminal for an operation while
+/// a strict pass temporarily forbids consuming it. Exact constructions consult
+/// these facts and report every approximate decision they consume.
+pub trait ApproximationPolicy {
+    /// Whether the operation selected the `APPROXIMATE_512` terminal, even if
+    /// a strict pass currently forbids consuming it.
+    fn selects_approximate_512(&self) -> bool;
+    /// Whether an approximate terminal decision may be consumed now.
+    fn permits_approximate_512(&self) -> bool;
+    /// Records that an approximate terminal decision was consumed.
+    fn observe_approximate_512(&self);
+}
+
+/// The sign of a represented value: a certified STRICT sign, else an
+/// `APPROXIMATE_512` comparison with zero when `policy` permits and records it.
+pub fn represented_policy_sign(
+    value: &AlgebraicRootRepresentation,
+    policy: &impl ApproximationPolicy,
+) -> RepresentedOutcome<RealSign> {
+    if let Some(sign) = represented_strict_sign(value) {
+        return RepresentedOutcome::Decided(sign);
+    }
+    if !policy.permits_approximate_512() {
+        return RepresentedOutcome::Undecided;
+    }
+    let zero = AlgebraicRootRepresentation::from_exact_value(&Real::zero());
+    let report = compare_algebraic_root_representations_with_refinement(
+        value,
+        &zero,
+        AlgebraicRootRefinementComparisonConfig {
+            policy: PredicatePolicy::APPROXIMATE_512,
+            ..AlgebraicRootRefinementComparisonConfig::default()
+        },
+    );
+    let Some(order) = matches!(
+        report.comparison.status,
+        AlgebraicRootComparisonStatus::Compared | AlgebraicRootComparisonStatus::SameRepresentation
+    )
+    .then_some(report.comparison.ordering)
+    .flatten() else {
+        return RepresentedOutcome::Undecided;
+    };
+    policy.observe_approximate_512();
+    RepresentedOutcome::Decided(match order {
+        Ordering::Less => RealSign::Negative,
+        Ordering::Equal => RealSign::Zero,
+        Ordering::Greater => RealSign::Positive,
+    })
+}
+
+/// Decides the sign of a reduced dense polynomial at a selected source tuple
+/// by refining the source isolators.
+///
+/// `value` is `polynomial` with an appended unit output axis. Each refinement
+/// first tries a certified tensor-interval sign. STRICT continues through
+/// complete algebraic tensor images without a refinement limit; an
+/// `APPROXIMATE_512` operation stops at 512 refinement steps, where it either
+/// consumes the approximate terminal or, inside a strict pass, reports the
+/// sign as undecided for the outer replay.
+pub fn dense_tuple_sign_by_refinement(
+    polynomial: &DenseTensorPolynomial,
+    value: &DenseTensorPolynomial,
+    sources: &[AlgebraicRootRepresentation],
+    policy: &impl ApproximationPolicy,
+) -> RepresentedOutcome<RealSign> {
+    let mut previous = None;
+    let mut refinement_steps = 0_usize;
+    let next_refinement_steps = |steps: usize| match steps {
+        0 => Some(4),
+        4 => Some(8),
+        8 => Some(16),
+        16 => Some(32),
+        32 => Some(64),
+        64 => Some(128),
+        128 => Some(256),
+        256 => Some(512),
+        steps => steps.checked_mul(2),
+    };
+    loop {
+        let refined = sources
+            .iter()
+            .map(|source| refined_represented_root(source, refinement_steps))
+            .collect::<Vec<_>>();
+        let progressed = previous.as_ref() != Some(&refined);
+        previous = Some(refined.clone());
+        if !progressed && refinement_steps < 512 {
+            refinement_steps = next_refinement_steps(refinement_steps)
+                .expect("the bounded refinement schedule cannot overflow");
+            continue;
+        }
+        if !progressed && !policy.permits_approximate_512() {
+            return RepresentedOutcome::Undecided;
+        }
+        let coefficient_bits = refinement_steps.max(64).min(i32::MAX as usize) as i32;
+        let coefficient_precision = -coefficient_bits;
+        if let Some(sign) = dense_polynomial_value_interval_with_coefficient_precision(
+            polynomial,
+            &refined,
+            coefficient_precision,
+        )
+        .as_ref()
+        .and_then(dense_strict_interval_sign)
+        {
+            return RepresentedOutcome::Decided(sign);
+        }
+        let bounded_terminal = policy.selects_approximate_512() && refinement_steps == 512;
+        let approximate_terminal = policy.permits_approximate_512() && bounded_terminal;
+        // APPROXIMATE_512 already performs the certified tensor interval test
+        // above at every refinement, including its 512-bit terminal. Building
+        // a global tensor image cannot strengthen that policy's terminal
+        // equality interpretation and would duplicate an exact elimination in
+        // both the preliminary strict pass and the outer approximate replay.
+        // STRICT alone retains the complete algebraic-image authority.
+        let represented = if policy.selects_approximate_512() {
+            RepresentedOutcome::Undecided
+        } else {
+            represented_dense_value_with_coefficient_precision(
+                value,
+                &refined,
+                coefficient_precision,
+            )
+        };
+        if let RepresentedOutcome::Decided(represented) = &represented
+            && let Some(sign) = represented_strict_sign(represented)
+        {
+            return RepresentedOutcome::Decided(sign);
+        }
+        if represented == RepresentedOutcome::Unsupported {
+            return RepresentedOutcome::Unsupported;
+        }
+        if approximate_terminal {
+            return match represented {
+                RepresentedOutcome::Decided(represented) => {
+                    represented_policy_sign(&represented, policy)
+                }
+                RepresentedOutcome::Unsupported | RepresentedOutcome::Undecided => {
+                    policy.observe_approximate_512();
+                    RepresentedOutcome::Decided(RealSign::Zero)
+                }
+            };
+        }
+        if bounded_terminal {
+            // This is the preliminary certified pass of an APPROXIMATE_512
+            // operation. Preserve its strict uncertainty so the outer policy
+            // replay can consume the terminal; never continue this selected
+            // policy into an unbounded exact promotion.
+            return RepresentedOutcome::Undecided;
+        }
+        refinement_steps = match next_refinement_steps(refinement_steps) {
+            Some(next) => next,
+            None => return RepresentedOutcome::Unsupported,
+        };
+        assert!(
+            !(policy.selects_approximate_512() && refinement_steps > 512),
+            "APPROXIMATE_512 cannot refine past its terminal"
+        );
+    }
+}
