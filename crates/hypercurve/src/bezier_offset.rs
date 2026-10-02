@@ -35,7 +35,6 @@ mod selected_fiber;
 
 pub use approximation::*;
 pub(crate) use bivariate_replay::*;
-use dense_sign::*;
 pub(crate) use fiber_sign::*;
 use multivariate_sign::*;
 pub(crate) use parallel_components::*;
@@ -98,11 +97,15 @@ use hypersolve::real_interval::{
 };
 use hypersolve::represented_root::{
     NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, RepresentedRootRefinement,
+    dense_polynomial_tuple_sign, dense_polynomial_tuple_sign_owned,
     dense_polynomial_value_interval, dense_polynomial_value_interval_with_coefficient_precision,
-    dense_positive_square_root_interval, dense_strict_interval_sign,
-    dense_substitute_affinely_related_sources, dense_tensor_interval_with_coefficient_precision,
-    dense_tuple_sign_by_refinement, dense_two_positive_square_root_interval,
-    dense_two_positive_square_root_interval_with_coefficient_precision, refined_represented_root,
+    dense_positive_square_root_interval, dense_positive_square_root_sum_sign,
+    dense_strict_interval_sign, dense_tensor_interval_with_coefficient_precision,
+    dense_two_positive_square_root_interval,
+    dense_two_positive_square_root_interval_with_coefficient_precision,
+    dense_two_positive_square_root_sum_sign,
+    dense_two_positive_square_root_sum_sign_at_projected_zero,
+    positive_root_sum_sign_from_components, refined_represented_root,
     represented_affine_coordinate, represented_affine_tensor_basis,
     represented_dense_value_refined, represented_order_to_real, represented_policy_sign,
     represented_projective_line_intersection, represented_ratio, represented_roots_strictly_equal,
@@ -114,7 +117,7 @@ use hypersolve::represented_root::{
 use hypersolve::tensor_support::dense_tensor_is_stored_zero;
 use hypersolve::tensor_support::{
     bivariate_dense_tensor, bivariate_tensor_with_output_axis,
-    dense_reduce_selected_tuple_relations, dense_tensor_with_output_axis, try_clone_dense_tensor,
+    dense_reduce_selected_tuple_relations, dense_tensor_with_output_axis,
 };
 use hypersolve::tensor_support::{
     dense_last_axis_coefficient, dense_last_axis_derivative, dense_reduce_selected_root_relations,
