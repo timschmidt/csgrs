@@ -1003,7 +1003,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 parameter_cache: BezierAlgebraicCuspSemicircleParameterCache2::default(),
             }),
         };
-        let expression_sign = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+        let expression_sign = |expression: &SquareRootExpression<TrivariatePolynomial>,
                                parameter: &BezierParameter2| {
             algebraic_cusp_trivariate_square_root_sum_sign(
                 expression,
@@ -2041,7 +2041,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         .add(&dy.scale(&support.translation_x)?)?
                         .subtract(&dx.scale(&support.translation_y)?)?,
                 )?;
-                let mut expression = DenseTwoSquareRootExpression::from_rational(rational)?;
+                let mut expression = TwoSquareRootExpression::from_rational(rational)?;
                 if support.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal {
                     let coefficient = DenseTensorPolynomial::from_axis_polynomial(
                         rank,
@@ -2049,9 +2049,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                         &[-support.distance.clone()],
                     )?;
                     let radical = if speed_index == 0 {
-                        DenseTwoSquareRootExpression::from_first_radical(coefficient)?
+                        TwoSquareRootExpression::from_first_radical(coefficient)?
                     } else {
-                        DenseTwoSquareRootExpression::from_second_radical(coefficient)?
+                        TwoSquareRootExpression::from_second_radical(coefficient)?
                     };
                     expression = expression.add(&radical)?;
                 }
@@ -2091,10 +2091,10 @@ impl BezierAlgebraicCuspSemicircle2 {
 
             let common_denominator = reduce(weight.multiply(&denominator)?)?;
             let point_x =
-                DenseTwoSquareRootExpression::from_rational(reduce(x.multiply(&denominator)?)?)?
+                TwoSquareRootExpression::from_rational(reduce(x.multiply(&denominator)?)?)?
                     .reduced(&sources)?;
             let point_y =
-                DenseTwoSquareRootExpression::from_rational(reduce(y.multiply(&denominator)?)?)?
+                TwoSquareRootExpression::from_rational(reduce(y.multiply(&denominator)?)?)?
                     .reduced(&sources)?;
             let center_x = center_x.multiply_rational(&weight)?.reduced(&sources)?;
             let center_y = center_y.multiply_rational(&weight)?.reduced(&sources)?;
@@ -2105,7 +2105,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let incidence = radial_x
                 .square(&first_speed_squared, &second_speed_squared)?
                 .add(&radial_y.square(&first_speed_squared, &second_speed_squared)?)?
-                .subtract(&DenseTwoSquareRootExpression::from_rational(reduce(
+                .subtract(&TwoSquareRootExpression::from_rational(reduce(
                     common_denominator
                         .multiply(&common_denominator)?
                         .scale(&radius_squared)?,
@@ -2132,9 +2132,9 @@ impl BezierAlgebraicCuspSemicircle2 {
                     .scale(&radius_squared)?,
             )?;
             let radius_squared_denominator = if anchor_speed == 0 {
-                DenseTwoSquareRootExpression::from_first_radical(radius_scale)?
+                TwoSquareRootExpression::from_first_radical(radius_scale)?
             } else {
-                DenseTwoSquareRootExpression::from_second_radical(radius_scale)?
+                TwoSquareRootExpression::from_second_radical(radius_scale)?
             }
             .reduced(&sources)?;
             let tangent_dot = radial_x
@@ -4095,7 +4095,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let mut tangent_projection = None;
             let mut tangent_projection_attempted = false;
             let mut tangent_constraint = None;
-            let radical_sign = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+            let radical_sign = |expression: &SquareRootExpression<TrivariatePolynomial>,
                                 candidate: &BezierParameter2| {
                 algebraic_cusp_trivariate_square_root_sum_sign(
                     expression,

@@ -82,6 +82,7 @@ use hypersolve::exact_factor::{
     rational_multi_affine_lift_scale_from_anchor_pair, trivariate_axis_lift_degree,
     trivariate_axis_lift_power_slice, trivariate_axis_lift_taylor_slice,
 };
+use hypersolve::radical_expression::{SquareRootExpression, TwoSquareRootExpression};
 use hypersolve::represented_root::{
     NEGATIVE_UNIT_SCALE, POSITIVE_UNIT_SCALE, dense_tensor_interval,
     dense_tensor_interval_with_coefficient_precision,
@@ -112,7 +113,6 @@ use hypersolve::trivariate_arithmetic::{
     trivariate_substitute_affine_axis, trivariate_substitute_product_axis,
     trivariate_substitute_sum_axis, try_zero_trivariate_coefficients,
 };
-use hypersolve::two_square_root::DenseTwoSquareRootExpression;
 use std::borrow::Cow;
 use std::ops::ControlFlow;
 use std::sync::{Arc, Mutex, OnceLock, Weak};
@@ -760,10 +760,10 @@ enum BezierAlgebraicCuspSemicircleRationalParameterMapSystem2 {
         pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
         branch: i8,
         discriminant: TrivariatePolynomial,
-        diameter: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+        diameter: SquareRootExpression<TrivariatePolynomial>,
         radius_squared_denominator: TrivariatePolynomial,
-        tangent_cross: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-        angular_tangent: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+        tangent_cross: SquareRootExpression<TrivariatePolynomial>,
+        angular_tangent: SquareRootExpression<TrivariatePolynomial>,
     },
     /// Arbitrary-depth selected-radial circle whose rational target parameter
     /// is embedded into the existing recursive quadratic tower. Rational
@@ -1386,7 +1386,7 @@ fn rational_overlap_parameter_for_exact_cusp(
         let Some(radical) = diameter.radical.scale(&denominator) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let expression = BezierAlgebraicCuspTrivariateSquareRootExpression2 { rational, radical };
+        let expression = SquareRootExpression { rational, radical };
         let Some([first_cusp_parameter, second_cusp_parameter]) =
             pair_map.compact_source_parameters()
         else {
@@ -3303,26 +3303,6 @@ struct BezierAlgebraicCuspSemicircleAxisChordParameterMapSystem2 {
     direction: BezierAlgebraicChordAxisDirection2,
 }
 
-#[derive(Clone, Debug)]
-struct BezierAlgebraicCuspTrivariateSquareRootExpression2 {
-    rational: TrivariatePolynomial,
-    radical: TrivariatePolynomial,
-}
-
-/// Exact expression in the retained circle-pair radical and one analytic
-/// parallel's positive source-speed radical.
-///
-/// With `k=sqrt(pair_discriminant)` on the authored pair branch and
-/// `s=sqrt(candidate_speed_squared) > 0`, the represented value is
-/// `product*k*s + pair*k + candidate*s + rational`.
-#[derive(Clone, Debug)]
-struct BezierAlgebraicCuspTrivariateTwoSquareRootExpression2 {
-    product: TrivariatePolynomial,
-    pair: TrivariatePolynomial,
-    candidate: TrivariatePolynomial,
-    rational: TrivariatePolynomial,
-}
-
 /// Target-independent pair-field geometry of a selected-radial circle.
 ///
 /// The first two axes are the two authored source-circle roots.  Center and
@@ -3340,10 +3320,10 @@ struct BezierSelectedRadialCircleFrameSystem2 {
     branch: i8,
     discriminant: TrivariatePolynomial,
     denominator: TrivariatePolynomial,
-    center_x: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    center_y: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radial_x: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    radial_y: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    center_x: SquareRootExpression<TrivariatePolynomial>,
+    center_y: SquareRootExpression<TrivariatePolynomial>,
+    radial_x: SquareRootExpression<TrivariatePolynomial>,
+    radial_y: SquareRootExpression<TrivariatePolynomial>,
     normal_denominator: Real,
 }
 
@@ -3410,15 +3390,15 @@ struct BezierSelectedRadialCircleRationalSystem2 {
     pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
     branch: i8,
     discriminant: TrivariatePolynomial,
-    incidence: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    incidence: SquareRootExpression<TrivariatePolynomial>,
     incidence_projection: TrivariatePolynomial,
-    selected_half_plane: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    diameter: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    selected_half_plane: SquareRootExpression<TrivariatePolynomial>,
+    diameter: SquareRootExpression<TrivariatePolynomial>,
     radius_squared_denominator: TrivariatePolynomial,
-    tangent_cross: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    tangent_cross: SquareRootExpression<TrivariatePolynomial>,
     /// Signed angular velocity `cross(Q-C,Q')`. Its exact zeros partition a
     /// coincident rational-circle component into monotone parameter cells.
-    angular_tangent: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    angular_tangent: SquareRootExpression<TrivariatePolynomial>,
 }
 
 /// Minimal-degree direct pair-radial backend for the authoritative recursive
@@ -3431,14 +3411,14 @@ struct BezierDirectPairRadialParallelFastPath2 {
     branch: i8,
     pair_discriminant: TrivariatePolynomial,
     candidate_speed_squared: TrivariatePolynomial,
-    incidence: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
-    incidence_candidate_norm: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    incidence: TwoSquareRootExpression<TrivariatePolynomial>,
+    incidence_candidate_norm: SquareRootExpression<TrivariatePolynomial>,
     incidence_projection: TrivariatePolynomial,
-    selected_half_plane: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
-    diameter: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
-    radius_squared_denominator: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
-    tangent_cross_source: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    tangent_dot_source: BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
+    selected_half_plane: TwoSquareRootExpression<TrivariatePolynomial>,
+    diameter: TwoSquareRootExpression<TrivariatePolynomial>,
+    radius_squared_denominator: TwoSquareRootExpression<TrivariatePolynomial>,
+    tangent_cross_source: SquareRootExpression<TrivariatePolynomial>,
+    tangent_dot_source: TwoSquareRootExpression<TrivariatePolynomial>,
     target_weight: Vec<Real>,
     target_speed_squared: Vec<Real>,
 }
@@ -4028,17 +4008,17 @@ struct BezierChordNormalDenseMapSystem2 {
     source_representations: Vec<AlgebraicRootRepresentation>,
     first_speed_squared: DenseTensorPolynomial,
     second_speed_squared: DenseTensorPolynomial,
-    diameter: DenseTwoSquareRootExpression,
-    radius_squared_denominator: DenseTwoSquareRootExpression,
+    diameter: TwoSquareRootExpression<DenseTensorPolynomial>,
+    radius_squared_denominator: TwoSquareRootExpression<DenseTensorPolynomial>,
 }
 
 #[derive(Debug)]
 struct BezierChordNormalDenseIntersectionSystem2 {
     map: Arc<BezierChordNormalDenseMapSystem2>,
-    incidence: DenseTwoSquareRootExpression,
-    selected_half_plane: DenseTwoSquareRootExpression,
-    tangent_cross: DenseTwoSquareRootExpression,
-    angular_tangent: Option<DenseTwoSquareRootExpression>,
+    incidence: TwoSquareRootExpression<DenseTensorPolynomial>,
+    selected_half_plane: TwoSquareRootExpression<DenseTensorPolynomial>,
+    tangent_cross: TwoSquareRootExpression<DenseTensorPolynomial>,
+    angular_tangent: Option<TwoSquareRootExpression<DenseTensorPolynomial>>,
     geometry: Option<BezierChordNormalDenseTargetGeometry2>,
 }
 
@@ -4054,8 +4034,8 @@ struct BezierChordNormalProjectiveFrameSource2 {
 struct BezierChordNormalDenseChordParameterMapSystem2 {
     projective: Arc<BezierChordNormalDenseMapSystem2>,
     geometry: BezierChordNormalDenseTargetGeometry2,
-    tangent_cross: DenseTwoSquareRootExpression,
-    angular_tangent: DenseTwoSquareRootExpression,
+    tangent_cross: TwoSquareRootExpression<DenseTensorPolynomial>,
+    angular_tangent: TwoSquareRootExpression<DenseTensorPolynomial>,
     recursive_contact_fields: [std::sync::OnceLock<BezierRecursiveQuadraticField2>; 3],
 }
 
@@ -4118,7 +4098,7 @@ struct BezierRecursiveQuadraticValue2 {
 enum BezierRecursiveQuadraticValueData2 {
     Base {
         field: Arc<BezierRecursiveQuadraticBaseFieldData2>,
-        expression: DenseTwoSquareRootExpression,
+        expression: TwoSquareRootExpression<DenseTensorPolynomial>,
         real_witness: std::sync::OnceLock<Real>,
     },
     Extension {
@@ -4367,10 +4347,10 @@ struct BezierChordNormalDenseTarget2 {
 
 #[derive(Clone, Debug)]
 struct BezierChordNormalDenseTargetGeometry2 {
-    point_x: DenseTwoSquareRootExpression,
-    point_y: DenseTwoSquareRootExpression,
-    center_x: DenseTwoSquareRootExpression,
-    center_y: DenseTwoSquareRootExpression,
+    point_x: TwoSquareRootExpression<DenseTensorPolynomial>,
+    point_y: TwoSquareRootExpression<DenseTensorPolynomial>,
+    center_x: TwoSquareRootExpression<DenseTensorPolynomial>,
+    center_y: TwoSquareRootExpression<DenseTensorPolynomial>,
     common_denominator: DenseTensorPolynomial,
 }
 
@@ -4473,7 +4453,7 @@ impl BezierChordNormalDenseMapSystem2 {
         &self,
         denominator: &Real,
         radial_coefficient: &Real,
-    ) -> Option<DenseTwoSquareRootExpression> {
+    ) -> Option<TwoSquareRootExpression<DenseTensorPolynomial>> {
         self.diameter.scale(denominator).and_then(|diameter| {
             self.radius_squared_denominator
                 .scale(radial_coefficient)
@@ -4496,40 +4476,29 @@ impl BezierChordNormalDenseMapSystem2 {
     }
 }
 
-/// One value `R + B*sqrt(K)` in the four selected roots of a pair-radial
-/// circle and an independent algebraic chord.
-#[derive(Clone, Debug)]
-struct BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
-    rational: DenseTensorPolynomial,
-    radical: DenseTensorPolynomial,
-}
-
 /// One nested value `X + branch*Y*sqrt(S)` where `X`, `Y`, and the
 /// nonnegative chord discriminant `S` all live in the retained pair-radical
 /// extension.  This is the complete radical tower for a line contact; no
 /// primitive element or additional selected root is needed.
 #[derive(Clone, Debug)]
 struct BezierSelectedRadialCircleChordNestedExpression2 {
-    retained: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-    candidate: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    retained: SquareRootExpression<DenseTensorPolynomial>,
+    candidate: SquareRootExpression<DenseTensorPolynomial>,
 }
 
 impl BezierSelectedRadialCircleChordNestedExpression2 {
-    fn from_retained(
-        retained: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-    ) -> Option<Self> {
+    fn from_retained(retained: SquareRootExpression<DenseTensorPolynomial>) -> Option<Self> {
         Some(Self {
             retained,
-            candidate: BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(
-                DenseTensorPolynomial::zero(vec![1; 4])?,
-            )?,
+            candidate: SquareRootExpression::from_rational(DenseTensorPolynomial::zero(vec![
+                1;
+                4
+            ])?)?,
         })
     }
 
     fn from_rational(rational: DenseTensorPolynomial) -> Option<Self> {
-        Self::from_retained(
-            BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(rational)?,
-        )
+        Self::from_retained(SquareRootExpression::from_rational(rational)?)
     }
 
     fn subtract(&self, other: &Self) -> Option<Self> {
@@ -4563,12 +4532,8 @@ impl BezierSelectedRadialCircleChordNestedExpression2 {
             .map(|(expression, scale)| (&expression.candidate, *scale))
             .collect::<Vec<_>>();
         Some(Self {
-            retained: BezierAlgebraicCuspQuadrivariateSquareRootExpression2::linear_combination(
-                &retained_terms,
-            )?,
-            candidate: BezierAlgebraicCuspQuadrivariateSquareRootExpression2::linear_combination(
-                &candidate_terms,
-            )?,
+            retained: SquareRootExpression::linear_combination(&retained_terms)?,
+            candidate: SquareRootExpression::linear_combination(&candidate_terms)?,
         })
     }
 }
@@ -4588,12 +4553,12 @@ struct BezierSelectedRadialCircleChordParameterMapSystem2 {
     pair_map: BezierAlgebraicCuspSemicirclePairParameterMap2,
     pair_branch: i8,
     pair_discriminant: DenseTensorPolynomial,
-    chord_discriminant: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    chord_discriminant: SquareRootExpression<DenseTensorPolynomial>,
     diameter: BezierSelectedRadialCircleChordNestedExpression2,
     radius_squared_denominator: DenseTensorPolynomial,
     common_denominator: DenseTensorPolynomial,
-    center_x: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-    center_y: BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    center_x: SquareRootExpression<DenseTensorPolynomial>,
+    center_y: SquareRootExpression<DenseTensorPolynomial>,
     point_x: BezierSelectedRadialCircleChordNestedExpression2,
     point_y: BezierSelectedRadialCircleChordNestedExpression2,
     first_parameter: BezierParameter2,
@@ -4608,21 +4573,21 @@ struct BezierSelectedRadialCircleChordParameterMapSystem2 {
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleObliqueChordSystem2 {
     retained: BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2,
-    selected_half_plane: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    point_minus_start: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    point_minus_end: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    selected_half_plane: SquareRootExpression<TrivariatePolynomial>,
+    point_minus_start: SquareRootExpression<TrivariatePolynomial>,
+    point_minus_end: SquareRootExpression<TrivariatePolynomial>,
 }
 
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2 {
     discriminant: TrivariatePolynomial,
-    diameter_side: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    diameter_side: SquareRootExpression<TrivariatePolynomial>,
     radius_squared_denominator: TrivariatePolynomial,
     common_denominator: TrivariatePolynomial,
     center_x: TrivariatePolynomial,
     center_y: TrivariatePolynomial,
-    point_x: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    point_y: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    point_x: SquareRootExpression<TrivariatePolynomial>,
+    point_y: SquareRootExpression<TrivariatePolynomial>,
     first_parameter: BezierParameter2,
     second_parameter: BezierParameter2,
     cusp_parameter: BezierParameter2,
@@ -4635,8 +4600,8 @@ struct BezierAlgebraicCuspSemicircleObliqueChordParameterMapSystem2 {
 /// and the outer branch is the ordinary pair of circle/line contacts.
 #[derive(Clone, Debug)]
 struct BezierAlgebraicCuspRetainedOffsetChordNestedExpression2 {
-    retained: BezierAlgebraicCuspTrivariateSquareRootExpression2,
-    candidate: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    retained: SquareRootExpression<TrivariatePolynomial>,
+    candidate: SquareRootExpression<TrivariatePolynomial>,
 }
 
 #[derive(Debug)]
@@ -4650,9 +4615,9 @@ struct BezierAlgebraicCuspSemicircleRetainedOffsetChordSystem2 {
 #[derive(Debug)]
 struct BezierAlgebraicCuspSemicircleRetainedOffsetChordParameterMapSystem2 {
     speed_squared: TrivariatePolynomial,
-    contact_discriminant: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    contact_discriminant: SquareRootExpression<TrivariatePolynomial>,
     diameter_side: BezierAlgebraicCuspRetainedOffsetChordNestedExpression2,
-    tangent_dot: BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    tangent_dot: SquareRootExpression<TrivariatePolynomial>,
     radius_squared_denominator: TrivariatePolynomial,
     common_denominator: TrivariatePolynomial,
     center_x: TrivariatePolynomial,
@@ -7528,7 +7493,7 @@ const MAX_BOUNDED_BILINEAR_FACTOR_PROPOSALS: usize = 256;
 /// expression at a retained pair of selected source roots, then rejects every
 /// conjugate or opposite-branch norm root by exact unsquared replay.
 fn selected_pair_square_root_expression_third_axis_parameters(
-    expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    expression: &SquareRootExpression<TrivariatePolynomial>,
     radicand: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
@@ -7556,7 +7521,7 @@ fn selected_pair_square_root_expression_third_axis_parameters(
 
 #[allow(clippy::too_many_arguments)]
 fn selected_pair_square_root_expression_third_axis_parameters_from_projection(
-    expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    expression: &SquareRootExpression<TrivariatePolynomial>,
     radicand: &TrivariatePolynomial,
     projection: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
@@ -8251,7 +8216,7 @@ impl BezierDirectPairRadialParallelFastPath2 {
 
     fn pair_expression_sign(
         &self,
-        expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+        expression: &SquareRootExpression<TrivariatePolynomial>,
         target_parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -8271,7 +8236,7 @@ impl BezierDirectPairRadialParallelFastPath2 {
 
     fn expression_sign(
         &self,
-        expression: &BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
+        expression: &TwoSquareRootExpression<TrivariatePolynomial>,
         target_parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -8408,15 +8373,15 @@ impl BezierDirectPairRadialParallelFastPath2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let Some(expression) = (|| {
-            Some(BezierAlgebraicCuspTrivariateTwoSquareRootExpression2 {
+            Some(TwoSquareRootExpression {
                 product: TrivariatePolynomial::linear_combination(&[
                     (&self.tangent_cross_source.radical, cross_scale),
                     (&self.tangent_dot_source.product, dot_scale),
                 ])?,
-                pair: self.tangent_dot_source.pair.scale(dot_scale)?,
-                candidate: TrivariatePolynomial::linear_combination(&[
+                first: self.tangent_dot_source.first.scale(dot_scale)?,
+                second: TrivariatePolynomial::linear_combination(&[
                     (&self.tangent_cross_source.rational, cross_scale),
-                    (&self.tangent_dot_source.candidate, dot_scale),
+                    (&self.tangent_dot_source.second, dot_scale),
                 ])?,
                 rational: self.tangent_dot_source.rational.scale(dot_scale)?,
             })
@@ -8659,7 +8624,7 @@ impl BezierChordNormalDenseMapSystem2 {
 
     fn expression_sign(
         &self,
-        expression: &DenseTwoSquareRootExpression,
+        expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
         target_parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -8698,7 +8663,9 @@ impl BezierChordNormalDenseMapSystem2 {
     }
 }
 
-fn dense_expression_last_axis_degree(expression: &DenseTwoSquareRootExpression) -> Option<usize> {
+fn dense_expression_last_axis_degree(
+    expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
+) -> Option<usize> {
     [
         &expression.rational,
         &expression.first,
@@ -8717,7 +8684,7 @@ fn dense_expression_last_axis_degree(expression: &DenseTwoSquareRootExpression) 
 /// existing retained two-radical base field. The unit final axis is removed
 /// structurally; no source root is eliminated or materialized.
 fn recursive_quadratic_base_expression_coefficient(
-    expression: &DenseTwoSquareRootExpression,
+    expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
     power: usize,
     base: &Arc<BezierRecursiveQuadraticBaseFieldData2>,
 ) -> Option<BezierRecursiveQuadraticValue2> {
@@ -8731,7 +8698,7 @@ fn recursive_quadratic_base_expression_coefficient(
     };
     BezierRecursiveQuadraticValue2::from_base(
         base.clone(),
-        DenseTwoSquareRootExpression {
+        TwoSquareRootExpression {
             rational: coefficient(&expression.rational)?,
             first: coefficient(&expression.first)?,
             second: coefficient(&expression.second)?,
@@ -8744,7 +8711,7 @@ fn recursive_quadratic_base_expression_coefficient(
 /// recursive field. The caller supplies one common degree when expressions
 /// must later be added, so their positive projective scales remain identical.
 fn recursive_quadratic_expression_projective_numerator(
-    expression: &DenseTwoSquareRootExpression,
+    expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
     base: &Arc<BezierRecursiveQuadraticBaseFieldData2>,
     field: &BezierRecursiveQuadraticField2,
     numerator: &BezierRecursiveQuadraticValue2,
@@ -8769,7 +8736,7 @@ fn recursive_quadratic_expression_projective_numerator(
 
 fn chord_normal_dense_expression_is_identically_zero(
     map: &BezierChordNormalDenseMapSystem2,
-    expression: &DenseTwoSquareRootExpression,
+    expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let target_count = [
@@ -8788,7 +8755,7 @@ fn chord_normal_dense_expression_is_identically_zero(
     .unwrap_or(1);
     for power in 0..target_count {
         let Some(coefficient) = (|| {
-            Some(DenseTwoSquareRootExpression {
+            Some(TwoSquareRootExpression {
                 rational: dense_last_axis_coefficient(&expression.rational, power)?,
                 first: dense_last_axis_coefficient(&expression.first, power)?,
                 second: dense_last_axis_coefficient(&expression.second, power)?,
@@ -8811,7 +8778,7 @@ fn chord_normal_dense_expression_is_identically_zero(
 }
 
 fn dense_two_positive_square_root_transverse_root(
-    expression: &DenseTwoSquareRootExpression,
+    expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
     first_speed_squared: &DenseTensorPolynomial,
     second_speed_squared: &DenseTensorPolynomial,
     source_representations: &[AlgebraicRootRepresentation],
@@ -8917,7 +8884,7 @@ fn dense_positive_square_root_transverse_root(
 
 fn chord_normal_dense_expression_parameters(
     map: &BezierChordNormalDenseMapSystem2,
-    expression: &DenseTwoSquareRootExpression,
+    expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
     domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
@@ -9002,7 +8969,7 @@ fn selected_radial_chord_parameters(
 
 fn selected_radial_chord_pair_expression_sign(
     system: &BezierSelectedRadialCircleChordParameterMapSystem2,
-    expression: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
+    expression: &SquareRootExpression<DenseTensorPolynomial>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     let Some(owned_parameters) = selected_radial_chord_parameters(system) else {
@@ -9139,7 +9106,7 @@ fn selected_radial_chord_nested_expression_sign(
 
 fn retained_offset_chord_speed_expression_sign(
     system: &BezierAlgebraicCuspSemicircleRetainedOffsetChordParameterMapSystem2,
-    expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    expression: &SquareRootExpression<TrivariatePolynomial>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     algebraic_cusp_trivariate_square_root_components_sign(
@@ -11790,7 +11757,7 @@ fn represented_chord_normal_line_angular_system(
         unreachable!("a represented chord-normal angular field begins at its dense base")
     };
     let rational = |polynomial| {
-        DenseTwoSquareRootExpression::from_rational(polynomial).and_then(|expression| {
+        TwoSquareRootExpression::from_rational(polynomial).and_then(|expression| {
             BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
         })
     };
@@ -11811,7 +11778,7 @@ fn represented_chord_normal_line_angular_system(
             rational(direction_squared)?,
             [rational(radial_x)?, rational(radial_y)?],
             rational(discriminant)?,
-            DenseTwoSquareRootExpression::from_first_radical(one).and_then(|expression| {
+            TwoSquareRootExpression::from_first_radical(one).and_then(|expression| {
                 BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
             })?,
         ))
@@ -15526,7 +15493,7 @@ fn algebraic_cusp_correlated_square_root_sum_sign_impl(
 /// predicate `A^2 - B^2 K`; the shared three-root predicate engine owns the
 /// STRICT/APPROXIMATE_512 terminal decision.
 fn algebraic_cusp_trivariate_square_root_sum_sign(
-    expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    expression: &SquareRootExpression<TrivariatePolynomial>,
     radicand: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
     second_parameter: &BezierParameter2,
@@ -15551,7 +15518,7 @@ fn algebraic_cusp_trivariate_square_root_sum_sign(
 /// proves exact zero before the generic three-field signer attempts to
 /// rediscover the resultant correlation by factorization.
 fn algebraic_cusp_projected_trivariate_square_root_sum_sign(
-    expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+    expression: &SquareRootExpression<TrivariatePolynomial>,
     radicand: &TrivariatePolynomial,
     projected_incidence: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
@@ -15892,8 +15859,8 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
 
 #[allow(clippy::too_many_arguments)]
 fn algebraic_cusp_projected_trivariate_two_square_root_sum_sign(
-    expression: &BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
-    candidate_norm: Option<&BezierAlgebraicCuspTrivariateSquareRootExpression2>,
+    expression: &TwoSquareRootExpression<TrivariatePolynomial>,
+    candidate_norm: Option<&SquareRootExpression<TrivariatePolynomial>>,
     pair_discriminant: &TrivariatePolynomial,
     candidate_speed_squared: &TrivariatePolynomial,
     projected_incidence: &TrivariatePolynomial,
@@ -15921,7 +15888,7 @@ fn algebraic_cusp_projected_trivariate_two_square_root_sum_sign(
 
 #[allow(clippy::too_many_arguments)]
 fn algebraic_cusp_trivariate_two_square_root_sum_sign(
-    expression: &BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
+    expression: &TwoSquareRootExpression<TrivariatePolynomial>,
     pair_discriminant: &TrivariatePolynomial,
     candidate_speed_squared: &TrivariatePolynomial,
     first_parameter: &BezierParameter2,
@@ -15947,8 +15914,8 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign(
 
 #[allow(clippy::too_many_arguments)]
 fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
-    expression: &BezierAlgebraicCuspTrivariateTwoSquareRootExpression2,
-    candidate_norm: Option<&BezierAlgebraicCuspTrivariateSquareRootExpression2>,
+    expression: &TwoSquareRootExpression<TrivariatePolynomial>,
+    candidate_norm: Option<&SquareRootExpression<TrivariatePolynomial>>,
     pair_discriminant: &TrivariatePolynomial,
     candidate_speed_squared: &TrivariatePolynomial,
     projected_incidence: Option<&TrivariatePolynomial>,
@@ -15981,7 +15948,7 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
         let norm = if let Some(norm) = candidate_norm {
             norm
         } else {
-            let Some(norm) = expression.candidate_norm(pair_discriminant, candidate_speed_squared)
+            let Some(norm) = expression.second_norm(pair_discriminant, candidate_speed_squared)
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
@@ -16001,19 +15968,19 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
         )?;
         match magnitude {
             Classification::Decided(RealSign::Positive) => {
-                return pair_sign(&expression.rational, &expression.pair);
+                return pair_sign(&expression.rational, &expression.first);
             }
             Classification::Decided(RealSign::Negative) => {
-                return pair_sign(&expression.candidate, &expression.product);
+                return pair_sign(&expression.second, &expression.product);
             }
             Classification::Decided(RealSign::Zero) => {
-                let retained = match pair_sign(&expression.rational, &expression.pair)? {
+                let retained = match pair_sign(&expression.rational, &expression.first)? {
                     Classification::Decided(sign) => sign,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
                     }
                 };
-                let candidate = match pair_sign(&expression.candidate, &expression.product)? {
+                let candidate = match pair_sign(&expression.second, &expression.product)? {
                     Classification::Decided(sign) => sign,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -16030,13 +15997,13 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
             }
         }
     }
-    let retained = match pair_sign(&expression.rational, &expression.pair)? {
+    let retained = match pair_sign(&expression.rational, &expression.first)? {
         Classification::Decided(sign) => sign,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let candidate = match pair_sign(&expression.candidate, &expression.product)? {
+    let candidate = match pair_sign(&expression.second, &expression.product)? {
         Classification::Decided(sign) => sign,
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
@@ -16052,7 +16019,7 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
         _ => {}
     }
 
-    let Some(norm) = expression.candidate_norm(pair_discriminant, candidate_speed_squared) else {
+    let Some(norm) = expression.second_norm(pair_discriminant, candidate_speed_squared) else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let magnitude = if let Some(projected_incidence) = projected_incidence {

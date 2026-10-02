@@ -287,18 +287,18 @@ impl BezierAlgebraicCuspSemicircle2 {
             ])?;
             let center_x = cx.multiply(&aw)?.multiply(&d_squared)?;
             let center_y = cy.multiply(&aw)?.multiply(&d_squared)?;
-            let point_x = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+            let point_x = SquareRootExpression {
                 rational: center_x.add(&radial_x_rational)?,
                 radical: dx.clone(),
             };
-            let point_y = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+            let point_y = SquareRootExpression {
                 rational: center_y.add(&radial_y_rational)?,
                 radical: dy.clone(),
             };
             let common_denominator = aw_cw.multiply(&d_squared)?;
 
             let turn_radius = self.turn_sign() * self.radial_distance();
-            let selected_half_plane = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+            let selected_half_plane = SquareRootExpression {
                 rational: TrivariatePolynomial::sum_products(&[
                     (&nx, &radial_y_rational, false),
                     (&ny, &radial_x_rational, true),
@@ -310,7 +310,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ])?
                 .scale(&turn_radius)?,
             };
-            let diameter_side = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+            let diameter_side = SquareRootExpression {
                 rational: TrivariatePolynomial::sum_products(&[
                     (&nx, &radial_x_rational, false),
                     (&ny, &radial_y_rational, false),
@@ -324,11 +324,11 @@ impl BezierAlgebraicCuspSemicircle2 {
             };
             let radius_squared_denominator =
                 cw.multiply(&common_denominator)?.scale(&radius_squared)?;
-            let point_minus_start = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+            let point_minus_start = SquareRootExpression {
                 rational: v_dot_d.scale(&Real::from(-1_i8))?,
                 radical: one,
             };
-            let point_minus_end = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+            let point_minus_end = SquareRootExpression {
                 rational: TrivariatePolynomial::sum_products(&[
                     (&bw, &v_dot_d, true),
                     (&cw, &d_squared, true),
@@ -484,7 +484,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 .multiply(&speed_squared)?;
             let radius_squared = self.radial_distance() * self.radial_distance();
             let distance_squared = &distance * &distance;
-            let contact_discriminant = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+            let contact_discriminant = SquareRootExpression {
                 rational: denominator_squared_speed
                     .scale(&(radius_squared - distance_squared))?
                     .subtract(&line_cross.multiply(&line_cross)?)?,
@@ -495,23 +495,23 @@ impl BezierAlgebraicCuspSemicircle2 {
             let offset_denominator = center_denominator.scale(&distance)?;
             let zero = axis(&[Real::zero()], 0)?;
             let radial_x = BezierAlgebraicCuspRetainedOffsetChordNestedExpression2 {
-                retained: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                retained: SquareRootExpression {
                     rational: dy.multiply(&line_cross)?.scale(&Real::from(-1_i8))?,
                     radical: dy
                         .multiply(&offset_denominator)?
                         .scale(&Real::from(-1_i8))?,
                 },
-                candidate: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                candidate: SquareRootExpression {
                     rational: dx.clone(),
                     radical: zero.clone(),
                 },
             };
             let radial_y = BezierAlgebraicCuspRetainedOffsetChordNestedExpression2 {
-                retained: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                retained: SquareRootExpression {
                     rational: dx.multiply(&line_cross)?,
                     radical: dx.multiply(&offset_denominator)?,
                 },
-                candidate: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                candidate: SquareRootExpression {
                     rational: dy.clone(),
                     radical: zero.clone(),
                 },
@@ -541,30 +541,30 @@ impl BezierAlgebraicCuspSemicircle2 {
                 .scale(&(self.radial_distance() * self.radial_distance()))?;
 
             let point_minus_start = BezierAlgebraicCuspRetainedOffsetChordNestedExpression2 {
-                retained: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                retained: SquareRootExpression {
                     rational: line_dot.scale(&Real::from(-1_i8))?,
                     radical: zero.clone(),
                 },
-                candidate: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                candidate: SquareRootExpression {
                     rational: one,
                     radical: zero.clone(),
                 },
             };
             let point_minus_end = BezierAlgebraicCuspRetainedOffsetChordNestedExpression2 {
-                retained: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                retained: SquareRootExpression {
                     rational: line_dot
                         .multiply(&support_denominator)?
                         .scale(&Real::from(-1_i8))?
                         .subtract(&center_denominator.multiply(&speed_squared)?)?,
                     radical: zero.clone(),
                 },
-                candidate: BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+                candidate: SquareRootExpression {
                     rational: support_denominator,
                     radical: zero,
                 },
             };
             let turn = self.turn_sign();
-            let tangent_dot = BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+            let tangent_dot = SquareRootExpression {
                 rational: line_cross.scale(&(-turn.clone()))?,
                 radical: center_denominator.scale(&(-turn * distance))?,
             };
@@ -656,15 +656,14 @@ impl BezierAlgebraicCuspSemicircle2 {
             let lift = |polynomial: &TrivariatePolynomial| {
                 DenseTensorPolynomial::from_trivariate(polynomial, 4, [0, 1, 2])
             };
-            let pair = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
-                Some(BezierAlgebraicCuspQuadrivariateSquareRootExpression2 {
+            let pair = |expression: &SquareRootExpression<TrivariatePolynomial>| {
+                Some(SquareRootExpression {
                     rational: lift(&expression.rational)?,
                     radical: lift(&expression.radical)?,
                 })
             };
-            let rational_pair = |polynomial: DenseTensorPolynomial| {
-                BezierAlgebraicCuspQuadrivariateSquareRootExpression2::from_rational(polynomial)
-            };
+            let rational_pair =
+                |polynomial: DenseTensorPolynomial| SquareRootExpression::from_rational(polynomial);
             let ax = axis(&start.x, 2)?;
             let ay = axis(&start.y, 2)?;
             let aw = axis(&start.denominator, 2)?;
@@ -725,19 +724,19 @@ impl BezierAlgebraicCuspSemicircle2 {
             let common_denominator = aw_contact.multiply(&d_squared)?;
 
             let pair_cross =
-                |first_x: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-                 first_y: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-                 second_x: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-                 second_y: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
+                |first_x: &SquareRootExpression<DenseTensorPolynomial>,
+                 first_y: &SquareRootExpression<DenseTensorPolynomial>,
+                 second_x: &SquareRootExpression<DenseTensorPolynomial>,
+                 second_y: &SquareRootExpression<DenseTensorPolynomial>| {
                     first_x
                         .multiply(second_y, &pair_discriminant)?
                         .subtract(&first_y.multiply(second_x, &pair_discriminant)?)
                 };
             let pair_dot =
-                |first_x: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-                 first_y: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-                 second_x: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2,
-                 second_y: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
+                |first_x: &SquareRootExpression<DenseTensorPolynomial>,
+                 first_y: &SquareRootExpression<DenseTensorPolynomial>,
+                 second_x: &SquareRootExpression<DenseTensorPolynomial>,
+                 second_y: &SquareRootExpression<DenseTensorPolynomial>| {
                     first_x
                         .multiply(second_x, &pair_discriminant)?
                         .add(&first_y.multiply(second_y, &pair_discriminant)?)
@@ -1036,7 +1035,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let BezierRecursiveQuadraticField2::Base(base) = &field else {
             unreachable!("a selected pair frame begins in its dense base field")
         };
-        let pair_value = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
+        let pair_value = |expression: &SquareRootExpression<TrivariatePolynomial>| {
             recursive_quadratic_pair_value(
                 base,
                 dense(&expression.rational)?,
@@ -3971,8 +3970,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             let radius_squared = self.radial_distance() * self.radial_distance();
             let radical_expression =
                 |rational: DenseTensorPolynomial, first: DenseTensorPolynomial| {
-                    DenseTwoSquareRootExpression::from_rational(rational)?
-                        .add(&DenseTwoSquareRootExpression::from_first_radical(first)?)?
+                    TwoSquareRootExpression::from_rational(rational)?
+                        .add(&TwoSquareRootExpression::from_first_radical(first)?)?
                         .reduced(&sources)
                 };
             // Homogenize B + M/sqrt(q) as (q*B + sqrt(q)*M)/q.
@@ -3986,11 +3985,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 dense_reduce_selected_root_relations(q.multiply(&point_base_y)?, &sources)?,
                 displacement_y.clone(),
             )?;
-            let center_x = DenseTwoSquareRootExpression::from_rational(
+            let center_x = TwoSquareRootExpression::from_rational(
                 dense_reduce_selected_root_relations(q.multiply(&center_x)?, &sources)?,
             )?
             .reduced(&sources)?;
-            let center_y = DenseTwoSquareRootExpression::from_rational(
+            let center_y = TwoSquareRootExpression::from_rational(
                 dense_reduce_selected_root_relations(q.multiply(&center_y)?, &sources)?,
             )?
             .reduced(&sources)?;
@@ -4015,7 +4014,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 angular_tangent_rational.clone(),
                 angular_tangent_radical.clone(),
             )?;
-            let radius_squared_denominator = DenseTwoSquareRootExpression::from_rational(
+            let radius_squared_denominator = TwoSquareRootExpression::from_rational(
                 dense_reduce_selected_root_relations(q.scale(&radius_squared)?, &sources)?,
             )?
             .reduced(&sources)?;
@@ -4861,8 +4860,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
         let radius_squared = self.radial_distance() * self.radial_distance();
         let radical_expression = |rational: DenseTensorPolynomial, first: DenseTensorPolynomial| {
-            DenseTwoSquareRootExpression::from_rational(rational)?
-                .add(&DenseTwoSquareRootExpression::from_first_radical(first)?)?
+            TwoSquareRootExpression::from_rational(rational)?
+                .add(&TwoSquareRootExpression::from_first_radical(first)?)?
                 .reduced(&sources)
         };
         let Some(system) = (|| {
@@ -4874,11 +4873,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 dense_reduce_selected_root_relations(q.multiply(&point_base_y)?, &sources)?,
                 displacement_y.clone(),
             )?;
-            let center_x = DenseTwoSquareRootExpression::from_rational(
+            let center_x = TwoSquareRootExpression::from_rational(
                 dense_reduce_selected_root_relations(q.multiply(&center_x)?, &sources)?,
             )?
             .reduced(&sources)?;
-            let center_y = DenseTwoSquareRootExpression::from_rational(
+            let center_y = TwoSquareRootExpression::from_rational(
                 dense_reduce_selected_root_relations(q.multiply(&center_y)?, &sources)?,
             )?
             .reduced(&sources)?;
@@ -4903,7 +4902,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 angular_tangent_rational.clone(),
                 angular_tangent_radical.clone(),
             )?;
-            let radius_squared_denominator = DenseTwoSquareRootExpression::from_rational(
+            let radius_squared_denominator = TwoSquareRootExpression::from_rational(
                 dense_reduce_selected_root_relations(q.scale(&radius_squared)?, &sources)?,
             )?
             .reduced(&sources)?;
@@ -6228,7 +6227,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         // `sqrt(S)` embeds that value as `radical + rational * sqrt(S)` in
         // the recursive base without changing any predicate sign.
         let radical_sum = |expression: &BezierAlgebraicCuspTwoTermExpression2| {
-            Some(DenseTwoSquareRootExpression {
+            Some(TwoSquareRootExpression {
                 rational: dense(&expression.radical)?,
                 first: dense(&expression.rational)?,
                 second: zero()?,
@@ -6236,7 +6235,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             })
         };
         let square_root_sum = |expression: &BezierAlgebraicCuspTwoTermExpression2| {
-            Some(DenseTwoSquareRootExpression {
+            Some(TwoSquareRootExpression {
                 rational: dense(&expression.rational)?,
                 first: dense(&expression.radical)?,
                 second: zero()?,
@@ -6244,10 +6243,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             })
         };
         let rational = |polynomial: &BivariatePolynomial| {
-            DenseTwoSquareRootExpression::from_rational(dense(polynomial)?)
+            TwoSquareRootExpression::from_rational(dense(polynomial)?)
         };
         let first_radical = |polynomial: &BivariatePolynomial| {
-            DenseTwoSquareRootExpression::from_first_radical(dense(polynomial)?)
+            TwoSquareRootExpression::from_first_radical(dense(polynomial)?)
         };
 
         let unit = [Real::one()];
@@ -6784,7 +6783,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         };
 
         let common_denominator =
-            DenseTwoSquareRootExpression::from_rational(geometry.common_denominator.clone())
+            TwoSquareRootExpression::from_rational(geometry.common_denominator.clone())
                 .ok_or_else(|| {
                     CurveError::Topology(
                         "a dense line denominator exceeded its tensor shape budget".into(),
@@ -6843,7 +6842,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
         };
 
-        let maximum_degree = |expressions: &[&DenseTwoSquareRootExpression]| {
+        let maximum_degree = |expressions: &[&TwoSquareRootExpression<DenseTensorPolynomial>]| {
             expressions
                 .iter()
                 .map(|expression| dense_expression_last_axis_degree(expression))

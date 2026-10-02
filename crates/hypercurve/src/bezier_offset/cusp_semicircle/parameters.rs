@@ -160,7 +160,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     pub(in crate::bezier_offset) fn oblique_represented_expression_coordinates(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        expressions: [&BezierAlgebraicCuspTrivariateSquareRootExpression2; 2],
+        expressions: [&SquareRootExpression<TrivariatePolynomial>; 2],
     ) -> CurveResult<Classification<[AlgebraicRootRepresentation; 2]>> {
         let system = self.oblique_system().ok_or_else(|| {
             CurveError::Topology(
@@ -212,7 +212,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let Some(zero) = DenseTensorPolynomial::zero(vec![1; sources.len() + 1]) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let coordinate = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
+        let coordinate = |expression: &SquareRootExpression<TrivariatePolynomial>| {
             let retained = dense(&expression.rational)
                 .and_then(|polynomial| dense_tensor_with_output_axis(&polynomial));
             let candidate = dense(&expression.radical)
@@ -272,19 +272,15 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 "a nonoblique cusp/chord map requested oblique derived coordinates".into(),
             )
         })?;
-        let center_x = BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational(
-            system.center_x.clone(),
-        )
-        .ok_or_else(|| {
-            CurveError::Topology("an oblique center exceeded its tensor budget".into())
-        })?;
-        let center_y = BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational(
-            system.center_y.clone(),
-        )
-        .ok_or_else(|| {
-            CurveError::Topology("an oblique center exceeded its tensor budget".into())
-        })?;
-        let translation_x = BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational(
+        let center_x =
+            SquareRootExpression::from_rational(system.center_x.clone()).ok_or_else(|| {
+                CurveError::Topology("an oblique center exceeded its tensor budget".into())
+            })?;
+        let center_y =
+            SquareRootExpression::from_rational(system.center_y.clone()).ok_or_else(|| {
+                CurveError::Topology("an oblique center exceeded its tensor budget".into())
+            })?;
+        let translation_x = SquareRootExpression::from_rational(
             system
                 .common_denominator
                 .scale(translation_x)
@@ -295,7 +291,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         .ok_or_else(|| {
             CurveError::Topology("an oblique translation exceeded its tensor budget".into())
         })?;
-        let translation_y = BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational(
+        let translation_y = SquareRootExpression::from_rational(
             system
                 .common_denominator
                 .scale(translation_y)
@@ -308,7 +304,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         })?;
         let center_scale = Real::one() - radial_scale;
         let negative_perpendicular = -perpendicular_scale.clone();
-        let x = BezierAlgebraicCuspTrivariateSquareRootExpression2::linear_combination(&[
+        let x = SquareRootExpression::linear_combination(&[
             (&system.point_x, radial_scale),
             (&system.point_y, &negative_perpendicular),
             (&center_x, &center_scale),
@@ -320,7 +316,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 "an oblique derived x coordinate exceeded its tensor budget".into(),
             )
         })?;
-        let y = BezierAlgebraicCuspTrivariateSquareRootExpression2::linear_combination(&[
+        let y = SquareRootExpression::linear_combination(&[
             (&system.point_x, perpendicular_scale),
             (&system.point_y, radial_scale),
             (&center_x, &negative_perpendicular),
@@ -620,7 +616,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let rational = |polynomial: &TrivariatePolynomial| {
             recursive_quadratic_rational_value(base, dense(polynomial)?)
         };
-        let value = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
+        let value = |expression: &SquareRootExpression<TrivariatePolynomial>| {
             recursive_quadratic_pair_value(
                 base,
                 dense(&expression.rational)?,
@@ -683,7 +679,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             let BezierRecursiveQuadraticField2::Base(base) = &base_field else {
                 unreachable!("a retained-offset import begins in its dense base field")
             };
-            let speed_value = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
+            let speed_value = |expression: &SquareRootExpression<TrivariatePolynomial>| {
                 recursive_quadratic_pair_value(
                     base,
                     dense(&expression.rational)?,
@@ -725,7 +721,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 "a retained-offset import acquired an unexpected quadratic depth".into(),
             ));
         }
-        let speed_value = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
+        let speed_value = |expression: &SquareRootExpression<TrivariatePolynomial>| {
             recursive_quadratic_pair_value(
                 &base,
                 dense(&expression.rational)?,
@@ -807,15 +803,14 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             let BezierRecursiveQuadraticField2::Base(base) = &base_field else {
                 unreachable!("a selected-radial import begins in its dense base field")
             };
-            let pair_value =
-                |expression: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
-                    recursive_quadratic_pair_value(
-                        base,
-                        dense(&expression.rational)?,
-                        dense(&expression.radical)?,
-                        system.pair_branch,
-                    )
-                };
+            let pair_value = |expression: &SquareRootExpression<DenseTensorPolynomial>| {
+                recursive_quadratic_pair_value(
+                    base,
+                    dense(&expression.rational)?,
+                    dense(&expression.radical)?,
+                    system.pair_branch,
+                )
+            };
             let Some(discriminant) = pair_value(&system.chord_discriminant) else {
                 return Ok(Classification::Decided(None));
             };
@@ -851,7 +846,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 "a selected-radial import acquired an unexpected quadratic depth".into(),
             ));
         }
-        let pair_value = |expression: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
+        let pair_value = |expression: &SquareRootExpression<DenseTensorPolynomial>| {
             recursive_quadratic_pair_value(
                 &base,
                 dense(&expression.rational)?,
@@ -910,16 +905,15 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 "a chord-normal contact retained a nonbase import field".into(),
             ));
         };
-        let value = |expression: &DenseTwoSquareRootExpression| {
+        let value = |expression: &TwoSquareRootExpression<DenseTensorPolynomial>| {
             BezierRecursiveQuadraticValue2::from_base(base.clone(), expression.clone())
         };
         let Some(frame) = (|| {
-            let denominator = DenseTwoSquareRootExpression::from_rational(
-                system.geometry.common_denominator.clone(),
-            )
-            .and_then(|expression| {
-                BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
-            })?;
+            let denominator =
+                TwoSquareRootExpression::from_rational(system.geometry.common_denominator.clone())
+                    .and_then(|expression| {
+                        BezierRecursiveQuadraticValue2::from_base(base.clone(), expression)
+                    })?;
             Some(BezierRecursiveQuadraticChordContactFrame2 {
                 field: field.clone(),
                 point: BezierRecursiveQuadraticProjectivePoint2 {
@@ -1081,7 +1075,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     pub(in crate::bezier_offset) fn chord_normal_dense_expression_sign(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        expression: &DenseTwoSquareRootExpression,
+        expression: &TwoSquareRootExpression<DenseTensorPolynomial>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let system = self.chord_normal_projective_system().ok_or_else(|| {
@@ -1101,13 +1095,13 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         axis: Axis2,
         radial_scale: &Real,
         translation: &Real,
-    ) -> Option<DenseTwoSquareRootExpression> {
+    ) -> Option<TwoSquareRootExpression<DenseTensorPolynomial>> {
         let system = self.chord_normal_projective_system()?;
         let (point, center) = match axis {
             Axis2::X => (&system.geometry.point_x, &system.geometry.center_x),
             Axis2::Y => (&system.geometry.point_y, &system.geometry.center_y),
         };
-        let translated = DenseTwoSquareRootExpression::from_rational(
+        let translated = TwoSquareRootExpression::from_rational(
             system.geometry.common_denominator.scale(translation)?,
         )?;
         point
@@ -1225,7 +1219,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
 
     pub(in crate::bezier_offset) fn trivariate_radical_sign(
         &self,
-        expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+        expression: &SquareRootExpression<TrivariatePolynomial>,
         branch: i8,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
@@ -1405,7 +1399,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         });
         let Some(candidate) =
             TrivariatePolynomial::from_axis_polynomial(&[(-turn * cross_scale)], 0)
-                .and_then(BezierAlgebraicCuspTrivariateSquareRootExpression2::from_rational)
+                .and_then(SquareRootExpression::from_rational)
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -1763,7 +1757,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         };
         Ok(
             match self.trivariate_radical_sign(
-                &BezierAlgebraicCuspTrivariateSquareRootExpression2 { rational, radical },
+                &SquareRootExpression { rational, radical },
                 contact.branch,
                 policy,
             )? {
@@ -1882,7 +1876,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                     numerator = numerator.add(&expression.scale(scale)?)?;
                 }
                 if offset.zero_status() != ZeroKnowledge::Zero {
-                    numerator = numerator.add(&DenseTwoSquareRootExpression::from_rational(
+                    numerator = numerator.add(&TwoSquareRootExpression::from_rational(
                         system.geometry.common_denominator.scale(offset)?,
                     )?)?;
                 }
@@ -1991,7 +1985,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         axis: Axis2,
         radial_scale: &Real,
         translation: &Real,
-    ) -> Option<BezierAlgebraicCuspTrivariateSquareRootExpression2> {
+    ) -> Option<SquareRootExpression<TrivariatePolynomial>> {
         let system = self.oblique_system()?;
         let (point, center) = match axis {
             Axis2::X => (&system.point_x, &system.center_x),
@@ -2003,7 +1997,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
             (center, &one_minus_scale),
             (&system.common_denominator, translation),
         ])?;
-        Some(BezierAlgebraicCuspTrivariateSquareRootExpression2 {
+        Some(SquareRootExpression {
             rational,
             radical: point.radical.scale(radial_scale)?,
         })
@@ -2067,8 +2061,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     pub(in crate::bezier_offset) fn chord_normal_dense_expressions_bounds_refined(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        point_x: &DenseTwoSquareRootExpression,
-        point_y: &DenseTwoSquareRootExpression,
+        point_x: &TwoSquareRootExpression<DenseTensorPolynomial>,
+        point_y: &TwoSquareRootExpression<DenseTensorPolynomial>,
         refinement_steps: usize,
     ) -> Classification<Aabb2> {
         let Some(system) = self.chord_normal_projective_system() else {
@@ -2337,7 +2331,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let speed_value = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
+        let speed_value = |expression: &SquareRootExpression<TrivariatePolynomial>| {
             let rational = evaluate(&expression.rational)?;
             let radical = evaluate(&expression.radical)?.multiply(&speed)?;
             Some(rational.add(&radical))
@@ -2440,7 +2434,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
                 value
             }
         };
-        let pair_value = |expression: &BezierAlgebraicCuspQuadrivariateSquareRootExpression2| {
+        let pair_value = |expression: &SquareRootExpression<DenseTensorPolynomial>| {
             let rational = evaluate(&expression.rational)?;
             let radical = evaluate(&expression.radical)?.multiply(&pair_discriminant)?;
             Some(rational.add(&branch_interval(radical, system.pair_branch)))
@@ -2530,8 +2524,8 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
     pub(in crate::bezier_offset) fn oblique_expressions_bounds_refined(
         &self,
         contact: &BezierAlgebraicCuspSemicircleChordContact2,
-        point_x: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
-        point_y: &BezierAlgebraicCuspTrivariateSquareRootExpression2,
+        point_x: &SquareRootExpression<TrivariatePolynomial>,
+        point_y: &SquareRootExpression<TrivariatePolynomial>,
         refinement_steps: usize,
     ) -> Classification<Aabb2> {
         let Some(system) = self.oblique_system() else {
@@ -2563,7 +2557,7 @@ impl BezierAlgebraicCuspSemicircleChordParameterMap2 {
         let Some(common_denominator) = evaluate(&system.common_denominator) else {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
-        let coordinate = |expression: &BezierAlgebraicCuspTrivariateSquareRootExpression2| {
+        let coordinate = |expression: &SquareRootExpression<TrivariatePolynomial>| {
             let rational = evaluate(&expression.rational)?;
             let radical = evaluate(&expression.radical)?.multiply(&discriminant)?;
             let radical = if contact.branch == -1 {

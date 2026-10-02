@@ -8992,7 +8992,7 @@ impl BezierAnalyticParallelPoint2 {
             let zero = DenseTensorPolynomial::zero(vec![1])?;
             BezierRecursiveQuadraticValue2::from_base(
                 base.clone(),
-                DenseTwoSquareRootExpression {
+                TwoSquareRootExpression {
                     rational: tensor(rational_coefficients)?,
                     first: tensor(speed_coefficients)?,
                     second: zero.clone(),
@@ -9412,7 +9412,7 @@ impl BezierAnalyticParallelPoint2 {
                 let zero = DenseTensorPolynomial::zero(vec![1])?;
                 BezierRecursiveQuadraticValue2::from_base(
                     base.clone(),
-                    DenseTwoSquareRootExpression {
+                    TwoSquareRootExpression {
                         rational: tensor(rational)?,
                         first: tensor(first)?,
                         second: zero.clone(),

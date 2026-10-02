@@ -2790,7 +2790,7 @@ fn recursive_scalar_native_replay_preserves_selected_source_authority() {
         };
         let value = BezierRecursiveQuadraticValue2::from_base(
             base.clone(),
-            DenseTwoSquareRootExpression {
+            TwoSquareRootExpression {
                 rational: constant(1_i8),
                 first: constant(1_i8),
                 second: constant(1_i8),
@@ -3317,7 +3317,7 @@ fn unused_positive_radicals_do_not_block_recursive_enclosures() {
     let zero = scalar(Real::zero());
     let one = scalar(Real::one());
     for active in [None, Some(0), Some(1)] {
-        let expression = DenseTwoSquareRootExpression {
+        let expression = TwoSquareRootExpression {
             rational: one.clone(),
             first: if active == Some(0) {
                 scalar(Real::from(2_i8))
@@ -23513,7 +23513,7 @@ fn four_selected_square_root_parameters() -> [BezierParameter2; 4] {
 fn exact_chord_normal_dense_test_map() -> BezierChordNormalDenseMapSystem2 {
     let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
     let zero = DenseTensorPolynomial::zero(vec![1]).unwrap();
-    let zero_expression = DenseTwoSquareRootExpression {
+    let zero_expression = TwoSquareRootExpression {
         rational: zero.clone(),
         first: zero.clone(),
         second: zero.clone(),
@@ -23553,7 +23553,7 @@ fn dense_projection_does_not_square_an_absent_radical() {
         // With every component zero the projection is still identically zero.
         (vec![0], vec![0], vec![0], vec![0], vec![0]),
     ] {
-        let expression = DenseTwoSquareRootExpression {
+        let expression = TwoSquareRootExpression {
             rational: dense_test_polynomial(&rational),
             first: dense_test_polynomial(&first),
             second: dense_test_polynomial(&second),
@@ -23571,7 +23571,7 @@ fn dense_projection_does_not_square_an_absent_radical() {
 
     // All four components can be present while their first-generator
     // cross term cancels exactly after the second-generator norm.
-    let expression = DenseTwoSquareRootExpression {
+    let expression = TwoSquareRootExpression {
         rational: dense_test_polynomial(&[0, 2]),
         first: dense_test_polynomial(&[1]),
         second: dense_test_polynomial(&[0, 1]),
@@ -23587,7 +23587,7 @@ fn dense_projection_does_not_square_an_absent_radical() {
     );
     // The first coefficient is absent only after source-root reduction.
     let source = AlgebraicRootRepresentation::from_exact_value(&Real::one());
-    let expression = DenseTwoSquareRootExpression {
+    let expression = TwoSquareRootExpression {
         rational: dense_test_polynomial(&[1, -4, 4])
             .insert_independent_axis(0)
             .unwrap(),
@@ -23615,7 +23615,7 @@ fn dense_projection_keeps_roots_of_vanishing_radicands() {
         (0, 1, 0, vec![1], vec![0, 1], vec![0, -1]),
         (0, 0, 1, vec![0, 1], vec![1, 1], vec![0, -1, -1]),
     ] {
-        let expression = DenseTwoSquareRootExpression {
+        let expression = TwoSquareRootExpression {
             rational: dense_test_polynomial(&[0]),
             first: dense_test_polynomial(&[first]),
             second: dense_test_polynomial(&[second]),
@@ -23642,7 +23642,7 @@ fn dense_projection_single_radical_replays_the_authored_sheet() {
         for first in [false, true] {
             for sign in [-1_i8, 1] {
                 let radical = scalar((Real::from(sign) / Real::from(10_i8)).unwrap());
-                let expression = DenseTwoSquareRootExpression {
+                let expression = TwoSquareRootExpression {
                     rational: DenseTensorPolynomial::from_axis_polynomial(
                         1,
                         0,
@@ -23699,7 +23699,7 @@ fn dense_projection_zero_set_matches_all_four_conjugates() {
                 components[index].clone()
             }
         });
-        let expression = DenseTwoSquareRootExpression {
+        let expression = TwoSquareRootExpression {
             rational: selected[0].clone(),
             first: selected[1].clone(),
             second: selected[2].clone(),
@@ -23747,7 +23747,7 @@ fn dense_projection_zero_set_matches_all_four_conjugates() {
 
 #[test]
 fn dense_two_radical_square_matches_general_field_product() {
-    let expression = DenseTwoSquareRootExpression {
+    let expression = TwoSquareRootExpression {
         rational: dense_test_polynomial(&[1, 2]),
         first: dense_test_polynomial(&[-3, 1]),
         second: dense_test_polynomial(&[2, 4]),
@@ -25933,7 +25933,7 @@ fn chord_normal_dense_sheet_replay_rejects_conjugate_roots() {
     // t - 1/2 + sqrt(1)/10 + sqrt(1)/10 has the authored root 3/10.
     // Its complete norm also contains the conjugate roots 1/2 and 7/10;
     // only positive-positive sheet replay may publish topology.
-    let expression = DenseTwoSquareRootExpression {
+    let expression = TwoSquareRootExpression {
         rational: DenseTensorPolynomial::from_axis_polynomial(1, 0, &[-half, Real::one()]).unwrap(),
         first: DenseTensorPolynomial::from_axis_polynomial(1, 0, std::slice::from_ref(&tenth))
             .unwrap(),
@@ -25970,7 +25970,7 @@ fn chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components() {
     let map = exact_chord_normal_dense_test_map();
     let quarter = (Real::one() / Real::from(4_i8)).unwrap();
     let zero = DenseTensorPolynomial::zero(vec![1]).unwrap();
-    let even = DenseTwoSquareRootExpression {
+    let even = TwoSquareRootExpression {
         rational: DenseTensorPolynomial::from_axis_polynomial(
             1,
             0,
@@ -25981,7 +25981,7 @@ fn chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components() {
         second: zero.clone(),
         product: zero.clone(),
     };
-    let identically_zero = DenseTwoSquareRootExpression {
+    let identically_zero = TwoSquareRootExpression {
         rational: zero.clone(),
         first: zero.clone(),
         second: zero.clone(),
