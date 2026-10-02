@@ -1240,3 +1240,57 @@ fn beveled_rational_seed_double_inward_offset_completes() {
     let steps = [Step::Offset(0, -1, 1), Step::Offset(1, -2, 2)];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// Boundary export and reconstruction after an outward miter offset of a
+/// filleted, chamfered Boolean of three seeds.
+///
+/// Rebuilding the exported paths regularizes them from scratch. An exported
+/// round join, a selected circle centered on an earlier parallel, is tangent
+/// to the following parallel at their shared endpoint, so the selected-fiber
+/// system for that adjacent pair has a double root there. Isolating it
+/// through local Sturm subresultants takes over twenty minutes; deflating the
+/// known shared endpoint of adjacent carriers would remove the double root.
+#[test]
+#[ignore = "tangential double root at an adjacent join/parallel endpoint"]
+fn filleted_chamfered_boolean_miter_offset_round_trips() {
+    let seeds = [
+        Seed {
+            x: 6,
+            y: -5,
+            width: 19,
+            height: 12,
+            lower: 0,
+            upper: 4,
+            curvature: 1,
+            weight: 3,
+        },
+        Seed {
+            x: 0,
+            y: -2,
+            width: 13,
+            height: 6,
+            lower: 4,
+            upper: 4,
+            curvature: 3,
+            weight: 2,
+        },
+        Seed {
+            x: -8,
+            y: -9,
+            width: 9,
+            height: 9,
+            lower: 6,
+            upper: 6,
+            curvature: 2,
+            weight: 6,
+        },
+    ];
+    let steps = [
+        Step::Boolean(7, 14, 0),
+        Step::Boolean(5, 3, 3),
+        Step::Chamfer(11, 7),
+        Step::Fillet(13, 2),
+        Step::Offset(13, 1, 2),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
