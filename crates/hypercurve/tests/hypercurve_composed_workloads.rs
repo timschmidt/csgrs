@@ -1337,9 +1337,9 @@ fn miter_bevel_bevel_offsets(seed: Seed) -> Result<(), TestCaseError> {
 /// Treating one sibling offset as the base certified the two sides collinear,
 /// put the sample on the boundary and blocked the offset. The separation is
 /// now the difference of their displacements; the operation completes but
-/// takes about two minutes.
+/// takes about a minute.
 #[test]
-#[ignore = "slow: about two minutes in the final bevel offset"]
+#[ignore = "slow: about a minute in the final bevel offset"]
 fn weighted_conic_miter_bevel_bevel_offsets_complete() {
     miter_bevel_bevel_offsets(Seed {
         x: 5,
