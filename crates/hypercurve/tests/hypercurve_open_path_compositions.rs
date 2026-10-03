@@ -684,3 +684,35 @@ fn bevel_stroke_of_a_filleted_hyperbola_pair_completes() {
     };
     run_sequence(&seed, &[Step::Fillet(2, 2), Step::Stroke(3, 1)]).unwrap();
 }
+
+/// A round stroke of an arc followed by a line. Rebuilding the exported
+/// boundary intersects an offset line with the round join arc it meets
+/// tangentially. Their shared junction is now one exact point, but deciding
+/// that tangency is an exact zero test on nested radicals
+/// (`line_circle_relation_at_endpoints`), so the line/arc relation is
+/// blocked by RealSign. The stroke knows the tangency by construction; the
+/// exported curves do not carry it.
+#[test]
+#[ignore = "open: tangent-junction provenance is not carried into exported stroke boundaries"]
+fn arc_line_round_stroke_round_trips() {
+    let seed = Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: 1,
+                dx: 3,
+                dy: 1,
+                outward: 1,
+            },
+            Edge {
+                family: 0,
+                dx: 4,
+                dy: -1,
+                outward: 1,
+            },
+        ],
+        weight: 1,
+    };
+    run_sequence(&seed, &[Step::Stroke(1, 0)]).unwrap();
+}
