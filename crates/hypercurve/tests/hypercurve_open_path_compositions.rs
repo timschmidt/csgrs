@@ -957,3 +957,50 @@ fn round_stroke_of_a_filleted_heavy_nurbs_path_completes() {
     };
     run_sequence(&seed, &[Step::Fillet(3, 2), Step::Stroke(3, 0)]).unwrap();
 }
+
+/// A bevel stroke of a chamfered quadratic/quadratic/rational-quadratic path
+/// (weight 1, so all low-degree). Rebuilding its exported boundary runs the
+/// recursive chord/parallel system, whose local candidates are filtered by
+/// `parameter_is_in_ordered_range`. A candidate equal to a range endpoint is
+/// compared by refining both recursive projective parameters; every step
+/// evaluates near-zero defining signs in a recursive quadratic tower, and
+/// the comparison did not finish within ten minutes.
+#[test]
+#[ignore = "open: equal recursive projective parameters are compared by refinement"]
+fn chamfered_quadratic_bevel_stroke_round_trips() {
+    let seed = Seed {
+        x: 2,
+        y: 5,
+        edges: vec![
+            Edge {
+                family: 2,
+                dx: 7,
+                dy: 0,
+                outward: 2,
+            },
+            Edge {
+                family: 2,
+                dx: 4,
+                dy: -3,
+                outward: -1,
+            },
+            Edge {
+                family: 4,
+                dx: 7,
+                dy: 6,
+                outward: -1,
+            },
+        ],
+        weight: 1,
+    };
+    run_sequence(
+        &seed,
+        &[
+            Step::Translate(3, -5),
+            Step::Translate(-2, -1),
+            Step::Chamfer(2, 3),
+            Step::Stroke(3, 1),
+        ],
+    )
+    .unwrap();
+}
