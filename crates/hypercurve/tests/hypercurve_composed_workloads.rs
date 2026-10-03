@@ -1419,3 +1419,33 @@ fn chamfered_conic_bevel_dilation_round_trips() {
     let steps = [Step::Chamfer(0, 3), Step::Offset(1, 1, 1)];
     run_sequence(&seeds, &steps, false).unwrap();
 }
+
+/// The difference between a chamfered weighted-conic seed and its fillet.
+///
+/// The fillet arc is tangent to the chamfer chord at a contact inside the
+/// other operand's untrimmed chord. The arc's endpoint is shared with a
+/// trimmed sub-chord of the same retained support in its own operand, so the
+/// pair has exactly that one tangential contact, but the circle/chord kernel
+/// rediscovers it through recursive-field signs and dense tensor-image
+/// resultants without completing. Mapping the shared endpoint into the other
+/// chord's chart through their common support would certify it directly.
+#[test]
+#[ignore = "open: cross-operand fillet tangency to an untrimmed chamfer chord"]
+fn chamfered_conic_minus_its_fillet_completes() {
+    let seeds = [Seed {
+        x: -5,
+        y: 1,
+        width: 11,
+        height: 8,
+        lower: 7,
+        upper: 5,
+        curvature: 1,
+        weight: 4,
+    }];
+    let steps = [
+        Step::Chamfer(0, 2),
+        Step::Fillet(1, 3),
+        Step::Boolean(1, 2, 2),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
