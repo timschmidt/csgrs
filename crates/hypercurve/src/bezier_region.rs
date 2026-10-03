@@ -7187,6 +7187,11 @@ fn retained_fragment_algebraic_ray_curve(
             }));
         }
         Classification::Uncertain(UncertaintyReason::Unsupported) => {}
+        // A straight parallel cut at algebraic parameters has no explicit
+        // endpoint pair; its retained rational component below keeps the
+        // exact range instead.
+        Classification::Uncertain(UncertaintyReason::Boundary)
+            if matches!(fragment, BezierSplitFragment2::AnalyticParallel(_)) => {}
         Classification::Uncertain(reason) => {
             return Ok(Classification::Uncertain(reason));
         }

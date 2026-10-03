@@ -833,3 +833,91 @@ fn miter_stroke_of_a_filleted_heavy_rational_cubic_completes() {
     )
     .unwrap();
 }
+
+fn chamfered_cubic_line_seed() -> Seed {
+    Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: 3,
+                dx: 4,
+                dy: -5,
+                outward: -1,
+            },
+            Edge {
+                family: 0,
+                dx: 5,
+                dy: -4,
+                outward: -2,
+            },
+            Edge {
+                family: 5,
+                dx: 6,
+                dy: 2,
+                outward: 2,
+            },
+            Edge {
+                family: 0,
+                dx: 4,
+                dy: -6,
+                outward: 2,
+            },
+        ],
+        weight: 2,
+    }
+}
+
+/// A chamfer cut on a cubic is an algebraic vertex; the bevel stroke's
+/// boundary beside it contains straight parallel pieces cut at algebraic
+/// parameters. Locating that vertex classifies those pieces through their
+/// retained rational parallel component instead of declining for want of
+/// explicit endpoints.
+#[test]
+fn bevel_stroke_contains_an_algebraic_chamfer_vertex() {
+    let seed = chamfered_cubic_line_seed();
+    let path = seed_path(&seed);
+    let chamfered = path
+        .chamfer_vertex_by_setbacks(
+            1,
+            fraction(1, 4),
+            fraction(1, 4),
+            CurveCornerMode2::TrimOnly,
+            &STRICT,
+        )
+        .unwrap()
+        .into_value()
+        .into_solutions()
+        .into_iter()
+        .next()
+        .expect("the cubic/line vertex admits a setback chamfer");
+    let stroke = CurveRegion2::stroke_path(
+        &chamfered,
+        fraction(2, 4),
+        &OffsetCornerStyle2::Bevel,
+        OffsetCap::Round,
+        &STRICT,
+    )
+    .unwrap()
+    .into_value();
+    for vertex in path_vertices(&chamfered) {
+        assert_eq!(
+            region_location("chamfered stroke", &stroke, &vertex).unwrap(),
+            RegionPointLocation::Inside
+        );
+    }
+}
+
+/// The same chamfered bevel stroke through the harness, including its
+/// boundary round trip. Rebuilding that boundary runs the recursive
+/// chord/parallel incidence system over a recursive quadratic tower and does
+/// not finish within minutes.
+#[test]
+#[ignore = "open: chord/parallel incidence over a recursive quadratic tower is too slow"]
+fn chamfered_cubic_line_bevel_stroke_round_trips() {
+    run_sequence(
+        &chamfered_cubic_line_seed(),
+        &[Step::Chamfer(3, 1), Step::Stroke(2, 1)],
+    )
+    .unwrap();
+}
