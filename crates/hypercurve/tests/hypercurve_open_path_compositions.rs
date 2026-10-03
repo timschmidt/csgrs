@@ -591,3 +591,31 @@ fn mixed_family_miter_stroke_round_trips() {
     };
     run_sequence(&seed, &[Step::Stroke(2, 2)]).unwrap();
 }
+
+/// Stroking a filleted line/parabola path. The fillet arc against the
+/// parabola is a generated algebraic circle carrier with no native Bezier
+/// image; the stroke offsets the path's retained fragments, as a region
+/// offset does, instead of requiring native Bezier spans.
+#[test]
+fn stroke_of_a_generated_fillet_arc_completes() {
+    let seed = Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: 0,
+                dx: 3,
+                dy: 0,
+                outward: -1,
+            },
+            Edge {
+                family: 2,
+                dx: 3,
+                dy: 0,
+                outward: 1,
+            },
+        ],
+        weight: 1,
+    };
+    run_sequence(&seed, &[Step::Fillet(0, 1), Step::Stroke(1, 0)]).unwrap();
+}

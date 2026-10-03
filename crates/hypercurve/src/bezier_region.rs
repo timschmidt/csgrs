@@ -895,6 +895,91 @@ fn canonicalize_exact_rational_subcurve(
     curve
 }
 
+/// Retained exact fragments of every authored or generated path curve, in
+/// traversal order. Generated restricted curves keep their own fragments;
+/// authored curves contribute their native Bezier spans, whose interior
+/// spline joins are certified here.
+pub(crate) fn path_retained_fragments(
+    path: &CurvePath2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Classification<Vec<BezierSplitFragment2>>> {
+    let mut fragments = Vec::with_capacity(path.curves().len());
+    for curve in path.curves() {
+        if let Some(fragment) = curve.retained_fragment() {
+            fragments.push(fragment.clone());
+        } else if let Some(spans) =
+            curve.restricted_source_spans(policy, CurveOperation2::Arrangement)?
+        {
+            for adjacent in spans.windows(2) {
+                match curve_fragment_endpoints_equal(
+                    &adjacent[0].fragment,
+                    false,
+                    &adjacent[1].fragment,
+                    true,
+                    policy,
+                ) {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        return Err(ExactCurveError::invalid(
+                            CurveOperation2::Arrangement,
+                            curve.family(),
+                            CurveError::DisconnectedCurvePath,
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            fragments.extend(spans.iter().map(|span| span.fragment.clone()));
+        } else {
+            let native = match curve.native_bezier_fragments_with_policy(policy)? {
+                Classification::Decided(native) => native,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            // Path joins certify the authored curves' outer endpoints.
+            // A spline can still have a discontinuous interior knot, so
+            // certify its promoted span joins before retaining a cycle.
+            for adjacent in native.windows(2) {
+                let (_, left_end) = adjacent[0].native_curve().endpoint_refs();
+                let (right_start, _) = adjacent[1].native_curve().endpoint_refs();
+                match CurvePoint2::from(left_end.clone())
+                    .same_point(&CurvePoint2::from(right_start.clone()), policy)
+                {
+                    Classification::Decided(true) => {}
+                    Classification::Decided(false) => {
+                        return Err(ExactCurveError::invalid(
+                            CurveOperation2::Arrangement,
+                            curve.family(),
+                            CurveError::DisconnectedCurvePath,
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            fragments.extend(
+                native
+                    .iter()
+                    .map(|native| BezierSplitFragment2::Materialized {
+                        start: BezierParameter2::Exact(Real::zero()),
+                        end: BezierParameter2::Exact(Real::one()),
+                        curve: native.native_curve().clone(),
+                    }),
+            );
+        }
+    }
+    Ok(Classification::Decided(
+        fragments
+            .into_iter()
+            .map(|fragment| canonicalize_retained_rational_fragment(fragment, policy))
+            .collect(),
+    ))
+}
+
 fn canonicalize_retained_rational_fragment(
     fragment: BezierSplitFragment2,
     policy: &CurveContext,
@@ -918,79 +1003,10 @@ impl CurveRegionBoundaryLoop2 {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        let mut fragments = Vec::with_capacity(path.curves().len());
-        for curve in path.curves() {
-            if let Some(fragment) = curve.retained_fragment() {
-                fragments.push(fragment.clone());
-            } else if let Some(spans) =
-                curve.restricted_source_spans(policy, CurveOperation2::Arrangement)?
-            {
-                for adjacent in spans.windows(2) {
-                    match curve_fragment_endpoints_equal(
-                        &adjacent[0].fragment,
-                        false,
-                        &adjacent[1].fragment,
-                        true,
-                        policy,
-                    ) {
-                        Classification::Decided(true) => {}
-                        Classification::Decided(false) => {
-                            return Err(ExactCurveError::invalid(
-                                CurveOperation2::Arrangement,
-                                curve.family(),
-                                CurveError::DisconnectedCurvePath,
-                            ));
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
-                }
-                fragments.extend(spans.iter().map(|span| span.fragment.clone()));
-            } else {
-                let native = match curve.native_bezier_fragments_with_policy(policy)? {
-                    Classification::Decided(native) => native,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                // Path joins certify the authored curves' outer endpoints.
-                // A spline can still have a discontinuous interior knot, so
-                // certify its promoted span joins before retaining a cycle.
-                for adjacent in native.windows(2) {
-                    let (_, left_end) = adjacent[0].native_curve().endpoint_refs();
-                    let (right_start, _) = adjacent[1].native_curve().endpoint_refs();
-                    match CurvePoint2::from(left_end.clone())
-                        .same_point(&CurvePoint2::from(right_start.clone()), policy)
-                    {
-                        Classification::Decided(true) => {}
-                        Classification::Decided(false) => {
-                            return Err(ExactCurveError::invalid(
-                                CurveOperation2::Arrangement,
-                                curve.family(),
-                                CurveError::DisconnectedCurvePath,
-                            ));
-                        }
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
-                }
-                fragments.extend(
-                    native
-                        .iter()
-                        .map(|native| BezierSplitFragment2::Materialized {
-                            start: BezierParameter2::Exact(Real::zero()),
-                            end: BezierParameter2::Exact(Real::one()),
-                            curve: native.native_curve().clone(),
-                        }),
-                );
-            }
-        }
-        let fragments = fragments
-            .into_iter()
-            .map(|fragment| canonicalize_retained_rational_fragment(fragment, policy))
-            .collect();
+        let fragments = match path_retained_fragments(path, policy)? {
+            Classification::Decided(fragments) => fragments,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
         Self::try_new_from_certified_connected_chain(fragments, None, policy)
             .map(Classification::Decided)
             .map_err(|cause| {
@@ -3995,8 +4011,10 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let native = match path
-            .native_bezier_fragments_with_policy(policy)
+        // Generated curves keep their retained fragments, so a stroke of a
+        // filleted or chamfered path offsets the same exact carriers a region
+        // offset would, rather than requiring a native Bezier image.
+        let source_fragments = match path_retained_fragments(path, policy)
             .map_err(|error| error.with_operation(CurveOperation2::Offset))?
         {
             Classification::Decided(fragments) => fragments,
@@ -4004,14 +4022,14 @@ impl CurveRegion2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let source_fragments = native
-            .iter()
-            .map(|fragment| BezierSplitFragment2::Materialized {
-                start: BezierParameter2::Exact(Real::zero()),
-                end: BezierParameter2::Exact(Real::one()),
-                curve: fragment.native_curve().clone(),
-            })
-            .collect::<Vec<_>>();
+        let (start_point, end_point) = (path.start(), path.end());
+        let (Some(path_start), Some(path_end)) =
+            (start_point.coordinates(), end_point.coordinates())
+        else {
+            // Caps are centered on represented path endpoints.
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let (path_start, path_end) = (path_start.clone(), path_end.clone());
         let left_spans =
             match exact_offset_span_runs_from_open_path(&source_fragments, &half_width, policy)
                 .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
@@ -4112,10 +4130,7 @@ impl CurveRegion2 {
             match cap_style {
                 OffsetCap::Butt => {}
                 OffsetCap::Round => {
-                    for center in [
-                        native[0].curve().start(),
-                        native.last().expect("nonempty native path").curve().end(),
-                    ] {
+                    for center in [&path_start, &path_end] {
                         band_loops.push(exact_round_path_cap_band(center, &half_width, policy)?);
                         band_filled_sides.push(true);
                     }
@@ -4137,22 +4152,13 @@ impl CurveRegion2 {
                     let start_dx = &start_tangent.0 * &half_width;
                     let start_dy = &start_tangent.1 * &half_width;
                     let start_extension = LineSeg2::try_new(
-                        native[0].curve().start().translated(-start_dx, -start_dy),
-                        native[0].curve().start().clone(),
+                        path_start.translated(-start_dx, -start_dy),
+                        path_start.clone(),
                     )
                     .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
                     let end_extension = LineSeg2::try_new(
-                        native
-                            .last()
-                            .expect("nonempty native path")
-                            .curve()
-                            .end()
-                            .clone(),
-                        native
-                            .last()
-                            .expect("nonempty native path")
-                            .curve()
-                            .end()
+                        path_end.clone(),
+                        path_end
                             .translated(&end_tangent.0 * &half_width, &end_tangent.1 * &half_width),
                     )
                     .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?;
