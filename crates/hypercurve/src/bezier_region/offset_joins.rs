@@ -27,11 +27,21 @@ pub(super) fn exact_offset_join_band_semantics(
             endpoint_reason.unwrap_or(UncertaintyReason::Unsupported),
         ));
     };
-    let turn = match curve_tangent_cross_sign(previous_tangent, next_tangent, policy) {
-        Classification::Decided(turn) => turn,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
+    // Inner and outer joins are a property of the source path's turn. With
+    // source vertex V, the offset ends are V + d*n_previous and
+    // V + d*n_next, so their orientation about V is the sign of
+    // d^2 * cross(n_previous, n_next): the source turn for either offset
+    // side. Offset tangents can run against their source where the offset
+    // exceeds the curvature radius, so they decide only when the offset ends
+    // are collinear with V.
+    let turn = match offset_end_source_turn(previous, next, policy)? {
+        Some(turn) => turn,
+        None => match curve_tangent_cross_sign(previous_tangent, next_tangent, policy) {
+            Classification::Decided(turn) => turn,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        },
     };
     let distance = match real_sign(distance, policy) {
         Some(distance) => distance,
@@ -41,6 +51,45 @@ pub(super) fn exact_offset_join_band_semantics(
         exact_sign_product(turn, distance) == RealSign::Positive,
         turn == RealSign::Positive,
     )))
+}
+
+/// Signs `cross(previous.offset_end - V, next.offset_start - V)` for the
+/// shared source vertex `V`, or `None` when it is zero or undecided.
+fn offset_end_source_turn(
+    previous: &ExactOffsetSpan2,
+    next: &ExactOffsetSpan2,
+    policy: &CurveContext,
+) -> CurveResult<Option<RealSign>> {
+    let vertex = &previous.source_end;
+    if let (Some(vertex), Some(first), Some(second)) = (
+        vertex.coordinates(),
+        previous.offset_end.coordinates(),
+        next.offset_start.coordinates(),
+    ) {
+        let cross = Real::diff_of_products(
+            &(first.x() - vertex.x()),
+            &(second.y() - vertex.y()),
+            &(first.y() - vertex.y()),
+            &(second.x() - vertex.x()),
+        );
+        return Ok(match real_sign(&cross, policy) {
+            Some(sign @ (RealSign::Positive | RealSign::Negative)) => Some(sign),
+            Some(RealSign::Zero) | None => None,
+        });
+    }
+    let Classification::Decided(radial) =
+        crate::BezierAlgebraicChord2::try_new(vertex.clone(), previous.offset_end.clone(), policy)?
+    else {
+        return Ok(None);
+    };
+    Ok(
+        match radial.oriented_support_side(&next.offset_start, policy)? {
+            Classification::Decided(crate::classify::LineSide::Left) => Some(RealSign::Positive),
+            Classification::Decided(crate::classify::LineSide::Right) => Some(RealSign::Negative),
+            Classification::Decided(crate::classify::LineSide::On)
+            | Classification::Uncertain(_) => None,
+        },
+    )
 }
 
 pub(super) fn exact_offset_spans_form_reversal(

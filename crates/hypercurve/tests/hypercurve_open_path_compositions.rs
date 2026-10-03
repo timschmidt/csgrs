@@ -489,3 +489,34 @@ fn refilleting_a_filleted_vertex_completes() {
     };
     run_sequence(&seed, &[Step::Fillet(0, 4), Step::Fillet(0, 4)]).unwrap();
 }
+
+/// Stroking a line followed by a sharply curved rational quadratic. Near the
+/// curve's start its curvature radius is smaller than the half-width, so the
+/// concave-side offset runs against its source there. Inner and outer joins
+/// follow the source turn, read from the offset ends about the shared vertex,
+/// so the outer side keeps its join and the vertex stays inside the stroke.
+#[test]
+fn stroke_keeps_the_outer_join_at_a_high_curvature_vertex() {
+    let seed = Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: 0,
+                dx: 3,
+                dy: 0,
+                outward: 1,
+            },
+            Edge {
+                family: 4,
+                dx: 3,
+                dy: 0,
+                outward: -1,
+            },
+        ],
+        weight: 1,
+    };
+    for corner in 0..3 {
+        run_sequence(&seed, &[Step::Stroke(2, corner)]).unwrap();
+    }
+}
