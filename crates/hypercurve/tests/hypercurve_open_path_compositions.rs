@@ -620,11 +620,14 @@ fn stroke_of_a_generated_fillet_arc_completes() {
     run_sequence(&seed, &[Step::Fillet(0, 1), Step::Stroke(1, 0)]).unwrap();
 }
 
-/// A round stroke of a chamfered line/arc path. Rebuilding the exported
-/// stroke boundary orients points whose coordinates are opaque nested
-/// radicals from the arc chamfer and its offsets; the exact orientation is
-/// undecidable there and construction is blocked by Predicate. Same class as
-/// `mixed_family_miter_stroke_round_trips`.
+/// A round stroke of a chamfered line/arc path. Export succeeds; the rebuild
+/// intersects adjacent exported carriers through the general Bezier pair
+/// context, which does not receive the path's certified junction. The
+/// line/arc kernel then has to prove two differently built nested-radical
+/// expressions of that junction equal, which is undecidable, and the
+/// fallback sweep orientation is blocked by Predicate. Same class as
+/// `mixed_family_miter_stroke_round_trips`: junction provenance is not
+/// carried into pair kernels.
 #[test]
 #[ignore = "open: stroke boundary reconstruction over opaque radical coordinates"]
 fn chamfered_line_arc_stroke_round_trips() {
@@ -648,4 +651,36 @@ fn chamfered_line_arc_stroke_round_trips() {
         weight: 1,
     };
     run_sequence(&seed, &[Step::Chamfer(0, 1), Step::Stroke(1, 0)]).unwrap();
+}
+
+/// A bevel stroke of a filleted hyperbola/hyperbola path (two weight-2
+/// rational quadratics). The stroke alone completes in about 24 s; after
+/// the fillet trims both hyperbolas at algebraic tangency parameters, the
+/// stroke spends minutes in selected-fiber isolation over the trimmed
+/// offsets and then in `exact_offset_corner_band` point equality through
+/// algebraic tensor images (Bareiss resultants). It did not complete within
+/// 26 minutes.
+#[test]
+#[ignore = "open: offsets of fillet-trimmed hyperbolas over recursive towers are too slow"]
+fn bevel_stroke_of_a_filleted_hyperbola_pair_completes() {
+    let seed = Seed {
+        x: 3,
+        y: 8,
+        edges: vec![
+            Edge {
+                family: 4,
+                dx: 6,
+                dy: -1,
+                outward: -1,
+            },
+            Edge {
+                family: 4,
+                dx: 6,
+                dy: 0,
+                outward: -2,
+            },
+        ],
+        weight: 2,
+    };
+    run_sequence(&seed, &[Step::Fillet(2, 2), Step::Stroke(3, 1)]).unwrap();
 }
