@@ -741,8 +741,11 @@ impl Curve2 {
                 .all(|offset| offset.zero_status() == hyperreal::ZeroKnowledge::Zero)
                 // The fragment's own endpoints are the loop's shared vertex
                 // representations; a cached image may hold equal copies.
-                && let Ok(line) =
-                    crate::LineSeg2::try_new(quadratic.start().clone(), quadratic.end().clone())
+                && let Some(image) = quadratic.retained_exact_line_image()
+                && let Ok(line) = image.with_endpoint_representations(
+                    quadratic.start().clone(),
+                    quadratic.end().clone(),
+                )
             {
                 return Self::from(line);
             }

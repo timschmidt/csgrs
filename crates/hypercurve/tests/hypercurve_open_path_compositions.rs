@@ -620,16 +620,13 @@ fn stroke_of_a_generated_fillet_arc_completes() {
     run_sequence(&seed, &[Step::Fillet(0, 1), Step::Stroke(1, 0)]).unwrap();
 }
 
-/// A round stroke of a chamfered line/arc path. Export succeeds; the rebuild
-/// intersects adjacent exported carriers through the general Bezier pair
-/// context, which does not receive the path's certified junction. The
-/// line/arc kernel then has to prove two differently built nested-radical
-/// expressions of that junction equal, which is undecidable, and the
-/// fallback sweep orientation is blocked by Predicate. Same class as
-/// `mixed_family_miter_stroke_round_trips`: junction provenance is not
-/// carried into pair kernels.
+/// A round stroke of a chamfered line/arc path. Rebuilding the exported
+/// boundary pairs an offset line, cut at irrational parameters, with the
+/// join arc it meets. The split shares the junction's representative point
+/// between both pieces and keeps the line's source support, so the line/arc
+/// kernel proves the incidence structurally and decides the tangency along
+/// the exact source direction.
 #[test]
-#[ignore = "open: stroke boundary reconstruction over opaque radical coordinates"]
 fn chamfered_line_arc_stroke_round_trips() {
     let seed = Seed {
         x: 0,
@@ -685,15 +682,11 @@ fn bevel_stroke_of_a_filleted_hyperbola_pair_completes() {
     run_sequence(&seed, &[Step::Fillet(2, 2), Step::Stroke(3, 1)]).unwrap();
 }
 
-/// A round stroke of an arc followed by a line. Rebuilding the exported
-/// boundary intersects an offset line with the round join arc it meets
-/// tangentially. Their shared junction is now one exact point, but deciding
-/// that tangency is an exact zero test on nested radicals
-/// (`line_circle_relation_at_endpoints`), so the line/arc relation is
-/// blocked by RealSign. The stroke knows the tangency by construction; the
-/// exported curves do not carry it.
+/// A round stroke of an arc followed by a line. The exported offset line
+/// meets the round join arc tangentially; both pieces share the junction's
+/// representative point and the line keeps its exact source direction, so
+/// the rebuild decides that tangency without a nested-radical zero test.
 #[test]
-#[ignore = "open: tangent-junction provenance is not carried into exported stroke boundaries"]
 fn arc_line_round_stroke_round_trips() {
     let seed = Seed {
         x: 0,

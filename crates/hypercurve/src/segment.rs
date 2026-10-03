@@ -126,6 +126,42 @@ impl LineSeg2 {
         )
     }
 
+    /// Direction of the supporting line oriented with this segment.
+    ///
+    /// The result is a positive multiple of [`Self::delta`]. A fragment cut
+    /// at irrational points keeps its exact source direction here, so signs
+    /// against it avoid subtracting the fragment's wide endpoints.
+    pub(crate) fn directed_support_delta(&self) -> (Real, Real) {
+        let (dx, dy) = self.support_delta();
+        if self.has_retained_support && self.support_direction_reversed {
+            (-dx, -dy)
+        } else {
+            (dx, dy)
+        }
+    }
+
+    /// Rebuilds this segment between equal-valued endpoint representations.
+    ///
+    /// The caller certifies that `start` and `end` equal this segment's
+    /// endpoints; retained support and offset provenance carry over.
+    pub(crate) fn with_endpoint_representations(
+        &self,
+        start: Point2,
+        end: Point2,
+    ) -> CurveResult<Self> {
+        let validated = Self::try_new(start, end)?;
+        if !self.has_retained_support {
+            return Ok(validated);
+        }
+        Ok(Self {
+            support: line_support_cell(self.support.get().cloned()),
+            has_retained_support: true,
+            support_direction_reversed: self.support_direction_reversed,
+            offset_provenance: self.offset_provenance.clone(),
+            ..validated
+        })
+    }
+
     pub(crate) const fn has_retained_support(&self) -> bool {
         self.has_retained_support
     }

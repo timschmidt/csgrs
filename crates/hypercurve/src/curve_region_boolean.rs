@@ -4634,6 +4634,16 @@ fn split_carrier_with_refinement(
             exact_contact_point_index_by_vertex,
             policy,
         );
+        let fragment = compact_retained_line_fragment(
+            &fragment,
+            carrier,
+            start_topology_vertex,
+            end_topology_vertex,
+            contact_points,
+            exact_contact_point_index_by_vertex,
+            policy,
+        )
+        .unwrap_or(fragment);
         output.push(SplitCarrierFragment {
             fragment: if carrier.reversed {
                 fragment.reversed()?
@@ -5309,6 +5319,64 @@ fn split_analytic_carrier(
         }
     }
     Ok(output)
+}
+
+/// Materializes a retained piece of a straight carrier cut at exact
+/// parameters, or returns `None` when the piece is not one.
+///
+/// An irrational cut keeps a general Bezier piece retained because its
+/// controls would be nested surds, but a straight piece's controls are its
+/// endpoints. Those are the topology vertices' representative points, the
+/// same points `compact_retained_circular_fragment` gives a circular
+/// neighbour, so the junction keeps one exact representation. The carrier's
+/// exact line image is the piece's support, which keeps the source direction
+/// for later tangency and parallelism decisions.
+fn compact_retained_line_fragment(
+    fragment: &BezierSplitFragment2,
+    carrier: &RegionCarrier,
+    start_topology_vertex: Option<usize>,
+    end_topology_vertex: Option<usize>,
+    contact_points: &[ContactVertex],
+    exact_contact_point_index_by_vertex: &[usize],
+    policy: &CurveContext,
+) -> Option<BezierSplitFragment2> {
+    let BezierSplitFragment2::RetainedBezier {
+        reversed: false,
+        start: start @ BezierParameter2::Exact(_),
+        end: end @ BezierParameter2::Exact(_),
+        source_curve: BezierSubcurve2::Quadratic(source),
+        ..
+    } = fragment
+    else {
+        return None;
+    };
+    if !source.retained_parallel_line_tangent_contacts().is_empty() {
+        return None;
+    }
+    let image = source.retained_exact_line_image()?;
+    let [start_point, end_point] = [(start, start_topology_vertex), (end, end_topology_vertex)]
+        .map(|(parameter, vertex)| {
+            exact_split_endpoint_point(
+                parameter,
+                vertex,
+                carrier,
+                contact_points,
+                exact_contact_point_index_by_vertex,
+                policy,
+            )
+        });
+    let (start_point, end_point) = (start_point?, end_point?);
+    LineSeg2::try_new(start_point.clone(), end_point.clone()).ok()?;
+    let line = image.fragment_between_after_distinct_endpoints(
+        start_point,
+        end_point,
+        image.fragment_support(),
+    );
+    Some(BezierSplitFragment2::Materialized {
+        start: start.clone(),
+        end: end.clone(),
+        curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(line)),
+    })
 }
 
 fn compact_retained_circular_fragment(

@@ -793,7 +793,19 @@ fn line_circle_relation_at_endpoints(
     };
     let radial = point.delta_from(center);
     let projection = dot(&radial.0, &radial.1, &dx, &dy);
-    let sign = match crate::classify::real_sign(&projection, &CurveContext::STRICT) {
+    // The directed support is a positive multiple of the segment delta, so
+    // it decides the same sign without the fragment's wide endpoint
+    // difference; a cut offset line keeps its exact source direction there.
+    let support_sign = || {
+        let (support_x, support_y) = line.directed_support_delta();
+        crate::classify::real_sign(
+            &dot(&radial.0, &radial.1, &support_x, &support_y),
+            &CurveContext::STRICT,
+        )
+    };
+    let sign = match crate::classify::real_sign(&projection, &CurveContext::STRICT)
+        .or_else(|| line.has_retained_support().then(support_sign).flatten())
+    {
         Some(RealSign::Zero) => {
             return Ok(Some(LineCircleRelation::Tangent {
                 point: point.clone(),
