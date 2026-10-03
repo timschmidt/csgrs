@@ -1004,3 +1004,34 @@ fn chamfered_quadratic_bevel_stroke_round_trips() {
     )
     .unwrap();
 }
+
+/// A miter stroke of a chamfered rational-quadratic/NURBS path (weight 4).
+/// Regularizing the stroke's bands pairs a join chord with a parallel; the
+/// recursive chord/parallel kernel projects its selected dense system onto
+/// the last axis through quotient-ring fiber resultants (Bareiss
+/// determinants of integer polynomial matrices), which did not finish
+/// within fourteen minutes.
+#[test]
+#[ignore = "open: recursive chord/parallel dense projection is too slow"]
+fn chamfered_rational_nurbs_miter_stroke_completes() {
+    let seed = Seed {
+        x: 8,
+        y: -6,
+        edges: vec![
+            Edge {
+                family: 4,
+                dx: 4,
+                dy: 4,
+                outward: 2,
+            },
+            Edge {
+                family: 7,
+                dx: 6,
+                dy: 6,
+                outward: -1,
+            },
+        ],
+        weight: 4,
+    };
+    run_sequence(&seed, &[Step::Chamfer(2, 3), Step::Stroke(2, 2)]).unwrap();
+}
