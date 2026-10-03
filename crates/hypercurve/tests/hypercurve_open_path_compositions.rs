@@ -523,11 +523,11 @@ fn stroke_keeps_the_outer_join_at_a_high_curvature_vertex() {
 
 /// Stroking a filleted line/arc path whose half-width equals the fillet
 /// radius. The fillet arc's concave offset collapses to its center, which the
-/// adjacent line's offset end reaches exactly; the fillet publishes its
-/// contact and center as coordinate pairs of opaque radical computations, and
-/// no exact zero test separates or identifies them, so the join is blocked.
+/// adjacent line's offset end reaches exactly. The trimmed line runs along an
+/// axis to a radical contact, so its offset normal must be the exact axis
+/// unit vector; dividing the radical length by the square root of its own
+/// square left an expression equal to one that no exact zero test could use.
 #[test]
-#[ignore = "open: fillet contacts published without retained algebraic point evidence"]
 fn stroke_of_a_fillet_at_its_radius_completes() {
     let seed = Seed {
         x: 0,
