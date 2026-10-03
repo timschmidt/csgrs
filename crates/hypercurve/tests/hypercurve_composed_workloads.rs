@@ -1469,3 +1469,43 @@ fn nested_xor_miter_dilation_completes() {
     let steps = [Step::Boolean(0, 1, 3), Step::Offset(2, 1, 2)];
     run_sequence(&seeds, &steps, true).unwrap();
 }
+
+/// An outward miter dilation of the union of a weighted-conic seed with a
+/// fillet of another seed. Regularizing the offset boundary walk orders the
+/// edges at the offset of a fillet's tangent junction, where an offset chord
+/// is tangent to the adjacent parallel. That zero tangent cross is proven
+/// through recursive projective points and dense tensor-image resultants
+/// without completing; the junction's tangency is known when the offset
+/// spans are built but is not carried into regularization.
+#[test]
+#[ignore = "open: zero tangent cross at an offset fillet junction during regularization"]
+fn filleted_union_miter_dilation_completes() {
+    let seeds = [
+        Seed {
+            x: 0,
+            y: -5,
+            width: 8,
+            height: 6,
+            lower: 1,
+            upper: 0,
+            curvature: 1,
+            weight: 1,
+        },
+        Seed {
+            x: -5,
+            y: -5,
+            width: 11,
+            height: 15,
+            lower: 5,
+            upper: 4,
+            curvature: 3,
+            weight: 2,
+        },
+    ];
+    let steps = [
+        Step::Fillet(6, 1),
+        Step::Boolean(10, 5, 0),
+        Step::Offset(3, 2, 2),
+    ];
+    run_sequence(&seeds, &steps, false).unwrap();
+}
