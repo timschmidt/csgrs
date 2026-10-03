@@ -520,3 +520,33 @@ fn stroke_keeps_the_outer_join_at_a_high_curvature_vertex() {
         run_sequence(&seed, &[Step::Stroke(2, corner)]).unwrap();
     }
 }
+
+/// Stroking a filleted line/arc path whose half-width equals the fillet
+/// radius. The fillet arc's concave offset collapses to its center, which the
+/// adjacent line's offset end reaches exactly; the fillet publishes its
+/// contact and center as coordinate pairs of opaque radical computations, and
+/// no exact zero test separates or identifies them, so the join is blocked.
+#[test]
+#[ignore = "open: fillet contacts published without retained algebraic point evidence"]
+fn stroke_of_a_fillet_at_its_radius_completes() {
+    let seed = Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: 0,
+                dx: 3,
+                dy: 0,
+                outward: -1,
+            },
+            Edge {
+                family: 1,
+                dx: 3,
+                dy: -1,
+                outward: -1,
+            },
+        ],
+        weight: 1,
+    };
+    run_sequence(&seed, &[Step::Fillet(0, 1), Step::Stroke(1, 0)]).unwrap();
+}
