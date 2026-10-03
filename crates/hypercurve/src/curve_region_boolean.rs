@@ -610,6 +610,31 @@ fn regularized_incident_ray_sectors(
         let mut rays: Vec<(CurveTangent2, usize, usize, bool, BezierSplitFragment2)> =
             Vec::with_capacity(incident.len());
         let mut coincident = Vec::new();
+        // Two rays bound the same two sectors in either angular order, so
+        // only a coincident straight pair, which must merge as an overlap,
+        // needs their turn order. A tangent-continuous junction otherwise
+        // costs an exact zero-cross proof that cannot change the result.
+        if let [first, second] = incident
+            && !incident.iter().all(|&(carrier, split, _)| {
+                split_fragment_is_affine_line(&topology.split_fragments[carrier][split].fragment)
+            })
+        {
+            let sides = |&(carrier, split, outgoing): &(usize, usize, bool)| {
+                let edge = edge_offsets[carrier] + split;
+                if outgoing {
+                    (2 * edge, 2 * edge + 1)
+                } else {
+                    (2 * edge + 1, 2 * edge)
+                }
+            };
+            let (first_left, first_right) = sides(first);
+            let (second_left, second_right) = sides(second);
+            let sectors = vec![(first_right, second_left), (second_right, first_left)];
+            return Some(RegularizedVertexSectors {
+                sectors: Some(sectors.clone()),
+                winding_links: sectors,
+            });
+        }
         for &(carrier, split, outgoing) in incident {
             let fragment = &topology.split_fragments[carrier][split].fragment;
             let straight = split_fragment_is_affine_line(fragment);

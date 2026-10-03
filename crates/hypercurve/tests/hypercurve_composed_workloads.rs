@@ -1471,14 +1471,15 @@ fn nested_xor_miter_dilation_completes() {
 }
 
 /// An outward miter dilation of the union of a weighted-conic seed with a
-/// fillet of another seed. Regularizing the offset boundary walk orders the
-/// edges at the offset of a fillet's tangent junction, where an offset chord
-/// is tangent to the adjacent parallel. That zero tangent cross is proven
-/// through recursive projective points and dense tensor-image resultants
-/// without completing; the junction's tangency is known when the offset
-/// spans are built but is not carried into regularization.
+/// fillet of another seed. At the offset of a fillet's tangent junction an
+/// offset chord is tangent to the adjacent parallel. Regularization no longer
+/// orders that two-edge vertex, so the offset completes, but the boundary
+/// round trip still certifies the adjacent tangent chord/parallel pair
+/// through recursive point promotion without completing: monotonicity cannot
+/// succeed where the relation vanishes at the shared endpoint, and the
+/// junction's construction tangency is not carried into reconstruction.
 #[test]
-#[ignore = "open: zero tangent cross at an offset fillet junction during regularization"]
+#[ignore = "open: adjacent tangent chord/parallel junction in boundary reconstruction"]
 fn filleted_union_miter_dilation_completes() {
     let seeds = [
         Seed {
