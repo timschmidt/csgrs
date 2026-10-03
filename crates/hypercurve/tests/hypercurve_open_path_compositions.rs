@@ -619,3 +619,33 @@ fn stroke_of_a_generated_fillet_arc_completes() {
     };
     run_sequence(&seed, &[Step::Fillet(0, 1), Step::Stroke(1, 0)]).unwrap();
 }
+
+/// A round stroke of a chamfered line/arc path. Rebuilding the exported
+/// stroke boundary orients points whose coordinates are opaque nested
+/// radicals from the arc chamfer and its offsets; the exact orientation is
+/// undecidable there and construction is blocked by Predicate. Same class as
+/// `mixed_family_miter_stroke_round_trips`.
+#[test]
+#[ignore = "open: stroke boundary reconstruction over opaque radical coordinates"]
+fn chamfered_line_arc_stroke_round_trips() {
+    let seed = Seed {
+        x: 0,
+        y: 0,
+        edges: vec![
+            Edge {
+                family: 0,
+                dx: 3,
+                dy: 0,
+                outward: 1,
+            },
+            Edge {
+                family: 1,
+                dx: 5,
+                dy: 0,
+                outward: -1,
+            },
+        ],
+        weight: 1,
+    };
+    run_sequence(&seed, &[Step::Chamfer(0, 1), Step::Stroke(1, 0)]).unwrap();
+}
