@@ -921,3 +921,42 @@ fn chamfered_cubic_line_bevel_stroke_round_trips() {
     )
     .unwrap();
 }
+
+/// A round stroke of a filleted rational-cubic/NURBS/NURBS path (weight 5).
+/// The fillet itself takes about five minutes. At the fillet's tangent
+/// junction the stroke's join semantics must prove the two offset ends equal
+/// (`exact_offset_join_band_semantics` → `same_point`); one is a cusp-chord
+/// derived point and the other an analytic parallel point, so equality runs
+/// through algebraic tensor images and did not finish within ten minutes.
+/// The fillet knows that junction is tangent-continuous, but the path does
+/// not carry it.
+#[test]
+#[ignore = "open: tangent-junction provenance is not carried into stroke joins"]
+fn round_stroke_of_a_filleted_heavy_nurbs_path_completes() {
+    let seed = Seed {
+        x: 2,
+        y: 4,
+        edges: vec![
+            Edge {
+                family: 5,
+                dx: 7,
+                dy: 6,
+                outward: 2,
+            },
+            Edge {
+                family: 7,
+                dx: 4,
+                dy: 5,
+                outward: 2,
+            },
+            Edge {
+                family: 7,
+                dx: 3,
+                dy: -1,
+                outward: -1,
+            },
+        ],
+        weight: 5,
+    };
+    run_sequence(&seed, &[Step::Fillet(3, 2), Step::Stroke(3, 0)]).unwrap();
+}
